@@ -3,16 +3,9 @@
 _blastFoam_ is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and air blast. 
 
 
-
-Math: $ \frac{1}{2} $
-
-
-
-
-
 ## Get the code
 
-blastFoam is free. blastFoam is currently in pre-release beta. If you'd like to request a copy of the code and solver before the official public release, while we're in beta, just get in touch: blastfoam@synthetik-technologies.com
+blastFoam is free and opensource. blastFoam is currently in pre-release beta. If you'd like to request a copy of the code and solver before the official public release, while we're in beta, just get in touch: blastfoam@synthetik-technologies.com
 
 
 ## Features
@@ -89,6 +82,40 @@ $$
 $$
 
 where $\rho$ is the mixture density, $\mathbf{u}$ the mixture velocity, $E$ the total energy, $p$ the pressure, and $rho_i$ and $\alpha_i$ are the density and volume fraction of each phase. 
+
+
+
+
+
+$$
+    \alpha_2 = 1 - \alpha_1
+$$
+
+
+$$
+    \rho = \sum_i \alpha_i \rho_i
+$$
+
+
+$$
+    \rho E = \rho e + \frac{1}{2}\rho |\mathbf{u}|^2
+$$
+
+$$
+    \rho e = \sum_i \alpha_i \rho_i e_i
+$$
+
+The pressure will be defined using a specified equation of state where the mixture internal energy, densities, and volume fraction are used to calculate the total pressure. The equations of state will be used in the Mie-Gruneisen form.
+
+$$
+    p_i(\rho_i, e_i, \rho) = (\Gamma(\rho_i) - 1) \rho_i e_i - \Pi(\rho_i)
+$$
+
+
+
+
+
+
 
 
 

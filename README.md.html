@@ -1,0 +1,55 @@
+<h1>blastfoam</h1>
+<p><em>blastFoam</em> is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and air blast. </p>
+<h2>Get the code</h2>
+<p>blastFoam is free and opensource. blastFoam is currently in pre-release beta. If you'd like to request a copy of the code and solver before the official public release, while we're in beta, just get in touch: blastfoam@synthetik-technologies.com</p>
+<h2>Features</h2>
+<p><em>blastFoam</em> currently supports the following features:</p>
+<ul>
+<li>An arbitrary number of phases/EOS's</li>
+<li>JLW equation of state with constant, linear, and "Miller" afterburn models</li>
+<li>Multiple example and tutorial cases</li>
+<li>Automatic mesh refinement (AMR)</li>
+<li>Single and multi-point detonation</li>
+<li>High-order (1st, 2nd, and 4th order in time; 3rd order spatial)</li>
+<li>HLLC, AUSM+, Kurganov, Tadmor flux schemes</li>
+<li>Parallel (MPI)</li>
+<li>Compatible with all standard OpenFOAM mesh generation, pre- and post-processing utilities</li>
+</ul>
+<h2>Equations of State</h2>
+<p>blastFoam includes the following equations of state:</p>
+<ul>
+<li>Jones Wilkens Lee (with afterburn)</li>
+<li>Ideal Gas</li>
+<li>Stiffened Perfect Gas</li>
+<li>Cochran-Chan</li>
+<li>Tait</li>
+</ul>
+<h2>Verification and Validation</h2>
+<p><em>blastFoam</em> has been validated against known solutions to standard gas dynamics problems, and against data from physical tests.  </p>
+<h2>Governing Equations</h2>
+<p>The evolution of a two phase, compressible, and inviscid mixture can be defined by a set of coupled evolution equations for mass, momentum, and energy. </p>
+<p align="center"><img alt="$$&#10;    \partial_t \mathbf{U} + \nabla \cdot \mathbf{F} = \mathbf{S}&#10;$$" src="svgs/10b5fb69900ce3e0ba80d06da2efff49.png" align="middle" width="119.034795pt" height="13.881251999999998pt"/></p>
+
+<p align="center"><img alt="$$&#10;    \mathbf{U} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \\&#10;           \alpha_1 \rho_1 \\&#10;           \alpha_2 \rho2 \\&#10;           \rho \mathbf{u} \\&#10;           \rho E&#10;        \end{array} \right)&#10;    \mathbf{F} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \mathbf{u} \\&#10;           \alpha_1 \rho_1 \mathbf{u} \\&#10;           \alpha_2 \rho_2 \mathbf{u} \\&#10;           \rho \mathbf{u} \otimes \mathbf{u} + p \mathbf{I}\\&#10;           (\rho E + p) \mathbf{u}&#10;        \end{array} \right)&#10;    \mathbf{S} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \nabla \cdot \mathbf{u} \\&#10;           0 \\&#10;           0 \\&#10;           0 \\&#10;           0&#10;        \end{array} \right)&#10;$$" src="svgs/e17a3de7478e3ea4b1124d2aaf70c7cb.png" align="middle" width="417.48629999999997pt" height="98.63106pt"/></p>
+
+<p>where <img alt="$\rho$" src="svgs/6dec54c48a0438a5fcde6053bdb9d712.png" align="middle" width="8.498985000000003pt" height="14.155350000000013pt"/> is the mixture density, <img alt="$\mathbf{u}$" src="svgs/129c5b884ff47d80be4d6261a476e9f1.png" align="middle" width="10.502250000000002pt" height="14.61206999999998pt"/> the mixture velocity, <img alt="$E$" src="svgs/84df98c65d88c6adf15d4645ffa25e47.png" align="middle" width="13.082190000000004pt" height="22.46574pt"/> the total energy, <img alt="$p$" src="svgs/2ec6e630f199f589a2402fdf3e0289d5.png" align="middle" width="8.270625000000004pt" height="14.155350000000013pt"/> the pressure, and <img alt="$rho_i$" src="svgs/b921dbff3fd97c42704607ee82ee7cc8.png" align="middle" width="29.96301pt" height="22.831379999999992pt"/> and <img alt="$\alpha_i$" src="svgs/67e7dd600dde6ca2d15b4df76a96110b.png" align="middle" width="15.166635000000003pt" height="14.155350000000013pt"/> are the density and volume fraction of each phase. </p>
+<p align="center"><img alt="$$&#10;    \alpha_2 = 1 - \alpha_1&#10;$$" src="svgs/7095db6a8ced11129e3a9e734856f850.png" align="middle" width="85.186365pt" height="13.059337499999998pt"/></p>
+
+<p align="center"><img alt="$$&#10;    \rho = \sum_i \alpha_i \rho_i&#10;$$" src="svgs/f0a7c0cae2506902c7bdae655786b0c4.png" align="middle" width="86.038755pt" height="36.655409999999996pt"/></p>
+
+<p align="center"><img alt="$$&#10;    \rho E = \rho e + \frac{1}{2}\rho |\mathbf{u}|^2&#10;$$" src="svgs/17c1f76bf866c00914f7f2c4224ef392.png" align="middle" width="126.59344499999999pt" height="32.9901pt"/></p>
+
+<p align="center"><img alt="$$&#10;    \rho e = \sum_i \alpha_i \rho_i e_i&#10;$$" src="svgs/f3a115a9e214cc2aaa59556c40aa818f.png" align="middle" width="106.819845pt" height="36.655409999999996pt"/></p>
+
+<p>The pressure will be defined using a specified equation of state where the mixture internal energy, densities, and volume fraction are used to calculate the total pressure. The equations of state will be used in the Mie-Gruneisen form.</p>
+<p align="center"><img alt="$$&#10;    p_i(\rho_i, e_i, \rho) = (\Gamma(\rho_i) - 1) \rho_i e_i - \Pi(\rho_i)&#10;$$" src="svgs/5d9c11f4f060e305ea1696832228d0d0.png" align="middle" width="263.05785pt" height="16.438356pt"/></p>
+
+<h2>Citation</h2>
+<p>If you use this code for your work or research, please cite this repository:</p>
+<p><code>@software{heylmun_blastfoam:_2019,
+    title = {{blastFoam}: An {OpenFOAM} Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
+    url = {https://github.com/synthetik-technologies/blastfoam},
+    publisher = {Synthetik Applied Technologies, {LLC}.},
+    author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
+    date = {2019-10-22}
+}</code></p>
