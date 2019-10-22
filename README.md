@@ -24,15 +24,13 @@ blastFoam is free and opensource. blastFoam is currently in pre-release beta, an
 If you use this code for your work or research, please use this citation:
 
 ```
-@software{heylmun_blastfoam:_2019,
+@software{blastfoam:2019,
 	title = {{blastFoam}: A Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
 	url = {https://github.com/synthetik-technologies/blastfoam},
-	publisher = {Synthetik Applied Technologies, {LLC}.},
-	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
+	author = {Synthetik Applied Technologies, {LLC}.},
 	date = {2019-10-22}
 }
 ```
-
 
 
 
@@ -44,7 +42,7 @@ blastFoam currently supports the following features:
 - An arbitrary number of phases/EOS's
 - JWL equation of state with constant, linear, and "Miller" afterburn models
 - Multiple example and tutorial cases
-- Automatic mesh refinement (AMR)
+- Adaptive mesh refinement (AMR)
 - Single and multi-point detonation
 - High-order (1st, 2nd, 3rd and 4th order in time; 2nd and 3rd order spatial)
 - HLLC, AUSM+, Kurganov, Tadmor flux schemes
