@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+\#*
+
+# the html preview file
+*.html
