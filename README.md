@@ -18,9 +18,10 @@ blastFoam
 
 
 
+## Citation
+If you use this code for your work or research, please cite this repository:
 
-# Citation
-
+```
 @software{heylmun_blastfoam:_2019,
 	title = {{blastFoam}: An {OpenFOAM} Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
 	url = {https://github.com/synthetik-technologies/blastfoam},
@@ -28,3 +29,4 @@ blastFoam
 	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
 	date = {2019-10-22}
 }
+```
