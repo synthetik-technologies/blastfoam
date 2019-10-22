@@ -42,7 +42,7 @@ If you use this code for your work or research, please use this citation:
 blastFoam currently supports the following features:
 
 - An arbitrary number of phases/EOS's
-- JLW equation of state with constant, linear, and "Miller" afterburn models
+- JWL equation of state with constant, linear, and "Miller" afterburn models
 - Multiple example and tutorial cases
 - Automatic mesh refinement (AMR)
 - Single and multi-point detonation
