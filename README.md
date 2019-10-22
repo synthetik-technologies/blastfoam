@@ -75,7 +75,7 @@ blastFoam has been validated against known solutions to standard gas dynamics pr
 
 
 
-### Example: Internal Detonation 
+### Validation/Example: Internal Detonation 
 
 Reference:
 ```
@@ -87,33 +87,31 @@ Validation against experimental and simulated (CTH) data as reported in Joachim 
 
 ![Joachim case setup](media/joachimCaseSetup.png)
 
-![Joachim validation case (scaled)](media/pressureScaledTimePa.gif)
+![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
 
 
 
-### Example: Blast Loads Behind Vertical Walls
+### Validation/Example: Blast Loads Behind Vertical Walls
 
 Reference:
 ```
 M. E. Beyer, “Blast Loads Behind Vertical Walls,” Naval Civil Engineering Laboratory, Port Hueneme, CA, USA, AD-A181 274, 1986.
 ```
 
-
-
-![Blast Wall Case](media/blastWall.gif)
+![Blast Wall Case](media/blastWallwm.gif)
 
 
 
 
 
-### Example: Multi-Component Flow Verification
+### Validation/Example: Multi-Component Flow Verification
 
 Reference:
 ```
 Zheng, H. W., C. Shu, Y. T. Chew, and N. Qin. “A Solution Adaptive Simulation of Compressible Multi-Fluid Flows with General Equation of State.” International Journal for Numerical Methods in Fluids 67, no. 5 (2011): 616–637.
 ```
 
-Verification and validation results as compared to those published by Zheng et. al.
+Verification and validation results as compared to those published by Zheng et. al.; HLLC flux shown.
 
 
 ![Verification plots compared with Zheng](media/zheng-blastfoam-validation.png)
