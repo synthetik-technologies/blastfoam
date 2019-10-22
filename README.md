@@ -2,8 +2,7 @@
 
 <h1 align="center">
   <br>
-  <a href="https://images.squarespace-cdn.com/content/5cd70f7251f4d42cc8bd12de/1557600900124-W2CA3LOJE5I4J1Z71VS8/Logo+Synthetik+Black+HD.png
-" alt="synthetik-logo" width="300"></a>
+  <a href="https://images.squarespace-cdn.com/content/5cd70f7251f4d42cc8bd12de/1557600900124-W2CA3LOJE5I4J1Z71VS8/Logo+Synthetik+Black+HD.png" alt="synthetik-logo" width="300"></a>
   <br>
   DualSPHysics
   <br>
