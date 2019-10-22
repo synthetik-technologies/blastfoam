@@ -36,6 +36,7 @@ If you use this code for your work or research, please use this citation:
 
 
 
+
 ## Features
 
 blastFoam currently supports the following features:
@@ -69,6 +70,25 @@ blastFoam includes the following equations of state:
 ## Verification and Validation
 
 blastFoam has been validated against known solutions to standard gas dynamics problems, and against data from physical tests. Validation cases are included with example/tutorial cases as part of the solver source code. 
+
+
+
+
+
+
+
+### Example: Internal Detonation 
+
+```
+Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garner. 1999. “Airblast Effects Research: Small-Scale Experiments and Calculations.” DTIC Document.
+```
+
+Validation against experimental and simulated (CTH) data as reported in Joachim et. al.
+
+[![Joachim validation case (scaled)](media/pressureScaledTimePa.gif)]
+
+
+
 
 
 
