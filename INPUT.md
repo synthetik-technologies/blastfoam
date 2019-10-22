@@ -87,7 +87,7 @@ Validation against experimental and simulated (CTH) data as reported in Joachim 
 
 ![Joachim case setup](media/joachimCaseSetup.png)
 
-![Joachim validation case (scaled)](media/pressureScaledTimePa.gif)
+![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
 
 
 
@@ -98,7 +98,7 @@ Reference:
 M. E. Beyer, “Blast Loads Behind Vertical Walls,” Naval Civil Engineering Laboratory, Port Hueneme, CA, USA, AD-A181 274, 1986.
 ```
 
-![Blast Wall Case](media/blastWall.gif)
+![Blast Wall Case](media/blastWallwm.gif)
 
 
 
