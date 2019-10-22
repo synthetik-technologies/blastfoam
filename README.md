@@ -4,7 +4,7 @@ _blastFoam_ is a solver for multi-component compressible flow with application t
 
 
 
-Math: <img src="svgs/4f0f90de9798f24da0a8a43f21b62ad2.svg?invert_in_darkmode" align=middle width=6.552644999999998pt height=27.775769999999994pt/>
+Math: <img alt="$ \frac{1}{2} $" src="svgs/4f0f90de9798f24da0a8a43f21b62ad2.png" align="middle" width="6.552644999999998pt" height="27.775769999999994pt"/>
 
 
 
@@ -57,11 +57,11 @@ _blastFoam_ has been validated against known solutions to standard gas dynamics 
 
 The evolution of a two phase, compressible, and inviscid mixture can be defined by a set of coupled evolution equations for mass, momentum, and energy. 
 
-<p align="center"><img src="svgs/10b5fb69900ce3e0ba80d06da2efff49.svg?invert_in_darkmode" align=middle width=119.034795pt height=13.881251999999998pt/></p>
+<p align="center"><img alt="$$&#10;    \partial_t \mathbf{U} + \nabla \cdot \mathbf{F} = \mathbf{S}&#10;$$" src="svgs/10b5fb69900ce3e0ba80d06da2efff49.png" align="middle" width="119.034795pt" height="13.881251999999998pt"/></p>
 
-<p align="center"><img src="svgs/e17a3de7478e3ea4b1124d2aaf70c7cb.svg?invert_in_darkmode" align=middle width=417.48629999999997pt height=98.63106pt/></p>
+<p align="center"><img alt="$$&#10;    \mathbf{U} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \\&#10;           \alpha_1 \rho_1 \\&#10;           \alpha_2 \rho2 \\&#10;           \rho \mathbf{u} \\&#10;           \rho E&#10;        \end{array} \right)&#10;    \mathbf{F} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \mathbf{u} \\&#10;           \alpha_1 \rho_1 \mathbf{u} \\&#10;           \alpha_2 \rho_2 \mathbf{u} \\&#10;           \rho \mathbf{u} \otimes \mathbf{u} + p \mathbf{I}\\&#10;           (\rho E + p) \mathbf{u}&#10;        \end{array} \right)&#10;    \mathbf{S} = &#10;        \left( \begin{array}{c}&#10;           \alpha_1 \nabla \cdot \mathbf{u} \\&#10;           0 \\&#10;           0 \\&#10;           0 \\&#10;           0&#10;        \end{array} \right)&#10;$$" src="svgs/e17a3de7478e3ea4b1124d2aaf70c7cb.png" align="middle" width="417.48629999999997pt" height="98.63106pt"/></p>
 
-where <img src="svgs/6dec54c48a0438a5fcde6053bdb9d712.svg?invert_in_darkmode" align=middle width=8.498985000000003pt height=14.155350000000013pt/> is the mixture density, <img src="svgs/129c5b884ff47d80be4d6261a476e9f1.svg?invert_in_darkmode" align=middle width=10.502250000000002pt height=14.61206999999998pt/> the mixture velocity, <img src="svgs/84df98c65d88c6adf15d4645ffa25e47.svg?invert_in_darkmode" align=middle width=13.082190000000004pt height=22.46574pt/> the total energy, <img src="svgs/2ec6e630f199f589a2402fdf3e0289d5.svg?invert_in_darkmode" align=middle width=8.270625000000004pt height=14.155350000000013pt/> the pressure, and <img src="svgs/b921dbff3fd97c42704607ee82ee7cc8.svg?invert_in_darkmode" align=middle width=29.96301pt height=22.831379999999992pt/> and <img src="svgs/67e7dd600dde6ca2d15b4df76a96110b.svg?invert_in_darkmode" align=middle width=15.166635000000003pt height=14.155350000000013pt/> are the density and volume fraction of each phase. 
+where <img alt="$\rho$" src="svgs/6dec54c48a0438a5fcde6053bdb9d712.png" align="middle" width="8.498985000000003pt" height="14.155350000000013pt"/> is the mixture density, <img alt="$\mathbf{u}$" src="svgs/129c5b884ff47d80be4d6261a476e9f1.png" align="middle" width="10.502250000000002pt" height="14.61206999999998pt"/> the mixture velocity, <img alt="$E$" src="svgs/84df98c65d88c6adf15d4645ffa25e47.png" align="middle" width="13.082190000000004pt" height="22.46574pt"/> the total energy, <img alt="$p$" src="svgs/2ec6e630f199f589a2402fdf3e0289d5.png" align="middle" width="8.270625000000004pt" height="14.155350000000013pt"/> the pressure, and <img alt="$rho_i$" src="svgs/b921dbff3fd97c42704607ee82ee7cc8.png" align="middle" width="29.96301pt" height="22.831379999999992pt"/> and <img alt="$\alpha_i$" src="svgs/67e7dd600dde6ca2d15b4df76a96110b.png" align="middle" width="15.166635000000003pt" height="14.155350000000013pt"/> are the density and volume fraction of each phase. 
 
 
 
