@@ -1,8 +1,6 @@
 # blastfoam
 
-
-![Test Image 4](https://images.squarespace-cdn.com/content/5cd70f7251f4d42cc8bd12de/1557600900124-W2CA3LOJE5I4J1Z71VS8/Logo+Synthetik+Black+HD.png)
-
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and air blast. 
 
 
 # Get the code
@@ -12,8 +10,13 @@ blastFoam is free. blastFoam is currently in pre-release beta - if you'd like to
 
 # Equations of State
 
-blastFoam 
+blastFoam includes the following equations of state:
 
+- Jones Wilkens Lee (with afterburn)
+- Ideal Gas
+- Stiffened Perfect Gas
+- Cochran-Chan
+- Tait
 
 
 
