@@ -85,7 +85,6 @@ Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garn
 
 Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling.
 
-![Joachim case setup](media/joachimCaseSetup.png)
 
 ![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
 
