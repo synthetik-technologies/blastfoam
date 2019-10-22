@@ -7,7 +7,7 @@ This offering is not approved or endorsed by OpenCFD Limited, producer and distr
 
 ## What is blastFoam?
 
-blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in** no way ** approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks (see Disclaimer above).
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks (see Disclaimer above).
 
 
 
