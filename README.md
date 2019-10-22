@@ -4,7 +4,7 @@ _blastFoam_ is a solver for multi-component compressible flow with application t
 
 
 
-Math: <img src="blob/master/svgs/4f0f90de9798f24da0a8a43f21b62ad2.svg?invert_in_darkmode" align=middle width=6.552644999999998pt height=27.775769999999994pt/>
+Math: <img src="/blob/master/svgs/4f0f90de9798f24da0a8a43f21b62ad2.svg?invert_in_darkmode" align=middle width=6.552644999999998pt height=27.775769999999994pt/>
 
 
 
