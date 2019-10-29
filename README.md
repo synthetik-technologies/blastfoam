@@ -12,12 +12,11 @@ blastFoam is a solver for multi-component compressible flow with application to 
 
 
 
-## Get the code
 
-blastFoam is free and opensource. blastFoam is currently in pre-release beta, and is being made available primarily to industry, academia, research groups and government. If you'd like to request a copy of the code and solver before the official public release, while we're in beta, just get in touch: info@synthetik-technologies.com 
+## Questions and Availability
+If you find any bugs, please let us know in the issues section of the repo. If you want to get in touch: info@synthetik-technologies.com 
 
 blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC)
-
 
 
 
