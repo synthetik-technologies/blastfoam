@@ -23,24 +23,32 @@ This offering is not approved or endorsed by OpenCFD Limited, producer and distr
 blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks (see Disclaimer above).
 
 
+
 ## How to use blastFoam
 
 Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
 
+
+
 ## Installation
 
-1. Install [OpenFOAM](https://github.com/OpenFOAM/OpenFOAM-7) from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with version 7).
+1. Install OpenFOAM from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with OF version 7).
 
 2. Clone the blastFoam repository
+
 ```bash
 git clone https://github.com/synthetik-technologies/blastfoam.git
 ```
+
 3. Run the ./Allwmake script to compile and install blastFoam
+
 ```bash
 cd blastFoam
 ./Allwmake
 ```
-4. Test your installation by running the tutorial and valiation cases
+
+4. Test your installation by running the tutorial and validation cases
+
 
 
 ## Questions and Availability

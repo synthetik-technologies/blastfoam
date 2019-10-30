@@ -32,7 +32,7 @@ Several validation and tutorial cases are included in the repository, and are do
 
 ## Installation
 
-1. Install [OpenFOAM](https://github.com/OpenFOAM/OpenFOAM-7) from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with version 7).
+1. Install OpenFOAM from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with OF version 7).
 
 2. Clone the blastFoam repository
 
