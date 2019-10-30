@@ -3,7 +3,7 @@
 </p>
 
 
-# blastFOAM
+# blastFoam
 
 blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast.
 
