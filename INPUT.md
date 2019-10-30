@@ -1,3 +1,13 @@
+<p align="center">
+  <img src="media/synthetik-logo.png" width="350" title="hover text">
+</p>
+
+
+# blastFoam
+
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). 
+
+
 ## Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks.
