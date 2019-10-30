@@ -5,7 +5,7 @@
 
 # blastFoam
 
-blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast.
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). 
 
 ## Disclaimer
 
