@@ -1,0 +1,20 @@
+EXE_INC= \
+    -I../../../src/equationOfState/lnInclude \
+    -I../../../src/compressibleSystem/lnInclude \
+    -I../../../src/timeIntegrators/lnInclude \
+    -I../../../src/adaptiveFvMesh/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude
+
+EXE_LIBS = \
+    -lfiniteVolume \
+    -lfvOptions \
+    -ldynamicFvMesh \
+    -ltopoChangerFvMesh \
+    -lmeshTools \
+    -L$(FOAM_USER_LIBBIN) \
+    -lequationOfStates \
+    -ltwoPhaseCompressibleSystem \
+    -ltimeIntegrators \
+    -ladaptiveFvMesh

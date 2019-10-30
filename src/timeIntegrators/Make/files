@@ -1,0 +1,11 @@
+timeIntegrator/timeIntegrator.C
+timeIntegrator/newTimeIntegrator.C
+
+Euler/Euler.C
+RK2/RK2.C
+RK2SSP/RK2SSP.C
+RK3SSP/RK3SSP.C
+RK4/RK4.C
+RK4SSP/RK4SSP.C
+
+LIB = $(FOAM_USER_LIBBIN)/libtimeIntegrators

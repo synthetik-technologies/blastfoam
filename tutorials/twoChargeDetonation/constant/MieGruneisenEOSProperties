@@ -1,0 +1,74 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (c4 tnt gas);
+
+c4
+{
+    type            JWL;
+    A               609.77e9;
+    B               12.95e9;
+    R1              4.5;
+    R2              1.4;
+    Gamma0          0.25;
+    rho0            1601;
+    E0              9e9;
+    residualRho     1e-10;
+    residualAlpha   1e-6;
+
+    initiation
+    {
+        active     true; // true or false
+        points     ((-0.5 0.5 0)); // m center top detonated
+        speed      7850; // 8285; // m/s
+        pRef       101298; // refernece pressure for initialization [Pa]
+    }
+}
+
+tnt
+{
+    type      JWL;
+    rho0      1630;
+    A         371.21e9;
+    B         3.23e9;
+    R1        4.15;
+    R2        0.95;
+    Gamma0    0.3;
+    E0        7e9;
+    residualRho 1e-10;
+    residualAlpha 1e-6;
+
+    initiation
+    {
+        active     true; // true or false
+        points     ((0.125 0 0) (0.25 0 0) (0.375 0 0));
+        speed      7850; // 8285; // m/s
+        pRef       101298; // refernece pressure for initialization [Pa]
+    }
+}
+
+
+gas
+{
+    type        idealGas;
+    gamma       1.4;
+    residualAlpha 1e-6;
+    residualRho 1e-10;
+}
+
+
+// ************************************************************************* //

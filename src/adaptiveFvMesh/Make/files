@@ -1,0 +1,9 @@
+hexRef/hexRef/hexRef.C
+hexRef/hexRef/newHexRef.C
+
+hexRef/hexRef3D/hexRef3D.C
+hexRef/hexRef2D/hexRef2D.C
+
+adaptiveFvMesh/adaptiveFvMesh.C
+
+LIB = $(FOAM_USER_LIBBIN)/libadaptiveFvMesh

@@ -1,0 +1,16 @@
+fluxSchemes/fluxScheme/fluxScheme.C
+fluxSchemes/fluxScheme/newFluxScheme.C
+
+fluxSchemes/HLLC/HLLC.C
+fluxSchemes/HLL/HLL.C
+fluxSchemes/Kurganov/Kurganov.C
+fluxSchemes/Tadmor/Tadmor.C
+fluxSchemes/AUSMPlus/AUSMPlus.C
+
+phaseCompressibleSystem/phaseCompressibleSystem.C
+phaseCompressibleSystem/newPhaseCompressibleSystem.C
+twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
+multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
+
+
+LIB = $(FOAM_USER_LIBBIN)/libtwoPhaseCompressibleSystem

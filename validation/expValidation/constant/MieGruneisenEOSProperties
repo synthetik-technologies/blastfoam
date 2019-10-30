@@ -1,0 +1,60 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (c4 air);
+
+c4
+{
+	// vaues for c-4 from: Alia2006
+    type            JWL;
+    A               609.77e9;
+    B               12.95e9;
+    R1              4.5;
+    R2              1.4;
+    Gamma0          0.25;
+    rho0            1601;
+    E0              9e9;
+    residualRho     1e-10;
+    residualAlpha   1e-6;
+
+    initiation
+    {
+        active on; // true or false
+        points ((0.9 0 0)); // m
+        speed 9000; // m/s
+        pRef  1e5; // refernece pressure for initialization [Pa]
+    }
+}
+
+air
+{
+    type idealGas;
+    gamma 1.4;
+    residualRho 1e-10;
+    residualAlpha 1e-6;
+}
+
+stop
+{
+    active false;
+    epsilon 1e-3;
+    points ((0.07 0 0));
+}
+
+
+
+// ************************************************************************* //

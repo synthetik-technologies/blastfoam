@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+createEpsP()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_twoFluid_validation_p.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Pressure [Pa]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:1]
+    plot    "$1" using 1:2 title 'Zheng 2011'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:2 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsUx()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_twoFluid_validation_Ux.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key right bottom
+    set size 2,2
+    set autoscale
+    set xrange [0:1]
+    plot    "$1" using 1:2 title 'Zheng 2011'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:2 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+pVal="$VALIDATIONDATAROOT/p_zheng.csv"
+uVal="$VALIDATIONDATAROOT/u_zheng.csv"
+pBlastFOAM="../postProcessing/sampleDict/*/Centerline_p*"
+UBlastFOAM="../postProcessing/sampleDict/*/Centerline_U*"
+
+createEpsP $pVal $pBlastFOAM
+createEpsUx $uVal $UBlastFOAM
+
+echo Done

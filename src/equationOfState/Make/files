@@ -1,0 +1,20 @@
+equationOfState/equationOfState.C
+equationOfState/newEquationOfState.C
+
+vanderWaals/vanderWaals.C
+Tait/Tait.C
+stiffenedGas/stiffenedGas.C
+idealGas/idealGas.C
+JWL/JWL.C
+JWL/afterburnModel/afterburnModel/afterburnModel.C
+JWL/afterburnModel/afterburnModel/newAfterburnModel.C
+JWL/afterburnModel/noAfterburn/noAfterburn.C
+JWL/afterburnModel/constantAfterburn/constantAfterburn.C
+JWL/afterburnModel/MillerAfterburn/MillerAfterburn.C
+CochranChan/CochranChan.C
+
+twoPhaseEquationOfState/twoPhaseEquationOfState.C
+multiphaseEquationOfState/multiphaseEquationOfState.C
+
+
+LIB = $(FOAM_USER_LIBBIN)/libequationOfStates
