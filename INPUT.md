@@ -24,6 +24,32 @@ blastFoam is a solver for multi-component compressible flow with application to 
 
 
 
+## How to use blastFoam
+
+Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
+
+
+
+## Installation
+
+1. Install [OpenFOAM](https://github.com/OpenFOAM/OpenFOAM-7) from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with version 7).
+
+2. Clone the blastFoam repository
+
+```bash
+git clone https://github.com/synthetik-technologies/blastfoam.git
+```
+
+3. Run the ./Allwmake script to compile and install blastFoam
+
+```bash
+cd blastFoam
+./Allwmake
+```
+
+4. Test your installation by running the tutorial and validation cases
+
+
 
 ## Questions and Availability
 If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com 
@@ -117,8 +143,6 @@ Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garn
 
 
 Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling.
-
-![Joachim case setup](media/joachimCaseSetup.png)
 
 ![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
 
