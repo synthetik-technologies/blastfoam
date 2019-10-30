@@ -1,3 +1,6 @@
+<!--- python3 -m readme2tex --nocdn --pngtrick --htmlize --output README.md INPUT.md && open README.md.html -->
+
+
 <p align="center">
   <img src="media/synthetik-logo.png" width="350" title="hover text">
 </p>
@@ -8,10 +11,10 @@
 blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). 
 
 
+
 ## Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks.
-
 
 
 
@@ -22,9 +25,10 @@ blastFoam is a solver for multi-component compressible flow with application to 
 
 
 
-## Get the code
+## Questions and Availability
+If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com 
 
-blastFoam is free and opensource. blastFoam is currently in pre-release beta, and is being made available primarily to industry, academia, research groups and government. If you'd like to request a copy of the code and solver before the official public release, while we're in beta, just get in touch: info@synthetik-technologies.com
+blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC)
 
 
 
@@ -33,6 +37,10 @@ blastFoam is free and opensource. blastFoam is currently in pre-release beta, an
 
 If you use this code for your work or research, please use this citation:
 
+```
+J. Heylmun, P. Vonk, and T. Brewer, blastFoam: An OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation. Synthetik Applied Technologies, LLC., 2019.
+```
+BiBTex:
 ```
 @software{heylmun_blastfoam:_2019,
 	title = {{blastFoam}: A Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
@@ -43,7 +51,22 @@ If you use this code for your work or research, please use this citation:
 }
 ```
 
-
+To cite the blastFoam User Guide:
+```
+J. Heylmun, P. Vonk, and T. Brewer, “blastFoam User Guide.” Synthetik Applied Technologies, LLC., 30-Oct-2019.
+```
+BiBTex:
+```
+@misc{heylmun_blastfoamguide_2019,
+	title = {{blastFoam} {User} {Guide}},
+	url = {https://github.com/synthetik-technologies/blastfoam},
+	language = {English},
+	publisher = {Synthetik Applied Technologies, LLC.},
+	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
+	month = oct,
+	year = {2019}
+}
+```
 
 
 

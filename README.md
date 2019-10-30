@@ -1,3 +1,6 @@
+<!--- python3 -m readme2tex --nocdn --pngtrick --htmlize --output README.md INPUT.md && open README.md.html -->
+
+
 <p align="center">
   <img src="media/synthetik-logo.png" width="350" title="hover text">
 </p>
@@ -7,18 +10,26 @@
 
 blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). 
 
+
+
 ## Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
 
 
+## What is blastFoam?
+
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks (see Disclaimer above).
+
+
 
 
 ## Questions and Availability
-If you find any bugs, please let us know in the issues section of the repo. If you want to get in touch: info@synthetik-technologies.com 
+If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com 
 
 blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC)
+
 
 
 
@@ -27,14 +38,35 @@ blastFoam is also available on the Texas Advanced Computing Center https://www.t
 If you use this code for your work or research, please use this citation:
 
 ```
-@software{blastfoam:2019,
+J. Heylmun, P. Vonk, and T. Brewer, blastFoam: An OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation. Synthetik Applied Technologies, LLC., 2019.
+```
+BiBTex:
+```
+@software{heylmun_blastfoam:_2019,
 	title = {{blastFoam}: A Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
 	url = {https://github.com/synthetik-technologies/blastfoam},
-	author = {Synthetik Applied Technologies, {LLC}.},
+	publisher = {Synthetik Applied Technologies, {LLC}.},
+	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
 	date = {2019-10-22}
 }
 ```
 
+To cite the blastFoam User Guide:
+```
+J. Heylmun, P. Vonk, and T. Brewer, “blastFoam User Guide.” Synthetik Applied Technologies, LLC., 30-Oct-2019.
+```
+BiBTex:
+```
+@misc{heylmun_blastfoamguide_2019,
+	title = {{blastFoam} {User} {Guide}},
+	url = {https://github.com/synthetik-technologies/blastfoam},
+	language = {English},
+	publisher = {Synthetik Applied Technologies, LLC.},
+	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
+	month = oct,
+	year = {2019}
+}
+```
 
 
 
@@ -43,9 +75,9 @@ If you use this code for your work or research, please use this citation:
 blastFoam currently supports the following features:
 
 - An arbitrary number of phases/EOS's
-- JWL equation of state with constant, linear, and "Miller" afterburn models
+- JLW equation of state with constant, linear, and "Miller" afterburn models
 - Multiple example and tutorial cases
-- Adaptive mesh refinement (AMR)
+- Automatic mesh refinement (AMR)
 - Single and multi-point detonation
 - High-order (1st, 2nd, 3rd and 4th order in time; 2nd and 3rd order spatial)
 - HLLC, AUSM+, Kurganov, Tadmor flux schemes
@@ -86,6 +118,7 @@ Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garn
 
 Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling.
 
+![Joachim case setup](media/joachimCaseSetup.png)
 
 ![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
 
