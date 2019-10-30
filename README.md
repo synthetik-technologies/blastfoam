@@ -122,7 +122,7 @@ blastFoam includes the following equations of state:
 - Stiffened Gas
 - Cochran-Chan
 - Tait
-
+- Van der Waals
 
 
 
