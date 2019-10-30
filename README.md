@@ -2,14 +2,10 @@
   <img src="media/synthetik-logo.png" width="350" title="hover text">
 </p>
 
-<h1 align="center">
-  blastFOAM
-  <br>
-</h1>
 
-<h4 align="left">blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. </h4>
+# blastFOAM
 
-<h4 align="left">The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks (see Disclaimer below).</h4>
+blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast.
 
 ## Disclaimer
 
