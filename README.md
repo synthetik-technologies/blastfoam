@@ -43,7 +43,7 @@ git clone https://github.com/synthetik-technologies/blastfoam.git
 3. Run the ./Allwmake script to compile and install blastFoam
 
 ```bash
-cd blastFoam
+cd blastfoam
 ./Allwmake
 ```
 
