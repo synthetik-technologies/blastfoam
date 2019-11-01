@@ -54,9 +54,7 @@ Foam::equationOfStates::JWL::JWL
         (
             IOobject::groupName("active", rho_.group()),
             rho_.mesh().time().timeName(),
-            rho_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            rho_.mesh()
         ),
         rho_.mesh(),
         1.0

@@ -64,6 +64,7 @@ class JWL
 // Private data
 
         //- Is the phase activated
+        //  No read or write since determined by runTime only
         volScalarField active_;
 
         //- Detonation  points

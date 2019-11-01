@@ -53,7 +53,9 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
         (
             "lambda",
             mesh_.time().timeName(),
-            mesh_
+            mesh_,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh_,
         0.0
