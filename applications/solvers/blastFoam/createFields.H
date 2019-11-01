@@ -45,7 +45,7 @@ volScalarField maxP
         "maxP",
         runTime.timeName(),
         mesh,
-        IOobject::NO_READ,
+        IOobject::READ_IF_PRESENT,
         IOobject::AUTO_WRITE
     ),
     p
@@ -58,7 +58,7 @@ volScalarField impulse
         "impulse",
         runTime.timeName(),
         mesh,
-        IOobject::NO_READ,
+        IOobject::READ_IF_PRESENT,
         IOobject::AUTO_WRITE
     ),
     mesh,
@@ -71,7 +71,7 @@ volScalarField maxImpulse
         "maxImpulse",
         runTime.timeName(),
         mesh,
-        IOobject::NO_READ,
+        IOobject::READ_IF_PRESENT,
         IOobject::AUTO_WRITE
     ),
     impulse
