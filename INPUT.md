@@ -43,7 +43,7 @@ git clone https://github.com/synthetik-technologies/blastfoam.git
 3. Run the ./Allwmake script to compile and install blastFoam
 
 ```bash
-cd blastFoam
+cd blastfoam
 ./Allwmake
 ```
 
@@ -60,31 +60,30 @@ blastFoam is also available on the Texas Advanced Computing Center https://www.t
 
 
 ## Citation
-
 If you use this code for your work or research, please use this citation:
 
 ```
-J. Heylmun, P. Vonk, and T. Brewer, blastFoam: An OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation. Synthetik Applied Technologies, LLC., 2019.
+blastFoam: An OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation. Synthetik Applied Technologies, LLC., 2019.
 ```
 BiBTex:
 ```
-@software{heylmun_blastfoam:_2019,
+@software{blastfoam,
 	title = {{blastFoam}: A Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation},
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	publisher = {Synthetik Applied Technologies, {LLC}.},
-	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
 	date = {2019-10-22}
 }
 ```
 
-To cite the blastFoam User Guide:
+## User Guide
+To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
 J. Heylmun, P. Vonk, and T. Brewer, “blastFoam User Guide.” Synthetik Applied Technologies, LLC., 30-Oct-2019.
 ```
 BiBTex:
 ```
 @misc{heylmun_blastfoamguide_2019,
-	title = {{blastFoam} {User} {Guide}},
+	title = {{blastFoam version 2.0} {User} {Guide} },
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
@@ -93,6 +92,16 @@ BiBTex:
 	year = {2019}
 }
 ```
+
+
+## blastFoam Publications:
+
+### Journals/Conferences 
+
+1. T. Brewer, J. Heylmun, and P. Vonk, “Employment of the Open-source Airblast Solver blastFoam to Support the Super Heavy Improvised Explosive Loading Demonstration (SHIELD) Test Program,” presented at the ISIEMS, USA, 2019.
+1. P. Vonk, “A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation,” presented at the OpenFOAM Users Conference, Cologne, Germany, 2016.
+1. P. Vonk, T. Brewer, “A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation and Extended Validation,” presented at the OpenFOAM Users Conference, USA, 2016.
+
 
 
 
