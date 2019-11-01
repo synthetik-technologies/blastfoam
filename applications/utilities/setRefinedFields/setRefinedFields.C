@@ -507,8 +507,14 @@ int main(int argc, char *argv[])
                     selectedCellSet
                 );
 
-                labelList cells;
-                if (selectedCellSet.toc().size() > 0)
+                labelList cells = selectedCellSet.toc();
+                if
+                (
+                    returnReduce
+                    (
+                        selectedCellSet.toc().size(), sumOp<label>()
+                    ) > 0
+                )
                 {
                     cells = selectedCellSet.toc();
                 }
