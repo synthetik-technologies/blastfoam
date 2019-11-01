@@ -99,6 +99,7 @@ BiBTex:
 ### Journals/Conferences 
 
 1. T. Brewer, J. Heylmun, and P. Vonk, “Employment of the Open-source Airblast Solver blastFoam to Support the Super Heavy Improvised Explosive Loading Demonstration (SHIELD) Test Program,” presented at the ISIEMS, USA, 2019.
+1. D. Stephens, P. Vonk, and T. Brewer, “Validation of Open-source Airblast Solver (blastFoam) in an Urban Environment,” presented at the MABS 25, Hague, Netherlands, 2018.
 1. P. Vonk, “A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation,” presented at the OpenFOAM Users Conference, Cologne, Germany, 2016.
 1. P. Vonk, T. Brewer, “A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation and Extended Validation,” presented at the OpenFOAM Users Conference, USA, 2016.
 
