@@ -9,10 +9,4 @@ EXE_INC = \
 
 LIB_LIBS = \
     -ldynamicMesh \
-    -ldynamicFvMesh \
-    -ldecompositionMethods \
-    -ldecompositionMethods \
-    -L$(FOAM_LIBBIN)/dummy \
-    -lmetisDecomp \
-    -lscotchDecomp \
-    -lptscotchDecomp
+    -ldynamicFvMesh
