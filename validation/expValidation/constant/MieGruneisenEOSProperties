@@ -19,7 +19,7 @@ phases (c4 air);
 
 c4
 {
-	// vaues for c-4 from: Alia2006
+    // vaues for c-4 from: Alia2006
     type            JWL;
     A               609.77e9;
     B               12.95e9;
@@ -36,7 +36,7 @@ c4
         active on; // true or false
         points ((0.9 0 0)); // m
         speed 9000; // m/s
-        pRef  1e5; // refernece pressure for initialization [Pa]
+        pRef  1e5; // reference pressure for initialization [Pa]
     }
 }
 
