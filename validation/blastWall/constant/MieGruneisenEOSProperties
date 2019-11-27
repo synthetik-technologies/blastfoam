@@ -34,8 +34,8 @@ c4
     {
         active     true; // true or false
         points     ((-0.3048 0.3048 0)); // m center top detonated
-        speed      7850; // 8285; // m/s
-        pRef       101298; // refernece pressure for initialization [Pa]
+        speed      7850;  // m/s
+        pRef       101298; // reference pressure for initialization [Pa]
     }
 }
 

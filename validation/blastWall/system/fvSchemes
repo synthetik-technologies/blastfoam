@@ -25,12 +25,14 @@ ddtSchemes
 
 gradSchemes
 {
-    default         faceLimited leastSquares 1.0;
+  // use faceMDLimited or cellMDLimited
+    default         faceMDLimited leastSquares 1.0;
 }
+
 
 divSchemes
 {
-    default         none;
+  default         none;
 }
 
 laplacianSchemes
