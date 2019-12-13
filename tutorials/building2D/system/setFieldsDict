@@ -23,7 +23,6 @@ nBufferLayers 10;
 defaultFieldValues
 (
     volScalarFieldValue alpha.c4    0
-    volScalarFieldValue lambda.c4   0
 );
 
 
@@ -45,23 +44,6 @@ regions
         (
             volScalarFieldValue alpha.c4    1
             volScalarFieldValue error       1 //Refine all cells in sphere
-        );
-    }
-    cylinderToCell // Use cylinder for 3D
-    {
-        p1 (0 0 0);
-        p2 (0 0 1);
-        radius 0.02;
-        backup
-        {
-            p1 (0 0 0);
-            p2 (0 0 1);
-            radius 0.5;
-        }
-
-        fieldValues
-        (
-//             volScalarFieldValue lambda.c4   1
         );
     }
 );
