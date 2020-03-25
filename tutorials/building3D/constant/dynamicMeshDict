@@ -14,7 +14,8 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
+dynamicFvMesh   staticFvMesh; // Run with a static mesh
+// dynamicFvMesh   adaptiveFvMesh; //  Use AMR
 
 // How often to refine
 refineInterval  3;
