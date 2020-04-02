@@ -91,8 +91,8 @@ void Foam::multiphaseCompressibleSystem::solve
     {
         forAll(alphas_, phasei)
         {
-            alphasOld_[phasei][oldIs_[stepi - 1]] = alphas_[phasei];
-            alphaRhosOld_[phasei][oldIs_[stepi - 1]] = alphaRhos_[phasei];
+            alphasOld_[oldIs_[stepi - 1]][phasei] = alphas_[phasei];
+            alphaRhosOld_[oldIs_[stepi - 1]][phasei] = alphaRhos_[phasei];
         }
     }
 
@@ -103,8 +103,8 @@ void Foam::multiphaseCompressibleSystem::solve
         {
             forAll(alphas_, phasei)
             {
-                alphasOld[phasei] += ai[fi]*alphasOld_[phasei][fi];
-                alphaRhosOld[phasei] += ai[fi]*alphaRhosOld_[phasei][fi];
+                alphasOld[phasei] += ai[fi]*alphasOld_[fi][phasei];
+                alphaRhosOld[phasei] += ai[fi]*alphaRhosOld_[fi][phasei];
             }
         }
     }
@@ -131,8 +131,8 @@ void Foam::multiphaseCompressibleSystem::solve
     {
         forAll(alphas_, phasei)
         {
-            deltaAlphas_[phasei][deltaIs_[stepi - 1]] = deltaAlphas[phasei];
-            deltaAlphaRhos_[phasei][deltaIs_[stepi - 1]] =
+            deltaAlphas_[deltaIs_[stepi - 1]][phasei] = deltaAlphas[phasei];
+            deltaAlphaRhos_[deltaIs_[stepi - 1]][phasei] =
                 deltaAlphaRhos[phasei];
         }
     }
@@ -149,8 +149,8 @@ void Foam::multiphaseCompressibleSystem::solve
         {
             forAll(alphas_, phasei)
             {
-                deltaAlphas[phasei] += bi[fi]*deltaAlphas_[phasei][fi];
-                deltaAlphaRhos[phasei] += bi[fi]*deltaAlphaRhos_[phasei][fi];
+                deltaAlphas[phasei] += bi[fi]*deltaAlphas_[fi][phasei];
+                deltaAlphaRhos[phasei] += bi[fi]*deltaAlphaRhos_[fi][phasei];
             }
         }
     }
