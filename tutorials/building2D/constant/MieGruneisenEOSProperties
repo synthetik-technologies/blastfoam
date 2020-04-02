@@ -16,26 +16,29 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (c4 air);
-
+pRef 101298;
 c4
 {
     type            JWL;
-    A               609.77e9;
-    B               12.95e9;
-    R1              4.5;
-    R2              1.4;
-    Gamma0          0.25;
-    rho0            1601;
-    E0              9e9;
+    A               2.98767e11;
+    B               0.0411706e11;
+    R1              4.95;
+    R2              1.15;
+    C               0.007206147e11;
+    Gamma0          0.35;
+    rho0            1160;
+    pRef            101298;
+    E0              0.04e11;
+
     residualRho     1e-6;
     residualAlpha   1e-6;
 
     initiation
     {
         active     true; // true or false
-        points     ((-0.3048 0.3048 0)); // m center top detonated
-        speed      7850;  // m/s
-        pRef       101298; // reference pressure for initialization [Pa]
+        points     ((0 0 0.5)); // m center top detonated
+        speed      7850; // 8285; // m/s
+        pRef       101298; // refernece pressure for initialization [Pa]
     }
 }
 
@@ -44,6 +47,7 @@ air
     type            stiffenedGas;
     gamma           1.4;
     a               0;
+
     residualRho     1e-6;
     residualAlpha   1e-6;
 }

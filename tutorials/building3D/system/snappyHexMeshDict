@@ -1,0 +1,203 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.x                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  object      snappyHexMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+castellatedMesh on;
+snap            off;
+addLayers       off;
+
+geometry
+{
+    wall
+    {
+        type triSurfaceMesh;
+        file "L_Wall.stl";
+        scale 0.001;
+    }
+};
+
+castellatedMeshControls
+{
+    // Refinement parameters
+    // ~~~~~~~~~~~~~~~~~~~~~
+
+    // If local number of cells is >= maxLocalCells on any processor
+    // switches from from refinement followed by balancing
+    // (current method) to (weighted) balancing before refinement.
+    maxLocalCells 10000000;
+
+    // Overall cell limit (approximately). Refinement will stop immediately
+    // upon reaching this number so a refinement level might not complete.
+    // Note that this is the number of cells before removing the part which
+    // is not 'visible' from the keepPoint. The final number of cells might
+    // actually be a lot less.
+    maxGlobalCells 200000000;
+
+    // The surface refinement loop might spend lots of iterations refining just a
+    // few cells. This setting will cause refinement to stop if <= minimumRefine
+    // are selected for refinement. Note: it will at least do one iteration
+    // (unless the number of cells to refine is 0)
+    minRefinementCells 2;
+
+    maxLoadUnBalance 0.1;
+
+    // Number of buffer layers between different levels.
+    // 1 means normal 2:1 refinement restriction, larger means slower
+    // refinement.
+    nCellsBetweenLevels 2;
+
+    resolveFeatureAngle 30;
+    allowFreeStandingZoneFaces false;
+
+    features
+    (
+        {
+            file  "L_Wall.extendedFeatureEdgeMesh";
+            level 0;
+        }
+    );
+
+    refinementSurfaces
+    {
+        wall
+        {
+            level (0 0);
+            patchInfo { type wall; }
+        }
+    }
+
+
+    refinementRegions
+    {
+    }
+
+    locationInMesh (0 0 0.5);
+}
+
+snapControls
+{
+
+    nSmoothPatch    3;
+    tolerance       2.0;
+    nSolveIter      100;
+    nRelaxIter      5;
+
+    nFeatureSnapIter 10;
+
+    explicitFeatureSnap    true;
+    multiRegionFeatureSnap false;
+    implicitFeatureSnap    false;
+}
+
+addLayersControls
+{
+    featureAngle              100;
+    slipFeatureAngle          30;
+
+    nLayerIter                50;
+    nRelaxedIter              20;
+    nRelaxIter                5;
+
+    nGrow                     0;
+
+    nSmoothSurfaceNormals     1;
+    nSmoothNormals            3;
+    nSmoothThickness          10;
+    maxFaceThicknessRatio     0.5;
+    maxThicknessToMedialRatio 0.3;
+
+    minMedialAxisAngle        90;
+    nMedialAxisIter           10;
+
+    nBufferCellsNoExtrude     0;
+    additionalReporting       false;
+//    nSmoothDisplacement       0;
+//    detectExtrusionIsland     false;
+
+    layers
+    {
+    }
+
+    relativeSizes       true;
+    expansionRatio      1.2;
+    finalLayerThickness 0.5;
+    minThickness        1e-3;
+}
+
+meshQualityControls
+{
+    maxNonOrtho 65;
+
+    maxBoundarySkewness 20;
+
+    maxInternalSkewness 4;
+
+    maxConcave 80;
+
+    // Minimum cell pyramid volume; case dependent
+    minVol 1e-13;
+
+    //  1e-15 (small positive) to enable tracking
+    // -1e+30 (large negative) for best layer insertion
+    minTetQuality 1e-15;
+
+    // if >0 : preserve single cells with all points on the surface if the
+    // resulting volume after snapping (by approximation) is larger than
+    // minVolCollapseRatio times old volume (i.e. not collapsed to flat cell).
+    //  If <0 : delete always.
+    //minVolCollapseRatio 0.5;
+
+    minArea          -1;
+
+    minTwist          0.02;
+
+    minDeterminant    0.001;
+
+    minFaceWeight     0.05;
+
+    minVolRatio       0.01;
+
+    minTriangleTwist -1;
+
+    nSmoothScale   4;
+
+    errorReduction 0.75;
+
+    relaxed
+    {
+        maxNonOrtho   75;
+    }
+}
+
+writeFlags
+(
+    scalarLevels
+    layerSets
+    layerFields
+//     mesh
+//     noRefinement
+);
+// debugFlags
+// (
+//     layerInfo
+// );
+// outputFlags
+// (
+//     layerInfo
+// );
+// debug 1;
+mergeTolerance 1e-6;
+
+// ************************************************************************* //

@@ -11,42 +11,44 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      decomposeParDict;
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of processors to use
+application     blastFoam;
 
-// preservePatches (patch0 patch1 patch2);
+startFrom       startTime;
 
-method         simple; // automatic
+startTime       0; // 0.00598000;
 
-simpleCoeffs // not auto
-{
-    n               ( 4 1 1 );
-    delta           0.001;
-}
+stopAt          endTime;
 
-hierarchicalCoeffs
-{
-    n               ( 4 3 2 );
-    delta           0.001;
-    order           xyz;
-}
+endTime         0.0025;
 
-metisCoeffs
-{
-    // processorWeights ( 1 1 1 1 1 1 );
-}
+deltaT          1e-7;
 
-manualCoeffs
-{
-    dataFile        "";
-}
+writeControl    adjustableRunTime;
 
-distributed     no;
+writeInterval   5e-5;
 
-roots           ( );
+cycleWrite      0;
 
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general; // fixed; // using precision below --- better for paraview
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+maxCo           0.5;
+
+maxDeltaT       1;
 
 // ************************************************************************* //

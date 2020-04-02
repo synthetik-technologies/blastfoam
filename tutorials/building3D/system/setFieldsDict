@@ -11,42 +11,42 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      decomposeParDict;
+    object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of processors to use
+field alpha.c4;
+maxCells 1000000;
+maxRefinement 5;
+nBufferLayers 5;
 
-// preservePatches (patch0 patch1 patch2);
+defaultFieldValues
+(
+    volScalarFieldValue alpha.c4 0
+);
 
-method         simple; // automatic
 
-simpleCoeffs // not auto
-{
-    n               ( 4 1 1 );
-    delta           0.001;
-}
+regions
+(
+    cylinderToCell // Use cylinder for 3D
+    {
+        p1 (0 0 0.25);
+        p2 (0 0 0.75);
+        radius 0.1;
+        backup
+        {
+            p1 (0 0 0.0);
+            p2 (0 0 1.0);
+            radius 0.75;
+        }
 
-hierarchicalCoeffs
-{
-    n               ( 4 3 2 );
-    delta           0.001;
-    order           xyz;
-}
-
-metisCoeffs
-{
-    // processorWeights ( 1 1 1 1 1 1 );
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
+        fieldValues
+        (
+            volScalarFieldValue alpha.c4    1
+            volScalarFieldValue error       1 //Refine all cells in sphere
+        );
+    }
+);
 
 
 // ************************************************************************* //

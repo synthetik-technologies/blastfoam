@@ -11,42 +11,26 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      decomposeParDict;
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of processors to use
-
-// preservePatches (patch0 patch1 patch2);
-
-method         simple; // automatic
-
-simpleCoeffs // not auto
+solvers
 {
-    n               ( 4 1 1 );
-    delta           0.001;
+    "(rho|rhoU|rhoE|alpha|.*)"
+    {
+        solver          diagonal;
+    }
+
+    "(U|e|k|epsilon)"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-10;
+        relTol          0;
+        minIter         1;
+    }
 }
-
-hierarchicalCoeffs
-{
-    n               ( 4 3 2 );
-    delta           0.001;
-    order           xyz;
-}
-
-metisCoeffs
-{
-    // processorWeights ( 1 1 1 1 1 1 );
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
 
 
 // ************************************************************************* //

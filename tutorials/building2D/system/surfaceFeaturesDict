@@ -1,7 +1,7 @@
 /*--------------------------------*- C++ -*----------------------------------*\
 | =========                 |                                                 |
 | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  2.3.0                                 |
+|  \\    /   O peration     | Version:  5                                     |
 |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
 |    \\/     M anipulation  |                                                 |
 \*---------------------------------------------------------------------------*/
@@ -10,43 +10,26 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      decomposeParDict;
+    object      surfaceFeatureExtractDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of processors to use
+surfaces
+(
+    "L_Wall.stl"
+);
 
-// preservePatches (patch0 patch1 patch2);
+// Identify a feature when angle between faces < includedAngle
+includedAngle   120;
 
-method         simple; // automatic
-
-simpleCoeffs // not auto
+subsetFeatures
 {
-    n               ( 4 1 1 );
-    delta           0.001;
+    // Keep nonManifold edges (edges with >2 connected faces)
+    nonManifoldEdges       yes;
+
+    // Keep open edges (edges with 1 connected face)
+    openEdges       yes;
 }
-
-hierarchicalCoeffs
-{
-    n               ( 4 3 2 );
-    delta           0.001;
-    order           xyz;
-}
-
-metisCoeffs
-{
-    // processorWeights ( 1 1 1 1 1 1 );
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
 
 
 // ************************************************************************* //

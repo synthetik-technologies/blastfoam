@@ -15,15 +15,15 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 4; // this is number of processors to use
+numberOfSubdomains 4; // this is number of proc
 
 // preservePatches (patch0 patch1 patch2);
 
-method         simple; // automatic
+method         scotch; // automatic
 
 simpleCoeffs // not auto
 {
-    n               ( 4 1 1 );
+    n               ( 2 2 1 );
     delta           0.001;
 }
 
