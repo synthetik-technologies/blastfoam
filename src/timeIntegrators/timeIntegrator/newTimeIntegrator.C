@@ -29,12 +29,12 @@ License
 
 Foam::autoPtr<Foam::timeIntegrator> Foam::timeIntegrator::New
 (
-    phaseCompressibleSystem& fluid
+    const fvMesh& mesh
 )
 {
     word timeIntegratorType
     (
-        fluid.rho().mesh().schemesDict().subDict("ddtSchemes").lookup("timeIntegrator")
+        mesh.schemesDict().subDict("ddtSchemes").lookup("timeIntegrator")
     );
 
     Info<< "Selecting timeIntegrator: " << timeIntegratorType << endl;
@@ -52,7 +52,7 @@ Foam::autoPtr<Foam::timeIntegrator> Foam::timeIntegrator::New
             << exit(FatalError);
     }
 
-    return cstrIter()(fluid);
+    return cstrIter()(mesh);
 }
 
 

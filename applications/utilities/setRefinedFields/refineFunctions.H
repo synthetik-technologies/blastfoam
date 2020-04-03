@@ -1,23 +1,31 @@
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void calcFaceDiff(volScalarField& error, const volScalarField& field)
+void calcFaceDiff
+(
+    volScalarField& error,
+    const PtrList<volScalarField>& fields
+)
 {
-    const labelUList& owner = field.mesh().owner();
-    const labelUList& neighbour = field.mesh().neighbour();
-    const label nInternalFaces = field.mesh().nInternalFaces();
+    const labelUList& owner = error.mesh().owner();
+    const labelUList& neighbour = error.mesh().neighbour();
+    const label nInternalFaces = error.mesh().nInternalFaces();
 
-    for (label facei = 0; facei < nInternalFaces; facei++)
+    forAll(fields, fieldi)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
+        const volScalarField& field = fields[fieldi];
+        for (label facei = 0; facei < nInternalFaces; facei++)
+        {
+            label own = owner[facei];
+            label nei = neighbour[facei];
 
-        error[own] =
-            max
-            (
-                error[own],
-                mag(field[own] - field[nei])
-            );
-        error[nei] = max(error[nei], mag(field[own] - field[nei]));
+            error[own] =
+                max
+                (
+                    error[own],
+                    mag(field[own] - field[nei])
+                );
+            error[nei] = max(error[nei], mag(field[own] - field[nei]));
+        }
     }
 }
 
@@ -806,6 +814,13 @@ bool update
 
     if (mesh.globalData().nTotalCells() < maxCells)
     {
+        // Extend with a buffer layer to prevent neighbouring points
+        // being unrefined.
+        for (label i = 0; i < nBufferLayers; i++)
+        {
+            extendMarkedCells(mesh, refineCell);
+        }
+
         // Select subset of candidates. Take into account max allowable
         // cells, refinement level, protected cells.
         labelList cellsToRefine
@@ -864,13 +879,6 @@ bool update
                     }
                 }
                 refineCell.transfer(newRefineCell);
-            }
-
-            // Extend with a buffer layer to prevent neighbouring points
-            // being unrefined.
-            for (label i = 0; i < nBufferLayers; i++)
-            {
-                extendMarkedCells(mesh, refineCell);
             }
 
             hasChanged = true;

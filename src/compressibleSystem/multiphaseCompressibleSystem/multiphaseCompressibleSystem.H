@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "multiphaseEquationOfState.H"
+#include "multiphaseFluidThermo.H"
 
 namespace Foam
 {
@@ -51,15 +51,22 @@ class multiphaseCompressibleSystem
 :
     public phaseCompressibleSystem
 {
-// Private data
+protected:
+// Protected data
 
     //- Primitative variables
 
+        //- Temperature
+        volScalarField T_;
+
+        //- Internal energy
+        volScalarField e_;
+
         //- Equation of states
-        multiphaseEquationOfState eos_;
+        multiphaseFluidThermo thermo_;
 
         //- Volume fractions
-        UPtrList<volScalarField>& alphas_;
+        PtrList<volScalarField>& alphas_;
 
         //- Phase densities
         UPtrList<volScalarField>& rhos_;
@@ -68,16 +75,16 @@ class multiphaseCompressibleSystem
     //- Conserved variables
 
         //- Phase masses
-        UPtrList<volScalarField>& alphaRhos_;
+        PtrList<volScalarField> alphaRhos_;
 
 
     //- Fluxes
 
         //- Volume fraction fluxes
-        UPtrList<surfaceScalarField>& alphaPhis_;
+        PtrList<surfaceScalarField> alphaPhis_;
 
         //- Phase mass fluxes
-        UPtrList<surfaceScalarField>& alphaRhoPhis_;
+        PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
     // ODE variables
@@ -89,6 +96,9 @@ class multiphaseCompressibleSystem
         //- Stored delta fields
         PtrList<PtrList<volScalarField>> deltaAlphas_;
         PtrList<PtrList<volScalarField>> deltaAlphaRhos_;
+
+        //- Calculate new alpha and rho fields
+        virtual void calcAlphaAndRho();
 
 
 public:
@@ -114,6 +124,9 @@ public:
         //- Update fluxes
         virtual void update();
 
+        //- Return energy source term
+        virtual tmp<volScalarField> ESource() const;
+
         //- Solve a sub-step
         virtual void solve
         (
@@ -130,14 +143,93 @@ public:
             const boolList& storeDeltas
         );
 
+        //- Remove stored fields
+        virtual void clearODEFields();
+
 
     // Member Access Functions
 
-        //- Return speed of sound
-        virtual tmp<volScalarField> c() const
+        //- Const access to internal energy
+        virtual const volScalarField& e() const
         {
-            return eos_.c();
+            return e_;
         }
+
+        //- Non-const access to internal energy
+        virtual volScalarField& e()
+        {
+            return e_;
+        }
+
+        //- Return speed of sound
+        virtual tmp<volScalarField> speedOfSound() const
+        {
+            return thermo_.speedOfSound();
+        }
+
+    //- Return functions for transport model
+
+        //- Return calculated temperature field
+        virtual tmp<volScalarField> T() const
+        {
+            return T_;
+        }
+
+        //- Heat capacit at contant volume of mixture [J/kg/K]
+        virtual tmp<volScalarField> Cv() const;
+
+        //- Dynamic viscosity of mixture [kg/m/s]
+        virtual tmp<volScalarField> mu() const;
+
+        //- Dynamic viscosity of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> mu(const label patchi) const;
+
+        //- Kinematic viscosity of mixture [m^2/s]
+        virtual tmp<volScalarField> nu() const;
+
+        //- Kinematic viscosity of mixture for patch [m^2/s]
+        virtual tmp<scalarField> nu(const label patchi) const;
+
+        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
+        virtual tmp<volScalarField> alpha() const;
+
+        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> alpha(const label patchi) const;
+
+        //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
+        virtual tmp<volScalarField> alphaEff(const volScalarField&) const;
+
+        //- Effective thermal turbulent diffusivity of mixture
+        //  for patch [kg/m/s]
+        virtual tmp<scalarField> alphaEff
+        (
+            const scalarField& alphat,
+            const label patchi
+        ) const;
+
+        //- Thermal diffusivity for energy of mixture [kg/m/s]
+        virtual tmp<volScalarField> alphahe() const;
+
+        //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> alphahe(const label patchi) const;
+
+        //- Thermal diffusivity for temperature of mixture [W/m/K]
+        virtual tmp<volScalarField> kappa() const;
+
+        //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
+        virtual tmp<scalarField> kappa(const label patchi) const;
+
+        //- Effective thermal turbulent diffusivity for temperature
+        //  of mixture [W/m/K]
+        virtual tmp<volScalarField> kappaEff(const volScalarField&) const;
+
+        //- Effective thermal turbulent diffusivity for temperature
+        //  of mixture for patch [W/m/K]
+        virtual tmp<scalarField> kappaEff
+        (
+            const scalarField& alphat,
+            const label patchi
+        ) const;
 };
 
 

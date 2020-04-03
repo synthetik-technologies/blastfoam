@@ -1,0 +1,68 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (gas);
+
+radiationModel none;
+
+fluid
+{
+    type        stiffenedGas;
+    gamma       4.4;
+    a           6.0e8;
+
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          4160;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho 1e-10;
+    residualAlpha 1e-6;
+}
+
+gas
+{
+    type          vanderWaals;
+    gamma         1.4;
+    a             5.0;
+    b             1e-3;
+
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho   1e-10;
+    residualAlpha 1e-6;
+}
+
+
+// ************************************************************************* //

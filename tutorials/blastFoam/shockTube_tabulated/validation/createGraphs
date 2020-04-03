@@ -1,0 +1,83 @@
+#!/bin/bash
+#
+# Results taken from:
+#   Luo, H., Baum, J. D., Lohner, R. (2003)
+#   "On the computation of multi-material flows using ALE formulation"
+#   Journal of Computational Physics, 194, 304-328
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+createEpsP()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_shockTube_validation_p.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Pressure [Pa]"
+    set grid
+    set key right top
+    set key off
+    set size 2,2
+    set autoscale
+    plot    "$1" using 1:2 notitle \
+            with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsRho()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_shockTube_rho.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Density [kg/m^3]"
+    set grid
+    set key right top
+    set key off
+    set size 2,2
+    set autoscale
+    plot    "$1" using 1:3 notitle \
+            with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsUx()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_shockTube_validation_Ux.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key left top
+    set key off
+    set size 2,2
+    set autoscale
+    plot    "$1" using 1:2 notitle \
+            with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+time=$(foamListTimes -latestTime -case ../)
+pRhoBlastFOAM="../postProcessing/sampleDict/$time/Centerline_p*"
+UBlastFOAM="../postProcessing/sampleDict/$time/Centerline_U*"
+
+createEpsP $pRhoBlastFOAM
+createEpsRho $pRhoBlastFOAM
+createEpsUx $UBlastFOAM
+
+echo Done

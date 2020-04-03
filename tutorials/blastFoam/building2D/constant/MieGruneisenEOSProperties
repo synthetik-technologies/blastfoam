@@ -1,0 +1,219 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (c4 air);                // List of phases
+
+radiationModel  none;
+
+fvDOMCoeffs
+{
+    nPhi        5;      // azimuthal angles in PI/2 on X-Y.(from Y to X)
+    nTheta      5;      // polar angles in PI (from Z to X-Y plane)
+    tolerance   1e-3;   // convergence tolerance for radiation iteration
+    maxIter     10;     // maximum number of iterations
+}
+
+// Number of flow iterations per radiation iteration
+solverFreq 1;
+
+absorptionEmissionModel greyMean;
+
+greyMeanCoeffs
+{
+    c4
+    {
+        Tcommon     300.;   // Common Temp
+        invTemp     true;   // Is the polynomial using inverse temperature?
+        Tlow        0.;   // Low Temp
+        Thigh       10000.;  // High Temp
+        loTcoeffs           // coeffs for T < Tcommon
+        (
+            18.741
+            -121.31e3
+            273.5e6
+            -194.05e9
+            56.31e12
+            -5.8169e15
+        );
+        hiTcoeffs           // coeffs for T > Tcommon
+        (
+            18.741
+            -121.31e3
+            273.5e6
+            -194.05e9
+            56.31e12
+            -5.8169e15
+        );
+    }
+}
+
+constantCoeffs
+{
+   absorptivity    0.5;
+   emissivity      0.5;
+   E               0;
+}
+
+scatterModel    none;
+
+sootModel       none;
+
+
+c4
+{
+    type detonating;
+    // values for c-4 from: Alia2006
+    reactants
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState Murnahan;
+        }
+        equationOfState
+        {
+            gamma           1.35;
+            rho0            1601;
+            n               7.4;
+            kappa           3.9e11;
+            Gamma           0.35;
+            pRef            101298;
+        }
+        specie
+        {
+            molWeight       55.0;
+        }
+        transport
+        {
+            mu              0;              // Viscosity
+            Pr              1;              // Prandtl number
+        }
+        thermodynamics
+        {
+            Cv              2500;           // Heat capacity
+            Hf              0.0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState JWL;
+        }
+        equationOfState
+        {
+            rho0      1601;
+            A         609.77e9;
+            B         12.95e9;
+            R1        4.50;
+            R2        1.4;
+            omega     0.25;
+        }
+        specie
+        {
+            molWeight       55.0;
+        }
+        transport
+        {
+            mu              0;              // Viscosity
+            Pr              1;              // Prandtl number
+        }
+        thermodynamics
+        {
+            Cv              2500;           // Heat capacity
+            Hf              0.0;
+        }
+    }
+
+    activationModel pressureBased;
+    initiation
+    {
+        E0              9.0e9;
+
+        I               4.0e6;
+        a               0.0367;
+        b               0.667;
+        x               7.0;
+        maxLambdaI      0.022;
+
+        G1              1.4997e-9;
+        c               0.667;
+        d               0.33;
+        y               2.0;
+        minLambda1      0.022;
+
+        G2              0.0;
+        e               0.667;
+        f               0.667;
+        z               3.0;
+        minLambda2      0.022;
+
+        pMin            101360;  // Above this pressure activation is                                    // "turned on" [Pa]
+
+        points     ((0 0 0.5));     // Detonation points
+        vDet       7850;            // Detonation velocity [m/s]
+
+        ALow        6.25e10;
+        TaLow       7216;
+        Ts          2000;
+        AHigh       1e-2;
+        TaHigh      2742;
+        dp          1e-6;
+    }
+
+    residualRho     1e-6;           // Minimum density of the phase
+    residualAlpha   1e-10;          // Minimum volume fraction used for division
+}
+
+air
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState stiffenedGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+        a               0;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+// ************************************************************************* //

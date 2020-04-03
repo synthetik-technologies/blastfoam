@@ -41,6 +41,7 @@ SourceFiles
 
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "regIOobject.H"
 #include "dictionary.H"
 #include "runTimeSelectionTables.H"
 #include "fvc.H"
@@ -53,16 +54,42 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class fluxScheme
+:
+    public regIOobject
 {
 protected:
-// Protected variables
 
-    //- Owner field
-    surfaceScalarField own_;
+    //- Const reference to mesh
+    const fvMesh& mesh_;
 
-    //- Neighbour field
-    surfaceScalarField nei_;
+    //- Owner and neighbour surface fields
+    tmp<surfaceScalarField> own_;
+    tmp<surfaceScalarField> nei_;
 
+    //- Saved interpolated U field
+    tmp<surfaceVectorField> Uf_;
+
+    //- Saved interpolated rho fields
+    tmp<surfaceScalarField> rhoOwn_;
+    tmp<surfaceScalarField> rhoNei_;
+
+    // Protected Functions
+
+        //- Calcualte fluxes
+        virtual void calculateFluxes
+        (
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const scalar& cOwn, const scalar& cNei,
+            const vector& Sf,
+            scalar& phi,
+            scalar& rhoPhi,
+            vector& rhoUPhi,
+            scalar& rhoEPhi,
+            const label facei, const label patchi = -1
+        ) = 0;
 
         //- Update
         virtual void calculateFluxes
@@ -79,8 +106,94 @@ protected:
             scalarList& alphaPhis,
             scalarList& alphaRhosPhis,
             vector& rhoUPhi,
-            scalar& rhoEPhi
+            scalar& rhoEPhi,
+            const label facei, const label patchi = -1
         ) = 0;
+
+        //- Calculate energy flux for an addition internal energy
+        virtual scalar energyFlux
+        (
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const label facei, const label patchi = -1
+        ) const = 0;
+
+        //- Interpolate field
+        virtual scalar interpolate
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const label facei, const label patchi = -1
+        ) const = 0;
+
+        //- Update fields before calculating fluxes
+        virtual void preUpdate(const volScalarField& p)
+        {}
+
+        //- Correct fluxes
+        virtual void postUpdate()
+        {}
+
+
+        //- Set Uf at facei
+        template<class Type>
+        Type save
+        (
+            const label facei,
+            const label patchi,
+            const Type& x,
+            tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& xf
+        )
+        {
+            if (xf.valid())
+            {
+                if (patchi != -1)
+                {
+                    xf.ref().boundaryFieldRef()[patchi][facei] = x;
+                }
+                else
+                {
+                    xf.ref()[facei] = x;
+                }
+            }
+            return x;
+        }
+
+        //- Set Uf at facei
+        template<class Type>
+        Type getValue
+        (
+            const label facei,
+            const label patchi,
+            const GeometricField<Type, fvsPatchField, surfaceMesh>& xf
+        ) const
+        {
+            if (patchi != -1)
+            {
+                return xf.boundaryField()[patchi][facei];
+            }
+            else
+            {
+                return xf[facei];
+            }
+        }
+
+        inline word scheme(const word& name) const
+        {
+            word schemeName = "reconstruct(" + name + ")";
+            if
+            (
+                !mesh_.schemesDict().subDict("interpolationSchemes").found(schemeName)
+            )
+            {
+                WarningInFunction
+                    << "Riemann schemes are used, but no limiter is " << nl
+                    << "specified for " << name << "." << nl
+                    << "This may result in unstable solutions." << endl;
+            }
+            return schemeName;
+        }
 
 
 public:
@@ -115,25 +228,53 @@ public:
 
     // Member Functions
 
-        //- Update
-        virtual void update
+        //- Clear savedFields
+        virtual void clear();
+
+        //- Allocate saved fields
+        virtual void createSavedFields();
+
+        //- Flux for three scalar fields
+        template<class Type>
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
         (
-            const UPtrList<volScalarField>& alphas,
-            const UPtrList<volScalarField>& rhos,
+            const GeometricField<Type, fvPatchField, volMesh>& f,
+            const word& fName
+        ) const;
+
+        //- Update
+        void update
+        (
+            const volScalarField& rho,
             const volVectorField& U,
             const volScalarField& e,
             const volScalarField& p,
             const volScalarField& c,
             surfaceScalarField& phi,
-            UPtrList<surfaceScalarField>& alphaPhis,
-            UPtrList<surfaceScalarField>& alphaRhoPhis,
             surfaceScalarField& rhoPhi,
             surfaceVectorField& rhoUPhi,
             surfaceScalarField& rhoEPhi
         );
 
         //- Update
-        virtual void update
+        void update
+        (
+            const PtrList<volScalarField>& alphas,
+            const UPtrList<volScalarField>& rhos,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            PtrList<surfaceScalarField>& alphaPhis,
+            PtrList<surfaceScalarField>& alphaRhoPhis,
+            surfaceScalarField& rhoPhi,
+            surfaceVectorField& rhoUPhi,
+            surfaceScalarField& rhoEPhi
+        );
+
+        //- Update
+        void update
         (
             const volScalarField& alpha,
             const volScalarField& rho1,
@@ -151,12 +292,32 @@ public:
             surfaceScalarField& rhoEPhi
         );
 
+        //- Calculate energy flux for an addition internal energy
+        tmp<surfaceScalarField> energyFlux
+        (
+            const volScalarField& rho,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p
+        ) const;
+
+        //- Return interpolated U field
+        tmp<surfaceVectorField> Uf() const;
+
+        //- Dummy write for regIOobject
+        bool writeData(Ostream& os) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "fluxSchemeTmp.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -1,0 +1,6 @@
+impulse/impulse.C
+blastMachNo/blastMachNos.C
+fieldMax/fieldMax.C
+overpressure/overpressure.C
+
+LIB = $(FOAM_USER_LIBBIN)/libblastFunctionObjects

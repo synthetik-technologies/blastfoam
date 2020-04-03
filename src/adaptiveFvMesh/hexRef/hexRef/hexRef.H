@@ -410,6 +410,8 @@ public:
 
             virtual bool useEdges() const = 0;
 
+            virtual label nDims() const = 0;
+
             const polyMesh& mesh() const
             {
                 return mesh_;

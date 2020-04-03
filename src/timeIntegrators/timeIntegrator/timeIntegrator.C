@@ -36,9 +36,9 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrator::timeIntegrator(phaseCompressibleSystem& fluid)
+Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh)
 :
-    fluid_(fluid)
+    mesh_(mesh)
 {}
 
 
@@ -48,4 +48,14 @@ Foam::timeIntegrator::~timeIntegrator()
 {}
 
 
+// * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
+
+void Foam::timeIntegrator::addSystem(integrationSystem& system)
+{
+    label oldSize = systems_.size();
+
+    setODEFields(system);
+    systems_.resize(oldSize + 1);
+    systems_.set(oldSize, &system);
+}
 // ************************************************************************* //

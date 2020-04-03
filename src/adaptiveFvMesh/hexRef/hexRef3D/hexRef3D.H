@@ -150,6 +150,11 @@ public:
                 return false;
             }
 
+            virtual label nDims() const
+            {
+                return 3;
+            }
+
             //- Insert refinement. All selected cells will be split into 8.
             //  Returns per element in cells the 8 cells they were split into.
             //  Guarantees that the 0th element is the original cell label.

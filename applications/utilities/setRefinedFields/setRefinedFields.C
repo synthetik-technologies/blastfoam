@@ -447,18 +447,27 @@ int main(int argc, char *argv[])
         mesh,
         0.0
     );
-    volScalarField field
-    (
-        IOobject
+    wordList fieldNames(setFieldsDict.lookup("fields"));
+    PtrList<volScalarField> fields(fieldNames.size());
+    forAll(fields, fieldi)
+    {
+        fields.set
         (
-            setFieldsDict.lookup("field"),
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
+            fieldi,
+            new volScalarField
+            (
+                IOobject
+                (
+                    fieldNames[fieldi],
+                    runTime.timeName(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh
+            )
+        );
+    }
 
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
@@ -574,7 +583,7 @@ int main(int argc, char *argv[])
 
         if (!end)
         {
-            calcFaceDiff(error, field);
+            calcFaceDiff(error, fields);
             prepareToStop =
                !update
                 (
