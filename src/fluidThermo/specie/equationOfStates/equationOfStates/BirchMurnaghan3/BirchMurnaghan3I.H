@@ -26,36 +26,36 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "JWLC.H"
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Gamma
+Foam::scalar Foam::BirchMurnaghan3<Specie>::p
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return
+        pRef_
+      + 1.5*K0_*(pow(rho/rho0_, 7.0/3.0) - pow(rho/rho0_, 5.0/3.0))
+       *(1.0 + 0.75*(K0Prime_ - 4.0)*(pow(rho/rho0_, 2.0/3.0) - 1.0));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::Gamma
 (
     const scalar& rho,
     const scalar& T,
     const scalar& cv
 ) const
 {
-    return omega_ + 1.0;
+    return Gamma_ + 1.0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::p
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar V(rho0_/max(rho, 1e-10));
-    return A_*exp(-R1_*V) + B_*exp(-R2_*V) + C_/pow(V, omega_ + 1.0);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::speedOfSound
+Foam::scalar Foam::BirchMurnaghan3<Specie>::speedOfSound
 (
     const scalar& p,
     const scalar& rho,
@@ -63,65 +63,40 @@ Foam::scalar Foam::JWLC<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        sqr(V)/rho0_
+    scalar cSqr =
+        K0_
+       *pow(rho/rho0_, 5.0/3.0)
        *(
-            A_*R1_*exp(-R1_*V)
-          + B_*R2_*exp(-R2_*V)
-          + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
+            6.0*pow(rho/rho0_, 2.0/3.0)*(K0Prime_ - 4.0)
+           *(pow(rho/rho0_, 2.0/3.0) - 1.0)
+          + (7.0*pow(rho/rho0_, 2.0/3.0) - 5.0)
+           *(3.0*(K0Prime_ - 4.0)*(pow(rho/rho0_, 2.0/3.0) - 1.0) + 4.0)
+        )/(8.0*max(rho, 1e-10));
+    return sqrt(max(cSqr, small));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::dpdv
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return
+      - 0.5*K0_*rho
+       *pow(rho/rho0_, 5.0/3.0)
+       *(
+            6.0*pow(rho/rho0_, 2.0/3.0)*(K0Prime_ - 4.0)
+           *(pow(rho/rho0_, 2.0/3.0) - 1.0)
+          + (7.0*pow(rho/rho0_, 2.0/3.0) - 5.0)
+           *(3.0*(K0Prime_ - 4.0)*(pow(rho/rho0_, 2.0/3.0) - 1.0) + 4.0)
         );
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::dpdv
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        rho0_
-       *(
-            A_*R1_*exp(-R1_*V)
-          + B_*R2_*exp(-R2_*V)
-          + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
-        );
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::dpdT
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::E
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        (
-            A_/R1_*exp(-R1_*V)
-          + B_/R2_*exp(-R2_*V)
-          + C_/(omega_*pow(V, omega_))
-        )/rho0_;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Cv
+Foam::scalar Foam::BirchMurnaghan3<Specie>::dpdT
 (
     const scalar& rho,
     const scalar& T
@@ -132,36 +107,68 @@ Foam::scalar Foam::JWLC<Specie>::Cv
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Cp
+Foam::scalar Foam::BirchMurnaghan3<Specie>::E
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::H
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar rhos(max(rho, 1e-10));
-    scalar V(rho0_/rhos);
     return
       - (
-            A_*R1_*rho0_*exp(-R1_*V)
-          + B_*R2_*rho0_*exp(-R2_*V)
-        )/(2.0*sqr(rhos))
-      - C_*(omega_ + 1.0)*pow(V, -omega_)/(2.0*rho0_);
+            (
+                9.0*K0_*rho
+               *(
+                  - K0_*sqr(rho) + pow(rho, 2.0/3.0)*pow3(rho0_)
+                   *(
+                        3.0*K0Prime_*pow(rho/rho0_, 2.0/3.0)
+                      - 3.0*K0Prime_
+                      - 14.0*pow(rho/rho0_, 2.0/3.0)
+                      + 16.0
+                    )*pow(rho0_, -5.0/3.0)
+                  + 4.0*sqr(rho)
+                )/16.0
+            )
+          + pRef_*pow3(rho0_)
+        )/(pow3(rho0_*max(rho, 1e-10)));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::CpMCv
+Foam::scalar Foam::BirchMurnaghan3<Specie>::Cv
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::H
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return
+        3.0*K0_
+       *(
+            9.0*K0_*sqr(rho)
+          + pow(rho, 2.0/3.0)*pow3(rho0_)
+           *(
+              - 21.0*K0Prime_*pow(rho/rho0_, 2.0/3.0)
+              + 15.0*K0Prime_
+              + 98.0*pow(rho/rho0_, 2.0/3.0)
+              - 80.0
+            )*pow(rho0_, -5.0/3.0)
+          - 36.0*sqr(rho)
+        )/(16.0*pow3(rho0_));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::Cp
 (
     const scalar& rho,
     const scalar& T
@@ -172,14 +179,26 @@ Foam::scalar Foam::JWLC<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::S
+Foam::scalar Foam::BirchMurnaghan3<Specie>::CpMCv
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::S
 (
     const scalar& p,
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return 0.0;
+    return 0;
 }
+
 
 // ************************************************************************* //

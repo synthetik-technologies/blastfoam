@@ -28,7 +28,7 @@ RDX
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnahan;
+            equationOfState Murnaghan;
         }
         equationOfState
         {

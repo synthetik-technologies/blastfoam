@@ -44,7 +44,21 @@ namespace Foam
     (
         constTransport,
         equationOfState,
-        Murnahan
+        Murnaghan
+    );
+
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2
+    );
+
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3
     );
 
 // Fluids
@@ -111,9 +125,10 @@ namespace Foam
         LSZK
     );
 
-    addFluidThermos
+    addFluidThermo
     (
         constTransport,
+        eConst,
         MGEquationOfState,
         DoanNickel
     );

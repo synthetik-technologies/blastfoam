@@ -26,36 +26,33 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "JWLC.H"
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Gamma
+Foam::scalar Foam::Murnaghan<Specie>::p
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return pRef_ + (pow(rho/rho0_, n_) - 1.0)/(kappa_*n_);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::Gamma
 (
     const scalar& rho,
     const scalar& T,
     const scalar& cv
 ) const
 {
-    return omega_ + 1.0;
+    return Gamma_ + 1.0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::p
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar V(rho0_/max(rho, 1e-10));
-    return A_*exp(-R1_*V) + B_*exp(-R2_*V) + C_/pow(V, omega_ + 1.0);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::speedOfSound
+Foam::scalar Foam::Murnaghan<Specie>::speedOfSound
 (
     const scalar& p,
     const scalar& rho,
@@ -63,37 +60,23 @@ Foam::scalar Foam::JWLC<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        sqr(V)/rho0_
-       *(
-            A_*R1_*exp(-R1_*V)
-          + B_*R2_*exp(-R2_*V)
-          + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
-        );
+    return sqrt(pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::dpdv
+Foam::scalar Foam::Murnaghan<Specie>::dpdv
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        rho0_
-       *(
-            A_*R1_*exp(-R1_*V)
-          + B_*R2_*exp(-R2_*V)
-          + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
-        );
+    return -rho*pow(rho/rho0_, n_)/kappa_;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::dpdT
+Foam::scalar Foam::Murnaghan<Specie>::dpdT
 (
     const scalar& rho,
     const scalar& T
@@ -104,25 +87,67 @@ Foam::scalar Foam::JWLC<Specie>::dpdT
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::E
+Foam::scalar Foam::Murnaghan<Specie>::E
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    scalar V(rho0_/max(rho, 1e-10));
+    scalar rhos(max(rho, 1e-10));
     return
-        (
-            A_/R1_*exp(-R1_*V)
-          + B_/R2_*exp(-R2_*V)
-          + C_/(omega_*pow(V, omega_))
-        )/rho0_;
+       -pRef_/rhos
+      + (pow(rho/rho0_, n_) - (n_ - 1.0))/(kappa_*n_*rhos*(n_ - 1.0));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Cv
+Foam::scalar Foam::Murnaghan<Specie>::Cv
 (
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::H
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return pow(rho/rho0_, n_ - 1.0)/(rho0_*kappa_*(n_ - 1.0));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::Cp
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::CpMCv
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::S
+(
+    const scalar& p,
     const scalar& rho,
     const scalar& T
 ) const
@@ -130,56 +155,5 @@ Foam::scalar Foam::JWLC<Specie>::Cv
     return 0;
 }
 
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::H
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar rhos(max(rho, 1e-10));
-    scalar V(rho0_/rhos);
-    return
-      - (
-            A_*R1_*rho0_*exp(-R1_*V)
-          + B_*R2_*rho0_*exp(-R2_*V)
-        )/(2.0*sqr(rhos))
-      - C_*(omega_ + 1.0)*pow(V, -omega_)/(2.0*rho0_);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::CpMCv
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::S
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    return 0.0;
-}
 
 // ************************************************************************* //

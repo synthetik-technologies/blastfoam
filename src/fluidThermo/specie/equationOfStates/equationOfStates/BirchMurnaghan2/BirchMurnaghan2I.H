@@ -29,18 +29,18 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::p
+Foam::scalar Foam::BirchMurnaghan2<Specie>::p
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return pRef_ + (pow(rho/rho0_, n_) - 1.0)/(kappa_*n_);
+    return  pRef_ + 1.5*K0_*(pow(rho/rho0_, 7.0/3.0) - pow(rho/rho0_, 5.0/3.0));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::Gamma
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Gamma
 (
     const scalar& rho,
     const scalar& T,
@@ -52,7 +52,7 @@ Foam::scalar Foam::Murnahan<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::speedOfSound
+Foam::scalar Foam::BirchMurnaghan2<Specie>::speedOfSound
 (
     const scalar& p,
     const scalar& rho,
@@ -60,48 +60,31 @@ Foam::scalar Foam::Murnahan<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    return pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_);
+    scalar cSqr =
+        K0_
+       *pow(rho/rho0_, 5.0/3.0)
+       *(7.0*pow(rho/rho0_, 2.0/3.0) - 5.0)
+       /(2.0*max(rho, 1e-10));
+    return sqrt(max(cSqr, small));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::dpdv
+Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdv
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return -rho*pow(rho/rho0_, n_)/kappa_;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::dpdT
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::E
-(
-    const scalar& rho,
-    const scalar& T
-) const
-{
-    scalar rhos(max(rho, 1e-10));
     return
-       -pRef_/rhos
-      + (pow(rho/rho0_, n_) - (n_ - 1.0))/(kappa_*n_*rhos*(n_ - 1.0));
+        0.5*K0_*rho
+       *pow(rho/rho0_, 5.0/3.0)
+       *(5.0 - 7.0*pow(rho/rho0_, 2.0/3.0));
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::Cv
+Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdT
 (
     const scalar& rho,
     const scalar& T
@@ -112,29 +95,44 @@ Foam::scalar Foam::Murnahan<Specie>::Cv
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::H
+Foam::scalar Foam::BirchMurnaghan2<Specie>::E
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return pow(rho/rho0_, n_ - 1.0)/(rho0_*kappa_*(n_ - 1.0));
+    return
+        (
+            9.0/8.0*K0_*pow(rho/rho0_, 5.0/3.0)*(pow(rho/rho0_, 2.0/3.0) - 2.0)
+          - pRef_
+        )/max(rho, 1e-10);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::Cp
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Cv
 (
     const scalar& rho,
     const scalar& T
 ) const
 {
-    return -this->R();
+    return 0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::CpMCv
+Foam::scalar Foam::BirchMurnaghan2<Specie>::H
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 3.0/8.0*K0_*pow(rho/rho0_, 2.0/3.0)*(7.0*pow(rho/rho0_, 2.0/3.0) - 10.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan2<Specie>::Cp
 (
     const scalar& rho,
     const scalar& T
@@ -145,7 +143,18 @@ Foam::scalar Foam::Murnahan<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::Murnahan<Specie>::S
+Foam::scalar Foam::BirchMurnaghan2<Specie>::CpMCv
+(
+    const scalar& rho,
+    const scalar& T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan2<Specie>::S
 (
     const scalar& p,
     const scalar& rho,

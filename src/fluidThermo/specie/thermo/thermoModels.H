@@ -40,7 +40,9 @@ License
 #include "MGEquationOfState.H"
 
 #include "CochranChan.H"
-#include "Murnahan.H"
+#include "Murnaghan.H"
+#include "BirchMurnaghan2.H"
+#include "BirchMurnaghan3.H"
 #include "solidJWL.H"
 
 #include "idealGas.H"
@@ -64,8 +66,29 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
+        MGEquationOfState,
+        CochranChan
+    );
+
+    defineThermoTypes
+    (
+        constTransport,
         equationOfState,
-        Murnahan
+        Murnaghan
+    );
+
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2
+    );
+
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3
     );
 
     defineThermoTypes
@@ -130,13 +153,6 @@ namespace Foam
         constTransport,
         equationOfState,
         JWLC
-    );
-
-    defineThermoTypes
-    (
-        constTransport,
-        MGEquationOfState,
-        CochranChan
     );
 
     defineThermoTypes

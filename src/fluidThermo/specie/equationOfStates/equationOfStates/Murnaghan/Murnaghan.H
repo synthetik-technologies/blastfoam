@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::Murnahan
+    Foam::Murnaghan
 
 Description
-    Murnahan equation of state for a solid
+    Murnaghan equation of state for a solid
 
     References:
     \verbatim
@@ -36,12 +36,12 @@ Description
     \endverbatim
 
 SourceFiles
-    Murnahan.C
+    Murnaghan.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MurnahanBlast_H
-#define MurnahanBlast_H
+#ifndef MurnaghanBlast_H
+#define MurnaghanBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,11 +51,11 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class Murnahan Declaration
+                           Class Murnaghan Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Specie>
-class Murnahan
+class Murnaghan
 :
     public Specie
 {
@@ -80,7 +80,7 @@ public:
     // Constructors
 
         //- Multiphase constuctor
-        Murnahan(const dictionary& dict);
+        Murnaghan(const dictionary& dict);
 
 
     // Member Functions
@@ -89,7 +89,7 @@ public:
         static word typeName()
         {
             return
-                "Murnahan<"
+                "Murnaghan<"
               + word(Specie::typeName()) + '>';
         }
 
@@ -188,10 +188,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "MurnahanI.H"
+#include "MurnaghanI.H"
 
 #ifdef NoRepository
-    #include "Murnahan.C"
+    #include "Murnaghan.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

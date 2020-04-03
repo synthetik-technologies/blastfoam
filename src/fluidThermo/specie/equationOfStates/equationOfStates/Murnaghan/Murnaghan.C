@@ -23,12 +23,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Murnahan.H"
+#include "Murnaghan.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::Murnahan<Specie>::Murnahan
+Foam::Murnaghan<Specie>::Murnaghan
 (
     const dictionary& dict
 )

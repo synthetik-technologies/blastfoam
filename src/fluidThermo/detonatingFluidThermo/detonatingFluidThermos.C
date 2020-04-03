@@ -32,6 +32,7 @@ License
 
 namespace Foam
 {
+//- Ideal gas
     addDetonatingFluidThermos
     (
         constTransport,
@@ -62,11 +63,12 @@ namespace Foam
         LSZK
     );
 
+//- Murnaghan
     addDetonatingFluidThermos
     (
         constTransport,
         equationOfState,
-        Murnahan,
+        Murnaghan,
         constTransport,
         MGEquationOfState,
         JWL
@@ -76,7 +78,7 @@ namespace Foam
     (
         constTransport,
         equationOfState,
-        Murnahan,
+        Murnaghan,
         constTransport,
         equationOfState,
         JWLC
@@ -86,12 +88,75 @@ namespace Foam
     (
         constTransport,
         equationOfState,
-        Murnahan,
+        Murnaghan,
         constTransport,
         MGEquationOfState,
         LSZK
     );
 
+//- Birch-Murnaghan
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+//- Birch-Murnaghan 3
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+// Blended JWL
     addDetonatingFluidThermo
     (
         constTransport,
