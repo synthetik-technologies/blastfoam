@@ -43,12 +43,18 @@ int main(int argc, char *argv[])
     argList::addBoolOption
     (
         "useTimeName",
-        "Rename vtk files with time step name"
+        "Rename VTK files with time step name"
+    );
+    argList::addBoolOption
+    (
+        "hardCopy",
+        "Hard copy of VTK files"
     );
 
     #include "setRootCase.H"
 
     bool useTime(args.optionFound("useTimeName"));
+    bool hardCopy(args.optionFound("hardCopy"));
 
     // Create the processor databases
     fileName postProcessDir
@@ -132,19 +138,38 @@ int main(int argc, char *argv[])
                     }
 
                     word name(IOobject::member(files[i]));
-                    ln
-                    (
-                        timeDir/fileName(files[i]),
-                        VTKDir
-                       /fileName(dirs[diri])
-                       /fileName
+                    if (hardCopy)
+                    {
+                        cp
                         (
-                            name
-                          + word("_")
-                          + index
-                          + word(".vtk")
-                        )
-                    );
+                            timeDir/fileName(files[i]),
+                            VTKDir
+                           /fileName(dirs[diri])
+                           /fileName
+                            (
+                                name
+                              + word("_")
+                              + index
+                              + word(".vtk")
+                            )
+                        );
+                    }
+                    else
+                    {
+                        ln
+                        (
+                            timeDir/fileName(files[i]),
+                            VTKDir
+                           /fileName(dirs[diri])
+                           /fileName
+                            (
+                                name
+                              + word("_")
+                              + index
+                              + word(".vtk")
+                            )
+                        );
+                    }
                 }
             }
         }
