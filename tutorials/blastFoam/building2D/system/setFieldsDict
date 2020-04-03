@@ -16,7 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.c4);
-maxCells 1000000;
 maxRefinement 7;
 nBufferLayers 10;
 
@@ -40,11 +39,11 @@ regions
             p2 (0 0 1);
             radius 0.5;
         }
+        refineInternal yes;
 
         fieldValues
         (
             volScalarFieldValue alpha.c4    1
-            volScalarFieldValue error       1 //Refine all cells in sphere
         );
     }
     cylinderToCell // Use cylinder for 3D
@@ -58,11 +57,11 @@ regions
             p2 (0 0 1);
             radius 0.5;
         }
+        refineInternal yes;
 
         fieldValues
         (
             volVectorFieldValue U   (0 -90 0)
-            volScalarFieldValue error       1
         );
     }
 );

@@ -16,7 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.c4);
-maxCells 100000;
 maxRefinement 4;
 nBufferLayers 1;
 
@@ -47,12 +46,11 @@ regions
             centre (-0.3048 0.3048 0);
             radius 0.25;
         }
+        refineInternal yes;
 
         fieldValues
         (
             volScalarFieldValue alpha.c4    1
-            volScalarFieldValue rho.air     0
-            volScalarFieldValue error       1 //Refine all cells in sphere
         );
     }
 );

@@ -469,13 +469,60 @@ int main(int argc, char *argv[])
         );
     }
 
+    label maxRefinement(setFieldsDict.lookupType<label>("maxRefinement"));
+
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
 
+    //- List of source
+    PtrList<topoSetSource> sources(regions.size());
+    PtrList<topoSetSource> backupSources(regions.size());
+    labelList levels(regions.size(), 0);
+    forAll(regions, regionI)
+    {
+        sources.set
+        (
+            regionI,
+            topoSetSource::New
+            (
+                regions[regionI].keyword(),
+                mesh,
+                regions[regionI].dict()
+            ).ptr()
+        );
+        if (regions[regionI].dict().found("backup"))
+        {
+            backupSources.set
+            (
+                regionI,
+                topoSetSource::New
+                (
+                    regions[regionI].keyword(),
+                    mesh,
+                    regions[regionI].dict().subDict("sources")
+                ).ptr()
+            );
+        }
+        if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+        {
+            levels[regionI] =
+                regions[regionI].dict().lookupOrDefault("level", maxRefinement);
+        }
+    }
+
     bool end = false;
     bool prepareToStop = false;
+    labelList nOldCells(regions.size(), -1);
+
+    label iter = 0;
+    label maxIter = setFieldsDict.lookupOrDefault("maxIter", 20);
     while(!end)
     {
+        if (maxIter <= iter)
+        {
+            prepareToStop = true;
+        }
+
         error = 0.0;
         if (prepareToStop)
         {
@@ -492,16 +539,12 @@ int main(int argc, char *argv[])
             Info<< endl;
         }
 
+        labelListList savedCellSets;
+
         Info<< "Setting field region values" << endl;
         forAll(regions, regionI)
         {
-            const entry& region = regions[regionI];
-            const dictionary& regionDict = region.dict();
-
-            autoPtr<topoSetSource> source =
-                topoSetSource::New(region.keyword(), mesh, region.dict());
-
-            if (source().setType() == topoSetSource::CELLSETSOURCE)
+            if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
             {
                 cellSet selectedCellSet
                 (
@@ -510,13 +553,24 @@ int main(int argc, char *argv[])
                     mesh.nCells()/10+1  // Reasonable size estimate.
                 );
 
-                source->applyToSet
+                sources[regionI].applyToSet
                 (
                     topoSetSource::NEW,
                     selectedCellSet
                 );
 
                 labelList cells = selectedCellSet.toc();
+                label maxCellLevel = 0;
+                forAll(cells, celli)
+                {
+                    maxCellLevel =
+                        max
+                        (
+                            maxCellLevel,
+                            meshCutter->cellLevel()[cells[celli]]
+                        );
+                }
+
                 if
                 (
                     returnReduce
@@ -527,16 +581,8 @@ int main(int argc, char *argv[])
                 {
                     cells = selectedCellSet.toc();
                 }
-                else if (!end && regionDict.found("backup"))
+                else if (!end && backupSources.set(regionI))
                 {
-                    autoPtr<topoSetSource> source =
-                        topoSetSource::New
-                        (
-                            region.keyword(),
-                            mesh,
-                            regionDict.subDict("backup")
-                        );
-
                     cellSet backupCellSet
                     (
                         mesh,
@@ -544,21 +590,32 @@ int main(int argc, char *argv[])
                         mesh.nCells()/10+1  // Reasonable size estimate.
                     );
 
-                    source->applyToSet
+                    backupSources[regionI].applyToSet
                     (
                         topoSetSource::NEW,
                         backupCellSet
                     );
                     cells = backupCellSet.toc();
                 }
-                PtrList<setCellField> fieldValues
+                bool set
                 (
-                    regionDict.lookup("fieldValues"),
-                    setCellField::iNew(mesh, cells)
+                    cells.size() != nOldCells[regionI]
+                 || end
                 );
 
+                if (set)
+                {
+                    PtrList<setCellField> fieldValues
+                    (
+                        regions[regionI].dict().lookup("fieldValues"),
+                        setCellField::iNew(mesh, cells)
+                    );
+                    nOldCells[regionI] = cells.size();
+                }
+                savedCellSets.append(cells);
+
             }
-            else if (source().setType() == topoSetSource::FACESETSOURCE)
+            else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
             {
                 faceSet selectedFaceSet
                 (
@@ -567,7 +624,7 @@ int main(int argc, char *argv[])
                     (mesh.nFaces()-mesh.nInternalFaces())/10+1
                 );
 
-                source->applyToSet
+                sources[regionI].applyToSet
                 (
                     topoSetSource::NEW,
                     selectedFaceSet
@@ -575,7 +632,7 @@ int main(int argc, char *argv[])
 
                 PtrList<setFaceField> fieldValues
                 (
-                    region.dict().lookup("fieldValues"),
+                    regions[regionI].dict().lookup("fieldValues"),
                     setFaceField::iNew(mesh, selectedFaceSet.toc())
                 );
             }
@@ -583,7 +640,36 @@ int main(int argc, char *argv[])
 
         if (!end)
         {
+            // Refine internal cells
             calcFaceDiff(error, fields);
+            labelList maxCellLevel(mesh.nCells(), maxRefinement);
+            forAll(regions, regionI)
+            {
+                if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+                {
+                    if
+                    (
+                        regions[regionI].dict().lookupOrDefault<Switch>
+                        (
+                            "refineInternal",
+                            false
+                        )
+                    )
+                    {
+                        forAll(savedCellSets[regionI], celli)
+                        {
+                            error[savedCellSets[regionI][celli]] =
+                                1.0;
+                        }
+                        forAll(savedCellSets[regionI], celli)
+                        {
+                            maxCellLevel[savedCellSets[regionI][celli]] =
+                                min(maxRefinement, levels[regionI]);
+                        }
+                    }
+                }
+            }
+
             prepareToStop =
                !update
                 (
@@ -591,13 +677,14 @@ int main(int argc, char *argv[])
                     error,
                     setFieldsDict,
                     meshCutter(),
-                    protectedCell
+                    protectedCell,
+                    maxCellLevel
                 );
             // Force refinement data to go to the current time directory.
             meshCutter->setInstance(runTime.timeName());
         }
+        iter++;
     }
-
 
 
     bool writeOk = (mesh.write() && meshCutter->write());
@@ -623,7 +710,6 @@ int main(int argc, char *argv[])
     {
         scalarCellLevel[celli] = cellLevel[celli];
     }
-
     writeOk = writeOk && scalarCellLevel.write();
 
     Info<< "\nEnd\n" << endl;

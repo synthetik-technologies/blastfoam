@@ -344,7 +344,7 @@ labelList selectRefineCells
 (
     const fvMesh& mesh,
     const label maxCells,
-    const label maxRefinement,
+    const labelList& maxRefinement,
     const PackedBoolList& candidateCell,
     const hexRef& meshCutter,
     const PackedBoolList& protectedCell
@@ -380,7 +380,7 @@ labelList selectRefineCells
         {
             if
             (
-                cellLevel[celli] < maxRefinement
+                cellLevel[celli] < maxRefinement[celli]
              && candidateCell.get(celli)
              && (
                     unrefineableCell.empty()
@@ -395,7 +395,7 @@ labelList selectRefineCells
     else
     {
         // Sort by error? For now just truncate.
-        for (label level = 0; level < maxRefinement; level++)
+        for (label level = 0; level < max(maxRefinement); level++)
         {
             forAll(candidateCell, celli)
             {
@@ -764,12 +764,13 @@ bool update
     const volScalarField& vFld,
     const dictionary& refineDict,
     hexRef& meshCutter,
-    PackedBoolList& protectedCell
+    PackedBoolList& protectedCell,
+    const labelList& maxRefinement
 )
 {
     bool hasChanged = false;
 
-    label maxCells = readLabel(refineDict.lookup("maxCells"));
+    label maxCells(refineDict.lookupOrDefault<label>("maxCells", labelMax));
 
     if (maxCells <= 0)
     {
@@ -780,12 +781,11 @@ bool update
             << exit(FatalError);
     }
 
-    label maxRefinement = readLabel(refineDict.lookup("maxRefinement"));
 
-    if (maxRefinement <= 0)
+    if (min(maxRefinement) <= 0)
     {
         FatalErrorInFunction
-            << "Illegal maximum refinement level " << maxRefinement << nl
+            << "Illegal maximum refinement level " << min(maxRefinement) << nl
             << "The maxCells setting in the setFields should"
             << " be > 0." << nl
             << exit(FatalError);

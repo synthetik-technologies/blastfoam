@@ -27,7 +27,7 @@ endTime         50e-6;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-8;
 
 writeFormat     ascii;
 

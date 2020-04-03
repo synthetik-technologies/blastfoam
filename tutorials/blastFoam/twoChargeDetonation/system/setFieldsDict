@@ -16,8 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.RDX alpha.tnt);
-maxCells 1000000;
-maxRefinement 4;
+maxRefinement 5;
 nBufferLayers 3;
 
 
@@ -36,11 +35,13 @@ regions
         p2 (0 0.55 1);
         radius 0.05;
 
+        refineInternal yes;
+        level 5;
+
         fieldValues
         (
             volScalarFieldValue alpha.RDX   1
             volScalarFieldValue alpha.gas   0
-            volScalarFieldValue error       1
         );
     }
     boxToCell
@@ -51,7 +52,6 @@ regions
         (
             volScalarFieldValue alpha.tnt   1
             volScalarFieldValue alpha.gas   0
-            volScalarFieldValue error       1
         );
     }
  );
