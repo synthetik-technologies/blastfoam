@@ -29,7 +29,7 @@ RDX
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnahan;
+            equationOfState Murnaghan;
         }
         equationOfState
         {
@@ -110,13 +110,13 @@ tnt
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnahan;
+            equationOfState BirchMurnaghan3;
         }
         equationOfState
         {
-            rho0            1630;
-            n               7.4;
-            kappa           3.9e11;
+            rho0            1601;
+            K0              9.6e9;
+            K0Prime         6.6;
             Gamma           0.35;
             pRef            101298;
         }
@@ -131,7 +131,7 @@ tnt
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              718;           // Heat capacity
             Hf              0.0;
         }
     }
