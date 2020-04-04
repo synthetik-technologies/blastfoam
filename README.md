@@ -12,21 +12,35 @@ blastFoam is a solver for multi-component compressible flow with application to 
 
 
 
-## Disclaimer
-
-This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
-
-
-
-## What is blastFoam?
-
-blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks (see Disclaimer above).
-
-
-
 ## How to use blastFoam
 
-Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
+Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf). 
+
+
+### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
+
+An introduction to blastFoam - a free and open-source Computational Fluid Dynamics (CFD) air blast code for modeling high-explosive detonations and blast load generation suitable for blast engineering and protective design.
+
+At the conclusion of the workshop, attendees will be able to competently and independently setup, calculate, visualize and post-process CFD solutions to air blast problems in complex geometries using blastFoam.
+
+The workshop will include:
+
+- An overview of the background theory, physics, equations and implementation in blastFoam
+- How to set up and run air blast calculations in simple and complex geometries
+- Mesh generation using snappyHexMesh and blockMesh for use with blastFoam
+- Setting initial conditions (e.g. JWL EOS coefficients, detonation points, charge shapes, etc.)
+- Boundary conditions
+- Using probes to get pressure-time histories at discrete locations
+- Generating pressure and impulse loads suitable for engineering/protective design
+- Pre- and post-processing of results
+- Verification and Validation
+- Using the blastFoam GUI to help setup and visualize blastFoam cases
+- A hands-on guided walk-through of a number of 2D and 3D blastFoam tutorial examples with the Synthetik team.
+- All levels of expertise are welcome to attend, and this session will be very practical and ‘hands on’. 
+
+Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
+
+More information and registration here: https://www.eventbrite.com/e/blastfoam-workshop-tickets-100310659884 
 
 
 
@@ -58,7 +72,6 @@ blastFoam is also available on the Texas Advanced Computing Center https://www.t
 
 
 
-
 ## Citation
 If you use this code for your work or research, please use this citation:
 
@@ -76,14 +89,14 @@ BiBTex:
 ```
 
 ## User Guide
-To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
+To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf):
 ```
-J. Heylmun, P. Vonk, and T. Brewer, “blastFoam User Guide.” Synthetik Applied Technologies, LLC., 30-Oct-2019.
+J. Heylmun, P. Vonk, and T. Brewer, “blastFoam Version 2.0 User Guide.” Synthetik Applied Technologies, LLC., 30-Oct-2019.
 ```
 BiBTex:
 ```
 @misc{heylmun_blastfoamguide_2019,
-	title = {{blastFoam version 2.0} {User} {Guide} },
+	title = {{blastFoam Version 2.0} {User} {Guide} },
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
@@ -343,13 +356,6 @@ where <img alt="$a_i$" src="svgs/65ed4b231dcf18a70bae40e50d48c9c0.png" align="mi
 
 
 
-
-
-
-
-
-
-
 ### Jones Wilkins Lee (JWL)
 
 The more complicated JWL EOS is often used to define energetic materials, and has a reference pressure given by
@@ -376,13 +382,6 @@ and
 
 
 
-
-
-
-
-
-
-
 ### Cochran Chan
 
 The Cochran Chan EOS can be used to describe solid material, and has a reference pressure given by
@@ -401,5 +400,11 @@ where again, <img alt="$e_0$" src="svgs/824a0be2acf2b955fb812cf516864cf4.png" al
 
 
 
+
+
+
+## Disclaimer
+
+The blastFoam solver uses OpenFOAM technology. This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
 
