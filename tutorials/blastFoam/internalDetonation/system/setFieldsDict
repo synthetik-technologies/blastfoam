@@ -16,7 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.c4);
-maxRefinement 5;
 nBufferLayers 1;
 
 defaultFieldValues
@@ -29,16 +28,19 @@ regions
 (
     cylinderToCell // Use cylinder for 3D
     {
+        refineInternal yes;
+        level 5;
+
         p1 (0 0 0);
         p2 (0 0 1);
         radius 0.05;
+
         backup
         {
             p1 (0 0 0);
             p2 (0 0 1);
             radius 0.25;
         }
-        refineInternal yes;
 
         fieldValues
         (

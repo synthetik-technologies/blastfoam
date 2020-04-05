@@ -83,7 +83,7 @@ c4
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnahan;
+            equationOfState idealGas;
         }
         equationOfState
         {

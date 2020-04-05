@@ -16,8 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.RDX alpha.tnt);
-maxRefinement 5;
-nBufferLayers 3;
+nBufferLayers 1;
 
 
 defaultFieldValues
@@ -31,12 +30,12 @@ regions
 (
     cylinderToCell
     {
+        refineInternal yes;
+        level 6;
+
         p1 (0 0.55 -1);
         p2 (0 0.55 1);
         radius 0.05;
-
-        refineInternal yes;
-        level 5;
 
         fieldValues
         (
@@ -46,6 +45,9 @@ regions
     }
     boxToCell
     {
+        level 5;
+        refineInternal no;
+
         box (-0.05 0.01 -1) (0.05 0.5 1);
 
         fieldValues

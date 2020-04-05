@@ -16,7 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.air);
-maxRefinement 3;
 nBufferLayers 1;
 
 defaultFieldValues
@@ -36,6 +35,7 @@ regions
         p2 (0 0 1);
         radius 0.1;
         refineInternal yes;
+        level 3;
 
         fieldValues
         (
@@ -49,6 +49,7 @@ regions
     boxToCell
     {
         boxes ((-1.2 0.3 -1) (1.2 1.2 1));
+        level 3;
 
         fieldValues
         (

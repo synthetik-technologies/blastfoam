@@ -149,16 +149,16 @@ Foam::activationModels::pressureBasedActivation::delta() const
         )
     );
     volScalarField oneMLambda(Foam::max(1.0 - lambda_, 0.0));
-//     if (I_.value() > 0)
-//     {
-//         R.ref() +=
-//             I_
-//            *pow(Foam::max(rho_/rho0_ - 1.0 - a_, 0.0), x_)
-//            *pow(oneMLambda, b_)
-//            *pos0(maxLambdaI_ - lambda_);
-//     }
-//     if (G1_.value() > 0)
-//     {
+    if (I_.value() > 0)
+    {
+        R.ref() +=
+            I_
+           *pow(Foam::max(rho_/rho0_ - 1.0 - a_, 0.0), x_)
+           *pow(oneMLambda, b_)
+           *pos0(maxLambdaI_ - lambda_);
+    }
+    if (G1_.value() > 0)
+    {
         R.ref() +=
             G1_
            *pow(oneMLambda, c_)
@@ -166,17 +166,17 @@ Foam::activationModels::pressureBasedActivation::delta() const
            *pow(p, y_)
            *pos0(lambda_ - minLambda1_)
            *pos(maxLambda1_ - lambda_);
-//     }
-//     if (G2_.value() > 0)
-//     {
-//         R.ref() +=
-//             G2_
-//            *pow(oneMLambda, e_)
-//            *pow(lambda_, f_)
-//            *pow(p, z_)
-//            *pos0(lambda_ - minLambda2_)
-//            *pos(maxLambda2_ - lambda_);
-//     }
+    }
+    if (G2_.value() > 0)
+    {
+        R.ref() +=
+            G2_
+           *pow(oneMLambda, e_)
+           *pow(lambda_, f_)
+           *pow(p, z_)
+           *pos0(lambda_ - minLambda2_)
+           *pos(maxLambda2_ - lambda_);
+    }
     return R;
 }
 

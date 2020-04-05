@@ -469,8 +469,6 @@ int main(int argc, char *argv[])
         );
     }
 
-    label maxRefinement(setFieldsDict.lookupType<label>("maxRefinement"));
-
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
 
@@ -499,23 +497,24 @@ int main(int argc, char *argv[])
                 (
                     regions[regionI].keyword(),
                     mesh,
-                    regions[regionI].dict().subDict("sources")
+                    regions[regionI].dict().subDict("backup")
                 ).ptr()
             );
         }
         if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
         {
             levels[regionI] =
-                regions[regionI].dict().lookupOrDefault("level", maxRefinement);
+                regions[regionI].dict().lookupType<label>("level");
         }
     }
+    label maxRefinement(max(levels));
 
     bool end = false;
     bool prepareToStop = false;
     labelList nOldCells(regions.size(), -1);
 
     label iter = 0;
-    label maxIter = setFieldsDict.lookupOrDefault("maxIter", 20);
+    label maxIter = setFieldsDict.lookupOrDefault("maxIter", 2*maxRefinement);
     while(!end)
     {
         if (maxIter <= iter)
@@ -523,7 +522,7 @@ int main(int argc, char *argv[])
             prepareToStop = true;
         }
 
-        error = 0.0;
+        error = -10.0;
         if (prepareToStop)
         {
             end = true;
@@ -560,16 +559,6 @@ int main(int argc, char *argv[])
                 );
 
                 labelList cells = selectedCellSet.toc();
-                label maxCellLevel = 0;
-                forAll(cells, celli)
-                {
-                    maxCellLevel =
-                        max
-                        (
-                            maxCellLevel,
-                            meshCutter->cellLevel()[cells[celli]]
-                        );
-                }
 
                 if
                 (
@@ -599,8 +588,15 @@ int main(int argc, char *argv[])
                 }
                 bool set
                 (
-                    cells.size() != nOldCells[regionI]
-                 || end
+                    setRegion
+                    (
+                        cells.size(),
+                        nOldCells[regionI],
+                        levels[regionI],
+                        cells,
+                        meshCutter->cellLevel(),
+                        error
+                    ) || end
                 );
 
                 if (set)
@@ -642,11 +638,20 @@ int main(int argc, char *argv[])
         {
             // Refine internal cells
             calcFaceDiff(error, fields);
-            labelList maxCellLevel(mesh.nCells(), maxRefinement);
+            labelList maxCellLevel(mesh.nCells(), -1);
             forAll(regions, regionI)
             {
                 if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
                 {
+                    forAll(savedCellSets[regionI], celli)
+                    {
+                        maxCellLevel[savedCellSets[regionI][celli]] =
+                            max
+                            (
+                                maxCellLevel[savedCellSets[regionI][celli]],
+                                levels[regionI]
+                            );
+                    }
                     if
                     (
                         regions[regionI].dict().lookupOrDefault<Switch>
@@ -658,15 +663,16 @@ int main(int argc, char *argv[])
                     {
                         forAll(savedCellSets[regionI], celli)
                         {
-                            error[savedCellSets[regionI][celli]] =
-                                1.0;
-                        }
-                        forAll(savedCellSets[regionI], celli)
-                        {
-                            maxCellLevel[savedCellSets[regionI][celli]] =
-                                min(maxRefinement, levels[regionI]);
+                            error[savedCellSets[regionI][celli]] = 1.0;
                         }
                     }
+                }
+            }
+            forAll(maxCellLevel, celli)
+            {
+                if (maxCellLevel[celli] < 0)
+                {
+                    maxCellLevel[celli] = maxRefinement;
                 }
             }
 
@@ -711,6 +717,7 @@ int main(int argc, char *argv[])
         scalarCellLevel[celli] = cellLevel[celli];
     }
     writeOk = writeOk && scalarCellLevel.write();
+    error.write();
 
     Info<< "\nEnd\n" << endl;
 

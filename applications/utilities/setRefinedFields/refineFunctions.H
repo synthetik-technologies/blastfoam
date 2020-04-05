@@ -1,11 +1,62 @@
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
+bool setRegion
+(
+    const label nCells,
+    const label nOldCells,
+    const label level,
+    const labelList& cells,
+    const labelList& cellLevel,
+    volScalarField& error
+)
+{
+    const labelUList& owner = error.mesh().owner();
+    const labelUList& neighbour = error.mesh().neighbour();
+
+    if (nCells == 0)
+    {
+        return false;
+    }
+
+    bool set(nCells != nOldCells);
+
+    forAll(cells, celli)
+    {
+        const labelList& faces(error.mesh().cells()[cells[celli]]);
+        forAll(faces, facei)
+        {
+            if (faces[facei] < error.mesh().nInternalFaces())
+            {
+                label own = owner[faces[facei]];
+                label nei = neighbour[faces[facei]];
+
+                if (cellLevel[cells[celli]] < level)
+                {
+                    error[own] = 0.1;
+                    error[nei] = 0.1;
+                }
+                if (cellLevel[own] > level)
+                {
+                    error[own] = max(error[own], -10.0);
+                }
+                if (cellLevel[nei] > level)
+                {
+                    error[nei] = max(error[nei], -10.0);
+                }
+            }
+        }
+    }
+    return set;
+}
+
+
 void calcFaceDiff
 (
     volScalarField& error,
     const PtrList<volScalarField>& fields
 )
 {
+    volScalarField errorOrig(error);
     const labelUList& owner = error.mesh().owner();
     const labelUList& neighbour = error.mesh().neighbour();
     const label nInternalFaces = error.mesh().nInternalFaces();
@@ -17,14 +68,18 @@ void calcFaceDiff
         {
             label own = owner[facei];
             label nei = neighbour[facei];
+            scalar e =
+                pos0(mag(field[own] - field[nei]) - 1e-6)
+              - 10.0*neg(mag(field[own] - field[nei]) - 1e-6);
 
-            error[own] =
-                max
-                (
-                    error[own],
-                    mag(field[own] - field[nei])
-                );
-            error[nei] = max(error[nei], mag(field[own] - field[nei]));
+            if (errorOrig[own] > 0)
+            {
+                error[own] = max(error[own], e);
+            }
+            if (errorOrig[nei] > 0)
+            {
+                error[nei] = max(error[nei], e);
+            }
         }
     }
 }
@@ -441,7 +496,10 @@ labelList selectRefineCells
 void extendMarkedCells
 (
     const fvMesh& mesh,
-    PackedBoolList& markedCell
+    PackedBoolList& markedCell,
+    const labelList& maxRefinement,
+    const labelList& cellLevel,
+    const bool top
 )
 {
     // Mark faces using any marked cell
@@ -449,7 +507,11 @@ void extendMarkedCells
 
     forAll(markedCell, celli)
     {
-        if (markedCell.get(celli))
+        if
+        (
+            markedCell.get(celli)
+         && (maxRefinement[celli] > cellLevel[celli] || !top)
+        )
         {
             const cell& cFaces = mesh.cells()[celli];
 
@@ -791,10 +853,8 @@ bool update
             << exit(FatalError);
     }
 
-    const scalar lowerRefineLevel =
-        refineDict.lookupOrDefault("lowerRefineLevel", 1e-6);
-    const scalar unrefineLevel =
-        refineDict.lookupOrDefault<scalar>("unrefineLevel", 0);
+    const scalar lowerRefineLevel = 0.5;
+    const scalar unrefineLevel = -0.5;
 
     const label nBufferLayers =
         readLabel(refineDict.lookup("nBufferLayers"));
@@ -818,7 +878,14 @@ bool update
         // being unrefined.
         for (label i = 0; i < nBufferLayers; i++)
         {
-            extendMarkedCells(mesh, refineCell);
+            extendMarkedCells
+            (
+                mesh,
+                refineCell,
+                maxRefinement,
+                meshCutter.cellLevel(),
+                i == 0
+            );
         }
 
         // Select subset of candidates. Take into account max allowable

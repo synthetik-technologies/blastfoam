@@ -40,6 +40,7 @@ regions
             radius 0.5;
         }
         refineInternal yes;
+        level 7;
 
         fieldValues
         (
@@ -58,6 +59,7 @@ regions
             radius 0.5;
         }
         refineInternal yes;
+        level 7;
 
         fieldValues
         (
