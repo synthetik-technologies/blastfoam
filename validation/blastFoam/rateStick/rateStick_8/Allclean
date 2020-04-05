@@ -6,5 +6,6 @@ cd ${0%/*} || exit 1    # run from this directory
 
 cleanCase
 cleanSamples
+rm detonationVelocity
 
 # ----------------------------------------------------------------- end-of-file

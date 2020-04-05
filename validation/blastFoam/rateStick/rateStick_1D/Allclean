@@ -6,7 +6,6 @@ cd ${0%/*} || exit 1    # run from this directory
 
 cleanCase
 cleanSamples
-
-rm -f validation/*.eps
+rm detonationVelocity
 
 # ----------------------------------------------------------------- end-of-file
