@@ -1,4 +1,5 @@
 impulse/impulse.C
+speedOfSound/speedOfSound.C
 blastMachNo/blastMachNos.C
 fieldMax/fieldMax.C
 overpressure/overpressure.C

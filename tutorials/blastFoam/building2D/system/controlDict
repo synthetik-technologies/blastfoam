@@ -69,6 +69,14 @@ functions
         writeControl    writeTime;
         store yes;
     }
+    speedOfSound
+    {
+        type                speedOfSound;
+        libs                ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+        store yes;
+    }
 };
 
 // ************************************************************************* //

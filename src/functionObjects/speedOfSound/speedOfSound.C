@@ -23,7 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicPressure.H"
+#include "speedOfSound.H"
+#include "fluidThermoModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,14 +33,14 @@ namespace Foam
 {
 namespace functionObjects
 {
-    defineTypeNameAndDebug(dynamicPressure, 0);
-    addToRunTimeSelectionTable(functionObject, dynamicPressure, dictionary);
+    defineTypeNameAndDebug(speedOfSound, 0);
+    addToRunTimeSelectionTable(functionObject, speedOfSound, dictionary);
 }
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::functionObjects::dynamicPressure::dynamicPressure
+Foam::functionObjects::speedOfSound::speedOfSound
 (
     const word& name,
     const Time& runTime,
@@ -47,16 +48,15 @@ Foam::functionObjects::dynamicPressure::dynamicPressure
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    rhoName_(dict.lookupOrDefault("rhoName", word("rho"))),
-    UName_(dict.lookupOrDefault("UName", word("U"))),
-    resultName_(dict.lookupOrDefault("name", word("dynamicP"))),
+    phaseName_(dict.lookupOrDefault("phaseName", word::null)),
+    resultName_(IOobject::groupName("speedOfSound", phaseName_)),
     store_(dict.lookupOrDefault("store", false))
 {
     if (store_)
     {
         obr_.store
         (
-            new volVectorField
+            new volScalarField
             (
                 IOobject
                 (
@@ -67,43 +67,40 @@ Foam::functionObjects::dynamicPressure::dynamicPressure
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedVector("0", dimPressure, Zero)
+                dimensionedScalar("0", dimVelocity, Zero)
             )
         );
     }
+
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::functionObjects::dynamicPressure::~dynamicPressure()
+Foam::functionObjects::speedOfSound::~speedOfSound()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::functionObjects::dynamicPressure::read
+bool Foam::functionObjects::speedOfSound::read
 (
     const dictionary& dict
 )
 {
-    fvMeshFunctionObject::read(dict);
-
-    dict.readIfPresent("rhoName", rhoName_);
-    dict.readIfPresent("UName", UName_);
-
-    word origName = resultName_;
+    word origName = phaseName_;
     bool origStore = store_;
-    dict.readIfPresent("name", resultName_);
+    dict.readIfPresent("phaseName", phaseName_);
     dict.readIfPresent("store", store_);
 
     bool change = false;
-    if ((origName != resultName_ && origStore) || (origStore && !store_))
+    if ((origName != phaseName_ && origStore) || (origStore && !store_))
     {
         change = true;
-        clearObject(origName);
+        clearObject(resultName_);
     }
 
+    resultName_ = IOobject::groupName("speedOfSound", phaseName_);
     if (store_ && change)
     {
         obr_.store
@@ -128,28 +125,35 @@ bool Foam::functionObjects::dynamicPressure::read
 }
 
 
-bool Foam::functionObjects::dynamicPressure::execute()
+bool Foam::functionObjects::speedOfSound::execute()
 {
     if
     (
-        foundObject<volScalarField>(rhoName_)
-     && foundObject<volVectorField>(UName_)
+        foundObject<fluidThermoModel>
+        (
+            IOobject::groupName("fluidThermo", phaseName_)
+        )
     )
     {
-        const volScalarField& rho = lookupObject<volScalarField>(rhoName_);
-        const volVectorField& U = lookupObject<volVectorField>(UName_);
-
+        tmp<volScalarField> c =
+            lookupObject<fluidThermoModel>
+            (
+                IOobject::groupName
+                (
+                    "fluidThermo",
+                    phaseName_
+                )
+            ).speedOfSound();
         if (store_)
         {
-            lookupObjectRef<volVectorField>(resultName_) =
-                0.5*rho*mag(U)*U;
+            lookupObjectRef<volScalarField>(resultName_) = c;
             return true;
         }
 
         return store
         (
             resultName_,
-            0.5*rho*mag(U)*U
+            c
         );
     }
     else
@@ -163,14 +167,14 @@ bool Foam::functionObjects::dynamicPressure::execute()
 }
 
 
-bool Foam::functionObjects::dynamicPressure::write()
+bool Foam::functionObjects::speedOfSound::write()
 {
     writeObject(resultName_);
     return true;
 }
 
 
-bool Foam::functionObjects::dynamicPressure::clear()
+bool Foam::functionObjects::speedOfSound::clear()
 {
     if (!store_)
     {
