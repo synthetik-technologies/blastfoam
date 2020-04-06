@@ -1,0 +1,61 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volScalarField;
+    object      rho;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [1 -3 0 0 0 0 0];
+
+internalField   uniform 1.4;
+
+boundaryField
+{
+    inlet1
+    {
+        type            fixedValue;
+        value           uniform 8.0;
+    }
+    inlet2
+    {
+        type            fixedValue;
+        value           uniform 8.0;
+    }
+    top
+    {
+        type            codedFixedValue;
+        value           $internalField;
+        name            shockRho;
+        code
+        #{
+            scalar xS = db().time().value()*11.2799 + 0.74402;
+            scalarField x = this->patch().Cf().component(0);
+
+            operator==(pos(x - xS)*1.4 + neg0(x-xS)*8.0);
+        #};
+    }
+    outlet
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
+
+    defaultFaces
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //
