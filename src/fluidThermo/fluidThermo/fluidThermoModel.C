@@ -43,7 +43,8 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fluidThermoModel, 0);
-    defineRunTimeSelectionTable(fluidThermoModel, dictionary);
+    defineRunTimeSelectionTable(fluidThermoModel, basic);
+    defineRunTimeSelectionTable(fluidThermoModel, detonating);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -117,7 +118,8 @@ Foam::fluidThermoModel::fluidThermoModel
             dimDensity,
             0.0
         )
-    )
+    ),
+    limit_(dict.lookupOrDefault("limit", true))
 {}
 
 

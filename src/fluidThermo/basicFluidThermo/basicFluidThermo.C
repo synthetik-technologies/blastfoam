@@ -182,7 +182,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
             }
         }
     }
-    if (master)
+    if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
         e_ = e;

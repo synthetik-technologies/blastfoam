@@ -262,7 +262,7 @@ public:
     (                                                                           \
         fluidThermoModel,                                                       \
         basicFluidThermo##Transport##Thermo##EoSType##EoS,                      \
-        dictionary                                                              \
+        basic                                                                   \
     );
 
 #define addFluidThermos(Transport, EoSType, EoS)                            \

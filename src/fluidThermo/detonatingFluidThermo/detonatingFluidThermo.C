@@ -229,33 +229,33 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
     activation_(activationModel::New(rho.mesh(), dict, name)),
     afterburn_(afterburnModel::New(rho.mesh(), dict, name))
 {
-//     if (uThermo::solid())
-//     {
-//         volScalarField rhoInit
-//         (
-//             volScalarFieldProperty
-//             (
-//                 IOobject::groupName("rhoInit", name_),
-//                 dimDensity,
-//                 &uThermo::initializeRho,
-//                 &rThermo::initializeRho,
-//                 p_,
-//                 rho_,
-//                 e_,
-//                 T_
-//             )
-//         );
-//         rho_ = rhoInit;
-//         forAll(rho_.boundaryField(), patchi)
-//         {
-//             forAll(rho_.boundaryField()[patchi], facei)
-//             {
-//                 rho_.boundaryFieldRef()[patchi][facei] =
-//                     rhoInit.boundaryField()[patchi][facei];
-//             }
-//         }
-//     }
-    if (master)
+    if (uThermo::solid())
+    {
+        volScalarField rhoInit
+        (
+            volScalarFieldProperty
+            (
+                IOobject::groupName("rhoInit", name_),
+                dimDensity,
+                &uThermo::initializeRho,
+                &rThermo::initializeRho,
+                p_,
+                rho_,
+                e_,
+                T_
+            )
+        );
+        rho_ = rhoInit;
+        forAll(rho_.boundaryField(), patchi)
+        {
+            forAll(rho_.boundaryField()[patchi], facei)
+            {
+                rho_.boundaryFieldRef()[patchi][facei] =
+                    rhoInit.boundaryField()[patchi][facei];
+            }
+        }
+    }
+    if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
         e_ = e;

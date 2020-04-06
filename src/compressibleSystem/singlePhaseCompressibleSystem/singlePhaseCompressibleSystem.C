@@ -71,7 +71,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar(sqr(dimVelocity), 0.0),
+        dimensionedScalar(sqr(dimVelocity), -1.0),
         fluidThermoModel::eBoundaryTypes(T_),
         fluidThermoModel::eBoundaryBaseTypes(T_)
     ),
@@ -222,7 +222,7 @@ void Foam::singlePhaseCompressibleSystem::decode()
     e_.correctBoundaryConditions();
 
     //--- Hard limit, e
-    if(min(e_).value() < 0)
+    if(min(e_).value() < 0 && thermo_->limit())
     {
         WarningInFunction<< "Limiting e, min(e) = " << min(e_).value() << endl;
         e_.max(small);

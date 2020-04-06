@@ -46,7 +46,7 @@ c4
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              815;           // Heat capacity
             Hf              0.0;
         }
     }

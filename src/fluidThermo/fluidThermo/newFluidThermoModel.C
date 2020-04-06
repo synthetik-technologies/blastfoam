@@ -30,6 +30,49 @@ License
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
+Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewBasic
+(
+    const word& phaseName,
+    volScalarField& p,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const bool master
+)
+{
+    basicConstructorTable::iterator cstrIter =
+        lookupThermo<basicConstructorTable>
+        (
+            dict,
+            basicConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, p, rho, e, T, dict, master);
+}
+
+
+Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
+(
+    const word& phaseName,
+    volScalarField& p,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const bool master
+)
+{
+    detonatingConstructorTable::iterator cstrIter =
+        lookupThermo<detonatingConstructorTable>
+        (
+            dict,
+            detonatingConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, p, rho, e, T, dict, master);
+}
+
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
 (
     const word& phaseName,
@@ -41,15 +84,25 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     const bool master
 )
 {
-    dictionaryConstructorTable::iterator cstrIter =
-        lookupThermo<dictionaryConstructorTable>
-        (
-            dict,
-            dictionaryConstructorTablePtr_
-        );
-
-    return cstrIter()(phaseName, p, rho, e, T, dict, master);
+    word type = dict.lookup("type");
+    if (type == "basic")
+    {
+        return NewBasic(phaseName, p, rho, e, T, dict, master);
+    }
+    else if (type == "detonating")
+    {
+        return NewDetonating(phaseName, p, rho, e, T, dict, master);
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unknown fluidThermo type " << type << nl << nl
+            << "Valid " << fluidThermoModel::typeName << " types are:" << nl
+            << "basic" << nl
+            << "detonating" << nl
+            << abort(FatalError);
+    }
+    return autoPtr<fluidThermoModel>();
 }
-
 
 // ************************************************************************* //

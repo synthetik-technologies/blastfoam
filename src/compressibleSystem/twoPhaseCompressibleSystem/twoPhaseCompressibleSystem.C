@@ -71,7 +71,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar(sqr(dimVelocity), 0.0),
+        dimensionedScalar(sqr(dimVelocity), -1.0),
         fluidThermoModel::eBoundaryTypes(T_),
         fluidThermoModel::eBoundaryBaseTypes(T_)
     ),
@@ -350,6 +350,13 @@ void Foam::twoPhaseCompressibleSystem::decode()
     volScalarField E(rhoE_/rho_);
     e_.ref() = E() - 0.5*magSqr(U_());
 
+    //--- Hard limit, e
+    if(min(e_).value() < 0 && thermo_.limit())
+    {
+        WarningInFunction<< "Limiting e, min(e) = " << min(e_).value() << endl;
+        e_.max(small);
+        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
+    }
     e_.correctBoundaryConditions();
 
     rhoE_.boundaryFieldRef() =

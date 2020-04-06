@@ -89,8 +89,7 @@ public:
             const label stepi,
             const scalarList& ai,
             const scalarList& bi
-        )
-        {}
+        );
 
         //- Set old lists and fluxes (initialization of fields)
         virtual void setODEFields

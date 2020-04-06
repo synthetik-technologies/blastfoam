@@ -295,7 +295,7 @@ public:
     (                                                                           \
         fluidThermoModel,                                                       \
         detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS,                                       \
-        dictionary                                                              \
+        detonating                                                               \
     );
 
 #define addDetonatingFluidThermos(uTransport, uEoSType, uEoS, rTransport, rEoSType, rEoS) \

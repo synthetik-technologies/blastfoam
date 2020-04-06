@@ -71,7 +71,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar(sqr(dimVelocity), 0.0),
+        dimensionedScalar(sqr(dimVelocity), -1.0),
         fluidThermoModel::eBoundaryTypes(T_),
         fluidThermoModel::eBoundaryBaseTypes(T_)
     ),
@@ -422,7 +422,7 @@ void Foam::multiphaseCompressibleSystem::decode()
     e_.ref() = E() - 0.5*magSqr(U_());
 
     //--- Hard limit, e
-    if(min(e_).value() < 0)
+    if(min(e_).value() < 0 && thermo_.limit())
     {
         WarningInFunction<< "Limiting e, min(e) = " << min(e_).value() << endl;
         e_.max(small);

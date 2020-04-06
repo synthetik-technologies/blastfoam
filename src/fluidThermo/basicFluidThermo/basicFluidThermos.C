@@ -154,7 +154,7 @@ namespace Foam
     (
         fluidThermoModel,
         basicFluidThermoconstTransportTabulatedEOS,
-        dictionary
+        basic
     );
 }
 // ************************************************************************* //

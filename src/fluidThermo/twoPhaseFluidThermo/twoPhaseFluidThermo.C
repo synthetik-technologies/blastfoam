@@ -109,7 +109,7 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
-    if (master)
+    if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
         e_ = e;

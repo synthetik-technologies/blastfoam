@@ -115,7 +115,7 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
         sumAlpha += volumeFractions_[phasei];
     }
 
-    if (master)
+    if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
         e_ = e;

@@ -19,7 +19,7 @@ application     blastFoam;
 
 startFrom       startTime;
 
-startTime       0;
+startTime       0.00049;
 
 stopAt          endTime;
 

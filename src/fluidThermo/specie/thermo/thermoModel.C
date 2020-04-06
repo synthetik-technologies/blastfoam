@@ -118,6 +118,10 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
         return E;
     }
 
+    if (rho < small)
+    {
+        return 0.0;
+    }
     scalar Eest = 1000.0;
     scalar Enew = 1000.0;
     scalar Etol = Eest*tolerance_;

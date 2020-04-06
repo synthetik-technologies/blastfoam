@@ -20,11 +20,7 @@ nBufferLayers 1;
 
 defaultFieldValues
 (
-    volVectorFieldValue U ( 0 0 0 )
-    volScalarFieldValue p 101298
     volScalarFieldValue alpha.c4 0
-    volScalarFieldValue rho.c4  1601
-    volScalarFieldValue rho.air 1.225
 );
 
 
@@ -39,7 +35,6 @@ regions
         fieldValues
         (
             volScalarFieldValue alpha.c4    1
-            volScalarFieldValue rho.air     0
         );
     }
 );

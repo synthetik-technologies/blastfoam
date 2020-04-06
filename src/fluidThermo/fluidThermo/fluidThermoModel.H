@@ -91,6 +91,9 @@ protected:
         //- Residual density
         dimensionedScalar residualRho_;
 
+        //- Is the internal energy limited
+        Switch limit_;
+
 public:
 
     //- Runtime type information
@@ -103,7 +106,24 @@ public:
         (
             autoPtr,
             fluidThermoModel,
-            dictionary,
+            basic,
+            (
+                const word& name,
+                volScalarField& p,
+                volScalarField& rho,
+                volScalarField& e,
+                volScalarField& T,
+                const dictionary& dict,
+                const bool master
+            ),
+            (name, p, rho, e, T, dict, master)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fluidThermoModel,
+            detonating,
             (
                 const word& name,
                 volScalarField& p,
@@ -130,6 +150,28 @@ public:
 
 
     // Selectors
+
+        static autoPtr<fluidThermoModel> NewBasic
+        (
+            const word& name,
+            volScalarField& p,
+            volScalarField& rho,
+            volScalarField& e,
+            volScalarField& T,
+            const dictionary& dict,
+            const bool master = true
+        );
+
+        static autoPtr<fluidThermoModel> NewDetonating
+        (
+            const word& name,
+            volScalarField& p,
+            volScalarField& rho,
+            volScalarField& e,
+            volScalarField& T,
+            const dictionary& dict,
+            const bool master = true
+        );
 
         static autoPtr<fluidThermoModel> New
         (
@@ -282,7 +324,11 @@ public:
         //- Return the speed of sound for patchi
         virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
 
-
+        //- Is the internal energy limited
+        bool limit() const
+        {
+            return limit_;
+        }
 
 
     //- Thermodynamic and transport functions
