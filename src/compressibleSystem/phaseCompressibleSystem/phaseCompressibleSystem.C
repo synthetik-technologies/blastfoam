@@ -54,8 +54,31 @@ void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
         turbulence_->validate();
     }
 
-    radiation_.set(radiationModel::New(dict, this->T()).ptr());
-
+    IOdictionary radIODict
+    (
+        IOobject
+        (
+            "radiationProperties",
+            rho_.time().constant(),
+            rho_.mesh(),
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        )
+    );
+    dictionary radDict;
+    if (dict.found("radiationModel"))
+    {
+        radDict = dict;
+    }
+    else if(radIODict.found("radiationModel"))
+    {
+        radDict = radIODict;
+    }
+    else
+    {
+        radDict.add("radiationModel", "none");
+    }
+    radiation_.set(radiationModel::New(radDict, this->T()).ptr());
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

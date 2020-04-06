@@ -1,9 +1,9 @@
-Info<< "Reading MieGruneisenEOSProperties dictionary\n" << endl;
-IOdictionary MieGruneisenEOSProperties
+Info<< "Reading phaseProperties dictionary\n" << endl;
+IOdictionary phaseProperties
 (
      IOobject
      (
-          "MieGruneisenEOSProperties",
+          "phaseProperties",
           runTime.constant(),
           mesh,
           IOobject::MUST_READ,
@@ -13,7 +13,7 @@ IOdictionary MieGruneisenEOSProperties
 
 autoPtr<phaseCompressibleSystem> fluid
 (
-    phaseCompressibleSystem::New(mesh, MieGruneisenEOSProperties)
+    phaseCompressibleSystem::New(mesh, phaseProperties)
 );
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid());

@@ -11,11 +11,11 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (c4 air);                // List of phases
+phases (c4 air);
 
 radiationModel none;
 
@@ -86,30 +86,9 @@ c4
     activationModel linear;
     initiation
     {
-        E0              9.0e9;
-
-        I               4.0e6;
-        a               0.0367;
-        b               0.667;
-        x               7.0;
-        maxLambdaI      0.022;
-
-        G1              1.4997e-9;
-        c               0.667;
-        d               0.33;
-        y               2.0;
-        minLambda1      0.022;
-
-        G2              0.0;
-        e               0.667;
-        f               0.667;
-        z               3.0;
-        minLambda2      0.022;
-
-        pMin            101360;  // Above this pressure activation is                                    // "turned on" [Pa]
-
-        points     ((0 0 0.5));     // Detonation points
-        vDet       7850;            // Detonation velocity [m/s]
+        E0          9.0e0;
+        points     ((0.9 0 0));
+        vDet       9000;
     }
 
     residualRho     1e-6;           // Minimum density of the phase

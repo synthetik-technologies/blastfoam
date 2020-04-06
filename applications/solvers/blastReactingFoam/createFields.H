@@ -1,19 +1,6 @@
-Info<< "Reading MieGruneisenEOSProperties dictionary\n" << endl;
-IOdictionary MieGruneisenEOSProperties
-(
-     IOobject
-     (
-          "MieGruneisenEOSProperties",
-          runTime.constant(),
-          mesh,
-          IOobject::MUST_READ,
-          IOobject::NO_WRITE
-     )
-);
-
 autoPtr<reactingCompressibleSystem> fluid
 (
-    new reactingCompressibleSystem(mesh, MieGruneisenEOSProperties)
+    new reactingCompressibleSystem(mesh, dictionary())
 );
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid());

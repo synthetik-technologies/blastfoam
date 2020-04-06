@@ -11,33 +11,36 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (fluid gas);
+phases (copper gas);
 
 radiationModel none;
 
-fluid
+copper
 {
     type basic;
-
     thermoType
     {
         transport   const;
         thermo      eConst;
-        equationOfState stiffenedGas;
+        equationOfState CochranChan;
     }
 
     equationOfState
     {
-        gamma       4.4;
-        a           6.0e8;
+        Gamma0      2.0;
+        A           1.45667e11;
+        B           1.4775e11;
+        Epsilon1    2.994;
+        Epsilon2    1.994;
+        rho0        8900;
     }
     specie
     {
-        molWeight    28.97;
+        molWeight   63.546;
     }
     transport
     {
@@ -46,36 +49,37 @@ fluid
     }
     thermodynamics
     {
-        Cv          4186;           // Heat capacity
+        Cv          3860;           // Heat capacity
         Hf          0.0;
     }
 
     residualRho 1e-10;
-    residualAlpha 1e-6;
+    residualAlpha 1e-10;
 }
 
 gas
 {
     type basic;
-
     thermoType
     {
         transport   const;
         thermo      eConst;
-        equationOfState vanderWaals;
+        equationOfState JWL;
     }
 
     equationOfState
     {
-        gamma           1.4;
-        a               5.0;
-        b               1e-3;
-        c               0;
+        omega       0.25;
+        A           854.5e9;
+        B           20.510e9;
+        R1          4.6;
+        R2          1.35;
+        rho0        1840.0;
     }
 
     specie
     {
-        molWeight     28.97;
+        molWeight       28.97;
     }
     transport
     {
@@ -84,12 +88,15 @@ gas
     }
     thermodynamics
     {
+        type        eConst;
         Cv          718;           // Heat capacity
         Hf          0.0;
     }
 
-    residualRho     1e-10;
-    residualAlpha   1e-6;
+    activationModel none;
+
+    residualRho 1e-10;
+    residualAlpha 1e-10;
 }
 
 

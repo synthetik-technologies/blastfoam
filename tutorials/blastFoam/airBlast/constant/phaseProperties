@@ -11,36 +11,32 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (RDX gas);
+phases (c4 air);
 
 radiationModel none;
-
-RDX
+c4
 {
     type detonating;
+    // values for c-4 from: Alia2006
     reactants
     {
         thermoType
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnaghan;
+            equationOfState idealGas;
         }
         equationOfState
         {
-            rho0            1160;
-            n               7.4;
-            kappa           3.9e11;
-            Gamma           0.35;
-            pRef            1e5;
+            gamma           1.25;
         }
         specie
         {
-            molWeight       222.12;
+            molWeight       55.0;
         }
         transport
         {
@@ -49,7 +45,7 @@ RDX
         }
         thermodynamics
         {
-            Cv              1130.78;           // Heat capacity
+            Cv              1400;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -63,13 +59,12 @@ RDX
         }
         equationOfState
         {
-            A               2.9867e11;
-            B               4.11706e9;
-            R1              4.95;
-            R2              1.15;
-            C               7.206147e8;
-            omega           0.35;
-            rho0            1160;
+            rho0      1601;
+            A         609.77e9;
+            B         12.95e9;
+            R1        4.50;
+            R2        1.4;
+            omega     0.25;
         }
         specie
         {
@@ -87,27 +82,21 @@ RDX
         }
     }
 
-    activationModel pressureBased;
+    activationModel linear;
+
     initiation
     {
-        E0              4.0e9;
-        I               0;//3.18e8;
-        G1              3.5083e-7;
-        c               1.0;
-        d               0.0;
-        y               1.3;
-        minLambda1      0.0;
-
-        G2              0.0;
-
-        pMin            1.1e5; // Cutoff pressure for activation
+        E0          9.0e9; // Detonation energy
+        points     ((-0.3048 0.3048 0)); // m center top detonated
+        vDet       7850; // 8285; // m/s
+        pRef       101298; // refernece pressure for initialization [Pa]
     }
 
     residualRho     1e-6;           // Minimum density of the phase
     residualAlpha   1e-10;          // Minimum volume fraction used for division
 }
 
-gas
+air
 {
     type basic;
     thermoType
@@ -139,6 +128,5 @@ gas
     residualRho     1e-6;
     residualAlpha   1e-10;
 }
-
 
 // ************************************************************************* //
