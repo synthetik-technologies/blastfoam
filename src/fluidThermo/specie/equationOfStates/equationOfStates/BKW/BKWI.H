@@ -36,7 +36,7 @@ Foam::scalar Foam::BKW<Specie>::Gamma
     const scalar& cv
 ) const
 {
-    return dpdT(rho, T)/(cv*max(rho, 1e-10)) + 1.0;
+    return max(dpdT(rho, T)/(cv*max(rho, 1e-10)), small) + 1.0;
 }
 
 
@@ -47,7 +47,7 @@ Foam::scalar Foam::BKW<Specie>::p
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return this->R()*T*rho*(1.0 + x*exp(beta_*x));
 }
 
@@ -76,14 +76,8 @@ Foam::scalar Foam::BKW<Specie>::dpdv
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
-    scalar dxdv = kappa_*k_*sqr(rho)/pow(T - Theta_, a_);
-    return
-        this->R()*T*rho
-       *(
-            dxdv*exp(beta_*x)*(1.0 + x)
-          - (1.0 + x*exp(beta_*x))*rho
-        );
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
+    return -this->R()*T*sqr(rho)*(1.0 + exp(beta_*x)*x*(2.0 + beta_*x));
 }
 
 
@@ -94,9 +88,13 @@ Foam::scalar Foam::BKW<Specie>::dpdT
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
-    scalar dxdT = -kappa_*k_*a_*rho/pow(T - Theta_, a_ + 1);
-    return this->R()*rho*(1.0 + exp(beta_*x)*(x + T*dxdT*(1.0 + x)));
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
+    return
+        this->R()
+       *(
+            rho
+          + x*exp(beta_*x)*(rho - T*a_*rho/(T + Theta_)*(1.0 + beta_*x))
+        );
 }
 
 
@@ -107,8 +105,8 @@ Foam::scalar Foam::BKW<Specie>::E
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
-    return this->R()*sqr(T)*a_*exp(beta_*x)/(T + Theta_);
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
+    return this->R()*sqr(T)*a_*x*exp(beta_*x)/(T + Theta_);
 }
 
 
@@ -119,11 +117,10 @@ Foam::scalar Foam::BKW<Specie>::Cv
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return
-      - this->R()*x*a_/sqr(T + Theta_)
-       *(T*a_*(beta_*x - 1.0) - T - 2.0*Theta_)
-       *exp(beta_*x);
+        this->R()*T*x*a_*exp(beta_*x)/sqr(T + Theta_)
+       *(1.0 + 2.0*Theta_/T - a_*(1.0 + beta_*x));
 }
 
 
@@ -145,7 +142,7 @@ Foam::scalar Foam::BKW<Specie>::H
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return this->R()*T/(T + Theta_)*x*(T*(a_ + 1.0) + Theta_)*exp(beta_*x);
 }
 
@@ -157,7 +154,7 @@ Foam::scalar Foam::BKW<Specie>::CpMCv
     const scalar& T
 ) const
 {
-    scalar x = kappa_*k_*rho/pow(T + Theta_, a_);
+    scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return
         this->R()
        *(

@@ -95,7 +95,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
         Tnew =
             Test
           - (ThermoType::Ea(rho, e, Test) - e)/ThermoType::Cv(rho, e, Test);
-        Tnew = max(Tnew, 0.0);
+        Tnew = max(Tnew, small);
 
     } while (mag(Tnew - Test) > Ttol && iter++ < maxIter_);
 
@@ -151,11 +151,6 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
     const scalar& T
 ) const
 {
-    if (!ThermoType::temperatureBased())
-    {
-        return rho;
-    }
-
     scalar Rhoest = rho;
     scalar Rhonew = rho;
     scalar Rhotol = Rhoest*tolerance_;

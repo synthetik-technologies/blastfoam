@@ -153,7 +153,11 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     ),
     Thermo(dict)
 {
-    if (dict.lookupOrDefault<Switch>("calculateDensity", false))
+    if
+    (
+        dict.lookupOrDefault<Switch>("calculateDensity", false)
+     || Thermo::temperatureBased()
+    )
     {
         volScalarField rhoInit
         (

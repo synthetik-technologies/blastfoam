@@ -109,7 +109,8 @@ void Foam::blastFixedEnergyFvPatchScalarField::updateCoeffs()
 
     const scalarField& rhow = thermo.rho().boundaryField()[patchID];
     const scalarField& ew = thermo.e().boundaryField()[patchID];
-    fvPatchScalarField& Tw = thermo.T().boundaryFieldRef()[patchID];
+    fvPatchScalarField& Tw =
+        const_cast<fvPatchScalarField&>(thermo.T().boundaryFieldRef()[patchID]);
 
     Tw.evaluate();
     operator==(thermo.E(rhow, ew, Tw, patchID));
