@@ -27,6 +27,14 @@ Class
 Description
     Activation rate based on local pressure
 
+    References:
+    \verbatim
+        Kim, B., Park, J., Lee, K., Yoh, J. J. (2014).
+        A reactive flow model for heavily aluminized
+        cyclotrimethylene-trinitramine
+        Journal of Applied Physics. 116. 1-9
+    \endverbatim
+
 SourceFiles
     pressureBasedActivation.C
 
@@ -53,9 +61,6 @@ class pressureBasedActivation
     public activationModel
 {
 // Private data
-
-    //- Is ignition used
-    Switch ignition_;
 
     //- Ignition coefficients
     dimensionedScalar I_;
