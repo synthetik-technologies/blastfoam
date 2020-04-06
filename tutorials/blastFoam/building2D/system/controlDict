@@ -61,6 +61,14 @@ functions
         writeControl    writeTime;
         pRef            101298;
     }
+    dynamicP
+    {
+        type                dynamicPressure;
+        libs                ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+        store yes;
+    }
 };
 
 // ************************************************************************* //
