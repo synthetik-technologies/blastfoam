@@ -83,7 +83,7 @@ c4
         {
             transport   const;
             thermo      eConst;
-            equationOfState idealGas;
+            equationOfState Murnaghan;
         }
         equationOfState
         {
@@ -189,7 +189,7 @@ air
     {
         transport   const;
         thermo      eConst;
-        equationOfState stiffenedGas;
+        equationOfState idealGas;
     }
     equationOfState
     {
@@ -207,13 +207,12 @@ air
     }
     thermodynamics
     {
-        type        eConst;
         Cv          718;
         Hf          0;
     }
 
     residualRho     1e-6;
-    residualAlpha   1e-10;
+    residualAlpha   1e-6;
 }
 
 // ************************************************************************* //

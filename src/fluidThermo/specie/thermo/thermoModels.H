@@ -35,6 +35,7 @@ License
 
 #include "hConst.H"
 #include "eConst.H"
+#include "janafThermo.H"
 
 #include "equationOfState.H"
 #include "MGEquationOfState.H"
@@ -102,6 +103,13 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
+        MGEquationOfState,
+        idealGas
+    );
+    defineThermoType
+    (
+        constTransport,
+        janaf,
         MGEquationOfState,
         idealGas
     );
