@@ -1,0 +1,14 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+runApplication blockMesh
+runApplication setFields
+runApplication $(getApplication)
+runApplication postProcess -func sampleDict -time '0.010,0.016,0.026,0.028,0.030,0.032,0.034,0.038'
+
+(cd validation && ./createGraphs)
+
+# ----------------------------------------------------------------- end-of-file
