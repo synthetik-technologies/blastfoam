@@ -31,7 +31,7 @@
 #
 #------------------------------------------------------------------------------
 
-export BLAST_PROJECT=blastfoam-Release
+export BLAST_PROJECT=blastfoam
 
 ################################################################################
 # USER EDITABLE PART: Changes made here may be lost with the next upgrade

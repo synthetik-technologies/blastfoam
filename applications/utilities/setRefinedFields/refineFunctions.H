@@ -81,6 +81,35 @@ void calcFaceDiff
                 error[nei] = max(error[nei], e);
             }
         }
+
+        // Boundary faces
+        forAll(error.boundaryField(), patchi)
+        {
+            if (error.boundaryField()[patchi].coupled())
+            {
+                const fvPatch& p = field.boundaryField()[patchi].patch();
+
+                const labelUList& faceCells = p.faceCells();
+                const scalarField fp = field.boundaryField()[patchi].patchInternalField();
+
+                const scalarField fn
+                (
+                    field.boundaryField()[patchi].patchNeighbourField()
+                );
+
+                forAll(faceCells, facei)
+                {
+                    scalar e =
+                        pos0(mag(fp[facei] - fn[facei]) - 1e-6)
+                      - 10.0*neg(mag(fp[facei] - fn[facei]) - 1e-6);
+                    if (errorOrig[faceCells[facei]] > 0)
+                    {
+                        error[faceCells[facei]]=
+                            max(error[faceCells[facei]], e);
+                    }
+                }
+            }
+        }
     }
 }
 

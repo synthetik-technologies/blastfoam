@@ -633,6 +633,10 @@ int main(int argc, char *argv[])
                 );
             }
         }
+        forAll(fields, fieldi)
+        {
+            fields[fieldi].correctBoundaryConditions();
+        }
 
         if (!end)
         {

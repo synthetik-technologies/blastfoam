@@ -79,6 +79,31 @@ void Foam::errorEstimators::delta::update()
         error[own] = Foam::max(error[own], eT);
         error[nei] = Foam::max(error[nei], eT);
     }
+
+    // Boundary faces
+    forAll(error.boundaryField(), patchi)
+    {
+        if (error.boundaryField()[patchi].coupled())
+        {
+            const fvPatch& p = x_.boundaryField()[patchi].patch();
+
+            const labelUList& faceCells = p.faceCells();
+            const scalarField fp(x_.boundaryField()[patchi].patchInternalField());
+
+            const scalarField fn
+            (
+                x_.boundaryField()[patchi].patchNeighbourField()
+            );
+
+            forAll(faceCells, facei)
+            {
+                scalar eT =
+                    mag(fp[facei] - fn[facei])/Foam::min(fp[facei], fn[facei]);
+                error[faceCells[facei]]=
+                    Foam::max(error[faceCells[facei]], eT);
+            }
+        }
+    }
     error.correctBoundaryConditions();
 }
 
