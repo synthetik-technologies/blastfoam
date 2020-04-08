@@ -23,20 +23,20 @@ absorptionEmissionModels/noAbsorptionEmission/noAbsorptionEmission.C
 absorptionEmissionModels/constantAbsorptionEmission/constantAbsorptionEmission.C
 absorptionEmissionModels/binary/binary.C
 absorptionEmissionModels/greyMean/greyMean.C
-#absorptionEmissionModels/wideBand/wideBand.C
-#absorptionEmissionModels/greyMeanSolid/greyMeanSolid.C
+/* absorptionEmissionModels/wideBand/wideBand.C */
+/* absorptionEmissionModels/greyMeanSolid/greyMeanSolid.C */
 
 /* Soot model */
 sootModels/sootModel/sootModel.C
 sootModels/sootModel/sootModelNew.C
-#sootModels/mixtureFraction/mixtureFractions.C
+/* sootModels/mixtureFraction/mixtureFractions.C */
 sootModels/noSoot/noSoot.C
 
 /* Boundary conditions */
 derivedFvPatchFields/MarshakRadiation/MarshakRadiationFvPatchScalarField.C
 derivedFvPatchFields/MarshakRadiationFixedTemperature/MarshakRadiationFixedTemperatureFvPatchScalarField.C
 derivedFvPatchFields/greyDiffusiveRadiation/greyDiffusiveRadiationMixedFvPatchScalarField.C
-#derivedFvPatchFields/wideBandDiffusiveRadiation/wideBandDiffusiveRadiationMixedFvPatchScalarField.C
+/* derivedFvPatchFields/wideBandDiffusiveRadiation/wideBandDiffusiveRadiationMixedFvPatchScalarField.C */
 derivedFvPatchFields/radiationCoupledBase/radiationCoupledBase.C
 derivedFvPatchFields/greyDiffusiveViewFactor/greyDiffusiveViewFactorFixedValueFvPatchScalarField.C
 

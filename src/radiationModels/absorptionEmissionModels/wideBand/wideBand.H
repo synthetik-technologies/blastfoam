@@ -158,7 +158,7 @@ protected:
         mutable autoPtr<interpolationLookUpTable<scalar>> lookUpTablePtr_;
 
         //- Thermo package
-        const fluidThermo& thermo_;
+        const fluidThermoModel& thermo_;
 
         //- Bands
         label nBands_;
