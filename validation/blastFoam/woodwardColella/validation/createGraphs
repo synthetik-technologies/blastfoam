@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# Results taken from:
+# Woodward, Paul, and Phillip Colella. “The Numerical Simulation of Two-Dimensional Fluid Flow with Strong Shocks.” Journal of Computational Physics 54, no. 1 (1984): 115–173.
+
+createU()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_woodward_colella_validation_u_$3.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:1]
+    plot    "$1" using 1:2 title 'Woodward \& Colella'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:2 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createRho()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_woodward_colella_rho_$3.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Density [kg/m^3]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:1]
+    plot    "$1" using 1:2 title 'Woodward \& Colella'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:3 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+# pVal="$VALIDATIONDATAROOT/p.csv"
+# rhoVal="$VALIDATIONDATAROOT/density.csv"
+
+# pRhoBlastFOAM="../postProcessing/sampleDict/20/Centerline_p*"
+
+
+
+## declare an array variable
+declare -a times=("0.01" "0.016" "0.026" "0.028" "0.03" "0.032" "0.034" "0.038")
+
+## now loop through the above array
+for i in "${times[@]}"
+do
+    echo "Creating U at time: $i"
+    uVal="$VALIDATIONDATAROOT/u_${i}.csv"
+    UBlastFOAM="../postProcessing/sampleDict/${i}/Centerline_U*"
+
+    createU $uVal $UBlastFOAM $i
+    # or do whatever with individual element of the array
+done
+
+
+
+## now loop through the above array
+for i in "${times[@]}"
+do
+    echo "Creating rho at time: $i"
+    rhoVal="$VALIDATIONDATAROOT/rho_${i}.csv"
+    rhoBlastFOAM="../postProcessing/sampleDict/${i}/Centerline_p*"
+
+    createRho $rhoVal $rhoBlastFOAM $i
+    # or do whatever with individual element of the array
+done
+
+
+
+
+
+# createEpsRho $rhoVal $pRhoBlastFOAM
+# createEpsUx $uVal $UBlastFOAM
+
+echo Done
