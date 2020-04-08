@@ -250,6 +250,7 @@ void Foam::phaseCompressibleSystem::solve
     (
         fvc::div(rhoEPhi_)
       - ESource()
+      - (rhoU_ & g_)
     );
 
     if (deltaIs_[stepi - 1] != -1)
