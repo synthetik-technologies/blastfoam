@@ -94,6 +94,10 @@ protected:
         //- Is the internal energy limited
         Switch limit_;
 
+        //- Correct e boundary values
+        void eBoundaryCorrection();
+
+
 public:
 
     //- Runtime type information

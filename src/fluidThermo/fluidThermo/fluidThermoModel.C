@@ -218,8 +218,7 @@ Foam::fluidThermoModel::eBoundaryTypes(const volScalarField& T)
         }
         else if
         (
-            isA<zeroGradientFvPatchScalarField>(T.boundaryField()[patchi])
-         || isA<fixedGradientFvPatchScalarField>(T.boundaryField()[patchi])
+            isA<fixedGradientFvPatchScalarField>(T.boundaryField()[patchi])
          || isA<blastGradientEnergyCalculatedTemperatureFvPatchScalarField>
             (
                 T.boundaryField()[patchi]
@@ -287,6 +286,26 @@ Foam::fluidThermoModel::eBoundaryBaseTypes(const volScalarField& T)
     return ebt;
 }
 
+
+
+void Foam::fluidThermoModel::eBoundaryCorrection()
+{
+    volScalarField::Boundary& eBf = e_.boundaryFieldRef();
+
+    forAll(eBf, patchi)
+    {
+        if (isA<blastGradientEnergyFvPatchScalarField>(eBf[patchi]))
+        {
+            refCast<blastGradientEnergyFvPatchScalarField>(eBf[patchi]).gradient()
+                = eBf[patchi].fvPatchField::snGrad();
+        }
+        else if (isA<blastMixedEnergyFvPatchScalarField>(eBf[patchi]))
+        {
+            refCast<blastMixedEnergyFvPatchScalarField>(eBf[patchi]).refGrad()
+                = eBf[patchi].fvPatchField::snGrad();
+        }
+    }
+}
 
 Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::mu() const
 {

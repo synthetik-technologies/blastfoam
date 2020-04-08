@@ -193,6 +193,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
                     e.boundaryField()[patchi][facei];
             }
         }
+        eBoundaryCorrection();
         correct();
     }
 }

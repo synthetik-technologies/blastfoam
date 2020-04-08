@@ -121,6 +121,7 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
                     e.boundaryField()[patchi][facei];
             }
         }
+        eBoundaryCorrection();
         correct();
     }
     rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;

@@ -721,7 +721,6 @@ int main(int argc, char *argv[])
         scalarCellLevel[celli] = cellLevel[celli];
     }
     writeOk = writeOk && scalarCellLevel.write();
-    error.write();
 
     Info<< "\nEnd\n" << endl;
 

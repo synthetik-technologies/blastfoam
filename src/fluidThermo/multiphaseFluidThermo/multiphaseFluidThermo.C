@@ -127,6 +127,7 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
                     e.boundaryField()[patchi][facei];
             }
         }
+        eBoundaryCorrection();
     }
 
     correct();

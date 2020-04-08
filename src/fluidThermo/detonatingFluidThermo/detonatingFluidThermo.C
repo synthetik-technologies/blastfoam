@@ -267,6 +267,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
                     e.boundaryField()[patchi][facei];
             }
         }
+        eBoundaryCorrection();
         correct();
     }
 }
