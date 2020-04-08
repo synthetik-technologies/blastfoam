@@ -43,6 +43,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "fiveEqnCompressibleTurbulenceModelFwd.H"
 #include "radiationModel.H"
+#include "uniformDimensionedFields.H"
 
 
 namespace Foam
@@ -125,6 +126,10 @@ protected:
         //- Drag source term
         tmp<volScalarField> UCoeff_;
         tmp<volVectorField> USource_;
+
+        //- Gravitational acceleration
+        const uniformDimensionedVectorField& g_;
+
 
         //- Allocate turbulence model if mu >= 0
         void setModels(const dictionary& dict);

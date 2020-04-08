@@ -200,7 +200,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
         mesh,
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
-    fluxScheme_(fluxScheme::New(mesh))
+    fluxScheme_(fluxScheme::New(mesh)),
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {}
 
 
@@ -244,7 +245,7 @@ void Foam::phaseCompressibleSystem::solve
         }
     }
 
-    volVectorField deltaRhoU(fvc::div(rhoUPhi_));
+    volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
     (
         fvc::div(rhoEPhi_)

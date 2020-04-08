@@ -1,3 +1,18 @@
+// Read gravitational acceleration
+Info<< "\nReading g" << endl;
+uniformDimensionedVectorField g
+(
+    IOobject
+    (
+        "g",
+        runTime.constant(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::NO_WRITE
+    ),
+    dimensionedVector(dimAcceleration, Zero)
+);
+
 Info<< "Reading phaseProperties dictionary\n" << endl;
 IOdictionary phaseProperties
 (
@@ -43,18 +58,3 @@ if (!isA<staticFvMesh>(mesh))
             )
         );
 }
-
-// Read gravitational acceleration
-Info<< "\nReading g" << endl;
-uniformDimensionedVectorField g
-(
-    IOobject
-    (
-        "g",
-        runTime.constant(),
-        mesh,
-        IOobject::READ_IF_PRESENT,
-        IOobject::NO_WRITE
-    ),
-    dimensionedVector(dimAcceleration, Zero)
-);
