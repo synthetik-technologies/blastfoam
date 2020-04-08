@@ -101,6 +101,49 @@ void Foam::errorEstimators::Lohner::update()
         error[own] = Foam::max(error[own], eT);
         error[nei] = Foam::max(error[nei], eT);
     }
+
+    forAll(error.boundaryField(), patchi)
+    {
+        if (error.boundaryField()[patchi].coupled())
+        {
+            const fvPatch& patch = x_.boundaryField()[patchi].patch();
+
+            const labelUList& faceCells = patch.faceCells();
+            const scalarField xp
+            (
+                x_.boundaryField()[patchi].patchInternalField()
+            );
+            const scalarField xn
+            (
+                x_.boundaryField()[patchi].patchNeighbourField()
+            );
+            const scalarField xbf
+            (
+                x_.boundaryField()[patchi]
+            );
+
+            forAll(faceCells, facei)
+            {
+               scalar eT =
+                    sqrt
+                    (
+                        mag(xn[facei] - 2.0*xbf[facei] + xp[facei])
+                       /(
+                            mag(xn[facei] - xbf[facei])
+                          + mag(xbf[facei] - xp[facei])
+                          + epsilon_
+                           *(
+                                mag(xn[facei])
+                              + 2.0*mag(xbf[facei])
+                              + mag(xp[facei])
+                            )
+                        )
+                    );
+                    error[faceCells[facei]] =
+                        Foam::max(error[faceCells[facei]], eT);
+            }
+        }
+    }
     error.correctBoundaryConditions();
 }
 

@@ -64,7 +64,7 @@ void Foam::errorEstimators::densityGradient::update()
 {
     volScalarField& error(*this);
 
-    vectorField gradRho(fvc::grad(rho_)().primitiveField());
+    volVectorField gradRho(fvc::grad(rho_));
     scalarField dL(mesh_.V()/fvc::surfaceSum(mesh_.magSf()));
 
     const labelUList& owner = mesh_.owner();
@@ -97,6 +97,63 @@ void Foam::errorEstimators::densityGradient::update()
                 );
             error[own] = Foam::max(error[own], eT);
             error[nei] = Foam::max(error[nei], eT);
+        }
+    }
+
+    // Boundary faces
+    forAll(error.boundaryField(), patchi)
+    {
+        if (error.boundaryField()[patchi].coupled())
+        {
+            const fvPatch& patch = rho_.boundaryField()[patchi].patch();
+
+            const labelUList& faceCells = patch.faceCells();
+            const scalarField rhop
+            (
+                rho_.boundaryField()[patchi].patchInternalField()
+            );
+            const scalarField rhon
+            (
+                rho_.boundaryField()[patchi].patchNeighbourField()
+            );
+            const vectorField drField
+            (
+                rho_.mesh().C().boundaryField()[patchi].patchNeighbourField()
+              - rho_.mesh().C().boundaryField()[patchi].patchInternalField()
+            );
+            const vectorField gradRhop
+            (
+                gradRho.boundaryField()[patchi].patchInternalField()
+            );
+            const vectorField gradRhon
+            (
+                gradRho.boundaryField()[patchi].patchNeighbourField()
+            );
+
+
+            forAll(faceCells, facei)
+            {
+                vector dr = drField[facei];
+                scalar magdr = mag(dr);
+
+                // Ignore error in empty directions
+                if (mag(solutionD & (dr/magdr)) > 0.1)
+                {
+                    scalar dRhodr = (rhon[facei] - rhop[facei])/magdr;
+                    scalar rhoc = (rhon[facei] + rhop[facei])*0.5;
+                    scalar dl = dL[faceCells[facei]];
+                    scalar dRhoDotOwn = gradRhop[facei] & (dr/magdr);
+                    scalar dRhoDotNei = gradRhon[facei] & (-dr/magdr);
+                    scalar eT =
+                        Foam::max
+                        (
+                            mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
+                            mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
+                        );
+                    error[faceCells[facei]] =
+                        Foam::max(error[faceCells[facei]], eT);
+                }
+            }
         }
     }
     error.correctBoundaryConditions();
