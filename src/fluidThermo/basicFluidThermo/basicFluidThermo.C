@@ -156,6 +156,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     if
     (
         dict.lookupOrDefault<Switch>("calculateDensity", false)
+     && rho_.time().value() == rho_.time().startTime().value()
     )
     {
         volScalarField rhoInit

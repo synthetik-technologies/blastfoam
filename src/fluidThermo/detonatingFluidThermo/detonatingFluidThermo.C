@@ -229,7 +229,12 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
     activation_(activationModel::New(rho.mesh(), dict, name)),
     afterburn_(afterburnModel::New(rho.mesh(), dict, name))
 {
-    if (uThermo::solid())
+    if
+    (
+        uThermo::solid()
+     && dict.lookupOrDefault<Switch>("calculateDensity", false)
+     && rho_.time().value() == rho_.time().startTime().value()
+    )
     {
         volScalarField rhoInit
         (
