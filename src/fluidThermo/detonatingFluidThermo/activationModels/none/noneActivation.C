@@ -48,7 +48,9 @@ Foam::activationModels::noneActivation::noneActivation
 )
 :
     activationModel(mesh, dict, phaseName)
-{}
+{
+    lambda_ = 1.0;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -57,19 +59,6 @@ Foam::activationModels::noneActivation::~noneActivation()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::activationModels::noneActivation::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
-{
-    if (lambda_.time().value() >= lambda_.time().deltaTValue())
-    {
-        lambda_ = 1.0;
-    }
-}
 
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
@@ -92,9 +81,7 @@ Foam::activationModels::noneActivation::ddtLambda() const
             (
                 "ESource",
                 inv(dimTime),
-                lambda_.time().value() == lambda_.time().deltaTValue()
-              ? 1.0/lambda_.time().deltaT().value()
-              : 0.0
+                0.0
             )
         )
     );

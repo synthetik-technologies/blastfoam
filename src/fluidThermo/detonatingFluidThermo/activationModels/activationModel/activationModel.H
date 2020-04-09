@@ -174,6 +174,12 @@ public:
         //- Remove stored fields
         virtual void clearODEFields();
 
+        //- Return the specific detonation energy
+        const dimensionedScalar& e0() const
+        {
+            return e0_;
+        }
+
         //- Return const reference to progress variable
         const volScalarField& lambda() const
         {

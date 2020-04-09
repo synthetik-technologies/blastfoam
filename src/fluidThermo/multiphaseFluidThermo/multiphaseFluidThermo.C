@@ -115,6 +115,9 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
         sumAlpha += volumeFractions_[phasei];
     }
 
+
+    //- If this is the top level model, initialize the internal energy
+    //  if it has not been read
     if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());

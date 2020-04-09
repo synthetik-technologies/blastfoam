@@ -106,9 +106,13 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
         )
     )
 {
+    //- Force reading of residual values
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
+
+    //- If this is the top level model, initialize the internal energy
+    //  if it has not been read
     if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
@@ -124,6 +128,8 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
         eBoundaryCorrection();
         correct();
     }
+
+    // Update total density
     rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 }
 
@@ -196,6 +202,7 @@ void Foam::twoPhaseFluidThermo::correct()
     thermo1_->correct();
     thermo2_->correct();
 
+    // Update transport coefficients
     mu_ = volumeFraction_*thermo1_->mu() + (1.0 - volumeFraction_)*thermo2_->mu();
     alpha_ =
         volumeFraction_*thermo1_->alphahe()
@@ -238,13 +245,16 @@ Foam::twoPhaseFluidThermo::speedOfSound(const label patchi) const
     scalarField cSqr
     (
         (
-            alphaXi1*rho1_.boundaryField()[patchi]*sqr(thermo1_->speedOfSound(patchi))
-          + alphaXi2*rho2_.boundaryField()[patchi]*sqr(thermo2_->speedOfSound(patchi))
+            alphaXi1*rho1_.boundaryField()[patchi]
+           *sqr(thermo1_->speedOfSound(patchi))
+          + alphaXi2*rho2_.boundaryField()[patchi]
+           *sqr(thermo2_->speedOfSound(patchi))
         )
         /(rho_.boundaryField()[patchi]*(alphaXi1 + alphaXi2))
     );
     return sqrt(max(cSqr, small));
-}\
+}
+
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcT() const
 {
@@ -252,7 +262,6 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcT() const
         volumeFraction_*thermo1_->calcT()
       + (1.0 - volumeFraction_)*thermo2_->calcT();
 }
-
 
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcP() const
@@ -338,7 +347,7 @@ Foam::twoPhaseFluidThermo::Gamma(const label patchi) const
     return
         1.0
        /(
-            volumeFraction_.boundaryField()[patchi]*thermo1_->Gamma(patchi)
+            volumeFraction_.boundaryField()[patchi]/thermo1_->Gamma(patchi)
           + (1.0 - volumeFraction_.boundaryField()[patchi])/thermo2_->Gamma(patchi)
         );
 }

@@ -229,6 +229,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
     activation_(activationModel::New(rho.mesh(), dict, name)),
     afterburn_(afterburnModel::New(rho.mesh(), dict, name))
 {
+    //- Initialize the density using the pressure and temperature
+    //  This is only done at the first time step (Not on restart)
     if
     (
         uThermo::solid()
@@ -260,6 +262,9 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
             }
         }
     }
+
+    //- If this is the top level model, initialize the internal energy
+    //  if it has not been read
     if (master && max(e_).value() < 0.0)
     {
         volScalarField e(calce());
@@ -410,7 +415,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::speedOfSound(const label patchi) 
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::calcT() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::calcT() const
 {
     return volScalarFieldProperty
     (
@@ -426,7 +432,8 @@ Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::c
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::calcP() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::calcP() const
 {
     return volScalarFieldProperty
     (
@@ -445,17 +452,27 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::calce() const
 {
-    return volScalarFieldProperty
+    tmp<volScalarField> eInit
     (
-        IOobject::groupName("e", name_),
-        dimEnergy/dimMass,
-        &uThermo::initializeEnergy,
-        &rThermo::initializeEnergy,
-        p_,
-        rho_,
-        e_,
-        T_
+        singleVolScalarFieldProperty
+        (
+            IOobject::groupName("e", name_),
+            dimEnergy/dimMass,
+            &uThermo::initializeEnergy,
+            p_,
+            rho_,
+            e_,
+            T_
+        )
     );
+
+    //- Add detonation energy to initially reacted material
+    if (rho_.time().value() == rho_.time().startTime().value())
+    {
+        eInit.ref() += activation_->e0()*activation_->lambda();
+    }
+
+    return eInit;
 }
 
 
@@ -553,7 +570,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::Gamma(const label patchi) const
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::ESource() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::ESource() const
 {
     return tmp<volScalarField>
     (
@@ -624,7 +642,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::Wi(const label celli) const
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::Cp() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::Cp() const
 {
     return volScalarFieldProperty
     (
@@ -656,7 +675,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::Cp(const label patchi) const
 
 
 template<class uThermo, class rThermo>
-Foam::scalar Foam::detonatingFluidThermo<uThermo, rThermo>::Cpi(const label celli) const
+Foam::scalar
+Foam::detonatingFluidThermo<uThermo, rThermo>::Cpi(const label celli) const
 {
     scalar x = activation_->lambdaPowi(celli);
     return
@@ -666,7 +686,8 @@ Foam::scalar Foam::detonatingFluidThermo<uThermo, rThermo>::Cpi(const label cell
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::Cv() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::Cv() const
 {
     return volScalarFieldProperty
     (
@@ -730,7 +751,8 @@ Foam::scalar Foam::detonatingFluidThermo<uThermo, rThermo>::Cvi(const label cell
 
 
 template<class uThermo, class rThermo>
-Foam::tmp<Foam::volScalarField> Foam::detonatingFluidThermo<uThermo, rThermo>::CpByCv() const
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::CpByCv() const
 {
     return volScalarFieldProperty
     (
