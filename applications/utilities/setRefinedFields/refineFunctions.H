@@ -90,9 +90,12 @@ void calcFaceDiff
                 const fvPatch& p = field.boundaryField()[patchi].patch();
 
                 const labelUList& faceCells = p.faceCells();
-                const scalarField fp = field.boundaryField()[patchi].patchInternalField();
+                scalarField fp
+                (
+                    field.boundaryField()[patchi].patchInternalField()
+                );
 
-                const scalarField fn
+                scalarField fn
                 (
                     field.boundaryField()[patchi].patchNeighbourField()
                 );
