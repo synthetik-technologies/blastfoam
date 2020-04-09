@@ -15,15 +15,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type singlePhaseCompressibleSystem;
-
 mixture
 {
-    type        basic;
+    type            basic;
     thermoType
     {
-        transport const;
-        thermo  eConst;
+        transport   const;
+        thermo      eConst;
         equationOfState idealGas;
     }
 
@@ -33,30 +31,17 @@ mixture
     }
     transport
     {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
+        mu              0;
+        Pr              1;
     }
     thermodynamics
     {
-        Cv          1;           // Heat capacity
+        Cv          1;
         Hf          0.0;
     }
     equationOfState
     {
         gamma 1.4;
-
-        nRho        9;
-        ne          90;
-        minRho      -5.8883678913116455;
-        mine        12.189257560491985;
-        dRho        1.0;
-        de          0.1791675836;
-
-        pMod        ln;
-        TMod        ln;
-
-        rhoMod      log10;
-        eMod        ln;
     }
 }
 
