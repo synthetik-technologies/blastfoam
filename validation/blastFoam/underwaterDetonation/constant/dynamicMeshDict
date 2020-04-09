@@ -19,14 +19,6 @@ dynamicFvMesh   adaptiveFvMesh;
 // How often to refine
 refineInterval  1;
 
-// loadBalance
-// {
-//     method ptscotch;
-//
-//     balanceInterval 1;
-//     allowableImbalance 0.1;
-// }
-
 // Field to be refinement on
 field           error;
 errorEstimator  densityGradient;
@@ -42,10 +34,10 @@ unrefineLevel   1e-2;
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   3;
+maxRefinement   5;
 
 // Stop refinement if maxCells reached
-maxCells        10000000;
+maxCells        100000000;
 
 // Flux field and corresponding velocity field. Fluxes on changed
 // faces get recalculated by interpolating the velocity. Use 'none'

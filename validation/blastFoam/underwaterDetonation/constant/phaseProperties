@@ -61,7 +61,7 @@ water
     {
         transport   const;
         thermo      eConst;
-        equationOfState stiffenedGas;
+        equationOfState Tait;
     }
     equationOfState
     {

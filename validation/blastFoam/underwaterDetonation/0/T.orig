@@ -20,11 +20,6 @@ internalField   uniform 300;
 
 boundaryField
 {
-    wall
-    {
-        type            zeroGradient;
-    }
-
     outlet
     {
         type            zeroGradient;

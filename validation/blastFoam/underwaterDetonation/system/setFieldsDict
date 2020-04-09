@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.air);
-nBufferLayers 1;
+nBufferLayers 0;
 
 defaultFieldValues
 (
@@ -34,8 +34,7 @@ regions
         p1 (0 0 -1);
         p2 (0 0 1);
         radius 0.1;
-        refineInternal yes;
-        level 3;
+        level 5;
 
         fieldValues
         (

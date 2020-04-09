@@ -79,6 +79,8 @@ void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
         radDict.add("radiationModel", "none");
     }
     radiation_.set(radiationModel::New(radDict, this->T()).ptr());
+     volVectorField("rhog", rho_*g_).write();
+            volVectorField("gradp", fvc::grad(p_)).write();
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

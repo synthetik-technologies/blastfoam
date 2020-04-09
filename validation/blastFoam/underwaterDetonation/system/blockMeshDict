@@ -19,20 +19,19 @@ convertToMeters 1;
 vertices
 (
     // this domain is slightly larger than the bounds of the geometry in the stl
-    ( -1.2  -0.6  0 ) // bottom
-    (  1.2  -0.6  0 )
-    (  1.2   1.2  0 )
-    ( -1.2   1.2  0 )
-    ( -1.2  -0.6  0.1) // top
-    (  1.2  -0.6  0.1)
-    (  1.2   1.2  0.1)
-    ( -1.2   1.2  0.1)
+    ( -0.6  -0.6  0 ) // bottom
+    (  0.6  -0.6  0 )
+    (  0.6   0.6  0 )
+    ( -0.6   0.6  0 )
+    ( -0.6  -0.6  0.1) // top
+    (  0.6  -0.6  0.1)
+    (  0.6   0.6  0.1)
+    ( -0.6   0.6  0.1)
 );
 
 blocks
 (
-	 hex (0 1 2 3 4 5 6 7) (100 75 1) simpleGrading (1 1 1) // control refinement of background mesh here
-	// this is the coarsest element in the mesh, is "level 0" in refinement; make this is "fine enough"
+    hex (0 1 2 3 4 5 6 7) (40 40 1) simpleGrading (1 1 1)
 );
 
 edges
@@ -41,10 +40,9 @@ edges
 
 boundary
 (
-
-    wall
+    outlet
     {
-        type wall;
+        type patch;
         faces
         (
             (0 1 5 4)
@@ -53,18 +51,6 @@ boundary
             (0 3 7 4)
         );
     }
-
-//     outlet
-//     {
-//         type patch;
-//         faces
-//         (
-//             (1 2 6 5)
-//             (3 2 6 7)
-//             (0 3 7 4)
-//         );
-//     }
-
 );
 
 mergePatchPairs

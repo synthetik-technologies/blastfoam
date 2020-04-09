@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 16; // this is number of proc
+numberOfSubdomains 4; // this is number of proc
 
 // preservePatches (patch0 patch1 patch2);
 
@@ -23,7 +23,7 @@ method         simple; // automatic
 
 simpleCoeffs // not auto
 {
-    n               ( 4 4 1 );
+    n               ( 2 2 1 );
     delta           0.001;
 }
 

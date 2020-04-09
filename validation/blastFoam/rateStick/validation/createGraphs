@@ -44,8 +44,8 @@ cat ../rateStick_12_5/detonationVelocity >>blastFoam.csv
 cat ../rateStick_20/detonationVelocity >>blastFoam.csv
 
 blastFOAM="blastFoam.csv"
-exp="experimental_LNLL.csv"
-sim="guilkey_et_al_2007.csv"
+exp="validationData/experimental_LNLL.csv"
+sim="validationData/guilkey_et_al_2007.csv"
 
 
 createEps $blastFOAM $exp $sim
