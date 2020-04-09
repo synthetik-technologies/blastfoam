@@ -109,15 +109,15 @@ void Foam::errorEstimators::Lohner::update()
             const fvPatch& patch = x_.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = patch.faceCells();
-            const scalarField xp
+            scalarField xp
             (
                 x_.boundaryField()[patchi].patchInternalField()
             );
-            const scalarField xn
+            scalarField xn
             (
                 x_.boundaryField()[patchi].patchNeighbourField()
             );
-            const scalarField xbf
+            scalarField xbf
             (
                 x_.boundaryField()[patchi]
             );

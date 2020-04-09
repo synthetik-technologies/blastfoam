@@ -108,24 +108,24 @@ void Foam::errorEstimators::densityGradient::update()
             const fvPatch& patch = rho_.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = patch.faceCells();
-            const scalarField rhop
+            scalarField rhop
             (
                 rho_.boundaryField()[patchi].patchInternalField()
             );
-            const scalarField rhon
+            scalarField rhon
             (
                 rho_.boundaryField()[patchi].patchNeighbourField()
             );
-            const vectorField drField
+            vectorField drField
             (
                 rho_.mesh().C().boundaryField()[patchi].patchNeighbourField()
               - rho_.mesh().C().boundaryField()[patchi].patchInternalField()
             );
-            const vectorField gradRhop
+            vectorField gradRhop
             (
                 gradRho.boundaryField()[patchi].patchInternalField()
             );
-            const vectorField gradRhon
+            vectorField gradRhon
             (
                 gradRho.boundaryField()[patchi].patchNeighbourField()
             );

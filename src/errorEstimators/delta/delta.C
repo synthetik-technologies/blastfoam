@@ -88,9 +88,9 @@ void Foam::errorEstimators::delta::update()
             const fvPatch& p = x_.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = p.faceCells();
-            const scalarField fp(x_.boundaryField()[patchi].patchInternalField());
+            scalarField fp(x_.boundaryField()[patchi].patchInternalField());
 
-            const scalarField fn
+            scalarField fn
             (
                 x_.boundaryField()[patchi].patchNeighbourField()
             );
