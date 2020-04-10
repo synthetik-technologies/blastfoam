@@ -42,7 +42,7 @@ License
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
-#include "BirchMurnaghan2.H"
+// #include "BirchMurnaghan2.H"
 #include "BirchMurnaghan3.H"
 #include "solidJWL.H"
 
@@ -54,8 +54,8 @@ License
 #include "JWLC.H"
 #include "LSZK.H"
 #include "BWR.H"
-#include "BKW.H"
-#include "DoanNickel.H"
+// #include "BKW.H"
+// #include "DoanNickel.H"
 
 #include "tabulated.H"
 
@@ -78,12 +78,12 @@ namespace Foam
         Murnaghan
     );
 
-    defineThermoTypes
-    (
-        constTransport,
-        equationOfState,
-        BirchMurnaghan2
-    );
+//     defineThermoTypes
+//     (
+//         constTransport,
+//         equationOfState,
+//         BirchMurnaghan2
+//     );
 
     defineThermoTypes
     (
@@ -114,12 +114,12 @@ namespace Foam
         idealGas
     );
 
-    defineThermoTypes
-    (
-        constTransport,
-        equationOfState,
-        BKW
-    );
+//     defineThermoTypes
+//     (
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
 
     defineThermoTypes
     (
@@ -156,12 +156,12 @@ namespace Foam
         JWL
     );
 
-    defineThermoTypes
-    (
-        constTransport,
-        equationOfState,
-        JWLC
-    );
+//     defineThermoTypes
+//     (
+//         constTransport,
+//         equationOfState,
+//         JWLC
+//     );
 
     defineThermoTypes
     (
@@ -170,12 +170,12 @@ namespace Foam
         LSZK
     );
 
-    defineThermoTypes
-    (
-        constTransport,
-        MGEquationOfState,
-        DoanNickel
-    );
+//     defineThermoTypes
+//     (
+//         constTransport,
+//         MGEquationOfState,
+//         DoanNickel
+//     );
 
     typedef constTransport<tabulated<blastSpecie>> constTransporttabulatedEOS;
 }

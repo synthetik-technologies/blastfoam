@@ -47,12 +47,12 @@ namespace Foam
         Murnaghan
     );
 
-    addFluidThermos
-    (
-        constTransport,
-        equationOfState,
-        BirchMurnaghan2
-    );
+//     addFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         BirchMurnaghan2
+//     );
 
     addFluidThermos
     (
@@ -90,12 +90,12 @@ namespace Foam
         Tait
     );
 
-    addFluidThermos
-    (
-        constTransport,
-        equationOfState,
-        BKW
-    );
+//     addFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
 
     addFluidThermos
     (
@@ -118,12 +118,12 @@ namespace Foam
         JWL
     );
 
-    addFluidThermos
-    (
-        constTransport,
-        equationOfState,
-        JWLC
-    );
+//     addFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         JWLC
+//     );
 
     addFluidThermos
     (
@@ -132,13 +132,13 @@ namespace Foam
         LSZK
     );
 
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        MGEquationOfState,
-        DoanNickel
-    );
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         MGEquationOfState,
+//         DoanNickel
+//     );
 
     // Tabulated equation of state
     typedef basicFluidThermo<constTransporttabulatedEOS>
