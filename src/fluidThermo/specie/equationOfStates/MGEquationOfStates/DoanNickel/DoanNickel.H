@@ -101,6 +101,9 @@ class DoanNickel
     scalar E33_ = 160.0;
     scalar deltaE3_ = 6.0;
 
+    //- Max value used in exp function
+    const scalar expMax_ = 100;
+
     //- Derivative of specific heat ration w.r.t. density
     scalar dGammadRho
     (

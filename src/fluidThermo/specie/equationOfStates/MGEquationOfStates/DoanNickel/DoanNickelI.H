@@ -58,18 +58,43 @@ Foam::scalar Foam::DoanNickel<Specie>::Gamma
     const scalar& eIn
 ) const
 {
+    //- Scale internal energy to 10^10 ergs/gram
     scalar e = eIn*1e-6;
     scalar rhoByRho0(rho/rho0_);
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
     scalar deltaI1(max(deltaE1_*pow(rhoByRho0, deltaE1Pow_), 1e-10));
-    scalar f1(1.0/(exp((e - I1)/deltaI1) + 1.0));
+    scalar f1((e - I1)/deltaI1);
+    if (f1 > expMax_)
+    {
+        f1 = 0.0;
+    }
+    else
+    {
+        f1 = 1.0/(exp(f1) + 1.0);
+    }
 
     scalar I2(E22_*pow(rhoByRho0, E2Pow_));
     scalar deltaI2(max(deltaE2_*pow(rhoByRho0, deltaE2Pow_), 1e-10));
-    scalar f2(1.0/(exp((I2 - e)/deltaI2) + 1.0));
+    scalar f2((I2 - e)/deltaI2);
+    if (f2 > expMax_)
+    {
+        f2 = 0.0;
+    }
+    else
+    {
+        f2 = 1.0/(exp(f2) + 1.0);
+    }
 
-    scalar f3(exp((E33_ - e)/deltaE3_)/sqr(exp((E33_ - e)/deltaE3_) + 1.0));
+    scalar f3((E33_ - e)/deltaE3_);
+    if (f3 > expMax_)
+    {
+        f3 = 0.0;
+    }
+    else
+    {
+        f3 = 1.0/(exp(f3) + 1.0);
+    }
 
     scalar A
     (
@@ -105,6 +130,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dpde
     const scalar& e
 ) const
 {
+    //- Unscale the change in internal energy
     return 1e-6*dGammade(rho, e)*rho*e + (Gamma(rho, e) - 1.0)*rho;
 }
 
@@ -194,40 +220,63 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammadRho
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
     scalar deltaI1(max(deltaE1_*pow(rhoByRho0, deltaE1Pow_), 1e-10));
+    scalar f1((e - I1)/deltaI1);
+    scalar df1 = 0.0;
+    if (f1 > expMax_)
+    {
+        f1 = 0.0;
+    }
+    else
+    {
+        scalar dI1(E11_/(max(rho, 1e-10)*log(10.0)));
+        scalar dDeltaI1(deltaE2Pow_*deltaE2_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
 
-    scalar dI1(E11_/(max(rho, 1e-10)*log(10.0)));
-    scalar dDeltaI1(deltaE2Pow_*deltaE2_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
-
-    scalar f1 =  1.0/(exp((e - I1)/deltaI1) + 1.0);
-    scalar df1 =
-        exp((e - I1)/deltaI1)/sqr(exp((e - I1)/deltaI1) + 1.0)
-       *(dI1/deltaI1 + dDeltaI1*(e - I1)/sqr(deltaI1));
+        df1 =
+            exp(f1)/sqr(exp(f1) + 1.0)
+           *(dI1/deltaI1 + dDeltaI1*(e - I1)/sqr(deltaI1));
+        f1 = 1.0/(exp(f1) + 1.0);
+    }
 
     scalar I2(E22_*pow(rhoByRho0, E2Pow_));
     scalar deltaI2(max(deltaE2_*pow(rhoByRho0, deltaE2Pow_), 1e-10));
+    scalar f2((I2 - e)/deltaI2);
+    scalar df2 = 0.0;
+    if (f2 > expMax_)
+    {
+        f2 = 0.0;
+    }
+    else
+    {
+        scalar dI2(E22_*E2Pow_/rho0_*pow(rhoByRho0, E2Pow_ - 1.0));
+        scalar dDeltaI2(deltaE2Pow_*deltaE2_/rho0_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
 
-    scalar dI2(E22_*E2Pow_/rho0_*pow(rhoByRho0, E2Pow_ - 1.0));
-    scalar dDeltaI2(deltaE2Pow_*deltaE2_/rho0_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
+        df2 =
+          - exp(f2)/sqr(exp(f2) + 1.0)
+           *(dI2/deltaI2 - dDeltaI2*(I2 - e)/sqr(deltaI2));
+        f2 = 1.0/(exp(f2) + 1.0);
+    }
 
-    scalar f2 = 1.0/(exp((I2 - e)/deltaI2) + 1.0);
-    scalar df2 =
-        - exp((I2 - e)/deltaI2)/sqr(exp((I2 - e)/deltaI2) + 1.0)
-        *(dI2/deltaI2 - dDeltaI2*(I2 - e)/sqr(deltaI2));
-
-    scalar f3(-exp((E33_ - e)/deltaE3_)/sqr(exp((E33_ - e)/deltaE3_) + 1.0));
+    scalar f3((E33_ - e)/deltaE3_);
+    if (f3 > expMax_)
+    {
+        f3 = 0.0;
+    }
+    else
+    {
+        f3 = 1.0/(exp(f3) + 1.0);
+    }
 
     scalar A
     (
         (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))*log10(max(e, small))
       + a3_*f2
     );
-    A *= pos(1.0e6 - e);
 
     scalar dA
     (
         (a1_*df1 - a2_*(df1*(1.0 - f2) + (1.0 - f1)*df2))*log10(max(e, small))
+      + a3_*df2
     );
-    dA *= pos(1.0e6 - e);
 
     scalar g =
             a_
@@ -256,16 +305,43 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
     scalar deltaI1(max(deltaE1_*pow(rhoByRho0, deltaE1Pow_), 1e-10));
-    scalar f1(1.0/(exp((e - I1)/deltaI1) + 1.0));
-    scalar df1(-exp((e - I1)/deltaI1)/sqr(exp((e - I1)/deltaI1) + 1.0)/deltaI1);
+    scalar f1((e - I1)/deltaI1);
+    scalar df1 = 0.0;
+    if (f1 > expMax_)
+    {
+        f1 = 0.0;
+    }
+    else
+    {
+        df1 = -exp(f1)/(sqr(exp(f1) + 1.0)*deltaI1);
+        f1 = 1.0/(exp(f1) + 1.0);
+    }
 
     scalar I2(E22_*pow(rhoByRho0, E2Pow_));
     scalar deltaI2(max(deltaE2_*pow(rhoByRho0, deltaE2Pow_), 1e-10));
-    scalar f2(1.0/(exp((I2 - e)/deltaI2) + 1.0));
-    scalar df2(exp((I2 - e)/deltaI2)/(sqr(exp((I2 - e)/deltaI2) + 1.0)*deltaI2));
+    scalar f2((I2 - e)/deltaI2);
+    scalar df2 = 0.0;
+    if (f2 > expMax_)
+    {
+        f2 = 0.0;
+    }
+    else
+    {
+        df2 = exp(f2)/(sqr(exp(f2) + 1.0)*deltaI2);
+        f2 = 1.0/(exp(f2) + 1.0);
+    }
 
-    scalar f3(1.0/(exp((E33_ - e)/deltaE3_)));
-    scalar df3(exp((E33_ - e)/deltaE3_)/(sqr(exp((E33_ - e)/deltaE3_) + 1.0)*deltaE3_));
+    scalar f3((E33_ - e)/deltaE3_);
+    scalar df3 = 0.0;
+    if (f3 > expMax_)
+    {
+        f3 = 0.0;
+    }
+    else
+    {
+        df3 = exp(f3)/(sqr(exp(f3) + 1.0)*deltaE3_);
+        f3 = 1.0/(exp(f3) + 1.0);
+    }
 
     scalar A
     (
@@ -277,7 +353,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
     (
         (a1_*df1 - a2_*(df1*(1.0 - f2) + (1.0 - f1)*df2))*log10(max(e, small))
       + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(e*log(10.0))
-      + a3_*df3
+      + a3_*df2
     );
 
     scalar g =

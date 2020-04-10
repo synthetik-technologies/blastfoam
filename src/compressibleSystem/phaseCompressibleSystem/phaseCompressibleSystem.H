@@ -130,6 +130,9 @@ protected:
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
+        //- Minimum temperature
+        dimensionedScalar TLow_;
+
 
         //- Allocate turbulence model if mu >= 0
         void setModels(const dictionary& dict);

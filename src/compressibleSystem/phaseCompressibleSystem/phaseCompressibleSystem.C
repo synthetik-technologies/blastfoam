@@ -201,8 +201,11 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
     fluxScheme_(fluxScheme::New(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
-{}
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
+    TLow_("TLow", dimTemperature, 0.0)
+{
+    TLow_.readIfPresent(dict);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

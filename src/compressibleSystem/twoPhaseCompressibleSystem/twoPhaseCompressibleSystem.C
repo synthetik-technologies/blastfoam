@@ -350,11 +350,19 @@ void Foam::twoPhaseCompressibleSystem::decode()
     volScalarField E(rhoE_/rho_);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-    //--- Hard limit, e
-    if(min(e_).value() < 0 && thermo_.limit())
+    //- Limit internal energy it there is a negative temperature
+    if(min(T_).value() < TLow_.value() && thermo_.limit())
     {
-        WarningInFunction<< "Limiting e, min(e) = " << min(e_).value() << endl;
-        e_.max(small);
+        if (debug)
+        {
+            WarningInFunction
+                << "Lower limit of temperature reached, min(T) = "
+                << min(T_).value()
+                << ", limiting internal energy." << endl;
+        }
+        volScalarField limit(pos(T_ - TLow_));
+        T_.max(TLow_);
+        e_ = e_*limit + thermo_.E()*(1.0 - limit);
         rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
