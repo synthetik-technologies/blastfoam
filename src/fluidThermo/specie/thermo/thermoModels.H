@@ -51,7 +51,7 @@ License
 #include "Tait.H"
 #include "vanderWaals.H"
 #include "JWL.H"
-#include "JWLC.H"
+// #include "JWLC.H"
 #include "LSZK.H"
 #include "BWR.H"
 // #include "BKW.H"

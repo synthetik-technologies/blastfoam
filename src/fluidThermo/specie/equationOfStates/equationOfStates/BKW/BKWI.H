@@ -77,7 +77,13 @@ Foam::scalar Foam::BKW<Specie>::dpdv
 ) const
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
-    return -this->R()*T*sqr(rho)*(1.0 + exp(beta_*x)*x*(2.0 + beta_*x));
+    scalar dxdv = -kappa_*k_*sqr(rho)/(this->W()*pow(T + Theta_, a_));
+    return
+        this->R()*T*rho
+       *(
+           exp(beta_*x)*dxdv*(1.0 + x*beta_)
+         - (1.0 + x*exp(beta_*x))*rho
+        );
 }
 
 
@@ -89,11 +95,12 @@ Foam::scalar Foam::BKW<Specie>::dpdT
 ) const
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
+    scalar dxdT = -a_*kappa_*k_*rho/(this->W()*pow(T + Theta_, a_ + 1.0));
     return
         this->R()
        *(
-            rho
-          + x*exp(beta_*x)*(rho - T*a_*rho/(T + Theta_)*(1.0 + beta_*x))
+            1.0 + x*exp(beta_*x)
+          + T*exp(beta_*x)*dxdT*(1.0 + x*beta_)
         );
 }
 
