@@ -142,7 +142,7 @@ c4
         }
     }
 
-    activationModel pressureBased;
+    activationModel linear;
     initiation
     {
         E0              9.0e9;

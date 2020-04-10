@@ -17,7 +17,7 @@ FoamFile
 
 fields (alpha.c4);
 maxRefinement 7;
-nBufferLayers 10;
+nBufferLayers 5;
 
 defaultFieldValues
 (
@@ -28,7 +28,7 @@ defaultFieldValues
 
 regions
 (
-    cylinderToCell // Use cylinder for 3D
+    cylinderToCell
     {
         p1 (0 0 0);
         p2 (0 0 1);
@@ -47,25 +47,25 @@ regions
             volScalarFieldValue alpha.c4    1
         );
     }
-    cylinderToCell // Use cylinder for 3D
-    {
-        p1 (0 0.1 0);
-        p2 (0 0.1 1);
-        radius 0.01;
-        backup
-        {
-            p1 (0 0 0);
-            p2 (0 0 1);
-            radius 0.5;
-        }
-        refineInternal yes;
-        level 7;
-
-        fieldValues
-        (
-            volVectorFieldValue U   (0 -90 0)
-        );
-    }
+//     cylinderToCell // Pressure based activation
+//     {
+//         p1 (0 0.1 0);
+//         p2 (0 0.1 1);
+//         radius 0.01;
+//         backup
+//         {
+//             p1 (0 0 0);
+//             p2 (0 0 1);
+//             radius 0.5;
+//         }
+//         refineInternal yes;
+//         level 7;
+//
+//         fieldValues
+//         (
+//             volVectorFieldValue U   (0 -90 0)
+//         );
+//     }
 );
 
 
