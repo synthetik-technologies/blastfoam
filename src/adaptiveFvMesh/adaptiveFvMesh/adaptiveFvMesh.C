@@ -59,21 +59,16 @@ Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
     // Check if cells have lost visibility of parent
     // (Usefull if snappyHexMesh is used)
 
-  if (p >= meshCutter().history().splitCells().size())
+  if (
+      p >= meshCutter().history().splitCells().size()
+      || meshCutter().cellLevel()[p] == 0
+      || meshCutter().history().visibleCells()[p] < 0
+     )
     {
       return p;
-    }
-  if (  meshCutter().cellLevel()[p] == 0)
-    {
-      return p;
-    }
-  if ( meshCutter().history().visibleCells()[p] < 0 )
-    {
-        return p;
     }
 
   label nextP = meshCutter().history().splitCells()[p].parent_;
-
   if (nextP < 0)
     {
       return p;
@@ -1582,10 +1577,8 @@ bool Foam::adaptiveFvMesh::update()
                 const labelIOList& cellLevel = meshCutter().cellLevel();
                 Map<label> coarseIDmap(100);
 
-
                 labelList uniqueIndex(nCells(),0);
                 label nCoarse = 0;
-
 
                 forAll(cells(), cellI)
                   {
@@ -1597,9 +1590,7 @@ bool Foam::adaptiveFvMesh::update()
                       {
                         auto cpi = meshCutter().history().parentIndex(cellI);
                         auto tpID = topParentID ( cpi );
-                        //                        Info<< tpID << endl;
-                        uniqueIndex[cellI] = nCells();
-                        uniqueIndex[cellI] += tpID; // fails here... 
+                        uniqueIndex[cellI] = nCells() + tpID;
                       }
                     else
                       {
