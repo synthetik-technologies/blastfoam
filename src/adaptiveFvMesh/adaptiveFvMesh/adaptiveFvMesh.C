@@ -58,24 +58,24 @@ Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
 {
     // Check if cells have lost visibility of parent
     // (Usefull if snappyHexMesh is used)
-    if
-    (
-        meshCutter().history().visibleCells()[p] < 0
-     || meshCutter().cellLevel()[p] == 0
-     || p >= meshCutter().history().splitCells().size()
-    )
+
+  if (
+      p >= meshCutter().history().splitCells().size()
+      || meshCutter().cellLevel()[p] == 0
+      || meshCutter().history().visibleCells()[p] < 0
+     )
     {
-        return p;
+      return p;
     }
 
-    label nextP = meshCutter().history().splitCells()[p].parent_;
-    if (nextP < 0)
+  label nextP = meshCutter().history().splitCells()[p].parent_;
+  if (nextP < 0)
     {
-        return p;
+      return p;
     }
-    else
+  else
     {
-        return topParentID(nextP);
+      return topParentID(nextP);
     }
 }
 
@@ -1509,7 +1509,9 @@ bool Foam::adaptiveFvMesh::update()
             }
         }
 
-        if ((nRefinementIterations_ % 10) == 0)
+
+        // PV: This is interesting... perhaps we should do this at every iteration as it is a known 'occasional' error?
+        if ((nRefinementIterations_ % 1) == 0) // change from 10 to 1 to force every time
         {
             // Compact refinement history occasionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
@@ -1548,12 +1550,13 @@ bool Foam::adaptiveFvMesh::update()
 
         if
         (
-            Pstream::parRun()
+         Pstream::parRun() // is this run parallel?
          && balance
          && (
                 (nRefinementIterations_ % balanceInterval) == 0
              || (nRefinementIterations_ == 1)
             )
+         && hasChanged
         )
         {
             const scalar allowableImbalance =
@@ -1573,33 +1576,32 @@ bool Foam::adaptiveFvMesh::update()
                 Info<< "Re-balancing dynamically refined mesh" << endl;
                 const labelIOList& cellLevel = meshCutter().cellLevel();
                 Map<label> coarseIDmap(100);
-                labelList uniqueIndex(nCells(),0);
 
+                labelList uniqueIndex(nCells(),0);
                 label nCoarse = 0;
 
                 forAll(cells(), cellI)
-                {
+                  {
                     if
-                    (
-                        cellLevel[cellI] > 0
-                     && meshCutter().history().visibleCells()[cellI] >= 0
-                    )
-                    {
-                        uniqueIndex[cellI] = nCells() + topParentID
-                        (
-                            meshCutter().history().parentIndex(cellI)
-                        );
-                    }
+                      (
+                       cellLevel[cellI] > 0
+                       && meshCutter().history().visibleCells()[cellI] >= 0
+                       )
+                      {
+                        auto cpi = meshCutter().history().parentIndex(cellI);
+                        auto tpID = topParentID ( cpi );
+                        uniqueIndex[cellI] = nCells() + tpID;
+                      }
                     else
-                    {
+                      {
                         uniqueIndex[cellI] = cellI;
-                    }
+                      }
 
                     if( coarseIDmap.insert(uniqueIndex[cellI], nCoarse) )
-                    {
+                      {
                         ++nCoarse;
-                    }
-                }
+                      }
+                  }
 
                 // Convert to local sequential indexing and calculate coarse
                 // points and weights
