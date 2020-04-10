@@ -185,7 +185,7 @@ void Foam::afterburnModels::MillerAfterburn::solve
     scalar f = bi[stepi - 1];
     for (label i = 0; i < stepi - 1; i++)
     {
-        f += bi[stepi];
+        f += bi[i];
         label fi = deltaIs_[i];
         if (fi != -1 && bi[fi] != 0)
         {
