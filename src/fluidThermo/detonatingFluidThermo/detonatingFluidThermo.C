@@ -107,15 +107,11 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::singleVolScalarFieldProperty
     );
 
     volScalarField& psi = tPsi.ref();
-    volScalarField x(activation_->lambdaPow());
 
     forAll(this->p_, celli)
     {
-        if (x[celli] > small)
-        {
-            psi[celli] =
-                (this->*psiMethod)(args[celli] ...);
-        }
+        psi[celli] =
+            (this->*psiMethod)(args[celli] ...);
     }
 
     volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
@@ -126,14 +122,11 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::singleVolScalarFieldProperty
 
         forAll(this->p_.boundaryField()[patchi], facei)
         {
-            if (x.boundaryField()[patchi][facei] > small)
-            {
-                pPsi[facei] =
-                    (this->*psiMethod)
-                    (
-                        args.boundaryField()[patchi][facei] ...
-                    );
-            }
+            pPsi[facei] =
+                (this->*psiMethod)
+                (
+                    args.boundaryField()[patchi][facei] ...
+                );
         }
     }
 
