@@ -17,6 +17,9 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 errorEstimator  densityGradient;
 
+// When can unrefinement start
+beginUnrefine 1e-5;
+
 // How often to refine
 refineInterval  3;
 

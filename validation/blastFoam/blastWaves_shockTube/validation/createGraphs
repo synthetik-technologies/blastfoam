@@ -1,0 +1,121 @@
+#!/bin/bash
+#
+# Results taken from:
+#   Luo, H., Baum, J. D., Lohner, R. (2003)
+#   "On the computation of multi-material flows using ALE formulation"
+#   Journal of Computational Physics, 194, 304-328
+
+createEpsP()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_blastWaves_shockTube_validation_p.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Pressure [Pa]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:250]
+    plot    "$1" using 1:2 title 'Exact'\
+                with points pt 5 ps 1 linecolor rgb 'blue', \
+            "$2" using 1:2 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsRho()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_blastWaves_shockTube_validation_rho.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Density [kg/m^3]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:250]
+    plot    "$1" using 1:2 title 'Exact'\
+                with points pt 5 ps 1 linecolor rgb 'blue', \
+            "$2" using 1:2 title 'SHAMRC'\
+                with points pt 7 ps 1 linecolor rgb 'red', \
+            "$3" using 1:3 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpse()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_blastWaves_shockTube_validation_e.eps"
+    set xlabel "X-Position [m]"
+    set ylabel "Internal energy [J/kg]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:250]
+    plot    "$1" using 1:2 title 'Exact'\
+                with points pt 5 ps 1 linecolor rgb 'blue', \
+            "$2" using 1:2 title 'SHAMRC'\
+                with points pt 7 ps 1 linecolor rgb 'red', \
+            "$3" using 1:4 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsUx()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_blastWaves_shockTube_validation_Ux.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key left top
+    set size 2,2
+    set autoscale
+    set xrange [0:250]
+    plot    "$1" using 1:2 title 'Exact'\
+                with points pt 5 ps 1 linecolor rgb 'blue', \
+            "$2" using 1:2 title 'blastFOAM'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+pExact="$VALIDATIONDATAROOT/exact_p.csv"
+rhoExact="$VALIDATIONDATAROOT/exact_rho.csv"
+rhoSHAMRC="$VALIDATIONDATAROOT/SHAMRC_rho.csv"
+eExact="$VALIDATIONDATAROOT/exact_e.csv"
+eSHAMRC="$VALIDATIONDATAROOT/SHAMRC_e.csv"
+uExact="$VALIDATIONDATAROOT/exact_U.csv"
+pRhoeBlastFOAM="../postProcessing/sampleDict/*/Centerline_p*"
+UBlastFOAM="../postProcessing/sampleDict/*/Centerline_U*"
+
+createEpsP $pExact $pRhoeBlastFOAM
+createEpsRho $rhoExact $rhoSHAMRC $pRhoeBlastFOAM
+createEpse $eExact $eSHAMRC $pRhoeBlastFOAM
+createEpsUx $uExact $UBlastFOAM
+
+echo Done
