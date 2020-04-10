@@ -36,34 +36,7 @@ Foam::DoanNickel<Specie>::DoanNickel
     const dictionary& dict
 )
 :
-    Specie(dict),
-    rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
-    e0_(dict.subDict("equationOfState").lookupType<scalar>("e0")),
-    a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
-    b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
-    c_(dict.subDict("equationOfState").lookupType<scalar>("c")),
-    d_(dict.subDict("equationOfState").lookupType<scalar>("d")),
-    g_(dict.subDict("equationOfState").lookupType<scalar>("g")),
-
-    a1_(dict.subDict("equationOfState").lookupType<scalar>("a1")),
-    a2_(dict.subDict("equationOfState").lookupType<scalar>("a2")),
-    a3_(dict.subDict("equationOfState").lookupType<scalar>("a3")),
-
-    E1_(dict.subDict("equationOfState").lookupType<scalar>("E1")),
-    E11_(dict.subDict("equationOfState").lookupType<scalar>("E11")),
-    E1Offset_(dict.subDict("equationOfState").lookupType<scalar>("E1Offset")),
-    deltaE1_(dict.subDict("equationOfState").lookupType<scalar>("deltaE1")),
-    deltaE1Pow_(dict.subDict("equationOfState").lookupType<scalar>("deltaE1Pow")),
-
-    E2_(dict.subDict("equationOfState").lookupType<scalar>("E2")),
-    E22_(dict.subDict("equationOfState").lookupType<scalar>("E22")),
-    deltaE2_(dict.subDict("equationOfState").lookupType<scalar>("deltaE2")),
-    E2Pow_(dict.subDict("equationOfState").lookupType<scalar>("E2Pow")),
-    deltaE2Pow_(dict.subDict("equationOfState").lookupType<scalar>("deltaE2Pow")),
-
-    E3_(dict.subDict("equationOfState").lookupType<scalar>("E3")),
-    E33_(dict.subDict("equationOfState").lookupType<scalar>("E33")),
-    deltaE3_(dict.subDict("equationOfState").lookupType<scalar>("deltaE3"))
+    Specie(dict)
 {}
 
 // ************************************************************************* //

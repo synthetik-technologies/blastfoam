@@ -38,45 +38,8 @@ Description
         Air Force Weapons Laboratory
     \endverbatim
 
-    Example entry for air from the Needham and Troutman (1966):
-    \verbatim
-    mixture
-    {
-        type        DoanNickel;
-
-        rho0 1.293;
-        e0 206730.6122;
-
-        a 0.161;
-        b 0.256;
-        c 0.280;
-        d 0.137;
-        g 0.5;
-
-        a1 0.161;
-        a2 0.32;
-        a3 0.015;
-
-        E1 4.46e6;
-        E2 6.63e6;
-        E3 25.5e6;
-
-        E11 0.357e6;
-        E1Offset 8.5e6;
-        deltaE1 0.975e6;
-        deltaE1Pow 0.05;
-
-        E22 45.0e6;
-        E2Pow 0.015;
-        deltaE2 4.0e6;
-        deltaE2Pow 0.095;
-
-        E33 160.0e6;
-        deltaE3 6.0e6;
-    }
-    \endverbatim
-
 SourceFiles
+    DoanNickelI.H
     DoanNickel.C
 
 \*---------------------------------------------------------------------------*/
@@ -103,40 +66,40 @@ class DoanNickel
 // Private data
 
     //- Reference density
-    scalar rho0_;
-
-    //- Reference internal energy
-    scalar e0_;
+    scalar rho0_ = 1.293;
 
     //- Gamma coefficients
-    scalar a_;
-    scalar b_;
-    scalar c_;
-    scalar d_;
-    scalar g_;
+    scalar a_ = 0.161;
+    scalar b_ = 0.255;
+    scalar c_ = 0.280;
+    scalar d_ = 0.137;
+    scalar g_ = 0.050;
 
-    scalar a1_;
-    scalar a2_;
-    scalar a3_;
+    scalar a1_ = 0.048;
+    scalar a2_ = 0.032;
+    scalar a3_ = 0.045;
 
     //- Equation of state coefficients for first regime
-    scalar E1_;
-    scalar E11_;
-    scalar E1Offset_;
-    scalar deltaE1_;
-    scalar deltaE1Pow_;
+    //  O_2 -> 2O
+    scalar E1_ = 4.46;
+    scalar E11_ = 0.357;
+    scalar E1Offset_ = 8.5;
+    scalar deltaE1_ = 0.975;
+    scalar deltaE1Pow_ = 0.05;
 
     //- Equation of state coefficients for second regime
-    scalar E2_;
-    scalar E22_;
-    scalar deltaE2_;
-    scalar E2Pow_;
-    scalar deltaE2Pow_;
+    //  N_2 -> 2N
+    scalar E2_ = 6.63;
+    scalar E22_ = 45.0;
+    scalar deltaE2_ = 4.0;
+    scalar E2Pow_ = 0.0157;
+    scalar deltaE2Pow_ = 0.085;
 
     //- Equation of state coefficients for third regime
-    scalar E3_;
-    scalar E33_;
-    scalar deltaE3_;
+    //  electrons
+    scalar E3_ = 25.5;
+    scalar E33_ = 160.0;
+    scalar deltaE3_ = 6.0;
 
     //- Derivative of specific heat ration w.r.t. density
     scalar dGammadRho

@@ -55,9 +55,10 @@ template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::Gamma
 (
     const scalar& rho,
-    const scalar& e
+    const scalar& eIn
 ) const
 {
+    scalar e = eIn*1e-6;
     scalar rhoByRho0(rho/rho0_);
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
@@ -75,7 +76,6 @@ Foam::scalar Foam::DoanNickel<Specie>::Gamma
         (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))*log10(max(e, small))
       + a3_*f2
     );
-    A *= pos(1.0e6 - e);
     return
         (
             a_
@@ -105,7 +105,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dpde
     const scalar& e
 ) const
 {
-    return dGammade(rho, e)*rho*e + (Gamma(rho, e) - 1.0)*rho;
+    return 1e-6*dGammade(rho, e)*rho*e + (Gamma(rho, e) - 1.0)*rho;
 }
 
 
@@ -186,9 +186,10 @@ template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dGammadRho
 (
     const scalar& rho,
-    const scalar& e
+    const scalar& eIn
 ) const
 {
+    scalar e = eIn*1e-6;
     scalar rhoByRho0(rho/rho0_);
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
@@ -205,8 +206,8 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammadRho
     scalar I2(E22_*pow(rhoByRho0, E2Pow_));
     scalar deltaI2(max(deltaE2_*pow(rhoByRho0, deltaE2Pow_), 1e-10));
 
-    scalar dI2(E22_*E2Pow_*pow(rhoByRho0, E2Pow_ - 1.0));
-    scalar dDeltaI2(deltaE2Pow_*deltaE2_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
+    scalar dI2(E22_*E2Pow_/rho0_*pow(rhoByRho0, E2Pow_ - 1.0));
+    scalar dDeltaI2(deltaE2Pow_*deltaE2_/rho0_*pow(rhoByRho0, deltaE2Pow_ - 1.0));
 
     scalar f2 = 1.0/(exp((I2 - e)/deltaI2) + 1.0);
     scalar df2 =
@@ -247,9 +248,10 @@ template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dGammade
 (
     const scalar& rho,
-    const scalar& e
+    const scalar& eIn
 ) const
 {
+    scalar e = eIn*1e-6;
     scalar rhoByRho0(rho/rho0_);
 
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
@@ -270,7 +272,6 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
         (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))*log10(max(e, small))
       + a3_*f2
     );
-    A *= pos(1.0e6 - e);
 
     scalar dA
     (
@@ -278,7 +279,6 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
       + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(e*log(10.0))
       + a3_*df3
     );
-    dA *= pos(1.0e6 - e);
 
     scalar g =
             a_
