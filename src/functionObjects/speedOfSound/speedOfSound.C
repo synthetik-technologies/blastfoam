@@ -71,7 +71,6 @@ Foam::functionObjects::speedOfSound::speedOfSound
             )
         );
     }
-
 }
 
 

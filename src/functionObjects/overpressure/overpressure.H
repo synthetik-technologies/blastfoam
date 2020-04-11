@@ -68,6 +68,9 @@ class overpressure
         //- Reference pressure
         dimensionedScalar pRef_;
 
+        //- Is the field stored in the database
+        Switch store_;
+
 
 public:
 

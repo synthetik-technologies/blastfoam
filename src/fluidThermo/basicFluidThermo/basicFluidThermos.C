@@ -132,13 +132,13 @@ namespace Foam
         LSZK
     );
 
-//     addFluidThermo
-//     (
-//         constTransport,
-//         eConst,
-//         MGEquationOfState,
-//         DoanNickel
-//     );
+    addFluidThermo
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        DoanNickel
+    );
 
     // Tabulated equation of state
     typedef basicFluidThermo<constTransporttabulatedEOS>

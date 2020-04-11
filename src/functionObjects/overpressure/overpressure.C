@@ -37,8 +37,30 @@ Foam::functionObjects::overpressure::overpressure
     fvMeshFunctionObject(name, runTime, dict),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     resultName_(IOobject::groupName("overPressure", IOobject::group(pName_))),
-    pRef_("pRef", dimPressure, dict)
-{}
+    pRef_("pRef", dimPressure, dict),
+    store_(dict.lookupOrDefault("store", false))
+{
+    if (store_)
+    {
+        obr_.store
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    resultName_,
+                    obr_.time().timeName(),
+                    obr_,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                this->mesh_,
+                dimensionedScalar("0", dimPressure, Zero)
+            )
+        );
+    }
+
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -54,8 +76,39 @@ bool Foam::functionObjects::overpressure::read
     const dictionary& dict
 )
 {
-    pRef_.read(dict);
-    pName_ = dict.lookupOrDefault("pName", word("p"));
+    word origName = pName_;
+    bool origStore = store_;
+    dict.readIfPresent("pName", pName_);
+    dict.readIfPresent("store", store_);
+
+    bool change = false;
+    if ((origName != pName_ && origStore) || (origStore && !store_))
+    {
+        change = true;
+        clearObject(resultName_);
+    }
+
+    resultName_ = IOobject::groupName("overPressure", IOobject::group(pName_));
+    if (store_ && change)
+    {
+        obr_.store
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    resultName_,
+                    obr_.time().timeName(),
+                    obr_,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                this->mesh_,
+                dimensionedScalar("0", dimPressure, Zero)
+            )
+        );
+    }
+
     return true;
 }
 
@@ -65,6 +118,12 @@ bool Foam::functionObjects::overpressure::execute()
     if (foundObject<volScalarField>(pName_))
     {
         const volScalarField& p(lookupObject<volScalarField>(pName_));
+
+        if (store_)
+        {
+            lookupObjectRef<volScalarField>(resultName_) = p - pRef_;
+            return true;
+        }
 
         return store
         (
@@ -92,7 +151,11 @@ bool Foam::functionObjects::overpressure::write()
 
 bool Foam::functionObjects::overpressure::clear()
 {
-    return clearObject(resultName_);
+    if (!store_)
+    {
+        return clearObject(resultName_);
+    }
+    return true;
 }
 
 // ************************************************************************* //

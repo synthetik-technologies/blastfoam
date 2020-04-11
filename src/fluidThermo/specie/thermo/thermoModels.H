@@ -55,7 +55,7 @@ License
 #include "LSZK.H"
 #include "BWR.H"
 // #include "BKW.H"
-// #include "DoanNickel.H"
+#include "DoanNickel.H"
 
 #include "tabulated.H"
 
@@ -170,12 +170,12 @@ namespace Foam
         LSZK
     );
 
-//     defineThermoTypes
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         DoanNickel
-//     );
+    defineThermoTypes
+    (
+        constTransport,
+        MGEquationOfState,
+        DoanNickel
+    );
 
     typedef constTransport<tabulated<blastSpecie>> constTransporttabulatedEOS;
 }

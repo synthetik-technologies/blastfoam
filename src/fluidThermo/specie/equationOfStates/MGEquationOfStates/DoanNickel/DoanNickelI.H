@@ -65,42 +65,23 @@ Foam::scalar Foam::DoanNickel<Specie>::Gamma
     scalar I1(E1Offset_ + E11_*log10(rhoByRho0));
     scalar deltaI1(max(deltaE1_*pow(rhoByRho0, deltaE1Pow_), 1e-10));
     scalar f1((e - I1)/deltaI1);
-    if (f1 > expMax_)
-    {
-        f1 = 0.0;
-    }
-    else
-    {
-        f1 = 1.0/(exp(f1) + 1.0);
-    }
+    f1 = 1.0/(exp(min(f1, expMax_)) + 1.0);
+
 
     scalar I2(E22_*pow(rhoByRho0, E2Pow_));
     scalar deltaI2(max(deltaE2_*pow(rhoByRho0, deltaE2Pow_), 1e-10));
     scalar f2((I2 - e)/deltaI2);
-    if (f2 > expMax_)
-    {
-        f2 = 0.0;
-    }
-    else
-    {
-        f2 = 1.0/(exp(f2) + 1.0);
-    }
+    f2 = 1.0/(exp(min(f2, expMax_)) + 1.0);
 
     scalar f3((E33_ - e)/deltaE3_);
-    if (f3 > expMax_)
-    {
-        f3 = 0.0;
-    }
-    else
-    {
-        f3 = 1.0/(exp(f3) + 1.0);
-    }
+    f3 = 1.0/(exp(min(f3, expMax_)) + 1.0);
 
     scalar A
     (
         (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))*log10(max(e, small))
       + a3_*f2
     );
+
     return
         (
             a_

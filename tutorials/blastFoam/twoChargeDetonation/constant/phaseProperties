@@ -22,7 +22,6 @@ radiationModel none;
 RDX
 {
     type detonating;
-    // values for c-4 from: Alia2006
     reactants
     {
         thermoType
@@ -83,7 +82,7 @@ RDX
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              1000;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -103,7 +102,6 @@ RDX
 tnt
 {
     type detonating;
-    // values for c-4 from: Alia2006
     reactants
     {
         thermoType
@@ -122,7 +120,7 @@ tnt
         }
         specie
         {
-            molWeight       55.0;
+            molWeight       227.13;
         }
         transport
         {
@@ -131,7 +129,7 @@ tnt
         }
         thermodynamics
         {
-            Cv              718;           // Heat capacity
+            Cv              1095;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -145,7 +143,7 @@ tnt
         }
         equationOfState
         {
-            rho0        1630;
+            rho0        1601;
             A           371.21e9;
             B           3.23e9;
             R1          4.15;
@@ -163,7 +161,7 @@ tnt
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              1000;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -172,7 +170,7 @@ tnt
     initiation
     {
         E0              7.0e9;
-        I               0;//3.18e8;
+        I               0;
         G1              3.5083e-7;
         c               1.0;
         d               0.0;
