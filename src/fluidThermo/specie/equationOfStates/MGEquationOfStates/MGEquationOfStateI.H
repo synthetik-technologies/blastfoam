@@ -65,7 +65,6 @@ Foam::scalar Foam::MGEquationOfState<EoS>::Gamma
     const scalar& Cv
 ) const
 {
-    Info<<"here"<<endl;
     return EoS::Gamma(rho, e);
 }
 
