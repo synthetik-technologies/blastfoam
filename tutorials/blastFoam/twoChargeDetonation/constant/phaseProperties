@@ -17,8 +17,6 @@ FoamFile
 
 phases (RDX tnt gas);
 
-radiationModel none;
-
 RDX
 {
     type detonating;
@@ -87,7 +85,7 @@ RDX
         }
     }
 
-    activationModel none;
+    activationModel linear;
     initiation
     {
         E0      4.0e9;

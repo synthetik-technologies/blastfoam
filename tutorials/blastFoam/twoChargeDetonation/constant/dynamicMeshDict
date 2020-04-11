@@ -28,7 +28,7 @@ lowerRefineLevel 0.05;
 upperRefineLevel 1e6;
 
 // If value < unrefineLevel unrefine
-unrefineLevel   0.02;
+unrefineLevel   0.05;
 
 // Have slower than 2:1 refinement
 nBufferLayers   3;

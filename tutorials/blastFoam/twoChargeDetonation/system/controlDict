@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1.0e-4;
+endTime         1.5e-4;
 
 writeControl    adjustableRunTime;
 
