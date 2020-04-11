@@ -51,4 +51,38 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
+
+functions
+{
+    impulse
+    {
+        type                impulse;
+        libs                ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+        pRef            101298;
+    }
+    overpressure
+    {
+        type                overpressure;
+        libs                ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+        store           yes;
+        pRef            101298;
+    }
+    maxPImpulse
+    {
+        type                fieldMax;
+        libs                ("libblastFunctionObjects.so");
+
+        writeControl    writeTime;
+        fields
+        (
+            overpressure
+            impulse
+        );
+    }
+};
+
 // ************************************************************************* //

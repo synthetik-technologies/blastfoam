@@ -24,6 +24,18 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "overpressure.H"
+#include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace functionObjects
+{
+    defineTypeNameAndDebug(overpressure, 0);
+    addToRunTimeSelectionTable(functionObject, overpressure, dictionary);
+}
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -36,7 +48,7 @@ Foam::functionObjects::overpressure::overpressure
 :
     fvMeshFunctionObject(name, runTime, dict),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    resultName_(IOobject::groupName("overPressure", IOobject::group(pName_))),
+    resultName_(IOobject::groupName("overpressure", IOobject::group(pName_))),
     pRef_("pRef", dimPressure, dict),
     store_(dict.lookupOrDefault("store", false))
 {
@@ -88,7 +100,7 @@ bool Foam::functionObjects::overpressure::read
         clearObject(resultName_);
     }
 
-    resultName_ = IOobject::groupName("overPressure", IOobject::group(pName_));
+    resultName_ = IOobject::groupName("overpressure", IOobject::group(pName_));
     if (store_ && change)
     {
         obr_.store

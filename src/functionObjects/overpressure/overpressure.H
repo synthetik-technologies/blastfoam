@@ -74,6 +74,8 @@ class overpressure
 
 public:
 
+    //- Runtime type information
+    TypeName("overpressure");
 
     // Constructors
 

@@ -61,21 +61,26 @@ functions
         writeControl    writeTime;
         pRef            101298;
     }
-    dynamicP
+    overpressure
     {
-        type                dynamicPressure;
+        type                overpressure;
         libs                ("libblastFunctionObjects.so");
 
         writeControl    writeTime;
-        store yes;
+        store           yes;
+        pRef            101298;
     }
-    speedOfSound
+    maxPImpulse
     {
-        type                speedOfSound;
+        type                fieldMax;
         libs                ("libblastFunctionObjects.so");
 
         writeControl    writeTime;
-        store yes;
+        fields
+        (
+            overpressure
+            impulse
+        );
     }
 };
 
