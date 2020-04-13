@@ -287,17 +287,7 @@ void Foam::phaseCompressibleSystem::solve
 
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ =
-        cmptMultiply
-        (
-            rhoUOld
-          - dT
-           *(
-                deltaRhoU
-              - rho_*rho_.mesh().lookupObject<uniformDimensionedVectorField>("g")
-            ),
-            solutionDs
-        );
+    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
     if (radiation_->type() != "none")
     {
@@ -367,7 +357,7 @@ void Foam::phaseCompressibleSystem::solve
                 fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
             - fvm::laplacian(turbulence_->alphaEff(), e())
             );
-            rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscos term in momentum equation
+            rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
 
             turbulence_->correct();
         }

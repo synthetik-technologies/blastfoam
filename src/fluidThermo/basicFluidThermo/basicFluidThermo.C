@@ -222,6 +222,7 @@ void Foam::basicFluidThermo<Thermo>::correct()
     {
         T_ = calcT();
         p_ = calcP();
+        p_.max(small);
     }
 
     mu_ = volScalarFieldProperty
