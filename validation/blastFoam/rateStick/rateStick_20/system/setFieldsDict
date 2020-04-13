@@ -19,7 +19,6 @@ defaultFieldValues
 (
     volScalarFieldValue alpha.RDX 0
     volVectorFieldValue U (0 0 0)
-    volScalarFieldValue lambda.RDX 0
 );
 
 regions
@@ -42,7 +41,6 @@ regions
         fieldValues
         (
             volVectorFieldValue U (0 0 90)
-//             volScalarFieldValue lambda.RDX 0.001
         );
     }
 );

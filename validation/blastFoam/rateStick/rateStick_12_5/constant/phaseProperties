@@ -17,8 +17,6 @@ FoamFile
 
 phases (RDX gas);
 
-radiationModel none;
-
 RDX
 {
     type detonating;

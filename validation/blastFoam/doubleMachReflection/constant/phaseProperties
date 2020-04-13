@@ -15,14 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type reactingCompressibleSystem;
-
-radiationModel none;
-
 mixture
 {
     type basic;
-//     calculateDensity yes;
     thermoType
     {
         transport   const;
@@ -31,11 +26,11 @@ mixture
     }
     equationOfState
     {
-        gamma           1.4;            // Heat capactiy ratio
+        gamma           1.4;
     }
     specie
     {
-        molWeight       11640.3;
+        molWeight       11640.3; // Normalizes pressure
     }
     transport
     {

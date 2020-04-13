@@ -17,8 +17,6 @@ FoamFile
 
 phases (copper gas);
 
-radiationModel none;
-
 copper
 {
     type basic;

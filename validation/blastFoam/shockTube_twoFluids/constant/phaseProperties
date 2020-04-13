@@ -17,8 +17,6 @@ FoamFile
 
 phases (fluid gas);
 
-radiationModel none;
-
 fluid
 {
     type basic;

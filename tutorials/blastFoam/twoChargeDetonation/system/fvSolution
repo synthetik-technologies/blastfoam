@@ -26,10 +26,10 @@ solvers
     {
         solver          PBiCGStab;
         preconditioner  DIC;
-        nSweeps         3; // 2;
+        nSweeps         3;;
         tolerance       1e-09;
         relTol          0;
-        minIter             1;
+        minIter         1;
     }
 
 }

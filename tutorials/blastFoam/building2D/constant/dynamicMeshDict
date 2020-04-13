@@ -64,4 +64,5 @@ correctFluxes
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;
+
 // ************************************************************************* //

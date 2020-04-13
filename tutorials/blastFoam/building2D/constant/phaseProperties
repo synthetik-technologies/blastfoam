@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (c4 air);                // List of phases
+phases (c4 air);   // List of phases
 
 radiationModel  none;
 
@@ -30,36 +30,7 @@ fvDOMCoeffs
 // Number of flow iterations per radiation iteration
 solverFreq 1;
 
-absorptionEmissionModel greyMean;
-
-greyMeanCoeffs
-{
-    c4
-    {
-        Tcommon     300.;   // Common Temp
-        invTemp     true;   // Is the polynomial using inverse temperature?
-        Tlow        0.;   // Low Temp
-        Thigh       10000.;  // High Temp
-        loTcoeffs           // coeffs for T < Tcommon
-        (
-            18.741
-            -121.31e3
-            273.5e6
-            -194.05e9
-            56.31e12
-            -5.8169e15
-        );
-        hiTcoeffs           // coeffs for T > Tcommon
-        (
-            18.741
-            -121.31e3
-            273.5e6
-            -194.05e9
-            56.31e12
-            -5.8169e15
-        );
-    }
-}
+absorptionEmissionModel constant;
 
 constantCoeffs
 {
@@ -72,11 +43,9 @@ scatterModel    none;
 
 sootModel       none;
 
-
 c4
 {
     type detonating;
-    // values for c-4 from: Alia2006
     reactants
     {
         thermoType
@@ -87,7 +56,6 @@ c4
         }
         equationOfState
         {
-            gamma           1.35;
             rho0            1601;
             n               7.4;
             kappa           3.9e11;
@@ -96,7 +64,7 @@ c4
         }
         specie
         {
-            molWeight       55.0;
+            molWeight       222.12;
         }
         transport
         {
@@ -105,7 +73,7 @@ c4
         }
         thermodynamics
         {
-            Cv              2500;           // Heat capacity
+            Cv              1000;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -137,7 +105,7 @@ c4
         }
         thermodynamics
         {
-            Cv              2500;           // Heat capacity
+            Cv              850;           // Heat capacity
             Hf              0.0;
         }
     }

@@ -17,21 +17,6 @@ FoamFile
 
 solvers
 {
-    p
-    {
-        solver           PCG;
-        preconditioner   DIC;
-        tolerance        1e-6;
-        relTol           0.1;
-    }
-
-    pFinal
-    {
-        $p;
-        tolerance        1e-6;
-        relTol           0.0;
-    }
-
     "(rho|rhoU|rhoE|alpha)"
     {
         solver          diagonal;
@@ -54,34 +39,8 @@ solvers
         $U;
         relTol          0;
     }
-
-    "(k|epsilon)"
-    {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-        tolerance       1e-6;
-        relTol          0.1;
-    }
-
-    "(k|epsilon)Final"
-    {
-        $k;
-        relTol          0;
-    }
-
-    "Yi.*"
-    {
-        $kFinal;
-    }
 }
 
-PIMPLE
-{
-    momentumPredictor no;
-    nOuterCorrectors  1;
-    nCorrectors     2;
-    nNonOrthogonalCorrectors 0;
-}
 
 
 // ************************************************************************* //

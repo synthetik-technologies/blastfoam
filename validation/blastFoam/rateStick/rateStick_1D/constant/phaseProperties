@@ -17,12 +17,9 @@ FoamFile
 
 phases (RDX gas);
 
-radiationModel none;
-
 RDX
 {
     type detonating;
-    // values for c-4 from: Alia2006
     reactants
     {
         thermoType

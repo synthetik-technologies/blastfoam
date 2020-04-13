@@ -26,7 +26,7 @@ defaultFieldValues
 
 regions
 (
-    boxToCell // Use cylinder for 3D
+    boxToCell
     {
         box (0 0 0) (0.5 0.25 0.25);
         refineInternal yes;

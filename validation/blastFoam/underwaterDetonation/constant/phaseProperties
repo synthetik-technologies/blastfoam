@@ -17,8 +17,6 @@ FoamFile
 
 phases (air water);
 
-radiationModel none;
-
 air
 {
     type basic;

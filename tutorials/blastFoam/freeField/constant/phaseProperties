@@ -22,7 +22,6 @@ radiationModel none;
 c4
 {
     type detonating;
-    // values for c-4 from: Alia2006
     reactants
     {
         thermoType

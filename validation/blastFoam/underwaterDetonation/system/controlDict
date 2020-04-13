@@ -39,7 +39,7 @@ writePrecision  6;
 
 writeCompression off;
 
-timeFormat      general; // fixed; // using precision below --- better for paraview
+timeFormat      general;
 
 timePrecision   12;
 
@@ -51,7 +51,8 @@ maxCo           0.1;
 
 maxDeltaT       1e-5;
 
-// ************************************************************************* //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 functions
 {}
 

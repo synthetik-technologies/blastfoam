@@ -15,8 +15,6 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-radiationModel none;
-
 mixture
 {
     type basic;
@@ -33,7 +31,7 @@ mixture
 
     specie
     {
-        molWeight    11640.3;
+        molWeight    11640.3;           // Normalizes pressure
     }
     transport
     {

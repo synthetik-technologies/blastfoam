@@ -31,8 +31,6 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
-    div(tauMC)      Gauss linear;
 }
 
 laplacianSchemes
@@ -43,7 +41,6 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    reconstruct(alpha)  Minmod;
     reconstruct(rho)    Minmod;
     reconstruct(U)      MinmodV;
     reconstruct(e)      Minmod;

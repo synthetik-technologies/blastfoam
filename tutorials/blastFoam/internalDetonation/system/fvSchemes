@@ -49,6 +49,7 @@ interpolationSchemes
     reconstruct(p)      Minmod;
     reconstruct(c)      Minmod;
 
+    // Afterburn reaction progress variable
     reconstruct(c.c4)   Minmod;
 }
 
