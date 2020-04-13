@@ -30,14 +30,26 @@ Description
 #include "fiveEqnCompressibleTurbulenceModelFwd.H"
 #include "CompressibleTurbulenceModel.H"
 #include "ThermalDiffusivity.H"
+#include "EddyDiffusivity.H"
+#include "laminarModel.H"
+#include "RASModel.H"
+#include "LESModel.H"
 #include "phaseCompressibleSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-      typedef ThermalDiffusivity<CompressibleTurbulenceModel<phaseCompressibleSystem>>
-          fiveEqnCompressibleTurbulenceModel;
+    typedef ThermalDiffusivity<CompressibleTurbulenceModel<phaseCompressibleSystem>>
+        fiveEqnCompressibleTurbulenceModel;
+
+    namespace blast
+    {
+        typedef laminarModel<fiveEqnCompressibleTurbulenceModel> laminarModel;
+        typedef RASModel<EddyDiffusivity<fiveEqnCompressibleTurbulenceModel>> RASModel;
+        typedef LESModel<EddyDiffusivity<fiveEqnCompressibleTurbulenceModel>> LESModel;
+    }
+
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

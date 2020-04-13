@@ -38,7 +38,7 @@ namespace Foam
     template<class BasicTurbulenceModel>
     class ThermalDiffusivity;
 
-      typedef ThermalDiffusivity<CompressibleTurbulenceModel<phaseCompressibleSystem>>
+    typedef ThermalDiffusivity<CompressibleTurbulenceModel<phaseCompressibleSystem>>
           fiveEqnCompressibleTurbulenceModel;
 }
 

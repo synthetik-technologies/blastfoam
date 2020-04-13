@@ -35,6 +35,7 @@ Description
 #include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "phaseCompressibleSystem.H"
+#include "fiveEqnCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
 #include "errorEstimator.H"
 
@@ -42,7 +43,27 @@ Description
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption
+    (
+        "listTurbulenceModels",
+        "List turbulenceModels"
+    );
     #include "setRootCase.H"
+    if (args.optionFound("listTurbulenceModels"))
+    {
+        Info<< "Turbulence models"
+            << blast::laminarModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+
+        Info<< "RAS models"
+            << blast::RASModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+
+        Info<< "LES models"
+            << blast::LESModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+        exit(1);
+    }
 
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
