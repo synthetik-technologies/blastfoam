@@ -68,7 +68,7 @@ Foam::activationModel::activationModel
             dict.parent().subDict("products").subDict("equationOfState")
         )
     ),
-    m_(dict.lookupOrDefault("m", 1.0)),
+    lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
     alphaRhoName_
     (
         dict.lookupOrDefault

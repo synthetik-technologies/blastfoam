@@ -63,7 +63,7 @@ protected:
         dimensionedScalar e0_;
 
         //- Exponent used to blend reacted and unreacted states (\lambda^m)
-        scalar m_;
+        scalar lambdaExp_;
 
         //- Density name
         word alphaRhoName_;
@@ -189,19 +189,19 @@ public:
         //- Return lambda to the m power for blending
         tmp<volScalarField> lambdaPow() const
         {
-            return pow(lambda_, m_);
+            return pow(lambda_, lambdaExp_);
         }
 
         //- Return ambda to the m power for blending for patchi
         tmp<scalarField> lambdaPow(const label patchi) const
         {
-            return pow(lambda_.boundaryField()[patchi], m_);
+            return pow(lambda_.boundaryField()[patchi], lambdaExp_);
         }
 
         //- Return ambda to the m power for blending for celli
         scalar lambdaPowi(const label celli) const
         {
-            return pow(lambda_[celli], m_);
+            return pow(lambda_[celli], lambdaExp_);
         }
 
         //- Return energy source
