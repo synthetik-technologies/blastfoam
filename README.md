@@ -90,7 +90,7 @@ source $HOME/.bashrc
 
 
 ## Questions and Availability
-If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC) as well as several other HPC centers.
+If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com. blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC) as well as several other HPC centers.
 
 
 
@@ -118,7 +118,7 @@ BiBTex:
 ## User Guide
 To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
-J. Heylmun, P. Vonk, and T. Brewer, â€œblastFoam 3.0 User Guide.â€ Synthetik Applied Technologies, LLC., 13-Apr-2020.
+J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 3.0 User Guide", Synthetik Applied Technologies, LLC., 13-Apr-2020.
 ```
 BiBTex:
 ```
@@ -142,10 +142,10 @@ BiBTex:
 
 ### Journals/Conferences
 
-1. T. Brewer, J. Heylmun, and P. Vonk, â€œEmployment of the Open-source Airblast Solver blastFoam to Support the Super Heavy Improvised Explosive Loading Demonstration (SHIELD) Test Program,â€ presented at the ISIEMS, USA, 2019.
-1. D. Stephens, P. Vonk, and T. Brewer, â€œValidation of Open-source Airblast Solver (blastFoam) in an Urban Environment,â€ presented at the MABS 25, Hague, Netherlands, 2018.
-1. P. Vonk, â€œA New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation,â€ presented at the OpenFOAM Users Conference, Cologne, Germany, 2016.
-1. P. Vonk, T. Brewer, â€œA New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation and Extended Validation,â€ presented at the OpenFOAM Users Conference, USA, 2016.
+1. T. Brewer, J. Heylmun, and P. Vonk, "Employment of the Open-source Airblast Solver blastFoam to Support the Super Heavy Improvised Explosive Loading Demonstration (SHIELD) Test Program" presented at the ISIEMS, USA, 2019.
+1. D. Stephens, P. Vonk, and T. Brewer, "Validation of Open-source Airblast Solver (blastFoam) in an Urban Environment," presented at the MABS 25, Hague, Netherlands, 2018.
+1. P. Vonk, "A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation," presented at the OpenFOAM Users Conference, Cologne, Germany, 2016.
+1. P. Vonk, T. Brewer, "A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation and Extended Validation," presented at the OpenFOAM Users Conference, USA, 2016.
 
 
 
@@ -160,11 +160,11 @@ We have introduced several different approaches to model detonation within explo
 
 blastFoam allows phenomena such as size effect (decrease of the detonation velocity with decreasing charge radius), and detonation front curvature (induced by edge lag of the front as energy is lost to the exterior of the charge) to be accurately captured.  These additions greatly enhance timing accuracy and load characterization, especially for near-contact explosive scenarios.  Options for modeling afterburn (i.e., under-oxygenated explosives continuing to burn after detonation) are also included using the Miller extension, constant, and linear rate models.
 
-blastFoam extends OpenFOAMâ€™s base AMR library, and includes the ability to perform 2D and 3D adaptive mesh refinement (AMR). The refinement criteria can be based on density gradient, change across faces (delta), or Lohnerâ€™s method (2nd derivative of a field) to determine what cell should be refined or unrefined. Additionally, options for mesh unrefinement/relaxation/coarsening have been added, and this is useful for keeping cell counts relatively constant during a calculation while still capturing key features (e.g. shocks) with high accuracy. This allows blastFoam to solve engineering-scale simulations at an affordable computational cost.
+blastFoam extends OpenFOAM's base AMR library, and includes the ability to perform 2D and 3D adaptive mesh refinement (AMR). The refinement criteria can be based on density gradient, change across faces (delta), or Lohner's method (2nd derivative of a field) to determine what cell should be refined or unrefined. Additionally, options for mesh unrefinement/relaxation/coarsening have been added, and this is useful for keeping cell counts relatively constant during a calculation while still capturing key features (e.g. shocks) with high accuracy. This allows blastFoam to solve engineering-scale simulations at an affordable computational cost.
 
 blastFoam extends OpenFOAM by adding dynamic load rebalancing for adaptive grids, and now includes a working solution for 2D and experimental support for 3D calculations.  Essentially, at a predetermined timestep interval the domain is rebalanced so that the cell count per CPU is more evenly distributed. This mitigates potential memory issues such as crashing and slow-down related to overloading CPUs that are operating on zones of high refinement.
 
-Turbulence and radiation models have been integrated, allowing blastFoam users to leverage the extensive OpenFOAM libraries and apply them to their simulations, and a new fluid model structure (fluidThermo class), that extends OpenFOAMâ€™s standard thermo classes has been added, and provides thermodynamically consistent solutions for more accurate temperature calculations.
+Turbulence and radiation models have been integrated, allowing blastFoam users to leverage the extensive OpenFOAM libraries and apply them to their simulations, and a new fluid model structure (fluidThermo class), that extends OpenFOAM's standard thermo classes has been added, and provides thermodynamically consistent solutions for more accurate temperature calculations.
 
 New functionObjects have been added to improve usability, including the ability to calculate peak overpressure and impulse for each cell in the domain, as well as *blastToVTK*, a utility to view time series mesh surface outputs in *ParaView*.
 
@@ -238,7 +238,7 @@ blastFoam includes the following afterburn models
 
 ## Verification and Validation
 
-blastFoam has been validated against known solutions to standard gas dynamics problems, and against data from physical tests. Validation cases are included with example/tutorial cases as part of the solver source code.
+blastFoam has been validated against known solutions to standard hydrodynamics problems, and against data from physical tests. Validation cases are included with example/tutorial cases as part of the solver source code.
 
 
 
