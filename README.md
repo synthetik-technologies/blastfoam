@@ -49,42 +49,42 @@ More information and registration here: https://www.eventbrite.com/e/blastfoam-w
 
 Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Instalation is simple and required only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
 
-2. Create the OpenFOAM directory
+1. Create the OpenFOAM directory
 ```bash
 mkdir -p $HOME/OpenFOAM
 ```
 
-3. Go to the $HOME/OpenFOAM directory
+2. Go to the $HOME/OpenFOAM directory
 ```bash
 cd $HOME/OpenFOAM
 ```
 
-4. Clone the blastFoam repository
+3. Clone the blastFoam repository
 ```bash
 git clone https://github.com/synthetik-technologies/blastfoam
 ```
 
-5. Go to the blastfoam directory
+4. Go to the blastfoam directory
 ```bash
 cd $HOME/OpenFOAM/blastfoam
 ```
 
-6. Append the etc/bashrc to your .bashrc file
+5. Append the etc/bashrc to your .bashrc file
 ```bash
 echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.bashrc
 ```
 
-7. Load and set the bash environment to compile blastFoam
+6. Load and set the bash environment to compile blastFoam
 ```bash
 source $HOME/.bashrc
 ```
 
-8. Compile blastFoam (for parallel use "-j")
+7. Compile blastFoam (for parallel use "-j")
 ```bash
 ./Allwmake
 ```
 
-7. Test your installation by running the tutorial and validation cases
+8. Test your installation by running the tutorial and validation cases
 
 
 
