@@ -37,7 +37,7 @@ The workshop will include:
 - Verification and Validation
 - Using the blastFoam GUI to help setup and visualize blastFoam cases
 - A hands-on guided walk-through of a number of 2D and 3D blastFoam tutorial examples with the Synthetik team.
-- All levels of expertise are welcome to attend, and this session will be very practical and â€˜hands onâ€™.
+- All levels of expertise are welcome to attend, and this session will be very practical and hands-on.
 
 Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
 
