@@ -7,7 +7,7 @@
 
 
 
-# blastFoam
+# blastFoam Version 3.0
 
 blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com).
 
