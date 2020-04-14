@@ -35,13 +35,35 @@ Description
 #include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "phaseCompressibleSystem.H"
+#include "fiveEqnCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
+#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption
+    (
+        "listTurbulenceModels",
+        "List turbulenceModels"
+    );
     #include "setRootCase.H"
+    if (args.optionFound("listTurbulenceModels"))
+    {
+        Info<< "Turbulence models"
+            << blast::laminarModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+
+        Info<< "RAS models"
+            << blast::RASModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+
+        Info<< "LES models"
+            << blast::LESModel::dictionaryConstructorTablePtr_->sortedToc()
+            << endl;
+        exit(1);
+    }
 
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
@@ -57,13 +79,17 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        #include "compressibleCourantNo.H"
+        #include "eigenvalueCourantNo.H"
         #include "readTimeControls.H"
         #include "setDeltaT.H"
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        #include "estimateError.H"
+        if (!isA<staticFvMesh>(mesh))
+        {
+            error->update();
+        }
+
         mesh.update();
 
         fluid->encode();
@@ -71,16 +97,10 @@ int main(int argc, char *argv[])
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
 
-        impulse +=
-            (
-                p
-              - dimensionedScalar("pRef", dimPressure, 101298.0)
-            )*runTime.deltaT();
-        maxImpulse = max(maxImpulse, impulse);
-        maxP = max(maxP, p);
-
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
+        Info<< "max(T): " << max(T).value()
+            << ", min(T): " << min(T).value() << endl;
 
         runTime.write();
 
@@ -89,24 +109,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-
-        if(stopActive)
-        {
-            /* code */
-            // check points in input file for vel mag and write/exit if > 0
-            for(auto pI = 0; pI < stopPoints.size(); ++pI)
-            {
-                 auto UMagPoint = mag(U[mesh.findNearestCell(stopPoints[pI])]);
-                 if(UMagPoint > stopEpsilon)
-                 {
-                    Info << "Stopping criteria detected at point: " << stopPoints[pI] << endl;
-                    Info << "Mag velocity is : " << UMagPoint << endl;
-                    Info<< "End\n" << endl;
-                    runTime.writeAndEnd();
-                    return 0;
-                 }
-            }
-        }
+        fluid->clearODEFields();
     }
 
     Info<< "End\n" << endl;

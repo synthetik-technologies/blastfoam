@@ -162,6 +162,11 @@ public:
             return true;
         }
 
+        virtual label nDims() const
+        {
+            return 2;
+        }
+
         // Refinement
 
             //- Insert refinement. All selected cells will be split into 4.

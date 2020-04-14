@@ -32,13 +32,24 @@ Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
     const dictionary& dict
 )
 {
-    word phaseCompressibleSystemType
+    wordList phases
     (
-        dict.lookupType<wordList>("phases").size() == 2
-      ? "twoPhaseCompressibleSystem"
-      : "multiphaseCompressibleSystem"
+        dict.lookupOrDefault("phases", wordList())
     );
+    word phaseCompressibleSystemType;
 
+    if (phases.size() == 2)
+    {
+        phaseCompressibleSystemType = "twoPhaseCompressibleSystem";
+    }
+    else if (phases.size() > 2)
+    {
+        phaseCompressibleSystemType = "multiphaseCompressibleSystem";
+    }
+    else
+    {
+        phaseCompressibleSystemType = "singlePhaseCompressibleSystem";
+    }
     Info<< "Selecting phaseCompressibleSystem: "
         << phaseCompressibleSystemType << endl;
 

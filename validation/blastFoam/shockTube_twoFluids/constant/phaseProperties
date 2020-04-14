@@ -1,0 +1,94 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (fluid gas);
+
+fluid
+{
+    type basic;
+
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState stiffenedGas;
+    }
+
+    equationOfState
+    {
+        gamma       4.4;
+        a           6.0e8;
+    }
+    specie
+    {
+        molWeight    28.97;
+    }
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        Cv          4186;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho 1e-10;
+    residualAlpha 1e-6;
+}
+
+gas
+{
+    type basic;
+
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState vanderWaals;
+    }
+
+    equationOfState
+    {
+        gamma           1.4;
+        a               5.0;
+        b               1e-3;
+        c               0;
+    }
+
+    specie
+    {
+        molWeight     28.97;
+    }
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        Cv          718;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho     1e-10;
+    residualAlpha   1e-6;
+}
+
+
+// ************************************************************************* //

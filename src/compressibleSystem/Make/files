@@ -1,7 +1,9 @@
 fluxSchemes/fluxScheme/fluxScheme.C
 fluxSchemes/fluxScheme/newFluxScheme.C
+fluxSchemes/RiemannConvectionScheme/RiemannConvectionSchemes.C
 
 fluxSchemes/HLLC/HLLC.C
+fluxSchemes/HLLCP/HLLCP.C
 fluxSchemes/HLL/HLL.C
 fluxSchemes/Kurganov/Kurganov.C
 fluxSchemes/Tadmor/Tadmor.C
@@ -9,8 +11,10 @@ fluxSchemes/AUSMPlus/AUSMPlus.C
 
 phaseCompressibleSystem/phaseCompressibleSystem.C
 phaseCompressibleSystem/newPhaseCompressibleSystem.C
+phaseCompressibleSystem/fiveEqnCompressibleTurbulenceModels.C
+singlePhaseCompressibleSystem/singlePhaseCompressibleSystem.C
 twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
 multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
 
 
-LIB = $(FOAM_USER_LIBBIN)/libtwoPhaseCompressibleSystem
+LIB = $(FOAM_USER_LIBBIN)/libphaseCompressibleSystems

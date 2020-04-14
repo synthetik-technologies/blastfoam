@@ -1,0 +1,12 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+(cd rateStick_1D && ./Allclean)
+(cd rateStick_6 && ./Allclean)
+(cd rateStick_8 && ./Allclean)
+(cd rateStick_12_5 && ./Allclean)
+(cd rateStick_20 && ./Allclean)
+
+rm validation/*.eps
+
+# ----------------------------------------------------------------- end-of-file

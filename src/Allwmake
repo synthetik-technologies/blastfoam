@@ -4,8 +4,13 @@ cd ${0%/*} || exit 1    # run from this directory
 # Parse arguments for library compilation
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
 
-wmake $targetType equationOfState
-wmake $targetType compressibleSystem
 wmake $targetType timeIntegrators
+wmake $targetType fluidThermo
+wmake $targetType radiationModels
+wmake $targetType compressibleSystem
 wmake $targetType adaptiveFvMesh
+wmake $targetType errorEstimators
+wmake $targetType functionObjects
+
 # ----------------------------------------------------------------- end-of-file
+

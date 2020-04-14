@@ -1,0 +1,4 @@
+psiuCompressibleSystem/psiuCompressibleSystem.C
+blastXiFoam.C
+
+EXE = $(FOAM_USER_APPBIN)/blastXiFoam

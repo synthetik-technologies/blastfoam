@@ -1,0 +1,11 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+(cd rateStick_1D && ./Allrun)
+(cd rateStick_6 && ./Allrun)
+(cd rateStick_8 && ./Allrun)
+(cd rateStick_12_5 && ./Allrun)
+(cd rateStick_20 && ./Allrun)
+
+(cd validation && ./createGraphs)
+# ----------------------------------------------------------------- end-of-file

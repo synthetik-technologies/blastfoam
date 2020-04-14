@@ -1,0 +1,93 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         50e-6;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-6;
+
+writeFormat     ascii;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+deltaT          1e-8;
+
+maxCo           0.5;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+functions
+{
+    detonationVelocity
+    {
+        type                coded;
+        libs                ("libutilityFunctionObjects.so");
+        name detonationVelocity;
+        executeControl  timeStep;
+        executeInterval 1;
+        writeControl  timeStep;
+        writeInterval 1;
+
+        codeExecute
+        #{
+            static bool write = true;
+            static scalar startTime = -1;
+            static scalar endTime = -1;
+            label celli = mesh().findCell(vector(0.001, 0, 0.09));
+            label cellj = mesh().findCell(vector(0.001, 0, 0.095));
+
+            const volScalarField& p(mesh().lookupObject<volScalarField>("p"));
+
+            if (p[celli] > 1e9 && startTime < 0)
+            {
+                startTime = mesh().time().value();
+            }
+            if (p[cellj] > 1e9 && endTime < 0)
+            {
+                endTime = mesh().time().value();
+            }
+
+            if (startTime > 0 && endTime > 0 && write)
+            {
+                write = false;
+                OFstream outputFile("detonationVelocity");
+                outputFile<< 1.0/12.5 << "," << 0.005/(endTime - startTime)<<endl;
+            }
+        #};
+    }
+}
+
+// ************************************************************************* //

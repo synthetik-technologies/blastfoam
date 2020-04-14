@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "runTimeSelectionTables.H"
-#include "phaseCompressibleSystem.H"
+#include "integrationSystem.H"
 
 namespace Foam
 {
@@ -53,8 +53,11 @@ class timeIntegrator
 protected:
 // Protected variables
 
+    //- Reference to mesh
+    const fvMesh& mesh_;
+
     //- Reference to compressible system
-    phaseCompressibleSystem& fluid_;
+    UPtrList<integrationSystem> systems_;
 
 
 public:
@@ -70,12 +73,12 @@ public:
             autoPtr,
             timeIntegrator,
             dictionary,
-            (phaseCompressibleSystem& fluid),
-            (fluid)
+            (const fvMesh& mesh),
+            (mesh)
         );
 
     // Constructor
-    timeIntegrator(phaseCompressibleSystem& fluid);
+    timeIntegrator(const fvMesh& mesh);
 
 
     //- Destructor
@@ -83,10 +86,14 @@ public:
 
 
     // Selector
-    static autoPtr<timeIntegrator> New(phaseCompressibleSystem& fluid);
+    static autoPtr<timeIntegrator> New(const fvMesh& mesh);
 
 
     // Member Functions
+
+        void addSystem(integrationSystem& system);
+
+        virtual void setODEFields(integrationSystem& system) = 0;
 
         //- Integrate fluxes in time
         virtual void integrate() = 0;

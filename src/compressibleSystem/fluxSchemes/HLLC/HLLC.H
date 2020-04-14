@@ -59,7 +59,33 @@ class HLLC
     public fluxScheme
 {
 
+    // Saved variables
+
+        tmp<surfaceScalarField> SOwn_;
+        tmp<surfaceScalarField> SNei_;
+        tmp<surfaceScalarField> SStar_;
+        tmp<surfaceScalarField> pStarOwn_;
+        tmp<surfaceScalarField> pStarNei_;
+        tmp<surfaceScalarField> UvOwn_;
+        tmp<surfaceScalarField> UvNei_;
+
     // Private functions
+
+        //- Calcualte fluxes
+        virtual void calculateFluxes
+        (
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const scalar& cOwn, const scalar& cNei,
+            const vector& Sf,
+            scalar& phi,
+            scalar& rhoPhi,
+            vector& rhoUPhi,
+            scalar& rhoEPhi,
+            const label facei, const label patchi = -1
+        );
 
         //- Calcualte fluxes
         virtual void calculateFluxes
@@ -76,8 +102,26 @@ class HLLC
             scalarList& alphaPhis,
             scalarList& alphaRhoPhis,
             vector& rhoUPhi,
-            scalar& rhoEPhi
+            scalar& rhoEPhi,
+            const label facei, const label patchi = -1
         );
+
+        //- Calculate energy flux for an addition internal energy
+        virtual scalar energyFlux
+        (
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const label facei, const label patchi = -1
+        ) const;
+
+        //- Interpolate field
+        virtual scalar interpolate
+        (
+            const scalar& fOwn, const scalar& fNei,
+            const label facei, const label patchi = -1
+        ) const;
 
 
 public:
@@ -91,6 +135,15 @@ public:
 
     //- Destructor
     virtual ~HLLC();
+
+
+    // Member Functions
+
+        //- Clear savedFields
+        virtual void clear();
+
+        //- Allocate saved fields
+        virtual void createSavedFields();
 };
 
 

@@ -605,13 +605,6 @@ void Foam::hexRef2D::createInternalFaces
                   {
                       nFacesAdded++;
 
-                      const face& fnew = meshMod.faces()[newFacei];
-
-                      forAll(fnew, fp0new)
-                      {
-                          label point0new = fnew[fp0new];
-                      }
-
                       if (nFacesAdded == 4)
                       {
                           break;
@@ -696,12 +689,6 @@ void Foam::hexRef2D::createInternalFaces
                   {
                       nFacesAdded++;
 
-                      const face& fnew = meshMod.faces()[newFacei];
-
-                      forAll(fnew, fp0new)
-                      {
-                          label point0new = fnew[fp0new];
-                      }
                       if (nFacesAdded == 4)
                       {
                           break;
@@ -828,7 +815,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
     {
         const label & patchID = mesh_.boundaryMesh().whichPatch(facei);
 
-        //if (isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchID])
         if
         (
             mesh_.boundaryMesh()[patchID].type() == "empty"

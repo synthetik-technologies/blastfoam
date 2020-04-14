@@ -32,6 +32,8 @@ Class
 Description
     A fvMesh with built-in refinement.
 
+    Dynamic load balancing done by Tyler Voskuilen
+
     Determines which cells to refine/unrefine and does all in update().
 
 
@@ -120,6 +122,12 @@ protected:
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
+        //- Static dictionary for runTime balancing
+        dictionary decompositionDict_;
+
+        //- Decomposition method
+        autoPtr<decompositionMethod> decomposer_;
+
 
     // Protected Member Functions
 
@@ -205,6 +213,12 @@ protected:
                 label& nProtected
             ) const;
 
+            //- Map non-flux surface<Type>Fields for new internal faces
+            //  (from cell splitting)
+            template <class T>
+            void mapNewInternalFaces(const labelList& faceMap);
+
+
 
 public:
 
@@ -226,6 +240,9 @@ public:
 
 
     // Member Functions
+
+        //- Map all fields in time using given map
+        virtual void mapFields(const mapPolyMesh& mpm);
 
         //- Direct access to the refinement engine
         const hexRef& meshCutter() const
@@ -252,6 +269,7 @@ public:
         template<class Type> void correctBoundaries();
 
 
+
     // Writing
 
         //- Write using given format, version and compression
@@ -276,6 +294,11 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+#ifdef NoRepository
+    #include "adaptiveFvMeshTemplates.C"
+#endif
 
 #endif
 

@@ -36,8 +36,12 @@ License
 #include "surfaceFields.H"
 #include "syncTools.H"
 #include "pointFields.H"
-#include "sigFpe.H"
+#include "fvCFD.H"
+#include "volPointInterpolation.H"
+#include "pointMesh.H"
 #include "cellSet.H"
+
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -52,14 +56,26 @@ namespace Foam
 
 Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
 {
-    label nextP = meshCutter().history().splitCells()[p].parent_;
-    if (nextP < 0)
+    // Check if cells have lost visibility of parent
+    // (Usefull if snappyHexMesh is used)
+
+  if (
+      p >= meshCutter().history().splitCells().size()
+      || meshCutter().cellLevel()[p] == 0
+      || meshCutter().history().visibleCells()[p] < 0
+     )
     {
-        return p;
+      return p;
     }
-    else
+
+  label nextP = meshCutter().history().splitCells()[p].parent_;
+  if (nextP < 0)
     {
-        return topParentID(nextP);
+      return p;
+    }
+  else
+    {
+      return topParentID(nextP);
     }
 }
 
@@ -232,8 +248,11 @@ Foam::adaptiveFvMesh::refine
     meshCutter_->setRefinement(cellsToRefine, meshMod);
 
     // Create mesh (with inflation), return map from old to new mesh.
-    // autoPtr<mapPolyMesh> map = meshMod.changeMesh(*this, true);
-    autoPtr<mapPolyMesh> map = meshMod.changeMesh(*this, false);
+//     // autoPtr<mapPolyMesh> map = meshMod.changeMesh(*this, true);
+    autoPtr<mapPolyMesh> map = meshMod.changeMesh
+    (
+        refCast<fvMesh>(*this), false
+    );
 
     Info<< "Refined from "
         << returnReduce(map().nOldCells(), sumOp<label>())
@@ -1059,7 +1078,21 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     meshCutter_(hexRef::New(*this)),
     dumpLevel_(false),
     nRefinementIterations_(0),
-    protectedCell_(nCells(), 0)
+    protectedCell_(nCells(), 0),
+    decompositionDict_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                time().system(),
+                *this,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        )
+    )
 {
     // Read static part of dictionary
     readDict();
@@ -1230,6 +1263,45 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
 
         protectedCells.write();
     }
+
+    //- 2D refinment does not currently work
+    //  Refinement history is not compatable with the current method of
+    //  tracking parent cells
+    const dictionary& balanceDict =
+        dynamicMeshDict().optionalSubDict("loadBalance");
+    Switch balance(balanceDict.lookupOrDefault("balance", false));
+    if (Pstream::parRun() && meshCutter().type() == "hexRef3D" && balance)
+    {
+        // Change decomposition method if entry is present
+        if (balanceDict.found("method"))
+        {
+            decompositionDict_.set
+            (
+                "method",
+                balanceDict.lookup("method")
+            );
+        }
+
+        // Add refinementHistory constraint
+        {
+            dictionary refinementHistoryDict;
+            refinementHistoryDict.add("type", "refinementHistory");
+            dictionary constraintsDict;
+            constraintsDict.add("refinementHistory", refinementHistoryDict);
+            decompositionDict_.add("constraints", constraintsDict);
+        }
+
+        decomposer_ = decompositionMethod::New(decompositionDict_);
+        if (!decomposer_->parallelAware())
+        {
+            FatalErrorInFunction
+                << "You have selected decomposition method "
+                << decomposer_->typeName
+                << " which is not parallel aware." << endl
+                << "Please select one that is (hierarchical, ptscotch)"
+                << exit(FatalError);
+        }
+    }
 }
 
 
@@ -1240,6 +1312,21 @@ Foam::adaptiveFvMesh::~adaptiveFvMesh()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
+{
+// DebugVar(mpm.nOldCells());
+    dynamicFvMesh::mapFields(mpm);
+
+    // Correct surface fields on introduced internal faces. These get
+    // created out-of-nothing so get an interpolated value.
+    mapNewInternalFaces<scalar>(mpm.faceMap());
+    mapNewInternalFaces<vector>(mpm.faceMap());
+    mapNewInternalFaces<sphericalTensor>(mpm.faceMap());
+    mapNewInternalFaces<symmTensor>(mpm.faceMap());
+    mapNewInternalFaces<tensor>(mpm.faceMap());
+}
+
 
 bool Foam::adaptiveFvMesh::update()
 {
@@ -1332,6 +1419,13 @@ bool Foam::adaptiveFvMesh::update()
 
         if (globalData().nTotalCells() < maxCells)
         {
+            // Extend with a buffer layer to prevent neighbouring points
+            // being unrefined.
+            for (label i = 0; i < nBufferLayers; i++)
+            {
+                extendMarkedCells(refineCell);
+            }
+
             // Select subset of candidates. Take into account max allowable
             // cells, refinement level, protected cells.
             labelList cellsToRefine
@@ -1382,19 +1476,12 @@ bool Foam::adaptiveFvMesh::update()
                     refineCell.transfer(newRefineCell);
                 }
 
-                // Extend with a buffer layer to prevent neighbouring points
-                // being unrefined.
-                for (label i = 0; i < nBufferLayers; i++)
-                {
-                    extendMarkedCells(refineCell);
-                }
-
                 hasChanged = true;
             }
         }
 
 
-         if (time().value() > beginUnrefine)
+        if (time().value() > beginUnrefine)
         {
             // Select unrefineable points that are not marked in refineCell
             labelList pointsEdgesToUnrefine
@@ -1423,21 +1510,194 @@ bool Foam::adaptiveFvMesh::update()
         }
 
 
-        if ((nRefinementIterations_ % 10) == 0)
+        // PV: This is interesting... perhaps we should do this at every iteration as it is a known 'occasional' error?
+        if ((nRefinementIterations_ % 1) == 0) // change from 10 to 1 to force every time
         {
             // Compact refinement history occasionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
             const_cast<refinementHistory&>(meshCutter().history()).compact();
         }
         nRefinementIterations_++;
-    }
 
-    topoChanging(hasChanged);
-    if (hasChanged)
-    {
-        // Reset moving flag (if any). If not using inflation we'll not move,
-        // if are using inflation any follow on movePoints will set it.
-        moving(false);
+        topoChanging(hasChanged);
+        if (hasChanged)
+        {
+            // Reset moving flag (if any). If not using inflation we'll not move,
+            // if are using inflation any follow on movePoints will set it.
+            moving(false);
+        }
+
+        if( Pstream::parRun() && hasChanged)
+        {
+            //Correct values on all coupled patches
+            correctBoundaries<scalar>();
+            correctBoundaries<vector>();
+            correctBoundaries<sphericalTensor>();
+            correctBoundaries<symmTensor>();
+            correctBoundaries<tensor>();
+        }
+
+
+        const dictionary& balanceDict
+        (
+            dynamicMeshDict().optionalSubDict("loadBalance")
+        );
+        Switch balance =
+            balanceDict.lookupOrDefault("balance", false)
+         && meshCutter().type() == "hexRef3D";
+        label balanceInterval =
+            balanceDict.lookupOrDefault("balanceInterval", 1);
+
+        if
+        (
+         Pstream::parRun() // is this run parallel?
+         && balance
+         && (
+                (nRefinementIterations_ % balanceInterval) == 0
+             || (nRefinementIterations_ == 1)
+            )
+         && hasChanged
+        )
+        {
+            const scalar allowableImbalance =
+                readScalar(balanceDict.lookup("allowableImbalance"));
+
+            label nGlobalCells = globalData().nTotalCells();
+            scalar idealNCells =
+                scalar(nGlobalCells)/scalar(Pstream::nProcs());
+            scalar localImbalance = mag(scalar(nCells()) - idealNCells);
+            Foam::reduce(localImbalance, maxOp<scalar>());
+            scalar maxImbalance = localImbalance/idealNCells;
+
+            Info<<"Maximum imbalance = " << 100*maxImbalance << " %" << endl;
+
+            if (maxImbalance > allowableImbalance && balance)
+            {
+                Info<< "Re-balancing dynamically refined mesh" << endl;
+                const labelIOList& cellLevel = meshCutter().cellLevel();
+                Map<label> coarseIDmap(100);
+
+                labelList uniqueIndex(nCells(),0);
+                label nCoarse = 0;
+
+                forAll(cells(), cellI)
+                  {
+                    if
+                      (
+                       cellLevel[cellI] > 0
+                       && meshCutter().history().visibleCells()[cellI] >= 0
+                       )
+                      {
+                        auto cpi = meshCutter().history().parentIndex(cellI);
+                        auto tpID = topParentID ( cpi );
+                        uniqueIndex[cellI] = nCells() + tpID;
+                      }
+                    else
+                      {
+                        uniqueIndex[cellI] = cellI;
+                      }
+
+                    if( coarseIDmap.insert(uniqueIndex[cellI], nCoarse) )
+                      {
+                        ++nCoarse;
+                      }
+                  }
+
+                // Convert to local sequential indexing and calculate coarse
+                // points and weights
+                labelList localIndex(nCells(),0);
+                pointField coarsePoints(nCoarse,vector::zero);
+                scalarField coarseWeights(nCoarse,0.0);
+
+                forAll(uniqueIndex, cellI)
+                {
+                    localIndex[cellI] = coarseIDmap[uniqueIndex[cellI]];
+
+                    // If 2D refinement (quadtree) is ever implemented, this '3'
+                    // should be set in general as the number of refinement
+                    // dimensions.
+                    label w = pow(2, meshCutter().nDims()*cellLevel[cellI]);
+
+                    coarseWeights[localIndex[cellI]] += 1.0;
+                    coarsePoints[localIndex[cellI]] += C()[cellI]/w;
+                }
+
+                // Faces where owner and neighbour are not 'connected' so can
+                // go to different processors.
+                boolList blockedFace;
+
+                // Faces that move as block onto single processor
+                PtrList<labelList> specifiedProcessorFaces;
+                labelList specifiedProcessor;
+
+                // Pairs of baffles
+                List<labelPair> couples;
+
+                // Constraints from decomposeParDict
+                decomposer_().setConstraints
+                (
+                    *this,
+                    blockedFace,
+                    specifiedProcessorFaces,
+                    specifiedProcessor,
+                    couples
+                );
+
+                labelList finalDecomp = decomposer_().decompose
+                (
+                    *this,
+                    localIndex,
+                    coarsePoints,
+                    coarseWeights
+                );
+
+                fvMesh::clearOut();
+
+                scalar tolDim = globalMeshData::matchTol_*bounds().mag();
+
+                Info<< "Distributing the mesh ..." << endl;
+                fvMeshDistribute distributor
+                (
+                    refCast<fvMesh>(*this), tolDim
+                );
+
+                autoPtr<mapDistributePolyMesh> map =
+                    distributor.distribute(finalDecomp);
+
+                meshCutter_->distribute(map);
+
+                scalarList procLoadNew (Pstream::nProcs(), 0.0);
+                procLoadNew[Pstream::myProcNo()] = this->nCells();
+
+                reduce(procLoadNew, sumOp<List<scalar> >());
+
+                scalar overallLoadNew = sum(procLoadNew);
+                scalar averageLoadNew = overallLoadNew/double(Pstream::nProcs());
+
+                Info<< "Successfully distributed mesh" << endl;
+                Info<< "New max deviation: "
+                    << max
+                    (
+                        Foam::mag(procLoadNew-averageLoadNew)
+                       /averageLoadNew
+                    )*100.0
+                    << " %" << endl;
+
+                if (debug)
+                {
+                    Info<< "\tNew distribution: " << procLoadNew << endl;
+                }
+
+                correctBoundaries<scalar>();
+                correctBoundaries<vector>();
+                correctBoundaries<sphericalTensor>();
+                correctBoundaries<symmTensor>();
+                correctBoundaries<tensor>();
+
+                setInstance(time().timeName());
+                meshCutter_->setInstance(facesInstance());
+            }
+        }
     }
     return hasChanged;
 }

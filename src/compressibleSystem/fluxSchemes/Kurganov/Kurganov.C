@@ -59,10 +59,101 @@ Foam::fluxSchemes::Kurganov::~Kurganov()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::fluxSchemes::Kurganov::clear()
+{
+    fluxScheme::clear();
+    aPhivOwn_.clear();
+    aPhivNei_.clear();
+    aOwn_.clear();
+    aNei_.clear();
+    aSf_.clear();
+}
+
+
+void Foam::fluxSchemes::Kurganov::createSavedFields()
+{
+    fluxScheme::createSavedFields();
+    if (aPhivOwn_.valid())
+    {
+        return;
+    }
+
+    aPhivOwn_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aPhivOwn",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+    aPhivNei_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aPhivNei",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+
+    aOwn_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aOwn",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimless, 0.0)
+        )
+    );
+    aNei_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aNei",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimless, 0.0)
+        )
+    );
+    aSf_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aSf",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+}
+
+
 void Foam::fluxSchemes::Kurganov::calculateFluxes
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
     const scalar& rhoOwn, const scalar& rhoNei,
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
@@ -70,10 +161,10 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     const scalar& cOwn, const scalar& cNei,
     const vector& Sf,
     scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
+    scalar& rhoPhi,
     vector& rhoUPhi,
-    scalar& rhoEPhi
+    scalar& rhoEPhi,
+    const label facei, const label patchi
 )
 {
     scalar magSf = mag(Sf);
@@ -106,6 +197,87 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
 
+    this->save(facei, patchi, aphivOwn, aPhivOwn_);
+    this->save(facei, patchi, aphivNei, aPhivNei_);
+    this->save(facei, patchi, aOwn, aOwn_);
+    this->save(facei, patchi, aNei, aNei_);
+    this->save(facei, patchi, aSf, aSf_);
+
+    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
+    phi = aphivOwn + aphivNei;
+    rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
+
+    rhoUPhi =
+    (
+        (aphivOwn*rhoOwn*UOwn + aphivNei*rhoNei*UNei)
+      + (aOwn*pOwn + aNei*pNei)*Sf
+    );
+
+    rhoEPhi =
+    (
+        aphivOwn*(rhoOwn*EOwn + pOwn)
+      + aphivNei*(rhoNei*ENei + pNei)
+      + aSf*pOwn - aSf*pNei
+    );
+}
+
+
+void Foam::fluxSchemes::Kurganov::calculateFluxes
+(
+    const scalarList& alphasOwn, const scalarList& alphasNei,
+    const scalarList& rhosOwn, const scalarList& rhosNei,
+    const scalar& rhoOwn, const scalar& rhoNei,
+    const vector& UOwn, const vector& UNei,
+    const scalar& eOwn, const scalar& eNei,
+    const scalar& pOwn, const scalar& pNei,
+    const scalar& cOwn, const scalar& cNei,
+    const vector& Sf,
+    scalar& phi,
+    scalarList& alphaPhis,
+    scalarList& alphaRhoPhis,
+    vector& rhoUPhi,
+    scalar& rhoEPhi,
+    const label facei, const label patchi
+)
+{
+    scalar magSf = mag(Sf);
+
+    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    scalar ENei = eNei + 0.5*magSqr(UNei);
+
+    scalar phivOwn(UOwn & Sf);
+    scalar phivNei(UNei & Sf);
+
+    scalar cSfOwn(cOwn*magSf);
+    scalar cSfNei(cNei*magSf);
+
+    scalar ap
+    (
+        max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0)
+    );
+    scalar am
+    (
+        min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0)
+    );
+
+    scalar aOwn(ap/(ap - am));
+    scalar aSf(am*aOwn);
+    scalar aNei(1.0 - aOwn);
+
+    phivOwn *= aOwn;
+    phivNei *= aNei;
+
+    scalar aphivOwn(phivOwn - aSf);
+    scalar aphivNei(phivNei + aSf);
+
+    this->save(facei, patchi, aphivOwn, aPhivOwn_);
+    this->save(facei, patchi, aphivNei, aPhivNei_);
+    this->save(facei, patchi, aOwn, aOwn_);
+    this->save(facei, patchi, aNei, aNei_);
+    this->save(facei, patchi, aSf, aSf_);
+
+    this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
+
     phi = aphivOwn + aphivNei;
 
     forAll(alphasOwn, phasei)
@@ -130,4 +302,44 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
       + aSf*pOwn - aSf*pNei
     );
 }
+
+
+Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
+(
+    const scalar& rhoOwn, const scalar& rhoNei,
+    const vector& UOwn, const vector& UNei,
+    const scalar& eOwn, const scalar& eNei,
+    const scalar& pOwn, const scalar& pNei,
+    const label facei, const label patchi
+) const
+{
+    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_());
+    scalar aphivNei = getValue(facei, patchi, aPhivNei_());
+    scalar aSf = getValue(facei, patchi, aSf_());
+
+    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    scalar ENei = eNei + 0.5*magSqr(UNei);
+
+
+    return
+    (
+        aphivOwn*(rhoOwn*EOwn + pOwn)
+      + aphivNei*(rhoNei*ENei + pNei)
+      + aSf*pOwn - aSf*pNei
+    );
+}
+
+
+Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
+(
+    const scalar& fOwn, const scalar& fNei,
+    const label facei, const label patchi
+) const
+{
+    scalar aOwn = getValue(facei, patchi, aOwn_());
+    scalar aNei = getValue(facei, patchi, aNei_());
+
+   return aOwn*fOwn + aNei*fNei;
+}
+
 // ************************************************************************* //

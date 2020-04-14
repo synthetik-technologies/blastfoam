@@ -59,10 +59,70 @@ Foam::fluxSchemes::Tadmor::~Tadmor()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::fluxSchemes::Tadmor::clear()
+{
+    fluxScheme::clear();
+    aPhivOwn_.clear();
+    aPhivNei_.clear();
+    aSf_.clear();
+}
+
+
+void Foam::fluxSchemes::Tadmor::createSavedFields()
+{
+    fluxScheme::createSavedFields();
+    if (aPhivOwn_.valid())
+    {
+        return;
+    }
+
+    aPhivOwn_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Tadmor::aPhivOwn",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+    aPhivNei_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Tadmor::aPhivNei",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+    aSf_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::aSf",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+        )
+    );
+}
+
+
 void Foam::fluxSchemes::Tadmor::calculateFluxes
 (
-    const scalarList& alphasOwn, const scalarList& alphasNei,
-    const scalarList& rhosOwn, const scalarList& rhosNei,
     const scalar& rhoOwn, const scalar& rhoNei,
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
@@ -70,10 +130,10 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
     const scalar& cOwn, const scalar& cNei,
     const vector& Sf,
     scalar& phi,
-    scalarList& alphaPhis,
-    scalarList& alphaRhoPhis,
+    scalar& rhoPhi,
     vector& rhoUPhi,
-    scalar& rhoEPhi
+    scalar& rhoEPhi,
+    const label facei, const label patchi
 )
 {
     scalar magSf = mag(Sf);
@@ -99,10 +159,75 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
 
+    this->save(facei, patchi, aphivOwn, aPhivOwn_);
+    this->save(facei, patchi, aphivNei, aPhivNei_);
+    this->save(facei, patchi, aSf, aSf_);
 
-    // Reuse amaxSf for the maximum positive and negative fluxes
-    // estimated by the central scheme
-    amaxSf = max(mag(aphivOwn), mag(aphivNei));
+    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
+    phi = aphivOwn + aphivNei;
+    rhoPhi = aphivOwn*rhoOwn + aphivNei*rhoNei;
+
+    rhoUPhi =
+    (
+        (aphivOwn*rhoOwn*UOwn + aphivNei*rhoNei*UNei)
+      + 0.5*(pOwn + pNei)*Sf
+    );
+
+    rhoEPhi =
+    (
+        aphivOwn*(rhoOwn*EOwn + pOwn)
+      + aphivNei*(rhoNei*ENei + pNei)
+      + aSf*pOwn - aSf*pNei
+    );
+}
+
+
+void Foam::fluxSchemes::Tadmor::calculateFluxes
+(
+    const scalarList& alphasOwn, const scalarList& alphasNei,
+    const scalarList& rhosOwn, const scalarList& rhosNei,
+    const scalar& rhoOwn, const scalar& rhoNei,
+    const vector& UOwn, const vector& UNei,
+    const scalar& eOwn, const scalar& eNei,
+    const scalar& pOwn, const scalar& pNei,
+    const scalar& cOwn, const scalar& cNei,
+    const vector& Sf,
+    scalar& phi,
+    scalarList& alphaPhis,
+    scalarList& alphaRhoPhis,
+    vector& rhoUPhi,
+    scalar& rhoEPhi,
+    const label facei, const label patchi
+)
+{
+    scalar magSf = mag(Sf);
+
+    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    scalar ENei = eNei + 0.5*magSqr(UNei);
+
+    scalar phivOwn(UOwn & Sf);
+    scalar phivNei(UNei & Sf);
+
+    scalar cSfOwn(cOwn*magSf);
+    scalar cSfNei(cNei*magSf);
+
+    scalar aOwn(max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0));
+    scalar aNei(min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0));
+
+    scalar amaxSf(max(mag(aNei), mag(aOwn)));
+    scalar aSf(-0.5*amaxSf);
+
+    phivOwn *= 0.5;
+    phivNei *= 0.5;
+
+    scalar aphivOwn(phivOwn - aSf);
+    scalar aphivNei(phivNei + aSf);
+
+    this->save(facei, patchi, aphivOwn, aPhivOwn_);
+    this->save(facei, patchi, aphivNei, aPhivNei_);
+    this->save(facei, patchi, aSf, aSf_);
+
+    this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
 
     phi = aphivOwn + aphivNei;
 
@@ -128,4 +253,40 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
       + aSf*pOwn - aSf*pNei
     );
 }
+
+
+Foam::scalar Foam::fluxSchemes::Tadmor::energyFlux
+(
+    const scalar& rhoOwn, const scalar& rhoNei,
+    const vector& UOwn, const vector& UNei,
+    const scalar& eOwn, const scalar& eNei,
+    const scalar& pOwn, const scalar& pNei,
+    const label facei, const label patchi
+) const
+{
+    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_());
+    scalar aphivNei = getValue(facei, patchi, aPhivNei_());
+    scalar aSf = getValue(facei, patchi, aSf_());
+
+    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    scalar ENei = eNei + 0.5*magSqr(UNei);
+
+    return
+    (
+        aphivOwn*(rhoOwn*EOwn + pOwn)
+      + aphivNei*(rhoNei*ENei + pNei)
+      + aSf*pOwn - aSf*pNei
+    );
+}
+
+
+Foam::scalar Foam::fluxSchemes::Tadmor::interpolate
+(
+    const scalar& fOwn, const scalar& fNei,
+    const label facei, const label patchi
+) const
+{
+    return 0.5*(fOwn + fNei);
+}
+
 // ************************************************************************* //

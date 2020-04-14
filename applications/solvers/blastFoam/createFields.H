@@ -1,9 +1,24 @@
-Info<< "Reading MieGruneisenEOSProperties dictionary\n" << endl;
-IOdictionary MieGruneisenEOSProperties
+// Read gravitational acceleration
+Info<< "\nReading g" << endl;
+uniformDimensionedVectorField g
+(
+    IOobject
+    (
+        "g",
+        runTime.constant(),
+        mesh,
+        IOobject::READ_IF_PRESENT,
+        IOobject::NO_WRITE
+    ),
+    dimensionedVector(dimAcceleration, Zero)
+);
+
+Info<< "Reading phaseProperties dictionary\n" << endl;
+IOdictionary phaseProperties
 (
      IOobject
      (
-          "MieGruneisenEOSProperties",
+          "phaseProperties",
           runTime.constant(),
           mesh,
           IOobject::MUST_READ,
@@ -13,91 +28,33 @@ IOdictionary MieGruneisenEOSProperties
 
 autoPtr<phaseCompressibleSystem> fluid
 (
-    phaseCompressibleSystem::New(mesh, MieGruneisenEOSProperties)
+    phaseCompressibleSystem::New(mesh, phaseProperties)
 );
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(fluid()));
+autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+integrator->addSystem(fluid());
 
-volScalarField& p = fluid->p();
-const volVectorField& U = fluid->U();
-const volScalarField& rho = fluid->rho();
+const volScalarField& p = fluid->p();
+const volScalarField& T = fluid->T();
 const surfaceScalarField& phi = fluid->phi();
 fluid->update();
 
-volScalarField error
-(
-    IOobject
-    (
-        "error",
-        runTime.timeName(),
-        mesh,
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
-    ),
-	mesh,
-    0.0,
-    wordList(p.boundaryField().size(), "zeroGradient")
-);
-
-volScalarField maxP
-(
-    IOobject
-    (
-        "maxP",
-        runTime.timeName(),
-        mesh,
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE
-    ),
-    p
-);
-
-volScalarField impulse
-(
-    IOobject
-    (
-        "impulse",
-        runTime.timeName(),
-        mesh,
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE
-    ),
-    mesh,
-    dimensionedScalar("0", dimPressure*dimTime, 0.0)
-);
-volScalarField maxImpulse
-(
-    IOobject
-    (
-        "maxImpulse",
-        runTime.timeName(),
-        mesh,
-        IOobject::READ_IF_PRESENT,
-        IOobject::AUTO_WRITE
-    ),
-    impulse
-);
-
-List<vector> stopPoints;
-scalar stopEpsilon = 0.0;
-Switch stopActive = false;
-if (MieGruneisenEOSProperties.found("stop"))
+autoPtr<errorEstimator> error;
+if (!isA<staticFvMesh>(mesh))
 {
-    dictionary stopDict(MieGruneisenEOSProperties.subDict("stop"));
-
-    /// stop simluation when pertubation sare detected ...
-    stopPoints = stopDict.lookupType<List<vector>>("points");
-    stopEpsilon = stopDict.lookupOrDefault("epsilon", 1e-3);
-    stopActive = stopDict.lookupOrDefault("active", true);
-
-    Info << "Stop points detected:" << endl;
-    forAll(stopPoints, pointI)
-    {
-        Info << stopPoints[pointI] << endl;
-        Info << "Corresponding cell id: " << mesh.findNearestCell(stopPoints[pointI]) << endl;
-    }
-
-    Info << "Ending simulation when mag(U) > " << stopEpsilon << " " << endl;
+    error =
+        errorEstimator::New
+        (
+            mesh,
+            IOdictionary
+            (
+                IOobject
+                (
+                    "dynamicMeshDict",
+                    runTime.constant(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::NO_WRITE
+                )
+            )
+        );
 }
-
-
-

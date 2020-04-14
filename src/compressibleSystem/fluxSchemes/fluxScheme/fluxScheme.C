@@ -38,28 +38,16 @@ namespace Foam
 
 Foam::fluxScheme::fluxScheme(const fvMesh& mesh)
 :
-    own_
+    regIOobject
     (
         IOobject
         (
-            "own",
+            "fluxScheme",
             mesh.time().timeName(),
             mesh
-        ),
-        mesh,
-        1.0
+        )
     ),
-    nei_
-    (
-        IOobject
-        (
-            "nei",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        -1.0
-    )
+    mesh_(mesh)
 {}
 
 
@@ -68,23 +56,189 @@ Foam::fluxScheme::fluxScheme(const fvMesh& mesh)
 Foam::fluxScheme::~fluxScheme()
 {}
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::fluxScheme::clear()
+{
+    own_.clear();
+    nei_.clear();
+    Uf_.clear();
+    rhoOwn_.clear();
+    rhoNei_.clear();
+}
+
+void Foam::fluxScheme::createSavedFields()
+{
+    if (own_.valid())
+    {
+        return;
+    }
+    own_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "fluxScheme::own",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("1", dimless, 1.0)
+        )
+    );
+    nei_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "fluxScheme::nei",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("-1", dimless, -1.0)
+        )
+    );
+    Uf_ = tmp<surfaceVectorField>
+    (
+        new surfaceVectorField
+        (
+            IOobject
+            (
+                "fluxScheme::Uf",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedVector("0", dimVelocity, Zero)
+        )
+    );
+}
+
+Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
+{
+    if (Uf_.valid())
+    {
+        return Uf_;
+    }
+    return tmp<surfaceVectorField>
+    (
+        new surfaceVectorField
+        (
+            IOobject
+            (
+                "fluxScheme::Uf",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedVector("0", dimVelocity, Zero)
+        )
+    );
+}
+
+
 void Foam::fluxScheme::update
 (
-    const UPtrList<volScalarField>& alphas,
+    const volScalarField& rho,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p,
+    const volScalarField& c,
+    surfaceScalarField& phi,
+    surfaceScalarField& rhoPhi,
+    surfaceVectorField& rhoUPhi,
+    surfaceScalarField& rhoEPhi
+)
+{
+    createSavedFields();
+
+    rhoOwn_ = fvc::interpolate(rho, own_(), scheme("rho"));
+    rhoNei_ = fvc::interpolate(rho, nei_(), scheme("rho"));
+
+    surfaceVectorField UOwn(fvc::interpolate(U, own_(), scheme("U")));
+    surfaceVectorField UNei(fvc::interpolate(U, nei_(), scheme("U")));
+
+    surfaceScalarField pOwn(fvc::interpolate(p, own_(), scheme("p")));
+    surfaceScalarField pNei(fvc::interpolate(p, nei_(), scheme("p")));
+
+    surfaceScalarField cOwn(fvc::interpolate(c, own_(), scheme("c")));
+    surfaceScalarField cNei(fvc::interpolate(c, nei_(), scheme("c")));
+
+    surfaceScalarField eOwn(fvc::interpolate(e, own_(), scheme("e")));
+    surfaceScalarField eNei(fvc::interpolate(e, nei_(), scheme("e")));
+
+    preUpdate(p);
+    forAll(UOwn, facei)
+    {
+
+        calculateFluxes
+        (
+            rhoOwn_()[facei], rhoNei_()[facei],
+            UOwn[facei], UNei[facei],
+            eOwn[facei], eNei[facei],
+            pOwn[facei], pNei[facei],
+            cOwn[facei], cNei[facei],
+            mesh_.Sf()[facei],
+            phi[facei],
+            rhoPhi[facei],
+            rhoUPhi[facei],
+            rhoEPhi[facei],
+            facei
+        );
+    }
+
+    forAll(U.boundaryField(), patchi)
+    {
+        forAll(U.boundaryField()[patchi], facei)
+        {
+
+            calculateFluxes
+            (
+                rhoOwn_().boundaryField()[patchi][facei],
+                rhoNei_().boundaryField()[patchi][facei],
+                UOwn.boundaryField()[patchi][facei],
+                UNei.boundaryField()[patchi][facei],
+                eOwn.boundaryField()[patchi][facei],
+                eNei.boundaryField()[patchi][facei],
+                pOwn.boundaryField()[patchi][facei],
+                pNei.boundaryField()[patchi][facei],
+                cOwn.boundaryField()[patchi][facei],
+                cNei.boundaryField()[patchi][facei],
+                mesh_.Sf().boundaryField()[patchi][facei],
+                phi.boundaryFieldRef()[patchi][facei],
+                rhoPhi.boundaryFieldRef()[patchi][facei],
+                rhoUPhi.boundaryFieldRef()[patchi][facei],
+                rhoEPhi.boundaryFieldRef()[patchi][facei],
+                facei, patchi
+            );
+        }
+    }
+    postUpdate();
+}
+
+void Foam::fluxScheme::update
+(
+    const PtrList<volScalarField>& alphas,
     const UPtrList<volScalarField>& rhos,
     const volVectorField& U,
     const volScalarField& e,
     const volScalarField& p,
     const volScalarField& c,
     surfaceScalarField& phi,
-    UPtrList<surfaceScalarField>& alphaPhis,
-    UPtrList<surfaceScalarField>& alphaRhoPhis,
+    PtrList<surfaceScalarField>& alphaPhis,
+    PtrList<surfaceScalarField>& alphaRhoPhis,
     surfaceScalarField& rhoPhi,
     surfaceVectorField& rhoUPhi,
     surfaceScalarField& rhoEPhi
 )
 {
-    const fvMesh& mesh = U.mesh();
+    createSavedFields();
 
     // Interpolate fields
     PtrList<surfaceScalarField> alphasOwn(alphas.size());
@@ -92,27 +246,33 @@ void Foam::fluxScheme::update
 
     PtrList<surfaceScalarField> rhosOwn(alphas.size());
     PtrList<surfaceScalarField> rhosNei(alphas.size());
-    surfaceScalarField rhoOwn
+    rhoOwn_ =
     (
-        IOobject
+        new surfaceScalarField
         (
-            "rhoOwn",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity, 0.0)
+            IOobject
+            (
+                "rhoOwn",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimDensity, 0.0)
+        )
     );
-    surfaceScalarField rhoNei
+    rhoNei_ =
     (
-        IOobject
+        new surfaceScalarField
         (
-            "rhoNei",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity, 0.0)
+            IOobject
+            (
+                "rhoNei",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimDensity, 0.0)
+        )
     );
 
     forAll(alphas, phasei)
@@ -120,39 +280,40 @@ void Foam::fluxScheme::update
         alphasOwn.set
         (
             phasei,
-            fvc::interpolate(alphas[phasei], own_, "reconstruct(alpha)")
+            fvc::interpolate(alphas[phasei], own_(), scheme("alpha"))
         );
         alphasNei.set
         (
             phasei,
-            fvc::interpolate(alphas[phasei], nei_, "reconstruct(alpha)")
+            fvc::interpolate(alphas[phasei], nei_(), scheme("alpha"))
         );
         rhosOwn.set
         (
             phasei,
-            fvc::interpolate(rhos[phasei], own_, "reconstruct(rho)")
+            fvc::interpolate(rhos[phasei], own_(), scheme("rho"))
         );
         rhosNei.set
         (
             phasei,
-            fvc::interpolate(rhos[phasei], nei_, "reconstruct(rho)")
+            fvc::interpolate(rhos[phasei], nei_(), scheme("rho"))
         );
-        rhoOwn += alphasOwn[phasei]*rhosOwn[phasei];
-        rhoNei += alphasNei[phasei]*rhosNei[phasei];
+        rhoOwn_.ref() += alphasOwn[phasei]*rhosOwn[phasei];
+        rhoNei_.ref() += alphasNei[phasei]*rhosNei[phasei];
     }
 
-    surfaceVectorField UOwn(fvc::interpolate(U, own_, "reconstruct(U)"));
-    surfaceVectorField UNei(fvc::interpolate(U, nei_, "reconstruct(U)"));
+    surfaceVectorField UOwn(fvc::interpolate(U, own_(), scheme("U")));
+    surfaceVectorField UNei(fvc::interpolate(U, nei_(), scheme("U")));
 
-    surfaceScalarField pOwn(fvc::interpolate(p, own_, "reconstruct(p)"));
-    surfaceScalarField pNei(fvc::interpolate(p, nei_, "reconstruct(p)"));
+    surfaceScalarField pOwn(fvc::interpolate(p, own_(), scheme("p")));
+    surfaceScalarField pNei(fvc::interpolate(p, nei_(), scheme("p")));
 
-    surfaceScalarField cOwn(fvc::interpolate(c, own_, "reconstruct(c)"));
-    surfaceScalarField cNei(fvc::interpolate(c, nei_, "reconstruct(c)"));
+    surfaceScalarField cOwn(fvc::interpolate(c, own_(), scheme("c")));
+    surfaceScalarField cNei(fvc::interpolate(c, nei_(), scheme("c")));
 
-    surfaceScalarField eOwn(fvc::interpolate(e, own_, "reconstruct(e)"));
-    surfaceScalarField eNei(fvc::interpolate(e, nei_, "reconstruct(e)"));
+    surfaceScalarField eOwn(fvc::interpolate(e, own_(), scheme("e")));
+    surfaceScalarField eNei(fvc::interpolate(e, nei_(), scheme("e")));
 
+    preUpdate(p);
     forAll(UOwn, facei)
     {
         scalarList alphasiOwn(alphas.size());
@@ -174,17 +335,18 @@ void Foam::fluxScheme::update
         (
             alphasiOwn, alphasiNei,
             rhosiOwn, rhosiNei,
-            rhoOwn[facei], rhoNei[facei],
+            rhoOwn_()[facei], rhoNei_()[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
             cOwn[facei], cNei[facei],
-            mesh.Sf()[facei],
+            mesh_.Sf()[facei],
             phi[facei],
             alphaPhisi,
             alphaRhoPhisi,
             rhoUPhi[facei],
-            rhoEPhi[facei]
+            rhoEPhi[facei],
+            facei
         );
 
         rhoPhi[facei] = 0.0;
@@ -223,8 +385,8 @@ void Foam::fluxScheme::update
             (
                 alphasiOwn, alphasiNei,
                 rhosiOwn, rhosiNei,
-                rhoOwn.boundaryField()[patchi][facei],
-                rhoNei.boundaryField()[patchi][facei],
+                rhoOwn_().boundaryField()[patchi][facei],
+                rhoNei_().boundaryField()[patchi][facei],
                 UOwn.boundaryField()[patchi][facei],
                 UNei.boundaryField()[patchi][facei],
                 eOwn.boundaryField()[patchi][facei],
@@ -233,12 +395,13 @@ void Foam::fluxScheme::update
                 pNei.boundaryField()[patchi][facei],
                 cOwn.boundaryField()[patchi][facei],
                 cNei.boundaryField()[patchi][facei],
-                mesh.Sf().boundaryField()[patchi][facei],
+                mesh_.Sf().boundaryField()[patchi][facei],
                 phi.boundaryFieldRef()[patchi][facei],
                 alphaPhisi,
                 alphaRhoPhisi,
                 rhoUPhi.boundaryFieldRef()[patchi][facei],
-                rhoEPhi.boundaryFieldRef()[patchi][facei]
+                rhoEPhi.boundaryFieldRef()[patchi][facei],
+                facei, patchi
             );
 
             rhoPhi.boundaryFieldRef()[patchi][facei] = 0.0;
@@ -253,6 +416,7 @@ void Foam::fluxScheme::update
             }
         }
     }
+    postUpdate();
 }
 
 
@@ -274,52 +438,53 @@ void Foam::fluxScheme::update
     surfaceScalarField& rhoEPhi
 )
 {
-    const fvMesh& mesh = U.mesh();
+    createSavedFields();
 
     // Interpolate fields
     surfaceScalarField alphaOwn
     (
-        fvc::interpolate(alpha, own_, "reconstruct(alpha)")
+        fvc::interpolate(alpha, own_(), scheme("alpha"))
     );
     surfaceScalarField alphaNei
     (
-        fvc::interpolate(alpha, nei_, "reconstruct(alpha)")
+        fvc::interpolate(alpha, nei_(), scheme("alpha"))
     );
 
     surfaceScalarField rho1Own
     (
-        fvc::interpolate(rho1, own_, "reconstruct(rho)")
+        fvc::interpolate(rho1, own_(), scheme("rho"))
     );
 
     surfaceScalarField rho1Nei
     (
-        fvc::interpolate(rho1, nei_, "reconstruct(rho)")
+        fvc::interpolate(rho1, nei_(), scheme("rho"))
     );
 
     surfaceScalarField rho2Own
     (
-        fvc::interpolate(rho2, own_, "reconstruct(rho)")
+        fvc::interpolate(rho2, own_(), scheme("rho"))
     );
 
     surfaceScalarField rho2Nei
     (
-        fvc::interpolate(rho2, nei_, "reconstruct(rho)")
+        fvc::interpolate(rho2, nei_(), scheme("rho"))
     );
-    surfaceScalarField rhoOwn(alphaOwn*rho1Own + (1.0 - alphaOwn)*rho2Own);
-    surfaceScalarField rhoNei(alphaNei*rho1Nei + (1.0 - alphaNei)*rho2Nei);
+    rhoOwn_ = (alphaOwn*rho1Own + (1.0 - alphaOwn)*rho2Own);
+    rhoNei_ = (alphaNei*rho1Nei + (1.0 - alphaNei)*rho2Nei);
 
-    surfaceVectorField UOwn(fvc::interpolate(U, own_, "reconstruct(U)"));
-    surfaceVectorField UNei(fvc::interpolate(U, nei_, "reconstruct(U)"));
+    surfaceVectorField UOwn(fvc::interpolate(U, own_(), scheme("U")));
+    surfaceVectorField UNei(fvc::interpolate(U, nei_(), scheme("U")));
 
-    surfaceScalarField pOwn(fvc::interpolate(p, own_, "reconstruct(p)"));
-    surfaceScalarField pNei(fvc::interpolate(p, nei_, "reconstruct(p)"));
+    surfaceScalarField pOwn(fvc::interpolate(p, own_(), scheme("p")));
+    surfaceScalarField pNei(fvc::interpolate(p, nei_(), scheme("p")));
 
-    surfaceScalarField cOwn(fvc::interpolate(c, own_, "reconstruct(c)"));
-    surfaceScalarField cNei(fvc::interpolate(c, nei_, "reconstruct(c)"));
+    surfaceScalarField cOwn(fvc::interpolate(c, own_(), scheme("c")));
+    surfaceScalarField cNei(fvc::interpolate(c, nei_(), scheme("c")));
 
-    surfaceScalarField eOwn(fvc::interpolate(e, own_, "reconstruct(e)"));
-    surfaceScalarField eNei(fvc::interpolate(e, nei_, "reconstruct(e)"));
+    surfaceScalarField eOwn(fvc::interpolate(e, own_(), scheme("e")));
+    surfaceScalarField eNei(fvc::interpolate(e, nei_(), scheme("e")));
 
+    preUpdate(p);
     forAll(UOwn, facei)
     {
         scalarList alphaPhisi(2);
@@ -330,17 +495,18 @@ void Foam::fluxScheme::update
             {alphaNei[facei], 1.0 - alphaNei[facei]},
             {rho1Own[facei], rho2Own[facei]},
             {rho1Nei[facei], rho2Nei[facei]},
-            rhoOwn[facei], rhoNei[facei],
+            rhoOwn_()[facei], rhoNei_()[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
             cOwn[facei], cNei[facei],
-            mesh.Sf()[facei],
+            mesh_.Sf()[facei],
             phi[facei],
             alphaPhisi,
             alphaRhoPhisi,
             rhoUPhi[facei],
-            rhoEPhi[facei]
+            rhoEPhi[facei],
+            facei
         );
 
         alphaPhi[facei] = alphaPhisi[0];
@@ -375,8 +541,8 @@ void Foam::fluxScheme::update
                     rho1Nei.boundaryField()[patchi][facei],
                     rho2Nei.boundaryField()[patchi][facei]
                 },
-                rhoOwn.boundaryField()[patchi][facei],
-                rhoNei.boundaryField()[patchi][facei],
+                rhoOwn_().boundaryField()[patchi][facei],
+                rhoNei_().boundaryField()[patchi][facei],
                 UOwn.boundaryField()[patchi][facei],
                 UNei.boundaryField()[patchi][facei],
                 eOwn.boundaryField()[patchi][facei],
@@ -385,12 +551,13 @@ void Foam::fluxScheme::update
                 pNei.boundaryField()[patchi][facei],
                 cOwn.boundaryField()[patchi][facei],
                 cNei.boundaryField()[patchi][facei],
-                mesh.Sf().boundaryField()[patchi][facei],
+                mesh_.Sf().boundaryField()[patchi][facei],
                 phi.boundaryFieldRef()[patchi][facei],
                 alphaPhisi,
                 alphaRhoPhisi,
                 rhoUPhi.boundaryFieldRef()[patchi][facei],
-                rhoEPhi.boundaryFieldRef()[patchi][facei]
+                rhoEPhi.boundaryFieldRef()[patchi][facei],
+                facei, patchi
             );
 
             alphaPhi.boundaryFieldRef()[patchi][facei] = alphaPhisi[0];
@@ -402,6 +569,120 @@ void Foam::fluxScheme::update
               + alphaRhoPhi2.boundaryField()[patchi][facei];
         }
     }
+    postUpdate();
+}
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
+(
+    const volScalarField& rho,
+    const volVectorField& U,
+    const volScalarField& e,
+    const volScalarField& p
+) const
+{
+    tmp<surfaceScalarField> rhoOwn;
+    tmp<surfaceScalarField> rhoNei;
+    if (rho.name() == "rho")
+    {
+        rhoOwn = tmp<surfaceScalarField>(new surfaceScalarField(rhoOwn_()));
+        rhoNei = tmp<surfaceScalarField>(new surfaceScalarField(rhoNei_()));
+    }
+    else
+    {
+        rhoOwn = fvc::interpolate(rho, own_(), scheme("rho"));
+        rhoNei = fvc::interpolate(rho, nei_(), scheme("rho"));
+    }
+
+    surfaceVectorField UOwn
+    (
+        fvc::interpolate(U, own_(), scheme("U"))
+    );
+    surfaceVectorField UNei
+    (
+        fvc::interpolate(U, nei_(), scheme("U"))
+    );
+
+    surfaceScalarField eOwn
+    (
+        fvc::interpolate(e, own_(), scheme("e"))
+    );
+    surfaceScalarField eNei
+    (
+        fvc::interpolate(e, nei_(), scheme("e"))
+    );
+
+    surfaceScalarField pOwn
+    (
+        fvc::interpolate(p, own_(), scheme("p"))
+    );
+    surfaceScalarField pNei
+    (
+        fvc::interpolate(p, nei_(), scheme("p"))
+    );
+
+    tmp<surfaceScalarField> tmpPhi
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                e.name() + "Phi",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedScalar
+            (
+                "0",
+                rho.dimensions()*e.dimensions()*dimVelocity*dimArea,
+                0.0
+            )
+        )
+    );
+    surfaceScalarField& phi = tmpPhi.ref();
+
+    forAll(eOwn, facei)
+    {
+        phi[facei] = energyFlux
+        (
+            rhoOwn()[facei], rhoNei()[facei],
+            UOwn[facei], UNei[facei],
+            eOwn[facei], eNei[facei],
+            pOwn[facei], pNei[facei],
+            facei
+        );
+    }
+
+    forAll(e.boundaryField(), patchi)
+    {
+        forAll(e.boundaryField()[patchi], facei)
+        {
+            phi.boundaryFieldRef()[patchi][facei] =
+                energyFlux
+                (
+                    rhoOwn().boundaryField()[patchi][facei],
+                    rhoNei().boundaryField()[patchi][facei],
+                    UOwn.boundaryField()[patchi][facei],
+                    UNei.boundaryField()[patchi][facei],
+                    eOwn.boundaryField()[patchi][facei],
+                    eNei.boundaryField()[patchi][facei],
+                    pOwn.boundaryField()[patchi][facei],
+                    pNei.boundaryField()[patchi][facei],
+                    facei, patchi
+                );
+        }
+    }
+    return tmpPhi;
+}
+
+
+bool Foam::fluxScheme::writeData(Ostream& os) const
+{
+    return os.good();
 }
 
 // ************************************************************************* //
