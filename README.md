@@ -45,19 +45,6 @@ More information and registration here: https://www.eventbrite.com/e/blastfoam-w
 
 
 
-
-<!-- ## What is blastFoam? -->
-
-<!-- blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks (see Disclaimer above). -->
-
-
-<!-- ## How to use blastFoam -->
-
-<!-- Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf). -->
-
-
-
-
 ## Installation
 
 Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Instalation is simple and required only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
@@ -256,53 +243,6 @@ blastFoam has been validated against known solutions to standard gas dynamics pr
 
 
 
-<!-- ### Validation/Example: Internal Detonation -->
-
-<!-- Reference: -->
-<!-- ``` -->
-<!-- Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garner. 1999. “Airblast Effects Research: Small-Scale Experiments and Calculations.” DTIC Document. -->
-<!-- ``` -->
-
-
-<!-- Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling. -->
-
-<!-- ![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif) -->
-
-
-
-<!-- ### Validation/Example: Blast Loads Behind Vertical Walls -->
-
-<!-- Reference: -->
-<!-- ``` -->
-<!-- M. E. Beyer, “Blast Loads Behind Vertical Walls,” Naval Civil Engineering Laboratory, Port Hueneme, CA, USA, AD-A181 274, 1986. -->
-<!-- ``` -->
-
-<!-- ![Blast Wall Case](media/blastWallwm.gif) -->
-
-
-
-
-
-<!-- ### Validation/Example: Multi-Component Flow Verification -->
-
-<!-- Reference: -->
-<!-- ``` -->
-<!-- Zheng, H. W., C. Shu, Y. T. Chew, and N. Qin. “A Solution Adaptive Simulation of Compressible Multi-Fluid Flows with General Equation of State.” International Journal for Numerical Methods in Fluids 67, no. 5 (2011): 616–637. -->
-<!-- ``` -->
-
-<!-- Verification and validation results as compared to those published by Zheng et. al.; HLLC flux shown. -->
-
-
-<!-- ![Verification plots compared with Zheng](media/zheng-blastfoam-validation.png) -->
-
-
-
-
-
-
-
-
 ## Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
-
