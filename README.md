@@ -152,9 +152,9 @@ BiBTex:
 
 
 
-## Features
+## blastFoam Version 3.0 Release Notes and Features
 
-blastFoam now includes thirteen equations of state that allow modeling of diverse materials under extreme conditions, with consideration of phenomenologies such as excitation, dissociation and ionization of nitrogen and oxygen in air at higher energies and temperatures, afterburn, and sympathetic detonation.
+blastFoam 3.0 now includes thirteen equations of state that allow modeling of diverse materials under extreme conditions, with consideration of phenomenologies such as excitation, dissociation and ionization of nitrogen and oxygen in air at higher energies and temperatures, afterburn, and sympathetic detonation.
 
 We have introduced several different approaches to model detonation within explosive materials which transition from unreacted energetics to detonation products, including pressure-based activation models with multi-step Arrhenius reaction rates, and simple, yet practical models based on empirically derived detonation velocities. Users can also specify instantaneous activation.
 
@@ -172,9 +172,9 @@ Additional validation and tutorial cases are also provided to demonstrate and sh
 
 The engineering community needs open, verifiable, validated blast and detonation simulation tools.  Currently available tools: 1) are prohibitively expensive to license to run calculations at the scale and number of CPU cores and nodes required to capture key blast phenomena, 2) do not provide access to the underlying code due to concerns over intellectual property rights, 3) use non-universal file formats for pre- and post-processing, and 4) contain export controlled or distribution limited components.  In response to these limitations, Synthetik Applied Technologies leveraged a widely used opensource CFD library as a foundation upon which to develop a new solver suited for high-explosive detonation modeling and simulation, blastFoam.
 
-Synthetikâ€™s solver builds upon the most widely utilized opensource CFD platform available today, and is currently deployed at DoD HPC Centers (e.g., AFRL, ARL, ERDC, Navy, ORS).  The code contains multiple utilities to prepare calculations for complex geometries of interest (e.g. engineering-scale; from CAD models), including parallel mesh generation, mesh refinement, advanced post-processing, and import/export functions. Verification and validation studies have been conducted with independent validation (conducted by others) performed on larger-scale problems with complex geometries and published in peer-reviewed journals.  The solver can be run on any modern platform (e.g. laptop, workstation, HPC, AWS, GCP, etc.).
+Synthetik's solver builds upon the most widely utilized opensource CFD platform available today, and is currently deployed at DoD HPC Centers (e.g., AFRL, ARL, ERDC, Navy, ORS).  The code contains multiple utilities to prepare calculations for complex geometries of interest (e.g. engineering-scale; from CAD models), including parallel mesh generation, mesh refinement, advanced post-processing, and import/export functions. Verification and validation studies have been conducted with independent validation (conducted by others) performed on larger-scale problems with complex geometries and published in peer-reviewed journals.  The solver can be run on any modern platform (e.g. laptop, workstation, HPC, AWS, GCP, etc.).
 
-Synthetik is a formal Texas Advanced Computing Center (TACC) Industry Partner, with access to High Performance Computing (HPC) resources on systems such as the new NSF-funded petascale computing system, Frontera, thus allowing Synthetik to develop and test on state-of-the-art systems at scale.
+Synthetik is a formal Texas Advanced Computing Center (TACC) Industry Partner, with access to High Performance Computing (HPC) resources on systems such as the new NSF-funded petascale computing system, Frontera, thus allowing Synthetik to develop and test on state-of-the-art HPC systems at scale.
 
 blastFoam currently supports the following features:
 
