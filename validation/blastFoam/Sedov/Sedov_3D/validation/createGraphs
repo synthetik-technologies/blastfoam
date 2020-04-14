@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# Results taken from:
+#   Luo, H., Baum, J. D., Lohner, R. (2003)
+#   "On the computation of multi-material flows using ALE formulation"
+#   Journal of Computational Physics, 194, 304-328
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+createEps()
+{
+
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "Sedov_validation_$1.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "$2"
+    set grid
+    set key left top
+    set size 2,2
+    set autoscale
+    plot    "$3" using 1:$4 title 'Sedov' \
+                with lines linewidth 2 linecolor rgb 'black', \
+            "$5" using 1:$6 title 'blastFOAM' \
+                with lines lt 1 linewidth 2 linecolor rgb 'red'
+EOF
+}
+
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+# t = 0.006 s
+p="$VALIDATIONDATAROOT/p_3D.csv"
+rho="$VALIDATIONDATAROOT/rho_3D.csv"
+U="$VALIDATIONDATAROOT/U_3D.csv"
+
+pBlast="../postProcessing/sampleDict/0.05/Centerline_p*"
+UBlast="../postProcessing/sampleDict/0.05/Centerline_U*"
+
+createEps "p" "Pressure [Pa]" $p 2 $pBlast 2
+createEps "rho" "Density [kg/m^3]" $rho 2 $pBlast 3
+createEps "U" "X-Velocity [m/s]" $U 2 $UBlast 2
+
+echo Done
