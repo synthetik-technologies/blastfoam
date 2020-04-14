@@ -6,33 +6,61 @@
 </p>
 
 
+
 # blastFoam
 
 blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com).
 
 
 
-## Disclaimer
-
-This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
-
-
-
-## What is blastFoam?
-
-blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general high-speed compressible flows. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks (see Disclaimer above).
-
-
-
 ## How to use blastFoam
 
-Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
+Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf). 
+
+
+### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
+
+An introduction to blastFoam - a free and open-source Computational Fluid Dynamics (CFD) air blast code for modeling high-explosive detonations and blast load generation suitable for blast engineering and protective design.
+
+At the conclusion of the workshop, attendees will be able to competently and independently setup, calculate, visualize and post-process CFD solutions to air blast problems in complex geometries using blastFoam.
+
+The workshop will include:
+
+- An overview of the background theory, physics, equations and implementation in blastFoam
+- How to set up and run air blast calculations in simple and complex geometries
+- Mesh generation using snappyHexMesh and blockMesh for use with blastFoam
+- Setting initial conditions (e.g. JWL EOS coefficients, detonation points, charge shapes, etc.)
+- Boundary conditions
+- Using probes to get pressure-time histories at discrete locations
+- Generating pressure and impulse loads suitable for engineering/protective design
+- Pre- and post-processing of results
+- Verification and Validation
+- Using the blastFoam GUI to help setup and visualize blastFoam cases
+- A hands-on guided walk-through of a number of 2D and 3D blastFoam tutorial examples with the Synthetik team.
+- All levels of expertise are welcome to attend, and this session will be very practical and ‘hands on’. 
+
+Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
+
+More information and registration here: https://www.eventbrite.com/e/blastfoam-workshop-tickets-100310659884 
+
+
+
+
+<!-- ## What is blastFoam? -->
+
+<!-- blastFoam is a solver for multi-component compressible flow with application to high-explosive detonation, explosive safety and airblast. The blastFoam solver uses OpenFOAM technology, and is in no way approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM$\textregistered$  and OpenCFD$\textregistered$ trade marks (see Disclaimer above). -->
+
+
+<!-- ## How to use blastFoam -->
+
+<!-- Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf). -->
+
 
 
 
 ## Installation
 
-1. Install OpenFOAM from [source](https://github.com/OpenFOAM/OpenFOAM-7) or via binary/package installation from [here](https://openfoam.org/version/7/) (blastFoam works with OF version 7).
+Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Instalation is simple and required only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
 
 2. Create the OpenFOAM directory
 ```bash
@@ -69,15 +97,13 @@ source $HOME/.bashrc
 ./Allwmake
 ```
 
+7. Test your installation by running the tutorial and validation cases
 
-9. Test your installation by running the tutorial and validation cases
 
 
 
 ## Questions and Availability
-If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com
-
-blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC)
+If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC) as well as several other HPC centers.
 
 
 
@@ -98,10 +124,14 @@ BiBTex:
 }
 ```
 
+
+
+
+
 ## User Guide
 To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
-J. Heylmun, P. Vonk, and T. Brewer, “blastFoam User Guide.” Synthetik Applied Technologies, LLC., 13-Apr-2020.
+J. Heylmun, P. Vonk, and T. Brewer, “blastFoam 3.0 User Guide.” Synthetik Applied Technologies, LLC., 13-Apr-2020.
 ```
 BiBTex:
 ```
@@ -111,10 +141,14 @@ BiBTex:
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
 	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
-	month = oct,
+	month = apr,
 	year = {2020}
 }
 ```
+
+
+
+
 
 
 ## blastFoam Publications:
@@ -129,13 +163,39 @@ BiBTex:
 
 
 
+
+
 ## Features
+
+blastFoam now includes thirteen equations of state that allow modeling of diverse materials under extreme conditions, with consideration of phenomenologies such as excitation, dissociation and ionization of nitrogen and oxygen in air at higher energies and temperatures, afterburn, and sympathetic detonation.
+
+We have introduced several different approaches to model detonation within explosive materials which transition from unreacted energetics to detonation products, including pressure-based activation models with multi-step Arrhenius reaction rates, and simple, yet practical models based on empirically derived detonation velocities. Users can also specify instantaneous activation.
+
+blastFoam allows phenomena such as size effect (decrease of the detonation velocity with decreasing charge radius), and detonation front curvature (induced by edge lag of the front as energy is lost to the exterior of the charge) to be accurately captured.  These additions greatly enhance timing accuracy and load characterization, especially for near-contact explosive scenarios.  Options for modeling afterburn (i.e., under-oxygenated explosives continuing to burn after detonation) are also included using the Miller extension, constant, and linear rate models.
+
+blastFoam extends OpenFOAM’s base AMR library, and includes the ability to perform 2D and 3D adaptive mesh refinement (AMR). The refinement criteria can be based on density gradient, change across faces (delta), or Lohner’s method (2nd derivative of a field) to determine what cell should be refined or unrefined. Additionally, options for mesh unrefinement/relaxation/coarsening have been added, and this is useful for keeping cell counts relatively constant during a calculation while still capturing key features (e.g. shocks) with high accuracy. This allows blastFoam to solve engineering-scale simulations at an affordable computational cost.
+
+blastFoam extends OpenFOAM by adding dynamic load rebalancing for adaptive grids, and now includes a working solution for 2D and experimental support for 3D calculations.  Essentially, at a predetermined timestep interval the domain is rebalanced so that the cell count per CPU is more evenly distributed. This mitigates potential memory issues such as crashing and slow-down related to overloading CPUs that are operating on zones of high refinement.
+
+Turbulence and radiation models have been integrated, allowing blastFoam users to leverage the extensive OpenFOAM libraries and apply them to their simulations, and a new fluid model structure (fluidThermo class), that extends OpenFOAM’s standard thermo classes has been added, and provides thermodynamically consistent solutions for more accurate temperature calculations.
+
+New functionObjects have been added to improve usability, including the ability to calculate peak overpressure and impulse for each cell in the domain, as well as *blastToVTK*, a utility to view time series mesh surface outputs in *ParaView*.
+
+Additional validation and tutorial cases are also provided to demonstrate and showcase the new functionality and capabilities of blastFoam v3.0.
+
+The engineering community needs open, verifiable, validated blast and detonation simulation tools.  Currently available tools: 1) are prohibitively expensive to license to run calculations at the scale and number of CPU cores and nodes required to capture key blast phenomena, 2) do not provide access to the underlying code due to concerns over intellectual property rights, 3) use non-universal file formats for pre- and post-processing, and 4) contain export controlled or distribution limited components.  In response to these limitations, Synthetik Applied Technologies leveraged a widely used opensource CFD library as a foundation upon which to develop a new solver suited for high-explosive detonation modeling and simulation, blastFoam.
+
+Synthetik’s solver builds upon the most widely utilized opensource CFD platform available today, and is currently deployed at DoD HPC Centers (e.g., AFRL, ARL, ERDC, Navy, ORS).  The code contains multiple utilities to prepare calculations for complex geometries of interest (e.g. engineering-scale; from CAD models), including parallel mesh generation, mesh refinement, advanced post-processing, and import/export functions. Verification and validation studies have been conducted with independent validation (conducted by others) performed on larger-scale problems with complex geometries and published in peer-reviewed journals.  The solver can be run on any modern platform (e.g. laptop, workstation, HPC, AWS, GCP, etc.). 
+
+Synthetik is a formal Texas Advanced Computing Center (TACC) Industry Partner, with access to High Performance Computing (HPC) resources on systems such as the new NSF-funded petascale computing system, Frontera, thus allowing Synthetik to develop and test on state-of-the-art systems at scale.
 
 blastFoam currently supports the following features:
 
-- An arbitrary number of phases/EOS's
-- Temperature-based and internal energy-based (Mie-Gruneisen form) equation of states
-- Detonation models (Activation and afterburn)
+- An arbitrary number of phases and EOS's
+- Multiple activation and burn models
+- Compatiblity with all OpenFOAM's compressible LES and RANS turbulence models
+- Extensive verification and validation
+- JLW equation of state with constant, linear, and "Miller" afterburn models
 - Multiple example and tutorial cases
 - Automatic mesh refinement (AMR)
 - Blast specific function object for post-processing
@@ -143,8 +203,7 @@ blastFoam currently supports the following features:
 - HLLC, AUSM+, Kurganov, Tadmor flux schemes
 - Parallel (MPI)
 - Compatible with all of OpenFOAM's standard mesh generation, pre- and post-processing utilities
-
-
+- Multiple solvers for high-speed reactive flow and deflatration to detonation transition
 
 
 ## Equations of State
@@ -197,48 +256,53 @@ blastFoam has been validated against known solutions to standard gas dynamics pr
 
 
 
+<!-- ### Validation/Example: Internal Detonation -->
 
-### Validation/Example: Internal Detonation
-
-Reference:
-```
-Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garner. 1999. “Airblast Effects Research: Small-Scale Experiments and Calculations.” DTIC Document.
-```
-
-
-Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling.
-
-![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif)
+<!-- Reference: -->
+<!-- ``` -->
+<!-- Joachim, Charles E., Gordon W. McMahon, Christo V. Lunderman, and Sharon B. Garner. 1999. “Airblast Effects Research: Small-Scale Experiments and Calculations.” DTIC Document. -->
+<!-- ``` -->
 
 
+<!-- Validation against experimental and simulated (CTH) data as reported in Joachim et. al.; see the paper for an explanation of scaling. -->
 
-### Validation/Example: Blast Loads Behind Vertical Walls
-
-Reference:
-```
-M. E. Beyer, “Blast Loads Behind Vertical Walls,” Naval Civil Engineering Laboratory, Port Hueneme, CA, USA, AD-A181 274, 1986.
-```
-
-![Blast Wall Case](media/blastWallwm.gif)
+<!-- ![Joachim validation case (scaled)](media/pressureScaledTimePawm.gif) -->
 
 
 
+<!-- ### Validation/Example: Blast Loads Behind Vertical Walls -->
 
+<!-- Reference: -->
+<!-- ``` -->
+<!-- M. E. Beyer, “Blast Loads Behind Vertical Walls,” Naval Civil Engineering Laboratory, Port Hueneme, CA, USA, AD-A181 274, 1986. -->
+<!-- ``` -->
 
-### Validation/Example: Multi-Component Flow Verification
-
-Reference:
-```
-Zheng, H. W., C. Shu, Y. T. Chew, and N. Qin. “A Solution Adaptive Simulation of Compressible Multi-Fluid Flows with General Equation of State.” International Journal for Numerical Methods in Fluids 67, no. 5 (2011): 616–637.
-```
-
-Verification and validation results as compared to those published by Zheng et. al.; HLLC flux shown.
-
-
-![Verification plots compared with Zheng](media/zheng-blastfoam-validation.png)
+<!-- ![Blast Wall Case](media/blastWallwm.gif) -->
 
 
 
 
 
+<!-- ### Validation/Example: Multi-Component Flow Verification -->
+
+<!-- Reference: -->
+<!-- ``` -->
+<!-- Zheng, H. W., C. Shu, Y. T. Chew, and N. Qin. “A Solution Adaptive Simulation of Compressible Multi-Fluid Flows with General Equation of State.” International Journal for Numerical Methods in Fluids 67, no. 5 (2011): 616–637. -->
+<!-- ``` -->
+
+<!-- Verification and validation results as compared to those published by Zheng et. al.; HLLC flux shown. -->
+
+
+<!-- ![Verification plots compared with Zheng](media/zheng-blastfoam-validation.png) -->
+
+
+
+
+
+
+
+
+## Disclaimer
+
+This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
