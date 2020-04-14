@@ -12,7 +12,7 @@ The calculation took approx. 8 hrs to run on a single core desktop at the refere
 ## Reference
 
 ```
-<!-- Raga, A. C., J. Cantó, L. F. Rodríguez, and P. F. Velázquez. “An Analytic Model for the Strong-/Weak-Shock Transition in a Spherical Blast Wave: Spherical Blast Wave.” Monthly Notices of the Royal Astronomical Society 424, no. 4 (August 21, 2012): 2522–27. https://doi.org/10.1111/j.1365-2966.2012.21208.x. -->
+Raga, A. C., J. Cantó, L. F. Rodríguez, and P. F. Velázquez. “An Analytic Model for the Strong-/Weak-Shock Transition in a Spherical Blast Wave: Spherical Blast Wave.” Monthly Notices of the Royal Astronomical Society 424, no. 4 (August 21, 2012): 2522–27. https://doi.org/10.1111/j.1365-2966.2012.21208.x.
 
 
 Sedov, L. I. “Similarity and Dimensional Methods in Mechanics.” Similarity and Dimensional Methods in Mechanics, New York: Academic Press, 1959, 1959. http://adsabs.harvard.edu/abs/1959sdmm.book.....S.
