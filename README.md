@@ -52,6 +52,8 @@ Detailed instructions on how to install and use blastFoam are found in the [blas
 
 1. Install OpenFOAM-7 (if not already installed)
 
+See https://openfoam.org/version/7 for OpenFOAM installation instructions.
+
 1. Create the OpenFOAM directory
 ```bash
 mkdir -p $HOME/OpenFOAM
