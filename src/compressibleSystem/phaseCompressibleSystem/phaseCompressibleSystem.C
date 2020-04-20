@@ -159,7 +159,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
+        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
     phi_
     (
@@ -299,16 +300,9 @@ void Foam::phaseCompressibleSystem::solve
     if (radiation_->type() != "none")
     {
         calcAlphaAndRho();
-        volScalarField T3(pow3(T()));
-
-        volScalarField den(rho_ + f*dT*4.0*radiation_->Rp()*T3/Cv());
-
-        volScalarField eNew
-        (
-            (rhoE_ - f*dT*radiation_->Rp()*T3*(T() - 4.0*e()/Cv()))/den
-        );
-        eNew.ref() += f*dT*radiation_->Ru()/den();
-        rhoE_ = rho_*eNew;
+        e() = rhoE_/rho_ - 0.5*magSqr(U_);
+        e().correctBoundaryConditions();
+        rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, rho_, e(), Cv());
     }
 
     if (stepi == oldIs_.size())

@@ -271,8 +271,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
             }
         }
         eBoundaryCorrection();
-        correct();
     }
+    correct();
 }
 
 

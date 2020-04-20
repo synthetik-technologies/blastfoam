@@ -179,6 +179,28 @@ void Foam::radiationModel::correct()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::radiationModel::calcRhoE
+(
+    const dimensionedScalar& dt,
+    const volScalarField& rhoE,
+    const volScalarField& rho,
+    const volScalarField& e,
+    const volScalarField& Cv
+) const
+{
+    volScalarField T3(pow3(T_));
+
+    volScalarField den(rho + dt*4.0*this->Rp()*T3/Cv);
+
+    volScalarField eNew
+    (
+        (rhoE - dt*this->Rp()*T3*(T_ - 4.0*e/Cv))/den
+    );
+    eNew.ref() += dt*this->Ru()/den();
+    return rho*eNew;
+}
+
+
 bool Foam::radiationModel::read()
 {
     if (regIOobject::read())

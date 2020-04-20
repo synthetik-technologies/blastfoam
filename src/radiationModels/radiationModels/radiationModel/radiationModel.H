@@ -205,6 +205,16 @@ public:
             //- Source term component (constant)
             virtual tmp<volScalarField::Internal> Ru() const = 0;
 
+            //- Source term component (constant)
+            virtual tmp<volScalarField> calcRhoE
+            (
+                const dimensionedScalar& dt,
+                const volScalarField& rhoE,
+                const volScalarField& rho,
+                const volScalarField& e,
+                const volScalarField& Cv
+            ) const;
+
             //- Access to absorptionEmission model
             const radiationModels::absorptionEmissionModel&
                 absorptionEmission() const;

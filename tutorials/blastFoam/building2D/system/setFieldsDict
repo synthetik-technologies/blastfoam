@@ -16,7 +16,6 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.c4);
-maxRefinement 7;
 nBufferLayers 5;
 
 defaultFieldValues

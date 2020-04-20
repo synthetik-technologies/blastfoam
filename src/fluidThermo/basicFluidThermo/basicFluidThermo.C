@@ -201,8 +201,8 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
             }
         }
         eBoundaryCorrection();
-        correct();
     }
+    correct();
 }
 
 

@@ -84,7 +84,8 @@ Foam::fluidThermoModel::fluidThermoModel
             p_.mesh()
         ),
         p_.mesh(),
-        dimensionedScalar(dimDynamicViscosity, 0.0)
+        dimensionedScalar(dimDynamicViscosity, 0.0),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
     alpha_
     (
@@ -97,7 +98,8 @@ Foam::fluidThermoModel::fluidThermoModel
             IOobject::NO_WRITE
         ),
         p_.mesh(),
-        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero)
+        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
     residualAlpha_
     (
