@@ -54,6 +54,7 @@ More information and registration here: [blastFoam July 2020 Virtual Workshop](h
 
 Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Installation is simple and requires only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
 
+An installation video for Windows 10 is available on our YouTube channel: https://youtu.be/vfd610LadSU
 
 1. Install OpenFOAM-7 (if not already installed)
 
