@@ -19,6 +19,10 @@ Several validation and tutorial cases are included in the repository, and are do
 
 
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
+#### The May 13th blastFoam workshop is Sold Out! 
+
+
+### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
 
 An introduction to blastFoam - a free and open-source Computational Fluid Dynamics (CFD) air blast code for modeling high-explosive detonations and blast load generation suitable for blast engineering and protective design.
 
@@ -41,7 +45,8 @@ The workshop will include:
 
 Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
 
-More information and registration here: https://www.eventbrite.com/e/blastfoam-workshop-tickets-100310659884
+More information and registration here: [blastFoam July 2020 Virtual Workshop](https://www.eventbrite.com/e/blastfoam-workshop-july-2020-tickets-103242747838)
+
 
 
 
