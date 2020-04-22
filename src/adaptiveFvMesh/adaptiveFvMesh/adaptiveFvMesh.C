@@ -1616,7 +1616,7 @@ bool Foam::adaptiveFvMesh::update()
                     // If 2D refinement (quadtree) is ever implemented, this '3'
                     // should be set in general as the number of refinement
                     // dimensions.
-                    label w = pow(2, meshCutter().nDims()*cellLevel[cellI]);
+                    scalar w = pow(2.0, meshCutter().nDims()*cellLevel[cellI]);
 
                     coarseWeights[localIndex[cellI]] += 1.0;
                     coarsePoints[localIndex[cellI]] += C()[cellI]/w;
