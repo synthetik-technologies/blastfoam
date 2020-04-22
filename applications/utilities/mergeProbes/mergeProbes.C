@@ -49,15 +49,15 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
-        "probeDict",
-        "Name of probe dictionary"
+        "probeDir",
+        "Name of probe directory"
     );
 
     #include "setRootCase.H"
 
     bool force(args.optionFound("force"));
     wordList probeNames(args.optionLookupOrDefault("probeNames", wordList()));
-    word probeDirName(args.option("probeDict"));
+    word probeDirName(args.option("probeDir"));
 
     // Create the processor databases
     fileName postProcessDir
@@ -118,7 +118,8 @@ int main(int argc, char *argv[])
         outputs.set(probei, new OFstream(probesDir/probeNames[probei]));
     }
 
-    scalar nextTime = 0.0;
+    scalar nextTime = -1.0;
+    bool header = true;
     forAll(times, timei)
     {
         nextTime = sTimes[timei + 1];
@@ -132,12 +133,16 @@ int main(int argc, char *argv[])
             {
                 string line;
                 stream.getLine(line);
-                char firstChar(line[0]);
 
-                if (firstChar == '#')
+                if (line[0] == '#')
                 {
+                    if (header)
+                    {
+                        outputs[probei] << word(line) << nl;
+                    }
                     continue;
                 }
+                header = false;
 
                 IStringStream is(line);
                 scalar t = readScalar(is);
