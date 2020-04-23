@@ -48,7 +48,7 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef blastFixedEnergyFvPatchScalarFieldd_H
+#ifndef blastFixedEnergyFvPatchScalarField_H
 #define blastFixedEnergyFvPatchScalarField_H
 
 #include "fixedValueFvPatchFields.H"
