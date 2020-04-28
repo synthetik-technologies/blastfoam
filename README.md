@@ -57,7 +57,7 @@ Detailed instructions on how to install and use blastFoam are found in the [blas
 An installation video for Windows 10 is available on our YouTube channel: https://youtu.be/vfd610LadSU
 
 <p align="center">
-  <img src="media/installation_thumbnail.png" width="350" title="hover text">
+  <img src="media/installation_thumbnail.png" width="650" title="Installing blastFoam in Windows 10">
 </p>
 
 1. Install OpenFOAM-7 (if not already installed)
