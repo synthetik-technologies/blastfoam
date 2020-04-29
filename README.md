@@ -54,13 +54,81 @@ More information and registration here: [blastFoam July 2020 Virtual Workshop](h
 
 Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Installation is simple and requires only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
 
+
+
+### How to install OpenFOAM for Windows 10
 An installation video for Windows 10 is available on our YouTube channel: https://youtu.be/vfd610LadSU
 
 <p align="center">
   <img src="media/installation_thumbnail.png" width="450" title="Installing blastFoam in Windows 10">
 </p>
 
-1. Install OpenFOAM-7 (if not already installed)
+
+
+
+### How to Install OpenFOAM for macOS
+Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS. The main steps from the guide are reproduced below. 
+
+1. Install the Homebrew package manager, if not already installed:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+```
+
+2. Install OpenFOAM dependencies: 
+```bash
+brew install open-mpi
+brew install boost
+brew install cgal
+brew install metis
+brew install https://raw.githubusercontent.com/mrklein/openfoam-os-x/master/formulae/scotch.rb
+brew install https://raw.githubusercontent.com/mrklein/openfoam-os-x/master/formulae/parmgridgen.rb
+```
+
+
+3. Create a volume with a case sensitive file system:
+```bash
+cd $HOME
+hdiutil create -size 8.3g -type SPARSEBUNDLE -fs HFSX -volname OpenFOAM -fsargs -s OpenFOAM.sparsebundle
+mkdir -p OpenFOAM
+hdiutil attach -mountpoint $HOME/OpenFOAM OpenFOAM.sparsebundle
+```
+
+4. Clone the OpenFOAM-7 repository and get and apply the patch:
+```bash
+cd $HOME/OpenFOAM
+git clone https://github.com/OpenFOAM/OpenFOAM-7.git
+cd OpenFOAM-7
+curl -L https://raw.githubusercontent.com/mrklein/openfoam-os-x/master/OpenFOAM-7-83cd285f0.patch > OpenFOAM-7-83cd285f0.patch
+git checkout -b local-install 83cd285f0
+git apply OpenFOAM-7-83cd285f0.patch
+```
+
+5. Set up the OpenFOAM config options for compilation:
+```bash
+mkdir -p $HOME/.OpenFOAM
+echo 'WM_COMPILER=Clang' > $HOME/.OpenFOAM/prefs.sh
+echo 'WM_COMPILE_OPTION=Opt' >> $HOME/.OpenFOAM/prefs.sh
+echo 'WM_MPLIB=SYSTEMOPENMPI' >> $HOME/.OpenFOAM/prefs.sh
+echo 'export WM_NCOMPPROCS=$(sysctl -n hw.ncpu)' >> $HOME/.OpenFOAM/prefs.sh
+echo 'WM_LABEL_SIZE=32' >> $HOME/.OpenFOAM/prefs.sh
+```
+
+
+6. Compile OpenFOAM
+```bash
+source etc/bashrc
+echo "source $HOME/OpenFOAM/OpenFOAM-7/etc/bashrc" >> ~/.bashrc
+echo "source $HOME/OpenFOAM/OpenFOAM-7/etc/bashrc" >> ~/.zshrc
+[ "$(ulimit -n)" -lt "4096" ] && ulimit -n 4096
+./Allwmake > log.Allwmake 2>&1
+```
+
+
+
+
+### How to install blastFoam 
+
+1. Install OpenFOAM-7 (if not already installed, see above)
 
 See https://openfoam.org/version/7 for OpenFOAM installation instructions.
 
