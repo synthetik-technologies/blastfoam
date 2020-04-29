@@ -152,19 +152,20 @@ git clone https://github.com/synthetik-technologies/blastfoam
 cd $HOME/OpenFOAM/blastfoam
 ```
 
-6. Append the etc/bashrc to your .bashrc file
+6. Append the etc/bashrc to your .bashrc and/or .zshrc file
 ```bash
 echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.bashrc
+echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
 ```
 
 7. Load and set the bash environment to compile blastFoam
 ```bash
-source $HOME/.bashrc
+source $HOME/.bashrc # or if using zsh: source $HOME/.zshrc
 ```
 
 8. Compile blastFoam (for parallel use "-j")
 ```bash
-./Allwmake
+./Allwmake -j
 ```
 
 9. Test your installation by running the tutorial and validation cases
