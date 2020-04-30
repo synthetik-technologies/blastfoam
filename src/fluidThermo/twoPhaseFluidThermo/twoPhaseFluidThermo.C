@@ -126,11 +126,16 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
             }
         }
         eBoundaryCorrection();
-        correct();
     }
+    correct();
 
     // Update total density
     rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
+
+    if (max(mu_).value() < small && master)
+    {
+        viscous_ = false;
+    }
 }
 
 
@@ -202,11 +207,15 @@ void Foam::twoPhaseFluidThermo::correct()
     thermo1_->correct();
     thermo2_->correct();
 
-    // Update transport coefficients
-    mu_ = volumeFraction_*thermo1_->mu() + (1.0 - volumeFraction_)*thermo2_->mu();
-    alpha_ =
-        volumeFraction_*thermo1_->alphahe()
-      + (1.0 - volumeFraction_)*thermo2_->alphahe();
+    if (viscous_)
+    {
+        // Update transport coefficients
+        mu_ =
+            volumeFraction_*thermo1_->mu() + (1.0 - volumeFraction_)*thermo2_->mu();
+        alpha_ =
+            volumeFraction_*thermo1_->alphahe()
+          + (1.0 - volumeFraction_)*thermo2_->alphahe();
+    }
 }
 
 

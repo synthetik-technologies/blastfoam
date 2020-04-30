@@ -121,7 +121,8 @@ Foam::fluidThermoModel::fluidThermoModel
             0.0
         )
     ),
-    limit_(dict.lookupOrDefault("limit", true))
+    limit_(dict.lookupOrDefault("limit", true)),
+    viscous_(true)
 {}
 
 

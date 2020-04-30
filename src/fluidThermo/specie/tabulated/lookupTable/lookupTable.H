@@ -88,7 +88,7 @@ class lookupTable
     //- Data
     Field<scalarField> data_;
 
-    scalar getValue(const scalar& i, const scalar& minx, const scalar& dx) const
+    inline scalar getValue(const scalar& i, const scalar& minx, const scalar& dx) const
     {
         return minx + i*dx;
     }
@@ -99,10 +99,10 @@ class lookupTable
     scalar readValue(const List<string>&) const;
 
     //- modify the variable based on the saved scheme
-    scalar modVar(const modType& type, const scalar& xy) const;
+    inline scalar modVar(const modType& type, const scalar& xy) const;
 
     //- modify the variable based on the saved scheme
-    scalar invModVar(const modType& type, const scalar& xy) const;
+    inline scalar invModVar(const modType& type, const scalar& xy) const;
 
     //- Read the table
     void readTable();
@@ -110,7 +110,6 @@ class lookupTable
     //- Find bottom of interpolation region, return index and weight between i and i+1
     inline void findIndex
     (
-        const word& name,
         const scalar& xy,
         const scalar& xyMin,
         const scalar& dxy,

@@ -164,7 +164,6 @@ void Foam::lookupTable::readTable()
 
 void Foam::lookupTable::findIndex
 (
-    const word& name,
     const scalar& xy,
     const scalar& xyMin,
     const scalar& dxy,
@@ -326,19 +325,17 @@ Foam::scalar Foam::lookupTable::lookup
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", x, xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", y, yMin_, dy_, ny_, yMod_, j, fy);
-
-    scalar mm(data_[i][j]);
-    scalar pm(data_[i+1][j]);
-    scalar mp(data_[i][j+1]);
-    scalar pp(data_[i+1][j+1]);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     return
         invModVar
         (
             mod_,
-            mm*fx*fy + pm*(1.0 - fx)*fy + mp*fx*(1.0 - fy) + pp*(1.0 - fx)*(1.0 - fy)
+            data_[i][j]*fx*fy
+          + data_[i+1][j]*(1.0 - fx)*fy
+          + data_[i][j+1]*fx*(1.0 - fy)
+          + data_[i+1][j+1]*(1.0 - fx)*(1.0 - fy)
         );
 }
 
@@ -348,13 +345,13 @@ Foam::lookupTable::reverseLookupY(const scalar& fin, const scalar& x) const
     scalar f(modVar(mod_, fin));
     scalar fx;
     label i;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
     label j = bound(f, i, yMin_, dy_, ny_, true);
 
-    scalar mm(data_[i][j]);
-    scalar pm(data_[i+1][j]);
-    scalar mp(data_[i][j+1]);
-    scalar pp(data_[i+1][j+1]);
+    const scalar& mm(data_[i][j]);
+    const scalar& pm(data_[i+1][j]);
+    const scalar& mp(data_[i][j+1]);
+    const scalar& pp(data_[i+1][j+1]);
 
     scalar fy =
         (f - fx*mp + fx*pp - pp)
@@ -370,7 +367,7 @@ Foam::lookupTable::reverseLookupX(const scalar& fin, const scalar& y) const
     scalar f(modVar(mod_, fin));
     scalar fy;
     label j;
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
     label i = bound(f, j, xMin_, dx_, nx_, false);
 
     scalar mm(data_[i][j]);
@@ -390,8 +387,8 @@ Foam::scalar Foam::lookupTable::dFdX(const scalar& x, const scalar& y) const
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     scalar mm(data_[i][j]);
     scalar pm(data_[i+1][j]);
@@ -413,8 +410,8 @@ Foam::scalar Foam::lookupTable::dFdY(const scalar& x, const scalar& y) const
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     scalar mm(data_[i][j]);
     scalar pm(data_[i+1][j]);
@@ -436,8 +433,8 @@ Foam::scalar Foam::lookupTable::d2FdX2(const scalar& x, const scalar& y) const
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     if (i == 0)
     {
@@ -466,12 +463,12 @@ Foam::scalar Foam::lookupTable::d2FdX2(const scalar& x, const scalar& y) const
       + (1.0 - fy)*(gPrimepp - gPrimemp)/(0.5*(xp - xm));
 }
 
-Foam::scalar Foam::lookupTable::d2FdXdY(const scalar& x, const scalar& y) const
+Foam::scalar Foam::lookupTable::d2FdY2(const scalar& x, const scalar& y) const
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     if (j == 0)
     {
@@ -500,12 +497,12 @@ Foam::scalar Foam::lookupTable::d2FdXdY(const scalar& x, const scalar& y) const
       + (1.0 - fx)*(gPrimepp - gPrimepm)/(0.5*(yp - ym));
 }
 
-Foam::scalar Foam::lookupTable::d2FdY2(const scalar& x, const scalar& y) const
+Foam::scalar Foam::lookupTable::d2FdXdY(const scalar& x, const scalar& y) const
 {
     scalar fx, fy;
     label i, j;
-    findIndex("x", max(x, small), xMin_, dx_, nx_, xMod_, i, fx);
-    findIndex("y", max(y, small), yMin_, dy_, ny_, yMod_, j, fy);
+    findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
+    findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
     if (j == 0)
     {

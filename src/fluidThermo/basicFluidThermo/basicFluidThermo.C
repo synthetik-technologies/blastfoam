@@ -203,6 +203,11 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
         eBoundaryCorrection();
     }
     correct();
+
+    if (max(mu_).value() < small && master)
+    {
+        viscous_ = false;
+    }
 }
 
 
@@ -225,25 +230,28 @@ void Foam::basicFluidThermo<Thermo>::correct()
         p_.max(small);
     }
 
-    mu_ = volScalarFieldProperty
-    (
-        IOobject::groupName("mu", name_),
-        dimDynamicViscosity,
-        &Thermo::mu,
-        rho_,
-        e_,
-        T_
-    );
+    if (viscous_)
+    {
+        mu_ = volScalarFieldProperty
+        (
+            IOobject::groupName("mu", name_),
+            dimDynamicViscosity,
+            &Thermo::mu,
+            rho_,
+            e_,
+            T_
+        );
 
-    alpha_ = volScalarFieldProperty
-    (
-        IOobject::groupName("alphah", name_),
-        dimensionSet(1, -1, -1, 0, 0),
-        &Thermo::alphah,
-        rho_,
-        e_,
-        T_
-    );
+        alpha_ = volScalarFieldProperty
+        (
+            IOobject::groupName("alphah", name_),
+            dimensionSet(1, -1, -1, 0, 0),
+            &Thermo::alphah,
+            rho_,
+            e_,
+            T_
+        );
+    }
 }
 
 

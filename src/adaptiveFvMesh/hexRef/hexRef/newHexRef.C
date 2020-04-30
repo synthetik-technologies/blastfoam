@@ -37,13 +37,13 @@ Foam::autoPtr<Foam::hexRef> Foam::hexRef::New
 
 )
 {
-    label nSolutionD(mesh.nSolutionD());
+    label nD(mesh.nGeometricD());
     word hexRefType = "hexRef";
-    if (nSolutionD == 3)
+    if (nD == 3)
     {
         hexRefType += "3D";
     }
-    else// if (nSolutionD == 2)
+    else// if (nD == 2)
     {
         hexRefType += "2D";
     }

@@ -93,7 +93,7 @@ Foam::scalar Foam::stiffenedGas<Specie>::E
     const scalar& e
 ) const
 {
-    return gamma_*a_/max(rho, 1.0e-10);
+    return 0.0;//gamma_*a_/max(rho, 1.0e-10);
 }
 
 

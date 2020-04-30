@@ -94,6 +94,9 @@ protected:
         //- Is the internal energy limited
         Switch limit_;
 
+        //- Is there viscosity
+        bool viscous_;
+
         //- Correct e boundary values
         void eBoundaryCorrection();
 

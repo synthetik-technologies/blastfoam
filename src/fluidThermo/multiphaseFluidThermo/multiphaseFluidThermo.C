@@ -134,6 +134,10 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
     }
 
     correct();
+    if (max(mu_).value() < small && master)
+    {
+        viscous_ = false;
+    }
 }
 
 
@@ -205,12 +209,15 @@ void Foam::multiphaseFluidThermo::correct()
         thermos_[phasei].correct();
     }
 
-    mu_ = volumeFractions_[0]*thermos_[0].mu();
-    alpha_ = volumeFractions_[0]*thermos_[0].alphahe();
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    if (viscous_)
     {
-        mu_ += volumeFractions_[phasei]*thermos_[phasei].mu();
-        alpha_ += volumeFractions_[phasei]*thermos_[phasei].alphahe();
+        mu_ = volumeFractions_[0]*thermos_[0].mu();
+        alpha_ = volumeFractions_[0]*thermos_[0].alphahe();
+        for (label phasei = 1; phasei < thermos_.size(); phasei++)
+        {
+            mu_ += volumeFractions_[phasei]*thermos_[phasei].mu();
+            alpha_ += volumeFractions_[phasei]*thermos_[phasei].alphahe();
+        }
     }
 }
 

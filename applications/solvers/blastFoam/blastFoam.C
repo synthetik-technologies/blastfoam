@@ -34,6 +34,7 @@ Description
 #include "dynamicFvMesh.H"
 #include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
+#include "wedgeFvPatch.H"
 #include "phaseCompressibleSystem.H"
 #include "fiveEqnCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"

@@ -33,13 +33,21 @@ Description
 
 scalar CoNum = 0.0;
 scalar meanCoNum = 0.0;
-volScalarField speedOfSound("speedOfSound", fluid->speedOfSound());
 
 {
     surfaceScalarField amaxSf
     (
-        mag(phi) + fvc::interpolate(speedOfSound)*mesh.magSf()
+        fvc::interpolate(fluid->speedOfSound())*mesh.magSf()
     );
+    // Remove wave speed from wedge boundaries
+    forAll(amaxSf.boundaryField(), patchi)
+    {
+        if (isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+        {
+            amaxSf.boundaryFieldRef() = Zero;
+        }
+    }
+    amaxSf += mag(phi);
 
     scalarField sumAmaxSf
     (
