@@ -54,7 +54,6 @@ scalar meanCoNum = 0.0;
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-
     CoNum = 0.5*gMax(sumAmaxSf/mesh.V().field())*runTime.deltaTValue();
 
     meanCoNum =

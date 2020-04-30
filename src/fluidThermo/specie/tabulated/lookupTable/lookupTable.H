@@ -88,6 +88,10 @@ class lookupTable
     //- Data
     Field<scalarField> data_;
 
+    //- Stored table lists in real space
+    scalarField x_;
+    scalarField y_;
+
     inline scalar getValue(const scalar& i, const scalar& minx, const scalar& dx) const
     {
         return minx + i*dx;
@@ -140,7 +144,7 @@ public:
         //- Multiphase constructor
         lookupTable
         (
-            const word& fileName,
+            const fileName& fileName,
             const word& mod,
             const word& xMod,
             const word& yMod,

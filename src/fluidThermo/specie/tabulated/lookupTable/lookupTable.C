@@ -281,7 +281,7 @@ Foam::lookupTable::invModVar(const modType& type, const scalar& xy) const
 
 Foam::lookupTable::lookupTable
 (
-    const word& fileName,
+    const fileName& file,
     const word& mod,
     const word& xMod,
     const word& yMod,
@@ -293,7 +293,7 @@ Foam::lookupTable::lookupTable
     const scalar& dy
 )
 :
-    file_(fileName),
+    file_(file),
     mod_(getModType(mod)),
     xMod_(getModType(xMod)),
     yMod_(getModType(yMod)),
@@ -303,9 +303,20 @@ Foam::lookupTable::lookupTable
     dx_(dx),
     yMin_(yMin),
     dy_(dy),
-    data_(nx_, scalarField(ny_, 0.0))
+    data_(nx_, scalarField(ny_, 0.0)),
+    x_(nx_, 0.0),
+    y_(ny_, 0.0)
 {
     readTable();
+
+    forAll(x_, i)
+    {
+        x_[i] = invModVar(xMod_, getValue(i, xMin_, dx_));
+    }
+    forAll(y_, i)
+    {
+        y_[i] = invModVar(yMod_, getValue(i, yMin_, dy_));
+    }
 }
 
 
@@ -399,11 +410,7 @@ Foam::scalar Foam::lookupTable::dFdX(const scalar& x, const scalar& y) const
         (
             invModVar(mod_, pm*fy + pp*(1.0 - fy))
           - invModVar(mod_, mm*fy + mp*(1.0 - fy))
-        )
-       /(
-           invModVar(xMod_, getValue(i+1, xMin_, dx_))
-         - invModVar(xMod_, getValue(i, xMin_, dx_))
-        );
+        )/(x_[i+1] - x_[i]);
 }
 
 Foam::scalar Foam::lookupTable::dFdY(const scalar& x, const scalar& y) const
@@ -422,11 +429,7 @@ Foam::scalar Foam::lookupTable::dFdY(const scalar& x, const scalar& y) const
         (
             invModVar(mod_, mp*fx + pp*(1.0 - fx))
           - invModVar(mod_, mm*fx + pm*(1.0 - fx))
-        )
-       /(
-           invModVar(yMod_, getValue(j+1, yMin_, dy_))
-         - invModVar(yMod_, getValue(j, yMin_, dy_))
-        );
+        )/(y_[j+1] - y_[j]);
 }
 
 Foam::scalar Foam::lookupTable::d2FdX2(const scalar& x, const scalar& y) const
@@ -449,9 +452,9 @@ Foam::scalar Foam::lookupTable::d2FdX2(const scalar& x, const scalar& y) const
     scalar gp(invModVar(mod_, data_[i][j+1]));
     scalar gpp(invModVar(mod_, data_[i+1][j+1]));
 
-    scalar xm(invModVar(xMod_, getValue(i-1, xMin_, dx_)));
-    scalar xi(invModVar(xMod_, getValue(i, xMin_, dx_)));
-    scalar xp(invModVar(xMod_, getValue(i+1, xMin_, dx_)));
+    const scalar& xm(x_[i-1]);
+    const scalar& xi(x_[i]);
+    const scalar& xp(x_[i+1]);
 
     scalar gPrimepm((gpm - gm)/(xp - xi));
     scalar gPrimemm((gm - gmm)/(xi - xm));
@@ -483,9 +486,9 @@ Foam::scalar Foam::lookupTable::d2FdY2(const scalar& x, const scalar& y) const
     scalar gp(invModVar(mod_, data_[i+1][j]));
     scalar gpp(invModVar(mod_, data_[i+1][j+1]));
 
-    scalar ym(invModVar(yMod_, getValue(j-1, yMin_, dy_)));
-    scalar yi(invModVar(yMod_, getValue(j, yMin_, dy_)));
-    scalar yp(invModVar(yMod_, getValue(j+1, yMin_, dy_)));
+    const scalar& ym(y_[j-1]);
+    const scalar& yi(y_[j]);
+    const scalar& yp(y_[j+1]);
 
     scalar gPrimemp((gmp - gm)/(yp - yi));
     scalar gPrimemm((gm - gmm)/(yi - ym));
@@ -504,25 +507,16 @@ Foam::scalar Foam::lookupTable::d2FdXdY(const scalar& x, const scalar& y) const
     findIndex(x, xMin_, dx_, nx_, xMod_, i, fx);
     findIndex(y, yMin_, dy_, ny_, yMod_, j, fy);
 
-    if (j == 0)
-    {
-        j++;
-    }
-    if (i == 0)
-    {
-        i++;
-    }
-
     scalar gmm(invModVar(mod_, data_[i][j]));
     scalar gmp(invModVar(mod_, data_[i][j+1]));
     scalar gpm(invModVar(mod_, data_[i+1][j]));
     scalar gpp(invModVar(mod_, data_[i+1][j+1]));
 
-    scalar xm(invModVar(xMod_, getValue(i, xMin_, dx_)));
-    scalar xp(invModVar(xMod_, getValue(i+1, xMin_, dx_)));
+    const scalar& xm(x_[i]);
+    const scalar& xp(x_[i+1]);
 
-    scalar ym(invModVar(yMod_, getValue(j, yMin_, dy_)));
-    scalar yp(invModVar(yMod_, getValue(j+1, yMin_, dy_)));
+    const scalar& ym(y_[j]);
+    const scalar& yp(y_[j+1]);
 
     return ((gpp - gmp)/(xp - xm) - (gpm - gmm)/(xp - xm))/(yp - ym);
 }
