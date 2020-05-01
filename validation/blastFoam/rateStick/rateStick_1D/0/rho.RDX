@@ -22,11 +22,11 @@ boundaryField
 {
     front
     {
-        type            symmetry;
+        type            wedge;
     }
     back
     {
-        type            symmetry;
+        type            wedge;
     }
     top
     {
