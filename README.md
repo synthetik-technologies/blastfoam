@@ -7,7 +7,7 @@
 
 
 
-# blastFoam Version 3.0
+# blastFoam Version 3.0.1
 
 blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com).
 
@@ -271,7 +271,7 @@ blastFoam currently supports the following features:
 - Parallel (MPI)
 - Compatible with all of OpenFOAM's standard mesh generation, pre- and post-processing utilities
 - Multiple solvers for high-speed reactive flow and deflatration to detonation transition
-
+- Performance improvements for axisymmetric cases that use wedge boundary conditions (v3.0.1)
 
 ## Equations of State
 
