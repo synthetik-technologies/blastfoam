@@ -6,4 +6,4 @@ hexRef/hexRef2D/hexRef2D.C
 
 adaptiveFvMesh/adaptiveFvMesh.C
 
-LIB = $(FOAM_USER_LIBBIN)/libadaptiveFvMesh
+LIB = $(BLAST_LIBBIN)/libadaptiveFvMesh

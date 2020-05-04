@@ -17,4 +17,4 @@ twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
 multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
 
 
-LIB = $(FOAM_USER_LIBBIN)/libphaseCompressibleSystems
+LIB = $(BLAST_LIBBIN)/libphaseCompressibleSystems

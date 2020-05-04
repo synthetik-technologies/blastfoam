@@ -43,6 +43,11 @@ export BLAST_PROJECT=blastfoam
 #
 export BLAST_DIR=$HOME/$WM_PROJECT/$BLAST_PROJECT
 
+export BLAST_LIBBIN=$FOAM_USER_LIBBIN
+export BLAST_APPBIN=$FOAM_USER_APPBIN
+#export BLAST_LIBBIN=$FOAM_SITE_LIBBIN
+#export BLAST_APPBIN=$FOAM_SITE_APPBIN
+
 # Equation of state template directory
 export EOS_DIR=$BLAST_DIR/etc/equationOfStateData
 export ADDITIONAL_EOS=

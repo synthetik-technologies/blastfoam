@@ -6,4 +6,4 @@ delta/delta.C
 Lohner/Lohner.C
 
 
-LIB = $(FOAM_USER_LIBBIN)/liberrorEstimate
+LIB = $(BLAST_LIBBIN)/liberrorEstimate

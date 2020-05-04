@@ -40,4 +40,4 @@ derivedFvPatchFields/greyDiffusiveRadiation/greyDiffusiveRadiationMixedFvPatchSc
 derivedFvPatchFields/radiationCoupledBase/radiationCoupledBase.C
 derivedFvPatchFields/greyDiffusiveViewFactor/greyDiffusiveViewFactorFixedValueFvPatchScalarField.C
 
-LIB = $(FOAM_USER_LIBBIN)/libblastRadiationModels
+LIB = $(BLAST_LIBBIN)/libblastRadiationModels

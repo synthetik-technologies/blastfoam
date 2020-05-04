@@ -33,4 +33,4 @@ derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPa
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
 
-LIB = $(FOAM_USER_LIBBIN)/libfluidThermo
+LIB = $(BLAST_LIBBIN)/libfluidThermo

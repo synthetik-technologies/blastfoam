@@ -5,4 +5,4 @@ fieldMax/fieldMax.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 
-LIB = $(FOAM_USER_LIBBIN)/libblastFunctionObjects
+LIB = $(BLAST_LIBBIN)/libblastFunctionObjects
