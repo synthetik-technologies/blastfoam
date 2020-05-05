@@ -160,7 +160,9 @@ echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
 
 7. Load and set the bash environment to compile blastFoam
 ```bash
-source $HOME/.bashrc # or if using zsh: source $HOME/.zshrc
+source $HOME/.bashrc 
+# or if using zsh: 
+source $HOME/.zshrc
 ```
 
 8. Compile blastFoam (for parallel use "-j")
