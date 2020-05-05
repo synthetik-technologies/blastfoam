@@ -36,13 +36,13 @@ Description
 #include "cellSet.H"
 #include "faceSet.H"
 #include "volFields.H"
-#include "hexRef8.H"
 
 #include "hexRef.H"
 #include "hexRef3D.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
+#include "wedgePolyPatch.H"
 
 using namespace Foam;
 
@@ -695,7 +695,6 @@ int main(int argc, char *argv[])
         }
         iter++;
     }
-
 
     bool writeOk = (mesh.write() && meshCutter->write());
 

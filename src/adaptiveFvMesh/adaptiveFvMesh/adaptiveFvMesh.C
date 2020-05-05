@@ -40,7 +40,7 @@ License
 #include "volPointInterpolation.H"
 #include "pointMesh.H"
 #include "cellSet.H"
-
+#include "wedgePolyPatch.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -1207,12 +1207,28 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             }
         }
 
+        bool wedge = false;
+        forAll(this->boundaryMesh(), patchi)
+        {
+            if (isA<wedgePolyPatch>(this->boundaryMesh()[patchi]))
+            {
+                wedge = true;
+            }
+        }
+
         // Also protect any cells that are less than hex
         forAll(cells(), celli)
         {
             const cell& cFaces = cells()[celli];
 
-            if (cFaces.size() < 6)
+            if (cFaces.size() < 5 )
+            {
+                if (protectedCell_.set(celli, 1))
+                {
+                    nProtected++;
+                }
+            }
+            else if (!wedge && cFaces.size() < 6)
             {
                 if (protectedCell_.set(celli, 1))
                 {
@@ -1223,7 +1239,15 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             {
                 forAll(cFaces, cFacei)
                 {
-                    if (faces()[cFaces[cFacei]].size() < 4)
+                    if (faces()[cFaces[cFacei]].size() < 3)
+                    {
+                        if (protectedCell_.set(celli, 1))
+                        {
+                            nProtected++;
+                        }
+                        break;
+                    }
+                    else if (faces()[cFaces[cFacei]].size() < 4 && !wedge)
                     {
                         if (protectedCell_.set(celli, 1))
                         {
@@ -1236,7 +1260,10 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
         }
 
         // Check cells for 8 corner points
-        checkEightAnchorPoints(protectedCell_, nProtected);
+        if (!wedge)
+        {
+            checkEightAnchorPoints(protectedCell_, nProtected);
+        }
     }
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)

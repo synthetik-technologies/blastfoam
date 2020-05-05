@@ -1025,7 +1025,7 @@ bool update
 void initialize
 (
     fvMesh& mesh,
-    PackedBoolList& protectedCell,
+    PackedBoolList& protectedCells,
     hexRef& meshCutter
 )
 {
@@ -1052,7 +1052,7 @@ void initialize
         {
             label celli = pCells[i];
 
-            if (!protectedCell.get(celli))
+            if (!protectedCells.get(celli))
             {
                 if (pointLevel[pointi] <= cellLevel[celli])
                 {
@@ -1060,7 +1060,7 @@ void initialize
 
                     if (nAnchors[celli] > 8)
                     {
-                        protectedCell.set(celli, 1);
+                        protectedCells.set(celli, 1);
                         nProtected++;
                     }
                 }
@@ -1128,9 +1128,9 @@ void initialize
         {
             if (protectedFace[facei])
             {
-                protectedCell.set(mesh.faceOwner()[facei], 1);
+                protectedCells.set(mesh.faceOwner()[facei], 1);
                 nProtected++;
-                protectedCell.set(mesh.faceNeighbour()[facei], 1);
+                protectedCells.set(mesh.faceNeighbour()[facei], 1);
                 nProtected++;
             }
         }
@@ -1143,8 +1143,17 @@ void initialize
         {
             if (protectedFace[facei])
             {
-                protectedCell.set(mesh.faceOwner()[facei], 1);
+                protectedCells.set(mesh.faceOwner()[facei], 1);
                 nProtected++;
+            }
+        }
+
+        bool wedge = false;
+        forAll(mesh.boundaryMesh(), patchi)
+        {
+            if (isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi]))
+            {
+                wedge = true;
             }
         }
 
@@ -1153,9 +1162,16 @@ void initialize
         {
             const cell& cFaces = mesh.cells()[celli];
 
-            if (cFaces.size() < 6)
+            if (cFaces.size() < 5 )
             {
-                if (protectedCell.set(celli, 1))
+                if (protectedCells.set(celli, 1))
+                {
+                    nProtected++;
+                }
+            }
+            else if (!wedge && cFaces.size() < 6)
+            {
+                if (protectedCells.set(celli, 1))
                 {
                     nProtected++;
                 }
@@ -1164,9 +1180,21 @@ void initialize
             {
                 forAll(cFaces, cFacei)
                 {
-                    if (mesh.faces()[cFaces[cFacei]].size() < 4)
+                    if (mesh.faces()[cFaces[cFacei]].size() < 3)
                     {
-                        if (protectedCell.set(celli, 1))
+                        if (protectedCells.set(celli, 1))
+                        {
+                            nProtected++;
+                        }
+                        break;
+                    }
+                    else if
+                    (
+                        mesh.faces()[cFaces[cFacei]].size() < 4
+                     && !wedge
+                    )
+                    {
+                        if (protectedCells.set(celli, 1))
                         {
                             nProtected++;
                         }
@@ -1177,20 +1205,29 @@ void initialize
         }
 
         // Check cells for 8 corner points
-        checkEightAnchorPoints(mesh, protectedCell, nProtected, meshCutter);
+        if (!wedge)
+        {
+            checkEightAnchorPoints
+            (
+                mesh,
+                protectedCells,
+                nProtected,
+                meshCutter
+            );
+        }
     }
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)
     {
-        protectedCell.clear();
+        protectedCells.clear();
     }
     else
     {
 
         cellSet ProtectedCells(mesh, "protectedCells", nProtected);
-        forAll(protectedCell, celli)
+        forAll(protectedCells, celli)
         {
-            if (protectedCell[celli])
+            if (protectedCells[celli])
             {
                 ProtectedCells.insert(celli);
             }
