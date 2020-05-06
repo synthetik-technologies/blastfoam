@@ -67,7 +67,11 @@ namespace Foam
 
 Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
 {
-    if (p >= meshCutter().history().splitCells().size())
+    if
+    (
+        p >= meshCutter().history().splitCells().size()
+     || meshCutter().history().visibleCells()[p] < 0
+    )
     {
         return p;
     }
@@ -80,27 +84,6 @@ Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
     {
         return topParentID(nextP);
     }
-//     // Check if cells have lost visibility of parent
-//     // (Usefull if snappyHexMesh is used)
-//
-//   if (
-//       p >= meshCutter().history().splitCells().size()
-//       || meshCutter().cellLevel()[p] == 0
-//       || meshCutter().history().visibleCells()[p] < 0
-//      )
-//     {
-//       return p;
-//     }
-//
-//   label nextP = meshCutter().history().splitCells()[p].parent_;
-//   if (nextP < 0)
-//     {
-//       return p;
-//     }
-//   else
-//     {
-//       return topParentID(nextP);
-//     }
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -1814,7 +1797,11 @@ void Foam::adaptiveFvMesh::balance()
 
             forAll(cells(), cellI)
             {
-                if( cellLevel[cellI] > 0 )
+                if
+                (
+                    cellLevel[cellI] > 0
+                 && meshCutter().history().visibleCells()[cellI] >= 0
+                )
                 {
                     //YO- 2D refinement uses fixed lists with unset parents;
                     //    we need to check that the parentIndex is set
