@@ -90,7 +90,6 @@ int main(int argc, char *argv[])
         {
             error->update();
         }
-
         mesh.update();
 
         fluid->encode();

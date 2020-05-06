@@ -59,16 +59,22 @@ bool setCellFieldType
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
 
-    if (fieldTypeDesc != fieldType::typeName + "Value")
+    bool useOrig = false;
+    if (fieldTypeDesc == fieldType::typeName + "InitialValue")
+    {
+        useOrig = true;
+    }
+    else if (fieldTypeDesc != fieldType::typeName + "Value")
     {
         return false;
     }
 
     word fieldName(fieldValueStream);
+    word fieldOrigName(fieldName + "Orig");
     fieldType* field = 0;
     if (mesh.foundObject<fieldType>(fieldName))
     {
-        field =  &mesh.lookupObjectRef<fieldType>(fieldName);
+        field = &mesh.lookupObjectRef<fieldType>(fieldName);
     }
     else
     {
@@ -99,7 +105,13 @@ bool setCellFieldType
             field = new fieldType(fieldHeader, mesh);
         }
     }
-    if (field)
+    if (field && useOrig)
+    {
+        Info<< "    Setting internal values of "
+            << field->headerClassName()
+            << " " << fieldName << " to initial values" << endl;
+    }
+    else if (field)
     {
         Info<< "    Setting internal values of "
             << field->headerClassName()
@@ -112,6 +124,22 @@ bool setCellFieldType
 
         // Consume value
         (void)pTraits<Type>(fieldValueStream);
+    }
+
+    if (useOrig)
+    {
+        fieldType* origFieldPtr = 0;
+        if (mesh.foundObject<fieldType>(fieldOrigName))
+        {
+            origFieldPtr = &mesh.lookupObjectRef<fieldType>(fieldOrigName);
+        }
+        else
+        {
+            origFieldPtr = new fieldType(fieldOrigName, *field);
+            origFieldPtr->store(origFieldPtr);
+        }
+        (*field) = (*origFieldPtr);
+        return true;
     }
 
     const Type& value = pTraits<Type>(fieldValueStream);
