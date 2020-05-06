@@ -38,7 +38,7 @@ Description
 #include "volFields.H"
 
 #include "hexRef.H"
-#include "hexRef3D.H"
+#include "hexRef8.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
@@ -456,7 +456,7 @@ int main(int argc, char *argv[])
     autoPtr<hexRef> meshCutter;
     if (setFieldsDict.lookupOrDefault("force3D", Switch(false)))
     {
-        meshCutter.set(new hexRef3D(mesh));
+        meshCutter.set(new hexRef8(mesh));
     }
     else
     {

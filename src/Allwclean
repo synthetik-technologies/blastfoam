@@ -6,8 +6,11 @@ wclean $targetType equationOfState
 wclean $targetType compressibleSystem
 wclean $targetType timeIntegrators
 wclean $targetType radiationModels
-wclean $targetType adaptiveFvMesh
+wclean $targetType dynamicMesh
+wclean $targetType decompositionMethods
+wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
+wclean $targetType sampling
 
 # ----------------------------------------------------------------- end-of-file
