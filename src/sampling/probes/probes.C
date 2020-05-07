@@ -48,7 +48,7 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::probes::findElements(const fvMesh& mesh)
+void Foam::probes::findElements(const fvMesh& mesh, const bool print)
 {
     if (debug)
     {
@@ -112,7 +112,7 @@ void Foam::probes::findElements(const fvMesh& mesh)
         reduce(celli, maxOp<label>());
         reduce(facei, maxOp<label>());
 
-        if (celli == -1)
+        if (celli == -1 && print)
         {
             if (Pstream::master())
             {
@@ -121,7 +121,7 @@ void Foam::probes::findElements(const fvMesh& mesh)
                     << " in any cell. Skipping location." << endl;
             }
         }
-        else if (facei == -1)
+        else if (facei == -1 && print)
         {
             if (Pstream::master())
             {
@@ -351,7 +351,7 @@ bool Foam::probes::read(const dictionary& dict)
     }
 
     // Initialise cells to sample from supplied locations
-    findElements(mesh_);
+    findElements(mesh_, true);
 
     prepare();
 
@@ -397,7 +397,7 @@ void Foam::probes::updateMesh(const mapPolyMesh& mpm)
 
     if (fixedLocations_)
     {
-        findElements(mesh_);
+        findElements(mesh_, false);
     }
     else
     {
@@ -471,7 +471,7 @@ void Foam::probes::movePoints(const polyMesh& mesh)
 
     if (fixedLocations_ && &mesh == &mesh_)
     {
-        findElements(mesh_);
+        findElements(mesh_, false);
     }
 }
 

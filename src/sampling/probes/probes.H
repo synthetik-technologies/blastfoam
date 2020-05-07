@@ -149,7 +149,7 @@ protected:
         label classifyFields();
 
         //- Find cells and faces containing probes
-        virtual void findElements(const fvMesh&);
+        virtual void findElements(const fvMesh&, const bool print);
 
         //- Classify field type and Open/close file streams,
         //  returns number of fields to sample
