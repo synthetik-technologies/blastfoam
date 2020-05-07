@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2016-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -33,14 +33,12 @@ namespace Foam
     defineTypeNameAndDebug(points0MotionSolver, 0);
 }
 
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::points0MotionSolver::points0MotionSolver
 (
     const polyMesh& mesh,
-    const IOdictionary& dict,
+    const dictionary& dict,
     const word& type
 )
 :
@@ -147,7 +145,7 @@ void Foam::points0MotionSolver::updateMesh(const mapPolyMesh& mpm)
     // points0 changed - set to write and check-in to database
     points0_.rename("points0");
     points0_.writeOpt() = IOobject::AUTO_WRITE;
-    points0_.instance() = time().timeName();
+    points0_.instance() = mesh().time().timeName();
     points0_.checkIn();
 }
 

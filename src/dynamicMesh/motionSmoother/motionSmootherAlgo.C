@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -56,7 +56,7 @@ void Foam::motionSmootherAlgo::testSyncPositions
         mesh_,
         syncedFld,
         minEqOp<point>(),           // combine op
-        point(GREAT,GREAT,GREAT)    // null
+        point(great,great,great)    // null
     );
 
     forAll(syncedFld, i)
@@ -78,7 +78,7 @@ void Foam::motionSmootherAlgo::checkFld(const pointScalarField& fld)
     {
         const scalar val = fld[pointi];
 
-        if ((val > -GREAT) && (val < GREAT))
+        if ((val > -great) && (val < great))
         {}
         else
         {
@@ -123,7 +123,7 @@ Foam::tmp<Foam::scalarField> Foam::motionSmootherAlgo::calcEdgeWeights
 
     forAll(edges, edgeI)
     {
-        wght[edgeI] = 1.0/(edges[edgeI].mag(points)+SMALL);
+        wght[edgeI] = 1.0/(edges[edgeI].mag(points)+small);
     }
     return twght;
 }
@@ -142,7 +142,7 @@ void Foam::motionSmootherAlgo::minSmooth
     tmp<pointScalarField> tavgFld = avg
     (
         fld,
-        edgeWeights //scalarField(mesh_.nEdges(), 1.0)    // uniform weighting
+        edgeWeights // scalarField(mesh_.nEdges(), 1.0)    // uniform weighting
     );
     const pointScalarField& avgFld = tavgFld();
 
@@ -176,7 +176,7 @@ void Foam::motionSmootherAlgo::minSmooth
     tmp<pointScalarField> tavgFld = avg
     (
         fld,
-        edgeWeights //scalarField(mesh_.nEdges(), 1.0)    // uniform weighting
+        edgeWeights // scalarField(mesh_.nEdges(), 1.0)    // uniform weighting
     );
     const pointScalarField& avgFld = tavgFld();
 
@@ -545,13 +545,13 @@ void Foam::motionSmootherAlgo::setDisplacement
         {
             const vector& newDisp = displacement[ppMeshPoints[patchPointi]];
 
-            if (mag(newDisp-patchDisp[patchPointi]) > SMALL)
+            if (mag(newDisp-patchDisp[patchPointi]) > small)
             {
                 const point& pt = mesh.points()[ppMeshPoints[patchPointi]];
 
                 meshTools::writeOBJ(str, pt);
                 nVerts++;
-                //Pout<< "Point:" << pt
+                // Pout<< "Point:" << pt
                 //    << " oldDisp:" << patchDisp[patchPointi]
                 //    << " newDisp:" << newDisp << endl;
             }
@@ -915,7 +915,7 @@ bool Foam::motionSmootherAlgo::scaleMesh
         // if errorReduction is set to zero, extend wrongFaces
         // to face-Cell-faces to ensure quick return to previously valid mesh
 
-        if (mag(errorReduction) < SMALL)
+        if (mag(errorReduction) < small)
         {
             labelHashSet newWrongFaces(wrongFaces);
             forAllConstIter(labelHashSet, wrongFaces, iter)
@@ -975,13 +975,13 @@ bool Foam::motionSmootherAlgo::scaleMesh
         {
             // Scale conflicting patch points
             scaleField(pp_.meshPoints(), usedPoints, errorReduction, scale_);
-            //subtractField(pp_.meshPoints(), usedPoints, 0.1, scale_);
+            // subtractField(pp_.meshPoints(), usedPoints, 0.1, scale_);
         }
         if (smoothMesh)
         {
             // Scale conflicting internal points
             scaleField(usedPoints, errorReduction, scale_);
-            //subtractField(usedPoints, 0.1, scale_);
+            // subtractField(usedPoints, 0.1, scale_);
         }
 
         scalarField eWeights(calcEdgeWeights(oldPoints_));
@@ -1016,7 +1016,7 @@ bool Foam::motionSmootherAlgo::scaleMesh
             mesh_,
             scale_,
             maxEqOp<scalar>(),
-            -GREAT              // null value
+            -great              // null value
         );
 
 

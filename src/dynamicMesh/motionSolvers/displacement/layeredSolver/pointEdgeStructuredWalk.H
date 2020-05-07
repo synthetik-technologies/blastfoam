@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -63,7 +63,7 @@ Ostream& operator<<(Ostream&, const pointEdgeStructuredWalk&);
 
 class pointEdgeStructuredWalk
 {
-    // Private data
+    // Private Data
 
         //- Starting location
         point point0_;
@@ -215,7 +215,7 @@ public:
 
     // Member Operators
 
-        //Note: Used to determine whether to call update.
+        // Note: Used to determine whether to call update.
         inline bool operator==(const pointEdgeStructuredWalk&) const;
         inline bool operator!=(const pointEdgeStructuredWalk&) const;
 

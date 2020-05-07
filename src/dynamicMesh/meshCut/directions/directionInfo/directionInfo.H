@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -84,7 +84,7 @@ Ostream& operator<<(Ostream&, const directionInfo&);
 
 class directionInfo
 {
-    // Private data
+    // Private Data
 
         // Either mesh edge or face point
         label index_;
@@ -138,9 +138,6 @@ public:
             const label,
             const vector& n
         );
-
-        //- Construct as copy
-        inline directionInfo(const directionInfo&);
 
 
     // Member Functions

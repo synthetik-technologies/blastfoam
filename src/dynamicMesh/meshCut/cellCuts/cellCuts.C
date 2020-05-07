@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -33,12 +33,25 @@ License
 #include "geomCellLooper.H"
 #include "OFstream.H"
 #include "plane.H"
+#include "syncTools.H"
+#include "dummyTransform.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
     defineTypeNameAndDebug(cellCuts, 0);
+
+    //- Template specialization for pTraits<edge> so we can use syncTools
+    //  functionality
+    template<>
+    class pTraits<edge>
+    {
+    public:
+
+        //- Component type
+        typedef edge cmptType;
+    };
 }
 
 
@@ -85,7 +98,7 @@ Foam::scalarField Foam::cellCuts::expand
     const scalarField& weights
 )
 {
-    scalarField result(size, -GREAT);
+    scalarField result(size, -great);
 
     forAll(labels, labelI)
     {
@@ -113,6 +126,148 @@ Foam::label Foam::cellCuts::firstUnique
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+void Foam::cellCuts::syncProc()
+{
+    if (!Pstream::parRun())
+    {
+        return;
+    }
+
+    syncTools::syncPointList(mesh(), pointIsCut_, orEqOp<bool>(), false);
+    syncTools::syncEdgeList(mesh(), edgeIsCut_, orEqOp<bool>(), false);
+    syncTools::syncEdgeList(mesh(), edgeWeight_, maxEqOp<scalar>(), -great);
+
+    {
+        const label nBnd = mesh().nFaces()-mesh().nInternalFaces();
+
+        // Convert faceSplitCut into face-local data: vertex and edge w.r.t.
+        // vertex 0: (since this is same on both sides)
+        //
+        //      Sending-side vertex  Receiving-side vertex
+        //      0                   0
+        //      1                   3
+        //      2                   2
+        //      3                   1
+        //
+        //      Sending-side edge    Receiving side edge
+        //      0-1                  3-0
+        //      1-2                  2-3
+        //      2-3                  1-2
+        //      3-0                  0-1
+        //
+        // Encoding is as index:
+        //      0  : not set
+        //      >0 : vertex, vertex is index-1
+        //      <0 : edge, edge is -index-1
+
+        edgeList relCuts(nBnd, edge(0, 0));
+
+        const polyBoundaryMesh& pbm = mesh().boundaryMesh();
+
+        forAll(pbm, patchi)
+        {
+            const polyPatch& pp = pbm[patchi];
+
+            if (isA<processorPolyPatch>(pp) || isA<cyclicPolyPatch>(pp))
+            {
+                forAll(pp, i)
+                {
+                    label facei = pp.start()+i;
+                    label bFacei = facei-mesh().nInternalFaces();
+
+                    const Map<edge>::const_iterator iter =
+                        faceSplitCut_.find(facei);
+                    if (iter != faceSplitCut_.end())
+                    {
+                        const face& f = mesh().faces()[facei];
+                        const labelList& fEdges = mesh().faceEdges()[facei];
+                        const edge& cuts = iter();
+
+                        forAll(cuts, i)
+                        {
+                            if (isEdge(cuts[i]))
+                            {
+                                label edgei = getEdge(cuts[i]);
+                                label index = findIndex(fEdges, edgei);
+                                relCuts[bFacei][i] = -index-1;
+                            }
+                            else
+                            {
+                                label index = findIndex(f, getVertex(cuts[i]));
+                                relCuts[bFacei][i] = index+1;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Exchange
+        syncTools::syncBoundaryFaceList
+        (
+            mesh(),
+            relCuts,
+            eqOp<edge>(),
+            dummyTransform()
+        );
+
+        // Convert relCuts back into mesh based data
+        forAll(pbm, patchi)
+        {
+            const polyPatch& pp = pbm[patchi];
+
+            if (isA<processorPolyPatch>(pp) || isA<cyclicPolyPatch>(pp))
+            {
+                forAll(pp, i)
+                {
+                    label facei = pp.start()+i;
+                    label bFacei = facei-mesh().nInternalFaces();
+
+                    const edge& relCut = relCuts[bFacei];
+                    if (relCut != edge(0, 0))
+                    {
+                        const face& f = mesh().faces()[facei];
+                        const labelList& fEdges = mesh().faceEdges()[facei];
+
+                        edge absoluteCut(0, 0);
+                        forAll(relCut, i)
+                        {
+                            if (relCut[i] < 0)
+                            {
+                                label oppFp = -relCut[i]-1;
+                                label fp = f.size()-1-oppFp;
+                                absoluteCut[i] = edgeToEVert(fEdges[fp]);
+                            }
+                            else
+                            {
+                                label oppFp = relCut[i]-1;
+                                label fp = f.size()-1-oppFp;
+                                absoluteCut[i] = vertToEVert(f[fp]);
+                            }
+                        }
+
+                        if
+                        (
+                           !faceSplitCut_.insert(facei, absoluteCut)
+                         && faceSplitCut_[facei] != absoluteCut
+                        )
+                        {
+                            FatalErrorInFunction
+                                << "Cut " << faceSplitCut_[facei]
+                                << " on face " << mesh().faceCentres()[facei]
+                                << " of coupled patch " << pp.name()
+                                << " is not consistent with coupled cut "
+                                << absoluteCut
+                                << exit(FatalError);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 void Foam::cellCuts::writeUncutOBJ
 (
@@ -337,7 +492,7 @@ Foam::label Foam::cellCuts::vertexVertexToFace
 
 void Foam::cellCuts::calcFaceCuts() const
 {
-    if (faceCutsPtr_)
+    if (faceCutsPtr_.valid())
     {
         FatalErrorInFunction
             << "faceCuts already calculated" << abort(FatalError);
@@ -345,9 +500,8 @@ void Foam::cellCuts::calcFaceCuts() const
 
     const faceList& faces = mesh().faces();
 
-
-    faceCutsPtr_ = new labelListList(mesh().nFaces());
-    labelListList& faceCuts = *faceCutsPtr_;
+    faceCutsPtr_.reset(new labelListList(mesh().nFaces()));
+    labelListList& faceCuts = faceCutsPtr_();
 
     for (label facei = 0; facei < mesh().nFaces(); facei++)
     {
@@ -366,7 +520,7 @@ void Foam::cellCuts::calcFaceCuts() const
         // string of connected cuts; we don't want to start somewhere in the
         // middle.
 
-        // Pass1: find first point cut not preceeded by a cut.
+        // Pass1: find first point cut not preceded by a cut.
         label startFp = -1;
 
         forAll(f, fp)
@@ -390,7 +544,7 @@ void Foam::cellCuts::calcFaceCuts() const
             }
         }
 
-        // Pass2: first edge cut not preceeded by point cut
+        // Pass2: first edge cut not preceded by point cut
         if (startFp == -1)
         {
             forAll(f, fp)
@@ -428,7 +582,7 @@ void Foam::cellCuts::calcFaceCuts() const
             label fp1 = f.fcIndex(fp);
 
             // Get the three items: current vertex, next vertex and edge
-            // inbetween
+            // in between
             label v0 = f[fp];
             label v1 = f[fp1];
             label edgeI = findEdge(facei, v0, v1);
@@ -932,7 +1086,7 @@ bool Foam::cellCuts::walkCell
             {
                 // Cut along existing edge. So is in fact on two faces.
                 // Get faces on both sides of the edge to make
-                // sure we dont fold back on to those.
+                // sure we don't fold back on to those.
 
                 label f0, f1;
                 meshTools::getEdgeFaces(mesh(), celli, edgeI, f0, f1);
@@ -1117,7 +1271,7 @@ void Foam::cellCuts::calcCellLoops(const labelList& cutCells)
         }
         else
         {
-            //Pout<< "calcCellLoops(const labelList&) : did not find valid"
+            // Pout<< "calcCellLoops(const labelList&) : did not find valid"
             //    << " loop for cell " << celli << " since not enough cut faces"
             //    << endl;
             cellLoops_[celli].setSize(0);
@@ -1200,12 +1354,11 @@ bool Foam::cellCuts::loopAnchorConsistent
     const labelList& anchorPoints
 ) const
 {
-    // Create identity face for ease of calculation of normal etc.
-    face f(identity(loopPts.size()));
+    // Create identity face for ease of calculation of area etc.
+    const face f(identity(loopPts.size()));
 
-    vector normal = f.normal(loopPts);
-    point ctr = f.centre(loopPts);
-
+    const vector a = f.area(loopPts);
+    const point ctr = f.centre(loopPts);
 
     // Get average position of anchor points.
     vector avg(Zero);
@@ -1216,8 +1369,7 @@ bool Foam::cellCuts::loopAnchorConsistent
     }
     avg /= anchorPoints.size();
 
-
-    if (((avg - ctr) & normal) > 0)
+    if (((avg - ctr) & a) > 0)
     {
         return true;
     }
@@ -1441,7 +1593,7 @@ bool Foam::cellCuts::calcAnchors
                 {
                     if (hasSet1)
                     {
-                        // Second occurence of set1.
+                        // Second occurrence of set1.
                         WarningInFunction
                             << "Invalid loop " << loop << " for cell " << celli
                             << " since face " << f << " would be split into"
@@ -1458,7 +1610,7 @@ bool Foam::cellCuts::calcAnchors
                 {
                     if (hasSet2)
                     {
-                        // Second occurence of set1.
+                        // Second occurrence of set1.
                         WarningInFunction
                             << "Invalid loop " << loop << " for cell " << celli
                             << " since face " << f << " would be split into"
@@ -1496,7 +1648,7 @@ bool Foam::cellCuts::calcAnchors
                 {
                     if (hasSet1)
                     {
-                        // Second occurence of set1.
+                        // Second occurrence of set1.
                         WarningInFunction
                             << "Invalid loop " << loop << " for cell " << celli
                             << " since face " << f << " would be split into"
@@ -1513,7 +1665,7 @@ bool Foam::cellCuts::calcAnchors
                 {
                     if (hasSet2)
                     {
-                        // Second occurence of set1.
+                        // Second occurrence of set1.
                         WarningInFunction
                             << "Invalid loop " << loop << " for cell " << celli
                             << " since face " << f << " would be split into"
@@ -1537,7 +1689,7 @@ bool Foam::cellCuts::calcAnchors
     // Check which one of point sets to use.
     bool loopOk = loopAnchorConsistent(celli, loopPts, connectedPoints);
 
-    //if (debug)
+    // if (debug)
     {
         // Additional check: are non-anchor points on other side?
         bool otherLoopOk = loopAnchorConsistent(celli, loopPts, otherPoints);
@@ -1607,7 +1759,7 @@ Foam::scalarField Foam::cellCuts::loopWeights(const labelList& loop) const
         }
         else
         {
-            weights[fp] = -GREAT;
+            weights[fp] = -great;
         }
     }
     return weights;
@@ -1865,7 +2017,7 @@ bool Foam::cellCuts::validLoop
 
                     if (meshFacei == -1)
                     {
-                        // Can't find face. Ilegal.
+                        // Can't find face. Illegal.
                         return false;
                     }
                 }
@@ -1945,7 +2097,7 @@ bool Foam::cellCuts::validLoop
             << "Found loop on cell " << celli << " with all points"
             << " on face " << faceContainingLoop << endl;
 
-        //writeOBJ(".", celli, loopPoints(loop, loopWeights), labelList(0));
+        // writeOBJ(".", celli, loopPoints(loop, loopWeights), labelList(0));
 
         return false;
     }
@@ -1994,7 +2146,7 @@ void Foam::cellCuts::setFromCellLoops()
                 )
             )
             {
-                //writeOBJ(".", celli, loopPoints(celli), anchorPoints);
+                // writeOBJ(".", celli, loopPoints(celli), anchorPoints);
 
                 WarningInFunction
                     << "Illegal loop " << loop
@@ -2040,7 +2192,7 @@ void Foam::cellCuts::setFromCellLoops()
         if (!edgeIsCut_[edgeI])
         {
             // Weight not used. Set to illegal value to make any use fall over.
-            edgeWeight_[edgeI] = -GREAT;
+            edgeWeight_[edgeI] = -great;
         }
     }
 }
@@ -2169,7 +2321,7 @@ void Foam::cellCuts::setFromCellLoops
 
             if (setFromCellLoop(celli, loop, loopWeights))
             {
-                // Valid loop. Call above will have upated all already.
+                // Valid loop. Call above will have updated all already.
             }
             else
             {
@@ -2494,7 +2646,7 @@ void Foam::cellCuts::calcLoopsAndAddressing(const labelList& cutCells)
         else
         {
             // Weight not used. Set to illegal value to make any use fall over.
-            edgeWeight_[edgeI] = -GREAT;
+            edgeWeight_[edgeI] = -great;
         }
     }
 
@@ -2624,6 +2776,16 @@ void Foam::cellCuts::check() const
 
 
     // Check that cut faces have a neighbour that is cut.
+    boolList nbrCellIsCut;
+    {
+        boolList cellIsCut(mesh().nCells(), false);
+        forAll(cellLoops_, celli)
+        {
+            cellIsCut[celli] = cellLoops_[celli].size();
+        }
+        syncTools::swapBoundaryCellList(mesh(), cellIsCut, nbrCellIsCut);
+    }
+
     forAllConstIter(Map<edge>, faceSplitCut_, iter)
     {
         label facei = iter.key();
@@ -2645,9 +2807,11 @@ void Foam::cellCuts::check() const
         }
         else
         {
+            label bFacei = facei - mesh().nInternalFaces();
+
             label own = mesh().faceOwner()[facei];
 
-            if (cellLoops_[own].empty())
+            if (cellLoops_[own].empty() && !nbrCellIsCut[bFacei])
             {
                 FatalErrorInFunction
                     << "Boundary face:" << facei << " cut by " << iter()
@@ -2675,7 +2839,6 @@ Foam::cellCuts::cellCuts
     pointIsCut_(expand(mesh.nPoints(), meshVerts)),
     edgeIsCut_(expand(mesh.nEdges(), meshEdges)),
     edgeWeight_(expand(mesh.nEdges(), meshEdges, meshEdgeWeights)),
-    faceCutsPtr_(nullptr),
     faceSplitCut_(cutCells.size()),
     cellLoops_(mesh.nCells()),
     nLoops_(-1),
@@ -2718,7 +2881,6 @@ Foam::cellCuts::cellCuts
     pointIsCut_(expand(mesh.nPoints(), meshVerts)),
     edgeIsCut_(expand(mesh.nEdges(), meshEdges)),
     edgeWeight_(expand(mesh.nEdges(), meshEdges, meshEdgeWeights)),
-    faceCutsPtr_(nullptr),
     faceSplitCut_(mesh.nFaces()/10 + 1),
     cellLoops_(mesh.nCells()),
     nLoops_(-1),
@@ -2733,6 +2895,9 @@ Foam::cellCuts::cellCuts
     }
 
     calcLoopsAndAddressing(identity(mesh.nCells()));
+
+    // Adds cuts on other side of coupled boundaries
+    syncProc();
 
     // Calculate planes and flip cellLoops if necessary
     orientPlanesAndLoops();
@@ -2762,8 +2927,7 @@ Foam::cellCuts::cellCuts
     edgeVertex(mesh),
     pointIsCut_(mesh.nPoints(), false),
     edgeIsCut_(mesh.nEdges(), false),
-    edgeWeight_(mesh.nEdges(), -GREAT),
-    faceCutsPtr_(nullptr),
+    edgeWeight_(mesh.nEdges(), -great),
     faceSplitCut_(cellLabels.size()),
     cellLoops_(mesh.nCells()),
     nLoops_(-1),
@@ -2777,6 +2941,9 @@ Foam::cellCuts::cellCuts
     // Update pointIsCut, edgeIsCut, faceSplitCut from cell loops.
     // Makes sure cuts are consistent
     setFromCellLoops(cellLabels, cellLoops, cellEdgeWeights);
+
+    // Adds cuts on other side of coupled boundaries
+    syncProc();
 
     // Calculate planes and flip cellLoops if necessary
     orientPlanesAndLoops();
@@ -2805,8 +2972,7 @@ Foam::cellCuts::cellCuts
     edgeVertex(mesh),
     pointIsCut_(mesh.nPoints(), false),
     edgeIsCut_(mesh.nEdges(), false),
-    edgeWeight_(mesh.nEdges(), -GREAT),
-    faceCutsPtr_(nullptr),
+    edgeWeight_(mesh.nEdges(), -great),
     faceSplitCut_(refCells.size()),
     cellLoops_(mesh.nCells()),
     nLoops_(-1),
@@ -2820,6 +2986,9 @@ Foam::cellCuts::cellCuts
     // Update pointIsCut, edgeIsCut, faceSplitCut from cell loops.
     // Makes sure cuts are consistent
     setFromCellCutter(cellCutter, refCells);
+
+    // Adds cuts on other side of coupled boundaries
+    syncProc();
 
     // Calculate planes and flip cellLoops if necessary
     orientPlanesAndLoops();
@@ -2849,8 +3018,7 @@ Foam::cellCuts::cellCuts
     edgeVertex(mesh),
     pointIsCut_(mesh.nPoints(), false),
     edgeIsCut_(mesh.nEdges(), false),
-    edgeWeight_(mesh.nEdges(), -GREAT),
-    faceCutsPtr_(nullptr),
+    edgeWeight_(mesh.nEdges(), -great),
     faceSplitCut_(cellLabels.size()),
     cellLoops_(mesh.nCells()),
     nLoops_(-1),
@@ -2865,6 +3033,9 @@ Foam::cellCuts::cellCuts
     // Update pointIsCut, edgeIsCut, faceSplitCut from cell loops.
     // Makes sure cuts are consistent
     setFromCellCutter(cellCutter, cellLabels, cutPlanes);
+
+    // Adds cuts on other side of coupled boundaries
+    syncProc();
 
     // Calculate planes and flip cellLoops if necessary
     orientPlanesAndLoops();
@@ -2900,7 +3071,6 @@ Foam::cellCuts::cellCuts
     pointIsCut_(pointIsCut),
     edgeIsCut_(edgeIsCut),
     edgeWeight_(edgeWeight),
-    faceCutsPtr_(nullptr),
     faceSplitCut_(faceSplitCut),
     cellLoops_(cellLoops),
     nLoops_(nLoops),
@@ -2924,7 +3094,7 @@ Foam::cellCuts::~cellCuts()
 
 void Foam::cellCuts::clearOut()
 {
-    deleteDemandDrivenData(faceCutsPtr_);
+    faceCutsPtr_.clear();
 }
 
 
@@ -2948,7 +3118,7 @@ Foam::pointField Foam::cellCuts::loopPoints(const label celli) const
         }
         else
         {
-            loopPts[fp] = coord(cut, -GREAT);
+            loopPts[fp] = coord(cut, -great);
         }
     }
     return loopPts;

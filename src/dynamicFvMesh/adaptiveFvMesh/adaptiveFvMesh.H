@@ -1,17 +1,15 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-24-10-2019  Jeff Heylmun:   Added runTimeSelectable hexRef class and modified
-                            functions to allow for 2D refinements based on
-                            implementation of Oleg Sutyrinusing, original code
-                            for foam-extend 3.2 by Luca Cornolti
+07-04-2020                  | Added additional checks for mesh created with
+                            | snappyHexMesh
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,58 +24,51 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+
 Class
     Foam::adaptiveFvMesh
 
-Description
-    A fvMesh with built-in refinement.
-
-    Dynamic load balancing done by Tyler Voskuilen
-
-    Determines which cells to refine/unrefine and does all in update().
-
-
-        // How often to refine
-        refineInterval  1;
-
-        // When is the mesh allowed to begin unrefining
-        beginUnrefine 1e-4;
-
-        // Field to be refinement on
-        field           alpha.water;
-
-        // Refine field in between lower..upper
-        lowerRefineLevel 0.001;
-        upperRefineLevel 0.999;
-
-        // If value < unrefineLevel (default=great) unrefine
-        // unrefineLevel   10;
-        // Have slower than 2:1 refinement
-        nBufferLayers   1;
-
-        // Refine cells only up to maxRefinement levels
-        maxRefinement   2;
-
-        // Stop refinement if maxCells reached
-        maxCells        200000;
-
-        // Flux field and corresponding velocity field. Fluxes on changed
-        // faces get recalculated by interpolating the velocity. Defualts 'none'
-        // on surfaceScalarFields that do not need to be reinterpolated, use
-        // NaN to detect use of mapped variable
-        correctFluxes
-        (
-            (phi none)  // NaN)   // none)
-            (nHatf none)   // none)
-            (rho*phi none)   // none)
-            (ghf none)  // NaN)   // none)
-        );
-        // Write the refinement level as a volScalarField
-        dumpLevel       true;
-
-
 SourceFiles
     adaptiveFvMesh.C
+    adaptiveFvMeshTemplates.C
+
+Authors
+    T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
+    Daniel Deising <deising@mma.tu-darmstadt.de>
+    Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
+    All rights reserved.
+
+Description
+    A fvMesh with run-time load balancing.
+
+    Updated to OpenFOAM-7 from the github version at:
+    https://github.com/ElsevierSoftwareX/SOFTX_2018_143.git
+
+    Reference:
+    Rettenmaier, D., Deising, D., Ouedraogo, Y., Gjonaj, E., De Gersem, H., Bothe, D., Tropea, C., Marschall, H.
+    "Load balanced 2D and 3D adaptive mesh refinement in OpenFOAM" (2019),
+    SoftwareX, volume 10, 2352-7110,
+
+    This code has been developed by :
+        Daniel Rettenmaier (main developer).
+
+    Method Development and Intellectual Property :
+        T.G. Voskuilen (Purdue University)
+        Timothée Pourpoint <timothee@purdue.edu> (Purdue University)
+        Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
+        Daniel Deising <deising@mma.tu-darmstadt.de>
+        Holger Marschall <marschall@csi.tu-darmstadt.de>
+        Dieter Bothe <bothe@csi.tu-darmstadt.de>
+        Cameron Tropea <ctropea@sla.tu-darmstadt.de>
+
+        School of Aeronautics and Astronautics Purdue University
+        Mathematical Modeling and Analysis
+        Institute for Fluid Mechanics and Aerodynamics
+        Center of Smart Interfaces
+        Technische Universitaet Darmstadt
+
+    If you use this software for your scientific work or your publications,
+    please don't forget to acknowledge explicitly the use of it.
 
 \*---------------------------------------------------------------------------*/
 

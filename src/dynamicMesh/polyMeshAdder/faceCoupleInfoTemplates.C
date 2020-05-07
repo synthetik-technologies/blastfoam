@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -46,6 +46,31 @@ Foam::pointField Foam::faceCoupleInfo::calcFaceCentres
         fc[i] = faces[facei++].centre(points);
     }
     return fc;
+}
+
+
+template<template<class> class FaceList>
+Foam::pointField Foam::faceCoupleInfo::calcFacePointAverages
+(
+    const FaceList<face>& faces,
+    const pointField& points,
+    const label start,
+    const label size
+)
+{
+    pointField fpa(size, Zero);
+
+    label facei = start;
+
+    forAll(fpa, i)
+    {
+        forAll(faces[facei], j)
+        {
+            fpa[i] += points[faces[facei][j]];
+        }
+        fpa[i] /= faces[facei++].size();
+    }
+    return fpa;
 }
 
 

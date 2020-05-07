@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -192,7 +192,7 @@ void Foam::topoCellLooper::walkFace
 
 
 // Returns list of vertices on 'superEdge' i.e. list of edges connected by
-// non-feature points. First and last are feature points, ones inbetween are
+// non-feature points. First and last are feature points, ones in between are
 // not.
 Foam::labelList Foam::topoCellLooper::getSuperEdge
 (
@@ -248,7 +248,7 @@ Foam::label Foam::topoCellLooper::getAlignedNonFeatureEdge
     const point& ctr = mesh().cellCentres()[celli];
 
     label cutEdgeI = -1;
-    scalar maxCos = -GREAT;
+    scalar maxCos = -great;
 
     forAll(cEdges, cEdgeI)
     {
@@ -326,7 +326,7 @@ void Foam::topoCellLooper::walkAcrossFace
 
     if (sz == 2)
     {
-        // No non-feature point inbetween feature points.
+        // No non-feature point in between feature points.
         // Mark edge.
 
         vertI = -1;
@@ -339,7 +339,7 @@ void Foam::topoCellLooper::walkAcrossFace
     }
     else
     {
-        //Should choose acc. to geometry!
+        // Should choose acc. to geometry!
         label index = sz/2;
 
         if (debug)
@@ -499,7 +499,7 @@ void Foam::topoCellLooper::walkSplitHex
             // On vertex.
 
             loop.append(vertToEVert(vertI));
-            loopWeights.append(-GREAT);
+            loopWeights.append(-great);
 
             if (edgeI == -1)
             {
@@ -634,7 +634,7 @@ void Foam::topoCellLooper::walkSplitHex
                 }
                 else if (nextFaces.size() == 2)
                 {
-                    // Split face. Get edge inbetween.
+                    // Split face. Get edge in between.
                     facei = -1;
 
                     edgeI =

@@ -39,7 +39,7 @@ upperRefineLevel 1e6;
 unrefineLevel   0.1;
 
 // Have slower than 2:1 refinement
-nBufferLayers   3;
+nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;

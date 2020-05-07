@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -73,10 +73,7 @@ namespace Foam
 
 class fvMeshSubset
 {
-
-private:
-
-    // Private data
+    // Private Data
 
         //- Mesh to subset from
         const fvMesh& baseMesh_;
@@ -115,6 +112,7 @@ private:
         void doCoupledPatches
         (
             const bool syncPar,
+            Map<label>& facesToSubset,
             labelList& nCellsUsingFace
         ) const;
 
@@ -136,11 +134,6 @@ private:
             const label currentRegion
         ) const;
 
-        //- Disallow default bitwise copy construct
-        fvMeshSubset(const fvMeshSubset&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const fvMeshSubset&);
 
 public:
 
@@ -148,6 +141,9 @@ public:
 
         //- Construct given a mesh to subset
         explicit fvMeshSubset(const fvMesh&);
+
+        //- Disallow default bitwise copy construction
+        fvMeshSubset(const fvMeshSubset&) = delete;
 
 
     // Member Functions
@@ -161,7 +157,8 @@ public:
             void setCellSubset
             (
                 const labelHashSet& globalCellMap,
-                const label patchID = -1
+                const label patchID = -1,
+                const bool syncPar = true
             );
 
             //- Set the subset from all cells with region == currentRegion.
@@ -318,6 +315,12 @@ public:
             template<class Type>
             tmp<DimensionedField<Type, volMesh>>
             interpolate(const DimensionedField<Type, volMesh>&) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const fvMeshSubset&) = delete;
 };
 
 

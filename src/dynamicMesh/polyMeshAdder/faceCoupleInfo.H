@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -157,7 +157,7 @@ class polyMesh;
 
 class faceCoupleInfo
 {
-    // Private data
+    // Private Data
 
         //- Angle matching tolerance.
         static const scalar angleTol_;
@@ -200,7 +200,7 @@ class faceCoupleInfo
 
             //- For edges originating from splitting of edges:
             //  given the two endpoints of the unsplit edge give the list
-            //  of inbetween vertices
+            //  of in between vertices
             edgeLookup cutEdgeToPoints_;
 
 
@@ -211,6 +211,16 @@ class faceCoupleInfo
             //- Calculate face centres from (subset of) faces.
             template<template<class> class FaceList>
             static pointField calcFaceCentres
+            (
+                const FaceList<face>&,
+                const pointField&,
+                const label start,
+                const label size
+            );
+
+            //- Calculate face point averages from (subset of) faces.
+            template<template<class> class FaceList>
+            static pointField calcFacePointAverages
             (
                 const FaceList<face>&,
                 const pointField&,
@@ -272,7 +282,7 @@ class faceCoupleInfo
             ) const;
 
             //- From (many-to-one) map of cut edges to master edges determine
-            //  points inbetween. I.e. just string up the edges. Stores this
+            //  points in between. I.e. just string up the edges. Stores this
             //  all on cutEdgeToPoints_
             void setCutEdgeToPoints(const labelList& cutToMasterEdges);
 

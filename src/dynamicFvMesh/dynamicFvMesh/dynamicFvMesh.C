@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2012 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -30,9 +30,8 @@ License
 
 namespace Foam
 {
-defineTypeNameAndDebug(dynamicFvMesh, 0);
-
-defineRunTimeSelectionTable(dynamicFvMesh, IOobject);
+    defineTypeNameAndDebug(dynamicFvMesh, 0);
+    defineRunTimeSelectionTable(dynamicFvMesh, IOobject);
 }
 
 
@@ -54,6 +53,7 @@ Foam::IOobject Foam::dynamicFvMesh::dynamicMeshDictIOobject(const IOobject& io)
         false
     );
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -108,10 +108,37 @@ Foam::dynamicFvMesh::dynamicFvMesh
 {}
 
 
+Foam::dynamicFvMesh::velocityMotionCorrection::velocityMotionCorrection
+(
+    const dynamicFvMesh& mesh,
+    const dictionary& dict
+)
+:
+    mesh_(mesh),
+    velocityFields_(dict.lookupOrDefault("velocityFields", wordList()))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::dynamicFvMesh::~dynamicFvMesh()
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::dynamicFvMesh::velocityMotionCorrection::update() const
+{
+    forAll(velocityFields_, i)
+    {
+        if (mesh_.foundObject<volVectorField>(velocityFields_[i]))
+        {
+            mesh_.lookupObjectRef<volVectorField>
+            (
+                velocityFields_[i]
+            ).correctBoundaryConditions();
+        }
+    }
+}
 
 // ************************************************************************* //

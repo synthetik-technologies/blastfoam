@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -172,7 +172,7 @@ Foam::label Foam::cellLooper::getMisAlignedEdge
     const labelList& cEdges = mesh().cellEdges()[celli];
 
     label cutEdgeI = -1;
-    scalar maxCos = -GREAT;
+    scalar maxCos = -great;
 
     forAll(cEdges, cEdgeI)
     {

@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -427,7 +427,7 @@ void Foam::attachDetach::setRefinement(polyTopoChange& ref) const
         else
         {
             FatalErrorInFunction
-                << "Requested attach/detach event and currect state "
+                << "Requested attach/detach event and current state "
                 << "is not known."
                 << abort(FatalError);
         }

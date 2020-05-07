@@ -349,15 +349,6 @@ Foam::adaptiveFvMesh::refine
         {
             if (!correctFluxes_.found(iter.key()))
             {
-                WarningInFunction
-                    << "Cannot find surfaceScalarField " << iter.key()
-                    << " in user-provided flux mapping table "
-                    << correctFluxes_ << endl
-                    << "    The flux mapping table is used to recreate the"
-                    << " flux on newly created faces." << endl
-                    << "    Either add the entry if it is a flux or use ("
-                    << iter.key() << " none) to suppress this warning."
-                    << endl;
                 continue;
             }
 

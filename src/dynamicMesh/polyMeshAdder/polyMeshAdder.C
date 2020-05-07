@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -35,6 +35,9 @@ License
 #include "polyModifyFace.H"
 #include "polyRemovePoint.H"
 #include "polyTopoChange.H"
+
+#include "pointMesh.H"
+#include "facePointPatch.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -228,7 +231,7 @@ Foam::List<Foam::polyPatch*> Foam::polyMeshAdder::combinePatches
 
         if (nFaces[patchi] == 0 && isA<processorPolyPatch>(patches0[patchi]))
         {
-            //Pout<< "Removing zero sized mesh0 patch "
+            // Pout<< "Removing zero sized mesh0 patch "
             //    << patches0[patchi].name() << endl;
             filteredPatchi = -1;
         }
@@ -276,7 +279,7 @@ Foam::List<Foam::polyPatch*> Foam::polyMeshAdder::combinePatches
              && isA<processorPolyPatch>(patches1[patchi])
             )
             {
-                //Pout<< "Removing zero sized mesh1 patch "
+                // Pout<< "Removing zero sized mesh1 patch "
                 //    << patches1[patchi].name() << endl;
                 filteredPatchi = -1;
             }
@@ -303,7 +306,7 @@ Foam::List<Foam::polyPatch*> Foam::polyMeshAdder::combinePatches
 
     allPatches.shrink();
 
-    return allPatches;
+    return move(allPatches);
 }
 
 
@@ -393,7 +396,7 @@ Foam::labelList Foam::polyMeshAdder::getFaceOrder
 
 
 // Extends face f with split points. cutEdgeToPoints gives for every
-// edge the points introduced inbetween the endpoints.
+// edge the points introduced in between the endpoints.
 void Foam::polyMeshAdder::insertVertices
 (
     const edgeLookup& cutEdgeToPoints,
@@ -529,7 +532,7 @@ void Foam::polyMeshAdder::mergePrimitives
     {
         const pointField& cutPoints = coupleInfo.cutPoints();
 
-        //const labelListList& cutToMasterPoints =
+        // const labelListList& cutToMasterPoints =
         //   coupleInfo.cutToMasterPoints();
         labelListList cutToMasterPoints
         (
@@ -540,7 +543,7 @@ void Foam::polyMeshAdder::mergePrimitives
             )
         );
 
-        //const labelListList& cutToSlavePoints =
+        // const labelListList& cutToSlavePoints =
         //    coupleInfo.cutToSlavePoints();
         labelListList cutToSlavePoints
         (
@@ -758,7 +761,7 @@ void Foam::polyMeshAdder::mergePrimitives
     // - get map from master edge to split edges.
     // - check all faces to find any edge that is split.
     {
-        // From two cut-points to labels of cut-points inbetween.
+        // From two cut-points to labels of cut-points in between.
         // (in order: from e[0] to e[1]
         const edgeLookup& cutEdgeToPoints = coupleInfo.cutEdgeToPoints();
 
@@ -891,7 +894,7 @@ void Foam::polyMeshAdder::mergePointZones
     // Zone(s) per point. Two levels: if only one zone
     // stored in pointToZone. Any extra stored in additionalPointToZones.
     // This is so we only allocate labelLists per point if absolutely
-    // necesary.
+    // necessary.
     labelList pointToZone(nAllPoints, -1);
     labelListList addPointToZones(nAllPoints);
 
@@ -1216,7 +1219,7 @@ void Foam::polyMeshAdder::mergeCellZones
     // Zone(s) per cell. Two levels: if only one zone
     // stored in cellToZone. Any extra stored in additionalCellToZones.
     // This is so we only allocate labelLists per cell if absolutely
-    // necesary.
+    // necessary.
     labelList cellToZone(nAllCells, -1);
     labelListList addCellToZones(nAllCells);
 
@@ -1813,11 +1816,8 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
 
     // Inplace extend mesh0 patches (note that patches0.size() now also
     // has changed)
-    polyBoundaryMesh& allPatches =
-        const_cast<polyBoundaryMesh&>(mesh0.boundaryMesh());
-    allPatches.setSize(allPatchNames.size());
-    labelList patchSizes(allPatches.size());
-    labelList patchStarts(allPatches.size());
+    labelList patchSizes(allPatchNames.size());
+    labelList patchStarts(allPatchNames.size());
 
     label startFacei = nInternalFaces;
 
@@ -1830,11 +1830,13 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
         // Originates from mesh0. Clone with new size & filter out empty
         // patch.
 
-        if (nFaces[patch0] == 0 && isA<processorPolyPatch>(allPatches[patch0]))
+        if (nFaces[patch0] == 0 && isA<processorPolyPatch>(patches0[patch0]))
         {
-            //Pout<< "Removing zero sized mesh0 patch " << allPatchNames[patch0]
-            //    << endl;
+            // Pout<< "Removing zero sized mesh0 patch "
+            //     << allPatchNames[patch0]
+            //     << endl;
             from0ToAllPatches[patch0] = -1;
+
             // Check if patch was also in mesh1 and update its addressing if so.
             if (fromAllTo1Patches[patch0] != -1)
             {
@@ -1843,20 +1845,6 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
         }
         else
         {
-            // Clone. Note dummy size and start. Gets overwritten later in
-            // resetPrimitives. This avoids getting temporarily illegal
-            // SubList construction in polyPatch.
-            allPatches.set
-            (
-                allPatchi,
-                allPatches[patch0].clone
-                (
-                    allPatches,
-                    allPatchi,
-                    0,          // dummy size
-                    0           // dummy start
-                )
-            );
             patchSizes[allPatchi] = nFaces[patch0];
             patchStarts[allPatchi] = startFacei;
 
@@ -1875,6 +1863,22 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
         }
     }
 
+    // Trim the existing patches
+    {
+        const label sz0 = from0ToAllPatches.size();
+        labelList newToOld(sz0, sz0-1);
+        label nNew = 0;
+        forAll(from0ToAllPatches, patchi)
+        {
+            if (from0ToAllPatches[patchi] != -1)
+            {
+                newToOld[nNew++] = patchi;
+            }
+        }
+        newToOld.setSize(nNew);
+        mesh0.reorderPatches(newToOld, false);
+    }
+
     // Copy unique patches of mesh1.
     forAll(from1ToAllPatches, patch1)
     {
@@ -1890,26 +1894,26 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
              && isA<processorPolyPatch>(patches1[patch1])
             )
             {
-                //Pout<< "Removing zero sized mesh1 patch "
+                // Pout<< "Removing zero sized mesh1 patch "
                 //    << allPatchNames[uncompactAllPatchi] << endl;
                 from1ToAllPatches[patch1] = -1;
             }
             else
             {
-                // Clone.
-                allPatches.set
-                (
-                    allPatchi,
-                    patches1[patch1].clone
-                    (
-                        allPatches,
-                        allPatchi,
-                        0,          // dummy size
-                        0           // dummy start
-                    )
-                );
                 patchSizes[allPatchi] = nFaces[uncompactAllPatchi];
                 patchStarts[allPatchi] = startFacei;
+
+                // Clone. Note dummy size and start. Gets overwritten later in
+                // resetPrimitives. This avoids getting temporarily illegal
+                // SubList construction in polyPatch.
+                mesh0.addPatch
+                (
+                    allPatchi,
+                    patches1[patch1],
+                    dictionary(),
+                    "calculated",
+                    false
+                );
 
                 // Record new index in allPatches
                 from1ToAllPatches[patch1] = allPatchi;
@@ -1920,8 +1924,6 @@ Foam::autoPtr<Foam::mapAddedPolyMesh> Foam::polyMeshAdder::add
             }
         }
     }
-
-    allPatches.setSize(allPatchi);
     patchSizes.setSize(allPatchi);
     patchStarts.setSize(allPatchi);
 
@@ -2064,7 +2066,7 @@ Foam::Map<Foam::label> Foam::polyMeshAdder::findSharedPoints
     {
         const labelList& connectedPointLabels = iter();
 
-        //Pout<< "For shared:" << iter.key()
+        // Pout<< "For shared:" << iter.key()
         //    << " found points:" << connectedPointLabels
         //    << " at coords:"
         //    <<  pointField(mesh.points(), connectedPointLabels) << endl;
@@ -2119,7 +2121,7 @@ Foam::Map<Foam::label> Foam::polyMeshAdder::findSharedPoints
                         {
                             label pointi = connectedPointLabels[mergeSet[i]];
 
-                            //Pout<< "Merging point " << pointi
+                            // Pout<< "Merging point " << pointi
                             //    << " at " << mesh.points()[pointi]
                             //    << " into master point "
                             //    << masterPointi
@@ -2135,8 +2137,8 @@ Foam::Map<Foam::label> Foam::polyMeshAdder::findSharedPoints
     }
 
     //- Old: geometric merging. Causes problems for two close shared points.
-    //labelList sharedToMerged;
-    //label nUnique = Foam::mergePoints
+    // labelList sharedToMerged;
+    // label nUnique = Foam::mergePoints
     //(
     //    pointField
     //    (
@@ -2151,9 +2153,9 @@ Foam::Map<Foam::label> Foam::polyMeshAdder::findSharedPoints
     //// Find out which sets of points get merged and create a map from
     //// mesh point to unique point.
     //
-    //Map<label> pointToMaster(10*sharedToMerged.size());
+    // Map<label> pointToMaster(10*sharedToMerged.size());
     //
-    //if (nUnique < sharedPointLabels.size())
+    // if (nUnique < sharedPointLabels.size())
     //{
     //    labelListList mergeSets
     //    (
@@ -2196,7 +2198,7 @@ Foam::Map<Foam::label> Foam::polyMeshAdder::findSharedPoints
     //        }
     //    }
     //
-    //    //if (debug)
+    //    // if (debug)
     //    //{
     //    //    Pout<< "polyMeshAdder : merging:"
     //    //        << pointToMaster.size() << " into " << nMergeSets

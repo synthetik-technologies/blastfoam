@@ -109,11 +109,14 @@ motionSolvers/displacement/displacement/displacementMotionSolver.C
 motionSolvers/displacement/interpolation/displacementInterpolationMotionSolver.C
 motionSolvers/displacement/layeredSolver/displacementLayeredMotionMotionSolver.C
 motionSolvers/displacement/layeredSolver/pointEdgeStructuredWalk.C
+motionSolvers/displacement/linearSolver/displacementLinearMotionMotionSolver.C
 motionSolvers/componentDisplacement/componentDisplacementMotionSolver.C
 motionSolvers/velocity/velocityMotionSolver.C
 motionSolvers/componentVelocity/componentVelocityMotionSolver.C
-motionSolvers/displacement/solidBody/solidBodyMotionSolver.C
-motionSolvers/displacement/solidBody/multiSolidBodyMotionSolver.C
+motionSolvers/displacement/solidBody/solidBodyMotionSolver/solidBodyMotionSolver.C
+motionSolvers/displacement/solidBody/multiSolidBodyMotionSolver/multiSolidBodyMotionSolver.C
+motionSolvers/displacement/solidBody/interpolatingSolidBodyMotionSolver/interpolatingSolidBodyMotionSolver.C
+motionSolvers/motionSolverList/motionSolverList.C
 
 solidBodyMotionFunctions = motionSolvers/displacement/solidBody/solidBodyMotionFunctions
 $(solidBodyMotionFunctions)/solidBodyMotionFunction/solidBodyMotionFunction.C
@@ -138,5 +141,7 @@ polyMeshFilter/polyMeshFilter.C
 
 pointPatchDist/externalPointEdgePoint.C
 pointPatchDist/pointPatchDist.C
+
+pointInterpolator/dynamicMeshPointInterpolator.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

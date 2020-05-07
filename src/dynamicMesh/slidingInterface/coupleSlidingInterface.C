@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -365,7 +365,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
     // slave edge.
     // For the edge selection algorithm, see, comment in
     // slidingInterfaceProjectPoints.C.
-    // Edge cutting algoritm:
+    // Edge cutting algorithm:
     // As the master patch defines the cutting surface, the newly
     // inserted point needs to be on the master edge.  Also, in 3-D
     // the pair of edges generally misses each other rather than
@@ -1185,7 +1185,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
             nOrphanedMasters++;
 
             //// Recover original orientation
-            //ref.setAction
+            // ref.setAction
             //(
             //    polyModifyFace
             //    (
@@ -1201,7 +1201,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
             //    )
             //);
 
-            //Pout<< "**MJ:deleting master face " << masterPatchAddr[facei]
+            // Pout<< "**MJ:deleting master face " << masterPatchAddr[facei]
             //    << " old verts:" << masterPatch[facei] << endl;
             ref.setAction(polyRemoveFace(masterPatchAddr[facei]));
         }
@@ -1216,7 +1216,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
             nOrphanedSlaves++;
 
             //// Recover original orientation
-            //ref.setAction
+            // ref.setAction
             //(
             //    polyModifyFace
             //    (
@@ -1232,7 +1232,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
             //    )
             //);
 
-            //Pout<< "**MJ:deleting slave face " << slavePatchAddr[facei]
+            // Pout<< "**MJ:deleting slave face " << slavePatchAddr[facei]
             //    << " old verts:" << slavePatch[facei] << endl;
             ref.setAction(polyRemoveFace(slavePatchAddr[facei]));
         }
@@ -1439,7 +1439,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
                                     // its weight to exclude it from
                                     // future picks
                                     newFaceLabels.append(curPime[nextPoint]);
-                                    edgePointWeights[nextPoint] = GREAT;
+                                    edgePointWeights[nextPoint] = great;
                                 }
                             }
 
@@ -1746,7 +1746,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
                                     // its weight to exclude it from
                                     // future picks
                                     newFaceLabels.append(curPise[nextPoint]);
-                                    edgePointWeights[nextPoint] = GREAT;
+                                    edgePointWeights[nextPoint] = great;
                                 }
                             }
 
@@ -1872,7 +1872,7 @@ void Foam::slidingInterface::coupleInterface(polyTopoChange& ref) const
             //        false                                // in a cell
             //    )
             // );
-            //Pout<< "MJ retire slave point " << slaveMeshPoints[pointi]
+            // Pout<< "MJ retire slave point " << slaveMeshPoints[pointi]
             //    << " coord " << points[slaveMeshPoints[pointi]]
             //    << endl;
             ref.setAction

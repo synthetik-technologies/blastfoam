@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2013-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -174,8 +174,7 @@ write(Ostream& os) const
     // Note: write value
     fixedValuePointPatchVectorField::write(os);
 
-    os.writeKeyword(solidBodyMotionFunction::typeName) << SBMFPtr_->type()
-        << token::END_STATEMENT << nl;
+    writeEntry(os, solidBodyMotionFunction::typeName, SBMFPtr_->type());
     os  << indent << word(SBMFPtr_->type() + "Coeffs");
     SBMFPtr_->writeData(os);
 }

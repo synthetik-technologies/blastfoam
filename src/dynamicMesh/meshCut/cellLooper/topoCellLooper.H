@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -95,7 +95,7 @@ class topoCellLooper
 
         //- Returns list of vertices on 'superEdge' i.e. list of edges connected
         // by non-feature points. First and last are feature points, ones
-        // inbetween are not.
+        // in between are not.
         labelList getSuperEdge
         (
             const cellFeatures& features,
@@ -144,19 +144,12 @@ class topoCellLooper
         ) const;
 
 
-        //- Disallow default bitwise copy construct
-        topoCellLooper(const topoCellLooper&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const topoCellLooper&);
-
-
 public:
 
     //- Runtime type information
     TypeName("topoCellLooper");
 
-    // Static data members
+    // Static Data Members
 
         //- Cos of angle for feature recognition (of splitHexes)
         static const scalar featureCos;
@@ -166,6 +159,9 @@ public:
 
         //- Construct from components
         topoCellLooper(const polyMesh& mesh);
+
+        //- Disallow default bitwise copy construction
+        topoCellLooper(const topoCellLooper&) = delete;
 
 
     //- Destructor
@@ -203,6 +199,12 @@ public:
             labelList& loop,
             scalarField& loopWeights
         ) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const topoCellLooper&) = delete;
 };
 
 

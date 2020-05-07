@@ -53,17 +53,7 @@ Foam::dynamicMotionSolverListFvMesh::dynamicMotionSolverListFvMesh
     dynamicFvMesh(io),
     motionSolvers_
     (
-        IOdictionary
-        (
-            IOobject
-            (
-                "dynamicMeshDict",
-                time().constant(),
-                *this,
-                IOobject::MUST_READ_IF_MODIFIED,
-                IOobject::AUTO_WRITE
-            )
-        ).lookup("solvers"),
+        dynamicMeshDict().lookup("solvers"),
         motionSolver::iNew(*this)
     )
 {}

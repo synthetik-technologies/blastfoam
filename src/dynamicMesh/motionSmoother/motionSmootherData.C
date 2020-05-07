@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2013 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2013-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -55,7 +55,7 @@ Foam::motionSmootherData::motionSmootherData
             IOobject::AUTO_WRITE
         ),
         pMesh,
-        dimensionedScalar("scale", dimless, 1.0)
+        dimensionedScalar(dimless, 1.0)
     ),
     oldPoints_(pMesh().points())
 {}
@@ -89,7 +89,7 @@ Foam::motionSmootherData::motionSmootherData
             IOobject::AUTO_WRITE
         ),
         displacement.mesh(),
-        dimensionedScalar("scale", dimless, 1.0)
+        dimensionedScalar(dimless, 1.0)
     ),
     oldPoints_(displacement.mesh()().points())
 {}

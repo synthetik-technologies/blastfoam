@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -55,10 +55,10 @@ Foam::displacementInterpolationMotionSolver::
 displacementInterpolationMotionSolver
 (
     const polyMesh& mesh,
-    const IOdictionary& dict
+    const dictionary& dict
 )
 :
-    displacementMotionSolver(mesh, dict, typeName)
+    points0MotionSolver(mesh, dict, typeName)
 {
     // Get zones and their interpolation tables for displacement
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -129,8 +129,8 @@ displacementInterpolationMotionSolver
             const word& zoneName = faceZoneToTable[i][0];
             const faceZone& fz = fZones[zoneName];
 
-            scalar minCoord = VGREAT;
-            scalar maxCoord = -VGREAT;
+            scalar minCoord = vGreat;
+            scalar maxCoord = -vGreat;
 
             forAll(fz().meshPoints(), localI)
             {
@@ -155,8 +155,8 @@ displacementInterpolationMotionSolver
         zoneCoordinates.sort();
 
         // Slightly tweak min and max face zone so points sort within
-        zoneCoordinates[0] -= SMALL;
-        zoneCoordinates.last() += SMALL;
+        zoneCoordinates[0] -= small;
+        zoneCoordinates.last() += small;
 
         // Check if we have static min and max mesh bounds
         const scalarField meshCoords(points0().component(dir));
@@ -188,7 +188,7 @@ displacementInterpolationMotionSolver
             label sz = rangeZone.size();
             rangeToCoord.setSize(sz+1);
             rangeZone.setSize(sz+1);
-            rangeToCoord[rangeI] = minCoord-SMALL;
+            rangeToCoord[rangeI] = minCoord-small;
             rangeZone[rangeI] = -1;
 
             if (debug)
@@ -219,7 +219,7 @@ displacementInterpolationMotionSolver
             label sz = rangeToCoord.size();
             rangeToCoord.setSize(sz+1);
             rangeZone.setSize(sz+1);
-            rangeToCoord[sz] = maxCoord+SMALL;
+            rangeToCoord[sz] = maxCoord+small;
             rangeZone[sz] = -1;
 
             if (debug)
@@ -235,7 +235,7 @@ displacementInterpolationMotionSolver
         // Sort the points
         // ~~~~~~~~~~~~~~~
 
-        // Count all the points inbetween rangeI and rangeI+1
+        // Count all the points in between rangeI and rangeI+1
         labelList nRangePoints(rangeToCoord.size(), 0);
 
         forAll(meshCoords, pointi)
@@ -347,11 +347,11 @@ Foam::displacementInterpolationMotionSolver::curPoints() const
 
             // Get the two zones bounding the range
             label minZoneI = rangeZone[rangeI];
-            //vector minDisp =
+            // vector minDisp =
             //    (minZoneI == -1 ? vector::zero : zoneDisp[minZoneI]);
             scalar minDisp = (minZoneI == -1 ? 0.0 : zoneDisp[minZoneI][dir]);
             label maxZoneI = rangeZone[rangeI+1];
-            //vector maxDisp =
+            // vector maxDisp =
             //    (maxZoneI == -1 ? vector::zero : zoneDisp[maxZoneI]);
             scalar maxDisp = (maxZoneI == -1 ? 0.0 : zoneDisp[maxZoneI][dir]);
 
@@ -359,7 +359,7 @@ Foam::displacementInterpolationMotionSolver::curPoints() const
             {
                 label pointi = rPoints[i];
                 scalar w = rWeights[i];
-                //curPoints[pointi] += (1.0-w)*minDisp+w*maxDisp;
+                // curPoints[pointi] += (1.0-w)*minDisp+w*maxDisp;
                 curPoints[pointi][dir] += (1.0-w)*minDisp+w*maxDisp;
             }
         }

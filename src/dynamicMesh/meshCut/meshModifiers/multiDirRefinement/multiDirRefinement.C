@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -32,7 +32,7 @@ License
 #include "geomCellLooper.H"
 #include "topoSet.H"
 #include "directions.H"
-#include "hexRef.H"
+#include "hexRef8.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "ListOps.H"
@@ -238,37 +238,34 @@ void Foam::multiDirRefinement::refineHex8
             << endl;
     }
 
-    autoPtr<hexRef> hexRefiner
+    hexRef8 hexRefiner
     (
-        hexRef::New
+        mesh,
+        labelList(mesh.nCells(), 0),    // cellLevel
+        labelList(mesh.nPoints(), 0),   // pointLevel
+        refinementHistory
         (
-            mesh,
-            labelList(mesh.nCells(), 0),    // cellLevel
-            labelList(mesh.nPoints(), 0),   // pointLevel
-            refinementHistory
+            IOobject
             (
-                IOobject
-                (
-                    "refinementHistory",
-                    mesh.facesInstance(),
-                    polyMesh::meshSubDir,
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE,
-                    false
-                ),
-                List<refinementHistory::splitCell8>(0),
-                labelList(0),
+                "refinementHistory",
+                mesh.facesInstance(),
+                polyMesh::meshSubDir,
+                mesh,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
                 false
-            )                                   // refinement history
-        )
+            ),
+            List<refinementHistory::splitCell8>(0),
+            labelList(0),
+            false
+        )                                   // refinement history
     );
 
     polyTopoChange meshMod(mesh);
 
     labelList consistentCells
     (
-        hexRefiner->consistentRefinement
+        hexRefiner.consistentRefinement
         (
             hexCells,
             true                  // buffer layer
@@ -318,7 +315,7 @@ void Foam::multiDirRefinement::refineHex8
     }
 
 
-    hexRefiner->setRefinement(consistentCells, meshMod);
+    hexRefiner.setRefinement(consistentCells, meshMod);
 
     // Change mesh, no inflation
     autoPtr<mapPolyMesh> morphMapPtr = meshMod.changeMesh(mesh, false, true);
@@ -340,7 +337,7 @@ void Foam::multiDirRefinement::refineHex8
             << mesh.time().timeName() << endl;
     }
 
-    hexRefiner->updateMesh(morphMap);
+    hexRefiner.updateMesh(morphMap);
 
     // Collect all cells originating from same old cell (original + 7 extra)
 
@@ -469,7 +466,7 @@ void Foam::multiDirRefinement::refineFromDict
     }
 
     // Construct undoable refinement topology modifier.
-    //Note: undoability switched off.
+    // Note: undoability switched off.
     // Might want to reconsider if needs to be possible. But then can always
     // use other constructor.
     undoableMeshCutter cutter(mesh, false);

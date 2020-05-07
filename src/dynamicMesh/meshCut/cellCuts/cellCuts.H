@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -110,7 +110,7 @@ class cellCuts
 :
     public edgeVertex
 {
-    // Private data
+    // Private Data
 
         // Per point/edge status
 
@@ -128,7 +128,7 @@ class cellCuts
 
             //- Cuts per existing face (includes those along edge of face)
             //  Cuts in no particular order.
-            mutable labelListList* faceCutsPtr_;
+            mutable autoPtr<labelListList> faceCutsPtr_;
 
             //- Per face : cut across edge (so not along existing edge)
             //  (can only be one per face)
@@ -418,6 +418,10 @@ class cellCuts
                 const List<scalarField>& cellLoopWeights
             );
 
+            //- Update basic cut information to be consistent across
+            //  coupled boundaries.
+            void syncProc();
+
             //- Cut cells and update basic cut information from cellLoops.
             //  Checks each loop for consistency with existing cut pattern.
             void setFromCellCutter
@@ -438,19 +442,12 @@ class cellCuts
             //- Set orientation of loops
             void orientPlanesAndLoops();
 
-            //- Top level driver: adressing calculation and loop detection
+            //- Top level driver: addressing calculation and loop detection
             //  (loops splitting cells).
             void calcLoopsAndAddressing(const labelList& cutCells);
 
             //- Check various consistencies.
             void check() const;
-
-
-        //- Disallow default bitwise copy construct
-        cellCuts(const cellCuts&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const cellCuts&);
 
 
 public:
@@ -523,6 +520,9 @@ public:
             const labelListList& cellAnchorPoints
         );
 
+        //- Disallow default bitwise copy construction
+        cellCuts(const cellCuts&) = delete;
+
 
     //- Destructor
     ~cellCuts();
@@ -557,11 +557,11 @@ public:
             //  Cuts in no particular order
             const labelListList& faceCuts() const
             {
-                if (!faceCutsPtr_)
+                if (!faceCutsPtr_.valid())
                 {
                     calcFaceCuts();
                 }
-                return *faceCutsPtr_;
+                return faceCutsPtr_();
             }
 
             //- Gives for split face the two cuts that split the face into two.
@@ -627,6 +627,11 @@ public:
             //- debugging:Write edges of cell and loop
             void writeCellOBJ(const fileName& dir, const label celli) const;
 
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const cellCuts&) = delete;
 };
 
 

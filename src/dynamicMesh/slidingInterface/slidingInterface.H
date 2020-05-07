@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -89,7 +89,7 @@ public:
 
 private:
 
-    // Private data
+    // Private Data
 
         //- Master face zone ID
         faceZoneID masterFaceZoneID_;
@@ -114,7 +114,7 @@ private:
 
         //- Couple-decouple operation.
         //  If the interface is coupled, decouple it and vice versa.
-        //  Used in conjuction with automatic mesh motion
+        //  Used in conjunction with automatic mesh motion
         mutable Switch coupleDecouple_;
 
         //- State of the modifier
@@ -209,12 +209,6 @@ private:
 
     // Private Member Functions
 
-        //- Disallow default bitwise copy construct
-        slidingInterface(const slidingInterface&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const slidingInterface&);
-
         //- Clear out
         void clearOut() const;
 
@@ -276,7 +270,7 @@ private:
             void decoupleInterface(polyTopoChange& ref) const;
 
 
-    // Static data members
+    // Static Data Members
 
         //- Point merge tolerance
         static const scalar pointMergeTolDefault_;
@@ -325,7 +319,8 @@ public:
             const word& slavePatchName,
             const typeOfMatch tom,
             const bool coupleDecouple = false,
-            const intersection::algorithm algo = intersection::algorithm::visible
+            const intersection::algorithm algo =
+                intersection::algorithm::visible
         );
 
         //- Construct from dictionary
@@ -336,6 +331,9 @@ public:
             const label index,
             const polyTopoChanger& mme
         );
+
+        //- Disallow default bitwise copy construction
+        slidingInterface(const slidingInterface&) = delete;
 
 
     //- Destructor
@@ -380,6 +378,12 @@ public:
 
         //- Write dictionary
         virtual void writeDict(Ostream&) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const slidingInterface&) = delete;
 };
 
 

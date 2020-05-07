@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -346,26 +346,6 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
     const bool negateIfFlipped
 ) const
 {
-
-////////////////////////////////////////////////////////////////////////
-// Daniel Deising, Daniel Rettenmaier
-// surfaceVectorFields must not be flipped when send to a new processor
-
-// TODO: Generalize
-    if(std::is_same<Type, vector>::value )
-    {
-        return interpolate
-        (
-            sf,
-            subMesh(),
-            patchMap(),
-            cellMap(),
-            faceMap(),
-            false
-        );
-    }
-////////////////////////////////////////////////////////////////////////
-
     return interpolate
     (
         sf,

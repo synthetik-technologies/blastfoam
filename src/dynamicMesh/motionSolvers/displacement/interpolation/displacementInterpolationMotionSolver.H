@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -27,7 +27,7 @@ Class
 Description
     Mesh motion solver for a polyMesh.
 
-    Scales inbetween motion prescribed on faceZones. Works out per point
+    Scales in between motion prescribed on faceZones. Works out per point
     the distance between the bounding face zones (in all three directions)
     at the start and then every time step
     - moves the faceZones based on tables
@@ -44,7 +44,7 @@ SourceFiles
 #ifndef displacementInterpolationMotionSolver_H
 #define displacementInterpolationMotionSolver_H
 
-#include "displacementMotionSolver.H"
+#include "points0MotionSolver.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,9 +57,9 @@ namespace Foam
 
 class displacementInterpolationMotionSolver
 :
-    public displacementMotionSolver
+    public points0MotionSolver
 {
-    // Private data
+    // Private Data
 
         // Face zone information (note: could pack these to only contain
         // used zones)
@@ -84,18 +84,6 @@ class displacementInterpolationMotionSolver
             FixedList<List<scalarField>, 3> rangeToWeights_;
 
 
-    // Private Member Functions
-
-        //- Disallow default bitwise copy construct
-        displacementInterpolationMotionSolver
-        (
-            const displacementInterpolationMotionSolver&
-        );
-
-        //- Disallow default bitwise assignment
-        void operator=(const displacementInterpolationMotionSolver&);
-
-
 public:
 
     //- Runtime type information
@@ -104,11 +92,17 @@ public:
 
     // Constructors
 
-        //- Construct from polyMesh and IOdictionary
+        //- Construct from polyMesh and dictionary
         displacementInterpolationMotionSolver
         (
             const polyMesh&,
-            const IOdictionary& dict
+            const dictionary& dict
+        );
+
+        //- Disallow default bitwise copy construction
+        displacementInterpolationMotionSolver
+        (
+            const displacementInterpolationMotionSolver&
         );
 
 
@@ -124,6 +118,12 @@ public:
         //- Solve for motion
         virtual void solve()
         {}
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const displacementInterpolationMotionSolver&) = delete;
 };
 
 

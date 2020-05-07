@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2012-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2012-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -578,7 +578,7 @@ void Foam::polyMeshFilter::checkMeshEdgesAndRelaxEdges
         }
     }
 
-    syncTools::syncEdgeList(mesh_, minEdgeLen_, minEqOp<scalar>(), scalar(0.0));
+    syncTools::syncEdgeList(mesh_, minEdgeLen_, minEqOp<scalar>(), scalar(0));
 
     for (label smoothIter = 0; smoothIter < maxSmoothIters(); ++smoothIter)
     {
@@ -614,7 +614,7 @@ void Foam::polyMeshFilter::checkMeshEdgesAndRelaxEdges
             mesh_,
             minEdgeLen_,
             minEqOp<scalar>(),
-            scalar(0.0)
+            scalar(0)
         );
     }
 }
@@ -752,8 +752,8 @@ void Foam::polyMeshFilter::printScalarFieldStats
 {
     scalar sum = 0;
     scalar validElements = 0;
-    scalar min = GREAT;
-    scalar max = -GREAT;
+    scalar min = great;
+    scalar max = -great;
 
     forAll(fld, i)
     {
@@ -785,7 +785,7 @@ void Foam::polyMeshFilter::printScalarFieldStats
 
     Info<< incrIndent << indent << desc
         << ": min = " << min
-        << " av = " << sum/(validElements + SMALL)
+        << " av = " << sum/(validElements + small)
         << " max = " << max << nl
         << indent
         << "    " << validElements << " / " << totFieldSize << " elements used"
@@ -824,7 +824,7 @@ void Foam::polyMeshFilter::mapOldMeshEdgeFieldToNewMesh
         newMesh,
         newMeshMinEdgeLen,
         maxEqOp<scalar>(),
-        scalar(0.0)
+        scalar(0)
     );
 }
 

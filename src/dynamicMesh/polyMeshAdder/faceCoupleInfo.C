@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -405,7 +405,7 @@ Foam::label Foam::faceCoupleInfo::mostAlignedCutEdge
     // Find the edge that gets us nearest end.
 
     label maxEdgeI = -1;
-    scalar maxCos = -GREAT;
+    scalar maxCos = -great;
 
     forAll(pEdges, i)
     {
@@ -444,7 +444,7 @@ Foam::label Foam::faceCoupleInfo::mostAlignedCutEdge
 
             scalar magEVec = mag(eVec);
 
-            if (magEVec < VSMALL)
+            if (magEVec < vSmall)
             {
                 WarningInFunction
                     << "Crossing zero sized edge " << edgeI
@@ -517,7 +517,7 @@ void Foam::faceCoupleInfo::setCutEdgeToPoints(const labelList& cutToMasterEdges)
     {
         const edge& masterE = masterPatch().edges()[masterEdgeI];
 
-        //Pout<< "Master:" << masterPatch().localPoints()[masterE[0]] << ' '
+        // Pout<< "Master:" << masterPatch().localPoints()[masterE[0]] << ' '
         //    << masterPatch().localPoints()[masterE[1]] << endl;
 
         const labelList& stringedEdges = masterToCutEdges[masterEdgeI];
@@ -538,7 +538,7 @@ void Foam::faceCoupleInfo::setCutEdgeToPoints(const labelList& cutToMasterEdges)
         else if (stringedEdges.size() > 1)
         {
             // String up the edges between e[0] and e[1]. Store the points
-            // inbetween e[0] and e[1] (all in cutFaces() labels)
+            // in between e[0] and e[1] (all in cutFaces() labels)
 
             DynamicList<label> splitPoints(stringedEdges.size()-1);
 
@@ -570,7 +570,7 @@ void Foam::faceCoupleInfo::setCutEdgeToPoints(const labelList& cutToMasterEdges)
                     {
                         const edge& e = cutEdges[edgeI];
 
-                        //Pout<< "    cut:" << e << " at:"
+                        // Pout<< "    cut:" << e << " at:"
                         //    << cutFaces().localPoints()[e[0]]
                         //    << ' ' << cutFaces().localPoints()[e[1]] << endl;
 
@@ -608,7 +608,7 @@ void Foam::faceCoupleInfo::setCutEdgeToPoints(const labelList& cutToMasterEdges)
                 }
             }
 
-            //Pout<< "For master edge:"
+            // Pout<< "For master edge:"
             //    << unsplitEdge
             //    << " Found stringed points "
             //    <<  UIndirectList<point>
@@ -735,7 +735,7 @@ bool Foam::faceCoupleInfo::matchPointsThroughFaces
     {
         const face& patchF = patchFaces[patchFacei];
 
-        //const face& cutF = cutFaces[patchToCutFaces[patchFacei]];
+        // const face& cutF = cutFaces[patchToCutFaces[patchFacei]];
         const face& cutF = cutFaces[patchFacei];
 
         // Do geometric matching to get position of cutF[0] in patchF
@@ -754,9 +754,9 @@ bool Foam::faceCoupleInfo::matchPointsThroughFaces
             label cutPointi = cutF[cutFp];
             label patchPointi = patchF[patchFp];
 
-            //const point& cutPt = cutPoints[cutPointi];
-            //const point& patchPt = patchPoints[patchPointi];
-            //if (mag(cutPt - patchPt) > SMALL)
+            // const point& cutPt = cutPoints[cutPointi];
+            // const point& patchPt = patchPoints[patchPointi];
+            // if (mag(cutPt - patchPt) > small)
             //{
             //    FatalErrorInFunction
             //    << "cutP:" << cutPt
@@ -774,7 +774,7 @@ bool Foam::faceCoupleInfo::matchPointsThroughFaces
                 // Check if already have region & region master for this set
                 label otherCutPointi = patchToCutPoints[patchPointi];
 
-                //Pout<< "PatchPoint:" << patchPt
+                // Pout<< "PatchPoint:" << patchPt
                 //    << " matches to:" << cutPointi
                 //    << " coord:" << cutPoints[cutPointi]
                 //    << " and to:" << otherCutPointi
@@ -862,7 +862,7 @@ Foam::scalar Foam::faceCoupleInfo::maxDistance
     const pointField& masterPoints
 )
 {
-    scalar maxDist = -GREAT;
+    scalar maxDist = -great;
 
     forAll(cutF, fp)
     {
@@ -988,7 +988,7 @@ void Foam::faceCoupleInfo::findSlavesCoveringMaster
             mesh0,
             bndFaces                    // boundary faces only
         ),
-        overallBb.extend(1e-4), // overall search domain
+        overallBb.extend(1e-4),         // overall search domain
         8,                              // maxLevel
         10,                             // leafsize
         3.0                             // duplicity
@@ -1305,7 +1305,7 @@ Foam::label Foam::faceCoupleInfo::matchEdgeFaces
                         else
                         {
                             // Should not happen?
-                            //Pout<< "On edge:" << cutEdgeI
+                            // Pout<< "On edge:" << cutEdgeI
                             //    << " have connected masterFaces:"
                             //    << masterEFaces
                             //    << " and from previous edge we have"
@@ -1364,7 +1364,7 @@ Foam::label Foam::faceCoupleInfo::geometricMatchEdgeFaces
             const labelList& masterFaces = iter();
 
             // Find the best matching master face.
-            scalar minDist = GREAT;
+            scalar minDist = great;
             label minMasterFacei = -1;
 
             forAll(masterFaces, i)
@@ -1426,7 +1426,7 @@ void Foam::faceCoupleInfo::perfectPointMatch
     const bool slaveFacesOrdered
 )
 {
-    // Calculate the set of cut faces inbetween master and slave patch assuming
+    // Calculate the set of cut faces in between master and slave patch assuming
     // perfect match (and optional face ordering on slave)
 
     if (debug)
@@ -1473,12 +1473,13 @@ void Foam::faceCoupleInfo::perfectPointMatch
         // Faces do not have to be ordered (but all have
         // to match). Note: Faces will be already ordered if we enter here from
         // construct from meshes.
+
         matchedAllFaces = matchPoints
         (
             calcFaceCentres<List>
             (
                 cutFaces(),
-                cutPoints_,
+                cutFaces().points(),
                 0,
                 cutFaces().size()
             ),
@@ -1490,9 +1491,43 @@ void Foam::faceCoupleInfo::perfectPointMatch
                 slavePatch().size()
             ),
             scalarField(slavePatch().size(), absTol),
-            true,
+            false,
             cutToSlaveFaces_
         );
+
+        // If some of the face centres did not match, then try to match the
+        // point averages instead. There is no division by the face area in
+        // calculating the point average, so this is more stable when faces
+        // collapse onto a line or point.
+        if (!matchedAllFaces)
+        {
+            labelList cutToSlaveFacesTemp(cutToSlaveFaces_.size(), -1);
+
+            matchPoints
+            (
+                calcFacePointAverages<List>
+                (
+                    cutFaces(),
+                    cutFaces().points(),
+                    0,
+                    cutFaces().size()
+                ),
+                calcFacePointAverages<IndirectList>
+                (
+                    slavePatch(),
+                    slavePatch().points(),
+                    0,
+                    slavePatch().size()
+                ),
+                scalarField(slavePatch().size(), absTol),
+                true,
+                cutToSlaveFacesTemp
+            );
+
+            cutToSlaveFaces_ = max(cutToSlaveFaces_, cutToSlaveFacesTemp);
+
+            matchedAllFaces = min(cutToSlaveFaces_) != -1;
+        }
     }
 
 
@@ -1589,7 +1624,7 @@ void Foam::faceCoupleInfo::subDivisionMatch
         findMappedEdges
         (
             cutFaces().edges(),
-            slaveToCutPoints_,  //note:should be cutToSlavePoints but since iden
+            slaveToCutPoints_,
             slavePatch()
         )
     );
@@ -1655,7 +1690,7 @@ void Foam::faceCoupleInfo::subDivisionMatch
     // Do masterEdges to cutEdges :
     // - mark all edges between two masterEdge endpoints. (geometric test since
     //   this is the only distinction)
-    // - this gives the borders inbetween which all cutfaces come from
+    // - this gives the borders in between which all cutfaces come from
     //   a single master face.
     if (debug)
     {
@@ -1753,7 +1788,7 @@ void Foam::faceCoupleInfo::subDivisionMatch
         writeEdges(cutToMasterEdges, cutToSlaveEdges);
     }
 
-    // Rework cutToMasterEdges into list of points inbetween two endpoints
+    // Rework cutToMasterEdges into list of points in between two endpoints
     // (cutEdgeToPoints_)
     setCutEdgeToPoints(cutToMasterEdges);
 

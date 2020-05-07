@@ -12,4 +12,4 @@ LIB_LIBS = \
     -L$(FOAM_LIBBIN)/dummy -lptscotchDecomp -lscotchDecomp \
     -L$(FOAM_USER_LIBBIN) \
     -lblastDynamicMesh \
-    -lblastDecompositionMethods \
+    -lblastDecompositionMethods
