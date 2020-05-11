@@ -263,6 +263,10 @@ void Foam::phaseCompressibleSystem::solve
       - ESource()
       - (rhoU_ & g_)
     );
+    if (extESource_.valid())
+    {
+        deltaRhoE.ref() += extESource_();
+    }
 
     if (deltaIs_[stepi - 1] != -1)
     {
@@ -315,8 +319,7 @@ void Foam::phaseCompressibleSystem::solve
         stepi == oldIs_.size()
      && (
             turbulence_.valid()
-         || UCoeff_.valid()
-         || USource_.valid()
+         || dragSource_.valid()
         )
     )
     {
@@ -336,13 +339,9 @@ void Foam::phaseCompressibleSystem::solve
                 fvm::laplacian(muEff, U_)
               + fvc::div(tauMC);
         }
-        if (UCoeff_.valid())
+        if (dragSource_.valid())
         {
-            UEqn += fvm::Sp(UCoeff_(), U_);
-        }
-        if (USource_.valid())
-        {
-            UEqn += USource_();
+            UEqn += dragSource_();
         }
         UEqn.solve();
 
@@ -423,33 +422,42 @@ void Foam::phaseCompressibleSystem::clearODEFields()
     deltaRhoU_.resize(nDelta_);
     deltaRhoE_.resize(nDelta_);
 
-    UCoeff_.clear();
-    USource_.clear();
-}
-
-void Foam::phaseCompressibleSystem::addUCoeff(const volScalarField& UCoeff)
-{
-    if (!UCoeff_.valid())
-    {
-        UCoeff_ = tmp<volScalarField>(new volScalarField("UCoeff", UCoeff));
-    }
-    else
-    {
-        UCoeff_.ref() += UCoeff;
-    }
+    extESource_.clear();
+    dragSource_.clear();
 }
 
 
-void Foam::phaseCompressibleSystem::addUSource(const volVectorField& USource)
+void Foam::phaseCompressibleSystem::addESource(const volScalarField::Internal& extEsrc)
 {
-    if (!USource_.valid())
+    if (!extESource_.valid())
     {
-        USource_ = tmp<volVectorField>(new volVectorField("USource", USource));
+        extESource_ =
+            tmp<volScalarField::Internal>(new volScalarField::Internal("extEsrc", extEsrc));
     }
     else
     {
-        USource_.ref() += USource;
+        extESource_.ref() += extEsrc;
     }
+}
+
+
+void Foam::phaseCompressibleSystem::addUCoeff(const volScalarField::Internal& UCoeff)
+{
+    if (!dragSource_.valid())
+    {
+        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
+    }
+    dragSource_.ref() += fvm::Sp(UCoeff, U_);
+}
+
+
+void Foam::phaseCompressibleSystem::addUSource(const volVectorField::Internal& USource)
+{
+    if (!dragSource_.valid())
+    {
+        dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
+    }
+    dragSource_.ref() += USource;
 }
 
 

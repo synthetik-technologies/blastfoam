@@ -554,15 +554,6 @@ Foam::adaptiveFvMesh::unrefine
         {
             if (!correctFluxes_.found(iter.key()))
             {
-                WarningInFunction
-                    << "Cannot find surfaceScalarField " << iter.key()
-                    << " in user-provided flux mapping table "
-                    << correctFluxes_ << endl
-                    << "    The flux mapping table is used to recreate the"
-                    << " flux on newly created faces." << endl
-                    << "    Either add the entry if it is a flux or use ("
-                    << iter.key() << " none) to suppress this warning."
-                    << endl;
                 continue;
             }
 
@@ -1459,9 +1450,14 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     //  tracking parent cells
     const dictionary& balanceDict =
         dynamicMeshDict().optionalSubDict("loadBalance");
-    balance_ = balanceDict.lookup("balance");
+    balance_ = balanceDict.lookupOrDefault("balance", true);
 
-    if (Pstream::parRun() && balance_)
+    if (!Pstream::parRun())
+    {
+        balance_ = false;
+    }
+
+    if (balance_)
     {
         // Change decomposition method if entry is present
         if (balanceDict.found("method"))
@@ -1737,7 +1733,7 @@ void Foam::adaptiveFvMesh::balance()
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
-    if(!Pstream::parRun() || !balance_)
+    if(!balance_)
     {
         return;
     }
@@ -1760,7 +1756,11 @@ void Foam::adaptiveFvMesh::balance()
     // Part 2 - Load Balancing
     {
         const scalar allowableImbalance =
-            readScalar(balanceDict.lookup("allowableImbalance"));
+            balanceDict.lookupOrDefault
+            (
+                "allowableImbalance",
+                0.2
+            );
 
         //First determine current level of imbalance - do this for all
         // parallel runs with a changing mesh, even if balancing is disabled
