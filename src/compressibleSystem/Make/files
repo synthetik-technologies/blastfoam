@@ -15,6 +15,7 @@ phaseCompressibleSystem/fiveEqnCompressibleTurbulenceModels.C
 singlePhaseCompressibleSystem/singlePhaseCompressibleSystem.C
 twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
 multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
+coupledMultiphaseCompressibleSystem/coupledMultiphaseCompressibleSystem.C
 
 
 LIB = $(BLAST_LIBBIN)/libphaseCompressibleSystems
