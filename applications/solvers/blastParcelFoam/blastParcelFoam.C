@@ -35,7 +35,7 @@ Description
 #include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
-#include "phaseCompressibleSystem.H"
+#include "coupledMultiphaseCompressibleSystem.H"
 #include "fiveEqnCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
 #include "errorEstimator.H"
@@ -97,12 +97,12 @@ int main(int argc, char *argv[])
 
         parcels.evolve();
 
-        fluid->encode();
+        fluid.encode();
         {
             volScalarField::Internal Vdt(mesh.V()*runTime.deltaT());
-//         fluid->addESource(parcels.Sh(fluid->e()) & fluid->e());
-            fluid->addUCoeff(parcels.UCoeff()/Vdt);
-            fluid->addUSource(parcels.UTrans()/Vdt);
+            fluid.addESource(parcels.Sh(fluid.e()) & fluid.e());
+            fluid.addUCoeff(parcels.UCoeff()/Vdt);
+            fluid.addUSource(parcels.UTrans()/Vdt);
         }
 
         Info<< "Calculating Fluxes" << endl;
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        fluid->clearODEFields();
+        fluid.clearODEFields();
     }
 
     Info<< "End\n" << endl;

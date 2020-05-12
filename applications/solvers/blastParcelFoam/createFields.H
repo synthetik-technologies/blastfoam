@@ -26,17 +26,14 @@ IOdictionary phaseProperties
      )
 );
 
-autoPtr<phaseCompressibleSystem> fluid
-(
-    phaseCompressibleSystem::New(mesh, phaseProperties)
-);
+coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
-integrator->addSystem(fluid());
+integrator->addSystem(fluid);
 
-const volScalarField& p = fluid->p();
-const volScalarField& T = fluid->T();
-const surfaceScalarField& phi = fluid->phi();
-fluid->update();
+const volScalarField& p = fluid.p();
+const volScalarField& T = fluid.T();
+const surfaceScalarField& phi = fluid.phi();
+fluid.update();
 
 autoPtr<errorEstimator> error;
 if (!isA<staticFvMesh>(mesh))
@@ -61,8 +58,8 @@ if (!isA<staticFvMesh>(mesh))
 basicThermoCloud parcels
 (
     "reactingCloud1",
-    fluid->rho(),
-    fluid->U(),
+    fluid.rho(),
+    fluid.U(),
     g,
     mesh.lookupObject<fluidThermoModel>("fluidThermo")
 );

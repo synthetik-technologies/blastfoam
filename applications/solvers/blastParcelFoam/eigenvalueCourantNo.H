@@ -37,7 +37,7 @@ scalar meanCoNum = 0.0;
 {
     surfaceScalarField amaxSf
     (
-        fvc::interpolate(fluid->speedOfSound())*mesh.magSf()
+        fvc::interpolate(fluid.speedOfSound())*mesh.magSf()
     );
     // Remove wave speed from wedge boundaries
     forAll(amaxSf.boundaryField(), patchi)
