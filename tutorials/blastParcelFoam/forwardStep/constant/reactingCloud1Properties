@@ -1,0 +1,237 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      reactingCloud1Properties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solution
+{
+    active          true;
+    coupled         true;
+    transient       yes;
+    cellValueSourceCorrection on;
+    maxCo           0.3;
+
+    sourceTerms
+    {
+        schemes
+        {
+            rho             explicit 1;
+            U               explicit 1;
+            Yi              explicit 1;
+            h               explicit 1;
+            radiation       explicit 1;
+        }
+    }
+
+    interpolationSchemes
+    {
+        rho             cell;
+        U               cellPoint;
+        thermo:mu       cell;
+        T               cell;
+        Cp              cell;
+        kappa           cell;
+        p               cell;
+        mu              cell;
+        none            cell;
+    }
+
+    integrationSchemes
+    {
+        U               Euler;
+        T               analytical;
+    }
+}
+
+
+constantProperties
+{
+    rho0            500;
+    T0              350;
+    Cp0             4100;
+
+    poissonsRatio 1.0;
+    youngsModulus 7e10;
+
+    constantVolume  false;
+}
+
+
+subModels
+{
+    particleForces
+    {
+        ErgunWenYuDrag
+        {
+            alphac none;
+        }
+        gravity;
+    }
+
+    injectionModels
+    {
+        model1
+        {
+            type            patchInjection;
+            SOI             0;
+            massTotal       000;
+            parcelBasisType mass;
+            patchName       inlet;
+            duration        10000;
+            parcelsPerSecond 5e6;
+            U0              (1041 0 0);
+            flowRateProfile constant 1;
+            sizeDistribution
+            {
+                type        general;
+                generalDistribution
+                {
+                    distribution
+                    (
+                        (10e-06      0.0025)
+                        (15e-06      0.0528)
+                        (20e-06      0.2795)
+                        (25e-06      1.0918)
+                        (30e-06      2.3988)
+                        (35e-06      4.4227)
+                        (40e-06      6.3888)
+                        (45e-06      8.6721)
+                        (50e-06      10.3153)
+                        (55e-06      11.6259)
+                        (60e-06      12.0030)
+                        (65e-06      10.4175)
+                        (70e-06      10.8427)
+                        (75e-06      8.0016)
+                        (80e-06      6.1333)
+                        (85e-06      3.8827)
+                        (90e-06      3.4688)
+                    );
+                }
+            }
+        }
+    }
+
+    dispersionModel none;
+
+    collisionModel none;
+
+    patchInteractionModel standardWallInteraction;
+
+    heatTransferModel RanzMarshall;
+
+    compositionModel singleMixtureFraction;
+
+    phaseChangeModel liquidEvaporation;
+
+    devolatilisationModel none;
+
+    surfaceReactionModel none;
+
+    stochasticCollisionModel none;
+
+    surfaceFilmModel none;
+
+    radiation       off;
+
+    pairCollisionCoeffs
+    {
+        // Maximum possible particle diameter expected at any time
+        maxInteractionDistance  0.006;
+
+        writeReferredParticleCloud no;
+
+        pairModel pairSpringSliderDashpot;
+
+        pairSpringSliderDashpotCoeffs
+        {
+            useEquivalentSize   no;
+            alpha               0.12;
+            b                   1.5;
+            mu                  0.52;
+            cohesionEnergyDensity 0;
+            collisionResolutionSteps 12;
+        };
+
+        wallModel    wallLocalSpringSliderDashpot;
+
+        wallLocalSpringSliderDashpotCoeffs
+        {
+            useEquivalentSize no;
+            collisionResolutionSteps 12;
+            walls
+            {
+                youngsModulus   1e10;
+                poissonsRatio   0.23;
+                alpha           0.12;
+                b               1.5;
+                mu              0.43;
+                cohesionEnergyDensity 0;
+            }
+            frontAndBack
+            {
+                youngsModulus   1e10;
+                poissonsRatio   0.23;
+                alpha           0.12;
+                b               1.5;
+                mu              0.1;
+                cohesionEnergyDensity 0;
+            }
+        }
+    }
+    standardWallInteractionCoeffs
+    {
+        type            rebound;
+    }
+
+    RanzMarshallCoeffs
+    {
+        BirdCorrection  off;
+    }
+
+    singleMixtureFractionCoeffs
+    {
+        phases
+        (
+            gas
+            {
+            }
+            liquid
+            {
+                H2O         1;
+            }
+            solid
+            {
+            }
+        );
+        YGasTot0        0;
+        YLiquidTot0     1;
+        YSolidTot0      0;
+    }
+
+    liquidEvaporationCoeffs
+    {
+        enthalpyTransfer enthalpyDifference;
+
+        activeLiquids   ( H2O );
+    }
+}
+
+
+cloudFunctions
+{
+}
+
+
+// ************************************************************************* //
