@@ -91,19 +91,17 @@ int main(int argc, char *argv[])
 
         if (!isA<staticFvMesh>(mesh))
         {
+            parcels.storeGlobalPositions();
             error->update();
         }
         mesh.update();
 
         parcels.evolve();
-
+        fluid.volumeFraction() = 1.0 - parcels.theta();
         fluid.encode();
-        {
-            volScalarField::Internal Vdt(mesh.V()*runTime.deltaT());
-            fluid.addESource(parcels.Sh(fluid.e()) & fluid.e());
-            fluid.addUCoeff(parcels.UCoeff()/Vdt);
-            fluid.addUSource(parcels.UTrans()/Vdt);
-        }
+
+        fluid.eSource() = parcels.Sh(fluid.e());
+        fluid.dragSource() = parcels.SU(fluid.U());
 
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();

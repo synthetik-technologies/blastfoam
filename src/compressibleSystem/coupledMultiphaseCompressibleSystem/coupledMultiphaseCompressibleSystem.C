@@ -71,7 +71,12 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
         ),
         volumeFraction_*rho_
     )
-{}
+{
+    forAll(alphas_, phasei)
+    {
+        volumeFraction_ += alphas_[phasei];
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -161,9 +166,17 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
     PtrList<volScalarField> deltaAlphaRhos(alphas_.size());
     volVectorField deltaRhoU
     (
-        fvc::div(rhoUPhi_*alphaf) - p_*fvc::grad(alphaf)
+        fvc::div(rhoUPhi_*alphaf)
+      - p_*fvc::grad(alphaf)
+      - g_*alphaRho_
     );
-    volScalarField deltaRhoE(fvc::div(rhoEPhi_*alphaf) - ESource());
+    volScalarField deltaRhoE
+    (
+        fvc::div(rhoEPhi_*alphaf)
+      - ESource()
+      - (rhoU_ & g_)
+    );
+
     forAll(alphas_, phasei)
     {
         deltaAlphas.set
@@ -237,9 +250,9 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
 //     if (radiation_->type() != "none")
 //     {
 //         calcAlphaAndRho();
-//         e() = rhoE_/rho_ - 0.5*magSqr(U_);
+//         e() = rhoE_/alphaRho_ - 0.5*magSqr(U_);
 //         e().correctBoundaryConditions();
-//         rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, rho_, e(), Cv());
+//         rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, alphaRho_, e(), Cv());
 //     }
 
     forAll(alphas_, phasei)
@@ -264,48 +277,66 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
      && (
             turbulence_.valid()
          || dragSource_.valid()
+         || extESource_.valid()
         )
     )
     {
         calcAlphaAndRho();
-        U_ = rhoU_/rho_;
+        U_ = rhoU_/alphaRho_;
         U_.correctBoundaryConditions();
+
+        e() = rhoE_/alphaRho_ - 0.5*magSqr(U_);
+        e().correctBoundaryConditions();
 
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
         );
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alphaRho_, e()) - fvc::ddt(alphaRho_, e())
+        );
+
         if (turbulence_.valid())
         {
-            volScalarField muEff("muEff", turbulence_->muEff());
-            volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
+            volScalarField muEff
+            (
+                "muEff",
+                volumeFraction_*turbulence_->muEff()
+            );
             UEqn -=
                 fvm::laplacian(muEff, U_)
-              + fvc::div(tauMC);
+              + fvc::div(muEff*dev2(Foam::T(fvc::grad(U_))));
+
+            eEqn -=
+                fvm::laplacian
+                (
+                    volumeFraction_*turbulence_->alphaEff(),
+                    e()
+                );
         }
+
         if (dragSource_.valid())
         {
-            UEqn += dragSource_();
+            UEqn -= dragSource_();
+        }
+        if (extESource_.valid())
+        {
+            eEqn -= extESource_();
         }
         UEqn.solve();
+        eEqn.solve();
 
-        rhoU_ = rho_*U_;
+        rhoU_ = alphaRho_*U_;
+        rhoE_ = alphaRho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
 
         if (turbulence_.valid())
         {
-            e() = rhoE_/rho_ - 0.5*magSqr(U_);
-            e().correctBoundaryConditions();
-
-            Foam::solve
-            (
-                fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
-            - fvm::laplacian(turbulence_->alphaEff(), e())
-            );
-            rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
-
             turbulence_->correct();
         }
     }
+
+    decode();
 }
 
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()

@@ -30,6 +30,18 @@ coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid);
 
+basicThermoCloud parcels
+(
+    "reactingCloud1",
+    fluid.rho(),
+    fluid.U(),
+    g,
+    mesh.lookupObject<fluidThermoModel>("fluidThermo")
+);
+
+fluid.volumeFraction() = 1.0 - parcels.theta();
+
+
 const volScalarField& p = fluid.p();
 const volScalarField& T = fluid.T();
 const surfaceScalarField& phi = fluid.phi();
@@ -55,11 +67,3 @@ if (!isA<staticFvMesh>(mesh))
             )
         );
 }
-basicThermoCloud parcels
-(
-    "reactingCloud1",
-    fluid.rho(),
-    fluid.U(),
-    g,
-    mesh.lookupObject<fluidThermoModel>("fluidThermo")
-);

@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   staticFvMesh;
+dynamicFvMesh   adaptiveFvMesh;
 
 errorEstimator densityGradient;
 

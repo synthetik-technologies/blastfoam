@@ -9,42 +9,49 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      phaseProperties;
+    class       volScalarField;
+    location    "0";
+    object      alpha.gas;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (gas);
-gas
+dimensions      [0 0 0 0 0 0 0];
+
+internalField   uniform 1;
+
+boundaryField
 {
-    type basic;
-    thermoType
+    inlet
     {
-        transport   const;
-        thermo      eConst;
-        equationOfState idealGas;
-    }
-    equationOfState
-    {
-        gamma           1.4;            // Heat capactiy ratio
-    }
-    specie
-    {
-        molWeight       28.97;
-    }
-    transport
-    {
-        mu              1.81e-5;
-        Pr              1;
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          718;
-        Hf          0;
+        type            fixedValue;
+        value           uniform 1;
     }
 
-    residualRho     1e-6;
-    residualAlpha   1e-10;
+    outlet
+    {
+        type            zeroGradient;
+    }
+
+    bottom
+    {
+        type            symmetryPlane;
+    }
+
+    top
+    {
+        type            symmetryPlane;
+    }
+
+    obstacle
+    {
+        type            zeroGradient;
+    }
+
+    defaultFaces
+    {
+        type            empty;
+    }
 }
+
+
+// ************************************************************************* //

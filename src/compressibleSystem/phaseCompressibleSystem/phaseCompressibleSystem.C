@@ -263,10 +263,6 @@ void Foam::phaseCompressibleSystem::solve
       - ESource()
       - (rhoU_ & g_)
     );
-    if (extESource_.valid())
-    {
-        deltaRhoE.ref() += extESource_();
-    }
 
     if (deltaIs_[stepi - 1] != -1)
     {
@@ -320,6 +316,7 @@ void Foam::phaseCompressibleSystem::solve
      && (
             turbulence_.valid()
          || dragSource_.valid()
+         || extESource_.valid()
         )
     )
     {
@@ -327,10 +324,18 @@ void Foam::phaseCompressibleSystem::solve
         U_ = rhoU_/rho_;
         U_.correctBoundaryConditions();
 
+        e() = rhoE_/rho_ - 0.5*magSqr(U_);
+        e().correctBoundaryConditions();
+
         fvVectorMatrix UEqn
         (
             fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
         );
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
+        );
+
         if (turbulence_.valid())
         {
             volScalarField muEff("muEff", turbulence_->muEff());
@@ -338,27 +343,25 @@ void Foam::phaseCompressibleSystem::solve
             UEqn -=
                 fvm::laplacian(muEff, U_)
               + fvc::div(tauMC);
+
+            eEqn -= fvm::laplacian(turbulence_->alphaEff(), e());
         }
         if (dragSource_.valid())
         {
-            UEqn += dragSource_();
+            UEqn -= dragSource_();
+        }
+        if (extESource_.valid())
+        {
+            eEqn -= extESource_();
         }
         UEqn.solve();
+        eEqn.solve();
 
         rhoU_ = rho_*U_;
+        rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
 
         if (turbulence_.valid())
         {
-            e() = rhoE_/rho_ - 0.5*magSqr(U_);
-            e().correctBoundaryConditions();
-
-            Foam::solve
-            (
-                fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
-            - fvm::laplacian(turbulence_->alphaEff(), e())
-            );
-            rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
-
             turbulence_->correct();
         }
     }
@@ -427,17 +430,31 @@ void Foam::phaseCompressibleSystem::clearODEFields()
 }
 
 
-void Foam::phaseCompressibleSystem::addESource(const volScalarField::Internal& extEsrc)
+void Foam::phaseCompressibleSystem::addECoeff(const volScalarField::Internal& ECoeff)
 {
     if (!extESource_.valid())
     {
         extESource_ =
-            tmp<volScalarField::Internal>(new volScalarField::Internal("extEsrc", extEsrc));
+        tmp<fvScalarMatrix>
+        (
+            new fvScalarMatrix(e(), dimEnergy/dimTime)
+        );
     }
-    else
+    extESource_.ref() -= fvm::Sp(ECoeff, e());
+}
+
+
+void Foam::phaseCompressibleSystem::addESource(const volScalarField::Internal& ESource)
+{
+    if (!extESource_.valid())
     {
-        extESource_.ref() += extEsrc;
+        extESource_ =
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(e(), dimEnergy/dimTime)
+            );
     }
+    extESource_.ref() += ESource;
 }
 
 
@@ -447,7 +464,7 @@ void Foam::phaseCompressibleSystem::addUCoeff(const volScalarField::Internal& UC
     {
         dragSource_ = tmp<fvVectorMatrix>(new fvVectorMatrix(U_, dimForce));
     }
-    dragSource_.ref() += fvm::Sp(UCoeff, U_);
+    dragSource_.ref() -= fvm::Sp(UCoeff, U_);
 }
 
 

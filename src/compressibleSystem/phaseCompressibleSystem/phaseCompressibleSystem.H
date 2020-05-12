@@ -123,8 +123,8 @@ protected:
         PtrList<volVectorField> deltaRhoU_;
         PtrList<volScalarField> deltaRhoE_;
 
-        //- External energy source
-        tmp<volScalarField::Internal> extESource_;
+        //- External energy source matrix
+        tmp<fvScalarMatrix> extESource_;
 
         //- Drag matrix
         tmp<fvVectorMatrix> dragSource_;
@@ -206,7 +206,22 @@ public:
         virtual void clearODEFields();
 
         //- Add external energy source
+        tmp<fvScalarMatrix>& eSource()
+        {
+            return extESource_;
+        }
+
+        //- Add external energy source
+        void addECoeff(const volScalarField::Internal& extEsrc);
+
+        //- Add external energy source
         void addESource(const volScalarField::Internal& extEsrc);
+
+        //- Add external energy source
+        tmp<fvVectorMatrix>& dragSource()
+        {
+            return dragSource_;
+        }
 
         //- Add to U coefficient
         void addUCoeff(const volScalarField::Internal& coeff);
