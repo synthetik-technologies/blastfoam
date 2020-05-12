@@ -20,31 +20,8 @@ Several validation and tutorial cases are included in the repository, and are do
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
 #### The May 13th blastFoam workshop is Sold Out! 
 
-
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
-#### Only a few place left!
-An introduction to blastFoam - a free and open-source Computational Fluid Dynamics (CFD) air blast code for modeling high-explosive detonations and blast load generation suitable for blast engineering and protective design.
-
-At the conclusion of the workshop, attendees will be able to competently and independently setup, calculate, visualize and post-process CFD solutions to air blast problems in complex geometries using blastFoam.
-
-The workshop will include:
-
-- An overview of the background theory, physics, equations and implementation in blastFoam
-- How to set up and run air blast calculations in simple and complex geometries
-- Mesh generation using snappyHexMesh and blockMesh for use with blastFoam
-- Setting initial conditions (e.g. JWL EOS coefficients, detonation points, charge shapes, etc.)
-- Boundary conditions
-- Using probes to get pressure-time histories at discrete locations
-- Generating pressure and impulse loads suitable for engineering/protective design
-- Pre- and post-processing of results
-- Verification and Validation
-- Using the blastFoam GUI to help setup and visualize blastFoam cases
-- A hands-on guided walk-through of a number of 2D and 3D blastFoam tutorial examples with the Synthetik team.
-- All levels of expertise are welcome to attend, and this session will be very practical and hands-on.
-
-Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
-
-More information and registration here: [blastFoam July 2020 Virtual Workshop](https://www.eventbrite.com/e/blastfoam-workshop-july-2020-tickets-103242747838)
+#### The July 13th workshop is Sold Out!
 
 
 
