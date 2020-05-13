@@ -281,11 +281,13 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
         )
     )
     {
+        volScalarField alphaRhos(alphaRho_);
+        alphaRhos.max(1e-10);
         calcAlphaAndRho();
-        U_ = rhoU_/alphaRho_;
+        U_ = rhoU_/alphaRhos;
         U_.correctBoundaryConditions();
 
-        e() = rhoE_/alphaRho_ - 0.5*magSqr(U_);
+        e() = rhoE_/alphaRhos - 0.5*magSqr(U_);
         e().correctBoundaryConditions();
 
         fvVectorMatrix UEqn
@@ -380,8 +382,7 @@ void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
     rhos_[phasei].correctBoundaryConditions();
     alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
     alphaRho_ += alphaRhos_[phasei];
-    rho_ = alphaRho_/volumeFraction_;
-
+    rho_ = alphaRho_/max(volumeFraction_, 1e-10);
 }
 
 
@@ -389,20 +390,30 @@ void Foam::coupledMultiphaseCompressibleSystem::decode()
 {
     calcAlphaAndRho();
 
-    U_.ref() = rhoU_()/alphaRho_();
+    volScalarField alphaRhos(alphaRho_);
+    alphaRhos.max(1e-10);
+    U_.ref() = rhoU_()/alphaRhos();
     U_.correctBoundaryConditions();
 
     rhoU_.boundaryFieldRef() = alphaRho_.boundaryField()*U_.boundaryField();
 
-    volScalarField E(rhoE_/alphaRho_);
+    volScalarField E(rhoE_/alphaRhos);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-    //--- Hard limit, e
-    if(min(e_).value() < 0)
+    //- Limit internal energy it there is a negative temperature
+    if(min(T_).value() < TLow_.value() && thermo_.limit())
     {
-        WarningInFunction<< "Limiting e, min(e) = " << min(e_).value() << endl;
-        e_.max(small);
-        rhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
+        if (debug)
+        {
+            WarningInFunction
+                << "Lower limit of temperature reached, min(T) = "
+                << min(T_).value()
+                << ", limiting internal energy." << endl;
+        }
+        volScalarField limit(pos(T_ - TLow_));
+        T_.max(TLow_);
+        e_ = e_*limit + thermo_.E()*(1.0 - limit);
+        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
 
@@ -426,7 +437,7 @@ void Foam::coupledMultiphaseCompressibleSystem::encode()
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
         alphaRho_ += alphaRhos_[phasei];
     }
-    rho_ = alphaRho_/volumeFraction_;
+    rho_ = alphaRho_/max(volumeFraction_, 1e-10);
     rhoU_ = alphaRho_*U_;
     rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 }

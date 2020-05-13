@@ -12,5 +12,6 @@ wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
 wclean $targetType sampling
+wclean all lagrangian
 
 # ----------------------------------------------------------------- end-of-file

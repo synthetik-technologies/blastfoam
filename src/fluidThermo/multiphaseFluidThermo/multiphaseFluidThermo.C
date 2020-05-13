@@ -258,7 +258,11 @@ Foam::multiphaseFluidThermo::speedOfSound() const
         alphaXiRhoCSqr += alphaXi*rhos_[phasei]*sqr(thermos_[phasei].speedOfSound());
     }
 
-    tmp<volScalarField> cSqr(alphaXiRhoCSqr/(rho_*Xi));
+    tmp<volScalarField> cSqr
+    (
+        alphaXiRhoCSqr
+       /max(rho_*Xi, dimensionedScalar(dimDensity, 1e-10))
+    );
     cSqr.ref().max(small);
     return sqrt(cSqr);
 }
@@ -343,6 +347,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::calcP() const
         rGamma += alphaByGamma;
         pByGamma += alphaByGamma*thermos_[phasei].calcP();
     }
+    rGamma.max(1e-10);
 
     return pByGamma/rGamma;
 }
