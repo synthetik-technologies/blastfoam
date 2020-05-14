@@ -19,12 +19,9 @@ foamGet probes # answer (1) to get the probes file and (2) to get a configuratio
 You will now have a file called "probes" in the system directory. Edit that file so that the probes are in the desired locations. Then, in the controlDict file, find the functions{}; section of the case. Add this line(s):
 
 ```c++
-...
 functions
 {
-	
 	#includeFunc "probes"; // this will load the system/probes file that was created with the $ foamGet probes command
-
 };
 ```
 
