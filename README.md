@@ -20,9 +20,14 @@ Several validation and tutorial cases are included in the repository, and are do
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
 #### The May 13th blastFoam workshop is Sold Out! 
 
+Thank you to everyone who attended! 
+
+The workshop tutorial case and modifications have been added to the repository: [tutorials/blastFoam/building3DWorkshop](tutorials/blastFoam/building3DWorkshop). 
+
+A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U). 
+
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
 #### The July 13th workshop is Sold Out!
-
 
 
 
