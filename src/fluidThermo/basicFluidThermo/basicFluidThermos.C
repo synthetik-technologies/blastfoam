@@ -140,20 +140,37 @@ namespace Foam
         DoanNickel
     );
 
-    // Tabulated equation of state
-    typedef basicFluidThermo<constTransporttabulatedEOS>
-        basicFluidThermoconstTransportTabulatedEOS;
+    // Tabulated equation of state and thermo model
+    typedef basicFluidThermo<constTransporttabulatedMGEquationOfStateDoanNickel>
+        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel;
 
     defineTemplateTypeNameAndDebugWithName
     (
-        basicFluidThermoconstTransportTabulatedEOS,
-        (constTransporttabulatedEOS::typeName()).c_str(),
+        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel,
+        (constTransporttabulatedMGEquationOfStateDoanNickel::typeName()).c_str(),
         0
     );
     addToRunTimeSelectionTable
     (
         fluidThermoModel,
-        basicFluidThermoconstTransportTabulatedEOS,
+        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel,
+        basic
+    );
+
+    // Tabulated equation of state and thermo model
+    typedef basicFluidThermo<constTransporttabulatedMGEquationOfStatetabulated>
+        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated;
+
+    defineTemplateTypeNameAndDebugWithName
+    (
+        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
+        (constTransporttabulatedMGEquationOfStatetabulated::typeName()).c_str(),
+        0
+    );
+    addToRunTimeSelectionTable
+    (
+        fluidThermoModel,
+        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
         basic
     );
 }

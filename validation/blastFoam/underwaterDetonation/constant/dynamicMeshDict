@@ -13,7 +13,6 @@ FoamFile
     object      dynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 dynamicFvMesh   adaptiveFvMesh;
 
 // How often to refine

@@ -40,6 +40,13 @@ Foam::vanderWaals<Specie>::vanderWaals
     b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
     c_(dict.subDict("equationOfState").lookupType<scalar>("c")),
     gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
-{}
+{
+    if (gamma_ <= 1.0)
+    {
+        FatalErrorInFunction
+            << "gamma must be greater than 1."
+            << abort(FatalError);
+    }
+}
 
 // ************************************************************************* //

@@ -1,5 +1,3 @@
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
 bool setRegion
 (
     const label nCells,
@@ -626,128 +624,11 @@ void checkEightAnchorPoints
     }
 }
 
-labelList selectUnrefinePointsEdges
-(
-    const fvMesh& mesh,
-    const scalar unrefineLevel,
-    const PackedBoolList& markedCell,
-    const scalarField& pFld,
-    const hexRef& meshCutter
-)
-{
-    // All points that can be unrefined
-    const labelList splitPointsEdges(meshCutter.getSplitPointsEdges());
-
-    DynamicList<label> newSplitPointsEdges(splitPointsEdges.size());
-
-    forAll(splitPointsEdges, i)
-    {
-        if (meshCutter.useEdges())
-        {
-            label edgei = splitPointsEdges[i];
-
-            const edge& e = mesh.edges()[edgei];
-
-            forAll(e, j)
-            {
-                label pointi = e[j];
-
-                bool hasMarked = true;
-
-                // Whas is the meaning of unrefineLevel?
-                // Does it makes sense to compare it with
-                // the field value instead of the cell level as the name suggests?
-                if (pFld[pointi] < unrefineLevel)
-                {
-                    hasMarked = false;
-
-                    // Check that all cells are not marked
-                    const labelList& pCells = mesh.pointCells()[pointi];
-
-
-
-                    forAll(pCells, pCelli)
-                    {
-                        if (markedCell.get(pCells[pCelli]) == 1)
-                        {
-                            hasMarked = true;
-                            break;
-                        }
-                    }
-                }
-
-                if (!hasMarked)
-                {
-                    newSplitPointsEdges.append(edgei);
-                    break;
-                }
-            }
-        }
-        else
-        {
-            label pointi = splitPointsEdges[i];
-
-            if (pFld[pointi] < unrefineLevel)
-            {
-                // Check that all cells are not marked
-                const labelList& pCells = mesh.pointCells()[pointi];
-
-                bool hasMarked = false;
-
-                forAll(pCells, pCelli)
-                {
-                    if (markedCell.get(pCells[pCelli]))
-                    {
-                        hasMarked = true;
-                        break;
-                    }
-                }
-
-                if (!hasMarked)
-                {
-                    newSplitPointsEdges.append(pointi);
-                }
-            }
-        }
-    }
-
-
-    newSplitPointsEdges.shrink();
-
-    // Guarantee 2:1 refinement after unrefinement
-    labelList consistentSet
-    (
-        meshCutter.consistentUnrefinement
-        (
-            newSplitPointsEdges,
-            false
-        )
-    );
-    if (meshCutter.useEdges())
-    {
-        Info<< "Selected "
-            << returnReduce(consistentSet.size(), sumOp<label>())
-            << " split edges out of a possible "
-            << returnReduce(splitPointsEdges.size(), sumOp<label>())
-            << "." << endl;
-    }
-    else
-    {
-        Info<< "Selected "
-            << returnReduce(consistentSet.size(), sumOp<label>())
-            << " split points out of a possible "
-            << returnReduce(splitPointsEdges.size(), sumOp<label>())
-            << "." << endl;
-    }
-
-    return consistentSet;
-}
-
 
 autoPtr<mapPolyMesh> unrefine
 (
     fvMesh& mesh,
-    const labelList& splitPointsEdges,
+    const labelList& splitElems,
     PackedBoolList& protectedCell,
     hexRef& meshCutter
 )
@@ -755,62 +636,17 @@ autoPtr<mapPolyMesh> unrefine
     polyTopoChange meshMod(mesh);
 
     // Play refinement commands into mesh changer.
-    meshCutter.setUnrefinement(splitPointsEdges, meshMod);
+    meshCutter.setUnrefinement(splitElems, meshMod);
 
 
-    // Save information on faces that will be combined
+    /// Save information on faces that will be combined
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     // Find the faceMidPoints on cells to be combined.
     // for each face resulting of split of face into four store the
     // midpoint
-    if (meshCutter.useEdges())
-    {
-        Map<label> faceToSplitPoint(2*splitPointsEdges.size());
-
-        forAll(splitPointsEdges, i)
-        {
-            label edgei = splitPointsEdges[i];
-
-            const edge& e = mesh.edges()[edgei];
-
-            forAll(e, j)
-            {
-                label pointi = e[j];
-
-                const labelList& pFaces = mesh.pointFaces()[pointi];
-
-                forAll(pFaces, pFacei)
-                {
-                    faceToSplitPoint.insert(pFaces[pFacei], pointi);
-                }
-            }
-        }
-    }
-    else
-    {
-        Map<label> faceToSplitPoint(3*splitPointsEdges.size());
-
-        forAll(splitPointsEdges, i)
-        {
-            label pointi = splitPointsEdges[i];
-
-            const labelList& pEdges = mesh.pointEdges()[pointi];
-
-            forAll(pEdges, j)
-            {
-                label otherPointi =
-                    mesh.edges()[pEdges[j]].otherVertex(pointi);
-
-                const labelList& pFaces = mesh.pointFaces()[otherPointi];
-
-                forAll(pFaces, pFacei)
-                {
-                    faceToSplitPoint.insert(pFaces[pFacei], otherPointi);
-                }
-            }
-        }
-    }
+    Map<label> faceToSplitPoint(0);
+    meshCutter.calcFaceToSplitPoint(splitElems, faceToSplitPoint);
 
 
     // Change mesh and generate map.
@@ -986,31 +822,29 @@ bool update
 
     {
         // Select unrefineable points that are not marked in refineCell
-        labelList pointsEdgesToUnrefine
+        labelList elemsToUnrefine
         (
-            selectUnrefinePointsEdges
+            meshCutter.selectUnrefineElems
             (
-                mesh,
                 unrefineLevel,
                 refineCell,
-                maxCellField(mesh, vFld),
-                meshCutter
+                maxCellField(mesh, vFld)
             )
         );
 
-        label nSplitPointsEdges = returnReduce
+        label nSplitElems = returnReduce
         (
-            pointsEdgesToUnrefine.size(),
+            elemsToUnrefine.size(),
             sumOp<label>()
         );
 
-        if (nSplitPointsEdges > 0)
+        if (nSplitElems > 0)
         {
             // Refine/update mesh
             unrefine
             (
                 mesh,
-                pointsEdgesToUnrefine,
+                elemsToUnrefine,
                 protectedCell,
                 meshCutter
             );

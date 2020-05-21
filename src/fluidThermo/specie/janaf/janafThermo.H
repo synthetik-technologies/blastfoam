@@ -154,6 +154,7 @@ public:
         scalar Hf
         (
             const scalar& rho,
+            const scalar& e,
             const scalar& T
         ) const
         {

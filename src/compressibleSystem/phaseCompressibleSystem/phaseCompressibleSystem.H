@@ -123,9 +123,11 @@ protected:
         PtrList<volVectorField> deltaRhoU_;
         PtrList<volScalarField> deltaRhoE_;
 
-        //- Drag source term
-        tmp<volScalarField> UCoeff_;
-        tmp<volVectorField> USource_;
+        //- External energy source
+        tmp<volScalarField::Internal> extESource_;
+
+        //- Drag matrix
+        tmp<fvVectorMatrix> dragSource_;
 
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
@@ -203,11 +205,14 @@ public:
         //- Remove stored fields
         virtual void clearODEFields();
 
+        //- Add external energy source
+        void addESource(const volScalarField::Internal& extEsrc);
+
         //- Add to U coefficient
-        void addUCoeff(const volScalarField& coeff);
+        void addUCoeff(const volScalarField::Internal& coeff);
 
         //- Add to U source
-        void addUSource(const volVectorField& src);
+        void addUSource(const volVectorField::Internal& src);
 
 
     // Member Access Functions

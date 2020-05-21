@@ -79,7 +79,7 @@ Foam::fluidThermoModel::fluidThermoModel
     (
         IOobject
         (
-            IOobject::groupName("mu", name_),
+            IOobject::groupName("thermo:mu", name_),
             p_.mesh().time().timeName(),
             p_.mesh()
         ),

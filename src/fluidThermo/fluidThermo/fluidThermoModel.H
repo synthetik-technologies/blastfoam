@@ -337,6 +337,18 @@ public:
             return limit_;
         }
 
+        //- Non-const access to thermo model phasei
+        virtual fluidThermoModel& thermo(const label)
+        {
+            return *this;
+        }
+
+        //- Const access to thermo model phasei
+        virtual const fluidThermoModel& thermo(const label) const
+        {
+            return *this;
+        }
+
 
     //- Thermodynamic and transport functions
 

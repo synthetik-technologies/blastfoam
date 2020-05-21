@@ -1,0 +1,3 @@
+initializeAtmosphere.C
+
+EXE = $(BLAST_APPBIN)/initializeAtmosphere

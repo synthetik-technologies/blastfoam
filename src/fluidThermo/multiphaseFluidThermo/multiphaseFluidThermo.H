@@ -169,13 +169,13 @@ public:
         }
 
         //- Non-const access to thermo model phasei
-        fluidThermoModel& thermo(const label phasei)
+        virtual fluidThermoModel& thermo(const label phasei)
         {
             return thermos_[phasei];
         }
 
         //- Const access to thermo model phasei
-        const fluidThermoModel& thermo(const label phasei) const
+        virtual const fluidThermoModel& thermo(const label phasei) const
         {
             return thermos_[phasei];
         }

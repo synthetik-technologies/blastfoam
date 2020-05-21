@@ -154,7 +154,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::cellSetProperty
 
     forAll(cells, celli)
     {
-        scalar x = activation_->lambdaPowi(celli);
+        scalar x = activation_->lambdaPowi(cells[celli]);
         psi[celli] =
            (this->*rpsiMethod)(args[celli] ...)*x
          + (this->*upsiMethod)(args[celli] ...)*(1.0 - x);
@@ -485,8 +485,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E() const
     (
         IOobject::groupName("e", name_),
         dimEnergy/dimMass,
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         rho_,
         e_,
         T_
@@ -506,8 +506,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
 {
     return patchFieldProperty
     (
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         patchi,
         rho,
         e,
@@ -528,8 +528,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
 {
     return cellSetProperty
     (
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         faceCells,
         rho,
         e,

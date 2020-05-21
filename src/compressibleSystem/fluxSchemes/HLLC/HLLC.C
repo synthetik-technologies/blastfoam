@@ -198,8 +198,9 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);
 
-    scalar UvOwn(UOwn & normal);
-    scalar UvNei(UNei & normal);
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
 
     scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
     scalar wNei(1.0 - wOwn);
@@ -245,11 +246,13 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     const vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
     const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
 
+    scalar p;
     if (SOwn > 0)
     {
         this->save(facei, patchi, UOwn, Uf_);
         phi = UvOwn;
         rhoPhi = rhoOwn*UvOwn;
+        p = pOwn;
         rhoUPhi = rhoUPhiOwn;
         rhoEPhi = rhoEPhiOwn;
     }
@@ -267,6 +270,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
         );
         phi = SStar;
         rhoPhi = phi*rhoOwn*(SOwn - UvOwn)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
         rhoUPhi =
             (SStar*(SOwn*rhoUOwn - rhoUPhiOwn) + SOwn*pStarOwn*normal)/dS;
         rhoEPhi = SStar*(SOwn*rhoEOwn - rhoEPhiOwn + SOwn*pStarOwn)/dS;
@@ -285,6 +289,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
         );
         phi = SStar;
         rhoPhi = phi*rhoNei*(SNei - UvNei)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
         rhoUPhi =
             (SStar*(SNei*rhoUNei - rhoUPhiNei) + SNei*pStarNei*normal)/dS;
         rhoEPhi = SStar*(SNei*rhoENei - rhoEPhiNei + SNei*pStarNei)/dS;
@@ -294,6 +299,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
         this->save(facei, patchi, UNei, Uf_);
         phi = UvNei;
         rhoPhi = rhoNei*UvNei;
+        p = pNei;
         rhoUPhi = rhoUPhiNei;
         rhoEPhi = rhoEPhiNei;
     }
@@ -301,6 +307,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     rhoPhi *= magSf;
     rhoUPhi *= magSf;
     rhoEPhi *= magSf;
+    rhoEPhi += vMesh*magSf*p;
 }
 
 
@@ -328,8 +335,9 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);
 
-    scalar UvOwn(UOwn & normal);
-    scalar UvNei(UNei & normal);
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
 
     scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
     scalar wNei(1.0 - wOwn);
@@ -375,11 +383,13 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     const vector rhoUPhiNei = rhoUNei*UvNei + pNei*normal;
     const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
 
+    scalar p;
     if (SOwn > 0)
     {
         this->save(facei, patchi, UOwn, Uf_);
         phi = UvOwn;
         rhoUPhi = rhoUPhiOwn;
+        p = pOwn;
         rhoEPhi = rhoEPhiOwn;
 
         forAll(alphaPhis, phasei)
@@ -406,6 +416,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
 
         rhoUPhi =
             (SStar*(SOwn*rhoUOwn - rhoUPhiOwn) + SOwn*pStarOwn*normal)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
         rhoEPhi = SStar*(SOwn*rhoEOwn - rhoEPhiOwn + SOwn*pStarOwn)/dS;
 
         forAll(alphaPhis, phasei)
@@ -432,6 +443,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
 
         rhoUPhi =
             (SStar*(SNei*rhoUNei - rhoUPhiNei) + SNei*pStarNei*normal)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
         rhoEPhi = SStar*(SNei*(rhoENei + pStarNei) - rhoEPhiNei)/dS;
 
         forAll(alphaPhis, phasei)
@@ -445,6 +457,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
         this->save(facei, patchi, UNei, Uf_);
         phi = UvNei;
         rhoUPhi = rhoUPhiNei;
+        p = pNei;
         rhoEPhi = rhoEPhiNei;
 
         forAll(alphaPhis, phasei)
@@ -456,6 +469,7 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     phi *= magSf;
     rhoUPhi *= magSf;
     rhoEPhi *= magSf;
+    rhoEPhi += vMesh*magSf*p;
     forAll(alphaPhis, phasei)
     {
         alphaPhis[phasei] *= magSf;
@@ -490,27 +504,31 @@ Foam::scalar Foam::fluxSchemes::HLLC::energyFlux
     const scalar rhoENei = rhoNei*(eNei + 0.5*magSqr(UNei));
     const scalar rhoEPhiNei = (rhoENei + pNei)*UvNei;
 
-    scalar rhoEPhi;
+    scalar rhoEPhi, p;
     if (SOwn > 0)
     {
         rhoEPhi = rhoEPhiOwn;
+        p = pOwn;
     }
     else if (SStar > 0)
     {
         const scalar dS = SOwn - SStar;
         rhoEPhi = SStar*(SOwn*rhoEOwn - rhoEPhiOwn + SOwn*pStarOwn)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
     }
     else if (SNei > 0)
     {
         const scalar dS = SNei - SStar;
         rhoEPhi = SStar*(SNei*rhoENei - rhoEPhiNei + SNei*pStarNei)/dS;
+        p = 0.5*(pStarNei + pStarOwn);
     }
     else
     {
         rhoEPhi = rhoEPhiNei;
+        p = pNei;
     }
 
-    return rhoEPhi*magSf;
+    return rhoEPhi*magSf + meshPhi(facei, patchi)*p;
 }
 
 

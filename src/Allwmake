@@ -8,9 +8,12 @@ wmake $targetType timeIntegrators
 wmake $targetType fluidThermo
 wmake $targetType radiationModels
 wmake $targetType compressibleSystem
-wmake $targetType adaptiveFvMesh
+wmake $targetType dynamicMesh
+wmake $targetType decompositionMethods
+wmake $targetType dynamicFvMesh
 wmake $targetType errorEstimators
 wmake $targetType functionObjects
+wmake $targetType sampling
 
 # ----------------------------------------------------------------- end-of-file
 

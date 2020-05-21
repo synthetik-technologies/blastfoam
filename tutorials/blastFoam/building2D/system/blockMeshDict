@@ -40,7 +40,6 @@ edges
 
 boundary
 (
-
     outlet
     {
         type patch;
@@ -52,7 +51,6 @@ boundary
             (0 3 7 4)
         );
     }
-
 );
 
 mergePatchPairs

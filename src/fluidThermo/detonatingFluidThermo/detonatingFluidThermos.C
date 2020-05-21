@@ -63,6 +63,57 @@ namespace Foam
         LSZK
     );
 
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         MGEquationOfState,
+//         idealGas,
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
+
+//- Stiffened gas
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        stiffenedGas,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         MGEquationOfState,
+//         stiffenedGas,
+//         constTransport,
+//         equationOfState,
+//         JWLC
+//     );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        stiffenedGas,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         MGEquationOfState,
+//         stiffenedGas,
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
+
 //- Murnaghan
     addDetonatingFluidThermos
     (
@@ -94,6 +145,16 @@ namespace Foam
         LSZK
     );
 
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         Murnaghan,
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
+
 // //- Birch-Murnaghan 2
 //     addDetonatingFluidThermos
 //     (
@@ -124,6 +185,17 @@ namespace Foam
 //         MGEquationOfState,
 //         LSZK
 //     );
+//
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         BirchMurnaghan2,
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
+
 
 //- Birch-Murnaghan 3
     addDetonatingFluidThermos
@@ -155,6 +227,16 @@ namespace Foam
         MGEquationOfState,
         LSZK
     );
+
+//     addDetonatingFluidThermos
+//     (
+//         constTransport,
+//         equationOfState,
+//         BirchMurnaghan3,
+//         constTransport,
+//         equationOfState,
+//         BKW
+//     );
 
 // Blended JWL
     addDetonatingFluidThermo

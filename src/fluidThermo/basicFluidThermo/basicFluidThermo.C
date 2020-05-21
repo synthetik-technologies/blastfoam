@@ -234,7 +234,7 @@ void Foam::basicFluidThermo<Thermo>::correct()
     {
         mu_ = volScalarFieldProperty
         (
-            IOobject::groupName("mu", name_),
+            IOobject::groupName("thermo:mu", name_),
             dimDynamicViscosity,
             &Thermo::mu,
             rho_,
@@ -345,7 +345,7 @@ Foam::basicFluidThermo<Thermo>::E() const
     (
         IOobject::groupName("e", name_),
         dimEnergy/dimMass,
-        &Thermo::Ea,
+        &Thermo::Es,
         rho_,
         e_,
         T_
@@ -365,7 +365,7 @@ Foam::basicFluidThermo<Thermo>::E
 {
     return patchFieldProperty
     (
-        &Thermo::Ea,
+        &Thermo::Es,
         patchi,
         rho,
         e,
@@ -386,7 +386,7 @@ Foam::basicFluidThermo<Thermo>::E
 {
     return cellSetProperty
     (
-        &Thermo::Ea,
+        &Thermo::Es,
         faceCells,
         rho,
         e,

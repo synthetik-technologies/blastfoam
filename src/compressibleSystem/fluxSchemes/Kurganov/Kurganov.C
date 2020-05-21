@@ -178,6 +178,10 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     scalar cSfOwn(cOwn*magSf);
     scalar cSfNei(cNei*magSf);
 
+    const scalar vMesh(meshPhi(facei, patchi));
+    phivOwn -= vMesh;
+    phivNei -= vMesh;
+
     scalar ap
     (
         max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0)
@@ -218,6 +222,7 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + vMesh*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -250,6 +255,10 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
 
     scalar cSfOwn(cOwn*magSf);
     scalar cSfNei(cNei*magSf);
+
+    const scalar vMesh(meshPhi(facei, patchi));
+    phivOwn -= vMesh;
+    phivNei -= vMesh;
 
     scalar ap
     (
@@ -300,6 +309,7 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + vMesh*(aOwn*pOwn + aNei*pNei)
     );
 }
 
@@ -315,6 +325,8 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
 {
     scalar aphivOwn = getValue(facei, patchi, aPhivOwn_());
     scalar aphivNei = getValue(facei, patchi, aPhivNei_());
+    scalar aOwn = getValue(facei, patchi, aOwn_());
+    scalar aNei = getValue(facei, patchi, aNei_());
     scalar aSf = getValue(facei, patchi, aSf_());
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
@@ -326,6 +338,7 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + meshPhi(facei, patchi)*(aOwn*pOwn + aNei*pNei)
     );
 }
 

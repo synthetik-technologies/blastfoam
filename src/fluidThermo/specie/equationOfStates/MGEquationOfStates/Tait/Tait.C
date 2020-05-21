@@ -40,7 +40,14 @@ Foam::Tait<Specie>::Tait
     a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
     b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
     gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
-{}
+{
+    if (gamma_ <= 1.0)
+    {
+        FatalErrorInFunction
+            << "gamma must be greater than 1."
+            << abort(FatalError);
+    }
+}
 
 // ************************************************************************* //
 
