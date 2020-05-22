@@ -43,6 +43,7 @@ Description
 #include "topoSetSource.H"
 #include "cellSet.H"
 #include "fluidThermoModel.H"
+#include "lookupTable1D.H"
 #include "twoPhaseFluidThermo.H"
 #include "multiphaseFluidThermo.H"
 #include "PtrListDictionary.H"
@@ -171,7 +172,7 @@ int main(int argc, char *argv[])
 
     HashSet<> atmosphereTypes;
     atmosphereTypes.insert("simple");
-    atmosphereTypes.insert("standard");
+    atmosphereTypes.insert("tabulated");
     atmosphereTypes.insert("standard76");
 
     word model(atmosphereProperties.lookup("type"));
@@ -313,14 +314,18 @@ int main(int argc, char *argv[])
     Info<< "Initializing " << model <<" atmosphere." << endl;
     if (model == "simple")
     {
+        //- Simple hydrostatic equilibrium
         simpleAtmosphere(atmosphereProperties, g, dir, h, p, rho);
     }
-    else if (model == "standard")
+    else if (model == "tabulated")
     {
-        standardAtmosphere(atmosphereProperties, g, dir, h, p, rho);
+        //- Atmosphere is based on a lookup table of pressure and temperature Vs.
+        //  height. Air is the hard coded
+        tableAtmosphere(atmosphereProperties, g, dir, h, p, rho);
     }
     else if (model == "standard76")
     {
+        //- U.S. standard 76 atmosphere model
         standardAtmosphere76(atmosphereProperties, g, dir, h, p, rho);
     }
     else

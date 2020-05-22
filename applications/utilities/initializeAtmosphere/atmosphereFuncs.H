@@ -1,33 +1,7 @@
 namespace Foam
 {
 
-void standardAtmospherei
-(
-    const scalar& h,
-    scalar& p,
-    scalar& rho
-)
-{
-    scalar T;
-    if (h > 25000)
-    {
-        T = -131.213 + 0.00299*h + 273.15;
-        p = 2488.0*pow(T/216.6, -11.388);
-    }
-    else if (11000 < h && h <= 25000)
-    {
-        T = -56.46 + 273.15;
-        p = 22650.0*exp(1.73 - 0.000157*h);
-    }
-    else
-    {
-        T = 15.04 - 0.00649*h + 273.15;
-        p = 101298*pow(T/288.08, 5.256);
-    }
-    rho = p/(8314.5/28.97)/T;
-}
-
-void standardAtmosphere
+void tableAtmosphere
 (
     const dictionary& dict,
     const uniformDimensionedVectorField& g,
@@ -37,21 +11,38 @@ void standardAtmosphere
     volScalarField& rho
 )
 {
+    dictionary pTableDict(dict.subDict("pTable"));
+    lookupTable1D pTable
+    (
+        pTableDict.lookup("file"),
+        pTableDict.lookupOrDefault<word>("pMod", "none"),
+        pTableDict.lookupOrDefault<word>("hMod", "none")
+    );
+    dictionary TTableDict(dict.subDict("TTable"));
+    lookupTable1D TTable
+    (
+        pTableDict.lookup("file"),
+        pTableDict.lookupOrDefault<word>("TMod", "none"),
+        pTableDict.lookupOrDefault<word>("hMod", "none")
+    );
+
+    scalar R = 8314.32/28.97;
     forAll(rho, celli)
     {
-        standardAtmospherei(h[celli], p[celli], rho[celli]);
+        p[celli] = pTable.lookup(h[celli]);
+        scalar T = TTable.lookup(h[celli]);
+        rho[celli] = p[celli]/T/R;
     }
 
     forAll(rho.boundaryField(), patchi)
     {
         forAll(rho.boundaryField()[patchi], facei)
         {
-            standardAtmospherei
-            (
-                h.boundaryField()[patchi][facei],
-                p.boundaryFieldRef()[patchi][facei],
-                rho.boundaryFieldRef()[patchi][facei]
-            );
+            p.boundaryFieldRef()[patchi][facei] =
+                pTable.lookup(h.boundaryField()[patchi][facei]);
+            scalar T = TTable.lookup(h.boundaryField()[patchi][facei]);
+            rho.boundaryFieldRef()[patchi][facei] =
+                p.boundaryField()[patchi][facei]/T/R;
         }
     }
 }
@@ -166,9 +157,9 @@ void standardAtmosphere76
     volScalarField& rho
 )
 {
-    scalar p0(dict.lookupType<scalar>("p0"));
-    scalar rho0(dict.lookupType<scalar>("rho0"));
-    scalar T0(dict.lookupType<scalar>("T0"));
+    scalar p0 = 101325.0;
+    scalar rho0 = 1.225;
+    scalar T0 = 288.15;
     forAll(rho, celli)
     {
         standardAtmosphere76i
