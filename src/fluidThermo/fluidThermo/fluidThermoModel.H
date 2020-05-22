@@ -100,6 +100,9 @@ protected:
         //- Correct e boundary values
         void eBoundaryCorrection();
 
+        //- Initialize internal energy
+        void initialize();
+
 
 public:
 

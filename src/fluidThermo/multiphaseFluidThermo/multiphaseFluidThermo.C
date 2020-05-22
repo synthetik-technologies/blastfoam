@@ -114,30 +114,7 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
     }
-
-
-    //- If this is the top level model, initialize the internal energy
-    //  if it has not been read
-    if (master && max(e_).value() < 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-
-    correct();
-    if (max(mu_).value() < small && master)
-    {
-        viscous_ = false;
-    }
+    initialize();
 }
 
 

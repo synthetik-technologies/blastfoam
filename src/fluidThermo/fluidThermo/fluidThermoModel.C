@@ -310,6 +310,38 @@ void Foam::fluidThermoModel::eBoundaryCorrection()
     }
 }
 
+
+void Foam::fluidThermoModel::initialize()
+{
+    if (!master_)
+    {
+        return;
+    }
+    if (max(e_).value() <= 0.0)
+    {
+        volScalarField e(calce());
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+        eBoundaryCorrection();
+    }
+    this->correct();
+
+    if (max(mu_).value() < small)
+    {
+        viscous_ = false;
+    }
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::mu() const
 {
     return mu_;
