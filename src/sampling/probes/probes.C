@@ -471,7 +471,7 @@ void Foam::probes::movePoints(const polyMesh& mesh)
 
     if (fixedLocations_ && &mesh == &mesh_)
     {
-        findElements(mesh_, false);
+        findElements(mesh_, true);
     }
 }
 

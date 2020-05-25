@@ -8,7 +8,7 @@
 21-10-2019  Jeff Heylmun:   Added refinement to setFields utility
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by

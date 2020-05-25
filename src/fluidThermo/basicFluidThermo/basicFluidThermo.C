@@ -185,29 +185,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
         }
     }
 
-    //- If this is the top level model, initialize the internal energy
-    //  if it has not been read
-
-    if (master && max(e_).value() < 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-    correct();
-
-    if (max(mu_).value() < small && master)
-    {
-        viscous_ = false;
-    }
+    initialize();
 }
 
 
@@ -234,7 +212,7 @@ void Foam::basicFluidThermo<Thermo>::correct()
     {
         mu_ = volScalarFieldProperty
         (
-            IOobject::groupName("mu", name_),
+            IOobject::groupName("thermo:mu", name_),
             dimDynamicViscosity,
             &Thermo::mu,
             rho_,
@@ -345,7 +323,7 @@ Foam::basicFluidThermo<Thermo>::E() const
     (
         IOobject::groupName("e", name_),
         dimEnergy/dimMass,
-        &Thermo::Ea,
+        &Thermo::Es,
         rho_,
         e_,
         T_
@@ -365,7 +343,7 @@ Foam::basicFluidThermo<Thermo>::E
 {
     return patchFieldProperty
     (
-        &Thermo::Ea,
+        &Thermo::Es,
         patchi,
         rho,
         e,
@@ -386,7 +364,7 @@ Foam::basicFluidThermo<Thermo>::E
 {
     return cellSetProperty
     (
-        &Thermo::Ea,
+        &Thermo::Es,
         faceCells,
         rho,
         e,

@@ -15,5 +15,5 @@ LIB_LIBS = \
     -lblastLagrangian \
     -lblastDistributionModels \
     -lblastDynamicFvMesh \
-    -lbzlastSampling \
+    -lblastSampling \
     -lfluidThermo

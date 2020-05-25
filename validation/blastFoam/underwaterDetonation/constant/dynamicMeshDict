@@ -13,8 +13,12 @@ FoamFile
     object      dynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+<<<<<<< HEAD
 
 dynamicFvMesh   dynamicRefineBalancedFvMesh;
+=======
+dynamicFvMesh   adaptiveFvMesh;
+>>>>>>> master_test
 
 multiCritRefinementControls
 {

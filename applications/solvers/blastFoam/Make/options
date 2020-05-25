@@ -21,4 +21,6 @@ EXE_LIBS = \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lerrorEstimate
+    -lerrorEstimate \
+    -lblastSampling \
+    -lblastFunctionObjects

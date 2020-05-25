@@ -33,6 +33,84 @@ namespace Foam
     defineTypeNameAndDebug(points0MotionSolver, 0);
 }
 
+// * * * * * * * * * * * * * * Private Data Members  * * * * * * * * * * * * //
+
+Foam::IOobject Foam::points0MotionSolver::points0IO
+(
+    const polyMesh& mesh
+) const
+{
+    const word instance0
+    (
+        mesh.time().findInstance
+        (
+            mesh.meshDir(),
+            "points0",
+            IOobject::READ_IF_PRESENT
+        )
+    );
+
+    if (instance0 != mesh.time().constant())
+    {
+        // Points0 written to a time folder
+
+        return IOobject
+        (
+            "points0",
+            instance0,
+            polyMesh::meshSubDir,
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        );
+    }
+    else
+    {
+        // Check that points0 are actually in constant directory
+
+        IOobject io
+        (
+            "points0",
+            instance0,
+            polyMesh::meshSubDir,
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        );
+
+        if (io.typeHeaderOk<pointIOField>())
+        {
+            return io;
+        }
+        else
+        {
+            const word instance
+            (
+                mesh.time().findInstance
+                (
+                    mesh.meshDir(),
+                    "points",
+                    IOobject::READ_IF_PRESENT
+                )
+            );
+
+            // Copy of original mesh points
+            return IOobject
+            (
+                "points",
+                instance,
+                polyMesh::meshSubDir,
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE,
+                false
+            );
+        }
+    }
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::points0MotionSolver::points0MotionSolver
@@ -43,8 +121,14 @@ Foam::points0MotionSolver::points0MotionSolver
 )
 :
     motionSolver(mesh, dict, type),
-    points0_(pointIOField(polyMesh::points0IO(mesh)))
+
+    points0_(pointIOField(points0IO(mesh)))
 {
+    points0_.rename("points0");
+    points0_.writeOpt() = IOobject::AUTO_WRITE;
+    points0_.instance() = mesh.time().timeName();
+    points0_.checkIn();
+
     if (points0_.size() != mesh.nPoints())
     {
         FatalErrorInFunction

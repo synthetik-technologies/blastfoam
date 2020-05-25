@@ -110,32 +110,10 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
-
-    //- If this is the top level model, initialize the internal energy
-    //  if it has not been read
-    if (master && max(e_).value() < 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-    correct();
-
     // Update total density
     rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
-    if (max(mu_).value() < small && master)
-    {
-        viscous_ = false;
-    }
+    initialize();
 }
 
 

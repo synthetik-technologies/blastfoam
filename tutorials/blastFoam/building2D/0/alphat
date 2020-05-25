@@ -26,7 +26,7 @@ boundaryField
         type            calculated;
         value           uniform 1e-3;
     }
-    wall
+    walls
     {
         type            compressible::alphatWallFunction;
         value           uniform 1e-3;

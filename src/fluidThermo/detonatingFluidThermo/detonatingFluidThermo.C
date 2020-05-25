@@ -154,7 +154,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::cellSetProperty
 
     forAll(cells, celli)
     {
-        scalar x = activation_->lambdaPowi(celli);
+        scalar x = activation_->lambdaPowi(cells[celli]);
         psi[celli] =
            (this->*rpsiMethod)(args[celli] ...)*x
          + (this->*upsiMethod)(args[celli] ...)*(1.0 - x);
@@ -256,28 +256,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
         }
     }
 
-    //- If this is the top level model, initialize the internal energy
-    //  if it has not been read
-    if (master && max(e_).value() < 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-    correct();
-
-    if (max(mu_).value() < small && master)
-    {
-        viscous_ = false;
-    }
+    initialize();
 }
 
 
@@ -485,8 +464,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E() const
     (
         IOobject::groupName("e", name_),
         dimEnergy/dimMass,
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         rho_,
         e_,
         T_
@@ -506,8 +485,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
 {
     return patchFieldProperty
     (
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         patchi,
         rho,
         e,
@@ -528,8 +507,8 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
 {
     return cellSetProperty
     (
-        &uThermo::Ea,
-        &rThermo::Ea,
+        &uThermo::Es,
+        &rThermo::Es,
         faceCells,
         rho,
         e,

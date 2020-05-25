@@ -108,8 +108,9 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar ENei = eNei + 0.5*magSqr(UNei);
     scalar HNei(ENei + pNei/rhoNei);
 
-    scalar UvOwn(UOwn & normal);
-    scalar UvNei(UNei & normal);
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
 
     scalar c12(0.5*(cOwn + cNei));
 
@@ -145,12 +146,14 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 
     this->save(facei, patchi, phi, phi_);
 
+    scalar p;
     if (Ma12 >= 0)
     {
         this->save(facei, patchi, UOwn, Uf_);
         rhoPhi = rhoOwn;
         rhoUPhi = rhoOwn*UOwn;
         rhoEPhi = rhoOwn*HOwn;
+        p = pOwn;
     }
     else
     {
@@ -158,11 +161,13 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
         rhoPhi = rhoNei;
         rhoUPhi = rhoNei*UNei;
         rhoEPhi = rhoNei*HNei;
+        p = pNei;
     }
     rhoPhi *= phi;
     rhoUPhi *= phi;
     rhoUPhi += P12*Sf;
     rhoEPhi *= phi;
+    rhoEPhi += vMesh*magSf*p;
 }
 
 
@@ -190,8 +195,9 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);
 
-    scalar UvOwn(UOwn & normal);
-    scalar UvNei(UNei & normal);
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
 
     scalar c12(0.5*(cOwn + cNei));
 
@@ -227,11 +233,13 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 
     this->save(facei, patchi, phi, phi_);
 
+    scalar p;
     if (Ma12 >= 0)
     {
         this->save(facei, patchi, UOwn, Uf_);
         rhoUPhi = rhoOwn*UOwn;
         rhoEPhi = rhoOwn*EOwn + pOwn;
+        p = pOwn;
         forAll(alphasOwn, phasei)
         {
             alphaPhis[phasei] = alphasOwn[phasei];
@@ -243,6 +251,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
         this->save(facei, patchi, UNei, Uf_);
         rhoUPhi = rhoNei*UNei;
         rhoEPhi = rhoNei*ENei + pNei;
+        p = pNei;
         forAll(alphasNei, phasei)
         {
             alphaPhis[phasei] = alphasNei[phasei];
@@ -252,6 +261,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     rhoUPhi *= phi;
     rhoUPhi += P12*Sf;
     rhoEPhi *= phi;
+    rhoEPhi += vMesh*magSf*p;
 
     forAll(alphasOwn, phasei)
     {
@@ -273,11 +283,15 @@ Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
     scalar phi = getValue(facei, patchi, phi_());
     if ( phi >= 0)
     {
-        return phi*(rhoOwn*(eOwn + 0.5*magSqr(UOwn)) + pOwn);
+        return
+            phi*(rhoOwn*(eOwn + 0.5*magSqr(UOwn)) + pOwn)
+          + meshPhi(facei, patchi)*pOwn;
     }
     else
     {
-        return phi*(rhoNei*(eNei + 0.5*magSqr(UNei)) + pNei);
+        return
+            phi*(rhoNei*(eNei + 0.5*magSqr(UNei)) + pNei)
+          + meshPhi(facei, patchi)*pNei;
     }
 }
 

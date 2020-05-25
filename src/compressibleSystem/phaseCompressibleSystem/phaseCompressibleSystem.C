@@ -230,21 +230,33 @@ void Foam::phaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
+    const fvMesh& mesh(rho_.mesh());
+    volVectorField rhoUOld(rhoU_);
+    volScalarField rhoEOld(rhoE_);
+    if (mesh.moving() && stepi == 1)
+    {
+        volScalarField::Internal v0Byv(mesh.Vsc0()/mesh.Vsc());
+        rhoUOld.ref() *= v0Byv;
+        rhoEOld.ref() *= v0Byv;
+    }
+
     if (oldIs_[stepi - 1] != -1)
     {
         rhoUOld_.set
         (
             oldIs_[stepi - 1],
-            new volVectorField(rhoU_)
+            new volVectorField(rhoUOld)
         );
         rhoEOld_.set
         (
             oldIs_[stepi - 1],
-            new volScalarField(rhoE_)
+            new volScalarField(rhoEOld)
         );
+
+
     }
-    volVectorField rhoUOld(ai[stepi - 1]*rhoU_);
-    volScalarField rhoEOld(ai[stepi - 1]*rhoE_);
+    rhoUOld *= ai[stepi - 1];
+    rhoEOld *= ai[stepi - 1];
 
     for (label i = 0; i < stepi - 1; i++)
     {
@@ -435,10 +447,10 @@ void Foam::phaseCompressibleSystem::addECoeff(const volScalarField::Internal& EC
     if (!extESource_.valid())
     {
         extESource_ =
-        tmp<fvScalarMatrix>
-        (
-            new fvScalarMatrix(e(), dimEnergy/dimTime)
-        );
+            tmp<fvScalarMatrix>
+            (
+                new fvScalarMatrix(e(), dimEnergy/dimTime)
+            );
     }
     extESource_.ref() -= fvm::Sp(ECoeff, e());
 }

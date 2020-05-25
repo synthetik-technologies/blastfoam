@@ -27,7 +27,7 @@ endTime         0.050;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-3;
+writeInterval   1;
 
 writeFormat     ascii;
 
@@ -52,4 +52,9 @@ maxCo           0.5;
 
 functions
 {
+    writeTimes
+    {
+        type writeTimeList;
+        times (0.01 0.016 0.026 0.028 0.03 0.032 0.034 0.038);
+    }
 }

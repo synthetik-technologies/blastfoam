@@ -73,6 +73,7 @@ protected:
     tmp<surfaceScalarField> rhoOwn_;
     tmp<surfaceScalarField> rhoNei_;
 
+
     // Protected Functions
 
         //- Calcualte fluxes
@@ -134,6 +135,23 @@ protected:
         //- Correct fluxes
         virtual void postUpdate()
         {}
+
+        //- Return velocity w.r.t. face
+        scalar meshPhi(const label facei, const label patchi) const
+        {
+            if (!mesh_.moving())
+            {
+                return 0.0;
+            }
+            if (patchi != -1)
+            {
+                return mesh_.phi().boundaryField()[patchi][facei];
+            }
+            else
+            {
+                return mesh_.phi()[facei];
+            }
+        }
 
 
         //- Set Uf at facei

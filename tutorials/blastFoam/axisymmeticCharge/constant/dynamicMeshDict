@@ -1,0 +1,67 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh   adaptiveFvMesh;
+
+errorEstimator densityGradient;      // Model used to estimate error
+
+loadBalance
+{
+    balance yes;
+    allowableImbalance 0.2;
+    balanceInterval 10;
+}
+
+// How often to refine
+refineInterval 1;
+
+// Field to be refinement on
+field           error;
+
+// Refine field in between lower..upper (varies based on errorEstimator)
+lowerRefineLevel 0.05;
+upperRefineLevel 1e6;       // Should be very high for adaptiveFvMesh
+
+// If value < unrefineLevel unrefine
+unrefineLevel   0.05;
+
+// Number of cells refined around high error cells
+nBufferLayers   1;
+
+// Refine cells only up to maxRefinement levels
+maxRefinement   4;
+
+// Stop refinement if maxCells reached
+maxCells        100000000;
+
+// Flux field and corresponding velocity field. Fluxes on changed
+// faces get recalculated by interpolating the velocity. Use 'none'
+// on surfaceScalarFields that do not need to be reinterpolated.
+correctFluxes
+(
+    (phi none)
+    (own none)
+    (nei none)
+    (rhoPhi none)
+    (rhoPhi none)
+    (rhoEPhi none)
+    (rhoUPhi none)
+);
+
+// Write the refinement level as a volScalarField
+dumpLevel       true;
+
+// ************************************************************************* //

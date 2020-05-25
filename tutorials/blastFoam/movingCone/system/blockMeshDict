@@ -1,0 +1,160 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 0.001;
+
+y1 0.7471460236;
+y2 1.992389396;
+y3 4.98097349;
+
+z1 0.0653668071;
+z2 0.1743114855;
+z3 0.4357787137;
+
+nz1 -0.0653668071;
+nz2 -0.1743114855;
+nz3 -0.4357787137;
+
+vertices
+(
+    (-10    0       0)
+    (-7     0       0)
+    (-3.5   0       0)
+    (2      0       0)
+
+    (-10    $y1     $nz1)
+    (-7     $y1     $nz1)
+
+    (-3.5   $y2     $nz2)
+    (2      $y2     $nz2)
+
+    (-10    $y3     $nz3)
+    (-7     $y3     $nz3)
+    (-3.5   $y3     $nz3)
+    (2      $y3     $nz3)
+
+    (-10    $y1     $z1)
+    (-7     $y1     $z1)
+
+    (-3.5   $y2     $z2)
+    (2      $y2     $z2)
+
+    (-10    $y3     $z3)
+    (-7     $y3     $z3)
+    (-3.5   $y3     $z3)
+    (2      $y3     $z3)
+);
+
+blocks
+(
+    hex (0 1 5 4 0 1 13 12) (15 7 1) simpleGrading (1 1 1)
+    hex (2 3 7 6 2 3 15 14) (15 15 1) simpleGrading (1 1 1)
+    hex (4 5 9 8 12 13 17 16) (15 15 1) simpleGrading (1 1 1)
+    hex (5 6 10 9 13 14 18 17) (25 15 1) simpleGrading (1 1 1)
+    hex (6 7 11 10 14 15 19 18) (15 15 1) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    movingWall
+    {
+        type wall;
+        faces
+        (
+            (1 5 13 1)
+            (5 6 14 13)
+            (2 2 14 6)
+        );
+    }
+    farFieldMoving
+    {
+        type patch;
+        faces
+        (
+            (9 17 18 10)
+        );
+    }
+    fixedWall
+    {
+        type wall;
+        faces
+        (
+            (3 7 15 3)
+            (7 11 19 15)
+        );
+    }
+    axis
+    {
+        type empty;
+        faces
+        (
+            (0 1 1 0)
+            (2 3 3 2)
+        );
+    }
+    left
+    {
+        type patch;
+        faces
+        (
+            (0 0 12 4)
+            (4 12 16 8)
+        );
+    }
+    farField
+    {
+        type patch;
+        faces
+        (
+            (8 16 17 9)
+            (10 18 19 11)
+        );
+    }
+    back
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 1)
+            (2 6 7 3)
+            (4 8 9 5)
+            (5 9 10 6)
+            (6 10 11 7)
+        );
+    }
+    front
+    {
+        type wedge;
+        faces
+        (
+            (0 1 13 12)
+            (2 3 15 14)
+            (12 13 17 16)
+            (13 14 18 17)
+            (14 15 19 18)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

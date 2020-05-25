@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-07-04-2020                  | Added additional checks for mesh created with
+07-04-2020   Jeff Heylmun:  | Added additional checks for mesh created with
                             | snappyHexMesh
 -------------------------------------------------------------------------------
 License
@@ -211,6 +211,12 @@ protected:
             //  (from cell splitting)
             template <class T>
             void mapNewInternalFaces(const labelList& faceMap);
+
+            //- Overload update mesh to include other methods
+            virtual void updateMesh(const mapPolyMesh& mpm)
+            {
+                fvMesh::updateMesh(mpm);
+            }
 
 
 

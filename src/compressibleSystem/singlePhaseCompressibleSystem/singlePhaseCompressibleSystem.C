@@ -108,16 +108,22 @@ void Foam::singlePhaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
+    volScalarField rhoOld(rho_);
+    if (rho_.mesh().moving() && stepi == 1)
+    {
+        rhoOld.ref() *= rho_.mesh().Vsc0()/rho_.mesh().Vsc();
+    }
+
     if (oldIs_[stepi - 1] != -1)
     {
         rhoOld_.set
         (
             oldIs_[stepi - 1],
-            new volScalarField(rho_)
+            new volScalarField(rhoOld)
         );
     }
+    rhoOld *= ai[stepi - 1];
 
-    volScalarField rhoOld(ai[stepi - 1]*rho_);
     for (label i = 0; i < stepi - 1; i++)
     {
         label fi = oldIs_[i];

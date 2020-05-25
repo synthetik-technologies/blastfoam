@@ -51,10 +51,28 @@ Foam::activationModels::linearActivation::linearActivation
     detonationPoints_(dict.lookupType<List<vector>>("points")),
     vDet_("vDet", dimVelocity, dict)
 {
+    const volScalarField& alpha
+    (
+        mesh.lookupObject<volScalarField>
+        (
+            IOobject::groupName("alpha", phaseName)
+        )
+    );
     Info<< "Initiation Points: " << nl
         << detonationPoints_ << nl
         << "Detonation speed: " << vDet_ << " [m/s]" << nl
         << endl;
+
+    forAll(detonationPoints_, pti)
+    {
+        label celli = mesh.findCell(detonationPoints_[pti]);
+        if (alpha[celli] < small)
+        {
+            WarningInFunction
+                << "There is no mass for phase " << phaseName
+                << " at " << detonationPoints_[pti] << endl;
+        }
+    }
 }
 
 

@@ -11,7 +11,7 @@
                             for foam-extend 3.2 by Luca Cornolti
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -287,7 +287,7 @@ Foam::adaptiveFvMesh::refine
     //    cellTreePtr_.clear();
 
     // Update fields
-    updateMesh(map);
+    this->updateMesh(map);
 
 
     // Move mesh
@@ -524,7 +524,22 @@ Foam::adaptiveFvMesh::unrefine
         << endl;
 
     // Update fields
-    updateMesh(map);
+    this->updateMesh(map);
+
+
+    // Move mesh
+    /*
+    pointField newPoints;
+    if (map().hasMotionPoints())
+    {
+        newPoints = map().preMotionPoints();
+    }
+    else
+    {
+        newPoints = points();
+    }
+    movePoints(newPoints);
+    */
 
 
     // Move mesh

@@ -42,7 +42,7 @@ License
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
-// #include "BirchMurnaghan2.H"
+#include "BirchMurnaghan2.H"
 #include "BirchMurnaghan3.H"
 #include "solidJWL.H"
 
@@ -51,13 +51,14 @@ License
 #include "Tait.H"
 #include "vanderWaals.H"
 #include "JWL.H"
-// #include "JWLC.H"
+#include "JWLC.H"
 #include "LSZK.H"
 #include "BWR.H"
-// #include "BKW.H"
+#include "BKW.H"
 #include "DoanNickel.H"
 
-#include "tabulated.H"
+#include "tabulatedThermo.H"
+#include "tabulatedThermoEOS.H"
 
 #include "blastSpecie.H"
 
@@ -78,12 +79,12 @@ namespace Foam
         Murnaghan
     );
 
-//     defineThermoTypes
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2
-//     );
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2
+    );
 
     defineThermoTypes
     (
@@ -114,12 +115,12 @@ namespace Foam
         idealGas
     );
 
-//     defineThermoTypes
-//     (
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
     defineThermoTypes
     (
@@ -156,12 +157,12 @@ namespace Foam
         JWL
     );
 
-//     defineThermoTypes
-//     (
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     defineThermoTypes
     (
@@ -177,7 +178,20 @@ namespace Foam
         DoanNickel
     );
 
-    typedef constTransport<tabulated<blastSpecie>> constTransporttabulatedEOS;
+    typedef
+        constTransport
+        <
+            tabulatedThermo
+            <
+                MGEquationOfState
+                <
+                    DoanNickel<blastSpecie>
+                >
+            >
+        > constTransporttabulatedMGEquationOfStateDoanNickel;
+
+    typedef constTransport<tabulatedThermoEOS<blastSpecie>>
+        constTransporttabulatedMGEquationOfStatetabulated;
 }
 
 #endif

@@ -1,5 +1,3 @@
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
 bool setRegion
 (
     const label nCells,

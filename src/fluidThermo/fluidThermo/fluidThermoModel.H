@@ -100,6 +100,9 @@ protected:
         //- Correct e boundary values
         void eBoundaryCorrection();
 
+        //- Initialize internal energy
+        void initialize();
+
 
 public:
 
@@ -335,6 +338,18 @@ public:
         bool limit() const
         {
             return limit_;
+        }
+
+        //- Non-const access to thermo model phasei
+        virtual fluidThermoModel& thermo(const label)
+        {
+            return *this;
+        }
+
+        //- Const access to thermo model phasei
+        virtual const fluidThermoModel& thermo(const label) const
+        {
+            return *this;
         }
 
 

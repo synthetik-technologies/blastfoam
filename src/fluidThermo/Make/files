@@ -1,7 +1,8 @@
 fluidThermo/fluidThermoModel.C
 fluidThermo/newFluidThermoModel.C
 
-specie/tabulated/lookupTable/lookupTable.C
+lookupTables/lookupTable2D/lookupTable2D.C
+lookupTables/lookupTable1D/lookupTable1D.C
 
 basicFluidThermo/basicFluidThermos.C
 

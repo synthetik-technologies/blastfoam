@@ -4,5 +4,6 @@ blastMachNo/blastMachNos.C
 fieldMax/fieldMax.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
+writeTimeList/writeTimeList.C
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

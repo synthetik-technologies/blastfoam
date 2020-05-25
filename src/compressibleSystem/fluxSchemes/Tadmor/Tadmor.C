@@ -147,6 +147,10 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
     scalar cSfOwn(cOwn*magSf);
     scalar cSfNei(cNei*magSf);
 
+    const scalar vMesh(meshPhi(facei, patchi));
+    phivOwn -= vMesh;
+    phivNei -= vMesh;
+
     scalar ap(max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0));
     scalar am(min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0));
 
@@ -178,6 +182,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + vMesh*0.5*(pOwn + pNei)
     );
 }
 
@@ -210,6 +215,10 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     scalar cSfOwn(cOwn*magSf);
     scalar cSfNei(cNei*magSf);
+
+    const scalar vMesh(meshPhi(facei, patchi));
+    phivOwn -= vMesh;
+    phivNei -= vMesh;
 
     scalar aOwn(max(max(phivOwn + cSfOwn, phivNei + cSfNei), 0.0));
     scalar aNei(min(min(phivOwn - cSfOwn, phivNei - cSfNei), 0.0));
@@ -251,6 +260,7 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + vMesh*0.5*(pOwn + pNei)
     );
 }
 
@@ -276,6 +286,7 @@ Foam::scalar Foam::fluxSchemes::Tadmor::energyFlux
         aphivOwn*(rhoOwn*EOwn + pOwn)
       + aphivNei*(rhoNei*ENei + pNei)
       + aSf*pOwn - aSf*pNei
+      + meshPhi(facei, patchi)*0.5*(pOwn + pNei)
     );
 }
 

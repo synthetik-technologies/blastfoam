@@ -35,6 +35,13 @@ Foam::idealGas<Specie>::idealGas(const dictionary& dict)
 :
     Specie(dict),
     gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
-{}
+{
+    if (gamma_ <= 1.0)
+    {
+        FatalErrorInFunction
+            << "gamma must be greater than 1."
+            << abort(FatalError);
+    }
+}
 
 // ************************************************************************* //
