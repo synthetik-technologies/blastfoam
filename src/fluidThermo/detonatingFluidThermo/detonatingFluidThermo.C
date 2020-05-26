@@ -56,9 +56,20 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::volScalarFieldProperty
 
     forAll(this->p_, celli)
     {
-        psi[celli] =
-            (this->*rpsiMethod)(args[celli] ...)*x[celli]
-          + (this->*upsiMethod)(args[celli] ...)*(1.0 - x[celli]);
+        if (x[celli] < small)
+        {
+            psi[celli] = (this->*upsiMethod)(args[celli] ...);
+        }
+        else if ((1.0 - x[celli]) < small)
+        {
+            psi[celli] = (this->*rpsiMethod)(args[celli] ...);
+        }
+        else
+        {
+            psi[celli] =
+                (this->*rpsiMethod)(args[celli] ...)*x[celli]
+              + (this->*upsiMethod)(args[celli] ...)*(1.0 - x[celli]);
+        }
     }
 
     volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
@@ -69,15 +80,26 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::volScalarFieldProperty
 
         forAll(this->p_.boundaryField()[patchi], facei)
         {
-            pPsi[facei] =
-                (this->*rpsiMethod)
-                (
-                    args.boundaryField()[patchi][facei] ...
-                )*x.boundaryField()[patchi][facei]
-              + (this->*upsiMethod)
-                (
-                    args.boundaryField()[patchi][facei] ...
-                )*(1.0 - x.boundaryField()[patchi][facei]);
+            const scalar& xi = x.boundaryField()[patchi][facei];
+            if (xi < small)
+            {
+                pPsi[facei] =
+                    (this->*upsiMethod)(args.boundaryField()[patchi][facei] ...);
+            }
+            else if ((1.0 - xi) < small)
+            {
+                pPsi[facei] =
+                    (this->*rpsiMethod)(args.boundaryField()[patchi][facei] ...);
+            }
+            else
+            {
+                pPsi[facei] =
+                    (this->*rpsiMethod)(args.boundaryField()[patchi][facei] ...)*xi
+                  + (this->*upsiMethod)
+                    (
+                        args.boundaryField()[patchi][facei] ...
+                    )*(1.0 - xi);
+            }
         }
     }
 
@@ -155,9 +177,20 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::cellSetProperty
     forAll(cells, celli)
     {
         scalar x = activation_->lambdaPowi(cells[celli]);
-        psi[celli] =
-           (this->*rpsiMethod)(args[celli] ...)*x
-         + (this->*upsiMethod)(args[celli] ...)*(1.0 - x);
+        if (x < small)
+        {
+            psi[celli] = (this->*upsiMethod)(args[celli] ...);
+        }
+        else if ((1.0 - x) < small)
+        {
+            psi[celli] = (this->*rpsiMethod)(args[celli] ...);
+        }
+        else
+        {
+            psi[celli] =
+                (this->*rpsiMethod)(args[celli] ...)*x
+              + (this->*upsiMethod)(args[celli] ...)*(1.0 - x);
+        }
     }
 
     return tPsi;
@@ -184,9 +217,20 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::patchFieldProperty
 
     forAll(this->p_.boundaryField()[patchi], facei)
     {
-        psi[facei] =
-            (this->*rpsiMethod)(args[facei] ...)*x[facei]
-          + (this->*upsiMethod)(args[facei] ...)*(1.0 - x[facei]);
+        if (x[facei] < small)
+        {
+             psi[facei] = (this->*upsiMethod)(args[facei] ...);
+        }
+        else if ((1.0 - x[facei]) < small)
+        {
+            psi[facei] = (this->*rpsiMethod)(args[facei] ...);
+        }
+        else
+        {
+            psi[facei] =
+                (this->*rpsiMethod)(args[facei] ...)*x[facei]
+              + (this->*upsiMethod)(args[facei] ...)*(1.0 - x[facei]);
+        }
     }
 
     return tPsi;
