@@ -1,16 +1,20 @@
-basicThermo/basicThermoModel.C
+basic/basicThermo/basicThermoModel.C
 
-fluidThermo/fluidThermoModel.C
-fluidThermo/newFluidThermoModel.C
+basic/fluidThermo/fluidThermoModel.C
+basic/fluidThermo/newFluidThermoModel.C
 
+basic/basicFluidThermo/basicFluidThermos.C
+
+/*
 solidThermo/solidThermoModel.C
 solidThermo/solidThermoModels.C
 solidThermo/newSolidThermoModel.C
 
+
 lookupTables/lookupTable2D/lookupTable2D.C
 lookupTables/lookupTable1D/lookupTable1D.C
 
-basicFluidThermo/basicFluidThermos.C
+
 
 multiphaseFluidThermo/multiphaseFluidThermo.C
 twoPhaseFluidThermo/twoPhaseFluidThermo.C
@@ -39,5 +43,6 @@ derivedFvPatchFields/gradientEnergy/blastGradientEnergyFvPatchScalarField.C
 derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
+*/
 
 LIB = $(BLAST_LIBBIN)/libfluidThermo
