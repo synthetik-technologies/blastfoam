@@ -116,11 +116,7 @@ void Foam::errorEstimators::densityGradient::update()
             (
                 rho_.boundaryField()[patchi].patchNeighbourField()
             );
-            vectorField drField
-            (
-                rho_.mesh().C().boundaryField()[patchi].patchNeighbourField()
-              - rho_.mesh().C().boundaryField()[patchi].patchInternalField()
-            );
+            vectorField drField(patch.delta());
             vectorField gradRhop
             (
                 gradRho.boundaryField()[patchi].patchInternalField()
