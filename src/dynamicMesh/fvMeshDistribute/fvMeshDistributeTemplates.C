@@ -212,12 +212,12 @@ void Foam::fvMeshDistribute::mapExposedFaces
 ////////////////////////////////////////////////////////////////////////
 // Daniel Deising, Daniel Rettenmaier
 // surfaceFields on coupled patches, which are no fluxFields must not be
-// flipped. 
+// flipped.
 
-// TODO: Generalize 
+// TODO: Generalize
         bool flipFace = false;
-        if 
-        (    
+        if
+        (
             fld.name().find("phi") != std::string::npos
             || fld.name().find("Phi") != std::string::npos
         )

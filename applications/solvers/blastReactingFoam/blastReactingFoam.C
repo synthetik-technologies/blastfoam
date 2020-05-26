@@ -32,11 +32,9 @@ Description
 
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "reactingCompressibleSystem.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -63,11 +61,6 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
-
-        if (!isA<staticFvMesh>(mesh))
-        {
-            error->update();
-        }
 
         mesh.update();
 

@@ -47,8 +47,7 @@ Foam::errorEstimators::densityGradient::densityGradient
     const dictionary& dict
 )
 :
-    errorEstimator(mesh, dict),
-    rho_(mesh.lookupObject<volScalarField>("rho"))
+    errorEstimator(mesh, dict)
 {}
 
 
@@ -62,9 +61,10 @@ Foam::errorEstimators::densityGradient::~densityGradient()
 
 void Foam::errorEstimators::densityGradient::update()
 {
+    const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
     volScalarField& error(*this);
 
-    volVectorField gradRho(fvc::grad(rho_));
+    volVectorField gradRho(fvc::grad(rho));
     scalarField dL(mesh_.V()/fvc::surfaceSum(mesh_.magSf()));
 
     const labelUList& owner = mesh_.owner();
@@ -84,8 +84,8 @@ void Foam::errorEstimators::densityGradient::update()
         // Ignore error in empty directions
         if (mag(solutionD & (dr/magdr)) > 0.1)
         {
-            scalar dRhodr = (rho_[nei] - rho_[own])/magdr;
-            scalar rhoc = (rho_[nei] + rho_[own])*0.5;
+            scalar dRhodr = (rho[nei] - rho[own])/magdr;
+            scalar rhoc = (rho[nei] + rho[own])*0.5;
             scalar dl = (dL[own] + dL[nei])*0.5;
             scalar dRhoDotOwn = gradRho[own] & (dr/magdr);
             scalar dRhoDotNei = gradRho[nei] & (-dr/magdr);
@@ -105,16 +105,16 @@ void Foam::errorEstimators::densityGradient::update()
     {
         if (error.boundaryField()[patchi].coupled())
         {
-            const fvPatch& patch = rho_.boundaryField()[patchi].patch();
+            const fvPatch& patch = rho.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = patch.faceCells();
             scalarField rhop
             (
-                rho_.boundaryField()[patchi].patchInternalField()
+                rho.boundaryField()[patchi].patchInternalField()
             );
             scalarField rhon
             (
-                rho_.boundaryField()[patchi].patchNeighbourField()
+                rho.boundaryField()[patchi].patchNeighbourField()
             );
             vectorField drField(patch.delta());
             vectorField gradRhop

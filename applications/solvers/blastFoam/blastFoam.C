@@ -38,7 +38,6 @@ Description
 #include "phaseCompressibleSystem.H"
 #include "fiveEqnCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -86,10 +85,6 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        if (!isA<staticFvMesh>(mesh))
-        {
-            error->update();
-        }
         mesh.update();
 
         fluid->encode();

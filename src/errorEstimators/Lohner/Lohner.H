@@ -30,7 +30,8 @@ Description
     References:
     \verbatim
         R. Löhner (1987).
-        An adaptive finite element scheme for transient problems in CFD
+        An adaptive finite element scheme for transient problems in
+ CFD
         Computer Methods in Applied Mechanics and Engineering, 61, 323-338.
     \endverbatim
 
@@ -63,9 +64,6 @@ class Lohner
 
         //- Field name
         const word fieldName_;
-
-        //- Constant reference to density
-        const volScalarField& x_;
 
         //- Coefficient
         const scalar epsilon_;

@@ -62,14 +62,6 @@ class dynamicFvMesh
         //- Disallow default bitwise assignment
         void operator=(const dynamicFvMesh&);
 
-protected:
-
-    //- Set dynamicMeshDict to MUST_READ_IF_MODIFIED
-    void setReadIfModified()
-    {
-        dynamicMeshDict_.readOpt() = IOobject::MUST_READ_IF_MODIFIED;
-    }
-
 
 public:
 

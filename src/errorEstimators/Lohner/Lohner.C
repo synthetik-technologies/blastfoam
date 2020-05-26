@@ -50,7 +50,6 @@ Foam::errorEstimators::Lohner::Lohner
 :
     errorEstimator(mesh, dict),
     fieldName_(dict.lookup("deltaField")),
-    x_(mesh.lookupObject<volScalarField>("rho")),
     epsilon_(readScalar(dict.lookup("epsilon")))
 {}
 
@@ -65,10 +64,11 @@ Foam::errorEstimators::Lohner::~Lohner()
 
 void Foam::errorEstimators::Lohner::update()
 {
+    const volScalarField& x = mesh_.lookupObject<volScalarField>(fieldName_);
     volScalarField& error(*this);
     surfaceScalarField xf
     (
-        cubic<scalar>(x_.mesh()).interpolate(x_)
+        cubic<scalar>(mesh_).interpolate(x)
     );
 
     const labelUList& owner = mesh_.owner();
@@ -86,15 +86,15 @@ void Foam::errorEstimators::Lohner::update()
         scalar eT =
             sqrt
             (
-                mag(x_[nei] - 2.0*xf[facei] + x_[own])
+                mag(x[nei] - 2.0*xf[facei] + x[own])
                /(
-                    mag(x_[nei] - xf[facei])
-                  + mag(xf[facei] - x_[own])
+                    mag(x[nei] - xf[facei])
+                  + mag(xf[facei] - x[own])
                   + epsilon_
                    *(
-                        mag(x_[nei])
+                        mag(x[nei])
                       + 2.0*mag(xf[facei])
-                      + mag(x_[own])
+                      + mag(x[own])
                     )
                 )
             );
@@ -106,20 +106,20 @@ void Foam::errorEstimators::Lohner::update()
     {
         if (error.boundaryField()[patchi].coupled())
         {
-            const fvPatch& patch = x_.boundaryField()[patchi].patch();
+            const fvPatch& patch = x.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = patch.faceCells();
             scalarField xp
             (
-                x_.boundaryField()[patchi].patchInternalField()
+                x.boundaryField()[patchi].patchInternalField()
             );
             scalarField xn
             (
-                x_.boundaryField()[patchi].patchNeighbourField()
+                x.boundaryField()[patchi].patchNeighbourField()
             );
             scalarField xbf
             (
-                x_.boundaryField()[patchi]
+                x.boundaryField()[patchi]
             );
 
             forAll(faceCells, facei)

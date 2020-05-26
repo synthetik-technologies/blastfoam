@@ -57,9 +57,6 @@ class delta
         //- Field name
         const word name_;
 
-        //- Constant reference to field
-        const volScalarField& x_;
-
 
 public:
 
