@@ -40,6 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "basicThermoModel.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
@@ -55,35 +56,15 @@ namespace Foam
 
 class fluidThermoModel
 :
+    public basicThermoModel,
     public regIOobject
 {
 protected:
 
     // Protected data
 
-        //- Is this the top level fluidThermoModel
-        bool master_;
-
-        //- Names of phase
-        word name_;
-
-        //- Pressure
-        volScalarField& p_;
-
-        //- Phase density
-        volScalarField& rho_;
-
-        //- Reference to internal energy
-        volScalarField& e_;
-
-        //- Reference to temperature
-        volScalarField& T_;
-
         //- Saved viscosity field
         volScalarField mu_;
-
-        //- Thermal diffusivity [kg/m/s]
-        volScalarField alpha_;
 
         //- Residual volume fraction
         dimensionedScalar residualAlpha_;
@@ -91,18 +72,11 @@ protected:
         //- Residual density
         dimensionedScalar residualRho_;
 
-        //- Is the internal energy limited
-        Switch limit_;
-
         //- Is there viscosity
         bool viscous_;
 
-        //- Correct e boundary values
-        void eBoundaryCorrection();
-
         //- Initialize internal energy
         void initialize();
-
 
 public:
 
@@ -197,133 +171,7 @@ public:
     //- Destructor
     virtual ~fluidThermoModel();
 
-
-    // Static public functions
-
-        //- Generic lookup for thermodynamics package thermoTypeName
-        template<class Table>
-        static typename Table::iterator lookupThermo
-        (
-            Table* tablePtr,
-            const char* cmptNames[],
-            const word& thermoTypeName
-        );
-
-        //- Generic lookup for each of the related thermodynamics packages
-        template<class Table>
-        static typename Table::iterator lookupThermo
-        (
-            const dictionary& thermoDict,
-            Table* tablePtr
-        );
-
-        //- Return the thermo type name given a dictionary
-        static word readThermoType(const dictionary& dict);
-
-        //- Split name of thermo package into a list of the components names
-        static wordList splitThermoName
-        (
-            const word& thermoName
-        );
-
-        //- Return the internal energy boundary types using an input
-        //  temperature field
-        static wordList eBoundaryTypes(const volScalarField& T);
-
-        //- Return the internal energy boundary types using an input
-        //  temperature field
-        static wordList eBoundaryBaseTypes(const volScalarField& T);
-
-
     // Access functions
-
-        //- Return residual volume fraction
-        virtual dimensionedScalar residualAlpha() const
-        {
-            return residualAlpha_;
-        }
-
-        //- Return residual density
-        virtual dimensionedScalar residualRho() const
-        {
-            return residualRho_;
-        }
-
-        //- Return constant reference to pressure field
-        const volScalarField& p() const
-        {
-            return p_;
-        }
-
-        //- Return non-constant reference to pressure field
-        volScalarField& p()
-        {
-            return p_;
-        }
-
-        //- Return constant reference to density field
-        const volScalarField& rho() const
-        {
-            return rho_;
-        }
-
-        //- Return non-constant reference to density field
-        volScalarField& rho()
-        {
-            return rho_;
-        }
-
-        //- Return constant reference to density field
-        const volScalarField& T() const
-        {
-            return T_;
-        }
-
-        //- Return non-constant reference to density field
-        volScalarField& T()
-        {
-            return T_;
-        }
-
-        //- Return constant reference to density field
-        const volScalarField& e() const
-        {
-            return e_;
-        }
-
-        //- Return non-constant reference to density field
-        volScalarField& e()
-        {
-            return e_;
-        }
-
-
-    // Member Functions
-
-        //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        ) = 0;
-
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const labelList& oldIs,
-            const label& nOld,
-            const labelList& deltaIs,
-            const label nDelta
-        ) = 0;
-
-        //- Remove stored fields
-        virtual void clearODEFields() = 0;
-
-
-        //- Correct thermodynamic fields
-        virtual void correct() = 0;
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
@@ -333,12 +181,6 @@ public:
 
         //- Return the speed of sound for patchi
         virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
-
-        //- Is the internal energy limited
-        bool limit() const
-        {
-            return limit_;
-        }
 
         //- Non-const access to thermo model phasei
         virtual fluidThermoModel& thermo(const label)
@@ -360,75 +202,6 @@ public:
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce() const = 0;
-
-        //- Calculate temperature
-        virtual tmp<volScalarField> calcT() const = 0;
-
-        //- Calculate internal energy
-        virtual tmp<volScalarField> E() const = 0;
-
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> E
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const = 0;
-
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> E
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const labelList& faceCells
-        ) const = 0;
-
-        //- Return molecular weight
-        virtual tmp<volScalarField> W() const = 0;
-
-        //- Return molecular weight
-        virtual scalar Wi(const label celli) const = 0;
-
-        //- Mie Gruniesen coefficient
-        virtual tmp<volScalarField> Gamma() const = 0;
-
-        //- Mie Gruniesen coefficient for a patch
-        virtual tmp<scalarField> Gamma(const label patchi) const = 0;
-
-        //- Heat capacity at constant pressure of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cp() const = 0;
-
-        //- Heat capacity at constant pressure of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cp(const label patchi) const = 0;
-
-        //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-        virtual scalar Cpi(const label celli) const = 0;
-
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const = 0;
-
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv(const label patchi) const = 0;
-
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const = 0;
-
-        //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-        virtual scalar Cvi(const label celli) const = 0;
-
-        //- Specific heat ratio
-        virtual tmp<volScalarField> CpByCv() const = 0;
-
-        //- Specific heat ratio for patchi
-        virtual tmp<scalarField> CpByCv(const label patchi) const = 0;
 
         //- Dynamic viscosity of mixture [kg/m/s]
         virtual tmp<volScalarField> mu() const;
@@ -506,12 +279,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "fluidThermoModelTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -26,13 +26,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicFluidThermo.H"
+#include "SolidThermoModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<class Thermo>
 template<class Method, class ... Args>
-Foam::tmp<Foam::volScalarField> Foam::basicFluidThermo<Thermo>::volScalarFieldProperty
+Foam::tmp<Foam::volScalarField> Foam::SolidThermoModel<Thermo>::volScalarFieldProperty
 (
     const word& psiName,
     const dimensionSet& psiDim,
@@ -79,7 +79,7 @@ Foam::tmp<Foam::volScalarField> Foam::basicFluidThermo<Thermo>::volScalarFieldPr
 
 template<class Thermo>
 template<class Method, class ... Args>
-Foam::tmp<Foam::scalarField> Foam::basicFluidThermo<Thermo>::cellSetProperty
+Foam::tmp<Foam::scalarField> Foam::SolidThermoModel<Thermo>::cellSetProperty
 (
     Method psiMethod,
     const labelList& cells,
@@ -104,7 +104,7 @@ Foam::tmp<Foam::scalarField> Foam::basicFluidThermo<Thermo>::cellSetProperty
 
 template<class Thermo>
 template<class Method, class ... Args>
-Foam::tmp<Foam::scalarField> Foam::basicFluidThermo<Thermo>::patchFieldProperty
+Foam::tmp<Foam::scalarField> Foam::SolidThermoModel<Thermo>::patchFieldProperty
 (
     Method psiMethod,
     const label patchi,
@@ -130,7 +130,7 @@ Foam::tmp<Foam::scalarField> Foam::basicFluidThermo<Thermo>::patchFieldProperty
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::basicFluidThermo<Thermo>::basicFluidThermo
+Foam::SolidThermoModel<Thermo>::SolidThermoModel
 (
     const word& name,
     volScalarField& p,
@@ -141,7 +141,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     const bool master
 )
 :
-    fluidThermoModel
+    solidThermoModel
     (
         name,
         p,
@@ -153,122 +153,44 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     ),
     Thermo(dict)
 {
-    //- Initialize the density using the pressure and temperature
-    //  This is only done at the first time step (Not on restart)
-    if
-    (
-        dict.lookupOrDefault<Switch>("calculateDensity", false)
-     && rho_.time().value() == rho_.time().startTime().value()
-    )
+    volScalarField& rhoRef(solidThermoModel::rho_);
+    forAll(rhoRef, celli)
     {
-        volScalarField rhoInit
-        (
-            volScalarFieldProperty
-            (
-                IOobject::groupName("rhoInit", basicThermoModel::name_),
-                dimDensity,
-                &Thermo::initializeRho,
-                p_,
-                rho_,
-                e_,
-                T_
-            )
-        );
-        rho_ = rhoInit;
-        forAll(rho_.boundaryField(), patchi)
+        rhoRef[celli] = Thermo::rho();
+    }
+    forAll(rhoRef.boundaryField(), patchi)
+    {
+        forAll(rhoRef.boundaryField()[patchi], facei)
         {
-            forAll(rho_.boundaryField()[patchi], facei)
-            {
-                rho_.boundaryFieldRef()[patchi][facei] =
-                    rhoInit.boundaryField()[patchi][facei];
-            }
+            rhoRef.boundaryFieldRef()[patchi][facei] = Thermo::rho();
         }
     }
-
-    initialize();
+    e_ = E();
+    T_ = calcT();
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::basicFluidThermo<Thermo>::~basicFluidThermo()
+Foam::SolidThermoModel<Thermo>::~SolidThermoModel()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
-void Foam::basicFluidThermo<Thermo>::correct()
+void Foam::SolidThermoModel<Thermo>::correct()
 {
     if (master_)
     {
         T_ = calcT();
-        p_ = calcP();
-        p_.max(small);
-    }
-
-    if (viscous_)
-    {
-        mu_ = volScalarFieldProperty
-        (
-            IOobject::groupName("thermo:mu", basicThermoModel::name_),
-            dimDynamicViscosity,
-            &Thermo::mu,
-            rho_,
-            e_,
-            T_
-        );
-
-        alpha_ = volScalarFieldProperty
-        (
-            IOobject::groupName("alphah", basicThermoModel::name_),
-            dimensionSet(1, -1, -1, 0, 0),
-            &Thermo::alphah,
-            rho_,
-            e_,
-            T_
-        );
     }
 }
 
-
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::speedOfSound() const
-{
-    return volScalarFieldProperty
-    (
-        IOobject::groupName("speedOfSound", basicThermoModel::name_),
-        dimVelocity,
-        &Thermo::speedOfSound,
-        p_,
-        rho_,
-        e_,
-        T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::speedOfSound(const label patchi) const
-{
-    return patchFieldProperty
-    (
-        &Thermo::speedOfSound,
-        patchi,
-        p_.boundaryField()[patchi],
-        rho_.boundaryField()[patchi],
-        e_.boundaryField()[patchi],
-        T_.boundaryField()[patchi]
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::calcT() const
+Foam::SolidThermoModel<Thermo>::calcT() const
 {
     return volScalarFieldProperty
     (
@@ -284,40 +206,7 @@ Foam::basicFluidThermo<Thermo>::calcT() const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::calcP() const
-{
-    return volScalarFieldProperty
-    (
-        IOobject::groupName("p", basicThermoModel::name_),
-        dimPressure,
-        &Thermo::p,
-        rho_,
-        e_,
-        T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::calce() const
-{
-    return volScalarFieldProperty
-    (
-        IOobject::groupName("e", basicThermoModel::name_),
-        dimEnergy/dimMass,
-        &Thermo::initializeEnergy,
-        p_,
-        rho_,
-        e_,
-        T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::E() const
+Foam::SolidThermoModel<Thermo>::E() const
 {
     return volScalarFieldProperty
     (
@@ -333,7 +222,7 @@ Foam::basicFluidThermo<Thermo>::E() const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::E
+Foam::SolidThermoModel<Thermo>::E
 (
     const scalarField& rho,
     const scalarField& e,
@@ -354,7 +243,7 @@ Foam::basicFluidThermo<Thermo>::E
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::E
+Foam::SolidThermoModel<Thermo>::E
 (
     const scalarField& rho,
     const scalarField& e,
@@ -373,8 +262,74 @@ Foam::basicFluidThermo<Thermo>::E
 }
 
 template<class Thermo>
+Foam::tmp<Foam::volVectorField>
+Foam::SolidThermoModel<Thermo>::Kappa() const
+{
+    const fvMesh& mesh = this->T_.mesh();
+
+    tmp<volVectorField> tKappa
+    (
+        volVectorField::New
+        (
+            "Kappa",
+            mesh,
+            dimEnergy/dimTime/dimLength/dimTemperature
+        )
+    );
+
+    volVectorField& Kappa = tKappa.ref();
+    vectorField& KappaCells = Kappa.primitiveFieldRef();
+    const scalarField& rhoCells = solidThermoModel::rho_;
+    const scalarField& eCells = this->e_;
+    const scalarField& TCells = this->T_;
+
+    forAll(KappaCells, celli)
+    {
+        Kappa[celli] = Thermo::Kappa(rhoCells[celli], eCells[celli], TCells[celli]);
+    }
+
+    volVectorField::Boundary& KappaBf = Kappa.boundaryFieldRef();
+
+    forAll(KappaBf, patchi)
+    {
+        vectorField& Kappap = KappaBf[patchi];
+        const scalarField& pRho = solidThermoModel::rho_.boundaryField()[patchi];
+        const scalarField& pe = this->e_.boundaryField()[patchi];
+        const scalarField& pT = this->T_.boundaryField()[patchi];
+
+        forAll(Kappap, facei)
+        {
+            Kappap[facei] = Thermo::Kappa(pRho[facei], pe[facei], pT[facei]);
+        }
+    }
+
+    return tKappa;
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::vectorField>
+Foam::SolidThermoModel<Thermo>::Kappa(const label patchi) const
+{
+    const scalarField& pRho = solidThermoModel::rho_.boundaryField()[patchi];
+    const scalarField& pe = this->e_.boundaryField()[patchi];
+    const scalarField& pT = this->T_.boundaryField()[patchi];
+    tmp<vectorField> tKappa(new vectorField(pe.size()));
+
+    vectorField& Kappap = tKappa.ref();
+
+    forAll(pe, facei)
+    {
+        Kappap[facei] = Thermo::Kappa(pRho[facei], pe[facei], pT[facei]);
+    }
+
+    return tKappa;
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::Gamma() const
+Foam::SolidThermoModel<Thermo>::Gamma() const
 {
     return volScalarFieldProperty
     (
@@ -390,7 +345,7 @@ Foam::basicFluidThermo<Thermo>::Gamma() const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::Gamma(const label patchi) const
+Foam::SolidThermoModel<Thermo>::Gamma(const label patchi) const
 {
     return patchFieldProperty
     (
@@ -402,34 +357,9 @@ Foam::basicFluidThermo<Thermo>::Gamma(const label patchi) const
     );
 }
 
-
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::ESource() const
-{
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("ESource", basicThermoModel::name_),
-                p_.mesh().time().timeName(),
-                p_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            p_.mesh(),
-            dimensionedScalar(sqr(dimVelocity)*dimDensity/dimTime, 0.0)
-        )
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::W() const
+Foam::SolidThermoModel<Thermo>::W() const
 {
     return volScalarFieldProperty
     (
@@ -442,7 +372,7 @@ Foam::basicFluidThermo<Thermo>::W() const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidThermo<Thermo>::Wi(const label celli) const
+Foam::SolidThermoModel<Thermo>::Wi(const label celli) const
 {
     return Thermo::W();
 }
@@ -450,7 +380,7 @@ Foam::basicFluidThermo<Thermo>::Wi(const label celli) const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::Cp() const
+Foam::SolidThermoModel<Thermo>::Cp() const
 {
     return volScalarFieldProperty
     (
@@ -466,7 +396,7 @@ Foam::basicFluidThermo<Thermo>::Cp() const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::Cp(const label patchi) const
+Foam::SolidThermoModel<Thermo>::Cp(const label patchi) const
 {
     return patchFieldProperty
     (
@@ -481,7 +411,7 @@ Foam::basicFluidThermo<Thermo>::Cp(const label patchi) const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidThermo<Thermo>::Cpi(const label celli) const
+Foam::SolidThermoModel<Thermo>::Cpi(const label celli) const
 {
     return Thermo::Cp(rho_[celli], e_[celli], T_[celli]);
 }
@@ -489,7 +419,7 @@ Foam::basicFluidThermo<Thermo>::Cpi(const label celli) const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::Cv() const
+Foam::SolidThermoModel<Thermo>::Cv() const
 {
     return volScalarFieldProperty
     (
@@ -505,7 +435,7 @@ Foam::basicFluidThermo<Thermo>::Cv() const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::Cv(const label patchi) const
+Foam::SolidThermoModel<Thermo>::Cv(const label patchi) const
 {
     return patchFieldProperty
     (
@@ -520,7 +450,7 @@ Foam::basicFluidThermo<Thermo>::Cv(const label patchi) const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::Cv
+Foam::SolidThermoModel<Thermo>::Cv
 (
     const scalarField& rho,
     const scalarField& e,
@@ -541,7 +471,7 @@ Foam::basicFluidThermo<Thermo>::Cv
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidThermo<Thermo>::Cvi(const label celli) const
+Foam::SolidThermoModel<Thermo>::Cvi(const label celli) const
 {
     return Thermo::Cv(rho_[celli], e_[celli], T_[celli]);
 }
@@ -549,7 +479,7 @@ Foam::basicFluidThermo<Thermo>::Cvi(const label celli) const
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::CpByCv() const
+Foam::SolidThermoModel<Thermo>::CpByCv() const
 {
     return volScalarFieldProperty
     (
@@ -565,7 +495,7 @@ Foam::basicFluidThermo<Thermo>::CpByCv() const
 
 template<class Thermo>
 Foam::tmp<Foam::scalarField>
-Foam::basicFluidThermo<Thermo>::CpByCv(const label patchi) const
+Foam::SolidThermoModel<Thermo>::CpByCv(const label patchi) const
 {
     return patchFieldProperty
     (

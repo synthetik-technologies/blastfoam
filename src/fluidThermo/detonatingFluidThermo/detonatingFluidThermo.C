@@ -30,9 +30,54 @@ License
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<class uThermo, class rThermo>
-template<class uMethod, class rMethod, class ... Args>
+template<class Method, class ... Args>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::volScalarFieldProperty
+(
+    const word& psiName,
+    const dimensionSet& psiDim,
+    Method psiMethod,
+    const Args& ... args
+) const
+{
+    tmp<volScalarField> tPsi
+    (
+        volScalarField::New
+        (
+            IOobject::groupName(psiName, this->group()),
+            this->p_.mesh(),
+            psiDim
+        )
+    );
+
+    volScalarField& psi = tPsi.ref();
+
+    forAll(this->p_, celli)
+    {
+        psi[celli] = (this->*psiMethod)(args[celli] ...);
+    }
+
+    volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
+
+    forAll(psiBf, patchi)
+    {
+        fvPatchScalarField& pPsi = psiBf[patchi];
+
+        forAll(this->p_.boundaryField()[patchi], facei)
+        {
+            pPsi[facei] = (this->*psiMethod)(args.boundaryField()[patchi][facei] ...);
+
+        }
+    }
+
+    return tPsi;
+}
+
+
+template<class uThermo, class rThermo>
+template<class uMethod, class rMethod, class ... Args>
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidThermo<uThermo, rThermo>::blendedVolScalarFieldProperty
 (
     const word& psiName,
     const dimensionSet& psiDim,
@@ -86,59 +131,9 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::volScalarFieldProperty
 
 
 template<class uThermo, class rThermo>
-template<class Method, class ... Args>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidThermo<uThermo, rThermo>::singleVolScalarFieldProperty
-(
-    const word& psiName,
-    const dimensionSet& psiDim,
-    Method psiMethod,
-    const Args& ... args
-) const
-{
-    tmp<volScalarField> tPsi
-    (
-        volScalarField::New
-        (
-            IOobject::groupName(psiName, this->group()),
-            this->p_.mesh(),
-            psiDim
-        )
-    );
-
-    volScalarField& psi = tPsi.ref();
-
-    forAll(this->p_, celli)
-    {
-        psi[celli] =
-            (this->*psiMethod)(args[celli] ...);
-    }
-
-    volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
-
-    forAll(psiBf, patchi)
-    {
-        fvPatchScalarField& pPsi = psiBf[patchi];
-
-        forAll(this->p_.boundaryField()[patchi], facei)
-        {
-            pPsi[facei] =
-                (this->*psiMethod)
-                (
-                    args.boundaryField()[patchi][facei] ...
-                );
-        }
-    }
-
-    return tPsi;
-}
-
-
-
-template<class uThermo, class rThermo>
 template<class uMethod, class rMethod, class ... Args>
 Foam::tmp<Foam::scalarField>
-Foam::detonatingFluidThermo<uThermo, rThermo>::cellSetProperty
+Foam::detonatingFluidThermo<uThermo, rThermo>::blendedCellSetProperty
 (
     uMethod upsiMethod,
     rMethod rpsiMethod,
@@ -167,7 +162,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::cellSetProperty
 template<class uThermo, class rThermo>
 template<class uMethod, class rMethod, class ... Args>
 Foam::tmp<Foam::scalarField>
-Foam::detonatingFluidThermo<uThermo, rThermo>::patchFieldProperty
+Foam::detonatingFluidThermo<uThermo, rThermo>::blendedPatchFieldProperty
 (
     uMethod upsiMethod,
     rMethod rpsiMethod,
@@ -233,9 +228,9 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::detonatingFluidThermo
     {
         volScalarField rhoInit
         (
-            volScalarFieldProperty
+            blendedVolScalarFieldProperty
             (
-                IOobject::groupName("rhoInit", name_),
+                IOobject::groupName("rhoInit", basicThermoModel::name_),
                 dimDensity,
                 &uThermo::initializeRho,
                 &rThermo::initializeRho,
@@ -334,9 +329,9 @@ void Foam::detonatingFluidThermo<uThermo, rThermo>::correct()
 
     if (viscous_)
     {
-        mu_ = volScalarFieldProperty
+        mu_ = blendedVolScalarFieldProperty
             (
-                IOobject::groupName("mu", name_),
+                IOobject::groupName("mu", basicThermoModel::name_),
                 dimDynamicViscosity,
                 &uThermo::mu,
                 &rThermo::mu,
@@ -345,9 +340,9 @@ void Foam::detonatingFluidThermo<uThermo, rThermo>::correct()
                 T_
             );
 
-        alpha_ = volScalarFieldProperty
+        alpha_ = blendedVolScalarFieldProperty
             (
-                IOobject::groupName("alpha", name_),
+                IOobject::groupName("alpha", basicThermoModel::name_),
                 dimensionSet(1, -1, -1, 0, 0),
                 &uThermo::alphah,
                 &rThermo::alphah,
@@ -363,9 +358,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::speedOfSound() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("speedOfSound", name_),
+        IOobject::groupName("speedOfSound", basicThermoModel::name_),
         dimVelocity,
         &uThermo::speedOfSound,
         &rThermo::speedOfSound,
@@ -381,7 +376,7 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::speedOfSound(const label patchi) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::speedOfSound,
         &rThermo::speedOfSound,
@@ -398,9 +393,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::calcT() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("T", name_),
+        IOobject::groupName("T", basicThermoModel::name_),
         dimTemperature,
         &uThermo::TRhoE,
         &rThermo::TRhoE,
@@ -415,9 +410,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::calcP() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("p", name_),
+        IOobject::groupName("p", basicThermoModel::name_),
         dimPressure,
         &uThermo::p,
         &rThermo::p,
@@ -434,9 +429,9 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::calce() const
 {
     tmp<volScalarField> eInit
     (
-        singleVolScalarFieldProperty
+        volScalarFieldProperty
         (
-            IOobject::groupName("e", name_),
+            IOobject::groupName("e", basicThermoModel::name_),
             dimEnergy/dimMass,
             &uThermo::initializeEnergy,
             p_,
@@ -460,9 +455,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::E() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("e", name_),
+        IOobject::groupName("e", basicThermoModel::name_),
         dimEnergy/dimMass,
         &uThermo::Es,
         &rThermo::Es,
@@ -483,7 +478,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
     const label patchi
 ) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::Es,
         &rThermo::Es,
@@ -505,7 +500,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::E
     const labelList& faceCells
 ) const
 {
-    return cellSetProperty
+    return blendedCellSetProperty
     (
         &uThermo::Es,
         &rThermo::Es,
@@ -520,9 +515,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Gamma() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("Gamma", name_),
+        IOobject::groupName("Gamma", basicThermoModel::name_),
         dimless,
         &uThermo::Gamma,
         &rThermo::Gamma,
@@ -537,7 +532,7 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Gamma(const label patchi) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::Gamma,
         &rThermo::Gamma,
@@ -559,7 +554,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::ESource() const
         (
             IOobject
             (
-                IOobject::groupName("ESource", name_),
+                IOobject::groupName("ESource", basicThermoModel::name_),
                 p_.mesh().time().timeName(),
                 p_.mesh(),
                 IOobject::NO_READ,
@@ -625,9 +620,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Cp() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("Cp", name_),
+        IOobject::groupName("Cp", basicThermoModel::name_),
         dimEnergy/dimMass/dimTemperature,
         &uThermo::Cp,
         &rThermo::Cp,
@@ -642,7 +637,7 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Cp(const label patchi) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::Cp,
         &rThermo::Cp,
@@ -669,9 +664,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Cv() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("Cv", name_),
+        IOobject::groupName("Cv", basicThermoModel::name_),
         dimEnergy/dimMass/dimTemperature,
         &uThermo::Cv,
         &rThermo::Cv,
@@ -686,7 +681,7 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::Cv(const label patchi) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::Cv,
         &rThermo::Cv,
@@ -708,7 +703,7 @@ Foam::detonatingFluidThermo<uThermo, rThermo>::Cv
     const label patchi
 ) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::Cv,
         &rThermo::Cv,
@@ -734,9 +729,9 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::CpByCv() const
 {
-    return volScalarFieldProperty
+    return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("CpByCv", name_),
+        IOobject::groupName("CpByCv", basicThermoModel::name_),
         dimless,
         &uThermo::CpByCv,
         &rThermo::CpByCv,
@@ -751,7 +746,7 @@ template<class uThermo, class rThermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<uThermo, rThermo>::CpByCv(const label patchi) const
 {
-    return patchFieldProperty
+    return blendedPatchFieldProperty
     (
         &uThermo::CpByCv,
         &rThermo::CpByCv,

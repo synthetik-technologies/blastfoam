@@ -273,7 +273,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::calcT() const
     (
         volScalarField::New
         (
-            IOobject::groupName("T", name_),
+            IOobject::groupName("T", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].calcT()
         )
     );
@@ -332,7 +332,7 @@ Foam::multiphaseFluidThermo::calce() const
     (
         volScalarField::New
         (
-            IOobject::groupName("e", name_),
+            IOobject::groupName("e", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].calce()
         )
     );
@@ -351,7 +351,7 @@ Foam::multiphaseFluidThermo::E() const
     (
         volScalarField::New
         (
-            IOobject::groupName("E", name_),
+            IOobject::groupName("E", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].E()
         )
     );
@@ -419,7 +419,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::Gamma() const
     (
         volScalarField::New
         (
-            IOobject::groupName("Gamma", name_),
+            IOobject::groupName("Gamma", basicThermoModel::name_),
             volumeFractions_[0]/thermos_[0].Gamma()
         )
     );
@@ -455,7 +455,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::ESource() const
     (
         volScalarField::New
         (
-            IOobject::groupName("ESource", name_),
+            IOobject::groupName("ESource", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].ESource()
         )
     );
@@ -474,7 +474,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::W() const
     (
         volScalarField::New
         (
-            IOobject::groupName("W", name_),
+            IOobject::groupName("W", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].W()
         )
     );
@@ -505,7 +505,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::Cp() const
     (
         volScalarField::New
         (
-            IOobject::groupName("Cp", name_),
+            IOobject::groupName("Cp", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].Cp()
         )
     );
@@ -555,7 +555,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::Cv() const
     (
         volScalarField::New
         (
-            IOobject::groupName("Cv", name_),
+            IOobject::groupName("Cv", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].Cv()
         )
     );
@@ -630,7 +630,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::CpByCv() const
     (
         volScalarField::New
         (
-            IOobject::groupName("CpByCv", name_),
+            IOobject::groupName("CpByCv", basicThermoModel::name_),
             volumeFractions_[0]*thermos_[0].CpByCv()
         )
     );

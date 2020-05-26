@@ -31,6 +31,7 @@ License
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
 #include "fluidThermoModel.H"
+#include "solidThermoModel.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -105,11 +106,18 @@ void Foam::blastMixedEnergyFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    fluidThermoModel& thermo =
-        db().lookupObjectRef<fluidThermoModel>
-        (
-            IOobject::groupName("fluidThermo", internalField().group())
-        );
+    word fluidName(IOobject::groupName("fluidThermo", internalField().group()));
+    word solidName(IOobject::groupName("solidThermo", internalField().group()));
+    basicThermoModel* thermoPtr;
+    if (db().foundObject<fluidThermoModel>(fluidName))
+    {
+        thermoPtr =  &db().lookupObjectRef<fluidThermoModel>(fluidName);
+    }
+    else
+    {
+        thermoPtr =  &db().lookupObjectRef<solidThermoModel>(solidName);
+    }
+    basicThermoModel& thermo = *thermoPtr;
     label patchID = patch().index();
 
     const scalarField& rhow = thermo.rho().boundaryField()[patchID];

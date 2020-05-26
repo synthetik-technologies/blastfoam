@@ -25,50 +25,36 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::detonatingFluidThermo
+    Foam::SolidThermoModel
 
 Description
-    Templated class to allow for a detonating material. Material will
-    transition from the unreacted state to reacted state using a activation
-    model and add the detonation energy.
+    Template class to define a runtime selectable fluidThermo model
 
 SourceFiles
-    detonatingFluidThermo.C
+    SolidThermoModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef detonatingFluidThermo_H
-#define detonatingFluidThermo_H
+#ifndef SolidThermoModel_H
+#define SolidThermoModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "fluidThermoModel.H"
-#include "activationModel.H"
-#include "afterburnModel.H"
+#include "solidThermoModel.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class detonatingFluidThermo Declaration
+                           Class SolidThermoModel Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class uThermo, class rThermo>
-class detonatingFluidThermo
+template<class Thermo>
+class SolidThermoModel
 :
-    public fluidThermoModel,
-    public uThermo,
-    public rThermo
+    public solidThermoModel,
+    public Thermo
 {
-// Private data
-
-    //- Activation model
-    autoPtr<activationModel> activation_;
-
-    //- Afterburn model
-    autoPtr<afterburnModel> afterburn_;
-
-
 protected:
 
     //- Protected functions
@@ -83,33 +69,20 @@ protected:
             const Args& ... args
         ) const;
 
-        //- Return a volScalarField of the given property
-        template<class uMethod, class rMethod, class ... Args>
-        tmp<volScalarField> blendedVolScalarFieldProperty
-        (
-            const word& psiName,
-            const dimensionSet& psiDim,
-            uMethod upsiMethod,
-            rMethod rpsiMethod,
-            const Args& ... args
-        ) const;
-
         //- Return a scalarField of the given property on a patch
-        template<class uMethod, class rMethod, class ... Args>
-        tmp<scalarField> blendedPatchFieldProperty
+        template<class Method, class ... Args>
+        tmp<scalarField> patchFieldProperty
         (
-            uMethod upsiMethod,
-            rMethod rpsiMethod,
+            Method psiMethod,
             const label patchi,
             const Args& ... args
         ) const;
 
         //- Return a scalarField of the given property on a cell set
-        template<class uMethod, class rMethod, class ... Args>
-        tmp<scalarField> blendedCellSetProperty
+        template<class Method, class ... Args>
+        tmp<scalarField> cellSetProperty
         (
-            uMethod upsiMethod,
-            rMethod rpsiMethod,
+            Method psiMethod,
             const labelList& cells,
             const Args& ... args
         ) const;
@@ -117,10 +90,10 @@ protected:
 
 public:
 
-    TypeName("detonatingFluidThermo");
+    TypeName("SolidThermoModel");
 
     // Constructor
-    detonatingFluidThermo
+    SolidThermoModel
     (
         const word& phaseName,
         volScalarField& p,
@@ -131,9 +104,8 @@ public:
         const bool master
     );
 
-
     //- Destructor
-    virtual ~detonatingFluidThermo();
+    virtual ~SolidThermoModel();
 
 
     // Member Functions
@@ -144,7 +116,8 @@ public:
             const label stepi,
             const scalarList& ai,
             const scalarList& bi
-        );
+        )
+        {}
 
         //- Set old lists and fluxes (initialization of fields)
         virtual void setODEFields
@@ -154,39 +127,18 @@ public:
             const label& nOld,
             const labelList& deltaIs,
             const label nDelta
-        );
+        )
+        {}
 
         //- Remove stored fields
-        virtual void clearODEFields();
+        virtual void clearODEFields()
+        {}
 
         //- Correct fields
         virtual void correct();
 
-        //- Return energy source
-        virtual tmp<volScalarField> ESource() const;
-
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
 
     //- Thermodynamic and transport functions
-
-//         //- Calculate density
-//         virtual tmp<volScalarField> calcRho
-//         (
-//             const volScalarField& p,
-//             const volScalarField& e,
-//             const volScalarField& T
-//         ) const;
-
-        //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> calcP() const;
-
-        //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const;
 
         //- Calculate temperature
         virtual tmp<volScalarField> calcT() const;
@@ -211,6 +163,22 @@ public:
             const scalarField& T,
             const labelList& faceCells
         ) const;
+
+        //- Thermal conductivity [W/m/K]
+        virtual tmp<volVectorField> Kappa() const;
+
+        //- Anisotropic thermal conductivity [W/m/K]
+        virtual tmp<vectorField> Kappa
+        (
+            const label patchi
+        ) const;
+
+        //- Return true if thermal conductivity is isotropic
+        virtual bool isotropic() const
+        {
+            return Thermo::isotropic();
+        }
+
 
         //- Return molecular weight
         virtual tmp<volScalarField> W() const;
@@ -272,58 +240,28 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addDetonatingFluidThermo(uTransport, uThermo, uEoSType, uEoS, rTransport, rThermo, rEoSType, rEoS) \
-    typedef detonatingFluidThermo                                               \
-        <                                                                       \
-            uTransport##uThermo##uEoSType##uEoS,                                \
-            rTransport##rThermo##rEoSType##rEoS                                 \
-        >                                                                       \
-        detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS; \
+#define addSolidThermo(Transport, Thermo, EoSType, EoS)                         \
+    typedef Transport<thermoModel<Thermo<EoSType<EoS<blastSpecie>>>>>           \
+        Transport##Thermo##EoSType##EoS;                                        \
+    typedef SolidThermoModel<Transport##Thermo##EoSType##EoS>                   \
+        solidThermoModel##Transport##Thermo##EoSType##EoS;                      \
     defineTemplateTypeNameAndDebugWithName                                      \
     (                                                                           \
-        detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS, \
-        (                                                                       \
-            "detonating<"                                                       \
-          + word(uTransport##uThermo##uEoSType##uEoS::typeName())               \
-          + ','                                                                 \
-          + word(rTransport##rThermo##rEoSType##rEoS::typeName())               \
-          + '>'                                                                 \
-        ).c_str(),                                                              \
+        solidThermoModel##Transport##Thermo##EoSType##EoS,                      \
+        (Transport##Thermo##EoSType##EoS::typeName()).c_str(),                  \
         0                                                                       \
     );                                                                          \
     addToRunTimeSelectionTable                                                  \
     (                                                                           \
-        fluidThermoModel,                                                       \
-        detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS,                                       \
-        detonating                                                               \
-    );
-
-#define addDetonatingFluidThermos(uTransport, uEoSType, uEoS, rTransport, rEoSType, rEoS) \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        uTransport, eConst, uEoSType, uEoS,                                     \
-        rTransport, eConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        uTransport, hConst, uEoSType, uEoS,                                     \
-        rTransport, hConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        uTransport, hConst, uEoSType, uEoS,                                     \
-        rTransport, eConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        uTransport, eConst, uEoSType, uEoS,                                     \
-        rTransport, hConst, rEoSType, rEoS                                      \
+        solidThermoModel,                                                       \
+        solidThermoModel##Transport##Thermo##EoSType##EoS,                      \
+        solid                                                                   \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "detonatingFluidThermo.C"
+    #include "SolidThermoModel.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
