@@ -101,9 +101,9 @@ Foam::basicFluidThermo<Thermo>::~basicFluidThermo()
 template<class Thermo>
 void Foam::basicFluidThermo<Thermo>::correct()
 {
-    Thermo::correct();
     if (this->master_)
     {
+        this->T_ = this->calcT();
         this->p_ = calcP();
         this->p_.max(small);
     }

@@ -155,7 +155,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
 
     forAll(this->p_, celli)
     {
-        const scalar& x = (*xPtr_)[celli];
+        scalar x = this->xi(celli);
         if (x < small)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
@@ -177,10 +177,11 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
     forAll(psiBf, patchi)
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
+        tmp<scalarField> xp(this->x(patchi));
 
         forAll(this->p_.boundaryField()[patchi], facei)
         {
-            const scalar& x = xPtr_->boundaryField()[patchi][facei];
+            const scalar& x = xp()[facei];
             if (x < small)
             {
                 pPsi[facei] =
@@ -226,7 +227,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
 
     forAll(cells, celli)
     {
-        scalar x = (*xPtr_)[cells[celli]];
+        scalar x = this->xi(cells[celli]);
         if (x < small)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
@@ -263,7 +264,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
         new scalarField(this->p_.boundaryField()[patchi].size())
     );
     scalarField& psi = tPsi.ref();
-    const scalarField& x(xPtr_->boundaryField()[patchi]);
+    tmp<scalarField> xtmp(this->x(patchi));
+    const scalarField& x(xtmp());
 
     forAll(this->p_.boundaryField()[patchi], facei)
     {
@@ -314,8 +316,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
         master
     ),
     Thermo1(dict1),
-    Thermo2(dict2),
-    xPtr_(nullptr)
+    Thermo2(dict2)
 {}
 
 
@@ -338,8 +339,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
         master
     ),
     Thermo1(dict1),
-    Thermo2(dict2),
-    xPtr_(nullptr)
+    Thermo2(dict2)
 {}
 
 
@@ -471,7 +471,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W() const
 
     forAll(this->p_, celli)
     {
-        const scalar& x = (*xPtr_)[celli];
+        scalar x = this->xi(celli);
         if (x < small)
         {
             psi[celli] = Thermo1::W();
@@ -491,10 +491,11 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W() const
     forAll(psiBf, patchi)
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
+        tmp<scalarField> xp(this->x(patchi));
 
         forAll(this->p_.boundaryField()[patchi], facei)
         {
-            const scalar& x = xPtr_->boundaryField()[patchi][facei];
+            const scalar& x = xp()[facei];
             if (x < small)
             {
                 pPsi[facei] = Thermo1::W();
@@ -523,7 +524,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W(const label patchi) c
         new scalarField(this->p_.boundaryField()[patchi].size())
     );
     scalarField& psi = tPsi.ref();
-    const scalarField& x(xPtr_->boundaryField()[patchi]);
+    const scalarField x(this->x(patchi));
 
     forAll(this->p_.boundaryField()[patchi], facei)
     {
@@ -549,7 +550,7 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Wi(const label celli) const
 {
-    return (*xPtr_)[celli]*Thermo1::W() + (1.0 - (*xPtr_)[celli])*Thermo2::W();
+    return this->xi(celli)*Thermo1::W() + (1.0 - this->xi(celli))*Thermo2::W();
 }
 
 
@@ -651,13 +652,13 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Cpi(const label celli) 
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
-        )*(*xPtr_)[celli]
+        )*this->xi(celli)
       + Thermo2::Cp
         (
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
-        )*(1.0 - (*xPtr_)[celli]);
+        )*(1.0 - this->xi(celli));
 }
 
 
@@ -726,13 +727,13 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Cvi(const label celli) 
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
-        )*(*xPtr_)[celli]
+        )*this->xi(celli)
       + Thermo2::Cv
         (
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
-        )*(1.0 - (*xPtr_)[celli]);
+        )*(1.0 - this->xi(celli));
 }
 
 
@@ -788,140 +789,6 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::CpByCv
         e,
         T
     );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::kappa() const
-{
-    tmp<Foam::volScalarField> kappa(Cp()*BasicThermo::alpha_);
-    kappa.ref().rename("kappa");
-    return kappa;
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField> Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::kappa
-(
-    const label patchi
-) const
-{
-    return
-        Cp
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )*BasicThermo::alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::scalar Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::kappai
-(
-    const label celli
-) const
-{
-    return Cpi(celli)*BasicThermo::alpha_[celli];
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::alphahe() const
-{
-    tmp<Foam::volScalarField> alphaEff(this->CpByCv()*BasicThermo::alpha_);
-    alphaEff.ref().rename("alphahe");
-    return alphaEff;
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::alphahe(const label patchi) const
-{
-    return
-        this->CpByCv
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )*BasicThermo::alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    tmp<Foam::volScalarField> kappaEff(Cp()*(BasicThermo::alpha_ + alphat));
-    kappaEff.ref().rename("kappaEff");
-    return kappaEff;
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        Cp
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )
-       *(
-           BasicThermo::alpha_.boundaryField()[patchi]
-         + alphat
-        );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    tmp<Foam::volScalarField> alphaEff(this->CpByCv()*(BasicThermo::alpha_ + alphat));
-    alphaEff.ref().rename("alphaEff");
-    return alphaEff;
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->CpByCv
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )
-       *(
-            BasicThermo::alpha_.boundaryField()[patchi]
-          + alphat
-        );
 }
 
 // ************************************************************************* //

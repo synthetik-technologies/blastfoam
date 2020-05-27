@@ -56,8 +56,6 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
     activation_(activationModel::New(rho.mesh(), dict, name)),
     afterburn_(afterburnModel::New(rho.mesh(), dict, name))
 {
-    Thermo::setBlendingField(activation_->lambda());
-
     //- Initialize the density using the pressure and temperature
     //  This is only done at the first time step (Not on restart)
     if
@@ -159,10 +157,9 @@ void Foam::detonatingFluidThermo<Thermo>::clearODEFields()
 template<class Thermo>
 void Foam::detonatingFluidThermo<Thermo>::correct()
 {
-
-
     if (this->master_)
     {
+        this->T_ = this->calcT();
         this->p_ = calcP();
         this->p_.max(small);
     }

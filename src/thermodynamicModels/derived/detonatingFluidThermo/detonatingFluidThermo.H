@@ -65,6 +65,18 @@ class detonatingFluidThermo
     //- Afterburn model
     autoPtr<afterburnModel> afterburn_;
 
+    //- Return the blending field for celli
+    virtual scalar xi(const label celli) const
+    {
+        return activation_->lambdaPowi(celli);
+    }
+
+    //- Return the blending field for patchi
+    virtual tmp<scalarField> x(const label patchi) const
+    {
+        return activation_->lambdaPow(patchi);
+    }
+
 
 public:
 
