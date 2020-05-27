@@ -43,7 +43,7 @@ Description
 
     This code has been developed by :
         Daniel Rettenmaier (main developer).
-    
+
     Method Development and Intellectual Property :
         T.G. Voskuilen (Purdue University)
         Timothée Pourpoint <timothee@purdue.edu> (Purdue University)
@@ -58,7 +58,7 @@ Description
         Institute for Fluid Mechanics and Aerodynamics
         Center of Smart Interfaces
         Technische Universitaet Darmstadt
-       
+
     If you use this software for your scientific work or your publications,
     please don't forget to acknowledge explicitly the use of it.
 
@@ -104,7 +104,7 @@ private:
 
         //-
         label topParentID(label p);
-        
+
         //-
         bool rebalance_;
 

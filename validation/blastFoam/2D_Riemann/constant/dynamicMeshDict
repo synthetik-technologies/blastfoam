@@ -17,7 +17,6 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 
 // Field to be refinement on
-field           error;
 errorEstimator  densityGradient;
 
 // How often to refine

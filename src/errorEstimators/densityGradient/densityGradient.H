@@ -60,12 +60,6 @@ class densityGradient
 :
     public errorEstimator
 {
-// Private data
-
-        //- Constant reference to density
-        const volScalarField& rho_;
-
-
 public:
 
     //- Runtime type information

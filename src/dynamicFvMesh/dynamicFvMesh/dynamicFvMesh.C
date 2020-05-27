@@ -57,10 +57,20 @@ Foam::IOobject Foam::dynamicFvMesh::dynamicMeshDictIOobject(const IOobject& io)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicFvMesh::dynamicFvMesh(const IOobject& io)
+Foam::dynamicFvMesh::dynamicFvMesh(const IOobject& io, const bool canModify)
 :
     fvMesh(io),
-    dynamicMeshDict_(IOdictionary(dynamicMeshDictIOobject(io)))
+    dynamicMeshDict_
+    (
+        IOobject
+        (
+            "dynamicMeshDict",
+            this->time().constant(),
+            *this,
+            (canModify ? IOobject::NO_READ : IOobject::MUST_READ_IF_MODIFIED),
+            IOobject::NO_WRITE
+        )
+    )
 {}
 
 
@@ -83,7 +93,17 @@ Foam::dynamicFvMesh::dynamicFvMesh
         move(allNeighbour),
         syncPar
     ),
-    dynamicMeshDict_(IOdictionary(dynamicMeshDictIOobject(io)))
+    dynamicMeshDict_
+    (
+        IOobject
+        (
+            "dynamicMeshDict",
+            this->time().constant(),
+            *this,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    )
 {}
 
 
@@ -104,7 +124,17 @@ Foam::dynamicFvMesh::dynamicFvMesh
         move(cells),
         syncPar
     ),
-    dynamicMeshDict_(IOdictionary(dynamicMeshDictIOobject(io)))
+    dynamicMeshDict_
+    (
+        IOobject
+        (
+            "dynamicMeshDict",
+            this->time().constant(),
+            *this,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    )
 {}
 
 

@@ -62,14 +62,6 @@ class dynamicFvMesh
         //- Disallow default bitwise assignment
         void operator=(const dynamicFvMesh&);
 
-protected:
-
-    //- Set dynamicMeshDict to MUST_READ_IF_MODIFIED
-    void setReadIfModified()
-    {
-        dynamicMeshDict_.readOpt() = IOobject::MUST_READ_IF_MODIFIED;
-    }
-
 
 public:
 
@@ -119,7 +111,7 @@ public:
     // Constructors
 
         //- Construct from objectRegistry, and read/write options
-        explicit dynamicFvMesh(const IOobject& io);
+        dynamicFvMesh(const IOobject& io, const bool canModify = false);
 
         //- Construct from components without boundary.
         //  Boundary is added using addFvPatches() member function
