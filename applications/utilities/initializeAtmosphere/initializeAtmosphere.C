@@ -305,7 +305,6 @@ int main(int argc, char *argv[])
             }
         }
     }
-    fluidThermoModel& thermo(*thermoPtr);
 
     vector dir((-g/mag(g)).value());
     volScalarField h("h", dir & mesh.C());
@@ -336,8 +335,11 @@ int main(int argc, char *argv[])
             << atmosphereTypes << nl
             <<abort(FatalError);
     };
-    e = thermo.calce();
-    T = thermo.calcT();
+    if (thermoPtr)
+    {
+        e = thermoPtr->calce();
+        T = thermoPtr->calcT();
+    }
 
     if (atmosphereProperties.found("equilibriumTemperature") && multiphase)
     {

@@ -13,7 +13,7 @@ LIB_LIBS = \
     -lfiniteVolume \
     -lfileFormats \
     -L$(FOAM_LIBBIN)/dummy -lptscotchDecomp -lscotchDecomp \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastDynamicMesh \
     -lblastDecompositionMethods \
     -lerrorEstimate

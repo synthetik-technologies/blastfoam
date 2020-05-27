@@ -29,7 +29,7 @@ EXE_LIBS = \
     -lchemistryModel \
     -lODE \
     -lcombustionModels \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lfluidThermo \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \

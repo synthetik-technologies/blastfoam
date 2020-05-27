@@ -32,7 +32,6 @@ Description
 
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "phaseCompressibleSystem.H"
