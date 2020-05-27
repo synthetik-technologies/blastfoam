@@ -177,7 +177,7 @@ void Foam::multiCritRefinement::applyCritEntries(word critType, dictionary critD
             // BUT: do not decrease if cell already marked for higher refinement level by previous criterion
             targetLevel_[cellI] = max(targetLevel_[cellI], refineLevel);
         }
-    } 
+    }
 
     //- AddLayer Keyword
     scalar nAddLayers(0);
@@ -202,7 +202,7 @@ void Foam::multiCritRefinement::applyCritEntries(word critType, dictionary critD
         for(label j=0; j < nAddLayers; j++)
         {
             //- select the area with targetLevel==refineLevel
-            volScalarField finest = pos(tLevel - refineLevel + SMALL);
+            volScalarField finest(pos(tLevel - refineLevel + SMALL));
 
             //- add +1 to targetLevel on the enlarged stencil
             tLevel += pos( fvc::average(fvc::interpolate(finest) - SMALL)) - finest;
@@ -220,7 +220,7 @@ void Foam::multiCritRefinement::applyCritEntries(word critType, dictionary critD
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::multiCritRefinement::multiCritRefinement(
-    const labelList& cellLevel, 
+    const labelList& cellLevel,
     const fvMesh& mesh
 )
 :
@@ -282,7 +282,7 @@ Foam::multiCritRefinement::multiCritRefinement(
             mesh_,
             dimensionedScalar("zero", dimless, 0.0)
         );
-    
+
 }
 
 
@@ -299,7 +299,7 @@ Foam::multiCritRefinement::~multiCritRefinement()
 void Foam::multiCritRefinement::updateRefinementField()
 {
 
-    if( !readMultiCritRefinementDict() ) 
+    if( !readMultiCritRefinementDict() )
     {
         return;
     }
@@ -345,18 +345,18 @@ void Foam::multiCritRefinement::updateRefinementField()
 
         forAll(fieldNames, i)
         {
-            
+
             word fldEntry = fieldNames[i];
 
             //- read criteria dict entries and calculate target level
-            applyCritEntries("field", fields_[fldEntry], fldEntry);            
+            applyCritEntries("field", fields_[fldEntry], fldEntry);
         }
     }
 
     // Then gradients
     {
         List<word> gradFieldNames = gradFields_.toc();
-        
+
         forAll(gradFieldNames, i)
         {
              word fldEntry = gradFieldNames[i];
@@ -375,7 +375,7 @@ void Foam::multiCritRefinement::updateRefinementField()
             word fldEntry = curlFieldNames[i];
 
             //- read criteria dict entries and calculate target level
-            applyCritEntries("curl", curlFields_[fldEntry], fldEntry);        
+            applyCritEntries("curl", curlFields_[fldEntry], fldEntry);
         }
     }
 
@@ -385,7 +385,7 @@ void Foam::multiCritRefinement::updateRefinementField()
         forAll(interfaceRefineField, i)
         {
             word fldName = interfaceRefineField[i];
-            
+
             // read region of maximum refinement levels inside and outside of interface indicator field
             // (does not need to be alpha, can also be a concentration field)
             scalar innerRefLayers = readScalar(interface_[fldName].lookup("innerRefLayers"));
@@ -411,7 +411,7 @@ void Foam::multiCritRefinement::updateRefinementField()
             volScalarField isInterface(intRefFld * 0.0);
             isInterface = dimensionedScalar("isInterface",dimless,0.0);
 
-            surfaceScalarField deltaAlpha = mag(fvc::snGrad(fld) / mesh_.deltaCoeffs());
+            surfaceScalarField deltaAlpha(mag(fvc::snGrad(fld) / mesh_.deltaCoeffs()));
 
             const unallocLabelList& owner = mesh_.owner();
             const unallocLabelList& neighbour = mesh_.neighbour();
@@ -447,14 +447,14 @@ void Foam::multiCritRefinement::updateRefinementField()
                    isInterface += neg(- fvc::average(fvc::interpolate(isInterface)) * pos(fld - fldInterfaceValue));
                    isInterface = neg(- isInterface);
                 }
-                
+
                 // add outer refinement layers
                 for(label i=0; i < outerRefLayers; i++)
                 {
                    isInterface += neg(- fvc::average(fvc::interpolate(isInterface)) * pos(fldInterfaceValue - fld));
                    isInterface = neg(- isInterface);
                 }
-                
+
                 forAll(isInterface, cellI)
                 {
                    if (isInterface[cellI] > 0.5)
@@ -592,7 +592,7 @@ void Foam::multiCritRefinement::updateRefinementField()
 
     //-DD: buffer layer based on targetLevel field to prevent 2-to-1 refinement
     {
-        volScalarField blockedLevel = targetFld * 0.;
+        volScalarField blockedLevel(targetFld*0.0);
 
         for (label currLayer=globalMaxRefLevel; currLayer>=1; currLayer--)
         {
