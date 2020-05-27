@@ -17,88 +17,6 @@ forAll(solidRegions, i)
     Info<< "*** Reading solid mesh thermophysical properties for region "
         << solidRegions[i].name() << nl << endl;
 
-    solidRhos.set
-    (
-        i,
-        new volScalarField
-        (
-            IOobject
-            (
-                "rho",
-                runTime.timeName(),
-                solidRegions[i]
-            ),
-            solidRegions[i],
-            dimensionedScalar("rho", dimDensity, 0.0)
-        )
-    );
-    solidPs.set
-    (
-        i,
-        new volScalarField
-        (
-            IOobject
-            (
-                "p",
-                runTime.timeName(),
-                solidRegions[i],
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            solidRegions[i]
-        )
-    );
-    solidTs.set
-    (
-        i,
-        new volScalarField
-        (
-            IOobject
-            (
-                "T",
-                runTime.timeName(),
-                solidRegions[i],
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            ),
-            solidRegions[i]
-        )
-    );
-    solides.set
-    (
-        i,
-        new volScalarField
-        (
-            IOobject
-            (
-                "e",
-                runTime.timeName(),
-                solidRegions[i],
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            solidRegions[i],
-            dimensionedScalar("e", sqr(dimVelocity), 0.0),
-            solidThermoModel::eBoundaryTypes(solidTs[i]),
-            solidThermoModel::eBoundaryBaseTypes(solidTs[i])
-        )
-    );
-    solidKappas.set
-    (
-        i,
-        new volScalarField
-        (
-            IOobject
-            (
-                "kappa",
-                runTime.timeName(),
-                solidRegions[i]
-            ),
-            solidRegions[i],
-            dimensionedScalar("zero", dimensionSet(1, 1, -3, -1, 0, 0, 0), small)
-        )
-    );
-
     Info<< "Reading thermophysicalProperties dictionary\n" << endl;
     IOdictionary thermophysicalProperties
     (
@@ -119,10 +37,7 @@ forAll(solidRegions, i)
         solidThermoModel::New
         (
             word::null,
-            solidPs[i],
-            solidRhos[i],
-            solides[i],
-            solidTs[i],
+            solidRegions[i],
             thermophysicalProperties,
             true
         )
