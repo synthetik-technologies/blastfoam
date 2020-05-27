@@ -31,23 +31,23 @@ Description
 
 
     dynamicRefineFvMeshCoeffs
-    {    
+    {
         refineInterval  1;              // How often to refine
 
         field           alpha.water;    // Field to be refinement on
-                                        // use multiCritRefinementField together 
+                                        // use multiCritRefinementField together
                                         // with multiCritRefinementControls
 
         lowerRefineLevel 0.001;         // Refine field inbetween lower..upper
         upperRefineLevel 0.999;
 
-        
-        // unrefineLevel   10;          // If value < unrefineLevel 
+
+        // unrefineLevel   10;          // If value < unrefineLevel
                                         // (default=GREAT) unrefine
 
         nBufferLayers   1;              // Have slower than 2:1 refinement
 
-        maxRefinement   2;              // Refine cells only up to maxRefinement 
+        maxRefinement   2;              // Refine cells only up to maxRefinement
                                         // levels
 
         maxCells        200000;         // Stop refinement if maxCells reached
@@ -65,13 +65,13 @@ Description
         );
 
         // only for new internal faces (AMR refine)
-        mapSurfaceFields_               // List of non-flux surface<Type>Fields 
+        mapSurfaceFields_               // List of non-flux surface<Type>Fields
         (                               // to be mapped
             Uf
             Uf_0
         );
 
-        dumpLevel       true;            // Write the refinement level as a 
+        dumpLevel       true;            // Write the refinement level as a
                                          // volScalarField
     }
 
@@ -80,10 +80,10 @@ SourceFiles
     dynamicRefineFvMesh.C
 
 Authors:
-    File adapted in 2018 by: 
+    File adapted in 2018 by:
     Daniel Rettenmaier <rettenmaier@tu-darmstadt.de>
     Daniel Deising <deising@mma.tu-darmstadt.de>
-    Changes: 
+    Changes:
         + Flux Mapping on refined internal faces
         + Multiple refinement criteria
 
@@ -222,7 +222,7 @@ protected:
                 label& nProtected
             ) const;
 
-            //- map non-flux surface<Type>Fields 
+            //- map non-flux surface<Type>Fields
             // for new internal faces (AMR refine)
             template <class T>
             void mapNewInternalFaces(const labelList& faceMap);

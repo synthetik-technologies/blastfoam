@@ -56,6 +56,9 @@ class dynamicFvMesh
         //- Return the dynamicMeshDict IOobject
         static IOobject dynamicMeshDictIOobject(const IOobject& io);
 
+        //- Return the dynamicMeshDict IOobject
+        virtual IOobject dynamicMeshDictIOobject() const;
+
         //- Disallow default bitwise copy construct
         dynamicFvMesh(const dynamicFvMesh&);
 
@@ -111,7 +114,7 @@ public:
     // Constructors
 
         //- Construct from objectRegistry, and read/write options
-        explicit dynamicFvMesh(const IOobject& io);
+        dynamicFvMesh(const IOobject& io, const bool canModify = false);
 
         //- Construct from components without boundary.
         //  Boundary is added using addFvPatches() member function
