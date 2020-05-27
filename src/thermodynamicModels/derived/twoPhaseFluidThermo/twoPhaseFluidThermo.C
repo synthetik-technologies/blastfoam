@@ -256,11 +256,6 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcP() const
     volScalarField alphaXi1(volumeFraction_/(thermo1_->Gamma() - 1.0));
     volScalarField alphaXi2((1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0));
 
-    if (volumeFraction_.time().outputTime())
-    {
-        volScalarField("p1", thermo1_->calcP()).write();
-        volScalarField("p2", thermo2_->calcP()).write();
-    }
     return
         (
             alphaXi1*thermo1_->calcP()

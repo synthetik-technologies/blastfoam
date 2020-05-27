@@ -167,8 +167,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
         else
         {
             psi[celli] =
-                (this->*psiMethod1)(args[celli] ...)*x
-              + (this->*psiMethod2)(args[celli] ...)*(1.0 - x);
+                (this->*psiMethod2)(args[celli] ...)*x
+              + (this->*psiMethod1)(args[celli] ...)*(1.0 - x);
         }
     }
 
@@ -195,8 +195,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
             else
             {
                 pPsi[facei] =
-                    (this->*psiMethod1)(args.boundaryField()[patchi][facei] ...)*x
-                  + (this->*psiMethod2)
+                    (this->*psiMethod2)(args.boundaryField()[patchi][facei] ...)*x
+                  + (this->*psiMethod1)
                     (
                         args.boundaryField()[patchi][facei] ...
                     )*(1.0 - x);
@@ -239,8 +239,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
         else
         {
             psi[celli] =
-                (this->*psiMethod1)(args[celli] ...)*x
-              + (this->*psiMethod2)(args[celli] ...)*(1.0 - x);
+                (this->*psiMethod2)(args[celli] ...)*x
+              + (this->*psiMethod1)(args[celli] ...)*(1.0 - x);
         }
     }
 
@@ -280,8 +280,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
         else
         {
             psi[facei] =
-                (this->*psiMethod1)(args[facei] ...)*x[facei]
-              + (this->*psiMethod2)(args[facei] ...)*(1.0 - x[facei]);
+                (this->*psiMethod2)(args[facei] ...)*x[facei]
+              + (this->*psiMethod1)(args[facei] ...)*(1.0 - x[facei]);
         }
     }
 
