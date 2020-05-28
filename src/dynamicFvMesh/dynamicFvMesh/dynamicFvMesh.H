@@ -56,9 +56,6 @@ class dynamicFvMesh
         //- Return the dynamicMeshDict IOobject
         static IOobject dynamicMeshDictIOobject(const IOobject& io);
 
-        //- Return the dynamicMeshDict IOobject
-        virtual IOobject dynamicMeshDictIOobject() const;
-
         //- Disallow default bitwise copy construct
         dynamicFvMesh(const dynamicFvMesh&);
 
