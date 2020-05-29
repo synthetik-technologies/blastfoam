@@ -1713,7 +1713,10 @@ bool Foam::adaptiveFvMesh::update()
             moving(false);
         }
     }
-    balance();
+    if (hasChanged)
+    {
+        balance();
+    }
     return hasChanged;
 }
 
