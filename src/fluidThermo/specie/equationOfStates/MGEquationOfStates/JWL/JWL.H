@@ -67,8 +67,14 @@ class JWL
         //- Reference density
         scalar rho0_;
 
+        //- Cut off density (exponents are no longer considered)
+        scalar rhoCutOff_;
+
         //- Reference Gamma
         scalar omega_;
+
+        //- Ideal gas specific heat ratio
+        scalar gammaIdeal_;
 
         //- Model coefficients
         scalar A_;

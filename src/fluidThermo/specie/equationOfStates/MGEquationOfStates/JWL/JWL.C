@@ -37,7 +37,23 @@ Foam::JWL<Specie>::JWL
 :
     Specie(dict),
     rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
+    rhoCutOff_
+    (
+        dict.subDict("equationOfState").lookupOrDefault
+        (
+            "rhoCutOff",
+            rho0_/100.0
+        )
+    ),
     omega_(dict.subDict("equationOfState").lookupType<scalar>("omega")),
+    gammaIdeal_
+    (
+        dict.subDict("equationOfState").lookupOrDefault
+        (
+            "gammaIdeal",
+            omega_ + 1.0
+        )
+    ),
     A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
     B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
     R1_(dict.subDict("equationOfState").lookupType<scalar>("R1")),

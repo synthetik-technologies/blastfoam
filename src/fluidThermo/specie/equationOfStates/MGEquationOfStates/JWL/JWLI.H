@@ -36,6 +36,11 @@ Foam::scalar Foam::JWL<Specie>::Gamma
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return gammaIdeal_;
+    }
+
     return omega_ + 1.0;
 }
 
@@ -47,6 +52,11 @@ Foam::scalar Foam::JWL<Specie>::Pi
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return 0.0;
+    }
+
     scalar V(rho0_/max(rho, 1e-10));
     return
         A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
@@ -63,6 +73,11 @@ Foam::scalar Foam::JWL<Specie>::delta
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return 0.0;
+    }
+
     scalar rhos(max(rho, 1e-10));
     return
         (
@@ -81,6 +96,11 @@ Foam::scalar Foam::JWL<Specie>::dpdv
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return (gammaIdeal_ - 1.0)*e*sqr(rho);
+    }
+
     scalar rhos(max(rho, 1e-10));
     return
       - omega_*e*sqr(rho)
@@ -98,6 +118,10 @@ Foam::scalar Foam::JWL<Specie>::dpde
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return (gammaIdeal_ - 1.0)*rho;
+    }
     return omega_*rho;
 }
 
@@ -109,6 +133,11 @@ Foam::scalar Foam::JWL<Specie>::E
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return 0.0;
+    }
+
     scalar V(rho0_/max(rho, 1e-10));
     return A_/(R1_*rho0_)*exp(-R1_*V) + B_/(R2_*V)*exp(-R2_*rho0_);
 }
@@ -143,6 +172,11 @@ Foam::scalar Foam::JWL<Specie>::H
     const scalar& e
 ) const
 {
+    if (rho < rhoCutOff_)
+    {
+        return 0.0;
+    }
+
     scalar rhos(max(rho, 1e-10));
     return
         A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
