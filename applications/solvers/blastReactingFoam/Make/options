@@ -1,5 +1,5 @@
 EXE_INC= \
-    -I$(BLAST_DIR)/src/fluidThermo/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
@@ -30,7 +30,7 @@ EXE_LIBS = \
     -lODE \
     -lcombustionModels \
     -L$(BLAST_LIBBIN) \
-    -lfluidThermo \
+    -lblastThermodynamics \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \
     -lblastRadiationModels \

@@ -40,9 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "volFields.H"
 #include "basicThermoModel.H"
-#include "runTimeSelectionTables.H"
 
 namespace Foam
 {

@@ -23,7 +23,7 @@ License
 
 Class
     Foam::compressible::
-        turbulentTemperatureRadCoupledMixedFvPatchScalarField
+        turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 
 Description
     Mixed boundary condition for temperature and radiation heat transfer
@@ -68,12 +68,12 @@ See also
     Foam::temperatureCoupledBase
 
 SourceFiles
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField.C
+    turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef turbulentTemperatureRadCoupledMixedFvPatchScalarField_H
-#define turbulentTemperatureRadCoupledMixedFvPatchScalarField_H
+#ifndef turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField_H
+#define turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField_H
 
 #include "mixedFvPatchFields.H"
 #include "temperatureCoupledBase.H"
@@ -87,10 +87,10 @@ namespace compressible
 {
 
 /*---------------------------------------------------------------------------*\
-    Class turbulentTemperatureRadCoupledMixedFvPatchScalarField Declaration
+    Class turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
-class turbulentTemperatureRadCoupledMixedFvPatchScalarField
+class turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 :
     public mixedFvPatchScalarField,
     public temperatureCoupledBase
@@ -119,20 +119,20 @@ class turbulentTemperatureRadCoupledMixedFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("compressible::turbulentTemperatureRadCoupledMixed");
+    TypeName("compressible::turbulentTemperatureRadCoupledBlastMixed");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        turbulentTemperatureRadCoupledMixedFvPatchScalarField
+        turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        turbulentTemperatureRadCoupledMixedFvPatchScalarField
+        turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
         (
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
@@ -142,10 +142,10 @@ public:
         //- Construct by mapping given
         //  turbulentTemperatureCoupledBaffleMixedFvPatchScalarField onto a
         //  new patch
-        turbulentTemperatureRadCoupledMixedFvPatchScalarField
+        turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
         (
             const
-            turbulentTemperatureRadCoupledMixedFvPatchScalarField&,
+            turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField&,
             const fvPatch&,
             const DimensionedField<scalar, volMesh>&,
             const fvPatchFieldMapper&
@@ -156,7 +156,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new turbulentTemperatureRadCoupledMixedFvPatchScalarField
+                new turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
                 (
                     *this
                 )
@@ -164,9 +164,9 @@ public:
         }
 
         //- Construct as copy setting internal field reference
-        turbulentTemperatureRadCoupledMixedFvPatchScalarField
+        turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
         (
-            const turbulentTemperatureRadCoupledMixedFvPatchScalarField&,
+            const turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField&,
             const DimensionedField<scalar, volMesh>&
         );
 
@@ -178,7 +178,7 @@ public:
         {
             return tmp<fvPatchScalarField>
             (
-                new turbulentTemperatureRadCoupledMixedFvPatchScalarField
+                new turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
                 (
                     *this,
                     iF

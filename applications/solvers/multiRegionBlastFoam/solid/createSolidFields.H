@@ -1,8 +1,4 @@
 // Initialise solid field pointer lists
-PtrList<volScalarField> solidRhos(solidRegions.size());
-PtrList<volScalarField> solidPs(solidRegions.size());
-PtrList<volScalarField> solidTs(solidRegions.size());
-PtrList<volScalarField> solides(solidRegions.size());
 PtrList<coordinateSystem> coordinates(solidRegions.size());
 PtrList<solidThermoModel> thermos(solidRegions.size());
 PtrList<radiationModel> radiations(solidRegions.size());

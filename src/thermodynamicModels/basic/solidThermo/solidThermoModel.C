@@ -32,7 +32,8 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(solidThermoModel, 0);
-    defineRunTimeSelectionTable(solidThermoModel, solid);
+    defineRunTimeSelectionTable(solidThermoModel, basicSolid);
+    defineRunTimeSelectionTable(solidThermoModel, detonatingSolid);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

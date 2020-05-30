@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "turbulentTemperatureRadCoupledMixedFvPatchScalarField.H"
+#include "turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -38,8 +38,8 @@ namespace compressible
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-turbulentTemperatureRadCoupledMixedFvPatchScalarField
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF
@@ -60,10 +60,10 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
 }
 
 
-turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-turbulentTemperatureRadCoupledMixedFvPatchScalarField
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 (
-    const turbulentTemperatureRadCoupledMixedFvPatchScalarField& psf,
+    const turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField& psf,
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
     const fvPatchFieldMapper& mapper
@@ -80,8 +80,8 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
 {}
 
 
-turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-turbulentTemperatureRadCoupledMixedFvPatchScalarField
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 (
     const fvPatch& p,
     const DimensionedField<scalar, volMesh>& iF,
@@ -142,10 +142,10 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
 }
 
 
-turbulentTemperatureRadCoupledMixedFvPatchScalarField::
-turbulentTemperatureRadCoupledMixedFvPatchScalarField
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::
+turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 (
-    const turbulentTemperatureRadCoupledMixedFvPatchScalarField& psf,
+    const turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField& psf,
     const DimensionedField<scalar, volMesh>& iF
 )
 :
@@ -162,7 +162,7 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
+void turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::updateCoeffs()
 {
     if (updated())
     {
@@ -186,7 +186,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     scalarField Tc(patchInternalField());
     scalarField& Tp = *this;
 
-    typedef turbulentTemperatureRadCoupledMixedFvPatchScalarField thisType;
+    typedef turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField thisType;
 
     const fvPatchScalarField& nbrTp =
         nbrPatch.lookupPatchField<volScalarField, scalar>(TnbrName_);
@@ -264,7 +264,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
 }
 
 
-void turbulentTemperatureRadCoupledMixedFvPatchScalarField::write
+void turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField::write
 (
     Ostream& os
 ) const
@@ -285,7 +285,7 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::write
 makePatchTypeField
 (
     fvPatchScalarField,
-    turbulentTemperatureRadCoupledMixedFvPatchScalarField
+    turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField
 );
 
 

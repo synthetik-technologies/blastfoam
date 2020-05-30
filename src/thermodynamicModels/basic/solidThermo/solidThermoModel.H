@@ -41,6 +41,11 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "basicThermoModel.H"
+#include "volFields.H"
+#include "surfaceFields.H"
+#include "dictionary.H"
+#include "wordIOList.H"
+#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
@@ -64,7 +69,21 @@ public:
     (
         autoPtr,
         solidThermoModel,
-        solid,
+        basicSolid,
+        (
+            const word& name,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool master
+        ),
+        (name, mesh, dict, master)
+    );
+
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        solidThermoModel,
+        detonatingSolid,
         (
             const word& name,
             const fvMesh& mesh,
@@ -85,6 +104,22 @@ public:
 
     //- Selector
         static autoPtr<solidThermoModel> New
+        (
+            const word& name,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool master = true
+        );
+
+        static autoPtr<solidThermoModel> NewBasic
+        (
+            const word& name,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool master = true
+        );
+
+        static autoPtr<solidThermoModel> NewDetonating
         (
             const word& name,
             const fvMesh& mesh,

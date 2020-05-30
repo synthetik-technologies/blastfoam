@@ -42,9 +42,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "fluidThermoModel.H"
-#include "activationModel.H"
-#include "afterburnModel.H"
+#include "basicThermoModel.H"
 
 namespace Foam
 {

@@ -10,8 +10,8 @@ wmake $targetType radiationModels
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
 wmake $targetType decompositionMethods
-wmake $targetType dynamicFvMesh
 wmake $targetType errorEstimators
+wmake $targetType dynamicFvMesh
 wmake $targetType functionObjects
 wmake $targetType sampling
 

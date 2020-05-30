@@ -116,7 +116,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Es
     const scalar& T
 ) const
 {
-    return pTable_.reverseLookupX(T, rho);
+    return TTable_.reverseLookupY(T, rho);
 }
 
 
@@ -128,7 +128,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ea
     const scalar& T
 ) const
 {
-    return pTable_.reverseLookupX(T, rho);
+    return TTable_.reverseLookupY(T, rho);
 }
 
 template<class Specie>

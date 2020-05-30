@@ -30,13 +30,12 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lfvOptions \
     -lregionModels \
-    -L$(FOAM_USER_LIBBIN) \
-    -lblastThermodynamics \
+    -L$(BLAST_LIBBIN) \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
-    -lsampling \
+    -lblastSampling \
     -lblastFunctionObjects

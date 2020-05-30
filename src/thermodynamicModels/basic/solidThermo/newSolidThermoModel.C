@@ -30,6 +30,43 @@ License
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
+Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewBasic
+(
+    const word& phaseName,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const bool master
+)
+{
+     basicSolidConstructorTable::iterator cstrIter =
+        lookupThermo<basicSolidConstructorTable>
+        (
+            dict.subDict("mixture"),
+            basicSolidConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, mesh, dict.subDict("mixture"), master);
+}
+
+
+Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewDetonating
+(
+    const word& phaseName,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const bool master
+)
+{
+    detonatingSolidConstructorTable::iterator cstrIter =
+        lookupThermo<detonatingSolidConstructorTable>
+        (
+            dict.subDict("mixture"),
+            detonatingSolidConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, mesh, dict.subDict("mixture"), master);
+}
+
 Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
 (
     const word& phaseName,
@@ -38,15 +75,27 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const bool master
 )
 {
-    solidConstructorTable::iterator cstrIter =
-        lookupThermo<solidConstructorTable>
-        (
-            dict.subDict("mixture"),
-            solidConstructorTablePtr_
-        );
-
-    return cstrIter()(phaseName, mesh, dict.subDict("mixture"), master);
+    Info<<detonatingSolidConstructorTablePtr_<<endl;
+    Info<<basicSolidConstructorTablePtr_<<endl;
+    word type = dict.subDict("mixture").lookup("type");
+    if (type == "basic")
+    {
+        return NewBasic(phaseName, mesh, dict, master);
+    }
+    else if (type == "detonating")
+    {
+        return NewDetonating(phaseName, mesh, dict, master);
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Unknown solidThermo type " << type << nl << nl
+            << "Valid " << solidThermoModel::typeName << " types are:" << nl
+            << "basic" << nl
+            << "detonating" << nl
+            << abort(FatalError);
+    }
+    return autoPtr<solidThermoModel>();
 }
-
 
 // ************************************************************************* //

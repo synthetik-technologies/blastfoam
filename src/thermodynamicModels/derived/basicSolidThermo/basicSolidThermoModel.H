@@ -25,18 +25,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::SolidThermoModel
+    Foam::basicSolidThermoModel
 
 Description
     Template class to define a runtime selectable fluidThermo model
 
 SourceFiles
-    SolidThermoModel.C
+    basicSolidThermoModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef SolidThermoModel_H
-#define SolidThermoModel_H
+#ifndef basicSolidThermoModel_H
+#define basicSolidThermoModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,66 +46,30 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class SolidThermoModel Declaration
+                           Class basicSolidThermoModel Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
-class SolidThermoModel
+class basicSolidThermoModel
 :
-    public solidThermoModel,
     public Thermo
 {
-protected:
-
-    //- Protected functions
-
-        //- Return a volScalarField of the given property
-        template<class Method, class ... Args>
-        tmp<volScalarField> volScalarFieldProperty
-        (
-            const word& psiName,
-            const dimensionSet& psiDim,
-            Method psiMethod,
-            const Args& ... args
-        ) const;
-
-        //- Return a scalarField of the given property on a patch
-        template<class Method, class ... Args>
-        tmp<scalarField> patchFieldProperty
-        (
-            Method psiMethod,
-            const label patchi,
-            const Args& ... args
-        ) const;
-
-        //- Return a scalarField of the given property on a cell set
-        template<class Method, class ... Args>
-        tmp<scalarField> cellSetProperty
-        (
-            Method psiMethod,
-            const labelList& cells,
-            const Args& ... args
-        ) const;
-
-
 public:
 
-    TypeName("SolidThermoModel");
+    //- Runtime type information
+    TypeName("basicSolidThermo");
 
     // Constructor
-    SolidThermoModel
+    basicSolidThermoModel
     (
         const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master
     );
 
     //- Destructor
-    virtual ~SolidThermoModel();
+    virtual ~basicSolidThermoModel();
 
 
     // Member Functions
@@ -140,30 +104,6 @@ public:
 
     //- Thermodynamic and transport functions
 
-        //- Calculate temperature
-        virtual tmp<volScalarField> calcT() const;
-
-        //- Calculate internal energy
-        virtual tmp<volScalarField> E() const;
-
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> E
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
-
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> E
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const labelList& faceCells
-        ) const;
-
         //- Thermal conductivity [W/m/K]
         virtual tmp<volVectorField> Kappa() const;
 
@@ -176,60 +116,7 @@ public:
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const
         {
-            return Thermo::isotropic();
-        }
-
-
-        //- Return molecular weight
-        virtual tmp<volScalarField> W() const;
-
-        //- Return molecular weight
-        virtual scalar Wi(const label celli) const;
-
-        //- Mie Gruniesen coefficient
-        virtual tmp<volScalarField> Gamma() const;
-
-        //- Mie Gruniesen coefficient for a patch
-        virtual tmp<scalarField> Gamma(const label patchi) const;
-
-        //- Heat capacity at constant pressure of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cp() const;
-
-        //- Heat capacity at constant pressure of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cp(const label patchi) const;
-
-        //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-        virtual scalar Cpi(const label celli) const;
-
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const;
-
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv(const label patchi) const;
-
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
-
-        //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-        virtual scalar Cvi(const label celli) const;
-
-        //- Specific heat ratio
-        virtual tmp<volScalarField> CpByCv() const;
-
-        //- Specific heat ratio for a patch
-        virtual tmp<scalarField> CpByCv(const label patchi) const;
-
-        //- Read residual values
-        virtual void read(const dictionary& dict)
-        {
-            residualRho_.read(dict);
-            residualAlpha_.read(dict);
+            return Thermo::thermoType::isotropic();
         }
 };
 
@@ -243,25 +130,32 @@ public:
 #define addSolidThermo(Transport, Thermo, EoSType, EoS)                         \
     typedef Transport<thermoModel<Thermo<EoSType<EoS<blastSpecie>>>>>           \
         Transport##Thermo##EoSType##EoS;                                        \
-    typedef SolidThermoModel<Transport##Thermo##EoSType##EoS>                   \
-        solidThermoModel##Transport##Thermo##EoSType##EoS;                      \
+    typedef basicSolidThermoModel                                               \
+        <                                                                       \
+            eThermoModel                                                        \
+            <                                                                   \
+                solidThermoModel,                                               \
+                Transport##Thermo##EoSType##EoS                                 \
+            >                                                                   \
+        >                                                                       \
+        solidThermo##Transport##Thermo##EoSType##EoS;                           \
     defineTemplateTypeNameAndDebugWithName                                      \
     (                                                                           \
-        solidThermoModel##Transport##Thermo##EoSType##EoS,                      \
+        solidThermo##Transport##Thermo##EoSType##EoS,                           \
         (Transport##Thermo##EoSType##EoS::typeName()).c_str(),                  \
         0                                                                       \
     );                                                                          \
     addToRunTimeSelectionTable                                                  \
     (                                                                           \
         solidThermoModel,                                                       \
-        solidThermoModel##Transport##Thermo##EoSType##EoS,                      \
-        solid                                                                   \
+        solidThermo##Transport##Thermo##EoSType##EoS,                           \
+        basicSolid                                                              \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "SolidThermoModel.C"
+    #include "basicSolidThermoModel.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

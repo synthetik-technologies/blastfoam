@@ -1,6 +1,7 @@
 derivedFvPatchFields/temperatureCoupledBase/temperatureCoupledBase.C
+derivedFvPatchFields/turbulentTemperatureRadCoupledMixed/turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField.C
 
 solid/solidRegionDiffNo.C
 multiRegionBlastFoam.C
 
-EXE = $(FOAM_APPBIN)/multiRegionBlastFoam
+EXE = $(BLAST_APPBIN)/multiRegionBlastFoam

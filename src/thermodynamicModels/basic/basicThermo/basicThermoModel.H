@@ -45,7 +45,6 @@ SourceFiles
 #include "dictionary.H"
 #include "wordIOList.H"
 #include "regIOobject.H"
-#include "runTimeSelectionTables.H"
 
 namespace Foam
 {

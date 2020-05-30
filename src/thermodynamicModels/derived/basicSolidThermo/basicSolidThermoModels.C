@@ -27,13 +27,15 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "solidThermoModel.H"
-#include "SolidThermoModel.H"
+#include "basicSolidThermoModel.H"
+#include "eThermoModel.H"
 
 #include "constSolidIsoTransport.H"
 #include "constSolidAnIsoTransport.H"
 
 #include "thermoModel.H"
 #include "eConst.H"
+#include "hConst.H"
 
 #include "equationOfState.H"
 #include "rhoConst.H"
@@ -56,6 +58,22 @@ namespace Foam
     (
         constSolidAnIsoTransport,
         eConst,
+        equationOfState,
+        rhoConst
+    );
+
+    addSolidThermo
+    (
+        constSolidIsoTransport,
+        hConst,
+        equationOfState,
+        rhoConst
+    );
+
+    addSolidThermo
+    (
+        constSolidAnIsoTransport,
+        hConst,
         equationOfState,
         rhoConst
     );
