@@ -201,6 +201,39 @@ Foam::eThermoModel<BasicThermo, ThermoType>::calcT() const
 
 
 template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::scalarField>
+Foam::eThermoModel<BasicThermo, ThermoType>::TRhoE
+(
+    const scalarField& T,
+    const scalarField& e,
+    const label patchi
+) const
+{
+    return patchFieldProperty
+    (
+        &ThermoType::TRhoE,
+        patchi,
+        T,
+        this->rho_.boundaryField()[patchi],
+        e
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::eThermoModel<BasicThermo, ThermoType>::TRhoEi
+(
+    const scalar& T,
+    const scalar& e,
+    const label celli
+) const
+{
+    return ThermoType::TRhoE(T, this->rho_[celli], e);
+}
+
+
+template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::eThermoModel<BasicThermo, ThermoType>::E() const
 {

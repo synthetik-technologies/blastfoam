@@ -102,7 +102,8 @@ Foam::radiationModel::radiationModel(const volScalarField& T)
     firstIter_(true),
     absorptionEmission_(nullptr),
     scatter_(nullptr),
-    soot_(nullptr)
+    soot_(nullptr),
+    radODE_(*this, T.mesh())
 {}
 
 
@@ -117,7 +118,8 @@ Foam::radiationModel::radiationModel(const word& type, const volScalarField& T)
     firstIter_(true),
     absorptionEmission_(nullptr),
     scatter_(nullptr),
-    soot_(nullptr)
+    soot_(nullptr),
+    radODE_(*this, T.mesh())
 {
     initialise();
 }
@@ -150,7 +152,8 @@ Foam::radiationModel::radiationModel
     firstIter_(true),
     absorptionEmission_(nullptr),
     scatter_(nullptr),
-    soot_(nullptr)
+    soot_(nullptr),
+    radODE_(*this, T.mesh())
 {
     initialise();
 }
@@ -186,8 +189,18 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModel::calcRhoE
     const volScalarField& rho,
     const volScalarField& e,
     const volScalarField& Cv
-) const
+)
 {
+    if (radODE_.solve())
+    {
+        tmp<volScalarField> rhoENew
+        (
+            new volScalarField(rhoE)
+        );
+        radODE_.solve(dt.value(), rhoENew.ref());
+        return rhoENew;
+    }
+
     volScalarField T3(pow3(T_));
 
     volScalarField den(rho + dt*4.0*this->Rp()*T3/Cv);

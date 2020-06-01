@@ -285,6 +285,46 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::calcT() const
 }
 
 
+Foam::tmp<Foam::scalarField>
+Foam::multiphaseFluidThermo::TRhoE
+(
+    const scalarField& T,
+    const scalarField& e,
+    const label patchi
+) const
+{
+    tmp<scalarField> tmpF
+    (
+        volumeFractions_[0].boundaryField()[patchi]
+       *thermos_[0].TRhoE(T, e, patchi)
+    );
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        tmpF.ref() +=
+            volumeFractions_[phasei].boundaryField()[patchi]
+           *thermos_[phasei].TRhoE(T, e, patchi);
+    }
+    return tmpF;
+}
+
+
+Foam::scalar Foam::multiphaseFluidThermo::TRhoEi
+(
+    const scalar& T,
+    const scalar& e,
+    const label celli
+) const
+{
+    scalar f(volumeFractions_[0][celli]*thermos_[0].TRhoEi(T, e, celli));
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        f +=
+            volumeFractions_[phasei][celli]
+           *thermos_[phasei].TRhoEi(T, e, celli);
+    }
+    return f;
+}
+
 
 Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::calcP() const
 {

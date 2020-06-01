@@ -250,6 +250,22 @@ public:
         //- Calculate temperature
         virtual tmp<volScalarField> calcT() const = 0;
 
+        //- Calculate internal energy for patchi
+        virtual tmp<scalarField> TRhoE
+        (
+            const scalarField& T,
+            const scalarField& e,
+            const label patchi
+        ) const = 0;
+
+        //- Calculate internal energy for celli
+        virtual scalar TRhoEi
+        (
+            const scalar& T,
+            const scalar& e,
+            const label celli
+        ) const = 0;
+
         //- Calculate internal energy
         virtual tmp<volScalarField> E() const = 0;
 

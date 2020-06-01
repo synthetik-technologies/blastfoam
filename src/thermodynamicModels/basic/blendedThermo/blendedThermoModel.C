@@ -371,6 +371,52 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::calcT() const
 
 
 template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::tmp<Foam::scalarField>
+Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::TRhoE
+(
+    const scalarField& T,
+    const scalarField& e,
+    const label patchi
+) const
+{
+    return blendedPatchFieldProperty
+    (
+        &Thermo1::TRhoE,
+        &Thermo2::TRhoE,
+        patchi,
+        T,
+        this->rho_.boundaryField()[patchi],
+        e
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::TRhoEi
+(
+    const scalar& T,
+    const scalar& e,
+    const label celli
+) const
+{
+    return
+        Thermo1::TRhoE
+        (
+            this->T_[celli],
+            this->rho_[celli],
+            this->e_[celli]
+        )*this->xi(celli)
+      + Thermo2::TRhoE
+        (
+            this->T_[celli],
+            this->rho_[celli],
+            this->e_[celli]
+        )*(1.0 - this->xi(celli));
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::E() const
 {

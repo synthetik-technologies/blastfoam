@@ -94,6 +94,13 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::opaqueSolid::Rp() const
 }
 
 
+Foam::scalar
+Foam::radiationModels::opaqueSolid::Rp(const label celli) const
+{
+    return 0.0;
+}
+
+
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiationModels::opaqueSolid::Ru() const
 {
@@ -105,5 +112,11 @@ Foam::radiationModels::opaqueSolid::Ru() const
     );
 }
 
+
+Foam::scalar
+Foam::radiationModels::opaqueSolid::Ru(const label celli) const
+{
+    return 0.0;
+}
 
 // ************************************************************************* //

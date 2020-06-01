@@ -251,6 +251,35 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcT() const
 }
 
 
+Foam::tmp<Foam::scalarField>
+Foam::twoPhaseFluidThermo::TRhoE
+(
+    const scalarField& T,
+    const scalarField& e,
+    const label patchi
+) const
+{
+    return
+        volumeFraction_.boundaryField()[patchi]
+       *thermo1_->TRhoE(T, e, patchi)
+      + (1.0 - volumeFraction_.boundaryField()[patchi])
+       *thermo2_->TRhoE(T, e, patchi);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidThermo::TRhoEi
+(
+    const scalar& T,
+    const scalar& e,
+    const label celli
+) const
+{
+    return
+        volumeFraction_[celli]*thermo1_->TRhoEi(T, e, celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->TRhoEi(T, e, celli);
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcP() const
 {
     volScalarField alphaXi1(volumeFraction_/(thermo1_->Gamma() - 1.0));
