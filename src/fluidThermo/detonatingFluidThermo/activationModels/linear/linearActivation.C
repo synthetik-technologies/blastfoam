@@ -66,7 +66,14 @@ Foam::activationModels::linearActivation::linearActivation
     forAll(detonationPoints_, pti)
     {
         label celli = mesh.findCell(detonationPoints_[pti]);
-        if (alpha[celli] < small)
+        if (returnReduce(celli, maxOp<label>()) < 0)
+        {
+            WarningInFunction
+                << "Detonation point at " << detonationPoints_[pti]
+                << " is was not found in the mesh. "
+                << endl;
+        }
+        else if (alpha[celli] < small && celli >= 0)
         {
             WarningInFunction
                 << "There is no mass for phase " << phaseName
