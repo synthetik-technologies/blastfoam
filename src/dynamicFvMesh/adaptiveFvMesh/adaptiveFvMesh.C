@@ -1154,6 +1154,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     }
                 }
             }
+
         }
 
         syncTools::syncFaceList(*this, protectedFace, orEqOp<bool>());
@@ -1412,10 +1413,57 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             }
         }
 
+        // Protect cells that will cause a failure (from snappyHexMesh)
+        boolList protectedFaces(nFaces(), false);
+
+        forAll(faceOwner(), facei)
+        {
+            label faceLevel = max
+            (
+                cellLevel[faceOwner()[facei]],
+                neiLevel[facei]
+            );
+
+            const face& f = faces()[facei];
+
+            label nAnchors = 0;
+
+            forAll(f, fp)
+            {
+                if (pointLevel[f[fp]] <= faceLevel)
+                {
+                    nAnchors++;
+                }
+            }
+            if (nAnchors == 2 || nAnchors == 3)
+            {
+                protectedFaces[facei] = true;
+            }
+        }
+
+        syncTools::syncFaceList(*this, protectedFaces, orEqOp<bool>());
+
+        for (label facei = 0; facei < nInternalFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCell_.set(faceOwner()[facei], 1);
+                nProtected++;
+                protectedCell_.set(faceNeighbour()[facei], 1);
+                nProtected++;
+            }
+        }
+        for (label facei = nInternalFaces(); facei < nFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCell_.set(faceOwner()[facei], 1);
+                nProtected++;
+            }
+        }
+
         //-YO
     }
-
-
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)
     {

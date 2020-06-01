@@ -1250,9 +1250,61 @@ void initialize
                     }
                 }
             }
+        } //-YO
+
+        // Protect cells that will cause a failure (from snappyHexMesh)
+        boolList protectedFaces(mesh.nFaces(), false);
+
+        forAll(mesh.faceOwner(), facei)
+        {
+            label faceLevel = max
+            (
+                cellLevel[mesh.faceOwner()[facei]],
+                neiLevel[facei]
+            );
+
+            const face& f = mesh.faces()[facei];
+
+            label nAnchors = 0;
+
+            forAll(f, fp)
+            {
+                if (pointLevel[f[fp]] <= faceLevel)
+                {
+                    nAnchors++;
+                }
+            }
+            if (nAnchors == 2 || nAnchors == 3)
+            {
+                protectedFaces[facei] = true;
+            }
         }
 
-        //-YO
+        syncTools::syncFaceList(mesh, protectedFaces, orEqOp<bool>());
+
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCells.set(mesh.faceOwner()[facei], 1);
+                nProtected++;
+                protectedCells.set(mesh.faceNeighbour()[facei], 1);
+                nProtected++;
+            }
+        }
+        for
+        (
+            label facei = mesh.nInternalFaces();
+            facei < mesh.nFaces();
+            facei++
+        )
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCells.set(mesh.faceOwner()[facei], 1);
+                nProtected++;
+            }
+        }
     }
 
 
