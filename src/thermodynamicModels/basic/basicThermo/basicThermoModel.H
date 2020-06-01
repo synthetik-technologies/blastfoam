@@ -71,11 +71,11 @@ protected:
         //- Phase density
         volScalarField& rho_;
 
-        //- Reference to internal energy
-        volScalarField& e_;
-
         //- Reference to temperature
         volScalarField& T_;
+
+        //- Reference to internal energy
+        volScalarField& e_;
 
         //- Thermal diffusivity [kg/m/s]
         volScalarField alpha_;
@@ -97,6 +97,13 @@ protected:
             const IOobject::readOption rOpt,
             const IOobject::writeOption wOpt,
             const dimensionSet& dims
+        ) const;
+
+        //- Lookup or construct field
+        volScalarField& lookupOrConstructE
+        (
+            const fvMesh& mesh,
+            const char* name
         ) const;
 
 

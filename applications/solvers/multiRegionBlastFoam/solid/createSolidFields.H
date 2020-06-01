@@ -5,7 +5,6 @@ PtrList<radiationModel> radiations(solidRegions.size());
 PtrList<fv::options> solidHeatSources(solidRegions.size());
 PtrList<volScalarField> betavSolid(solidRegions.size());
 PtrList<volSymmTensorField> aniAlphas(solidRegions.size());
-PtrList<volScalarField> solidKappas(solidRegions.size());
 
 // Populate solid field pointer lists
 forAll(solidRegions, i)
@@ -89,11 +88,6 @@ forAll(solidRegions, i)
             coordinates[i].R().transformVector(tkappaByCp());
         aniAlphas[i].correctBoundaryConditions();
 
-    }
-    else
-    {
-        solidKappas[i] =
-            solidRegions[i].lookupObject<solidThermoModel>("solidThermo").kappa();
     }
 
     IOobject betavSolidIO

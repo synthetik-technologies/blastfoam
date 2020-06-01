@@ -41,10 +41,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "basicThermoModel.H"
-#include "volFields.H"
-#include "surfaceFields.H"
-#include "dictionary.H"
-#include "wordIOList.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam

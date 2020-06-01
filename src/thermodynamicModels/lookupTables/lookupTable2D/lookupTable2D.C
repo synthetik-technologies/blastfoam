@@ -199,7 +199,7 @@ Foam::label Foam::lookupTable2D::bound
     const bool ij
 ) const
 {
-    for (label j = 0; j < ny; j++)
+    for (label j = 0; j < ny-1; j++)
     {
         if (ij)
         {

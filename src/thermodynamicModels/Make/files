@@ -9,6 +9,8 @@ basic/solidThermo/newSolidThermoModel.C
 derived/basicFluidThermo/basicFluidThermos.C
 derived/detonatingFluidThermo/detonatingFluidThermos.C
 
+derived/basicSolidThermo/basicSolidThermoModels.C
+
 derived/multiphaseFluidThermo/multiphaseFluidThermo.C
 derived/twoPhaseFluidThermo/twoPhaseFluidThermo.C
 

@@ -470,7 +470,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::CpByCv() const
     return volScalarFieldProperty
     (
         IOobject::groupName("CpByCv", basicThermoModel::name_),
-        dimEnergy/dimMass/dimTemperature,
+        dimless,
         &ThermoType::CpByCv,
         this->rho_,
         this->e_,

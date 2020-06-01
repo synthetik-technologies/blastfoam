@@ -75,8 +75,6 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const bool master
 )
 {
-    Info<<detonatingSolidConstructorTablePtr_<<endl;
-    Info<<basicSolidConstructorTablePtr_<<endl;
     word type = dict.subDict("mixture").lookup("type");
     if (type == "basic")
     {

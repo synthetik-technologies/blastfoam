@@ -120,7 +120,13 @@ Foam::basicSolidThermoModel<Thermo>::Kappa() const
 
     forAll(KappaCells, celli)
     {
-        Kappa[celli] = Thermo::thermoType::Kappa(rhoCells[celli], eCells[celli], TCells[celli]);
+        Kappa[celli] =
+            Thermo::thermoType::Kappa
+            (
+                rhoCells[celli],
+                eCells[celli],
+                TCells[celli]
+            );
     }
 
     volVectorField::Boundary& KappaBf = Kappa.boundaryFieldRef();

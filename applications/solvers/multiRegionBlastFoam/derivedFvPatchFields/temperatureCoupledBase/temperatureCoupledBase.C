@@ -149,10 +149,7 @@ Foam::tmp<Foam::scalarField> Foam::temperatureCoupledBase::kappa
 
             word turbName(turbulenceModel::propertiesName);
 
-            if
-            (
-                mesh.foundObject<turbulenceModel>(turbName)
-            )
+            if (mesh.foundObject<turbulenceModel>(turbName))
             {
                 const turbulenceModel& turbModel =
                     mesh.lookupObject<turbulenceModel>(turbName);

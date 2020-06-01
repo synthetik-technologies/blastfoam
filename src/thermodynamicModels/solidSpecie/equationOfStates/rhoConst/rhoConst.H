@@ -58,7 +58,7 @@ class rhoConst
 // Private data
 
     //- Density
-    scalar rho_;
+    scalar rho0_;
 
     //- Reference pressure
     scalar pRef_;
@@ -85,9 +85,9 @@ public:
             return true;
         }
 
-        const scalar& rho() const
+        const scalar& rho0() const
         {
-            return rho_;
+            return rho0_;
         }
 
         //- Return deviation from ideal gas pressure

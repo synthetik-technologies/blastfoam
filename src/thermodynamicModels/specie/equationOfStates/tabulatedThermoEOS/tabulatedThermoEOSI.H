@@ -60,7 +60,9 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdT
     const scalar& T
 ) const
 {
-    return 0.0;
+    return
+        pTable_.dFdX(rho, e)/TTable_.dFdX(rho, e)
+      + pTable_.dFdY(rho, e)/TTable_.dFdY(rho, e);
 }
 
 
@@ -139,7 +141,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cv
     const scalar& T
 ) const
 {
-    return 0.0;
+    return 1.0/max(TTable_.dFdY(rho, e), small);
 }
 
 
@@ -151,7 +153,21 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cp
     const scalar& T
 ) const
 {
-    return 0.0;
+    scalar cv(Cv(rho, e, T));
+    scalar cSqr
+    (
+        sqr
+        (
+            speedOfSound
+            (
+                p(rho, e, T),
+                rho,
+                e,
+                T
+            )
+        )
+    );
+    return cv/(1.0 - sqr(Gamma(rho, e, T))*cv*T/cSqr);
 }
 
 
@@ -163,7 +179,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpMCv
     const scalar& T
 ) const
 {
-    return 0.0;
+    return Cp(rho, e, T) - Cv(rho, e, T);
 }
 
 template<class Specied>

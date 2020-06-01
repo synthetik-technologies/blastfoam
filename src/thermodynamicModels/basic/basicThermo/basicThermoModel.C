@@ -58,6 +58,58 @@ Foam::volScalarField& Foam::basicThermoModel::lookupOrConstruct
 {
     if (!mesh.objectRegistry::foundObject<volScalarField>(name))
     {
+        volScalarField* fPtr;
+
+        if (rOpt == IOobject::MUST_READ)
+        {
+            fPtr =
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        name,
+                        mesh.time().timeName(),
+                        mesh,
+                        rOpt,
+                        wOpt
+                    ),
+                    mesh
+                );
+        }
+        else
+        {
+            fPtr =
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        name,
+                        mesh.time().timeName(),
+                        mesh,
+                        rOpt,
+                        wOpt
+                    ),
+                    mesh,
+                    dimensionedScalar("0", dims, Zero)
+                );
+        }
+
+        // Transfer ownership of this object to the objectRegistry
+        fPtr->store(fPtr);
+    }
+
+    return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
+}
+
+
+Foam::volScalarField& Foam::basicThermoModel::lookupOrConstructE
+(
+    const fvMesh& mesh,
+    const char* name
+) const
+{
+    if (!mesh.objectRegistry::foundObject<volScalarField>(name))
+    {
         volScalarField* fPtr
         (
             new volScalarField
@@ -67,21 +119,21 @@ Foam::volScalarField& Foam::basicThermoModel::lookupOrConstruct
                     name,
                     mesh.time().timeName(),
                     mesh,
-                    rOpt,
-                    wOpt
+                    IOobject::READ_IF_PRESENT,
+                    IOobject::AUTO_WRITE
                 ),
                 mesh,
-                dimensionedScalar("0", dims, Zero)
+                dimensionedScalar(dimEnergy/dimMass, -1.0),
+                eBoundaryTypes(T_),
+                eBoundaryBaseTypes(T_)
             )
         );
-
         // Transfer ownership of this object to the objectRegistry
         fPtr->store(fPtr);
     }
 
     return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
 }
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -100,8 +152,8 @@ Foam::basicThermoModel::basicThermoModel
     name_(phaseName),
     p_(p),
     rho_(rho),
-    e_(e),
     T_(T),
+    e_(e),
     alpha_
     (
         IOobject
@@ -149,18 +201,7 @@ Foam::basicThermoModel::basicThermoModel
             "rho",
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE,
-            dimPressure
-        )
-    ),
-    e_
-    (
-        lookupOrConstruct
-        (
-            mesh,
-            "e",
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE,
-            dimEnergy/dimMass
+            dimDensity
         )
     ),
     T_
@@ -174,6 +215,7 @@ Foam::basicThermoModel::basicThermoModel
             dimTemperature
         )
     ),
+    e_(lookupOrConstructE(mesh, "e")),
     alpha_
     (
         IOobject
