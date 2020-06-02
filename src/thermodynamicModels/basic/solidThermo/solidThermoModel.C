@@ -52,15 +52,6 @@ Foam::solidThermoModel::solidThermoModel
         mesh,
         dict,
         master
-    ),
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName("solidThermo", name),
-            mesh.time().timeName(),
-            mesh
-        )
     )
 {}
 

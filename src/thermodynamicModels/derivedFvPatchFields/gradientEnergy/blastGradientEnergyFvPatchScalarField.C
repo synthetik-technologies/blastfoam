@@ -30,8 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
-#include "fluidThermoModel.H"
-#include "solidThermoModel.H"
+#include "basicThermoModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -100,18 +99,13 @@ void Foam::blastGradientEnergyFvPatchScalarField::updateCoeffs()
     {
         return;
     }
-    word fluidName(IOobject::groupName("fluidThermo", internalField().group()));
-    word solidName(IOobject::groupName("solidThermo", internalField().group()));
-    basicThermoModel* thermoPtr;
-    if (db().foundObject<fluidThermoModel>(fluidName))
-    {
-        thermoPtr = &db().lookupObjectRef<fluidThermoModel>(fluidName);
-    }
-    else
-    {
-        thermoPtr = &db().lookupObjectRef<solidThermoModel>(solidName);
-    }
-    basicThermoModel& thermo = *thermoPtr;
+    basicThermoModel& thermo
+    (
+        db().lookupObjectRef<basicThermoModel>
+        (
+            IOobject::groupName("basicThermo", internalField().group())
+        )
+    );
 
     label patchID = patch().index();
 

@@ -111,7 +111,7 @@ void Foam::blastEnergyJumpAMIFvPatchScalarField::updateCoeffs()
         fluidThermoModel& thermo =
             db().lookupObjectRef<fluidThermoModel>
             (
-                IOobject::groupName("fluidThermo", internalField().group())
+                IOobject::groupName("basicThermo", internalField().group())
             );
         label patchID = patch().index();
 

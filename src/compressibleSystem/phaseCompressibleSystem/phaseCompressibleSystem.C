@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
+#include "blastCompressibleTurbulenceModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
 
@@ -39,16 +39,16 @@ namespace Foam
 
 void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
 {
-    if (Foam::max(mu()).value() > 0)
+    if (Foam::max(this->thermo().mu()).value() > 0)
     {
         turbulence_ =
         (
-            fiveEqnCompressibleTurbulenceModel::New
+            blastCompressibleTurbulenceModel::New
             (
                 rho_,
                 U_,
                 rhoPhi_,
-                *this
+                this->thermo()
             )
         );
         turbulence_->validate();
@@ -134,6 +134,33 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh
+    ),
+    T_
+    (
+        IOobject
+        (
+            "T",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    ),
+    e_
+    (
+        IOobject
+        (
+            "e",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(sqr(dimVelocity), -1.0),
+        fluidThermoModel::eBoundaryTypes(T_),
+        fluidThermoModel::eBoundaryBaseTypes(T_)
     ),
     rhoU_
     (
@@ -318,7 +345,15 @@ void Foam::phaseCompressibleSystem::solve
         calcAlphaAndRho();
         e() = rhoE_/rho_ - 0.5*magSqr(U_);
         e().correctBoundaryConditions();
-        rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, rho_, e(), Cv());
+        rhoE_ =
+            radiation_->calcRhoE
+            (
+                f*dT,
+                rhoE_,
+                rho_,
+                e(),
+                this->thermo().Cv()
+            );
     }
 
     if (stepi == oldIs_.size())
@@ -473,14 +508,14 @@ void Foam::phaseCompressibleSystem::addUSource(const volVectorField::Internal& U
 }
 
 
-const Foam::fiveEqnCompressibleTurbulenceModel&
+const Foam::blastCompressibleTurbulenceModel&
 Foam::phaseCompressibleSystem::turbulence() const
 {
     return turbulence_();
 }
 
 
-Foam::fiveEqnCompressibleTurbulenceModel&
+Foam::blastCompressibleTurbulenceModel&
 Foam::phaseCompressibleSystem::turbulence()
 {
     return turbulence_();

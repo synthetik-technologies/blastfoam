@@ -25,8 +25,6 @@ License
 
 #include "pressureBasedActivation.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fvc.H"
-#include "fvm.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

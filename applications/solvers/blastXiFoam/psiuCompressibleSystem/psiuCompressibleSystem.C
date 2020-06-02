@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "psiuCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
 #include "fvm.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -42,10 +41,65 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     const dictionary& dict
 )
 :
-    phaseCompressibleSystem(mesh, dict),
+    integrationSystem("phaseCompressibleSystem", mesh),
     thermo_(psiuReactionThermo::New(mesh)),
+    rho_
+    (
+        IOobject
+        (
+            "rho",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("rho", dimDensity, 0.0),
+        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+    ),
+    U_
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    ),
+    p_(thermo_->p()),
+    T_(thermo_->T()),
     e_(thermo_->he()),
     eu_(thermo_->heu()),
+    rhoU_
+    (
+        IOobject
+        (
+            "rhoU",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        rho_*U_,
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
+    ),
+    rhoE_
+    (
+        IOobject
+        (
+            "rhoE",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
+    ),
     rhoEu_
     (
         IOobject
@@ -56,12 +110,73 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
         ),
         eu_*rho_,
         eu_.boundaryField().types()
-    )
+    ),
+    phi_
+    (
+        IOobject
+        (
+            "phi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+    ),
+    rhoPhi_
+    (
+        IOobject
+        (
+            "rhoPhi",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)
+    ),
+    rhoUPhi_
+    (
+        IOobject
+        (
+            "rhoUPhi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedVector("0", dimDensity*sqr(dimVelocity)*dimArea, Zero)
+    ),
+    rhoEPhi_
+    (
+        IOobject
+        (
+            "rhoEPhi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
+    ),
+    fluxScheme_(fluxScheme::New(mesh)),
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
     rho_ = thermo_->rho();
 
     thermo_->validate("psiuCompressibleSystem", "ea");
-    setModels(thermo_());
+
+    if (min(thermo_->mu()).value() > small)
+    {
+        turbulence_.set
+        (
+            compressible::turbulenceModel::New
+            (
+                rho_,
+                U_,
+                phi_,
+                thermo_()
+            ).ptr()
+        );
+    }
 
     encode();
 }
@@ -88,6 +203,16 @@ void Foam::psiuCompressibleSystem::solve
             oldIs_[stepi - 1],
             new volScalarField(rho_)
         );
+        rhoUOld_.set
+        (
+            oldIs_[stepi - 1],
+            new volVectorField(rhoU_)
+        );
+        rhoEOld_.set
+        (
+            oldIs_[stepi - 1],
+            new volScalarField(rhoE_)
+        );
         rhoEuOld_.set
         (
             oldIs_[stepi - 1],
@@ -96,6 +221,8 @@ void Foam::psiuCompressibleSystem::solve
     }
 
     volScalarField rhoOld(ai[stepi - 1]*rho_);
+    volVectorField rhoUOld(ai[stepi - 1]*rhoU_);
+    volScalarField rhoEOld(ai[stepi - 1]*rhoE_);
     volScalarField rhoEuOld(ai[stepi - 1]*rhoEu_);
     for (label i = 0; i < stepi - 1; i++)
     {
@@ -103,14 +230,23 @@ void Foam::psiuCompressibleSystem::solve
         if (fi != -1 && ai[fi] != 0)
         {
             rhoOld += ai[fi]*rhoOld_[fi];
+            rhoUOld += ai[fi]*rhoUOld_[fi];
+            rhoEOld += ai[fi]*rhoEOld_[fi];
             rhoEuOld += ai[fi]*rhoEuOld_[fi];
         }
     }
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
+    volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
+    volScalarField deltaRhoE
+    (
+        fvc::div(rhoEPhi_)
+      - (rhoU_ & g_)
+    );
     volScalarField deltaRhoEu
     (
         fvc::div(fluxScheme_->energyFlux(rho_, U_, eu_, p_))
+      - (rhoU_ & g_)
     );
     if (deltaIs_[stepi - 1] != -1)
     {
@@ -119,6 +255,16 @@ void Foam::psiuCompressibleSystem::solve
             deltaIs_[stepi - 1],
             new volScalarField(deltaRho)
         );
+        deltaRhoU_.set
+        (
+            deltaIs_[stepi - 1],
+            new volVectorField(deltaRhoU)
+        );
+        deltaRhoE_.set
+        (
+            deltaIs_[stepi - 1],
+            new volScalarField(deltaRhoE)
+        );
         deltaRhoEu_.set
         (
             deltaIs_[stepi - 1],
@@ -126,6 +272,8 @@ void Foam::psiuCompressibleSystem::solve
         );
     }
     deltaRho *= bi[stepi - 1];
+    deltaRhoU *= bi[stepi - 1];
+    deltaRhoE *= bi[stepi - 1];
     deltaRhoEu *= bi[stepi - 1];
 
     for (label i = 0; i < stepi - 1; i++)
@@ -134,6 +282,8 @@ void Foam::psiuCompressibleSystem::solve
         if (fi != -1 && bi[fi] != 0)
         {
             deltaRho += bi[fi]*deltaRho_[fi];
+            deltaRhoU += bi[fi]*deltaRhoU_[fi];
+            deltaRhoE += bi[fi]*deltaRhoE_[fi];
             deltaRhoEu += bi[fi]*deltaRhoEu_[fi];
         }
     }
@@ -141,23 +291,53 @@ void Foam::psiuCompressibleSystem::solve
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = rhoOld - dT*deltaRho;
     rho_.correctBoundaryConditions();
+
+    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
+    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
+    rhoE_ = rhoEOld - dT*deltaRhoE;
     rhoEu_ = rhoEuOld - dT*deltaRhoEu;
 
-    phaseCompressibleSystem::solve(stepi, ai, bi);
-    if (stepi == oldIs_.size() && turbulence_.valid())
+    if (stepi == oldIs_.size() && (turbulence_.valid()))
     {
+        U_ = rhoU_/rho_;
+        U_.correctBoundaryConditions();
+
+        volScalarField muEff("muEff", turbulence_->muEff());
+        volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
+
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+         ==
+            fvm::laplacian(muEff, U_)
+          + fvc::div(tauMC)
+        );
+
+        UEqn.solve();
+
+        rhoU_ = rho_*U_;
+
+        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+        e_.correctBoundaryConditions();
+
+        eu_ = rhoEu_/rho_ - 0.5*magSqr(U_);
+        eu_.correctBoundaryConditions();
+
+        Foam::solve
+        (
+            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
+        - fvm::laplacian(turbulence_->alphaEff(), e_)
+        );
+        rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+
         Foam::solve
         (
             fvm::ddt(rho_, eu_) - fvc::ddt(rho_, eu_)
-          - fvm::laplacian(turbulence_->alphaEff(), eu_)
+        - fvm::laplacian(turbulence_->alphaEff(), eu_)
         );
-        rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
-        rhoEu_.boundaryFieldRef() =
-            rho_.boundaryField()
-           *(
-                eu_.boundaryField()
-              + 0.5*magSqr(U_.boundaryField())
-            );
+        rhoE_ = rho_*(eu_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+
+        turbulence_->correct();
     }
 
 //     if(temperatureFix)
@@ -170,7 +350,6 @@ void Foam::psiuCompressibleSystem::solve
         rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
     }
 
-
     decode();
 }
 
@@ -182,27 +361,67 @@ void Foam::psiuCompressibleSystem::setODEFields
     const boolList& storeDeltas
 )
 {
-    phaseCompressibleSystem::setODEFields(nSteps, storeFields, storeDeltas);
-    rhoOld_.setSize(nOld_);
-    rhoEuOld_.setSize(nOld_);
+    oldIs_.resize(nSteps);
+    deltaIs_.resize(nSteps);
+    label fi = 0;
+    for (label i = 0; i < nSteps; i++)
+    {
+        if (storeFields[i])
+        {
+            oldIs_[i] = fi;
+            fi++;
+        }
+        else
+        {
+            oldIs_[i] = -1;
+        }
+    }
+    nOld_ = fi;
+    rhoOld_.resize(nOld_);
+    rhoUOld_.resize(nOld_);
+    rhoEOld_.resize(nOld_);
+    rhoEuOld_.resize(nOld_);
 
-    deltaRho_.setSize(nDelta_);
-    deltaRhoEu_.setSize(nDelta_);
+    fi = 0;
+    for (label i = 0; i < nSteps; i++)
+    {
+        if (storeDeltas[i])
+        {
+            deltaIs_[i] = fi;
+            fi++;
+        }
+        else
+        {
+            deltaIs_[i] = -1;
+        }
+    }
+    nDelta_ = fi;
+    deltaRho_.resize(nDelta_);
+    deltaRhoU_.resize(nDelta_);
+    deltaRhoE_.resize(nDelta_);
+    deltaRhoEu_.resize(nDelta_);
 }
 
 void Foam::psiuCompressibleSystem::clearODEFields()
 {
-    phaseCompressibleSystem::clearODEFields();
-
+    fluxScheme_->clear();
     rhoOld_.clear();
-    rhoOld_.setSize(nOld_);
+    rhoUOld_.clear();
+    rhoEOld_.clear();
     rhoEuOld_.clear();
-    rhoEuOld_.setSize(nOld_);
+    rhoOld_.resize(nOld_);
+    rhoUOld_.resize(nOld_);
+    rhoEOld_.resize(nOld_);
+    rhoEuOld_.resize(nOld_);
 
     deltaRho_.clear();
-    deltaRho_.setSize(nDelta_);
+    deltaRhoU_.clear();
+    deltaRhoE_.clear();
     deltaRhoEu_.clear();
-    deltaRhoEu_.setSize(nDelta_);
+    deltaRho_.resize(nDelta_);
+    deltaRhoU_.resize(nDelta_);
+    deltaRhoE_.resize(nDelta_);
+    deltaRhoEu_.resize(nDelta_);
 }
 
 
@@ -219,29 +438,6 @@ void Foam::psiuCompressibleSystem::update()
         rhoPhi_,
         rhoUPhi_,
         rhoEPhi_
-    );
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::psiuCompressibleSystem::ESource() const
-{
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ESource",
-                rho_.mesh().time().timeName(),
-                rho_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            rho_.mesh(),
-            dimensionedScalar("0", rhoE_.dimensions()/dimTime, 0.0)
-        )
     );
 }
 
@@ -297,9 +493,21 @@ Foam::psiuCompressibleSystem::speedOfSound() const
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rho() const
+{
+    return thermo_->rho();
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::psiuCompressibleSystem::rhou() const
 {
     return thermo_->rhou();
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::psiuCompressibleSystem::U() const
+{
+    return U_;
 }
 
 

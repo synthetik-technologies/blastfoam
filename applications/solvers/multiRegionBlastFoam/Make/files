@@ -1,6 +1,3 @@
-derivedFvPatchFields/temperatureCoupledBase/temperatureCoupledBase.C
-derivedFvPatchFields/turbulentTemperatureRadCoupledMixed/turbulentTemperatureRadCoupledBlastMixedFvPatchScalarField.C
-
 solid/solidRegionDiffNo.C
 multiRegionBlastFoam.C
 

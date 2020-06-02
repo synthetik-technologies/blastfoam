@@ -23,52 +23,37 @@ Description
     Typedef for phaseCompressibleTurbulenceModel
 \*---------------------------------------------------------------------------*/
 
-#include "compressibleTurbulenceModel.H"
-#include "CompressibleTurbulenceModel.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
-#include "addToRunTimeSelectionTable.H"
-#include "makeTurbulenceModel.H"
+#ifndef blastCompressibleTurbulenceModel_H
+#define blastCompressibleTurbulenceModel_H
 
+
+#include "blastCompressibleTurbulenceModelFwd.H"
+#include "CompressibleTurbulenceModel.H"
 #include "ThermalDiffusivity.H"
 #include "EddyDiffusivity.H"
-
 #include "laminarModel.H"
 #include "RASModel.H"
 #include "LESModel.H"
+#include "fluidThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makeTurbulenceModelTypes
-(
-    geometricOneField,
-    volScalarField,
-    compressibleTurbulenceModel,
-    CompressibleTurbulenceModel,
-    ThermalDiffusivity,
-    phaseCompressibleSystem
-);
+namespace Foam
+{
+    typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
+        blastCompressibleTurbulenceModel;
 
-makeBaseTurbulenceModel
-(
-    geometricOneField,
-    volScalarField,
-    compressibleTurbulenceModel,
-    CompressibleTurbulenceModel,
-    ThermalDiffusivity,
-    phaseCompressibleSystem
-);
+    namespace blast
+    {
+        typedef laminarModel<blastCompressibleTurbulenceModel> laminarModel;
+        typedef RASModel<EddyDiffusivity<blastCompressibleTurbulenceModel>> RASModel;
+        typedef LESModel<EddyDiffusivity<blastCompressibleTurbulenceModel>> LESModel;
+    }
 
-#define makeLaminarModel(Type)                                                 \
-    makeTemplatedLaminarModel                                                  \
-    (phaseCompressibleSystemCompressibleTurbulenceModel, laminar, Type)
+}
 
-#define makeRASModel(Type)                                                     \
-    makeTemplatedTurbulenceModel                                               \
-    (phaseCompressibleSystemCompressibleTurbulenceModel, RAS, Type)
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define makeLESModel(Type)                                                     \
-    makeTemplatedTurbulenceModel                                               \
-    (phaseCompressibleSystemCompressibleTurbulenceModel, LES, Type)
-
+#endif
 
 // ************************************************************************* //

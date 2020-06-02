@@ -3,6 +3,7 @@ cd ${0%/*} || exit 1    # run from this directory
 set -x
 
 wclean $targetType thermodynamicModels
+wclean $targetType fluxSchemes
 wclean $targetType compressibleSystem
 wclean $targetType timeIntegrators
 wclean $targetType radiationModels

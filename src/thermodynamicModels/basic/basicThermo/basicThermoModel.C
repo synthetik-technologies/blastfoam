@@ -148,6 +148,15 @@ Foam::basicThermoModel::basicThermoModel
     const bool master
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName("basicThermo", phaseName),
+            p.mesh().time().timeName(),
+            p.mesh()
+        )
+    ),
     master_(master),
     name_(phaseName),
     p_(p),
@@ -180,6 +189,15 @@ Foam::basicThermoModel::basicThermoModel
     const bool master
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName("basicThermo", phaseName),
+            mesh.time().timeName(),
+            mesh
+        )
+    ),
     master_(master),
     name_(phaseName),
     p_

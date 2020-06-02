@@ -86,8 +86,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef greyMean_H
-#define greyMean_H
+#ifndef blastGreyMean_H
+#define blastGreyMean_H
 
 #include "interpolationLookUpTable.H"
 #include "absorptionEmissionModel.H"

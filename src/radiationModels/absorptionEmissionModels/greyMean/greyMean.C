@@ -94,7 +94,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
             i,
             &mesh.lookupObjectRef<fluidThermoModel>
             (
-                IOobject::groupName("fluidThermo", specieName)
+                IOobject::groupName("basicThermo", specieName)
             )
         );
         if (mesh.foundObject<volScalarField>(IOobject::groupName("Y", specieName)))

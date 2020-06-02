@@ -24,9 +24,10 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "reactingCompressibleSystem.H"
+#include "fvm.H"
 #include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
 
 namespace Foam
 {
@@ -41,14 +42,129 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     const dictionary& dict
 )
 :
-    phaseCompressibleSystem(mesh, dict),
+    integrationSystem("phaseCompressibleSystem", mesh),
     thermo_(rhoReactionThermo::New(mesh)),
-    e_(thermo_->he())
+    rho_
+    (
+        IOobject
+        (
+            "rho",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("rho", dimDensity, 0.0),
+        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+    ),
+    U_
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh
+    ),
+    p_(thermo_->p()),
+    T_(thermo_->T()),
+    e_(thermo_->he()),
+    rhoU_
+    (
+        IOobject
+        (
+            "rhoU",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        rho_*U_,
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
+    ),
+    rhoE_
+    (
+        IOobject
+        (
+            "rhoE",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
+    ),
+    phi_
+    (
+        IOobject
+        (
+            "phi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar("0", dimVelocity*dimArea, 0.0)
+    ),
+    rhoPhi_
+    (
+        IOobject
+        (
+            "rhoPhi",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)
+    ),
+    rhoUPhi_
+    (
+        IOobject
+        (
+            "rhoUPhi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedVector("0", dimDensity*sqr(dimVelocity)*dimArea, Zero)
+    ),
+    rhoEPhi_
+    (
+        IOobject
+        (
+            "rhoEPhi",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
+    ),
+    fluxScheme_(fluxScheme::New(mesh)),
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
 
-    setModels(dict);
+    if (min(thermo_->mu()).value() > small)
+    {
+        turbulence_.set
+        (
+            compressible::turbulenceModel::New
+            (
+                rho_,
+                U_,
+                phi_,
+                thermo_()
+            ).ptr()
+        );
+    }
 
     Switch useChemistry
     (
@@ -93,19 +209,39 @@ void Foam::reactingCompressibleSystem::solve
             oldIs_[stepi - 1],
             new volScalarField(rho_)
         );
+        rhoUOld_.set
+        (
+            oldIs_[stepi - 1],
+            new volVectorField(rhoU_)
+        );
+        rhoEOld_.set
+        (
+            oldIs_[stepi - 1],
+            new volScalarField(rhoE_)
+        );
     }
 
     volScalarField rhoOld(ai[stepi - 1]*rho_);
+    volVectorField rhoUOld(ai[stepi - 1]*rhoU_);
+    volScalarField rhoEOld(ai[stepi - 1]*rhoE_);
     for (label i = 0; i < stepi - 1; i++)
     {
         label fi = oldIs_[i];
         if (fi != -1 && ai[fi] != 0)
         {
             rhoOld += ai[fi]*rhoOld_[fi];
+            rhoUOld += ai[fi]*rhoUOld_[fi];
+            rhoEOld += ai[fi]*rhoEOld_[fi];
         }
     }
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
+    volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
+    volScalarField deltaRhoE
+    (
+        fvc::div(rhoEPhi_)
+      - (rhoU_ & g_)
+    );
     if (deltaIs_[stepi - 1] != -1)
     {
         deltaRho_.set
@@ -113,8 +249,20 @@ void Foam::reactingCompressibleSystem::solve
             deltaIs_[stepi - 1],
             new volScalarField(deltaRho)
         );
+        deltaRhoU_.set
+        (
+            deltaIs_[stepi - 1],
+            new volVectorField(deltaRhoU)
+        );
+        deltaRhoE_.set
+        (
+            deltaIs_[stepi - 1],
+            new volScalarField(deltaRhoE)
+        );
     }
     deltaRho *= bi[stepi - 1];
+    deltaRhoU *= bi[stepi - 1];
+    deltaRhoE *= bi[stepi - 1];
 
     for (label i = 0; i < stepi - 1; i++)
     {
@@ -122,6 +270,8 @@ void Foam::reactingCompressibleSystem::solve
         if (fi != -1 && bi[fi] != 0)
         {
             deltaRho += bi[fi]*deltaRho_[fi];
+            deltaRhoU += bi[fi]*deltaRhoU_[fi];
+            deltaRhoE += bi[fi]*deltaRhoE_[fi];
         }
     }
 
@@ -129,7 +279,42 @@ void Foam::reactingCompressibleSystem::solve
     rho_ = rhoOld - dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    phaseCompressibleSystem::solve(stepi, ai, bi);
+    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
+    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
+    rhoE_ = rhoEOld - dT*deltaRhoE;
+
+    if (stepi == oldIs_.size() && (turbulence_.valid()))
+    {
+        U_ = rhoU_/rho_;
+        U_.correctBoundaryConditions();
+
+        volScalarField muEff("muEff", turbulence_->muEff());
+        volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
+
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+         ==
+            fvm::laplacian(muEff, U_)
+          + fvc::div(tauMC)
+        );
+
+        UEqn.solve();
+
+        rhoU_ = rho_*U_;
+
+        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+        e_.correctBoundaryConditions();
+
+        Foam::solve
+        (
+            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
+        - fvm::laplacian(turbulence_->alphaEff(), e_)
+        );
+        rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+
+        turbulence_->correct();
+    }
 
     //- Solve chemistry on the final step
     if (stepi == oldIs_.size())
@@ -177,21 +362,61 @@ void Foam::reactingCompressibleSystem::setODEFields
     const boolList& storeDeltas
 )
 {
-    phaseCompressibleSystem::setODEFields(nSteps, storeFields, storeDeltas);
-    rhoOld_.setSize(nOld_);
+    oldIs_.resize(nSteps);
+    deltaIs_.resize(nSteps);
+    label fi = 0;
+    for (label i = 0; i < nSteps; i++)
+    {
+        if (storeFields[i])
+        {
+            oldIs_[i] = fi;
+            fi++;
+        }
+        else
+        {
+            oldIs_[i] = -1;
+        }
+    }
+    nOld_ = fi;
+    rhoOld_.resize(nOld_);
+    rhoUOld_.resize(nOld_);
+    rhoEOld_.resize(nOld_);
 
-    deltaRho_.setSize(nDelta_);
+    fi = 0;
+    for (label i = 0; i < nSteps; i++)
+    {
+        if (storeDeltas[i])
+        {
+            deltaIs_[i] = fi;
+            fi++;
+        }
+        else
+        {
+            deltaIs_[i] = -1;
+        }
+    }
+    nDelta_ = fi;
+    deltaRho_.resize(nDelta_);
+    deltaRhoU_.resize(nDelta_);
+    deltaRhoE_.resize(nDelta_);
 }
 
 void Foam::reactingCompressibleSystem::clearODEFields()
 {
-    phaseCompressibleSystem::clearODEFields();
-
+    fluxScheme_->clear();
     rhoOld_.clear();
-    rhoOld_.setSize(nOld_);
+    rhoUOld_.clear();
+    rhoEOld_.clear();
+    rhoOld_.resize(nOld_);
+    rhoUOld_.resize(nOld_);
+    rhoEOld_.resize(nOld_);
 
     deltaRho_.clear();
-    deltaRho_.setSize(nDelta_);
+    deltaRhoU_.clear();
+    deltaRhoE_.clear();
+    deltaRho_.resize(nDelta_);
+    deltaRhoU_.resize(nDelta_);
+    deltaRhoE_.resize(nDelta_);
 }
 
 
@@ -212,31 +437,10 @@ void Foam::reactingCompressibleSystem::update()
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::reactingCompressibleSystem::ESource() const
-{
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ESource",
-                rho_.mesh().time().timeName(),
-                rho_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            rho_.mesh(),
-            dimensionedScalar("0", rhoE_.dimensions()/dimTime, 0.0)
-        )
-    );
-}
-
-
 void Foam::reactingCompressibleSystem::decode()
 {
+    thermo_->rho() = rho_;
+
     U_.ref() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
@@ -263,6 +467,7 @@ void Foam::reactingCompressibleSystem::decode()
 
 void Foam::reactingCompressibleSystem::encode()
 {
+    rho_ = thermo_->rho();
     rhoU_ = rho_*U_;
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 }

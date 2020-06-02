@@ -32,23 +32,36 @@ Foam::scalar Foam::solidRegionDiffNo
 (
     const fvMesh& mesh,
     const Time& runTime,
+    const volScalarField& e,
     const volScalarField& Cprho,
     const volScalarField& kappa
 )
 {
-    surfaceScalarField kapparhoCpbyDelta
+    surfaceScalarField amaxSf
     (
-        sqr(mesh.surfaceInterpolation::deltaCoeffs())
-       *fvc::interpolate(kappa)
-       /fvc::interpolate(Cprho)
+        mag(fvc::snGrad(kappa/Cprho*e))*mesh.magSf()
+    );
+    scalarField sumAmaxSf
+    (
+        fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-    const scalar DiNum = max(kapparhoCpbyDelta).value()*runTime.deltaTValue();
-    const scalar meanDiNum =
-        average(kapparhoCpbyDelta).value()*runTime.deltaTValue();
+    const scalar DiNum =
+        0.5
+       *gMax(sumAmaxSf/mesh.V().field())
+       *mesh.time().deltaTValue();
+//     surfaceScalarField kapparhoCpbyDelta
+//     (
+//         sqr(mesh.surfaceInterpolation::deltaCoeffs())
+//        *fvc::interpolate(kappa)
+//        /fvc::interpolate(Cprho)
+//     );
+//
+//     const scalar DiNum = max(kapparhoCpbyDelta).value()*runTime.deltaTValue();
+//     const scalar meanDiNum =
+//         average(kapparhoCpbyDelta).value()*runTime.deltaTValue();
 
-    Info<< "Region: " << mesh.name() << " Diffusion Number mean: " << meanDiNum
-        << " max: " << DiNum << endl;
+    Info<< "Region: " << mesh.name() << " max: " << DiNum << endl;
 
     return DiNum;
 }

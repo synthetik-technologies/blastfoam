@@ -23,7 +23,7 @@ Description
     Typedef for phaseCompressibleTurbulenceModels
 \*---------------------------------------------------------------------------*/
 
-#include "fiveEqnCompressibleTurbulenceModels.H"
+#include "blastCompressibleTurbulenceModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

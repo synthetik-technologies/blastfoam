@@ -52,8 +52,7 @@ namespace Foam
 
 class solidThermoModel
 :
-    public basicThermoModel,
-    public regIOobject
+    public basicThermoModel
 {
 
 public:
@@ -137,18 +136,6 @@ public:
 
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const = 0;
-
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const
-        {
-            return os.good();
-        }
-
-        //- Read residual values
-        virtual void read(const dictionary& dict)
-        {
-            return;
-        }
 };
 
 

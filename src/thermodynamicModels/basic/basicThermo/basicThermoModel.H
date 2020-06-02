@@ -54,6 +54,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class basicThermoModel
+:
+    public regIOobject
 {
 protected:
 
@@ -414,6 +416,18 @@ public:
             const scalarField& alphat,
             const label patchi
         ) const;
+
+        //- Dummy write for regIOobject
+        bool writeData(Ostream& os) const
+        {
+            return os.good();
+        }
+
+        //- Read residual values
+        virtual void read(const dictionary& dict)
+        {
+            return;
+        }
 };
 
 

@@ -7,6 +7,7 @@ cd ${0%/*} || exit 1    # run from this directory
 wmake $targetType timeIntegrators
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
+wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
 wmake $targetType decompositionMethods

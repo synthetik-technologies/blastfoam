@@ -48,33 +48,6 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 )
 :
     phaseCompressibleSystem(mesh, dict),
-    T_
-    (
-        IOobject
-        (
-            "T",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
-    e_
-    (
-        IOobject
-        (
-            "e",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidThermoModel::eBoundaryTypes(T_),
-        fluidThermoModel::eBoundaryBaseTypes(T_)
-    ),
     thermo_(word::null, p_, rho_, e_, T_, dict, true),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
@@ -459,105 +432,6 @@ void Foam::multiphaseCompressibleSystem::encode()
     }
     rhoU_ = rho_*U_;
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::Cv() const
-{
-    return thermo_.Cv();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::mu() const
-{
-    return thermo_.mu();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::multiphaseCompressibleSystem::mu(const label patchi) const
-{
-    return thermo_.mu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::nu() const
-{
-    return thermo_.nu();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::multiphaseCompressibleSystem::nu(const label patchi) const
-{
-    return thermo_.nu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseCompressibleSystem::alpha() const
-{
-    return thermo_.alpha();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::multiphaseCompressibleSystem::alpha(const label patchi) const
-{
-    return thermo_.alpha(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_.alphaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::multiphaseCompressibleSystem::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_.alphaEff(alphat, patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseCompressibleSystem::alphahe() const
-{
-    return thermo_.alphahe();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::multiphaseCompressibleSystem::alphahe(const label patchi) const
-{
-    return thermo_.alphahe(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::kappa() const
-{
-    return thermo_.kappa();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::multiphaseCompressibleSystem::kappa(const label patchi) const
-{
-    return thermo_.kappa(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::multiphaseCompressibleSystem::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_.kappaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::multiphaseCompressibleSystem::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_.kappaEff(alphat, patchi);
 }
 
 // ************************************************************************* //

@@ -60,15 +60,6 @@ Foam::fluidThermoModel::fluidThermoModel
         dict,
         master
     ),
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName("fluidThermo", phaseName),
-            e.mesh().time().timeName(),
-            e.mesh()
-        )
-    ),
     mu_
     (
         IOobject

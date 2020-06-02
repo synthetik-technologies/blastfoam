@@ -25,7 +25,6 @@ License
 
 #include "MillerAfterburn.H"
 #include "fvc.H"
-#include "fvm.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

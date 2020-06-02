@@ -23,14 +23,14 @@ Description
     Forward declaration of typedef for phaseCompressibleTurbulenceModel
 \*---------------------------------------------------------------------------*/
 
-#ifndef fiveEqnCompressibleTurbulenceModelFwd_H
-#define fiveEqnCompressibleTurbulenceModelFwd_H
+#ifndef blastCompressibleTurbulenceModelFwd_H
+#define blastCompressibleTurbulenceModelFwd_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    class phaseCompressibleSystem;
+    class fluidThermoModel;
 
     template<class TransportModel>
     class CompressibleTurbulenceModel;
@@ -38,8 +38,8 @@ namespace Foam
     template<class BasicTurbulenceModel>
     class ThermalDiffusivity;
 
-    typedef ThermalDiffusivity<CompressibleTurbulenceModel<phaseCompressibleSystem>>
-          fiveEqnCompressibleTurbulenceModel;
+    typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
+          blastCompressibleTurbulenceModel;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

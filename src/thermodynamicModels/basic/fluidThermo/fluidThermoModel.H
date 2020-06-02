@@ -56,8 +56,7 @@ namespace Foam
 
 class fluidThermoModel
 :
-    public basicThermoModel,
-    public regIOobject
+    public basicThermoModel
 {
 protected:
 
@@ -249,18 +248,6 @@ public:
 
         //- Kinematic viscosity of mixture for cell [m^2/s]
         virtual scalar nui(const label celli) const;
-
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const
-        {
-            return os.good();
-        }
-
-        //- Read residual values
-        virtual void read(const dictionary& dict)
-        {
-            return;
-        }
 };
 
 
