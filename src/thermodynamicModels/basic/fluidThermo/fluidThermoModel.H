@@ -120,16 +120,27 @@ public:
         );
 
     // Constructor
-    fluidThermoModel
-    (
-        const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
-        const dictionary& dict,
-        const bool master = true
-    );
+
+        //- Construct with input field
+        fluidThermoModel
+        (
+            const word& phaseName,
+            volScalarField& p,
+            volScalarField& rho,
+            volScalarField& e,
+            volScalarField& T,
+            const dictionary& dict,
+            const bool master = true
+        );
+
+        //- Construct and add fields to db
+        fluidThermoModel
+        (
+            const word& phaseName,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool master = true
+        );
 
 
     // Selectors

@@ -89,13 +89,27 @@ public:
     );
 
     // Constructor
-    solidThermoModel
-    (
-        const word& phaseName,
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const bool master
-    );
+
+        //- Construct with input field
+        solidThermoModel
+        (
+            const word& phaseName,
+            volScalarField& p,
+            volScalarField& rho,
+            volScalarField& e,
+            volScalarField& T,
+            const dictionary& dict,
+            const bool master = true
+        );
+
+        //- Construct and add fields to db
+        solidThermoModel
+        (
+            const word& phaseName,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const bool master = true
+        );
 
     //- Selector
         static autoPtr<solidThermoModel> New

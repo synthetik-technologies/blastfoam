@@ -305,7 +305,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
     const bool master
 )
 :
-    fluidThermoModel
+    BasicThermo
     (
         name,
         p,
@@ -331,7 +331,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
     const bool master
 )
 :
-    fluidThermoModel
+    BasicThermo
     (
         name,
         mesh,

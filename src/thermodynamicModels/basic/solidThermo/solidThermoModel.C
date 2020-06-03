@@ -56,6 +56,28 @@ Foam::solidThermoModel::solidThermoModel
 {}
 
 
+Foam::solidThermoModel::solidThermoModel
+(
+    const word& phaseName,
+    volScalarField& p,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const bool master
+)
+:
+    basicThermoModel
+    (
+        phaseName,
+        p,
+        rho,
+        e,
+        T,
+        dict,
+        master
+    )
+{}
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::solidThermoModel::~solidThermoModel()

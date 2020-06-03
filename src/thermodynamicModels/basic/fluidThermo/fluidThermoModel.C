@@ -78,6 +78,39 @@ Foam::fluidThermoModel::fluidThermoModel
 {}
 
 
+Foam::fluidThermoModel::fluidThermoModel
+(
+    const word& phaseName,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const bool master
+)
+:
+    basicThermoModel
+    (
+        phaseName,
+        mesh,
+        dict,
+        master
+    ),
+    mu_
+    (
+        IOobject
+        (
+            IOobject::groupName("thermo:mu", phaseName),
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimDynamicViscosity, 0.0),
+        wordList(p_.boundaryField().types().size(), "zeroGradient")
+    ),
+    residualAlpha_("residualAlpha", dimless, 0.0),
+    residualRho_("residualRho", dimDensity, 0.0),
+    viscous_(true)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::fluidThermoModel::~fluidThermoModel()
