@@ -1184,6 +1184,10 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     }
                 }
             }
+            if (nAnchors == 2)
+            {
+                protectedFace[facei] = true;
+            }
         }
 
         syncTools::syncFaceList(*this, protectedFace, orEqOp<bool>());
