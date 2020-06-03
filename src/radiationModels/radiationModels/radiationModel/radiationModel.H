@@ -42,6 +42,7 @@ SourceFiles
 #include "volFields.H"
 #include "fvMatricesFwd.H"
 #include "Switch.H"
+#include "radiationODE.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -102,6 +103,8 @@ protected:
             //- Soot model
             autoPtr<radiationModels::sootModel> soot_;
 
+        //- Radiation ode
+        radiationODE radODE_;
 
 private:
 
@@ -202,8 +205,14 @@ public:
             //- Source term component (for power of T^4)
             virtual tmp<volScalarField> Rp() const = 0;
 
+            //- Source term component (for power of T^4)
+            virtual scalar Rp(const label celli) const = 0;
+
             //- Source term component (constant)
             virtual tmp<volScalarField::Internal> Ru() const = 0;
+
+            //- Source term component (constant)
+            virtual scalar Ru(const label celli) const = 0;
 
             //- Source term component (constant)
             virtual tmp<volScalarField> calcRhoE
@@ -213,7 +222,7 @@ public:
                 const volScalarField& rho,
                 const volScalarField& e,
                 const volScalarField& Cv
-            ) const;
+            );
 
             //- Access to absorptionEmission model
             const radiationModels::absorptionEmissionModel&

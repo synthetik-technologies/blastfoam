@@ -90,22 +90,35 @@ public:
 
         // Access
 
-            // Absorption coefficient
+            //- Absorption coefficient for continuous phase
+            virtual tmp<volScalarField> aCont(const label bandI = 0) const;
 
-                //- Absorption coefficient for continuous phase
-                tmp<volScalarField> aCont(const label bandI = 0) const;
+            //- Absorption coefficient for continuous phase
+            virtual scalar aConti
+            (
+                const label celli,
+                const label bandI = 0
+            ) const;
 
+            //- Emission coefficient for continuous phase
+            virtual tmp<volScalarField> eCont(const label bandI = 0) const;
 
-            // Emission coefficient
+            //- Emission coefficient for continuous phase
+            virtual scalar eConti
+            (
+                const label celli,
+                const label bandI = 0
+            ) const;
 
-                //- Emission coefficient for continuous phase
-                tmp<volScalarField> eCont(const label bandI = 0) const;
+            //- Emission contribution for continuous phase
+            virtual tmp<volScalarField> ECont(const label bandI = 0) const;
 
-
-            // Emission contribution
-
-                //- Emission contribution for continuous phase
-                tmp<volScalarField> ECont(const label bandI = 0) const;
+            //- Emission contribution for continuous phase
+            virtual scalar EConti
+            (
+                const label celli,
+                const label bandI = 0
+            ) const;
 
 
     // Member Functions

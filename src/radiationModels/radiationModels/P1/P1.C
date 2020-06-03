@@ -257,6 +257,7 @@ void Foam::radiationModels::P1::calculate()
 }
 
 
+
 Foam::tmp<Foam::volScalarField> Foam::radiationModels::P1::Rp() const
 {
     return volScalarField::New
@@ -264,6 +265,12 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::P1::Rp() const
         "Rp",
         4.0*absorptionEmission_->eCont()*physicoChemical::sigma
     );
+}
+
+
+Foam::scalar Foam::radiationModels::P1::Rp(const label celli) const
+{
+    return 4.0*absorptionEmission_->eConti(celli)*physicoChemical::sigma.value();
 }
 
 
@@ -278,6 +285,15 @@ Foam::radiationModels::P1::Ru() const
         absorptionEmission_->aCont()()();
 
     return a*G - E;
+}
+
+
+Foam::scalar
+Foam::radiationModels::P1::Ru(const label celli) const
+{
+    return
+        absorptionEmission_->aConti(celli)*G_[celli]
+      - absorptionEmission_->EConti(celli);
 }
 
 

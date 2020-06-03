@@ -476,6 +476,35 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::fvDOM::Rp() const
 }
 
 
+Foam::scalar
+Foam::radiationModels::fvDOM::Rp(const label celli) const
+{
+    // Construct using contribution from first frequency band
+    scalar Rp
+    (
+        4.0
+       *physicoChemical::sigma.value()
+       *(aLambda_[0][celli] - absorptionEmission_->aDispi(celli, 0))
+       *blackBody_.deltaLambdaTi(T_[celli], absorptionEmission_->bands(0))
+    );
+
+
+    // Add contributions over remaining frequency bands
+    for (label j=1; j < nLambda_; j++)
+    {
+        Rp +=
+        (
+            4.0
+           *physicoChemical::sigma.value()
+           *(aLambda_[j][celli] - absorptionEmission_->aDispi(celli, j))
+           *blackBody_.deltaLambdaTi(T_[celli], absorptionEmission_->bands(j))
+        );
+    }
+
+    return Rp;
+}
+
+
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiationModels::fvDOM::Ru() const
 {
@@ -518,6 +547,33 @@ Foam::radiationModels::fvDOM::Ru() const
     }
 
     return tRu;
+}
+
+
+Foam::scalar
+Foam::radiationModels::fvDOM::Ru(const label celli) const
+{
+    scalar Ru = 0.0;
+
+    // Sum contributions over all frequency bands
+    for (label j=0; j < nLambda_; j++)
+    {
+        // Compute total incident radiation within frequency band
+        scalar Gj
+        (
+            IRay_[0].ILambda(j)[celli]*IRay_[0].omega()
+        );
+
+        for (label rayI=1; rayI < nRay_; rayI++)
+        {
+            Gj += IRay_[rayI].ILambda(j)[celli]*IRay_[rayI].omega();
+        }
+
+        Ru += (aLambda_[j][celli] - absorptionEmission_->aDispi(celli, j))*Gj
+             - absorptionEmission_->EConti(celli, j);
+    }
+
+    return Ru;
 }
 
 

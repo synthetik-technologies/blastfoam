@@ -10,6 +10,8 @@ radiationModels/fvDOM/absorptionCoeffs/absorptionCoeffs.C
 radiationModels/viewFactor/viewFactor.C
 radiationModels/opaqueSolid/opaqueSolid.C
 
+radiationODE/radiationODE.C
+
 /* Scatter model */
 scatterModels/scatterModel/scatterModel.C
 scatterModels/scatterModel/scatterModelNew.C

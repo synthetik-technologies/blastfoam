@@ -53,7 +53,7 @@ Description
 
 #include "fvCFD.H"
 #include "psiuCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
+#include "turbulentFluidThermoModel.H"
 #include "fluxScheme.H"
 #include "timeIntegrator.H"
 #include "laminarFlameSpeed.H"

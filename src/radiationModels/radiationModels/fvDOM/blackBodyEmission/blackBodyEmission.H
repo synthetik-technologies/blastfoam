@@ -130,10 +130,24 @@ public:
                 const Vector2D<scalar>& band
             ) const;
 
+            //- Proportion of total energy at T from lambda1 to lambda2
+            scalar deltaLambdaTi
+            (
+                const scalar& T,
+                const Vector2D<scalar>& band
+            ) const;
+
             //- Integral energy at T from lambda1 to lambda2
             tmp<Foam::volScalarField> EbDeltaLambdaT
             (
                 const volScalarField& T,
+                const Vector2D<scalar>& band
+            ) const;
+
+            //- Integral energy at T from lambda1 to lambda2
+            scalar EbDeltaLambdaTi
+            (
+                const scalar& T,
                 const Vector2D<scalar>& band
             ) const;
 
