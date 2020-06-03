@@ -86,7 +86,6 @@ Foam::scalar Foam::tabulated<Specie>::Gamma
     const scalar& T
 ) const
 {
-//     return 1.0 + pTable_.lookup(rho, e)/(max(rho, 1e-10)*e);
     return pTable_.dFdY(rho, e)/max(rho, 1e-10);
 }
 
@@ -100,14 +99,12 @@ Foam::scalar Foam::tabulated<Specie>::speedOfSound
     const scalar& T
 ) const
 {
-    scalar gamma = 1.0 + p/(max(rho, 1e-10)*e);
     return
         sqrt
         (
             max
             (
                 pTable_.dFdX(rho, e) + Gamma(rho, e, T)*p/max(rho, 1e-10),
-//                 gamma*p/max(rho, 1e-10),
                 small
             )
         );
