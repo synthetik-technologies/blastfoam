@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::compressible::convectiveHeatTransferFvPatchScalarField
+    Foam::blast::convectiveHeatTransferFvPatchScalarField
 
 Description
     This boundary condition provides a convective heat transfer coefficient
@@ -57,7 +57,7 @@ Usage
     \verbatim
     <patchName>
     {
-        type            convectiveHeatTransfer;
+        type            blast:convectiveHeatTransfer;
         L               0.1;
     }
     \endverbatim
@@ -101,7 +101,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("convectiveHeatTransfer");
+    TypeName("blast:convectiveHeatTransfer");
 
 
     // Constructors

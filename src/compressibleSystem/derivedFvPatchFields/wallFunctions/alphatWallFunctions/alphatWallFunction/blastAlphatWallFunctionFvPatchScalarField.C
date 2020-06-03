@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "alphatWallFunctionFvPatchScalarField.H"
+#include "blastAlphatWallFunctionFvPatchScalarField.H"
 #include "compressibleTurbulenceModel.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
@@ -33,7 +33,7 @@ License
 
 namespace Foam
 {
-namespace compressible
+namespace blast
 {
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -144,7 +144,7 @@ makePatchTypeField
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace compressible
+} // End namespace blast
 } // End namespace Foam
 
 // ************************************************************************* //

@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::compressible::alphatWallFunctionFvPatchScalarField
+    Foam::blast::alphatWallFunctionFvPatchScalarField
 
 Description
     This boundary condition provides a turbulent thermal diffusivity condition
@@ -54,7 +54,7 @@ Usage
     \verbatim
     <patchName>
     {
-        type            alphatWallFunction;
+        type            blast:alphatWallFunction;
         nut             nut;
         Prt             0.85;
         value           uniform 0; // optional value entry
@@ -65,12 +65,12 @@ See also
     Foam::fixedValueFvPatchField
 
 SourceFiles
-    alphatWallFunctionFvPatchScalarField.C
+    blastAlphatWallFunctionFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef alphatWallFunctionFvPatchScalarField_H
-#define alphatWallFunctionFvPatchScalarField_H
+#ifndef blastAlphatWallFunctionFvPatchScalarField_H
+#define blastAlphatWallFunctionFvPatchScalarField_H
 
 #include "fixedValueFvPatchFields.H"
 
@@ -78,7 +78,7 @@ SourceFiles
 
 namespace Foam
 {
-namespace compressible
+namespace blast
 {
 
 /*---------------------------------------------------------------------------*\
@@ -98,7 +98,7 @@ class alphatWallFunctionFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("compressible::alphatWallFunction");
+    TypeName("blast::alphatWallFunction");
 
 
     // Constructors
@@ -181,7 +181,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace compressible
+} // End namespace blast
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

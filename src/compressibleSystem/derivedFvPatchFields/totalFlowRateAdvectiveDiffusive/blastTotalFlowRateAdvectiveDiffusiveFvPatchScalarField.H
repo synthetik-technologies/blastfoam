@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::totalFlowRateAdvectiveDiffusiveFvPatchScalarField
+    Foam::blast::totalFlowRateAdvectiveDiffusiveFvPatchScalarField
 
 Description
     This BC is used for species inlets. The diffusion and advection fluxes are
@@ -31,7 +31,7 @@ Description
     species.
 
 SourceFiles
-    totalFlowRateAdvectiveDiffusiveFvPatchScalarField.C
+    blastTotalFlowRateAdvectiveDiffusiveFvPatchScalarField.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -70,7 +70,7 @@ class totalFlowRateAdvectiveDiffusiveFvPatchScalarField
 public:
 
     //- Runtime type information
-    TypeName("totalFlowRateAdvectiveDiffusive");
+    TypeName("blast:totalFlowRateAdvectiveDiffusive");
 
 
     // Constructors

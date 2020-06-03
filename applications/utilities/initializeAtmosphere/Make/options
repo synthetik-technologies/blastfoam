@@ -9,4 +9,5 @@ EXE_LIBS = \
     -lcompressibleTurbulenceModels \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
-    -lblastThermodynamics
+    -lblastThermodynamics \
+    -lphaseCompressibleSystems

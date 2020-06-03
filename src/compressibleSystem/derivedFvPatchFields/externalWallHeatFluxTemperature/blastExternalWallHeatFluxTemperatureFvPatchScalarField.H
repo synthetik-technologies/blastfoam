@@ -71,7 +71,7 @@ Usage
     \verbatim
     <patchName>
     {
-        type            externalWallHeatFluxTemperature;
+        type            blast:externalWallHeatFluxTemperature;
 
         mode            coefficient;
 
@@ -87,7 +87,7 @@ Usage
     \endverbatim
 
 See also
-    Foam::temperatureCoupledBase
+    Foam::blast::temperatureCoupledBase
     Foam::mixedFvPatchScalarField
 
 SourceFiles
@@ -177,7 +177,7 @@ private:
 public:
 
     //- Runtime type information
-    TypeName("externalWallHeatFluxTemperature");
+    TypeName("blast:externalWallHeatFluxTemperature");
 
 
     // Constructors
