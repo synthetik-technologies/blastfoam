@@ -35,13 +35,11 @@ using Foam::constant::physicoChemical::sigma;
 
 namespace Foam
 {
-namespace blast
-{
     template<>
     const char*
     NamedEnum
     <
-        externalWallHeatFluxTemperatureFvPatchScalarField::operationMode,
+        blast::externalWallHeatFluxTemperatureFvPatchScalarField::operationMode,
         3
     >::names[] =
     {
@@ -52,10 +50,9 @@ namespace blast
 
     const NamedEnum
     <
-        externalWallHeatFluxTemperatureFvPatchScalarField::operationMode,
+        blast::externalWallHeatFluxTemperatureFvPatchScalarField::operationMode,
         3
-    > externalWallHeatFluxTemperatureFvPatchScalarField::operationModeNames;
-}
+    > blast::externalWallHeatFluxTemperatureFvPatchScalarField::operationModeNames;
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
