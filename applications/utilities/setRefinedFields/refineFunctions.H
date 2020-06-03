@@ -912,7 +912,6 @@ void initialize
         }
     }
 
-
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Bit tricky since proc face might be one more refined than the owner since
@@ -1274,7 +1273,7 @@ void initialize
                     nAnchors++;
                 }
             }
-            if (nAnchors == 2 || nAnchors == 3)
+            if (nAnchors == 2)
             {
                 protectedFaces[facei] = true;
             }
@@ -1306,7 +1305,6 @@ void initialize
             }
         }
     }
-
 
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)

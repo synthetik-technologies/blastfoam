@@ -1435,7 +1435,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     nAnchors++;
                 }
             }
-            if (nAnchors == 2 || nAnchors == 3)
+            if (nAnchors == 2)
             {
                 protectedFaces[facei] = true;
             }
