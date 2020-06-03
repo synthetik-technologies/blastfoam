@@ -7,10 +7,9 @@
 
 
 
-# blastFoam Version 3.0
+# blastFoam Version 3.0.2
 
-blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com).
-
+blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
 
 ## How to use blastFoam
@@ -21,32 +20,14 @@ Several validation and tutorial cases are included in the repository, and are do
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
 #### The May 13th blastFoam workshop is Sold Out! 
 
+Thank you to everyone who attended! 
+
+The workshop tutorial case and modifications have been added to the repository: [tutorials/blastFoam/building3DWorkshop](tutorials/blastFoam/building3DWorkshop). 
+
+A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U). 
 
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
-
-An introduction to blastFoam - a free and open-source Computational Fluid Dynamics (CFD) air blast code for modeling high-explosive detonations and blast load generation suitable for blast engineering and protective design.
-
-At the conclusion of the workshop, attendees will be able to competently and independently setup, calculate, visualize and post-process CFD solutions to air blast problems in complex geometries using blastFoam.
-
-The workshop will include:
-
-- An overview of the background theory, physics, equations and implementation in blastFoam
-- How to set up and run air blast calculations in simple and complex geometries
-- Mesh generation using snappyHexMesh and blockMesh for use with blastFoam
-- Setting initial conditions (e.g. JWL EOS coefficients, detonation points, charge shapes, etc.)
-- Boundary conditions
-- Using probes to get pressure-time histories at discrete locations
-- Generating pressure and impulse loads suitable for engineering/protective design
-- Pre- and post-processing of results
-- Verification and Validation
-- Using the blastFoam GUI to help setup and visualize blastFoam cases
-- A hands-on guided walk-through of a number of 2D and 3D blastFoam tutorial examples with the Synthetik team.
-- All levels of expertise are welcome to attend, and this session will be very practical and hands-on.
-
-Looking forward to connecting with current and new blastFOAMers! Please do reach out with any questions, suggestions, or topics to cover during the workshop and we shall endeavor to work them into the program.
-
-More information and registration here: [blastFoam July 2020 Virtual Workshop](https://www.eventbrite.com/e/blastfoam-workshop-july-2020-tickets-103242747838)
-
+#### The July 13th workshop is Sold Out!
 
 
 
@@ -160,7 +141,9 @@ echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
 
 7. Load and set the bash environment to compile blastFoam
 ```bash
-source $HOME/.bashrc # or if using zsh: source $HOME/.zshrc
+source $HOME/.bashrc 
+# or if using zsh: 
+source $HOME/.zshrc
 ```
 
 8. Compile blastFoam (for parallel use "-j")
@@ -271,7 +254,7 @@ blastFoam currently supports the following features:
 - Parallel (MPI)
 - Compatible with all of OpenFOAM's standard mesh generation, pre- and post-processing utilities
 - Multiple solvers for high-speed reactive flow and deflatration to detonation transition
-
+- Performance improvements for axisymmetric cases that use wedge boundary conditions (v3.0.1)
 
 ## Equations of State
 
