@@ -16,47 +16,35 @@ FoamFile
 
 dimensions      [0 1 -1 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform (2.9 0 0);
 
 boundaryField
 {
-    movingWall
+    top
     {
-        type            movingWallVelocity;
-        value           $internalField;
+        type            fixedValue;
+        value           uniform (2.61933 -0.50632 0);
     }
 
-    farFieldMoving
+    inlet
     {
-        type            maxwellSlipU;
-        accommodationCoeff 0.85;
-        Uwall           uniform (0 0 0);
+        type            fixedValue;
+        value           uniform (2.9 0 0);
     }
 
-    fixedWall
+    outlet
     {
-        type            noSlip;
+        type            zeroGradient;
     }
 
-    left
+    bottom
     {
-        type            pressureInletOutletVelocity;
-        value           $internalField;
+        type            symmetryPlane;
     }
 
-    farField
+    frontAndBack
     {
-        type            noSlip;
-    }
-
-    back
-    {
-        type            wedge;
-    }
-
-    front
-    {
-        type            wedge;
+        type            empty;
     }
 }
 
