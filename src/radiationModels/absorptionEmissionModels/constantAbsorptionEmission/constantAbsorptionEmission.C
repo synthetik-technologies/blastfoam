@@ -86,6 +86,17 @@ Foam::radiationModels::absorptionEmissionModels::constant::aCont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::constant::aConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return a_.value();
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::constant::eCont
 (
@@ -101,6 +112,18 @@ Foam::radiationModels::absorptionEmissionModels::constant::eCont
 }
 
 
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::constant::eConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return e_.value();
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::constant::ECont
 (
@@ -113,6 +136,18 @@ Foam::radiationModels::absorptionEmissionModels::constant::ECont
         mesh_,
         E_
     );
+}
+
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::constant::EConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return E_.value();
 }
 
 

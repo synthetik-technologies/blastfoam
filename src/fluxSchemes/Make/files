@@ -1,0 +1,12 @@
+fluxScheme/fluxScheme.C
+fluxScheme/newFluxScheme.C
+RiemannConvectionScheme/RiemannConvectionSchemes.C
+
+HLLC/HLLC.C
+HLLCP/HLLCP.C
+HLL/HLL.C
+Kurganov/Kurganov.C
+Tadmor/Tadmor.C
+AUSMPlus/AUSMPlus.C
+
+LIB = $(BLAST_LIBBIN)/libfluxSchemes

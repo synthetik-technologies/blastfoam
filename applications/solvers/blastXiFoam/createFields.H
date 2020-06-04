@@ -20,7 +20,7 @@ integrator->addSystem(fluid);
 
 psiuReactionThermo& thermo = fluid.thermo();
 basicSpecieMixture& composition = thermo.composition();
-fiveEqnCompressibleTurbulenceModel& turbulence = fluid.turbulence();
+compressible::turbulenceModel& turbulence = fluid.turbulence();
 
 const volScalarField& rho = fluid.rho();
 const volScalarField& p = thermo.p();

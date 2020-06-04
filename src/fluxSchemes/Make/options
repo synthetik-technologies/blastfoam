@@ -1,0 +1,8 @@
+EXE_INC = \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+
+LIB_LIBS = \
+    -L$(BLAST_LIBBIN) \
+    -ltimeIntegrators

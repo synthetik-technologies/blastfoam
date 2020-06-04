@@ -68,6 +68,11 @@ functions
         store           yes;
         pRef            101298;
     }
+    speedOfSound
+    {
+        type            speedOfSound;
+        writeControl    writeTime;
+    }
     maxPImpulse
     {
         type            fieldMax;

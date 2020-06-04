@@ -76,6 +76,7 @@ Description
 #define adaptiveFvMesh_H
 
 #include "dynamicFvMesh.H"
+#include "errorEstimator.H"
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
@@ -97,6 +98,8 @@ class adaptiveFvMesh
     public dynamicFvMesh
 {
 protected:
+
+        autoPtr<errorEstimator> error_;
 
         //- Mesh cutting engine
         autoPtr<hexRef> meshCutter_;

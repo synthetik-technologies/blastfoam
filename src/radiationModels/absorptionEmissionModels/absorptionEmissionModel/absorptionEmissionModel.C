@@ -88,6 +88,39 @@ Foam::radiationModels::absorptionEmissionModel::aDisp(const label bandI) const
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::ai
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return aDispi(celli, bandI) + aConti(celli, bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::aConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::aDispi
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModel::e(const label bandI) const
 {
@@ -119,6 +152,39 @@ Foam::radiationModels::absorptionEmissionModel::eDisp(const label bandI) const
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::ei
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return eDispi(celli, bandI) + eConti(celli, bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::eConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::eDispi
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModel::E(const label bandI) const
 {
@@ -147,6 +213,39 @@ Foam::radiationModels::absorptionEmissionModel::EDisp(const label bandI) const
         mesh_,
         dimensionedScalar(dimMass/dimLength/pow3(dimTime), 0)
     );
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::Ei
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return EDispi(celli, bandI) + EConti(celli, bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::EConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModel::EDispi
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
 }
 
 

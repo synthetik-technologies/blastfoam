@@ -67,11 +67,7 @@ namespace Foam
 
 Foam::label Foam::adaptiveFvMesh::topParentID(const label p) const
 {
-    if
-    (
-        p >= meshCutter().history().splitCells().size()
-     || meshCutter().history().visibleCells()[p] < 0
-    )
+    if (p >= meshCutter().history().splitCells().size())
     {
         return p;
     }
@@ -1063,6 +1059,7 @@ void Foam::adaptiveFvMesh::mapNewInternalFaces
 Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
 :
     dynamicFvMesh(io),
+    error_(errorEstimator::New(*this, dynamicMeshDict())),
     meshCutter_(hexRef::New(*this)),
     dumpLevel_(false),
     nRefinementIterations_(0),
@@ -1172,6 +1169,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     }
                 }
             }
+
         }
 
         syncTools::syncFaceList(*this, protectedFace, orEqOp<bool>());
@@ -1430,10 +1428,57 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             }
         }
 
+        // Protect cells that will cause a failure (from snappyHexMesh)
+        boolList protectedFaces(nFaces(), false);
+
+        forAll(faceOwner(), facei)
+        {
+            label faceLevel = max
+            (
+                cellLevel[faceOwner()[facei]],
+                neiLevel[facei]
+            );
+
+            const face& f = faces()[facei];
+
+            label nAnchors = 0;
+
+            forAll(f, fp)
+            {
+                if (pointLevel[f[fp]] <= faceLevel)
+                {
+                    nAnchors++;
+                }
+            }
+            if (nAnchors == 2)
+            {
+                protectedFaces[facei] = true;
+            }
+        }
+
+        syncTools::syncFaceList(*this, protectedFaces, orEqOp<bool>());
+
+        for (label facei = 0; facei < nInternalFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCell_.set(faceOwner()[facei], 1);
+                nProtected++;
+                protectedCell_.set(faceNeighbour()[facei], 1);
+                nProtected++;
+            }
+        }
+        for (label facei = nInternalFaces(); facei < nFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCell_.set(faceOwner()[facei], 1);
+                nProtected++;
+            }
+        }
+
         //-YO
     }
-
-
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)
     {
@@ -1532,10 +1577,13 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
 
 bool Foam::adaptiveFvMesh::update()
 {
+    //- Update error field
+    error_->update();
+
     // Re-read dictionary. Chosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.
-    const dictionary refineDict
+    const dictionary& refineDict
     (
         dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
     );
@@ -1597,10 +1645,6 @@ bool Foam::adaptiveFvMesh::update()
                 << exit(FatalError);
         }
 
-        const word fieldName(refineDict.lookup("field"));
-
-        const volScalarField& vFld = lookupObject<volScalarField>(fieldName);
-
         const scalar lowerRefineLevel =
             readScalar(refineDict.lookup("lowerRefineLevel"));
         const scalar upperRefineLevel =
@@ -1620,7 +1664,7 @@ bool Foam::adaptiveFvMesh::update()
         (
             lowerRefineLevel,
             upperRefineLevel,
-            vFld,
+            error_(),
             refineCell
         );
 
@@ -1697,7 +1741,7 @@ bool Foam::adaptiveFvMesh::update()
                 (
                     unrefineLevel,
                     refineCell,
-                    maxCellField(vFld)
+                    maxCellField(error_())
                 )
             );
 
@@ -1732,7 +1776,10 @@ bool Foam::adaptiveFvMesh::update()
             moving(false);
         }
     }
-    balance();
+    if (hasChanged)
+    {
+        balance();
+    }
     return hasChanged;
 }
 

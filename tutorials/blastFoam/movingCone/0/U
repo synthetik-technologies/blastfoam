@@ -28,7 +28,9 @@ boundaryField
 
     farFieldMoving
     {
-        type            noSlip;
+        type            maxwellSlipU;
+        accommodationCoeff 0.85;
+        Uwall           uniform (0 0 0);
     }
 
     fixedWall

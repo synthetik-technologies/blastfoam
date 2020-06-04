@@ -1,3 +1,13 @@
+template<class Type>
+class combineMaxOp
+{
+    public:
+    void operator()(Type& x, const Type& y) const
+    {
+        x = max(x, y);
+    }
+};
+
 bool setRegion
 (
     const label nCells,
@@ -902,7 +912,6 @@ void initialize
         }
     }
 
-
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Bit tricky since proc face might be one more refined than the owner since
@@ -982,65 +991,39 @@ void initialize
             }
         }
 
-        bool wedge = false;
-        forAll(mesh.boundaryMesh(), patchi)
-        {
-            if (isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi]))
-            {
-                wedge = true;
-            }
-        }
+        bool isAxisym = (mesh.nGeometricD() == 2 && mesh.nSolutionD() == 3);
 
-        // Also protect any cells that are less than hex
-        forAll(mesh.cells(), celli)
+        if (!isAxisym)
         {
-            const cell& cFaces = mesh.cells()[celli];
+            // Also protect any cells that are less than hex
+            forAll(mesh.cells(), celli)
+            {
+                const cell& cFaces = mesh.cells()[celli];
 
-            if (cFaces.size() < 5 )
-            {
-                if (protectedCells.set(celli, 1))
+                if (cFaces.size() < 6)
                 {
-                    nProtected++;
-                }
-            }
-            else if (!wedge && cFaces.size() < 6)
-            {
-                if (protectedCells.set(celli, 1))
-                {
-                    nProtected++;
-                }
-            }
-            else
-            {
-                forAll(cFaces, cFacei)
-                {
-                    if (mesh.faces()[cFaces[cFacei]].size() < 3)
+                    if (protectedCells.set(celli, 1))
                     {
-                        if (protectedCells.set(celli, 1))
-                        {
-                            nProtected++;
-                        }
-                        break;
+                        nProtected++;
                     }
-                    else if
-                    (
-                        mesh.faces()[cFaces[cFacei]].size() < 4
-                     && !wedge
-                    )
+                }
+                else
+                {
+                    forAll(cFaces, cFacei)
                     {
-                        if (protectedCells.set(celli, 1))
+                        if (mesh.faces()[cFaces[cFacei]].size() < 4)
                         {
-                            nProtected++;
+                            if (protectedCells.set(celli, 1))
+                            {
+                                nProtected++;
+                            }
+                            break;
                         }
-                        break;
                     }
                 }
             }
-        }
 
-        // Check cells for 8 corner points
-        if (!wedge)
-        {
+            // Check cells for 8 corner points
             checkEightAnchorPoints
             (
                 mesh,
@@ -1049,7 +1032,280 @@ void initialize
                 meshCutter
             );
         }
+        else
+        {
+            PackedBoolList cellIsAxisPrism(mesh.nCells(), false);
+            label nAxisPrims = 0;
+
+            // Do not protect prisms on the axis
+            forAll(mesh.cells(), celli)
+            {
+                const cell& cFaces = mesh.cells()[celli];
+
+                if (cFaces.size() == 5)
+                {
+                    forAll(cFaces, cFacei)
+                    {
+                        label facei = cFaces[cFacei];
+                        if
+                        (
+                            !mesh.isInternalFace(facei)
+                         && mesh.faces()[facei].size() != 4
+                        )
+                        {
+                            label patchi =
+                                mesh.boundaryMesh().whichPatch(facei);
+                            if
+                            (
+                                isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi])
+                            )
+                            {
+                                if (protectedCells.set(celli, 1))
+                                {
+                                    nProtected++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!protectedCells.get(celli))
+                    {
+                        cellIsAxisPrism.set(celli, 1);
+                        nAxisPrims++;
+                    }
+                }
+                else if (cFaces.size() < 5)
+                {
+                    if (protectedCells.set(celli, 1))
+                    {
+                        nProtected++;
+                    }
+                }
+            }
+
+            // Check cells for 8 corner points
+            checkEightAnchorPoints
+            (
+                mesh,
+                protectedCells,
+                nProtected,
+                meshCutter
+            );
+
+            // Unprotect prism cells on the axis
+            protectedCells -= cellIsAxisPrism;
+            nProtected -= nAxisPrims;
+
+
+
+            // YO
+            // Unprotect cells that have a refinement history
+            const labelList& visibleCells =
+                meshCutter.history().visibleCells();
+            forAll(visibleCells, celli)
+            {
+                if (visibleCells[celli] >= 0)
+                {
+                    if (protectedCells[celli])
+                    {
+                        protectedCells.unset(celli);
+                        nProtected--;
+                    }
+                }
+            }
+
+            // Look for former prisms cells on level 0. Since they do not have
+            // a refinement history, they will be incorrectly protected.
+            // In order to find former prisms, look for protectedCells with
+            // exactly 2 points on the axis. If the number of refined
+            // neighbours matches with the number of faces in excess of 5,
+            // the cell is (most probably) a former prism.
+
+            {
+                // First, look for a wedge polyPatch, in order to get the wedge
+                // plane normal and axis.
+                vector axis(0,0,0);
+                vector centreNormal(0,0,0);
+                bool foundWedge = false;
+
+                forAll(mesh.boundaryMesh(), patchi)
+                {
+                    if (isA<wedgePolyPatch>(mesh.boundaryMesh()[patchi]))
+                    {
+                        foundWedge = true;
+
+                        const wedgePolyPatch& wedgePatch =
+                            refCast<const wedgePolyPatch>
+                            (
+                                mesh.boundaryMesh()[patchi]
+                            );
+
+                        axis = wedgePatch.axis();
+                        centreNormal = wedgePatch.centreNormal();
+                        break;
+                    }
+                }
+
+                if (!foundWedge)
+                {
+                    FatalErrorInFunction
+                        << "Number of geometric dimensions and solution dimensions "
+                        << "correspond to an axisymmetric case, but no wedgePolyPatch "
+                        << " found in boundaryMesh." << nl
+                        << exit(FatalError);
+                }
+
+                // Get radial direction on the mesh
+                vector radialVector = axis^centreNormal;
+
+                // Translate as a component. Since wedge meshes should be constrained
+                // around one of the planes XY, XZ or YZ, we can directly get the
+                // distance to the axis
+
+                direction dir = 0;
+                scalar maxComp = mag(radialVector[0]);
+
+                if (mag(radialVector[1]) > maxComp)
+                {
+                    dir = 1;
+                    maxComp = mag(radialVector[1]);
+                }
+                if (mag(radialVector[2]) > maxComp)
+                {
+                    dir = 2;
+                }
+
+                // Use the level0Edge length to calculate a safety margin for
+                // detecting points on the axis.
+                // We should be able to rely on level0, since we only check
+                // unrefined cells.
+                scalar tolerance = meshCutter.level0EdgeLength()*1e-6;
+
+                const labelListList& cellPoints = mesh.cellPoints();
+
+                // Get max level across faces
+                labelList maxFaceLevel(mesh.nFaces());
+                const labelList& cellLevel = meshCutter.cellLevel();
+
+                forAll(maxFaceLevel, facei)
+                {
+                    maxFaceLevel[facei] = cellLevel[mesh.faceOwner()[facei]];
+                }
+
+                forAll(mesh.faceNeighbour(), facei)
+                {
+                    maxFaceLevel[facei] = max(maxFaceLevel[facei], cellLevel[mesh.faceNeighbour()[facei]]);
+                }
+                syncTools::syncFaceList(mesh, maxFaceLevel, combineMaxOp<label>());
+
+                forAll(protectedCells, celli)
+                {
+                    if (protectedCells[celli])
+                    {
+                        // Check if the cell has exactly 2 points on the axis
+                        label numPointsOnAxis = 0;
+                        const labelList& cPoints = cellPoints[celli];
+                        forAll(cPoints, pointi)
+                        {
+                            if
+                            (
+                                mag(mesh.points()[cPoints[pointi]][dir])
+                              < tolerance
+                            )
+                            {
+                                numPointsOnAxis++;
+                            }
+                        }
+
+                        if (numPointsOnAxis == 2)
+                        {
+                            // Calculate number of higher level neighbour cells.
+                            // Use cellFaces instead of cellCells to deal with
+                            // processor patches.
+                            label thisCellLevel = cellLevel[celli];
+                            label numNeighboursWithHigherLevel = 0;
+
+                            const labelList& cellFaces = mesh.cells()[celli];
+                            forAll(cellFaces, cellFacei)
+                            {
+                                if
+                                (
+                                    thisCellLevel
+                                  < maxFaceLevel[cellFaces[cellFacei]]
+                                )
+                                {
+                                    numNeighboursWithHigherLevel++;
+                                }
+                            }
+
+                            // If the cell was a neighbour to refined cells, then each
+                            // pair of refined neighbours introduces an additional face
+                            if (2*(cellFaces.size()-5) == numNeighboursWithHigherLevel)
+                            {
+                                protectedCells.unset(celli);
+                                nProtected--;
+                            }
+                        }
+                    }
+                }
+            }
+        } //-YO
+
+        // Protect cells that will cause a failure (from snappyHexMesh)
+        boolList protectedFaces(mesh.nFaces(), false);
+
+        forAll(mesh.faceOwner(), facei)
+        {
+            label faceLevel = max
+            (
+                cellLevel[mesh.faceOwner()[facei]],
+                neiLevel[facei]
+            );
+
+            const face& f = mesh.faces()[facei];
+
+            label nAnchors = 0;
+
+            forAll(f, fp)
+            {
+                if (pointLevel[f[fp]] <= faceLevel)
+                {
+                    nAnchors++;
+                }
+            }
+            if (nAnchors == 2)
+            {
+                protectedFaces[facei] = true;
+            }
+        }
+
+        syncTools::syncFaceList(mesh, protectedFaces, orEqOp<bool>());
+
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCells.set(mesh.faceOwner()[facei], 1);
+                nProtected++;
+                protectedCells.set(mesh.faceNeighbour()[facei], 1);
+                nProtected++;
+            }
+        }
+        for
+        (
+            label facei = mesh.nInternalFaces();
+            facei < mesh.nFaces();
+            facei++
+        )
+        {
+            if (protectedFaces[facei])
+            {
+                protectedCells.set(mesh.faceOwner()[facei], 1);
+                nProtected++;
+            }
+        }
     }
+
 
     if (returnReduce(nProtected, sumOp<label>()) == 0)
     {
@@ -1058,22 +1314,22 @@ void initialize
     else
     {
 
-        cellSet ProtectedCells(mesh, "protectedCells", nProtected);
+        cellSet pCells(mesh, "protectedCells", nProtected);
         forAll(protectedCells, celli)
         {
             if (protectedCells[celli])
             {
-                ProtectedCells.insert(celli);
+                pCells.insert(celli);
             }
         }
 
         Info<< "Detected " << returnReduce(nProtected, sumOp<label>())
             << " cells that are protected from refinement."
             << " Writing these to cellSet "
-            << ProtectedCells.name()
+            << pCells.name()
             << "." << endl;
 
-        ProtectedCells.write();
+        pCells.write();
     }
 }
 

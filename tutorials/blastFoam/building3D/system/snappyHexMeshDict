@@ -73,7 +73,7 @@ castellatedMeshControls
     {
         walls
         {
-            level (2 3);
+            level (3 3);
             patchInfo { type wall; }
         }
     }

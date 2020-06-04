@@ -7,5 +7,5 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lgenericPatchFields \
     -lmeshTools \
-    -L$(FOAM_USER_LIBBIN)\
+    -L$(BLAST_LIBBIN)\
     -lblastDynamicMesh

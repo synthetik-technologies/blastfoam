@@ -690,6 +690,13 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::viewFactor::Rp() const
 }
 
 
+Foam::scalar
+Foam::radiationModels::viewFactor::Rp(const label celli) const
+{
+    return 0.0;
+}
+
+
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiationModels::viewFactor::Ru() const
 {
@@ -699,6 +706,13 @@ Foam::radiationModels::viewFactor::Ru() const
         mesh_,
         dimensionedScalar(dimMass/dimLength/pow3(dimTime), 0)
     );
+}
+
+
+Foam::scalar
+Foam::radiationModels::viewFactor::Ru(const label celli) const
+{
+    return 0.0;
 }
 
 // ************************************************************************* //

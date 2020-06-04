@@ -48,8 +48,7 @@ Foam::errorEstimators::delta::delta
 )
 :
     errorEstimator(mesh, dict),
-    name_(dict.lookup("deltaField")),
-    x_(mesh.lookupObject<volScalarField>(name_))
+    name_(dict.lookup("deltaField"))
 {}
 
 
@@ -63,6 +62,7 @@ Foam::errorEstimators::delta::~delta()
 
 void Foam::errorEstimators::delta::update()
 {
+    const volScalarField& x = mesh_.lookupObject<volScalarField>(name_);
     volScalarField& error(*this);
 
     const labelUList& owner = mesh_.owner();
@@ -75,7 +75,7 @@ void Foam::errorEstimators::delta::update()
         label own = owner[facei];
         label nei = neighbour[facei];
 
-        scalar eT = mag(x_[own] - x_[nei])/Foam::min(x_[own], x_[nei]);
+        scalar eT = mag(x[own] - x[nei])/Foam::min(x[own], x[nei]);
         error[own] = Foam::max(error[own], eT);
         error[nei] = Foam::max(error[nei], eT);
     }
@@ -85,14 +85,14 @@ void Foam::errorEstimators::delta::update()
     {
         if (error.boundaryField()[patchi].coupled())
         {
-            const fvPatch& p = x_.boundaryField()[patchi].patch();
+            const fvPatch& p = x.boundaryField()[patchi].patch();
 
             const labelUList& faceCells = p.faceCells();
-            scalarField fp(x_.boundaryField()[patchi].patchInternalField());
+            scalarField fp(x.boundaryField()[patchi].patchInternalField());
 
             scalarField fn
             (
-                x_.boundaryField()[patchi].patchNeighbourField()
+                x.boundaryField()[patchi].patchNeighbourField()
             );
 
             forAll(faceCells, facei)

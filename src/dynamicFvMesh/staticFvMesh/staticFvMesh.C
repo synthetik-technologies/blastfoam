@@ -41,7 +41,7 @@ namespace Foam
 
 Foam::staticFvMesh::staticFvMesh(const IOobject& io)
 :
-    dynamicFvMesh(io)
+    dynamicFvMesh(io, true)
 {}
 
 

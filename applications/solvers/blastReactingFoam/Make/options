@@ -1,8 +1,7 @@
 EXE_INC= \
-    -I$(BLAST_DIR)/src/fluidThermo/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
+    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
-    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
@@ -29,11 +28,9 @@ EXE_LIBS = \
     -lchemistryModel \
     -lODE \
     -lcombustionModels \
-    -L$(FOAM_USER_LIBBIN) \
-    -lfluidThermo \
-    -lphaseCompressibleSystems \
+    -L$(BLAST_LIBBIN) \
+    -lfluxSchemes \
     -ltimeIntegrators \
-    -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate

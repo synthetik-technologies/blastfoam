@@ -24,24 +24,3 @@ const volScalarField& p = fluid->p();
 const volScalarField& T = fluid->T();
 const surfaceScalarField& phi = fluid->phi();
 fluid->update();
-
-autoPtr<errorEstimator> error;
-if (!isA<staticFvMesh>(mesh))
-{
-    error =
-        errorEstimator::New
-        (
-            mesh,
-            IOdictionary
-            (
-                IOobject
-                (
-                    "dynamicMeshDict",
-                    runTime.constant(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE
-                )
-            )
-        );
-}
