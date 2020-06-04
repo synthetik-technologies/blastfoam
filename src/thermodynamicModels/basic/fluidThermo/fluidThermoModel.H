@@ -65,12 +65,6 @@ protected:
         //- Saved viscosity field
         volScalarField mu_;
 
-        //- Residual volume fraction
-        dimensionedScalar residualAlpha_;
-
-        //- Residual density
-        dimensionedScalar residualRho_;
-
         //- Is there viscosity
         bool viscous_;
 
@@ -224,16 +218,6 @@ public:
         virtual const fluidThermoModel& thermo(const label) const
         {
             return *this;
-        }
-
-        const dimensionedScalar& residualAlpha() const
-        {
-            return residualAlpha_;
-        }
-
-        const dimensionedScalar& residualRho() const
-        {
-            return residualRho_;
         }
 
 

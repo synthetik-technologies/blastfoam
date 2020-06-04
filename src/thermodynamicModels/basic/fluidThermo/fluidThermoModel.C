@@ -72,8 +72,6 @@ Foam::fluidThermoModel::fluidThermoModel
         dimensionedScalar(dimDynamicViscosity, 0.0),
         wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
-    residualAlpha_("residualAlpha", dimless, 0.0),
-    residualRho_("residualRho", dimDensity, 0.0),
     viscous_(true)
 {}
 
@@ -105,8 +103,6 @@ Foam::fluidThermoModel::fluidThermoModel
         dimensionedScalar(dimDynamicViscosity, 0.0),
         wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
-    residualAlpha_("residualAlpha", dimless, 0.0),
-    residualRho_("residualRho", dimDensity, 0.0),
     viscous_(true)
 {}
 

@@ -1,0 +1,81 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// p1  142040;
+// T1  370.13;
+// rho1 1.337;
+// U1  195.73;
+
+p2  67.0e3;
+T2  295;
+rho2 #calc "$p2/(718.0*$T2*0.4)";
+
+M2 1.4;
+M1 0.73970927;
+
+p1byp20 2.11999999;
+rho2byrho1 1.68965517;
+T2byT1 1.25469387;
+
+p1 #calc "$p2*$p1byp20";
+rho1 #calc "$rho2*$rho2byrho1";
+T1 #calc "$T2*$T2byT1";
+
+c1 #calc "sqrt(1.4*$p1/$rho1)";
+c2 #calc "sqrt(1.4*$p2/$rho2)";
+
+U1 #calc "$M2*$c2 - $M1*$c1";
+
+defaultFieldValues
+(
+    volScalarFieldValue rho.gas $rho2
+    volScalarFieldValue p $p2
+    volScalarFieldValue T.gas $T2
+    volScalarFieldValue T.particles0 $T2
+    volScalarFieldValue T.particles1 $T2
+    volVectorFieldValue U.gas (0 0 0)
+    volScalarFieldValue alpha.particles0 0
+    volScalarFieldValue alpha.particles1 0
+    volScalarFieldValue alpha.gas        1
+);
+
+regions
+(
+    boxToCell
+    {
+        box (0 -1 -1) (0.01 1 1);
+        fieldValues
+        (
+            volScalarFieldValue rho.gas $rho1
+            volScalarFieldValue p $p1
+            volScalarFieldValue T.gas $T1
+            volVectorFieldValue U.gas ($U1 0 0)
+        );
+    }
+    boxToCell
+    {
+        box (0.015 0 0) (0.019 0.05 0.05);
+        fieldValues
+        (
+            volScalarFieldValue alpha.particles0 0.026e-2
+            volScalarFieldValue alpha.particles1 0.026e-2
+            volScalarFieldValue alpha.gas        0.99948
+        );
+    }
+);
+
+// ************************************************************************* //

@@ -85,6 +85,12 @@ protected:
         //- Is the internal energy limited
         Switch limit_;
 
+        //- Residual volume fraction
+        dimensionedScalar residualAlpha_;
+
+        //- Residual density
+        dimensionedScalar residualRho_;
+
 
     //- Protected functions
 
@@ -95,7 +101,7 @@ protected:
         volScalarField& lookupOrConstruct
         (
             const fvMesh& mesh,
-            const char* name,
+            const word& name,
             const IOobject::readOption rOpt,
             const IOobject::writeOption wOpt,
             const dimensionSet& dims
@@ -105,7 +111,7 @@ protected:
         volScalarField& lookupOrConstructE
         (
             const fvMesh& mesh,
-            const char* name
+            const word& name
         ) const;
 
 
@@ -184,6 +190,16 @@ public:
         const word& name() const
         {
             return name_;
+        }
+
+        const dimensionedScalar& residualAlpha() const
+        {
+            return residualAlpha_;
+        }
+
+        const dimensionedScalar& residualRho() const
+        {
+            return residualRho_;
         }
 
         //- Return constant reference to pressure field
@@ -426,7 +442,8 @@ public:
         //- Read residual values
         virtual void read(const dictionary& dict)
         {
-            return;
+            this->residualRho_.read(dict);
+            this->residualAlpha_.read(dict);
         }
 };
 

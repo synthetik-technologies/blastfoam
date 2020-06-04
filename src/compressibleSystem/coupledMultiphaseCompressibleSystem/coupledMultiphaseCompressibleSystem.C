@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
+#include "blastCompressibleTurbulenceModel.H"
 #include "fvm.H"
 #include "addToRunTimeSelectionTable.H"
 

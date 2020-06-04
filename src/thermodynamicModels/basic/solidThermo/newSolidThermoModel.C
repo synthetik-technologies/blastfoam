@@ -41,11 +41,11 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewBasic
      basicSolidConstructorTable::iterator cstrIter =
         lookupThermo<basicSolidConstructorTable>
         (
-            dict.subDict("mixture"),
+            dict,
             basicSolidConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, mesh, dict.subDict("mixture"), master);
+    return cstrIter()(phaseName, mesh, dict, master);
 }
 
 
@@ -60,11 +60,11 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewDetonating
     detonatingSolidConstructorTable::iterator cstrIter =
         lookupThermo<detonatingSolidConstructorTable>
         (
-            dict.subDict("mixture"),
+            dict,
             detonatingSolidConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, mesh, dict.subDict("mixture"), master);
+    return cstrIter()(phaseName, mesh, dict, master);
 }
 
 Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
@@ -75,7 +75,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const bool master
 )
 {
-    word type = dict.subDict("mixture").lookup("type");
+    word type = dict.lookup("type");
     if (type == "basic")
     {
         return NewBasic(phaseName, mesh, dict, master);

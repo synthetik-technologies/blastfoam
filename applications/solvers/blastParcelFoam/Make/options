@@ -1,5 +1,6 @@
 EXE_INC= \
-    -I$(BLAST_DIR)/src/fluidThermo/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
@@ -9,6 +10,7 @@ EXE_INC= \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/ODE/lnInclude \
     -I$(BLAST_DIR)/src/lagrangian/basic/lnInclude \
     -I$(BLAST_DIR)/src/lagrangian/distributionModels/lnInclude \
     -I$(BLAST_DIR)/src/lagrangian/intermediate/lnInclude \
@@ -18,7 +20,8 @@ EXE_LIBS = \
     -lturbulenceModels \
     -lcompressibleTurbulenceModels \
     -L$(FOAM_USER_LIBBIN) \
-    -lfluidThermo \
+    -lblastThermodynamics \
+    -lfluxSchemes \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \
     -lblastRadiationModels \

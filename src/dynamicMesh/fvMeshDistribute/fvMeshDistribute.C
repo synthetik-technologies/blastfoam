@@ -1542,15 +1542,15 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 move(oldPatchStarts),
                 move(oldPatchNMeshPoints),
 
-                move(labelListList(1, identity(mesh_.nPoints()))),//subPointMap
-                move(labelListList(1, identity(mesh_.nFaces()))), //subFaceMap
-                move(labelListList(1, identity(mesh_.nCells()))), //subCellMap
-                move(labelListList(1, identity(patches.size()))), //subPatchMap
+                labelListList(1, identity(mesh_.nPoints())),//subPointMap
+                labelListList(1, identity(mesh_.nFaces())), //subFaceMap
+                labelListList(1, identity(mesh_.nCells())), //subCellMap
+                labelListList(1, identity(patches.size())), //subPatchMap
 
-                move(labelListList(1, identity(mesh_.nPoints()))),//pointMap
-                move(labelListList(1, identity(mesh_.nFaces()))), //faceMap
-                move(labelListList(1, identity(mesh_.nCells()))), //cellMap
-                move(labelListList(1, identity(patches.size())))  //patchMap
+                labelListList(1, identity(mesh_.nPoints())),//pointMap
+                labelListList(1, identity(mesh_.nFaces())), //faceMap
+                labelListList(1, identity(mesh_.nCells())), //cellMap
+                labelListList(1, identity(patches.size()))  //patchMap
             )
         );
     }

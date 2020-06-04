@@ -50,7 +50,7 @@ namespace Foam
 Foam::volScalarField& Foam::basicThermoModel::lookupOrConstruct
 (
     const fvMesh& mesh,
-    const char* name,
+    const word& name,
     const IOobject::readOption rOpt,
     const IOobject::writeOption wOpt,
     const dimensionSet& dims
@@ -105,7 +105,7 @@ Foam::volScalarField& Foam::basicThermoModel::lookupOrConstruct
 Foam::volScalarField& Foam::basicThermoModel::lookupOrConstructE
 (
     const fvMesh& mesh,
-    const char* name
+    const word& name
 ) const
 {
     if (!mesh.objectRegistry::foundObject<volScalarField>(name))
@@ -177,7 +177,9 @@ Foam::basicThermoModel::basicThermoModel
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
         wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
-    limit_(dict.lookupOrDefault("limit", true))
+    limit_(dict.lookupOrDefault("limit", true)),
+    residualAlpha_("residualAlpha", dimless, 0.0),
+    residualRho_("residualRho", dimDensity, 0.0)
 {}
 
 
@@ -205,7 +207,7 @@ Foam::basicThermoModel::basicThermoModel
         lookupOrConstruct
         (
             mesh,
-            "p",
+            (master ? IOobject::groupName("p", phaseName) : "p"),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimPressure
@@ -216,7 +218,7 @@ Foam::basicThermoModel::basicThermoModel
         lookupOrConstruct
         (
             mesh,
-            "rho",
+            IOobject::groupName("rho", phaseName),
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE,
             dimDensity
@@ -227,13 +229,20 @@ Foam::basicThermoModel::basicThermoModel
         lookupOrConstruct
         (
             mesh,
-            "T",
+            (master ? IOobject::groupName("T", phaseName) : "T"),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimTemperature
         )
     ),
-    e_(lookupOrConstructE(mesh, "e")),
+    e_
+    (
+        lookupOrConstructE
+        (
+            mesh,
+            (master ? IOobject::groupName("e", phaseName) : "e")
+        )
+    ),
     alpha_
     (
         IOobject
@@ -248,7 +257,9 @@ Foam::basicThermoModel::basicThermoModel
         dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
         wordList(p_.boundaryField().types().size(), "zeroGradient")
     ),
-    limit_(dict.lookupOrDefault("limit", true))
+    limit_(dict.lookupOrDefault("limit", true)),
+    residualAlpha_("residualAlpha", dimless, 0.0),
+    residualRho_("residualRho", dimDensity, 0.0)
 {}
 
 

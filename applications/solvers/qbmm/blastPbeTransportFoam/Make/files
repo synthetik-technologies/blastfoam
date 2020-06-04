@@ -1,0 +1,3 @@
+blastPbeTransportFoam.C
+
+EXE = $(BLAST_APPBIN)/blastPbeTransportFoam

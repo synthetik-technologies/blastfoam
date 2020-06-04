@@ -1,0 +1,63 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  dev                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+    class           dictionary;
+    location        system;
+    object          sampleDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type sets;
+libs ("libsampling.so");
+
+setFormat raw;
+
+surfaceFormat vtk;
+
+interpolationScheme cell;
+
+// Fields to sample.
+fields
+(
+    alpha.coal
+    alpha.particles0
+    alpha.particles1
+    alpha.particles2
+    alpha.particles3
+    alpha.particles4
+    U.coal      //2
+    U.particles0//5
+    U.particles1//8
+    U.particles2//11
+    U.particles3//14
+    U.particles4//17
+    U.gas//20
+);
+
+
+sets
+(
+    Centerline
+    {
+        type        lineCell;
+        axis        x;
+
+        start       (0 0.025 0.025);
+        end         (0.06 0.025 0.025);
+    }
+);
+
+
+surfaces ();
+
+// *********************************************************************** //

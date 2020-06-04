@@ -36,7 +36,7 @@ basicThermoCloud parcels
     fluid.rho(),
     fluid.U(),
     g,
-    mesh.lookupObject<fluidThermoModel>("fluidThermo")
+    fluid.thermo()
 );
 
 fluid.volumeFraction() = 1.0 - parcels.theta();
@@ -46,24 +46,3 @@ const volScalarField& p = fluid.p();
 const volScalarField& T = fluid.T();
 const surfaceScalarField& phi = fluid.phi();
 fluid.update();
-
-autoPtr<errorEstimator> error;
-if (!isA<staticFvMesh>(mesh))
-{
-    error =
-        errorEstimator::New
-        (
-            mesh,
-            IOdictionary
-            (
-                IOobject
-                (
-                    "dynamicMeshDict",
-                    runTime.constant(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE
-                )
-            )
-        );
-}

@@ -1,0 +1,242 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (particles0 particles1 gas);
+pRef 67e3;
+particles0
+{
+    phaseType        granular;
+    d           11e-6;
+    alphaMax    0.65;
+
+
+    type basic;
+    thermoType
+    {
+        equationOfState rhoConst;
+        thermo eConst;
+        transport constIso;
+    }
+    specie
+    {
+        molWeight 100;
+    }
+    equationOfState
+    {
+        rho         1300;
+    }
+    transport
+    {
+        kappa       0.36;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          987;           // Heat capacity
+        Hf          0.0;
+    }
+
+    kineticTheoryCoeffs
+    {
+        e 0.9;
+    }
+
+    residualRho     0;
+    residualAlpha   1e-10;
+}
+
+particles1
+{
+    phaseType        granular;
+    d           80e-6;
+    alphaMax    0.65;
+
+    type basic;
+    thermoType
+    {
+        equationOfState rhoConst;
+        thermo eConst;
+        transport constIso;
+    }
+    specie
+    {
+        molWeight 100;
+    }
+    equationOfState
+    {
+        rho         1300;
+    }
+    transport
+    {
+        kappa       0.36;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          987;           // Heat capacity
+        Hf          0.0;
+    }
+
+    kineticTheoryCoeffs
+    {
+        e 0.9;
+    }
+
+    residualRho     0;
+    residualAlpha   1e-10;
+}
+
+gas
+{
+    phaseType      fluid;
+    d               0;
+
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              1.81e-5;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+interfacialPressure
+{
+    type single;
+    phase gas;
+}
+interfacialVelocity
+{
+    type massAveraged;
+    phases (particles0 particles1);
+}
+
+aspectRatio
+(
+);
+
+solveDragODE off;
+dragODECoeffs
+{
+    solver seulex;
+    relTol 1e-3;
+
+}
+
+drag
+(
+    (particles0 in gas)
+    {
+        type GidaspowErgunWenYu;
+        residualRe 1e-3;
+        swarmCorrection
+        {
+            type none;
+        }
+    }
+    (particles1 in gas)
+    {
+        type GidaspowErgunWenYu;
+        residualRe 1e-3;
+        swarmCorrection
+        {
+            type none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    (particles0 in gas)
+    {
+        type RanzMarshall;
+    }
+    (particles1 in gas)
+    {
+        type RanzMarshall;
+    }
+);
+
+lift
+(
+    (particles0 in gas)
+    {
+        type constantCoefficient;
+        Cl 0.5;
+    }
+    (particles1 in gas)
+    {
+        type constantCoefficient;
+        Cl 0.5;
+    }
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    residualAlpha 1e-10;
+
+    radialModel Lebowitz;
+    viscosityModel Gidaspow;
+    conductivityModel Gidaspow;
+    granularPressureModel Huilin;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           1e-6;
+    }
+}
+// ************************************************************************* //

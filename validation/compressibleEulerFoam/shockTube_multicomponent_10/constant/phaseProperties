@@ -1,0 +1,208 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (particles gas);
+particles
+{
+    phaseType        granular;
+    d           10e-6;
+    alphaMax    0.63;
+    alphaMinFriction 0.5;
+
+    type basic;
+    thermoType
+    {
+        equationOfState rhoConst;
+        thermo eConst;
+        transport constIso;
+    }
+    specie
+    {
+        molWeight  100.0;
+    }
+    equationOfState
+    {
+        rho         2500;
+    }
+    transport
+    {
+        kappa       0.36;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          745;           // Heat capacity
+        Hf          0.0;
+    }
+
+    kineticTheoryCoeffs
+    {
+        e           0.999;
+    }
+    residualAlpha 1e-10;
+    residualRho 0;
+
+
+}
+
+gas
+{
+    phaseType       multicomponent;
+    components      (He N2);
+    d               0;
+
+    He
+    {
+        type basic;
+        thermoType
+        {
+            transport   const;
+            thermo      hConst;
+            equationOfState idealGas;
+        }
+        equationOfState
+        {
+            gamma           1.66;            // Heat capactiy ratio
+        }
+        specie
+        {
+            molWeight       4.0;
+        }
+        transport
+        {
+            mu              2.0e-5;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cp          5190;
+            Hf          0;
+        }
+
+        residualRho     1e-6;
+        residualAlpha   1e-10;
+    }
+    N2
+    {
+        type basic;
+        thermoType
+        {
+            transport   const;
+            thermo      hConst;
+            equationOfState idealGas;
+        }
+        equationOfState
+        {
+            gamma           1.4;            // Heat capactiy ratio
+        }
+        specie
+        {
+            molWeight       28.00;
+        }
+        transport
+        {
+            mu              1.8e-5;
+            Pr              1;
+        }
+        thermodynamics
+        {
+            Cp          1040;
+            Hf          0;
+        }
+
+        residualRho     1e-6;
+        residualAlpha   1e-10;
+    }
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+interfacialPressure
+{
+    type single;
+    phase gas;
+}
+interfacialVelocity
+{
+    type single;
+    phase particles;
+}
+
+aspectRatio
+(
+);
+
+drag
+(
+    (particles in gas)
+    {
+        type GidaspowErgunWenYu;
+        residualRe 1e-3;
+        swarmCorrection
+        {
+            type none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    (particles in gas)
+    {
+        type RanzMarshall;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    alphaMax 0.63;
+    residualAlpha 1e-8;
+    alphaMinFriction 0.5;
+
+    radialModel SinclairJackson;
+    viscosityModel Gidaspow;
+    conductivityModel Gidaspow;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           0.05;
+    }
+}
+// ************************************************************************* //

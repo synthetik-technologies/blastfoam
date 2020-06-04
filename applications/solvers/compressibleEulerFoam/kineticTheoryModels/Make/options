@@ -1,0 +1,15 @@
+EXE_INC = \
+    -I../phaseSystems/lnInclude \
+    -I../interfacialModels/lnInclude\
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude
+
+LIB_LIBS = \
+    -lfiniteVolume \
+    -lfvOptions \
+    -lmeshTools \
+    -L$(FOAM_USER_LIBBIN) \
+    -lblastPhaseSystems \
+    -lblastInterfacialModels

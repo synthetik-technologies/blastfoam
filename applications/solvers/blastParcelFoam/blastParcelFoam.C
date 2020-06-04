@@ -36,9 +36,8 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
+#include "blastCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
 #include "fluidThermoModel.H"
 
 #include "basicThermoCloud.H"
@@ -92,7 +91,6 @@ int main(int argc, char *argv[])
         if (!isA<staticFvMesh>(mesh))
         {
             parcels.storeGlobalPositions();
-            error->update();
         }
         mesh.update();
 

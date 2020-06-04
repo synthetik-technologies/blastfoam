@@ -1,0 +1,66 @@
+#!/bin/bash
+#
+createEpsP()
+{
+title="blastFoam_dilute_validation_p"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Pressure [Pa]"
+#     set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.257798]
+    plot    "$1" using 1:2 title 'Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:(\$2/101298) title 'blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+convert -colorspace sRGB -density 600 $title.eps -background white -flatten -resize 1200x800 -units pixelsperinch -density 500 $title.png
+}
+
+createEpsRho()
+{
+title="blastFoam_dilute_validation_rho"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Dimensionless density [ ]"
+#     set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.257798]
+    plot   "$1" using 1:2 title 'Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:((\$3*2500)/1.30632931) title 'blastFoam (particles)'\
+                with lines lt 1 linewidth 2 linecolor rgb 'red',\
+            "$2" using 1:((1-\$3)*\$4/1.30632931) title 'blastFoam (gas)'\
+                with lines lt 1 linewidth 2 linecolor rgb 'green'
+EOF
+convert -colorspace sRGB -density 600 $title.eps -background white -flatten -resize 1200x800 -units pixelsperinch -density 500 $title.png
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+pVal="$VALIDATIONDATAROOT/p.csv"
+uVal="$VALIDATIONDATAROOT/rho.csv"
+blastFOAM="../postProcessing/sampleDict/*/Centerline*"
+
+createEpsP $pVal $blastFOAM
+createEpsRho $uVal $blastFOAM
+
+echo Done
