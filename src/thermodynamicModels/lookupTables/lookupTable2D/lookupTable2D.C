@@ -156,14 +156,6 @@ void Foam::lookupTable2D::findIndex
     scalar ij = (xy - xyMin)/dxy;
     if (ij < 0)
     {
-//         if (debug)
-//         {
-//             WarningInFunction
-//                 << name << " is out of bonds, limiting. "
-//                 << "min(" << name << ") = "
-//                 << invModVar(mod, getValue(0, xyMin, dxy))
-//                 << ", " << name << " = " << xy << endl;
-//         }
         IJ = 0;
         f = 1.0;
         return;
@@ -171,14 +163,6 @@ void Foam::lookupTable2D::findIndex
     IJ = floor(ij);
     if (IJ >= nxy - 1)
     {
-//         if ((ij >= (nxy - 1) && debug)
-//         {
-//             WarningInFunction
-//                 << name << " is out of bonds, limiting. "
-//                 << "max(" << name << " = "
-//                 << invModVar(mod, getValue(ij, xyMin, dxy))
-//                 << ", " << name << " = " << xy << endl;
-//         }
         IJ = nxy - 2;
         f = 0.0;
 
@@ -252,68 +236,9 @@ Foam::lookupTable2D::lookupTable2D
     x_(nx_, 0.0),
     y_(ny_, 0.0)
 {
-    if (mod == "log10")
-    {
-        modFunc_ = &log10S;
-        invModFunc_ = &pow10S;
-    }
-    else if (mod == "ln")
-    {
-        modFunc_ = &lnS;
-        invModFunc_ = &expS;
-    }
-    else if (mod == "exp")
-    {
-        modFunc_ = &expS;
-        invModFunc_ = &lnS;
-    }
-    else
-    {
-        modFunc_ = &noneS;
-        invModFunc_ = &noneS;
-    }
-
-    if (xMod == "log10")
-    {
-        modXFunc_ = &log10S;
-        invModXFunc_ = &pow10S;
-    }
-    else if (xMod == "ln")
-    {
-        modXFunc_ = &lnS;
-        invModXFunc_ = &expS;
-    }
-    else if (xMod ==  "exp")
-    {
-        modXFunc_ = &expS;
-        invModXFunc_ = &lnS;
-    }
-    else
-    {
-        modXFunc_ = &noneS;
-        invModXFunc_ = &noneS;
-    }
-
-    if (yMod == "log10")
-    {
-        modYFunc_ = &log10S;
-        invModYFunc_ = &pow10S;
-    }
-    else if (yMod == "ln")
-    {
-        modYFunc_ = &lnS;
-        invModYFunc_ = &expS;
-    }
-    else if (yMod ==  "exp")
-    {
-        modYFunc_ = &expS;
-        invModYFunc_ = &lnS;
-    }
-    else
-    {
-        modYFunc_ = &noneS;
-        invModYFunc_ = &noneS;
-    }
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setMod(yMod, modYFunc_, invModYFunc_);
 
     readTable();
 
