@@ -68,13 +68,14 @@ dimensionedScalar rhop
 word dragModel(populationBalanceProperties.lookup("dragModel"));
 
 
-autoPtr<populationBalanceModel> populationBalance
+autoPtr<ODEPopulationBalanceModel> populationBalance
 (
-    populationBalanceModel::New
+    ODEPopulationBalanceModel::New
     (
         phaseName, populationBalanceProperties, phi
     )
 );
+integrator->addSystem(populationBalance());
 
 velocityQuadratureApproximation& quadrature =
     mesh.lookupObjectRef<velocityQuadratureApproximation>

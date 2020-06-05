@@ -13,12 +13,12 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-Info<< "Reading MieGruneisenEOSProperties dictionary\n" << endl;
-IOdictionary MieGruneisenEOSProperties
+Info<< "Reading phaseProperties dictionary\n" << endl;
+IOdictionary phaseProperties
 (
      IOobject
      (
-          "MieGruneisenEOSProperties",
+          "phaseProperties",
           runTime.constant(),
           mesh,
           IOobject::MUST_READ,
@@ -28,7 +28,7 @@ IOdictionary MieGruneisenEOSProperties
 
 autoPtr<phaseCompressibleSystem> fluid
 (
-    phaseCompressibleSystem::New(mesh, MieGruneisenEOSProperties)
+    phaseCompressibleSystem::New(mesh, phaseProperties)
 );
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid());
@@ -38,28 +38,6 @@ const volVectorField& U = fluid->U();
 const volScalarField& rho = fluid->rho();
 const surfaceScalarField& phi = fluid->phi();
 fluid->update();
-
-autoPtr<errorEstimator> error;
-if (!isA<staticFvMesh>(mesh))
-{
-    error =
-        errorEstimator::New
-        (
-            mesh,
-            IOdictionary
-            (
-                IOobject
-                (
-                    "dynamicMeshDict",
-                    runTime.constant(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE
-                )
-            )
-        );
-}
-
 
 
 Info<< "Reading populationBalanceProperties\n" << endl;
@@ -77,10 +55,11 @@ IOdictionary populationBalanceProperties
 );
 
 
-autoPtr<populationBalanceModel> populationBalance
+autoPtr<ODEPopulationBalanceModel> populationBalance
 (
-    populationBalanceModel::New
+    ODEPopulationBalanceModel::New
     (
         "populationBalance", populationBalanceProperties, phi
     )
 );
+integrator->addSystem(populationBalance());

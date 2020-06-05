@@ -40,7 +40,7 @@ Description
 #include "phaseCompressibleSystem.H"
 #include "timeIntegrator.H"
 #include "fluidThermoModel.H"
-#include "populationBalanceModel.H"
+#include "ODEPopulationBalanceModel.H"
 #include "quadratureApproximations.H"
 #include "mappedPtrList.H"
 
@@ -78,11 +78,7 @@ int main(int argc, char *argv[])
 
         fluid->encode();
 
-        Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
-
-        Info<< "Solving PBE" << endl;
-        populationBalance->solve();
 
         Info<< "Solving velocity abscissae" << endl;
         #include "vEqns.H"
@@ -91,6 +87,7 @@ int main(int argc, char *argv[])
         #include "computeParticleFields.H"
 
         fluid->clearODEFields();
+        populationBalance->clearODEFields();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

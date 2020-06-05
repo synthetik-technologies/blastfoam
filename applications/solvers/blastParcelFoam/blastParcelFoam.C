@@ -32,7 +32,6 @@ Description
 
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "coupledMultiphaseCompressibleSystem.H"
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        if (!isA<staticFvMesh>(mesh))
+        if (mesh.dynamic())
         {
             parcels.storeGlobalPositions();
         }

@@ -71,29 +71,37 @@ void Foam::timeIntegrators::RK4::setODEFields(integrationSystem& system)
 void Foam::timeIntegrators::RK4::integrate()
 {
     // Update and store original fields
+    Info<< nl << "RK4: Step 1" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve(1, {1.0}, {0.5});
     }
 
-    // Update and store 1st step
+    // Update and store 2nd step
+    Info<< nl << "RK4: Step 2" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve(2, {0.0, 1.0}, {0.0, 0.5});
     }
 
-    // Update and store 1st step
+    // Update and store 3rd step
+    Info<< nl << "RK4: Step 3" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve(3, {1.0, 0.0, 0.0}, {0.0, 0.0, 1.0});
     }
 
-    // Update and store 1st step
+    // Update and store 4th step
+    Info<< nl << "RK4: Step 4" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve
         (

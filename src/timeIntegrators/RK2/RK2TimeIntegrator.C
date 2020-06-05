@@ -66,15 +66,19 @@ void Foam::timeIntegrators::RK2::setODEFields(integrationSystem& system)
 void Foam::timeIntegrators::RK2::integrate()
 {
     // Update and solve predictor step
+    Info<< nl << "RK2: Predictor" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve(1, {1.0}, {0.5});
     }
 
     // Update and solve corrector step
+    Info<< nl << "RK2: Corrector" << endl;
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve(2, {1.0, 0.0}, {0.0, 1.0});
     }

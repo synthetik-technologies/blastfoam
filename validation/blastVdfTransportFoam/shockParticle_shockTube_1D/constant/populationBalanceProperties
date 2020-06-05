@@ -1,0 +1,79 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      populationaBalanceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+populationBalanceModel  sizeVelocity;
+phaseName               particles;
+rho                     1300;
+residualAlpha           1e-8;
+
+dragModel GidaspowErgunWenYu;
+
+sizeVelocityCoeffs
+{
+    odeCoeffs
+    {
+        solveOde on;
+        solveSources off;
+
+        ATol    1.0e-6;
+        RTol    1.0e-4;
+        fac     0.7;
+        facMin  0.9;
+        facMax  2.0;
+        minLocalDt 1.0e-10;
+    }
+
+    diffusionModel
+    {
+        diffusionModel  none;
+        gammaLam        gammaLam    [ 0 2 -1 0 0 0 0 ] 1.0e-6;
+        Sc              0.7;
+    }
+
+    collision  on;
+
+    collisionKernel
+    {
+        collisionKernel Boltzmann;
+        e           0.9;
+        rho         1300;
+    }
+
+    aggregation off;
+    aggregationKernel
+    {
+        aggregationKernel constant;
+    }
+
+    breakup off;
+    breakupKernel
+    {
+        breakupKernel constant;
+
+        Cb        Cb        [ 0 0 0 0 0 0 0 ] 0.2;
+        epsilonExp          0.75;
+        nuExp              -1.25;
+        sizeExp             1.0;
+
+        daughterDistribution
+        {
+            daughterDistribution symmetricFragmentation;
+        }
+    }
+}
+
+// ************************************************************************* //

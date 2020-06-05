@@ -1,0 +1,54 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+radiationModel none;
+
+mixture
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              1.81e-5;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+
+// ************************************************************************* //

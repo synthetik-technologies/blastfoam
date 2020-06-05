@@ -31,7 +31,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/sampling/lnInclude \
-    -I$(BLAST_DIR)/src/functionObjects/lnInclude
+    -I$(BLAST_DIR)/src/functionObjects/lnInclude \
+    -I../../populationBalanceODE/lnInclude
 
 
 EXE_LIBS = \
@@ -60,4 +61,5 @@ EXE_LIBS = \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
     -lblastSampling \
-    -lblastFunctionObjects
+    -lblastFunctionObjects \
+    -lblastPopulationBalanceModels

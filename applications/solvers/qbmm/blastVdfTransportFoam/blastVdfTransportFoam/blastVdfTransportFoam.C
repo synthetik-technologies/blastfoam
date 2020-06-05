@@ -38,7 +38,7 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "coupledMultiphaseCompressibleSystem.H"
 #include "timeIntegrator.H"
-#include "populationBalanceModel.H"
+#include "ODEPopulationBalanceModel.H"
 #include "quadratureApproximations.H"
 #include "mappedPtrList.H"
 #include "EulerTimeIntegrator.H"
@@ -77,21 +77,18 @@ int main(int argc, char *argv[])
 
         #include "computeDrag.H"
 
-        Info<< "Calculating Fluxes" << endl;
         fluid.encode();
         integrator->integrate();
 
-        Info<< "Solving PBE" << endl;
-        populationBalance->solve();
         #include "vEqns.H"
 
-        fluid.volumeFraction() = 1.0 - alpha;
         fluid.decode();
 
 
         #include "computeParticleFields.H"
 
         fluid.clearODEFields();
+        populationBalance->clearODEFields();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

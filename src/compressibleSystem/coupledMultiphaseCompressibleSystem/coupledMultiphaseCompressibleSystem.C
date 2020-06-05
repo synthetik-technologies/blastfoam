@@ -287,34 +287,31 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
         U_ = rhoU_/alphaRhos;
         U_.correctBoundaryConditions();
 
-        e() = rhoE_/alphaRhos - 0.5*magSqr(U_);
-        e().correctBoundaryConditions();
+        e_ = rhoE_/alphaRhos - 0.5*magSqr(U_);
+        e_.correctBoundaryConditions();
 
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+            alphaRho_*fvm::ddt(U_) - fvc::ddt(alphaRho_, U_)
         );
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho_, e()) - fvc::ddt(alphaRho_, e())
+            alphaRho_*fvm::ddt(e_) - fvc::ddt(alphaRho_, e_)
         );
 
         if (turbulence_.valid())
         {
-            volScalarField muEff
-            (
-                "muEff",
-                volumeFraction_*turbulence_->muEff()
-            );
+            volScalarField muEff("muEff", volumeFraction_*turbulence_->muEff());
+            volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
             UEqn -=
                 fvm::laplacian(muEff, U_)
-              + fvc::div(muEff*dev2(Foam::T(fvc::grad(U_))));
+              + fvc::div(tauMC);
 
             eEqn -=
                 fvm::laplacian
                 (
                     volumeFraction_*turbulence_->alphaEff(),
-                    e()
+                    e_
                 );
         }
 
@@ -330,7 +327,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
         eEqn.solve();
 
         rhoU_ = alphaRho_*U_;
-        rhoE_ = alphaRho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+        rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
 
         if (turbulence_.valid())
         {
@@ -343,6 +340,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
 
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
 {
+    volumeFraction_ = min(1.0, max(0.0, *alphadPtr_));
     alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
     volScalarField sumAlpha
     (

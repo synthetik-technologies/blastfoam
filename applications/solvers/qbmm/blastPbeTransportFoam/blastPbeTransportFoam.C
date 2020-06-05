@@ -35,12 +35,10 @@ Description
 
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "phaseCompressibleSystem.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
-#include "populationBalanceModel.H"
+#include "ODEPopulationBalanceModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,20 +66,13 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        if (!isA<staticFvMesh>(mesh))
-        {
-            error->update();
-        }
-
         mesh.update();
 
         fluid->encode();
 
-        Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
 
-        populationBalance->solve();
-
+        populationBalance->clearODEFields();
         fluid->clearODEFields();
 
         Info<< "max(p): " << max(p).value()

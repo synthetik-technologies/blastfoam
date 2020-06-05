@@ -27,8 +27,7 @@ IOdictionary phaseProperties
 );
 
 coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
-autoPtr<timeIntegrator> integrator;//(timeIntegrator::New(mesh));
-integrator.set(new timeIntegrators::Euler(mesh));
+autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid);
 
 volScalarField& p = fluid.p();
@@ -80,13 +79,14 @@ volVectorField Up
     dimensionedVector("zero", dimVelocity, Zero)
 );
 
-autoPtr<populationBalanceModel> populationBalance
+autoPtr<ODEPopulationBalanceModel> populationBalance
 (
-    populationBalanceModel::New
+    ODEPopulationBalanceModel::New
     (
         phaseName, populationBalanceProperties, phi
     )
 );
+integrator->addSystem(populationBalance());
 
 velocityQuadratureApproximation& quadrature =
     mesh.lookupObjectRef<velocityQuadratureApproximation>
@@ -159,7 +159,7 @@ if (computeVariance)
     );
 }
 
-fluid.volumeFraction() = 1.0 - alpha;
+fluid.setDispersedVolumeFraction(alpha);
 fluid.decode();
 fluid.encode();
 #include "computeParticleFields.H"

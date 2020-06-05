@@ -75,12 +75,6 @@ public:
 
     // Member functions
 
-        //- Decode primative variables
-        virtual void decode() = 0;
-
-        //- Encode conserved variables
-        virtual void encode() = 0;
-
         //- Update fluxes
         virtual void update() = 0;
 

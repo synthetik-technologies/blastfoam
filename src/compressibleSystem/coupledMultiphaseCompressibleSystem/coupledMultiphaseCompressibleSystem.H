@@ -55,6 +55,9 @@ class coupledMultiphaseCompressibleSystem
         //- Total volume fraction
         volScalarField volumeFraction_;
 
+        //- Pointer to dispersed phase volume fraction
+        const volScalarField* alphadPtr_;
+
         //- Phasic density
         volScalarField alphaRho_;
 
@@ -75,6 +78,12 @@ public:
 
 
     // Member functions
+
+        //- Set a pointer to the dispersed phase volume fraction
+        void setDispersedVolumeFraction(const volScalarField& alphad)
+        {
+            alphadPtr_ = &alphad;
+        }
 
         //- Return const access to volume fraction
         const volScalarField& volumeFraction() const
@@ -104,7 +113,6 @@ public:
 
 
     //- Return functions for transport model
-
 
         //- Heat capacit at contant volume of mixture [J/kg/K]
         virtual tmp<volScalarField> Cv() const;

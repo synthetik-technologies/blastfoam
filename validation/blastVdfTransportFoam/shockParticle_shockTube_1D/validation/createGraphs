@@ -1,0 +1,90 @@
+#!/bin/bash
+#
+# Results taken from:
+#   Luo, H., Baum, J. D., Lohner, R. (2003)
+#   "On the computation of multi-material flows using ALE formulation"
+#   Journal of Computational Physics, 194, 304-328
+
+createEpsUx()
+{
+title=blastFoam_shockTube_validation_Ux_$4
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Velocity [m/s]"
+    set grid
+    set key right top
+    set size 3,2
+    set autoscale
+    set xrange [0:0.06]
+    plot    "$1" using 1:2 title 'Lai 2018 (small)'\
+                with points linewidth 8 linecolor rgb 'red',\
+            "$2" using 1:2 title 'Lai 2018 (large)'\
+                with points lt 1 linewidth 8 linecolor rgb 'green',\
+            "$3" using 1:2 title 'blastFoam (mean)'\
+                with lines linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsAlpha()
+{
+title=blastFoam_shockTube_alpha_$4
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Volume fraction [ ]"
+    set grid
+    set key right top
+    set size 3,2
+    set autoscale
+    set xrange [0:0.06]
+    plot    "$1" using 1:(\$2/100) title 'Lai 2018 (small)'\
+                with points linewidth 8 linecolor rgb 'red',\
+            "$2" using 1:(\$2/100) title 'Lai 2018 (large)'\
+                with points lt 1 linewidth 8 linecolor rgb 'green',\
+            "$3" using 1:(\$2) title 'blastFoam (small)'\
+                with lines linewidth 2 linecolor rgb 'red', \
+            "$3" using 1:(\$3) title 'blastFoam (large)'\
+                with lines linewidth 2 linecolor rgb 'green'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+Lai_U1_100="$VALIDATIONDATAROOT/Lai_U1_100.csv"
+Lai_U2_100="$VALIDATIONDATAROOT/Lai_U2_100.csv"
+Lai_Ug_100="$VALIDATIONDATAROOT/Lai_Ug_100.csv"
+Lai_alpha1_100="$VALIDATIONDATAROOT/Lai_alpha1_100.csv"
+Lai_alpha2_100="$VALIDATIONDATAROOT/Lai_alpha2_100.csv"
+
+Lai_U1_200="$VALIDATIONDATAROOT/Lai_U1_200.csv"
+Lai_U2_200="$VALIDATIONDATAROOT/Lai_U2_200.csv"
+Lai_Ug_200="$VALIDATIONDATAROOT/Lai_Ug_200.csv"
+Lai_alpha1_200="$VALIDATIONDATAROOT/Lai_alpha1_200.csv"
+Lai_alpha2_200="$VALIDATIONDATAROOT/Lai_alpha2_200.csv"
+
+
+nodeBlastFOAM1="../postProcessing/sampleDict/0.0001/Centerline_weight*"
+UBlastFOAM1="../postProcessing/sampleDict/0.0001/Centerline_U*"
+nodeBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_weight*"
+UBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_U*"
+
+createEpsUx $Lai_U2_100 $Lai_U1_100 $UBlastFOAM1 1
+createEpsAlpha $Lai_alpha2_100 $Lai_alpha1_100 $nodeBlastFOAM1 1
+
+createEpsUx $Lai_U2_200 $Lai_U1_200 $UBlastFOAM2 2
+createEpsAlpha $Lai_alpha2_200 $Lai_alpha1_200 $nodeBlastFOAM2 2
+
+echo Done
