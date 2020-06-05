@@ -23,8 +23,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Initialize an atmosphere using either the U.S. standard 76 model, standard
-    atmosphere from NASA, or using a simple hydrostatic pressure.
+    Initialize an atmosphere using a list of values, or a simple hydrostatic pressure.
 
     References:
     \verbatim
@@ -173,7 +172,6 @@ int main(int argc, char *argv[])
     HashSet<> atmosphereTypes;
     atmosphereTypes.insert("simple");
     atmosphereTypes.insert("tabulated");
-    atmosphereTypes.insert("standard76");
 
     word model(atmosphereProperties.lookup("type"));
 
@@ -321,11 +319,6 @@ int main(int argc, char *argv[])
         //- Atmosphere is based on a lookup table of pressure and temperature Vs.
         //  height. Air is the hard coded
         tableAtmosphere(atmosphereProperties, g, dir, h, p, rho);
-    }
-    else if (model == "standard76")
-    {
-        //- U.S. standard 76 atmosphere model
-        standardAtmosphere76(atmosphereProperties, g, dir, h, p, rho);
     }
     else
     {
