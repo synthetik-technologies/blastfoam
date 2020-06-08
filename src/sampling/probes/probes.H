@@ -112,7 +112,7 @@ protected:
 
             //- Can the points be moved inside the mesh if the points are not
             //  found
-            Switch moveIntoMesh_;
+            Switch adjustLocations_;
 
             //- Are the probes appended to the end of a previous output
             Switch append_;

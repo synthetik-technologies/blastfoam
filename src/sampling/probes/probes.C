@@ -150,15 +150,15 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         }
     }
 
-    if (moveIntoMesh_ && nBadProbes > 0)
+    if (adjustLocations_ && nBadProbes > 0)
     {
-//         if (print)
-//         {
+        if (print)
+        {
             Info<< nl
                 << nBadProbes << " probes were not found in any domain." << nl
                 << "These probes are being moved to the nearest patch face." << nl
                 << endl;
-//         }
+        }
 
         forAll(foundList, probei)
         {
@@ -197,7 +197,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 faceList_[probei] = minFacei;
                 elementList_ = p.faceCells()[p.whichFace(minFacei)];
 
-//                 if (print)
+                if (print)
                 {
                     Pout<< "Moved probe " << probei << nl
                         << "    Original position: " << origPoint << nl
@@ -207,7 +207,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 }
             }
         }
-//         if (print)
+        if (print)
         {
             Info<<endl;
         }
@@ -356,8 +356,14 @@ Foam::label Foam::probes::prepare()
             // Create directory if does not exist.
             mkDir(probeDir);
 
+            // Read old file and store stream as a list of strings
             wordList oldValues;
-            if (exists(fileName(probeDir/fieldName)))
+            if
+            (
+                exists(fileName(probeDir/fieldName))
+             && times[0] != mesh_.time().timeName()
+             && append_
+            )
             {
                 label nOldProbes = 0;
                 bool header = true;
@@ -376,12 +382,28 @@ Foam::label Foam::probes::prepare()
                     {
                         header = false;
                         nOldProbes -= 2;
+
+                        // Do not overwrite files if the number of probes has
+                        // changed
                         if (nOldProbes != size())
                         {
-                            FatalErrorInFunction
-                                << "The number of probes in " << probeDir
-                                << " is not the same as the previous file."
-                                << abort (FatalError);
+                            fileName oldProbeDir(probeDir);
+                            probeDir = probeDir/".."/mesh_.time().timeName();
+                            probeDir.clean();
+
+                            if (Pstream::master())
+                            {
+                                WarningInFunction
+                                    << "The number of probes in " << oldProbeDir
+                                    << nl
+                                    << "    is not the same as the previous file."
+                                    << nl
+                                    << "    The previous probe file will not be"
+                                    << " overwritten. " << nl
+                                    << "    Writing to "
+                                    << probeDir << endl;
+                            }
+                            break;
                         }
                     }
 
@@ -423,6 +445,7 @@ Foam::label Foam::probes::prepare()
             fout<< '#' << setw(IOstream::defaultPrecision() + 6)
                 << "Time" << endl;
 
+            // Add old values to new output
             if (oldValues.size())
             {
                 forAll(oldValues, i)
@@ -430,8 +453,7 @@ Foam::label Foam::probes::prepare()
                     IStringStream isLine(oldValues[i]);
                     scalar t = readScalar(isLine);
 
-                    Info<<oldValues[i]<<endl;
-                    if (t < mesh_.time().value())
+                    if (t <= mesh_.time().value())
                     {
                         fout << word(oldValues[i]) << nl;
                     }
@@ -473,8 +495,8 @@ Foam::probes::probes
     fieldSelection_(),
     fixedLocations_(true),
     interpolationScheme_("cell"),
-    moveIntoMesh_(true),
-    append_(true)
+    adjustLocations_(false),
+    append_(false)
 {
     read(dict);
 }
@@ -495,8 +517,8 @@ Foam::probes::probes
     fieldSelection_(),
     fixedLocations_(true),
     interpolationScheme_("cell"),
-    moveIntoMesh_(true),
-    append_(true)
+    adjustLocations_(false),
+    append_(false)
 {
     read(dict);
 }
@@ -528,7 +550,7 @@ bool Foam::probes::read(const dictionary& dict)
         }
     }
 
-    dict.readIfPresent("moveIntoMesh", moveIntoMesh_);
+    dict.readIfPresent("adjustLocations", adjustLocations_);
     dict.readIfPresent("append", append_);
 
     // Initialise cells to sample from supplied locations
