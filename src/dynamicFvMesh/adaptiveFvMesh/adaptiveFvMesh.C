@@ -1107,6 +1107,26 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
         }
     }
 
+    const dictionary& refineDict
+    (
+        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+    );
+    wordList protectedPatches
+    (
+        refineDict.lookupOrDefault("protectedPatches", wordList())
+    );
+    if (protectedPatches.size())
+    {
+        forAll(protectedPatches, patchi)
+        {
+            const polyPatch& p = this->boundaryMesh()[protectedPatches[patchi]];
+            forAll(p.faceCells(), facei)
+            {
+                protectedCell_.set(p.faceCells()[facei], 1);
+                nProtected++;
+            }
+        }
+    }
 
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
