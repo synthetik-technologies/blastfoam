@@ -114,6 +114,9 @@ protected:
             //  found
             Switch moveIntoMesh_;
 
+            //- Are the probes appended to the end of a previous output
+            Switch append_;
+
 
         // Calculated
 
@@ -162,9 +165,6 @@ protected:
 
         //- Find cells and faces containing probes
         virtual void findElements(const fvMesh&, const bool print);
-
-        //- Initialize probe locations and move to internal cells
-        virtual void initializeElements(const fvMesh&);
 
         //- Classify field type and Open/close file streams,
         //  returns number of fields to sample
