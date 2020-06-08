@@ -790,7 +790,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::CpByCv() const
     return blendedVolScalarFieldProperty
     (
         "CpByCv",
-        dimEnergy/dimMass/dimTemperature,
+        dimless,
         &Thermo1::CpByCv,
         &Thermo2::CpByCv,
         this->rho_,
