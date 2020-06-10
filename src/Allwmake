@@ -15,6 +15,7 @@ wmake $targetType errorEstimators
 wmake $targetType dynamicFvMesh
 wmake $targetType functionObjects
 wmake $targetType sampling
+wmake $targetType atmosphereModels
 
 # ----------------------------------------------------------------- end-of-file
 

@@ -13,5 +13,6 @@ wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
 wclean $targetType sampling
+wclean $targetType atmosphereModels
 
 # ----------------------------------------------------------------- end-of-file
