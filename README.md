@@ -26,6 +26,8 @@ The workshop tutorial case and modifications have been added to the repository: 
 
 A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U). 
 
+The slides from the workshop have been added to the repository: [blastFoam May Workshop Slides](media/Synthetik-Applied-Technologies-blastFoam-Workshop-May-Final-20200513.pdf]
+
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
 #### The July 13th workshop is Sold Out!
 
