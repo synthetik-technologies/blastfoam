@@ -16,6 +16,7 @@ wmake $targetType dynamicFvMesh
 wmake $targetType functionObjects
 wmake $targetType sampling
 lagrangian/Allwmake $targetType $*
+wmake $targetType atmosphereModels
 
 # ----------------------------------------------------------------- end-of-file
 

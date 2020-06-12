@@ -97,9 +97,12 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
     }
 
     //- Finish updating initial value for stepi
-    forAll(momentsOld, mi)
+    if (ai[stepi -1] != 1)
     {
-        momentsOld[mi] *= ai[stepi - 1];
+        forAll(momentsOld, mi)
+        {
+            momentsOld[mi] *= ai[stepi - 1];
+        }
     }
     for (label i = 0; i < stepi - 1; i++)
     {
@@ -134,9 +137,13 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
             new volScalarField(momentAdvection_->divMoments()[mi])
         );
     }
-    forAll(deltaMoments, mi)
+
+    if (bi[stepi - 1] != 1)
     {
-        deltaMoments[mi] *= bi[stepi - 1];
+        forAll(deltaMoments, mi)
+        {
+            deltaMoments[mi] *= bi[stepi - 1];
+        }
     }
 
     for (label i = 0; i < stepi - 1; i++)
@@ -153,7 +160,7 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
 
     dimensionedScalar dT = mesh_.time().deltaT();
 
-    forAll(momentsOld_, mi)
+    forAll(deltaMoments, mi)
     {
         volScalarField& m = quadrature_.moments()[mi];
         m = momentsOld[mi] - dT*deltaMoments[mi];

@@ -29,6 +29,9 @@ License
 #include "Time.H"
 #include "IOmanip.H"
 #include "mapPolyMesh.H"
+#include "polyPatch.H"
+#include "SortableList.H"
+#include "IFstream.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -68,29 +71,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         const label celli = mesh.findCell(location);
 
         elementList_[probei] = celli;
-
-        if (celli != -1)
-        {
-            const labelList& cellFaces = mesh.cells()[celli];
-            const vector& cellCentre = mesh.cellCentres()[celli];
-            scalar minDistance = great;
-            label minFaceID = -1;
-            forAll(cellFaces, i)
-            {
-                label facei = cellFaces[i];
-                vector dist = mesh.faceCentres()[facei] - cellCentre;
-                if (mag(dist) < minDistance)
-                {
-                    minDistance = mag(dist);
-                    minFaceID = facei;
-                }
-            }
-            faceList_[probei] = minFaceID;
-        }
-        else
-        {
-            faceList_[probei] = -1;
-        }
+        faceList_[probei] = findFaceIndex(mesh, celli, location);
 
         if (debug && (elementList_[probei] != -1 || faceList_[probei] != -1))
         {
@@ -100,6 +81,9 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         }
     }
 
+
+    boolList foundList(size(), true);
+    label nBadProbes = 0;
 
     // Check if all probes have been found.
     forAll(elementList_, probei)
@@ -112,18 +96,21 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         reduce(celli, maxOp<label>());
         reduce(facei, maxOp<label>());
 
-        if (celli == -1 && print)
+        if (celli == -1)
         {
-            if (Pstream::master())
+            foundList[probei] = false;
+            nBadProbes++;
+
+            if (Pstream::master() && print)
             {
                 WarningInFunction
                     << "Did not find location " << location
                     << " in any cell. Skipping location." << endl;
             }
         }
-        else if (facei == -1 && print)
+        else if (facei == -1)
         {
-            if (Pstream::master())
+            if (Pstream::master() && print)
             {
                 WarningInFunction
                     << "Did not find location " << location
@@ -162,6 +149,97 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
             }
         }
     }
+
+    if (adjustLocations_ && nBadProbes > 0)
+    {
+        if (print)
+        {
+            Info<< nl
+                << nBadProbes << " probes were not found in any domain." << nl
+                << "These probes are being moved to the nearest patch face." << nl
+                << endl;
+        }
+
+        forAll(foundList, probei)
+        {
+            if (foundList[probei])
+            {
+                continue;
+            }
+
+            scalar minDistance = great;
+            label minFacei = -1;
+            for
+            (
+                label facei = mesh.nInternalFaces();
+                facei < mesh.nFaces();
+                facei++
+            )
+            {
+                vector fci(mesh.faceCentres()[facei]);
+                scalar distance(mag(fci - operator[](probei)));
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    minFacei = facei;
+                }
+            }
+
+            scalar trueMinDistance = minDistance;
+            reduce(trueMinDistance, minOp<scalar>());
+
+            if (trueMinDistance == minDistance)
+            {
+                vector origPoint(operator[](probei));
+                operator[](probei) = mesh.faceCentres()[minFacei];
+                const polyPatch& p =
+                    mesh.boundaryMesh()[mesh.boundaryMesh().whichPatch(minFacei)];
+                faceList_[probei] = minFacei;
+                elementList_ = p.faceCells()[p.whichFace(minFacei)];
+
+                if (print)
+                {
+                    Pout<< "Moved probe " << probei << nl
+                        << "    Original position: " << origPoint << nl
+                        << "    New position: " << operator[](probei) << nl
+                        << "    Located in cell " << elementList_[probei]
+                        << ", face " << faceList_[probei] << endl;
+                }
+            }
+        }
+        if (print)
+        {
+            Info<<endl;
+        }
+    }
+}
+
+
+Foam::label Foam::probes::findFaceIndex
+(
+    const fvMesh& mesh,
+    const label celli,
+    const vector& pt
+) const
+{
+    if (celli != -1)
+    {
+        const labelList& cellFaces = mesh.cells()[celli];
+        scalar minDistance = great;
+        label minFaceID = -1;
+        forAll(cellFaces, i)
+        {
+            label facei = cellFaces[i];
+            vector dist = mesh.faceCentres()[facei] - pt;
+            if (mag(dist) < minDistance)
+            {
+                minDistance = mag(dist);
+                minFaceID = facei;
+            }
+        }
+        return minFaceID;
+    }
+    return -1;
 }
 
 
@@ -201,7 +279,47 @@ Foam::label Foam::probes::prepare()
         {
             probeSubDir = probeSubDir/mesh_.name();
         }
-        probeSubDir = "postProcessing"/probeSubDir/mesh_.time().timeName();
+        probeSubDir = "postProcessing"/probeSubDir;
+
+        if (Pstream::parRun())
+        {
+            // Put in undecomposed case
+            // (Note: gives problems for distributed data running)
+            probeDir = mesh_.time().path()/".."/probeSubDir;
+        }
+        else
+        {
+            probeDir = mesh_.time().path()/probeSubDir;
+        }
+
+        wordList times(readDir(probeDir, fileType::directory));
+
+        // Sort times
+        {
+            SortableList<scalar> sTimes(times.size());
+            forAll(sTimes, ti)
+            {
+                IStringStream is(times[ti]);
+                sTimes[ti] = readScalar(is);
+            }
+            sTimes.sort();
+            wordList oldTimes(times);
+            forAll(sTimes, ti)
+            {
+                times[ti] = oldTimes[sTimes.indices()[ti]];
+            }
+        }
+
+        word timeName;
+        if (append_ && times.size())
+        {
+            timeName = times[0];
+        }
+        else
+        {
+            timeName = mesh_.time().timeName();
+        }
+        probeSubDir = probeSubDir/timeName;
 
         if (Pstream::parRun())
         {
@@ -238,6 +356,64 @@ Foam::label Foam::probes::prepare()
             // Create directory if does not exist.
             mkDir(probeDir);
 
+            // Read old file and store stream as a list of strings
+            wordList oldValues;
+            if
+            (
+                exists(fileName(probeDir/fieldName))
+             && times[0] != mesh_.time().timeName()
+             && append_
+            )
+            {
+                label nOldProbes = 0;
+                bool header = true;
+                IFstream is(fileName(probeDir/fieldName));
+                string line;
+
+                while (is.good())
+                {
+                    is.getLine(line);
+
+                    if (line[0] == '#')
+                    {
+                        nOldProbes++;
+                    }
+                    else if (header)
+                    {
+                        header = false;
+                        nOldProbes -= 2;
+
+                        // Do not overwrite files if the number of probes has
+                        // changed
+                        if (nOldProbes != size())
+                        {
+                            fileName oldProbeDir(probeDir);
+                            probeDir = probeDir/".."/mesh_.time().timeName();
+                            probeDir.clean();
+
+                            if (Pstream::master())
+                            {
+                                WarningInFunction
+                                    << "The number of probes in " << oldProbeDir
+                                    << nl
+                                    << "    is not the same as the previous file."
+                                    << nl
+                                    << "    The previous probe file will not be"
+                                    << " overwritten. " << nl
+                                    << "    Writing to "
+                                    << probeDir << endl;
+                            }
+                            break;
+                        }
+                    }
+
+                    if (!header)
+                    {
+                        oldValues.append(line);
+                    }
+                }
+            }
+
             OFstream* fPtr = new OFstream(probeDir/fieldName);
 
             OFstream& fout = *fPtr;
@@ -268,6 +444,25 @@ Foam::label Foam::probes::prepare()
 
             fout<< '#' << setw(IOstream::defaultPrecision() + 6)
                 << "Time" << endl;
+
+            // Add old values to new output
+            if (oldValues.size())
+            {
+                forAll(oldValues, i)
+                {
+                    IStringStream isLine(oldValues[i]);
+                    scalar t = readScalar(isLine);
+
+                    if (t <= mesh_.time().value())
+                    {
+                        fout << word(oldValues[i]) << nl;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -299,7 +494,9 @@ Foam::probes::probes
     loadFromFiles_(false),
     fieldSelection_(),
     fixedLocations_(true),
-    interpolationScheme_("cell")
+    interpolationScheme_("cell"),
+    adjustLocations_(false),
+    append_(false)
 {
     read(dict);
 }
@@ -319,7 +516,9 @@ Foam::probes::probes
     loadFromFiles_(loadFromFiles),
     fieldSelection_(),
     fixedLocations_(true),
-    interpolationScheme_("cell")
+    interpolationScheme_("cell"),
+    adjustLocations_(false),
+    append_(false)
 {
     read(dict);
 }
@@ -338,6 +537,7 @@ bool Foam::probes::read(const dictionary& dict)
     dict.lookup("probeLocations") >> *this;
     dict.lookup("fields") >> fieldSelection_;
 
+
     dict.readIfPresent("fixedLocations", fixedLocations_);
     if (dict.readIfPresent("interpolationScheme", interpolationScheme_))
     {
@@ -349,6 +549,9 @@ bool Foam::probes::read(const dictionary& dict)
                 << "entry will be ignored";
         }
     }
+
+    dict.readIfPresent("adjustLocations", adjustLocations_);
+    dict.readIfPresent("append", append_);
 
     // Initialise cells to sample from supplied locations
     findElements(mesh_, true);

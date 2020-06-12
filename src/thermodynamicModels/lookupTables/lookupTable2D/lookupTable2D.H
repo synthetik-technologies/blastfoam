@@ -60,14 +60,17 @@ class lookupTable2D
     //- File name
     const fileName file_;
 
-    scalar (*modFunc_)(const scalar&);
-    scalar (*invModFunc_)(const scalar&);
+    //- Include definition of modifying functions
+    #include "tableFuncs.H"
 
-    scalar (*modXFunc_)(const scalar&);
-    scalar (*invModXFunc_)(const scalar&);
+    modFuncType modFunc_;
+    modFuncType invModFunc_;
 
-    scalar (*modYFunc_)(const scalar&);
-    scalar (*invModYFunc_)(const scalar&);
+    modFuncType modXFunc_;
+    modFuncType invModXFunc_;
+
+    modFuncType modYFunc_;
+    modFuncType invModYFunc_;
 
     //- Number of entries for x
     label nx_;
@@ -129,31 +132,6 @@ class lookupTable2D
         const label ny,
         const bool ij
     ) const;
-
-    inline static scalar noneS(const scalar& x)
-    {
-        return x;
-    }
-
-    inline static scalar lnS(const scalar& x)
-    {
-        return Foam::log(Foam::max(x, small));
-    }
-
-    inline static scalar expS(const scalar& x)
-    {
-        return Foam::exp(x);
-    }
-
-    inline static scalar log10S(const scalar& x)
-    {
-        return Foam::log10(Foam::max(x, small));
-    }
-
-    inline static scalar pow10S(const scalar& x)
-    {
-        return Foam::pow(10, x);
-    }
 
 
 public:

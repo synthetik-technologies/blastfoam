@@ -31,7 +31,6 @@ Description
 #define solidRegionDiffNo_H
 
 #include "fvMesh.H"
-#include "fvc.H"
 
 namespace Foam
 {
@@ -39,7 +38,6 @@ namespace Foam
     (
         const fvMesh& mesh,
         const Time& runTime,
-        const volScalarField& e,
         const volScalarField& Cprho,
         const volScalarField& kappa
     );

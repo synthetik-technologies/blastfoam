@@ -21,49 +21,28 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Description
+    Calculates and outputs the mean and maximum Courant Numbers for the fluid
+    regions
+
 \*---------------------------------------------------------------------------*/
 
-#include "solidRegionDiffNo.H"
-#include "surfaceInterpolate.H"
+#ifndef compressibleCourantNo_H
+#define compressibleCourantNo_H
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "fvMesh.H"
+#include "phaseCompressibleSystem.H"
 
-Foam::scalar Foam::solidRegionDiffNo
-(
-    const fvMesh& mesh,
-    const Time& runTime,
-    const volScalarField& e,
-    const volScalarField& Cprho,
-    const volScalarField& kappa
-)
+namespace Foam
 {
-    surfaceScalarField amaxSf
+    scalar compressibleCourantNo
     (
-        mag(fvc::snGrad(kappa/Cprho*e))*mesh.magSf()
+        const fvMesh& mesh,
+        const Time& runTime,
+        const phaseCompressibleSystem& fluid
     );
-    scalarField sumAmaxSf
-    (
-        fvc::surfaceSum(amaxSf)().primitiveField()
-    );
-
-    const scalar DiNum =
-        0.5
-       *gMax(sumAmaxSf/mesh.V().field())
-       *mesh.time().deltaTValue();
-//     surfaceScalarField kapparhoCpbyDelta
-//     (
-//         sqr(mesh.surfaceInterpolation::deltaCoeffs())
-//        *fvc::interpolate(kappa)
-//        /fvc::interpolate(Cprho)
-//     );
-//
-//     const scalar DiNum = max(kapparhoCpbyDelta).value()*runTime.deltaTValue();
-//     const scalar meanDiNum =
-//         average(kapparhoCpbyDelta).value()*runTime.deltaTValue();
-
-    Info<< "Region: " << mesh.name() << " max: " << DiNum << endl;
-
-    return DiNum;
 }
+
+#endif
 
 // ************************************************************************* //

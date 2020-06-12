@@ -32,18 +32,16 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "phaseCompressibleSystem.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
+#include "fluidThermoModel.H"
+#include "solidThermoModel.H"
 #include "fixedGradientFvPatchFields.H"
 #include "regionProperties.H"
+#include "compressibleCourantNo.H"
 #include "solidRegionDiffNo.H"
-#include "solidThermoModel.H"
-#include "fluidThermoModel.H"
 #include "radiationModel.H"
 #include "fvOptions.H"
 #include "coordinateSystem.H"
-#include "pimpleMultiRegionControl.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -59,7 +57,7 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
     #include "readSolidTimeControls.H"
-    #include "fluidMultiRegionCourantNo.H"
+    #include "compressibleMultiRegionCourantNo.H"
     #include "solidRegionDiffusionNo.H"
     #include "setInitialMultiRegionDeltaT.H"
 
@@ -68,7 +66,7 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
         #include "readSolidTimeControls.H"
 
-        #include "fluidMultiRegionCourantNo.H"
+        #include "compressibleMultiRegionCourantNo.H"
         #include "solidRegionDiffusionNo.H"
         #include "setMultiRegionDeltaT.H"
 
@@ -80,7 +78,6 @@ int main(int argc, char *argv[])
         {
             Info<< "\nSolving for fluid region "
                 << fluidRegions[i].name() << endl;
-            #include "setRegionFluidFields.H"
             #include "solveFluid.H"
         }
 

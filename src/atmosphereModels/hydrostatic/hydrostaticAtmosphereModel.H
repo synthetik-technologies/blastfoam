@@ -22,105 +22,74 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::lookupTable1D
+    Foam::atmosphereModels::hydrostatic
 
 Description
-    Table used to lookup vales given a 1D table
+    Initialize atmosphere using a constant density. Pressure is defined so
+    the gravitational force and pressure gradient are equal. The reference
+    pressure is defined as the pressure at the minimum altitude
 
 SourceFiles
-    lookupTable1D.C
+    hydrostaticAtmosphereModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lookupTable1D_H
-#define lookupTable1D_H
+#ifndef hydrostaticAtmosphereModel_H
+#define hydrostaticAtmosphereModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "dictionary.H"
-#include "Field.H"
-#include "fieldTypes.H"
-#include "FieldFields.H"
-#include "IOstreams.H"
-#include "Switch.H"
-#include "IOField.H"
-#include "fileName.H"
+#include "atmosphereModel.H"
 
 namespace Foam
 {
+namespace atmosphereModels
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class lookupTable1D Declaration
+                           Class hydrostatic Declaration
 \*---------------------------------------------------------------------------*/
 
-class lookupTable1D
+class hydrostatic
+:
+    public atmosphereModel
 {
 // Private data
 
-    //- File name
-    const fileName file_;
+    //- Density value
+    dimensionedScalar rhoRef_;
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
-
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
-
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
-
-    //- List of x values in real space
-    scalarField xValues_;
-
-    //- List of x values in the given space
-    scalarField xModValues_;
-
-    //- Data
-    scalarField data_;
-
-    //- Read the table
-    void readTable();
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline void findIndex(const scalar& x, label& I, scalar& f) const;
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline label bound(const scalar& f) const;
-
+    //- Pressure at reference height
+    dimensionedScalar pRef_;
 
 
 public:
 
-    // Constructors
-    lookupTable1D
-    (
-        const fileName& fileName,
-        const word& mod,
-        const word& xMod
-    );
+    //- Runtime type information
+    TypeName("hydrostatic");
+
+    // Constructor
+    hydrostatic(const fvMesh& mesh, const dictionary& dict);
+
 
     //- Destructor
-    virtual ~lookupTable1D();
+    virtual ~hydrostatic();
 
 
     // Member Functions
 
-        //- Lookup value
-        scalar lookup(const scalar& x) const;
-
-        //- Lookup X given f and y
-        scalar reverseLookup(const scalar& f) const;
-
-        //- Return first derivative
-        scalar dFdX(const scalar& x) const;
-
-        //- Return second derivative w.r.t. x
-        scalar d2FdX2(const scalar& x) const;
+        //- Create atmosphere
+        virtual void createAtmosphere
+        (
+            volScalarField& p,
+            volScalarField& rho
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace atmosphereModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

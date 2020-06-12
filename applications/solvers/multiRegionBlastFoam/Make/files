@@ -1,4 +1,0 @@
-solid/solidRegionDiffNo.C
-multiRegionBlastFoam.C
-
-EXE = $(BLAST_APPBIN)/multiRegionBlastFoam

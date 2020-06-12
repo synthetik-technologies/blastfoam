@@ -340,7 +340,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
 
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
 {
-    volumeFraction_ = min(1.0, max(0.0, *alphadPtr_));
+    volumeFraction_ = min(1.0, max(0.0, 1.0 - *alphadPtr_));
     alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
     volScalarField sumAlpha
     (

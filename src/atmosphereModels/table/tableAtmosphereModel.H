@@ -22,105 +22,77 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::lookupTable1D
+    Foam::atmosphereModels::table
 
 Description
-    Table used to lookup vales given a 1D table
+    Initialize atmosphere using pressure and temperature tables based on
+    height. An ideal gas is assumed.
 
 SourceFiles
-    lookupTable1D.C
+    tableAtmosphereModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef lookupTable1D_H
-#define lookupTable1D_H
+#ifndef tableAtmosphereModel_H
+#define tableAtmosphereModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "dictionary.H"
-#include "Field.H"
-#include "fieldTypes.H"
-#include "FieldFields.H"
-#include "IOstreams.H"
-#include "Switch.H"
-#include "IOField.H"
-#include "fileName.H"
+#include "lookupTable1D.H"
+#include "atmosphereModel.H"
 
 namespace Foam
 {
+namespace atmosphereModels
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class lookupTable1D Declaration
+                           Class table Declaration
 \*---------------------------------------------------------------------------*/
 
-class lookupTable1D
+class table
+:
+    public atmosphereModel
 {
 // Private data
 
-    //- File name
-    const fileName file_;
+    //- Pressure table
+    lookupTable1D pTable_;
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
+    //- Temperature table
+    lookupTable1D TTable_;
 
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
-
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
-
-    //- List of x values in real space
-    scalarField xValues_;
-
-    //- List of x values in the given space
-    scalarField xModValues_;
-
-    //- Data
-    scalarField data_;
-
-    //- Read the table
-    void readTable();
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline void findIndex(const scalar& x, label& I, scalar& f) const;
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline label bound(const scalar& f) const;
-
+    //- Molecular weight
+    scalar W_;
 
 
 public:
 
-    // Constructors
-    lookupTable1D
-    (
-        const fileName& fileName,
-        const word& mod,
-        const word& xMod
-    );
+    //- Runtime type information
+    TypeName("table");
+
+    // Constructor
+    table(const fvMesh& mesh, const dictionary& dict);
+
 
     //- Destructor
-    virtual ~lookupTable1D();
+    virtual ~table();
 
 
     // Member Functions
 
-        //- Lookup value
-        scalar lookup(const scalar& x) const;
-
-        //- Lookup X given f and y
-        scalar reverseLookup(const scalar& f) const;
-
-        //- Return first derivative
-        scalar dFdX(const scalar& x) const;
-
-        //- Return second derivative w.r.t. x
-        scalar d2FdX2(const scalar& x) const;
+        //- Create atmosphere
+        virtual void createAtmosphere
+        (
+            volScalarField& p,
+            volScalarField& rho
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace atmosphereModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

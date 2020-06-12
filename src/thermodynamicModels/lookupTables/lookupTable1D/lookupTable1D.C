@@ -26,53 +26,79 @@ License
 #include "lookupTable1D.H"
 #include "DynamicList.H"
 #include "Field.H"
-#include "IFstream.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 void Foam::lookupTable1D::readTable()
 {
-    IFstream is(file_);
-    string line;
-    bool good = is.good();
-    if (!good)
+    fileName fNameExpanded(file_);
+    fNameExpanded.expand();
+
+    // Open a stream and check it
+    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fNameExpanded));
+    ISstream& is = isPtr();
+    if (!is.good())
     {
         FatalIOErrorInFunction(is)
             << "Cannot open file" << file_ << nl
             << exit(FatalIOError);
     }
-    while (good)
+
+    scalarField xTmp;
+    scalarField xModTmp;
+    scalarField fTmp;
+    string line;
+    while (is.good())
     {
-        scalar xTmp(readScalar(is));
-        good = is.good();
-        if (good)
+        is.getLine(line);
+        if (line[0] == '#')
         {
-            x_.append(modXFunc_(xTmp));
-            realX_.append(xTmp);
-            data_.append(modFunc_(readScalar(is)));
+            continue;
+        }
+
+        IStringStream isLine(line);
+
+        scalar xi(readScalar(isLine));
+
+        if (is.good())
+        {
+            scalar fi(readScalar(isLine));
+            xTmp.append(xi);
+            xModTmp.append(modXFunc_(xi));
+            fTmp.append(modFunc_(fi));
         }
     }
+    xValues_ = xTmp;
+    xModValues_ = xModTmp;
+    data_ = fTmp;
 }
 
 void Foam::lookupTable1D::findIndex
 (
     const scalar& x,
-    label& I,
+    label& i,
     scalar& f
 ) const
 {
-    for (label i = 0; i < x_.size(); i++)
+    if (x < xModValues_[0])
     {
-        if (x_[i] > x)
+        i = 0;
+        f = x/xModValues_[0];
+    }
+    for (i = 1; i < xModValues_.size(); i++)
+    {
+        if (x < xModValues_[i])
         {
-            I = max(i-1, 0);
-            f = (x - x_[I])/(x_[I+1] - x_[I]);
+            i--;
+            f = (x - xModValues_[i])/(xModValues_[i+1] - xModValues_[i]);
             return;
         }
     }
-    I = x_.size() - 2;
-    f = 0.0;
+    i = xModValues_.size() - 2;
+    f = 1.0;
+    return;
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -89,47 +115,8 @@ Foam::lookupTable1D::lookupTable1D
     modXFunc_(NULL),
     invModXFunc_(NULL)
 {
-    if (mod == "log10")
-    {
-        modFunc_ = &log10S;
-        invModFunc_ = &pow10S;
-    }
-    else if (mod == "ln")
-    {
-        modFunc_ = &lnS;
-        invModFunc_ = &expS;
-    }
-    else if (mod == "exp")
-    {
-        modFunc_ = &expS;
-        invModFunc_ = &lnS;
-    }
-    else
-    {
-        modFunc_ = &noneS;
-        invModFunc_ = &noneS;
-    }
-
-    if (xMod == "log10")
-    {
-        modXFunc_ = &log10S;
-        invModXFunc_ = &pow10S;
-    }
-    else if (xMod == "ln")
-    {
-        modXFunc_ = &lnS;
-        invModXFunc_ = &expS;
-    }
-    else if (xMod ==  "exp")
-    {
-        modXFunc_ = &expS;
-        invModXFunc_ = &lnS;
-    }
-    else
-    {
-        modXFunc_ = &noneS;
-        invModXFunc_ = &noneS;
-    }
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
     readTable();
 }
 
@@ -148,7 +135,7 @@ Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
     label i;
     findIndex(modXFunc_(x), i, fx);
 
-    return invModFunc_(data_[i]*fx + data_[i+1]*(1.0 - fx));
+    return invModFunc_(data_[i] + fx*(data_[i+1] - data_[i]));
 }
 
 
@@ -156,18 +143,26 @@ Foam::scalar
 Foam::lookupTable1D::reverseLookup(const scalar& fin) const
 {
     scalar f(modFunc_(fin));
-    label i;
-    for (i = 0; i <data_.size(); i++)
+    if (f < data_[0])
     {
-        if (data_[i] < f)
+        return xValues_[0];
+    }
+    label i = 0;
+    for (i = 1; i < data_.size(); i++)
+    {
+        if (f < data_[i])
         {
+            i--;
             break;
         }
     }
 
-    scalar fx = (data_[i+1] - fin)/(x_[i+1] - x_[i]);
+    const scalar& fm(data_[i]);
+    const scalar& fp(data_[i+1]);
 
-    return invModXFunc_(x_[i] + (1.0 - fx)*(x_[i+1] - x_[i]));
+    scalar fx = (f - fm)/(fp - fm);
+
+    return invModXFunc_(xModValues_[i] + fx*(xValues_[i+1] - xValues_[i]));
 }
 
 
@@ -177,13 +172,17 @@ Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
     label i;
     findIndex(modXFunc_(x), i, fx);
 
-    return (invModFunc_(data_[i+1]) - invModFunc_(data_[i]))/(realX_[i+1] - realX_[i]);
+    scalar fm(data_[i]);
+    scalar fp(data_[i+1]);
+
+    return (invModFunc_(fp) - invModFunc_(fm))/(xValues_[i+1] - xValues_[i]);
 }
+
 
 Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
 {
-    scalar fx;
     label i;
+    scalar fx;
     findIndex(modXFunc_(x), i, fx);
 
     if (i == 0)
@@ -191,15 +190,16 @@ Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
         i++;
     }
 
-    scalar gm(invModFunc_(data_[i-1]));
-    scalar g(invModFunc_(data_[i]));
-    scalar gp(invModFunc_(data_[i+1]));
+    scalar fm(invModFunc_(data_[i-1]));
+    scalar fi(invModFunc_(data_[i]));
+    scalar fp(invModFunc_(data_[i+1]));
 
-    const scalar& xm(realX_[i-1]);
-    const scalar& xi(realX_[i]);
-    const scalar& xp(realX_[i+1]);
+    const scalar& xm(xValues_[i-1]);
+    const scalar& xi(xValues_[i]);
+    const scalar& xp(xValues_[i+1]);
 
-    return (gp - 2.0*g + gm)/((xp - xi)*(xi - xm));
+    return
+        ((fp - fi)/(xp - xi) - (fi - fm)/(xi - xm))/(xp - xm);
 }
 
 // ************************************************************************* //

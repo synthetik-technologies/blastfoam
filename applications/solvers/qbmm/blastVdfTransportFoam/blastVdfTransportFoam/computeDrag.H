@@ -88,5 +88,5 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
     volScalarField KD(Kdi*nodes[nodei].primaryWeight());
 
     fluid.addUCoeff(KD);
-    fluid.addUSource(-KD*Ui);
+    fluid.addUSource(KD*Ui);
 }

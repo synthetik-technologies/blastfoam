@@ -23,8 +23,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Description
-    Initialize an atmosphere using either the U.S. standard 76 model, standard
-    atmosphere from NASA, or using a simple hydrostatic pressure.
+    Initialize an atmosphere using a list of values, or a simple hydrostatic pressure.
 
     References:
     \verbatim
@@ -37,18 +36,13 @@ Description
 #include "Time.H"
 #include "fvMesh.H"
 #include "volFields.H"
-#include "uniformDimensionedFields.H"
-#include "HashSet.H"
+#include "atmosphereModel.H"
 #include "fvc.H"
-#include "topoSetSource.H"
-#include "cellSet.H"
 #include "fluidThermoModel.H"
-#include "lookupTable1D.H"
 #include "twoPhaseFluidThermo.H"
 #include "multiphaseFluidThermo.H"
 #include "PtrListDictionary.H"
 
-#include "atmosphereFuncs.H"
 
 using namespace Foam;
 
@@ -68,11 +62,17 @@ int main(int argc, char *argv[])
         IOobject
         (
             "atmosphereProperties",
-            runTime.system(),
+            mesh.time().system(),
             mesh,
             IOobject::MUST_READ
         )
     );
+
+    autoPtr<atmosphereModel> atmosphere
+    (
+        atmosphereModel::New(mesh, atmosphereProperties)
+    );
+
     IOdictionary phaseProperties
     (
         IOobject
@@ -85,10 +85,16 @@ int main(int argc, char *argv[])
     );
 
     //- Name of phase (Default = word::null)
-    word phaseName(atmosphereProperties.lookupOrDefault("phaseName", word::null));
+    word phaseName
+    (
+        atmosphereProperties.lookupOrDefault("phaseName", word::null)
+    );
 
     //- Shared switches
-    Switch sharedPressure(atmosphereProperties.lookupOrDefault("sharedPressure", true));
+    Switch sharedPressure
+    (
+        atmosphereProperties.lookupOrDefault("sharedPressure", true)
+    );
     Switch sharedTemperature
     (
         atmosphereProperties.lookupOrDefault("sharedTemperature", true)
@@ -168,33 +174,6 @@ int main(int argc, char *argv[])
         dimensionedScalar(sqr(dimVelocity), -1.0),
         fluidThermoModel::eBoundaryTypes(T),
         fluidThermoModel::eBoundaryBaseTypes(T)
-    );
-
-    HashSet<> atmosphereTypes;
-    atmosphereTypes.insert("simple");
-    atmosphereTypes.insert("tabulated");
-    atmosphereTypes.insert("standard76");
-
-    word model(atmosphereProperties.lookup("type"));
-
-    dimensionedScalar groundElevation
-    (
-        "groundElevation",
-        dimLength,
-        atmosphereProperties
-    );
-
-    Info<< "\nReading g" << endl;
-    uniformDimensionedVectorField g
-    (
-        IOobject
-        (
-            "g",
-            runTime.constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
     );
 
     wordList phases(phaseProperties.lookupOrDefault("phases", wordList()));
@@ -306,47 +285,25 @@ int main(int argc, char *argv[])
         }
     }
 
-    vector dir((-g/mag(g)).value());
-    volScalarField h("h", dir & mesh.C());
-    h += (groundElevation - min(h));
+    Info<< "Initializing atmosphere." << endl;
+    atmosphere->createAtmosphere(p, rho);
 
-    Info<< "Initializing " << model <<" atmosphere." << endl;
-    if (model == "simple")
-    {
-        //- Simple hydrostatic equilibrium
-        simpleAtmosphere(atmosphereProperties, g, dir, h, p, rho);
-    }
-    else if (model == "tabulated")
-    {
-        //- Atmosphere is based on a lookup table of pressure and temperature Vs.
-        //  height. Air is the hard coded
-        tableAtmosphere(atmosphereProperties, g, dir, h, p, rho);
-    }
-    else if (model == "standard76")
-    {
-        //- U.S. standard 76 atmosphere model
-        standardAtmosphere76(atmosphereProperties, g, dir, h, p, rho);
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Unknown " << model << " atmosphere model " << nl
-            << "Valid atmosphere model types are:"
-            << atmosphereTypes << nl
-            <<abort(FatalError);
-    };
     if (thermoPtr)
     {
         e = thermoPtr->calce();
         T = thermoPtr->calcT();
     }
 
-    if (atmosphereProperties.found("equilibriumTemperature") && multiphase)
+    if (multiphase)
     {
-        forAll(phases, phasei)
+        if (atmosphereProperties.lookupType<Switch>("equilibriumTemperature"))
         {
-            thermos[phasei].T() = T;
-            thermos[phasei].T().write();
+            forAll(phases, phasei)
+            {
+                Info<< "Setting " << thermos[phasei].T().name() << endl;
+                thermos[phasei].T() = T;
+                thermos[phasei].T().write();
+            }
         }
     }
 

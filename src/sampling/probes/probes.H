@@ -110,6 +110,13 @@ protected:
             //  Note: only possible when fixedLocations_ is true
             word interpolationScheme_;
 
+            //- Can the points be moved inside the mesh if the points are not
+            //  found
+            Switch adjustLocations_;
+
+            //- Are the probes appended to the end of a previous output
+            Switch append_;
+
 
         // Calculated
 
@@ -147,6 +154,14 @@ protected:
 
         //- Classify field types, returns the number of fields
         label classifyFields();
+
+        //- Return the nearest face to a point
+        label findFaceIndex
+        (
+            const fvMesh& mesh,
+            const label celli,
+            const vector& pt
+        ) const;
 
         //- Find cells and faces containing probes
         virtual void findElements(const fvMesh&, const bool print);
