@@ -1070,34 +1070,8 @@ void Foam::adaptiveFvMesh::checkEightAnchorPoints
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
-:
-    dynamicFvMesh(io),
-    meshCutter_(hexRef::New(*this)),
-    dumpLevel_(false),
-    nRefinementIterations_(0),
-    protectedCell_(nCells(), 0),
-    decompositionDict_
-    (
-        IOdictionary
-        (
-            IOobject
-            (
-                "decomposeParDict",
-                time().system(),
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            )
-        )
-    )
+void Foam::adaptiveFvMesh::setProtectedCells()
 {
-    // Read static part of dictionary
-    readDict();
-
-
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
 
@@ -1111,7 +1085,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
 
     labelList nAnchors(nCells(), 0);
 
-    label nProtected = 0;
+    nProtected_ = 0;
 
     forAll(pointCells(), pointi)
     {
@@ -1130,7 +1104,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     if (nAnchors[celli] > 8)
                     {
                         protectedCell_.set(celli, 1);
-                        nProtected++;
+                        nProtected_++;
                     }
                 }
             }
@@ -1197,9 +1171,9 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
                 protectedCell_.set(faceNeighbour()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
         for (label facei = nInternalFaces(); facei < nFaces(); facei++)
@@ -1207,7 +1181,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
 
@@ -1229,14 +1203,14 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             {
                 if (protectedCell_.set(celli, 1))
                 {
-                    nProtected++;
+                    nProtected_++;
                 }
             }
             else if (!wedge && cFaces.size() < 6)
             {
                 if (protectedCell_.set(celli, 1))
                 {
-                    nProtected++;
+                    nProtected_++;
                 }
             }
             else
@@ -1247,7 +1221,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     {
                         if (protectedCell_.set(celli, 1))
                         {
-                            nProtected++;
+                            nProtected_++;
                         }
                         break;
                     }
@@ -1255,7 +1229,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     {
                         if (protectedCell_.set(celli, 1))
                         {
-                            nProtected++;
+                            nProtected_++;
                         }
                         break;
                     }
@@ -1266,34 +1240,44 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
         // Check cells for 8 corner points
         if (!wedge)
         {
-            checkEightAnchorPoints(protectedCell_, nProtected);
+            checkEightAnchorPoints(protectedCell_, nProtected_);
         }
     }
 
-    if (returnReduce(nProtected, sumOp<label>()) == 0)
+    if (returnReduce(nProtected_, sumOp<label>()) == 0)
     {
         protectedCell_.clear();
     }
-    else
-    {
+}
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-        cellSet protectedCells(*this, "protectedCells", nProtected);
-        forAll(protectedCell_, celli)
-        {
-            if (protectedCell_[celli])
-            {
-                protectedCells.insert(celli);
-            }
-        }
+Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
+:
+    dynamicFvMesh(io),
+    meshCutter_(hexRef::New(*this)),
+    dumpLevel_(false),
+    nRefinementIterations_(0),
+    nProtected_(0),
+    protectedCell_(nCells(), 0),
+    decompositionDict_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                time().system(),
+                *this,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        )
+    )
+{
+    // Read static part of dictionary
+    readDict();
+    setProtectedCells();
 
-        Info<< "Detected " << returnReduce(nProtected, sumOp<label>())
-            << " cells that are protected from refinement."
-            << " Writing these to cellSet "
-            << protectedCells.name()
-            << "." << endl;
-
-        protectedCells.write();
-    }
 
     //- 2D refinment does not currently work
     //  Refinement history is not compatable with the current method of
@@ -1730,6 +1714,11 @@ bool Foam::adaptiveFvMesh::update()
             }
         }
     }
+    if (returnReduce(nProtected_, sumOp<label>()) == 0)
+    {
+        setProtectedCells();
+    }
+
     return hasChanged;
 }
 
@@ -1776,6 +1765,25 @@ bool Foam::adaptiveFvMesh::writeObject
         }
 
         writeOk = writeOk && scalarCellLevel.write();
+    }
+    if (returnReduce(nProtected_, sumOp<label>()) > 0)
+    {
+        cellSet protectedCells(*this, "protectedCells", nProtected_);
+        forAll(protectedCell_, celli)
+        {
+            if (protectedCell_[celli])
+            {
+                protectedCells.insert(celli);
+            }
+        }
+
+        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
+            << " cells that are protected from refinement."
+            << " Writing these to cellSet "
+            << protectedCells.name()
+            << "." << endl;
+
+        protectedCells.write();
     }
 
     return writeOk;
