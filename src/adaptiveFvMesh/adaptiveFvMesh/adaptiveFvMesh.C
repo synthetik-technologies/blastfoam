@@ -1249,6 +1249,8 @@ void Foam::adaptiveFvMesh::setProtectedCells()
         protectedCell_.clear();
     }
 }
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
@@ -1278,6 +1280,20 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     readDict();
     setProtectedCells();
 
+    if (returnReduce(nProtected_, sumOp<label>()))
+    {
+        cellSet protectedCells(*this, "protectedCells", nProtected_);
+        forAll(protectedCell_, celli)
+        {
+            if (protectedCell_[celli])
+            {
+                protectedCells.insert(celli);
+            }
+        }
+
+        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
+            << " cells that are protected from refinement." << endl;
+    }
 
     //- 2D refinment does not currently work
     //  Refinement history is not compatable with the current method of
@@ -1382,6 +1398,11 @@ bool Foam::adaptiveFvMesh::update()
      && time().timeIndex() % refineInterval == 0
     )
     {
+        if (returnReduce(nProtected_, sumOp<label>()) > 0)
+        {
+            setProtectedCells();
+        }
+
         label maxCells = readLabel(refineDict.lookup("maxCells"));
 
         if (maxCells <= 0)
@@ -1713,10 +1734,6 @@ bool Foam::adaptiveFvMesh::update()
                 meshCutter_->setInstance(facesInstance());
             }
         }
-    }
-    if (returnReduce(nProtected_, sumOp<label>()) == 0)
-    {
-        setProtectedCells();
     }
 
     return hasChanged;
