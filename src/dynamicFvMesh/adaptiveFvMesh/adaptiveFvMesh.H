@@ -113,6 +113,9 @@ protected:
         //- Number of refinement/unrefinement steps done so far.
         label nRefinementIterations_;
 
+        //- Number of protected cells
+        label nProtected_;
+
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
@@ -209,6 +212,9 @@ protected:
                 PackedBoolList& protectedCell,
                 label& nProtected
             ) const;
+
+            //- Set protected cells
+            void setProtectedCells();
 
             //- Map non-flux surface<Type>Fields for new internal faces
             //  (from cell splitting)

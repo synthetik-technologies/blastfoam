@@ -963,6 +963,10 @@ void initialize
                     }
                 }
             }
+            if (nAnchors == 2)
+            {
+                protectedFace[facei] = true;
+            }
         }
 
         syncTools::syncFaceList(mesh, protectedFace, orEqOp<bool>());

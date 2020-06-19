@@ -1029,45 +1029,8 @@ void Foam::adaptiveFvMesh::checkEightAnchorPoints
 }
 
 
-template <class T>
-void Foam::adaptiveFvMesh::mapNewInternalFaces
-(
-    const labelList& faceMap
-)
+void Foam::adaptiveFvMesh::setProtectedCells()
 {
-    return;
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
-:
-    dynamicFvMesh(io),
-    error_(errorEstimator::New(*this, dynamicMeshDict())),
-    meshCutter_(hexRef::New(*this)),
-    dumpLevel_(false),
-    nRefinementIterations_(0),
-    protectedCell_(nCells(), 0),
-    decompositionDict_
-    (
-        IOdictionary
-        (
-            IOobject
-            (
-                "decomposeParDict",
-                time().system(),
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            )
-        )
-    )
-{
-    // Read static part of dictionary
-    readDict();
-
-
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
 
@@ -1081,7 +1044,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
 
     labelList nAnchors(nCells(), 0);
 
-    label nProtected = 0;
+    nProtected_ = 0;
 
     forAll(pointCells(), pointi)
     {
@@ -1100,7 +1063,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     if (nAnchors[celli] > 8)
                     {
                         protectedCell_.set(celli, 1);
-                        nProtected++;
+                        nProtected_++;
                     }
                 }
             }
@@ -1123,7 +1086,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             forAll(p.faceCells(), facei)
             {
                 protectedCell_.set(p.faceCells()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
     }
@@ -1184,9 +1147,9 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
                 protectedCell_.set(faceNeighbour()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
         for (label facei = nInternalFaces(); facei < nFaces(); facei++)
@@ -1194,7 +1157,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
 
@@ -1211,7 +1174,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                 {
                     if (protectedCell_.set(celli, 1))
                     {
-                        nProtected++;
+                        nProtected_++;
                     }
                 }
                 else
@@ -1222,7 +1185,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                         {
                             if (protectedCell_.set(celli, 1))
                             {
-                                nProtected++;
+                                nProtected_++;
                             }
                             break;
                         }
@@ -1231,7 +1194,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             }
 
             // Check cells for 8 corner points
-            checkEightAnchorPoints(protectedCell_, nProtected);
+            checkEightAnchorPoints(protectedCell_, nProtected_);
         }
         else
         {
@@ -1259,7 +1222,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                             {
                                 if (protectedCell_.set(celli, 1))
                                 {
-                                    nProtected++;
+                                    nProtected_++;
                                     break;
                                 }
                             }
@@ -1275,17 +1238,17 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                 {
                     if (protectedCell_.set(celli, 1))
                     {
-                        nProtected++;
+                        nProtected_++;
                     }
                 }
             }
 
             // Check cells for 8 corner points
-            checkEightAnchorPoints(protectedCell_, nProtected);
+            checkEightAnchorPoints(protectedCell_, nProtected_);
 
             // Unprotect prism cells on the axis
             protectedCell_ -= cellIsAxisPrism;
-            nProtected -= nAxisPrims;
+            nProtected_ -= nAxisPrims;
 
 
 
@@ -1299,7 +1262,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                     if (protectedCell_[celli])
                     {
                         protectedCell_.unset(celli);
-                        nProtected--;
+                        nProtected_--;
                     }
                 }
             }
@@ -1425,7 +1388,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
                             if (2*(cellFaces.size()-5) == numNeighboursWithHigherLevel)
                             {
                                 protectedCell_.unset(celli);
-                                nProtected--;
+                                nProtected_--;
                             }
                         }
                     }
@@ -1468,9 +1431,9 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFaces[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
                 protectedCell_.set(faceNeighbour()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
         for (label facei = nInternalFaces(); facei < nFaces(); facei++)
@@ -1478,37 +1441,60 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             if (protectedFaces[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected++;
+                nProtected_++;
             }
         }
 
         //-YO
     }
 
-    if (returnReduce(nProtected, sumOp<label>()) == 0)
+    if (returnReduce(nProtected_, sumOp<label>()) == 0)
     {
         protectedCell_.clear();
     }
-    else
-    {
+}
 
-        cellSet protectedCells(*this, "protectedCells", nProtected);
-        forAll(protectedCell_, celli)
-        {
-            if (protectedCell_[celli])
-            {
-                protectedCells.insert(celli);
-            }
-        }
 
-        Info<< "Detected " << returnReduce(nProtected, sumOp<label>())
-            << " cells that are protected from refinement."
-            << " Writing these to cellSet "
-            << protectedCells.name()
-            << "." << endl;
+template<class T>
+void Foam::adaptiveFvMesh::mapNewInternalFaces
+(
+    const labelList& faceMap
+)
+{
+    return;
+}
 
-        protectedCells.write();
-    }
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
+:
+    dynamicFvMesh(io),
+    error_(errorEstimator::New(*this, dynamicMeshDict())),
+    meshCutter_(hexRef::New(*this)),
+    dumpLevel_(false),
+    nRefinementIterations_(0),
+    nProtected_(0),
+    protectedCell_(nCells(), 0),
+    decompositionDict_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                time().system(),
+                *this,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        )
+    )
+{
+    // Read static part of dictionary
+    readDict();
+    setProtectedCells();
+
 
     //- 2D refinment does not currently work
     //  Refinement history is not compatable with the current method of
@@ -1950,6 +1936,20 @@ void Foam::adaptiveFvMesh::balance()
     correctBoundaries<sphericalTensor>();
     correctBoundaries<symmTensor>();
     correctBoundaries<tensor>();
+
+    if (returnReduce(nProtected_, sumOp<label>()) == 0)
+    {
+        setProtectedCells();
+        cellSet protectedCells(*this, "protectedCells", nProtected_);
+        forAll(protectedCell_, celli)
+        {
+            if (protectedCell_[celli])
+            {
+                protectedCells.insert(celli);
+            }
+        }
+    }
+
     return;
 }
 
@@ -1996,6 +1996,25 @@ bool Foam::adaptiveFvMesh::writeObject
         }
 
         writeOk = writeOk && scalarCellLevel.write();
+    }
+    if (returnReduce(nProtected_, sumOp<label>()) > 0 && balance_)
+    {
+        cellSet protectedCells(*this, "protectedCells", nProtected_);
+        forAll(protectedCell_, celli)
+        {
+            if (protectedCell_[celli])
+            {
+                protectedCells.insert(celli);
+            }
+        }
+
+        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
+            << " cells that are protected from refinement."
+            << " Writing these to cellSet "
+            << protectedCells.name()
+            << "." << endl;
+
+        protectedCells.write();
     }
 
     return writeOk;

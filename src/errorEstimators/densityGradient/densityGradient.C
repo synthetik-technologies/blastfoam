@@ -72,7 +72,7 @@ void Foam::errorEstimators::densityGradient::update()
     const label nInternalFaces = mesh_.nInternalFaces();
     error = 0.0;
 
-    vector solutionD((vector(mesh_.solutionD()) + vector::one)/2.0);
+    vector solutionD((vector(mesh_.geometricD()) + vector::one)/2.0);
 
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
