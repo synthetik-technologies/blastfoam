@@ -1,8 +1,8 @@
-# Comparison with CONWEP (Kingery-Bulmash) Results
+# Comparison with Kingery-Bulmash Results
 
 ## Notes
 
-This basic case is designed to provide comparison results with the CONWEP airblast load calculator, which leverages the Simplified Kingery-Bulmash Airblast Equations (https://apps.dtic.mil/dtic/tr/fulltext/u2/a526744.pdf)
+This basic case is designed to provide comparison results with the simplified Kingery-Bulmash Airblast Equations (https://apps.dtic.mil/dtic/tr/fulltext/u2/a526744.pdf)
 
 A hemispherical surface burst detonation event is considered with a 10kg hemi-spherical TNT charge.  The charge is center detonated, using a linear activation model which based on a predetermined detonation velocity.
 
