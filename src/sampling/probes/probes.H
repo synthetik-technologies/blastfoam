@@ -29,6 +29,45 @@ Description
 
     Call write() to sample and write files.
 
+    If continuing a simulation the old probes files will be trimmed to the
+    start time and new values will be appended.
+
+
+    Example of function object specification:
+    \verbatim
+    max
+    {
+        type                probes;
+        writeControl        timeStep;
+        writeInterval       1;
+
+        probeLocations
+        (
+            (0 0 0)
+            (1 0 0)
+            (0 1 0)
+            ...
+        );
+        fields
+        (
+            p
+            T
+            rho
+        );
+        append yes;
+        adjustLocations no;
+    }
+    \endverbatim
+
+Usage
+    \table
+        Property          | Description               | Required  | Default
+        probeLocations    | List of probe locations   | yes
+        fields            | Name of  fields           | yes
+        append            | Append to end of old probe files | no | yes
+        adjustLocations   | Move probes inside mesh   | no        | no
+    \endtable
+
 SourceFiles
     probes.C
 
@@ -102,7 +141,7 @@ protected:
             wordReList fieldSelection_;
 
             //- Fixed locations, default = yes
-            //  Note: set to false for moving mesh calations where locations
+            //  Note: set to false for moving mesh calculations where locations
             //        should move with the mesh
             bool fixedLocations_;
 

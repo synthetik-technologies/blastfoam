@@ -2,8 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2011-2020
+     \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+20-06-2020 Jeff Heylmun     | Added use of compressibleSystem
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,11 +24,12 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    blastFoam
+    blastReactingFoam
 
 Description
-    Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Equation of states use the Mie–Grüneisen form.
+    Modified reactingFoam solver that uses the standard OpenFOAM thermodynamic
+    classes in combination with the ODE integration and Riemann fluxes.
+    Combustion and multi-species transport is included.
 
 \*---------------------------------------------------------------------------*/
 

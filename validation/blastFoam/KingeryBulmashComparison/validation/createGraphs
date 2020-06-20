@@ -33,8 +33,8 @@ BLASTFOAM_cl="../postProcessing/sampleDict/*/Centerline*"
 Swisdak="validationData/SwisdakData.csv"
 
 
-createEps "Overpressure" "kPa" $BLASTFOAM_cl 2 0.001 $Swisdak 2 "overpressure"
-createEps "Impulse" "kPa ms" $BLASTFOAM_cl 3 1.0 $Swisdak 3 "impulse"
+createEps "Maximum Overpressure" "kPa" $BLASTFOAM_cl 2 0.001 $Swisdak 2 "overpressure"
+createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_cl 3 1.0 $Swisdak 3 "impulse"
 createEps "Time of arrival" "ms" $BLASTFOAM_cl 4 1000 $Swisdak 4 "toa"
 
 echo Done

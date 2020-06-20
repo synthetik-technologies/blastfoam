@@ -28,7 +28,7 @@ Application
 
 Description
     Solver for highly compressible premixed/partially-premixed
-    combustion with turbulence modelling.
+    combustion with turbulence modeling.
 
     Combusting RANS code using the b-Xi two-equation model.
     Xi may be obtained by either the solution of the Xi transport

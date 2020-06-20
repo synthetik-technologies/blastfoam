@@ -6,13 +6,13 @@ The presented set of cases are compared to Guilkey et al. (2007) to validation t
 
 Original plots were digitized using WebPlotDigitizer: https://github.com/ankitrohatgi/WebPlotDigitizer/releases The quality of the plots in the original publication (below) was not ideal for reproduction, but we have made an effort to reproduce them as faithfully as possible, and the points are found in the "validation/validationData" directory.
 
-All cases used a cell size of 0.25 mm. The run times and number of cells for the cases were:
+All cases used a cell size of 0.25 mm. The run times on a four core desktop and number of cells for the cases were:
 
-1D (400 cells): 30 s
-6 mm (1920 cells): 20 min
-8 mm (32000 cells): 40 min
-12.5 mm (40000 cells): 60 min
-20 mm (40000 cells): 65 min
+1D (400 cells): 17 s
+6 mm (1920 cells): 90 s
+8 mm (32000 cells): 3 min
+12.5 mm (40000 cells): 4 min
+20 mm (40000 cells): 4 min
 
 Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs.
 

@@ -2,11 +2,13 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+20-06-2020 Jeff Heylmun     | Added use of blastFoam thermodynamics
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,12 +24,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    chtMultiRegionFoam
+    blastMultiRegionFoam
 
 Description
-    Solver for steady or transient fluid flow and solid heat conduction, with
+    Solver for transient fluid flow and solid heat conduction, with
     conjugate heat transfer between regions, buoyancy effects, turbulence,
-    reactions and radiation modelling.
+    and radiation modeling. Riemann fluxes are used to transport the fluid
+    phase.
 
 \*---------------------------------------------------------------------------*/
 

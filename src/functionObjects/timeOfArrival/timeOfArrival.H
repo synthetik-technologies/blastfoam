@@ -30,7 +30,6 @@ Description
     Calculates and writes the time of arrival
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles

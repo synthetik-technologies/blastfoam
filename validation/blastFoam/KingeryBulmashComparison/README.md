@@ -11,3 +11,14 @@ The case is modeled using an axisymmetic wedge with a computational domain size 
 The time of arrival, maximum overpressure, and maximum impulse are compared between 1 m and 10 m. The time of arrival is determined by the time of the peak pressure.
 
 During/after running the simulation, probe outputs are available in the postProcessing directory.
+
+The simulation took approximately 2 hrs to run on a four core desktop with a refinement level of 4.
+
+Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs.
+
+## Reference
+
+```
+Swisdak, M.M., 1994. Simplified Kingery Airblast Calculations 18.
+
+```
