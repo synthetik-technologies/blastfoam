@@ -1,0 +1,40 @@
+#!/bin/bash
+#
+createEps()
+{
+    echo "creating $1 plot"
+    gnuplot<<EOF
+
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "blastFoam_KB_validation_$8.eps"
+    set xlabel "Radius [m]"
+    set ylabel "$1 [$2]"
+    set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    plot    "$6" using 1:(\$$7) title 'Swisdak (1994)'\
+                with points pt 5 ps 2 lc rgb 'blue',\
+            "$3" using 1:(\$$4*$5) title 'blastFoam'\
+                with lines lt 1 linewidth 3 lc rgb 'black'
+
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+BLASTFOAM_cl="../postProcessing/sampleDict/*/Centerline*"
+Swisdak="validationData/SwisdakData.csv"
+
+
+createEps "Overpressure" "kPa" $BLASTFOAM_cl 2 0.001 $Swisdak 2 "overpressure"
+createEps "Impulse" "kPa ms" $BLASTFOAM_cl 3 1.0 $Swisdak 3 "impulse"
+createEps "Time of arrival" "ms" $BLASTFOAM_cl 4 1000 $Swisdak 4 "toa"
+
+echo Done
