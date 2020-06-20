@@ -5,5 +5,6 @@ fieldMax/fieldMax.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 writeTimeList/writeTimeList.C
+timeOfArrival/timeOfArrival.C
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects
