@@ -67,19 +67,19 @@ void Foam::timeIntegrators::RK2SSP::integrate()
 {
     // Update and store original fields
     Info<< nl << "RK2SSP: Predictor" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(1, {1.0}, {1.0});
     }
 
     // Update and store 1st step
     Info<< nl << "RK2SSP: Corrector" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(2, {0.5, 0.5}, {0.0, 0.5});
     }
 }

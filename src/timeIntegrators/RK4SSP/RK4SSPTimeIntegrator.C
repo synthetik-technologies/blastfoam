@@ -72,37 +72,37 @@ void Foam::timeIntegrators::RK4SSP::integrate()
 {
     // Update and store original fields
     Info<< nl << "RK4SSP: Step 1" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(1, {1.0}, {0.5});
     }
 
     // Update and store 2nd step
     Info<< nl << "RK4SSP: Step 2" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(2, {a20, a21}, {b20, b21});
     }
 
     // Update and store 3rd step
     Info<< nl << "RK4SSP: Step 3" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(3, {a30, a31, a32}, {b30, b31, b32});
     }
 
     // Update and store 4th step
     Info<< nl << "RK4SSP: Step 4" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve
         (
             4,

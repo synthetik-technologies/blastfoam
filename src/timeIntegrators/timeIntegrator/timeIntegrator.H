@@ -59,6 +59,9 @@ protected:
     //- Reference to compressible system
     UPtrList<integrationSystem> systems_;
 
+    //- Update all stored systems
+    void updateSystems();
+
 
 public:
 

@@ -34,6 +34,16 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * * * Protected Functions * * * * * * * * * * * * * //
+
+void Foam::timeIntegrator::updateSystems()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].update();
+    }
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh)

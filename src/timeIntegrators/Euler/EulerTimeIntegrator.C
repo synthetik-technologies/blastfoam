@@ -67,10 +67,10 @@ void Foam::timeIntegrators::Euler::integrate()
 {
     // Update and solve
     Info<< nl << "Euler:" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve(1, {1.0}, {1.0});
     }
 }
