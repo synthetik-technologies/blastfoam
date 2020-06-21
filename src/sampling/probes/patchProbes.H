@@ -156,7 +156,7 @@ public:
         virtual bool read(const dictionary&);
 
         //- Find elements containing patchProbes
-        virtual void findElements(const fvMesh&);
+        virtual void findElements(const fvMesh&, const bool print);
 
 
     // Member Operators
