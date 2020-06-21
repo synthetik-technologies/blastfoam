@@ -4,16 +4,29 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+# -- Create the mesh
 runApplication blockMesh
+
+# -- Decompose the mesh
 runApplication decomposePar
+
+# -- Set and refine the initial conditions
 runParallel setRefinedFields
 
+# -- Reconstruct the initial mesh
+runApplication reconstructParMesh -withZero
 
 # -- run the calc
 runParallel $(getApplication)
 
-runApplication reconstructParMesh -withZero -latestTime
+# -- Reconstuct the mesh at the final time step
+runApplication reconstructParMesh -latestTime
+
+# -- Reconstruct fields at the final time step
 runApplication reconstructPar -latestTime
+
+# -- Sample the fields
 runApplication postProcess -func sampleDict -latestTime
 
+# -- Create graphs
 ( cd validation && ./createGraphs )

@@ -14,10 +14,12 @@ createEps()
     set key right top
     set size 2,2
     set autoscale
-    plot    "$6" using 1:(\$$7) title 'Swisdak (1994)'\
+    plot    "$7" using 1:(\$$8) title 'Swisdak (1994)'\
                 with points pt 5 ps 2 lc rgb 'blue',\
-            "$3" using 1:(\$$4*$5) title 'blastFoam'\
-                with lines lt 1 linewidth 3 lc rgb 'black'
+            "$3" using 1:(\$$5*$6) title 'blastFoam (x)'\
+                with lines lt 1 linewidth 3 lc rgb 'black', \
+            "$4" using 1:(\$$5*$6) title 'blastFoam (y)'\
+                with lines dt 2 linewidth 3 lc rgb 'black'
 
 EOF
 }
@@ -29,12 +31,13 @@ then
     exit 1
 fi
 
-BLASTFOAM_cl="../postProcessing/sampleDict/*/Centerline*"
+BLASTFOAM_clx="../postProcessing/sampleDict/*/Centerlinex*"
+BLASTFOAM_cly="../postProcessing/sampleDict/*/Centerliney*"
 Swisdak="validationData/SwisdakData.csv"
 
 
-createEps "Maximum Overpressure" "kPa" $BLASTFOAM_cl 2 0.001 $Swisdak 2 "overpressure"
-createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_cl 3 1.0 $Swisdak 3 "impulse"
-createEps "Time of arrival" "ms" $BLASTFOAM_cl 4 1000 $Swisdak 4 "toa"
+createEps "Maximum Overpressure" "kPa" $BLASTFOAM_clx $BLASTFOAM_cly 2 0.001 $Swisdak 2 "overpressure"
+createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_clx $BLASTFOAM_cly 3 1.0 $Swisdak 3 "impulse"
+createEps "Time of arrival" "ms" $BLASTFOAM_clx $BLASTFOAM_cly 4 1000 $Swisdak 4 "toa"
 
 echo Done
