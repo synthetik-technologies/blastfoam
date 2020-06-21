@@ -37,4 +37,5 @@
 *.html
 
 .DS_Store
-
+darwin64Clang**
+lnInclude**

@@ -24,18 +24,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::MachNo
+    Foam::functionObjects::dynamicPressure
 
 Description
     Calculates and writes the dynamic pressure. Includes option to save the field
     to the database.
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    MachNo.C
+    dynamicPressure.C
 
 \*---------------------------------------------------------------------------*/
 

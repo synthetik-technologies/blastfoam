@@ -24,10 +24,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::fieldAverage
+    Foam::functionObjects::impulse
 
 Description
-    Calculates the imupulse using the difference from a reference pressure
+    Calculates the impulse using the difference from a reference pressure
 
     Example of function object specification:
     \verbatim
@@ -56,7 +56,6 @@ Usage
 
 See also
     Foam::functionObjects::fvMeshFunctionObject
-    Foam::functionObject
 
 SourceFiles
     impulse.C

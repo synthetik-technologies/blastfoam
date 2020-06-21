@@ -27,7 +27,8 @@ Class
     Foam::functionObjects::writeTimeList
 
 Description
-    Write fields at a specified list of times
+    Overrides write interval to write at a designated list of times. The normal
+    write interval specified in the control dict is still used.
 
     Example of function object specification:
     \verbatim

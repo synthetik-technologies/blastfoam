@@ -30,11 +30,10 @@ Description
     Calculates and writes the Mach number as a volScalarField.
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    MachNo.C
+    blastMachNo.C
 
 \*---------------------------------------------------------------------------*/
 

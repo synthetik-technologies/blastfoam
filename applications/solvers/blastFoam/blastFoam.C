@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
