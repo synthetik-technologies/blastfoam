@@ -17,8 +17,11 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 errorEstimator  densityGradient;
 
+// Do not unrefine
+beginUnrefine 1;
+
 // How often to refine
-refineInterval  3;
+refineInterval  1;
 
 loadBalance
 {
@@ -42,7 +45,7 @@ unrefineLevel   0.01;
 nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   4;
+maxRefinement   3;
 
 // Stop refinement if maxCells reached
 maxCells        10000000;
