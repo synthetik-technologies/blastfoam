@@ -13,20 +13,11 @@ runApplication decomposePar
 # -- Set and refine the initial conditions
 runParallel setRefinedFields
 
-# -- Reconstruct the initial mesh
-runApplication reconstructParMesh -withZero
-
 # -- run the calc
 runParallel $(getApplication)
 
-# -- Reconstuct the mesh at the final time step
-runApplication reconstructParMesh -latestTime
-
-# -- Reconstruct fields at the final time step
-runApplication reconstructPar -latestTime
-
 # -- Sample the fields
-runApplication postProcess -func sampleDict -latestTime
+runParallel postProcess -func sampleDict -latestTime
 
 # -- Create graphs
 ( cd validation && ./createGraphs )
