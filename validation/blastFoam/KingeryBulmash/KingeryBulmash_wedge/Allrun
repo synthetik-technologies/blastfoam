@@ -1,0 +1,23 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create the mesh
+runApplication blockMesh
+
+# -- Decompose the mesh
+runApplication decomposePar
+
+# -- Set and refine the initial conditions
+runParallel setRefinedFields
+
+# -- run the calc
+runParallel $(getApplication)
+
+# -- Sample the fields
+runParallel postProcess -func sampleDict -latestTime
+
+# -- Create graphs
+( cd validation && ./createGraphs )

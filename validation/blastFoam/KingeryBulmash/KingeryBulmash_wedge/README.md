@@ -12,7 +12,7 @@ The time of arrival, maximum overpressure, and maximum impulse are compared betw
 
 During/after running the simulation, probe outputs are available in the postProcessing directory.
 
-The simulation took approximately 2 hrs to run on a four core desktop with a refinement level of 4.
+The simulation took approximately 5 min to run on a four core desktop with a refinement level of 4.
 
 Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs.
 

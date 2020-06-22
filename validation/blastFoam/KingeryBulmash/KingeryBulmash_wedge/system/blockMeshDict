@@ -16,35 +16,24 @@ FoamFile
 
 convertToMeters 1;
 
+R 16.0;
+x #calc "cos(5*Foam::constant::mathematical::pi/180.0)*$R";
+z #calc "sin(5*Foam::constant::mathematical::pi/180.0)*$R";
+nz #calc "-sin(5*Foam::constant::mathematical::pi/180.0)*$R";
+
 vertices
 (
-    (0      0       0)
-    (4.5    0       0)
-    (5      0       0)
-    (0      2       0)
-    (4.5    2       0)
-    (5      2       0)
-    (0      2.5     0)
-    (4.5    2.5     0)
-    (5      2.5     0)
-
-    (0      0       2)
-    (4.5    0       2)
-    (5      0       2)
-    (0      2       2)
-    (4.5    2       2)
-    (5      2       2)
-    (0      2.5     2)
-    (4.5    2.5     2)
-    (5      2.5     2)
+    (0.0    0.0     0.0) // bottom
+    ($x     0.0     $nz)
+    ($x     $R      $nz)
+    (0.0    $R      0.0)
+    ($x     0       $z)
+    ($x     $R      $z)
 );
 
 blocks
 (
-	 hex (0 1 4 3 9 10 13 12) (16 8 10) simpleGrading (1 1 1)
-     hex (1 2 5 4 10 11 14 13) (2 8 10) simpleGrading (1 1 1)
-     hex (3 4 7 6 12 13 16 15) (16 2 10) simpleGrading (1 1 1)
-     hex (4 5 8 7 13 14 17 16) (2 2 10) simpleGrading (1 1 1)
+	 hex (0 1 2 3 0 4 5 3) (25 25 1) simpleGrading (1 1 1)
 );
 
 edges
@@ -53,36 +42,38 @@ edges
 
 boundary
 (
-
+    ground
+    {
+        type patch;
+        faces
+        (
+            (0 1 4 0)
+        );
+    }
     outlet
     {
         type patch;
         faces
         (
-            (5 8 17 14)
-            (7 8 17 16)
+
+            (1 2 5 4)
+            (3 2 5 3)
         );
     }
-    walls
+    wedge0
     {
-        type wall;
+        type wedge;
         faces
         (
-            (0 1 10 9)
-            (1 2 11 10)
-            (2 5 14 11)
-            (6 7 16 15)
-            (3 6 15 12)
-            (0 3 12 9)
-
-            (0 1 4 3)
-            (1 2 5 4)
-            (3 4 7 6)
-            (4 5 8 7)
-            (9 10 13 12)
-            (10 11 14 13)
-            (12 13 16 15)
-            (13 14 17 16)
+            (0 1 2 3)
+        );
+    }
+    wedge1
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 3)
         );
     }
 

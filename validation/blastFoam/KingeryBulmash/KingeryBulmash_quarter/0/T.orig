@@ -10,27 +10,32 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      rho.RDX;
+    object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [1 -3 0 0 0 0 0];
+dimensions      [0 0 0 1 0 0 0];
 
-internalField   uniform 1160;
+internalField   uniform 288.15;
 
 boundaryField
 {
-    walls
-    {
-        type            zeroGradient;
-    }
+    //- Set patchGroups for constraint patches
+    #includeEtc "caseDicts/setConstraintTypes"
+
     outlet
     {
         type            zeroGradient;
     }
-    "wedge.*"
+
+    ground
     {
-        type            wedge;
+        type            zeroGradient;
+    }
+
+    symmetryPlanes
+    {
+        type            symmetry;
     }
 }
 

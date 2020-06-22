@@ -9,29 +9,25 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      rho.RDX;
+    class       dictionary;
+    location    "system";
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [1 -3 0 0 0 0 0];
+numberOfSubdomains 16; // this is number of proc
 
-internalField   uniform 1160;
+method         scotch; // automatic
 
-boundaryField
+simpleCoeffs // not auto
 {
-    walls
-    {
-        type            zeroGradient;
-    }
-    outlet
-    {
-        type            zeroGradient;
-    }
-    "wedge.*"
-    {
-        type            wedge;
-    }
+    n               ( 2 2 1 );
+    delta           0.001;
 }
+
+distributed     no;
+
+roots           ( );
+
 
 // ************************************************************************* //

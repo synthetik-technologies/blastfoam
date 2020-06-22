@@ -9,29 +9,43 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      rho.RDX;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [1 -3 0 0 0 0 0];
+fields (alpha.tnt);
+nBufferLayers 5;
 
-internalField   uniform 1160;
+defaultFieldValues
+(
+    volScalarFieldValue alpha.tnt 0
+    volVectorFieldValue U (0 0 0)
+);
 
-boundaryField
-{
-    walls
+
+regions
+(
+    sphereToCell // Use cylinder for 3D
     {
-        type            zeroGradient;
+        centre (0 0 0);
+		radius 0.143;
+		backup
+		{
+		centre (0 0 0);
+		radius 1.0;
+		}
+        refineInternal yes;
+        level 6;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.tnt    1
+        );
     }
-    outlet
-    {
-        type            zeroGradient;
-    }
-    "wedge.*"
-    {
-        type            wedge;
-    }
-}
+
+);
+
 
 // ************************************************************************* //

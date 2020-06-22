@@ -41,7 +41,7 @@ sets
         axis        x;
 
         start       (1 0 0);
-        end         (10 0 0);
+        end         (15 0 0);
     }
     Centerliney
     {
@@ -49,7 +49,7 @@ sets
         axis        y;
 
         start       (1e-4 1 0);
-        end         (1e-4 10 0);
+        end         (1e-4 15 0);
     }
 );
 

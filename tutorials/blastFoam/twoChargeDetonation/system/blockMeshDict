@@ -1,37 +1,40 @@
 /*--------------------------------*- C++ -*----------------------------------*\
-  | =========                 |                                                 |
-  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-  |  \\    /   O peration     | Version:  2.3.0                                 |
-  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
-  |    \\/     M anipulation  |                                                 |
-  \*---------------------------------------------------------------------------*/
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
-  version     2.0;
-  format      ascii;
-  class       dictionary;
-  object      blockMeshDict;
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 convertToMeters 1;
 
+R 2.0;
+x #calc "0.9961946981*$R";
+z #calc "0.0871557427*$R";
+nz #calc "-0.0871557427*$R";
+
 vertices
 (
-    (-1     0   -0.1)
-    (1      0   -0.1)
-    (1      2   -0.1)
-    (-1     2   -0.1)
-    (-1     0   .1)
-    (1      0   .1)
-    (1      2   .1)
-    (-1     2   .1)
+    (0.0    0.0     0.0) // bottom
+    ($x     0.0     $nz)
+    ($x     2.0     $nz)
+    (0.0    2.0     0.0)
+    ($x     0       $z)
+    ($x     2.0     $z)
 );
 
 blocks
 (
- hex (0 1 2 3 4 5 6 7) (25 25 1) simpleGrading (1 1 1)
- );
+	 hex (0 1 2 3 0 4 5 3) (25 25 1) simpleGrading (1 1 1)
+);
 
 edges
 (
@@ -41,23 +44,40 @@ boundary
 (
     walls
     {
-        type wall;
+        type patch;
         faces
         (
-            (0 1 5 4)
+            (0 1 4 0)
         );
     }
     outlet
     {
-        type wall;
+        type patch;
         faces
         (
-            (0 3 7 4)
-            (1 2 6 5)
-            (3 2 6 7)
+
+            (1 2 5 4)
+            (3 2 5 3)
         );
     }
- );
+    wedge0
+    {
+        type wedge;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+    wedge1
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 3)
+        );
+    }
+
+);
 
 mergePatchPairs
 (
