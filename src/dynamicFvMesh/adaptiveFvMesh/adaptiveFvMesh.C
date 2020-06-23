@@ -1,14 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-24-10-2019  Jeff Heylmun:   Added runTimeSelectable hexRef class and modified
-                            functions to allow for 2D refinements based on
-                            implementation of Oleg Sutyrinusing, original code
-                            for foam-extend 3.2 by Luca Cornolti
+21-05-2020  Jeff Heylmun:   Modified original dynamicRefineBalanceFvMesh class
+                            to be more appilcable to compressible flows.
+                            Improved compatibility with snappyHexMesh.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
