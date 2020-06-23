@@ -1626,7 +1626,10 @@ bool Foam::adaptiveFvMesh::update()
             setProtectedCells();
         }
 
-        label maxCells = readLabel(refineDict.lookup("maxCells"));
+        label maxCells
+        (
+            refineDict.lookupOrDefault("maxCells", labelMax)
+        );
 
         if (maxCells <= 0)
         {
