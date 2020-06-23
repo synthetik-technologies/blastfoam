@@ -23,20 +23,8 @@ beginUnrefine 1;
 // How often to refine
 refineInterval  1;
 
-loadBalance
-{
-    balance yes;
-    balanceInterval 10;
-    allowableImbalance 0.15;
-    method scotch;
-}
-
-// Field to be refinement on
-field           error;
-
 // Refine field in between lower..upper
 lowerRefineLevel 0.01;
-upperRefineLevel 1e6;
 
 // If value < unrefineLevel unrefine
 unrefineLevel   0.01;
@@ -46,27 +34,6 @@ nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   3;
-
-// Stop refinement if maxCells reached
-maxCells        10000000;
-
-// Flux field and corresponding velocity field. Fluxes on changed
-// faces get recalculated by interpolating the velocity. Use 'none'
-// on surfaceScalarFields that do not need to be reinterpolated.
-correctFluxes
-(
-    (phi none)
-    (own none)
-    (nei none)
-    (rhoPhi none)
-    (alphaPhi.air none)
-    (alphaPhi.tnt none)
-    (rhoPhi none)
-    (alphaRhoPhi.air none)
-    (alphaRhoPhi.tnt none)
-    (rhoEPhi none)
-    (rhoUPhi none)
-);
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

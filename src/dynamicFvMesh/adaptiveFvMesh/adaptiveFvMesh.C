@@ -221,6 +221,12 @@ void Foam::adaptiveFvMesh::readDict()
     (
         dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
     );
+    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
+
+    if (!refineDict.found("correctFluxes"))
+    {
+        return;
+    }
 
     List<Pair<word>> fluxVelocities = List<Pair<word>>
     (
@@ -232,8 +238,6 @@ void Foam::adaptiveFvMesh::readDict()
     {
         correctFluxes_.insert(fluxVelocities[i][0], fluxVelocities[i][1]);
     }
-
-    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
 }
 
 

@@ -14,17 +14,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 dynamicFvMesh   adaptiveFvMesh;
+errorEstimator  densityGradient;
 
 // How often to refine
 refineInterval  1;
 
-// Field to be refinement on
-field           error;
-errorEstimator  densityGradient;
-
 // Refine field in between lower..upper
 lowerRefineLevel 1e-2;
-upperRefineLevel 1e6;
 
 // If value < unrefineLevel unrefine
 unrefineLevel   1e-2;
@@ -34,27 +30,6 @@ nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   5;
-
-// Stop refinement if maxCells reached
-maxCells        100000000;
-
-// Flux field and corresponding velocity field. Fluxes on changed
-// faces get recalculated by interpolating the velocity. Use 'none'
-// on surfaceScalarFields that do not need to be reinterpolated.
-correctFluxes
-(
-    (phi none)
-    (own none)
-    (nei none)
-    (rhoPhi none)
-    (alphaPhi.air none)
-    (alphaPhi.water none)
-    (rhoPhi none)
-    (alphaRhoPhi.air none)
-    (alphaRhoPhi.water none)
-    (rhoEPhi none)
-    (rhoUPhi none)
-);
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;
