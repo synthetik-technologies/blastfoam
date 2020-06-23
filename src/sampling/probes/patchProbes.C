@@ -48,7 +48,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::patchProbes::findElements(const fvMesh& mesh)
+void Foam::patchProbes::findElements(const fvMesh& mesh, const bool print)
 {
     (void)mesh.tetBasePtIs();
 
@@ -120,7 +120,7 @@ void Foam::patchProbes::findElements(const fvMesh& mesh)
 
             const label patchi = bm.whichPatch(facei);
 
-            if (isA<emptyPolyPatch>(bm[patchi]))
+            if (isA<emptyPolyPatch>(bm[patchi]) && print)
             {
                 WarningInFunction
                 << " The sample point: " << sample
