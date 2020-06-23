@@ -582,6 +582,64 @@ void extendMarkedCells
     }
 }
 
+void extendMaxCellLevel
+(
+    const fvMesh& mesh,
+    labelList& cells,
+    labelList& maxCellLevel,
+    const label level,
+    const bool top
+)
+{
+    // Mark faces using any marked cell
+    boolList markedFace(mesh.nFaces(), false);
+    PackedBoolList markedCell(mesh.nCells(), false);
+    label nMarkedCells = 0;
+
+    forAll(cells, i)
+    {
+        label celli = cells[i];
+        markedCell.set(celli, true);
+        const cell& cFaces = mesh.cells()[celli];
+
+        forAll(cFaces, i)
+        {
+            markedFace[cFaces[i]] = true;
+        }
+    }
+
+    syncTools::syncFaceList(mesh, markedFace, orEqOp<bool>());
+
+    // Update cells using any markedFace
+    for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+    {
+        if (markedFace[facei])
+        {
+            markedCell.set(mesh.faceOwner()[facei], 1);
+            markedCell.set(mesh.faceNeighbour()[facei], 1);
+        }
+    }
+    for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
+    {
+        if (markedFace[facei])
+        {
+            markedCell.set(mesh.faceOwner()[facei], 1);
+        }
+    }
+
+    cells.resize(mesh.nCells());
+    label i = 0;
+    forAll(markedCell, celli)
+    {
+        if (markedCell.get(celli))
+        {
+            cells[i++] = celli;
+            maxCellLevel[celli] = max(maxCellLevel[celli], level);
+        }
+    }
+    cells.resize(i);
+}
+
 
 void checkEightAnchorPoints
 (
