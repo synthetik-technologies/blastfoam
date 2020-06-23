@@ -630,15 +630,15 @@ int main(int argc, char *argv[])
                     ) || end
                 );
 
-                if (set)
+                if (set && regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setCellField> fieldValues
                     (
                         regions[regionI].dict().lookup("fieldValues"),
                         setCellField::iNew(mesh, cells, end)
                     );
-                    nOldCells[regionI] = cells.size();
                 }
+                nOldCells[regionI] = cells.size();
                 savedCells.append(cells);
 
             }
@@ -658,11 +658,14 @@ int main(int argc, char *argv[])
                 );
 
                 labelList selectedFaces(selectedFaceSet.toc());
-                PtrList<setFaceField> fieldValues
-                (
-                    regions[regionI].dict().lookup("fieldValues"),
-                    setFaceField::iNew(mesh, selectedFaces, end)
-                );
+                if (regions[regionI].dict().found("fieldValues"))
+                {
+                    PtrList<setFaceField> fieldValues
+                    (
+                        regions[regionI].dict().lookup("fieldValues"),
+                        setFaceField::iNew(mesh, selectedFaces, end)
+                    );
+                }
 
                 labelList faceCells(selectedFaces.size()*2);
                 label nFaces = 0;
