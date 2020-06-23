@@ -137,6 +137,9 @@ protected:
         //- Load fields from files (not from objectRegistry)
         bool loadFromFiles_;
 
+        //- Original positions
+        pointField origPoints_;
+
 
         // Read from dictonary
 
