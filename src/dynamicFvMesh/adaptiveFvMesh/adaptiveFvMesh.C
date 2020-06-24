@@ -1750,6 +1750,16 @@ bool Foam::adaptiveFvMesh::update()
 
         if (time().value() > beginUnrefine)
         {
+            if (nProtected_ > 0)
+            {
+                forAll(protectedCell_, celli)
+                {
+                    if (protectedCell_.get(celli))
+                    {
+                        refineCell.set(celli, true);
+                    }
+                }
+            }
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (
