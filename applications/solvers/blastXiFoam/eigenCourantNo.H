@@ -31,14 +31,13 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-volScalarField speedOfSound("speedOfSound", fluid.speedOfSound());
 scalar CoNum = 0.0;
 scalar meanCoNum = 0.0;
 
 {
     surfaceScalarField amaxSf
     (
-        mag(fluid.phi()) + fvc::interpolate(speedOfSound)*mesh.magSf()
+        mag(fluid.phi()) + fvc::interpolate(fluid.speedOfSound())*mesh.magSf()
     );
 
     scalarField sumAmaxSf
