@@ -617,20 +617,30 @@ int main(int argc, char *argv[])
                     );
                     cells = backupCellSet.toc();
                 }
-                bool set
-                (
-                    setRegion
-                    (
-                        cells.size(),
-                        nOldCells[regionI],
-                        levels[regionI],
-                        cells,
-                        meshCutter->cellLevel(),
-                        error
-                    ) || end
-                );
 
-                if (set && regions[regionI].dict().found("fieldValues"))
+                //- Mark for possible refinement
+                {
+                    const labelUList& owner = error.mesh().owner();
+                    const labelUList& neighbour = error.mesh().neighbour();
+
+                    forAll(cells, celli)
+                    {
+                        const labelList& faces
+                        (
+                            error.mesh().cells()[cells[celli]]
+                        );
+                        forAll(faces, facei)
+                        {
+                            if (faces[facei] < error.mesh().nInternalFaces())
+                            {
+                                error[owner[faces[facei]]] = 0.1;
+                                error[neighbour[faces[facei]]] = 0.1;
+                            }
+                        }
+                    }
+                }
+
+                if (regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setCellField> fieldValues
                     (
