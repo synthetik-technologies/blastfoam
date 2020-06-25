@@ -1,0 +1,14 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+runApplication blockMesh
+runApplication topoSet
+runApplication subsetMesh -overwrite c0 -patch walls
+runApplication decomposePar
+runParallel setFields
+runParallel blastXiFoam
+
+# ----------------------------------------------------------------- end-of-file
