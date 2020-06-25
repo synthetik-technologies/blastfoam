@@ -536,7 +536,6 @@ void extendMaxCellLevel
     // Mark faces using any marked cell
     boolList markedFace(mesh.nFaces(), false);
     PackedBoolList markedCell(mesh.nCells(), false);
-    label nMarkedCells = 0;
 
     forAll(cells, i)
     {
