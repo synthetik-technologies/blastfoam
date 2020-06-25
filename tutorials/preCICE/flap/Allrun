@@ -1,0 +1,113 @@
+#!/bin/bash
+
+cd ${0%/*} || exit 1                        # Run from this directory
+. $WM_PROJECT_DIR/bin/tools/RunFunctions    # Tutorial run functions
+
+# This script prepares and runs all the participants in one terminal,
+# forwarding the solvers' output to log files.
+# Alternatively, you may execute the scripts "runSolid" and "runFluid"
+# in separate terminals.
+
+# Run this script with "-parallel" for parallel simulations
+
+# The script "Allclean" cleans-up the result and log files.
+# Set up the run parameters:
+
+# 1 for true, 0 for false
+parallel=0
+if [ "$1" = "-parallel" ]; then
+    parallel=1
+fi
+
+# =============== Participant 1: Fluid ===========================
+Participant1="Fluid"
+
+    # Prepare
+    echo "Preparing the ${Participant1} participant..."
+
+    echo "  Preparing the mesh..."
+    blockMesh -case ${Participant1} > ${Participant1}_blockMesh.log 2>&1
+    checkMesh -case ${Participant1} > ${Participant1}_checkMesh.log 2>&1
+
+    # get application information
+    cd ${Participant1}
+        Solver1=$(getApplication)    # solver
+        echo "  ${Participant1} Solver: ${Solver1}."
+    cd ..
+
+    # Run and get the process id
+    if [ $parallel -eq 1 ]; then
+        echo "  Decomposing the case..."
+        decomposePar -force -case ${Participant1} > ${Participant1}_decomposePar.log 2>&1
+
+        cd ${Participant1}
+            nproc=$(getNumberOfProcessors)
+        cd ..
+
+        mpirun -np ${nproc} setRefinedFields -case ${Participant1} -parallel > ${Participant1}_setRefinedFields.log 2>&1
+
+        echo "  Starting the ${Participant1} participant in parallel..."
+        mpirun -np ${nproc} ${Solver1} -parallel -case ${Participant1} > ${Participant1}.log 2>&1 &
+
+    else
+        setRefinedFields -case ${Participant1} > ${Participant1}_setRefinedFields.log 2>&1
+        echo "  Starting the ${Participant1} participant in serial..."
+        ${Solver1} -case ${Participant1} > ${Participant1}.log 2>&1 &
+    fi
+    PIDParticipant1=$!
+
+# =============== Participant 2: Solid ===========================
+Participant2="Solid"
+Solver2="ccx_preCICE"
+
+    # Prepare in silent mode
+    echo "Preparing the ${Participant2} participant..."
+    cd ${Participant2}
+        # We use CalculiX CGX to setup the structural simulation
+        echo "  Executing cgx (provided by CalculiX, make sure this exists)..."
+        cgx -bg pre_flap.fbd > prepare_flap.log 2>&1
+    cd ..
+
+    # Run
+    echo "  Starting the ${Participant2} participant..."
+    ${Solver2} -i ${Participant2}/flap -precice-participant Calculix > ${Participant2}.log  2>&1 &
+    PIDParticipant2=$!
+
+
+# =============== Wait for all the participants to finish =======
+echo "Waiting for the participants to exit..., PIDs: ${PIDParticipant1}, ${PIDParticipant2}"
+echo "(you may run 'tail -f ${Participant1}.log' in another terminal to check the progress)"
+
+echo "To interrupt the simulation, press 'c'. Ctrl+C will only send the processes to the background."
+while [ -e /proc/${PIDParticipant1} ]; do
+    read -r -t1 -n1 input
+    if [ "$input" = "c" ]; then
+        kill ${PIDParticipant1}
+        kill ${PIDParticipant2}
+        false
+    fi
+done
+
+if [ $? -ne 0 ] || [ "$(grep -c -E "error:" ${Participant1}.log)" -ne 0 ] || [ "$(grep -c -E "error:" ${Participant2}.log)" -ne 0 ]; then
+    echo ""
+    echo "Something went wrong... See the log files for more."
+    # Precaution
+    kill ${PIDParticipant1}
+    kill ${PIDParticipant2}
+else
+    echo ""
+    echo "The simulation completed! (check for any errors)"
+    if [ $parallel -eq 1 ]; then
+        echo "Reconstructing fields..."
+        reconstructPar -case ${Participant1} > ${Participant1}_reconstructPar.log 2>&1 &
+    fi
+
+    # Workaround for issue #26
+    echo "Problems with time directories without results? Run the script removeObsoleteFolders.sh and see issue #26 on GitHub."
+    # ./removeObsoleteFolders.sh
+
+    echo "You may now open '${Participant1}/${Participant1}.foam' in ParaView."
+    # Note: ".foam" triggers the native OpenFOAM reader of ParaView.
+    # Change to ".OpenFOAM" to use the OpenFOAM reader provided with OpenFOAM.
+fi
+

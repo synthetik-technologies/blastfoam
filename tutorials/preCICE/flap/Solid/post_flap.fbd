@@ -1,0 +1,21 @@
+ulin perpendicular flap to the flow
+read Solid/flap.frd
+read Solid/flap.inp
+view elem
+view disp
+rot y
+#rot l 180
+ds 1 e 4
+#graph NA time DISP D1
+#q
+#graph NA time DISP D2
+#q
+#quit
+
+anim real
+# movi frames auto
+ds 2 ah 7
+# min 0
+# max 2.5e10
+#sys mv movie.gif figures/displacement.gif
+# quit
