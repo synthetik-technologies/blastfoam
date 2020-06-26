@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,26 +22,26 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::timeIntegrators::RK4SSP
+    Foam::timeIntegrators::RKF45
 
 Description
-    Fourth order, strong stability preserving Runge-Kutta method
+    Fifth order Runge–Kutta–Fehlberg method
 
     References:
     \verbatim
-        Spiteri, R.J., Ruuth, S.J. (2003).
-        A New Class of Optimal Higher-order Strong-Stability-Preserving
-        Time Discretization Methods
-        SIAM Journal of Numerical Analysis, 40(2), 469-491.
+        Erwin Fehlberg (1969).
+        Low-order classical Runge-Kutta formulas with step size control and
+        their application to some heat transfer problems.
+        NASA Technical Report 315.
     \endverbatim
 
 SourceFiles
-    RK4SSPTimeIntegrator.C
+    RKF45TimeIntegrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RK4SSPTimeIntegrator_H
-#define RK4SSPTimeIntegrator_H
+#ifndef RKF45TimeIntegrator_H
+#define RKF45TimeIntegrator_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,49 +53,64 @@ namespace timeIntegrators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class RK4SSP Declaration
+                           Class RKF45 Declaration
 \*---------------------------------------------------------------------------*/
 
-class RK4SSP
+class RKF45
 :
     public timeIntegrator
 {
 
-    //- Coefficients
-    //  a: old time step coefficients
-    //  b: delta coefficients
-    scalar a20 = 649.0/1600.0;
-    scalar b20 = -10890423.0/25193600.0;
-    scalar a21 = 951.0/1600.0;
-    scalar b21 = 5000.0/7873.0;
+    // Coefficients
 
-    scalar a30 = 53989.0/2500000.0;
-    scalar b30 = -102261.0/5000000.0;
-    scalar a31 = 4806213.0/20000000.0;
-    scalar b31 = -5121.0/20000.0;
-    scalar a32 = 23619.0/32000.0;
-    scalar b32 = 7873.0/10000.0;
+    scalar a10 = 0.25;
 
-    scalar a40 = 0.2;
-    scalar b40 = 0.1;
-    scalar a41 = 6127.0/30000.0;
-    scalar b41 = 1.0/6.0;
-    scalar a42 = 7873.0/30000.0;
-    scalar b42 = 0.0;
-    scalar a43 = 1.0/3.0;
-    scalar b43 = 1.0/6.0;
+    scalar a20 = 3.0/32.0;
+    scalar a21 = 9.0/32.0;
+
+    scalar a30 = 1932.0/2197.0;
+    scalar a31 = -7200.0/2197.0;
+    scalar a32 = 7296.0/2197.0;
+
+    scalar a40 = 439.0/216.0;
+    scalar a41 = -8.0;
+    scalar a42 = 3680.0/513.0;
+    scalar a43 = -845.0/4104.0;
+
+    scalar a50 = -8.0/27.0;
+    scalar a51 = 2.0;
+    scalar a52 = -3544.0/2565.0;
+    scalar a53 = 1859.0/4104.0;
+    scalar a54 = -11.0/40.0;
+
+    //- Fourth order coefficients
+    scalar a604 = 25.0/216.0;
+    scalar a614 = 0.0;
+    scalar a624 = 1408.0/2565.0;
+    scalar a634 = 2197.0/4104.0;
+    scalar a644 = -1.0/5.0;
+    scalar a654 = 0.0;
+
+    //- Fifth order coefficients
+    scalar a605 = 16.0/135.0;
+    scalar a615 = 0.0;
+    scalar a625 = 6656.0/12825.0;
+    scalar a635 = 28561.0/56430.0;
+    scalar a645 = -9.0/50.0;
+    scalar a655 = 2.0/55.0;
+
 
 public:
 
     //- Runtime type information
-    TypeName("RK4SSP");
+    TypeName("RKF45");
 
     // Constructor
-    RK4SSP(const fvMesh& mesh);
+    RKF45(const fvMesh& mesh);
 
 
     //- Destructor
-    virtual ~RK4SSP();
+    virtual ~RKF45();
 
 
     // Member Functions

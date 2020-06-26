@@ -9,5 +9,6 @@ RK2SSP/RK2SSPTimeIntegrator.C
 RK3SSP/RK3SSPTimeIntegrator.C
 RK4/RK4TimeIntegrator.C
 RK4SSP/RK4SSPTimeIntegrator.C
+RKF45/RKF45TimeIntegrator.C
 
 LIB = $(BLAST_LIBBIN)/libtimeIntegrators
