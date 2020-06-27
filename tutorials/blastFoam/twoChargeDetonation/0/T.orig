@@ -28,9 +28,9 @@ boundaryField
     {
         type            zeroGradient;
     }
-    defaultFaces
+    "wedge.*"
     {
-        type            empty;
+        type            wedge;
     }
 }
 

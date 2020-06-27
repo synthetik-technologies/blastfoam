@@ -1,14 +1,11 @@
 EXE_INC = \
-    -DFULLDEBUG -O0 -g \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -I$(LIB_SRC)/dynamicMesh/lnInclude \
-    -I$(BLAST_DIR)/src/adaptiveFvMesh/lnInclude
+    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
     -lgenericPatchFields \
     -lmeshTools \
-    -ldynamicMesh \
-    -L$(FOAM_USER_LIBBIN)\
-    -ladaptiveFvMesh
+    -L$(BLAST_LIBBIN)\
+    -lblastDynamicMesh

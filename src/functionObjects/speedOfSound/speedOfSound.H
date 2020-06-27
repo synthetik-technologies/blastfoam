@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+13-05-2020 Jeff Heylmun:    | Calculate speed of sound with blastFoam thermo
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,18 +24,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::MachNo
+    Foam::functionObjects::speedOfSound
 
 Description
     Calculates and writes the dynamic pressure. Includes option to save the field
     to the database.
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    MachNo.C
+    speedOfSound.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -51,7 +52,7 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class MachNo Declaration
+                          Class speedOfSound Declaration
 \*---------------------------------------------------------------------------*/
 
 class speedOfSound

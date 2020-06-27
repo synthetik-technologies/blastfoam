@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+13-05-2020 Jeff Heylmun:    | Calculate mach number with blastFoam thermo
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,11 +30,10 @@ Description
     Calculates and writes the Mach number as a volScalarField.
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    MachNo.C
+    blastMachNo.C
 
 \*---------------------------------------------------------------------------*/
 

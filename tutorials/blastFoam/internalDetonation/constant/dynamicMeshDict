@@ -20,12 +20,8 @@ errorEstimator  densityGradient;
 // How often to refine
 refineInterval  3;
 
-// Field to be refinement on
-field           error;
-
 // Refine field in between lower..upper
 lowerRefineLevel 0.1;
-upperRefineLevel 1e6;
 
 // If value < unrefineLevel unrefine
 unrefineLevel   0.1;
@@ -34,28 +30,7 @@ unrefineLevel   0.1;
 nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   4;
-
-// Stop refinement if maxCells reached
-maxCells        10000000;
-
-// Flux field and corresponding velocity field. Fluxes on changed
-// faces get recalculated by interpolating the velocity. Use 'none'
-// on surfaceScalarFields that do not need to be reinterpolated.
-correctFluxes
-(
-    (phi none)
-    (own none)
-    (nei none)
-    (rhoPhi none)
-    (alphaPhi.air none)
-    (alphaPhi.c4 none)
-    (rhoPhi none)
-    (alphaRhoPhi.air none)
-    (alphaRhoPhi.c4 none)
-    (rhoEPhi none)
-    (rhoUPhi none)
-);
+maxRefinement   2;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

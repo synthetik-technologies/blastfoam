@@ -5,6 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+13-05-2020 Jeff Heylmun:    | Store maxes over all times
+-------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
 
@@ -25,7 +27,9 @@ Class
     Foam::functionObjects::fieldMax
 
 Description
-    Calculates the imupulse using the difference from a reference pressure
+    Tracks the maximum value of a given list of field names at every cell. If
+    Adaptive mesh refinement is used, the maximum value may decrease due to
+    volume averaging.
 
     Example of function object specification:
     \verbatim
@@ -55,7 +59,6 @@ Usage
 
 See also
     Foam::functionObjects::fvMeshFunctionObject
-    Foam::functionObject
 
 SourceFiles
     fieldMax.C

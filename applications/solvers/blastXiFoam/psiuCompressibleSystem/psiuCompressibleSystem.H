@@ -38,9 +38,11 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
+#include "integrationSystem.H"
+#include "fluxScheme.H"
 #include "psiuReactionThermo.H"
-#include "compressibleTurbulenceModel.H"
+#include "turbulentFluidThermoModel.H"
+#include "uniformDimensionedFields.H"
 
 namespace Foam
 {
@@ -51,7 +53,7 @@ namespace Foam
 
 class psiuCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public integrationSystem
 {
 protected:
 // Protected data
@@ -59,30 +61,84 @@ protected:
     //- Thermo
     autoPtr<psiuReactionThermo> thermo_;
 
-    //- Reference to thermo internal energy
-    volScalarField& e_;
+    //- Primitative variables
 
-    //- Refernce to unburnt internal energy
-    volScalarField& eu_;
+        //- Total mass
+        volScalarField rho_;
 
-    //- Total unbunrt energy
-    volScalarField rhoEu_;
+        //- Velocity
+        volVectorField U_;
+
+        //- Pressure
+        volScalarField& p_;
+
+        //- Temperature
+        volScalarField& T_;
+
+        //- Internal energy
+        volScalarField& e_;
+
+        //- Refernce to unburnt internal energy
+        volScalarField& eu_;
+
+    //- Conserved variables
+
+        //- Momentum
+        volVectorField rhoU_;
+
+        //- Energy
+        volScalarField rhoE_;
+
+        //- Total unbunrt energy
+        volScalarField rhoEu_;
+
+
+    //- Fluxes
+
+        //- Volumetric flux
+        surfaceScalarField phi_;
+
+        //- Total mass flux
+        surfaceScalarField rhoPhi_;
+
+        //- Momentum flux
+        surfaceVectorField rhoUPhi_;
+
+        //- Energy flux
+        surfaceScalarField rhoEPhi_;
+
+        //- Flux scheme
+        autoPtr<fluxScheme> fluxScheme_;
+
+        //- Turbulence model
+        autoPtr<compressible::turbulenceModel> turbulence_;
+
 
     // ODE variables
 
+        //- Stored old field indexes
+        labelList oldIs_;
+        label nOld_;
+
+        //- Stored delta indexes
+        labelList deltaIs_;
+        label nDelta_;
+
         //- Old values for ode solver
         PtrList<volScalarField> rhoOld_;
+        PtrList<volVectorField> rhoUOld_;
+        PtrList<volScalarField> rhoEOld_;
         PtrList<volScalarField> rhoEuOld_;
 
         //- Stored delta fields
         PtrList<volScalarField> deltaRho_;
+        PtrList<volVectorField> deltaRhoU_;
+        PtrList<volScalarField> deltaRhoE_;
         PtrList<volScalarField> deltaRhoEu_;
 
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho()
-        {
-            return;
-        }
+        //- Gravitational acceleration
+        const uniformDimensionedVectorField& g_;
+
 
 public:
 
@@ -118,9 +174,6 @@ public:
         //- Update fluxes
         virtual void update();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve sub-step stepi
         virtual void solve
         (
@@ -143,6 +196,21 @@ public:
 
     // Member Access Functions
 
+        //- Const access to turbulence model
+        const compressible::turbulenceModel& turbulence() const
+        {
+            return turbulence_();
+        }
+
+        //- Non-const access to turbulence model
+        compressible::turbulenceModel& turbulence()
+        {
+            return turbulence_();
+        }
+
+        //- Velocity
+        virtual tmp<volVectorField> U() const;
+
         //- Const access to internal energy
         virtual const volScalarField& e() const
         {
@@ -155,10 +223,28 @@ public:
             return e_;
         }
 
-        //- Return calculated temperature field
-        virtual tmp<volScalarField> T() const
+        //- Return volumetric flux
+        const surfaceScalarField& phi() const
         {
-            return thermo_->T();
+            return phi_;
+        }
+
+        //- Return mass flux
+        const surfaceScalarField& rhoPhi() const
+        {
+            return rhoPhi_;
+        }
+
+        //- Return thermodynamic pressure
+        const volScalarField& p() const
+        {
+            return p_;
+        }
+
+        //- Return temperature
+        const volScalarField& T() const
+        {
+            return T_;
         }
 
         //- Return speed of sound
@@ -166,6 +252,9 @@ public:
 
 
     //- Return functions for transport model
+
+        //- Density of mixture [kg/m^3]
+        virtual tmp<volScalarField> rho() const;
 
         //- Density of unburnt mixture [kg/m^3]
         virtual tmp<volScalarField> rhou() const;

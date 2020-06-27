@@ -1,0 +1,115 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         0.025;
+
+deltaT          1e-7;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-3;
+
+cycleWrite      0;
+
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+maxCo           0.5;
+
+maxDeltaT       1;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+functions
+{
+    impulse
+    {
+        type                impulse;
+        writeControl        writeTime;
+        pRef                101325;
+    }
+    overpressure
+    {
+        type                overpressure;
+        writeControl        writeTime;
+        store               yes;
+        pRef                101325;
+    }
+    maxPImpulse
+    {
+        type                fieldMax;
+        writeControl        writeTime;
+        fields
+        (
+            overpressure
+            impulse
+        );
+    }
+
+    timeOfArrival
+    {
+        type                timeOfArrival;
+        writeControl        writeTime;
+        writeInterval       1;
+    }
+
+    pressureProbes
+    {
+        type                probes;
+        writeControl        timeStep;
+        writeInterval       1;
+        adjustLocations     yes;
+        probeLocations
+        (
+            ( 1.0     0.0     0.0)
+            ( 2.0     0.0     0.0)
+            ( 3.0     0.0     0.0)
+            ( 4.0     0.0     0.0)
+            ( 5.0     0.0     0.0)
+            ( 6.0     0.0     0.0)
+            ( 7.0     0.0     0.0)
+            ( 8.0     0.0     0.0)
+            ( 9.0     0.0     0.0)
+            ( 10.0    0.0     0.0)
+        );
+        fields
+        (
+            overpressure
+        );
+    }
+};
+
+// ************************************************************************* //

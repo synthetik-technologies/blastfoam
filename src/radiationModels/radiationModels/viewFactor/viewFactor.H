@@ -158,8 +158,14 @@ public:
             //- Source term component (for power of T^4)
             virtual tmp<volScalarField> Rp() const;
 
+            //- Source term component (for power of T^4)
+            virtual scalar Rp(const label celli) const;
+
             //- Source term component (constant)
             virtual tmp<volScalarField::Internal> Ru() const;
+
+            //- Source term component (constant)
+            virtual scalar Ru(const label celli) const;
 
 
     // Access

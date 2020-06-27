@@ -19,7 +19,7 @@ createEps()
     set size 2,2
     set autoscale
     plot    "$3" using 1:$4 title 'Sedov' \
-                with lines linewidth 2 linecolor rgb 'black', \
+                with points pt 5 ps 2 linecolor rgb 'black', \
             "$5" using 1:$6 title 'blastFOAM' \
                 with lines lt 1 linewidth 2 linecolor rgb 'red'
 EOF

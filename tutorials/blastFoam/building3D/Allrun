@@ -12,4 +12,4 @@ runParallel setRefinedFields
 
 
 # -- run the calc
-runParallel $(getApplication)
+# runParallel $(getApplication)

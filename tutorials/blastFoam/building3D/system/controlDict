@@ -57,26 +57,20 @@ functions
 {
     impulse
     {
-        type                impulse;
-        libs                ("libblastFunctionObjects.so");
-
+        type            impulse;
         writeControl    writeTime;
         pRef            101298;
     }
     overpressure
     {
-        type                overpressure;
-        libs                ("libblastFunctionObjects.so");
-
+        type            overpressure;
         writeControl    writeTime;
         store           yes;
         pRef            101298;
     }
     maxPImpulse
     {
-        type                fieldMax;
-        libs                ("libblastFunctionObjects.so");
-
+        type            fieldMax;
         writeControl    writeTime;
         fields
         (

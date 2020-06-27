@@ -86,8 +86,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef greyMean_H
-#define greyMean_H
+#ifndef blastGreyMean_H
+#define blastGreyMean_H
 
 #include "interpolationLookUpTable.H"
 #include "absorptionEmissionModel.H"
@@ -164,13 +164,34 @@ public:
     // Member Functions
 
         //- Absorption coefficient for continuous phase
-        tmp<volScalarField> aCont(const label bandI = 0) const;
+        virtual tmp<volScalarField> aCont(const label bandI = 0) const;
+
+        //- Absorption coefficient for continuous phase
+        virtual scalar aConti
+        (
+            const label celli,
+            const label bandI = 0
+        ) const;
 
         //- Emission coefficient for continuous phase
-        tmp<volScalarField> eCont(const label bandI = 0) const;
+        virtual tmp<volScalarField> eCont(const label bandI = 0) const;
+
+        //- Emission coefficient for continuous phase
+        virtual scalar eConti
+        (
+            const label celli,
+            const label bandI = 0
+        ) const;
 
         //- Emission contribution for continuous phase
-        tmp<volScalarField> ECont(const label bandI = 0) const;
+        virtual tmp<volScalarField> ECont(const label bandI = 0) const;
+
+        //- Emission contribution for continuous phase
+        virtual scalar EConti
+        (
+            const label celli,
+            const label bandI = 0
+        ) const;
 
         //-
         inline bool isGrey() const

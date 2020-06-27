@@ -10,6 +10,8 @@ radiationModels/fvDOM/absorptionCoeffs/absorptionCoeffs.C
 radiationModels/viewFactor/viewFactor.C
 radiationModels/opaqueSolid/opaqueSolid.C
 
+radiationODE/radiationODE.C
+
 /* Scatter model */
 scatterModels/scatterModel/scatterModel.C
 scatterModels/scatterModel/scatterModelNew.C
@@ -40,4 +42,4 @@ derivedFvPatchFields/greyDiffusiveRadiation/greyDiffusiveRadiationMixedFvPatchSc
 derivedFvPatchFields/radiationCoupledBase/radiationCoupledBase.C
 derivedFvPatchFields/greyDiffusiveViewFactor/greyDiffusiveViewFactorFixedValueFvPatchScalarField.C
 
-LIB = $(FOAM_USER_LIBBIN)/libblastRadiationModels
+LIB = $(BLAST_LIBBIN)/libblastRadiationModels

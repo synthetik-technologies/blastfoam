@@ -23,13 +23,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.0003;
+endTime         0.00031;
 
 deltaT          1e-7;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
 cycleWrite      0;
 
@@ -47,13 +47,25 @@ runTimeModifiable true;
 
 adjustTimeStep  yes;
 
-maxCo           0.1;
+maxCo           0.5;
 
 maxDeltaT       1e-5;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 functions
-{}
+{
+    writeTimes
+    {
+        type writeTimeList;
+        times
+        (
+            0.071e-3
+            0.14e-3
+            0.22e-3
+            0.301e-3
+        );
+    }
+}
 
 // ************************************************************************* //

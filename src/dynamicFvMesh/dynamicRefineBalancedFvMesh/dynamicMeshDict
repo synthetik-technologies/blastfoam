@@ -1,0 +1,159 @@
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  dev                                   |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh       dynamicRefineBalancedFvMesh;
+// dynamicFvMesh      dynamicRefineFvMesh;
+// dynamicFvMesh      staticFvMesh;
+
+multiCritRefinementControls
+{
+    enableMultiCritRefinementControl  true;
+    
+    fields // must be scalarFields
+    (
+        //alpha (min max refineLevel)
+        // refine cells where alpha in [0.01:0.99] with maximal 2 refinement layers
+        alpha.water
+        {
+            minValue  0.01;
+            maxValue  0.99;
+            refineLevel 3;
+            nAddLayers  2; // add two cell layers at the refinement border
+        }
+    );
+    
+    interface // must be a scalarField (only one dictionary!)
+    (
+        alpha.water // refine interface (found based on snGrad of alpha > 0.1) 
+        {
+            innerRefLayers 2; // describes how many cell layers inside phase alpha are to be refined
+            outerRefLayers 5; // describes how many cell layers outside phase alpha are to be refined
+            
+            // optional settings:
+            maxRefineLevel 3; // max refinement layers; Default: maxRefinement from dynamicRefineFvMeshCoeffs is used
+            // to get slower than 2:1 refinement; add #nAddLayers between each refinement level at the interface
+            nAddLayers 1; //Default: 0 
+        }
+    );
+    
+    gradients // must be scalars
+    (
+        // arguments as in 'fields'
+        // min/max values are based on mag(fvc::grad(volScalarField)) * cellVolume
+        O2_1
+        {
+            fielName O2;   //default: dictName -> 02_1
+            minValue 1.5;
+            maxValue 3.0;
+            refineLevel 1;
+            nAddLayers 0;  //default: 0
+        }
+
+        O2_2
+        {
+            fielName O2;
+            minValue 1.75;
+            maxValue 2.5;
+            refineLevel 2;
+            nAddLayers 0;  //default: 0
+        }
+    );
+    
+    curls // must be vectors
+    (
+        // arguments as in 'fields'
+        // min/max values are based on mag(fvc::curl(volVectorField))
+        U   (0.5 1 2)
+        { 
+            minValue 0.5;
+            maxValue 1.0;
+            refineLevel 2;
+            nAddLayers 0;  //default: 0
+        }
+    );
+    
+    regions
+    (
+        boxToCell
+        {
+            minLevel 1;
+            
+            box (-1 0.001 0.002)(1 0.005 0.003);
+        }
+        
+    );
+}
+
+// Refinement
+dynamicRefineFvMeshCoeffs
+{
+    // Extra entries for balancing
+    enableBalancing true;
+    allowableImbalance 0.15;
+
+    // Refine every refineInterval timesteps
+    refineInterval 3;
+
+    // Maximum refinement level (starts from 0)
+    maxRefinement 3;
+
+    // Maximum cell limit (approximate)
+    maxCells 1000000;
+
+                   
+    field gamma;    // volScalarField to base refinement on, or
+                    // multiCritRefinementField; 
+                    // to use multiple criteria specified in 
+                    // multiCritRefinementControls
+
+    // Which cells to un/refine: based on point values (simple averaging).
+    // - refine pointCells of point value inbetween minLevel..maxLevel
+    // - unrefine pointCells that are within nBufferLayers of points marked
+    //   for refinement.
+    minLevel 0.01;
+    maxLevel 0.99;
+
+    nBufferLayers 4;
+
+    // Refine field inbetween lower..upper
+    lowerRefineLevel 0.5; // do not change
+    upperRefineLevel 3.5; // maxRefinement+0.5
+    unrefineLevel   -0.5;  // If value < unrefineLevel unrefine
+
+    // Newly introduced patch points optionally get projected onto a surface
+    //projectSurfaces ("fixedWalls4.stl");
+    //projectPatches (fixedWalls);
+    // Maximum project distance
+    //projectDistance 1;
+
+    // Fluxes to adapt. For newly created faces or split faces the flux
+    // gets estimated from an interpolated volVectorField ('velocity')
+    // First is name of the flux to adapt, second is velocity that will
+    // be interpolated and inner-producted with the face area vector.
+    correctFluxes ((phi U));
+
+    // List of non-flux surface<Type>Fields to be mapped
+    // only for new internal faces (AMR refine)
+    mapSurfaceFields
+    (
+        Uf
+        Uf_0
+    );
+}
+
+// ************************************************************************* //

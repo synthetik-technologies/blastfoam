@@ -94,7 +94,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
             i,
             &mesh.lookupObjectRef<fluidThermoModel>
             (
-                IOobject::groupName("fluidThermo", specieName)
+                IOobject::groupName("basicThermo", specieName)
             )
         );
         if (mesh.foundObject<volScalarField>(IOobject::groupName("Y", specieName)))
@@ -203,6 +203,46 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::aCont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::greyMean::aConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    scalar a = 0.0;
+
+    scalar invWt = Yj_[0][celli]/eos_[0].Wi(celli);
+    for (label s = 1; s < Yj_.size(); s++)
+    {
+        invWt += Yj_[s][celli]/eos_[s].Wi(celli);
+    }
+
+    forAll(Yj_, s)
+    {
+        scalar Xk = Yj_[s][celli]/(eos_[s].Wi(celli)*invWt);
+        scalar Xipi = Xk*paToAtm(p_[celli]);
+
+        const absorptionCoeffs::coeffArray& b = coeffs_[s].coeffs(T_[celli]);
+
+        scalar Ti = max(T_[celli], small);
+        // negative temperature exponents
+        if (coeffs_[s].invTemp())
+        {
+            Ti = 1.0/T_[celli];
+        }
+        a +=
+            Xipi
+            *(
+                ((((b[5]*Ti + b[4])*Ti + b[3])*Ti + b[2])*Ti + b[1])*Ti
+                + b[0]
+            );
+    }
+    a = max(a, small);
+    return a;
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::greyMean::eCont
 (
@@ -213,6 +253,17 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::eCont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::greyMean::eConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return aConti(celli, bandI);
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::greyMean::ECont
 (
@@ -220,6 +271,17 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::ECont
 ) const
 {
     return absorptionEmissionModel::ECont(bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::greyMean::EConti
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return absorptionEmissionModel::EConti(celli, bandI);
 }
 
 

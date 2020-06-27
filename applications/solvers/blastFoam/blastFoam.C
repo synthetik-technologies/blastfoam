@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -32,13 +32,11 @@ Description
 
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
-#include "staticFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "phaseCompressibleSystem.H"
-#include "fiveEqnCompressibleTurbulenceModel.H"
+#include "blastCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
-#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -85,11 +83,6 @@ int main(int argc, char *argv[])
         #include "setDeltaT.H"
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
-
-        if (!isA<staticFvMesh>(mesh))
-        {
-            error->update();
-        }
 
         mesh.update();
 

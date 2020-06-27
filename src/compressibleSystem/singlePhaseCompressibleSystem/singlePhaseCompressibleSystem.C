@@ -48,33 +48,6 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 )
 :
     phaseCompressibleSystem(mesh, dict),
-    T_
-    (
-        IOobject
-        (
-            "T",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
-    e_
-    (
-        IOobject
-        (
-            "e",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidThermoModel::eBoundaryTypes(T_),
-        fluidThermoModel::eBoundaryBaseTypes(T_)
-    ),
     thermo_
     (
         fluidThermoModel::New
@@ -108,16 +81,22 @@ void Foam::singlePhaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
+    volScalarField rhoOld(rho_);
+    if (rho_.mesh().moving() && stepi == 1)
+    {
+        rhoOld.ref() *= rho_.mesh().Vsc0()/rho_.mesh().Vsc();
+    }
+
     if (oldIs_[stepi - 1] != -1)
     {
         rhoOld_.set
         (
             oldIs_[stepi - 1],
-            new volScalarField(rho_)
+            new volScalarField(rhoOld)
         );
     }
+    rhoOld *= ai[stepi - 1];
 
-    volScalarField rhoOld(ai[stepi - 1]*rho_);
     for (label i = 0; i < stepi - 1; i++)
     {
         label fi = oldIs_[i];
@@ -265,104 +244,4 @@ Foam::singlePhaseCompressibleSystem::speedOfSound() const
     );
 }
 
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::Cv() const
-{
-    return thermo_->Cv();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::mu() const
-{
-    return thermo_->mu();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseCompressibleSystem::mu(const label patchi) const
-{
-    return thermo_->mu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::nu() const
-{
-    return thermo_->nu();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseCompressibleSystem::nu(const label patchi) const
-{
-    return thermo_->nu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseCompressibleSystem::alpha() const
-{
-    return thermo_->alpha();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseCompressibleSystem::alpha(const label patchi) const
-{
-    return thermo_->alpha(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_->alphaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseCompressibleSystem::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_->alphaEff(alphat, patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseCompressibleSystem::alphahe() const
-{
-    return thermo_->alphahe();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseCompressibleSystem::alphahe(const label patchi) const
-{
-    return thermo_->alphahe(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::kappa() const
-{
-    return thermo_->kappa();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseCompressibleSystem::kappa(const label patchi) const
-{
-    return
-        thermo_->kappa(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseCompressibleSystem::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_->kappaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseCompressibleSystem::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        thermo_->kappaEff(alphat, patchi);
-}
 // ************************************************************************* //

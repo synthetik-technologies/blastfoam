@@ -228,6 +228,46 @@ Foam::radiationModels::blackBodyEmission::deltaLambdaT
 }
 
 
+Foam::scalar
+Foam::radiationModels::blackBodyEmission::deltaLambdaTi
+(
+    const scalar& T,
+    const Vector2D<scalar>& band
+) const
+{
+    scalar deltaLambdaT = 1.0;
+
+    if (band != Vector2D<scalar>::one)
+    {
+
+        deltaLambdaT = fLambdaT(band[1]*T) - fLambdaT(band[0]*T);
+    }
+
+    return deltaLambdaT;
+}
+
+
+Foam::scalar
+Foam::radiationModels::blackBodyEmission::EbDeltaLambdaTi
+(
+    const scalar& T,
+    const Vector2D<scalar>& band
+) const
+{
+    scalar Eb
+    (
+        physicoChemical::sigma.value()*pow4(T)
+    );
+
+    if (band != Vector2D<scalar>::one)
+    {
+        Eb *= fLambdaT(band[1]*T) - fLambdaT(band[0]*T);
+    }
+
+    return Eb;
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::blackBodyEmission::EbDeltaLambdaT
 (

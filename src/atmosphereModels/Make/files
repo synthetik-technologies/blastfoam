@@ -1,0 +1,6 @@
+atmosphereModel/atmosphereModel.C
+atmosphereModel/newAtmosphereModel.C
+hydrostatic/hydrostaticAtmosphereModel.C
+table/tableAtmosphereModel.C
+
+LIB = $(BLAST_LIBBIN)/libatmosphereModels

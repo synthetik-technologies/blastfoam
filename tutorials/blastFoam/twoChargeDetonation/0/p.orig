@@ -29,9 +29,9 @@ boundaryField
         type            pressureWaveTransmissive;
         value           $internalField;
     }
-    defaultFaces
+    "wedge.*"
     {
-        type            empty;
+        type            wedge;
     }
 }
 

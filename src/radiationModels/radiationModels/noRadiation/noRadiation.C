@@ -97,6 +97,12 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::noRadiation::Rp() const
 }
 
 
+Foam::scalar Foam::radiationModels::noRadiation::Rp(const label celli) const
+{
+    return 0.0;
+}
+
+
 Foam::tmp<Foam::DimensionedField<Foam::scalar, Foam::volMesh>>
 Foam::radiationModels::noRadiation::Ru() const
 {
@@ -106,6 +112,13 @@ Foam::radiationModels::noRadiation::Ru() const
         mesh_,
         dimensionedScalar(dimMass/dimLength/pow3(dimTime), 0)
     );
+}
+
+
+Foam::scalar
+Foam::radiationModels::noRadiation::Ru(const label celli) const
+{
+    return 0.0;
 }
 
 

@@ -10,4 +10,4 @@ RK3SSP/RK3SSPTimeIntegrator.C
 RK4/RK4TimeIntegrator.C
 RK4SSP/RK4SSPTimeIntegrator.C
 
-LIB = $(FOAM_USER_LIBBIN)/libtimeIntegrators
+LIB = $(BLAST_LIBBIN)/libtimeIntegrators

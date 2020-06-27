@@ -134,6 +134,27 @@ public:
                 //- Absorption coefficient for dispersed phase
                 virtual tmp<volScalarField> aDisp(const label bandI = 0) const;
 
+                //- Absorption coefficient (net) for celli
+                virtual scalar ai
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Absorption coefficient for continuous phase
+                virtual scalar aConti
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Absorption coefficient for dispersed phase
+                virtual scalar aDispi
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
 
             // Emission coefficient
 
@@ -146,6 +167,27 @@ public:
                 //- Return emission coefficient for dispersed phase
                 virtual tmp<volScalarField> eDisp(const label bandI = 0) const;
 
+                //- Emission coefficient (net)
+                virtual scalar ei
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Return emission coefficient for continuous phase
+                virtual scalar eConti
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Return emission coefficient for dispersed phase
+                virtual scalar eDispi
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
 
             // Emission contribution
 
@@ -157,6 +199,27 @@ public:
 
                 //- Emission contribution for dispersed phase
                 virtual tmp<volScalarField> EDisp(const label bandI = 0) const;
+
+                //- Emission contribution (net)
+                virtual scalar Ei
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Emission contribution for continuous phase
+                virtual scalar EConti
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+                //- Emission contribution for dispersed phase
+                virtual scalar EDispi
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
 
 
             //- Const access to the number of bands - defaults to 1 for grey

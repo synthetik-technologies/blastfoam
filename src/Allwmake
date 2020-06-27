@@ -5,12 +5,17 @@ cd ${0%/*} || exit 1    # run from this directory
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
 
 wmake $targetType timeIntegrators
-wmake $targetType fluidThermo
+wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
+wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
-wmake $targetType adaptiveFvMesh
+wmake $targetType dynamicMesh
+wmake $targetType decompositionMethods
 wmake $targetType errorEstimators
+wmake $targetType dynamicFvMesh
 wmake $targetType functionObjects
+wmake $targetType sampling
+wmake $targetType atmosphereModels
 
 # ----------------------------------------------------------------- end-of-file
 

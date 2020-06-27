@@ -1,0 +1,21 @@
+decompositionMethod/decompositionMethod.C
+geomDecomp/geomDecomp.C
+simpleGeomDecomp/simpleGeomDecomp.C
+hierarchGeomDecomp/hierarchGeomDecomp.C
+manualDecomp/manualDecomp.C
+multiLevelDecomp/multiLevelDecomp.C
+structuredDecomp/structuredDecomp.C
+noDecomp/noDecomp.C
+
+
+decompositionConstraints = decompositionConstraints
+
+$(decompositionConstraints)/decompositionConstraint/decompositionConstraint.C
+$(decompositionConstraints)/preserveBaffles/preserveBafflesConstraint.C
+$(decompositionConstraints)/preserveFaceZones/preserveFaceZonesConstraint.C
+$(decompositionConstraints)/preservePatches/preservePatchesConstraint.C
+$(decompositionConstraints)/singleProcessorFaceSets/singleProcessorFaceSetsConstraint.C
+$(decompositionConstraints)/refinementHistory/refinementHistoryConstraint.C
+
+
+LIB = $(BLAST_LIBBIN)/libblastDecompositionMethods

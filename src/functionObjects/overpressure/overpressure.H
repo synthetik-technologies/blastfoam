@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+13-05-2020 Jeff Heylmun:    | Calculate overpressure
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,17 +24,16 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::MachNo
+    Foam::functionObjects::overpressure
 
 Description
     Calculates and writes the Mach number as a volScalarField.
 
 See also
-    Foam::functionObjects::fieldExpression
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    MachNo.C
+    overpressure.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -50,7 +51,7 @@ namespace functionObjects
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class MachNo Declaration
+                          Class overpressure Declaration
 \*---------------------------------------------------------------------------*/
 
 class overpressure
