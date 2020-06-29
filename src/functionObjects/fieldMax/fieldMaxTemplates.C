@@ -70,7 +70,8 @@ void Foam::functionObjects::fieldMax::createMax
                   : IOobject::READ_IF_PRESENT,
                     IOobject::NO_WRITE
                 ),
-                baseField
+                baseField,
+                baseField.boundaryField()
             )
         );
     }

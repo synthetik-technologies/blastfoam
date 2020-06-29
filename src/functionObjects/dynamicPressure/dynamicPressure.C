@@ -69,7 +69,8 @@ Foam::functionObjects::dynamicPressure::dynamicPressure
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedVector("0", dimPressure, Zero)
+                dimensionedVector("0", dimPressure, Zero),
+                "zeroGradient"
             )
         );
     }
@@ -121,7 +122,8 @@ bool Foam::functionObjects::dynamicPressure::read
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero)
+                dimensionedScalar("0", dimVelocity, Zero),
+                "zeroGradient"
             )
         );
     }

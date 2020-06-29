@@ -70,7 +70,8 @@ Foam::functionObjects::timeOfArrival::lookupOrCreate
                 IOobject::NO_WRITE
             ),
             this->mesh_,
-            dimensionedScalar("0", dims, 0.0)
+            dimensionedScalar("0", dims, 0.0),
+            "zeroGradient"
         )
     );
     fieldPtr->store(fieldPtr);
