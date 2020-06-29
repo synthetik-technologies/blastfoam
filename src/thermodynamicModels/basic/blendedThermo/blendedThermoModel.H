@@ -54,7 +54,7 @@ namespace Foam
 template<class BasicThermo, class Thermo1, class Thermo2>
 class blendedThermoModel
 :
-    public fluidThermoModel,
+    public BasicThermo,
     public Thermo1,
     public Thermo2
 {
@@ -286,8 +286,8 @@ public:
         //- Read residual values
         virtual void read(const dictionary& dict)
         {
-            residualRho_.read(dict);
-            residualAlpha_.read(dict);
+            this->residualRho_.read(dict);
+            this->residualAlpha_.read(dict);
         }
 };
 
