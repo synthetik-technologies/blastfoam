@@ -45,13 +45,6 @@ void Foam::vtkSurfaceWriter::writeGeometry
     const faceList& faces
 )
 {
-    // header
-    os
-        << "# vtk DataFile Version 2.0" << nl
-        << "sampleSurface" << nl
-        << "ASCII" << nl
-        << "DATASET POLYDATA" << nl;
-
     // Write vertex coords
     os  << "POINTS " << points.size() << " double" << nl;
     forAll(points, pointi)
@@ -220,6 +213,7 @@ void Foam::vtkSurfaceWriter::writeData
 template<class Type>
 void Foam::vtkSurfaceWriter::writeTemplate
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
@@ -241,6 +235,16 @@ void Foam::vtkSurfaceWriter::writeTemplate
     {
         Info<< "Writing field " << fieldName << " to " << os.name() << endl;
     }
+
+    // header
+    os
+        << "# vtk DataFile Version 2.0" << nl
+        << "sampleSurface" << nl
+        << "ASCII" << nl
+        << "DATASET POLYDATA" << nl
+        << "FIELD FieldData 1" << nl
+        << "TIME 1 1 double" << nl
+        << time << nl;
 
     writeGeometry(os, points, faces);
 
@@ -281,6 +285,7 @@ Foam::vtkSurfaceWriter::~vtkSurfaceWriter()
 
 void Foam::vtkSurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
@@ -299,6 +304,16 @@ void Foam::vtkSurfaceWriter::write
     {
         Info<< "Writing geometry to " << os.name() << endl;
     }
+
+    // header
+    os
+        << "# vtk DataFile Version 2.0" << nl
+        << "sampleSurface" << nl
+        << "ASCII" << nl
+        << "DATASET POLYDATA" << nl
+        << "FIELD FieldData 1" << nl
+        << "TIME 1 1 double" << nl
+        << time << nl;
 
     writeGeometry(os, points, faces);
 }

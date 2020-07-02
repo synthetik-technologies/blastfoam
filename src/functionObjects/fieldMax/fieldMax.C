@@ -51,7 +51,22 @@ Foam::functionObjects::fieldMax::fieldMax
     fvMeshFunctionObject(name, runTime, dict),
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     fieldNames_(dict.lookup("fields")),
-    maxFieldNames_(fieldNames_.size())
+    maxFieldNames_(fieldNames_.size()),
+
+    cellMap_(nullptr),
+    rCellMap_(nullptr),
+
+    vScalarFields_(0),
+    vVectorFields_(0),
+    vSphericalTensorFields_(0),
+    vSymmTensorFields_(0),
+    vTensorFields_(0),
+
+    sScalarFields_(0),
+    sVectorFields_(0),
+    sSphericalTensorFields_(0),
+    sSymmTensorFields_(0),
+    sTensorFields_(0)
 {
     read(dict);
     forAll(fieldNames_, fieldi)
@@ -61,17 +76,57 @@ Foam::functionObjects::fieldMax::fieldMax
           + "Max"
           + IOobject::group(fieldNames_[fieldi]);
 
-        createMax<volScalarField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<volVectorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<volSphericalTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<volSymmTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<volTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
+        createMax<volScalarField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<volVectorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<volSphericalTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<volSymmTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<volTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
 
-        createMax<surfaceScalarField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<surfaceVectorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<surfaceSphericalTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<surfaceSymmTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        createMax<surfaceTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
+        createMax<surfaceScalarField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<surfaceVectorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<surfaceSphericalTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<surfaceSymmTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
+        createMax<surfaceTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi]
+        );
     }
 }
 
@@ -79,7 +134,9 @@ Foam::functionObjects::fieldMax::fieldMax
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::functionObjects::fieldMax::~fieldMax()
-{}
+{
+    clearOldFields();
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -98,23 +155,214 @@ bool Foam::functionObjects::fieldMax::read(const dictionary& dict)
 }
 
 
+void Foam::functionObjects::fieldMax::updateMesh(const mapPolyMesh& mpm)
+{
+    forAll(fieldNames_, fieldi)
+    {
+        mapMax<volScalarField>
+        (
+            maxFieldNames_[fieldi], mpm, vScalarFields_
+        );
+        mapMax<volVectorField>
+        (
+            maxFieldNames_[fieldi], mpm, vVectorFields_
+        );
+        mapMax<volSphericalTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, vSphericalTensorFields_
+        );
+        mapMax<volSymmTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, vSymmTensorFields_
+        );
+        mapMax<volTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, vTensorFields_
+        );
+
+        mapMax<surfaceScalarField>
+        (
+            maxFieldNames_[fieldi], mpm, sScalarFields_
+        );
+        mapMax<surfaceVectorField>
+        (
+            maxFieldNames_[fieldi], mpm, sVectorFields_
+        );
+        mapMax<surfaceSphericalTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, sSphericalTensorFields_
+        );
+        mapMax<surfaceSymmTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, sSymmTensorFields_
+        );
+        mapMax<surfaceTensorField>
+        (
+            maxFieldNames_[fieldi], mpm, sTensorFields_
+        );
+    }
+
+    setOldFields(mpm);
+}
+
+
 bool Foam::functionObjects::fieldMax::execute()
 {
     forAll(fieldNames_, fieldi)
     {
-        updateMax<volScalarField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<volVectorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<volSphericalTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<volSymmTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<volTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
+        updateMax<volScalarField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            vScalarFields_
+        );
+        updateMax<volVectorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            vVectorFields_
+        );
+        updateMax<volSphericalTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            vSphericalTensorFields_
+        );
+        updateMax<volSymmTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            vSymmTensorFields_
+        );
+        updateMax<volTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            vTensorFields_
+        );
 
-        updateMax<surfaceScalarField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<surfaceVectorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<surfaceSphericalTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<surfaceSymmTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
-        updateMax<surfaceTensorField>(fieldNames_[fieldi], maxFieldNames_[fieldi]);
+        updateMax<surfaceScalarField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            sScalarFields_
+        );
+        updateMax<surfaceVectorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            sVectorFields_
+        );
+        updateMax<surfaceSphericalTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            sSphericalTensorFields_
+        );
+        updateMax<surfaceSymmTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            sSymmTensorFields_
+        );
+        updateMax<surfaceTensorField>
+        (
+            fieldNames_[fieldi],
+            maxFieldNames_[fieldi],
+            sTensorFields_
+        );
     }
+
     return true;
+}
+
+
+void Foam::functionObjects::fieldMax::clearOldFields()
+{
+    if (cellMap_)
+    {
+        delete cellMap_;
+        cellMap_ = 0;
+        delete rCellMap_;
+        rCellMap_ = 0;
+
+        // Clear toc and fields
+        vScalarFields_.clear();
+        vVectorFields_.clear();
+        vSphericalTensorFields_.clear();
+        vSymmTensorFields_.clear();
+        vTensorFields_.clear();
+
+        sScalarFields_.clear();
+        sVectorFields_.clear();
+        sSphericalTensorFields_.clear();
+        sSymmTensorFields_.clear();
+        sTensorFields_.clear();
+    }
+}
+
+
+void Foam::functionObjects::fieldMax::setOldFields(const mapPolyMesh& mpm)
+{
+    clearOldFields();
+
+    forAll(fieldNames_, fieldi)
+    {
+        createOld<volScalarField>
+        (
+            maxFieldNames_[fieldi],
+            vScalarFields_
+        );
+        createOld<volVectorField>
+        (
+            maxFieldNames_[fieldi],
+            vVectorFields_
+        );
+        createOld<volSphericalTensorField>
+        (
+            maxFieldNames_[fieldi],
+            vSphericalTensorFields_
+        );
+        createOld<volSymmTensorField>
+        (
+            maxFieldNames_[fieldi],
+            vSymmTensorFields_
+        );
+        createOld<volTensorField>
+        (
+            maxFieldNames_[fieldi],
+            vTensorFields_
+        );
+
+        createOld<surfaceScalarField>
+        (
+            maxFieldNames_[fieldi],
+            sScalarFields_
+        );
+        createOld<surfaceVectorField>
+        (
+            maxFieldNames_[fieldi],
+            sVectorFields_
+        );
+        createOld<surfaceSphericalTensorField>
+        (
+            maxFieldNames_[fieldi],
+            sSphericalTensorFields_
+        );
+        createOld<surfaceSymmTensorField>
+        (
+            maxFieldNames_[fieldi],
+            sSymmTensorFields_
+        );
+        createOld<surfaceTensorField>
+        (
+            maxFieldNames_[fieldi],
+            sTensorFields_
+        );
+    }
+
+    cellMap_ = new labelList(mpm.cellMap());
+    rCellMap_ = new labelList(mpm.reverseCellMap());
 }
 
 

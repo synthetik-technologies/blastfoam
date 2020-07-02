@@ -189,7 +189,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 }
             }
         }
-        reduce(foundList[probei], andOp<bool>());
+        reduce(foundList[probei], orOp<bool>());
         if (!foundList[probei])
         {
             nBadProbes++;

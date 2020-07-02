@@ -45,6 +45,7 @@ namespace Foam
 template<class Type>
 void Foam::ensightSurfaceWriter::writeTemplate
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
@@ -143,6 +144,7 @@ Foam::ensightSurfaceWriter::~ensightSurfaceWriter()
 
 void Foam::ensightSurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,

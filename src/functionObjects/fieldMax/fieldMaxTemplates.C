@@ -79,10 +79,46 @@ void Foam::functionObjects::fieldMax::createMax
 
 
 template<class Type>
+void Foam::functionObjects::fieldMax::createOld
+(
+    const word& maxFieldName,
+    PtrListDictionary<Type>& old
+)
+{
+    if (obr_.foundObject<Type>(maxFieldName))
+    {
+        const Type& f = obr_.lookupObject<Type>(maxFieldName);
+
+        // Store unregistered fields so fields are not updated with refinement
+        old.resize(old.size() + 1);
+        old.set
+        (
+            old.size()-1,
+            maxFieldName,
+            new Type
+            (
+                IOobject
+                (
+                    maxFieldName,
+                    obr_.time().timeName(),
+                    obr_,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE,
+                    false
+                ),
+                f
+            )
+        );
+    }
+}
+
+
+template<class Type>
 void Foam::functionObjects::fieldMax::updateMax
 (
     const word& fieldName,
-    const word& maxFieldName
+    const word& maxFieldName,
+    PtrListDictionary<Type>& old
 )
 {
     if (obr_.foundObject<Type>(fieldName))
@@ -90,6 +126,76 @@ void Foam::functionObjects::fieldMax::updateMax
         const Type& baseField = obr_.lookupObject<Type>(fieldName);
         Type& field = obr_.lookupObjectRef<Type>(maxFieldName);
         field = max(field, baseField);
+
+        if (cellMap_)
+        {
+            const labelList& cellMap = *cellMap_;
+            const labelList& rCellMap = *rCellMap_;
+
+            const Type& fOld = old[maxFieldName];
+
+            forAll(cellMap, i)
+            {
+                label celli = cellMap[i];
+                if (celli > -1)
+                {
+                    field[i] = max(field[i], fOld[celli]);
+                }
+            }
+
+            forAll(rCellMap, i)
+            {
+                label index = rCellMap[i];
+
+                if (index < -1)
+                {
+                    label celli = -index-2;
+                    field[celli] = max(field[celli], fOld[i]);
+                }
+            }
+        }
+    }
+}
+
+
+template<class Type>
+void Foam::functionObjects::fieldMax::mapMax
+(
+    const word& fieldName,
+    const mapPolyMesh& meshMap,
+    const PtrListDictionary<Type>& old
+)
+{
+    if (obr_.foundObject<Type>(fieldName))
+    {
+        Type& f = obr_.lookupObjectRef<Type>(fieldName);
+
+        if (cellMap_)
+        {
+            const labelList& cellMap = *cellMap_;
+            const labelList& rCellMap = *rCellMap_;
+
+            const Type& fOld = old[fieldName];
+            forAll(cellMap, i)
+            {
+                label celli = cellMap[i];
+                if (celli > -1)
+                {
+                    f[i] = max(f[i], fOld[celli]);
+                }
+            }
+
+            forAll(rCellMap, i)
+            {
+                label index = rCellMap[i];
+
+                if (index < -1)
+                {
+                    label celli = -index-2;
+                    f[celli] = max(f[celli], fOld[i]);
+                }
+            }
+        }
     }
 }
 

@@ -69,6 +69,8 @@ SourceFiles
 #define functionObjects_fieldMax_H
 
 #include "fvMeshFunctionObject.H"
+#include "mapPolyMesh.H"
+#include "PtrListDictionary.H"
 #include "volFields.H"
 #include "surfaceFields.H"
 
@@ -92,6 +94,7 @@ protected:
 
     // Protected data
 
+
         //- Restart the averaging process on output
         Switch restartOnRestart_;
 
@@ -101,17 +104,67 @@ protected:
         //- Name of max fields
         wordList maxFieldNames_;
 
-        //- Update field max
-        template<class type>
-        void createMax(const word& fieldName, const word& maxFieldName);
+
+        labelList* cellMap_;
+        labelList* rCellMap_;
+
+        //- Old field values
+        PtrListDictionary<volScalarField> vScalarFields_;
+        PtrListDictionary<volVectorField> vVectorFields_;
+        PtrListDictionary<volSphericalTensorField> vSphericalTensorFields_;
+        PtrListDictionary<volSymmTensorField> vSymmTensorFields_;
+        PtrListDictionary<volTensorField> vTensorFields_;
+
+        PtrListDictionary<surfaceScalarField> sScalarFields_;
+        PtrListDictionary<surfaceVectorField> sVectorFields_;
+        PtrListDictionary<surfaceSphericalTensorField> sSphericalTensorFields_;
+        PtrListDictionary<surfaceSymmTensorField> sSymmTensorFields_;
+        PtrListDictionary<surfaceTensorField> sTensorFields_;
+
+
+        //- Store old fields
+        template<class Type>
+        void mapMax
+        (
+            const word& fName,
+            const mapPolyMesh&,
+            const PtrListDictionary<Type>& old
+        );
 
         //- Update field max
-        template<class type>
-        void updateMax(const word& fieldName, const word& maxFieldName);
+        template<class Type>
+        void createMax
+        (
+            const word& fieldName,
+            const word& maxFieldName
+        );
+
+        //- Create old field
+        template<class Type>
+        void createOld
+        (
+            const word& maxFieldName,
+            PtrListDictionary<Type>& old
+        );
+
+        //- Update field max
+        template<class Type>
+        void updateMax
+        (
+            const word& fieldName,
+            const word& maxFieldName,
+            PtrListDictionary<Type>& old
+        );
 
         //- Write field max
         template<class type>
         void writeField(const word& fieldName);
+
+        //- Set all old fields and cell maps
+        void setOldFields(const mapPolyMesh& mpm);
+
+        //- Clear all old field and cell maps
+        void clearOldFields();
 
 public:
 
@@ -141,6 +194,9 @@ public:
 
         //- Read the field average data
         virtual bool read(const dictionary&);
+
+        //- Update mesh and store map
+        virtual void updateMesh(const mapPolyMesh& mpm);
 
         //- Calculate the field averages
         virtual bool execute();

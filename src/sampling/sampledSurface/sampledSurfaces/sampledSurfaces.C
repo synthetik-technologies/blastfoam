@@ -65,6 +65,7 @@ void Foam::sampledSurfaces::writeGeometry() const
             {
                 formatter_->write
                 (
+                    mesh_.time().value(),
                     outputDir,
                     s.name(),
                     mergeList_[surfI].points,
@@ -76,6 +77,7 @@ void Foam::sampledSurfaces::writeGeometry() const
         {
             formatter_->write
             (
+                mesh_.time().value(),
                 outputDir,
                 s.name(),
                 s.points(),

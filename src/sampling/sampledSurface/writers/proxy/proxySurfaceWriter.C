@@ -54,6 +54,7 @@ Foam::proxySurfaceWriter::~proxySurfaceWriter()
 
 void Foam::proxySurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,

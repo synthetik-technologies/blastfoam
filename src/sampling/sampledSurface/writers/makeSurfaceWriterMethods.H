@@ -49,6 +49,7 @@ namespace Foam
 #define defineSurfaceWriterWriteField(ThisClass, FieldType)                    \
     void ThisClass::write                                                      \
     (                                                                          \
+        const scalar& time,                                                    \
         const fileName& outputDir,                                             \
         const fileName& surfaceName,                                           \
         const pointField& points,                                              \
@@ -61,6 +62,7 @@ namespace Foam
     {                                                                          \
         writeTemplate                                                          \
         (                                                                      \
+            time,                                                              \
             outputDir,                                                         \
             surfaceName,                                                       \
             points,                                                            \

@@ -137,6 +137,7 @@ private:
         template<class Type>
         void writeTemplate
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -179,6 +180,7 @@ public:
         //- Write single surface geometry to file.
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -190,6 +192,7 @@ public:
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -204,6 +207,7 @@ public:
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -218,6 +222,7 @@ public:
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -232,6 +237,7 @@ public:
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
@@ -246,6 +252,7 @@ public:
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
+            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
