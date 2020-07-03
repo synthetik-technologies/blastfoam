@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      AUSM+;
+fluxScheme      Tadmor;
 
 ddtSchemes
 {

@@ -84,12 +84,16 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        mesh.update();
-
+        //- Update conserved quantites before updating mesh and mapping
         fluid->encode();
+
+        mesh.update();
 
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
+
+        //- Decode to get new values of non-conservative variables
+        fluid->decode();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
