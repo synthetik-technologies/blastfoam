@@ -34,17 +34,16 @@ template<class Specie>
 Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
 :
     Specie(dict),
-    a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
-    b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
-    B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    alpha_(dict.subDict("equationOfState").lookupType<scalar>("alpha")),
-    beta_(dict.subDict("equationOfState").lookupType<scalar>("beta")),
-    A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
+    p0_(dict.subDict("equationOfState").lookupType<scalar>("p0")),
+    pCav_(dict.subDict("equationOfState").lookupType<scalar>("pCav")),
     rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
+    rhoCav_(dict.subDict("equationOfState").lookupType<scalar>("rhoCav")),
     e0_(dict.subDict("equationOfState").lookupType<scalar>("e0")),
-    rhoIV_(dict.subDict("equationOfState").lookupType<scalar>("rhoIV")),
-    eIV_(dict.subDict("equationOfState").lookupType<scalar>("eIV")),
-    eCV_(dict.subDict("equationOfState").lookupType<scalar>("eCV"))
+    omega_(dict.subDict("equationOfState").lookupType<scalar>("omega")),
+    k_(dict.subDict("equationOfState").lookupType<scalar>("k")),
+    A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
+    B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
+    C_(dict.subDict("equationOfState").lookupType<scalar>("C"))
 {}
 
 // ************************************************************************* //

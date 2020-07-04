@@ -73,11 +73,14 @@ Foam::activationModels::linearActivation::linearActivation
                 << " is was not found in the mesh. "
                 << endl;
         }
-        else if (alpha[celli] < small && celli >= 0)
+        else if (celli >= 0)
         {
-            WarningInFunction
-                << "There is no mass for phase " << phaseName
-                << " at " << detonationPoints_[pti] << endl;
+            if (alpha[celli] < small)
+            {
+                WarningInFunction
+                    << "There is no mass for phase " << phaseName
+                    << " at " << detonationPoints_[pti] << endl;
+            }
         }
     }
 }

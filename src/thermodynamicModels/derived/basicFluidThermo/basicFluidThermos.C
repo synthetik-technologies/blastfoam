@@ -91,6 +91,14 @@ namespace Foam
         Tait
     );
 
+    addFluidThermo
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        Tillotson
+    );
+
 //     addFluidThermos
 //     (
 //         constTransport,

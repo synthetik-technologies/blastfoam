@@ -27,7 +27,14 @@ Class
     Foam::Tillotson
 
 Description
-    Equation of state for an ideal gas using the Mie Grunsien form
+    Tillotson equation of state
+
+    References:
+    \verbatim
+        Wardlaw, A., Jr., McKnown, R., Luton, A.  (2011).
+        Coupled Hydrocode Prediction of Underwater Explosion Damage.
+        Warhead Performance and Lethality Division, Code 420
+    \endverbatim
 
 SourceFiles
     Tillotson.C
@@ -54,123 +61,27 @@ class Tillotson
 {
 // Private data
 
-    //- Tillotson parameters
-    scalar a_;
-    scalar b_;
-    scalar B_;
-    scalar alpha_;
-    scalar beta_;
+    //- Reference pressure
+    scalar p0_;
 
-    //- Bulk modulus
-    scalar A_;
+    //- Cavitation pressure
+    scalar pCav_;
 
     //- Reference density
     scalar rho0_;
 
+    //- Cavitation density
+    scalar rhoCav_;
+
     //- Reference internal energy
     scalar e0_;
 
-    //- Density  of incipient vaporization
-    scalar rhoIV_;
-
-    //- Internal energy of incipient vaporization
-    scalar eIV_;
-
-    //- Internal energy of complete vaporization
-    scalar eCV_;
-
-    //- Functions to return Pi for the different states
-    inline scalar Pi1
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-    inline scalar Pi2
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-    inline scalar Pi3
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-    //- Functions to return derivative of Pi w.r.t density for the different states
-    inline scalar dPidRho1
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-    inline scalar dPidRho2
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-    inline scalar dPidRho3
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-    //- Functions to return derivative of Pi w.r.t energy for the different states
-    inline scalar dPide2
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-
-    //- Functions to return Pi for the different states
-    inline scalar Gamma1
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-    inline scalar Gamma2
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-    //- Functions to return derivative of Pi w.r.t density for the different states
-    inline scalar dGammadRho1
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-    //- Functions to return derivative of Pi w.r.t energy for the different states
-    inline scalar dGammade1
-    (
-        const scalar& rho,
-        const scalar& e,
-        const scalar& eta,
-        const scalar& mu
-    ) const;
-
-//     scalar solveEc(scalar rho0, const scalar rho)
-
+    //- Tillotson parameters
+    scalar omega_;
+    scalar k_;
+    scalar A_;
+    scalar B_;
+    scalar C_;
 
 public:
 
