@@ -112,35 +112,28 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12(0.5*(cOwn + cNei));
+    scalar c12 = sqrt(0.5*(sqr(cOwn) + sqr(cNei)));
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
-    scalar magMaOwn(mag(MaOwn));
-    scalar magMaNei(mag(MaNei));
 
-    scalar Ma4Own(max(MaOwn, 0.0));
-    scalar P5Own(pos0(MaOwn));
-    if (magMaOwn < 1)
-    {
-        Ma4Own = 0.25*sqr(MaOwn + 1.0) + beta_*sqr(sqr(MaOwn) - 1.0);
-        P5Own =
-            0.25*sqr(MaOwn + 1.0)*(2.0 - MaOwn)
-          + alpha_*MaOwn*sqr(sqr(MaOwn) - 1.0);
-    }
+    scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+    scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
-    scalar Ma4Nei(min(MaNei, 0.0));
-    scalar P5Nei(neg(MaNei));
-    if (magMaNei < 1)
-    {
-        Ma4Nei = -0.25*sqr(MaNei - 1.0) - beta_*sqr(sqr(MaNei) - 1.0);
-        P5Nei =
-            0.25*sqr(MaNei - 1.0)*(2.0 + MaNei)
-          - alpha_*MaNei*sqr(sqr(MaNei) - 1.0);
-    }
-    scalar Ma12(Ma4Own + Ma4Nei);
-    scalar P12(P5Own*pOwn + P5Nei*pNei);
+    scalar Mp =
+      - Kp_
+       *max(1.0 - sigma_*sqr(Mbar), 0.0)
+       *(pNei - pOwn)
+       /(rho12*sqr(c12));
+
+    scalar P5Own = P5(MaOwn, 1);
+    scalar P5Nei = P5(MaNei, -1);
+
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*c12*(UvNei - UvOwn);
+
+    scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
+    scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
 
     phi = magSf*c12*Ma12;
 
@@ -199,35 +192,28 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12(0.5*(cOwn + cNei));
+    scalar c12 = sqrt(0.5*(sqr(cOwn) + sqr(cNei)));
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
-    scalar magMaOwn(mag(MaOwn));
-    scalar magMaNei(mag(MaNei));
 
-    scalar Ma4Own(max(MaOwn, 0.0));
-    scalar P5Own(pos0(MaOwn));
-    if (magMaOwn < 1)
-    {
-        Ma4Own = 0.25*sqr(MaOwn + 1.0) + beta_*sqr(sqr(MaOwn) - 1.0);
-        P5Own =
-            0.25*sqr(MaOwn + 1.0)*(2.0 - MaOwn)
-          + alpha_*MaOwn*sqr(sqr(MaOwn) - 1.0);
-    }
+    scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+    scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
-    scalar Ma4Nei(min(MaNei, 0.0));
-    scalar P5Nei(neg(MaNei));
-    if (magMaNei < 1)
-    {
-        Ma4Nei = -0.25*sqr(MaNei - 1.0) - beta_*sqr(sqr(MaNei) - 1.0);
-        P5Nei =
-            0.25*sqr(MaNei - 1.0)*(2.0 + MaNei)
-          - alpha_*MaNei*sqr(sqr(MaNei) - 1.0);
-    }
-    scalar Ma12(Ma4Own + Ma4Nei);
-    scalar P12(P5Own*pOwn + P5Nei*pNei);
+    scalar Mp =
+      - Kp_
+       *max(1.0 - sigma_*sqr(Mbar), 0.0)
+       *(pNei - pOwn)
+       /(rho12*sqr(c12));
+
+    scalar P5Own = P5(MaOwn, 1);
+    scalar P5Nei = P5(MaNei, -1);
+
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*c12*(UvNei - UvOwn);
+
+    scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
+    scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
 
     phi = magSf*c12*Ma12;
 

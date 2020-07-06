@@ -20,7 +20,10 @@ defaultFieldValues
     volScalarFieldValue rho 1
     volScalarFieldValue p 1e-5
 );
-dr 0.001;
+
+dr 0.005;
+gamma 1.4;
+
 regions
 (
     sphereToCell
@@ -30,7 +33,7 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue p #calc "0.0818511136/pow3($dr)"
+            volScalarFieldValue p #calc "1.0/(8.0*3.141529/3.0*$gamma/(sqr($gamma)-1.0)*pow3($dr))"
         );
     }
 );

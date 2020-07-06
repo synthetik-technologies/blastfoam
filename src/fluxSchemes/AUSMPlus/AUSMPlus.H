@@ -25,13 +25,19 @@ Class
     Foam::fluxSchemes::AUSMPlus
 
 Description
-    Computes flux using AUSM+ scheme
+    Computes flux using AUSM+up scheme with low speed correction
 
     References:
     \verbatim
         Liou, Meng-Sing (1996).
         A Sequel to AUSM: AUSM+.
         Journal of Computational Physics, 129, 364-382.
+    \endverbatim
+
+    \verbatim
+        Liou, Meng-Sing (2006).
+        A sequel to AUSM, Part II: AUSM+-up for all speeds.
+        Journal of Computational Physics, 214, 137-170.
     \endverbatim
 
 SourceFiles
@@ -64,6 +70,9 @@ class AUSMPlus
         //- Coefficients
         scalar alpha_ = 3.0/16.0;
         scalar beta_ = 0.125;
+        scalar Kp_ = 0.25;
+        scalar Ku_ = 0.75;
+        scalar sigma_ = 1.0;
 
         //- Saved flux
         tmp<surfaceScalarField> phi_;
@@ -122,6 +131,46 @@ class AUSMPlus
             const scalar& fOwn, const scalar& fNei,
             const label facei, const label patchi = -1
         ) const;
+
+        // Mach number polynomials
+
+            //- First order
+            scalar M1(const scalar& Ma, const label sign) const
+            {
+                return 0.5*(Ma + sign*mag(Ma));
+            }
+
+            //- Second order
+            scalar M2(const scalar& Ma, const label sign) const
+            {
+                if (mag(Ma) >= 1.0)
+                {
+                    return M1(Ma, sign);
+                }
+                return sign*0.25*sqr(Ma + sign*1.0);
+            }
+
+            //- Fourth order
+            scalar M4(const scalar& Ma, const label sign) const
+            {
+                if (mag(Ma) >= 1.0)
+                {
+                    return M1(Ma, sign);
+                }
+                return sign*0.25*sqr(Ma + sign) + sign*beta_*sqr(sqr(Ma) - 1.0);
+            }
+
+            //- Fifth order
+            scalar P5(const scalar& Ma, const label sign) const
+            {
+                if (mag(Ma) >= 1.0)
+                {
+                    return 0.5*(1.0 + sign*Foam::sign(Ma));
+                }
+                return
+                    0.25*sqr(Ma + sign)*(2.0 - sign*Ma)
+                  + sign*alpha_*Ma*sqr(sqr(Ma) - 1.0);
+            }
 
 
 public:

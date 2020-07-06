@@ -107,6 +107,26 @@ public:
             return false;
         }
 
+        //- Is temperature used
+        bool temperatureBased() const
+        {
+            return false;
+        }
+
+        //- Return pressure
+        scalar p(const scalar& rho, const scalar& e, const scalar& T) const;
+
+        //- Return the speed of sound
+        scalar speedOfSound
+        (
+            const scalar& p,
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T,
+            const scalar& Cv
+        ) const;
+
+
         //- Return deviation from ideal gas pressure
         scalar Pi
         (
@@ -126,56 +146,73 @@ public:
         scalar Gamma
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T,
+            const scalar& Cv
         ) const;
 
         //- Return derivative of pressure w.r.t density
         scalar dpdv
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
-        //- Return derivative of pressure w.r.t. Temperature
+        //- Return derivative of pressure w.r.t. internal energy
         scalar dpde
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. Temperature
+        scalar dpdT
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Internal energy correction [J/kg]
         scalar E
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Enthalpy correction [J/kg]
         scalar H
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
         scalar Cv
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
         scalar Cp
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Heat capacity difference [J/kg/K]
         scalar CpMCv
         (
             const scalar& rho,
-            const scalar& e
+            const scalar& e,
+            const scalar& T
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
