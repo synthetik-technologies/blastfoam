@@ -67,7 +67,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
     faceList_.clear();
     faceList_.setSize(size());
 
-    boolList foundList(size(), true);
+    boolList foundList(size(), false);
     label nBadProbes = 0;
 
     forAll(*this, probei)
@@ -179,7 +179,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         return;
     }
 
-    if (adjustLocations_ && nBadProbes > 0)
+//     if (adjustLocations_ && nBadProbes > 0)
     {
         if (print)
         {
@@ -196,23 +196,41 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 continue;
             }
 
-            scalarField distance(mag(origPoints_[probei] - mesh.cellCentres()));
-            label celli(findMin(distance));
             scalar minDistance = great;
-            if (celli >= 0)
+            label facei = -1;
+            for
+            (
+                label faceI = mesh.nInternalFaces();
+                faceI < mesh.nFaces();
+                faceI++
+            )
             {
-                minDistance = distance[celli];
+                scalar newDistance
+                (
+                    mag
+                    (
+                        origPoints_[probei]
+                      - mesh.faceCentres()[faceI]
+                    )
+                );
+                if (newDistance < minDistance)
+                {
+                    facei = faceI;
+                    minDistance = newDistance;
+                }
             }
 
-            scalarList trueMinDistancel(Pstream::nProcs(), minDistance);
-            Pstream::gatherList(trueMinDistancel);
-            Pstream::scatterList(trueMinDistancel);
-            label minI = max(findMin(trueMinDistancel), 0);
+            scalar trueMinDistance =
+                returnReduce(minDistance, minOp<scalar>());
 
-            if (Pstream::myProcNo() == minI)
+            if (trueMinDistance == minDistance)
             {
-                elementList_[probei] = celli;
-                faceList_[probei] = findFaceIndex(mesh, celli, origPoints_[probei]);
+                label patchi = mesh.boundaryMesh().whichPatch(facei);
+                faceList_[probei] = facei;
+                label localFaceID =
+                    facei - mesh.boundaryMesh()[patchi].start();
+                elementList_[probei] =
+                    mesh.boundaryMesh()[patchi].faceCells()[localFaceID];
                 operator[](probei) = mesh.faceCentres()[faceList_[probei]];
 
                 if (print)
