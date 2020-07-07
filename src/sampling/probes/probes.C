@@ -67,6 +67,9 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
     faceList_.clear();
     faceList_.setSize(size());
 
+    boolList foundList(size(), true);
+    label nBadProbes = 0;
+
     forAll(*this, probei)
     {
         const vector& location = origPoints_[probei];
@@ -76,66 +79,46 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         elementList_[probei] = celli;
         faceList_[probei] = findFaceIndex(mesh, celli, location);
 
-        if (debug && (elementList_[probei] != -1 || faceList_[probei] != -1))
+        if ((elementList_[probei] != -1 || faceList_[probei] != -1))
         {
-            Pout<< "probes : found point " << location
-                << " in cell " << elementList_[probei]
-                << " and face " << faceList_[probei] << endl;
+            foundList[probei] = true;
+            if (debug)
+            {
+                Pout<< "probes : found point " << location
+                    << " in cell " << elementList_[probei]
+                    << " and face " << faceList_[probei] << endl;
+            }
+        }
+
+        reduce(foundList[probei], orOp<bool>());
+        if (!foundList[probei])
+        {
+            nBadProbes++;
         }
     }
-
-
-    boolList foundList(size(), true);
-    label nBadProbes = 0;
 
     // Check if all probes have been found.
     forAll(elementList_, probei)
     {
         const vector& location = origPoints_[probei];
+        label celli = elementList_[probei];
+        label facei = -1;
+
+        label celliOrig = celli;
+
+        reduce(celli, maxOp<label>());
 
         if (Pstream::parRun())
         {
-            labelList celliL(Pstream::nProcs(), elementList_[probei]);
-            labelList faceiL(Pstream::nProcs(), faceList_[probei]);
-
-            // Check at least one processor with cell.
-            Pstream::gatherList(celliL);
-            Pstream::scatterList(celliL);
-            Pstream::gatherList(faceiL);
-            Pstream::scatterList(faceiL);
-
-            //- Find first actual cell and face
-            bool set = false;
-            forAll(celliL, proci)
+            if (celli >= 0 && celli == celliOrig)
             {
-                if
-                (
-                    (celliL[proci] >= 0 && faceiL[proci] >= 0)
-                 && celliL[proci] == elementList_[probei]
-                 && faceiL[proci] == faceList_[probei]
-                 && !set
-                )
-                {
-                    set = true;
-                }
-                else
-                {
-                    elementList_[probei] = -1;
-                    faceList_[probei] = -1;
-                }
-
+                facei = faceList_[probei];
             }
         }
-        label celli = elementList_[probei];
-        label facei = faceList_[probei];
-
-        reduce(celli, maxOp<label>());
         reduce(facei, maxOp<label>());
 
         if (celli == -1)
         {
-            foundList[probei] = false;
-
             if (Pstream::master() && print)
             {
                 WarningInFunction
@@ -188,11 +171,6 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                         << " to prevent this." << endl;
                 }
             }
-        }
-        reduce(foundList[probei], orOp<bool>());
-        if (!foundList[probei])
-        {
-            nBadProbes++;
         }
     }
 
@@ -275,7 +253,8 @@ Foam::label Foam::probes::findFaceIndex
         forAll(cellFaces, i)
         {
             label facei = cellFaces[i];
-            vector dist = mesh.faceCentres()[facei] - pt;
+            const vector& cellCentre = mesh.cellCentres()[celli];
+            vector dist = mesh.faceCentres()[facei] - cellCentre;
             if (mag(dist) < minDistance)
             {
                 minDistance = mag(dist);

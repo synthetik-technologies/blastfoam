@@ -112,17 +112,21 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12 = sqrt(0.5*(sqr(cOwn) + sqr(cNei)));
+    scalar c12 = 0.5*(cOwn + cNei);
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
 
     scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+//     scalar M0Sqr(min(1.0, sqr(Mbar)));
+//     scalar M0(sqrt(M0Sqr));
+    scalar fa(1.0);//max(M0*(2.0 - M0), 1e-10));
+    alpha_ = 3.0/16.0*(5.0*sqr(fa) - 4.0);
     scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
     scalar Mp =
-      - Kp_
+      - Kp_/fa
        *max(1.0 - sigma_*sqr(Mbar), 0.0)
        *(pNei - pOwn)
        /(rho12*sqr(c12));
@@ -130,7 +134,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar P5Own = P5(MaOwn, 1);
     scalar P5Nei = P5(MaNei, -1);
 
-    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*c12*(UvNei - UvOwn);
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*fa*c12*(UvNei - UvOwn);
 
     scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
     scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
@@ -192,17 +196,21 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12 = sqrt(0.5*(sqr(cOwn) + sqr(cNei)));
+    scalar c12 = 0.5*(cOwn + cNei);
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
 
     scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+//     scalar M0Sqr(min(1.0, sqr(Mbar)));
+//     scalar M0(sqrt(M0Sqr));
+    scalar fa(1.0);//max(M0*(2.0 - M0), 1e-10));
+    alpha_ = 3.0/16.0*(5.0*sqr(fa) - 4.0);
     scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
     scalar Mp =
-      - Kp_
+      - Kp_/fa
        *max(1.0 - sigma_*sqr(Mbar), 0.0)
        *(pNei - pOwn)
        /(rho12*sqr(c12));
@@ -210,7 +218,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar P5Own = P5(MaOwn, 1);
     scalar P5Nei = P5(MaNei, -1);
 
-    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*c12*(UvNei - UvOwn);
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*fa*c12*(UvNei - UvOwn);
 
     scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
     scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
