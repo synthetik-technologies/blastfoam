@@ -7,19 +7,23 @@
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
+
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
+
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 \*---------------------------------------------------------------------------*/
 
-#include "AUSMPlus.H"
+#include "AUSMPlusUp.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -28,15 +32,15 @@ namespace Foam
 {
 namespace fluxSchemes
 {
-    defineTypeNameAndDebug(AUSMPlus, 0);
-    addToRunTimeSelectionTable(fluxScheme, AUSMPlus, dictionary);
+    defineTypeNameAndDebug(AUSMPlusUp, 0);
+    addToRunTimeSelectionTable(fluxScheme, AUSMPlusUp, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::AUSMPlus::AUSMPlus(const fvMesh& mesh)
+Foam::fluxSchemes::AUSMPlusUp::AUSMPlusUp(const fvMesh& mesh)
 :
     fluxScheme(mesh)
 {}
@@ -44,19 +48,19 @@ Foam::fluxSchemes::AUSMPlus::AUSMPlus(const fvMesh& mesh)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::fluxSchemes::AUSMPlus::~AUSMPlus()
+Foam::fluxSchemes::AUSMPlusUp::~AUSMPlusUp()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::fluxSchemes::AUSMPlus::clear()
+void Foam::fluxSchemes::AUSMPlusUp::clear()
 {
     fluxScheme::clear();
     phi_.clear();
 }
 
-void Foam::fluxSchemes::AUSMPlus::createSavedFields()
+void Foam::fluxSchemes::AUSMPlusUp::createSavedFields()
 {
     fluxScheme::createSavedFields();
     if (phi_.valid())
@@ -69,7 +73,7 @@ void Foam::fluxSchemes::AUSMPlus::createSavedFields()
         (
             IOobject
             (
-                "AUSMPlus::phi",
+                "AUSMPlusUp::phi",
                 mesh_.time().timeName(),
                 mesh_
             ),
@@ -80,7 +84,7 @@ void Foam::fluxSchemes::AUSMPlus::createSavedFields()
 }
 
 
-void Foam::fluxSchemes::AUSMPlus::calculateFluxes
+void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
 (
     const scalar& rhoOwn, const scalar& rhoNei,
     const vector& UOwn, const vector& UNei,
@@ -108,35 +112,32 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12(0.5*(cOwn + cNei));
+    scalar c12 = 0.5*(cOwn + cNei);
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
-    scalar magMaOwn(mag(MaOwn));
-    scalar magMaNei(mag(MaNei));
 
-    scalar Ma4Own(max(MaOwn, 0.0));
-    scalar P5Own(pos0(MaOwn));
-    if (magMaOwn < 1)
-    {
-        Ma4Own = 0.25*sqr(MaOwn + 1.0) + beta_*sqr(sqr(MaOwn) - 1.0);
-        P5Own =
-            0.25*sqr(MaOwn + 1.0)*(2.0 - MaOwn)
-          + alpha_*MaOwn*sqr(sqr(MaOwn) - 1.0);
-    }
+    scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+//     scalar M0Sqr(min(1.0, sqr(Mbar)));
+//     scalar M0(sqrt(M0Sqr));
+    scalar fa(1.0);//max(M0*(2.0 - M0), 1e-10));
+    alpha_ = 3.0/16.0*(5.0*sqr(fa) - 4.0);
+    scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
-    scalar Ma4Nei(min(MaNei, 0.0));
-    scalar P5Nei(neg(MaNei));
-    if (magMaNei < 1)
-    {
-        Ma4Nei = -0.25*sqr(MaNei - 1.0) - beta_*sqr(sqr(MaNei) - 1.0);
-        P5Nei =
-            0.25*sqr(MaNei - 1.0)*(2.0 + MaNei)
-          - alpha_*MaNei*sqr(sqr(MaNei) - 1.0);
-    }
-    scalar Ma12(Ma4Own + Ma4Nei);
-    scalar P12(P5Own*pOwn + P5Nei*pNei);
+    scalar Mp =
+      - Kp_/fa
+       *max(1.0 - sigma_*sqr(Mbar), 0.0)
+       *(pNei - pOwn)
+       /(rho12*sqr(c12));
+
+    scalar P5Own = P5(MaOwn, 1);
+    scalar P5Nei = P5(MaNei, -1);
+
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*fa*c12*(UvNei - UvOwn);
+
+    scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
+    scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
 
     phi = magSf*c12*Ma12;
 
@@ -167,7 +168,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 }
 
 
-void Foam::fluxSchemes::AUSMPlus::calculateFluxes
+void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
 (
     const scalarList& alphasOwn, const scalarList& alphasNei,
     const scalarList& rhosOwn, const scalarList& rhosNei,
@@ -195,35 +196,32 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar c12(0.5*(cOwn + cNei));
+    scalar c12 = 0.5*(cOwn + cNei);
 
     // Compute split Mach numbers
     scalar MaOwn(UvOwn/c12);
     scalar MaNei(UvNei/c12);
-    scalar magMaOwn(mag(MaOwn));
-    scalar magMaNei(mag(MaNei));
 
-    scalar Ma4Own(max(MaOwn, 0.0));
-    scalar P5Own(pos0(MaOwn));
-    if (magMaOwn < 1)
-    {
-        Ma4Own = 0.25*sqr(MaOwn + 1.0) + beta_*sqr(sqr(MaOwn) - 1.0);
-        P5Own =
-            0.25*sqr(MaOwn + 1.0)*(2.0 - MaOwn)
-          + alpha_*MaOwn*sqr(sqr(MaOwn) - 1.0);
-    }
+    scalar Mbar = sqrt(0.5*(sqr(UvOwn) + sqr(UvNei))/sqr(c12));
+//     scalar M0Sqr(min(1.0, sqr(Mbar)));
+//     scalar M0(sqrt(M0Sqr));
+    scalar fa(1.0);//max(M0*(2.0 - M0), 1e-10));
+    alpha_ = 3.0/16.0*(5.0*sqr(fa) - 4.0);
+    scalar rho12 = 0.5*(rhoOwn + rhoNei);
 
-    scalar Ma4Nei(min(MaNei, 0.0));
-    scalar P5Nei(neg(MaNei));
-    if (magMaNei < 1)
-    {
-        Ma4Nei = -0.25*sqr(MaNei - 1.0) - beta_*sqr(sqr(MaNei) - 1.0);
-        P5Nei =
-            0.25*sqr(MaNei - 1.0)*(2.0 + MaNei)
-          - alpha_*MaNei*sqr(sqr(MaNei) - 1.0);
-    }
-    scalar Ma12(Ma4Own + Ma4Nei);
-    scalar P12(P5Own*pOwn + P5Nei*pNei);
+    scalar Mp =
+      - Kp_/fa
+       *max(1.0 - sigma_*sqr(Mbar), 0.0)
+       *(pNei - pOwn)
+       /(rho12*sqr(c12));
+
+    scalar P5Own = P5(MaOwn, 1);
+    scalar P5Nei = P5(MaNei, -1);
+
+    scalar pu = -Ku_*P5Own*P5Nei*(rhoOwn + rhoNei)*fa*c12*(UvNei - UvOwn);
+
+    scalar Ma12(M4(MaOwn, 1) + M4(MaNei, -1) + Mp);
+    scalar P12(P5Own*pOwn + P5Nei*pNei + pu);
 
     phi = magSf*c12*Ma12;
 
@@ -267,7 +265,7 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 }
 
 
-Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
+Foam::scalar Foam::fluxSchemes::AUSMPlusUp::energyFlux
 (
     const scalar& rhoOwn, const scalar& rhoNei,
     const vector& UOwn, const vector& UNei,
@@ -292,7 +290,7 @@ Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
 }
 
 
-Foam::scalar Foam::fluxSchemes::AUSMPlus::interpolate
+Foam::scalar Foam::fluxSchemes::AUSMPlusUp::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
     const label facei, const label patchi

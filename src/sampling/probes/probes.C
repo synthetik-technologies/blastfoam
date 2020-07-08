@@ -72,7 +72,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
 
     forAll(*this, probei)
     {
-        const vector& location = origPoints_[probei];
+        const vector& location = operator[](probei);
 
         const label celli = mesh.findCell(location);
 
@@ -84,7 +84,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
             foundList[probei] = true;
             if (debug)
             {
-                Pout<< "probes : found point " << location
+                Pout<< "probes : found point " << origPoints_[probei]
                     << " in cell " << elementList_[probei]
                     << " and face " << faceList_[probei] << endl;
             }
@@ -179,7 +179,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         return;
     }
 
-//     if (adjustLocations_ && nBadProbes > 0)
+    if (adjustLocations_ && nBadProbes > 0)
     {
         if (print)
         {

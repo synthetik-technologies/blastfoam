@@ -8,5 +8,6 @@ HLL/HLL.C
 Kurganov/Kurganov.C
 Tadmor/Tadmor.C
 AUSMPlus/AUSMPlus.C
+AUSMPlusUp/AUSMPlusUp.C
 
 LIB = $(BLAST_LIBBIN)/libfluxSchemes
