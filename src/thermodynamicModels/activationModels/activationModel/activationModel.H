@@ -106,6 +106,14 @@ protected:
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const = 0;
 
+        //- Return the center of centerOfMass
+        //  Only valid for a single detonation point
+        vector centerOfMass
+        (
+            const fvMesh& mesh,
+            const volScalarField& alpha
+        ) const;
+
 
 public:
 

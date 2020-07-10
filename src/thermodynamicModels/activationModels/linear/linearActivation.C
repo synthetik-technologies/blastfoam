@@ -48,10 +48,9 @@ Foam::activationModels::linearActivation::linearActivation
 )
 :
     activationModel(mesh, dict, phaseName),
-    useCOM_(dict.lookupOrDefault("useCOM", false)),
     detonationPoints_
     (
-        useCOM_
+        dict.lookupOrDefault("useCOM", false)
       ? List<vector>(1, Zero)
       : dict.lookupType<List<vector>>("points")
     ),
@@ -65,15 +64,13 @@ Foam::activationModels::linearActivation::linearActivation
         )
     );
 
-    if (useCOM_)
+    if (dict.lookupOrDefault("useCOM", false))
     {
-        scalarField Vtot(mesh.V()*alpha.primitiveField());
-        vectorField m1(Vtot*mesh.C().primitiveField());
-        detonationPoints_[0] = gSum(m1)/gSum(Vtot);
+        detonationPoints_[0] =  this->centerOfMass(mesh, alpha);
     }
 
     Info<< "Initiation Points: " << nl
-        << detonationPoints_ << nl
+        << "    " << detonationPoints_ << nl
         << "Detonation speed: " << vDet_ << " [m/s]" << nl
         << endl;
 

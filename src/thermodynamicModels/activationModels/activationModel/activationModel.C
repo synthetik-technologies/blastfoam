@@ -102,6 +102,17 @@ Foam::activationModel::~activationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::vector Foam::activationModel::centerOfMass
+(
+    const fvMesh& mesh,
+    const volScalarField& alpha
+) const
+{
+    scalarField Vtot(mesh.V()*alpha.primitiveField());
+    vectorField m1(Vtot*mesh.C().primitiveField());
+    return gSum(m1)/gSum(Vtot);
+}
+
 
 void Foam::activationModel::limit()
 {
