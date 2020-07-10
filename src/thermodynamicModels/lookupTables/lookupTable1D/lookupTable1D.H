@@ -57,9 +57,6 @@ class lookupTable1D
 {
 // Private data
 
-    //- File name
-    const fileName file_;
-
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
@@ -79,7 +76,7 @@ class lookupTable1D
     scalarField data_;
 
     //- Read the table
-    void readTable();
+    void readTable(const fileName& file);
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
     inline void findIndex(const scalar& x, label& I, scalar& f) const;
@@ -92,12 +89,29 @@ class lookupTable1D
 public:
 
     // Constructors
-    lookupTable1D
-    (
-        const fileName& fileName,
-        const word& mod,
-        const word& xMod
-    );
+
+        //- Empty constructor
+        lookupTable1D();
+
+        //- Construct from file
+        lookupTable1D
+        (
+            const fileName& file,
+            const word& mod,
+            const word& xMod
+        );
+
+        //- Construct from data given list of x and data
+        //  x can be in real or xMod space
+        lookupTable1D
+        (
+            const scalarField& x,
+            const scalarField& data,
+            const word& mod,
+            const word& xMod,
+            const bool inReal
+        );
+
 
     //- Destructor
     virtual ~lookupTable1D();
@@ -116,6 +130,16 @@ public:
 
         //- Return second derivative w.r.t. x
         scalar d2FdX2(const scalar& x) const;
+
+        //- Set data
+        void set
+        (
+            const scalarField& x,
+            const scalarField& data,
+            const word& mod,
+            const word& xMod,
+            const bool inReal
+        );
 };
 
 

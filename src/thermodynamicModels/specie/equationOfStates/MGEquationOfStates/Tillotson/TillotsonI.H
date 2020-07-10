@@ -41,10 +41,16 @@ Foam::scalar Foam::Tillotson<Specie>::p
         return pCav_;
     }
 
+    scalar eTot = e;
+    if (rho > rho0_)
+    {
+        eTot += EcTable_.lookup(rho);
+    }
+
     scalar mu(rho/rho0_ - 1.0);
     return
         p0_
-      + omega_*rho*(e - e0_)
+      + omega_*rho*(eTot - e0_)
       + A_*mu
       + B_*sqr(mu)
       + C_*pow3(mu);
@@ -81,6 +87,11 @@ Foam::scalar Foam::Tillotson<Specie>::delta
     const scalar& e
 ) const
 {
+    if (rho < rhoCav_)
+    {
+        return 0.0;
+    }
+
     scalar mu(rho/rho0_ - 1.0);
     return
         e0_
@@ -102,9 +113,9 @@ Foam::scalar Foam::Tillotson<Specie>::speedOfSound
     const scalar& Cv
 ) const
 {
-    if (rho < small)
+    if (rho < rhoCav_)
     {
-        return 0.0;// sqrt(k_*pCav_/max(rho, 1e-10));
+        return sqrt(k_*pCav_/max(rho, 1e-10));
     }
 
     scalar gamma(Gamma(rho, e, T, Cv));
@@ -142,24 +153,24 @@ Foam::scalar Foam::Tillotson<Specie>::Gamma
     const scalar& Cv
 ) const
 {
-//     if (rho < rhoCav_)
-//     {
-//         return k_;
-//     }
-//     else if (rho < rho0_)
-//     {
-//         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
-//
-//         return
-//             1.0
-//            /(
-//                 max(rho, 1e-10)
-//                *(
-//                     x/(rhoCav_*k_)
-//                   + (1.0 - x)/(rho0_*(omega_ + 1.0))
-//                 )
-//             );
-//     }
+    if (rho < rhoCav_)
+    {
+        return k_;
+    }
+    else if (rho < rho0_)
+    {
+        scalar x((rho - rho0_)/(rhoCav_ - rho0_));
+
+        return
+            1.0
+           /(
+                max(rho, 1e-10)
+               *(
+                    x/(rhoCav_*k_)
+                  + (1.0 - x)/(rho0_*(omega_ + 1.0))
+                )
+            );
+    }
 
     return omega_ + 1.0;
 }
@@ -217,36 +228,7 @@ Foam::scalar Foam::Tillotson<Specie>::E
     const scalar& T
 ) const
 {
-    if (rho < rho0_)
-    {
-        return 0.0;
-    }
-
-    scalar x = rho0_;
-    scalar y = 0.0;
-    scalar dx = 0.5;
-    label nSteps = max(ceil((rho - rho0_)/dx), 1);
-    dx = (rho - rho0_)/scalar(nSteps);
-    for (label i = 0; i < nSteps; i++)
-    {
-        scalar yOld = y;
-
-        scalar k1 = p(x, y, T)/sqr(x);
-        y = yOld + dx*0.5*k1;
-
-        x += 0.5*dx;
-        scalar k2 = p(x, y, T)/sqr(x);
-        y = yOld + dx*0.5*k2;
-        scalar k3 = p(x, y, T)/sqr(x);
-
-        y = yOld + dx*k3;
-        x += 0.5*dx;
-        scalar k4 = p(x, y, T)/sqr(x);
-
-        y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
-
-    }
-    return y;
+    return 0.0;
 }
 
 

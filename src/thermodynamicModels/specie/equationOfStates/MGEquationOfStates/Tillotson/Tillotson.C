@@ -43,7 +43,61 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
     k_(dict.subDict("equationOfState").lookupType<scalar>("k")),
     A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
     B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    C_(dict.subDict("equationOfState").lookupType<scalar>("C"))
-{}
+    C_(dict.subDict("equationOfState").lookupType<scalar>("C")),
+    EcTable_()
+{
+    //- Dummy temperature
+    scalar T(273.0);
+
+    label tableSize(100);
+    scalarField rhof(tableSize + 1, rho0_);
+    scalarField ecf(tableSize + 1, 0.0);
+    label I = 1;
+
+    scalar x = rho0_;
+    scalar y = 0.0;
+    label nSteps = 10000;
+    scalar dx = 0.5*rho0_/scalar(nSteps);
+
+
+    for (label i = 0; i < nSteps; i++)
+    {
+        scalar yOld = y;
+
+        scalar k1 =
+            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        y = yOld + dx*0.5*k1;
+
+        x += 0.5*dx;
+        scalar k2 =
+            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        y = yOld + dx*0.5*k2;
+        scalar k3 =
+            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+
+        y = yOld + dx*k3;
+        x += 0.5*dx;
+        scalar k4 =
+            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+
+        y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
+
+        if (((i + 1) % (nSteps/tableSize)) == 0)
+        {
+            rhof[I] = x;
+            ecf[I] = y;
+            I++;
+        }
+    }
+
+    EcTable_.set
+    (
+        rhof,
+        ecf,
+        "none",
+        "none",
+        true
+    );
+}
 
 // ************************************************************************* //

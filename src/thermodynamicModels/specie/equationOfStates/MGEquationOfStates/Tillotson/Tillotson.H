@@ -47,6 +47,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "lookupTable1D.H"
 
 namespace Foam
 {
@@ -82,6 +83,10 @@ class Tillotson
     scalar A_;
     scalar B_;
     scalar C_;
+
+    //- Stored cavitation energies
+    lookupTable1D EcTable_;
+
 
 public:
 
