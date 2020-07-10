@@ -62,11 +62,12 @@ class AUSMPlusUp
     // Private Data
 
         //- Coefficients
-        scalar alpha_ = 3.0/16.0;
         scalar beta_ = 0.125;
         scalar Kp_ = 0.25;
         scalar Ku_ = 0.75;
         scalar sigma_ = 1.0;
+        scalar fa_ = 1.0;
+        scalar alpha_ = 3.0/16.0*(5.0*sqr(fa_) - 4.0);
 
         //- Saved flux
         tmp<surfaceScalarField> phi_;
