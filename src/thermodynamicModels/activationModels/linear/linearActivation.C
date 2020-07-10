@@ -48,7 +48,13 @@ Foam::activationModels::linearActivation::linearActivation
 )
 :
     activationModel(mesh, dict, phaseName),
-    detonationPoints_(dict.lookupType<List<vector>>("points")),
+    useCOM_(dict.lookupOrDefault("useCOM", false)),
+    detonationPoints_
+    (
+        useCOM_
+      ? List<vector>(1, Zero)
+      : dict.lookupType<List<vector>>("points")
+    ),
     vDet_("vDet", dimVelocity, dict)
 {
     const volScalarField& alpha
@@ -58,6 +64,14 @@ Foam::activationModels::linearActivation::linearActivation
             IOobject::groupName("alpha", phaseName)
         )
     );
+
+    if (useCOM_)
+    {
+        scalarField Vtot(mesh.V()*alpha.primitiveField());
+        vectorField m1(Vtot*mesh.C().primitiveField());
+        detonationPoints_[0] = gSum(m1)/gSum(Vtot);
+    }
+
     Info<< "Initiation Points: " << nl
         << detonationPoints_ << nl
         << "Detonation speed: " << vDet_ << " [m/s]" << nl

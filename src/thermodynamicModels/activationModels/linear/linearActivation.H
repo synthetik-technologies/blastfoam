@@ -55,6 +55,10 @@ class linearActivation
 {
 // Private data
 
+        //- Is the center of mass used to define a single detonation
+        //  point
+        Switch useCOM_;
+
         //- Detonation  points
         List<vector> detonationPoints_;
 
