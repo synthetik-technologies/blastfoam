@@ -1073,27 +1073,6 @@ void Foam::adaptiveFvMesh::setProtectedCells()
         }
     }
 
-    const dictionary& refineDict
-    (
-        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
-    );
-    wordList protectedPatches
-    (
-        refineDict.lookupOrDefault("protectedPatches", wordList())
-    );
-    if (protectedPatches.size())
-    {
-        forAll(protectedPatches, patchi)
-        {
-            const polyPatch& p = this->boundaryMesh()[protectedPatches[patchi]];
-            forAll(p.faceCells(), facei)
-            {
-                protectedCell_.set(p.faceCells()[facei], 1);
-                nProtected_++;
-            }
-        }
-    }
-
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Bit tricky since proc face might be one more refined than the owner since
@@ -1684,6 +1663,29 @@ bool Foam::adaptiveFvMesh::update()
             refineCell
         );
 
+        // Update protected patches
+        const dictionary& refineDict
+        (
+            dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+        );
+        wordList protectedPatches
+        (
+            refineDict.lookupOrDefault("protectedPatches", wordList())
+        );
+        if (protectedPatches.size())
+        {
+            forAll(protectedPatches, patchi)
+            {
+                const polyPatch& p =
+                    this->boundaryMesh()[protectedPatches[patchi]];
+                forAll(p.faceCells(), facei)
+                {
+                    label own = faceOwner()[facei + p.start()];
+                    refineCell.set(own, 0);
+                }
+            }
+        }
+
         if (globalData().nTotalCells() < maxCells)
         {
             // Extend with a buffer layer to prevent neighbouring points
@@ -1760,6 +1762,22 @@ bool Foam::adaptiveFvMesh::update()
                     }
                 }
             }
+
+            // Mark as already refined
+            if (protectedPatches.size())
+            {
+                forAll(protectedPatches, patchi)
+                {
+                    const polyPatch& p =
+                        this->boundaryMesh()[protectedPatches[patchi]];
+                    forAll(p.faceCells(), facei)
+                    {
+                        label own = faceOwner()[facei + p.start()];
+                        refineCell.set(own, true);
+                    }
+                }
+            }
+
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (
