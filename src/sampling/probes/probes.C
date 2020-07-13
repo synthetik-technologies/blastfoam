@@ -114,6 +114,11 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
             {
                 facei = faceList_[probei];
             }
+            else
+            {
+                elementList_[probei] = -1;
+                faceList_[probei] = -1;
+            }
         }
         reduce(facei, maxOp<label>());
 
