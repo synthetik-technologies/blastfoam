@@ -54,7 +54,11 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::probes::findElements(const fvMesh& mesh, const bool print)
+void Foam::probes::findElements
+(
+    const fvMesh& mesh,
+    const bool print
+)
 {
     if (debug)
     {
@@ -84,7 +88,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
             foundList[probei] = true;
             if (debug)
             {
-                Pout<< "probes : found point " << origPoints_[probei]
+                Pout<< "probes : found point " << location
                     << " in cell " << elementList_[probei]
                     << " and face " << faceList_[probei] << endl;
             }
@@ -100,7 +104,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
     // Check if all probes have been found.
     forAll(elementList_, probei)
     {
-        const vector& location = origPoints_[probei];
+        const vector& location = operator[](probei);
         label celli = elementList_[probei];
         label facei = -1;
 
@@ -124,7 +128,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
 
         if (celli == -1)
         {
-            if (Pstream::master() && print)
+            if (print)
             {
                 WarningInFunction
                     << "Did not find location " << location
@@ -179,12 +183,14 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         }
     }
 
+    needUpdate_ = false;
+
     if (!returnReduce(mesh.nFaces(), sumOp<label>()))
     {
         return;
     }
 
-    if (adjustLocations_ && nBadProbes > 0)
+    if (adjustLocations_&& nBadProbes > 0)
     {
         if (print)
         {
@@ -196,6 +202,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
 
         forAll(foundList, probei)
         {
+            vector origPoint = operator[](probei);
             if (foundList[probei])
             {
                 continue;
@@ -214,7 +221,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 (
                     mag
                     (
-                        origPoints_[probei]
+                        origPoint
                       - mesh.faceCentres()[faceI]
                     )
                 );
@@ -241,7 +248,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                 if (print)
                 {
                     Pout<< "Moved probe " << probei << nl
-                        << "    Original position: " << origPoints_[probei] << nl
+                        << "    Original position: " << origPoint << nl
                         << "    New position: " << operator[](probei) << nl
                         << "    Located in cell " << elementList_[probei]
                         << ", face " << faceList_[probei] << endl;
@@ -476,7 +483,7 @@ Foam::label Foam::probes::prepare()
 
             forAll(*this, probei)
             {
-                fout<< "# Probe " << probei << ' ' << origPoints_[probei]
+                fout<< "# Probe " << probei << ' ' << operator[](probei)
                     << endl;
             }
 
@@ -582,12 +589,18 @@ Foam::probes::~probes()
 bool Foam::probes::read(const dictionary& dict)
 {
     dict.lookup("probeLocations") >> *this;
-    origPoints_ = refCast<pointField>(*this);
     dict.lookup("fields") >> fieldSelection_;
 
 
     dict.readIfPresent("fixedLocations", fixedLocations_);
-    if (dict.readIfPresent("interpolationScheme", interpolationScheme_))
+    if
+    (
+        dict.readIfPresent
+        (
+            "interpolationScheme",
+            interpolationScheme_
+        )
+    )
     {
         if (!fixedLocations_ && interpolationScheme_ != "cell")
         {
@@ -603,7 +616,6 @@ bool Foam::probes::read(const dictionary& dict)
 
     // Initialise cells to sample from supplied locations
     findElements(mesh_, true);
-
     prepare();
 
     return true;
@@ -618,6 +630,10 @@ bool Foam::probes::execute()
 
 bool Foam::probes::write()
 {
+    if (needUpdate_)
+    {
+        findElements(mesh_, true);
+    }
     if (size() && prepare())
     {
         sampleAndWrite(scalarFields_);
@@ -648,7 +664,7 @@ void Foam::probes::updateMesh(const mapPolyMesh& mpm)
 
     if (fixedLocations_)
     {
-        findElements(mesh_, false);
+        needUpdate_ = true;
     }
     else
     {

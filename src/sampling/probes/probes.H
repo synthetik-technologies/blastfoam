@@ -137,11 +137,7 @@ protected:
         //- Load fields from files (not from objectRegistry)
         bool loadFromFiles_;
 
-        //- Original positions
-        pointField origPoints_;
-
-
-        // Read from dictonary
+        // Read from dictionary
 
             //- Names of fields to probe
             wordReList fieldSelection_;
@@ -161,6 +157,9 @@ protected:
 
             //- Are the probes appended to the end of a previous output
             Switch append_;
+
+            //- Switch if update is needed before sampling
+            bool needUpdate_;
 
 
         // Calculated
@@ -209,7 +208,11 @@ protected:
         ) const;
 
         //- Find cells and faces containing probes
-        virtual void findElements(const fvMesh&, const bool print);
+        virtual void findElements
+        (
+            const fvMesh&,
+            const bool print
+        );
 
         //- Classify field type and Open/close file streams,
         //  returns number of fields to sample
