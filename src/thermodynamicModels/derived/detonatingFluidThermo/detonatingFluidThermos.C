@@ -45,15 +45,15 @@ namespace Foam
         JWL
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         idealGas,
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     addDetonatingFluidThermos
     (
@@ -65,15 +65,15 @@ namespace Foam
         LSZK
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         idealGas,
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
 //- Stiffened gas
     addDetonatingFluidThermos
@@ -86,15 +86,15 @@ namespace Foam
         JWL
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         stiffenedGas,
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        stiffenedGas,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     addDetonatingFluidThermos
     (
@@ -106,15 +106,15 @@ namespace Foam
         LSZK
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         stiffenedGas,
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        stiffenedGas,
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
 //- Murnaghan
     addDetonatingFluidThermos
@@ -127,15 +127,15 @@ namespace Foam
         JWL
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         Murnaghan,
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        Murnaghan,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     addDetonatingFluidThermos
     (
@@ -147,56 +147,56 @@ namespace Foam
         LSZK
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         Murnaghan,
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        Murnaghan,
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
-// //- Birch-Murnaghan 2
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2,
-//         constTransport,
-//         MGEquationOfState,
-//         JWL
-//     );
-//
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2,
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
-//
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2,
-//         constTransport,
-//         MGEquationOfState,
-//         LSZK
-//     );
-//
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2,
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+//- Birch-Murnaghan 2
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2,
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
 
 //- Birch-Murnaghan 3
@@ -210,15 +210,15 @@ namespace Foam
         JWL
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan3,
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     addDetonatingFluidThermos
     (
@@ -230,15 +230,56 @@ namespace Foam
         LSZK
     );
 
-//     addDetonatingFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan3,
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan3,
+        constTransport,
+        equationOfState,
+        BKW
+    );
+
+//- Cochran Chan
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        CochranChan,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        CochranChan,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        CochranChan,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        CochranChan,
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
 // Blended JWL
     addDetonatingFluidThermo
