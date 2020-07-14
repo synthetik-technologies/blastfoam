@@ -195,7 +195,7 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<Thermo>::speedOfSound() const
 {
-    return Thermo::blendedVolScalarFieldProperty
+    return Thermo::blendedVolScalarFieldPropertySqr
     (
         "speedOfSound",
         dimVelocity,
@@ -213,7 +213,7 @@ template<class Thermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<Thermo>::speedOfSound(const label patchi) const
 {
-    return Thermo::blendedPatchFieldProperty
+    return Thermo::blendedPatchFieldPropertySqr
     (
         &Thermo::thermoType1::speedOfSound,
         &Thermo::thermoType2::speedOfSound,

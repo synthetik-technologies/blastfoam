@@ -57,7 +57,7 @@ RDX
         {
             transport   const;
             thermo      eConst;
-            equationOfState JWL;
+            equationOfState JWLC;
         }
         equationOfState
         {
