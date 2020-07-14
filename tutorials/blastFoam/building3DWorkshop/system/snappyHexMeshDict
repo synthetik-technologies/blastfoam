@@ -20,7 +20,7 @@ addLayers       off;
 
 geometry
 {
-    wall
+    walls
     {
         type triSurfaceMesh;
         file "L_Wall.stl";
@@ -71,7 +71,7 @@ castellatedMeshControls
 
     refinementSurfaces
     {
-        wall
+        walls
         {
             level (0 0);
             patchInfo { type wall; }

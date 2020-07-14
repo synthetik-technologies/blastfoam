@@ -17,7 +17,7 @@ FoamFile
 
 application     blastFoam;
 
-startFrom       latestTime;
+startFrom       startTime;
 
 startTime       0;
 
@@ -59,22 +59,22 @@ functions
     {
         type                impulse;
 
-        writeControl    writeTime;
-        pRef            101298;
+        writeControl        writeTime;
+        pRef                101298;
     }
     overpressure
     {
         type                overpressure;
 
-        writeControl    writeTime;
-        store           yes;
-        pRef            101298;
+        writeControl        writeTime;
+        store               yes;
+        pRef                101298;
     }
     maxPImpulse
     {
         type                fieldMax;
 
-        writeControl    writeTime;
+        writeControl        writeTime;
         fields
         (
             overpressure
@@ -84,12 +84,12 @@ functions
 
     surfaces
     {
-        type      surfaces;
-        writeControl   adjustableRunTime;
-        writeInterval  1e-4;
-        interpolate false;
+        type                surfaces;
+        writeControl        adjustableRunTime;
+        writeInterval       1e-4;
+        interpolate         false;
         interpolationScheme cellPointFace;
-        surfaceFormat  vtk;
+        surfaceFormat       vtk;
         fields ( p );
         surfaces
         (
@@ -107,49 +107,53 @@ functions
             }
             zNormal
             {
-                type            cuttingPlane;
-                planeType       pointAndNormal;
+                type        cuttingPlane;
+                planeType   pointAndNormal;
                 pointAndNormalDict
                 {
                     point   (0 0 0.5);
                     normal  (0 0 1);
                 }
-                interpolate     true;
+                interpolate true;
             }
             yNormal
             {
-                type            cuttingPlane;
-                planeType       pointAndNormal;
+                type        cuttingPlane;
+                planeType   pointAndNormal;
                 pointAndNormalDict
                 {
                     point   (0 0 0.5);
                     normal  (0 1 0);
                 }
-                interpolate     true;
+                interpolate true;
             }
             xNormal
             {
-                type            cuttingPlane;
-                planeType       pointAndNormal;
+                type        cuttingPlane;
+                planeType   pointAndNormal;
                 pointAndNormalDict
                 {
                     point   (0 0 0.5);
                     normal  (1 0 0);
                 }
-                interpolate     true;
+                interpolate true;
             }
         );
     }
 
     pressureProbes
     {
-        type            probes;
-        writeControl    timeStep;
-        writeInterval   1;
+        type                probes;
+        writeControl        timeStep;
+        writeInterval       1;
+        adjustLocations     yes;
+        append yes;
         probeLocations
         (
-            // probe locations in ( x y z ) format, unlimited number -- needs to be inside the domain!
-            ( 1.999 0.001 0.5)
+            // probe locations in ( x y z ) format
+            // unlimited number -- needs to be inside the domain!
+            ( 2.0 0 0.5)    // In mesh
+            (0 2.1 1.0)     // Not in mesh
             // etc.
         );
         fields
@@ -159,5 +163,6 @@ functions
         );
     }
 };
+
 
 // ************************************************************************* //

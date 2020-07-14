@@ -17,8 +17,10 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 errorEstimator  densityGradient;
 
+protectedPatches (walls);
+
 // How often to refine
-refineInterval  3;
+refineInterval  2;
 
 loadBalance
 {
@@ -35,7 +37,7 @@ lowerRefineLevel 0.1;
 unrefineLevel   0.1;
 
 // Have slower than 2:1 refinement
-nBufferLayers   2;
+nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;
