@@ -69,7 +69,8 @@ Foam::functionObjects::speedOfSound::speedOfSound
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero)
+                dimensionedScalar("0", dimVelocity, Zero),
+                "zeroGradient"
             )
         );
     }
@@ -117,7 +118,8 @@ bool Foam::functionObjects::speedOfSound::read
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero)
+                dimensionedScalar("0", dimVelocity, Zero),
+                "zeroGradient"
             )
         );
     }

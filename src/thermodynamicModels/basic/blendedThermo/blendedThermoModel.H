@@ -54,7 +54,7 @@ namespace Foam
 template<class BasicThermo, class Thermo1, class Thermo2>
 class blendedThermoModel
 :
-    public fluidThermoModel,
+    public BasicThermo,
     public Thermo1,
     public Thermo2
 {
@@ -117,6 +117,37 @@ protected:
         //- Return a scalarField of the given property on a cell set
         template<class Method1, class Method2, class ... Args>
         tmp<scalarField> blendedCellSetProperty
+        (
+            Method1 psiMethod1,
+            Method2 psiMethod2,
+            const labelList& cells,
+            const Args& ... args
+        ) const;
+
+        //- Return a volScalarField of the given property
+        template<class Method1, class Method2, class ... Args>
+        tmp<volScalarField> blendedVolScalarFieldPropertySqr
+        (
+            const word& psiName,
+            const dimensionSet& psiDim,
+            Method1 psiMethod1,
+            Method2 psiMethod2,
+            const Args& ... args
+        ) const;
+
+        //- Return a scalarField of the given property on a patch
+        template<class Method1, class Method2, class ... Args>
+        tmp<scalarField> blendedPatchFieldPropertySqr
+        (
+            Method1 psiMethod1,
+            Method2 psiMethod2,
+            const label patchi,
+            const Args& ... args
+        ) const;
+
+        //- Return a scalarField of the given property on a cell set
+        template<class Method1, class Method2, class ... Args>
+        tmp<scalarField> blendedCellSetPropertySqr
         (
             Method1 psiMethod1,
             Method2 psiMethod2,
@@ -286,8 +317,8 @@ public:
         //- Read residual values
         virtual void read(const dictionary& dict)
         {
-            residualRho_.read(dict);
-            residualAlpha_.read(dict);
+            this->residualRho_.read(dict);
+            this->residualAlpha_.read(dict);
         }
 };
 

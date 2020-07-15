@@ -23,15 +23,15 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1.5e-4;
+endTime         1e-3;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
-writeFormat     ascii;
+writeFormat     binary;
 
-writePrecision  6;
+writePrecision  10;
 
 writeCompression off;
 

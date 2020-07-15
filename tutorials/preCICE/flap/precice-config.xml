@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+
+<precice-configuration>
+
+    <log>
+        <sink filter="%Severity% > trace and %Rank% = 0" format="---[precice] %ColorizedSeverity% %Message%" enabled="true"/>
+    </log>
+
+    <solver-interface dimensions="3">
+
+    <data:vector name="Forces0"/>
+    <data:vector name="Displacements0"/>
+
+    <mesh name="Fluid-Mesh-Faces">
+        <use-data name="Forces0"/>
+    </mesh>
+
+    <mesh name="Fluid-Mesh-Nodes">
+        <use-data name="Displacements0"/>
+    </mesh>
+
+    <mesh name="Solid">
+        <use-data name="Forces0"/>
+        <use-data name="Displacements0"/>
+    </mesh>
+
+    <participant name="Fluid">
+        <use-mesh name="Fluid-Mesh-Faces" provide="yes"/>
+        <use-mesh name="Fluid-Mesh-Nodes" provide="yes"/>
+        <use-mesh name="Solid" from="Calculix"/>
+        <write-data name="Forces0" mesh="Fluid-Mesh-Faces"/>
+        <read-data name="Displacements0" mesh="Fluid-Mesh-Nodes"/>
+        <mapping:rbf-thin-plate-splines direction="write" from="Fluid-Mesh-Faces" to="Solid" constraint="conservative" y-dead="true" />
+        <mapping:rbf-thin-plate-splines direction="read" from="Solid" to="Fluid-Mesh-Nodes" constraint="consistent"/>
+        <watch-point mesh="Solid" name="point1" coordinate="-0.05;0;1" />
+    </participant>
+
+    <participant name="Calculix">
+        <use-mesh name="Solid" provide="yes"/>
+        <read-data name="Forces0" mesh="Solid"/>
+        <write-data name="Displacements0" mesh="Solid"/>
+    </participant>
+
+    <m2n:sockets from="Fluid" to="Calculix" />
+
+    <coupling-scheme:serial-explicit>
+        <time-window-size value="1e-5"/>
+        <max-time value="5e-3"/>
+        <participants first="Fluid" second="Calculix"/>
+        <exchange data="Forces0" mesh="Solid" from="Fluid" to="Calculix"/>
+        <exchange data="Displacements0" mesh="Solid" from="Calculix" to="Fluid"/>
+    </coupling-scheme:serial-explicit>
+
+    </solver-interface>
+
+</precice-configuration>

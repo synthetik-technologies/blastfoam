@@ -209,6 +209,7 @@ namespace Foam
 template<class Type>
 void Foam::rawSurfaceWriter::writeTemplate
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
@@ -304,6 +305,7 @@ Foam::rawSurfaceWriter::~rawSurfaceWriter()
 
 void Foam::rawSurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,

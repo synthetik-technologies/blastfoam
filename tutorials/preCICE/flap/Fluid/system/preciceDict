@@ -1,0 +1,54 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      preciceDict;
+}
+
+preciceConfig "precice-config.xml";
+
+participant Fluid;
+
+modules (FSI);
+
+interfaces
+{
+  Interface1
+  {
+    mesh              Fluid-Mesh-Faces;
+    patches           (flap);
+    locations         faceCenters;
+
+    readData
+    (
+    );
+
+    writeData
+    (
+      Forces0
+    );
+  };
+
+  Interface2
+  {
+    mesh              Fluid-Mesh-Nodes;
+    patches           (flap);
+    locations         faceNodes;
+
+    readData
+    (
+      Displacements0
+    );
+
+    writeData
+    (
+    );
+  };
+};
+
+FSI
+{
+    solverType compressible;
+}

@@ -17,7 +17,7 @@ FoamFile
 
 defaultFieldValues
 (
-    volScalarFieldValue alpha.RDX 0
+    volScalarFieldValue alpha.ANFO 0
     volVectorFieldValue U (0 0 0)
 );
 
@@ -30,7 +30,7 @@ regions
         radius 0.008;
         fieldValues
         (
-            volScalarFieldValue alpha.RDX 1
+            volScalarFieldValue alpha.ANFO 1
         );
     }
     cylinderToCell

@@ -5,8 +5,9 @@
     \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-07-04-2020   Jeff Heylmun:  | Added additional checks for mesh created with
-                            | snappyHexMesh
+21-05-2020  Jeff Heylmun:   Modified original dynamicRefineBalanceFvMesh class
+                            to be more appilcable to compressible flows.
+                            Improved compatibility with snappyHexMesh.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -69,6 +70,10 @@ Description
 
     If you use this software for your scientific work or your publications,
     please don't forget to acknowledge explicitly the use of it.
+
+    Additional modifications not part of the original work include the use of
+    error estimators, improved stability with castellated mesh, and fewer
+    required user inputs.
 
 \*---------------------------------------------------------------------------*/
 

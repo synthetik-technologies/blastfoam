@@ -46,18 +46,6 @@ regions
             volScalarFieldValue alpha.c4    1
         );
     }
-    cylinderToCell // Use cylinder for 3D
-    {
-        p1 (0 0 0.7);
-        p2 (0 0 0.75);
-        radius 0.1;
-        level 5;
-
-        fieldValues
-        (
-            volVectorFieldValue U    (0 0 -400)
-        );
-    }
 );
 
 

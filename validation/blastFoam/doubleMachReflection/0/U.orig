@@ -38,7 +38,7 @@ boundaryField
         code
         #{
             scalar xS = db().time().value()*11.2799 + 0.74402;
-            scalarField x = this->patch().Cf().component(0);
+            scalarField x(this->patch().Cf().component(0));
 
             operator==(neg0(x-xS)*vector(7.1477, -4.125, 0));
         #};

@@ -56,6 +56,7 @@ License
 #include "BWR.H"
 #include "BKW.H"
 #include "DoanNickel.H"
+#include "Tillotson.H"
 
 #include "tabulatedThermo.H"
 #include "tabulatedThermoEOS.H"
@@ -142,6 +143,18 @@ namespace Foam
         MGEquationOfState,
         Tait
     );
+
+    typedef
+        constTransport
+        <
+            thermoModel
+            <
+                eConst
+                <
+                    Tillotson<blastSpecie>
+                >
+            >
+        > constTransporteConstMGEquationOfStateTillotson;
 
     defineThermoTypes
     (

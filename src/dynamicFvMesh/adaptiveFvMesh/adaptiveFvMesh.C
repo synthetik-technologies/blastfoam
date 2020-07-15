@@ -1,14 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-24-10-2019  Jeff Heylmun:   Added runTimeSelectable hexRef class and modified
-                            functions to allow for 2D refinements based on
-                            implementation of Oleg Sutyrinusing, original code
-                            for foam-extend 3.2 by Luca Cornolti
+21-05-2020  Jeff Heylmun:   Modified original dynamicRefineBalanceFvMesh class
+                            to be more appilcable to compressible flows.
+                            Improved compatibility with snappyHexMesh.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -222,6 +221,12 @@ void Foam::adaptiveFvMesh::readDict()
     (
         dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
     );
+    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
+
+    if (!refineDict.found("correctFluxes"))
+    {
+        return;
+    }
 
     List<Pair<word>> fluxVelocities = List<Pair<word>>
     (
@@ -233,8 +238,6 @@ void Foam::adaptiveFvMesh::readDict()
     {
         correctFluxes_.insert(fluxVelocities[i][0], fluxVelocities[i][1]);
     }
-
-    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
 }
 
 
@@ -1085,27 +1088,6 @@ void Foam::adaptiveFvMesh::setProtectedCells()
         }
     }
 
-    const dictionary& refineDict
-    (
-        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
-    );
-    wordList protectedPatches
-    (
-        refineDict.lookupOrDefault("protectedPatches", wordList())
-    );
-    if (protectedPatches.size())
-    {
-        forAll(protectedPatches, patchi)
-        {
-            const polyPatch& p = this->boundaryMesh()[protectedPatches[patchi]];
-            forAll(p.faceCells(), facei)
-            {
-                protectedCell_.set(p.faceCells()[facei], 1);
-                nProtected_++;
-            }
-        }
-    }
-
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Bit tricky since proc face might be one more refined than the owner since
@@ -1642,7 +1624,10 @@ bool Foam::adaptiveFvMesh::update()
             setProtectedCells();
         }
 
-        label maxCells = readLabel(refineDict.lookup("maxCells"));
+        label maxCells
+        (
+            refineDict.lookupOrDefault("maxCells", labelMax)
+        );
 
         if (maxCells <= 0)
         {
@@ -1692,6 +1677,29 @@ bool Foam::adaptiveFvMesh::update()
             error_(),
             refineCell
         );
+
+        // Update protected patches
+        const dictionary& refineDict
+        (
+            dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+        );
+        wordList protectedPatches
+        (
+            refineDict.lookupOrDefault("protectedPatches", wordList())
+        );
+        if (protectedPatches.size())
+        {
+            forAll(protectedPatches, patchi)
+            {
+                const polyPatch& p =
+                    this->boundaryMesh()[protectedPatches[patchi]];
+                forAll(p.faceCells(), facei)
+                {
+                    label own = faceOwner()[facei + p.start()];
+                    refineCell.set(own, 0);
+                }
+            }
+        }
 
         if (globalData().nTotalCells() < maxCells)
         {
@@ -1759,6 +1767,32 @@ bool Foam::adaptiveFvMesh::update()
 
         if (time().value() > beginUnrefine)
         {
+            if (nProtected_ > 0)
+            {
+                forAll(protectedCell_, celli)
+                {
+                    if (protectedCell_.get(celli))
+                    {
+                        refineCell.set(celli, true);
+                    }
+                }
+            }
+
+            // Mark as already refined
+            if (protectedPatches.size())
+            {
+                forAll(protectedPatches, patchi)
+                {
+                    const polyPatch& p =
+                        this->boundaryMesh()[protectedPatches[patchi]];
+                    forAll(p.faceCells(), facei)
+                    {
+                        label own = faceOwner()[facei + p.start()];
+                        refineCell.set(own, true);
+                    }
+                }
+            }
+
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (

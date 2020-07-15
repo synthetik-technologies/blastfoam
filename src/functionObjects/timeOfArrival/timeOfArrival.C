@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Time of arrival implementation
+20-06-2020 Jeff Heylmun:    | Time of arrival implementation
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -70,7 +70,8 @@ Foam::functionObjects::timeOfArrival::lookupOrCreate
                 IOobject::NO_WRITE
             ),
             this->mesh_,
-            dimensionedScalar("0", dims, 0.0)
+            dimensionedScalar("0", dims, 0.0),
+            "zeroGradient"
         )
     );
     fieldPtr->store(fieldPtr);

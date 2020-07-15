@@ -29,9 +29,9 @@ License
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
-void Foam::lookupTable1D::readTable()
+void Foam::lookupTable1D::readTable(const fileName& file)
 {
-    fileName fNameExpanded(file_);
+    fileName fNameExpanded(file);
     fNameExpanded.expand();
 
     // Open a stream and check it
@@ -40,7 +40,7 @@ void Foam::lookupTable1D::readTable()
     if (!is.good())
     {
         FatalIOErrorInFunction(is)
-            << "Cannot open file" << file_ << nl
+            << "Cannot open file" << file << nl
             << exit(FatalIOError);
     }
 
@@ -102,6 +102,15 @@ void Foam::lookupTable1D::findIndex
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::lookupTable1D::lookupTable1D()
+:
+    modFunc_(NULL),
+    invModFunc_(NULL),
+    modXFunc_(NULL),
+    invModXFunc_(NULL)
+{}
+
+
 Foam::lookupTable1D::lookupTable1D
 (
     const fileName& file,
@@ -109,7 +118,6 @@ Foam::lookupTable1D::lookupTable1D
     const word& xMod
 )
 :
-    file_(file),
     modFunc_(NULL),
     invModFunc_(NULL),
     modXFunc_(NULL),
@@ -117,9 +125,45 @@ Foam::lookupTable1D::lookupTable1D
 {
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
-    readTable();
+    readTable(file);
 }
 
+
+Foam::lookupTable1D::lookupTable1D
+(
+    const scalarField& x,
+    const scalarField& data,
+    const word& mod,
+    const word& xMod,
+    const bool inReal
+)
+:
+    modFunc_(NULL),
+    invModFunc_(NULL),
+    modXFunc_(NULL),
+    invModXFunc_(NULL),
+    xValues_(x),
+    xModValues_(x),
+    data_(data)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    if (inReal)
+    {
+        forAll(x, i)
+        {
+            xModValues_[i] = modXFunc_(x[i]);
+        }
+    }
+    else
+    {
+        forAll(x, i)
+        {
+            xValues_[i] = invModXFunc_(x[i]);
+            data_[i] = invModFunc_(x[i]);
+        }
+    }
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -202,4 +246,39 @@ Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
         ((fp - fi)/(xp - xi) - (fi - fm)/(xi - xm))/(xp - xm);
 }
 
+
+void Foam::lookupTable1D::set
+(
+    const scalarField& x,
+    const scalarField& data,
+    const word& mod,
+    const word& xMod,
+    const bool inReal
+)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    if (inReal)
+    {
+        xValues_ = x;
+        xModValues_.resize(x.size());
+        data_ = data;
+        forAll(x, i)
+        {
+            xModValues_[i] = modXFunc_(x[i]);
+        }
+    }
+    else
+    {
+        xModValues_ = x;
+        xValues_.resize(x.size());
+        data_ = data;
+        forAll(x, i)
+        {
+            xValues_[i] = invModXFunc_(x[i]);
+            data_[i] = invModFunc_(x[i]);
+        }
+    }
+    Info<<"done"<<endl;
+}
 // ************************************************************************* //

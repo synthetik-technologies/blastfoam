@@ -61,7 +61,9 @@ class RK4SSP
     public timeIntegrator
 {
 
-    // Coefficients
+    //- Coefficients
+    //  a: old time step coefficients
+    //  b: delta coefficients
     scalar a20 = 649.0/1600.0;
     scalar b20 = -10890423.0/25193600.0;
     scalar a21 = 951.0/1600.0;

@@ -204,6 +204,7 @@ void Foam::FacePostProcessing<CloudType>::write()
 
                 writer->write
                 (
+                    this->owner().mesh().time().value(),
                     this->writeTimeDir(),
                     fZone.name(),
                     allPoints,
@@ -215,6 +216,7 @@ void Foam::FacePostProcessing<CloudType>::write()
 
                 writer->write
                 (
+                    this->owner().mesh().time().value(),
                     this->writeTimeDir(),
                     fZone.name(),
                     allPoints,

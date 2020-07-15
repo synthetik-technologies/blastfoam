@@ -65,11 +65,14 @@ Foam::scalar Foam::JWLC<Specie>::speedOfSound
 {
     scalar V(rho0_/max(rho, 1e-10));
     return
-        sqr(V)/rho0_
-       *(
-            A_*R1_*exp(-R1_*V)
-          + B_*R2_*exp(-R2_*V)
-          + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
+        sqrt
+        (
+            sqr(V)/rho0_
+           *(
+                A_*R1_*exp(-R1_*V)
+              + B_*R2_*exp(-R2_*V)
+              + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
+            )
         );
 }
 

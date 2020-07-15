@@ -2,11 +2,14 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+08-06-2020  Jeff Heylmun  : Reload exisiting probe files and move probes to
+                            the nearest cell/face.
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -51,7 +54,11 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::probes::findElements(const fvMesh& mesh, const bool print)
+void Foam::probes::findElements
+(
+    const fvMesh& mesh,
+    const bool print
+)
 {
     if (debug)
     {
@@ -64,6 +71,9 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
     faceList_.clear();
     faceList_.setSize(size());
 
+    boolList foundList(size(), false);
+    label nBadProbes = 0;
+
     forAll(*this, probei)
     {
         const vector& location = operator[](probei);
@@ -73,35 +83,52 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         elementList_[probei] = celli;
         faceList_[probei] = findFaceIndex(mesh, celli, location);
 
-        if (debug && (elementList_[probei] != -1 || faceList_[probei] != -1))
+        if ((elementList_[probei] != -1 || faceList_[probei] != -1))
         {
-            Pout<< "probes : found point " << location
-                << " in cell " << elementList_[probei]
-                << " and face " << faceList_[probei] << endl;
+            foundList[probei] = true;
+            if (debug)
+            {
+                Pout<< "probes : found point " << location
+                    << " in cell " << elementList_[probei]
+                    << " and face " << faceList_[probei] << endl;
+            }
+        }
+
+        reduce(foundList[probei], orOp<bool>());
+        if (!foundList[probei])
+        {
+            nBadProbes++;
         }
     }
-
-
-    boolList foundList(size(), true);
-    label nBadProbes = 0;
 
     // Check if all probes have been found.
     forAll(elementList_, probei)
     {
         const vector& location = operator[](probei);
         label celli = elementList_[probei];
-        label facei = faceList_[probei];
+        label facei = -1;
 
-        // Check at least one processor with cell.
+        label celliOrig = celli;
+
         reduce(celli, maxOp<label>());
+
+        if (Pstream::parRun())
+        {
+            if (celli >= 0 && celli == celliOrig)
+            {
+                facei = faceList_[probei];
+            }
+            else
+            {
+                elementList_[probei] = -1;
+                faceList_[probei] = -1;
+            }
+        }
         reduce(facei, maxOp<label>());
 
         if (celli == -1)
         {
-            foundList[probei] = false;
-            nBadProbes++;
-
-            if (Pstream::master() && print)
+            if (print)
             {
                 WarningInFunction
                     << "Did not find location " << location
@@ -110,7 +137,7 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
         }
         else if (facei == -1)
         {
-            if (Pstream::master() && print)
+            if (print)
             {
                 WarningInFunction
                     << "Did not find location " << location
@@ -122,35 +149,48 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
             // Make sure location not on two domains.
             if (elementList_[probei] != -1 && elementList_[probei] != celli)
             {
-                WarningInFunction
-                    << "Location " << location
-                    << " seems to be on multiple domains:"
-                    << " cell " << elementList_[probei]
-                    << " on my domain " << Pstream::myProcNo()
-                        << " and cell " << celli << " on some other domain."
-                    << endl
-                    << "This might happen if the probe location is on"
-                    << " a processor patch. Change the location slightly"
-                    << " to prevent this." << endl;
+                if (print)
+                {
+                    WarningInFunction
+                        << "Location " << location
+                        << " seems to be on multiple domains:"
+                        << " cell " << elementList_[probei]
+                        << " on my domain " << Pstream::myProcNo()
+                            << " and cell " << celli << " on some other domain."
+                        << endl
+                        << "This might happen if the probe location is on"
+                        << " a processor patch. Change the location slightly"
+                        << " to prevent this." << endl;
+                }
             }
 
             if (faceList_[probei] != -1 && faceList_[probei] != facei)
             {
-                WarningInFunction
-                    << "Location " << location
-                    << " seems to be on multiple domains:"
-                    << " cell " << faceList_[probei]
-                    << " on my domain " << Pstream::myProcNo()
-                        << " and face " << facei << " on some other domain."
-                    << endl
-                    << "This might happen if the probe location is on"
-                    << " a processor patch. Change the location slightly"
-                    << " to prevent this." << endl;
+                if (print)
+                {
+                    WarningInFunction
+                        << "Location " << location
+                        << " seems to be on multiple domains:"
+                        << " cell " << faceList_[probei]
+                        << " on my domain " << Pstream::myProcNo()
+                            << " and face " << facei << " on some other domain."
+                        << endl
+                        << "This might happen if the probe location is on"
+                        << " a processor patch. Change the location slightly"
+                        << " to prevent this." << endl;
+                }
             }
         }
     }
 
-    if (adjustLocations_ && nBadProbes > 0)
+    needUpdate_ = false;
+
+    if (!returnReduce(mesh.nFaces(), sumOp<label>()))
+    {
+        return;
+    }
+
+    if (adjustLocations_&& nBadProbes > 0)
     {
         if (print)
         {
@@ -162,40 +202,48 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
 
         forAll(foundList, probei)
         {
+            vector origPoint = operator[](probei);
             if (foundList[probei])
             {
                 continue;
             }
 
             scalar minDistance = great;
-            label minFacei = -1;
+            label facei = -1;
             for
             (
-                label facei = mesh.nInternalFaces();
-                facei < mesh.nFaces();
-                facei++
+                label faceI = mesh.nInternalFaces();
+                faceI < mesh.nFaces();
+                faceI++
             )
             {
-                vector fci(mesh.faceCentres()[facei]);
-                scalar distance(mag(fci - operator[](probei)));
-                if (distance < minDistance)
+                scalar newDistance
+                (
+                    mag
+                    (
+                        origPoint
+                      - mesh.faceCentres()[faceI]
+                    )
+                );
+                if (newDistance < minDistance)
                 {
-                    minDistance = distance;
-                    minFacei = facei;
+                    facei = faceI;
+                    minDistance = newDistance;
                 }
             }
 
-            scalar trueMinDistance = minDistance;
-            reduce(trueMinDistance, minOp<scalar>());
+            scalar trueMinDistance =
+                returnReduce(minDistance, minOp<scalar>());
 
             if (trueMinDistance == minDistance)
             {
-                vector origPoint(operator[](probei));
-                operator[](probei) = mesh.faceCentres()[minFacei];
-                const polyPatch& p =
-                    mesh.boundaryMesh()[mesh.boundaryMesh().whichPatch(minFacei)];
-                faceList_[probei] = minFacei;
-                elementList_ = p.faceCells()[p.whichFace(minFacei)];
+                label patchi = mesh.boundaryMesh().whichPatch(facei);
+                faceList_[probei] = facei;
+                label localFaceID =
+                    facei - mesh.boundaryMesh()[patchi].start();
+                elementList_[probei] =
+                    mesh.boundaryMesh()[patchi].faceCells()[localFaceID];
+                operator[](probei) = mesh.faceCentres()[faceList_[probei]];
 
                 if (print)
                 {
@@ -205,6 +253,11 @@ void Foam::probes::findElements(const fvMesh& mesh, const bool print)
                         << "    Located in cell " << elementList_[probei]
                         << ", face " << faceList_[probei] << endl;
                 }
+            }
+            else
+            {
+                elementList_[probei] = -1;
+                faceList_[probei] = -1;
             }
         }
         if (print)
@@ -230,7 +283,8 @@ Foam::label Foam::probes::findFaceIndex
         forAll(cellFaces, i)
         {
             label facei = cellFaces[i];
-            vector dist = mesh.faceCentres()[facei] - pt;
+            const vector& cellCentre = mesh.cellCentres()[celli];
+            vector dist = mesh.faceCentres()[facei] - cellCentre;
             if (mag(dist) < minDistance)
             {
                 minDistance = mag(dist);
@@ -539,7 +593,14 @@ bool Foam::probes::read(const dictionary& dict)
 
 
     dict.readIfPresent("fixedLocations", fixedLocations_);
-    if (dict.readIfPresent("interpolationScheme", interpolationScheme_))
+    if
+    (
+        dict.readIfPresent
+        (
+            "interpolationScheme",
+            interpolationScheme_
+        )
+    )
     {
         if (!fixedLocations_ && interpolationScheme_ != "cell")
         {
@@ -555,7 +616,6 @@ bool Foam::probes::read(const dictionary& dict)
 
     // Initialise cells to sample from supplied locations
     findElements(mesh_, true);
-
     prepare();
 
     return true;
@@ -570,6 +630,10 @@ bool Foam::probes::execute()
 
 bool Foam::probes::write()
 {
+    if (needUpdate_)
+    {
+        findElements(mesh_, true);
+    }
     if (size() && prepare())
     {
         sampleAndWrite(scalarFields_);
@@ -600,7 +664,7 @@ void Foam::probes::updateMesh(const mapPolyMesh& mpm)
 
     if (fixedLocations_)
     {
-        findElements(mesh_, false);
+        needUpdate_ = true;
     }
     else
     {

@@ -105,7 +105,10 @@ c4
 
         pMin            101300;  // Above this pressure activation is                                    // "turned on" [Pa]
 
-        points     ((0 0 0.5));     // Detonation points
+        useCOM      yes;            // Use the center of mass
+        radius      0.05;           // Set cell with in 0.05 m of
+                                    // COM
+
         vDet       7850;            // Detonation velocity [m/s]
     }
 

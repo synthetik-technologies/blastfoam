@@ -28,14 +28,18 @@ defaultFieldValues
 
 regions
 (
-    cylinderToCell
+    sphereToCell
     {
         refineInternal yes;
         level 6;
 
-        p1 (0 0.55 -1);
-        p2 (0 0.55 1);
+        centre (0 0.55 0);
         radius 0.05;
+        backup
+        {
+            centre (0 0.55 0);
+            radius 0.25;
+        }
 
         fieldValues
         (
@@ -43,12 +47,21 @@ regions
             volScalarFieldValue alpha.gas   0
         );
     }
-    boxToCell
+    cylinderToCell
     {
         level 5;
         refineInternal no;
 
-        box (-0.05 0.01 -1) (0.05 0.5 1);
+        p1 (0 0.01 0);
+        p2 (0 0.5 0);
+        radius 0.05;
+
+        backup
+        {
+            p1 (0 0 0);
+            p2 (0 01 0);
+            radius 0.25;
+        }
 
         fieldValues
         (

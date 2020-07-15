@@ -43,9 +43,9 @@ Foam::scalar Foam::lookupTable2D::readValue(const List<string>& split) const
 }
 
 
-void Foam::lookupTable2D::readTable()
+void Foam::lookupTable2D::readTable(const fileName& file)
 {
-    fileName fNameExpanded(file_);
+    fileName fNameExpanded(file);
     fNameExpanded.expand();
 
     // Open a stream and check it
@@ -54,7 +54,7 @@ void Foam::lookupTable2D::readTable()
     if (!is.good())
     {
         FatalIOErrorInFunction(is)
-            << "Cannot open file" << file_ << nl
+            << "Cannot open file" << file << nl
             << exit(FatalIOError);
     }
 
@@ -219,7 +219,6 @@ Foam::lookupTable2D::lookupTable2D
     const scalar& dy
 )
 :
-    file_(file),
     modFunc_(NULL),
     invModFunc_(NULL),
     modXFunc_(NULL),
@@ -240,7 +239,7 @@ Foam::lookupTable2D::lookupTable2D
     setMod(xMod, modXFunc_, invModXFunc_);
     setMod(yMod, modYFunc_, invModYFunc_);
 
-    readTable();
+    readTable(file);
 
     forAll(x_, i)
     {
@@ -252,6 +251,48 @@ Foam::lookupTable2D::lookupTable2D
     }
 }
 
+
+Foam::lookupTable2D::lookupTable2D
+(
+    const Field<scalarField>& data,
+    const word& mod,
+    const word& xMod,
+    const word& yMod,
+    const scalar& xMin,
+    const scalar& dx,
+    const scalar& yMin,
+    const scalar& dy
+)
+:
+    modFunc_(NULL),
+    invModFunc_(NULL),
+    modXFunc_(NULL),
+    invModXFunc_(NULL),
+    modYFunc_(NULL),
+    invModYFunc_(NULL),
+    nx_(data.size()),
+    ny_(data[0].size()),
+    xMin_(xMin),
+    dx_(dx),
+    yMin_(yMin),
+    dy_(dy),
+    data_(data),
+    x_(nx_, 0.0),
+    y_(ny_, 0.0)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setMod(yMod, modYFunc_, invModYFunc_);
+
+    forAll(x_, i)
+    {
+        x_[i] = invModXFunc_(getValue(i, xMin_, dx_));
+    }
+    forAll(y_, i)
+    {
+        y_[i] = invModYFunc_(getValue(i, yMin_, dy_));
+    }
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

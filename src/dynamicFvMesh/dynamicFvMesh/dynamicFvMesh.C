@@ -5,6 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+21-05-2020  Jeff Heylmun    : Made the dynamicMeshDict runtime modifiable
+-------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
 

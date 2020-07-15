@@ -86,6 +86,7 @@ inline void Foam::starcdSurfaceWriter::writeData
 template<class Type>
 void Foam::starcdSurfaceWriter::writeTemplate
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
@@ -136,6 +137,7 @@ Foam::starcdSurfaceWriter::~starcdSurfaceWriter()
 
 void Foam::starcdSurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,

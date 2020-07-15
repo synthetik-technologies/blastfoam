@@ -1,0 +1,10 @@
+participants:
+
+    Calculix:
+        interfaces:
+        - nodes-mesh: Solid
+          patch: surface
+          read-data: [Forces0]
+          write-data: [Displacements0]
+          
+precice-config-file: ./precice-config.xml

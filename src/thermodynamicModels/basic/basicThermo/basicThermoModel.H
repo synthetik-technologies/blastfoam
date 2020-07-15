@@ -434,9 +434,15 @@ public:
         ) const;
 
         //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const
+        virtual bool writeData(Ostream& os) const
         {
             return os.good();
+        }
+
+        //- Dummy read for regIOobject
+        virtual bool read()
+        {
+            return true;
         }
 
         //- Read residual values
@@ -444,12 +450,6 @@ public:
         {
             this->residualRho_.read(dict);
             this->residualAlpha_.read(dict);
-        }
-
-        //- Dummy read for regIOobject
-        virtual bool read()
-        {
-            return true;
         }
 };
 

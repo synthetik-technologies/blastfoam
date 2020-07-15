@@ -31,7 +31,7 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(alphaRhoPhi.RDX,lambda.RDX) Riemann;
+    div(alphaRhoPhi.ANFO,lambda.ANFO) Riemann;
 }
 
 laplacianSchemes
@@ -49,7 +49,7 @@ interpolationSchemes
     reconstruct(p)      Minmod;
     reconstruct(c)      Minmod;
 
-    reconstruct(lambda.RDX) Minmod;
+    reconstruct(lambda.ANFO) Minmod;
 }
 
 snGradSchemes

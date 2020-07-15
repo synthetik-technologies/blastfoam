@@ -17,7 +17,7 @@ FoamFile
 
 application     blastFoam;
 
-startFrom       latestTime;
+startFrom       startTime;
 
 startTime       0;
 
@@ -58,26 +58,23 @@ functions
     impulse
     {
         type                impulse;
-        libs                ("libblastFunctionObjects.so");
 
-        writeControl    writeTime;
-        pRef            101298;
+        writeControl        writeTime;
+        pRef                101298;
     }
     overpressure
     {
         type                overpressure;
-        libs                ("libblastFunctionObjects.so");
 
-        writeControl    writeTime;
-        store           yes;
-        pRef            101298;
+        writeControl        writeTime;
+        store               yes;
+        pRef                101298;
     }
     maxPImpulse
     {
         type                fieldMax;
-        libs                ("libblastFunctionObjects.so");
 
-        writeControl    writeTime;
+        writeControl        writeTime;
         fields
         (
             overpressure
@@ -85,41 +82,87 @@ functions
         );
     }
 
+    surfaces
+    {
+        type                surfaces;
+        writeControl        adjustableRunTime;
+        writeInterval       1e-4;
+        interpolate         false;
+        interpolationScheme cellPointFace;
+        surfaceFormat       vtk;
+        fields ( p );
+        surfaces
+        (
+            ground
+            {
+                type        patch;
+                patches     (ground);
+                triangulate false;
+            }
+            pContours
+            {
+                type        isoSurface;
+                isoField    p;
+                isoValues   (1.1e5);
+            }
+            zNormal
+            {
+                type        cuttingPlane;
+                planeType   pointAndNormal;
+                pointAndNormalDict
+                {
+                    point   (0 0 0.5);
+                    normal  (0 0 1);
+                }
+                interpolate true;
+            }
+            yNormal
+            {
+                type        cuttingPlane;
+                planeType   pointAndNormal;
+                pointAndNormalDict
+                {
+                    point   (0 0 0.5);
+                    normal  (0 1 0);
+                }
+                interpolate true;
+            }
+            xNormal
+            {
+                type        cuttingPlane;
+                planeType   pointAndNormal;
+                pointAndNormalDict
+                {
+                    point   (0 0 0.5);
+                    normal  (1 0 0);
+                }
+                interpolate true;
+            }
+        );
+    }
 
-	// A few different ways to use run-time processing to get pressure-time histories below. Many other options exist: 
-	 
-	// generate and modify a "probes" file by using the "$ foamGet probes" command (see README.md), and load that file with an #includeFunc command, for example: 
-	// #includeFunc "probes"; 
-	
-
-	// Automatically load and insert the contents of the probesAndSurfaces file here:
-	// #include "probesAndSurfaces"; 
-	
-	
-	// Another example of how to use probes -- uncomment to use:
-		
-			//     pressureProbes
-			//     {
-			//         type            probes;
-			//         functionObjectLibs ("libsampling.so");
-			//         writeControl    timeStep;
-			//         writeInterval   1;
-			//         probeLocations
-			//         (
-			// // probe locations in ( x y z ) format, unlimited number -- needs to be inside the domain!
-			// ( 1.999 0.001 0.5)
-			// // ( 0 0 0 ) // etc...
-			//         );
-			//         fields
-			//         (
-			//             p // fields you want at each probe location: p U T rho etc.
-			//         );
-			//     }
-	
-	
-	
-	
-	
+    pressureProbes
+    {
+        type                probes;
+        writeControl        timeStep;
+        writeInterval       1;
+        adjustLocations     yes;
+        append yes;
+        probeLocations
+        (
+            // probe locations in ( x y z ) format
+            // unlimited number -- needs to be inside the domain!
+            ( 2.0 0 0.5)    // In mesh
+            (0 2.1 1.0)     // Not in mesh
+            // etc.
+        );
+        fields
+        (
+            p
+            impulse
+        );
+    }
 };
+
 
 // ************************************************************************* //

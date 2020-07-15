@@ -66,7 +66,8 @@ Foam::functionObjects::impulse::createImpulseField
                 IOobject::NO_WRITE
             ),
             p_.mesh(),
-            dimensionedScalar("0", dimPressure*dimTime, 0.0)
+            dimensionedScalar("0", dimPressure*dimTime, 0.0),
+            "zeroGradient"
         )
     );
     impulsePtr->store(impulsePtr);

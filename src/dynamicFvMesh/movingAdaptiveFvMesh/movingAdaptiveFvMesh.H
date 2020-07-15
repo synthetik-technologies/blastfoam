@@ -1,12 +1,11 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-07-04-2020   Jeff Heylmun:  | Added additional checks for mesh created with
-                            | snappyHexMesh
+21-05-2020   Jeff Heylmun:  Set old cell volumes after refinement is done.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -30,45 +29,13 @@ Class
 
 SourceFiles
     movingAdaptiveFvMesh.C
-    movingAdaptiveFvMeshTemplates.C
-
-Authors
-    T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
-    Daniel Deising <deising@mma.tu-darmstadt.de>
-    Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
-    All rights reserved.
 
 Description
-    A fvMesh with run-time load balancing.
+    Mesh movement is solved with motion solvers, and adaptive mesh refinement
+    is also included.
 
-    Updated to OpenFOAM-7 from the github version at:
-    https://github.com/ElsevierSoftwareX/SOFTX_2018_143.git
-
-    Reference:
-    Rettenmaier, D., Deising, D., Ouedraogo, Y., Gjonaj, E., De Gersem, H., Bothe, D., Tropea, C., Marschall, H.
-    "Load balanced 2D and 3D adaptive mesh refinement in OpenFOAM" (2019),
-    SoftwareX, volume 10, 2352-7110,
-
-    This code has been developed by :
-        Daniel Rettenmaier (main developer).
-
-    Method Development and Intellectual Property :
-        T.G. Voskuilen (Purdue University)
-        Timothée Pourpoint <timothee@purdue.edu> (Purdue University)
-        Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
-        Daniel Deising <deising@mma.tu-darmstadt.de>
-        Holger Marschall <marschall@csi.tu-darmstadt.de>
-        Dieter Bothe <bothe@csi.tu-darmstadt.de>
-        Cameron Tropea <ctropea@sla.tu-darmstadt.de>
-
-        School of Aeronautics and Astronautics Purdue University
-        Mathematical Modeling and Analysis
-        Institute for Fluid Mechanics and Aerodynamics
-        Center of Smart Interfaces
-        Technische Universitaet Darmstadt
-
-    If you use this software for your scientific work or your publications,
-    please don't forget to acknowledge explicitly the use of it.
+Additional files
+    adaptiveFvMesh.H
 
 \*---------------------------------------------------------------------------*/
 

@@ -356,6 +356,7 @@ Foam::nastranSurfaceWriter::~nastranSurfaceWriter()
 
 void Foam::nastranSurfaceWriter::write
 (
+    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,

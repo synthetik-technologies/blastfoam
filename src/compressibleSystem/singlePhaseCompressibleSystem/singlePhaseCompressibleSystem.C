@@ -133,8 +133,6 @@ void Foam::singlePhaseCompressibleSystem::solve
 
     thermo_->solve(stepi, ai, bi);
     phaseCompressibleSystem::solve(stepi, ai, bi);
-
-    decode();
 }
 
 
@@ -167,6 +165,7 @@ void Foam::singlePhaseCompressibleSystem::clearODEFields()
 
 void Foam::singlePhaseCompressibleSystem::update()
 {
+    decode();
     fluxScheme_->update
     (
         rho_,

@@ -69,7 +69,8 @@ Foam::functionObjects::overpressure::overpressure
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimPressure, Zero)
+                dimensionedScalar("0", dimPressure, Zero),
+                "zeroGradient"
             )
         );
     }
@@ -118,7 +119,8 @@ bool Foam::functionObjects::overpressure::read
                     IOobject::NO_WRITE
                 ),
                 this->mesh_,
-                dimensionedScalar("0", dimPressure, Zero)
+                dimensionedScalar("0", dimPressure, Zero),
+                "zeroGradient"
             )
         );
     }

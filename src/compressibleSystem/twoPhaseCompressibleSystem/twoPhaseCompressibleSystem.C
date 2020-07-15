@@ -215,7 +215,6 @@ void Foam::twoPhaseCompressibleSystem::solve
 
     thermo_.solve(stepi, ai, bi);
     phaseCompressibleSystem::solve(stepi, ai, bi);
-    decode();
 }
 
 
@@ -264,6 +263,7 @@ void Foam::twoPhaseCompressibleSystem::clearODEFields()
 
 void Foam::twoPhaseCompressibleSystem::update()
 {
+    decode();
     fluxScheme_->update
     (
         volumeFraction_,

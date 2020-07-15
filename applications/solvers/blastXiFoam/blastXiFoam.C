@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
-    #include "compressibleCourantNo.H"
+    #include "eigenCourantNo.H"
     #include "setInitialDeltaT.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

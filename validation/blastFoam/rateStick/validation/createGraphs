@@ -15,14 +15,12 @@ createEps()
     set size 2,2
     set autoscale
     set xrange [0:0.20]
-    plot    "$2" using 1:2 title 'Experimental (LNLL)'\
+    plot    "$2" using 1:2 title 'Souers (2000)'\
                 with points pt 5 ps 2 lc rgb 'blue',\
             "$3" using 1:2 title 'Guilikey et al. (2007)'\
                 with points pt 7 ps 3 lc rgb 'black',\
-            "$1" using 1:2 title 'blastFoam (JWL)'\
-                with points pt 11 ps 5 lc rgb 'red',\
-            "$1" using 1:3 title 'blastFoam (JWL-C)'\
-                with points pt 11 ps 5 lc rgb 'green',\
+            "$1" using 1:2 title 'blastFoam (JWL-C)'\
+                with points pt 11 ps 5 lc rgb 'red'
 
 EOF
 }

@@ -1,0 +1,35 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(rho|rhoE|rhoU)"
+    {
+        solver diagonal;
+    }
+
+    "(U|cellDisplacement|e)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-6;
+        relTol          1e-4;
+        minIter         2;
+    }
+
+    "(U|cellDisplacement|e)Final"
+    {
+        $U;
+        relTol          0;
+    }
+}
+
+
+// ************************************************************************* //

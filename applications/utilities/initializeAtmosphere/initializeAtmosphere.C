@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
       ? phases.size()
       : 1
     );
-    fluidThermoModel* thermoPtr;
+    fluidThermoModel* thermoPtr = nullptr;
     if (!multiphase)
     {
         if (phases.size() <= 1)

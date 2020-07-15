@@ -57,9 +57,6 @@ class lookupTable2D
 {
 // Private data
 
-    //- File name
-    const fileName file_;
-
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
@@ -107,7 +104,7 @@ class lookupTable2D
     scalar readValue(const List<string>&) const;
 
     //- Read the table
-    void readTable();
+    void readTable(const fileName& file);
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
     inline void findIndex
@@ -138,7 +135,7 @@ public:
 
     // Constructors
 
-        //- Multiphase constructor
+        //- Construct from file
         lookupTable2D
         (
             const fileName& fileName,
@@ -147,6 +144,19 @@ public:
             const word& yMod,
             const label nx,
             const label ny,
+            const scalar& xMin,
+            const scalar& dx,
+            const scalar& yMin,
+            const scalar& dy
+        );
+
+        //- Construct from data
+        lookupTable2D
+        (
+            const Field<scalarField>& data,
+            const word& mod,
+            const word& xMod,
+            const word& yMod,
             const scalar& xMin,
             const scalar& dx,
             const scalar& yMin,

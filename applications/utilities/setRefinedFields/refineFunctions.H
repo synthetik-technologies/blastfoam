@@ -8,55 +8,6 @@ class combineMaxOp
     }
 };
 
-bool setRegion
-(
-    const label nCells,
-    const label nOldCells,
-    const label level,
-    const labelList& cells,
-    const labelList& cellLevel,
-    volScalarField& error
-)
-{
-    const labelUList& owner = error.mesh().owner();
-    const labelUList& neighbour = error.mesh().neighbour();
-
-    if (nCells == 0)
-    {
-        return false;
-    }
-
-    bool set(nCells != nOldCells);
-
-    forAll(cells, celli)
-    {
-        const labelList& faces(error.mesh().cells()[cells[celli]]);
-        forAll(faces, facei)
-        {
-            if (faces[facei] < error.mesh().nInternalFaces())
-            {
-                label own = owner[faces[facei]];
-                label nei = neighbour[faces[facei]];
-
-                if (cellLevel[cells[celli]] < level)
-                {
-                    error[own] = 0.1;
-                    error[nei] = 0.1;
-                }
-                if (cellLevel[own] > level)
-                {
-                    error[own] = max(error[own], -10.0);
-                }
-                if (cellLevel[nei] > level)
-                {
-                    error[nei] = max(error[nei], -10.0);
-                }
-            }
-        }
-    }
-    return set;
-}
-
 
 void calcFaceDiff
 (
@@ -80,14 +31,8 @@ void calcFaceDiff
                 pos0(mag(field[own] - field[nei]) - 1e-6)
               - 10.0*neg(mag(field[own] - field[nei]) - 1e-6);
 
-            if (errorOrig[own] > 0)
-            {
-                error[own] = max(error[own], e);
-            }
-            if (errorOrig[nei] > 0)
-            {
-                error[nei] = max(error[nei], e);
-            }
+            error[own] = max(error[own], e);
+            error[nei] = max(error[nei], e);
         }
 
         // Boundary faces
@@ -113,11 +58,8 @@ void calcFaceDiff
                     scalar e =
                         pos0(mag(fp[facei] - fn[facei]) - 1e-6)
                       - 10.0*neg(mag(fp[facei] - fn[facei]) - 1e-6);
-                    if (errorOrig[faceCells[facei]] > 0)
-                    {
-                        error[faceCells[facei]]=
-                            max(error[faceCells[facei]], e);
-                    }
+                    error[faceCells[facei]]=
+                        max(error[faceCells[facei]], e);
                 }
             }
         }
@@ -580,6 +522,63 @@ void extendMarkedCells
             markedCell.set(mesh.faceOwner()[facei], 1);
         }
     }
+}
+
+void extendMaxCellLevel
+(
+    const fvMesh& mesh,
+    labelList& cells,
+    labelList& maxCellLevel,
+    const label level,
+    const bool top
+)
+{
+    // Mark faces using any marked cell
+    boolList markedFace(mesh.nFaces(), false);
+    PackedBoolList markedCell(mesh.nCells(), false);
+
+    forAll(cells, i)
+    {
+        label celli = cells[i];
+        markedCell.set(celli, true);
+        const cell& cFaces = mesh.cells()[celli];
+
+        forAll(cFaces, i)
+        {
+            markedFace[cFaces[i]] = true;
+        }
+    }
+
+    syncTools::syncFaceList(mesh, markedFace, orEqOp<bool>());
+
+    // Update cells using any markedFace
+    for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+    {
+        if (markedFace[facei])
+        {
+            markedCell.set(mesh.faceOwner()[facei], 1);
+            markedCell.set(mesh.faceNeighbour()[facei], 1);
+        }
+    }
+    for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
+    {
+        if (markedFace[facei])
+        {
+            markedCell.set(mesh.faceOwner()[facei], 1);
+        }
+    }
+
+    cells.resize(mesh.nCells());
+    label i = 0;
+    forAll(markedCell, celli)
+    {
+        if (markedCell.get(celli))
+        {
+            cells[i++] = celli;
+            maxCellLevel[celli] = max(maxCellLevel[celli], level);
+        }
+    }
+    cells.resize(i);
 }
 
 

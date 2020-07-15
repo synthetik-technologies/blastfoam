@@ -453,6 +453,7 @@ void Foam::ParticleCollector<CloudType>::write()
 
             writer->write
             (
+                this->owner().mesh().time().value(),
                 this->writeTimeDir(),
                 "collector",
                 points_,
@@ -464,6 +465,7 @@ void Foam::ParticleCollector<CloudType>::write()
 
             writer->write
             (
+                this->owner().mesh().time().value(),
                 this->writeTimeDir(),
                 "collector",
                 points_,
