@@ -11,51 +11,44 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      fvSchemes;
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+application     blastFoam;
 
-ddtSchemes
-{
-    default         Euler;
-    timeIntegrator  RK3SSP;
-}
+startFrom       startTime;
 
-gradSchemes
-{
-    default         cellMDLimited leastSquares 1.0;
-}
+startTime       0; // 0.00598000;
 
-divSchemes
-{
-    default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Riemann;
-}
+stopAt          endTime;
 
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
+endTime         0.001;
 
-interpolationSchemes
-{
-    default             cubic;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
+deltaT          1e-7;
 
-    reconstruct(lambda.c4) vanAlbada;
-}
+writeControl    adjustableRunTime;
 
-snGradSchemes
-{
-    default         corrected;
-}
+writeInterval   1e-5;
 
+cycleWrite      0;
+
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general; // fixed; // using precision below --- better for paraview
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+maxCo           0.5;
+
+maxDeltaT       1;
 
 // ************************************************************************* //

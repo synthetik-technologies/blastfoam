@@ -1,0 +1,8 @@
+diameterModel/diameterModel.C
+diameterModel/newDiameterModel.C
+
+constant/constantDiameterModel.C
+constantMass/constantMassDiameterModel.C
+qbmm/qbmmDiameterModel.C
+
+LIB = $(BLAST_LIBBIN)/libdiameterModels

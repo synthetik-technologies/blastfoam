@@ -1,0 +1,73 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      momentGenerationDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases
+(
+    c4
+);
+
+boundaries
+{
+    outlet
+    {
+        type            zeroGradient;
+    }
+
+    walls
+    {
+        type            zeroGradient;
+    }
+
+    defaultFaces
+    {
+        type            empty;
+    }
+}
+
+c4
+{
+    type                weightsAndAbscissae;
+    weightDimension     [0 -3 0 0 0 0 0];
+    abscissaDimension0  [0 1 0 0 0 0 0];
+
+    default
+    {
+        node0
+        {
+            weight      uniform 0;
+            abscissae0  uniform 20e-6;
+        }
+    }
+
+    regions
+    (
+        sphereToCell // Use cylinder for 3D
+        {
+            centre (-0.3048 0.3048 0);
+            radius 0.0877805;
+
+            node0
+            {
+                weight      uniform 1e6;
+                abscissae0  uniform 20e-6;
+            }
+        }
+    );
+}
+
+
+// ************************************************************************* //

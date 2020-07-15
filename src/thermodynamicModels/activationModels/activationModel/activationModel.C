@@ -270,7 +270,7 @@ void Foam::activationModel::solve
 
 Foam::tmp<Foam::volScalarField> Foam::activationModel::ESource() const
 {
-    return ddtLambda()*e0_;
+    return ddtLambda_()*e0_;
 }
 
 

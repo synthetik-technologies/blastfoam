@@ -4,6 +4,7 @@ cd ${0%/*} || exit 1    # run from this directory
 # Parse arguments for library compilation
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
 
+wmakeLnInclude diameterModels
 wmake $targetType timeIntegrators
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
@@ -17,6 +18,15 @@ wmake $targetType functionObjects
 wmake $targetType sampling
 lagrangian/Allwmake $targetType $*
 wmake $targetType atmosphereModels
+wmake $targetType diameterModels
 
+if [ -z "$QBMM_INST_DIR" ]
+then
+    echo "No directory found for OpenQBMM"
+    echo "QBMM classes will not be compiled"
+    echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
+else
+    wmake $targetType populationBalanceODE
+fi
 # ----------------------------------------------------------------- end-of-file
 

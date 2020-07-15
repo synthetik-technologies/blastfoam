@@ -11,51 +11,45 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      fvSchemes;
+    object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+fields (alpha.c4);
+nBufferLayers 1;
 
-ddtSchemes
-{
-    default         Euler;
-    timeIntegrator  RK3SSP;
-}
+//- Calc
+rho     1601.0;
+mass    10.0; // pounds
+V       #calc "$mass/2.20462/$rho";
+R       #calc "cbrt($V/4/3.141529*3)";
 
-gradSchemes
-{
-    default         cellMDLimited leastSquares 1.0;
-}
+defaultFieldValues
+(
+    volScalarFieldValue alpha.c4 0
+);
 
-divSchemes
-{
-    default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Riemann;
-}
 
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
+regions
+(
+    sphereToCell // Use cylinder for 3D
+    {
+        centre (-0.3048 0.3048 0);
+        radius $R;
+        backup
+        {
+            centre (-0.3048 0.3048 0);
+            radius 0.25;
+        }
+        refineInternal yes;
+        level 4;
 
-interpolationSchemes
-{
-    default             cubic;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
-
-    reconstruct(lambda.c4) vanAlbada;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
+        fieldValues
+        (
+            volScalarFieldValue alpha.c4    1
+        );
+    }
+);
 
 
 // ************************************************************************* //

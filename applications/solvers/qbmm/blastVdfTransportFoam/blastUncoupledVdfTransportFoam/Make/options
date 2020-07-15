@@ -7,16 +7,6 @@ EXE_INC = \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -I$(QBMM_INST_DIR)/src/mappedList \
-    -I$(QBMM_INST_DIR)/src/mappedPtrList \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/momentSets/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/momentInversion/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/quadratureNode/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/moments \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/fieldMomentInversion/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/quadratureApproximations/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/momentAdvection/lnInclude \
-    -I$(QBMM_INST_DIR)/src/quadratureMethods/populationBalanceModels/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
@@ -27,7 +17,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/sampling/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
-    -I../../populationBalanceODE/lnInclude
+    $(BLAST_QBMM_INC)
 
 
 EXE_LIBS = \
@@ -39,14 +29,8 @@ EXE_LIBS = \
     -lfluidThermophysicalModels \
     -lODE \
     -L$(BLAST_LIBBIN) \
-    -lquadratureNode \
-    -lmomentSets \
-    -lmomentInversion \
-    -lfieldMomentInversion \
-    -lquadratureApproximation \
-    -lmomentAdvection \
-    -lpopulationBalance \
     -lblastThermodynamics \
+    -ldiameterModels \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \
@@ -55,4 +39,4 @@ EXE_LIBS = \
     -lerrorEstimate \
     -lblastSampling \
     -lblastFunctionObjects \
-    -lblastPopulationBalanceModels
+    $(BLAST_QBMM_LIBS)

@@ -10,52 +10,64 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      fvSchemes;
+    object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+convertToMeters 0.3048;
 
-ddtSchemes
-{
-    default         Euler;
-    timeIntegrator  RK3SSP;
-}
+vertices
+(
+    // this domain is slightly larger than the bounds of the geometry in the stl
+    ( -5.0  0.0    -5.0) // bottom
+    (  5.0 0.0    -5.0)
+    (  5.0 10.0   -5.0)
+    ( -5.0  10.0   -5.0)
+    ( -5.0  0.0     5.0) // top
+    (  5.0 0.0     5.0)
+    (  5.0 10.0    5.0)
+    ( -5.0  10.0    5.0)
+);
 
-gradSchemes
-{
-    default         cellMDLimited leastSquares 1.0;
-}
+blocks
+(
+	 hex (0 1 2 3 4 5 6 7) (20 20 20) simpleGrading (1 1 1)
+);
 
-divSchemes
-{
-    default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Riemann;
-}
+edges
+(
+);
 
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
+boundary
+(
 
-interpolationSchemes
-{
-    default             cubic;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
+    walls
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+        );
+    }
 
-    reconstruct(lambda.c4) vanAlbada;
-}
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 2 6 5)
+            (3 2 6 7)
+            (0 3 7 4)
 
-snGradSchemes
-{
-    default         corrected;
-}
+            (0 1 2 3)
+            (4 5 6 7)
+        );
+    }
 
+);
+
+mergePatchPairs
+(
+);
 
 // ************************************************************************* //

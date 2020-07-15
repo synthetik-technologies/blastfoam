@@ -54,7 +54,7 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
         dimDensity,
         dict.parent().subDict("products").subDict("equationOfState")
     ),
-    dp_("dp", dimLength, dict),
+    dp_(diameterModel::New(mesh, dict, phaseName)),
     Ts_("Ts", dimTemperature, dict),
     ALow_("ALow", inv(sqr(dimLength)*dimTime), dict),
     TaLow_("TaLow", dimTemperature, dict),
@@ -165,7 +165,7 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
         if (T_[celli] > Ts_.value())
         {
             R[celli] =
-                sqr(dp_.value())
+                sqr(dp_->d()[celli])
                *AHigh_.value()
                *exp(-TaHigh_.value()/T_[celli]);
         }
@@ -180,4 +180,35 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
     return R*(1.0 - lambda_);
 }
 
+void Foam::activationModels::ArrheniusRateActivation::setODEFields
+(
+    const label nSteps,
+    const labelList& oldIs,
+    const label& nOld,
+    const labelList& deltaIs,
+    const label nDelta
+)
+{
+    activationModel::setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
+    dp_->setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
+}
+
+
+void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
+{
+    activationModel::clearODEFields();
+    dp_->clearODEFields();
+}
+
+
+void Foam::activationModels::ArrheniusRateActivation::solve
+(
+    const label stepi,
+    const scalarList& ai,
+    const scalarList& bi
+)
+{
+    dp_->solve(stepi, ai, bi);
+    activationModel::solve(stepi, ai, bi);
+}
 // ************************************************************************* //

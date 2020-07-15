@@ -1,5 +1,4 @@
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I. \
     -I./fluid \
     -I./solid \
@@ -22,7 +21,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
+    $(BLAST_QBMM_INC)
 
 
 EXE_LIBS = \
@@ -35,6 +35,7 @@ EXE_LIBS = \
     -lregionModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
+    -ldiameterModels \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
     -ltimeIntegrators \
@@ -43,4 +44,5 @@ EXE_LIBS = \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
     -lblastSampling \
-    -lblastFunctionObjects
+    -lblastFunctionObjects \
+    $(BLAST_QBMM_LIBS)

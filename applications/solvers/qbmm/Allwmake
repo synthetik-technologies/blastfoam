@@ -10,7 +10,6 @@ if [ -z "$QBMM_INST_DIR" ]
 then
     echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
 else
-    wmake $targetType populationBalanceODE
     wmake $targetType blastPbeTransportFoam
     wmake all blastVdfTransportFoam
 fi

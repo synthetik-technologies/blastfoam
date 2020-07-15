@@ -15,12 +15,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+fluxScheme      AUSM+up;
 
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK3SSP;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes

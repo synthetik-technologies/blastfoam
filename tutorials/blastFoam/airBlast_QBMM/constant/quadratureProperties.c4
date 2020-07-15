@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      quadratureProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fieldMomentInversion    extendedFieldMomentInversion;
+
+basicMomentInversion
+{
+    univariateMomentInversion Gauss;
+}
+
+extendedMomentInversion
+{
+    extendedMomentInversion     lognormal;
+
+    maxSigmaIter        1000;
+    momentsTol          1.0e-6;
+    sigmaTol            1.0e-8;
+    targetFunctionTol   1.0e-8;
+
+    basicQuadrature
+    {
+        univariateMomentInversion   Gauss;
+    }
+}
+
+momentAdvection
+{
+    univariateMomentAdvection   firstOrderKinetic;
+
+    basicMomentInversion
+    {
+        univariateMomentInversion Gauss;
+    }
+}
+
+moments
+(
+    (0)
+    (1)
+    (2)
+    (3)
+    (4)
+);
+
+nodes
+(
+    (0)
+    (1)
+);
+
+// ************************************************************************* //

@@ -53,5 +53,21 @@ export EOS_DIR=$BLAST_DIR/etc/equationOfStateData
 export ADDITIONAL_EOS=
 
 # OpenQBMM install directory
-export QBMM_INST_DIR=
-# export QBMM_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
+export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
+
+export QBMM_LIBBIN=$FOAM_USER_LIBBIN
+export QBMM_APPBIN=$FOAM_USER_APPBIN
+
+if [ -n "$QBMM_INST_DIR" ]
+then
+export QBMM_LIBS="-L\$(QBMM_LIBBIN) -leigenSolver -lquadratureNode -lmomentSets -lmomentInversion -lfieldMomentInversion -lquadratureApproximation -lmomentAdvection -lPDFTransportModel -lmixing -lpopulationBalance"
+export BLAST_QBMM_LIBS="-L\$(BLAST_LIBBIN) -lblastPopulationBalanceModels $QBMM_LIBS"
+
+export QBMM_INC="-I\$(QBMM_INST_DIR)/src/eigenSolver/lnInclude -I\$(QBMM_INST_DIR)/src/mappedList -I\$(QBMM_INST_DIR)/src/mappedPtrList -I\$(QBMM_INST_DIR)/src/Vandermonde/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentSets/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentInversion/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/quadratureNode/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/moments -I\$(QBMM_INST_DIR)/src/quadratureMethods/fieldMomentInversion/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/quadratureApproximations/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentAdvection/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/PDFTransportModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/populationBalanceModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/mixingModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/realizableOdeSolver"
+export BLAST_QBMM_INC="-I\$(BLAST_DIR)/src/populationBalanceODE/lnInclude $QBMM_INC"
+else
+export QBMM_LIBS=
+export BLAST_QBMM_LIBS=
+export QBMM_INC=
+export BLAST_QBMM_INC=
+fi

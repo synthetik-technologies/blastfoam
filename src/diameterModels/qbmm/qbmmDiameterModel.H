@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,81 +22,62 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::activationModels::ArrheniusRateActivation
+    Foam::diameterModels::qbmmDiameterModel
 
 Description
-    Activation rate based on two step Arrhenius rate model
+    Diameter model using quadrature based moment methods
 
 SourceFiles
-    ArrheniusRateActivation.C
+    qbmmDiameterModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ArrheniusRateActivation_H
-#define ArrheniusRateActivation_H
+#ifndef qbmmDiameterModel_H
+#define qbmmDiameterModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "activationModel.H"
 #include "diameterModel.H"
+#include "univariateODEPopulationBalance.H"
 
 namespace Foam
 {
-namespace activationModels
+namespace diameterModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class ArrheniusRateActivation Declaration
+                           Class qbmmDiameter Declaration
 \*---------------------------------------------------------------------------*/
 
-class ArrheniusRateActivation
+class qbmmDiameterModel
 :
-    public activationModel
+    public diameterModel
 {
 // Private data
 
-    //- reference density
-    dimensionedScalar rho0_;
+    //- Population balance properties dictionary
+    IOdictionary pbeDict_;
 
-    //- Diameter
-    autoPtr<diameterModel> dp_;
+    //- QBMM model
+    PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance pbe_;
 
-    //- Switch temperature
-    dimensionedScalar Ts_;
+    //- Does the pbe use number density
+    bool numberDensity_;
 
+    //- Reference to volume fraction
+    const volScalarField& vf_;
 
-    // Low temperature coefficients
-
-        //- Activation Rate
-        dimensionedScalar ALow_;
-
-        //- Activation energy
-        dimensionedScalar TaLow_;
-
-
-    // High temperature coefficients
-
-        //- Activation Rate
-        dimensionedScalar AHigh_;
-
-        //- Activation energy
-        dimensionedScalar TaHigh_;
-
-        //- Reference to temperature
-        const volScalarField& T_;
-
-
-    //- Return the time rate of chage of lambda
-    virtual tmp<volScalarField> delta() const;
+    //- Reference to volume fraction weighted diameter
+    const volScalarField& vfD_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("ArrheniusRate");
+    TypeName("qbmm");
 
     // Constructor
-    ArrheniusRateActivation
+    qbmmDiameterModel
     (
         const fvMesh& mesh,
         const dictionary& dict,
@@ -105,10 +86,10 @@ public:
 
 
     //- Destructor
-    virtual ~ArrheniusRateActivation();
+    virtual ~qbmmDiameterModel();
 
 
-    // Public functions
+    // Member Functions
 
         //- Solve sub-step stepi
         virtual void solve
@@ -135,7 +116,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace activationModels
+} // End namespace diameterModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

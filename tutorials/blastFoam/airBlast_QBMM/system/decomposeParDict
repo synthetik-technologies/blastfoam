@@ -11,51 +11,42 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      fvSchemes;
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+numberOfSubdomains 4; // 8; // this is number of proc
 
-ddtSchemes
+// preservePatches (patch0 patch1 patch2);
+
+method         simple; // automatic
+
+simpleCoeffs // not auto
 {
-    default         Euler;
-    timeIntegrator  RK3SSP;
+    n               ( 4 1 1 );
+    delta           0.001;
 }
 
-gradSchemes
+hierarchicalCoeffs
 {
-    default         cellMDLimited leastSquares 1.0;
+    n               ( 4 3 2 );
+    delta           0.001;
+    order           xyz;
 }
 
-divSchemes
+metisCoeffs
 {
-    default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Riemann;
+    // processorWeights ( 1 1 1 1 1 1 );
 }
 
-laplacianSchemes
+manualCoeffs
 {
-    default         Gauss linear corrected;
+    dataFile        "";
 }
 
-interpolationSchemes
-{
-    default             cubic;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
+distributed     no;
 
-    reconstruct(lambda.c4) vanAlbada;
-}
-
-snGradSchemes
-{
-    default         corrected;
-}
+roots           ( );
 
 
 // ************************************************************************* //

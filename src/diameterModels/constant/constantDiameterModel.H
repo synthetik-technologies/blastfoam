@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,81 +22,44 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::activationModels::ArrheniusRateActivation
+    Foam::diameterModels::constantDiameter
 
 Description
-    Activation rate based on two step Arrhenius rate model
+    Constant diameter model
 
 SourceFiles
-    ArrheniusRateActivation.C
+    constantDiameter.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ArrheniusRateActivation_H
-#define ArrheniusRateActivation_H
+#ifndef constantDiameter_H
+#define constantDiameter_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "activationModel.H"
 #include "diameterModel.H"
 
 namespace Foam
 {
-namespace activationModels
+namespace diameterModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class ArrheniusRateActivation Declaration
+                           Class constantDiameter Declaration
 \*---------------------------------------------------------------------------*/
 
-class ArrheniusRateActivation
+class constantDiameter
 :
-    public activationModel
+    public diameterModel
 {
-// Private data
-
-    //- reference density
-    dimensionedScalar rho0_;
-
-    //- Diameter
-    autoPtr<diameterModel> dp_;
-
-    //- Switch temperature
-    dimensionedScalar Ts_;
-
-
-    // Low temperature coefficients
-
-        //- Activation Rate
-        dimensionedScalar ALow_;
-
-        //- Activation energy
-        dimensionedScalar TaLow_;
-
-
-    // High temperature coefficients
-
-        //- Activation Rate
-        dimensionedScalar AHigh_;
-
-        //- Activation energy
-        dimensionedScalar TaHigh_;
-
-        //- Reference to temperature
-        const volScalarField& T_;
-
-
-    //- Return the time rate of chage of lambda
-    virtual tmp<volScalarField> delta() const;
-
 
 public:
 
     //- Runtime type information
-    TypeName("ArrheniusRate");
+    TypeName("constant");
 
     // Constructor
-    ArrheniusRateActivation
+    constantDiameter
     (
         const fvMesh& mesh,
         const dictionary& dict,
@@ -105,37 +68,13 @@ public:
 
 
     //- Destructor
-    virtual ~ArrheniusRateActivation();
-
-
-    // Public functions
-
-        //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        );
-
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const labelList& oldIs,
-            const label& nOld,
-            const labelList& deltaIs,
-            const label nDelta
-        );
-
-        //- Remove stored fields
-        virtual void clearODEFields();
+    virtual ~constantDiameter();
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace activationModels
+} // End namespace diameterModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
