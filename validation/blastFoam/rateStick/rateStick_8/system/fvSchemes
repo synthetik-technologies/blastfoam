@@ -31,7 +31,7 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(alphaRhoPhi.RDX,lambda.RDX) Riemann;
+    div(alphaRhoPhi.ANFO,lambda.ANFO) Riemann;
 }
 
 laplacianSchemes

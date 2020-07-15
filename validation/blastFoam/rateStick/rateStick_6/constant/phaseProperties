@@ -15,9 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (RDX gas);
+phases (ANFO gas);
 
-RDX
+ANFO
 {
     type detonating;
     reactants
