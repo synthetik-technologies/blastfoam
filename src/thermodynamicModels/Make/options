@@ -1,12 +1,11 @@
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude
 
-
 LIB_LIBS = \
     -L$(BLAST_LIBBIN) \
-    -ltimeIntegrators
+    -ltimeIntegrators \
+    -ldiameterModels

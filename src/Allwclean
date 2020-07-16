@@ -16,4 +16,5 @@ wclean $targetType sampling
 wclean all lagrangian
 wclean $targetType atmosphereModels
 
+wclean $targetType QBMM
 # ----------------------------------------------------------------- end-of-file

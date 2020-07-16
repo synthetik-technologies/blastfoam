@@ -26,7 +26,7 @@ then
     echo "QBMM classes will not be compiled"
     echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
 else
-    wmake $targetType populationBalanceODE
+    wmake $targetType QBMM
 fi
 # ----------------------------------------------------------------- end-of-file
 

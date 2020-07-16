@@ -12,6 +12,7 @@ EXE_INC = \
 LIB_LIBS = \
     -L$(BLAST_LIBBIN) \
     -ltimeIntegrators \
+    -ldiameterModels \
     -lblastThermodynamics \
     -lfluxSchemes \
     -lblastRadiationModels
