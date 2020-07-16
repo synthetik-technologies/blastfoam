@@ -1,0 +1,311 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      MieGruneisenEOSProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (aluminum gas);
+pRef 1e5;
+aluminum
+{
+    phaseType        granular;
+    diameterModel constant;
+    d           50e-6;
+
+    alphaMax    0.65;
+    alphaMinFriction 0.5;
+
+    type detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport   constIso;
+            thermo      eConst;
+            equationOfState rhoConst;
+        }
+        specie
+        {
+            molWeight 26.981539;
+        }
+        equationOfState
+        {
+            rho0     2700;
+        }
+        transport
+        {
+            kappa       237;
+        }
+        thermodynamics
+        {
+            Cv          987;           // Heat capacity
+            Hf          0.0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport   constIso;
+            thermo      eConst;
+            equationOfState rhoConst;
+        }
+        specie
+        {
+            molWeight 26.981539;
+        }
+        equationOfState
+        {
+            rho0     2700;
+        }
+        transport
+        {
+            kappa       237;
+        }
+        thermodynamics
+        {
+            Cv          987;           // Heat capacity
+            Hf          0.0;
+        }
+    }
+
+    activationModel pressureBased;
+    initiation
+    {
+        E0              9.0e9;
+        I               4.0e6;
+        a               0.0367;
+        b               0.667;
+        x               7.0;
+        maxLambdaI      0.022;
+
+        G1              1.4997e-9;
+        c               0.667;
+        d               0.33;
+        y               2.0;
+        minLambda1      0.022;
+
+        G2              0.0;
+        e               0.667;
+        f               0.667;
+        z               3.0;
+        minLambda2      0.022;
+
+        pMin            101360;  // Above this pressure activation is                                    // "turned on" [Pa]
+    }
+
+    residualAlpha 1e-10;
+    residualRho   1e-6;
+
+    kineticTheoryCoeffs
+    {
+        e           0.9;
+    }
+
+}
+
+gas
+{
+    phaseType            multiphase;
+    diameterModel   constant;
+    d               0;
+
+    phases (c4 air);
+
+    c4
+    {
+        type detonating;
+        reactants
+        {
+            thermoType
+            {
+                transport   const;
+                thermo      eConst;
+                equationOfState idealGas;
+            }
+
+            equationOfState
+            {
+                rho0            1601;
+                n               7.4;
+                kappa           3.9e11;
+                Gamma           0.35;
+                gamma 1.35;
+                pRef            101298;
+            }
+            specie
+            {
+                molWeight           55.0;
+            }
+            transport
+            {
+                mu              1.81e-5;              // Viscosity
+                Pr              1;              // Prandtl number
+            }
+            thermodynamics
+            {
+                Cv          1400;           // Heat capacity
+                Hf          0.0;
+            }
+        }
+        products
+        {
+            thermoType
+            {
+                transport   const;
+                thermo      eConst;
+                equationOfState JWL;
+            }
+
+            equationOfState
+            {
+                rho0      1601;
+                A         609.77e9;
+                B         12.95e9;
+                R1        4.50;
+                R2        1.4;
+                omega     0.25;
+            }
+            specie
+            {
+                molWeight           55.0;
+            }
+            transport
+            {
+                mu              1.81e-5;              // Viscosity
+                Pr              1;              // Prandtl number
+            }
+            thermodynamics
+            {
+                Cv          1400;           // Heat capacity
+                Hf          0.0;
+            }
+        }
+        residualRho     1e-6;           // Minimum density of the phase
+        residualAlpha   1e-10;          // Minimum volume fraction used for division
+
+        activationModel linear;
+        initiation
+        {
+            E0              9.0e9;
+            points ((0 0 0));
+            vDet       7850;            // Detonation velocity [m/s]
+        }
+    }
+
+    air
+    {
+        type basic;
+        thermoType
+        {
+            transport const;
+            equationOfState idealGas;
+            thermo eConst;
+        }
+        specie
+        {
+            molWeight 28.97;
+        }
+        equationOfState
+        {
+            gamma           1.4;
+        }
+        transport
+        {
+            mu              1.81e-5;              // Viscosity
+            Pr              1;              // Prandtl number
+        }
+        thermodynamics
+        {
+            Cv          718;           // Heat capacity
+            Hf          0.0;
+        }
+        residualRho     1e-6;
+        residualAlpha   1e-10;
+    }
+}
+
+interfacialPressure
+{
+    type single;
+    phase gas;
+}
+interfacialVelocity
+{
+    type single;
+    phase aluminum;
+}
+
+aspectRatio
+(
+);
+
+drag
+(
+    (aluminum in gas)
+    {
+        type GidaspowErgunWenYu;
+        residualRe 1e-3;
+        swarmCorrection
+        {
+            type none;
+        }
+    }
+);
+
+virtualMass
+(
+);
+
+heatTransfer
+(
+    (aluminum in gas)
+    {
+        type RanzMarshall;
+    }
+);
+
+lift
+(
+);
+
+wallLubrication
+(
+);
+
+turbulentDispersion
+(
+);
+
+kineticTheory
+{
+    residualAlpha       1e-10;
+
+    radialModel SinclairJackson;
+    viscosityModel Gidaspow;
+    conductivityModel Gidaspow;
+    granularPressureModel Lun;
+    frictionalStressModel JohnsonJackson;
+
+    JohnsonJacksonCoeffs
+    {
+        alphaMinFriction        0.5;
+        Fr                      0.05;
+        eta                     2;
+        p                       5;
+        phi                     28.5;
+        alphaDeltaMin           1e-6;
+    }
+}
+// ************************************************************************* //

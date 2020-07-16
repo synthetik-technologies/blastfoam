@@ -1,0 +1,72 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSchemes;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fluxSchemes
+{
+    gas
+    {
+        fluxScheme  HLLC;
+    }
+    aluminum
+    {
+        fluxScheme          AUSM+Up;
+        alphaMinFriction    0.5;
+    }
+}
+
+ddtSchemes
+{
+    default         Euler;
+    timeIntegrator  RK2SSP;
+}
+
+gradSchemes
+{
+    default         cellMDLimited leastSquares 1;
+}
+
+divSchemes
+{
+    default         none;
+    div(alphaRhoPhi.c4,lambda.c4) Gauss upwind;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default             cubic;
+    "reconstruct\(alpha.*\)"  vanAlbada;
+    "reconstruct\(rho.*\)"  vanAlbada;
+    "reconstruct\(U.*\)"  vanAlbadaV;
+    "reconstruct\(e.*\)"  vanAlbada;
+    "reconstruct\(p.*\)"  vanAlbada;
+    "reconstruct\(c.*\)"  vanAlbada;
+    "reconstruct\(Theta.*\)"  vanAlbada;
+    "reconstruct\(lambda.*\)"  vanAlbada;
+}
+
+snGradSchemes
+{
+    default         corrected;
+}
+
+
+// ************************************************************************* //

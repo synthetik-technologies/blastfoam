@@ -9,7 +9,6 @@ EXE_INC = \
 
 LIB_LIBS = \
     -lfiniteVolume \
-    -lfvOptions \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
     -lblastPhaseSystems \

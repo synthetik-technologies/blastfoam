@@ -28,7 +28,7 @@ License
 
 #include "basicFluidThermo.H"
 #include "eThermoModel.H"
-#include "thermoModels.H"
+#include "fluidThermoModelTypes.H"
 #include "addToRunTimeSelectionTable.H"
 
 namespace Foam
@@ -48,12 +48,12 @@ namespace Foam
         Murnaghan
     );
 
-//     addFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BirchMurnaghan2
-//     );
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BirchMurnaghan2
+    );
 
     addFluidThermos
     (
@@ -99,12 +99,12 @@ namespace Foam
         Tillotson
     );
 
-//     addFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         BKW
-//     );
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        BKW
+    );
 
     addFluidThermos
     (
@@ -127,12 +127,12 @@ namespace Foam
         JWL
     );
 
-//     addFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         JWLC
-//     );
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        JWLC
+    );
 
     addFluidThermos
     (
@@ -155,7 +155,7 @@ namespace Foam
             eThermoModel
             <
                 fluidThermoModel,
-                constTransporttabulatedMGEquationOfStateDoanNickel
+                constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie
             >
         >
         basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel;
@@ -163,7 +163,7 @@ namespace Foam
     defineTemplateTypeNameAndDebugWithName
     (
         basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel,
-        (constTransporttabulatedMGEquationOfStateDoanNickel::typeName()).c_str(),
+        (constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie::typeName()).c_str(),
         0
     );
     addToRunTimeSelectionTable
@@ -179,7 +179,7 @@ namespace Foam
             eThermoModel
             <
                 fluidThermoModel,
-                constTransporttabulatedMGEquationOfStatetabulated
+                constTransporttabulatedMGEquationOfStatetabulatedblastSpecie
             >
         >
         basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated;
@@ -187,7 +187,7 @@ namespace Foam
     defineTemplateTypeNameAndDebugWithName
     (
         basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
-        (constTransporttabulatedMGEquationOfStatetabulated::typeName()).c_str(),
+        (constTransporttabulatedMGEquationOfStatetabulatedblastSpecie::typeName()).c_str(),
         0
     );
     addToRunTimeSelectionTable

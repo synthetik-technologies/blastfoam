@@ -144,7 +144,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define defineThermoType(Transport, Thermo, EoSType, EoS)                   \
+#define defineThermoType(Transport, Thermo, EoSType, EoS, Specie)           \
 typedef                                                                     \
     Transport                                                               \
     <                                                                       \
@@ -156,16 +156,16 @@ typedef                                                                     \
                 <                                                           \
                     EoS                                                     \
                     <                                                       \
-                        blastSpecie                                         \
+                        Specie                                              \
                     >                                                       \
                 >                                                           \
             >                                                               \
         >                                                                   \
-    > Transport##Thermo##EoSType##EoS;
+    > Transport##Thermo##EoSType##EoS##Specie;                              \
 
-#define defineThermoTypes(Transport, EoSType, EoS)                          \
-    defineThermoType(Transport, eConst, EoSType, EoS);                      \
-    defineThermoType(Transport, hConst, EoSType, EoS);
+#define defineThermoTypes(Transport, EoSType, EoS, Specie)                  \
+    defineThermoType(Transport, eConst, EoSType, EoS, Specie)               \
+    defineThermoType(Transport, hConst, EoSType, EoS, Specie)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

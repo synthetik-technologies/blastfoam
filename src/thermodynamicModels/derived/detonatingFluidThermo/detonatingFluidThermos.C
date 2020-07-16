@@ -29,7 +29,7 @@ License
 #include "fluidThermoModel.H"
 #include "blendedThermoModel.H"
 #include "detonatingFluidThermo.H"
-#include "thermoModels.H"
+#include "fluidThermoModelTypes.H"
 #include "addToRunTimeSelectionTable.H"
 
 namespace Foam

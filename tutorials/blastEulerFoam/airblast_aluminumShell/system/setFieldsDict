@@ -1,0 +1,71 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+fields (alpha.aluminum alpha.c4);
+nBufferLayers 5;
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.aluminum  0
+    volScalarFieldValue alpha.c4        0
+    volScalarFieldValue alpha.air       1
+);
+
+regions
+(
+    sphereToCell
+    {
+        centre (0 0 0);
+        radius 0.11;
+
+        backup
+        {
+            centre (0 0 0);
+            radius 0.5;
+        }
+        level 6;
+        refineInternal yes;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.aluminum  0.6
+            volScalarFieldValue alpha.c4        0
+            volScalarFieldValue alpha.air       0.4
+        );
+    }
+    sphereToCell
+    {
+        centre (0 0 0);
+        radius 0.1;
+
+        backup
+        {
+            centre (0 0 0);
+            radius 0.5;
+        }
+        level 5;
+        refineInternal yes;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.aluminum  0
+            volScalarFieldValue alpha.c4        1
+            volScalarFieldValue alpha.air       0
+        );
+    }
+ );
+
+// ************************************************************************* //

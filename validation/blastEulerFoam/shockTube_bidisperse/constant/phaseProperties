@@ -43,7 +43,7 @@ particles0
     }
     equationOfState
     {
-        rho         1300;
+        rho0         1300;
     }
     transport
     {

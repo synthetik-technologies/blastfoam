@@ -104,6 +104,9 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Return energy source
+        virtual tmp<volScalarField> ESource() const;
+
         //- Thermal conductivity [W/m/K]
         virtual tmp<volVectorField> Kappa() const;
 
@@ -127,29 +130,27 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addSolidThermo(Transport, Thermo, EoSType, EoS)                         \
-    typedef Transport<thermoModel<Thermo<EoSType<EoS<blastSpecie>>>>>           \
-        Transport##Thermo##EoSType##EoS;                                        \
-    typedef basicSolidThermoModel                                               \
-        <                                                                       \
-            eThermoModel                                                        \
-            <                                                                   \
-                solidThermoModel,                                               \
-                Transport##Thermo##EoSType##EoS                                 \
-            >                                                                   \
-        >                                                                       \
-        solidThermo##Transport##Thermo##EoSType##EoS;                           \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        solidThermo##Transport##Thermo##EoSType##EoS,                           \
-        (Transport##Thermo##EoSType##EoS::typeName()).c_str(),                  \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        solidThermoModel,                                                       \
-        solidThermo##Transport##Thermo##EoSType##EoS,                           \
-        basicSolid                                                              \
+#define addSolidThermo(Transport, Thermo, EoSType, EoS)                       \
+    typedef basicSolidThermoModel                                             \
+        <                                                                     \
+            eThermoModel                                                      \
+            <                                                                 \
+                solidThermoModel,                                             \
+                Transport##Thermo##EoSType##EoS##blastSpecie                  \
+            >                                                                 \
+        >                                                                     \
+        solidThermo##Transport##Thermo##EoSType##EoS;                         \
+    defineTemplateTypeNameAndDebugWithName                                    \
+    (                                                                         \
+        solidThermo##Transport##Thermo##EoSType##EoS,                         \
+        (Transport##Thermo##EoSType##EoS##blastSpecie::typeName()).c_str(),   \
+        0                                                                     \
+    );                                                                        \
+    addToRunTimeSelectionTable                                                \
+    (                                                                         \
+        solidThermoModel,                                                     \
+        solidThermo##Transport##Thermo##EoSType##EoS,                         \
+        basicSolid                                                            \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -1,0 +1,77 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+x   9.998476952;
+z   0.1745240644;
+nz  -0.1745240644;
+vertices
+(
+    // this domain is slightly larger than the bounds of the geometry in the stl
+    (0 -5 0)
+    ($x -5 $nz)
+    ($x 5  $nz)
+    (0  5  0)
+    ($x -5 $z)
+    ($x 5  $z)
+);
+
+blocks
+(
+	 hex (0 1 2 3 0 4 5 3) (50 50 1) simpleGrading (1 1 1) // control refinement of background mesh here
+	// this is the coarsest element in the mesh, is "level 0" in refinement; make this is "fine enough"
+);
+
+edges
+(
+);
+
+boundary
+(
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 2 5 4)
+            (3 2 5 3)
+            (0 1 4 0)
+        );
+    }
+    wedge1
+    {
+        type wedge;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+    wedge0
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 3)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

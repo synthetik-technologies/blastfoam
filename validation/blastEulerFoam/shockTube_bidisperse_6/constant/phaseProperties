@@ -41,7 +41,7 @@ coal
     }
     equationOfState
     {
-        rho         1300;
+        rho0         1300;
     }
     transport
     {
@@ -87,7 +87,7 @@ particles0
     }
     equationOfState
     {
-        rho         2700;
+        rho0         2700;
     }
     transport
     {
@@ -131,7 +131,7 @@ particles1
     }
     equationOfState
     {
-        rho         2700;
+        rho0         2700;
     }
     transport
     {
@@ -177,7 +177,7 @@ particles2
     }
     equationOfState
     {
-        rho         2700;
+        rho0         2700;
     }
     transport
     {
@@ -222,7 +222,7 @@ particles3
     }
     equationOfState
     {
-        rho         2700;
+        rho0         2700;
     }
     transport
     {
@@ -268,7 +268,7 @@ particles4
     }
     equationOfState
     {
-        rho         2700;
+        rho0         2700;
     }
     transport
     {

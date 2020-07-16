@@ -26,8 +26,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef thermoModels_H
-#define thermoModels_H
+#ifndef fluidThermoModelTypes_H
+#define fluidThermoModelTypes_H
 
 #include "constTransport.H"
 
@@ -62,6 +62,7 @@ License
 #include "tabulatedThermoEOS.H"
 
 #include "blastSpecie.H"
+#include "rBlastSpecie.H"
 
 namespace Foam
 {
@@ -70,35 +71,40 @@ namespace Foam
     (
         constTransport,
         MGEquationOfState,
-        CochranChan
+        CochranChan,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        Murnaghan
+        Murnaghan,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        BirchMurnaghan2
+        BirchMurnaghan2,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        BirchMurnaghan3
+        BirchMurnaghan3,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        solidJWL
+        solidJWL,
+        blastSpecie
     );
 
 // Fluids
@@ -106,42 +112,48 @@ namespace Foam
     (
         constTransport,
         MGEquationOfState,
-        idealGas
+        idealGas,
+        blastSpecie
     );
     defineThermoType
     (
         constTransport,
         janaf,
         MGEquationOfState,
-        idealGas
+        idealGas,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        BKW
+        BKW,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        BWR
+        BWR,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        stiffenedGas
+        stiffenedGas,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        Tait
+        Tait,
+        blastSpecie
     );
 
     typedef
@@ -154,41 +166,46 @@ namespace Foam
                     Tillotson<blastSpecie>
                 >
             >
-        > constTransporteConstMGEquationOfStateTillotson;
+        > constTransporteConstMGEquationOfStateTillotsonblastSpecie;
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        vanderWaals
+        vanderWaals,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        JWL
+        JWL,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         equationOfState,
-        JWLC
+        JWLC,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        LSZK
+        LSZK,
+        blastSpecie
     );
 
     defineThermoTypes
     (
         constTransport,
         MGEquationOfState,
-        DoanNickel
+        DoanNickel,
+        blastSpecie
     );
 
     typedef
@@ -201,10 +218,10 @@ namespace Foam
                     DoanNickel<blastSpecie>
                 >
             >
-        > constTransporttabulatedMGEquationOfStateDoanNickel;
+        > constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie;
 
     typedef constTransport<tabulatedThermoEOS<blastSpecie>>
-        constTransporttabulatedMGEquationOfStatetabulated;
+        constTransporttabulatedMGEquationOfStatetabulatedblastSpecie;
 }
 
 #endif

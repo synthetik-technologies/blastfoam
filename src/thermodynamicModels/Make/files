@@ -10,10 +10,10 @@ derived/basicFluidThermo/basicFluidThermos.C
 derived/detonatingFluidThermo/detonatingFluidThermos.C
 
 derived/basicSolidThermo/basicSolidThermoModels.C
+derived/detonatingSolidThermo/detonatingSolidThermos.C
 
 derived/multiphaseFluidThermo/multiphaseFluidThermo.C
 derived/twoPhaseFluidThermo/twoPhaseFluidThermo.C
-
 
 lookupTables/lookupTable2D/lookupTable2D.C
 lookupTables/lookupTable1D/lookupTable1D.C

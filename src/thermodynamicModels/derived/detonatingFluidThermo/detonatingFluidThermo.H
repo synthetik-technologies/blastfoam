@@ -157,8 +157,8 @@ public:
             blendedThermoModel                                                  \
             <                                                                   \
                 fluidThermoModel,                                               \
-                uTransport##uThermo##uEoSType##uEoS,                            \
-                rTransport##rThermo##rEoSType##rEoS                             \
+                uTransport##uThermo##uEoSType##uEoS##blastSpecie,               \
+                rTransport##rThermo##rEoSType##rEoS##blastSpecie                \
             >                                                                   \
         >                                                                       \
         detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS; \
@@ -167,9 +167,9 @@ public:
         detonating##uTransport##uThermo##uEoSType##uEoS##rTransport##rThermo##rEoSType##rEoS, \
         (                                                                       \
             "detonating<"                                                       \
-          + word(uTransport##uThermo##uEoSType##uEoS::typeName())               \
+          + word(uTransport##uThermo##uEoSType##uEoS##blastSpecie::typeName())  \
           + ','                                                                 \
-          + word(rTransport##rThermo##rEoSType##rEoS::typeName())               \
+          + word(rTransport##rThermo##rEoSType##rEoS##blastSpecie::typeName())  \
           + '>'                                                                 \
         ).c_str(),                                                              \
         0                                                                       \

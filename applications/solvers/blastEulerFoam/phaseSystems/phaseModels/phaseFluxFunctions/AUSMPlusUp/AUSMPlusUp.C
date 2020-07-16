@@ -204,8 +204,9 @@ void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
     scalar magSf = mag(Sf);
     vector normal = Sf/magSf;
 
-    scalar UvOwn(UOwn & normal);
-    scalar UvNei(UNei & normal);
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
 
     scalar c12
     (

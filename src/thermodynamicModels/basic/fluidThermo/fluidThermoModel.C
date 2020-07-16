@@ -160,20 +160,20 @@ Foam::fluidThermoModel::mu(const label patchi) const
 
 Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::nu() const
 {
-    return mu_/rho_;
+    return mu_/max(rho_, dimensionedScalar(dimDensity, 1e-10));
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::fluidThermoModel::nu(const label patchi) const
 {
-    return mu(patchi)/rho_.boundaryField()[patchi];
+    return mu(patchi)/max(rho_.boundaryField()[patchi], 1e-10);
 }
 
 
 Foam::scalar Foam::fluidThermoModel::nui(const label celli) const
 {
-    return mu_[celli]/rho_[celli];
+    return mu_[celli]/max(rho_[celli], 1e-10);
 }
 
 // ************************************************************************* //

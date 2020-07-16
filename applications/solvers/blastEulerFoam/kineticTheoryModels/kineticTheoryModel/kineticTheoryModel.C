@@ -118,7 +118,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
     (
         IOobject
         (
-            IOobject::groupName("lambda", phase.name()),
+            IOobject::groupName("lambdas", phase.name()),
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,
@@ -174,7 +174,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
     (
         IOobject
         (
-            IOobject::groupName("kappa", phase.name()),
+            IOobject::groupName("kappas", phase.name()),
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,

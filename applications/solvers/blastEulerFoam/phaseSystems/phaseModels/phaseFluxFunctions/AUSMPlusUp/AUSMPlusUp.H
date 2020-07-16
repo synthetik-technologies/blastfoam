@@ -143,6 +143,29 @@ class AUSMPlusUp
             const label facei, const label patchi = -1
         );
 
+        //- Calcualte fluxes
+        virtual void calculateFluxes
+        (
+            const scalar& alphaOwn, const scalar& alphaNei,
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const scalarList& alphasOwn, const scalarList& alphasNei,
+            const scalarList& rhosOwn, const scalarList& rhosNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const scalar& cOwn, const scalar& cNei,
+            const vector& Sf,
+            scalar& phi,
+            scalarList& alphaPhis,
+            scalarList& alphaRhoPhis,
+            vector& alphaRhoUPhi,
+            scalar& alphaRhoEPhi,
+            const label facei, const label patchi = -1
+        )
+        {
+            NotImplemented;
+        }
+
         //- Interpolate field
         virtual scalar interpolate
         (

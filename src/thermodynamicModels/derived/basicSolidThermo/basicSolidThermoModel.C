@@ -97,6 +97,22 @@ void Foam::basicSolidThermoModel<Thermo>::correct()
 
 
 template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicSolidThermoModel<Thermo>::ESource() const
+{
+    const fvMesh& mesh = this->T_.mesh();
+
+    return
+        volScalarField::New
+        (
+            "ESource",
+            mesh,
+            dimEnergy/dimMass/dimTime
+        );
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volVectorField>
 Foam::basicSolidThermoModel<Thermo>::Kappa() const
 {

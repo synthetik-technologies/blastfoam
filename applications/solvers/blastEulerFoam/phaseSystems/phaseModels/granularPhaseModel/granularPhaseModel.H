@@ -74,7 +74,7 @@ protected:
         autoPtr<solidThermoModel> thermo_;
 
         //- Phase density
-        volScalarField rho_;
+        volScalarField& rho_;
 
         //- Reference to thermodynamic pressure
         const volScalarField& p_;

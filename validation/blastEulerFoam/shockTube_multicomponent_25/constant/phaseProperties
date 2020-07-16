@@ -40,7 +40,7 @@ particles
     }
     equationOfState
     {
-        rho         2500;
+        rho0         2500;
     }
     transport
     {

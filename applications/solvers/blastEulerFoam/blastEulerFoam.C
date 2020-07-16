@@ -35,8 +35,6 @@ Description
 #include "dynamicFvMesh.H"
 #include "phaseSystem.H"
 #include "timeIntegrator.H"
-#include "staticFvMesh.H"
-#include "errorEstimator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,15 +63,11 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //- Update error and refine mesh
-        if (!isA<staticFvMesh>(mesh))
-        {
-            error->update();
-            mesh.update();
-        }
-
         //- Update conservative quantities
         fluid.encode();
+
+        //- Update error and refine mesh
+        mesh.update();
 
         //- Integrate the hyperbolic fluxes
         integrator->integrate();

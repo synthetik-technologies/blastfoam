@@ -132,12 +132,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define addFluidThermo(Transport, Thermo, EoSType, EoS)                         \
-    typedef basicFluidThermo<eThermoModel<fluidThermoModel, Transport##Thermo##EoSType##EoS>>     \
+    typedef basicFluidThermo<eThermoModel<fluidThermoModel, Transport##Thermo##EoSType##EoS##blastSpecie>>     \
         basicFluidThermo##Transport##Thermo##EoSType##EoS;                      \
     defineTemplateTypeNameAndDebugWithName                                      \
     (                                                                           \
         basicFluidThermo##Transport##Thermo##EoSType##EoS,                      \
-        (Transport##Thermo##EoSType##EoS::typeName()).c_str(),                  \
+        (Transport##Thermo##EoSType##EoS##blastSpecie::typeName()).c_str(),     \
         0                                                                       \
     );                                                                          \
     addToRunTimeSelectionTable                                                  \

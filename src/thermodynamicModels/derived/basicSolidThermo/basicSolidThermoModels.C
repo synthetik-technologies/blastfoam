@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "solidThermoModel.H"
+#include "solidThermoModelTypes.H"
 #include "basicSolidThermoModel.H"
 #include "eThermoModel.H"
 

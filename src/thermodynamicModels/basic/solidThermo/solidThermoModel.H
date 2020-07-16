@@ -139,6 +139,9 @@ public:
     //- Destructor
     virtual ~solidThermoModel();
 
+        //- Return energy source
+        virtual tmp<volScalarField> ESource() const = 0;
+
         //- Thermal conductivity [W/m/K]
         virtual tmp<volVectorField> Kappa() const = 0;
 

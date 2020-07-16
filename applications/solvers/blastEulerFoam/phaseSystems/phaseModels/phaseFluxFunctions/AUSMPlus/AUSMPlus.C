@@ -249,6 +249,150 @@ void Foam::fluxSchemes::AUSMPlus::calculateFluxes
 }
 
 
+void Foam::fluxSchemes::AUSMPlus::calculateFluxes
+(
+    const scalar& alphaOwn, const scalar& alphaNei,
+    const scalar& rhoO, const scalar& rhoN,
+    const scalarList& alphasOwn, const scalarList& alphasNei,
+    const scalarList& rhosOwn, const scalarList& rhosNei,
+    const vector& UOwn, const vector& UNei,
+    const scalar& eOwn, const scalar& eNei,
+    const scalar& pOwn, const scalar& pNei,
+    const scalar& cOwn, const scalar& cNei,
+    const vector& Sf,
+    scalar& phi,
+    scalarList& alphaPhis,
+    scalarList& alphaRhoPhis,
+    vector& alphaRhoUPhi,
+    scalar& alphaRhoEPhi,
+    const label facei, const label patchi
+)
+{
+    scalar magSf = mag(Sf);
+    vector normal = Sf/magSf;
+
+    scalar rhoOwn = max(rhoO, 1e-6);
+    scalar rhoNei = max(rhoN, 1e-6);
+    scalar EOwn = eOwn + 0.5*magSqr(UOwn);
+    scalar HOwn(EOwn + pOwn/rhoOwn);
+
+    scalar ENei = eNei + 0.5*magSqr(UNei);
+    scalar HNei(ENei + pNei/rhoNei);
+
+    const scalar vMesh(meshPhi(facei, patchi)/magSf);
+    scalar UvOwn((UOwn & normal) - vMesh);
+    scalar UvNei((UNei & normal) - vMesh);
+
+    scalar cStar(sqrt(cOwn*cNei));
+
+    // Compute split Mach numbers
+    scalar MaOwn(UvOwn/cStar);
+    scalar MaNei(UvNei/cStar);
+
+    scalar MaStar(f(MaOwn, 1.0) + f(MaNei, -1.0));
+    scalar M0
+    (
+        sqrt(min(1.0, max(sqr((MaOwn + MaNei)*0.5), cutOffMa_)))
+    );
+    scalar fa(M0*(2.0 - M0));
+
+    scalar BetaOwn(beta(MaOwn, 1.0, fa));
+    scalar BetaNei(beta(MaNei, -1.0, fa));
+
+    scalar deltaMa
+    (
+        f(MaOwn, 1.0) - pos0(MaOwn) - f(MaNei, -1.0) + neg(MaNei)
+    );
+    scalar Du
+    (
+        -ku_*BetaOwn*BetaNei
+       *0.5*(alphaOwn*rhoOwn + alphaNei*rhoNei)
+       *fa*cStar*(UvNei - UvOwn)
+    );
+    scalar Dp
+    (
+        -kp_/fa*deltaMa*max(1.0 - sqr(0.5*(MaOwn - MaNei)), 0.0)
+       *(alphaNei*pNei - alphaOwn*pOwn)/cStar
+    );
+
+    scalar mDot
+    (
+        0.5*cStar
+       *(
+            alphaOwn*rhoOwn*max(MaStar, 0.0)
+          + alphaNei*rhoNei*min(MaStar, 0.0)
+        ) + Dp
+    );
+    scalar alphaP
+    (
+        BetaOwn*alphaOwn*pOwn + BetaNei*alphaNei*pNei + Du
+    );
+
+    scalar alphaRhoPhi = magSf*mDot;
+    scalar alpha;
+    vector U;
+    scalar rho;
+    scalarList alphas(alphasOwn.size());
+    scalarList rhos(rhosOwn.size());
+
+    if (mDot >= 0)
+    {
+        alpha = alphaOwn;
+        rho = rhoOwn;
+        U = save(facei, patchi, UOwn, Uf_);
+
+        forAll(alphas, phasei)
+        {
+            alphas[phasei] = alphasOwn[phasei];
+            rhos[phasei] = rhosOwn[phasei];
+        }
+    }
+    else
+    {
+        alpha = alphaNei;
+        rho = rhoNei;
+        U = save(facei, patchi, UNei, Uf_);
+
+        forAll(alphas, phasei)
+        {
+            alphas[phasei] = alphasNei[phasei];
+            rhos[phasei] = rhosNei[phasei];
+        }
+    }
+    phi = save(facei, patchi, U & Sf, phi_);
+    scalar alphaPhi = alphaRhoPhi/rho;
+    save
+    (
+        facei,
+        patchi,
+        alphaP/max(alpha, 1e-6),
+        pf_
+    );
+
+    alphaRhoUPhi =
+        magSf*0.5
+       *(
+            mDot*(UOwn + UNei)
+          + mag(mDot)*(UOwn - UNei)
+        )
+      + alphaP*Sf;
+
+    alphaRhoEPhi =
+        magSf*0.5
+       *(
+            mDot*(HOwn + HNei)
+          + mag(mDot)*(HOwn - HNei)
+        );
+    alphaRhoEPhi += vMesh*magSf*alphaP;
+
+    forAll(alphaPhis, phasei)
+    {
+        alphaPhis[phasei] = alphaPhi*alphas[phasei]/max(alpha, 1e-10);
+        alphaRhoPhis[phasei] = alphaPhis[phasei]*rhos[phasei];
+    }
+}
+
+
 Foam::scalar Foam::fluxSchemes::AUSMPlus::interpolate
 (
     const scalar& fOwn, const scalar& fNei,

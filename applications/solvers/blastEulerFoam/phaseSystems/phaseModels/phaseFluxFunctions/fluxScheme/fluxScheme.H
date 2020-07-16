@@ -98,6 +98,26 @@ protected:
             const label facei, const label patchi = -1
         ) = 0;
 
+        //- Calcualte fluxes
+        virtual void calculateFluxes
+        (
+            const scalar& alphaOwn, const scalar& alphaNei,
+            const scalar& rhoOwn, const scalar& rhoNei,
+            const scalarList& alphasOwn, const scalarList& alphasNei,
+            const scalarList& rhosOwn, const scalarList& rhosNei,
+            const vector& UOwn, const vector& UNei,
+            const scalar& eOwn, const scalar& eNei,
+            const scalar& pOwn, const scalar& pNei,
+            const scalar& cOwn, const scalar& cNei,
+            const vector& Sf,
+            scalar& phi,
+            scalarList& alphaPhis,
+            scalarList& alphaRhoPhis,
+            vector& alphaRhoUPhi,
+            scalar& alphaRhoEPhi,
+            const label facei, const label patchi = -1
+        ) = 0;
+
         //- Interpolate field
         virtual scalar interpolate
         (
@@ -155,6 +175,23 @@ protected:
             else
             {
                 return xf[facei];
+            }
+        }
+
+        //- Return velocity w.r.t. face
+        scalar meshPhi(const label facei, const label patchi) const
+        {
+            if (!mesh_.moving())
+            {
+                return 0.0;
+            }
+            if (patchi != -1)
+            {
+                return mesh_.phi().boundaryField()[patchi][facei];
+            }
+            else
+            {
+                return mesh_.phi()[facei];
             }
         }
 
@@ -249,6 +286,24 @@ public:
             const volScalarField& c,
             surfaceScalarField& phi,
             surfaceScalarField& alphaRhoPhi,
+            surfaceVectorField& alphaRhoUPhi,
+            surfaceScalarField& alphaRhoEPhi
+        );
+
+        //- Update
+        void update
+        (
+            const UPtrList<volScalarField>& alphas,
+            const UPtrList<volScalarField>& rhos,
+            const volVectorField& U,
+            const volScalarField& e,
+            const volScalarField& p,
+            const volScalarField& c,
+            surfaceScalarField& phi,
+            surfaceScalarField& alphaPhi,
+            surfaceScalarField& alphaRhoPhi,
+            PtrList<surfaceScalarField>& alphaPhis,
+            PtrList<surfaceScalarField>& alphaRhoPhis,
             surfaceVectorField& alphaRhoUPhi,
             surfaceScalarField& alphaRhoEPhi
         );
