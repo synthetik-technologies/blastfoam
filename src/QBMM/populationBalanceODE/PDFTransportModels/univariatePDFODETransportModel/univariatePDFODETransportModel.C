@@ -156,7 +156,7 @@ void Foam::PDFTransportModels::univariatePDFODETransportModel::solve
 
     dimensionedScalar dT = mesh_.time().deltaT();
 
-    forAll(momentsOld_, mi)
+    forAll(quadrature_.moments(), mi)
     {
         volScalarField& m = quadrature_.moments()[mi];
         m = momentsOld[mi] - dT*deltaMoments[mi];
