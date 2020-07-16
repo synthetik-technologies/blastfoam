@@ -106,7 +106,7 @@ void Foam::probes::findElements
     {
         const vector& location = operator[](probei);
         label celli = elementList_[probei];
-        label facei = -1;
+        label facei = faceList_[probei];
 
         label celliOrig = celli;
 
@@ -114,6 +114,7 @@ void Foam::probes::findElements
 
         if (Pstream::parRun())
         {
+            facei = -1;
             if (celli >= 0 && celli == celliOrig)
             {
                 facei = faceList_[probei];
@@ -123,8 +124,8 @@ void Foam::probes::findElements
                 elementList_[probei] = -1;
                 faceList_[probei] = -1;
             }
+            reduce(facei, maxOp<label>());
         }
-        reduce(facei, maxOp<label>());
 
         if (celli == -1)
         {
