@@ -20,7 +20,13 @@ pRef 67e3;
 particles0
 {
     phaseType        granular;
-    d           11e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           11e-6;
+    }
+
     alphaMax    0.65;
 
 
@@ -62,7 +68,12 @@ particles0
 particles1
 {
     phaseType        granular;
-    d           80e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           80e-6;
+    }
     alphaMax    0.65;
 
     type basic;
@@ -103,7 +114,12 @@ particles1
 gas
 {
     phaseType      fluid;
-    d               0;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           0;
+    }
 
     type basic;
     thermoType

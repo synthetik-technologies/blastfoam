@@ -41,7 +41,7 @@ title=multiclass_shockTube_validation_Ux_$2
             "$1" using 1:14 title 'Gas' \
             with lines dt 3 linewidth 2 linecolor rgb 'brown'
 EOF
-convert -colorspace sRGB -flatten $title.eps -background white $title.png
+# convert -colorspace sRGB -flatten $title.eps -background white $title.png
 }
 
 createEpsAlpha()
@@ -65,7 +65,7 @@ title=multiclass_shockTube_validation_alpha_$2
             "$1" using 1:6 with lines lw 2 linecolor rgb 'orange',\
             "$1" using 1:7 with lines lw 2 linecolor rgb 'purple'
 EOF
-convert -colorspace sRGB -flatten $title.eps -background white $title.png
+# convert -colorspace sRGB -flatten $title.eps -background white $title.png
 }
 
 # test if gnuplot exists on the system

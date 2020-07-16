@@ -20,7 +20,11 @@ pRef 67e3;
 coal
 {
     phaseType        granular;
-    d           10e-6;
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           10e-6;
+    }
     alphaMax    0.65;
 
 
@@ -61,7 +65,13 @@ coal
 particles0
 {
     phaseType        granular;
-    d           1.685e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           1.685e-6;
+    }
+
     alphaMax    0.65;
 
     type basic;
@@ -100,7 +110,12 @@ particles0
 particles1
 {
     phaseType        granular;
-    d           8.931e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           8.931e-6;
+    }
     alphaMax    0.65;
 
     type basic;
@@ -140,7 +155,13 @@ particles1
 particles2
 {
     phaseType        granular;
-    d           26.201e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           26.201e-6;
+    }
+
     alphaMax    0.65;
 
     type basic;
@@ -180,7 +201,12 @@ particles2
 particles3
 {
     phaseType        granular;
-    d           81.633e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           81.633e-6;
+    }
     alphaMax    0.65;
 
     type basic;
@@ -220,7 +246,13 @@ particles3
 particles4
 {
     phaseType        granular;
-    d           171.239e-6;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           171.239e-6;
+    }
+
     alphaMax    0.65;
 
     type basic;
@@ -260,7 +292,12 @@ particles4
 gas
 {
     phaseType            fluid;
-    d               0;
+
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           0;
+    }
 
     type basic;
     thermoType

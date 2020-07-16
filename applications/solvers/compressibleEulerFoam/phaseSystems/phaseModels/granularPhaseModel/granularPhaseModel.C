@@ -347,7 +347,7 @@ Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
     Theta2.max(1e-10);
     phasePairKey key(name(), phase2.name(), false);
 
-    volScalarField m1(pi/6.0*pow3(d_)*rho_);
+    volScalarField m1(pi/6.0*pow3(this->d())*rho_);
     volScalarField m2(pi/6.0*pow3(phase2.d())*phase2.rho());
     volScalarField m0(m1 + m2);
     volScalarField m1Thetam2Theta(sqr(m1)*Theta1 + sqr(m2)*Theta2);
@@ -357,7 +357,7 @@ Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
         new volScalarField
         (
             (
-                3.0/d_
+                3.0/this->d()
                *sqrt
                 (
                     2.0*sqr(m0)*Theta_*phase2.Theta()

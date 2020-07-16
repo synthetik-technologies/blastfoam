@@ -20,7 +20,11 @@ pRef 1e5;
 particles
 {
     phaseType        granular;
-    d           10e-6;
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           10e-6;
+    }
     alphaMax    0.63;
     alphaMinFriction 0.5;
 
@@ -62,7 +66,11 @@ particles
 gas
 {
     phaseType            fluid;
-    d               0;
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           0;
+    }
 
     type basic;
     thermoType

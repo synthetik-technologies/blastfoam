@@ -16,11 +16,16 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (particles gas);
-pRef 1e5;
+
 particles
 {
     phaseType        granular;
-    d           5e-6;
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           5e-6;
+    }
+
     alphaMax    0.65;
     alphaMinFriction 0.5;
 
@@ -63,7 +68,11 @@ particles
 gas
 {
     phaseType            fluid;
-    d               0;
+    diameterModel constant;
+    constantDiameterCoeffs
+    {
+        d           0;
+    }
 
     type basic;
     thermoType

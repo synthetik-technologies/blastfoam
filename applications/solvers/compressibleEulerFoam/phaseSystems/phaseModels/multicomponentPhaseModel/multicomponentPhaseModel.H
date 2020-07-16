@@ -41,6 +41,7 @@ SourceFiles
 #define multicomponentPhaseModel_H
 
 #include "phaseModel.H"
+#include "fluidThermoModel.H"
 #include "fluxScheme.H"
 #include "runTimeSelectionTables.H"
 

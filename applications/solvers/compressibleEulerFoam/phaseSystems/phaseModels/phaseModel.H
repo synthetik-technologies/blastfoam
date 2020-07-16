@@ -45,7 +45,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "fvMatricesFwd.H"
-#include "fluidThermoModel.H"
+#include "diameterModel.H"
 #include "fvc.H"
 #include "runTimeSelectionTables.H"
 
@@ -145,8 +145,8 @@ protected:
         PtrList<volScalarField> deltaAlphaRhoE_;
 
 
-        //- Diameter
-        volScalarField d_;
+        //- Diameter model
+        autoPtr<diameterModel> dPtr_;
 
         //- Is the volume fraction transported
         bool solveAlpha_;
@@ -375,13 +375,13 @@ public:
             //- Return diameter of nodei
             virtual tmp<volScalarField> d(const label nodei = -1) const
             {
-                return d_;
+                return dPtr_->d();
             }
 
             //- Return diameter of nodei for celli
             virtual scalar di(const label celli, const label nodei = -1) const
             {
-                return d_[celli];
+                return dPtr_->d()[celli];
             }
 
             //- Return the thermophysical pressure

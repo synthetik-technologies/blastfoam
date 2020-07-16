@@ -180,19 +180,7 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
     ),
-    d_
-    (
-        IOobject
-        (
-            IOobject::groupName("d", name_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        fluid.mesh(),
-        dimensionedScalar("d", dimLength, phaseDict_)
-    )
+    dPtr_(diameterModel::New(fluid.mesh(), phaseDict_, phaseName))
 {}
 
 
@@ -307,6 +295,9 @@ void Foam::phaseModel::solve
     alphaRho_.max(0);
     alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
     alphaRhoE_ = alphaRhoEOld - dT*deltaAlphaRhoE;
+
+    //- Update diameterModel
+    dPtr_->solve(stepi, ai, bi);
 }
 
 
