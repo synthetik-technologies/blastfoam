@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
         mesh.update();
 
         parcels.evolve();
-        fluid.volumeFraction() = 1.0 - parcels.theta();
+        theta = parcels.theta();
         fluid.encode();
 
         fluid.eSource() = parcels.Sh(fluid.e());

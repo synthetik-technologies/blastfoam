@@ -38,8 +38,8 @@ basicThermoCloud parcels
     g,
     fluid.thermo()
 );
-
-fluid.setDispersedVolumeFraction(parcels.theta());
+volScalarField theta("theta.reactingCloud1", parcels.theta());
+fluid.setDispersedVolumeFraction(theta);
 
 
 const volScalarField& p = fluid.p();

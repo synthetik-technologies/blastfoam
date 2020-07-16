@@ -9,7 +9,6 @@ EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/finiteVolume/cfdTools \
     -I$(LIB_SRC)/ODE/lnInclude \
-    -I$(LIB_SRC)/combustionModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
     -I$(LIB_SRC)/radiationModels/lnInclude \
@@ -21,8 +20,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    $(BLAST_QBMM_INC)
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude
 
 
 EXE_LIBS = \
