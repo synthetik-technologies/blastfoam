@@ -17,5 +17,5 @@ LIB_LIBS = \
     -lcompressibleTransportModels \
     -lspecie \
     -lmeshTools \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastPhaseSystems

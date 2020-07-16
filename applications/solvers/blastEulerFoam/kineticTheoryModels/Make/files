@@ -48,4 +48,4 @@ derivedFvPatchFields/JohnsonJacksonParticleSlip/JohnsonJacksonParticleSlipFvPatc
 dragModels/Syamlal/Syamlal.C
 dragModels/Chao/Chao.C
 
-LIB = $(FOAM_LIBBIN)/libblastKineticTheoryModels
+LIB = $(BLAST_LIBBIN)/libblastKineticTheoryModels

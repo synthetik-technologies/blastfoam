@@ -18,6 +18,6 @@ EXE_INC = \
 LIB_LIBS = \
     -lturbulenceModels \
     -lcompressibleTurbulenceModels \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
     -ltimeIntegrators

@@ -30,6 +30,6 @@ EXE_LIBS = \
     -lfvOptions \
     -lsampling \
     -lmeshTools \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lfluxSchemes \
     -ltimeIntegrators

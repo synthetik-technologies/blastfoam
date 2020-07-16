@@ -11,6 +11,6 @@ LIB_LIBS = \
     -lfiniteVolume \
     -lfvOptions \
     -lmeshTools \
-    -L$(FOAM_USER_LIBBIN) \
+    -L$(BLAST_LIBBIN) \
     -lblastPhaseSystems \
     -lblastInterfacialModels

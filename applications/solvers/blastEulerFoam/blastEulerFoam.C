@@ -22,11 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    compressibleEulerFoam
+    blastEulerFoam
 
 Description
     Multiphase compressible solver that uses Riemann solver to construct
-    hyperbolic fluxes. Have unique velocities, internal energies and pressures.
+    hyperbolic fluxes. Phases have unique velocities, internal energies and pressures.
 
 
 \*---------------------------------------------------------------------------*/
