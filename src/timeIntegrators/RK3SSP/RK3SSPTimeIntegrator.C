@@ -89,7 +89,7 @@ void Foam::timeIntegrators::RK3SSP::integrate()
     }
 
     // Update and store 3rd step
-    Info<< nl << "RK3SSP: Step 2" << endl;
+    Info<< nl << "RK3SSP: Step 3" << endl;
     this->updateSystems();
     forAll(systems_, i)
     {

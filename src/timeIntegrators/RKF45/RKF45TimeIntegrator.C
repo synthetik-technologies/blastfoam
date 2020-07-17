@@ -67,30 +67,38 @@ void Foam::timeIntegrators::RKF45::setODEFields(integrationSystem& system)
 void Foam::timeIntegrators::RKF45::integrate()
 {
     // Update and store original fields
+    Info<< nl << "RKF45: Step 1" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
-        systems_[i].update();
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(1, {1.0}, {a10});
     }
 
-    // Update and store 1st step
+    // Update and store original fields
+    Info<< nl << "RKF45: Step 2" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
-        systems_[i].update();
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(2, {0.0, 1.0}, {a20, a21});
     }
 
-    // Update and store 1st step
+    // Update and store original fields
+    Info<< nl << "RKF45: Step 3" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
-        systems_[i].update();
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(3, {0.0, 0.0, 1.0}, {a30, a31, a32});
     }
 
-    // Update and store 1st step
+    // Update and store original fields
+    Info<< nl << "RKF45: Step 4" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
-        systems_[i].update();
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve
         (
             4,
@@ -99,10 +107,12 @@ void Foam::timeIntegrators::RKF45::integrate()
         );
     }
 
-    // Update and store 1st step
+    // Update and store original fields
+    Info<< nl << "RKF45: Step 5" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
-        systems_[i].update();
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve
         (
             5,
@@ -111,9 +121,12 @@ void Foam::timeIntegrators::RKF45::integrate()
         );
     }
 
-    // Update and store 1st step
+    // Update and store original fields
+    Info<< nl << "RKF45: Step 6" << endl;
+    this->updateSystems();
     forAll(systems_, i)
     {
+        Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].update();
         systems_[i].solve
         (

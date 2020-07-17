@@ -27,10 +27,10 @@ lowerRefineLevel 0.1;
 unrefineLevel   0.1;
 
 // Have slower than 2:1 refinement
-nBufferLayers   1;
+nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   2;
+maxRefinement   3;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

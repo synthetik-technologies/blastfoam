@@ -1508,10 +1508,9 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             }
         }
     }
-
-    origProtectedCell_ = protectedCell_;
-
     setProtectedCells();
+    origProtectedCell_ = protectedCell_;
+    nOrigProtected_ = nProtected_;
 
     if (returnReduce(nProtected_, sumOp<label>()))
     {
@@ -1666,6 +1665,7 @@ bool Foam::adaptiveFvMesh::update()
     )
     {
         protectedCell_ = origProtectedCell_;
+        nProtected_ = nOrigProtected_;
         setProtectedCells();
 
         label maxCells

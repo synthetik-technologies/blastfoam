@@ -120,6 +120,7 @@ protected:
 
         //- Number of protected cells
         label nProtected_;
+        label nOrigProtected_;
 
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
