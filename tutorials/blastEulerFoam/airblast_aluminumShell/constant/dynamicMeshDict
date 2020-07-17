@@ -18,7 +18,7 @@ dynamicFvMesh   adaptiveFvMesh;
 
 // How often to refine
 refineInterval  2;
-beginUnrefine 5e-7;
+beginUnrefine 1e-6;
 
 // Field to be refinement on
 errorEstimator  multicomponent;
@@ -50,7 +50,7 @@ volumeFraction
 nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   6;
+maxRefinement   4;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

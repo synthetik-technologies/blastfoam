@@ -182,7 +182,6 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
                *exp(-TaLow_.value()/T_[celli]);
         }
     }
-
     return R*(1.0 - lambda_);
 }
 

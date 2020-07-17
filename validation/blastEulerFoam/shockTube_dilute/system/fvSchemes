@@ -19,7 +19,7 @@ fluxSchemes
 {
     gas
     {
-        fluxScheme  HLLC;
+        fluxScheme  Kurganov;
     }
     particles
     {

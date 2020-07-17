@@ -65,9 +65,9 @@ class Kurganov
 
     // Private functions
 
-        //- Calcualte fluxes
         virtual void calculateFluxes
         (
+            const scalar& alphaOwn, const scalar& alphaNei,
             const scalar& rhoOwn, const scalar& rhoNei,
             const vector& UOwn, const vector& UNei,
             const scalar& eOwn, const scalar& eNei,
@@ -75,18 +75,20 @@ class Kurganov
             const scalar& cOwn, const scalar& cNei,
             const vector& Sf,
             scalar& phi,
-            scalar& rhoPhi,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
+            scalar& alphaPhi,
+            scalar& alphaRhoPhi,
+            vector& alphaRhoUPhi,
+            scalar& alphaRhoEPhi,
             const label facei, const label patchi = -1
         );
 
         //- Calcualte fluxes
         virtual void calculateFluxes
         (
+            const scalar& alphaOwn, const scalar& alphaNei,
+            const scalar& rhoOwn, const scalar& rhoNei,
             const scalarList& alphasOwn, const scalarList& alphasNei,
             const scalarList& rhosOwn, const scalarList& rhosNei,
-            const scalar& rhoOwn, const scalar& rhoNei,
             const vector& UOwn, const vector& UNei,
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
@@ -95,25 +97,16 @@ class Kurganov
             scalar& phi,
             scalarList& alphaPhis,
             scalarList& alphaRhoPhis,
-            vector& rhoUPhi,
-            scalar& rhoEPhi,
+            vector& alphaRhoUPhi,
+            scalar& alphaRhoEPhi,
             const label facei, const label patchi = -1
         );
-
-        //- Calculate energy flux for an addition internal energy
-        virtual scalar energyFlux
-        (
-            const scalar& rhoOwn, const scalar& rhoNei,
-            const vector& UOwn, const vector& UNei,
-            const scalar& eOwn, const scalar& eNei,
-            const scalar& pOwn, const scalar& pNei,
-            const label facei, const label patchi = -1
-        ) const;
 
         //- Interpolate field
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
+            const bool rho,
             const label facei, const label patchi = -1
         ) const;
 
@@ -124,7 +117,7 @@ public:
     TypeName("Kurganov");
 
     // Constructor
-    Kurganov(const fvMesh& mesh);
+    Kurganov(const fvMesh& mesh, const word& name);
 
 
     //- Destructor

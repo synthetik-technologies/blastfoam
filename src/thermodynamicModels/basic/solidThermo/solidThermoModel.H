@@ -139,6 +139,28 @@ public:
     //- Destructor
     virtual ~solidThermoModel();
 
+
+        //- Solve sub-step stepi
+        virtual void solve
+        (
+            const label stepi,
+            const scalarList& ai,
+            const scalarList& bi
+        ) = 0;
+
+        //- Set old lists and fluxes (initialization of fields)
+        virtual void setODEFields
+        (
+            const label nSteps,
+            const labelList& oldIs,
+            const label& nOld,
+            const labelList& deltaIs,
+            const label nDelta
+        ) = 0;
+
+        //- Remove stored fields
+        virtual void clearODEFields() = 0;
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
 

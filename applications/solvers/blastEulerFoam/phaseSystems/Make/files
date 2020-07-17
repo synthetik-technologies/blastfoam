@@ -28,6 +28,7 @@ phaseModels/phaseFluxFunctions/AUSMPlusUp/KimLimitedScheme/KimLimitedScheme.C
 phaseModels/phaseFluxFunctions/RiemannConvectionScheme/RiemannConvectionSchemes.C
 phaseModels/phaseFluxFunctions/HLLC/HLLC.C
 phaseModels/phaseFluxFunctions/AUSMPlusUp/AUSMPlusUp.C
-phaseModels/phaseFluxFunctions/AUSMPlus/AUSMPlus.C
+phaseModels/phaseFluxFunctions/Tadmor/Tadmor.C
+phaseModels/phaseFluxFunctions/Kurganov/Kurganov.C
 
 LIB = $(BLAST_LIBBIN)/libblastPhaseSystems

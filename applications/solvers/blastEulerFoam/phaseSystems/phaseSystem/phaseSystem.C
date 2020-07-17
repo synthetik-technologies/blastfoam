@@ -525,7 +525,6 @@ Foam::phaseSystem::~phaseSystem()
 
 void Foam::phaseSystem::decode()
 {
-    rho_ = dimensionedScalar(dimDensity, 0.0);
     phaseModels_[0].decode();
     volScalarField sumAlpha(phaseModels_[0]);
     label nPhases = phaseModels_.size();
@@ -533,7 +532,6 @@ void Foam::phaseSystem::decode()
     {
         phaseModels_[phasei].decode();
         sumAlpha += phaseModels_[phasei];
-        rho_ += phaseModels_[phasei].alphaRho();
     }
     sumAlpha.min(1.0);
     volScalarField& alpha(phaseModels_[nPhases - 1]);
@@ -542,7 +540,6 @@ void Foam::phaseSystem::decode()
     alpha.min(1.0);
     alpha.correctBoundaryConditions();
     phaseModels_[nPhases - 1].decode();
-    rho_ += phaseModels_[nPhases - 1].alphaRho();
 
 
     if (kineticTheoryPtr_ != NULL)

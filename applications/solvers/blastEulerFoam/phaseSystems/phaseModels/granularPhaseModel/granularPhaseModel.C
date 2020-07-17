@@ -218,6 +218,8 @@ void Foam::granularPhaseModel::solve
     alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
     alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
     alphaRhoPTE_ = alphaRhoPTEOld - dT*(deltaAlphaRhoPTE);
+
+    thermo_->solve(stepi, ai, bi);
 }
 
 
@@ -231,6 +233,8 @@ void Foam::granularPhaseModel::setODEFields
     phaseModel::setODEFields(nSteps, storeFields, storeDeltas);
     alphaRhoPTEOld_.resize(nOld_);
     deltaAlphaRhoPTE_.resize(nDelta_);
+
+    thermo_->setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
 }
 
 void Foam::granularPhaseModel::clearODEFields()
@@ -242,6 +246,8 @@ void Foam::granularPhaseModel::clearODEFields()
 
     alphaRhoPTEOld_.resize(nOld_);
     deltaAlphaRhoPTE_.resize(nDelta_);
+
+    thermo_->clearODEFields();
 }
 
 
@@ -424,23 +430,7 @@ void Foam::granularPhaseModel::correctThermo()
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::ESource() const
 {
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ESource",
-                fluid_.mesh().time().timeName(),
-                fluid_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            fluid_.mesh(),
-            dimensionedScalar("0", alphaRhoE_.dimensions(), 0.0)
-        )
-    );
+    return thermo_->ESource();
 }
 
 
