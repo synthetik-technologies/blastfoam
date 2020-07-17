@@ -54,7 +54,13 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
         dimDensity,
         dict.parent().subDict("products").subDict("equationOfState")
     ),
-    dp_(diameterModel::New(mesh, dict, phaseName)),
+    dModel_
+    (
+        mesh.foundObject<volScalarField>(IOobject::groupName("d", phaseName))
+      ? autoPtr<diameterModel>()
+      :diameterModel::New(mesh, dict, phaseName)
+    ),
+    dp_(mesh.lookupObject<volScalarField>(IOobject::groupName("d", phaseName))),
     Ts_("Ts", dimTemperature, dict),
     ALow_("ALow", inv(sqr(dimLength)*dimTime), dict),
     TaLow_("TaLow", dimTemperature, dict),
@@ -165,7 +171,7 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
         if (T_[celli] > Ts_.value())
         {
             R[celli] =
-                sqr(dp_->d()[celli])
+                sqr(dp_[celli])
                *AHigh_.value()
                *exp(-TaHigh_.value()/T_[celli]);
         }
@@ -190,14 +196,20 @@ void Foam::activationModels::ArrheniusRateActivation::setODEFields
 )
 {
     activationModel::setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
-    dp_->setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
+    if (dModel_.valid())
+    {
+        dModel_->setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
+    }
 }
 
 
 void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
 {
     activationModel::clearODEFields();
-    dp_->clearODEFields();
+    if (dModel_.valid())
+    {
+        dModel_->clearODEFields();
+    }
 }
 
 
@@ -208,7 +220,10 @@ void Foam::activationModels::ArrheniusRateActivation::solve
     const scalarList& bi
 )
 {
-    dp_->solve(stepi, ai, bi);
+    if (dModel_.valid())
+    {
+        dModel_->solve(stepi, ai, bi);
+    }
     activationModel::solve(stepi, ai, bi);
 }
 // ************************************************************************* //

@@ -59,7 +59,10 @@ class ArrheniusRateActivation
     dimensionedScalar rho0_;
 
     //- Diameter
-    autoPtr<diameterModel> dp_;
+    autoPtr<diameterModel> dModel_;
+
+    //- Reference to diameter
+    const volScalarField& dp_;
 
     //- Switch temperature
     dimensionedScalar Ts_;
