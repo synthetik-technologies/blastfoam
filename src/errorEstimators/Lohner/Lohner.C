@@ -51,7 +51,9 @@ Foam::errorEstimators::Lohner::Lohner
     errorEstimator(mesh, dict),
     fieldName_(dict.lookup("deltaField")),
     epsilon_(readScalar(dict.lookup("epsilon")))
-{}
+{
+    this->read(dict);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -143,6 +145,7 @@ void Foam::errorEstimators::Lohner::update()
             }
         }
     }
+    normalize(error_);
     error_.correctBoundaryConditions();
 }
 

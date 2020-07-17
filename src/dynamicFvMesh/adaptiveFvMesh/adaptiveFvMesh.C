@@ -1655,14 +1655,13 @@ bool Foam::adaptiveFvMesh::update()
                 << exit(FatalError);
         }
 
-        const scalar lowerRefineLevel =
-            readScalar(refineDict.lookup("lowerRefineLevel"));
-        const scalar upperRefineLevel =
-            refineDict.lookupOrDefault("upperRefineLevel", great);
-        const scalar unrefineLevel = refineDict.lookupType<scalar>
-        (
-            "unrefineLevel"
-        );
+        //- Update coefficients
+        error_->read(refineDict);
+
+        const scalar lowerRefineLevel = small;
+        const scalar upperRefineLevel = 1.0 - small;
+        const scalar unrefineLevel = -small;
+
         const label nBufferLayers =
             readLabel(refineDict.lookup("nBufferLayers"));
 

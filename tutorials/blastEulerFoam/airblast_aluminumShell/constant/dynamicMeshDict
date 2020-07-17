@@ -27,18 +27,24 @@ estimators (density volumeFraction);
 density
 {
     errorEstimator densityGradient;
+
+    // Refine field in between lower..upper
+    lowerRefineLevel 1e-2;
+
+    // If value < unrefineLevel unrefine
+    unrefineLevel   1e-2;
 }
 volumeFraction
 {
     errorEstimator delta;
     deltaField alpha.aluminum;
+
+    // Refine field in between lower..upper
+    lowerRefineLevel 0.1;
+
+    // If value < unrefineLevel unrefine
+    unrefineLevel   0.1;
 }
-
-// Refine field in between lower..upper
-lowerRefineLevel 1e-2;
-
-// If value < unrefineLevel unrefine
-unrefineLevel   1e-2;
 
 // Have slower than 2:1 refinement
 nBufferLayers   2;

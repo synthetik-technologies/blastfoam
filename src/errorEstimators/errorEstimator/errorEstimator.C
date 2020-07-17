@@ -75,7 +75,11 @@ Foam::errorEstimator::errorEstimator
 )
 :
     mesh_(mesh),
-    error_(lookupOrConstruct(mesh))
+    error_(lookupOrConstruct(mesh)),
+    lowerRefine_(0.0),
+    lowerUnrefine_(0.0),
+    upperRefine_(0.0),
+    upperUnrefine_(0.0)
 {}
 
 
@@ -83,5 +87,44 @@ Foam::errorEstimator::errorEstimator
 
 Foam::errorEstimator::~errorEstimator()
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::errorEstimator::read(const dictionary& dict)
+{
+    lowerRefine_ = dict.lookupType<scalar>("lowerRefineLevel");
+    lowerUnrefine_ = dict.lookupType<scalar>("unrefineLevel");
+    upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
+    upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
+}
+
+
+void Foam::errorEstimator::normalize(volScalarField& error)
+{
+    forAll(error, celli)
+    {
+        if
+        (
+            error[celli] < lowerUnrefine_
+         || error[celli] > upperUnrefine_
+        )
+        {
+            error[celli] = -1.0;
+        }
+        else if
+        (
+            error[celli] > lowerRefine_
+         || error[celli] < upperRefine_
+        )
+        {
+            error[celli] = 1.0;
+        }
+        else
+        {
+            error[celli] = 0.0;
+        }
+    }
+}
 
 // ************************************************************************* //

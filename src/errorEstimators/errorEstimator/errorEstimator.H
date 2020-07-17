@@ -61,9 +61,24 @@ protected:
         //- Reference to error field
         volScalarField& error_;
 
+        //- Lower refine level
+        scalar lowerRefine_;
+
+        //- Lower unrefine level
+        scalar lowerUnrefine_;
+
+        //- Upper refine level
+        scalar upperRefine_;
+
+        //- Upper unrefine level
+        scalar upperUnrefine_;
+
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
         volScalarField& lookupOrConstruct(const fvMesh& mesh) const;
+
+        //- Normalize error (-1 = unrefine, 0 = do nothing, 1 = refine)
+        void normalize(volScalarField& error);
 
 public:
 
@@ -111,7 +126,11 @@ public:
         const volScalarField& error() const
         {
             return error_;
+
         }
+
+        //- Read level values
+        virtual void read(const dictionary& dict);
 };
 
 

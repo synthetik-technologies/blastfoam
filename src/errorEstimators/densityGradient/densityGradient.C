@@ -48,7 +48,9 @@ Foam::errorEstimators::densityGradient::densityGradient
 )
 :
     errorEstimator(mesh, dict)
-{}
+{
+    this->read(dict);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -151,6 +153,7 @@ void Foam::errorEstimators::densityGradient::update()
             }
         }
     }
+    normalize(error_);
     error_.correctBoundaryConditions();
 }
 

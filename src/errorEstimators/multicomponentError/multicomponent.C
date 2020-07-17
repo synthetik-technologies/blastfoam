@@ -71,6 +71,15 @@ Foam::errorEstimators::multicomponent::~multicomponent()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
+{
+    forAll(errors_, i)
+    {
+        errors_[i].read(dict.subDict(names_[i]));
+    }
+}
+
+
 void Foam::errorEstimators::multicomponent::update()
 {
     volScalarField error

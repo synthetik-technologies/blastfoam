@@ -85,6 +85,9 @@ public:
 
         //- Gamma function
         virtual void update();
+
+        //- Read level values
+        virtual void read(const dictionary& dict);
 };
 
 

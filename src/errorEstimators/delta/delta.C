@@ -49,7 +49,9 @@ Foam::errorEstimators::delta::delta
 :
     errorEstimator(mesh, dict),
     name_(dict.lookup("deltaField"))
-{}
+{
+    this->read(dict);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -104,6 +106,7 @@ void Foam::errorEstimators::delta::update()
             }
         }
     }
+    normalize(error_);
     error_.correctBoundaryConditions();
 }
 
