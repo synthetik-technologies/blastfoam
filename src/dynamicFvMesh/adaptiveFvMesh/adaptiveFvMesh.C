@@ -1674,7 +1674,7 @@ bool Foam::adaptiveFvMesh::update()
         (
             lowerRefineLevel,
             upperRefineLevel,
-            error_(),
+            error_->error(),
             refineCell
         );
 
@@ -1800,7 +1800,7 @@ bool Foam::adaptiveFvMesh::update()
                 (
                     unrefineLevel,
                     refineCell,
-                    maxCellField(error_())
+                    maxCellField(error_->error())
                 )
             );
 

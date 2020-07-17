@@ -4,6 +4,7 @@ errorEstimator/newErrorEstimator.C
 densityGradient/densityGradient.C
 delta/delta.C
 Lohner/Lohner.C
+multicomponentError/multicomponent.C
 
 
 LIB = $(BLAST_LIBBIN)/liberrorEstimate

@@ -36,27 +36,46 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
+(
+    const fvMesh& mesh
+) const
+{
+    if (!mesh.foundObject<volScalarField>("error"))
+    {
+        volScalarField* fPtr
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "error",
+                    mesh.time().timeName(),
+                    mesh,
+                    IOobject::NO_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                mesh,
+                0.0,
+                "zeroGradient"
+            )
+        );
+
+        // Transfer ownership of this object to the objectRegistry
+        fPtr->store(fPtr);
+    }
+
+    return mesh.lookupObjectRef<volScalarField>("error");
+}
+
 Foam::errorEstimator::errorEstimator
 (
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    volScalarField
-    (
-        IOobject
-        (
-            "error",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0),
-        wordList(mesh.boundaryMesh().size(), "zeroGradient")
-    ),
-    mesh_(mesh)
+    mesh_(mesh),
+    error_(lookupOrConstruct(mesh))
 {}
 
 

@@ -65,7 +65,6 @@ Foam::errorEstimators::Lohner::~Lohner()
 void Foam::errorEstimators::Lohner::update()
 {
     const volScalarField& x = mesh_.lookupObject<volScalarField>(fieldName_);
-    volScalarField& error(*this);
     surfaceScalarField xf
     (
         cubic<scalar>(mesh_).interpolate(x)
@@ -74,7 +73,7 @@ void Foam::errorEstimators::Lohner::update()
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
     const label nInternalFaces = mesh_.nInternalFaces();
-    error = 0.0;
+    error_ = 0.0;
 
     vector solutionD((vector(mesh_.solutionD()) + vector::one)/2.0);
 
@@ -98,13 +97,13 @@ void Foam::errorEstimators::Lohner::update()
                     )
                 )
             );
-        error[own] = Foam::max(error[own], eT);
-        error[nei] = Foam::max(error[nei], eT);
+        error_[own] = Foam::max(error_[own], eT);
+        error_[nei] = Foam::max(error_[nei], eT);
     }
 
-    forAll(error.boundaryField(), patchi)
+    forAll(error_.boundaryField(), patchi)
     {
-        if (error.boundaryField()[patchi].coupled())
+        if (error_.boundaryField()[patchi].coupled())
         {
             const fvPatch& patch = x.boundaryField()[patchi].patch();
 
@@ -139,12 +138,12 @@ void Foam::errorEstimators::Lohner::update()
                             )
                         )
                     );
-                    error[faceCells[facei]] =
-                        Foam::max(error[faceCells[facei]], eT);
+                error_[faceCells[facei]] =
+                    Foam::max(error_[faceCells[facei]], eT);
             }
         }
     }
-    error.correctBoundaryConditions();
+    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

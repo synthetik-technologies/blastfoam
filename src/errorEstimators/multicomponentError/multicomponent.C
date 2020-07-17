@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "delta.H"
+#include "multicomponent.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,78 +33,67 @@ namespace Foam
 {
 namespace errorEstimators
 {
-    defineTypeNameAndDebug(delta, 0);
-    addToRunTimeSelectionTable(errorEstimator, delta, dictionary);
+    defineTypeNameAndDebug(multicomponent, 0);
+    addToRunTimeSelectionTable(errorEstimator, multicomponent, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::delta::delta
+Foam::errorEstimators::multicomponent::multicomponent
 (
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
     errorEstimator(mesh, dict),
-    name_(dict.lookup("deltaField"))
-{}
+    names_(dict.lookup("estimators")),
+    errors_(names_.size())
+{
+    forAll(names_, i)
+    {
+        errors_.set
+        (
+            i,
+            errorEstimator::New(mesh, dict.subDict(names_[i])).ptr()
+        );
+    }
+}
+
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::delta::~delta()
+Foam::errorEstimators::multicomponent::~multicomponent()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::delta::update()
+void Foam::errorEstimators::multicomponent::update()
 {
-    const volScalarField& x = mesh_.lookupObject<volScalarField>(name_);
+    volScalarField error
+    (
+        IOobject
+        (
+            "error",
+            mesh_.time().timeName(),
+            mesh_,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            false
+        ),
+        mesh_,
+        0.0
+    );
 
-    const labelUList& owner = mesh_.owner();
-    const labelUList& neighbour = mesh_.neighbour();
-    const label nInternalFaces = mesh_.nInternalFaces();
-    error_ = 0.0;
-
-    for (label facei = 0; facei < nInternalFaces; facei++)
+    forAll(errors_, i)
     {
-        label own = owner[facei];
-        label nei = neighbour[facei];
-
-        scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
-        error_[own] = max(error_[own], eT);
-        error_[nei] = max(error_[nei], eT);
+        errors_[i].update();
+        error = max(error, error_);
     }
-
-    // Boundary faces
-    forAll(error_.boundaryField(), patchi)
-    {
-        if (error_.boundaryField()[patchi].coupled())
-        {
-            const fvPatch& p = x.boundaryField()[patchi].patch();
-
-            const labelUList& faceCells = p.faceCells();
-            scalarField fp(x.boundaryField()[patchi].patchInternalField());
-
-            scalarField fn
-            (
-                x.boundaryField()[patchi].patchNeighbourField()
-            );
-
-            forAll(faceCells, facei)
-            {
-                scalar eT =
-                    mag(fp[facei] - fn[facei])
-                   /max(min(fp[facei], fn[facei]), small);
-                error_[faceCells[facei]]=
-                    max(error_[faceCells[facei]], eT);
-            }
-        }
-    }
-    error_.correctBoundaryConditions();
+    error_ = error;
 }
 
 // ************************************************************************* //

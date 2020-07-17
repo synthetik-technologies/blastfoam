@@ -22,101 +22,75 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimator
+    Foam::errorEstimators::multicomponent
 
 Description
-    Base class used to estimate error within a cell/across faces
+    Error is defined by a modified density gradient
+
+    References:
+    \verbatim
+        Zheng, H.W., Shu, C., Chew, Y.T., Qin, N.  (2011).
+        A solution adaptive simulation of compressible multi-fluid flows
+        with general equation of state.
+        International Journal for Numerical Methods in Fluids, 67, 616-637.
+    \endverbatim
 
 SourceFiles
-    errorEstimator.C
-    newErrorEstimator.C
+    multicomponent.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef errorEstimator_H
-#define errorEstimator_H
+#ifndef multicomponent_H
+#define multicomponent_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "volFields.H"
-#include "surfaceFields.H"
-#include "dictionary.H"
-#include "runTimeSelectionTables.H"
+#include "errorEstimator.H"
 
 namespace Foam
 {
+namespace errorEstimators
+{
 
 /*---------------------------------------------------------------------------*\
-                           Class errorEstimator Declaration
+                           Class multicomponent Declaration
 \*---------------------------------------------------------------------------*/
 
-class errorEstimator
+class multicomponent
+:
+    public errorEstimator
 {
-protected:
-    // Protected data
 
-        //- Reference to mesh
-        const fvMesh& mesh_;
+    //- Names of error estimators
+    wordList names_;
 
-        //- Reference to error field
-        volScalarField& error_;
+    //- List of error estimators
+    PtrList<errorEstimator> errors_;
 
-        //- Create or lookup error field
-        //  Useful when multiple error estimators are used
-        volScalarField& lookupOrConstruct(const fvMesh& mesh) const;
 
 public:
 
     //- Runtime type information
-    ClassName("errorEstimator");
-
-
-    // Declare runtime construction
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            errorEstimator,
-            dictionary,
-            (
-                const fvMesh& mesh,
-                const dictionary& dict
-            ),
-            (mesh, dict)
-        );
+    ClassName("multicomponent");
 
     // Constructor
-    errorEstimator(const fvMesh& mesh, const dictionary& dict);
+    multicomponent(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~errorEstimator();
-
-
-    // Selectors
-
-        static autoPtr<errorEstimator> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict
-        );
+    virtual ~multicomponent();
 
 
     // Member Functions
 
-        //- Update
-        virtual void update() = 0;
-
-        //- Return constant reference to error field
-        const volScalarField& error() const
-        {
-            return error_;
-        }
+        //- Gamma function
+        virtual void update();
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace errorEstimators
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

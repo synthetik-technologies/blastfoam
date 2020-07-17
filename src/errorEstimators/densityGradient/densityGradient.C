@@ -62,7 +62,6 @@ Foam::errorEstimators::densityGradient::~densityGradient()
 void Foam::errorEstimators::densityGradient::update()
 {
     const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
-    volScalarField& error(*this);
 
     volVectorField gradRho(fvc::grad(rho));
     scalarField dL(mesh_.V()/fvc::surfaceSum(mesh_.magSf()));
@@ -70,7 +69,7 @@ void Foam::errorEstimators::densityGradient::update()
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
     const label nInternalFaces = mesh_.nInternalFaces();
-    error = 0.0;
+    error_ = 0.0;
 
     vector solutionD((vector(mesh_.geometricD()) + vector::one)/2.0);
 
@@ -95,15 +94,15 @@ void Foam::errorEstimators::densityGradient::update()
                     mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
                     mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
                 );
-            error[own] = Foam::max(error[own], eT);
-            error[nei] = Foam::max(error[nei], eT);
+            error_[own] = Foam::max(error_[own], eT);
+            error_[nei] = Foam::max(error_[nei], eT);
         }
     }
 
     // Boundary faces
-    forAll(error.boundaryField(), patchi)
+    forAll(error_.boundaryField(), patchi)
     {
-        if (error.boundaryField()[patchi].coupled())
+        if (error_.boundaryField()[patchi].coupled())
         {
             const fvPatch& patch = rho.boundaryField()[patchi].patch();
 
@@ -146,13 +145,13 @@ void Foam::errorEstimators::densityGradient::update()
                             mag(dRhodr - dRhoDotNei)/(0.3*rhoc/dl + mag(dRhoDotNei)),
                             mag(dRhodr - dRhoDotOwn)/(0.3*rhoc/dl + mag(dRhoDotOwn))
                         );
-                    error[faceCells[facei]] =
-                        Foam::max(error[faceCells[facei]], eT);
+                    error_[faceCells[facei]] =
+                        Foam::max(error_[faceCells[facei]], eT);
                 }
             }
         }
     }
-    error.correctBoundaryConditions();
+    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

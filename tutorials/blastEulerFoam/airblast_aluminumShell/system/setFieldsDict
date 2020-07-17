@@ -41,9 +41,9 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue alpha.aluminum  0.6
+            volScalarFieldValue alpha.aluminum  0.5
             volScalarFieldValue alpha.c4        0
-            volScalarFieldValue alpha.air       0.4
+            volScalarFieldValue alpha.air       0.5
         );
     }
     sphereToCell
