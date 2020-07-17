@@ -1574,6 +1574,31 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
     mapNewInternalFaces<sphericalTensor>(mpm.faceMap());
     mapNewInternalFaces<symmTensor>(mpm.faceMap());
     mapNewInternalFaces<tensor>(mpm.faceMap());
+
+    PackedBoolList protectedCell(this->nCells());
+    const labelList& cellMap = mpm.cellMap();
+    const labelList& rCellMap = mpm.reverseCellMap();
+
+    forAll(cellMap, i)
+    {
+        label celli = cellMap[i];
+        if (protectedCell_.get(celli))
+        {
+            protectedCell.set(i, true);
+        }
+    }
+
+    forAll(rCellMap, i)
+    {
+        label index = rCellMap[i];
+
+        if (protectedCell_.get(i))
+        {
+            label celli = -index-2;
+            protectedCell.set(celli, true);
+        }
+    }
+    protectedCell_ = protectedCell;
 }
 
 
@@ -1619,11 +1644,6 @@ bool Foam::adaptiveFvMesh::update()
      && time().timeIndex() % refineInterval == 0
     )
     {
-        if (returnReduce(nProtected_, sumOp<label>()) > 0 && balance_)
-        {
-            setProtectedCells();
-        }
-
         label maxCells
         (
             refineDict.lookupOrDefault("maxCells", labelMax)

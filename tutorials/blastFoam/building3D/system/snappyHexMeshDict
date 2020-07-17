@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 castellatedMesh on;
-snap            off;
+snap            on;
 addLayers       off;
 
 geometry
@@ -25,6 +25,13 @@ geometry
         type triSurfaceMesh;
         file "L_Wall.stl";
         scale 0.001;
+    }
+    ground
+    {
+        type searchableCylinder;
+        point1 (-1 -1 0);
+        point2 (-1 -1 1);
+        radius 0.5;
     }
 };
 
@@ -76,6 +83,14 @@ castellatedMeshControls
             level (3 3);
             patchInfo { type wall; }
         }
+        ground
+        {
+            level (3 3);
+            patchInfo
+            {
+                type patch;
+            }
+        }
     }
 
 
@@ -90,15 +105,15 @@ snapControls
 {
 
     nSmoothPatch    3;
-    tolerance       2.0;
+    tolerance       1.0;
     nSolveIter      100;
     nRelaxIter      5;
 
     nFeatureSnapIter 10;
 
-    explicitFeatureSnap    true;
+    explicitFeatureSnap    false;
     multiRegionFeatureSnap false;
-    implicitFeatureSnap    false;
+    implicitFeatureSnap    true;
 }
 
 addLayersControls
