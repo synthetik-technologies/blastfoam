@@ -715,14 +715,28 @@ int main(int argc, char *argv[])
                 {
                     refineKeyword = "refineFaces";
                 }
+                Switch overwrite =
+                    regions[regionI].dict().lookupOrDefault<Switch>
+                    (
+                        "overwriteLevel",
+                        false
+                    );
+
                 forAll(savedCells[regionI], celli)
                 {
-                    maxCellLevel[savedCells[regionI][celli]] =
-                        max
-                        (
-                            maxCellLevel[savedCells[regionI][celli]],
-                            levels[regionI]
-                        );
+                    if (overwrite)
+                    {
+                        maxCellLevel[savedCells[regionI][celli]] = levels[regionI];
+                    }
+                    else
+                    {
+                        maxCellLevel[savedCells[regionI][celli]] =
+                            max
+                            (
+                                maxCellLevel[savedCells[regionI][celli]],
+                                levels[regionI]
+                            );
+                    }
                 }
 
                 if
