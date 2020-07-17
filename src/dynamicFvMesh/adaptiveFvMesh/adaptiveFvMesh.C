@@ -1659,7 +1659,7 @@ bool Foam::adaptiveFvMesh::update()
         error_->read(refineDict);
 
         const scalar lowerRefineLevel = small;
-        const scalar upperRefineLevel = 1.0 - small;
+        const scalar upperRefineLevel = great;
         const scalar unrefineLevel = -small;
 
         const label nBufferLayers =

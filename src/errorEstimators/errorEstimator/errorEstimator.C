@@ -115,7 +115,7 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         else if
         (
             error[celli] > lowerRefine_
-         || error[celli] < upperRefine_
+         && error[celli] < upperRefine_
         )
         {
             error[celli] = 1.0;

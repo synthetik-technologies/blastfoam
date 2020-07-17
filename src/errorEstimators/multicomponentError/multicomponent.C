@@ -94,7 +94,7 @@ void Foam::errorEstimators::multicomponent::update()
             false
         ),
         mesh_,
-        0.0
+        -1.0
     );
 
     forAll(errors_, i)
