@@ -1052,6 +1052,121 @@ void Foam::adaptiveFvMesh::setProtectedCells()
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
 
+    labelList neiLevel(nFaces());
+
+    for (label facei = 0; facei < nInternalFaces(); facei++)
+    {
+        neiLevel[facei] = cellLevel[faceNeighbour()[facei]];
+    }
+    for (label facei = nInternalFaces(); facei < nFaces(); facei++)
+    {
+        neiLevel[facei] = cellLevel[faceOwner()[facei]];
+    }
+    syncTools::swapFaceList(*this, neiLevel);
+
+    // Protect cells that will cause a failure (from snappyHexMesh)
+    boolList protectedFaces(nFaces(), false);
+
+    forAll(faceOwner(), facei)
+    {
+        label faceLevel = max
+        (
+            cellLevel[faceOwner()[facei]],
+            neiLevel[facei]
+        );
+
+        const face& f = faces()[facei];
+
+        label nAnchors = 0;
+
+        forAll(f, fp)
+        {
+            if (pointLevel[f[fp]] <= faceLevel)
+            {
+                nAnchors++;
+            }
+        }
+        if (nAnchors == 2)
+        {
+            protectedFaces[facei] = true;
+        }
+    }
+
+    syncTools::syncFaceList(*this, protectedFaces, orEqOp<bool>());
+
+    for (label facei = 0; facei < nInternalFaces(); facei++)
+    {
+        if (protectedFaces[facei])
+        {
+            protectedCell_.set(faceOwner()[facei], 1);
+            nProtected_++;
+            protectedCell_.set(faceNeighbour()[facei], 1);
+            nProtected_++;
+        }
+    }
+    for (label facei = nInternalFaces(); facei < nFaces(); facei++)
+    {
+        if (protectedFaces[facei])
+        {
+            protectedCell_.set(faceOwner()[facei], 1);
+            nProtected_++;
+        }
+    }
+
+    if (nGeometricD() == nSolutionD())
+    {
+        checkEightAnchorPoints(protectedCell_, nProtected_);
+    }
+
+    if (returnReduce(nProtected_, sumOp<label>()) == 0)
+    {
+        protectedCell_.clear();
+    }
+}
+
+
+template<class T>
+void Foam::adaptiveFvMesh::mapNewInternalFaces
+(
+    const labelList& faceMap
+)
+{
+    return;
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
+:
+    dynamicFvMesh(io),
+    error_(errorEstimator::New(*this, dynamicMeshDict())),
+    meshCutter_(hexRef::New(*this)),
+    dumpLevel_(false),
+    nRefinementIterations_(0),
+    nProtected_(0),
+    protectedCell_(nCells(), 0),
+    decompositionDict_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                time().system(),
+                *this,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        )
+    )
+{
+    // Read static part of dictionary
+    readDict();
+
+    const labelList& cellLevel = meshCutter_->cellLevel();
+    const labelList& pointLevel = meshCutter_->pointLevel();
+
     // Set cells that should not be refined.
     // This is currently any cell which does not have 8 anchor points or
     // uses any face which does not have 4 anchor points.
@@ -1392,104 +1507,10 @@ void Foam::adaptiveFvMesh::setProtectedCells()
                 }
             }
         }
-
-        // Protect cells that will cause a failure (from snappyHexMesh)
-        boolList protectedFaces(nFaces(), false);
-
-        forAll(faceOwner(), facei)
-        {
-            label faceLevel = max
-            (
-                cellLevel[faceOwner()[facei]],
-                neiLevel[facei]
-            );
-
-            const face& f = faces()[facei];
-
-            label nAnchors = 0;
-
-            forAll(f, fp)
-            {
-                if (pointLevel[f[fp]] <= faceLevel)
-                {
-                    nAnchors++;
-                }
-            }
-            if (nAnchors == 2)
-            {
-                protectedFaces[facei] = true;
-            }
-        }
-
-        syncTools::syncFaceList(*this, protectedFaces, orEqOp<bool>());
-
-        for (label facei = 0; facei < nInternalFaces(); facei++)
-        {
-            if (protectedFaces[facei])
-            {
-                protectedCell_.set(faceOwner()[facei], 1);
-                nProtected_++;
-                protectedCell_.set(faceNeighbour()[facei], 1);
-                nProtected_++;
-            }
-        }
-        for (label facei = nInternalFaces(); facei < nFaces(); facei++)
-        {
-            if (protectedFaces[facei])
-            {
-                protectedCell_.set(faceOwner()[facei], 1);
-                nProtected_++;
-            }
-        }
-
-        //-YO
     }
 
-    if (returnReduce(nProtected_, sumOp<label>()) == 0)
-    {
-        protectedCell_.clear();
-    }
-}
+    origProtectedCell_ = protectedCell_;
 
-
-template<class T>
-void Foam::adaptiveFvMesh::mapNewInternalFaces
-(
-    const labelList& faceMap
-)
-{
-    return;
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
-:
-    dynamicFvMesh(io),
-    error_(errorEstimator::New(*this, dynamicMeshDict())),
-    meshCutter_(hexRef::New(*this)),
-    dumpLevel_(false),
-    nRefinementIterations_(0),
-    nProtected_(0),
-    protectedCell_(nCells(), 0),
-    decompositionDict_
-    (
-        IOdictionary
-        (
-            IOobject
-            (
-                "decomposeParDict",
-                time().system(),
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            )
-        )
-    )
-{
-    // Read static part of dictionary
-    readDict();
     setProtectedCells();
 
     if (returnReduce(nProtected_, sumOp<label>()))
@@ -1582,7 +1603,7 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
     forAll(cellMap, i)
     {
         label celli = cellMap[i];
-        if (protectedCell_.get(celli))
+        if (origProtectedCell_.get(celli))
         {
             protectedCell.set(i, true);
         }
@@ -1592,13 +1613,13 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
     {
         label index = rCellMap[i];
 
-        if (protectedCell_.get(i))
+        if (origProtectedCell_.get(i))
         {
             label celli = -index-2;
             protectedCell.set(celli, true);
         }
     }
-    protectedCell_ = protectedCell;
+    origProtectedCell_ = protectedCell;
 }
 
 
@@ -1644,6 +1665,9 @@ bool Foam::adaptiveFvMesh::update()
      && time().timeIndex() % refineInterval == 0
     )
     {
+        protectedCell_ = origProtectedCell_;
+        setProtectedCells();
+
         label maxCells
         (
             refineDict.lookupOrDefault("maxCells", labelMax)
@@ -2002,6 +2026,17 @@ void Foam::adaptiveFvMesh::balance()
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
 
+            boolList protectedCell(origProtectedCell_.size(), false);
+            forAll(protectedCell, i)
+            {
+                if (origProtectedCell_.get(i))
+                {
+                    protectedCell[i] = true;
+                }
+            }
+
+            map->distributeCellData(protectedCell);
+            origProtectedCell_ = protectedCell;
 
             Info << "Successfully distributed mesh" << endl;
 
