@@ -1509,8 +1509,6 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
         }
     }
     setProtectedCells();
-    origProtectedCell_ = protectedCell_;
-    nOrigProtected_ = nProtected_;
 
     if (returnReduce(nProtected_, sumOp<label>()))
     {
@@ -1584,7 +1582,6 @@ Foam::adaptiveFvMesh::~adaptiveFvMesh()
 
 void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
 {
-// DebugVar(mpm.nOldCells());
     dynamicFvMesh::mapFields(mpm);
 
     // Correct surface fields on introduced internal faces. These get
@@ -1594,31 +1591,6 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
     mapNewInternalFaces<sphericalTensor>(mpm.faceMap());
     mapNewInternalFaces<symmTensor>(mpm.faceMap());
     mapNewInternalFaces<tensor>(mpm.faceMap());
-
-    PackedBoolList protectedCell(this->nCells());
-    const labelList& cellMap = mpm.cellMap();
-    const labelList& rCellMap = mpm.reverseCellMap();
-
-    forAll(cellMap, i)
-    {
-        label celli = cellMap[i];
-        if (origProtectedCell_.get(celli))
-        {
-            protectedCell.set(i, true);
-        }
-    }
-
-    forAll(rCellMap, i)
-    {
-        label index = rCellMap[i];
-
-        if (origProtectedCell_.get(i))
-        {
-            label celli = -index-2;
-            protectedCell.set(celli, true);
-        }
-    }
-    origProtectedCell_ = protectedCell;
 }
 
 
@@ -1664,10 +1636,6 @@ bool Foam::adaptiveFvMesh::update()
      && time().timeIndex() % refineInterval == 0
     )
     {
-        protectedCell_ = origProtectedCell_;
-        nProtected_ = nOrigProtected_;
-        setProtectedCells();
-
         label maxCells
         (
             refineDict.lookupOrDefault("maxCells", labelMax)
@@ -1726,6 +1694,18 @@ bool Foam::adaptiveFvMesh::update()
         (
             dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
         );
+
+        if (nProtected_ > 0)
+        {
+            forAll(protectedCell_, celli)
+            {
+                if (protectedCell_.get(celli))
+                {
+                    refineCell.set(celli, false);
+                }
+            }
+        }
+
         wordList protectedPatches
         (
             refineDict.lookupOrDefault("protectedPatches", wordList())
@@ -2026,17 +2006,17 @@ void Foam::adaptiveFvMesh::balance()
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
 
-            boolList protectedCell(origProtectedCell_.size(), false);
+            boolList protectedCell(protectedCell_.size(), false);
             forAll(protectedCell, i)
             {
-                if (origProtectedCell_.get(i))
+                if (protectedCell_.get(i))
                 {
                     protectedCell[i] = true;
                 }
             }
 
             map->distributeCellData(protectedCell);
-            origProtectedCell_ = protectedCell;
+            protectedCell_ = protectedCell;
 
             Info << "Successfully distributed mesh" << endl;
 

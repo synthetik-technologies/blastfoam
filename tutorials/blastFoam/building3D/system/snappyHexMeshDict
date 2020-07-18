@@ -26,7 +26,7 @@ geometry
         file "L_Wall.stl";
         scale 0.001;
     }
-    ground
+    cylinder
     {
         type searchableCylinder;
         point1 (-1 -1 0);
@@ -83,7 +83,7 @@ castellatedMeshControls
             level (3 3);
             patchInfo { type wall; }
         }
-        ground
+        cylinder
         {
             level (3 3);
             patchInfo
@@ -105,15 +105,15 @@ snapControls
 {
 
     nSmoothPatch    3;
-    tolerance       1.0;
+    tolerance       2.0;
     nSolveIter      100;
-    nRelaxIter      5;
+    nRelaxIter      10;
 
-    nFeatureSnapIter 10;
+    nFeatureSnapIter 15;
 
-    explicitFeatureSnap    false;
+    explicitFeatureSnap    true;
     multiRegionFeatureSnap false;
-    implicitFeatureSnap    true;
+    implicitFeatureSnap    false;
 }
 
 addLayersControls

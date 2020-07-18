@@ -120,12 +120,9 @@ protected:
 
         //- Number of protected cells
         label nProtected_;
-        label nOrigProtected_;
 
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
-
-        PackedBoolList origProtectedCell_;
 
         //- Does the mesh get balanced
         bool balance_;
