@@ -177,7 +177,8 @@ public:
             const dictionary& dict,
             const dictionary& dict1,
             const dictionary& dict2,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         //- Construct and add fields to db
@@ -188,7 +189,8 @@ public:
             const dictionary& dict,
             const dictionary& dict1,
             const dictionary& dict2,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
 

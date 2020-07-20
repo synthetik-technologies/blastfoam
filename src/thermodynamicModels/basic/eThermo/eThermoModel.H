@@ -103,7 +103,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         //- Construct and add fields to db
@@ -112,7 +113,8 @@ public:
             const word& phaseName,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
 

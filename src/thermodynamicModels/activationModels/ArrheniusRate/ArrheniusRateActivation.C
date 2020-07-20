@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "ArrheniusRateActivation.H"
+#include "thermodynamicConstants.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -61,19 +62,21 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
       :diameterModel::New(mesh, dict, phaseName)
     ),
     dp_(mesh.lookupObject<volScalarField>(IOobject::groupName("d", phaseName))),
+    Tign_("Tign", dimTemperature, dict),
     Ts_("Ts", dimTemperature, dict),
     ALow_("ALow", inv(sqr(dimLength)*dimTime), dict),
-    TaLow_("TaLow", dimTemperature, dict),
+    EaLow_("EaLow", dimEnergy/dimMass, dict),
     AHigh_("AHigh", inv(dimTime), dict),
-    TaHigh_("TaHigh", dimTemperature, dict),
-    T_
+    EaHigh_("EaHigh", dimEnergy/dimMass, dict),
+    TName_
     (
-        mesh.foundObject<volScalarField>(IOobject::groupName("T", phaseName))
-      ? mesh.lookupObject<volScalarField>
+        dict.lookupOrDefault
         (
-            IOobject::groupName("T", phaseName)
+            "TName",
+            mesh.foundObject<volScalarField>(IOobject::groupName("T", phaseName))
+          ? IOobject::groupName("T", phaseName)
+          : "T"
         )
-      : mesh.lookupObject<volScalarField>("T")
     )
 {
     if (dict.found("points") || dict.found("useCOM"))
@@ -151,6 +154,7 @@ Foam::activationModels::ArrheniusRateActivation::~ArrheniusRateActivation()
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::ArrheniusRateActivation::delta() const
 {
+    const volScalarField& T = lambda_.mesh().lookupObject<volScalarField>(TName_);
     volScalarField R
     (
         IOobject
@@ -165,21 +169,26 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
         lambda_.mesh(),
         dimensionedScalar("0", inv(dimTime), 0.0)
     );
+    scalar specieR(Foam::constant::thermodynamic::RR);
 
     forAll(R, celli)
     {
-        if (T_[celli] > Ts_.value())
+        if (T[celli] < Tign_.value())
+        {
+            R[celli] = 0.0;
+        }
+        else if (T[celli] > Ts_.value())
         {
             R[celli] =
                 sqr(dp_[celli])
                *AHigh_.value()
-               *exp(-TaHigh_.value()/T_[celli]);
+               *exp(-EaHigh_.value()/(specieR*T[celli]));
         }
         else
         {
             R[celli] =
                 ALow_.value()
-               *exp(-TaLow_.value()/T_[celli]);
+               *exp(-EaLow_.value()/(specieR*T[celli]));
         }
     }
     return R*(1.0 - lambda_);

@@ -47,7 +47,8 @@ Foam::fluidThermoModel::fluidThermoModel
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     basicThermoModel
@@ -58,7 +59,8 @@ Foam::fluidThermoModel::fluidThermoModel
         e,
         T,
         dict,
-        master
+        master,
+        masterName
     ),
     mu_
     (
@@ -81,7 +83,8 @@ Foam::fluidThermoModel::fluidThermoModel
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     basicThermoModel
@@ -89,7 +92,8 @@ Foam::fluidThermoModel::fluidThermoModel
         phaseName,
         mesh,
         dict,
-        master
+        master,
+        masterName
     ),
     mu_
     (

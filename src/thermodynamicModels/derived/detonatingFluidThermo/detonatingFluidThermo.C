@@ -38,7 +38,8 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     Thermo
@@ -51,7 +52,8 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
         dict,
         dict.subDict("reactants"),
         dict.subDict("products"),
-        master
+        master,
+        masterName
     ),
     activation_(activationModel::New(rho.mesh(), dict, name)),
     afterburn_(afterburnModel::New(rho.mesh(), dict, name))

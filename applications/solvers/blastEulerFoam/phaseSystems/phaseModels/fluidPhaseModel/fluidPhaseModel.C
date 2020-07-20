@@ -89,7 +89,8 @@ Foam::fluidPhaseModel::fluidPhaseModel
             e_,
             T_,
             phaseDict_,
-            true
+            true,
+            phaseName
         )
     ),
     fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
@@ -120,6 +121,12 @@ Foam::fluidPhaseModel::~fluidPhaseModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::fluidPhaseModel::ESource() const
+{
+    return (*this)*thermo_->ESource();
+}
+
 
 void Foam::fluidPhaseModel::solveAlpha(const bool s)
 {

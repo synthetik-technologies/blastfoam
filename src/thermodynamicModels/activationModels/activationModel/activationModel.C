@@ -60,13 +60,15 @@ Foam::activationModel::activationModel
     ),
     e0_
     (
-        dimensionedScalar("E0", dimPressure, dict)
+        dict.found("E0")
+      ? dimensionedScalar("E0", dimPressure, dict)
        /dimensionedScalar
         (
             "rho0",
             dimDensity,
             dict.parent().subDict("products").subDict("equationOfState")
         )
+      : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
     lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
     alphaRhoName_
@@ -270,7 +272,7 @@ void Foam::activationModel::solve
 
 Foam::tmp<Foam::volScalarField> Foam::activationModel::ESource() const
 {
-    return ddtLambda_()*e0_;
+    return ddtLambda()*e0_;
 }
 
 

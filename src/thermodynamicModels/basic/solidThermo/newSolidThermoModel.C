@@ -35,7 +35,8 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewBasic
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
      basicSolidConstructorTable::iterator cstrIter =
@@ -45,7 +46,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewBasic
             basicSolidConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, mesh, dict, master);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 
@@ -54,7 +55,8 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewDetonating
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
     detonatingSolidConstructorTable::iterator cstrIter =
@@ -64,7 +66,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewDetonating
             detonatingSolidConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, mesh, dict, master);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
@@ -72,17 +74,18 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
     word type = dict.lookup("type");
     if (type == "basic")
     {
-        return NewBasic(phaseName, mesh, dict, master);
+        return NewBasic(phaseName, mesh, dict, master, masterName);
     }
     else if (type == "detonating")
     {
-        return NewDetonating(phaseName, mesh, dict, master);
+        return NewDetonating(phaseName, mesh, dict, master, masterName);
     }
     else
     {

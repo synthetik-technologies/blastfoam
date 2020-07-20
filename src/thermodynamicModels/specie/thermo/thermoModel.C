@@ -89,13 +89,18 @@ Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
     scalar Tnew = T0;
     scalar Ttol = T0*tolerance_;
     int    iter = 0;
+
+    if (rho < small)
+    {
+        return 0.0;
+    }
     do
     {
         Test = Tnew;
         Tnew =
             Test
           - (ThermoType::Es(rho, e, Test) - e)/ThermoType::Cv(rho, e, Test);
-        Tnew = max(Tnew, small);
+        Tnew = max(Tnew, 0.0);
 
     } while (mag(Tnew - Test) > Ttol && iter++ < maxIter_);
 

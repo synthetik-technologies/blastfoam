@@ -80,12 +80,12 @@ castellatedMeshControls
     {
         walls
         {
-            level (3 3);
+            level (1 1);
             patchInfo { type wall; }
         }
         cylinder
         {
-            level (3 3);
+            level (2 2);
             patchInfo
             {
                 type patch;
@@ -105,15 +105,15 @@ snapControls
 {
 
     nSmoothPatch    3;
-    tolerance       2.0;
+    tolerance       1.0;
     nSolveIter      100;
     nRelaxIter      10;
 
     nFeatureSnapIter 15;
 
-    explicitFeatureSnap    true;
+    explicitFeatureSnap    false;
     multiRegionFeatureSnap false;
-    implicitFeatureSnap    false;
+    implicitFeatureSnap    true;
 }
 
 addLayersControls

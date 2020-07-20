@@ -68,7 +68,8 @@ public:
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master
+        const bool master,
+        const word& masterName = word::null
     );
 
 

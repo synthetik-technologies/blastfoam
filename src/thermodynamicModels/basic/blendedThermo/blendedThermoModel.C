@@ -484,7 +484,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
     const dictionary& dict,
     const dictionary& dict1,
     const dictionary& dict2,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     BasicThermo
@@ -495,7 +496,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
         e,
         T,
         dict,
-        master
+        master,
+        masterName
     ),
     Thermo1(dict1),
     Thermo2(dict2)
@@ -510,7 +512,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
     const dictionary& dict,
     const dictionary& dict1,
     const dictionary& dict2,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     BasicThermo
@@ -518,7 +521,8 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
         name,
         mesh,
         dict,
-        master
+        master,
+        masterName
     ),
     Thermo1(dict1),
     Thermo2(dict2)
@@ -541,7 +545,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::calcT() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("T", basicThermoModel::name_),
+        IOobject::groupName("T", basicThermoModel::masterName_),
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -604,7 +608,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::E() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::name_),
+        IOobject::groupName("e", basicThermoModel::masterName_),
         dimEnergy/dimMass,
         &Thermo1::Es,
         &Thermo2::Es,
@@ -626,7 +630,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::e
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::name_),
+        IOobject::groupName("e", basicThermoModel::masterName_),
         dimEnergy/dimMass,
         &Thermo1::Es,
         &Thermo2::Es,

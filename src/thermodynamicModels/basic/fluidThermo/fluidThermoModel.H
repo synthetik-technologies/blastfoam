@@ -91,9 +91,10 @@ public:
                 volScalarField& e,
                 volScalarField& T,
                 const dictionary& dict,
-                const bool master
+                const bool master,
+                const word& masterName
             ),
-            (name, p, rho, e, T, dict, master)
+            (name, p, rho, e, T, dict, master, masterName)
         );
 
         declareRunTimeSelectionTable
@@ -108,9 +109,10 @@ public:
                 volScalarField& e,
                 volScalarField& T,
                 const dictionary& dict,
-                const bool master
+                const bool master,
+                const word& masterName
             ),
-            (name, p, rho, e, T, dict, master)
+            (name, p, rho, e, T, dict, master, masterName)
         );
 
     // Constructor
@@ -124,7 +126,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         //- Construct and add fields to db
@@ -133,7 +136,8 @@ public:
             const word& phaseName,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
 
@@ -147,7 +151,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         static autoPtr<fluidThermoModel> NewDetonating
@@ -158,7 +163,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         static autoPtr<fluidThermoModel> New
@@ -169,7 +175,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
     //- Destructor

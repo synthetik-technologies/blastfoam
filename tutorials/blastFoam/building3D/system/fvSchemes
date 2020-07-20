@@ -15,12 +15,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      HLLC;
+fluxScheme      Tadmor;
 
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK3SSP;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes
@@ -42,14 +42,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    reconstruct(alpha)  vanAlbada;
-    reconstruct(rho)    vanAlbada;
-    reconstruct(U)      vanAlbadaV;
-    reconstruct(e)      vanAlbada;
-    reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
+    reconstruct(alpha)  Minmod;
+    reconstruct(rho)    Minmod;
+    reconstruct(U)      MinmodV;
+    reconstruct(e)      Minmod;
+    reconstruct(p)      Minmod;
+    reconstruct(c)      Minmod;
 
-    reconstruct(lambda.c4) vanAlbada;
+    reconstruct(lambda.c4) Minmod;
 }
 
 snGradSchemes

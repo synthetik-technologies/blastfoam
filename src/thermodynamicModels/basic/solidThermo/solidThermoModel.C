@@ -43,7 +43,8 @@ Foam::solidThermoModel::solidThermoModel
     const word& name,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     basicThermoModel
@@ -51,7 +52,8 @@ Foam::solidThermoModel::solidThermoModel
         name,
         mesh,
         dict,
-        master
+        master,
+        masterName
     )
 {}
 
@@ -64,7 +66,8 @@ Foam::solidThermoModel::solidThermoModel
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     basicThermoModel
@@ -75,7 +78,8 @@ Foam::solidThermoModel::solidThermoModel
         e,
         T,
         dict,
-        master
+        master,
+        masterName
     )
 {}
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

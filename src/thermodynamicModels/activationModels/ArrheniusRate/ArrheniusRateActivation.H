@@ -64,6 +64,9 @@ class ArrheniusRateActivation
     //- Reference to diameter
     const volScalarField& dp_;
 
+    //- Ignition temperature
+    dimensionedScalar Tign_;
+
     //- Switch temperature
     dimensionedScalar Ts_;
 
@@ -74,7 +77,7 @@ class ArrheniusRateActivation
         dimensionedScalar ALow_;
 
         //- Activation energy
-        dimensionedScalar TaLow_;
+        dimensionedScalar EaLow_;
 
 
     // High temperature coefficients
@@ -83,10 +86,10 @@ class ArrheniusRateActivation
         dimensionedScalar AHigh_;
 
         //- Activation energy
-        dimensionedScalar TaHigh_;
+        dimensionedScalar EaHigh_;
 
-        //- Reference to temperature
-        const volScalarField& T_;
+        //- Name of temperature field
+        word TName_;
 
 
     //- Return the time rate of chage of lambda

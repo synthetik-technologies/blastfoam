@@ -76,6 +76,7 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     {
         volumeFraction_ += alphas_[phasei];
     }
+    this->thermo_.setTotalVolumeFractionPtr(volumeFraction_);
 }
 
 
@@ -444,49 +445,43 @@ void Foam::coupledMultiphaseCompressibleSystem::encode()
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::Cv() const
 {
-    return thermo_.Cv()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.Cv();
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::mu() const
 {
-    return thermo_.mu()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.mu();
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::coupledMultiphaseCompressibleSystem::mu(const label patchi) const
 {
-    return
-    thermo_.mu(patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.mu(patchi);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::nu() const
 {
-    return thermo_.nu()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.nu();
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::coupledMultiphaseCompressibleSystem::nu(const label patchi) const
 {
-    return
-        thermo_.nu(patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.nu(patchi);
 }
 
 Foam::tmp<Foam::volScalarField>
 Foam::coupledMultiphaseCompressibleSystem::alpha() const
 {
-    return thermo_.alpha()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.alpha();
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::coupledMultiphaseCompressibleSystem::alpha(const label patchi) const
 {
-    return
-        thermo_.alpha(patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.alpha(patchi);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
@@ -494,7 +489,7 @@ Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::alpha
     const volScalarField& alphat
 ) const
 {
-    return thermo_.alphaEff(alphat)/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.alphaEff(alphat);
 }
 
 Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
@@ -503,36 +498,30 @@ Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
     const label patchi
 ) const
 {
-    return
-        thermo_.alphaEff(alphat, patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.alphaEff(alphat, patchi);
 }
 
 Foam::tmp<Foam::volScalarField>
 Foam::coupledMultiphaseCompressibleSystem::alphahe() const
 {
-    return thermo_.alphahe()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.alphahe();
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::coupledMultiphaseCompressibleSystem::alphahe(const label patchi) const
 {
-    return
-        thermo_.alphahe(patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.alphahe(patchi);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappa() const
 {
-    return thermo_.kappa()/Foam::max(volumeFraction_, 1e-10);
+    return thermo_.kappa();
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::coupledMultiphaseCompressibleSystem::kappa(const label patchi) const
 {
-    return
-        thermo_.kappa(patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.kappa(patchi);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
@@ -540,9 +529,7 @@ Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappa
     const volScalarField& alphat
 ) const
 {
-    return
-        thermo_.kappaEff(alphat)
-       /Foam::max(volumeFraction_, 1e-10);
+    return thermo_.kappaEff(alphat);
 }
 
 Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
@@ -551,9 +538,7 @@ Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
     const label patchi
 ) const
 {
-    return
-        thermo_.kappaEff(alphat, patchi)
-       /Foam::max(volumeFraction_.boundaryField()[patchi], 1e-10);
+    return thermo_.kappaEff(alphat, patchi);
 }
 
 // ************************************************************************* //

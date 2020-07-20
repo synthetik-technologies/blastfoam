@@ -69,9 +69,10 @@ public:
             const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master
+            const bool master,
+            const word& masterName
         ),
-        (name, mesh, dict, master)
+        (name, mesh, dict, master, masterName)
     );
 
     declareRunTimeSelectionTable
@@ -83,9 +84,10 @@ public:
             const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master
+            const bool master,
+            const word& masterName
         ),
-        (name, mesh, dict, master)
+        (name, mesh, dict, master, masterName)
     );
 
     // Constructor
@@ -99,7 +101,8 @@ public:
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         //- Construct and add fields to db
@@ -108,7 +111,8 @@ public:
             const word& phaseName,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
     //- Selector
@@ -117,7 +121,8 @@ public:
             const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         static autoPtr<solidThermoModel> NewBasic
@@ -125,7 +130,8 @@ public:
             const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
         static autoPtr<solidThermoModel> NewDetonating
@@ -133,7 +139,8 @@ public:
             const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master = true
+            const bool master = true,
+            const word& masterName = word::null
         );
 
     //- Destructor

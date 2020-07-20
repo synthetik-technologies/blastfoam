@@ -86,6 +86,9 @@ class multiphaseFluidThermo
         //- Mass fluxes
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
+        //- Pointer to total volume fraction field
+        const volScalarField* sumVfPtr_;
+
 
 public:
 
@@ -99,7 +102,8 @@ public:
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master
+        const bool master,
+        const word& masterName = word::null
     );
 
 
@@ -155,6 +159,9 @@ public:
         {
             return volumeFractions_;
         }
+
+        //- Set the pointer to the total volume fraction field
+        void setTotalVolumeFractionPtr(const volScalarField& vf);
 
         //- Non-const access to densities
         PtrList<volScalarField>& rhos()

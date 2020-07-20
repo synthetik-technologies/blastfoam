@@ -35,7 +35,8 @@ Foam::detonatingSolidThermo<Thermo>::detonatingSolidThermo
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     Thermo
@@ -45,7 +46,8 @@ Foam::detonatingSolidThermo<Thermo>::detonatingSolidThermo
         dict,
         dict.subDict("reactants"),
         dict.subDict("products"),
-        master
+        master,
+        masterName
     ),
     activation_(activationModel::New(mesh, dict, phaseName)),
     afterburn_(afterburnModel::New(mesh, dict, phaseName))

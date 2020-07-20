@@ -139,7 +139,8 @@ Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     BasicThermo
@@ -150,7 +151,8 @@ Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
         e,
         T,
         dict,
-        master
+        master,
+        masterName
     ),
     ThermoType(dict)
 {}
@@ -162,7 +164,8 @@ Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     BasicThermo
@@ -170,7 +173,8 @@ Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
         phaseName,
         mesh,
         dict,
-        master
+        master,
+        masterName
     ),
     ThermoType(dict)
 {}
@@ -190,7 +194,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::calcT() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("T", basicThermoModel::name_),
+        IOobject::groupName("T", basicThermoModel::masterName_),
         dimTemperature,
         &ThermoType::TRhoE,
         this->T_,
@@ -239,7 +243,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::E() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::name_),
+        IOobject::groupName("e", basicThermoModel::masterName_),
         dimEnergy/dimMass,
         &ThermoType::Es,
         this->rho_,
@@ -260,7 +264,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::e
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::name_),
+        IOobject::groupName("e", basicThermoModel::masterName_),
         dimEnergy/dimMass,
         &ThermoType::Es,
         rho,
@@ -318,7 +322,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::W() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("W", basicThermoModel::name_),
+        IOobject::groupName("W", basicThermoModel::masterName_),
         dimMass/dimMoles,
         &ThermoType::W
     );
@@ -351,7 +355,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Gamma() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Gamma", basicThermoModel::name_),
+        IOobject::groupName("Gamma", basicThermoModel::masterName_),
         dimless,
         &ThermoType::Gamma,
         this->rho_,
@@ -382,7 +386,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Cp() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cp", basicThermoModel::name_),
+        IOobject::groupName("Cp", basicThermoModel::masterName_),
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cp,
         this->rho_,
@@ -442,7 +446,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Cv() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cv", basicThermoModel::name_),
+        IOobject::groupName("Cv", basicThermoModel::masterName_),
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cv,
         this->rho_,
@@ -502,7 +506,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::CpByCv() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("CpByCv", basicThermoModel::name_),
+        IOobject::groupName("CpByCv", basicThermoModel::masterName_),
         dimless,
         &ThermoType::CpByCv,
         this->rho_,

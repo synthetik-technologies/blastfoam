@@ -87,10 +87,7 @@ protected:
         //- Turbulence model
         autoPtr<PhaseCompressibleTurbulenceModel<phaseModel>> turbulence_;
 
-        virtual tmp<volScalarField> ESource() const
-        {
-            return thermo_->ESource();
-        }
+        virtual tmp<volScalarField> ESource() const;
 
 
 public:

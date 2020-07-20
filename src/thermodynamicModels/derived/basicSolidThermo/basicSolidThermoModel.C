@@ -37,7 +37,8 @@ Foam::basicSolidThermoModel<Thermo>::basicSolidThermoModel
     const word& name,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     Thermo
@@ -45,7 +46,8 @@ Foam::basicSolidThermoModel<Thermo>::basicSolidThermoModel
         name,
         mesh,
         dict,
-        master
+        master,
+        masterName
     )
 {
     volScalarField& rhoRef(solidThermoModel::rho_);
@@ -107,7 +109,7 @@ Foam::basicSolidThermoModel<Thermo>::ESource() const
         (
             "ESource",
             mesh,
-            dimEnergy/dimMass/dimTime
+            dimensionedScalar(dimEnergy/dimTime/dimVolume, 0.0)
         );
 }
 

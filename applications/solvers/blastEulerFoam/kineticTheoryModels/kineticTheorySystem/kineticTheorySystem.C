@@ -290,7 +290,7 @@ bool Foam::kineticTheorySystem::polydisperse() const
 
 Foam::scalar Foam::kineticTheorySystem::es(const phasePairKey& pair) const
 {
-    if (pair[0] == pair[2])
+    if (pair[0] == pair[1])
     {
         return kineticTheoryModels_[pair[0]]().es();
     }

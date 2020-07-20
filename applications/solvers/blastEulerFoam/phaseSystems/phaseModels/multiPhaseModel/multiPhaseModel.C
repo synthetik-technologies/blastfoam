@@ -96,7 +96,7 @@ Foam::multiPhaseModel::multiPhaseModel
         this->mesh(),
         dimensionedScalar("0", phi_.dimensions(), 0.0)
     ),
-    thermo_(phaseName, p_, rho_, e_, T_, phaseDict_, true),
+    thermo_(phaseName, p_, rho_, e_, T_, phaseDict_, true, phaseName),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
@@ -171,7 +171,10 @@ Foam::multiPhaseModel::multiPhaseModel
         );
     }
     // Reset density to correct value
+    volScalarField& alpha = *this;
+    alpha = sumAlpha;
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
+    thermo_.setTotalVolumeFractionPtr(*this);
     correctThermo();
 
     encode();
@@ -572,57 +575,67 @@ Foam::multiPhaseModel::ESource() const
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::Cv() const
 {
-    return thermo_.Cv();
+    return thermo_.Cv()/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::Cp() const
 {
-    return thermo_.Cp();
+    return thermo_.Cp()/Foam::max(*this, residualAlpha());
 }
 
 Foam::scalar Foam::multiPhaseModel::Cvi(const label celli) const
 {
-    return thermo_.Cvi(celli);
+    return
+        thermo_.Cvi(celli)
+       /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::mu() const
 {
-    return thermo_.mu();
+    return thermo_.mu()/Foam::max(*this, residualAlpha());
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::mu(const label patchi) const
 {
-    return thermo_.mu(patchi);
+    return
+        thermo_.mu(patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::nu() const
 {
-    return thermo_.nu();
+    return thermo_.nu()/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::nu(const label patchi) const
 {
-    return thermo_.nu(patchi);
+    return
+        thermo_.nu(patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::scalar
 Foam::multiPhaseModel::nui(const label celli) const
 {
-    return thermo_.nui(celli);
+    return
+        thermo_.nui(celli)
+       /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alpha() const
 {
-    return thermo_.alpha();
+    return thermo_.alpha()/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::alpha(const label patchi) const
 {
-    return thermo_.alpha(patchi);
+    return
+        thermo_.alpha(patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alphaEff
@@ -630,7 +643,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alphaEff
     const volScalarField& alphat
 ) const
 {
-    return thermo_.alphaEff(alphat);
+    return thermo_.alphaEff(alphat)/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField> Foam::multiPhaseModel::alphaEff
@@ -639,35 +652,43 @@ Foam::tmp<Foam::scalarField> Foam::multiPhaseModel::alphaEff
     const label patchi
 ) const
 {
-    return thermo_.alphaEff(alphat, patchi);
+    return
+        thermo_.alphaEff(alphat, patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alphahe() const
 {
-    return thermo_.alphahe();
+    return thermo_.alphahe()/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::alphahe(const label patchi) const
 {
-    return thermo_.alphahe(patchi);
+    return
+        thermo_.alphahe(patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::kappa() const
 {
-    return thermo_.kappa();
+    return thermo_.kappa()/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::kappa(const label patchi) const
 {
-    return thermo_.kappa(patchi);
+    return
+        thermo_.kappa(patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::scalar
 Foam::multiPhaseModel::kappai(const label celli) const
 {
-    return thermo_.kappai(celli);
+    return
+        thermo_.kappai(celli)
+       /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::kappaEff
@@ -675,7 +696,7 @@ Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::kappaEff
     const volScalarField& alphat
 ) const
 {
-    return thermo_.kappaEff(alphat);
+    return thermo_.kappaEff(alphat)/Foam::max(*this, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
@@ -685,7 +706,9 @@ Foam::multiPhaseModel::kappaEff
     const label patchi
 ) const
 {
-    return thermo_.kappaEff(alphat, patchi);
+    return
+        thermo_.kappaEff(alphat, patchi)
+       /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 // ************************************************************************* //

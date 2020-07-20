@@ -63,9 +63,6 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //- Update conservative quantities
-        fluid.encode();
-
         //- Update error and refine mesh
         mesh.update();
 

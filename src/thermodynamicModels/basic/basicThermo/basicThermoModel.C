@@ -145,7 +145,8 @@ Foam::basicThermoModel::basicThermoModel
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     regIOobject
@@ -158,6 +159,7 @@ Foam::basicThermoModel::basicThermoModel
         )
     ),
     master_(master),
+    masterName_(masterName),
     name_(phaseName),
     p_(p),
     rho_(rho),
@@ -188,7 +190,8 @@ Foam::basicThermoModel::basicThermoModel
     const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     regIOobject
@@ -201,13 +204,14 @@ Foam::basicThermoModel::basicThermoModel
         )
     ),
     master_(master),
+    masterName_(masterName),
     name_(phaseName),
     p_
     (
         lookupOrConstruct
         (
             mesh,
-            (master ? IOobject::groupName("p", phaseName) : "p"),
+            IOobject::groupName("p", masterName),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimPressure
@@ -229,7 +233,7 @@ Foam::basicThermoModel::basicThermoModel
         lookupOrConstruct
         (
             mesh,
-            (master ? IOobject::groupName("T", phaseName) : "T"),
+            IOobject::groupName("T", masterName),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimTemperature
@@ -240,7 +244,7 @@ Foam::basicThermoModel::basicThermoModel
         lookupOrConstructE
         (
             mesh,
-            (master ? IOobject::groupName("e", phaseName) : "e")
+            IOobject::groupName("e", masterName)
         )
     ),
     alpha_

@@ -38,10 +38,11 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
-    fluidThermoModel(name, p, rho, e, T, dict, master),
+    fluidThermoModel(name, p, rho, e, T, dict, master, masterName),
     phases_(dict.lookup("phases")),
     volumeFraction_
     (

@@ -23,13 +23,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         2.5e-4;
+endTime         1e-3;
 
 deltaT          1e-7;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
 cycleWrite      0;
 
@@ -47,12 +47,24 @@ runTimeModifiable true;
 
 adjustTimeStep  yes;
 
-maxCo           0.25;
+maxCo           0.5;
 
 maxDeltaT       1e-5;
 
 // ************************************************************************* //
 functions
-{}
+{
+    toa
+    {
+        type timeOfArrival;
+        writeControl writeTime;
+    }
+    speedOfSound
+    {
+        type speedOfSound;
+        writeControl writeTime;
+        phaseName gas;
+    }
+}
 
 // ************************************************************************* //

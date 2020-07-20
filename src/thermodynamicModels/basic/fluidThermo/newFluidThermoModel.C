@@ -38,7 +38,8 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewBasic
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
     basicConstructorTable::iterator cstrIter =
@@ -48,7 +49,7 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewBasic
             basicConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master);
+    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
 }
 
 
@@ -60,7 +61,8 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
     detonatingConstructorTable::iterator cstrIter =
@@ -70,7 +72,7 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
             detonatingConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master);
+    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
 }
 
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
@@ -81,17 +83,18 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 {
     word type = dict.lookup("type");
     if (type == "basic")
     {
-        return NewBasic(phaseName, p, rho, e, T, dict, master);
+        return NewBasic(phaseName, p, rho, e, T, dict, master, masterName);
     }
     else if (type == "detonating")
     {
-        return NewDetonating(phaseName, p, rho, e, T, dict, master);
+        return NewDetonating(phaseName, p, rho, e, T, dict, master, masterName);
     }
     else
     {

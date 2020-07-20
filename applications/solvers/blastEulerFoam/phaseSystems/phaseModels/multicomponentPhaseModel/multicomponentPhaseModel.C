@@ -180,7 +180,8 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
                 e_,
                 T_,
                 phaseDict_.subDict(components_[i]),
-                false
+                false,
+                phaseName
             ).ptr()
         );
     }

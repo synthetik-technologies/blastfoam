@@ -84,12 +84,14 @@ aluminum
 
     initiation
     {
-        E0          9.0e9; // Detonation energy
-        Ts 2000;
-        ALow 1e-2;
-        TaLow 800;
-        AHigh 6.25e10;
-        TaHigh 400;
+        e0      16.43e6; // Detonation energy
+        TName   T.gas;
+        Ts      2500;
+        Tign    1785;
+        ALow    6.25e10;
+        EaLow   251.04e6;
+        AHigh   1e8;
+        EaHigh  91.3952e6;
     }
 
     residualAlpha 1e-10;

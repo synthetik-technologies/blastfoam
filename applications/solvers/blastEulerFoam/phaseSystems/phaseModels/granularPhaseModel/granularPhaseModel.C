@@ -57,7 +57,9 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             phaseName,
             fluid.mesh(),
-            phaseDict_
+            phaseDict_,
+            true,
+            phaseName
         )
     ),
     rho_(thermo_->rho()),
@@ -162,7 +164,6 @@ void Foam::granularPhaseModel::solve
             deltaAlphaRhoU += (*this)*phase.gradP();
         }
     }
-    volScalarField deltaAlphaRhoE(fvc::div(alphaRhoEPhi_));
     volScalarField deltaAlphaRhoPTE
     (
         fvc::div(alphaRhoPTEPhi_)
@@ -181,11 +182,6 @@ void Foam::granularPhaseModel::solve
             deltaIs_[stepi - 1],
             new volVectorField(deltaAlphaRhoU)
         );
-        deltaAlphaRhoE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoE)
-        );
         deltaAlphaRhoPTE_.set
         (
             deltaIs_[stepi - 1],
@@ -194,7 +190,6 @@ void Foam::granularPhaseModel::solve
     }
     deltaAlphaRho *= bi[stepi - 1];
     deltaAlphaRhoU *= bi[stepi - 1];
-    deltaAlphaRhoE *= bi[stepi - 1];
     deltaAlphaRhoPTE *= bi[stepi - 1];
 
     for (label i = 0; i < stepi - 1; i++)
@@ -204,7 +199,6 @@ void Foam::granularPhaseModel::solve
         {
             deltaAlphaRho += bi[fi]*deltaAlphaRho_[fi];
             deltaAlphaRhoU += bi[fi]*deltaAlphaRhoU_[fi];
-            deltaAlphaRhoE += bi[fi]*deltaAlphaRhoE_[fi];
             deltaAlphaRhoPTE += bi[fi]*deltaAlphaRhoPTE_[fi];
         }
     }
@@ -216,10 +210,34 @@ void Foam::granularPhaseModel::solve
     alphaRho_ = alphaRhoOld - dT*(deltaAlphaRho);
     alphaRho_.max(0);
     alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
-    alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
     alphaRhoPTE_ = alphaRhoPTEOld - dT*(deltaAlphaRhoPTE);
 
     thermo_->solve(stepi, ai, bi);
+
+    volScalarField deltaAlphaRhoE
+    (
+        fvc::div(alphaRhoEPhi_)
+      - ESource()
+    );
+    if (deltaIs_[stepi - 1] != -1)
+    {
+        deltaAlphaRhoE_.set
+        (
+            deltaIs_[stepi - 1],
+            new volScalarField(deltaAlphaRhoE)
+        );
+    }
+    deltaAlphaRhoE *= bi[stepi - 1];
+
+    for (label i = 0; i < stepi - 1; i++)
+    {
+        label fi = deltaIs_[i];
+        if (fi != -1 && bi[fi] != 0)
+        {
+            deltaAlphaRhoE += bi[fi]*deltaAlphaRhoE_[fi];
+        }
+    }
+    alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
 }
 
 
@@ -288,23 +306,8 @@ void Foam::granularPhaseModel::decode()
     alphaRhoU_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
-    e_.ref() = alphaRhoE_/alphaRho;
-
-    //- Limit internal energy it there is a negative temperature
-    if(Foam::min(T_).value() < small && thermo_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << Foam::min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - small));
-        T_.max(small);
-        e_ = e_*limit + thermo_->E()*(1.0 - limit);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
+    alphaRhoE_.max(0.0);
+    e_.ref() = alphaRhoE_()/alphaRho();
     e_.correctBoundaryConditions();
     alphaRhoE_.boundaryFieldRef() =
         alphaRho.boundaryField()*e_.boundaryField();
@@ -315,7 +318,7 @@ void Foam::granularPhaseModel::decode()
     alphaRhoPTE_.boundaryFieldRef() =
         Theta_.boundaryField()*alphaRho.boundaryField();
 
-    T_ = thermo_->calcT();
+    thermo_->correct();
     kineticTheoryModel::correct();
 }
 
@@ -409,7 +412,7 @@ Foam::granularPhaseModel::speedOfSound() const
       + 2.0/3.0*sqr(kineticTheorySystem_.dPsdTheta(*this))*Theta_
        /sqr(Foam::max(*this, residualAlpha())*rho_)
     );
-    cSqr.ref().max(0.0);
+    cSqr.ref().max(small);
     return tmp<volScalarField>
     (
         new volScalarField
@@ -430,7 +433,7 @@ void Foam::granularPhaseModel::correctThermo()
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::ESource() const
 {
-    return thermo_->ESource();
+    return (*this)*thermo_->ESource();
 }
 
 

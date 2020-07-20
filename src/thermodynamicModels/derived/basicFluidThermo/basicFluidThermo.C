@@ -39,7 +39,8 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master
+    const bool master,
+    const word& masterName
 )
 :
     Thermo
@@ -50,7 +51,8 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
         e,
         T,
         dict,
-        master
+        master,
+        masterName
     )
 {
     //- Initialize the density using the pressure and temperature
