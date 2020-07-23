@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
-     \\/     M anipulation  | Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,26 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::densityGradient
+    Foam::errorEstimators::fieldValue
 
 Description
-    Error is defined by a modified density gradient
-
-    References:
-    \verbatim
-        Zheng, H.W., Shu, C., Chew, Y.T., Qin, N.  (2011).
-        A solution adaptive simulation of compressible multi-fluid flows
-        with general equation of state.
-        International Journal for Numerical Methods in Fluids, 67, 616-637.
-    \endverbatim
+    Error is the value of the given field
 
 SourceFiles
-    densityGradient.C
+    fieldValue.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef densityGradient_H
-#define densityGradient_H
+#ifndef fieldValue_H
+#define fieldValue_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,24 +45,30 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class densityGradient Declaration
+                           Class fieldValue Declaration
 \*---------------------------------------------------------------------------*/
 
-class densityGradient
+class fieldValue
 :
     public errorEstimator
 {
+// Private data
+
+        //- Field name
+        const word fieldName_;
+
+
 public:
 
     //- Runtime type information
-    ClassName("densityGradient");
+    ClassName("fieldValue");
 
     // Constructor
-    densityGradient(const fvMesh& mesh, const dictionary& dict);
+    fieldValue(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~densityGradient();
+    virtual ~fieldValue();
 
 
     // Member Functions

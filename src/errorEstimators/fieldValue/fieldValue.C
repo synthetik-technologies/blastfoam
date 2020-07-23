@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multicomponent.H"
+#include "fieldValue.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,76 +33,40 @@ namespace Foam
 {
 namespace errorEstimators
 {
-    defineTypeNameAndDebug(multicomponent, 0);
-    addToRunTimeSelectionTable(errorEstimator, multicomponent, dictionary);
+    defineTypeNameAndDebug(fieldValue, 0);
+    addToRunTimeSelectionTable(errorEstimator, fieldValue, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::multicomponent::multicomponent
+Foam::errorEstimators::fieldValue::fieldValue
 (
     const fvMesh& mesh,
     const dictionary& dict
 )
 :
     errorEstimator(mesh, dict),
-    names_(dict.lookup("estimators")),
-    errors_(names_.size())
+    fieldName_(dict.lookup("deltaField"))
 {
-    forAll(names_, i)
-    {
-        errors_.set
-        (
-            i,
-            errorEstimator::New(mesh, dict.subDict(names_[i])).ptr()
-        );
-    }
+    this->read(dict);
 }
-
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::multicomponent::~multicomponent()
+Foam::errorEstimators::fieldValue::~fieldValue()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
+void Foam::errorEstimators::fieldValue::update()
 {
-    forAll(errors_, i)
-    {
-        errors_[i].read(dict.subDict(names_[i]));
-    }
-}
-
-
-void Foam::errorEstimators::multicomponent::update()
-{
-    volScalarField error
-    (
-        IOobject
-        (
-            "error",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            false
-        ),
-        mesh_,
-        -1.0
-    );
-
-    forAll(errors_, i)
-    {
-        errors_[i].update();
-        error = max(error, error_);
-    }
-    error_ = error;
+    error_ = mesh_.lookupObject<volScalarField>(fieldName_);
+    normalize(error_);
+    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //
