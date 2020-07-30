@@ -1555,8 +1555,8 @@ Foam::hexRef::hexRef
             mesh_.facesInstance(),
             polyMesh::meshSubDir,
             mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         cellLevel
     ),
@@ -1568,8 +1568,8 @@ Foam::hexRef::hexRef
             mesh_.facesInstance(),
             polyMesh::meshSubDir,
             mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         pointLevel
     ),
@@ -1581,8 +1581,8 @@ Foam::hexRef::hexRef
             mesh_.facesInstance(),
             polyMesh::meshSubDir,
             mesh_,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         dimensionedScalar
         (
@@ -3075,7 +3075,7 @@ void Foam::hexRef::distribute(const mapDistributePolyMesh& map)
 
 void Foam::hexRef::checkMesh() const
 {
-    const scalar smallDim = 1e-6 * mesh_.bounds().mag();
+    const scalar smallDim = globalMeshData::matchTol_ * mesh_.bounds().mag();
 
     if (debug)
     {
