@@ -66,6 +66,11 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedScalar("alpha", dimless, 0)
     ),
+    integrationSystem
+    (
+        IOobject::groupName("phaseModel", phaseName),
+        fluid.mesh()
+    ),
     fluid_(fluid),
     name_(phaseName),
     index_(index),
@@ -181,7 +186,9 @@ Foam::phaseModel::phaseModel
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
     ),
     dPtr_(diameterModel::New(fluid.mesh(), phaseDict_, phaseName))
-{}
+{
+    this->lookupAndInitialize();
+}
 
 
 Foam::autoPtr<Foam::phaseModel> Foam::phaseModel::clone() const
@@ -206,34 +213,17 @@ void Foam::phaseModel::solve
     const scalarList& bi
 )
 {
-    if (oldIs_[stepi - 1] != -1)
-    {
-        alphaRhoOld_.set(oldIs_[stepi - 1], new volScalarField(alphaRho_));
-        alphaRhoUOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volVectorField(alphaRhoU_)
-        );
-        alphaRhoEOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRhoE_)
-        );
-    }
-    volScalarField alphaRhoOld(ai[stepi - 1]*alphaRho_);
-    volVectorField alphaRhoUOld(ai[stepi - 1]*alphaRhoU_);
-    volScalarField alphaRhoEOld(ai[stepi - 1]*alphaRhoE_);
+    volScalarField alphaRhoOld(alphaRho_);
+    volVectorField alphaRhoUOld(alphaRhoU_);
+    volScalarField alphaRhoEOld(alphaRhoE_);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            alphaRhoOld += ai[fi]*alphaRhoOld_[fi];
-            alphaRhoUOld += ai[fi]*alphaRhoUOld_[fi];
-            alphaRhoEOld += ai[fi]*alphaRhoEOld_[fi];
-        }
-    }
+    this->storeOld(stepi, alphaRhoOld, alphaRhoOld_);
+    this->storeOld(stepi, alphaRhoUOld, alphaRhoUOld_);
+    this->storeOld(stepi, alphaRhoEOld, alphaRhoEOld_);
+
+    this->blendOld(stepi, alphaRhoOld, alphaRhoOld_, ai);
+    this->blendOld(stepi, alphaRhoUOld, alphaRhoUOld_, ai);
+    this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
 
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     volVectorField deltaAlphaRhoU
@@ -254,39 +244,13 @@ void Foam::phaseModel::solve
         }
     }
 
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlphaRho_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRho)
-        );
-        deltaAlphaRhoU_.set
-        (
-            deltaIs_[stepi - 1],
-            new volVectorField(deltaAlphaRhoU)
-        );
-        deltaAlphaRhoE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoE)
-        );
-    }
-    deltaAlphaRho *= bi[stepi - 1];
-    deltaAlphaRhoU *= bi[stepi - 1];
-    deltaAlphaRhoE *= bi[stepi - 1];
+    this->storeDelta(stepi, deltaAlphaRho, deltaAlphaRho_);
+    this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
+    this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlphaRho += bi[fi]*deltaAlphaRho_[fi];
-            deltaAlphaRhoU += bi[fi]*deltaAlphaRhoU_[fi];
-            deltaAlphaRhoE += bi[fi]*deltaAlphaRhoE_[fi];
-        }
-    }
-
+    this->blendDelta(stepi, deltaAlphaRho, deltaAlphaRho_, bi);
+    this->blendDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_, bi);
+    this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
 
     dimensionedScalar dT = this->mesh().time().deltaT();
     vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
@@ -300,71 +264,18 @@ void Foam::phaseModel::solve
     dPtr_->solve(stepi, ai, bi);
 }
 
-
-void Foam::phaseModel::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    oldIs_.resize(nSteps);
-    deltaIs_.resize(nSteps);
-    label fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeFields[i])
-        {
-            oldIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            oldIs_[i] = -1;
-        }
-    }
-    nOld_ = fi;
-    alphaRhoOld_.resize(nOld_);
-    alphaRhoUOld_.resize(nOld_);
-    alphaRhoEOld_.resize(nOld_);
-
-    fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeDeltas[i])
-        {
-            deltaIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            deltaIs_[i] = -1;
-        }
-    }
-    nDelta_ = fi;
-    deltaAlphaRho_.resize(nDelta_);
-    deltaAlphaRhoU_.resize(nDelta_);
-    deltaAlphaRhoE_.resize(nDelta_);
-}
-
+void Foam::phaseModel::postUpdate()
+{}
 
 void Foam::phaseModel::clearODEFields()
 {
-    alphaRhoOld_.clear();
-    alphaRhoUOld_.clear();
-    alphaRhoEOld_.clear();
+    this->clearOld(alphaRhoOld_);
+    this->clearOld(alphaRhoUOld_);
+    this->clearOld(alphaRhoEOld_);
 
-    alphaRhoOld_.resize(nOld_);
-    alphaRhoUOld_.resize(nOld_);
-    alphaRhoEOld_.resize(nOld_);
-
-    deltaAlphaRho_.clear();
-    deltaAlphaRhoU_.clear();
-    deltaAlphaRhoE_.clear();
-
-    deltaAlphaRho_.resize(nDelta_);
-    deltaAlphaRhoU_.resize(nDelta_);
-    deltaAlphaRhoE_.resize(nDelta_);
+    this->clearDelta(deltaAlphaRho_);
+    this->clearDelta(deltaAlphaRhoU_);
+    this->clearDelta(deltaAlphaRhoE_);
 }
 
 // ************************************************************************* //

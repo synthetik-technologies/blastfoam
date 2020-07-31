@@ -26,8 +26,8 @@ IOdictionary phaseProperties
      )
 );
 
-coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
+coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
 integrator->addSystem(fluid);
 
 basicThermoCloud parcels

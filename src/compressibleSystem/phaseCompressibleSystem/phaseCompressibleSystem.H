@@ -113,13 +113,8 @@ protected:
 
     // ODE variables
 
-        //- Stored old field indexes
-        labelList oldIs_;
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-        label nDelta_;
+        //- Stored value of rhoOld
+        tmp<volScalarField> rhoOldTmp_;
 
         //- Old values for ode solver
         PtrList<volVectorField> rhoUOld_;
@@ -192,6 +187,9 @@ public:
         //- Return energy source term
         virtual tmp<volScalarField> ESource() const = 0;
 
+        //- Update
+        virtual void update() = 0;
+
         //- Solve sub-step stepi
         virtual void solve
         (
@@ -200,13 +198,8 @@ public:
             const scalarList& bi
         );
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
+        //- Post update
+        virtual void postUpdate();
 
         //- Remove stored fields
         virtual void clearODEFields();

@@ -105,6 +105,9 @@ public:
 
     // Member Functions
 
+        //- Pre update
+        virtual void update();
+
         //- Solve sub-step stepi
         virtual void solve
         (
@@ -113,18 +116,11 @@ public:
             const scalarList& bi
         );
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const labelList& oldIs,
-            const label& nOld,
-            const labelList& deltaIs,
-            const label nDelta
-        );
-
         //- Remove stored fields
         virtual void clearODEFields();
+
+        //- Post update
+        virtual void postUpdate();
 
         //- Correct fields
         virtual void correct();

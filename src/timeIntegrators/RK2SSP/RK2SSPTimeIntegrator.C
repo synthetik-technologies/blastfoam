@@ -57,7 +57,7 @@ Foam::timeIntegrators::RK2SSP::~RK2SSP()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::RK2SSP::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::RK2SSP::setODEFields(integrationSystem& system) const
 {
     system.setODEFields(2, {true, false}, {false, false});
 }
@@ -67,7 +67,7 @@ void Foam::timeIntegrators::RK2SSP::integrate()
 {
     // Update and store original fields
     Info<< nl << "RK2SSP: Predictor" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -76,11 +76,13 @@ void Foam::timeIntegrators::RK2SSP::integrate()
 
     // Update and store 1st step
     Info<< nl << "RK2SSP: Corrector" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(2, {0.5, 0.5}, {0.0, 0.5});
     }
+
+    this->postUpdateAll();
 }
 // ************************************************************************* //

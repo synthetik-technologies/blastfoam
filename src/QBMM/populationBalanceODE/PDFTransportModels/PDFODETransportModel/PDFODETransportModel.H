@@ -38,6 +38,7 @@ SourceFiles
 #include "PDFTransportModel.H"
 #include "fvMesh.H"
 #include "volFields.H"
+#include "integrationSystem.H"
 #include "dimensionedTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,6 +51,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class PDFODETransportModel
+:
+    public integrationSystem
 {
     // Private data
 
@@ -66,14 +69,6 @@ protected:
 
         // ODE variables
 
-            //- Stored old field indexes
-            labelList oldIs_;
-            label nOld_;
-
-            //- Stored delta indexes
-            labelList deltaIs_;
-            label nDelta_;
-
             //- Old values for ode solver
             PtrList<PtrList<volScalarField>> momentsOld_;
 
@@ -84,15 +79,6 @@ protected:
 
         //- Return number of moments
         virtual label nMoments() const = 0;
-
-        //- Save field to a given list
-        template<class MomentType>
-        void saveFields
-        (
-            const label stepi,
-            const MomentType& newFields,
-            PtrList<PtrList<volScalarField>>& storage
-        );
 
 
 public:
@@ -117,22 +103,6 @@ public:
 
     // Member Functions
 
-        //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        ) = 0;
-
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
-
         //- Remove stored fields
         virtual void clearODEFields();
 
@@ -148,12 +118,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "PDFODETransportModelI.H"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

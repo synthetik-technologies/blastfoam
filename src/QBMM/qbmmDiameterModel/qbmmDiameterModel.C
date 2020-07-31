@@ -104,6 +104,7 @@ Foam::diameterModels::qbmmDiameterModel::qbmmDiameterModel
         )
     )
 {
+    this->lookupAndInitialize();
     if (vfD_.dimensions() != dimLength)
     {
         FatalErrorInFunction
@@ -122,36 +123,6 @@ Foam::diameterModels::qbmmDiameterModel::~qbmmDiameterModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::diameterModels::qbmmDiameterModel::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    boolList storeOld(nSteps, false);
-    forAll(oldIs, i)
-    {
-        if (oldIs[i] >= 0)
-        {
-            storeOld[i] = true;
-        }
-    }
-    boolList storeDeltas(nSteps, false);
-    forAll(deltaIs, i)
-    {
-        if (deltaIs[i] >= 0)
-        {
-            storeDeltas[i] = true;
-        }
-    }
-
-    pbe_.setODEFields(nSteps, storeOld, storeDeltas);
-}
-
 
 void Foam::diameterModels::qbmmDiameterModel::clearODEFields()
 {

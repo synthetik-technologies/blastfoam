@@ -77,7 +77,7 @@ public:
     // Member Functions
 
         //- Set ode fields
-        virtual void setODEFields(integrationSystem& system);
+        virtual void setODEFields(integrationSystem& system) const;
 
         //- Update
         virtual void integrate();

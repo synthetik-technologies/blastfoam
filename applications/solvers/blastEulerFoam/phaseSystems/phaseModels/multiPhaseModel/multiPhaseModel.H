@@ -173,13 +173,8 @@ public:
                 const scalarList& bi
             );
 
-            //- Set old lists and fluxes (initialization of fields)
-            virtual void setODEFields
-            (
-                const label nSteps,
-                const boolList& storeFields,
-                const boolList& storeDeltas
-            );
+            //- Update viscous terms
+            virtual void postUpdate();
 
             //- Remove stored fields
             virtual void clearODEFields();

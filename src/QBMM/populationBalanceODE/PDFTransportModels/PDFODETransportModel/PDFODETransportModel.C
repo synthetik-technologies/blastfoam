@@ -34,9 +34,16 @@ Foam::PDFODETransportModel::PDFODETransportModel
     const fvMesh& mesh
 )
 :
+    integrationSystem
+    (
+        IOobject::groupName("PDFODETransportModel", name),
+        mesh
+    ),
     name_(name),
     mesh_(mesh)
-{}
+{
+    this->lookupAndInitialize();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -46,66 +53,6 @@ Foam::PDFODETransportModel::~PDFODETransportModel()
 
 
 // * * * * * * * * * * * * Public Member functions * * * * * * * * * * * * * //
-
-void Foam::PDFODETransportModel::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    oldIs_.resize(nSteps);
-    deltaIs_.resize(nSteps);
-    label fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeFields[i])
-        {
-            oldIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            oldIs_[i] = -1;
-        }
-    }
-    nOld_ = fi;
-
-    fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeDeltas[i])
-        {
-            deltaIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            deltaIs_[i] = -1;
-        }
-    }
-    nDelta_ = fi;
-
-    momentsOld_.resize(nOld_);
-    deltaMoments_.resize(nDelta_);
-    forAll(momentsOld_, stepi)
-    {
-        momentsOld_.set
-        (
-            stepi,
-            new PtrList<volScalarField>(nMoments())
-        );
-    }
-    forAll(deltaMoments_, stepi)
-    {
-        deltaMoments_.set
-        (
-            stepi,
-            new PtrList<volScalarField>(nMoments())
-        );
-    }
-}
-
 
 void Foam::PDFODETransportModel::clearODEFields()
 {

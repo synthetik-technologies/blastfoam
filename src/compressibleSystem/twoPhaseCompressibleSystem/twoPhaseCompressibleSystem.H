@@ -140,14 +140,6 @@ public:
             const scalarList& bi
         );
 
-        //- Set old lists and fluxes
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
-
         //- Remove stored fields
         virtual void clearODEFields();
 

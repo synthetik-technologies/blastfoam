@@ -82,49 +82,12 @@ void Foam::singlePhaseCompressibleSystem::solve
 )
 {
     volScalarField rhoOld(rho_);
-    if (rho_.mesh().moving() && stepi == 1)
-    {
-        rhoOld.ref() *= rho_.mesh().Vsc0()/rho_.mesh().Vsc();
-    }
-
-    if (oldIs_[stepi - 1] != -1)
-    {
-        rhoOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(rhoOld)
-        );
-    }
-    rhoOld *= ai[stepi - 1];
-
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            rhoOld += ai[fi]*rhoOld_[fi];
-        }
-    }
+    this->storeOld(stepi, rhoOld, rhoOld_);
+    this->blendOld(stepi, rhoOld, rhoOld_, ai);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaRho_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaRho)
-        );
-    }
-    deltaRho *= bi[stepi - 1];
-
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaRho += bi[fi]*deltaRho_[fi];
-        }
-    }
+    this->storeDelta(stepi, deltaRho, deltaRho_);
+    this->blendDelta(stepi, deltaRho, deltaRho_, bi);
 
     dimensionedScalar dT = rho_.time().deltaT();
     rho_.oldTime() = rhoOld;
@@ -136,29 +99,13 @@ void Foam::singlePhaseCompressibleSystem::solve
 }
 
 
-void Foam::singlePhaseCompressibleSystem::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    phaseCompressibleSystem::setODEFields(nSteps, storeFields, storeDeltas);
-    rhoOld_.setSize(nOld_);
-
-    deltaRho_.setSize(nDelta_);
-    thermo_->setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
-}
-
 void Foam::singlePhaseCompressibleSystem::clearODEFields()
 {
     phaseCompressibleSystem::clearODEFields();
 
-    rhoOld_.clear();
-    rhoOld_.setSize(nOld_);
+    this->clearOld(rhoOld_);
+    this->clearDelta(deltaRho_);
 
-    deltaRho_.clear();
-    deltaRho_.setSize(nDelta_);
     thermo_->clearODEFields();
 }
 

@@ -194,22 +194,6 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
     return R*(1.0 - lambda_);
 }
 
-void Foam::activationModels::ArrheniusRateActivation::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    activationModel::setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
-    if (dModel_.valid())
-    {
-        dModel_->setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
-    }
-}
-
 
 void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
 {

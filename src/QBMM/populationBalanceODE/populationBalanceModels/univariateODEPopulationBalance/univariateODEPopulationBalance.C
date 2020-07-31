@@ -245,6 +245,14 @@ Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalanc
 
 void
 Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
+::update()
+{
+    univariatePDFODETransportModel::update();
+}
+
+
+void
+Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
 ::solve
 (
     const label stepi,
@@ -258,14 +266,9 @@ Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalanc
 
 void
 Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
-::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+::postUpdate()
 {
-    univariatePDFODETransportModel::setODEFields(nSteps, storeFields, storeDeltas);
+    univariatePDFODETransportModel::postUpdate();
 }
 
 

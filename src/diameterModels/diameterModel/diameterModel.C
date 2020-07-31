@@ -44,6 +44,11 @@ Foam::diameterModel::diameterModel
     const word& phaseName
 )
 :
+    integrationSystem
+    (
+        IOobject::groupName("diameterModel", phaseName),
+        mesh
+    ),
     d_
     (
         IOobject
@@ -80,20 +85,8 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
 }
 
 
-void Foam::diameterModel::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
+void Foam::diameterModel::update()
 {}
-
-
-void Foam::diameterModel::clearODEFields()
-{}
-
 
 void Foam::diameterModel::solve
 (
@@ -102,6 +95,14 @@ void Foam::diameterModel::solve
     const scalarList& bi
 )
 {}
+
+void Foam::diameterModel::postUpdate()
+{}
+
+void Foam::diameterModel::clearODEFields()
+{}
+
+
 
 
 // ************************************************************************* //

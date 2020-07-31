@@ -126,6 +126,9 @@ public:
 
         //-Edit
 
+            //- Update fluxes
+            virtual void update();
+
             //- Solve sub-step stepi
             virtual void solve
             (
@@ -133,6 +136,9 @@ public:
                 const scalarList& ai,
                 const scalarList& bi
             );
+
+            //- Solve implicit terms and ode
+            virtual void postUpdate();
 };
 
 

@@ -158,6 +158,11 @@ Foam::basicThermoModel::basicThermoModel
             p.mesh()
         )
     ),
+    integrationSystem
+    (
+        IOobject::groupName("basicThermo", phaseName),
+        p.mesh()
+    ),
     master_(master),
     masterName_(masterName),
     name_(phaseName),
@@ -202,6 +207,11 @@ Foam::basicThermoModel::basicThermoModel
             mesh.time().timeName(),
             mesh
         )
+    ),
+    integrationSystem
+    (
+        IOobject::groupName("basicThermo", phaseName),
+        mesh
     ),
     master_(master),
     masterName_(masterName),

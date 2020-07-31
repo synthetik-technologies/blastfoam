@@ -120,35 +120,6 @@ void Foam::detonatingFluidThermo<Thermo>::solve
 
 
 template<class Thermo>
-void Foam::detonatingFluidThermo<Thermo>::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    activation_->setODEFields
-    (
-        nSteps,
-        oldIs,
-        nOld,
-        deltaIs,
-        nDelta
-    );
-    afterburn_->setODEFields
-    (
-        nSteps,
-        oldIs,
-        nOld,
-        deltaIs,
-        nDelta
-    );
-}
-
-
-template<class Thermo>
 void Foam::detonatingFluidThermo<Thermo>::clearODEFields()
 {
     activation_->clearODEFields();

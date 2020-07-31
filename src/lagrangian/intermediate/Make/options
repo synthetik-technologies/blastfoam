@@ -3,6 +3,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/lagrangian/distributionModels/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/sampling/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \

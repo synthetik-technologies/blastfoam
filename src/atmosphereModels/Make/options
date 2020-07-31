@@ -1,5 +1,6 @@
 EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude
 
 EXE_LIBS = \

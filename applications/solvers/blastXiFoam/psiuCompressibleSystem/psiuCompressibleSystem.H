@@ -183,12 +183,7 @@ public:
         );
 
         //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
+        virtual void postUpdate();
 
         //- Remove stored fields
         virtual void clearODEFields();

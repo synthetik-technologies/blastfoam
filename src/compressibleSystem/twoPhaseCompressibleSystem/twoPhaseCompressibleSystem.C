@@ -128,38 +128,19 @@ void Foam::twoPhaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
-    if (oldIs_[stepi - 1] != -1)
-    {
-        alphaOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(volumeFraction_)
-        );
-        alphaRho1Old_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRho1_)
-        );
-        alphaRho2Old_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRho2_)
-        );
-    }
+    volScalarField alphaOld(volumeFraction_);
+    volScalarField alphaRho1Old(alphaRho1_);
+    volScalarField alphaRho2Old(alphaRho2_);
 
-    volScalarField alphaOld(ai[stepi - 1]*volumeFraction_);
-    volScalarField alphaRho1Old(ai[stepi - 1]*alphaRho1_);
-    volScalarField alphaRho2Old(ai[stepi - 1]*alphaRho2_);
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            alphaOld += ai[fi]*alphaOld_[fi];
-            alphaRho1Old += ai[fi]*alphaRho1Old_[fi];
-            alphaRho2Old += ai[fi]*alphaRho2Old_[fi];
-        }
-    }
+    this->storeOld(stepi, alphaOld, alphaOld_);
+    this->storeOld(stepi, alphaRho1Old, alphaRho1Old_);
+    this->storeOld(stepi, alphaRho2Old, alphaRho2Old_);
+
+    this->blendOld(stepi, alphaOld, alphaOld_, ai);
+    this->blendOld(stepi, alphaRho1Old, alphaRho1Old_, ai);
+    this->blendOld(stepi, alphaRho2Old, alphaRho2Old_, ai);
+
+    this->rho_.oldTime() = alphaRho1Old + alphaRho2Old;
 
     volScalarField deltaAlpha
     (
@@ -168,38 +149,15 @@ void Foam::twoPhaseCompressibleSystem::solve
     );
     volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlpha_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlpha)
-        );
-        deltaAlphaRho1_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRho1)
-        );
-        deltaAlphaRho2_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRho2)
-        );
-    }
-    deltaAlpha *= bi[stepi - 1];
-    deltaAlphaRho1 *= bi[stepi - 1];
-    deltaAlphaRho2 *= bi[stepi - 1];
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlpha += bi[fi]*deltaAlpha_[fi];
-            deltaAlphaRho1 += bi[fi]*deltaAlphaRho1_[fi];
-            deltaAlphaRho2 += bi[fi]*deltaAlphaRho2_[fi];
-        }
-    }
+    this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
+    this->storeDelta(stepi, deltaAlphaRho1, deltaAlphaRho1_);
+    this->storeDelta(stepi, deltaAlphaRho2, deltaAlphaRho2_);
+
+    this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
+    this->blendDelta(stepi, deltaAlphaRho1, deltaAlphaRho1_, bi);
+    this->blendDelta(stepi, deltaAlphaRho2, deltaAlphaRho2_, bi);
+
 
     dimensionedScalar dT = rho_.time().deltaT();
     volumeFraction_ = alphaOld - dT*deltaAlpha;
@@ -218,44 +176,17 @@ void Foam::twoPhaseCompressibleSystem::solve
 }
 
 
-void Foam::twoPhaseCompressibleSystem::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    phaseCompressibleSystem::setODEFields(nSteps, storeFields, storeDeltas);
-    alphaOld_.setSize(nOld_);
-    alphaRho1Old_.setSize(nOld_);
-    alphaRho2Old_.setSize(nOld_);
-
-    deltaAlpha_.setSize(nDelta_);
-    deltaAlphaRho1_.setSize(nDelta_);
-    deltaAlphaRho2_.setSize(nDelta_);
-
-    thermo_.setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
-}
-
 void Foam::twoPhaseCompressibleSystem::clearODEFields()
 {
     phaseCompressibleSystem::clearODEFields();
 
-    alphaOld_.clear();
-    alphaRho1Old_.clear();
-    alphaRho2Old_.clear();
+    this->clearOld(alphaOld_);
+    this->clearOld(alphaRho1Old_);
+    this->clearOld(alphaRho2Old_);
 
-    alphaOld_.setSize(nOld_);
-    alphaRho1Old_.setSize(nOld_);
-    alphaRho2Old_.setSize(nOld_);
-
-    deltaAlpha_.clear();
-    deltaAlphaRho1_.clear();
-    deltaAlphaRho2_.clear();
-
-    deltaAlpha_.setSize(nDelta_);
-    deltaAlphaRho1_.setSize(nDelta_);
-    deltaAlphaRho2_.setSize(nDelta_);
+    this->clearDelta(deltaAlpha_);
+    this->clearDelta(deltaAlphaRho1_);
+    this->clearDelta(deltaAlphaRho2_);
 
     thermo_.clearODEFields();
 }

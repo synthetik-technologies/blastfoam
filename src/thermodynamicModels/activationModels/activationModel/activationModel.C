@@ -44,6 +44,11 @@ Foam::activationModel::activationModel
     const word& phaseName
 )
 :
+    integrationSystem
+    (
+        IOobject::groupName("activationModel", phaseName),
+        mesh
+    ),
     lambda_
     (
         IOobject
@@ -94,7 +99,12 @@ Foam::activationModel::activationModel
 
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0)),
     limit_(maxDLambda_ != 1.0)
-{}
+{
+    this->lookupAndInitialize();
+    Info<<lambdaOld_.size()<<endl;
+    Info<<deltaLambda_.size()<<endl;
+    Info<<deltaAlphaRhoLambda_.size()<<endl;
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -126,38 +136,12 @@ void Foam::activationModel::limit()
     lambda_ = lambda_.oldTime() + min(dLambda, maxDLambda_);
 }
 
-void Foam::activationModel::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    oldIs_ = oldIs;
-    nOld_ = nOld;
-    deltaIs_ = deltaIs;
-    nDelta_ = nDelta;
-
-    lambdaOld_.resize(nOld_);
-    deltaLambda_.resize(nDelta_);
-    deltaAlphaRhoLambda_.resize(nDelta_);
-}
-
 
 void Foam::activationModel::clearODEFields()
 {
-    lambdaOld_.clear();
-    lambdaOld_.resize(nOld_);
-
-    ddtLambda_.clear();
-
-    deltaLambda_.clear();
-    deltaLambda_.resize(nDelta_);
-
-    deltaAlphaRhoLambda_.clear();
-    deltaAlphaRhoLambda_.resize(nDelta_);
+    this->clearOld(lambdaOld_);
+    this->clearDelta(deltaLambda_);
+    this->clearDelta(deltaAlphaRhoLambda_);
 }
 
 
@@ -178,49 +162,17 @@ void Foam::activationModel::solve
     );
 
     dimensionedScalar dT(alphaRho.time().deltaT());
-    if (oldIs_[stepi - 1] != -1)
-    {
-        lambdaOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(lambda_)
-        );
-    }
+    volScalarField lambdaOld(lambda_);
+    this->storeOld(stepi, lambdaOld, lambdaOld_);
+    this->blendOld(stepi, lambdaOld, lambdaOld_, ai);
 
-    volScalarField lambdaOld(lambda_*ai[stepi - 1]);
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            lambdaOld += ai[fi]*lambdaOld_[fi];
-        }
-    }
 
-    scalar f = bi[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        f += bi[i];
-    }
+    scalar f = this->f(stepi, bi);
 
     volScalarField deltaLambda(delta());
     deltaLambda = Foam::min(deltaLambda, (1.0 - lambda_)/(f*dT));
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaLambda_.set
-        (
-            deltaIs_[stepi - 1], new volScalarField(deltaLambda)
-        );
-    }
-    deltaLambda *= bi[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaLambda += bi[fi]*deltaLambda_[fi];
-        }
-    }
+    this->storeDelta(stepi, deltaLambda, deltaLambda_);
+    this->blendDelta(stepi, deltaLambda, deltaLambda_, bi);
 
     lambda_ = lambdaOld + deltaLambda*dT;
     lambda_.min(1);
@@ -240,25 +192,8 @@ void Foam::activationModel::solve
     }
 
     volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlphaRhoLambda_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoLambda)
-        );
-    }
-
-    deltaAlphaRhoLambda *= bi[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlphaRhoLambda.ref() +=
-                bi[fi]*deltaAlphaRhoLambda_[fi];
-        }
-    }
+    this->storeDelta(stepi, deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
+    this->blendDelta(stepi, deltaAlphaRhoLambda, deltaAlphaRhoLambda_, bi);
 
     lambda_ =
         (

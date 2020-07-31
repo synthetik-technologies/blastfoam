@@ -186,6 +186,14 @@ Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
 
 void
 Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
+::update()
+{
+    velocityPDFODETransportModel::update();
+}
+
+
+void
+Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
 ::solve
 (
     const label stepi,
@@ -193,24 +201,16 @@ Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
     const scalarList& bi
 )
 {
-    if (stepi == integrationSystem::oldIs_.size())
-    {
-        collisionKernel_->preUpdate();
-    }
     velocityPDFODETransportModel::solve(stepi, ai, bi);
 }
 
 
 void
 Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
-::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+::postUpdate()
 {
-    velocityPDFODETransportModel::setODEFields(nSteps, storeFields, storeDeltas);
+    collisionKernel_->preUpdate();
+    velocityPDFODETransportModel::postUpdate();
 }
 
 

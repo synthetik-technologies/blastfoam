@@ -57,7 +57,7 @@ Foam::timeIntegrators::RK2::~RK2()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::RK2::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::RK2::setODEFields(integrationSystem& system) const
 {
     system.setODEFields(2, {true, false}, {false, false});
 }
@@ -67,7 +67,7 @@ void Foam::timeIntegrators::RK2::integrate()
 {
     // Update and solve predictor step
     Info<< nl << "RK2: Predictor" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -76,11 +76,13 @@ void Foam::timeIntegrators::RK2::integrate()
 
     // Update and solve corrector step
     Info<< nl << "RK2: Corrector" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(2, {1.0, 0.0}, {0.0, 1.0});
     }
+
+    this->postUpdateAll();
 }
 // ************************************************************************* //

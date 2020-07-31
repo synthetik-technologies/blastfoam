@@ -33,7 +33,7 @@ SourceFiles
 \*---------------------------------------------------------------------------*/
 
 #ifndef massAveragedInterfacialPressure_H
-#define massAveragedfacialPressure_H
+#define massAveragedInterfacialPressure_H
 
 #include "interfacialPressureModel.H"
 

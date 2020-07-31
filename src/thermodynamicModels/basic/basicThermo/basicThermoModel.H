@@ -44,6 +44,7 @@ SourceFiles
 #include "surfaceFields.H"
 #include "dictionary.H"
 #include "wordIOList.H"
+#include "integrationSystem.H"
 #include "regIOobject.H"
 
 namespace Foam
@@ -55,7 +56,8 @@ namespace Foam
 
 class basicThermoModel
 :
-    public regIOobject
+    public regIOobject,
+    public integrationSystem
 {
 protected:
 

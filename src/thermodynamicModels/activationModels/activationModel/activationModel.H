@@ -41,6 +41,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
+#include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -51,6 +52,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class activationModel
+:
+    public integrationSystem
 {
 protected:
 
@@ -76,14 +79,6 @@ protected:
 
         //- Is the change in lambda limited
         bool limit_;
-
-        //- Stored old field indexes
-        labelList oldIs_;
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-        label nDelta_;
 
         //- Stored old values
         PtrList<volScalarField> lambdaOld_;
@@ -161,6 +156,10 @@ public:
 
     // Member Functions
 
+        //- Update
+        virtual void update()
+        {}
+
         //- Solve sub-step stepi
         virtual void solve
         (
@@ -169,15 +168,9 @@ public:
             const scalarList& bi
         );
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const labelList& oldIs,
-            const label& nOld,
-            const labelList& deltaIs,
-            const label nDelta
-        );
+        //- Post update
+        virtual void postUpdate()
+        {}
 
         //- Remove stored fields
         virtual void clearODEFields();

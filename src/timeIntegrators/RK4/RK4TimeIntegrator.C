@@ -57,7 +57,7 @@ Foam::timeIntegrators::RK4::~RK4()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::RK4::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::RK4::setODEFields(integrationSystem& system) const
 {
     system.setODEFields
     (
@@ -72,7 +72,7 @@ void Foam::timeIntegrators::RK4::integrate()
 {
     // Update and store original fields
     Info<< nl << "RK4: Step 1" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -81,7 +81,7 @@ void Foam::timeIntegrators::RK4::integrate()
 
     // Update and store 2nd step
     Info<< nl << "RK4: Step 2" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -90,7 +90,7 @@ void Foam::timeIntegrators::RK4::integrate()
 
     // Update and store 3rd step
     Info<< nl << "RK4: Step 3" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -99,7 +99,7 @@ void Foam::timeIntegrators::RK4::integrate()
 
     // Update and store 4th step
     Info<< nl << "RK4: Step 4" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -110,5 +110,7 @@ void Foam::timeIntegrators::RK4::integrate()
             {1.0/6.0, 1.0/3.0, 1.0/3.0, 1.0/6.0}
         );
     }
+
+    this->postUpdateAll();
 }
 // ************************************************************************* //

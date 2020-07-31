@@ -49,6 +49,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class timeIntegrator
+:
+    public regIOobject
 {
 protected:
 // Protected variables
@@ -60,7 +62,10 @@ protected:
     UPtrList<integrationSystem> systems_;
 
     //- Update all stored systems
-    void updateSystems();
+    void updateAll();
+
+    //- Post update of all stored systems
+    void postUpdateAll();
 
 
 public:
@@ -96,10 +101,17 @@ public:
 
         void addSystem(integrationSystem& system);
 
-        virtual void setODEFields(integrationSystem& system) = 0;
+        virtual void setODEFields(integrationSystem& system) const = 0;
 
         //- Integrate fluxes in time
         virtual void integrate() = 0;
+
+        //- Dummy IO operations
+        virtual bool writeData(Ostream& os) const
+        {
+            return true;
+        }
+
 };
 
 

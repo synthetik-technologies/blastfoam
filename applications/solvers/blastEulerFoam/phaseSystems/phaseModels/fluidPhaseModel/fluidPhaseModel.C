@@ -161,44 +161,17 @@ void Foam::fluidPhaseModel::solve
     if (solveAlpha_)
     {
         volScalarField& alpha = *this;
-        if (oldIs_[stepi - 1] != -1)
-        {
-            alphaOld_.set(oldIs_[stepi - 1], new volScalarField(alpha));
-        }
-        volScalarField alphaOld(ai[stepi - 1]*(alpha));
-
-        for (label i = 0; i < stepi - 1; i++)
-        {
-            label fi = oldIs_[i];
-            if (fi != -1 && ai[fi] != 0)
-            {
-                alphaOld += ai[fi]*alphaOld_[fi];
-            }
-        }
+        volScalarField alphaOld(alpha);
+        this->storeOld(stepi, alphaOld, alphaOld_);
+        this->blendOld(stepi, alphaOld, alphaOld_, ai);
 
         volScalarField deltaAlpha
         (
             fvc::div(alphaPhi_()) - alpha*fvc::div(fluid_.phi())
         );
 
-        if (deltaIs_[stepi - 1] != -1)
-        {
-            deltaAlpha_.set
-            (
-                deltaIs_[stepi - 1],
-                new volScalarField(deltaAlpha)
-            );
-        }
-        deltaAlpha *= bi[stepi - 1];
-
-        for (label i = 0; i < stepi - 1; i++)
-        {
-            label fi = deltaIs_[i];
-            if (fi != -1 && bi[fi] != 0)
-            {
-                deltaAlpha += bi[fi]*deltaAlpha_[fi];
-            }
-        }
+        this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
+        this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
 
 
         dimensionedScalar dT = rho_.time().deltaT();
@@ -206,6 +179,7 @@ void Foam::fluidPhaseModel::solve
         alpha = alphaOld - dT*(deltaAlpha);
         alpha.max(0);
         alpha.min(alphaMax_);
+        alpha.correctBoundaryConditions();
     }
 
     thermo_->solve(stepi, ai, bi);
@@ -213,30 +187,21 @@ void Foam::fluidPhaseModel::solve
 }
 
 
-void Foam::fluidPhaseModel::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+void Foam::fluidPhaseModel::postUpdate()
 {
-    phaseModel::setODEFields(nSteps, storeFields, storeDeltas);
-    thermo_->setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
-    alphaOld_.resize(nOld_);
-    deltaAlpha_.resize(nDelta_);
+    phaseModel::postUpdate();
+    thermo_->postUpdate();
 }
+
 
 void Foam::fluidPhaseModel::clearODEFields()
 {
     phaseModel::clearODEFields();
     fluxScheme_->clear();
-    alphaOld_.clear();
-    deltaAlpha_.clear();
-
     if (solveAlpha_)
     {
-        alphaOld_.resize(nOld_);
-        deltaAlpha_.resize(nDelta_);
+        this->clearOld(alphaOld_);
+        this->clearDelta(deltaAlpha_);
     }
 }
 

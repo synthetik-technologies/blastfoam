@@ -47,6 +47,7 @@ SourceFiles
 #include "fvMatricesFwd.H"
 #include "diameterModel.H"
 #include "fvc.H"
+#include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -66,7 +67,8 @@ class phaseSystem;
 
 class phaseModel
 :
-    public volScalarField
+    public volScalarField,
+    public integrationSystem
 {
 protected:
     // Protected data
@@ -124,15 +126,6 @@ protected:
 
             //- Phasic total energy flux
             surfaceScalarField alphaRhoEPhi_;
-
-
-        //- Stored old field indexes
-        labelList oldIs_;
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-        label nDelta_;
 
         //- Old values for ode solver
         PtrList<volScalarField> alphaRhoOld_;
@@ -317,13 +310,8 @@ public:
                 const scalarList& bi
             );
 
-            //- Set old lists and fluxes (initialization of fields)
-            virtual void setODEFields
-            (
-                const label nSteps,
-                const boolList& storeFields,
-                const boolList& storeDeltas
-            );
+            //- Solve viscous terms
+            virtual void postUpdate();
 
             //- Remove stored fields
             virtual void clearODEFields();

@@ -130,6 +130,12 @@ public:
         //- Return the courant number based on abscissae
         virtual scalar CoNum() const = 0;
 
+        //- Update fields
+        virtual void update()
+        {
+            return;
+        }
+
         //- Solve sub-step stepi
         virtual void solve
         (
@@ -139,21 +145,10 @@ public:
         ) = 0;
 
         //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        ) = 0;
+        virtual void postUpdate() = 0;
 
         //- Remove stored fields
         virtual void clearODEFields() = 0;
-
-        //- Update fields
-        virtual void update()
-        {
-            return;
-        }
 
 
     // regIOobject functions

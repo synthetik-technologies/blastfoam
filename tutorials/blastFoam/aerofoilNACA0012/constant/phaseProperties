@@ -1,0 +1,47 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      thermophysicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+mixture // air at room temperature (293 K)
+{
+    type basic;
+    thermoType
+    {
+        transport       const;
+        thermo          hConst;
+        equationOfState idealGas;
+    }
+    specie
+    {
+        molWeight   28.9;
+    }
+    equationOfState
+    {
+        gamma 1.4;
+    }
+    thermodynamics
+    {
+        Cp          1005;
+        Hf          0;
+    }
+    transport
+    {
+        mu          1.82e-05;
+        Pr          0.71;
+    }
+}
+
+// ************************************************************************* //

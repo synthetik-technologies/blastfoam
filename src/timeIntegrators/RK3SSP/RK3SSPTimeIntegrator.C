@@ -57,7 +57,7 @@ Foam::timeIntegrators::RK3SSP::~RK3SSP()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::RK3SSP::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::RK3SSP::setODEFields(integrationSystem& system) const
 {
     system.setODEFields
     (
@@ -72,7 +72,7 @@ void Foam::timeIntegrators::RK3SSP::integrate()
 {
     // Update and store original fields
     Info<< nl << "RK3SSP: Step 1" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -81,7 +81,7 @@ void Foam::timeIntegrators::RK3SSP::integrate()
 
     // Update and store 2nd step
     Info<< nl << "RK3SSP: Step 2" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -90,11 +90,13 @@ void Foam::timeIntegrators::RK3SSP::integrate()
 
     // Update and store 3rd step
     Info<< nl << "RK3SSP: Step 3" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(3, {1.0/3.0, 0.0, 2.0/3.0}, {0.0, 0.0, 2.0/3.0});
     }
+
+    this->postUpdateAll();
 }
 // ************************************************************************* //

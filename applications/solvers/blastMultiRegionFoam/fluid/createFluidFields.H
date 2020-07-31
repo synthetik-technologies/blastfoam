@@ -41,12 +41,12 @@ forAll(fluidRegions, i)
         )
     );
 
+    timeIntegrators.set(i, timeIntegrator::New(fluidRegions[i]));
     fluids.set
     (
         i,
         phaseCompressibleSystem::New(fluidRegions[i], phaseProperties)
     );
-    timeIntegrators.set(i, timeIntegrator::New(fluidRegions[i]));
     timeIntegrators[i].addSystem(fluids[i]);
     fluids[i].update();
 }

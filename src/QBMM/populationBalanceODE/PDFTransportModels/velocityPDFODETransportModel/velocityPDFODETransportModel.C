@@ -56,6 +56,12 @@ Foam::PDFTransportModels::velocityPDFODETransportModel::~velocityPDFODETransport
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+void Foam::PDFTransportModels::velocityPDFODETransportModel::update()
+{
+    momentAdvection_().update();
+}
+
+
 void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
 (
     const label stepi,
@@ -63,68 +69,17 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
     const scalarList& bi
 )
 {
-    momentAdvection_().update();
-
     //- Set initial values for stepi
     PtrList<volScalarField> momentsOld(nMoments());
+
     forAll(momentsOld, mi)
     {
         momentsOld.set
         (
             mi, new volScalarField(quadrature_.moments()[mi])
         );
-    }
-
-    //- Correct of value for changes in cell volume
-    if (mesh_.moving() && stepi == 1)
-    {
-        volScalarField::Internal v0Byv(mesh_.Vsc0()/mesh_.Vsc());
-        forAll(momentsOld, mi)
-        {
-            momentsOld[mi].ref() *= v0Byv;
-        }
-    }
-
-    // Store old values
-    if (oldIs_[stepi - 1] != -1)
-    {
-        saveFields
-        (
-            oldIs_[stepi - 1],
-            momentsOld,
-            momentsOld_
-        );
-    }
-
-    //- Finish updating initial value for stepi
-    if (ai[stepi -1] != 1)
-    {
-        forAll(momentsOld, mi)
-        {
-            momentsOld[mi] *= ai[stepi - 1];
-        }
-    }
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            forAll(momentsOld, mi)
-            {
-                momentsOld[mi] += ai[fi]*momentsOld_[fi][mi];
-            }
-        }
-    }
-
-    //- Store deltas for stepi
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        saveFields
-        (
-            deltaIs_[stepi - 1],
-            momentAdvection_->divMoments(),
-            this->deltaMoments_
-        );
+        this->storeOld(stepi, momentsOld[mi], momentsOld_[mi]);
+        this->blendOld(stepi, momentsOld[mi], momentsOld_[mi], ai);
     }
 
     //- Calculate true deltas for stepi
@@ -136,78 +91,59 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
             mi,
             new volScalarField(momentAdvection_->divMoments()[mi])
         );
-    }
-
-    if (bi[stepi - 1] != 1)
-    {
-        forAll(deltaMoments, mi)
-        {
-            deltaMoments[mi] *= bi[stepi - 1];
-        }
-    }
-
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            forAll(deltaMoments, mi)
-            {
-                deltaMoments[mi] += bi[fi]*deltaMoments_[fi][mi];
-            }
-        }
+        this->storeDelta(stepi, deltaMoments[mi], deltaMoments_[mi]);
+        this->blendDelta(stepi, deltaMoments[mi], deltaMoments_[mi], bi);
     }
 
     dimensionedScalar dT = mesh_.time().deltaT();
 
-    forAll(deltaMoments, mi)
+    forAll(quadrature_.moments(), mi)
     {
         volScalarField& m = quadrature_.moments()[mi];
         m = momentsOld[mi] - dT*deltaMoments[mi];
         m.correctBoundaryConditions();
     }
+    quadrature_.updateQuadrature();
+}
+
+
+void Foam::PDFTransportModels::velocityPDFODETransportModel::postUpdate()
+{
+    // Solve moment transport equations
+    updateImplicitMomentSource();
+
+    // List of moment transport equations
+    PtrList<fvScalarMatrix> momentEqns(quadrature_.nMoments());
+
+    // Solve moment transport equations
+    forAll(quadrature_.moments(), momenti)
+    {
+        volVelocityMoment& m = quadrature_.moments()[momenti];
+
+        momentEqns.set
+        (
+            momenti,
+            new fvScalarMatrix
+            (
+                fvm::ddt(m)
+              - fvc::ddt(m)
+             ==
+                implicitMomentSource(m)
+            )
+        );
+    }
+
+    forAll (momentEqns, mEqni)
+    {
+        momentEqns[mEqni].relax();
+        momentEqns[mEqni].solve();
+    }
 
     quadrature_.updateQuadrature();
 
-
-    if (stepi == oldIs_.size())
+    if (solveMomentSources())
     {
-        // Solve moment transport equations
-        updateImplicitMomentSource();
-
-        // List of moment transport equations
-        PtrList<fvScalarMatrix> momentEqns(quadrature_.nMoments());
-
-        // Solve moment transport equations
-        forAll(quadrature_.moments(), momenti)
-        {
-            volVelocityMoment& m = quadrature_.moments()[momenti];
-
-            momentEqns.set
-            (
-                momenti,
-                new fvScalarMatrix
-                (
-                    fvm::ddt(m)
-                  - fvc::ddt(m)
-                ==
-                    implicitMomentSource(m)
-                )
-            );
-        }
-
-        forAll (momentEqns, mEqni)
-        {
-            momentEqns[mEqni].relax();
-            momentEqns[mEqni].solve();
-        }
-
-        quadrature_.updateQuadrature();
-
-        if (solveMomentSources())
-        {
-            this->explicitMomentSource();
-        }
+        this->explicitMomentSource();
     }
 }
 

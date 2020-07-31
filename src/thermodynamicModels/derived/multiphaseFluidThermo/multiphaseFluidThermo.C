@@ -148,6 +148,15 @@ void Foam::multiphaseFluidThermo::setTotalVolumeFractionPtr
 }
 
 
+void Foam::multiphaseFluidThermo::update()
+{
+    forAll(phases_, phasei)
+    {
+        thermos_[phasei].update();
+    }
+}
+
+
 void Foam::multiphaseFluidThermo::solve
 (
     const label stepi,
@@ -162,25 +171,11 @@ void Foam::multiphaseFluidThermo::solve
 }
 
 
-void Foam::multiphaseFluidThermo::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
+void Foam::multiphaseFluidThermo::postUpdate()
 {
     forAll(phases_, phasei)
     {
-        thermos_[phasei].setODEFields
-        (
-            nSteps,
-            oldIs,
-            nOld,
-            deltaIs,
-            nDelta
-        );
+        thermos_[phasei].postUpdate();
     }
 }
 

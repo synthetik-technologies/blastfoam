@@ -297,13 +297,8 @@ public:
             const scalarList& bi
         );
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
+        //- Solve viscous terms
+        virtual void postUpdate();
 
         //- Remove stored fields
         virtual void clearODEFields();
@@ -348,9 +343,6 @@ public:
 
         //- Return the aspect-ratio for a pair
         tmp<volScalarField> E(const phasePairKey& key) const;
-
-        //- Relax pressures and velocities
-        void relax();
 
         //- Read base phaseProperties dictionary
         bool read();

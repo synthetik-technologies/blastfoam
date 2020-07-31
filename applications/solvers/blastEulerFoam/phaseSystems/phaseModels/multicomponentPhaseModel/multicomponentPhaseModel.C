@@ -184,6 +184,9 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
                 phaseName
             ).ptr()
         );
+
+        alphaRhoYsOld_.set(i, new PtrList<volScalarField>());
+        deltaAlphaRhoYs_.set(i, new PtrList<volScalarField>());
     }
     // Reset density to correct value
     rho_ = rhoOld;
@@ -257,42 +260,15 @@ void Foam::multicomponentPhaseModel::solve
     const scalarList& bi
 )
 {
-    volScalarField& alpha = *this;
-
     PtrList<volScalarField> alphaRhoYsOld(Ys_.size());
-    forAll(Ys_, phasei)
+    forAll(Ys_, i)
     {
         alphaRhoYsOld.set
         (
-            phasei, new volScalarField(alphaRhoYs_[phasei])
+            i, new volScalarField(alphaRhoYs_[i])
         );
-    }
-    if (oldIs_[stepi - 1] != -1)
-    {
-        forAll(Ys_, phasei)
-        {
-            alphaRhoYsOld_[oldIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(alphaRhoYs_[phasei])
-            );
-        }
-    }
-
-    forAll(Ys_, phasei)
-    {
-        alphaRhoYsOld[phasei] *= ai[stepi - 1];
-    }
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            forAll(Ys_, phasei)
-            {
-                alphaRhoYsOld[phasei] += ai[fi]*alphaRhoYsOld_[fi][phasei];
-            }
-        }
+        this->storeOld(stepi, alphaRhoYsOld[i], alphaRhoYsOld_[i]);
+        this->blendOld(stepi, alphaRhoYsOld[i], alphaRhoYsOld_[i], ai);
     }
 
     PtrList<volScalarField> deltaAlphaRhoYs(Ys_.size());
@@ -303,88 +279,47 @@ void Foam::multicomponentPhaseModel::solve
             i,
             new volScalarField(fvc::div(alphaRhoYPhis_[i]))
         );
-    }
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        forAll(Ys_, phasei)
-        {
-            deltaAlphaRhoYs_[deltaIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(deltaAlphaRhoYs[phasei])
-            );
-        }
-    }
-
-    forAll(Ys_, phasei)
-    {
-        deltaAlphaRhoYs[phasei] *= bi[stepi - 1];
-    }
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            forAll(Ys_, phasei)
-            {
-                deltaAlphaRhoYs[phasei] +=
-                    bi[fi]*deltaAlphaRhoYs_[fi][phasei];
-            }
-        }
+        this->storeDelta
+        (
+            stepi,
+            deltaAlphaRhoYs[i],
+            deltaAlphaRhoYs_[i]
+        );
+        this->blendDelta
+        (
+            stepi,
+            deltaAlphaRhoYs[i],
+            deltaAlphaRhoYs_[i],
+            bi
+        );
     }
 
     dimensionedScalar dT = rho_.time().deltaT();
 
-    forAll(Ys_, phasei)
+    forAll(Ys_, i)
     {
-        alphaRhoYs_[phasei].oldTime() = alphaRhoYsOld[phasei];
-        alphaRhoYs_[phasei] =
-            alphaRhoYsOld[phasei] - dT*deltaAlphaRhoYs[phasei];
-        alphaRhoYs_[phasei].correctBoundaryConditions();
+        alphaRhoYs_[i].oldTime() = alphaRhoYsOld[i];
+        alphaRhoYs_[i] =
+            alphaRhoYsOld[i] - dT*deltaAlphaRhoYs[i];
+        alphaRhoYs_[i].correctBoundaryConditions();
 
-        thermos_[phasei].solve(stepi, ai, bi);
+        thermos_[i].solve(stepi, ai, bi);
     }
 
     if (solveAlpha_)
     {
-        if (oldIs_[stepi - 1] != -1)
-        {
-            alphaOld_.set(oldIs_[stepi - 1], new volScalarField(alpha));
-        }
-        volScalarField alphaOld(ai[stepi - 1]*(alpha));
-
-        for (label i = 0; i < stepi - 1; i++)
-        {
-            label fi = oldIs_[i];
-            if (fi != -1 && ai[fi] != 0)
-            {
-                alphaOld += ai[fi]*alphaOld_[fi];
-            }
-        }
+        volScalarField& alpha = *this;
+        volScalarField alphaOld(alpha);
+        this->storeOld(stepi, alphaOld, alphaOld_);
+        this->blendOld(stepi, alphaOld, alphaOld_, ai);
 
         volScalarField deltaAlpha
         (
-           (fluid_.U() & fvc::grad(fluxScheme_->alphaf()))
+            (fluid_.U() & fvc::grad(fluxScheme_->alphaf()))
         );
 
-        if (deltaIs_[stepi - 1] != -1)
-        {
-            deltaAlpha_.set
-            (
-                deltaIs_[stepi - 1],
-                new volScalarField(deltaAlpha)
-            );
-        }
-        deltaAlpha *= bi[stepi - 1];
-
-        for (label i = 0; i < stepi - 1; i++)
-        {
-            label fi = deltaIs_[i];
-            if (fi != -1 && bi[fi] != 0)
-            {
-                deltaAlpha += bi[fi]*deltaAlpha_[fi];
-            }
-        }
+        this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
+        this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
 
 
         dimensionedScalar dT = rho_.time().deltaT();
@@ -392,69 +327,40 @@ void Foam::multicomponentPhaseModel::solve
         alpha = alphaOld - dT*(deltaAlpha);
         alpha.max(0);
         alpha.min(alphaMax_);
+        alpha.correctBoundaryConditions();
     }
 
     phaseModel::solve(stepi, ai, bi);
 }
 
 
-void Foam::multicomponentPhaseModel::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+void Foam::multicomponentPhaseModel::postUpdate()
 {
-    phaseModel::setODEFields(nSteps, storeFields, storeDeltas);
+    phaseModel::postUpdate();
 
-    forAll(Ys_, i)
+    forAll(thermos_, i)
     {
-        thermos_[i].setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
-    }
-
-    alphaRhoYsOld_.resize(nOld_);
-    forAll(alphaRhoYsOld_, stepi)
-    {
-        alphaRhoYsOld_.set
-        (
-            stepi,
-            new PtrList<volScalarField>(alphaRhoYs_.size())
-        );
-    }
-
-    deltaAlphaRhoYs_.resize(nDelta_);
-    forAll(deltaAlphaRhoYs_, stepi)
-    {
-        deltaAlphaRhoYs_.set
-        (
-            stepi,
-            new PtrList<volScalarField>(alphaRhoYs_.size())
-        );
+        thermos_[i].postUpdate();
     }
 }
+
 
 void Foam::multicomponentPhaseModel::clearODEFields()
 {
     phaseModel::clearODEFields();
     fluxScheme_->clear();
-    alphaOld_.clear();
-    deltaAlpha_.clear();
 
     if (solveAlpha_)
     {
-        alphaOld_.resize(nOld_);
-        deltaAlpha_.resize(nDelta_);
+        this->clearOld(alphaOld_);
+        this->clearDelta(deltaAlpha_);
     }
 
     forAll(alphaRhoYsOld_, i)
     {
-        alphaRhoYsOld_[i].clear();
-        alphaRhoYsOld_[i].resize(alphaRhoYs_.size());
-    }
-    forAll(deltaAlphaRhoYs_, i)
-    {
-        deltaAlphaRhoYs_[i].clear();
-        deltaAlphaRhoYs_[i].resize(alphaRhoYs_.size());
+        this->clearOld(alphaRhoYsOld_[i]);
+        this->clearDelta(deltaAlphaRhoYs_[i]);
+        thermos_[i].clearODEFields();
     }
 }
 

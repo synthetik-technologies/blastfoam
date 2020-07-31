@@ -114,54 +114,30 @@ void Foam::granularPhaseModel::solve
     const scalarList& bi
 )
 {
-    if (oldIs_[stepi - 1] != -1)
-    {
-        alphaRhoOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRho_)
-        );
-        alphaRhoUOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volVectorField(alphaRhoU_)
-        );
-        alphaRhoEOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRhoE_)
-        );
-        alphaRhoPTEOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(alphaRhoPTE_)
-        );
-    }
-    volScalarField alphaRhoOld(ai[stepi - 1]*(alphaRho_));
-    volVectorField alphaRhoUOld(ai[stepi - 1]*(alphaRhoU_));
-    volScalarField alphaRhoEOld(ai[stepi - 1]*(alphaRhoE_));
-    volScalarField alphaRhoPTEOld(ai[stepi - 1]*(alphaRhoPTE_));
+    volScalarField alphaRhoOld(alphaRho_);
+    volVectorField alphaRhoUOld(alphaRhoU_);
+    volScalarField alphaRhoEOld(alphaRhoE_);
+    volScalarField alphaRhoPTEOld(alphaRhoPTE_);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            alphaRhoOld += ai[fi]*alphaRhoOld_[fi];
-            alphaRhoUOld += ai[fi]*alphaRhoUOld_[fi];
-            alphaRhoEOld += ai[fi]*alphaRhoEOld_[fi];
-            alphaRhoPTEOld += ai[fi]*alphaRhoPTEOld_[fi];
-        }
-    }
+    this->storeOld(stepi, alphaRhoOld, alphaRhoOld_);
+    this->storeOld(stepi, alphaRhoUOld, alphaRhoUOld_);
+    this->storeOld(stepi, alphaRhoEOld, alphaRhoEOld_);
+    this->storeOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_);
+
+    this->blendOld(stepi, alphaRhoOld, alphaRhoOld_, ai);
+    this->blendOld(stepi, alphaRhoUOld, alphaRhoUOld_, ai);
+    this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
+    this->blendOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_, ai);
 
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     volVectorField deltaAlphaRhoU(fvc::div(alphaRhoUPhi_));
+    const volScalarField& alpha = *this;
     forAll(fluid_.phases(), phasei)
     {
         const phaseModel& phase = fluid_.phases()[phasei];
         if (!phase.granular())
         {
-            deltaAlphaRhoU += (*this)*phase.gradP();
+            deltaAlphaRhoU += alpha*phase.gradP();
         }
     }
     volScalarField deltaAlphaRhoPTE
@@ -170,38 +146,13 @@ void Foam::granularPhaseModel::solve
       + Ps_*fvc::div(phi_)
     );
 
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlphaRho_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRho)
-        );
-        deltaAlphaRhoU_.set
-        (
-            deltaIs_[stepi - 1],
-            new volVectorField(deltaAlphaRhoU)
-        );
-        deltaAlphaRhoPTE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoPTE)
-        );
-    }
-    deltaAlphaRho *= bi[stepi - 1];
-    deltaAlphaRhoU *= bi[stepi - 1];
-    deltaAlphaRhoPTE *= bi[stepi - 1];
+    this->storeDelta(stepi, deltaAlphaRho, deltaAlphaRho_);
+    this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
+    this->storeDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlphaRho += bi[fi]*deltaAlphaRho_[fi];
-            deltaAlphaRhoU += bi[fi]*deltaAlphaRhoU_[fi];
-            deltaAlphaRhoPTE += bi[fi]*deltaAlphaRhoPTE_[fi];
-        }
-    }
+    this->blendDelta(stepi, deltaAlphaRho, deltaAlphaRho_, bi);
+    this->blendDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_, bi);
+    this->blendDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_, bi);
 
 
     dimensionedScalar dT = rho_.time().deltaT();
@@ -219,51 +170,27 @@ void Foam::granularPhaseModel::solve
         fvc::div(alphaRhoEPhi_)
       - ESource()
     );
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlphaRhoE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoE)
-        );
-    }
-    deltaAlphaRhoE *= bi[stepi - 1];
+    this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
+    this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlphaRhoE += bi[fi]*deltaAlphaRhoE_[fi];
-        }
-    }
     alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
 }
 
 
-void Foam::granularPhaseModel::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+void Foam::granularPhaseModel::postUpdate()
 {
-    phaseModel::setODEFields(nSteps, storeFields, storeDeltas);
-    alphaRhoPTEOld_.resize(nOld_);
-    deltaAlphaRhoPTE_.resize(nDelta_);
-
-    thermo_->setODEFields(nSteps, oldIs_, nOld_, deltaIs_, nDelta_);
+    phaseModel::postUpdate();
+    thermo_->postUpdate();
 }
+
 
 void Foam::granularPhaseModel::clearODEFields()
 {
     phaseModel::clearODEFields();
     fluxScheme_->clear();
-    alphaRhoPTEOld_.clear();
-    deltaAlphaRhoPTE_.clear();
 
-    alphaRhoPTEOld_.resize(nOld_);
-    deltaAlphaRhoPTE_.resize(nDelta_);
+    this->clearOld(alphaRhoPTEOld_);
+    this->clearDelta(deltaAlphaRhoPTE_);
 
     thermo_->clearODEFields();
 }

@@ -69,9 +69,6 @@ int main(int argc, char *argv[])
         //- Integrate the hyperbolic fluxes
         integrator->integrate();
 
-        //- Relax velocities, pressures, and temperatures
-        fluid.relax();
-
         //- Clear temporary fields
         fluid.clearODEFields();
 

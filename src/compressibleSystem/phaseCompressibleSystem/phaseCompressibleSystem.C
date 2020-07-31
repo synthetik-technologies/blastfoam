@@ -257,44 +257,24 @@ void Foam::phaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
-    const fvMesh& mesh(rho_.mesh());
+    if (stepi == 1 && turbulence_.valid())
+    {
+        rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
+    }
+
     volVectorField rhoUOld(rhoU_);
     volScalarField rhoEOld(rhoE_);
-    if (mesh.moving() && stepi == 1)
-    {
-        volScalarField::Internal v0Byv(mesh.Vsc0()/mesh.Vsc());
-        rhoUOld.ref() *= v0Byv;
-        rhoEOld.ref() *= v0Byv;
-    }
 
-    if (oldIs_[stepi - 1] != -1)
-    {
-        rhoUOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volVectorField(rhoUOld)
-        );
-        rhoEOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(rhoEOld)
-        );
+    //- Store old values
+    this->storeOld(stepi, rhoUOld, rhoUOld_);
+    this->storeOld(stepi, rhoEOld, rhoEOld_);
+
+    //- Blend steps to get starting field for the sub step
+    this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
+    this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
 
 
-    }
-    rhoUOld *= ai[stepi - 1];
-    rhoEOld *= ai[stepi - 1];
-
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            rhoUOld += ai[fi]*rhoUOld_[fi];
-            rhoEOld += ai[fi]*rhoEOld_[fi];
-        }
-    }
-
+    //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
     (
@@ -303,39 +283,20 @@ void Foam::phaseCompressibleSystem::solve
       - (rhoU_ & g_)
     );
 
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaRhoU_.set
-        (
-            deltaIs_[stepi - 1],
-            new volVectorField(deltaRhoU)
-        );
-        deltaRhoE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaRhoE)
-        );
-    }
+    //- Store changed in momentum and energy
+    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
+    this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
 
-    scalar f(bi[stepi - 1]);
-    deltaRhoU *= bi[stepi - 1];
-    deltaRhoE *= bi[stepi - 1];
+    //- Get actual changes by blending stored values
+    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
+    this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            f += bi[fi];
-            deltaRhoU += bi[fi]*deltaRhoU_[fi];
-            deltaRhoE += bi[fi]*deltaRhoE_[fi];
-        }
-    }
 
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
     rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
+
     if (radiation_->type() != "none")
     {
         calcAlphaAndRho();
@@ -344,140 +305,95 @@ void Foam::phaseCompressibleSystem::solve
         rhoE_ =
             radiation_->calcRhoE
             (
-                f*dT,
+                this->f(stepi, bi)*dT,
                 rhoE_,
                 rho_,
                 e(),
                 this->thermo().Cv()
             );
     }
+}
 
-    if (stepi == oldIs_.size())
+
+void Foam::phaseCompressibleSystem::postUpdate()
+{
+    if (radiation_.valid())
     {
         radiation_->correct();
     }
 
     if
     (
-        stepi == oldIs_.size()
-     && (
-            turbulence_.valid()
-         || dragSource_.valid()
-         || extESource_.valid()
-        )
+        !turbulence_.valid()
+     && !dragSource_.valid()
+     && !extESource_.valid()
     )
     {
-        calcAlphaAndRho();
-        U_ = rhoU_/rho_;
-        U_.correctBoundaryConditions();
-
-        e() = rhoE_/rho_ - 0.5*magSqr(U_);
-        e().correctBoundaryConditions();
-
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        );
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
-        );
-
-        if (turbulence_.valid())
-        {
-            volScalarField muEff("muEff", turbulence_->muEff());
-            volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
-            UEqn -=
-                fvm::laplacian(muEff, U_)
-              + fvc::div(tauMC);
-
-            eEqn -= fvm::laplacian(turbulence_->alphaEff(), e());
-        }
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_();
-        }
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_();
-        }
-        UEqn.solve();
-        eEqn.solve();
-
-        rhoU_ = rho_*U_;
-        rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
-
-        if (turbulence_.valid())
-        {
-            turbulence_->correct();
-        }
+        return;
     }
+
+    this->decode();
+
+    rho_.oldTime() = rhoOldTmp_;
+
+    fvVectorMatrix UEqn
+    (
+        fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+    );
+    fvScalarMatrix eEqn
+    (
+        fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
+    );
+
+    if (turbulence_.valid())
+    {
+        volScalarField muEff("muEff", turbulence_->muEff());
+        volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
+        UEqn -=
+            fvm::laplacian(muEff, U_)
+          + fvc::div(tauMC);
+
+        eEqn -= fvm::laplacian(turbulence_->alphaEff(), e());
+
+        turbulence_->correct();
+    }
+    if (dragSource_.valid())
+    {
+        UEqn -= dragSource_();
+    }
+    if (extESource_.valid())
+    {
+        eEqn -= extESource_();
+    }
+    UEqn.solve();
+    eEqn.solve();
+
+    rhoU_ = rho_*U_;
+    rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+
+    this->thermo().correct();
 }
 
-
-void Foam::phaseCompressibleSystem::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    oldIs_.resize(nSteps);
-    deltaIs_.resize(nSteps);
-    label fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeFields[i])
-        {
-            oldIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            oldIs_[i] = -1;
-        }
-    }
-    nOld_ = fi;
-    rhoUOld_.resize(nOld_);
-    rhoEOld_.resize(nOld_);
-
-    fi = 0;
-    for (label i = 0; i < nSteps; i++)
-    {
-        if (storeDeltas[i])
-        {
-            deltaIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            deltaIs_[i] = -1;
-        }
-    }
-    nDelta_ = fi;
-    deltaRhoU_.resize(nDelta_);
-    deltaRhoE_.resize(nDelta_);
-}
 
 void Foam::phaseCompressibleSystem::clearODEFields()
 {
     fluxScheme_->clear();
-    rhoUOld_.clear();
-    rhoEOld_.clear();
-    rhoUOld_.resize(nOld_);
-    rhoEOld_.resize(nOld_);
 
-    deltaRhoU_.clear();
-    deltaRhoE_.clear();
-    deltaRhoU_.resize(nDelta_);
-    deltaRhoE_.resize(nDelta_);
+    this->clearOld(rhoUOld_);
+    this->clearOld(rhoEOld_);
+
+    this->clearDelta(deltaRhoU_);
+    this->clearDelta(deltaRhoE_);
 
     extESource_.clear();
     dragSource_.clear();
 }
 
 
-void Foam::phaseCompressibleSystem::addECoeff(const volScalarField::Internal& ECoeff)
+void Foam::phaseCompressibleSystem::addECoeff
+(
+    const volScalarField::Internal& ECoeff
+)
 {
     if (!extESource_.valid())
     {
@@ -491,7 +407,10 @@ void Foam::phaseCompressibleSystem::addECoeff(const volScalarField::Internal& EC
 }
 
 
-void Foam::phaseCompressibleSystem::addESource(const volScalarField::Internal& ESource)
+void Foam::phaseCompressibleSystem::addESource
+(
+    const volScalarField::Internal& ESource
+)
 {
     if (!extESource_.valid())
     {

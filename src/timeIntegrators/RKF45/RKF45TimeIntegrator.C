@@ -53,7 +53,7 @@ Foam::timeIntegrators::RKF45::~RKF45()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::RKF45::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::RKF45::setODEFields(integrationSystem& system) const
 {
     system.setODEFields
     (
@@ -68,7 +68,7 @@ void Foam::timeIntegrators::RKF45::integrate()
 {
     // Update and store original fields
     Info<< nl << "RKF45: Step 1" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -77,7 +77,7 @@ void Foam::timeIntegrators::RKF45::integrate()
 
     // Update and store original fields
     Info<< nl << "RKF45: Step 2" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -86,7 +86,7 @@ void Foam::timeIntegrators::RKF45::integrate()
 
     // Update and store original fields
     Info<< nl << "RKF45: Step 3" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -95,7 +95,7 @@ void Foam::timeIntegrators::RKF45::integrate()
 
     // Update and store original fields
     Info<< nl << "RKF45: Step 4" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -109,7 +109,7 @@ void Foam::timeIntegrators::RKF45::integrate()
 
     // Update and store original fields
     Info<< nl << "RKF45: Step 5" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
@@ -123,17 +123,18 @@ void Foam::timeIntegrators::RKF45::integrate()
 
     // Update and store original fields
     Info<< nl << "RKF45: Step 6" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].update();
         systems_[i].solve
         (
             6,
             {1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-            {a604, a614, a624, a634, a644, a654}
+            {a60, a61, a62, a63, a64, a65}
         );
     }
+
+    this->postUpdateAll();
 }
 // ************************************************************************* //

@@ -57,7 +57,7 @@ Foam::timeIntegrators::Euler::~Euler()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrators::Euler::setODEFields(integrationSystem& system)
+void Foam::timeIntegrators::Euler::setODEFields(integrationSystem& system) const
 {
     system.setODEFields(1, {false}, {false});
 }
@@ -67,11 +67,12 @@ void Foam::timeIntegrators::Euler::integrate()
 {
     // Update and solve
     Info<< nl << "Euler:" << endl;
-    this->updateSystems();
+    this->updateAll();
     forAll(systems_, i)
     {
         Info<< "Solving " << systems_[i].name() << endl;
         systems_[i].solve(1, {1.0}, {1.0});
     }
+    this->postUpdateAll();
 }
 // ************************************************************************* //

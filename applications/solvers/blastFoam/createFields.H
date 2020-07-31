@@ -26,11 +26,11 @@ IOdictionary phaseProperties
      )
 );
 
+autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 autoPtr<phaseCompressibleSystem> fluid
 (
     phaseCompressibleSystem::New(mesh, phaseProperties)
 );
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid());
 
 const volScalarField& p = fluid->p();

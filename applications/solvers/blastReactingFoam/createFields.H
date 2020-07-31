@@ -13,11 +13,11 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
+autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 autoPtr<reactingCompressibleSystem> fluid
 (
     new reactingCompressibleSystem(mesh, dictionary())
 );
-autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 integrator->addSystem(fluid());
 
 const volScalarField& p = fluid->p();

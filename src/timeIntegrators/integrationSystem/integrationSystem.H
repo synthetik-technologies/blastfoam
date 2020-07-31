@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -50,11 +50,15 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class integrationSystem
-:
-    public regIOobject
 {
 protected:
 // Protected data
+
+        //- Constant reference to mesh
+        const fvMesh& mesh_;
+
+        //- Name of system
+        const word name_;
 
         //- Stored old field indexes
         labelList oldIs_;
@@ -62,12 +66,83 @@ protected:
         //- Number of stored fields
         label nOld_;
 
+        //- Stored delta indexes
+        labelList deltaIs_;
+
+        //- Number of stored deltas
+        label nDelta_;
+
+        //- Store old fields
+        template<class fieldType>
+        void storeOld
+        (
+            const label stepi,
+            fieldType& f,
+            PtrList<fieldType>& fList
+        ) const;
+
+        //- Store delta fields
+        template<class fieldType>
+        void storeDelta
+        (
+            const label stepi,
+            const fieldType& f,
+            PtrList<fieldType>& fList
+        ) const;
+
+        //- Combine fields using time step coefficients
+        //  f must be the most recent value of the field
+        template<class fieldType>
+        void blendSteps
+        (
+            const label stepi,
+            const labelList& indices,
+            fieldType& f,
+            const PtrList<fieldType>& fList,
+            const scalarList& scales
+        ) const;
+
+        //- Combine old fields using time step coefficients
+        template<class fieldType>
+        void blendOld
+        (
+            const label stepi,
+            fieldType& f,
+            const PtrList<fieldType>& fList,
+            const scalarList& scales
+        ) const;
+
+        //- Combine delta fields using time step coefficients
+        template<class fieldType>
+        void blendDelta
+        (
+            const label stepi,
+            fieldType& f,
+            const PtrList<fieldType>& fList,
+            const scalarList& scales
+        ) const;
+
+        //- Clear and resize stored old fields
+        template<class fieldType>
+        void clearOld(PtrList<fieldType>& fList) const;
+
+        //- Clear and resize stored delta fields
+        template<class fieldType>
+        void clearDelta(PtrList<fieldType>& fList) const;
+
+        //- Lookup global integrator and initialize
+        void lookupAndInitialize(const word& name = "globalTimeIntegrator");
+
 
 public:
 
 
     // Constructor
-    integrationSystem(const word& name, const fvMesh& mesh);
+    integrationSystem
+    (
+        const word& name,
+        const fvMesh& mesh
+    );
 
 
     //- Destructor
@@ -76,8 +151,25 @@ public:
 
     // Member functions
 
-        //- Update fluxes
+        //- Return name of system
+        const word& name() const
+        {
+            return name_;
+        }
+
+        //- Set old lists and fluxes (initialization of fields)
+        void setODEFields
+        (
+            const label nSteps,
+            const boolList& storeFields,
+            const boolList& storeDeltas
+        );
+
+        //- Update before each ode step
         virtual void update() = 0;
+
+        //- Update after ode integration
+        virtual void postUpdate() = 0;
 
         //- Solve sub-step stepi
         virtual void solve
@@ -87,26 +179,28 @@ public:
             const scalarList& bi
         ) = 0;
 
-        //- Set old lists and fluxes (initialization of fields)
-        virtual void setODEFields
-        (
-            const label nSteps,
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        ) = 0;
-
         //- Remove stored fields
         virtual void clearODEFields() = 0;
 
+        //- Return the time step fraction
+        scalar f(const label stepi, const scalarList& b) const;
+
 
         //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const;
+        virtual bool writeData(Ostream& os) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "integrationSystemTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

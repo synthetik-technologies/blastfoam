@@ -90,7 +90,9 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
     n_(readScalar(dict.lookup("n"))),
     a_("a", pow(dimPressure, -n_)/dimTime, dict_),
     pMin_("pMin", dimPressure, dict_)
-{}
+{
+    this->lookupAndInitialize();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -101,34 +103,11 @@ Foam::afterburnModels::MillerAfterburn::~MillerAfterburn()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::afterburnModels::MillerAfterburn::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    afterburnModel::setODEFields(nSteps, oldIs, nOld, deltaIs, nDelta);
-    cOld_.resize(nOld_);
-    deltaC_.resize(nDelta_);
-    deltaAlphaRhoC_.resize(nDelta_);
-}
-
-
 void Foam::afterburnModels::MillerAfterburn::clearODEFields()
 {
-    cOld_.clear();
-    cOld_.resize(nOld_);
-
-    ddtC_.clear();
-
-    deltaC_.clear();
-    deltaC_.resize(nDelta_);
-
-    deltaAlphaRhoC_.clear();
-    deltaAlphaRhoC_.resize(nDelta_);
+    this->clearOld(cOld_);
+    this->clearDelta(deltaC_);
+    this->clearDelta(deltaAlphaRhoC_);
 }
 
 
@@ -148,23 +127,10 @@ void Foam::afterburnModels::MillerAfterburn::solve
         c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
     );
 
-    if (oldIs_[stepi - 1] != -1)
-    {
-        cOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(c_)
-        );
-    }
-    volScalarField cOld(ai[stepi - 1]*c_);
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-           cOld += ai[fi]*cOld_[fi];
-        }
-    }
+    volScalarField cOld(c_);
+    this->storeOld(stepi, c_, cOld_);
+    this->blendOld(stepi, c_, cOld_, ai);
+
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
     p.ref().max(small);
@@ -172,25 +138,11 @@ void Foam::afterburnModels::MillerAfterburn::solve
     (
         a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
     );
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaC_.set
-        (
-            deltaIs_[stepi - 1], new volScalarField(deltaC)
-        );
-    }
 
-    deltaC *= bi[stepi - 1];
-    scalar f = bi[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        f += bi[i];
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaC += bi[fi]*deltaC_[fi];
-        }
-    }
+    this->storeDelta(stepi, deltaC, deltaC_);
+    this->blendDelta(stepi, deltaC, deltaC_, bi);
+    scalar f = this->f(stepi, bi);
+
     dimensionedScalar dT = alphaRho.time().deltaT();
     c_ = cOld + dT*deltaC;
     c_.min(1);
@@ -210,29 +162,13 @@ void Foam::afterburnModels::MillerAfterburn::solve
     }
 
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaAlphaRhoC_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaAlphaRhoC)
-        );
-    }
+    this->storeDelta(stepi, deltaAlphaRhoC, deltaAlphaRhoC_);
+    this->blendDelta(stepi, deltaAlphaRhoC, deltaAlphaRhoC_, bi);
 
-    deltaAlphaRhoC *= bi[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaAlphaRhoC.ref() +=
-                bi[fi]*deltaAlphaRhoC_[fi];
-        }
-    }
     c_ =
         (
             cOld*alphaRho.oldTime()
-            + dT*(ddtC_()*f*alphaRho - deltaAlphaRhoC)
+          + dT*(ddtC_()*f*alphaRho - deltaAlphaRhoC)
         )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
     c_.min(1);
     c_.max(0);

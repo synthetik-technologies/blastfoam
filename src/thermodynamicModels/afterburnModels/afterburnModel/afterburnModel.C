@@ -43,11 +43,23 @@ Foam::afterburnModel::afterburnModel
     const word& phaseName
 )
 :
+    integrationSystem
+    (
+        IOobject::groupName("afterburnModel", phaseName),
+        mesh
+    ),
     mesh_(mesh),
     dict_(dict),
     time_(mesh.time()),
     dt_(mesh.time().deltaT())
-{}
+{
+    this->lookupAndInitialize();
+    times_.resize(this->oldIs_.size() + 1);
+    forAll(times_, ti)
+    {
+        times_[ti].dimensions().reset(dimTime);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -56,28 +68,6 @@ Foam::afterburnModel::~afterburnModel()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::afterburnModel::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
-{
-    oldIs_ = oldIs;
-    nOld_ = nOld;
-    deltaIs_ = deltaIs;
-    nDelta_ = nDelta;
-
-    times_.resize(nSteps + 1);
-    forAll(times_, i)
-    {
-        times_[i].dimensions().reset(dimTime);
-    }
-}
-
 
 void Foam::afterburnModel::solve
 (
@@ -102,4 +92,6 @@ void Foam::afterburnModel::solve
     time_ = t0 + dt_;
     times_[stepi] = time_;
 }
+
+
 // ************************************************************************* //

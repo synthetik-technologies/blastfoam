@@ -36,7 +36,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * * Protected Functions * * * * * * * * * * * * * //
 
-void Foam::timeIntegrator::updateSystems()
+void Foam::timeIntegrator::updateAll()
 {
     forAll(systems_, i)
     {
@@ -44,10 +44,31 @@ void Foam::timeIntegrator::updateSystems()
     }
 }
 
+
+void Foam::timeIntegrator::postUpdateAll()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].postUpdate();
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh)
 :
+    regIOobject
+    (
+        IOobject
+        (
+            "globalTimeIntegrator",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        )
+    ),
     mesh_(mesh)
 {}
 

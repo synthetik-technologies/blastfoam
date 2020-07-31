@@ -585,25 +585,22 @@ void Foam::phaseSystem::solve
     const scalarList& bi
 )
 {
+    decode();
     forAll(phaseModels_, phasei)
     {
         phaseModels_[phasei].solve(stepi, ai, bi);
     }
-    decode();
 }
 
 
-void Foam::phaseSystem::setODEFields
-(
-    const label nSteps,
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
+void Foam::phaseSystem::postUpdate()
 {
-    forAll(phaseModels_, phasei)
-    {
-        phaseModels_[phasei].setODEFields(nSteps, storeFields, storeDeltas);
-    }
+    const dimensionedScalar& deltaT(mesh_.time().deltaT());
+
+    decode();
+
+    relaxVelocity(deltaT);
+    relaxTemperature(deltaT);
 }
 
 
@@ -696,16 +693,6 @@ Foam::phaseSystem::cellE
     }
 }
 
-
-void Foam::phaseSystem::relax()
-{
-    const dimensionedScalar& deltaT(mesh_.time().deltaT());
-
-    relaxVelocity(deltaT);
-    relaxTemperature(deltaT);
-
-    decode();
-}
 
 
 bool Foam::phaseSystem::read()

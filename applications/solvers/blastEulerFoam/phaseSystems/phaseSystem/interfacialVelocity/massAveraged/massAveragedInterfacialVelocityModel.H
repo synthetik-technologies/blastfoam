@@ -33,7 +33,7 @@ SourceFiles
 \*---------------------------------------------------------------------------*/
 
 #ifndef massAveragedInterfacialVelocity_H
-#define massAveragedfacialVelocity_H
+#define massAveragedInterfacialVelocity_H
 
 #include "interfacialVelocityModel.H"
 

@@ -126,6 +126,14 @@ Foam::twoPhaseFluidThermo::~twoPhaseFluidThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::twoPhaseFluidThermo::postUpdate()
+{
+
+    thermo1_->postUpdate();
+    thermo2_->postUpdate();
+}
+
+
 void Foam::twoPhaseFluidThermo::solve
 (
     const label stepi,
@@ -138,32 +146,11 @@ void Foam::twoPhaseFluidThermo::solve
 }
 
 
-void Foam::twoPhaseFluidThermo::setODEFields
-(
-    const label nSteps,
-    const labelList& oldIs,
-    const label& nOld,
-    const labelList& deltaIs,
-    const label nDelta
-)
+void Foam::twoPhaseFluidThermo::update()
 {
 
-    thermo1_->setODEFields
-    (
-        nSteps,
-        oldIs,
-        nOld,
-        deltaIs,
-        nDelta
-    );
-    thermo2_->setODEFields
-    (
-        nSteps,
-        oldIs,
-        nOld,
-        deltaIs,
-        nDelta
-    );
+    thermo1_->update();
+    thermo2_->update();
 }
 
 

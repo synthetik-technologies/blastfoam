@@ -103,81 +103,38 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
         (
             phasei, new volScalarField(alphas_[phasei])
         );
+        this->storeOld(stepi, alphasOld[phasei], alphasOld_[phasei]);
+        this->blendOld(stepi, alphasOld[phasei], alphasOld_[phasei], ai);
+
         alphaRhosOld.set
         (
             phasei, new volScalarField(alphaRhos_[phasei])
         );
-    }
-    if (oldIs_[stepi - 1] != -1)
-    {
-        rhoUOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volVectorField(rhoU_)
-        );
-        rhoEOld_.set
-        (
-            oldIs_[stepi - 1],
-            new volScalarField(rhoE_)
-        );
-        forAll(alphas_, phasei)
-        {
-            alphasOld_[oldIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(alphas_[phasei])
-            );
-            alphaRhosOld_[oldIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(alphaRhos_[phasei])
-            );
-        }
-    }
-
-    volVectorField rhoUOld(ai[stepi - 1]*rhoU_);
-    volScalarField rhoEOld(ai[stepi - 1]*rhoE_);
-    forAll(alphas_, phasei)
-    {
-        alphasOld[phasei] *= ai[stepi - 1];
-        alphaRhosOld[phasei] *= ai[stepi - 1];
-    }
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = oldIs_[i];
-        if (fi != -1 && ai[fi] != 0)
-        {
-            rhoUOld += ai[fi]*rhoUOld_[fi];
-            rhoEOld += ai[fi]*rhoEOld_[fi];
-            forAll(alphas_, phasei)
-            {
-                alphasOld[phasei] += ai[fi]*alphasOld_[fi][phasei];
-                alphaRhosOld[phasei] += ai[fi]*alphaRhosOld_[fi][phasei];
-            }
-        }
-    }
-    forAll(alphas_, phasei)
-    {
+        this->storeOld(stepi, alphaRhosOld[phasei], alphaRhosOld_[phasei]);
+        this->blendOld(stepi, alphaRhosOld[phasei], alphaRhosOld_[phasei], ai);
         alphaRhos_[phasei].oldTime() = alphaRhosOld[phasei];
     }
+
+    rho_.oldTime() = alphaRhosOld[0];
+    for (label i = 1; i < alphaRhosOld.size(); i++)
+    {
+        rho_.oldTime() += alphaRhosOld[i];
+    }
+    rho_.oldTime() /= max(volumeFraction_, 1e-10);
+
+    volVectorField rhoUOld(rhoU_);
+    this->storeOld(stepi, rhoUOld, rhoUOld_);
+    this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
+
+    volScalarField rhoEOld(rhoE_);
+    this->storeOld(stepi, rhoEOld, rhoEOld_);
+    this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
+
     thermo_.solve(stepi, ai, bi);
 
     surfaceScalarField alphaf(fluxScheme_->interpolate(volumeFraction_, "alpha"));
     PtrList<volScalarField> deltaAlphas(alphas_.size());
     PtrList<volScalarField> deltaAlphaRhos(alphas_.size());
-    volVectorField deltaRhoU
-    (
-        fvc::div(rhoUPhi_*alphaf)
-      - p_*fvc::grad(alphaf)
-      - g_*alphaRho_
-    );
-    volScalarField deltaRhoE
-    (
-        fvc::div(rhoEPhi_*alphaf)
-      - ESource()
-      - (rhoU_ & g_)
-    );
-
     forAll(alphas_, phasei)
     {
         deltaAlphas.set
@@ -189,72 +146,54 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
               - alphas_[phasei]*fvc::div(phi_)
             )
         );
+        this->storeDelta(stepi, deltaAlphas[phasei], deltaAlphas_[phasei]);
+        this->blendDelta(stepi, deltaAlphas[phasei], deltaAlphas_[phasei], bi);
+
         deltaAlphaRhos.set
         (
             phasei, new volScalarField(fvc::div(alphaRhoPhis_[phasei]))
         );
-    }
-    if (deltaIs_[stepi - 1] != -1)
-    {
-        deltaRhoU_.set
+        this->storeDelta(stepi, deltaAlphaRhos[phasei], deltaAlphaRhos_[phasei]);
+        this->blendDelta
         (
-            deltaIs_[stepi - 1],
-            new volVectorField(deltaRhoU)
+            stepi,
+            deltaAlphaRhos[phasei],
+            deltaAlphaRhos_[phasei],
+            bi
         );
-        deltaRhoE_.set
-        (
-            deltaIs_[stepi - 1],
-            new volScalarField(deltaRhoE)
-        );
-        forAll(alphas_, phasei)
-        {
-            deltaAlphas_[deltaIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(deltaAlphas[phasei])
-            );
-            deltaAlphaRhos_[deltaIs_[stepi - 1]].set
-            (
-                phasei,
-                new volScalarField(deltaAlphaRhos[phasei])
-            );
-        }
-    }
-    deltaRhoU *= bi[stepi - 1];
-    deltaRhoE *= bi[stepi - 1];
-    forAll(alphas_, phasei)
-    {
-        deltaAlphas[phasei] *= bi[stepi - 1];
-        deltaAlphaRhos[phasei] *= bi[stepi - 1];
     }
 
-    for (label i = 0; i < stepi - 1; i++)
-    {
-        label fi = deltaIs_[i];
-        if (fi != -1 && bi[fi] != 0)
-        {
-            deltaRhoU += bi[fi]*deltaRhoU_[fi];
-            deltaRhoE += bi[fi]*deltaRhoE_[fi];
-            forAll(alphas_, phasei)
-            {
-                deltaAlphas[phasei] += bi[fi]*deltaAlphas_[fi][phasei];
-                deltaAlphaRhos[phasei] += bi[fi]*deltaAlphaRhos_[fi][phasei];
-            }
-        }
-    }
+    volVectorField deltaRhoU
+    (
+        fvc::div(rhoUPhi_*alphaf)
+      - p_*fvc::grad(alphaf)
+      - g_*alphaRho_
+    );
+    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
+    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
+
+    volScalarField deltaRhoE
+    (
+        fvc::div(rhoEPhi_*alphaf)
+      - ESource()
+      - (rhoU_ & g_)
+    );
+    this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
+    this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
 
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
 
     rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
-//     if (radiation_->type() != "none")
-//     {
+    if (radiation_->type() != "none")
+    {
+        NotImplemented;
 //         calcAlphaAndRho();
 //         e() = rhoE_/alphaRho_ - 0.5*magSqr(U_);
 //         e().correctBoundaryConditions();
 //         rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, alphaRho_, e(), Cv());
-//     }
+    }
 
     forAll(alphas_, phasei)
     {
@@ -263,80 +202,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
 
         alphaRhos_[phasei].oldTime() = alphaRhosOld[phasei];
         alphaRhos_[phasei] = alphaRhosOld[phasei] - dT*deltaAlphaRhos[phasei];
-        alphaRhos_[phasei].correctBoundaryConditions();
     }
-
-
-//     if (stepi == oldIs_.size())
-//     {
-//         radiation_->correct();
-//     }
-
-    if
-    (
-        stepi == oldIs_.size()
-     && (
-            turbulence_.valid()
-         || dragSource_.valid()
-         || extESource_.valid()
-        )
-    )
-    {
-        volScalarField alphaRhos(alphaRho_);
-        alphaRhos.max(1e-10);
-        calcAlphaAndRho();
-        U_ = rhoU_/alphaRhos;
-        U_.correctBoundaryConditions();
-
-        e_ = rhoE_/alphaRhos - 0.5*magSqr(U_);
-        e_.correctBoundaryConditions();
-
-        fvVectorMatrix UEqn
-        (
-            alphaRho_*fvm::ddt(U_) - fvc::ddt(alphaRho_, U_)
-        );
-        fvScalarMatrix eEqn
-        (
-            alphaRho_*fvm::ddt(e_) - fvc::ddt(alphaRho_, e_)
-        );
-
-        if (turbulence_.valid())
-        {
-            volScalarField muEff("muEff", volumeFraction_*turbulence_->muEff());
-            volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
-            UEqn -=
-                fvm::laplacian(muEff, U_)
-              + fvc::div(tauMC);
-
-            eEqn -=
-                fvm::laplacian
-                (
-                    volumeFraction_*turbulence_->alphaEff(),
-                    e_
-                );
-        }
-
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_();
-        }
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_();
-        }
-        UEqn.solve();
-        eEqn.solve();
-
-        rhoU_ = alphaRho_*U_;
-        rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
-
-        if (turbulence_.valid())
-        {
-            turbulence_->correct();
-        }
-    }
-
-    decode();
 }
 
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()

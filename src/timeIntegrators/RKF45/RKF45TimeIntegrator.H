@@ -76,20 +76,20 @@ class RKF45
     scalar a54 = -11.0/40.0;
 
     //- Fourth order coefficients
-    scalar a604 = 25.0/216.0;
-    scalar a614 = 0.0;
-    scalar a624 = 1408.0/2565.0;
-    scalar a634 = 2197.0/4104.0;
-    scalar a644 = -1.0/5.0;
-    scalar a654 = 0.0;
+    scalar a60 = 25.0/216.0;
+    scalar a61 = 0.0;
+    scalar a62 = 1408.0/2565.0;
+    scalar a63 = 2197.0/4104.0;
+    scalar a64 = -1.0/5.0;
+    scalar a65 = 0.0;
 
     //- Fifth order coefficients
-    scalar a605 = 16.0/135.0;
-    scalar a615 = 0.0;
-    scalar a625 = 6656.0/12825.0;
-    scalar a635 = 28561.0/56430.0;
-    scalar a645 = -9.0/50.0;
-    scalar a655 = 2.0/55.0;
+//     scalar a60 = 16.0/135.0;
+//     scalar a61 = 0.0;
+//     scalar a62 = 6656.0/12825.0;
+//     scalar a63 = 28561.0/56430.0;
+//     scalar a64 = -9.0/50.0;
+//     scalar a65 = 2.0/55.0;
 
 
 public:
@@ -108,7 +108,7 @@ public:
     // Member Functions
 
         //- Set ode fields
-        virtual void setODEFields(integrationSystem& system);
+        virtual void setODEFields(integrationSystem& system) const;
 
         //- Update
         virtual void integrate();
