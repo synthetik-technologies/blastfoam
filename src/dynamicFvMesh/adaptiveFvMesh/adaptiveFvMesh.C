@@ -1027,7 +1027,7 @@ void Foam::adaptiveFvMesh::checkEightAnchorPoints
                     }
                 }
 
-                if (!protectedCell[celli])
+                if (!protectedCell.get(celli))
                 {
                     nAnchorPoints[celli]++;
                 }
@@ -1038,7 +1038,7 @@ void Foam::adaptiveFvMesh::checkEightAnchorPoints
 
     forAll(protectedCell, celli)
     {
-        if (!protectedCell[celli] && nAnchorPoints[celli] != 8)
+        if (!protectedCell.get(celli) && nAnchorPoints[celli] != 8)
         {
             protectedCell.set(celli, true);
             nProtected++;
@@ -1371,7 +1371,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
             {
                 if (visibleCells[celli] >= 0)
                 {
-                    if (protectedCell_[celli])
+                    if (protectedCell_.get(celli))
                     {
                         protectedCell_.unset(celli);
                         nProtected_--;
@@ -1465,7 +1465,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
 
                 forAll(protectedCell_, celli)
                 {
-                    if (protectedCell_[celli])
+                    if (protectedCell_.get(celli))
                     {
                         // Check if the cell has exactly 2 points on the axis
                         label numPointsOnAxis = 0;
@@ -1515,7 +1515,7 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
         cellSet protectedCells(*this, "protectedCells", nProtected_);
         forAll(protectedCell_, celli)
         {
-            if (protectedCell_[celli])
+            if (protectedCell_.get(celli))
             {
                 protectedCells.insert(celli);
             }
@@ -2006,17 +2006,19 @@ void Foam::adaptiveFvMesh::balance()
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
 
-            boolList protectedCell(protectedCell_.size(), false);
-            forAll(protectedCell, i)
+            if (nProtected_ > 0)
             {
-                if (protectedCell_.get(i))
+                boolList protectedCell(this->nCells(), false);
+                forAll(protectedCell, i)
                 {
-                    protectedCell[i] = true;
+                    if (protectedCell_.get(i))
+                    {
+                        protectedCell[i] = true;
+                    }
                 }
+                map->distributeCellData(protectedCell);
+                protectedCell_ = protectedCell;
             }
-
-            map->distributeCellData(protectedCell);
-            protectedCell_ = protectedCell;
 
             Info << "Successfully distributed mesh" << endl;
 
@@ -2091,7 +2093,7 @@ bool Foam::adaptiveFvMesh::writeObject
         cellSet protectedCells(*this, "protectedCells", nProtected_);
         forAll(protectedCell_, celli)
         {
-            if (protectedCell_[celli])
+            if (protectedCell_.get(celli))
             {
                 protectedCells.insert(celli);
             }
