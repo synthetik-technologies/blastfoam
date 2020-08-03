@@ -101,9 +101,6 @@ Foam::activationModel::activationModel
     limit_(maxDLambda_ != 1.0)
 {
     this->lookupAndInitialize();
-    Info<<lambdaOld_.size()<<endl;
-    Info<<deltaLambda_.size()<<endl;
-    Info<<deltaAlphaRhoLambda_.size()<<endl;
 }
 
 
