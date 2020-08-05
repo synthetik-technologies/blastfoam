@@ -279,6 +279,12 @@ public:
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();
 
+        //- Update error field
+        virtual void updateError();
+
+        //- Update error field boundaries
+        virtual void updateErrorBoundaries();
+
         //- Template to update all volField boundaries
         template<class Type> void correctBoundaries();
 

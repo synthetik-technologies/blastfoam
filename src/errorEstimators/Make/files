@@ -7,5 +7,6 @@ delta/delta.C
 Lohner/Lohner.C
 multicomponentError/multicomponent.C
 
+fvPatchFields/derived/coupledMaxError/coupledMaxErrorFvPatchScalarField.C
 
 LIB = $(BLAST_LIBBIN)/liberrorEstimate

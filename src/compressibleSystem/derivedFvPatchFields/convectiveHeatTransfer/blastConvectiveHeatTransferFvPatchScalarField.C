@@ -110,12 +110,12 @@ void convectiveHeatTransferFvPatchScalarField::updateCoeffs()
 
     const label patchi = patch().index();
 
-    const blastCompressibleTurbulenceModel& turbModel =
-        db().lookupObject<blastCompressibleTurbulenceModel>
+    const blast::turbulenceModel& turbModel =
+        db().lookupObject<blast::turbulenceModel>
         (
             IOobject::groupName
             (
-                blastCompressibleTurbulenceModel::propertiesName,
+                blast::turbulenceModel::propertiesName,
                 internalField().group()
             )
         );

@@ -48,7 +48,7 @@ Foam::errorEstimators::fieldValue::fieldValue
 )
 :
     errorEstimator(mesh, dict),
-    fieldName_(dict.lookup("deltaField"))
+    fieldName_(dict.lookup("fieldName"))
 {
     this->read(dict);
 }
@@ -64,9 +64,9 @@ Foam::errorEstimators::fieldValue::~fieldValue()
 
 void Foam::errorEstimators::fieldValue::update()
 {
-    error_ = mesh_.lookupObject<volScalarField>(fieldName_);
+    error_.primitiveFieldRef() =
+        mesh_.lookupObject<volScalarField>(fieldName_).primitiveField();
     normalize(error_);
-    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

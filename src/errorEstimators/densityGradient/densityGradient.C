@@ -154,7 +154,6 @@ void Foam::errorEstimators::densityGradient::update()
         }
     }
     normalize(error_);
-    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

@@ -24,6 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "errorEstimator.H"
+#include "coupledMaxErrorFvPatchScalarField.H"
+#include "mappedWallFvPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -43,6 +45,20 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
 {
     if (!mesh.foundObject<volScalarField>("error"))
     {
+        wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
+        forAll(boundaryTypes, patchi)
+        {
+            if (isA<mappedWallFvPatch>(mesh.boundary()[patchi]))
+            {
+                boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
+            }
+//             if (debug)
+            {
+                Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
+                    << " cellType:" << boundaryTypes[patchi] << endl;
+            }
+        }
+
         volScalarField* fPtr
         (
             new volScalarField
@@ -53,11 +69,11 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
                     mesh.time().timeName(),
                     mesh,
                     IOobject::NO_READ,
-                    IOobject::NO_WRITE
+                    IOobject::AUTO_WRITE
                 ),
                 mesh,
                 0.0,
-                "zeroGradient"
+                boundaryTypes
             )
         );
 

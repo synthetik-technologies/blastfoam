@@ -36,7 +36,7 @@ unrefineLevel   0.01;
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement  4;
+maxRefinement  3;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

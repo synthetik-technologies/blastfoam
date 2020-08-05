@@ -767,7 +767,7 @@ void Foam::dynamicRefineFvMesh::selectRefineCandidates
 {
 ////////////////////////////////////////////////////////////////////////
 // Batzdorf
-/* 
+/*
     //-
     // Get error per cell. Is -1 (not to be refined) to >0 (to be refined,
     // higher more desirable to be refined).
@@ -801,7 +801,7 @@ void Foam::dynamicRefineFvMesh::selectRefineCandidates
             candidateCell.set(cellI, 1);
         }
     }
-////////////////////////////////////////////////////////////////////////  
+////////////////////////////////////////////////////////////////////////
 }
 
 
@@ -1027,7 +1027,7 @@ void Foam::dynamicRefineFvMesh::checkEightAnchorPoints
                     }
                 }
 
-                if (!protectedCell[celli])
+                if (!protectedCell.get(celli))
                 {
                     nAnchorPoints[celli]++;
                 }
@@ -1038,7 +1038,7 @@ void Foam::dynamicRefineFvMesh::checkEightAnchorPoints
 
     forAll(protectedCell, celli)
     {
-        if (!protectedCell[celli] && nAnchorPoints[celli] != 8)
+        if (!protectedCell.get(celli) && nAnchorPoints[celli] != 8)
         {
             protectedCell.set(celli, true);
             nProtected++;
@@ -1065,7 +1065,7 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
 
         GeoField& sFld = *iter();
         if (mapSurfaceFields_.found(iter.key()))
-        {   
+        {
             if (debug)
             {
                 Info << "dynamicRefineFvMesh::mapNewInternalFaces(): " <<iter.key()<< endl;
@@ -1108,7 +1108,7 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
                     {
                         //- faces on empty patches are not counted
                         label facePatchId = boundaryMesh().whichPatch(faceOwner[iFace]);
-                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceOwner[iFace]  
+                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceOwner[iFace]
                                                  && isA<emptyPolyPatch>(boundaryMesh()[facePatchId]));
 
                         //- is master face and not on empty boundary
@@ -1125,7 +1125,7 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
                     {
                         //- faces on empty patches are not counted
                         label facePatchId = boundaryMesh().whichPatch(faceNeighbour[iFace]);
-                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceNeighbour[iFace]  
+                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceNeighbour[iFace]
                                                  && isA<emptyPolyPatch>(boundaryMesh()[facePatchId]));
 
                         //- is master face and not on empty boundary
@@ -1140,17 +1140,17 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
 
                     if(counter > 0)
                     {
-                        if 
-                        (   
-                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName 
+                        if
+                        (
+                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName
                                 == "surfaceScalarField"
                         )
                         {
                             tmpValue /= counter;
-                        }                            
-                        else if 
-                        (    
-                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName 
+                        }
+                        else if
+                        (
+                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName
                                 == "surfaceVectorField"
                         )
                         {
@@ -1163,7 +1163,7 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
                                 << "mapping implementation only valid for"
                                 << " scalar and vector fields! \n Field "
                                 << sFld.name() << " is of type: "
-                                << GeometricField<T, fvsPatchField, surfaceMesh>::typeName 
+                                << GeometricField<T, fvsPatchField, surfaceMesh>::typeName
                                 << abort(FatalError);
                         }
                     }
@@ -1398,7 +1398,7 @@ Foam::dynamicRefineFvMesh::dynamicRefineFvMesh(const IOobject& io)
             {
                 if (visibleCells[celli] >= 0)
                 {
-                    if (protectedCell_[celli])
+                    if (protectedCell_.get(celli))
                     {
                         protectedCell_.unset(celli);
                         nProtected--;
@@ -1492,7 +1492,7 @@ Foam::dynamicRefineFvMesh::dynamicRefineFvMesh(const IOobject& io)
 
                 forAll(protectedCell_, celli)
                 {
-                    if (protectedCell_[celli])
+                    if (protectedCell_.get(celli))
                     {
                         // Check if the cell has exactly 2 points on the axis
                         label numPointsOnAxis = 0;
@@ -1550,7 +1550,7 @@ Foam::dynamicRefineFvMesh::dynamicRefineFvMesh(const IOobject& io)
         cellSet protectedCells(*this, "protectedCells", nProtected);
         forAll(protectedCell_, celli)
         {
-            if (protectedCell_[celli])
+            if (protectedCell_.get(celli))
             {
                 protectedCells.insert(celli);
             }
@@ -1798,7 +1798,8 @@ bool Foam::dynamicRefineFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,
-    IOstream::compressionType cmp
+    IOstream::compressionType cmp,
+    const bool write
 ) const
 {
     // Force refinement data to go to the current time directory.

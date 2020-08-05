@@ -155,8 +155,8 @@ Foam::blast::totalFlowRateAdvectiveDiffusiveFvPatchScalarField::updateCoeffs()
 
     const label patchi = patch().index();
 
-    const blastCompressibleTurbulenceModel& turbModel =
-        db().lookupObject<blastCompressibleTurbulenceModel>
+    const blast::turbulenceModel& turbModel =
+        db().lookupObject<blast::turbulenceModel>
         (
             IOobject::groupName
             (

@@ -107,7 +107,6 @@ void Foam::errorEstimators::delta::update()
         }
     }
     normalize(error_);
-    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

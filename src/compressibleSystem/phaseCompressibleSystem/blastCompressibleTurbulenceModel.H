@@ -27,7 +27,6 @@ Description
 #define blastCompressibleTurbulenceModel_H
 
 
-#include "blastCompressibleTurbulenceModelFwd.H"
 #include "CompressibleTurbulenceModel.H"
 #include "ThermalDiffusivity.H"
 #include "EddyDiffusivity.H"
@@ -40,14 +39,15 @@ Description
 
 namespace Foam
 {
-    typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
-        blastCompressibleTurbulenceModel;
-
     namespace blast
     {
-        typedef laminarModel<blastCompressibleTurbulenceModel> laminarModel;
-        typedef RASModel<EddyDiffusivity<blastCompressibleTurbulenceModel>> RASModel;
-        typedef LESModel<EddyDiffusivity<blastCompressibleTurbulenceModel>> LESModel;
+        typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
+            turbulenceModel;
+
+
+        typedef laminarModel<turbulenceModel> laminarModel;
+        typedef RASModel<EddyDiffusivity<turbulenceModel>> RASModel;
+        typedef LESModel<EddyDiffusivity<turbulenceModel>> LESModel;
     }
 
 }

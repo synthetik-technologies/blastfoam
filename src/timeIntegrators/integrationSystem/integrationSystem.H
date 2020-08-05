@@ -78,7 +78,8 @@ protected:
         (
             const label stepi,
             fieldType& f,
-            PtrList<fieldType>& fList
+            PtrList<fieldType>& fList,
+            const bool moving = true
         ) const;
 
         //- Store delta fields

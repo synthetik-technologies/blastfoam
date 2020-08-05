@@ -23,9 +23,8 @@ Description
     Typedef for phaseCompressibleTurbulenceModel
 \*---------------------------------------------------------------------------*/
 
-#include "compressibleTurbulenceModel.H"
 #include "CompressibleTurbulenceModel.H"
-#include "blastCompressibleTurbulenceModel.H"
+#include "fluidThermoModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "makeTurbulenceModel.H"
 

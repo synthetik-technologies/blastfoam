@@ -126,7 +126,12 @@ public:
         const volScalarField& error() const
         {
             return error_;
+        }
 
+        //- Return non constant reference to error field
+        volScalarField& error()
+        {
+            return error_;
         }
 
         //- Read level values

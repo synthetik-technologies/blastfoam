@@ -146,7 +146,7 @@ Foam::tmp<Foam::scalarField> Foam::blast::temperatureCoupledBase::kappa
     {
         case mtFluidThermo:
         {
-            typedef blastCompressibleTurbulenceModel turbulenceModel;
+            typedef blast::turbulenceModel turbulenceModel;
 
             word turbName(turbulenceModel::propertiesName);
 

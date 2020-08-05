@@ -160,12 +160,12 @@ void alphatJayatillekeWallFunctionFvPatchScalarField::updateCoeffs()
     const label patchi = patch().index();
 
     // Retrieve turbulence properties from model
-    const blastCompressibleTurbulenceModel& turbModel =
-        db().lookupObject<blastCompressibleTurbulenceModel>
+    const blast::turbulenceModel& turbModel =
+        db().lookupObject<blast::turbulenceModel>
         (
             IOobject::groupName
             (
-                blastCompressibleTurbulenceModel::propertiesName,
+                blast::turbulenceModel::propertiesName,
                 internalField().group()
             )
         );

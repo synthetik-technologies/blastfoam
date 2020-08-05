@@ -87,6 +87,8 @@ int main(int argc, char *argv[])
         //- Update conserved quantites before updating mesh and mapping
         fluid->encode();
 
+        mesh.updateError();
+        mesh.updateErrorBoundaries();
         mesh.update();
 
         Info<< "Calculating Fluxes" << endl;

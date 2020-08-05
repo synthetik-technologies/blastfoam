@@ -91,6 +91,8 @@ int main(int argc, char *argv[])
         {
             parcels.storeGlobalPositions();
         }
+        mesh.updateError();
+        mesh.updateErrorBoundaries();
         mesh.update();
 
         parcels.evolve();

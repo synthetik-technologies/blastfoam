@@ -126,13 +126,13 @@ void Foam::blast::externalCoupledTemperatureMixedFvPatchScalarField::transferDat
     // heat flux [W/m^2]
     scalarField qDot(this->patch().size(), 0.0);
 
-    typedef blastCompressibleTurbulenceModel cmpTurbModelType;
+    typedef blast::turbulenceModel cmpTurbModelType;
 
     static word turbName
     (
         IOobject::groupName
         (
-            blastCompressibleTurbulenceModel::propertiesName,
+            blast::turbulenceModel::propertiesName,
             internalField().group()
         )
     );

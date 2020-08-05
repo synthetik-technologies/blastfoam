@@ -35,6 +35,7 @@ fvMotionSolvers/motionDiffusivity/manipulators/exponential/exponentialDiffusivit
 
 fvMotionSolvers/fvPatchFields/derived/cellMotion/cellMotionFvPatchFields.C
 fvMotionSolvers/fvPatchFields/derived/surfaceSlipDisplacement/surfaceSlipDisplacementFvPatchFields.C
+fvMotionSolvers/fvPatchFields/derived/coupledCellMotion/coupledCellMotionFvPatchFields.C
 
 derivedPoint = fvMotionSolvers/pointPatchFields/derived
 

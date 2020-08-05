@@ -1164,6 +1164,41 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     // Read static part of dictionary
     readDict();
 
+    nProtected_ = 0;
+
+    const dictionary& refineDict
+    (
+        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+    );
+
+    wordList protectedPatches
+    (
+        refineDict.lookupOrDefault("protectedPatches", wordList())
+    );
+    if (protectedPatches.size())
+    {
+        forAll(protectedPatches, patchi)
+        {
+            const polyPatch& p =
+                this->boundaryMesh()[protectedPatches[patchi]];
+            Info<< "Protecting " << p.faceCells(). size() << " cells "
+                << " on the " << protectedPatches[patchi] << " patch." << endl;
+            forAll(p.faceCells(), facei)
+            {
+                label own = faceOwner()[facei + p.start()];
+                protectedCell_.set(own, true);
+            }
+        }
+    }
+    forAll(protectedCell_, celli)
+    {
+        if (protectedCell_.get(celli))
+        {
+            nProtected_++;
+        }
+    }
+
+
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
 
@@ -1176,8 +1211,6 @@ Foam::adaptiveFvMesh::adaptiveFvMesh(const IOobject& io)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     labelList nAnchors(nCells(), 0);
-
-    nProtected_ = 0;
 
     forAll(pointCells(), pointi)
     {
@@ -1596,9 +1629,6 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
 
 bool Foam::adaptiveFvMesh::update()
 {
-    //- Update error field
-    error_->update();
-
     // Re-read dictionary. Chosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.
@@ -1689,11 +1719,12 @@ bool Foam::adaptiveFvMesh::update()
             refineCell
         );
 
-        // Update protected patches
-        const dictionary& refineDict
-        (
-            dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
-        );
+        // Extend with a buffer layer to prevent neighbouring points
+        // being unrefined.
+        for (label i = 0; i < nBufferLayers; i++)
+        {
+            extendMarkedCells(refineCell);
+        }
 
         if (nProtected_ > 0)
         {
@@ -1706,32 +1737,8 @@ bool Foam::adaptiveFvMesh::update()
             }
         }
 
-        wordList protectedPatches
-        (
-            refineDict.lookupOrDefault("protectedPatches", wordList())
-        );
-        if (protectedPatches.size())
-        {
-            forAll(protectedPatches, patchi)
-            {
-                const polyPatch& p =
-                    this->boundaryMesh()[protectedPatches[patchi]];
-                forAll(p.faceCells(), facei)
-                {
-                    label own = faceOwner()[facei + p.start()];
-                    refineCell.set(own, 0);
-                }
-            }
-        }
-
         if (globalData().nTotalCells() < maxCells)
         {
-            // Extend with a buffer layer to prevent neighbouring points
-            // being unrefined.
-            for (label i = 0; i < nBufferLayers; i++)
-            {
-                extendMarkedCells(refineCell);
-            }
 
             // Select subset of candidates. Take into account max allowable
             // cells, refinement level, protected cells.
@@ -1801,21 +1808,6 @@ bool Foam::adaptiveFvMesh::update()
                 }
             }
 
-            // Mark as already refined
-            if (protectedPatches.size())
-            {
-                forAll(protectedPatches, patchi)
-                {
-                    const polyPatch& p =
-                        this->boundaryMesh()[protectedPatches[patchi]];
-                    forAll(p.faceCells(), facei)
-                    {
-                        label own = faceOwner()[facei + p.start()];
-                        refineCell.set(own, true);
-                    }
-                }
-            }
-
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (
@@ -1858,11 +1850,25 @@ bool Foam::adaptiveFvMesh::update()
             moving(false);
         }
     }
-    if (hasChanged)
+    if (returnReduce(hasChanged, orOp<bool>()))
     {
         balance();
     }
     return hasChanged;
+}
+
+
+void Foam::adaptiveFvMesh::updateError()
+{
+    //- Update error field
+    error_->update();
+    error_->error().correctBoundaryConditions();
+}
+
+void Foam::adaptiveFvMesh::updateErrorBoundaries()
+{
+    //- Update error field
+    error_->error().correctBoundaryConditions();
 }
 
 
@@ -2006,7 +2012,7 @@ void Foam::adaptiveFvMesh::balance()
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
 
-            if (nProtected_ > 0)
+            if (returnReduce(nProtected_, sumOp<label>()) > 0)
             {
                 boolList protectedCell(this->nCells(), false);
                 forAll(protectedCell, i)

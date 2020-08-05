@@ -160,7 +160,9 @@ void Foam::activationModel::solve
 
     dimensionedScalar dT(alphaRho.time().deltaT());
     volScalarField lambdaOld(lambda_);
-    this->storeOld(stepi, lambdaOld, lambdaOld_);
+
+    // Do not include volume changes
+    this->storeOld(stepi, lambdaOld, lambdaOld_, false);
     this->blendOld(stepi, lambdaOld, lambdaOld_, ai);
 
 

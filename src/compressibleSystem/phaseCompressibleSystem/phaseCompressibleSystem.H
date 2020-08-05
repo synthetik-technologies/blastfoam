@@ -105,7 +105,7 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<blastCompressibleTurbulenceModel> turbulence_;
+        autoPtr<blast::turbulenceModel> turbulence_;
 
         //- Radiation model
         autoPtr<radiationModel> radiation_;
@@ -232,10 +232,10 @@ public:
     // Member Access Functions
 
         //- Return turbulence class
-        const blastCompressibleTurbulenceModel& turbulence() const;
+        const blast::turbulenceModel& turbulence() const;
 
         //- Return turbulence class
-        blastCompressibleTurbulenceModel& turbulence();
+        blast::turbulenceModel& turbulence();
 
         //- Const access to thermo model
         virtual const fluidThermoModel& thermo() const = 0;

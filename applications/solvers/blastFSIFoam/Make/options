@@ -1,0 +1,44 @@
+EXE_INC = \
+    -I. \
+    -I./fluid \
+    -I./solid \
+    -IderivedFvPatchFields/tractionDisplacement \
+    -IderivedFvPatchFields/hydrostaticDisplacement \
+    -I./include \
+    -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/cfdTools \
+    -I$(LIB_SRC)/ODE/lnInclude \
+    -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
+    -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
+    -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
+    -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
+    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude
+
+
+EXE_LIBS = \
+    -lODE \
+    -lturbulenceModels \
+    -lcompressibleTurbulenceModels \
+    -lmeshTools \
+    -lfiniteVolume \
+    -lregionModels \
+    -L$(BLAST_LIBBIN) \
+    -lblastThermodynamics \
+    -ldiameterModels \
+    -lfluxSchemes \
+    -lphaseCompressibleSystems \
+    -ltimeIntegrators \
+    -lblastRadiationModels \
+    -lblastDynamicMesh \
+    -lblastDynamicFvMesh \
+    -lerrorEstimate \
+    -lblastSampling \
+    -lblastFunctionObjects \
+    $(BLAST_QBMM_LIBS)

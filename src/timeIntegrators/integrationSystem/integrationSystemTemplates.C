@@ -32,13 +32,14 @@ void Foam::integrationSystem::storeOld
 (
     const label stepi,
     fieldType& f,
-    PtrList<fieldType>& fList
+    PtrList<fieldType>& fList,
+    const bool moving
 ) const
 {
     // Correct old field for mesh motion before storage
-    if (f.mesh().moving() && stepi == 1)
+    if (f.mesh().moving() && stepi == 1 && moving)
     {
-        f.ref() *= f.mesh().Vsc0()/f.mesh().Vsc();
+        f.ref() *= f.mesh().V0()/f.mesh().V();
     }
 
     // Store fields if needed later

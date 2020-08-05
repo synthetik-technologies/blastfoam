@@ -175,8 +175,8 @@ void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
     {
         const volVectorField& vsfU =
             db().lookupObject<volVectorField>(internalField().name());
-        const blastCompressibleTurbulenceModel& turbulence =
-            db().lookupObject<blastCompressibleTurbulenceModel>
+        const blast::turbulenceModel& turbulence =
+            db().lookupObject<blast::turbulenceModel>
             (
                 IOobject::groupName
                 (

@@ -132,7 +132,9 @@ void Foam::twoPhaseCompressibleSystem::solve
     volScalarField alphaRho1Old(alphaRho1_);
     volScalarField alphaRho2Old(alphaRho2_);
 
-    this->storeOld(stepi, alphaOld, alphaOld_);
+    // Volume fraction is not scaled by change in volume because it is not
+    // conserved
+    this->storeOld(stepi, alphaOld, alphaOld_, false);
     this->storeOld(stepi, alphaRho1Old, alphaRho1Old_);
     this->storeOld(stepi, alphaRho2Old, alphaRho2Old_);
 
@@ -140,7 +142,10 @@ void Foam::twoPhaseCompressibleSystem::solve
     this->blendOld(stepi, alphaRho1Old, alphaRho1Old_, ai);
     this->blendOld(stepi, alphaRho2Old, alphaRho2Old_, ai);
 
+    // Set old values for use by other classes
     this->rho_.oldTime() = alphaRho1Old + alphaRho2Old;
+    alphaRho1_.oldTime() = alphaRho1Old;
+    alphaRho2_.oldTime() = alphaRho2Old;
 
     volScalarField deltaAlpha
     (
@@ -163,11 +168,9 @@ void Foam::twoPhaseCompressibleSystem::solve
     volumeFraction_ = alphaOld - dT*deltaAlpha;
     volumeFraction_.correctBoundaryConditions();
 
-    alphaRho1_.oldTime() = alphaRho1Old;
     alphaRho1_ = alphaRho1Old - dT*deltaAlphaRho1;
     alphaRho1_.correctBoundaryConditions();
 
-    alphaRho2_.oldTime() = alphaRho2Old;
     alphaRho2_ = alphaRho2Old - dT*deltaAlphaRho2;
     alphaRho2_.correctBoundaryConditions();
 

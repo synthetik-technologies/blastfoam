@@ -148,8 +148,8 @@ void Foam::blast::wallHeatTransferFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    const blastCompressibleTurbulenceModel& turbModel =
-        db().lookupObject<blastCompressibleTurbulenceModel>
+    const blast::turbulenceModel& turbModel =
+        db().lookupObject<blast::turbulenceModel>
         (
             IOobject::groupName
             (

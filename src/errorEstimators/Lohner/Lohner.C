@@ -77,8 +77,6 @@ void Foam::errorEstimators::Lohner::update()
     const label nInternalFaces = mesh_.nInternalFaces();
     error_ = 0.0;
 
-    vector solutionD((vector(mesh_.solutionD()) + vector::one)/2.0);
-
     for (label facei = 0; facei < nInternalFaces; facei++)
     {
         label own = owner[facei];
@@ -146,7 +144,6 @@ void Foam::errorEstimators::Lohner::update()
         }
     }
     normalize(error_);
-    error_.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

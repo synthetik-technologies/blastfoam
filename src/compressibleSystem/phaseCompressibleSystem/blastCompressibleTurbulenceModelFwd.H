@@ -38,8 +38,12 @@ namespace Foam
     template<class BasicTurbulenceModel>
     class ThermalDiffusivity;
 
-    typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
-          blastCompressibleTurbulenceModel;
+    namespace blast
+    {
+
+        typedef ThermalDiffusivity<CompressibleTurbulenceModel<fluidThermoModel>>
+            turbulenceModel;
+    }
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

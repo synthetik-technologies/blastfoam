@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
+        mesh.updateError();
+        mesh.updateErrorBoundaries();
         mesh.update();
 
         fluid->encode();

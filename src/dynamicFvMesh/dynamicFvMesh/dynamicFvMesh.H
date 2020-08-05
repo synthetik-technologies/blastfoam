@@ -165,6 +165,14 @@ public:
 
         //- Update the mesh for both mesh motion and topology change
         virtual bool update() = 0;
+
+        //- Update error field
+        virtual void updateError()
+        {}
+
+        //- Update error field boundaries
+        virtual void updateErrorBoundaries()
+        {}
 };
 
 

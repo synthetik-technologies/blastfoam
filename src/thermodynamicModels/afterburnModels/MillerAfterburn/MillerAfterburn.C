@@ -128,7 +128,9 @@ void Foam::afterburnModels::MillerAfterburn::solve
     );
 
     volScalarField cOld(c_);
-    this->storeOld(stepi, c_, cOld_);
+
+    // Do not include volume changes
+    this->storeOld(stepi, c_, cOld_, false);
     this->blendOld(stepi, c_, cOld_, ai);
 
 
