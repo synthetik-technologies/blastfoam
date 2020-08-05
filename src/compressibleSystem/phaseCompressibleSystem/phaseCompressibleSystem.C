@@ -333,17 +333,13 @@ void Foam::phaseCompressibleSystem::postUpdate()
     {
         rho_.oldTime() = rhoOldTmp_;
 
-        U_.storeOldTime();
-        e_.storeOldTime();
-
-
         fvVectorMatrix UEqn
         (
-            rho_*fvm::ddt(U_)// - fvc::ddt(rho_, U_)
+            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
         );
         fvScalarMatrix eEqn
         (
-            rho_*fvm::ddt(e())// - fvc::ddt(rho_, e())
+            fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
         );
 
         if (turbulence_.valid())

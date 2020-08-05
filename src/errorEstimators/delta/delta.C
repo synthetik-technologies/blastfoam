@@ -64,7 +64,17 @@ Foam::errorEstimators::delta::~delta()
 
 void Foam::errorEstimators::delta::update()
 {
-    const volScalarField& x = mesh_.lookupObject<volScalarField>(name_);
+    volScalarField x
+    (
+        IOobject
+        (
+            "mag(" + name_ + ")",
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        mesh_,
+        0.0
+    );
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();

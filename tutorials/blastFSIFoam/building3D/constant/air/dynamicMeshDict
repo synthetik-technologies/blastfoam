@@ -14,12 +14,20 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
+dynamicFvMesh   movingAdaptiveFvMesh;
 
 balance no;
 
-errorEstimator delta;      // Model used to estimate error
-deltaField sigmaD;
+errorEstimator densityGradient;      // Model used to estimate error
+
+solver      displacementLaplacian;
+
+displacementLaplacianCoeffs
+{
+    diffusivity quadratic inverseDistance (air_to_building);
+}
+
+beginUnrefine 1e-5;
 
 // How often to refine
 refineInterval  3;
@@ -31,7 +39,7 @@ lowerRefineLevel 0.01;
 unrefineLevel   0.01;
 
 // Number of cells refined around high error cells
-nBufferLayers   2;
+nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;

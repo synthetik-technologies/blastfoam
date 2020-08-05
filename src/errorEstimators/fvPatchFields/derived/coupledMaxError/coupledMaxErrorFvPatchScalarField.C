@@ -106,6 +106,8 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
     const label samplePatchi = mpp.samplePolyPatch().index();
     const fvPatch& nbrPatch = nbrFvMesh.boundary()[samplePatchi];
 
+    scalarField::operator=(this->patchInternalField());
+
     if (nbrFvMesh.foundObject<volScalarField>("error"))
     {
         const fvPatchScalarField& nbrError
@@ -116,7 +118,7 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
 
         mpp.distribute(errorp);
 
-        scalarField::operator=(max(errorp, this->patchInternalField()));
+        scalarField::operator=(max(errorp, *this));
 
         volScalarField& error
         (
@@ -126,10 +128,6 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
         {
             error[patch().faceCells()[facei]] = this->operator[](facei);
         }
-    }
-    else
-    {
-        scalarField::operator=(this->patchInternalField());
     }
 
     fixedValueFvPatchField<scalar>::updateCoeffs();

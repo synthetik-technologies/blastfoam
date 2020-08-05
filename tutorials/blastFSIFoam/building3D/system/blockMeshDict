@@ -1,0 +1,275 @@
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+scale   1.;
+
+x0 -5.0;
+x1 -0.5;
+x2 2.0;
+x3 2.5;
+x4 5.0;
+
+y0 -5.0;
+y1 -0.5;
+y2 2.0;
+y3 2.5;
+y4 5.0;
+
+z0 0.0;
+z1 2.0;
+z2 5.0;
+
+w 0.3;
+
+vertices
+(
+    ($x0 $y0 $z0)
+    ($x1 $y0 $z0)
+    ($x2 $y0 $z0)
+    ($x3 $y0 $z0)
+    ($x4 $y0 $z0)
+
+    ($x0 $y1 $z0)
+    ($x1 $y1 $z0)
+    ($x2 $y1 $z0)
+    ($x3 $y1 $z0)
+    ($x4 $y1 $z0)
+
+    ($x0 $y2 $z0)
+    ($x1 $y2 $z0)
+    ($x2 $y2 $z0)
+    ($x3 $y2 $z0)
+    ($x4 $y2 $z0)
+
+    ($x0 $y3 $z0)
+    ($x1 $y3 $z0)
+    ($x2 $y3 $z0)
+    ($x3 $y3 $z0)
+    ($x4 $y3 $z0)
+
+    ($x0 $y4 $z0)
+    ($x1 $y4 $z0)
+    ($x2 $y4 $z0)
+    ($x3 $y4 $z0)
+    ($x4 $y4 $z0)
+
+    ($x0 $y0 $z1)
+    ($x1 $y0 $z1)
+    ($x2 $y0 $z1)
+    ($x3 $y0 $z1)
+    ($x4 $y0 $z1)
+
+    ($x0 $y1 $z1)
+    ($x1 $y1 $z1)
+    ($x2 $y1 $z1)
+    ($x3 $y1 $z1)
+    ($x4 $y1 $z1)
+
+    ($x0 $y2 $z1)
+    ($x1 $y2 $z1)
+    ($x2 $y2 $z1)
+    ($x3 $y2 $z1)
+    ($x4 $y2 $z1)
+
+    ($x0 $y3 $z1)
+    ($x1 $y3 $z1)
+    ($x2 $y3 $z1)
+    ($x3 $y3 $z1)
+    ($x4 $y3 $z1)
+
+    ($x0 $y4 $z1)
+    ($x1 $y4 $z1)
+    ($x2 $y4 $z1)
+    ($x3 $y4 $z1)
+    ($x4 $y4 $z1)
+
+    ($x0 $y0 $z2)
+    ($x1 $y0 $z2)
+    ($x2 $y0 $z2)
+    ($x3 $y0 $z2)
+    ($x4 $y0 $z2)
+
+    ($x0 $y1 $z2)
+    ($x1 $y1 $z2)
+    ($x2 $y1 $z2)
+    ($x3 $y1 $z2)
+    ($x4 $y1 $z2)
+
+    ($x0 $y2 $z2)
+    ($x1 $y2 $z2)
+    ($x2 $y2 $z2)
+    ($x3 $y2 $z2)
+    ($x4 $y2 $z2)
+
+    ($x0 $y3 $z2)
+    ($x1 $y3 $z2)
+    ($x2 $y3 $z2)
+    ($x3 $y3 $z2)
+    ($x4 $y3 $z2)
+
+    ($x0 $y4 $z2)
+    ($x1 $y4 $z2)
+    ($x2 $y4 $z2)
+    ($x3 $y4 $z2)
+    ($x4 $y4 $z2)
+);
+
+// Grading
+nx1 9;
+nx2 5;
+nx3 2;
+nx4 5;
+
+nz1 4;
+nz2 6;
+
+blocks
+(
+    hex (0 1 6 5 25 26 31 30) air ($nx1 $nx1 $nz1) simpleGrading (1 1 1)
+    hex (1 2 7 6 26 27 32 31) air ($nx2 $nx1 $nz1) simpleGrading (1 1 1)
+    hex (2 3 8 7 27 28 33 32) air ($nx3 $nx1 $nz1) simpleGrading (1 1 1)
+    hex (3 4 9 8 28 29 34 33) air ($nx4 $nx1 $nz1) simpleGrading (1 1 1)
+
+    hex (5 6 11 10 30 31 36 35) air ($nx1 $nx2 $nz1) simpleGrading (1 1 1)
+    hex (6 7 12 11 31 32 37 36) air ($nx2 $nx2 $nz1) simpleGrading (1 1 1)
+    hex (7 8 13 12 32 33 38 37) building ($nx3 $nx2 $nz1) simpleGrading (1 1 1)
+    hex (8 9 14 13 33 34 39 38) air ($nx4 $nx2 $nz1) simpleGrading (1 1 1)
+
+    hex (10 11 16 15 35 36 41 40) air ($nx1 $nx3 $nz1) simpleGrading (1 1 1)
+    hex (11 12 17 16 36 37 42 41) building ($nx2 $nx3 $nz1) simpleGrading (1 1 1)
+    hex (12 13 18 17 37 38 43 42) building ($nx3 $nx3 $nz1) simpleGrading (1 1 1)
+    hex (13 14 19 18 38 39 44 43) air ($nx4 $nx3 $nz1) simpleGrading (1 1 1)
+
+    hex (15 16 21 20 40 41 46 45) air ($nx1 $nx4 $nz1) simpleGrading (1 1 1)
+    hex (16 17 22 21 41 42 47 46) air ($nx2 $nx4 $nz1) simpleGrading (1 1 1)
+    hex (17 18 23 22 42 43 48 47) air ($nx3 $nx4 $nz1) simpleGrading (1 1 1)
+    hex (18 19 24 23 43 44 49 48) air ($nx4 $nx4 $nz1) simpleGrading (1 1 1)
+
+
+    hex (25 26 31 30 50 51 56 55) air ($nx1 $nx1 $nz2) simpleGrading (1 1 1)
+    hex (26 27 32 31 51 52 57 56) air ($nx2 $nx1 $nz2) simpleGrading (1 1 1)
+    hex (27 28 33 32 52 53 58 57) air ($nx3 $nx1 $nz2) simpleGrading (1 1 1)
+    hex (28 29 34 33 53 54 59 58) air ($nx4 $nx1 $nz2) simpleGrading (1 1 1)
+
+    hex (30 31 36 35 55 56 61 60) air ($nx1 $nx2 $nz2) simpleGrading (1 1 1)
+    hex (31 32 37 36 56 57 62 61) air ($nx2 $nx2 $nz2) simpleGrading (1 1 1)
+    hex (32 33 38 37 57 58 63 62) air ($nx3 $nx2 $nz2) simpleGrading (1 1 1)
+    hex (33 34 39 38 58 59 64 63) air ($nx4 $nx2 $nz2) simpleGrading (1 1 1)
+
+    hex (35 36 41 40 60 61 66 65) air ($nx1 $nx3 $nz2) simpleGrading (1 1 1)
+    hex (36 37 42 41 61 62 67 66) air ($nx2 $nx3 $nz2) simpleGrading (1 1 1)
+    hex (37 38 43 42 62 63 68 67) air ($nx3 $nx3 $nz2) simpleGrading (1 1 1)
+    hex (38 39 44 43 63 64 69 68) air ($nx4 $nx3 $nz2) simpleGrading (1 1 1)
+
+    hex (40 41 46 45 65 66 71 70) air ($nx1 $nx4 $nz2) simpleGrading (1 1 1)
+    hex (41 42 47 46 66 67 72 71) air ($nx2 $nx4 $nz2) simpleGrading (1 1 1)
+    hex (42 43 48 47 67 68 73 72) air ($nx3 $nx4 $nz2) simpleGrading (1 1 1)
+    hex (43 44 49 48 68 69 74 73) air ($nx4 $nx4 $nz2) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (50 51 56 55)
+            (51 52 57 56)
+            (52 53 58 57)
+            (53 54 59 58)
+            (55 56 61 60)
+            (56 57 62 61)
+            (58 59 64 63)
+            (60 61 66 65)
+            (63 64 69 68)
+            (65 66 71 70)
+            (66 67 72 71)
+            (67 68 73 72)
+            (68 69 74 73)
+            (57 58 63 62)
+            (62 63 68 67)
+            (61 62 67 66)
+
+            (0 25 26 1)
+            (1 26 27 2)
+            (2 27 28 3)
+            (3 28 29 4)
+
+            (0 25 30 5)
+            (4 29 34 9)
+            (5 30 35 10)
+            (9 34 39 14)
+            (10 35 40 15)
+            (14 39 44 19)
+            (15 40 45 20)
+            (19 44 49 24)
+
+            (20 45 46 21)
+            (21 46 47 22)
+            (22 47 48 23)
+            (23 48 49 24)
+
+            (25 50 51 26)
+            (26 51 52 27)
+            (27 52 53 28)
+            (28 53 54 29)
+
+            (25 50 55 30)
+            (29 54 59 34)
+            (30 55 60 35)
+            (34 59 64 39)
+            (35 60 65 40)
+            (39 64 69 44)
+            (40 65 70 45)
+            (44 69 74 49)
+
+            (45 70 71 46)
+            (46 71 72 47)
+            (47 72 73 48)
+            (48 73 74 49)
+        );
+    }
+    ground
+    {
+        type wall;
+        faces
+        (
+            (0 1 6 5)
+            (1 2 7 6)
+            (2 3 8 7)
+            (3 4 9 8)
+            (5 6 11 10)
+            (6 7 12 11)
+            (8 9 14 13)
+            (10 11 16 15)
+            (13 14 19 18)
+            (15 16 21 20)
+            (16 17 22 21)
+            (17 18 23 22)
+            (18 19 24 23)
+        );
+    }
+    buildingBase
+    {
+        type wall;
+        faces
+        (
+            (7 8 13 12)
+            (12 13 18 17)
+            (11 12 17 16)
+        );
+    }
+);
+
+// ************************************************************************* //

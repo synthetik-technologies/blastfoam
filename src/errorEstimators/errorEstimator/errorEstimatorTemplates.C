@@ -21,70 +21,24 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::errorEstimators::fieldValue
-
-Description
-    Error is the value of the given field
-
-SourceFiles
-    fieldValue.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef fieldValue_H
-#define fieldValue_H
+#include "fieldValue.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-#include "errorEstimator.H"
-
-namespace Foam
+template<class Type>
+void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
 {
-namespace errorEstimators
-{
+    typedef GeometricField<Type, fvPatchField, volMesh> thisType;
 
-/*---------------------------------------------------------------------------*\
-                           Class fieldValue Declaration
-\*---------------------------------------------------------------------------*/
-
-class fieldValue
-:
-    public errorEstimator
-{
-// Private data
-
-        //- Field name
-        const word fieldName_;
-
-public:
-
-    //- Runtime type information
-    ClassName("fieldValue");
-
-    // Constructor
-    fieldValue(const fvMesh& mesh, const dictionary& dict);
-
-
-    //- Destructor
-    virtual ~fieldValue();
-
-
-    // Member Functions
-
-        //- Gamma function
-        virtual void update();
-};
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace errorEstimators
-} // End namespace Foam
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#endif
+    if (mesh_.foundObject<thisType>(name))
+    {
+        const thisType& x = mesh_.lookupObject<thisType>(name);
+        f.primitiveFieldRef() =  mag(x.primitiveField());
+        f.boundaryFieldRef() = mag(x.boundaryField());
+    }
+    return;
+}
 
 // ************************************************************************* //

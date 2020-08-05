@@ -27,19 +27,19 @@ displacementLaplacianCoeffs
     diffusivity quadratic inverseDistance (air_to_flap);
 }
 
-// protectedPatches (air_to_flap);
+beginUnrefine 1e-5;
 
 // How often to refine
-refineInterval  5;
+refineInterval  3;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
-lowerRefineLevel 0.05;
+lowerRefineLevel 0.01;
 
 // If value < unrefineLevel unrefine
-unrefineLevel   0.05;
+unrefineLevel   0.01;
 
 // Number of cells refined around high error cells
-nBufferLayers   2;
+nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;

@@ -80,6 +80,10 @@ protected:
         //- Normalize error (-1 = unrefine, 0 = do nothing, 1 = refine)
         void normalize(volScalarField& error);
 
+        //- Lookup and return the scalar value of the field
+        template<class Type>
+        void getFieldValue(const word& name, volScalarField& f) const;
+
 public:
 
     //- Runtime type information
@@ -142,6 +146,13 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "errorEstimatorTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

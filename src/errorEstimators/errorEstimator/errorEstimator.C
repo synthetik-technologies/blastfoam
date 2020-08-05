@@ -52,7 +52,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
             {
                 boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
             }
-//             if (debug)
+            if (debug)
             {
                 Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
                     << " cellType:" << boundaryTypes[patchi] << endl;
@@ -69,7 +69,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
                     mesh.time().timeName(),
                     mesh,
                     IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
+                    IOobject::NO_WRITE
                 ),
                 mesh,
                 0.0,
