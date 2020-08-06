@@ -1,7 +1,18 @@
 solidRegions[i].update();
+tmp<volScalarField> threeKalphaTmp;
 
 if (thermalStress)
 {
+    if (planeStress)
+    {
+        threeKalphaTmp = E/(1.0 - nu)*alphas[i];
+    }
+    else
+    {
+        threeKalphaTmp = E/(1.0 - 2.0*nu)*alphas[i];
+    }
+    volScalarField DT("DT", thermo.kappa()/thermo.Cp());
+
     volScalarField& T = thermo.T();
     fvScalarMatrix TEqn
     (
@@ -28,17 +39,17 @@ if (thermalStress)
     if (thermalStress)
     {
         const volScalarField& T = thermo.T();
-        DEqn += fvc::grad(threeKalpha*T);
+        DEqn += fvc::grad(threeKalphaTmp()*T);
     }
 
     fvOptions.constrain(DEqn);
+
+    DEqn.solve();
 
     if (!compactNormalStress)
     {
         divSigmaExp = fvc::div(DEqn.flux());
     }
-
-    DEqn.solve();
 }
 
 {
@@ -64,41 +75,15 @@ thermo.correct();
 Info<< "max(T): " << max(thermo.T()).value()
     << ", min(T): " << min(thermo.T()).value() << endl;
 
-if (runTime.writeTime())
+sigmas[i] = thermo.rho()*sigmaD;
+
+if (thermalStress)
 {
-    volSymmTensorField sigma
-    (
-        IOobject
-        (
-            "sigma",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        thermo.rho()*sigmaD
-    );
-
-    if (thermalStress)
-    {
-        sigma = sigma - I*(thermo.rho()*threeKalpha*thermo.T());
-    }
-
-    volScalarField sigmaEq
-    (
-        IOobject
-        (
-            "sigmaEq",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        sqrt((3.0/2.0)*magSqr(dev(sigma)))
-    );
-
-    Info<< "Max sigmaEq = " << max(sigmaEq).value()
-        << endl;
-
-    runTime.write();
+    sigmas[i] = sigmas[i] - I*(thermo.rho()*threeKalphaTmp*thermo.T());
 }
+
+sigmaEqs[i] = sqrt((3.0/2.0)*magSqr(dev(sigmas[i])));
+
+Info<< "Max sigmaEq = " << max(sigmaEqs[i]).value()
+    << endl;
+

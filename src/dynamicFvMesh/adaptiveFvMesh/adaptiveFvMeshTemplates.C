@@ -51,7 +51,7 @@ void Foam::adaptiveFvMesh::correctBoundaries()
 
             forAll(fld.boundaryField(), patchi)
             {
-                if(fld.boundaryField()[patchi].coupled())
+                if (fld.boundaryField()[patchi].coupled())
                 {
                     fld.boundaryFieldRef()[patchi].initEvaluate
                     (
@@ -72,7 +72,7 @@ void Foam::adaptiveFvMesh::correctBoundaries()
 
             forAll(fld.boundaryField(), patchi)
             {
-                if(fld.boundaryField()[patchi].coupled())
+                if (fld.boundaryField()[patchi].coupled())
                 {
                     fld.boundaryFieldRef()[patchi].evaluate
                     (

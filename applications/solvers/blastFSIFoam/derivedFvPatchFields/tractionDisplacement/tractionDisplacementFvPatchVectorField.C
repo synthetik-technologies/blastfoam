@@ -148,13 +148,12 @@ void Foam::tractionDisplacementFvPatchVectorField::updateCoeffs()
     const fvPatchField<scalar>& rho =
         patch().lookupPatchField<volScalarField, scalar>("rho");
 
-    const fvPatchField<scalar>& rhoE =
+    const fvPatchField<scalar>& E =
         patch().lookupPatchField<volScalarField, scalar>("E");
 
     const fvPatchField<scalar>& nu =
         patch().lookupPatchField<volScalarField, scalar>("nu");
 
-    scalarField E(rhoE/rho);
     scalarField mu(E/(2.0*(1.0 + nu)));
     scalarField lambda(nu*E/((1.0 + nu)*(1.0 - 2.0*nu)));
     scalarField threeK(E/(1.0 - 2.0*nu));

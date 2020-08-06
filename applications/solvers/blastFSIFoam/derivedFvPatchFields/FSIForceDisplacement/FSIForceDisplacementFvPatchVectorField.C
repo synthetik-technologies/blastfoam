@@ -39,7 +39,8 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(p, iF),
-    pName_("p")
+    pName_("p"),
+    pRef_(this->size(), 0.0)
 {}
 
 
@@ -52,7 +53,8 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(p, iF),
-    pName_(dict.lookupOrDefault("pName", word("p")))
+    pName_(dict.lookupOrDefault("pName", word("p"))),
+    pRef_("pRef", dict, p.size())
 {}
 
 
@@ -66,7 +68,8 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf, p, iF, mapper),
-    pName_(tdpvf.pName_)
+    pName_(tdpvf.pName_),
+    pRef_(mapper(tdpvf.pRef_))
 {}
 
 
@@ -77,7 +80,8 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf),
-    pName_(tdpvf.pName_)
+    pName_(tdpvf.pName_),
+    pRef_(tdpvf.pRef_)
 {}
 
 
@@ -89,11 +93,36 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf, iF),
-    pName_(tdpvf.pName_)
+    pName_(tdpvf.pName_),
+    pRef_(tdpvf.pRef_)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::FSIForceDisplacementFvPatchVectorField::autoMap
+(
+    const fvPatchFieldMapper& m
+)
+{
+    tractionDisplacementFvPatchVectorField::autoMap(m);
+    m(pRef_, pRef_);
+}
+
+
+void Foam::FSIForceDisplacementFvPatchVectorField::rmap
+(
+    const fvPatchVectorField& ptf,
+    const labelList& addr
+)
+{
+    tractionDisplacementFvPatchVectorField::rmap(ptf, addr);
+
+    const FSIForceDisplacementFvPatchVectorField& dmptf =
+        refCast<const FSIForceDisplacementFvPatchVectorField>(ptf);
+
+    pRef_.rmap(dmptf.pRef_, addr);
+}
 
 void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
 {
@@ -130,7 +159,7 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
     mpp.distribute(nbrDevRhoReff);
     mpp.distribute(nbrP);
 
-    this->pressure() = nbrP;
+    this->pressure() = nbrP - pRef_;
     this->traction() = normal & nbrDevRhoReff;
 
     tractionDisplacementFvPatchVectorField::updateCoeffs();
@@ -141,6 +170,7 @@ void Foam::FSIForceDisplacementFvPatchVectorField::write(Ostream& os) const
 {
     fvPatchVectorField::write(os);
     writeEntry(os, "pName", pName_);
+    writeEntry(os, "pRef", pRef_);
     writeEntry(os, "value", *this);
 }
 

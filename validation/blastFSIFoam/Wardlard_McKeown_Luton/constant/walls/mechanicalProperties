@@ -1,4 +1,5 @@
 
+
 /*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
@@ -11,60 +12,24 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant/heater";
-    object      thermophysicalProperties;
+    location    "constant/solid";
+    object      mechanicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
-type basic;
-// Iron
-
-thermoType
-{
-    transport       constIso;
-    thermo          eConst;
-    equationOfState rhoConst;
-}
-
-specie
-{
-    molWeight       60.08;
-}
-equationOfState
-{
-    rho0             1000;
-}
-transport
-{
-    kappa           0.36;
-}
-thermodynamics
-{
-    Hf              0;
-    Cv              800;
-}
-
-C
+nu
 {
     type        uniform;
-    value       434;
+    value       0.35;
 }
 
-k
+E
 {
     type        uniform;
-    value       60.5;
+    value       28.9e9;
 }
 
-alpha
-{
-    type        uniform;
-    value       1.1e-05;
-}
-
-thermalStress   no;
-
+planeStress     yes;
 
 
 // ************************************************************************* //

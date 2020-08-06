@@ -7,15 +7,15 @@ volVectorField& divSigmaExp = divSigmaExps[i];
 volSymmTensorField& sigmaD = sigmaDs[i];
 
 // Mechanical fields
-volScalarField& mu = mus[i];
-volScalarField& lambda = lambdas[i];
+const volScalarField& mu = mus[i];
+const volScalarField& nu = nus[i];
+const volScalarField& lambda = lambdas[i];
+const volScalarField& E = Es[i];
 Switch& compactNormalStress = compactNormalStresses[i];
+const Switch& planeStress = planeStresses[i];
 
 
 // Thermal fields
-
-volScalarField& threeKalpha = threeKalphas[i];
-volScalarField& DT = DTs[i];
 Switch& thermalStress = thermalStresses[i];
 
 

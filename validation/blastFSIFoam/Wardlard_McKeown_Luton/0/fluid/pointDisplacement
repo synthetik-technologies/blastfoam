@@ -9,8 +9,8 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volVectorField;
-    object      D;
+    class       pointVectorField;
+    object      pointDisplacement;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -20,19 +20,26 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    building_to_air
-    {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0.90530979e5;
-    }
-    buildingBase
+    fixedWalls
     {
         type            fixedValue;
         value           uniform (0 0 0);
+    }
+
+    fluid_to_walls
+    {
+        type            calculated;
+        value           uniform (0 0 0);
+    }
+
+    front
+    {
+        type            wedge;
+    }
+
+    back
+    {
+        type            wedge;
     }
 }
 

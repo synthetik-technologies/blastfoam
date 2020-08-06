@@ -1,0 +1,54 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh   movingAdaptiveFvMesh;
+
+// balance no;
+
+errorEstimator densityGradient;      // Model used to estimate error
+deltaField p;               // Field used to estimate error
+epsilon 0.5;
+
+solver      displacementLaplacian;
+
+displacementLaplacianCoeffs
+{
+    diffusivity quadratic inverseDistance (fluid_to_walls);
+}
+
+beginUnrefine 1e-6;         // At what time does unrefinement start (default is 0)
+
+
+// How often to refine
+refineInterval  5;
+
+// Refine field in between lower..upper (varies based on errorEstimator)
+lowerRefineLevel 0.01;
+
+// If value < unrefineLevel unrefine
+unrefineLevel   0.01;
+
+// Number of cells refined around high error cells
+nBufferLayers   3;
+
+// Refine cells only up to maxRefinement levels
+maxRefinement   2;
+
+
+// Write the refinement level as a volScalarField
+dumpLevel       true;
+
+// ************************************************************************* //

@@ -39,7 +39,7 @@ if (EType == "uniform")
             solidRegions[i],
             dimensionedScalar
             (
-                dimMass/dimLength/sqr(dimTime),
+                dimPressure,
                 rhoEValue
             )
         )
@@ -126,16 +126,13 @@ const volScalarField& E = Es[i];
 
 mus.set(i, new volScalarField(E/(2.0*(1.0 + nu))));
 lambdas.set(i, new volScalarField(nu*E/((1.0 + nu)*(1.0 - 2.0*nu))));
-threeKs.set(i, new volScalarField(E/(1.0 - 2.0*nu)));
 
 planeStresses[i] = mechanicalProperties[i].lookupType<Switch>("planeStress");
 
 if (planeStresses[i])
 {
     Info<< "Plane Stress\n" << endl;
-
     lambdas[i] = nu*E/((1.0 + nu)*(1.0 - nu));
-    threeKs[i] = E/(1.0 - nu);
 }
 else
 {

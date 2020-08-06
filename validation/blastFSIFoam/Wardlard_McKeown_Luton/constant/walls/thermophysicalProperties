@@ -18,7 +18,7 @@ FoamFile
 
 
 type basic;
-// Iron
+// Aluminum
 
 thermoType
 {
@@ -29,15 +29,15 @@ thermoType
 
 specie
 {
-    molWeight       60.08;
+    molWeight       26.98;
 }
 equationOfState
 {
-    rho0             1000;
+    rho0             2700;
 }
 transport
 {
-    kappa           0.36;
+    kappa           205.5;
 }
 thermodynamics
 {
@@ -45,22 +45,11 @@ thermodynamics
     Cv              800;
 }
 
-C
-{
-    type        uniform;
-    value       434;
-}
-
-k
-{
-    type        uniform;
-    value       60.5;
-}
 
 alpha
 {
     type        uniform;
-    value       1.1e-05;
+    value       2.31e-05;
 }
 
 thermalStress   no;

@@ -20,19 +20,34 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    building_to_air
-    {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0.90530979e5;
-    }
-    buildingBase
+    fixedWalls
     {
         type            fixedValue;
         value           uniform (0 0 0);
+    }
+    freeWall
+    {
+        type            tractionDisplacement;
+        traction        uniform (0 0 0);
+        pressure        uniform 0;
+        value           uniform (0 0 0);
+    }
+    walls_to_fluid
+    {
+        type            FSIForceDisplacement;
+        traction        uniform (0 0 0);
+        pressure        uniform 0;
+        pRef            uniform 1e5;
+        value           uniform (0 0 0);
+    }
+    front
+    {
+        type            wedge;
+    }
+
+    back
+    {
+        type            wedge;
     }
 }
 

@@ -36,13 +36,13 @@ Foam::scalar Foam::Tillotson<Specie>::p
     const scalar& T
 ) const
 {
-    if (rho < rho0_)
+    if (rho < rhoCav_)
     {
         return pCav_;
     }
 
     scalar eTot = e;
-    if (rho > rho0_)
+    if (rho > rhoCav_)
     {
         eTot += EcTable_.lookup(rho);
     }
@@ -64,7 +64,7 @@ Foam::scalar Foam::Tillotson<Specie>::Pi
     const scalar& e
 ) const
 {
-    if (rho < rho0_)
+    if (rho < rhoCav_)
     {
         return 0.0;
     }

@@ -41,7 +41,6 @@ License
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam

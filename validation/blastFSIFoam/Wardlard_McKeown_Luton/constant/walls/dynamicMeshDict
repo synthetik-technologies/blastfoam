@@ -1,4 +1,3 @@
-
 /*--------------------------------*- C++ -*----------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
@@ -11,60 +10,33 @@ FoamFile
     version     2.0;
     format      ascii;
     class       dictionary;
-    location    "constant/heater";
-    object      thermophysicalProperties;
+    object      dynamicMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+dynamicFvMesh   adaptiveFvMesh;
 
-type basic;
-// Iron
+balance no;
 
-thermoType
-{
-    transport       constIso;
-    thermo          eConst;
-    equationOfState rhoConst;
-}
+errorEstimator delta;      // Model used to estimate error
+deltaField D;
 
-specie
-{
-    molWeight       60.08;
-}
-equationOfState
-{
-    rho0             1000;
-}
-transport
-{
-    kappa           0.36;
-}
-thermodynamics
-{
-    Hf              0;
-    Cv              800;
-}
+// How often to refine
+refineInterval  3;
 
-C
-{
-    type        uniform;
-    value       434;
-}
+// Refine field in between lower..upper (varies based on errorEstimator)
+lowerRefineLevel 0.01;
 
-k
-{
-    type        uniform;
-    value       60.5;
-}
+// If value < unrefineLevel unrefine
+unrefineLevel   0.01;
 
-alpha
-{
-    type        uniform;
-    value       1.1e-05;
-}
+// Number of cells refined around high error cells
+nBufferLayers   2;
 
-thermalStress   no;
+// Refine cells only up to maxRefinement levels
+maxRefinement   2;
 
-
+// Write the refinement level as a volScalarField
+dumpLevel       true;
 
 // ************************************************************************* //

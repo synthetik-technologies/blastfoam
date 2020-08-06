@@ -9,31 +9,36 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volVectorField;
-    object      D;
+    class       volScalarField;
+    location    "0/fluid";
+    object      cellToRegion;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 0 0 0 0 0];
+dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform 0;
 
 boundaryField
 {
-    building_to_air
+    fixedWalls
     {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0.90530979e5;
+        type            zeroGradient;
     }
-    buildingBase
+    front
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type            wedge;
+    }
+    back
+    {
+        type            wedge;
+    }
+    fluid_to_walls
+    {
+        type            calculated;
+        value           uniform 0;
     }
 }
+
 
 // ************************************************************************* //

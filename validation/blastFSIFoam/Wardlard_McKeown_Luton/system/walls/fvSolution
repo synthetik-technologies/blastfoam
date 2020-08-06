@@ -8,32 +8,29 @@
 FoamFile
 {
     version     2.0;
-    format      ascii;
-    class       volVectorField;
-    object      D;
+    format      binary;
+    class       dictionary;
+    location    "system/ground";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 0 0 0 0 0];
-
-internalField   uniform (0 0 0);
-
-boundaryField
+solvers
 {
-    building_to_air
+    "(D|T)"
     {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0.90530979e5;
+        solver          PCG;
+        tolerance       1e-09;
+        relTol          0.1;
+        preconditioner  DIC;
     }
-    buildingBase
-    {
-        type            fixedValue;
-        value           uniform (0 0 0);
-    }
+}
+
+stressAnalysis
+{
+    compactNormalStress yes;
+    nCorrectors     1;
+    D               1e-06;
 }
 
 // ************************************************************************* //

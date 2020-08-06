@@ -8,32 +8,33 @@
 FoamFile
 {
     version     2.0;
-    format      ascii;
-    class       volVectorField;
-    object      D;
+    format      binary;
+    class       volScalarField;
+    location    "0/air";
+    object      cellToRegion;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 0 0 0 0 0];
+dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform 0;
 
 boundaryField
 {
-    building_to_air
+    outlet
     {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0.90530979e5;
+        type            zeroGradient;
     }
-    buildingBase
+    ground
     {
-        type            fixedValue;
-        value           uniform (0 0 0);
+        type            zeroGradient;
+    }
+    air_to_building
+    {
+        type            calculated;
+        value           uniform 0;
     }
 }
+
 
 // ************************************************************************* //

@@ -5,6 +5,8 @@ PtrList<volVectorField> Ds(solidRegions.size());
 PtrList<fv::options> solidSources(solidRegions.size());
 PtrList<volVectorField> divSigmaExps(solidRegions.size());
 PtrList<volSymmTensorField> sigmaDs(solidRegions.size());
+PtrList<volSymmTensorField> sigmas(solidRegions.size());
+PtrList<volScalarField> sigmaEqs(solidRegions.size());
 
 // Mechanical fields
 PtrList<IOdictionary> mechanicalProperties(solidRegions.size());
@@ -12,7 +14,6 @@ PtrList<volScalarField> Es(solidRegions.size());
 PtrList<volScalarField> nus(solidRegions.size());
 PtrList<volScalarField> mus(solidRegions.size());
 PtrList<volScalarField> lambdas(solidRegions.size());
-PtrList<volScalarField> threeKs(solidRegions.size());
 List<Switch> planeStresses(solidRegions.size(), false);
 List<Switch> compactNormalStresses(solidRegions.size(), false);
 
@@ -21,14 +22,8 @@ List<Switch> compactNormalStresses(solidRegions.size(), false);
 PtrList<IOdictionary> thermophysicalProperties(solidRegions.size());
 PtrList<solidThermoModel> solidThermos(solidRegions.size());
 // PtrList<radiationModel> radiations(solidRegions.size());
-PtrList<volScalarField> threeKalphas(solidRegions.size());
-PtrList<volScalarField> DTs(solidRegions.size());
-PtrList<volScalarField> ks(solidRegions.size());
-PtrList<volScalarField> Cs(solidRegions.size());
 PtrList<volScalarField> alphas(solidRegions.size());
 List<Switch> thermalStresses(solidRegions.size(), false);
-
-
 
 
 // Populate solid field pointer lists
@@ -120,6 +115,40 @@ forAll(solidRegions, i)
                 IOobject::NO_WRITE
             ),
             fvc::div(sigmaDs[i])
+        )
+    );
+
+    sigmas.set
+    (
+        i,
+        new volSymmTensorField
+        (
+             IOobject
+            (
+                "sigma",
+                runTime.timeName(),
+                solidRegions[i],
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            solidThermos[i].rho()*sigmaDs[i]
+        )
+    );
+
+    sigmaEqs.set
+    (
+        i,
+        new volScalarField
+        (
+             IOobject
+            (
+                "sigmaEq",
+                runTime.timeName(),
+                solidRegions[i],
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            sqrt((3.0/2.0)*magSqr(dev(sigmas[i])))
         )
     );
 
