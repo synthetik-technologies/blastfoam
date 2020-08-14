@@ -44,3 +44,9 @@ adjustTimeStep yes;
 
 functions
 {}
+
+DebugSwitches
+{
+//     fvMeshDistribute 1;
+    meshObject 1;
+}

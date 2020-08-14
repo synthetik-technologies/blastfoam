@@ -286,7 +286,7 @@ public:
         virtual void updateErrorBoundaries();
 
         //- Template to update all volField boundaries
-        template<class Type> void correctBoundaries();
+        template<class GeoField> void correctBoundaries();
 
         //- Balance the mesh
         void balance();

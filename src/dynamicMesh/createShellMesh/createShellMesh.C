@@ -89,14 +89,14 @@ void Foam::createShellMesh::syncEdges
         label patchEdgeI = patchEdges[i];
         label coupledEdgeI = coupledEdges[i];
 
-        if (isChangedEdge[patchEdgeI])
+        if (isChangedEdge.get(patchEdgeI))
         {
             const labelPair& data = allEdgeData[patchEdgeI];
 
             // Patch-edge data needs to be converted into coupled-edge data
             // (optionally flipped) and consistent in orientation with
             // other coupled edge (optionally flipped)
-            if (sameEdgeOrientation[i] == cppOrientation[coupledEdgeI])
+            if (sameEdgeOrientation.get(i) == cppOrientation[coupledEdgeI])
             {
                 cppEdgeData[coupledEdgeI] = data;
             }
@@ -131,7 +131,7 @@ void Foam::createShellMesh::syncEdges
         {
             const labelPair& data = cppEdgeData[coupledEdgeI];
 
-            if (sameEdgeOrientation[i] == cppOrientation[coupledEdgeI])
+            if (sameEdgeOrientation.get(i) == cppOrientation[coupledEdgeI])
             {
                 allEdgeData[patchEdgeI] = data;
             }
@@ -140,10 +140,10 @@ void Foam::createShellMesh::syncEdges
                 allEdgeData[patchEdgeI] = labelPair(data[1], data[0]);
             }
 
-            if (!isChangedEdge[patchEdgeI])
+            if (!isChangedEdge.get(patchEdgeI))
             {
                 changedEdges.append(patchEdgeI);
-                isChangedEdge[patchEdgeI] = true;
+                isChangedEdge.set(patchEdgeI, true);
             }
         }
     }
@@ -219,7 +219,7 @@ void Foam::createShellMesh::calcPointRegions
 
     forAll(patch.edgeFaces(), edgeI)
     {
-        if (!nonManifoldEdge[edgeI])
+        if (!nonManifoldEdge.get(edgeI))
         {
             // Take over value from one face only.
             const edge& e = patch.edges()[edgeI];
@@ -233,10 +233,10 @@ void Foam::createShellMesh::calcPointRegions
                 pointGlobalRegions[facei][fp0],
                 pointGlobalRegions[facei][fp1]
             );
-            if (!isChangedEdge[edgeI])
+            if (!isChangedEdge.get(edgeI))
             {
                 changedEdges.append(edgeI);
-                isChangedEdge[edgeI] = true;
+                isChangedEdge.set(edgeI, true);
             }
         }
     }
@@ -287,9 +287,9 @@ void Foam::createShellMesh::calcPointRegions
                 if (pointGlobalRegions[facei][fp0] > edgeData[0])
                 {
                     pointGlobalRegions[facei][fp0] = edgeData[0];
-                    if (!isChangedFace[facei])
+                    if (!isChangedFace.get(facei))
                     {
-                        isChangedFace[facei] = true;
+                        isChangedFace.set(facei, true);
                         changedFaces.append(facei);
                     }
                 }
@@ -298,9 +298,9 @@ void Foam::createShellMesh::calcPointRegions
                 if (pointGlobalRegions[facei][fp1] > edgeData[1])
                 {
                     pointGlobalRegions[facei][fp1] = edgeData[1];
-                    if (!isChangedFace[facei])
+                    if (!isChangedFace.get(facei))
                     {
-                        isChangedFace[facei] = true;
+                        isChangedFace.set(facei, true);
                         changedFaces.append(facei);
                     }
                 }
@@ -331,7 +331,7 @@ void Foam::createShellMesh::calcPointRegions
             {
                 label edgeI = fEdges[fp];
 
-                if (!nonManifoldEdge[edgeI])
+                if (!nonManifoldEdge.get(edgeI))
                 {
                     const edge& e = patch.edges()[edgeI];
                     label fp0 = findIndex(f, e[0]);
@@ -346,10 +346,10 @@ void Foam::createShellMesh::calcPointRegions
                     )
                     {
                         allEdgeData[edgeI] = labelPair(region0, region1);
-                        if (!isChangedEdge[edgeI])
+                        if (!isChangedEdge.get(edgeI))
                         {
                             changedEdges.append(edgeI);
-                            isChangedEdge[edgeI] = true;
+                            isChangedEdge.set(edgeI, true);
                         }
                     }
                 }

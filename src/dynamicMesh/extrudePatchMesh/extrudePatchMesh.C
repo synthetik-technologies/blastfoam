@@ -160,7 +160,7 @@ void extrudePatchMesh::extrudeMesh(const List<polyPatch*>& regionPatches)
         {
             if (columnCells)
             {
-                nonManifoldEdge[edgeI] = true;
+                nonManifoldEdge.set(edgeI, true);
             }
         }
 

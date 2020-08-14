@@ -51,8 +51,15 @@ Foam::cellMotionFvPatchField<Type>::cellMotionFvPatchField
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchField<Type>(ptf, p, iF, mapper)
-{}
+    fixedValueFvPatchField<Type>(p, iF)
+{
+    // For unmapped faces set to internal field value (zero-gradient)
+    if (notNull(iF) && mapper.hasUnmapped())
+    {
+        fvPatchField<Type>::operator=(this->patchInternalField());
+    }
+    mapper(*this, ptf);
+}
 
 
 template<class Type>

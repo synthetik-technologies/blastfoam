@@ -615,7 +615,7 @@ Foam::label Foam::polyTopoChange::getCellOrder
         forAll(visited, celli)
         {
             // find the lowest connected cell that has not been visited yet
-            if (!cellRemoved(celli) && !visited[celli])
+            if (!cellRemoved(celli) && !visited.get(celli))
             {
                 if (cellCellAddressing[celli].size() < minWeight)
                 {
@@ -647,9 +647,9 @@ Foam::label Foam::polyTopoChange::getCellOrder
         {
             currentCell = nextCell.removeHead();
 
-            if (!visited[currentCell])
+            if (!visited.get(currentCell))
             {
-                visited[currentCell] = 1;
+                visited.set(currentCell, 1);
 
                 // add into cellOrder
                 newOrder[cellInOrder] = currentCell;
@@ -667,7 +667,7 @@ Foam::label Foam::polyTopoChange::getCellOrder
                 forAll(neighbours, nI)
                 {
                     label nbr = neighbours[nI];
-                    if (!cellRemoved(nbr) && !visited[nbr])
+                    if (!cellRemoved(nbr) && !visited.get(nbr))
                     {
                         // not visited, add to the list
                         nbrs.append(nbr);
@@ -1207,15 +1207,17 @@ void Foam::polyTopoChange::compact
                         {
                             faces_[facei].flip();
                             Swap(faceOwner_[facei], faceNeighbour_[facei]);
-                            flipFaceFlux_[facei] =
+                            flipFaceFlux_.set
                             (
-                                flipFaceFlux_[facei]
+                                facei,
+                                flipFaceFlux_.get(facei)
                               ? 0
                               : 1
                             );
-                            faceZoneFlip_[facei] =
+                            faceZoneFlip_.set
                             (
-                                faceZoneFlip_[facei]
+                                facei,
+                                faceZoneFlip_.get(facei)
                               ? 0
                               : 1
                             );
@@ -2838,13 +2840,13 @@ Foam::label Foam::polyTopoChange::addFace
     }
     reverseFaceMap_.append(facei);
 
-    flipFaceFlux_[facei] = (flipFaceFlux ? 1 : 0);
+    flipFaceFlux_.set(facei, (flipFaceFlux ? 1 : 0));
 
     if (zoneID >= 0)
     {
         faceZone_.insert(facei, zoneID);
     }
-    faceZoneFlip_[facei] = (zoneFlip ? 1 : 0);
+    faceZoneFlip_.set(facei, (zoneFlip ? 1 : 0));
 
     return facei;
 }
@@ -2873,7 +2875,7 @@ void Foam::polyTopoChange::modifyFace
     faceNeighbour_[facei] = nei;
     region_[facei] = patchID;
 
-    flipFaceFlux_[facei] = (flipFaceFlux ? 1 : 0);
+    flipFaceFlux_.set(facei, (flipFaceFlux ? 1 : 0));
 
     Map<label>::iterator faceFnd = faceZone_.find(facei);
 
@@ -2892,7 +2894,7 @@ void Foam::polyTopoChange::modifyFace
     {
         faceZone_.insert(facei, zoneID);
     }
-    faceZoneFlip_[facei] = (zoneFlip ? 1 : 0);
+    faceZoneFlip_.set(facei, (zoneFlip ? 1 : 0));
 }
 
 
@@ -2933,9 +2935,9 @@ void Foam::polyTopoChange::removeFace(const label facei, const label mergeFacei)
     }
     faceFromEdge_.erase(facei);
     faceFromPoint_.erase(facei);
-    flipFaceFlux_[facei] = 0;
+    flipFaceFlux_.set(facei, 0);
     faceZone_.erase(facei);
-    faceZoneFlip_[facei] = 0;
+    faceZoneFlip_.set(facei, 0);
 }
 
 

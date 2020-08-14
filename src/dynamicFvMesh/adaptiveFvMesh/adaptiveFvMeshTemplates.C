@@ -28,11 +28,9 @@ License
 #include "surfaceFields.H"
 
 
-template<class Type>
+template<class GeoField>
 void Foam::adaptiveFvMesh::correctBoundaries()
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> GeoField;
-
     HashTable<GeoField*> flds(this->objectRegistry::lookupClass<GeoField>());
 
     forAllIter(typename HashTable<GeoField*>, flds, iter)

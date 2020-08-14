@@ -75,9 +75,9 @@ void Foam::displacementLayeredMotionMotionSolver::calcZoneMask
             const labelList& cPoints = mesh().cellPoints(cz[i]);
             forAll(cPoints, cPointi)
             {
-                if (!isZonePoint[cPoints[cPointi]])
+                if (!isZonePoint.get(cPoints[cPointi]))
                 {
-                    isZonePoint[cPoints[cPointi]] = 1;
+                    isZonePoint.set(cPoints[cPointi], 1);
                     nPoints++;
                 }
             }
@@ -157,7 +157,7 @@ void Foam::displacementLayeredMotionMotionSolver::walkStructured
     // so as not to accumulate errors.
     forAll(isZonePoint, pointi)
     {
-        if (isZonePoint[pointi])
+        if (isZonePoint.get(pointi))
         {
             allPointInfo[pointi] = pointEdgeStructuredWalk
             (
@@ -202,7 +202,7 @@ void Foam::displacementLayeredMotionMotionSolver::walkStructured
     // Extract distance and passive data
     forAll(allPointInfo, pointi)
     {
-        if (isZonePoint[pointi])
+        if (isZonePoint.get(pointi))
         {
             distance[pointi] = allPointInfo[pointi].dist();
             data[pointi] = allPointInfo[pointi].data();
@@ -359,7 +359,7 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
         DynamicList<label> meshPoints(fzMeshPoints.size());
         forAll(fzMeshPoints, i)
         {
-            if (isZonePoint[fzMeshPoints[i]])
+            if (isZonePoint.get(fzMeshPoints[i]))
             {
                 meshPoints.append(fzMeshPoints[i]);
             }
@@ -452,7 +452,7 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
     {
         forAll(pointDisplacement_, pointi)
         {
-            if (isZonePoint[pointi])
+            if (isZonePoint.get(pointi))
             {
                 pointDisplacement_[pointi] = patchDisp[0][pointi];
             }
@@ -462,7 +462,7 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
     {
         forAll(pointDisplacement_, pointi)
         {
-            if (isZonePoint[pointi])
+            if (isZonePoint.get(pointi))
             {
                 scalar d1 = patchDist[0][pointi];
                 scalar d2 = patchDist[1][pointi];

@@ -160,7 +160,7 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
     mpp.distribute(nbrP);
 
     this->pressure() = nbrP - pRef_;
-    this->traction() = normal & nbrDevRhoReff;
+    this->traction() = nbrDevRhoReff & normal;
 
     tractionDisplacementFvPatchVectorField::updateCoeffs();
 }

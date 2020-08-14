@@ -1896,11 +1896,17 @@ void Foam::adaptiveFvMesh::balance()
     }
 
     //Correct values on all coupled patches
-    correctBoundaries<scalar>();
-    correctBoundaries<vector>();
-    correctBoundaries<sphericalTensor>();
-    correctBoundaries<symmTensor>();
-    correctBoundaries<tensor>();
+    correctBoundaries<volScalarField>();
+    correctBoundaries<volVectorField>();
+    correctBoundaries<volSphericalTensorField>();
+    correctBoundaries<volSymmTensorField>();
+    correctBoundaries<volTensorField>();
+//
+//     correctBoundaries<pointScalarField>();
+//     correctBoundaries<pointVectorField>();
+//     correctBoundaries<pointSphericalTensorField>();
+//     correctBoundaries<pointSymmTensorField>();
+//     correctBoundaries<pointTensorField>();
 
     // Part 2 - Load Balancing
     {
@@ -2040,11 +2046,17 @@ void Foam::adaptiveFvMesh::balance()
     }
 
     //Correct values on all coupled patches
-    correctBoundaries<scalar>();
-    correctBoundaries<vector>();
-    correctBoundaries<sphericalTensor>();
-    correctBoundaries<symmTensor>();
-    correctBoundaries<tensor>();
+    correctBoundaries<volScalarField>();
+    correctBoundaries<volVectorField>();
+    correctBoundaries<volSphericalTensorField>();
+    correctBoundaries<volSymmTensorField>();
+    correctBoundaries<volTensorField>();
+
+//     correctBoundaries<pointScalarField>();
+//     correctBoundaries<pointVectorField>();
+//     correctBoundaries<pointSphericalTensorField>();
+//     correctBoundaries<pointSymmTensorField>();
+//     correctBoundaries<pointTensorField>();
 
     return;
 }

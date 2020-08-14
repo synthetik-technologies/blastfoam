@@ -50,8 +50,15 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchField<scalar>(ptf, p, iF, mapper)
-{}
+    fixedValueFvPatchField<scalar>(p, iF)
+{
+    // For unmapped faces set to internal field value (zero-gradient)
+    if (notNull(iF) && mapper.hasUnmapped())
+    {
+        fvPatchField<scalar>::operator=(this->patchInternalField());
+    }
+    mapper(*this, ptf);
+}
 
 
 Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField

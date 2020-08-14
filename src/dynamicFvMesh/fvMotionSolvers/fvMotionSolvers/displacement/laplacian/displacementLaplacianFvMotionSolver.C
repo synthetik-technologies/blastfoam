@@ -226,6 +226,19 @@ void Foam::displacementLaplacianFvMotionSolver::solve()
     // the motionSolver accordingly
     movePoints(fvMesh_.points());
 
+//     if (fvMesh_.points().size() != points0().size())
+    {
+        Pout<<cellDisplacement_.boundaryField().types() << " "
+            <<pointDisplacement_.boundaryField().types() << endl;
+        volPointInterpolation::New(fvMesh_).interpolate
+        (
+            cellDisplacement_,
+            pointDisplacement_
+        );
+
+        correctPoints0(fvMesh_.points(), pointDisplacement_);
+    }
+
     diffusivity().correct();
     pointDisplacement_.boundaryFieldRef().updateCoeffs();
 

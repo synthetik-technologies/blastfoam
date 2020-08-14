@@ -26,3 +26,5 @@ if
             blast::turbulenceModel::propertiesName
         ).devRhoReff();
 }
+
+fluids[i].clearODEFields();
