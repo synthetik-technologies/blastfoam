@@ -6,6 +6,7 @@ EXE_INC = \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
 

@@ -46,7 +46,7 @@ interpolationSchemes
     reconstruct(U)      vanLeerV;
     reconstruct(e)      vanLeer;
     reconstruct(p)      vanLeer;
-    reconstruct(c)      vanLeer;
+    reconstruct(speedOfSound)      vanLeer;
 }
 
 snGradSchemes

@@ -62,10 +62,6 @@ protected:
     //- Const reference to mesh
     const fvMesh& mesh_;
 
-    //- Owner and neighbour surface fields
-    tmp<surfaceScalarField> own_;
-    tmp<surfaceScalarField> nei_;
-
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
 
@@ -195,22 +191,6 @@ protected:
             {
                 return xf[facei];
             }
-        }
-
-        inline word scheme(const word& name) const
-        {
-            word schemeName = "reconstruct(" + name + ")";
-            if
-            (
-                !mesh_.schemesDict().subDict("interpolationSchemes").found(schemeName)
-            )
-            {
-                WarningInFunction
-                    << "Riemann schemes are used, but no limiter is " << nl
-                    << "specified for " << name << "." << nl
-                    << "This may result in unstable solutions." << endl;
-            }
-            return schemeName;
         }
 
 
