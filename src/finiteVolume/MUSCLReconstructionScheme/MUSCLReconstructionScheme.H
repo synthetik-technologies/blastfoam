@@ -27,6 +27,27 @@ Class
     Foam::MUSCLReconstructionScheme
 
 Description
+    Base class for MUSCL reconstruction
+
+    Example of MUSCL reconstruction specification:
+    \verbatim
+    interpolationSchemes
+    {
+        defualt linear;
+
+        // linear MUSCL with Minmod limiter
+        reconstruct(rho) linearMUSCL Minmod;
+
+        // quadratic with Minmod limiter
+        reconstruct(U)   quadraticMUSCL Minmod;
+
+        // upwind MUSCL
+        reconstruct(p)   upwindMUSCL;
+
+        // Standard linear interpolation with Minmod limiter
+        reconstruct(e)   Minmod;
+    }
+    \endverbatim
 
 
 SourceFiles

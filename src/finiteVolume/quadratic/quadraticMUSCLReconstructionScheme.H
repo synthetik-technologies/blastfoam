@@ -27,6 +27,9 @@ Class
     Foam::quadraticMUSCLReconstructionScheme
 
 Description
+    Quadratic MUSCL reconstruction using gradient and Hessian of field
+    components. Interpolated values are limited to the min/max of the own/nei
+    cell values.
 
 
 SourceFiles

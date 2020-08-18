@@ -80,20 +80,12 @@ Foam::upwindMUSCLReconstructionScheme<Type>::interpolateOwn() const
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
         if (patch.coupled())
         {
-            Field<Type> pphiOwn(pphi.patchInternalField());
-
-            forAll(pphiOwn, facei)
-            {
-                phiOwn.boundaryFieldRef()[patchi][facei] = pphiOwn[facei];
-            }
+            phiOwn.boundaryFieldRef()[patchi] = pphi.patchInternalField();
         }
         else
         {
-            forAll(this->phi_.boundaryField()[patchi], facei)
-            {
-                phiOwn.boundaryFieldRef()[patchi][facei] =
-                    this->phi_.boundaryField()[patchi][facei];
-            }
+            phiOwn.boundaryFieldRef()[patchi] =
+                this->phi_.boundaryField()[patchi];
         }
     }
 
@@ -133,20 +125,12 @@ Foam::upwindMUSCLReconstructionScheme<Type>::interpolateNei() const
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
         if (patch.coupled())
         {
-            Field<Type> pphiNei(pphi.patchInternalField());
-
-            forAll(pphiNei, facei)
-            {
-                phiNei.boundaryFieldRef()[patchi][facei] = pphiNei[facei];
-            }
+            phiNei.boundaryFieldRef()[patchi] = pphi.patchInternalField();
         }
         else
         {
-            forAll(this->phi_.boundaryField()[patchi], facei)
-            {
-                phiNei.boundaryFieldRef()[patchi][facei] =
-                    this->phi_.boundaryField()[patchi][facei];
-            }
+            phiNei.boundaryFieldRef()[patchi] =
+                this->phi_.boundaryField()[patchi];
         }
     }
 

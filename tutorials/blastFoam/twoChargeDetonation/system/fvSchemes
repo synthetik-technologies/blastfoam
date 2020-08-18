@@ -50,7 +50,7 @@ interpolationSchemes
     reconstruct(U)      vanLeerV;
     reconstruct(e)      vanLeer;
     reconstruct(p)      vanLeer;
-    reconstruct(c)      vanLeer;
+    reconstruct(speedOfSound)      vanLeer;
     "reconstruct\(lambda.*\)" vanLeer;
 
     reconstruct(k)      vanLeer;

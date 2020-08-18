@@ -175,11 +175,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
         }
         else
         {
-            forAll(this->phi_.boundaryField()[patchi], facei)
-            {
-                phiOwn.boundaryFieldRef()[patchi][facei] =
-                    this->phi_.boundaryField()[patchi][facei];
-            }
+            phiOwn.boundaryFieldRef()[patchi] =
+                this->phi_.boundaryField()[patchi];
         }
     }
 
@@ -289,11 +286,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
         }
         else
         {
-            forAll(this->phi_.boundaryField()[patchi], facei)
-            {
-                phiNei.boundaryFieldRef()[patchi][facei] =
-                    this->phi_.boundaryField()[patchi][facei];
-            }
+            phiNei.boundaryFieldRef()[patchi] =
+                this->phi_.boundaryField()[patchi];
         }
     }
 

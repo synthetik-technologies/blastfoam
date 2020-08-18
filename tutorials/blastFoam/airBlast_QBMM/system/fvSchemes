@@ -47,7 +47,7 @@ interpolationSchemes
     reconstruct(U)      vanAlbadaV;
     reconstruct(e)      vanAlbada;
     reconstruct(p)      vanAlbada;
-    reconstruct(c)      vanAlbada;
+    reconstruct(speedOfSound)      vanAlbada;
 
     reconstruct(lambda.c4) vanAlbada;
 }

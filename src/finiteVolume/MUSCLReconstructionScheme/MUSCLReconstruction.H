@@ -142,18 +142,7 @@ MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
             LIMITER<NVDTVD>,                                                   \
             limitFuncs::LIMFUNC                                                \
         >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;                  \
-                                                                               \
-MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
-    <                                                                          \
-        MUSCLReconstruction                                                    \
-        <                                                                      \
-            TYPE,                                                              \
-            ORDER##MUSCLReconstructionScheme##TYPE,                            \
-            LIMITER<NVDTVD>,                                                   \
-            limitFuncs::LIMFUNC                                                \
-        >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToLimitedTable_;
+    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;
 
 
 #define makeMUSCLReconstruction(ORDER, SS, LIMITER)\
@@ -208,18 +197,7 @@ MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
             LLIMITER<LIMITER<NVDTVD>>,                                         \
             limitFuncs::LIMFUNC                                                \
         >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;                  \
-                                                                               \
-MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
-    <                                                                          \
-        MUSCLReconstruction                                                    \
-        <                                                                      \
-            TYPE,                                                              \
-            ORDER##MUSCLReconstructionScheme##TYPE,                            \
-            LLIMITER<LIMITER<NVDTVD>>,                                         \
-            limitFuncs::LIMFUNC                                                \
-        >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToLimitedTable_;
+    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

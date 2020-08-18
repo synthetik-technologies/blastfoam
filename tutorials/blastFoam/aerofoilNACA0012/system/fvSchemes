@@ -50,7 +50,7 @@ interpolationSchemes
     reconstruct(rho) linearUpwind limited;
     reconstruct(e)   linearUpwind limited;
     reconstruct(U)   linearUpwindV limited;
-    reconstruct(c) linearUpwind limited;
+    reconstruct(speedOfSound) linearUpwind limited;
     reconstruct(p) linearUpwind limited;
 
 }

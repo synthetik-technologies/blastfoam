@@ -27,6 +27,8 @@ Class
     Foam::upwindMUSCLReconstructionScheme
 
 Description
+    Owner and neighbor interpolated fields are set to the owner and neighbor
+    cell values.
 
 SourceFiles
     upwindMUSCLReconstructionScheme.C

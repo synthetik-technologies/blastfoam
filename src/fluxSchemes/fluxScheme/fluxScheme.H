@@ -193,22 +193,6 @@ protected:
             }
         }
 
-        inline word scheme(const word& name) const
-        {
-            word schemeName = "reconstruct(" + name + ")";
-            if
-            (
-                !mesh_.schemesDict().subDict("interpolationSchemes").found(schemeName)
-            )
-            {
-                WarningInFunction
-                    << "Riemann schemes are used, but no limiter is " << nl
-                    << "specified for " << name << "." << nl
-                    << "This may result in unstable solutions." << endl;
-            }
-            return schemeName;
-        }
-
 
 public:
 

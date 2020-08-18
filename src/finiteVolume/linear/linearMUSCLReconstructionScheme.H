@@ -27,8 +27,9 @@ Class
     Foam::linearMUSCLReconstructionScheme
 
 Description
-    Interpolates owner and neighbour fields using a 2nd order, linear MUSCL
-    reconstruction
+    Linear MUSCL reconstruction using gradient of field components.
+    Interpolated values are limited to the min/max of the own/nei
+    cell values.
 
 SourceFiles
     linearMUSCLReconstructionScheme.C

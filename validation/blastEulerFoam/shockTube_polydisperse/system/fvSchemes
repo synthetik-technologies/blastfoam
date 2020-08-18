@@ -60,7 +60,7 @@ interpolationSchemes
     "reconstruct\(U.*\)"      MinmodV;
     "reconstruct\(e.*\)"      Minmod;
     "reconstruct\(p.*\)"      Minmod;
-    "reconstruct\(c.*\)"      Minmod;
+    "reconstruct\(speedOfSound.*\)"      Minmod;
     "reconstruct\(Theta.*\)"  Minmod;
 }
 
