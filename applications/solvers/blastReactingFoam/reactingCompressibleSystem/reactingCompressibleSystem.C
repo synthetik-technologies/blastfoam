@@ -157,7 +157,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
             (
                 rho_,
                 U_,
-                phi_,
+                rhoPhi_,
                 thermo_()
             ).ptr()
         );
@@ -286,6 +286,8 @@ void Foam::reactingCompressibleSystem::postUpdate()
     {
         reaction_->correct();
 
+        eEqn -= reaction_->Qdot();
+
         PtrList<volScalarField>& Y = thermo_->composition().Y();
         volScalarField Yt(0.0*Y[0]);
         forAll(Y, i)
@@ -293,12 +295,11 @@ void Foam::reactingCompressibleSystem::postUpdate()
             if (i != inertIndex_ && thermo_->composition().active(i))
             {
                 volScalarField& Yi = Y[i];
-
                 fvScalarMatrix YiEqn
                 (
                     fvm::ddt(rho_, Yi)
                   + fvm::div(rhoPhi_, Yi, "div(rhoPhi,Yi)")
-                  + - fvm::laplacian(turbulence_->alphaEff(), Yi)
+                  - fvm::laplacian(turbulence_->muEff(), Yi)
                  ==
                     reaction_->R(Yi)
                 );
@@ -311,14 +312,13 @@ void Foam::reactingCompressibleSystem::postUpdate()
         }
         Y[inertIndex_] = scalar(1) - Yt;
         Y[inertIndex_].max(0.0);
-        eEqn == reaction_->Qdot();
     }
 
     eEqn.solve();
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
 
     thermo_->correct();
-    p_.ref() = rho_/thermo_->psi();
+    p_.ref() = rho_()/thermo_->psi()();
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
@@ -340,6 +340,7 @@ void Foam::reactingCompressibleSystem::clearODEFields()
 
 void Foam::reactingCompressibleSystem::update()
 {
+    decode();
     fluxScheme_->update
     (
         rho_,
@@ -394,7 +395,7 @@ void Foam::reactingCompressibleSystem::encode()
 Foam::tmp<Foam::volScalarField>
 Foam::reactingCompressibleSystem::speedOfSound() const
 {
-    return sqrt(thermo_->gamma()/thermo_->psi());
+    return sqrt(thermo_->Cp()/(thermo_->Cv()*thermo_->psi()));
 }
 
 

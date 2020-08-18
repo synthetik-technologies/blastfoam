@@ -118,14 +118,6 @@ protected:
 
     // ODE variables
 
-        //- Stored old field indexes
-        labelList oldIs_;
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-        label nDelta_;
-
         //- Old values for ode solver
         PtrList<volScalarField> rhoOld_;
         PtrList<volVectorField> rhoUOld_;
