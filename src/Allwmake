@@ -8,6 +8,7 @@ wmake $targetType timeIntegrators
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
+wmake $targetType finiteVolume
 wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh

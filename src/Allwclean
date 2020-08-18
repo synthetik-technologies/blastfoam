@@ -4,6 +4,7 @@ set -x
 
 wclean $targetType thermodynamicModels
 wclean $targetType fluxSchemes
+wclean $targetType finiteVolume
 wclean $targetType compressibleSystem
 wclean $targetType timeIntegrators
 wclean $targetType radiationModels

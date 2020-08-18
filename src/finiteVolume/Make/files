@@ -1,0 +1,8 @@
+MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
+none/noneMUSCLReconstructionSchemes.C
+upwind/upwindMUSCLReconstructionSchemes.C
+linear/linearMUSCLReconstructionSchemes.C
+quadratic/quadraticMUSCLReconstructionSchemes.C
+
+
+LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

@@ -40,13 +40,13 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(alpha)  Minmod;
-    reconstruct(rho)    Minmod;
-    reconstruct(U)      MinmodV;
-    reconstruct(e)      Minmod;
-    reconstruct(p)      Minmod;
-    reconstruct(c)      Minmod;
+    default             linear;
+    reconstruct(alpha)  quadraticMUSCL Minmod;
+    reconstruct(rho)    quadraticMUSCL Minmod;
+    reconstruct(U)      quadraticMUSCL Minmod;
+    reconstruct(e)      quadraticMUSCL Minmod;
+    reconstruct(p)      quadraticMUSCL Minmod;
+    reconstruct(speedOfSound) quadraticMUSCL Minmod;
 }
 
 snGradSchemes

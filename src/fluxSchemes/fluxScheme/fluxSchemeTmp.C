@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxScheme.H"
+#include "MUSCLReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -42,8 +43,13 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolate
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
     label nCmpts = pTraits<Type>::nComponents;
 
-    fieldType fOwn(fvc::interpolate(f, own_(), scheme(name)));
-    fieldType fNei(fvc::interpolate(f, nei_(), scheme(name)));
+    autoPtr<MUSCLReconstructionScheme<Type>> fLimiter
+    (
+        MUSCLReconstructionScheme<Type>::New(f, name)
+    );
+
+    tmp<fieldType> fOwn(fLimiter->interpolateOwn());
+    tmp<fieldType> fNei(fLimiter->interpolateNei());
 
     tmp<fieldType> tmpf
     (
@@ -64,14 +70,14 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolate
     );
     fieldType& ff = tmpf.ref();
 
-    forAll(fOwn, facei)
+    forAll(fOwn(), facei)
     {
         for (label i = 0; i < nCmpts; i++)
         {
             setComponent(ff[facei], i) = interpolate
             (
-                component(fOwn[facei], i),
-                component(fNei[facei], i),
+                component(fOwn()[facei], i),
+                component(fNei()[facei], i),
                 facei
             );
         }
@@ -86,8 +92,8 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolate
                 setComponent(ff.boundaryFieldRef()[patchi][facei], i) =
                     interpolate
                     (
-                        component(fOwn.boundaryField()[patchi][facei], i),
-                        component(fNei.boundaryField()[patchi][facei], i),
+                        component(fOwn().boundaryField()[patchi][facei], i),
+                        component(fNei().boundaryField()[patchi][facei], i),
                         facei, patchi
                     );
             }

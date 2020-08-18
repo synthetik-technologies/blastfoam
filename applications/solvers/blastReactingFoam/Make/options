@@ -1,5 +1,6 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
