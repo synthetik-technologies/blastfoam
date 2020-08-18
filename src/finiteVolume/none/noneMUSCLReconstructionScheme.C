@@ -57,7 +57,13 @@ Foam::noneMUSCLReconstructionScheme<Type>::lookupOrConstruct
         );
         fPtr->store(fPtr);
     }
-    return this->mesh_.template lookupObject<surfaceScalarField>(fieldName);
+
+    // Reset value that may be flipped when balancing
+    surfaceScalarField& f =
+        this->mesh_.template lookupObjectRef<surfaceScalarField>(fieldName);
+    f = value;
+
+    return f;
 }
 
 
@@ -71,8 +77,8 @@ Foam::noneMUSCLReconstructionScheme<Type>::noneMUSCLReconstructionScheme
 :
     MUSCLReconstructionScheme<Type>(phi, is),
     name_(is),
-    own_(lookupOrConstruct("MUSCLScheme:own", 1.0)),
-    nei_(lookupOrConstruct("MUSCLScheme:nei", -1.0))
+    own_(lookupOrConstruct("MUSCL::own", 1.0)),
+    nei_(lookupOrConstruct("MUSCL::nei", -1.0))
 {}
 
 
