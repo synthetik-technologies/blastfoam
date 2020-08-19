@@ -47,6 +47,7 @@ functions
 
 DebugSwitches
 {
-//     fvMeshDistribute 1;
+    pointMesh 1;
     meshObject 1;
+    polyMesh 1;
 }

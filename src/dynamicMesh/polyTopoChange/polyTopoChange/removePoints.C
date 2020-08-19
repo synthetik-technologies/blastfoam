@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -198,7 +198,7 @@ Foam::label Foam::removePoints::countPointUsage
 
     pointCanBeDeleted.setSize(mesh_.nPoints());
     pointCanBeDeleted = false;
-    //label nDeleted = 0;
+    // label nDeleted = 0;
 
     forAll(edge0, pointi)
     {
@@ -214,22 +214,22 @@ Foam::label Foam::removePoints::countPointUsage
             label vRight = e1.otherVertex(common);
 
             vector e0Vec = points[common] - points[vLeft];
-            e0Vec /= mag(e0Vec) + VSMALL;
+            e0Vec /= mag(e0Vec) + vSmall;
 
             vector e1Vec = points[vRight] - points[common];
-            e1Vec /= mag(e1Vec) + VSMALL;
+            e1Vec /= mag(e1Vec) + vSmall;
 
             if ((e0Vec & e1Vec) > minCos)
             {
                 pointCanBeDeleted[pointi] = true;
-                //nDeleted++;
+                // nDeleted++;
             }
         }
         else if (edge0[pointi] == -1)
         {
             // point not used at all
             pointCanBeDeleted[pointi] = true;
-            //nDeleted++;
+            // nDeleted++;
         }
     }
     edge0.clear();
@@ -467,7 +467,7 @@ void Foam::removePoints::updateMesh(const mapPolyMesh& map)
                 {
                     FatalErrorInFunction
                         << "Old face " << savedFaceLabels_[localI]
-                        << " seems to have dissapeared."
+                        << " seems to have disappeared."
                         << abort(FatalError);
                 }
                 savedFaceLabels_[localI] = newFacei;
@@ -493,7 +493,7 @@ void Foam::removePoints::updateMesh(const mapPolyMesh& map)
                     {
                         FatalErrorInFunction
                             << "Old point " << pointi
-                            << " seems to have dissapeared."
+                            << " seems to have disappeared."
                             << abort(FatalError);
                     }
                 }

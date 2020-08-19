@@ -363,6 +363,7 @@ tmp<GeometricField<Type, pointPatchField, pointMesh>>
 fvMeshSubset::interpolate
 (
     const GeometricField<Type, pointPatchField, pointMesh>& vf,
+    const pointMesh& pMesh,
     const pointMesh& sMesh,
     const labelList& patchMap,
     const labelList& pointMap
@@ -438,9 +439,10 @@ fvMeshSubset::interpolate
         // as necessary.
         if (patchMap[patchi] != -1)
         {
+            Pout<<vf.name()<<" "<<pMesh.boundary().size()<<" "<<patchMap[patchi]<<endl;
             // Construct addressing
             const pointPatch& basePatch =
-                vf.mesh().boundary()[patchMap[patchi]];
+                pMesh.boundary()[patchMap[patchi]];
 
             const labelList& meshPoints = basePatch.meshPoints();
 
@@ -498,6 +500,7 @@ tmp<GeometricField<Type, pointPatchField, pointMesh>> fvMeshSubset::interpolate
     return interpolate
     (
         sf,
+        pointMesh::New(baseMesh_),
         pointMesh::New(subMesh()),     // subsetted point mesh
         patchMap(),
         pointMap()

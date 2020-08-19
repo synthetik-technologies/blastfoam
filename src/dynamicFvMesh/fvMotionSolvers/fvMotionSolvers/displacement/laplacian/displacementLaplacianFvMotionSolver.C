@@ -226,19 +226,6 @@ void Foam::displacementLaplacianFvMotionSolver::solve()
     // the motionSolver accordingly
     movePoints(fvMesh_.points());
 
-//     if (fvMesh_.points().size() != points0().size())
-    {
-        Pout<<cellDisplacement_.boundaryField().types() << " "
-            <<pointDisplacement_.boundaryField().types() << endl;
-        volPointInterpolation::New(fvMesh_).interpolate
-        (
-            cellDisplacement_,
-            pointDisplacement_
-        );
-
-        correctPoints0(fvMesh_.points(), pointDisplacement_);
-    }
-
     diffusivity().correct();
     pointDisplacement_.boundaryFieldRef().updateCoeffs();
 
@@ -260,6 +247,18 @@ void Foam::displacementLaplacianFvMotionSolver::updateMesh
 )
 {
     displacementMotionSolver::updateMesh(mpm);
+
+    if (returnReduce(fvMesh_.points().size(), minOp<label>()) > 0)
+    {
+        volPointInterpolation::New(fvMesh_).interpolate
+        (
+            cellDisplacement_,
+            pointDisplacement_
+        );
+
+        correctPoints0(fvMesh_.points(), pointDisplacement_);
+        twoDCorrectPoints(points0_);
+    }
 
     // Update diffusivity. Note two stage to make sure old one is de-registered
     // before creating/registering new one.

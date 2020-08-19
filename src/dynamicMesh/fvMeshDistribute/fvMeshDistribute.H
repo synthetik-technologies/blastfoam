@@ -38,13 +38,6 @@ Description
 SourceFiles
     fvMeshDistribute.C
     fvMeshDistributeTemplates.C
-
-Authors:
-    File adapted in 2018 by:
-    Daniel Rettenmaier <rettenmaier@tu-darmstadt.de>
-    Daniel Deising <deising@mma.tu-darmstadt.de>
-    Changes:
-        + No flux-flip for non flux surface fields
 \*---------------------------------------------------------------------------*/
 
 #ifndef fvMeshDistribute_H

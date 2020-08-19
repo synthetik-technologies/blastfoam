@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -146,7 +146,7 @@ void Foam::faceCollapser::filterFace
     }
     face newF(newFace.shrink());
 
-    //Pout<< "Modifying face:" << facei << " from " << f << " to " << newFace
+    // Pout<< "Modifying face:" << facei << " from " << f << " to " << newFace
     //    << endl;
 
     if (newF != f)
@@ -291,7 +291,7 @@ void Foam::faceCollapser::setRefinement
                 near.setPoint(newPoint);
             }
 
-            // Responsability of caller to make sure polyModifyPoint is only
+            // Responsibility of caller to make sure polyModifyPoint is only
             // called once per point. (so max only one collapse face per
             // edge)
             meshMod.setAction
@@ -344,7 +344,7 @@ void Foam::faceCollapser::setRefinement
                 near.setPoint(newPoint);
             }
 
-            // Responsability of caller to make sure polyModifyPoint is only
+            // Responsibility of caller to make sure polyModifyPoint is only
             // called once per point. (so max only one collapse face per
             // edge)
             meshMod.setAction

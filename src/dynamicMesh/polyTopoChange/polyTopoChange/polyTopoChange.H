@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -44,7 +44,7 @@ Description
         - no item can be removed more than once.
     - removed cell: cell set to 0 faces.
     - removed face: face set to 0 vertices.
-    - removed point: coordinate set to vector::max (VGREAT,VGREAT,VGREAT).
+    - removed point: coordinate set to vector::max (vGreat,vGreat,vGreat).
     Note that this might give problems if this value is used already.
     To see if point is equal to above value we don't use == (which might give
     problems with roundoff error) but instead compare the individual component
@@ -97,7 +97,7 @@ template<class T, class Container> class CompactListList;
 
 class polyTopoChange
 {
-    // Private data
+    // Private Data
 
         //- Whether to allow referencing illegal points/cells/faces
         //  when adding/removing data.
@@ -127,6 +127,10 @@ class polyTopoChange
 
             //- Retired points
             labelHashSet retiredPoints_;
+
+            //- Explicitly provided old location for e.g. added points without
+            //  masterPoint
+            Map<point> oldPoints_;
 
 
         // Faces
@@ -507,6 +511,31 @@ public:
                 const label newZoneID,
                 const bool inCell
             );
+
+            // Explicitly provided 'old' point location
+
+                //- Add point with original position. Return new point label.
+                //  Notes:
+                //  - masterPointID can be < 0 (appended points)
+                //  - inCell = false: add retired point (to end of point list)
+                label addPoint
+                (
+                    const point& newPosition,
+                    const point& oldPosition,
+                    const label masterPointID,
+                    const label zoneID
+                );
+
+                //- Modify coordinate.
+                //  Notes:
+                //  - inCell = false: add retired point (to end of point list)
+                void modifyPoint
+                (
+                    const label pointi,
+                    const point& newPosition,
+                    const point& oldPosition,
+                    const label newZoneID
+                );
 
             //- Remove/merge point.
             void removePoint(const label, const label);

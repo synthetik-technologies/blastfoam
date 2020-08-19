@@ -205,23 +205,6 @@ void Foam::fvMeshDistribute::mapExposedFaces
 
         const Field<T>& oldInternal = oldFlds[fieldI++];
 
-////////////////////////////////////////////////////////////////////////
-// Daniel Deising, Daniel Rettenmaier
-// surfaceFields on coupled patches, which are no fluxFields must not be
-// flipped.
-
-// TODO: Generalize
-        bool flipFace = false;
-        if
-        (
-            fld.name().find("phi") != std::string::npos
-            || fld.name().find("Phi") != std::string::npos
-        )
-        {
-             flipFace = true;
-        }
-////////////////////////////////////////////////////////////////////////
-
         // Pull from old internal field into bfld.
 
         forAll(bfld, patchi)
@@ -238,13 +221,7 @@ void Foam::fvMeshDistribute::mapExposedFaces
                 {
                     patchFld[i] = oldInternal[oldFaceI];
 
-////////////////////////////////////////////////////////////////////////
-// Daniel Deising, Daniel Rettenmaier
-// surfaceFields on coupled patches, which are no fluxFields must not be
-// flipped.
-                    //if (map.flipFaceFlux().found(faceI))
-                    if (map.flipFaceFlux().found(faceI) && flipFace)
-////////////////////////////////////////////////////////////////////////
+                    if (map.flipFaceFlux().found(faceI))
                     {
                         patchFld[i] = flipOp()(patchFld[i]);
                     }

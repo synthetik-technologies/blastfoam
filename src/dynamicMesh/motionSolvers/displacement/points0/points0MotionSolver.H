@@ -64,6 +64,11 @@ protected:
         //- Return IOobject for points0
         IOobject points0IO(const polyMesh& mesh) const;
 
+        void correctPoints0
+        (
+            const pointField& currPoints,
+            const pointField& D
+        );
 
 public:
 
@@ -102,10 +107,6 @@ public:
         {
             return points0_;
         }
-
-        //- Correct reference field using current points and displacement
-        //  Used when AMR is used and initial points cannot be found
-        void correctPoints0(const pointField& currPoints, const pointField& D);
 
         //- Update local data for geometry changes
         virtual void movePoints(const pointField&);

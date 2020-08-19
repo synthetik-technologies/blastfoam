@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -53,7 +53,7 @@ Foam::HashSet<Foam::label> Foam::edgeCollapser::checkBadFaces
 
     const vectorField& fAreas = mesh.faceAreas();
 
-    scalar faceAreaLimit = SMALL;
+    scalar faceAreaLimit = small;
 
     forAll(fAreas, fI)
     {
@@ -184,8 +184,8 @@ void Foam::edgeCollapser::collapseToEdge
 {
     // Negative half
 
-    Foam::point collapseToPtA(GREAT, GREAT, GREAT);
-        //collapseAxis*(sum(dNeg)/dNeg.size() - dShift) + fC;
+    Foam::point collapseToPtA(great, great, great);
+        // collapseAxis*(sum(dNeg)/dNeg.size() - dShift) + fC;
 
     label maxPriority = labelMin;
     DynamicList<label> maxPriorityPts(max(dNeg.size(), dPos.size()));
@@ -237,7 +237,7 @@ void Foam::edgeCollapser::collapseToEdge
 
 
     // Positive half
-    Foam::point collapseToPtB(GREAT, GREAT, GREAT);
+    Foam::point collapseToPtB(great, great, great);
 //        = collapseAxis*(sum(dPos)/dPos.size() - dShift) + fC;
 
     forAll(facePtsPos, fPtI)
@@ -405,20 +405,20 @@ void Foam::edgeCollapser::faceCollapseAxisAndAspectRatio
 
     scalar magJ = mag(J);
 
-    scalar detJ = SMALL;
+    scalar detJ = small;
 
-    if (magJ > VSMALL)
+    if (magJ > vSmall)
     {
         // Normalise inertia tensor to remove problems with small values
 
         J /= mag(J);
         // J /= cmptMax(J);
-        // J /= max(eigenValues(J).x(), SMALL);
+        // J /= max(eigenValues(J).x(), small);
 
         // Calculating determinant, including stabilisation for zero or
         // small negative values
 
-        detJ = max(det(J), SMALL);
+        detJ = max(det(J), small);
     }
 
     if (detJ < 1e-5)
@@ -426,7 +426,7 @@ void Foam::edgeCollapser::faceCollapseAxisAndAspectRatio
         collapseAxis = f.edges()[longestEdge(f, pts)].vec(pts);
 
         // It is possible that all the points of a face are the same
-        if (magSqr(collapseAxis) > VSMALL)
+        if (magSqr(collapseAxis) > vSmall)
         {
             collapseAxis /= mag(collapseAxis);
         }
@@ -439,7 +439,7 @@ void Foam::edgeCollapser::faceCollapseAxisAndAspectRatio
     {
         vector eVals = eigenValues(J);
 
-        if (mag(eVals.y() - eVals.x()) < 100*SMALL)
+        if (mag(eVals.y() - eVals.x()) < 100*small)
         {
             // First two eigenvalues are the same: i.e. a square face
 
@@ -465,7 +465,7 @@ void Foam::edgeCollapser::faceCollapseAxisAndAspectRatio
             // the ratio of face-plane moments gives a good indication of the
             // aspect ratio.
 
-            aspectRatio = Foam::sqrt(eVals.y()/max(eVals.x(), SMALL));
+            aspectRatio = Foam::sqrt(eVals.y()/max(eVals.x(), small));
         }
     }
 }
@@ -673,7 +673,7 @@ Foam::edgeCollapser::collapseType Foam::edgeCollapser::collapseFace
 
     collapseType typeOfCollapse = noCollapse;
 
-    if (magSqr(collapseAxis) < VSMALL)
+    if (magSqr(collapseAxis) < vSmall)
     {
         typeOfCollapse = toPoint;
     }
@@ -854,7 +854,6 @@ void Foam::edgeCollapser::checkBoundaryPointMergeEdges
 
 Foam::label Foam::edgeCollapser::breakStringsAtEdges
 (
-    const PackedBoolList& markedEdges,
     PackedBoolList& collapseEdge,
     List<pointEdgeCollapse>& allPointInfo
 ) const
@@ -866,44 +865,32 @@ Foam::label Foam::edgeCollapser::breakStringsAtEdges
 
     forAll(edges, eI)
     {
-        if (markedEdges[eI])
+        const edge& e = edges[eI];
+
+        const label startCollapseIndex
+            = allPointInfo[e.start()].collapseIndex();
+
+        if (startCollapseIndex != -1 && startCollapseIndex != -2)
         {
-            const edge& e = edges[eI];
+            const label endCollapseIndex
+                = allPointInfo[e.end()].collapseIndex();
 
-            const label startCollapseIndex
-                = allPointInfo[e.start()].collapseIndex();
-
-            if (startCollapseIndex != -1 && startCollapseIndex != -2)
+            if (!collapseEdge[eI] && startCollapseIndex == endCollapseIndex)
             {
-                const label endCollapseIndex
-                    = allPointInfo[e.end()].collapseIndex();
+                const labelList& ptEdgesStart = pointEdges[e.start()];
 
-                if
-                (
-                    !collapseEdge[eI]
-                 && startCollapseIndex == endCollapseIndex
-                )
+                forAll(ptEdgesStart, ptEdgeI)
                 {
-                    const labelList& ptEdgesStart = pointEdges[e.start()];
+                    const label edgeI = ptEdgesStart[ptEdgeI];
 
-                    forAll(ptEdgesStart, ptEdgeI)
+                    const label nbrPointi = edges[edgeI].otherVertex(e.start());
+                    const label nbrIndex =
+                        allPointInfo[nbrPointi].collapseIndex();
+
+                    if (collapseEdge[edgeI] && nbrIndex == startCollapseIndex)
                     {
-                        const label edgeI = ptEdgesStart[ptEdgeI];
-
-                        const label nbrPointi
-                            = edges[edgeI].otherVertex(e.start());
-                        const label nbrIndex
-                            = allPointInfo[nbrPointi].collapseIndex();
-
-                        if
-                        (
-                            collapseEdge[edgeI]
-                         && nbrIndex == startCollapseIndex
-                        )
-                        {
-                            collapseEdge[edgeI] = false;
-                            nUncollapsed++;
-                        }
+                        collapseEdge[edgeI] = false;
+                        nUncollapsed++;
                     }
                 }
             }
@@ -1085,7 +1072,7 @@ Foam::label Foam::edgeCollapser::syncCollapse
                 masterPointPriority
             );
 
-            // Mark as collapsable but with nonsense master so it gets
+            // Mark as collapsible but with nonsense master so it gets
             // overwritten and starts an update wave
             allEdgeInfo[edgeI] = pointEdgeCollapse
             (
@@ -1297,7 +1284,7 @@ bool Foam::edgeCollapser::setRefinement
 //        if
 //        (
 //            mesh_.points()[ptI] != pec.collapsePoint()
-//         && pec.collapsePoint() != vector(GREAT, GREAT, GREAT)
+//         && pec.collapsePoint() != vector(great, great, great)
 //        )
 //        {
 //            meshTools::writeOBJ
@@ -1736,8 +1723,6 @@ void Foam::edgeCollapser::consistentCollapse
             }
         }
 
-        PackedBoolList markedEdges(mesh_.nEdges());
-
         if (!allowCellCollapse)
         {
             // Check collapsed cells
@@ -1775,13 +1760,12 @@ void Foam::edgeCollapser::consistentCollapse
                                 collapseEdge[edgeI] = false;
                                 nUncollapsed++;
                             }
-
-                            markedEdges[edgeI] = true;
                         }
+
+                        nFaces += isCollapsedFace[facei] ? 1 : 0;
 
                         // Uncollapsed this face.
                         isCollapsedFace[facei] = false;
-                        nFaces++;
                     }
                 }
 
@@ -1796,20 +1780,7 @@ void Foam::edgeCollapser::consistentCollapse
             }
         }
 
-        syncTools::syncEdgeList
-        (
-            mesh_,
-            markedEdges,
-            orEqOp<unsigned int>(),
-            0
-        );
-
-        nUncollapsed += breakStringsAtEdges
-        (
-            markedEdges,
-            collapseEdge,
-            allPointInfo
-        );
+        nUncollapsed += breakStringsAtEdges(collapseEdge, allPointInfo);
 
         reduce(nUncollapsed, sumOp<label>());
 

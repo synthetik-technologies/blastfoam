@@ -206,9 +206,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
         (
             "rhoPhi",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         mesh,
         dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)

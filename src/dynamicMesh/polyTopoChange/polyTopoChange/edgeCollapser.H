@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -79,7 +79,7 @@ public:
 
 private:
 
-    // Private data
+    // Private Data
 
         //- Reference to mesh
         const polyMesh& mesh_;
@@ -184,7 +184,6 @@ private:
         //  location
         label breakStringsAtEdges
         (
-            const PackedBoolList& markedEdges,
             PackedBoolList& collapseEdge,
             List<pointEdgeCollapse>& allPointInfo
         ) const;
@@ -236,12 +235,6 @@ private:
             face& f
         ) const;
 
-        //- Disallow default bitwise copy construct
-        edgeCollapser(const edgeCollapser&);
-
-        //- Disallow default bitwise assignment
-        void operator=(const edgeCollapser&);
-
 
 public:
 
@@ -256,6 +249,9 @@ public:
 
         //- Construct from mesh and dict
         edgeCollapser(const polyMesh& mesh, const dictionary& dict);
+
+        //- Disallow default bitwise copy construction
+        edgeCollapser(const edgeCollapser&) = delete;
 
 
     // Member Functions
@@ -325,7 +321,7 @@ public:
             //  edges that need to be collapsed in order to remove these faces.
             //  Also returns a map of new locations for points that will move
             //  as a result of the collapse.
-            //  Use in conjuctions with edgeCollapser to synchronise the
+            //  Use in conjunctions with edgeCollapser to synchronise the
             //  collapses and modify the mesh
             labelPair markSmallSliverFaces
             (
@@ -344,6 +340,12 @@ public:
                 PackedBoolList& collapseEdge,
                 Map<point>& collapsePointToLocation
             ) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const edgeCollapser&) = delete;
 };
 
 

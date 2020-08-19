@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -92,9 +92,9 @@ void Foam::duplicatePoints::setRefinement
             );
         }
 
-        //Pout<< "For point:" << pointi << " coord:" << mesh_.points()[pointi]
+        // Pout<< "For point:" << pointi << " coord:" << mesh_.points()[pointi]
         //    << endl;
-        //forAll(duplicates_[localI], i)
+        // forAll(duplicates_[localI], i)
         //{
         //    Pout<< "    region:" << regions[i]
         //        << "  addedpoint:" << duplicates_[localI][i]
