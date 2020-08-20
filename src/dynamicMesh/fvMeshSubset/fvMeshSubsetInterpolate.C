@@ -439,7 +439,6 @@ fvMeshSubset::interpolate
         // as necessary.
         if (patchMap[patchi] != -1)
         {
-            Pout<<vf.name()<<" "<<pMesh.boundary().size()<<" "<<patchMap[patchi]<<endl;
             // Construct addressing
             const pointPatch& basePatch =
                 pMesh.boundary()[patchMap[patchi]];

@@ -22,7 +22,7 @@ boundaryField
 {
     movingWall
     {
-        type            fixedValue;
+        type            movingWallVelocity;
         value           $internalField;
     }
 

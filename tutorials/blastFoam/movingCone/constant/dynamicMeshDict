@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   dynamicMotionSolverFvMesh;
+dynamicFvMesh   movingAdaptiveFvMesh;
 errorEstimator densityGradient;
 
 motionSolver    velocityComponentLaplacian;

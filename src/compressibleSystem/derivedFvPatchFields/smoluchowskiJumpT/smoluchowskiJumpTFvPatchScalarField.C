@@ -135,6 +135,7 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::autoMap
 )
 {
     mixedFvPatchScalarField::autoMap(m);
+    m(Twall_, Twall_);
 }
 
 
@@ -146,6 +147,10 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::rmap
 )
 {
     mixedFvPatchField<scalar>::rmap(ptf, addr);
+    const smoluchowskiJumpTFvPatchScalarField& dmptf =
+        refCast<const smoluchowskiJumpTFvPatchScalarField>(ptf);
+
+    Twall_.rmap(dmptf.Twall_, addr);
 }
 
 
