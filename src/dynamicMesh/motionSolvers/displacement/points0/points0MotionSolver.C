@@ -111,6 +111,37 @@ Foam::IOobject Foam::points0MotionSolver::points0IO
     }
 }
 
+const Foam::pointVectorField& Foam::points0MotionSolver::points0Init
+(
+    const polyMesh& mesh
+) const
+{
+    pointIOField pio(points0IO(mesh));
+
+    pointVectorField* p0Ptr
+    (
+        new pointVectorField
+        (
+            IOobject
+            (
+                "points0",
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                IOobject::AUTO_WRITE
+            ),
+            pointMesh::New(mesh),
+            dimensionedVector(dimLength, Zero)
+        )
+    );
+    p0Ptr->primitiveFieldRef() = pio;
+
+    p0Ptr->store(p0Ptr);
+
+    return mesh.lookupObject<pointVectorField>("points0");
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::points0MotionSolver::points0MotionSolver
@@ -121,7 +152,7 @@ Foam::points0MotionSolver::points0MotionSolver
 )
 :
     motionSolver(mesh, dict, type),
-    points0_(pointIOField(points0IO(mesh)))
+    points0_(points0Init(mesh))
 {
     if (points0_.size() != mesh.nPoints())
     {
@@ -157,24 +188,6 @@ Foam::points0MotionSolver::~points0MotionSolver()
 
 void Foam::points0MotionSolver::movePoints(const pointField&)
 {}
-
-
-void Foam::points0MotionSolver::correctPoints0
-(
-    const pointField& currPoints,
-    const pointField& D
-)
-{
-    pointField newPoints0(currPoints - D);
-    points0_.transfer(newPoints0);
-
-    // points0 changed - set to write and check-in to database
-    points0_.rename("points0");
-    points0_.writeOpt() = IOobject::AUTO_WRITE;
-    points0_.instance() = mesh().time().timeName();
-    points0_.checkIn();
-}
-
 
 void Foam::points0MotionSolver::updateMesh(const mapPolyMesh& mpm)
 {

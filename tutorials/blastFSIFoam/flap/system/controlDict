@@ -24,7 +24,7 @@ writeControl    adjustableRunTime;
 
 runTimeModifiable yes;
 
-writeInterval   1e-5;
+writeInterval   1e-6;
 
 purgeWrite      0;
 
@@ -47,7 +47,8 @@ functions
 
 DebugSwitches
 {
-    pointMesh 1;
-    meshObject 1;
-    polyMesh 1;
+    mappedPatchBase 1;
+//     pointMesh 1;
+//     meshObject 1;
+//     polyMesh 1;
 }

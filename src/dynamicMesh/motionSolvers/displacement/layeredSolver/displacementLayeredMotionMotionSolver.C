@@ -569,6 +569,7 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
     displacementMotionSolver::updateMesh(mpm);
 
     const vectorField displacement(this->newPoints() - points0_);
+    pointVectorField& p0(points0());
 
     forAll(points0_, pointi)
     {
@@ -584,7 +585,7 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
 
                 // need to set point0 so that it represents the position that
                 // it would have had if it had existed for all time
-                points0_[pointi] -= displacement[pointi];
+                p0[pointi] -= displacement[pointi];
             }
         }
     }

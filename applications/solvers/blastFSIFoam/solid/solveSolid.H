@@ -1,4 +1,3 @@
-solidRegions[i].update();
 tmp<volScalarField> threeKalphaTmp;
 
 if (thermalStress)

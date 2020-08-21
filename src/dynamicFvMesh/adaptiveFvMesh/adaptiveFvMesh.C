@@ -1861,7 +1861,6 @@ void Foam::adaptiveFvMesh::updateError()
 {
     //- Update error field
     error_->update();
-    error_->error().correctBoundaryConditions();
 }
 
 void Foam::adaptiveFvMesh::updateErrorBoundaries()
@@ -2058,6 +2057,7 @@ void Foam::adaptiveFvMesh::balance()
 //     correctBoundaries<pointSymmTensorField>();
 //     correctBoundaries<pointTensorField>();
 
+    balanced_ = true;
     return;
 }
 

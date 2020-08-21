@@ -25,7 +25,8 @@ ddtSchemes
 
 gradSchemes
 {
-    default         cellMDLimited leastSquares 1.0;
+    default         cellMDLimited Gauss linear 1.0;
+    grad(cellDisplacement) Gauss linea;
 }
 
 divSchemes

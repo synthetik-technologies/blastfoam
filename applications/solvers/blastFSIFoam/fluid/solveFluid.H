@@ -1,5 +1,3 @@
-fluidRegions[i].update();
-
 fluids[i].encode();
 
 Info<< "Calculating Fluxes" << endl;

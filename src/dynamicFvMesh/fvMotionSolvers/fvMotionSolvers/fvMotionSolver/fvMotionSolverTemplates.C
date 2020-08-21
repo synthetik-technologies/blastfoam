@@ -45,11 +45,11 @@ Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
 
     forAll(cmUbf, patchi)
     {
-        if (isA<mappedWallFvPatch>(fvMesh_.boundary()[patchi]))
-        {
-            cmUbf[patchi] = coupledCellMotionFvPatchField<Type>::typeName;
-        }
-        else if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
+//         if (isA<mappedWallFvPatch>(fvMesh_.boundary()[patchi]))
+//         {
+//             cmUbf[patchi] = coupledCellMotionFvPatchField<Type>::typeName;
+//         }
+//         else if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
         {
             cmUbf[patchi] = cellMotionFvPatchField<Type>::typeName;
         }

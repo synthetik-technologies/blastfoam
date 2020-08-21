@@ -27,12 +27,12 @@ boundaryField
     }
     ground
     {
-        type            fixedValue;
+        type            calculated;
         value           uniform (0 0 0);
     }
     outlet
     {
-        type            fixedValue;
+        type            calculated;
         value           uniform (0 0 0);
     }
 }

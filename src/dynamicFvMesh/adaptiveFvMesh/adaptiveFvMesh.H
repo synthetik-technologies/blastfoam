@@ -127,6 +127,9 @@ protected:
         //- Does the mesh get balanced
         bool balance_;
 
+        //- Has the mesh been balanced this step
+        mutable bool balanced_;
+
         //- Static dictionary for runTime balancing
         dictionary decompositionDict_;
 
@@ -290,6 +293,14 @@ public:
 
         //- Balance the mesh
         void balance();
+
+        //- Are other region mapping updates required
+        virtual bool balanced() const
+        {
+            bool isBalanced = balanced_;
+            balanced_ = false;
+            return isBalanced;
+        }
 
 
 

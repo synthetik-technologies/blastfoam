@@ -27,7 +27,7 @@ boundaryField
         traction        uniform (0 0 0);
         value           uniform (0 0 0);
         pressure        uniform 0;
-        pRef            uniform 1e5;
+        pRef            uniform 0.90530979e5;
     }
     flapBase
     {

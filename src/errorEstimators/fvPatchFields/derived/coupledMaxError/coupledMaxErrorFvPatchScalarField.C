@@ -95,10 +95,10 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 
 void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
 {
-//     if (this->updated())
-//     {
-//         return;
-//     }
+    if (this->updated())
+    {
+        return;
+    }
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
