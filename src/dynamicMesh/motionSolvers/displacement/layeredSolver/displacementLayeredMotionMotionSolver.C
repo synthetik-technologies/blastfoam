@@ -569,7 +569,7 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
     displacementMotionSolver::updateMesh(mpm);
 
     const vectorField displacement(this->newPoints() - points0_);
-    pointVectorField& p0(points0());
+    pointVectorField& p0(points0Ref());
 
     forAll(points0_, pointi)
     {

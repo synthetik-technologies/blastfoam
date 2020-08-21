@@ -38,6 +38,7 @@ SourceFiles
 #define FSIForceDisplacementFvPatchVectorField_H
 
 #include "tractionDisplacementFvPatchVectorField.H"
+#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,6 +54,9 @@ class FSIForceDisplacementFvPatchVectorField
     public tractionDisplacementFvPatchVectorField
 {
     // Private Data
+
+        //- Selector for mapped patch type
+        mappedPatchSelector mpp_;
 
         //- Name of neighbour pressure field
         const word pName_;

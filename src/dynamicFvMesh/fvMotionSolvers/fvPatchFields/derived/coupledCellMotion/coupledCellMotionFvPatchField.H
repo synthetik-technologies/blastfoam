@@ -37,6 +37,7 @@ SourceFiles
 
 #include "Random.H"
 #include "fixedValueFvPatchFields.H"
+#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -53,6 +54,8 @@ class coupledCellMotionFvPatchField
     public fixedValueFvPatchField<Type>
 {
     // Private Data
+
+        mappedPatchSelector mpp_;
 
         //- Name of neighbour displacement field
         const word DnbrName_;

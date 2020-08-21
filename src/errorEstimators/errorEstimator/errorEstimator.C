@@ -26,6 +26,7 @@ License
 #include "errorEstimator.H"
 #include "coupledMaxErrorFvPatchScalarField.H"
 #include "mappedWallFvPatch.H"
+#include "mappedMovingWallFvPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -48,7 +49,11 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
         wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
         forAll(boundaryTypes, patchi)
         {
-            if (isA<mappedWallFvPatch>(mesh.boundary()[patchi]))
+            if
+            (
+                isA<mappedWallFvPatch>(mesh.boundary()[patchi])
+             || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
+            )
             {
                 boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
             }
@@ -118,6 +123,14 @@ void Foam::errorEstimator::read(const dictionary& dict)
 
 void Foam::errorEstimator::normalize(volScalarField& error)
 {
+    if (debug)
+    {
+        if (error.time().outputTime())
+        {
+            error.write();
+        }
+    }
+
     forAll(error, celli)
     {
         if

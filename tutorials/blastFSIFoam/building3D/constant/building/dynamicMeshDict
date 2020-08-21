@@ -16,8 +16,6 @@ FoamFile
 
 dynamicFvMesh   adaptiveFvMesh;
 
-balance no;
-
 errorEstimator delta;      // Model used to estimate error
 deltaField sigmaD;
 

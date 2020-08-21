@@ -7,4 +7,6 @@ EXE_INC = \
 LIB_LIBS = \
     -lfiniteVolume \
     -ltriSurface \
-    -lextrudeModel
+    -lextrudeModel \
+    -L$(BLAST_LIBBIN) \
+    -lblastFiniteVolume

@@ -26,6 +26,8 @@ License
 #include "movingAdaptiveFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "motionSolver.H"
+#include "mappedMovingPatchBase.H"
+#include "mappedMovingWallFvPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 

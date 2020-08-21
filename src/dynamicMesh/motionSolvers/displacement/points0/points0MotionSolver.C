@@ -154,6 +154,7 @@ Foam::points0MotionSolver::points0MotionSolver
     motionSolver(mesh, dict, type),
     points0_(points0Init(mesh))
 {
+
     if (points0_.size() != mesh.nPoints())
     {
         FatalErrorInFunction

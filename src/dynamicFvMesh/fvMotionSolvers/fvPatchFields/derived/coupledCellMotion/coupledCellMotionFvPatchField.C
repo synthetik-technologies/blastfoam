@@ -28,6 +28,7 @@ License
 #include "volMesh.H"
 #include "volFields.H"
 #include "mappedPatchBase.H"
+#include "mappedMovingPatchBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -39,6 +40,7 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(p, iF),
+    mpp_(p),
     DnbrName_("D"),
     cmpt_(-1),
     velocity_(this->internalField().dimensions() == dimVelocity)
@@ -69,6 +71,7 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(p, iF),
+    mpp_(p),
     DnbrName_(ptf.DnbrName_),
     cmpt_(ptf.cmpt_),
     velocity_(ptf.velocity_)
@@ -91,6 +94,7 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(p, iF, dict),
+    mpp_(p),
     DnbrName_(dict.lookup("DnbrName")),
     cmpt_(-1),
     velocity_(this->internalField().dimensions() == dimVelocity)
@@ -118,6 +122,7 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(ptf),
+    mpp_(ptf.mpp_),
     DnbrName_(ptf.DnbrName_),
     cmpt_(ptf.cmpt_),
     velocity_(ptf.velocity_)
@@ -132,6 +137,7 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 )
 :
     fixedValueFvPatchField<Type>(ptf, iF),
+    mpp_(ptf.mpp_),
     DnbrName_(ptf.DnbrName_),
     cmpt_(ptf.cmpt_),
     velocity_(ptf.velocity_)
@@ -154,22 +160,20 @@ void Foam::coupledCellMotionFvPatchField<Type>::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const mappedPatchBase& mpp =
-        refCast<const mappedPatchBase>(this->patch().patch());
-    const polyMesh& nbrMesh = mpp.sampleMesh();
+    const polyMesh& nbrMesh = mpp_.sampleMesh();
     const fvMesh& nbrFvMesh = refCast<const fvMesh>(nbrMesh);
-    const label samplePatchi = mpp.samplePolyPatch().index();
+    const label samplePatchi = mpp_.samplePolyPatch().index();
 
     const volVectorField& nbrD =
         nbrFvMesh.lookupObject<volVectorField>(DnbrName_);
     vectorField Dp(nbrD.boundaryField()[samplePatchi]);
 
-    mpp.distribute(Dp);
+    mpp_.distribute(Dp);
 
     if (velocity_)
     {
         vectorField DpOld(nbrD.oldTime().boundaryField()[samplePatchi]);
-        mpp.distribute(DpOld);
+        mpp_.distribute(DpOld);
         Field<Type>::operator=
         (
             (getCmpt(Dp) - getCmpt(DpOld))/nbrFvMesh.time().deltaTValue()

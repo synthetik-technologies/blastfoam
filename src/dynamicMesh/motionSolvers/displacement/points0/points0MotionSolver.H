@@ -68,7 +68,7 @@ protected:
         const pointVectorField& points0Init(const polyMesh& mesh) const;
 
         //- Non-const reference to points0 through lookup
-        pointVectorField& points0()
+        pointVectorField& points0Ref() const
         {
             return mesh().lookupObjectRef<pointVectorField>("points0");
         }

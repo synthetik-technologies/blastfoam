@@ -64,17 +64,10 @@ Foam::displacementLaplacianFvMotionSolver::displacementLaplacianFvMotionSolver
             "cellDisplacement",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        fvMesh_,
-        dimensionedVector
-        (
-            "cellDisplacement",
-            pointDisplacement_.dimensions(),
-            Zero
-        ),
-        cellMotionBoundaryTypes<vector>(pointDisplacement_.boundaryField())
+        fvMesh_
     ),
     pointLocation_(nullptr),
     diffusivityPtr_
@@ -157,6 +150,10 @@ Foam::displacementLaplacianFvMotionSolver::diffusivity()
 Foam::tmp<Foam::pointField>
 Foam::displacementLaplacianFvMotionSolver::curPoints() const
 {
+//     //- Update points0 before updating pointDisplacement
+//     points0Ref().primitiveFieldRef() =
+//         fvMesh_.points() - pointDisplacement_.primitiveField();
+
     volPointInterpolation::New(fvMesh_).interpolate
     (
         cellDisplacement_,
@@ -250,6 +247,9 @@ void Foam::displacementLaplacianFvMotionSolver::updateMesh
     // Update diffusivity. Note two stage to make sure old one is de-registered
     // before creating/registering new one.
     diffusivityPtr_.clear();
+
+    points0Ref().primitiveFieldRef() =
+        fvMesh_.points() - pointDisplacement_.primitiveField();
 }
 
 

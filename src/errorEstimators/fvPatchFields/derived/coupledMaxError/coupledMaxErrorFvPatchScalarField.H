@@ -37,6 +37,7 @@ SourceFiles
 
 #include "Random.H"
 #include "fixedValueFvPatchFields.H"
+#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,6 +52,11 @@ class coupledMaxErrorFvPatchScalarField
 :
     public fixedValueFvPatchField<scalar>
 {
+// Private Data
+
+    //- Selector for mapped patch type
+    mappedPatchSelector mpp_;
+
 
 public:
 

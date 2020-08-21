@@ -31,6 +31,7 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lregionModels \
     -L$(BLAST_LIBBIN) \
+    -lblastFiniteVolume \
     -lblastThermodynamics \
     -ldiameterModels \
     -lfluxSchemes \

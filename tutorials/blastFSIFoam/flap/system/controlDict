@@ -16,7 +16,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         5e-3;
+endTime         0.5e-3;
 
 deltaT          1e-7;
 
@@ -24,7 +24,7 @@ writeControl    adjustableRunTime;
 
 runTimeModifiable yes;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
 purgeWrite      0;
 
@@ -44,11 +44,3 @@ adjustTimeStep yes;
 
 functions
 {}
-
-DebugSwitches
-{
-    mappedPatchBase 1;
-//     pointMesh 1;
-//     meshObject 1;
-//     polyMesh 1;
-}

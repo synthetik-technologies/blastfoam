@@ -39,6 +39,7 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(p, iF),
+    mpp_(p),
     pName_("p"),
     pRef_(this->size(), 0.0)
 {}
@@ -53,6 +54,7 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(p, iF),
+    mpp_(p),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     pRef_("pRef", dict, p.size())
 {}
@@ -68,6 +70,7 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf, p, iF, mapper),
+    mpp_(p),
     pName_(tdpvf.pName_),
     pRef_(mapper(tdpvf.pRef_))
 {}
@@ -80,6 +83,7 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf),
+    mpp_(tdpvf.mpp_),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}
@@ -93,6 +97,7 @@ FSIForceDisplacementFvPatchVectorField
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf, iF),
+    mpp_(tdpvf.mpp_),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}
@@ -137,10 +142,8 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const mappedPatchBase& mpp =
-        refCast<const mappedPatchBase>(patch().patch());
-    const polyMesh& nbrMesh = mpp.sampleMesh();
-    const label samplePatchi = mpp.samplePolyPatch().index();
+    const polyMesh& nbrMesh = mpp_.sampleMesh();
+    const label samplePatchi = mpp_.samplePolyPatch().index();
     const fvPatch& nbrPatch =
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
@@ -155,9 +158,9 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
         nbrPatch.lookupPatchField<volScalarField, scalar>(pName_)
     );
 
-    mpp.distribute(normal);
-    mpp.distribute(nbrDevRhoReff);
-    mpp.distribute(nbrP);
+    mpp_.distribute(normal);
+    mpp_.distribute(nbrDevRhoReff);
+    mpp_.distribute(nbrP);
 
     this->pressure() = nbrP - pRef_;
     this->traction() = nbrDevRhoReff & normal;

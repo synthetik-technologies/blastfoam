@@ -48,8 +48,12 @@ Description
 #include "blastCompressibleTurbulenceModel.H"
 #include "ThermalDiffusivity.H"
 #include "fvOptions.H"
-#include "mappedWallFvPatch.H"
+
 #include "mappedPatchBase.H"
+#include "mappedMovingPatchBase.H"
+
+#include "mappedWallFvPatch.H"
+#include "mappedMovingWallFvPatch.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -68,6 +72,8 @@ int main(int argc, char *argv[])
     #include "compressibleMultiRegionCourantNo.H"
     #include "setInitialMultiRegionDeltaT.H"
 
+    #include "setBoundaryDisplacementFields.H"
+
     while (runTime.run())
     {
         #include "readTimeControls.H"
@@ -79,103 +85,7 @@ int main(int argc, char *argv[])
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //- Update internal error fields of all regions
-        forAll(fluidRegions, i)
-        {
-            fluidRegions[i].updateError();
-        }
-        forAll(solidRegions, i)
-        {
-            solidRegions[i].updateError();
-        }
-
-        //- Update error field boundaries
-        //  Done after all region errors have been updated to make sure
-        //  all fields are up to date
-        forAll(fluidRegions, i)
-        {
-            fluidRegions[i].updateErrorBoundaries();
-        }
-        forAll(solidRegions, i)
-        {
-            solidRegions[i].updateErrorBoundaries();
-        }
-
-        //- Update Meshes and check if balancing has occurred
-        boolList balanced(fluidRegions.size() + solidRegions.size(), false);
-        bool needRemap = false;
-        label j = 0;
-        forAll(fluidRegions, i)
-        {
-            fluidRegions[i].update();
-
-            // Already cleared mapped patches
-            balanced[j++] = !fluidRegions[i].balanced();
-            needRemap = needRemap || fluidRegions[i].balanced();
-        }
-        forAll(solidRegions, i)
-        {
-            solidRegions[i].update();
-
-            // Already cleared mapped patches
-            balanced[j++] = !solidRegions[i].balanced();
-            needRemap = needRemap || solidRegions[i].balanced();
-        }
-
-        // Clear mapped boundaries if one region has been balanced
-        // Balanced meshes have already had their maps cleared
-        if (needRemap)
-        {
-            j = 0;
-            forAll(fluidRegions, i)
-            {
-                if (!balanced[j++])
-                {
-                    forAll(fluidRegions[i].boundaryMesh(), patchi)
-                    {
-                        if
-                        (
-                            isA<mappedWallFvPatch>
-                            (
-                                fluidRegions[i].boundary()[patchi]
-                            )
-                        )
-                        {
-                            polyBoundaryMesh& pbMesh =
-                                const_cast<polyBoundaryMesh&>
-                                (
-                                    fluidRegions[i].boundaryMesh()
-                                );
-                            refCast<mappedPatchBase>(pbMesh[patchi]).clearOut();
-                        }
-                    }
-                }
-            }
-            forAll(solidRegions, i)
-            {
-                if (!balanced[j++])
-                {
-                    forAll(solidRegions[i].boundaryMesh(), patchi)
-                    {
-                        if
-                        (
-                            isA<mappedWallFvPatch>
-                            (
-                                solidRegions[i].boundary()[patchi]
-                            )
-                        )
-                        {
-                            polyBoundaryMesh& pbMesh =
-                                const_cast<polyBoundaryMesh&>
-                                (
-                                    solidRegions[i].boundaryMesh()
-                                );
-                            refCast<mappedPatchBase>(pbMesh[patchi]).clearOut();
-                        }
-                    }
-                }
-            }
-        }
+        #include "updateMeshes.H"
 
         // Solve
         forAll(fluidRegions, i)
