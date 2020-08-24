@@ -20,13 +20,13 @@ FoamFile
 nu
 {
     type        uniform;
-    value       0.3;
+    value       0.2;
 }
 
 E
 {
     type        uniform;
-    value       2e+11;
+    value       25e8;
 }
 
 planeStress     yes;

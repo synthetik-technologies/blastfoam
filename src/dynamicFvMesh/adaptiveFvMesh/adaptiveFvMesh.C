@@ -1841,18 +1841,20 @@ bool Foam::adaptiveFvMesh::update()
         }
         nRefinementIterations_++;
 
-        topoChanging(hasChanged);
-        if (hasChanged)
-        {
-            // Reset moving flag (if any). If not using inflation we'll not move,
-            // if are using inflation any follow on movePoints will set it.
-            moving(false);
-        }
+
     }
-    if (returnReduce(hasChanged, orOp<bool>()))
+
+    reduce(hasChanged, orOp<bool>());
+    topoChanging(hasChanged);
+    if (hasChanged)
     {
         balance();
+
+        // Reset moving flag (if any). If not using inflation we'll not move,
+        // if are using inflation any follow on movePoints will set it.
+        moving(false);
     }
+
     return hasChanged;
 }
 
@@ -1870,7 +1872,7 @@ void Foam::adaptiveFvMesh::updateErrorBoundaries()
 }
 
 
-void Foam::adaptiveFvMesh::balance()
+bool Foam::adaptiveFvMesh::balance()
 {
     //Part 1 - Call normal update from dynamicRefineFvMesh
     const dictionary& balanceDict
@@ -1881,9 +1883,11 @@ void Foam::adaptiveFvMesh::balance()
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
+    balance_ = balanceDict.lookupOrDefault("balance", true);
+
     if(!balance_)
     {
-        return;
+        return false;
     }
     if
     (
@@ -1891,7 +1895,7 @@ void Foam::adaptiveFvMesh::balance()
      && (nRefinementIterations_ != 1)
     )
     {
-        return;
+        return false;
     }
 
     //Correct values on all coupled patches
@@ -1900,12 +1904,12 @@ void Foam::adaptiveFvMesh::balance()
     correctBoundaries<volSphericalTensorField>();
     correctBoundaries<volSymmTensorField>();
     correctBoundaries<volTensorField>();
-//
-//     correctBoundaries<pointScalarField>();
-//     correctBoundaries<pointVectorField>();
-//     correctBoundaries<pointSphericalTensorField>();
-//     correctBoundaries<pointSymmTensorField>();
-//     correctBoundaries<pointTensorField>();
+
+    correctBoundaries<pointScalarField>();
+    correctBoundaries<pointVectorField>();
+    correctBoundaries<pointSphericalTensorField>();
+    correctBoundaries<pointSymmTensorField>();
+    correctBoundaries<pointTensorField>();
 
     // Part 2 - Load Balancing
     {
@@ -2042,6 +2046,10 @@ void Foam::adaptiveFvMesh::balance()
 
             Info << "Max deviation: " << max(Foam::mag(procLoadNew-averageLoadNew)/averageLoadNew)*100.0 << " %" << endl;
         }
+        else
+        {
+            return false;
+        }
     }
 
     //Correct values on all coupled patches
@@ -2051,14 +2059,13 @@ void Foam::adaptiveFvMesh::balance()
     correctBoundaries<volSymmTensorField>();
     correctBoundaries<volTensorField>();
 
-//     correctBoundaries<pointScalarField>();
-//     correctBoundaries<pointVectorField>();
-//     correctBoundaries<pointSphericalTensorField>();
-//     correctBoundaries<pointSymmTensorField>();
-//     correctBoundaries<pointTensorField>();
+    correctBoundaries<pointScalarField>();
+    correctBoundaries<pointVectorField>();
+    correctBoundaries<pointSphericalTensorField>();
+    correctBoundaries<pointSymmTensorField>();
+    correctBoundaries<pointTensorField>();
 
-    balanced_ = true;
-    return;
+    return true;
 }
 
 

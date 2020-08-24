@@ -44,10 +44,11 @@ namespace errorEstimators
 Foam::errorEstimators::densityGradient::densityGradient
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
-    errorEstimator(mesh, dict)
+    errorEstimator(mesh, dict, name)
 {
     this->read(dict);
 }

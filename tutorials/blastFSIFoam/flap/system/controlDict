@@ -16,7 +16,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.5e-3;
+endTime         3e-3;
 
 deltaT          1e-7;
 
@@ -30,7 +30,7 @@ purgeWrite      0;
 
 writeFormat     ascii;
 
-writePrecision  6;
+writePrecision  16;
 
 writeCompression off;
 
@@ -44,3 +44,4 @@ adjustTimeStep yes;
 
 functions
 {}
+

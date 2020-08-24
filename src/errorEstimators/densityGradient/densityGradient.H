@@ -63,10 +63,15 @@ class densityGradient
 public:
 
     //- Runtime type information
-    ClassName("densityGradient");
+    TypeName("densityGradient");
 
     // Constructor
-    densityGradient(const fvMesh& mesh, const dictionary& dict);
+    densityGradient
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor

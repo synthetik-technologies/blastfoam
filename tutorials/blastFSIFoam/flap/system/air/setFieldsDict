@@ -28,13 +28,13 @@ regions
 (
     cylinderToCell
     {
-        p1 (-1 -1 0.5);
-        p2 (-1 1 0.5);
+        p1 (-0.5 -1 0.5);
+        p2 (-0.5 1 0.5);
         radius 0.025;
         backup
         {
-            p1 (-1 -1 0.5);
-            p2 (-1 1 0.5);
+            p1 (-0.5 -1 0.5);
+            p2 (-0.5 1 0.5);
             radius 0.1;
         }
         refineInternal yes;

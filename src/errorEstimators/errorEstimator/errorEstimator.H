@@ -58,6 +58,9 @@ protected:
         //- Reference to mesh
         const fvMesh& mesh_;
 
+        //- Name of error estimator
+        word name_;
+
         //- Reference to error field
         volScalarField& error_;
 
@@ -81,13 +84,16 @@ protected:
         void normalize(volScalarField& error);
 
         //- Lookup and return the scalar value of the field
-        template<class Type>
         void getFieldValue(const word& name, volScalarField& f) const;
+
+        //- Lookup and return the scalar value of the field
+        template<class Type>
+        void getFieldValueType(const word& name, volScalarField& f) const;
 
 public:
 
     //- Runtime type information
-    ClassName("errorEstimator");
+    TypeName("errorEstimator");
 
 
     // Declare runtime construction
@@ -99,13 +105,19 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
-                const dictionary& dict
+                const dictionary& dict,
+                const word& name
             ),
-            (mesh, dict)
+            (mesh, dict, name)
         );
 
     // Constructor
-    errorEstimator(const fvMesh& mesh, const dictionary& dict);
+    errorEstimator
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor
@@ -117,7 +129,8 @@ public:
         static autoPtr<errorEstimator> New
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            const word& name = word::null
         );
 
 

@@ -292,15 +292,7 @@ public:
         template<class GeoField> void correctBoundaries();
 
         //- Balance the mesh
-        void balance();
-
-        //- Are other region mapping updates required
-        virtual bool balanced() const
-        {
-            bool isBalanced = balanced_;
-            balanced_ = false;
-            return isBalanced;
-        }
+        bool balance();
 
 
 

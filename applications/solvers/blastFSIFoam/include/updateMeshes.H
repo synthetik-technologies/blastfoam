@@ -52,36 +52,32 @@ forAll(solidRegions, i)
 }
 
 //- Update Meshes and check if balancing has occurred
-boolList balanced(fluidRegions.size() + solidRegions.size(), false);
+boolList remapped(fluidRegions.size() + solidRegions.size(), false);
 bool needRemap = false;
 label j = 0;
 forAll(fluidRegions, i)
 {
-    fluidRegions[i].update();
-
     // Already cleared mapped patches
-    balanced[j] = fluidRegions[i].balanced();
-    needRemap = needRemap || balanced[j];
+    remapped[j] = fluidRegions[i].update();
+    needRemap = needRemap || remapped[j];
     j++;
 }
 forAll(solidRegions, i)
 {
-    solidRegions[i].update();
-
     // Already cleared mapped patches
-    balanced[j] = solidRegions[i].balanced();
-    needRemap = needRemap || balanced[j];
+    remapped[j] = solidRegions[i].update();
+    needRemap = needRemap || remapped[j];
     j++;
 }
 
-// Clear mapped boundaries if one region has been balanced
+// Clear mapped boundaries if one region has been remapped
 // Balanced meshes have already had their maps cleared
 if (needRemap)
 {
     j = 0;
     forAll(fluidRegions, i)
     {
-        if (!balanced[j++])
+        if (!remapped[j])
         {
             forAll(fluidRegions[i].boundaryMesh(), patchi)
             {
@@ -105,10 +101,11 @@ if (needRemap)
                 }
             }
         }
+        j++;
     }
     forAll(solidRegions, i)
     {
-        if (!balanced[j++])
+        if (!remapped[j])
         {
             forAll(solidRegions[i].boundaryMesh(), patchi)
             {
@@ -132,6 +129,7 @@ if (needRemap)
                 }
             }
         }
+        j++;
     }
 }
 

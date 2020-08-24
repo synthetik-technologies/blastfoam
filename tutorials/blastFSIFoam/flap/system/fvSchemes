@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      AUSM+;
+fluxScheme      AUSM+up;
 
 ddtSchemes
 {
@@ -41,11 +41,11 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(c)      vanLeer;
+    reconstruct(rho)    linearMUSCL vanLeer;
+    reconstruct(U)      linearMUSCL vanLeer;
+    reconstruct(e)      linearMUSCL vanLeer;
+    reconstruct(p)      linearMUSCL vanLeer;
+    reconstruct(c)      linearMUSCL vanLeer;
 }
 
 snGradSchemes

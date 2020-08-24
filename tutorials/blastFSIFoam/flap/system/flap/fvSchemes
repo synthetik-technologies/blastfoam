@@ -33,9 +33,7 @@ divSchemes
 
 gradSchemes
 {
-    default         leastSquares;
-    grad(D)         leastSquares;
-    grad(T)         leastSquares;
+    default         cellMDLimited leastSquares 1.0;
 }
 
 laplacianSchemes

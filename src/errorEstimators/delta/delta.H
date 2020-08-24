@@ -55,16 +55,52 @@ class delta
 // Private data
 
         //- Field name
-        const word name_;
+        const word fieldName_;
+
+        //- Minimum value to scale by
+        scalar minVal_;
+
+        //- Stored pointer to error function
+        scalar (*errorFunc_)(const scalar&, const scalar&, const scalar&);
+
+
+        // Functions to calculate error
+
+            //- Unscaled error
+            static scalar unscaledError
+            (
+                const scalar& own,
+                const scalar& nei,
+                const scalar& minVal
+            )
+            {
+                return mag(own - nei);
+            }
+
+            //- Scaled error
+            static scalar scaledError
+            (
+                const scalar& own,
+                const scalar& nei,
+                const scalar& minVal
+            )
+            {
+                return mag(own - nei)/max(min(mag(own), mag(nei)), minVal);
+            }
 
 
 public:
 
     //- Runtime type information
-    ClassName("delta");
+    TypeName("delta");
 
     // Constructor
-    delta(const fvMesh& mesh, const dictionary& dict);
+    delta
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor

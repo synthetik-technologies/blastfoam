@@ -40,7 +40,7 @@ lowerRefineLevel 0.01;
 unrefineLevel   0.01;
 
 // Number of cells refined around high error cells
-nBufferLayers   3;
+nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;

@@ -29,7 +29,8 @@ License
 Foam::autoPtr<Foam::errorEstimator> Foam::errorEstimator::New
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 {
     word errorEstimatorType(dict.lookup("errorEstimator"));
@@ -49,7 +50,7 @@ Foam::autoPtr<Foam::errorEstimator> Foam::errorEstimator::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict);
+    return cstrIter()(mesh, dict, name);
 }
 
 

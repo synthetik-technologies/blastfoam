@@ -60,10 +60,10 @@ class fieldValue
 public:
 
     //- Runtime type information
-    ClassName("fieldValue");
+    TypeName("fieldValue");
 
     // Constructor
-    fieldValue(const fvMesh& mesh, const dictionary& dict);
+    fieldValue(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor

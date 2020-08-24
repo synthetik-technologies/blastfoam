@@ -171,10 +171,9 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
 
 void Foam::FSIForceDisplacementFvPatchVectorField::write(Ostream& os) const
 {
-    fvPatchVectorField::write(os);
+    tractionDisplacementFvPatchVectorField::write(os);
     writeEntry(os, "pName", pName_);
     writeEntry(os, "pRef", pRef_);
-    writeEntry(os, "value", *this);
 }
 
 

@@ -71,10 +71,15 @@ class multicomponent
 public:
 
     //- Runtime type information
-    ClassName("multicomponent");
+    TypeName("multicomponent");
 
     // Constructor
-    multicomponent(const fvMesh& mesh, const dictionary& dict);
+    multicomponent
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor

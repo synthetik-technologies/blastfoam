@@ -44,10 +44,11 @@ namespace errorEstimators
 Foam::errorEstimators::multicomponent::multicomponent
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
-    errorEstimator(mesh, dict),
+    errorEstimator(mesh, dict, name),
     names_(dict.lookup("estimators")),
     errors_(names_.size())
 {
@@ -56,7 +57,7 @@ Foam::errorEstimators::multicomponent::multicomponent
         errors_.set
         (
             i,
-            errorEstimator::New(mesh, dict.subDict(names_[i])).ptr()
+            errorEstimator::New(mesh, dict.subDict(names_[i]), names_[i]).ptr()
         );
     }
 }

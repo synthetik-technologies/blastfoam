@@ -111,11 +111,11 @@ bool Foam::dynamicRefineBalancedFvMesh::update()
             )
         )
     );
-    
-    rebalance_ = false; 
+
+    rebalance_ = false;
 
     // Part 2 - Load Balancing
-    {    
+    {
         dictionary refineDict
         (
             IOdictionary
@@ -216,7 +216,7 @@ bool Foam::dynamicRefineBalancedFvMesh::update()
                     coarseWeights[localIndex[cellI]] += 1.0;
                     coarsePoints[localIndex[cellI]] += C()[cellI]/w;
                 }
-            
+
                 // Set up decomposer - a separate dictionary is used here so
                 // you can use a simple partitioning for decomposePar and
                 // ptscotch for the rebalancing (or any chosen algorithms)

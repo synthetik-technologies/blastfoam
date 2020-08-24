@@ -44,12 +44,23 @@ namespace errorEstimators
 Foam::errorEstimators::delta::delta
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
-    errorEstimator(mesh, dict),
-    name_(dict.lookup("deltaField"))
+    errorEstimator(mesh, dict, name),
+    fieldName_(dict.lookup("deltaField")),
+    minVal_(dict.lookupOrDefault<scalar>("minValue", small))
 {
+    if (dict.lookupOrDefault<Switch>("scale", true))
+    {
+        errorFunc_ = &scaledError;
+    }
+    else
+    {
+        errorFunc_ = &unscaledError;
+    }
+
     this->read(dict);
 }
 
@@ -68,13 +79,14 @@ void Foam::errorEstimators::delta::update()
     (
         IOobject
         (
-            "mag(" + name_ + ")",
+            "mag(" + fieldName_ + ")",
             mesh_.time().timeName(),
             mesh_
         ),
         mesh_,
         0.0
     );
+    this->getFieldValue(fieldName_, x);
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -86,7 +98,7 @@ void Foam::errorEstimators::delta::update()
         label own = owner[facei];
         label nei = neighbour[facei];
 
-        scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
+        scalar eT = errorFunc_(x[own], x[nei], minVal_);
         error_[own] = max(error_[own], eT);
         error_[nei] = max(error_[nei], eT);
     }
@@ -108,10 +120,8 @@ void Foam::errorEstimators::delta::update()
 
             forAll(faceCells, facei)
             {
-                scalar eT =
-                    mag(fp[facei] - fn[facei])
-                   /max(min(fp[facei], fn[facei]), small);
-                error_[faceCells[facei]]=
+                scalar eT = errorFunc_(fp[facei], fn[facei], minVal_);
+                error_[faceCells[facei]] =
                     max(error_[faceCells[facei]], eT);
             }
         }

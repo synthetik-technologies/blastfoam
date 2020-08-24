@@ -21,7 +21,7 @@ solvers
     {
         solver          PCG;
         tolerance       1e-09;
-        relTol          0.1;
+        relTol          0;
         preconditioner  DIC;
     }
 }

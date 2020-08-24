@@ -173,12 +173,6 @@ public:
         //- Update error field boundaries
         virtual void updateErrorBoundaries()
         {}
-
-        //- Are other region mapping updates required
-        virtual bool balanced() const
-        {
-            return false;
-        }
 };
 
 

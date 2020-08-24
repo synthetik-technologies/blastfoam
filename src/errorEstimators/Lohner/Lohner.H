@@ -72,10 +72,15 @@ class Lohner
 public:
 
     //- Runtime type information
-    ClassName("Lohner");
+    TypeName("Lohner");
 
     // Constructor
-    Lohner(const fvMesh& mesh, const dictionary& dict);
+    Lohner
+    (
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& name
+    );
 
 
     //- Destructor

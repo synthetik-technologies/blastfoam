@@ -43,10 +43,11 @@ namespace errorEstimators
 Foam::errorEstimators::fieldValue::fieldValue
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
-    errorEstimator(mesh, dict),
+    errorEstimator(mesh, dict, name),
     fieldName_(dict.lookup("fieldName"))
 {
     this->read(dict);
@@ -64,12 +65,7 @@ Foam::errorEstimators::fieldValue::~fieldValue()
 void Foam::errorEstimators::fieldValue::update()
 {
     volScalarField& errorCells(error_);
-
-    this->getFieldValue<scalar>(fieldName_, errorCells);
-    this->getFieldValue<vector>(fieldName_, errorCells);
-    this->getFieldValue<symmTensor>(fieldName_, errorCells);
-    this->getFieldValue<sphericalTensor>(fieldName_, errorCells);
-    this->getFieldValue<tensor>(fieldName_, errorCells);
+    this->getFieldValue(fieldName_, errorCells);
 
     normalize(error_);
 }

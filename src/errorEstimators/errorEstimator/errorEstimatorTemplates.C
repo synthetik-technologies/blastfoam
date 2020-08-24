@@ -28,7 +28,11 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
+void Foam::errorEstimator::getFieldValueType
+(
+    const word& name,
+    volScalarField& f
+) const
 {
     typedef GeometricField<Type, fvPatchField, volMesh> thisType;
 

@@ -70,7 +70,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
             (
                 IOobject
                 (
-                    "error",
+                    IOobject::groupName("error", name_),
                     mesh.time().timeName(),
                     mesh,
                     IOobject::NO_READ,
@@ -92,10 +92,12 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
 Foam::errorEstimator::errorEstimator
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
     mesh_(mesh),
+    name_(name),
     error_(lookupOrConstruct(mesh)),
     lowerRefine_(0.0),
     lowerUnrefine_(0.0),
@@ -121,16 +123,19 @@ void Foam::errorEstimator::read(const dictionary& dict)
 }
 
 
+void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
+{
+
+    this->getFieldValueType<scalar>(name, f);
+    this->getFieldValueType<vector>(name, f);
+    this->getFieldValueType<symmTensor>(name, f);
+    this->getFieldValueType<sphericalTensor>(name, f);
+    this->getFieldValueType<tensor>(name, f);
+}
+
+
 void Foam::errorEstimator::normalize(volScalarField& error)
 {
-    if (debug)
-    {
-        if (error.time().outputTime())
-        {
-            error.write();
-        }
-    }
-
     forAll(error, celli)
     {
         if

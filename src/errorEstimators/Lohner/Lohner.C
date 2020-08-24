@@ -45,10 +45,11 @@ namespace errorEstimators
 Foam::errorEstimators::Lohner::Lohner
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const word& name
 )
 :
-    errorEstimator(mesh, dict),
+    errorEstimator(mesh, dict, name),
     fieldName_(dict.lookup("deltaField")),
     epsilon_(readScalar(dict.lookup("epsilon")))
 {
