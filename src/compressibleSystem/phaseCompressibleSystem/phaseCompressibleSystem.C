@@ -294,7 +294,6 @@ void Foam::phaseCompressibleSystem::solve
             rhoEOld += ai[fi]*rhoEOld_[fi];
         }
     }
-
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
     (
@@ -343,6 +342,9 @@ void Foam::phaseCompressibleSystem::solve
     if (radiation_->type() != "none")
     {
         calcAlphaAndRho();
+        U_ = rhoU_/rho_;
+        U_.correctBoundaryConditions();
+
         e() = rhoE_/rho_ - 0.5*magSqr(U_);
         e().correctBoundaryConditions();
         rhoE_ =

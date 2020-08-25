@@ -45,7 +45,17 @@ Foam::radiationODE::radiationODE
     nEqns_(1),
     q_(1, 0.0),
     dqdt_(1, 0.0),
-    deltaT_(mesh.nCells(), mesh.time().deltaTValue())
+    deltaT_
+    (
+        IOobject
+        (
+            "radiation::deltaT",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        mesh.time().deltaT()
+    )
 {
     if (solve_)
     {
@@ -72,8 +82,7 @@ void Foam::radiationODE::derivatives
 {
     scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
     scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = 0.0;
-    dqdt[0] = min(rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T), -q_[0]);
+    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
 }
 
 
@@ -87,8 +96,7 @@ void Foam::radiationODE::jacobian
 {
     scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
     scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = 0.0;
-    dqdt[0] = min(rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T), -q_[0]);
+    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
     J = scalarSquareMatrix(1, 0.0);
 }
 
@@ -101,13 +109,12 @@ Foam::scalar Foam::radiationODE::solve
 {
     if (!odeSolver_.valid())
     {
-        return min(deltaT_);
+        return min(deltaT_).value();
     }
 
     for(celli_ = 0; celli_ < rhoE.size(); celli_++)
     {
-        q_ = 0.0;
-        q_[0] = rhoE[celli_];
+        q_ = rhoE[celli_];
 
         scalar timeLeft = deltaT;
         while (timeLeft > small)
@@ -119,7 +126,7 @@ Foam::scalar Foam::radiationODE::solve
         }
         rhoE[celli_] = q_[0];
     }
-    return min(deltaT_);
+    return min(deltaT_).value();
 }
 
 

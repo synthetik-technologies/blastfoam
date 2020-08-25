@@ -182,12 +182,12 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     const fvPatch& nbrPatch =
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
-
-    scalarField Tc(patchInternalField());
-    scalarField& Tp = *this;
-
     typedef turbulentTemperatureRadCoupledMixedFvPatchScalarField thisType;
 
+    if (!refCast<const fvMesh>(nbrMesh).foundObject<volScalarField>(TnbrName_))
+    {
+        return;
+    }
     const fvPatchScalarField& nbrTp =
         nbrPatch.lookupPatchField<volScalarField, scalar>(TnbrName_);
 
@@ -220,15 +220,16 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     }
     mpp.distribute(KDeltaNbr);
 
-    scalarField KDelta(kappa(Tp)*patch().deltaCoeffs());
+    scalarField K(kappa(*this));
+    scalarField KDelta(K*patch().deltaCoeffs());
 
-    scalarField qr(Tp.size(), 0.0);
+    scalarField qr(this->size(), 0.0);
     if (qrName_ != "none")
     {
         qr = patch().lookupPatchField<volScalarField, scalar>(qrName_);
     }
 
-    scalarField qrNbr(Tp.size(), 0.0);
+    scalarField qrNbr(this->size(), 0.0);
     if (qrNbrName_ != "none")
     {
         qrNbr = nbrPatch.lookupPatchField<volScalarField, scalar>(qrNbrName_);
@@ -236,14 +237,15 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     }
 
     valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
+
     refValue() = TcNbr;
-    refGrad() = (qr + qrNbr)/kappa(Tp);
+    refGrad() = (qr + qrNbr)/K;
 
     mixedFvPatchScalarField::updateCoeffs();
 
     if (debug)
     {
-        scalar Q = gSum(kappa(Tp)*patch().magSf()*snGrad());
+        scalar Q = gSum(K*patch().magSf()*snGrad());
 
         Info<< patch().boundaryMesh().mesh().name() << ':'
             << patch().name() << ':'
@@ -253,9 +255,9 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
             << this->internalField().name() << " :"
             << " heat transfer rate:" << Q
             << " walltemperature "
-            << " min:" << gMin(Tp)
-            << " max:" << gMax(Tp)
-            << " avg:" << gAverage(Tp)
+            << " min:" << gMin(*this)
+            << " max:" << gMax(*this)
+            << " avg:" << gAverage(*this)
             << endl;
     }
 
