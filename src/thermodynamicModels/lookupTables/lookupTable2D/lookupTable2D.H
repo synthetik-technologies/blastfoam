@@ -60,14 +60,21 @@ class lookupTable2D
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
+    word modType_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
+    word modXType_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
+    word modYType_;
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
+
+    //- Is the provided data uniform
+    Switch uniformX_;
+    Switch uniformY_;
 
     //- Number of entries for x
     label nx_;
@@ -75,65 +82,94 @@ class lookupTable2D
     //- Number of entries for y
     label ny_;
 
-    //- Minimum x value (in given space)
-    scalar xMin_;
-
-    //- X spacing (in given space)
-    scalar dx_;
-
-    //- Minimum y value (in given space)
-    scalar yMin_;
-
-    //- Y spacing (in given space)
-    scalar dy_;
-
     //- Data
     Field<scalarField> data_;
 
-    //- Stored table lists in real space
-    scalarField x_;
-    scalarField y_;
+    //- Modified x field values
+    scalarField xMod_;
 
-    //- Return x or y given the index
-    inline scalar getValue(const scalar& i, const scalar& minx, const scalar& dx) const
-    {
-        return minx + i*dx;
-    }
+    //- Modified y field values
+    scalarField yMod_;
+
+    //- Stored real x values
+    scalarField x_;
+
+    //- Stored real y values
+    scalarField y_;
 
     //- Read the next value from the split string
     scalar readValue(const List<string>&) const;
 
     //- Read the table
-    void readTable(const fileName& file);
+    void readTable(const fileName& file, Field<scalarField>& data);
 
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline void findIndex
+    //- Pointer to function to lookup indexes in the x direction
+    void (*findXIndex_)(const scalar&, const scalarField&, label&, scalar&);
+
+    //- Pointer to function to lookup indexes in the y direction
+    void (*findYIndex_)(const scalar&, const scalarField&, label&, scalar&);
+
+    //- Lookup based on uniform indexing
+    static void findUniformIndexes
     (
         const scalar& xy,
-        const scalar& xyMin,
-        const scalar& dxy,
-        const label nxy,
+        const scalarField& XY,
         label& IJ,
         scalar& f
-    ) const;
+    );
 
+    //- Lookup based on non uniform indexing
+    static void findNonuniformIndexes
+    (
+        const scalar& xy,
+        const scalarField& XY,
+        label& IJ,
+        scalar& f
+    );
 
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline label bound
+    inline label boundi
     (
         const scalar& f,
-        const label i,
-        const scalar& yMin,
-        const scalar& dy,
-        const label ny,
-        const bool ij
+        const Field<scalarField>& data,
+        const label j
     ) const;
 
+    //- Find bottom of interpolation region, return index and weight between j and j+1
+    inline label boundj
+    (
+        const scalar& f,
+        const Field<scalarField>& data,
+        const label i
+    ) const;
+
+    //- Find bottom of interpolation region, return indexes and weights between i, i+1, j, and j+1
+    inline void boundij
+    (
+        const scalar& f,
+        const Field<scalarField>& data,
+        label& i,
+        label& j
+    ) const;
+
+    //- Return value from a given list from lower index and weight
+    scalar getValue(const label ij, const scalar& f, const scalarField& xy) const;
+
+    //- Check if spacing in a list is uniform
+    bool checkUniform(const scalarField& xy) const;
 
 public:
 
     // Constructors
+
+        //- Construct from dictionary
+        lookupTable2D
+        (
+            const dictionary& dict,
+            const word& xName,
+            const word& yName
+        );
 
         //- Construct from file
         lookupTable2D
@@ -157,10 +193,9 @@ public:
             const word& mod,
             const word& xMod,
             const word& yMod,
-            const scalar& xMin,
-            const scalar& dx,
-            const scalar& yMin,
-            const scalar& dy
+            const scalarField& x,
+            const scalarField& y,
+            const bool modified
         );
 
 
@@ -168,8 +203,127 @@ public:
     //- Destructor
     virtual ~lookupTable2D();
 
+    //- Access to data
+
+        //- Return name of modifier
+        const word& modType() const
+        {
+            return modType_;
+        }
+
+        //- Return name of x modifier
+        const word& modXType() const
+        {
+            return modXType_;
+        }
+
+        //- Return name of y modifier
+        const word& modYType() const
+        {
+            return modYType_;
+        }
+
+        //- Modify by modType
+        scalar mod(const scalar& f) const
+        {
+            return modFunc_(f);
+        }
+
+        //- Modify by invModType
+        scalar invMod(const scalar& f) const
+        {
+            return invModFunc_(f);
+        }
+
+        //- Modify by modXType
+        scalar modX(const scalar& f) const
+        {
+            return modXFunc_(f);
+        }
+
+        //- Modify by invModXType
+        scalar invModX(const scalar& f) const
+        {
+            return modXFunc_(f);
+        }
+
+        //- Modify by modYType
+        scalar modY(const scalar& f) const
+        {
+            return modYFunc_(f);
+        }
+
+        //- Modify by invModYType
+        scalar invModY(const scalar& f) const
+        {
+            return modYFunc_(f);
+        }
+
+        //- Const access to real x values
+        const scalarField& x() const
+        {
+            return x_;
+        }
+
+        //- Non-const access to real x values
+        scalarField& x()
+        {
+            return x_;
+        }
+
+        //- Const access to real y values
+        const scalarField& y() const
+        {
+            return y_;
+        }
+
+        //- Non-const access to real y values
+        scalarField& y()
+        {
+            return y_;
+        }
+
+        //- Const access to modified x values
+        const scalarField& xMod() const
+        {
+            return xMod_;
+        }
+
+        //- Non-const access to modified x values
+        scalarField& xMod()
+        {
+            return xMod_;
+        }
+
+        //- Const access to modified y values
+        const scalarField& yMod() const
+        {
+            return yMod_;
+        }
+
+        //- Non-const access to modified y values
+        scalarField& yMod()
+        {
+            return yMod_;
+        }
+
+        //- Const access to modified data values
+        const Field<scalarField>& data() const
+        {
+            return data_;
+        }
+
+        //- Non-const access to modified data values
+        Field<scalarField>& data()
+        {
+            return data_;
+        }
+
 
     // Member Functions
+
+        //- Return real data values
+        tmp<Field<scalarField>> realData() const;
 
         //- Lookup value
         scalar lookup(const scalar& x, const scalar& y) const;

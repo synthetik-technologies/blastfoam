@@ -186,6 +186,10 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
 
     if (!refCast<const fvMesh>(nbrMesh).foundObject<volScalarField>(TnbrName_))
     {
+        valueFraction() = Zero;
+        refValue() = patchInternalField();
+        refGrad() = Zero;
+        mixedFvPatchScalarField::updateCoeffs();
         return;
     }
     const fvPatchScalarField& nbrTp =
@@ -237,7 +241,6 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     }
 
     valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
-
     refValue() = TcNbr;
     refGrad() = (qr + qrNbr)/K;
 
