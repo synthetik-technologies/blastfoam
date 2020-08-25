@@ -35,6 +35,7 @@ forAll(fluidRegions, i)
 {
     needRemap = needRemap ||fluidRegions[i].update();
 }
+reduce(needRemap, orOp<bool>());
 
 // Clear mapped boundaries if one region has been balanced
 // Balanced meshes have already had their maps cleared
