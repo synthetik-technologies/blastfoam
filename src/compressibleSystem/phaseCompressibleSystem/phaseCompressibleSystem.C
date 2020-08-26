@@ -273,12 +273,12 @@ void Foam::phaseCompressibleSystem::solve
     this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
     this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
 
-
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU
     (
         fvc::div(rhoUPhi_) - g_*rho_
     );
+
     volScalarField deltaRhoE
     (
         fvc::div(rhoEPhi_)
@@ -311,6 +311,9 @@ void Foam::phaseCompressibleSystem::postUpdate()
         radiation_->correct();
 
         calcAlphaAndRho();
+        U_ = rhoU_/rho_;
+        U_.correctBoundaryConditions();
+
         e() = rhoE_/rho_ - 0.5*magSqr(U_);
         e().correctBoundaryConditions();
         rhoE_ =

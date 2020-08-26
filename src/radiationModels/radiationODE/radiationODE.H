@@ -95,7 +95,7 @@ protected:
         scalarField dqdt_;
 
         //- Stored time step
-        scalarField deltaT_;
+        volScalarField::Internal deltaT_;
 
         //- Current cell
         label celli_ = 0;

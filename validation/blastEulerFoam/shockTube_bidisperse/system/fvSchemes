@@ -51,13 +51,13 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    "reconstruct\(alpha.*\)"  Minmod;
-    "reconstruct\(rho.*\)"    Minmod;
-    "reconstruct\(U.*\)"      MinmodV;
-    "reconstruct\(e.*\)"      Minmod;
-    "reconstruct\(p.*\)"      Minmod;
-    "reconstruct\(speedOfSound.*\)"      Minmod;
-    "reconstruct\(Theta.*\)"  Minmod;
+    reconstruct(alpha)  Minmod;
+    reconstruct(rho)    Minmod;
+    reconstruct(U)      MinmodV;
+    reconstruct(e)      Minmod;
+    reconstruct(p)      Minmod;
+    reconstruct(speedOfSound) Minmod;
+    reconstruct(Theta)  Minmod;
 }
 
 snGradSchemes

@@ -18,7 +18,6 @@ Several validation and tutorial cases are included in the repository, and are do
 
 
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
-#### The May 13th blastFoam workshop is Sold Out! 
 
 Thank you to everyone who attended! 
 
@@ -29,8 +28,14 @@ A recording of the workshop is also available on YouTube: [blastFoam May 13, 202
 The slides from the workshop have been added to the repository: [blastFoam May Workshop Slides](media/Synthetik-Applied-Technologies-blastFoam-Workshop-May-Final-20200513.pdf)
 
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
-#### The July 13th workshop is Sold Out!
 
+Thank you to everyone who attended! 
+
+A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4). 
+
+### blastFoam workshop | Date: September 15, 2020 | Location: Virtual/Online | Cost: Free
+
+Book places here: [blastFoam Workshop September 15, 2020](https://www.eventbrite.com/e/blastfoam-workshop-september-15-2020-tickets-105146309442)
 
 
 ## Installation

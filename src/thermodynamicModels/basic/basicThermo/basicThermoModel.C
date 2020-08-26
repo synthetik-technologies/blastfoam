@@ -288,7 +288,8 @@ void Foam::basicThermoModel::correct()
 {
     if (master_)
     {
-        T_ = calcT();
+        this->T_ = this->calcT();
+        this->T_.correctBoundaryConditions();
     }
 }
 

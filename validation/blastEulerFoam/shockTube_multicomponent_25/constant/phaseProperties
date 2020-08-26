@@ -77,7 +77,7 @@ gas
         thermoType
         {
             transport   const;
-            thermo      hConst;
+            thermo      eConst;
             equationOfState idealGas;
         }
         equationOfState
@@ -96,6 +96,7 @@ gas
         thermodynamics
         {
             Cp          5190;
+            Cv          3115.6;
             Hf          0;
         }
     }
@@ -105,7 +106,7 @@ gas
         thermoType
         {
             transport   const;
-            thermo      hConst;
+            thermo      eConst;
             equationOfState idealGas;
         }
         equationOfState
@@ -124,6 +125,7 @@ gas
         thermodynamics
         {
             Cp          1040;
+            Cv          743;
             Hf          0;
         }
     }

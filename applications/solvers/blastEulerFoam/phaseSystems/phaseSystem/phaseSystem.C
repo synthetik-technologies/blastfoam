@@ -378,6 +378,18 @@ void Foam::phaseSystem::calcRho()
 }
 
 
+void Foam::phaseSystem::calcT()
+{
+    const label nPhases = phaseModels_.size();
+
+    T_ = phaseModels_[0]*phaseModels_[0].T();
+    for (label phasei = 1; phasei < nPhases; ++ phasei)
+    {
+        T_ += phaseModels_[phasei]*phaseModels_[phasei].T();
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::phaseSystem::phaseSystem
@@ -439,6 +451,20 @@ Foam::phaseSystem::phaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh
+    ),
+
+    T_
+    (
+        IOobject
+        (
+            "T",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar("0", dimTemperature, 0.0)
     ),
 
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
@@ -510,6 +536,7 @@ Foam::phaseSystem::phaseSystem
     }
 
     calcRho();
+    calcT();
     U_ = interfacialVelocity_->Ui();
     p_ = interfacialPressure_->Pi();
 }
@@ -548,6 +575,7 @@ void Foam::phaseSystem::decode()
     }
 
     calcRho();
+    calcT();
     U_ = interfacialVelocity_->Ui();
     p_ = interfacialPressure_->Pi();
 }

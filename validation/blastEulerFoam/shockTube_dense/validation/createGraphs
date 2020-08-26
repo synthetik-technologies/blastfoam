@@ -1,0 +1,124 @@
+#!/bin/bash
+#
+createEpsP()
+{
+title="blastFoam_dense_validation_p"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Phasic pressure [atm]"
+#     set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.06]
+    plot    "$1" using 1:2 title 'Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'black',\
+            "$2" using 1:((1.0 - \$3)*\$2/101298) title 'blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'black'
+EOF
+}
+
+createEpsRho()
+{
+title="blastFoam_dense_validation_rho"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Phasic density [kg/m^3]"
+#     set grid
+    set key left top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.06]
+    plot    "$1" using 1:2 title '{/Symbol a}{/Symbol r}_p - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'red',\
+            "$2" using 1:2 title '{/Symbol a}{/Symbol r}_g - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'green',\
+            "$3" using 1:((\$3*1470)) title '{/Symbol a}{/Symbol r}_p - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'red',\
+            "$3" using 1:((1-\$3)*\$4) title '{/Symbol a}{/Symbol r}_g - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'green'
+EOF
+}
+createEpsT()
+{
+title="blastFoam_dense_validation_T"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "Temperature [K]"
+#     set grid
+    set key left top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.06]
+    set yrange [270:310]
+    plot    "$1" using 1:2 title 'T_p - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'red',\
+            "$2" using 1:2 title 'T_g - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'green',\
+            "$3" using 1:6 title 'T_p - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'red',\
+            "$3" using 1:7 title 'T_g - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'green'
+EOF
+}
+createEpsU()
+{
+title="blastFoam_dense_validation_U"
+    gnuplot<<EOF
+    set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
+        dl 8.0
+    set output "$title.eps"
+    set xlabel "X-Position (m)"
+    set ylabel "X-Velocity [m/s]"
+#     set grid
+    set key right top
+    set size 2,2
+    set autoscale
+    set xrange [0:0.06]
+    set yrange [0:100]
+    plot    "$1" using 1:2 title 'U_p - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'green',\
+            "$2" using 1:2 title 'U_g - Houim Oran (2016)'\
+                with points linewidth 8 linecolor rgb 'red',\
+            "$3" using 1:2 title 'U_p - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'green',\
+            "$3" using 1:5 title 'U_g - blastFoam'\
+                with lines lt 1 linewidth 2 linecolor rgb 'red'
+EOF
+}
+
+# test if gnuplot exists on the system
+if ! which gnuplot > /dev/null 2>&1
+then
+    echo "gnuplot not found - skipping graph creation" >&2
+    exit 1
+fi
+
+# paths to data
+VALIDATIONDATAROOT=./validationData
+
+pVal="$VALIDATIONDATAROOT/p_g.csv"
+rhogVal="$VALIDATIONDATAROOT/rho_g.csv"
+rhopVal="$VALIDATIONDATAROOT/rho_p.csv"
+ugVal="$VALIDATIONDATAROOT/U_g.csv"
+upVal="$VALIDATIONDATAROOT/U_p.csv"
+TgVal="$VALIDATIONDATAROOT/T_g.csv"
+TpVal="$VALIDATIONDATAROOT/T_p.csv"
+blastFOAM="../postProcessing/sampleDict/*/Centerline_p*"
+blastFOAMU="../postProcessing/sampleDict/*/Centerline_U*"
+
+createEpsP $pVal $blastFOAM
+createEpsRho $rhopVal $rhogVal $blastFOAM
+createEpsT $TpVal $TgVal $blastFOAM
+createEpsU $upVal $ugVal $blastFOAMU
+
+echo Done

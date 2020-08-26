@@ -586,19 +586,19 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::TRhoEi
     const label celli
 ) const
 {
+    const scalar& x = this->xi(celli);
+    if (x < small)
+    {
+        return Thermo1::TRhoE(T, this->rho_[celli], e);
+    }
+    else if ((1.0 - x) < small)
+    {
+        return Thermo2::TRhoE(T, this->rho_[celli], e);
+    }
+
     return
-        Thermo1::TRhoE
-        (
-            this->T_[celli],
-            this->rho_[celli],
-            this->e_[celli]
-        )*this->xi(celli)
-      + Thermo2::TRhoE
-        (
-            this->T_[celli],
-            this->rho_[celli],
-            this->e_[celli]
-        )*(1.0 - this->xi(celli));
+        Thermo2::TRhoE(T, this->rho_[celli], e)*x
+      + Thermo1::TRhoE(T, this->rho_[celli], e)*(1.0 - x);
 }
 
 
@@ -714,7 +714,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W() const
         }
         else
         {
-            psi[celli] = Thermo1::W()*x + Thermo2::W()*(1.0 - x);
+            psi[celli] = Thermo2::W()*x + Thermo1::W()*(1.0 - x);
         }
     }
 
@@ -738,7 +738,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W() const
             }
             else
             {
-                pPsi[facei] = Thermo1::W()*x + Thermo2::W()*(1.0 - x);
+                pPsi[facei] = Thermo2::W()*x + Thermo1::W()*(1.0 - x);
             }
         }
     }
@@ -770,7 +770,7 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::W(const label patchi) c
         }
         else
         {
-            psi[facei] =Thermo1::W()*x[facei] + Thermo2::W()*(1.0 - x[facei]);
+            psi[facei] =Thermo2::W()*x[facei] + Thermo1::W()*(1.0 - x[facei]);
         }
     }
 
@@ -782,7 +782,7 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Wi(const label celli) const
 {
-    return this->xi(celli)*Thermo1::W() + (1.0 - this->xi(celli))*Thermo2::W();
+    return this->xi(celli)*Thermo2::W() + (1.0 - this->xi(celli))*Thermo1::W();
 }
 
 
@@ -818,6 +818,28 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Gamma(const label patch
     );
 }
 
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Gammai
+(
+    const label celli
+) const
+{
+    return
+        Thermo2::Gamma
+        (
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
+        )*this->xi(celli)
+      + Thermo1::Gamma
+        (
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
+        )*(1.0 - this->xi(celli));
+}
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
@@ -879,13 +901,13 @@ Foam::scalar
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Cpi(const label celli) const
 {
     return
-        Thermo1::Cp
+        Thermo2::Cp
         (
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
         )*this->xi(celli)
-      + Thermo2::Cp
+      + Thermo1::Cp
         (
             this->rho_[celli],
             this->e_[celli],
@@ -954,13 +976,13 @@ Foam::scalar
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Cvi(const label celli) const
 {
     return
-        Thermo1::Cv
+        Thermo2::Cv
         (
             this->rho_[celli],
             this->e_[celli],
             this->T_[celli]
         )*this->xi(celli)
-      + Thermo2::Cv
+      + Thermo1::Cv
         (
             this->rho_[celli],
             this->e_[celli],

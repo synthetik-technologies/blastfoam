@@ -11,6 +11,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I../interfacialModels/lnInclude \
     -I../kineticTheoryModels/lnInclude
 
@@ -20,4 +21,5 @@ LIB_LIBS = \
     -lcompressibleTurbulenceModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -ltimeIntegrators
+    -ltimeIntegrators \
+    -lblastFiniteVolume

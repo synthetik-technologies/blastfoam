@@ -183,8 +183,11 @@ public:
 //             const volScalarField& T
 //         ) const;
 
+        //- Calculate thermodynamic pressure for a patch
+        virtual tmp<scalarField> calcP(const label patchi) const;
+
         //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> calcP() const;
+        virtual scalar calcPi(const label celli) const;
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce() const;
@@ -251,6 +254,9 @@ public:
 
         //- Mie Gruniesen coefficient for a patch
         virtual tmp<scalarField> Gamma(const label patchi) const;
+
+        //- Mie Gruniesen coefficient for a cell
+        virtual scalar Gammai(const label celli) const;
 
         //- Heat capacity at constant pressure of mixture [J/kg/K]
         virtual tmp<volScalarField> Cp() const;

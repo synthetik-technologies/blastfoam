@@ -155,6 +155,9 @@ protected:
         //- Mixture pressure
         volScalarField p_;
 
+        //- Mixture temperature
+        volScalarField T_;
+
         //- Phase models
         phaseModelList phaseModels_;
 
@@ -262,6 +265,9 @@ protected:
 
         //- Calculate the mixture density
         void calcRho();
+
+        //- Calculate the mixture temperature
+        void calcT();
 
 
 public:

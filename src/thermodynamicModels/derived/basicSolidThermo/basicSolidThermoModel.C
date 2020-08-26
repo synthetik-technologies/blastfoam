@@ -84,6 +84,7 @@ void Foam::basicSolidThermoModel<Thermo>::correct()
     if (this->master_)
     {
         this->T_ = this->calcT();
+        this->T_.correctBoundaryConditions();
     }
 
     this->Thermo::alpha_ = Thermo::volScalarFieldProperty

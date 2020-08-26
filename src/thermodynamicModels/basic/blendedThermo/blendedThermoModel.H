@@ -264,6 +264,9 @@ public:
         //- Mie Gruniesen coefficient for a patch
         virtual tmp<scalarField> Gamma(const label patchi) const;
 
+        //- Mie Gruniesen coefficient for a cell
+        virtual scalar Gammai(const label celli) const;
+
         //- Heat capacity at constant pressure of mixture [J/kg/K]
         virtual tmp<volScalarField> Cp() const;
 

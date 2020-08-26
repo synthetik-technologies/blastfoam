@@ -52,16 +52,15 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default cubic;
-    "reconstruct\(alpha.*\)"  vanAlbada;
-    "reconstruct\(Y.*\)"  vanAlbada;
-    "reconstruct\(rho.*\)"  vanAlbada;
-    "reconstruct\(U.*\)"  vanAlbadaV;
-    "reconstruct\(e.*\)"  vanAlbada;
-    "reconstruct\(p.*\)"  vanAlbada;
-    "reconstruct\(speedOfSound.*\)"  vanAlbada;
-    "reconstruct\(Theta.*\)"  vanAlbada;
-    "reconstruct\(lambda.*\)"  vanAlbada;
+    default             cubic;
+    reconstruct(alpha)  vanAlbada;
+    reconstruct(rho)    vanAlbada;
+    reconstruct(U)      vanAlbadaV;
+    reconstruct(e)      vanAlbada;
+    reconstruct(p)      vanAlbada;
+    reconstruct(speedOfSound) vanAlbada;
+    "reconstruct\(Y.*\)" vanAlbada;
+    reconstruct(Theta)  vanAlbada;
 }
 
 snGradSchemes

@@ -115,8 +115,11 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Calculate thermodynamic pressure for a patch
+        virtual tmp<scalarField> calcP(const label patchi) const;
+
         //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> calcP() const;
+        virtual scalar calcPi(const label celli) const;
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce() const;
