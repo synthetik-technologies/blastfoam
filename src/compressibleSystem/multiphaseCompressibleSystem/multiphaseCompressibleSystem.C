@@ -25,6 +25,7 @@ License
 
 #include "multiphaseCompressibleSystem.H"
 #include "addToRunTimeSelectionTable.H"
+#include "SortableList.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -339,23 +340,31 @@ Foam::multiphaseCompressibleSystem::ESource() const
 void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
 {
     rho_ = dimensionedScalar("0", dimDensity, 0.0);
-    volScalarField sumAlpha
-    (
-        IOobject
-        (
-            "sumAlpha",
-            rho_.time().timeName(),
-            rho_.mesh()
-        ),
-        rho_.mesh(),
-        0.0
-    );
-    for (label phasei = 0; phasei < alphas_.size() - 1; phasei++)
+
+    // find largest volume fraction and set to 1-sum
+    forAll(rho_, celli)
     {
-        alphas_[phasei].max(0);
-        alphas_[phasei].min(1);
+        SortableList<scalar> alphas(alphas_.size());
+        forAll(alphas_, phasei)
+        {
+            alphas_[phasei][celli] = max(min(alphas_[phasei][celli], 1.0), 0.0);
+            alphas[phasei] = alphas_[phasei][celli];
+        }
+        alphas.reverseSort();
+
+        const label fixedPhase = alphas.indices()[0];
+
+        scalar sumAlpha = 0.0;
+        for (label phasei = 1; phasei < alphas.size(); phasei++)
+        {
+            sumAlpha += alphas[phasei];
+        }
+        alphas_[fixedPhase][celli] = 1.0 - sumAlpha;
+    }
+
+    forAll(alphas_, phasei)
+    {
         alphas_[phasei].correctBoundaryConditions();
-        sumAlpha += alphas_[phasei];
 
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
@@ -368,17 +377,6 @@ void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
 
         rho_ += alphaRhos_[phasei];
     }
-    label phasei = alphas_.size() - 1;
-    alphas_[phasei] = 1.0 - sumAlpha;
-    alphas_[phasei].max(0.0);
-    alphas_[phasei].min(1.0);
-
-    alphaRhos_[phasei].max(0.0);
-    rhos_[phasei] = alphaRhos_[phasei]
-           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
-    rhos_[phasei].correctBoundaryConditions();
-    alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
-    rho_ += alphaRhos_[phasei];
 }
 
 void Foam::multiphaseCompressibleSystem::decode()
