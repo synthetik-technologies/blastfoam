@@ -64,6 +64,8 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         //- Update error and refine mesh
+        mesh.updateError();
+        mesh.updateErrorBoundaries();
         mesh.update();
 
         //- Integrate the hyperbolic fluxes

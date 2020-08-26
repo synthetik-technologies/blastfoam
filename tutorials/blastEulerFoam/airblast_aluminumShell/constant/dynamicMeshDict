@@ -18,7 +18,7 @@ dynamicFvMesh   adaptiveFvMesh;
 
 // How often to refine
 refineInterval  2;
-beginUnrefine 1e-6;
+beginUnrefine 1e-5;
 
 // Field to be refinement on
 errorEstimator  multicomponent;
@@ -40,17 +40,17 @@ volumeFraction
     deltaField alpha.aluminum;
 
     // Refine field in between lower..upper
-    lowerRefineLevel 0.5;
+    lowerRefineLevel 0.001;
 
     // If value < unrefineLevel unrefine
-    unrefineLevel   0.5;
+    unrefineLevel   0.001;
 }
 
 // Have slower than 2:1 refinement
 nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   2;
+maxRefinement   3;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

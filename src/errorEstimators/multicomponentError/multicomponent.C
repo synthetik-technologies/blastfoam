@@ -100,7 +100,7 @@ void Foam::errorEstimators::multicomponent::update()
     forAll(errors_, i)
     {
         errors_[i].update();
-        error = max(error, error_);
+        error = max(error,  errors_[i].error());
     }
     error_ = error;
 }
