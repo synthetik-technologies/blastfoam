@@ -177,9 +177,10 @@ void Foam::twoPhaseFluidThermo::correct()
 {
     if (master_)
     {
-        T_ = calcT();
-        p_ = calcP();
-        p_.max(small);
+        this->T_ = this->calcT();
+        this->T_.correctBoundaryConditions();
+        this->p_ = fluidThermoModel::calcP();
+        this->p_.correctBoundaryConditions();
     }
 
     thermo1_->correct();
@@ -280,15 +281,51 @@ Foam::scalar Foam::twoPhaseFluidThermo::TRhoEi
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::calcP() const
+Foam::tmp<Foam::scalarField>
+Foam::twoPhaseFluidThermo::calcP(const label patchi) const
 {
-    volScalarField alphaXi1(volumeFraction_/(thermo1_->Gamma() - 1.0));
-    volScalarField alphaXi2((1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0));
+    scalarField alphaXi1
+    (
+        volumeFraction_.boundaryField()[patchi]/(thermo1_->Gamma(patchi) - 1.0)
+    );
+    scalarField alphaXi2
+    (
+        (1.0 - volumeFraction_.boundaryField()[patchi])
+       /(thermo2_->Gamma(patchi) - 1.0)
+    );
 
     return
         (
-            alphaXi1*thermo1_->calcP()
-          + alphaXi2*thermo2_->calcP()
+            alphaXi1*thermo1_->calcP(patchi)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->calcP(patchi)*pos(alphaXi2 - small)
+        )/(alphaXi1 + alphaXi2);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidThermo::calcPi(const label celli) const
+{
+    scalar alphaXi1
+    (
+        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+    );
+    scalar alphaXi2
+    (
+        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+    );
+
+    if (alphaXi1 < small)
+    {
+        return thermo2_->calcPi(celli);
+    }
+    if (alphaXi2 < small)
+    {
+        return thermo1_->calcPi(celli);
+    }
+
+    return
+        (
+            alphaXi1*thermo1_->calcPi(celli)
+          + alphaXi2*thermo2_->calcPi(celli)
         )/(alphaXi1 + alphaXi2);
 }
 
@@ -379,6 +416,14 @@ Foam::twoPhaseFluidThermo::Gamma(const label patchi) const
             volumeFraction_.boundaryField()[patchi]/thermo1_->Gamma(patchi)
           + (1.0 - volumeFraction_.boundaryField()[patchi])/thermo2_->Gamma(patchi)
         );
+}
+
+
+Foam::scalar Foam::twoPhaseFluidThermo::Gammai(const label celli) const
+{
+    return
+        volumeFraction_[celli]*thermo1_->Gammai(celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->Gammai(celli);
 }
 
 
