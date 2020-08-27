@@ -114,22 +114,18 @@ void Foam::granularPhaseModel::solve
     const scalarList& bi
 )
 {
-    volScalarField alphaRhoOld(alphaRho_);
     volVectorField alphaRhoUOld(alphaRhoU_);
     volScalarField alphaRhoEOld(alphaRhoE_);
     volScalarField alphaRhoPTEOld(alphaRhoPTE_);
 
-    this->storeOld(stepi, alphaRhoOld, alphaRhoOld_);
     this->storeOld(stepi, alphaRhoUOld, alphaRhoUOld_);
     this->storeOld(stepi, alphaRhoEOld, alphaRhoEOld_);
     this->storeOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_);
 
-    this->blendOld(stepi, alphaRhoOld, alphaRhoOld_, ai);
     this->blendOld(stepi, alphaRhoUOld, alphaRhoUOld_, ai);
     this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
     this->blendOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_, ai);
 
-    volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     volVectorField deltaAlphaRhoU(fvc::div(alphaRhoUPhi_));
     const volScalarField& alpha = *this;
     forAll(fluid_.phases(), phasei)
@@ -146,11 +142,9 @@ void Foam::granularPhaseModel::solve
       + Ps_*fvc::div(phi_)
     );
 
-    this->storeDelta(stepi, deltaAlphaRho, deltaAlphaRho_);
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
 
-    this->blendDelta(stepi, deltaAlphaRho, deltaAlphaRho_, bi);
     this->blendDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_, bi);
     this->blendDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_, bi);
 
@@ -158,7 +152,8 @@ void Foam::granularPhaseModel::solve
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
 
-    alphaRho_ = alphaRhoOld - dT*(deltaAlphaRho);
+    phaseModel::solveAlphaRho(stepi, ai, bi);
+
     alphaRho_.max(0);
     alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
     alphaRhoPTE_ = alphaRhoPTEOld - dT*(deltaAlphaRhoPTE);

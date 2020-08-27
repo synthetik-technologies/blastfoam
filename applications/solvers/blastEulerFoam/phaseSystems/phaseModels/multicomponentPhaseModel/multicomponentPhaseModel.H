@@ -72,9 +72,6 @@ protected:
         //- Density field
         volScalarField rho_;
 
-        //- Volume fraction flux
-        surfaceScalarField alphaPhi_;
-
         //- Equation of state for phases
         PtrList<fluidThermoModel> thermos_;
 
@@ -84,18 +81,13 @@ protected:
         //- Residual alpha
         dimensionedScalar residualAlpha_;
 
-        //- Volume weighted density of phases
-        PtrList<volScalarField> alphaRhoYs_;
-
         //- Mass fluxes
         PtrList<surfaceScalarField> alphaRhoYPhis_;
 
         //- Old values for ode solver
-        PtrList<volScalarField> alphaOld_;
-        PtrList<PtrList<volScalarField>> alphaRhoYsOld_;
+        PtrList<PtrList<volScalarField>> YsOld_;
 
         //- Stored delta fields
-        PtrList<volScalarField> deltaAlpha_;
         PtrList<PtrList<volScalarField>> deltaAlphaRhoYs_;
 
         //- Flux scheme
@@ -137,8 +129,6 @@ public:
 
 
         // integrationSystem functions
-
-             virtual void solveAlpha(const bool s);
 
             //- Decode primative variables
             virtual void decode();
@@ -186,12 +176,6 @@ public:
 
         //- Return non-const access to the volume fraction gradient
         virtual tmp<volVectorField> gradAlpha() const;
-
-        //- Constant access to the volume fraction flux
-        virtual tmp<surfaceScalarField> alphaPhi() const
-        {
-            return alphaPhi_;
-        }
 
         //- Return the laminar viscosity
         virtual tmp<volScalarField> nu() const;

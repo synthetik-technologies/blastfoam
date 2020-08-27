@@ -36,6 +36,7 @@ License
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
 
+#include "SortableList.H"
 #include "dragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -434,7 +435,7 @@ Foam::phaseSystem::phaseSystem
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::AUTO_WRITE
+            IOobject::NO_WRITE
         ),
         mesh,
         dimensionedVector("0", dimVelocity, Zero)
@@ -503,17 +504,42 @@ Foam::phaseSystem::phaseSystem
         dragOde_.set(new dragOde(*this, dragModels_));
     }
 
-    phaseModels_[phaseModels_.size() - 1].solveAlpha(false);
+    if (phaseModels_.size() == 2)
+    {
+        phaseModels_.last().solveAlpha(false);
+    }
+    else
+    {
+        forAll(phaseModels_, phasei)
+        {
+            phaseModels_[phasei].solveAlpha(true);
+        }
+    }
+
     volScalarField sumAlpha(phaseModels_[0]);
-    label nPhases = phaseModels_.size();
-    for (label phasei = 1; phasei < nPhases - 1; phasei++)
+    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
     {
         sumAlpha += phaseModels_[phasei];
     }
-    sumAlpha.min(1.0);
-    volScalarField& alpha(phaseModels_[nPhases - 1]);
-    alpha = 1.0 - sumAlpha;
-    alpha.correctBoundaryConditions();
+
+    if
+    (
+        max(phaseModels_.last()).value() == 0
+     && min(phaseModels_.last()).value() == 0
+    )
+    {
+        refCast<volScalarField>(phaseModels_.last()) = 1.0 - sumAlpha;
+    }
+    else if (max(sumAlpha).value() != 1 && min(sumAlpha).value() != 1)
+    {
+        FatalErrorInFunction
+            << "Initial volume fractions do not sum to one." << nl
+            << "min(sum(alphas)) = " << min(sumAlpha).value()
+            << ", max(sum(alphas)) = " << max(sumAlpha).value()
+            << endl
+            << abort(FatalError);
+    }
+
     encode();
 
     // Check if a granular phase is used and store at pointer if it is
@@ -552,22 +578,53 @@ Foam::phaseSystem::~phaseSystem()
 
 void Foam::phaseSystem::decode()
 {
-    phaseModels_[0].decode();
-    volScalarField sumAlpha(phaseModels_[0]);
-    label nPhases = phaseModels_.size();
-    for (label phasei = 1; phasei < nPhases - 1; phasei++)
+    if (phaseModels_.size() == 2)
     {
-        phaseModels_[phasei].decode();
-        sumAlpha += phaseModels_[phasei];
+        volScalarField& alpha1(phaseModels_[0]);
+        volScalarField& alpha2(phaseModels_[1]);
+        phaseModels_[0].decode();
+        alpha2 = 1.0 - alpha1;
+        alpha2.correctBoundaryConditions();
+        phaseModels_[1].decode();
     }
-    sumAlpha.min(1.0);
-    volScalarField& alpha(phaseModels_[nPhases - 1]);
-    alpha = 1.0 - sumAlpha;
-    alpha.max(0);
-    alpha.min(1.0);
-    alpha.correctBoundaryConditions();
-    phaseModels_[nPhases - 1].decode();
+    else
+    {
+        // find largest volume fraction and set to 1-sum
+        forAll(rho_, celli)
+        {
+            SortableList<scalar> alphas(phaseModels_.size());
+            forAll(phaseModels_, phasei)
+            {
+                phaseModels_[phasei][celli] =
+                    Foam::max
+                    (
+                        Foam::min
+                        (
+                            phaseModels_[phasei][celli],
+                            1.0
+                        ),
+                        0.0
+                    );
+                alphas[phasei] = phaseModels_[phasei][celli];
+            }
+            alphas.reverseSort();
 
+            const label fixedPhase = alphas.indices()[0];
+
+            scalar sumAlpha = 0.0;
+            for (label phasei = 1; phasei < alphas.size(); phasei++)
+            {
+                sumAlpha += alphas[phasei];
+            }
+            phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
+        }
+
+        forAll(phaseModels_, phasei)
+        {
+            phaseModels_[phasei].correctBoundaryConditions();
+            phaseModels_[phasei].decode();
+        }
+    }
 
     if (kineticTheoryPtr_ != NULL)
     {
@@ -618,6 +675,21 @@ void Foam::phaseSystem::solve
     {
         phaseModels_[phasei].solve(stepi, ai, bi);
     }
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::phaseSystem::UMix() const
+{
+    tmp<volVectorField> rhoU
+    (
+        phaseModels_[0].alphaRho()*phaseModels_[0].U()
+    );
+    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
+    {
+        rhoU.ref() +=
+            phaseModels_[phasei].alphaRho()*phaseModels_[phasei].U();
+    }
+    return rhoU/rho_;
 }
 
 

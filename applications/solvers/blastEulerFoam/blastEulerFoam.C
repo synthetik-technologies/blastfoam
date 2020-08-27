@@ -79,6 +79,11 @@ int main(int argc, char *argv[])
             << nl << endl;
 
         runTime.write();
+
+        if (runTime.outputTime())
+        {
+            volVectorField("U", fluid.UMix()).write();
+        }
     }
 
     Info<< "End\n" << endl;

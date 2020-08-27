@@ -315,17 +315,20 @@ public:
             return rho_;
         }
 
-        //- Return the mixture velocity
+        //- Return the interfacial velocity
         const volVectorField& U() const
         {
             return U_;
         }
 
-        //- Return the mixture pressure
+        //- Return the interfacial pressure
         const volScalarField& p() const
         {
             return p_;
         }
+
+        //- Return the mixture velocity
+        tmp<volVectorField> UMix() const;
 
         //- Calculate and return the total volumetric flux
         tmp<surfaceScalarField> phi() const;

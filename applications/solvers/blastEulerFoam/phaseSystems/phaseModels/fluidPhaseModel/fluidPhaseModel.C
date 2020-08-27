@@ -128,29 +128,6 @@ Foam::tmp<Foam::volScalarField> Foam::fluidPhaseModel::ESource() const
 }
 
 
-void Foam::fluidPhaseModel::solveAlpha(const bool s)
-{
-    phaseModel::solveAlpha(s);
-    if (alphaPhi_.valid() || !s)
-    {
-        return;
-    }
-
-    alphaPhi_.set
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("alphaPhi", name_),
-                this->mesh().time().timeName(),
-                this->mesh()
-            ),
-            this->mesh(),
-            dimensionedScalar("0", phi_.dimensions(), 0.0)
-        )
-    );
-}
 void Foam::fluidPhaseModel::solve
 (
     const label stepi,
@@ -158,31 +135,13 @@ void Foam::fluidPhaseModel::solve
     const scalarList& bi
 )
 {
-    if (solveAlpha_)
-    {
-        volScalarField& alpha = *this;
-        volScalarField alphaOld(alpha);
-        this->storeOld(stepi, alphaOld, alphaOld_);
-        this->blendOld(stepi, alphaOld, alphaOld_, ai);
+    // Solve phase density transport to store old time values
+    phaseModel::solveAlphaRho(stepi, ai, bi);
 
-        volScalarField deltaAlpha
-        (
-            fvc::div(alphaPhi_()) - alpha*fvc::div(fluid_.phi())
-        );
-
-        this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
-        this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
-
-
-        dimensionedScalar dT = rho_.time().deltaT();
-
-        alpha = alphaOld - dT*(deltaAlpha);
-        alpha.max(0);
-        alpha.min(alphaMax_);
-        alpha.correctBoundaryConditions();
-    }
-
+    // Solve thermodynamic models (activation and afterburn)
     thermo_->solve(stepi, ai, bi);
+
+    // Solve momentum and energy transport
     phaseModel::solve(stepi, ai, bi);
 }
 
@@ -197,19 +156,15 @@ void Foam::fluidPhaseModel::postUpdate()
 void Foam::fluidPhaseModel::clearODEFields()
 {
     phaseModel::clearODEFields();
+    thermo_->clearODEFields();
     fluxScheme_->clear();
-    if (solveAlpha_)
-    {
-        this->clearOld(alphaOld_);
-        this->clearDelta(deltaAlpha_);
-    }
 }
 
 
 void Foam::fluidPhaseModel::update()
 {
     const volScalarField& alpha = *this;
-    if (solveAlpha_)
+    if (this->solveAlpha_)
     {
         fluxScheme_->update
         (
@@ -220,7 +175,7 @@ void Foam::fluidPhaseModel::update()
             p_,
             thermo_->speedOfSound()(),
             phi_,
-            alphaPhi_(),
+            this->alphaPhiPtr_(),
             alphaRhoPhi_,
             alphaRhoUPhi_,
             alphaRhoEPhi_
