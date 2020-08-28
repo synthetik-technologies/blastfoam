@@ -212,9 +212,9 @@ Foam::detonatingFluidThermo<Thermo>::calcP(const label patchi) const
                 &Thermo::thermoType1::p,
                 &Thermo::thermoType2::p,
                 patchi,
-                this->rho_,
-                this->e_,
-                this->T_
+                this->rho_.boundaryField()[patchi],
+                this->e_.boundaryField()[patchi],
+                this->T_.boundaryField()[patchi]
             ),
             small
         );
