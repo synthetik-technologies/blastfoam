@@ -199,17 +199,9 @@ void Foam::reactingCompressibleSystem::solve
     const scalarList& bi
 )
 {
-    const fvMesh& mesh(rho_.mesh());
     volScalarField rhoOld(rho_);
     volVectorField rhoUOld(rhoU_);
     volScalarField rhoEOld(rhoE_);
-    if (mesh.moving() && stepi == 1)
-    {
-        volScalarField::Internal v0Byv(mesh.Vsc0()/mesh.Vsc());
-        rhoOld.ref() *= v0Byv;
-        rhoUOld.ref() *= v0Byv;
-        rhoEOld.ref() *= v0Byv;
-    }
 
     //- Store old values
     this->storeOld(stepi, rhoOld, rhoOld_);
