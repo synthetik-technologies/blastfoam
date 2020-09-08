@@ -125,7 +125,7 @@ Foam::upwindMUSCLReconstructionScheme<Type>::interpolateNei() const
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
         if (patch.coupled())
         {
-            phiNei.boundaryFieldRef()[patchi] = pphi.patchInternalField();
+            phiNei.boundaryFieldRef()[patchi] = pphi.patchNeighbourField();
         }
         else
         {
