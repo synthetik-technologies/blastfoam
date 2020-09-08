@@ -18,8 +18,9 @@ dynamicFvMesh   adaptiveFvMesh;
 
 balance no;
 
-errorEstimator delta;      // Model used to estimate error
-deltaField D;
+errorEstimator scaledDelta;      // Model used to estimate error
+scaledDeltaField sigma;
+minValue 1000;
 
 // How often to refine
 refineInterval  3;
@@ -31,7 +32,7 @@ lowerRefineLevel 0.01;
 unrefineLevel   0.01;
 
 // Number of cells refined around high error cells
-nBufferLayers   2;
+nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;

@@ -62,7 +62,7 @@ Foam::errorEstimators::densityGradient::~densityGradient()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::densityGradient::update()
+void Foam::errorEstimators::densityGradient::update(const bool scale)
 {
     const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
 
@@ -154,7 +154,10 @@ void Foam::errorEstimators::densityGradient::update()
             }
         }
     }
-    normalize(error_);
+    if (scale)
+    {
+        normalize(error_);
+    }
 }
 
 // ************************************************************************* //

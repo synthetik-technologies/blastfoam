@@ -81,7 +81,7 @@ void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
 }
 
 
-void Foam::errorEstimators::multicomponent::update()
+void Foam::errorEstimators::multicomponent::update(const bool scale)
 {
     volScalarField error
     (
@@ -100,7 +100,7 @@ void Foam::errorEstimators::multicomponent::update()
 
     forAll(errors_, i)
     {
-        errors_[i].update();
+        errors_[i].update(scale);
         error = max(error,  errors_[i].error());
     }
     error_ = error;

@@ -57,6 +57,9 @@ class scaledDelta
         //- Field name
         const word fieldName_;
 
+        //- Minimum value to consider
+        const scalar minVal_;
+
 
 public:
 
@@ -74,7 +77,7 @@ public:
     // Member Functions
 
         //- Gamma function
-        virtual void update();
+        virtual void update(const bool scale = true);
 };
 
 

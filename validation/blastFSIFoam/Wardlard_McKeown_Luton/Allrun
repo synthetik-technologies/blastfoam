@@ -8,6 +8,9 @@ runApplication blockMesh
 
 runApplication splitMeshRegions -cellZones -overwrite
 
+foamDictionary constant/walls/polyMesh/boundary -entry entry0.walls_to_fluid.type -set mappedMovingWall
+foamDictionary constant/fluid/polyMesh/boundary -entry entry0.fluid_to_walls.type -set mappedMovingWall
+
 rm -rf constant/polyMesh
 
 runApplication decomposePar -allRegions

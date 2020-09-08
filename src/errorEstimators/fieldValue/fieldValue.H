@@ -73,7 +73,7 @@ public:
     // Member Functions
 
         //- Gamma function
-        virtual void update();
+        virtual void update(const bool scale = true);
 };
 
 

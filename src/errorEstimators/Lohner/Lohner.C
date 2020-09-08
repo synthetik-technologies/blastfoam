@@ -65,7 +65,7 @@ Foam::errorEstimators::Lohner::~Lohner()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::Lohner::update()
+void Foam::errorEstimators::Lohner::update(const bool scale)
 {
     const volScalarField& x = mesh_.lookupObject<volScalarField>(fieldName_);
     surfaceScalarField xf
@@ -144,7 +144,10 @@ void Foam::errorEstimators::Lohner::update()
             }
         }
     }
-    normalize(error_);
+    if (scale)
+    {
+        normalize(error_);
+    }
 }
 
 // ************************************************************************* //

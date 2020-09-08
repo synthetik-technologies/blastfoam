@@ -63,7 +63,7 @@ Foam::errorEstimators::delta::~delta()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::delta::update()
+void Foam::errorEstimators::delta::update(const bool scale)
 {
     volScalarField x
     (
@@ -117,7 +117,10 @@ void Foam::errorEstimators::delta::update()
             }
         }
     }
-    normalize(error_);
+    if (scale)
+    {
+        normalize(error_);
+    }
 }
 
 // ************************************************************************* //

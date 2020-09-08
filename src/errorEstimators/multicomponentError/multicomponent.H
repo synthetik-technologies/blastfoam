@@ -89,7 +89,7 @@ public:
     // Member Functions
 
         //- Gamma function
-        virtual void update();
+        virtual void update(const bool scale = true);
 
         //- Read level values
         virtual void read(const dictionary& dict);

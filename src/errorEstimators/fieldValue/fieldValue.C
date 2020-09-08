@@ -62,12 +62,15 @@ Foam::errorEstimators::fieldValue::~fieldValue()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::fieldValue::update()
+void Foam::errorEstimators::fieldValue::update(const bool scale)
 {
     volScalarField& errorCells(error_);
     this->getFieldValue(fieldName_, errorCells);
 
-    normalize(error_);
+    if (scale)
+    {
+        normalize(error_);
+    }
 }
 
 // ************************************************************************* //

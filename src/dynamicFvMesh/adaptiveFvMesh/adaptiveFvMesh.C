@@ -1861,6 +1861,11 @@ bool Foam::adaptiveFvMesh::update()
 
 void Foam::adaptiveFvMesh::updateError()
 {
+    if (this->time().outputTime() && errorEstimator::debug)
+    {
+        error_->update(false);
+        error_->error().write();
+    }
     //- Update error field
     error_->update();
 }

@@ -137,7 +137,7 @@ public:
     // Member Functions
 
         //- Update
-        virtual void update() = 0;
+        virtual void update(const bool scale = true) = 0;
 
         //- Return constant reference to error field
         const volScalarField& error() const

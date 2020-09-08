@@ -49,7 +49,8 @@ Foam::errorEstimators::scaledDelta::scaledDelta
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("scaledDeltaField"))
+    fieldName_(dict.lookup("scaledDeltaField")),
+    minVal_(dict.lookupOrDefault<scalar>("minValue", small))
 {
     this->read(dict);
 }
@@ -63,7 +64,7 @@ Foam::errorEstimators::scaledDelta::~scaledDelta()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::scaledDelta::update()
+void Foam::errorEstimators::scaledDelta::update(const bool scale)
 {
     volScalarField x
     (
@@ -76,6 +77,7 @@ void Foam::errorEstimators::scaledDelta::update()
         mesh_,
         0.0
     );
+    this->getFieldValue(fieldName_, x);
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -87,9 +89,12 @@ void Foam::errorEstimators::scaledDelta::update()
         label own = owner[facei];
         label nei = neighbour[facei];
 
-        scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
-        error_[own] = max(error_[own], eT);
-        error_[nei] = max(error_[nei], eT);
+        if (x[own] > minVal_ || x[nei] > minVal_)
+        {
+            scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
+            error_[own] = max(error_[own], eT);
+            error_[nei] = max(error_[nei], eT);
+        }
     }
 
     // Boundary faces
@@ -109,15 +114,22 @@ void Foam::errorEstimators::scaledDelta::update()
 
             forAll(faceCells, facei)
             {
-                scalar eT =
-                    mag(fp[facei] - fn[facei])
-                   /max(min(fp[facei], fn[facei]), small);
-                error_[faceCells[facei]]=
-                    max(error_[faceCells[facei]], eT);
+                if (fn[facei] > minVal_ || fp[facei] > minVal_)
+                {
+                    scalar eT =
+                        mag(fp[facei] - fn[facei])
+                       /max(min(fp[facei], fn[facei]), small);
+                    error_[faceCells[facei]]=
+                        max(error_[faceCells[facei]], eT);
+                }
             }
         }
     }
-    normalize(error_);
+
+    if (scale)
+    {
+        normalize(error_);
+    }
 }
 
 // ************************************************************************* //
