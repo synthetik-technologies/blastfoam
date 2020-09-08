@@ -53,20 +53,13 @@ laplacianSchemes
 interpolationSchemes
 {
     default cubic;
-    reconstruct(alpha.gas)  vanAlbada;
-    reconstruct(rho.gas)    vanAlbada;
-    reconstruct(U.gas)      vanAlbadaV;
-    reconstruct(e.gas)      vanAlbada;
-    reconstruct(p.gas)      vanAlbada;
-    reconstruct(speedOfSound.gas)      vanAlbada;
-
-    reconstruct(alpha.particles)  vanAlbada;
-    reconstruct(rho.particles)    vanAlbada;
-    reconstruct(U.particles)      vanAlbadaV;
-    reconstruct(e.particles)      vanAlbada;
-    reconstruct(p.particles)      vanAlbada;
-    reconstruct(speedOfSound.particles)      vanAlbada;
-    reconstruct(Theta.particles)  vanAlbada;
+    reconstruct(alpha)  quadraticMUSCL vanAlbada;
+    reconstruct(rho)    quadraticMUSCL vanAlbada;
+    reconstruct(U)      quadraticMUSCL vanAlbada;
+    reconstruct(e)      quadraticMUSCL vanAlbada;
+    reconstruct(p)      quadraticMUSCL vanAlbada;
+    reconstruct(speedOfSound) quadraticMUSCL vanAlbada;
+    reconstruct(Theta)  quadraticMUSCL vanAlbada;
 }
 
 snGradSchemes

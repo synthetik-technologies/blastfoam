@@ -206,7 +206,32 @@ Foam::phaseModel::~phaseModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::phaseModel::solve
+void Foam::phaseModel::solveAlpha(const bool s)
+{
+    solveAlpha_ = s;
+    if (alphaPhiPtr_.valid() || !s)
+    {
+        return;
+    }
+
+    alphaPhiPtr_.set
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                IOobject::groupName("alphaPhi", name_),
+                this->mesh().time().timeName(),
+                this->mesh()
+            ),
+            this->mesh(),
+            dimensionedScalar("0", phi_.dimensions(), 0.0)
+        )
+    );
+}
+
+
+void Foam::phaseModel::solveAlphaRho
 (
     const label stepi,
     const scalarList& ai,
@@ -214,18 +239,61 @@ void Foam::phaseModel::solve
 )
 {
     volScalarField alphaRhoOld(alphaRho_);
+    this->storeOld(stepi, alphaRhoOld, alphaRhoOld_);
+    this->blendOld(stepi, alphaRhoOld, alphaRhoOld_, ai);
+
+    volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
+
+    this->storeDelta(stepi, deltaAlphaRho, deltaAlphaRho_);
+    this->blendDelta(stepi, deltaAlphaRho, deltaAlphaRho_, bi);
+
+    alphaRho_.oldTime() = alphaRhoOld;
+    alphaRho_ = alphaRhoOld - this->mesh().time().deltaT()*deltaAlphaRho;
+    alphaRho_.max(0);
+}
+
+
+void Foam::phaseModel::solve
+(
+    const label stepi,
+    const scalarList& ai,
+    const scalarList& bi
+)
+{
+    // Transport volume fraction if required
+    if (solveAlpha_)
+    {
+        volScalarField& alpha = *this;
+        volScalarField alphaOld(alpha);
+        this->storeOld(stepi, alphaOld, alphaOld_);
+        this->blendOld(stepi, alphaOld, alphaOld_, ai);
+
+        volScalarField deltaAlpha
+        (
+            fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
+        );
+
+        this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
+        this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
+
+
+        dimensionedScalar dT = rho().time().deltaT();
+
+        alpha = alphaOld - dT*(deltaAlpha);
+        alpha.max(0);
+        alpha.min(alphaMax_);
+        alpha.correctBoundaryConditions();
+    }
+
     volVectorField alphaRhoUOld(alphaRhoU_);
     volScalarField alphaRhoEOld(alphaRhoE_);
 
-    this->storeOld(stepi, alphaRhoOld, alphaRhoOld_);
     this->storeOld(stepi, alphaRhoUOld, alphaRhoUOld_);
     this->storeOld(stepi, alphaRhoEOld, alphaRhoEOld_);
 
-    this->blendOld(stepi, alphaRhoOld, alphaRhoOld_, ai);
     this->blendOld(stepi, alphaRhoUOld, alphaRhoUOld_, ai);
     this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
 
-    volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     volVectorField deltaAlphaRhoU
     (
         fvc::div(alphaRhoUPhi_)
@@ -244,25 +312,23 @@ void Foam::phaseModel::solve
         }
     }
 
-    this->storeDelta(stepi, deltaAlphaRho, deltaAlphaRho_);
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
 
-    this->blendDelta(stepi, deltaAlphaRho, deltaAlphaRho_, bi);
     this->blendDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_, bi);
     this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
 
     dimensionedScalar dT = this->mesh().time().deltaT();
     vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
 
-    alphaRho_ = alphaRhoOld - dT*(deltaAlphaRho);
-    alphaRho_.max(0);
-    alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoU_ =
+        cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
     alphaRhoE_ = alphaRhoEOld - dT*deltaAlphaRhoE;
 
     //- Update diameterModel
     dPtr_->solve(stepi, ai, bi);
 }
+
 
 void Foam::phaseModel::postUpdate()
 {}
@@ -276,6 +342,23 @@ void Foam::phaseModel::clearODEFields()
     this->clearDelta(deltaAlphaRho_);
     this->clearDelta(deltaAlphaRhoU_);
     this->clearDelta(deltaAlphaRhoE_);
+
+    if (solveAlpha_)
+    {
+        this->clearOld(alphaOld_);
+        this->clearDelta(deltaAlpha_);
+    }
 }
+
+
+Foam::tmp<Foam::surfaceScalarField> Foam::phaseModel::alphaPhi() const
+{
+    if (alphaPhiPtr_.valid())
+    {
+        return alphaPhiPtr_();
+    }
+    return this->phi_*fvc::interpolate(*this);
+}
+
 
 // ************************************************************************* //

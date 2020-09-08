@@ -45,6 +45,10 @@ Description
 #include "radiationModel.H"
 #include "fvOptions.H"
 #include "coordinateSystem.H"
+#include "dynamicFvMesh.H"
+
+#include "mappedPatchBase.H"
+#include "mappedWallFvPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -76,6 +80,8 @@ int main(int argc, char *argv[])
         runTime++;
 
         Info<< "Time = " << runTime.timeName() << nl << endl;
+
+        #include "updateMeshes.H"
 
         forAll(fluidRegions, i)
         {

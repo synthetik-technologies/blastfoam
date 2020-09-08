@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "delta.H"
+#include "scaledDelta.H"
 #include "fvc.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,15 +33,15 @@ namespace Foam
 {
 namespace errorEstimators
 {
-    defineTypeNameAndDebug(delta, 0);
-    addToRunTimeSelectionTable(errorEstimator, delta, dictionary);
+    defineTypeNameAndDebug(scaledDelta, 0);
+    addToRunTimeSelectionTable(errorEstimator, scaledDelta, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::delta::delta
+Foam::errorEstimators::scaledDelta::scaledDelta
 (
     const fvMesh& mesh,
     const dictionary& dict,
@@ -49,7 +49,7 @@ Foam::errorEstimators::delta::delta
 )
 :
     errorEstimator(mesh, dict, name),
-    fieldName_(dict.lookup("deltaField"))
+    fieldName_(dict.lookup("scaledDeltaField"))
 {
     this->read(dict);
 }
@@ -57,13 +57,13 @@ Foam::errorEstimators::delta::delta
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::errorEstimators::delta::~delta()
+Foam::errorEstimators::scaledDelta::~scaledDelta()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::errorEstimators::delta::update()
+void Foam::errorEstimators::scaledDelta::update()
 {
     volScalarField x
     (
@@ -76,7 +76,6 @@ void Foam::errorEstimators::delta::update()
         mesh_,
         0.0
     );
-    this->getFieldValue(fieldName_, x);
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
@@ -88,8 +87,7 @@ void Foam::errorEstimators::delta::update()
         label own = owner[facei];
         label nei = neighbour[facei];
 
-        scalar eT = mag(x[own] - x[nei]);
-
+        scalar eT = mag(x[own] - x[nei])/max(min(x[own], x[nei]), small);
         error_[own] = max(error_[own], eT);
         error_[nei] = max(error_[nei], eT);
     }
@@ -111,7 +109,9 @@ void Foam::errorEstimators::delta::update()
 
             forAll(faceCells, facei)
             {
-                scalar eT = mag(fp[facei] - fn[facei]);
+                scalar eT =
+                    mag(fp[facei] - fn[facei])
+                   /max(min(fp[facei], fn[facei]), small);
                 error_[faceCells[facei]]=
                     max(error_[faceCells[facei]], eT);
             }

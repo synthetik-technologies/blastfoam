@@ -8,6 +8,9 @@ runApplication blockMesh
 runApplication setFields
 runApplication $(getApplication)
 runApplication postProcess -func sampleDict -latestTime
+runApplication -o postProcess -func sampleDict -time 0.0001
+runApplication -o postProcess -func sampleDict -time 5e-5
+runApplication -o postProcess -func sampleDict -time 0
 
 (cd validation && ./createGraphs)
 

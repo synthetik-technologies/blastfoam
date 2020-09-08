@@ -72,15 +72,6 @@ protected:
         //- Thermophysical properties
         autoPtr<fluidThermoModel> thermo_;
 
-        //- Volume fraction flux
-        autoPtr<surfaceScalarField> alphaPhi_;
-
-        //- Old values for ode solver
-        PtrList<volScalarField> alphaOld_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaAlpha_;
-
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
 
@@ -120,8 +111,6 @@ public:
 
 
         // integrationSystem functions
-
-             virtual void solveAlpha(const bool s);
 
             //- Decode primative variables
             virtual void decode();
@@ -170,12 +159,6 @@ public:
 
         //- Return non-const access to the volume fraction gradient
         virtual tmp<volVectorField> gradAlpha() const;
-
-        //- Constant access to the volume fraction flux
-        virtual tmp<surfaceScalarField> alphaPhi() const
-        {
-            return alphaPhi_();
-        }
 
         //- Return the laminar viscosity
         virtual tmp<volScalarField> nu() const

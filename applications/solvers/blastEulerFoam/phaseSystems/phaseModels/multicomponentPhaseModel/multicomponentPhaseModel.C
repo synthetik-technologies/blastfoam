@@ -30,10 +30,11 @@ License
 #include "fvMatrix.H"
 #include "slipFvPatchFields.H"
 #include "partialSlipFvPatchFields.H"
-#include "fvcFlux.H"
+#include "fvc.H"
 #include "surfaceInterpolate.H"
 #include "PhaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
+#include "SortableList.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -85,23 +86,11 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
         ),
         fluid.mesh()
     ),
-    alphaPhi_
-    (
-        IOobject
-        (
-            IOobject::groupName("alphaPhi", name_),
-            this->mesh().time().timeName(),
-            this->mesh()
-        ),
-        this->mesh(),
-        dimensionedScalar("0", phi_.dimensions(), 0.0)
-    ),
     thermos_(components_.size()),
     Ys_(components_.size()),
     residualAlpha_("residualAlpha", dimless, phaseDict_),
-    alphaRhoYs_(components_.size()),
     alphaRhoYPhis_(components_.size()),
-    alphaRhoYsOld_(components_.size()),
+    YsOld_(components_.size()),
     deltaAlphaRhoYs_(components_.size()),
     fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
 {
@@ -139,20 +128,6 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
         );
         sumY += Ys_[i];
 
-        alphaRhoYs_.set
-        (
-            i,
-            new volScalarField
-            (
-                IOobject
-                (
-                    IOobject::groupName("alphaRho", components_[i]),
-                    fluid.mesh().time().timeName(),
-                    fluid.mesh()
-                ),
-                (*this)*Ys_[i]*rho_
-            )
-        );
         alphaRhoYPhis_.set
         (
             i,
@@ -185,7 +160,7 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
             ).ptr()
         );
 
-        alphaRhoYsOld_.set(i, new PtrList<volScalarField>());
+        YsOld_.set(i, new PtrList<volScalarField>());
         deltaAlphaRhoYs_.set(i, new PtrList<volScalarField>());
     }
     // Reset density to correct value
@@ -247,12 +222,6 @@ Foam::multicomponentPhaseModel::~multicomponentPhaseModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::multicomponentPhaseModel::solveAlpha(const bool s)
-{
-    phaseModel::solveAlpha(s);
-}
-
-
 void Foam::multicomponentPhaseModel::solve
 (
     const label stepi,
@@ -260,15 +229,15 @@ void Foam::multicomponentPhaseModel::solve
     const scalarList& bi
 )
 {
-    PtrList<volScalarField> alphaRhoYsOld(Ys_.size());
+    PtrList<volScalarField> YsOld(Ys_.size());
     forAll(Ys_, i)
     {
-        alphaRhoYsOld.set
+        YsOld.set
         (
-            i, new volScalarField(alphaRhoYs_[i])
+            i, new volScalarField(Ys_[i])
         );
-        this->storeOld(stepi, alphaRhoYsOld[i], alphaRhoYsOld_[i]);
-        this->blendOld(stepi, alphaRhoYsOld[i], alphaRhoYsOld_[i], ai);
+        this->storeOld(stepi, YsOld[i], YsOld_[i]);
+        this->blendOld(stepi, YsOld[i], YsOld_[i], ai);
     }
 
     PtrList<volScalarField> deltaAlphaRhoYs(Ys_.size());
@@ -294,40 +263,18 @@ void Foam::multicomponentPhaseModel::solve
         );
     }
 
-    dimensionedScalar dT = rho_.time().deltaT();
+    phaseModel::solveAlphaRho(stepi, ai, bi);
+
+    dimensionedScalar dT = this->rho_.time().deltaT();
 
     forAll(Ys_, i)
     {
-        alphaRhoYs_[i].oldTime() = alphaRhoYsOld[i];
-        alphaRhoYs_[i] =
-            alphaRhoYsOld[i] - dT*deltaAlphaRhoYs[i];
-        alphaRhoYs_[i].correctBoundaryConditions();
+        Ys_[i] =
+            (this->alphaRho_.oldTime()*YsOld[i] - dT*deltaAlphaRhoYs[i])
+          /(Foam::max(this->alphaRho_, residualAlphaRho()));
+        Ys_[i].correctBoundaryConditions();
 
         thermos_[i].solve(stepi, ai, bi);
-    }
-
-    if (solveAlpha_)
-    {
-        volScalarField& alpha = *this;
-        volScalarField alphaOld(alpha);
-        this->storeOld(stepi, alphaOld, alphaOld_);
-        this->blendOld(stepi, alphaOld, alphaOld_, ai);
-
-        volScalarField deltaAlpha
-        (
-            (fluid_.U() & fvc::grad(fluxScheme_->alphaf()))
-        );
-
-        this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
-        this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
-
-
-        dimensionedScalar dT = rho_.time().deltaT();
-
-        alpha = alphaOld - dT*(deltaAlpha);
-        alpha.max(0);
-        alpha.min(alphaMax_);
-        alpha.correctBoundaryConditions();
     }
 
     phaseModel::solve(stepi, ai, bi);
@@ -350,15 +297,9 @@ void Foam::multicomponentPhaseModel::clearODEFields()
     phaseModel::clearODEFields();
     fluxScheme_->clear();
 
-    if (solveAlpha_)
+    forAll(YsOld_, i)
     {
-        this->clearOld(alphaOld_);
-        this->clearDelta(deltaAlpha_);
-    }
-
-    forAll(alphaRhoYsOld_, i)
-    {
-        this->clearOld(alphaRhoYsOld_[i]);
+        this->clearOld(YsOld_[i]);
         this->clearDelta(deltaAlphaRhoYs_[i]);
         thermos_[i].clearODEFields();
     }
@@ -367,23 +308,41 @@ void Foam::multicomponentPhaseModel::clearODEFields()
 
 void Foam::multicomponentPhaseModel::update()
 {
-    tmp<volScalarField> c(speedOfSound());
-    const volScalarField& alpha = *this;
+    const volScalarField& alpha(*this);
 
-    fluxScheme_->update
-    (
-        alpha,
-        rho_,
-        U_,
-        e_,
-        p_,
-        c(),
-        phi_,
-        alphaPhi_,
-        alphaRhoPhi_,
-        alphaRhoUPhi_,
-        alphaRhoEPhi_
-    );
+    if (this->solveAlpha_)
+    {
+        fluxScheme_->update
+        (
+            alpha,
+            rho_,
+            U_,
+            e_,
+            p_,
+            speedOfSound()(),
+            phi_,
+            this->alphaPhiPtr_(),
+            alphaRhoPhi_,
+            alphaRhoUPhi_,
+            alphaRhoEPhi_
+        );
+    }
+    else
+    {
+        fluxScheme_->update
+        (
+            alpha,
+            rho_,
+            U_,
+            e_,
+            p_,
+            speedOfSound()(),
+            phi_,
+            alphaRhoPhi_,
+            alphaRhoUPhi_,
+            alphaRhoEPhi_
+        );
+    }
     forAll(Ys_, i)
     {
         alphaRhoYPhis_[i] =
@@ -404,43 +363,32 @@ void Foam::multicomponentPhaseModel::decode()
 
     volScalarField alphaRho(alphaRho_);
     alphaRho.max(1e-10);
-    volScalarField sumY
-    (
-        IOobject
-        (
-            "sumY",
-            rho_.time().timeName(),
-            rho_.mesh()
-        ),
-        rho_.mesh(),
-        0.0
-    );
-    volScalarField sumRhoY
-    (
-        IOobject
-        (
-            "sumRhoY",
-            rho_.time().timeName(),
-            rho_.mesh()
-        ),
-        rho_.mesh(),
-        dimensionedScalar(dimDensity, 0.0)
-    );
-    for (label i = 0; i < Ys_.size() - 1; i++)
+
+    // Ensure that Ys sum to 1
+    forAll(rho_, celli)
     {
-        alphaRhoYs_[i].max(0);
-        Ys_[i] = alphaRhoYs_[i]/alphaRho;
-        Ys_[i].min(1);
-        Ys_[i].correctBoundaryConditions();
-        sumY += Ys_[i];
+        SortableList<scalar> Ys(Ys_.size());
+        forAll(Ys_, i)
+        {
+            Ys_[i][celli] = Foam::max(Foam::min(Ys_[i][celli], 1.0), 0.0);
+            Ys[i] = Ys_[i][celli];
+        }
+        Ys.reverseSort();
+
+        const label fixedPhase = Ys.indices()[0];
+
+        scalar sumY = 0.0;
+        for (label i = 1; i < Ys.size(); i++)
+        {
+            sumY += Ys[i];
+        }
+        Ys_[fixedPhase][celli] = 1.0 - sumY;
     }
 
-    label i = Ys_.size() - 1;
-    Ys_[i] = 1.0 - sumY;
-    Ys_[i].max(0.0);
-    Ys_[i].min(1.0);
-    Ys_[i].correctBoundaryConditions();
-    alphaRhoYs_[i] = (*this)*Ys_[i]*rho_;
+    forAll(Ys_, i)
+    {
+        Ys_[i].correctBoundaryConditions();
+    }
 
     U_.ref() = alphaRhoU_()/(alphaRho());
     U_.correctBoundaryConditions();
@@ -451,12 +399,12 @@ void Foam::multicomponentPhaseModel::decode()
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-//     //--- Hard limit, e
-//     if(Foam::min(e_).value() < 0)
-//     {
-//         e_.max(small);
-//         alphaRhoE_.ref() = (*this)()*rho_*(e_() + 0.5*magSqr(U_()));
-//     }
+    //--- Hard limit, e
+    if(Foam::min(e_).value() < 0)
+    {
+        e_.max(small);
+        alphaRhoE_.ref() = (*this)()*rho_*(e_() + 0.5*magSqr(U_()));
+    }
     e_.correctBoundaryConditions();
 
     alphaRhoE_.boundaryFieldRef() =
@@ -473,11 +421,6 @@ void Foam::multicomponentPhaseModel::decode()
 
 void Foam::multicomponentPhaseModel::encode()
 {
-    for (label i = 0; i < Ys_.size(); i++)
-    {
-        alphaRhoYs_[i] = (*this)*rho_*Ys_[i];
-    }
-
     alphaRho_ = (*this)*rho_;
     alphaRhoU_ = alphaRho_*U_;
     alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));

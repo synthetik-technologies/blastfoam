@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::errorEstimators::delta
+    Foam::errorEstimators::scaledDelta
 
 Description
-    Error is defined by the difference of a field over a face
+    Error is defined by the relative difference of a field over a face
 
 SourceFiles
-    delta.C
+    scaledDelta.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef delta_H
-#define delta_H
+#ifndef scaledDelta_H
+#define scaledDelta_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,10 +45,10 @@ namespace errorEstimators
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class delta Declaration
+                           Class scaledDelta Declaration
 \*---------------------------------------------------------------------------*/
 
-class delta
+class scaledDelta
 :
     public errorEstimator
 {
@@ -61,19 +61,14 @@ class delta
 public:
 
     //- Runtime type information
-    TypeName("delta");
+    ClassName("scaledDelta");
 
     // Constructor
-    delta
-    (
-        const fvMesh& mesh,
-        const dictionary& dict,
-        const word& name
-    );
+    scaledDelta(const fvMesh& mesh, const dictionary& dict, const word& name);
 
 
     //- Destructor
-    virtual ~delta();
+    virtual ~scaledDelta();
 
 
     // Member Functions

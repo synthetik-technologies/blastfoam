@@ -10,7 +10,7 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volVectorField;
-    object      D;
+    object      cellDisplacement;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -20,20 +20,27 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    flap_to_air
-    {
-        type            FSIForceDisplacement;
-        pName           p;
-        pRef            uniform 0.90530979e5;
-        traction        uniform (0 0 0);
-        value           uniform (0 0 0);
-        pressure        uniform 0;
-        pRef            uniform 0.90530979e5;
-    }
-    flapBase
+    fixedWalls
     {
         type            fixedValue;
         value           uniform (0 0 0);
+    }
+
+    fluid_to_walls
+    {
+        type            coupledCellMotion;
+        DnbrName        D;
+        value           uniform (0 0 0);
+    }
+
+    front
+    {
+        type            wedge;
+    }
+
+    back
+    {
+        type            wedge;
     }
 }
 

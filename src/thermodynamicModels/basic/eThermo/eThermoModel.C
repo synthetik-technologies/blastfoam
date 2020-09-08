@@ -381,6 +381,14 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Gamma(const label patchi) const
 
 
 template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::eThermoModel<BasicThermo, ThermoType>::Gammai(const label celli) const
+{
+    return ThermoType::Gamma(this->rho_[celli], this->e_[celli],this->T_[celli]);
+}
+
+
+template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::eThermoModel<BasicThermo, ThermoType>::Cp() const
 {

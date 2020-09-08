@@ -65,10 +65,6 @@ protected:
     //- Dictionary for phase fluxScheme
     const dictionary& dict_;
 
-    //- Owner and neighbour surface fields
-    tmp<surfaceScalarField> own_;
-    tmp<surfaceScalarField> nei_;
-
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
 

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxScheme.H"
+#include "MUSCLReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -43,9 +44,16 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolate
     label nCmpts = pTraits<Type>::nComponents;
 
     bool rho = f.member() == "rho";
-    const word phaseName(f.group());
-    fieldType fOwn(fvc::interpolate(f, own_(), scheme(name, phaseName)));
-    fieldType fNei(fvc::interpolate(f, nei_(), scheme(name, phaseName)));
+    autoPtr<MUSCLReconstructionScheme<Type>> fLimiter
+    (
+        MUSCLReconstructionScheme<Type>::New(f, name)
+    );
+
+    tmp<fieldType> fOwnTmp(fLimiter->interpolateOwn());
+    tmp<fieldType> fNeiTmp(fLimiter->interpolateNei());
+
+    const fieldType& fOwn = fOwnTmp();
+    const fieldType& fNei = fNeiTmp();
 
     tmp<fieldType> tmpf
     (

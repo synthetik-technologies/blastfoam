@@ -118,6 +118,9 @@ protected:
             //- Volumetric flux of the phase
             surfaceScalarField phi_;
 
+            //- Volume fraction flux
+            autoPtr<surfaceScalarField> alphaPhiPtr_;
+
             //- Phasic mass flux
             surfaceScalarField alphaRhoPhi_;
 
@@ -128,11 +131,13 @@ protected:
             surfaceScalarField alphaRhoEPhi_;
 
         //- Old values for ode solver
+        PtrList<volScalarField> alphaOld_;
         PtrList<volScalarField> alphaRhoOld_;
         PtrList<volVectorField> alphaRhoUOld_;
         PtrList<volScalarField> alphaRhoEOld_;
 
         //- Stored delta fields
+        PtrList<volScalarField> deltaAlpha_;
         PtrList<volScalarField> deltaAlphaRho_;
         PtrList<volVectorField> deltaAlphaRhoU_;
         PtrList<volScalarField> deltaAlphaRhoE_;
@@ -146,6 +151,16 @@ protected:
 
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
+
+        //- Solve phase density
+        //  Seperated to allow solving before thermodynamics,
+        //  and solve thermo before energy
+        void solveAlphaRho
+        (
+            const label stepi,
+            const scalarList& ai,
+            const scalarList& bi
+        );
 
 
 public:
@@ -244,10 +259,7 @@ public:
         }
 
         //- Determine if alpha is solved
-        virtual void solveAlpha(const bool s)
-        {
-            solveAlpha_ = s;
-        }
+        virtual void solveAlpha(const bool s);
 
         //- Return the name of this phase
         const word& name() const
@@ -462,7 +474,7 @@ public:
             }
 
             //- Constant access to the volume fraction flux
-            virtual tmp<surfaceScalarField> alphaPhi() const = 0;
+            virtual tmp<surfaceScalarField> alphaPhi() const;
 
             //- Constant access to the mass flux
             virtual tmp<surfaceScalarField> alphaRhoPhi() const

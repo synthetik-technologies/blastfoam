@@ -133,8 +133,9 @@ void Foam::detonatingFluidThermo<Thermo>::correct()
     if (this->master_)
     {
         this->T_ = this->calcT();
-        this->p_ = calcP();
-        this->p_.max(small);
+        this->T_.correctBoundaryConditions();
+        this->p_ = fluidThermoModel::calcP();
+        this->p_.correctBoundaryConditions();
     }
 
     if (this->viscous_)
@@ -200,19 +201,68 @@ Foam::detonatingFluidThermo<Thermo>::speedOfSound(const label patchi) const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidThermo<Thermo>::calcP() const
+Foam::tmp<Foam::scalarField>
+Foam::detonatingFluidThermo<Thermo>::calcP(const label patchi) const
 {
-    return Thermo::blendedVolScalarFieldProperty
-    (
-        "p",
-        dimPressure,
-        &Thermo::thermoType1::p,
-        &Thermo::thermoType2::p,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
+    return
+        max
+        (
+            Thermo::blendedPatchFieldProperty
+            (
+                &Thermo::thermoType1::p,
+                &Thermo::thermoType2::p,
+                patchi,
+                this->rho_.boundaryField()[patchi],
+                this->e_.boundaryField()[patchi],
+                this->T_.boundaryField()[patchi]
+            ),
+            small
+        );
+}
+
+
+template<class Thermo>
+Foam::scalar Foam::detonatingFluidThermo<Thermo>::calcPi(const label celli) const
+{
+    const scalar& x = this->xi(celli);
+    scalar pi;
+   if (x < small)
+    {
+        pi =
+            Thermo::thermoType1::p
+            (
+                this->rho_[celli],
+                this->e_[celli],
+                this->T_[celli]
+            );
+    }
+    else if ((1.0 - x) < small)
+    {
+        pi =
+            Thermo::thermoType2::p
+            (
+                this->rho_[celli],
+                this->e_[celli],
+                this->T_[celli]
+            );
+    }
+    else
+    {
+        pi =
+            Thermo::thermoType2::p
+            (
+                this->rho_[celli],
+                this->e_[celli],
+                this->T_[celli]
+            )*this->xi(celli)
+          + Thermo::thermoType1::p
+            (
+                this->rho_[celli],
+                this->e_[celli],
+                this->T_[celli]
+            )*(1.0 - this->xi(celli));
+    }
+    return max(pi, small);
 }
 
 

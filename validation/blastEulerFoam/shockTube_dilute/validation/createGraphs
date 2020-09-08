@@ -19,7 +19,6 @@ title="blastFoam_dilute_validation_p"
             "$2" using 1:(\$2/101298) title 'blastFoam'\
                 with lines lt 1 linewidth 2 linecolor rgb 'black'
 EOF
-convert -colorspace sRGB -density 600 $title.eps -background white -flatten -resize 1200x800 -units pixelsperinch -density 500 $title.png
 }
 
 createEpsRho()
@@ -43,7 +42,6 @@ title="blastFoam_dilute_validation_rho"
             "$2" using 1:((1-\$3)*\$4/1.30632931) title 'blastFoam (gas)'\
                 with lines lt 1 linewidth 2 linecolor rgb 'green'
 EOF
-convert -colorspace sRGB -density 600 $title.eps -background white -flatten -resize 1200x800 -units pixelsperinch -density 500 $title.png
 }
 
 # test if gnuplot exists on the system

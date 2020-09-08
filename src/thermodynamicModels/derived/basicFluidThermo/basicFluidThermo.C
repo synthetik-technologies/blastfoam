@@ -106,8 +106,9 @@ void Foam::basicFluidThermo<Thermo>::correct()
     if (this->master_)
     {
         this->T_ = this->calcT();
-        this->p_ = calcP();
-        this->p_.max(small);
+        this->T_.correctBoundaryConditions();
+        this->p_ = fluidThermoModel::calcP();
+        this->p_.correctBoundaryConditions();
     }
 
     if (this->viscous_)
@@ -190,18 +191,39 @@ Foam::basicFluidThermo<Thermo>::speedOfSound(const label patchi) const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidThermo<Thermo>::calcP() const
+Foam::tmp<Foam::scalarField>
+Foam::basicFluidThermo<Thermo>::calcP(const label patchi) const
 {
-    return Thermo::volScalarFieldProperty
-    (
-        "p",
-        dimPressure,
-        &Thermo::thermoType::p,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
+    return
+        max
+        (
+            Thermo::patchFieldProperty
+            (
+                &Thermo::thermoType::p,
+                patchi,
+                this->rho_.boundaryField()[patchi],
+                this->e_.boundaryField()[patchi],
+                this->T_.boundaryField()[patchi]
+            ),
+            small
+        );
+}
+
+
+template<class Thermo>
+Foam::scalar Foam::basicFluidThermo<Thermo>::calcPi(const label celli) const
+{
+    return
+        max
+        (
+            Thermo::thermoType::p
+            (
+                this->rho_[celli],
+                this->e_[celli],
+                this->T_[celli]
+            ),
+            small
+        );
 }
 
 

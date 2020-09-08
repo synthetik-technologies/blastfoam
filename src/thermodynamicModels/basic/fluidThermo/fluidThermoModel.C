@@ -149,6 +149,40 @@ void Foam::fluidThermoModel::initialize()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::calcP() const
+{
+    tmp<volScalarField> pTmp
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "P",
+                e_.mesh().time().timeName(),
+                e_.mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            e_.mesh(),
+            dimensionedScalar("0", dimPressure, 0.0)
+        )
+    );
+    volScalarField& p = pTmp.ref();
+
+    forAll(p, celli)
+    {
+        p[celli] = this->calcPi(celli);
+    }
+    forAll(p.boundaryField(), patchi)
+    {
+        p.boundaryFieldRef()[patchi] = this->calcP(patchi);
+    }
+
+    return pTmp;
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::mu() const
 {
     return mu_;

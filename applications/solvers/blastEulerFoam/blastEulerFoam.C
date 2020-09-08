@@ -64,6 +64,8 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         //- Update error and refine mesh
+        mesh.updateError();
+        mesh.updateErrorBoundaries();
         mesh.update();
 
         //- Integrate the hyperbolic fluxes
@@ -77,6 +79,11 @@ int main(int argc, char *argv[])
             << nl << endl;
 
         runTime.write();
+
+        if (runTime.outputTime())
+        {
+            volVectorField("U", fluid.UMix()).write();
+        }
     }
 
     Info<< "End\n" << endl;

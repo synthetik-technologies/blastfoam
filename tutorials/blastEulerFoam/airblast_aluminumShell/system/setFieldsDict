@@ -41,7 +41,7 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue alpha.aluminum  0.63
+            volScalarFieldValue alpha.aluminum  0.55
             volScalarFieldValue alpha.c4        0
             volScalarFieldValue alpha.air       0.37
         );

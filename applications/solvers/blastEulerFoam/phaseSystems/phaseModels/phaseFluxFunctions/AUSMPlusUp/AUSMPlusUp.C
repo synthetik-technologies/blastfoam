@@ -114,8 +114,15 @@ void Foam::fluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
     {
         ktName = this->group();
     }
-    alphapOwn_ = fvc::interpolate(alphap, own_(), scheme("alpha", ktName));
-    alphapNei_ = fvc::interpolate(alphap, nei_(), scheme("alpha", ktName));
+
+    autoPtr<MUSCLReconstructionScheme<scalar>> alphapLimiter
+    (
+        MUSCLReconstructionScheme<scalar>::New(alphap, "alpha")
+    );
+
+    alphapOwn_ = alphapLimiter->interpolateOwn();
+    alphapNei_ = alphapLimiter->interpolateNei();
+
     alphaMaxf_ = fvc::interpolate(kineticTheorySystem_.alphaMax());
     alphaMinFrictionf_ =
         fvc::interpolate(kineticTheorySystem_.alphaMinFriction());

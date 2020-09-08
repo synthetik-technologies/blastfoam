@@ -4,6 +4,7 @@ errorEstimator/newErrorEstimator.C
 fieldValue/fieldValue.C
 densityGradient/densityGradient.C
 delta/delta.C
+scaledDelta/scaledDelta.C
 Lohner/Lohner.C
 multicomponentError/multicomponent.C
 
