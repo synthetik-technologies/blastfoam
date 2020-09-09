@@ -107,7 +107,7 @@ water
     equationOfState
     {
         p0          1e5;
-        pCav        5e-2;
+        pCav        5000;
         rho0        1000;
         rhoCav      995.0;
         omega       0.28;

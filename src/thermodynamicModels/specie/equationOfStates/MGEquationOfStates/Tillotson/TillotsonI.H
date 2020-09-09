@@ -36,7 +36,7 @@ Foam::scalar Foam::Tillotson<Specie>::p
     const scalar& T
 ) const
 {
-    if (rho < rhoCav_)
+    if ((rho0_ - rho) > 1e-6)
     {
         return pCav_;
     }

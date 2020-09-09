@@ -18,8 +18,9 @@ dynamicFvMesh   adaptiveFvMesh;
 
 balance no;
 
-errorEstimator delta;      // Model used to estimate error
-deltaField sigma;
+errorEstimator scaledDelta;      // Model used to estimate error
+scaledDeltaField sigma;
+minValue 1000;
 
 // How often to refine
 refineInterval  3;
