@@ -54,7 +54,15 @@ Foam::activationModels::linearActivation::linearActivation
       ? List<vector>(1, Zero)
       : dict.lookupType<List<vector>>("points")
     ),
-    vDet_("vDet", dimVelocity, dict)
+    vDet_("vDet", dimVelocity, dict),
+    delays_
+    (
+        dict.lookupOrDefault
+        (
+            "delays",
+            scalarList(detonationPoints_.size(), 0.0)
+        )
+    )
 {
     const volScalarField& alpha
     (
@@ -124,14 +132,15 @@ void Foam::activationModels::linearActivation::solve
     }
 
     dimensionedScalar dt(lambda_.time().deltaT());
-    dimensionedScalar detonationFrontDistance
-    (
-        (lambda_.time() + dt)*vDet_
-    );
     volScalarField lambdaOld(lambda_);
 
     forAll(detonationPoints_, pointi)
     {
+        dimensionedScalar delay(dimTime, delays_[pointi]);
+        dimensionedScalar detonationFrontDistance
+        (
+            (lambda_.time() + dt - delay)*vDet_
+        );
         dimensionedVector xDet
         (
             "xDet",

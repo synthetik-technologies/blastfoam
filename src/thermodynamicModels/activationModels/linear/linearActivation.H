@@ -61,6 +61,9 @@ class linearActivation
         //- Detonation velocity
         dimensionedScalar vDet_;
 
+        //- Time of detonation for each point
+        List<scalar> delays_;
+
         //- Stored times
         List<dimensionedScalar> times_;
 
