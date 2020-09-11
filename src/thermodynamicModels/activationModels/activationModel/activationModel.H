@@ -56,8 +56,60 @@ protected:
 
     // Protected data
 
+        // Declaration of detonation point class
+        class detonationPoint
+        :
+            public vector
+        {
+            //- Has this point been activated
+            bool activated_;
+
+            //- Delay time
+            scalar delay_;
+
+            //- Radius of activation (0 = 1 cell)
+            scalar radius_;
+
+            //- List of activated cell indicies
+            labelList cells_;
+
+        public:
+
+            detonationPoint
+            (
+                const volScalarField& mesh,
+                const vector& pt,
+                const scalar& delay,
+                const scalar& radius
+            );
+
+            virtual ~detonationPoint()
+            {}
+
+            // Public access
+
+                //- Has the point been activated
+                bool activated() const
+                {
+                    return activated_;
+                }
+
+                //- Return delay
+                const scalar& delay() const
+                {
+                    return delay_;
+                }
+
+                //- Set activated cells
+                void setActivated(volScalarField&, const bool update);
+        };
+
+
         //- Progress variable
         volScalarField lambda_;
+
+        //- Detonation points
+        PtrList<detonationPoint> detonationPoints_;
 
         //- Specific activation energy
         dimensionedScalar e0_;
@@ -113,6 +165,12 @@ protected:
             const fvMesh& mesh,
             const volScalarField& alpha
         ) const;
+
+        //- Do detonation points need to be specified
+        virtual bool needDetonationPoints() const
+        {
+            return false;
+        }
 
 
 public:

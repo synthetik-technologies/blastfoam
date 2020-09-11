@@ -69,69 +69,7 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
         )
       : mesh.lookupObject<volScalarField>("T")
     )
-{
-    if (dict.found("points") || dict.found("useCOM"))
-    {
-        List<vector> points(1, Zero);
-        if (dict.found("useCOM"))
-        {
-            points[0] =
-                centerOfMass
-                (
-                    mesh,
-                    mesh.lookupObject<volScalarField>
-                    (
-                        IOobject::groupName("alpha", phaseName)
-                    )
-                );
-        }
-        else
-        {
-            points = dict.lookupType<List<vector>>("points");
-        };
-
-        scalar r(dict.lookupOrDefault("radius", 0.0));
-
-        Info<< "Initiation Points: " << nl
-            << "    " << points << endl;
-        if (r > small)
-        {
-            Info<< "Setting cells within " << r << " m from "
-                << "initiation points as activated." << endl;
-        }
-
-        forAll(points, pti)
-        {
-            label nCells = 0;
-            if (r > small)
-            {
-                forAll(mesh.C(), celli)
-                {
-                    if (mag(mesh.C()[celli] - points[pti]) < r)
-                    {
-                        lambda_[celli] = 1.0;
-                        nCells++;
-                    }
-                }
-            }
-            else
-            {
-                label celli = mesh.findCell(points[pti]);
-                if (celli >= 0)
-                {
-                    lambda_[celli] = 1.0;
-                    nCells++;
-                }
-            }
-            if (returnReduce(nCells, sumOp<label>()) == 0)
-            {
-                WarningInFunction
-                    << "No cells were activated using the "
-                    << "detonation point " << points[pti] << endl;
-            }
-        }
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
