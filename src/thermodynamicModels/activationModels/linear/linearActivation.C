@@ -48,53 +48,8 @@ Foam::activationModels::linearActivation::linearActivation
 )
 :
     activationModel(mesh, dict, phaseName),
-    detonationPoints_
-    (
-        dict.lookupOrDefault("useCOM", false)
-      ? List<vector>(1, Zero)
-      : dict.lookupType<List<vector>>("points")
-    ),
     vDet_("vDet", dimVelocity, dict)
-{
-    const volScalarField& alpha
-    (
-        mesh.lookupObject<volScalarField>
-        (
-            IOobject::groupName("alpha", phaseName)
-        )
-    );
-
-    if (dict.lookupOrDefault("useCOM", false))
-    {
-        detonationPoints_[0] =  this->centerOfMass(mesh, alpha);
-    }
-
-    Info<< "Initiation Points: " << nl
-        << "    " << detonationPoints_ << nl
-        << "Detonation speed: " << vDet_ << " [m/s]" << nl
-        << endl;
-
-    forAll(detonationPoints_, pti)
-    {
-        label celli = mesh.findCell(detonationPoints_[pti]);
-        if (returnReduce(celli, maxOp<label>()) < 0)
-        {
-            WarningInFunction
-                << "Detonation point at " << detonationPoints_[pti]
-                << " is was not found in the mesh. "
-                << endl;
-        }
-        else if (celli >= 0)
-        {
-            if (alpha[celli] < small)
-            {
-                WarningInFunction
-                    << "There is no mass for phase " << phaseName
-                    << " at " << detonationPoints_[pti] << endl;
-            }
-        }
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -124,19 +79,22 @@ void Foam::activationModels::linearActivation::solve
     }
 
     dimensionedScalar dt(lambda_.time().deltaT());
-    dimensionedScalar detonationFrontDistance
-    (
-        (lambda_.time() + dt)*vDet_
-    );
     volScalarField lambdaOld(lambda_);
 
-    forAll(detonationPoints_, pointi)
+    forAll(this->detonationPoints_, pointi)
     {
+        detonationPoint& dp = this->detonationPoints_[pointi];
+        dp.setActivated(lambda_, true);
+        dimensionedScalar delay(dimTime, dp.delay());
+        dimensionedScalar detonationFrontDistance
+        (
+            (lambda_.time() + dt - delay)*vDet_
+        );
         dimensionedVector xDet
         (
             "xDet",
             dimLength,
-            detonationPoints_[pointi]
+            dp
         );
         lambda_ =
             max

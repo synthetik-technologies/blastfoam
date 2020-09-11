@@ -257,7 +257,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
     (
         IOobject
         (
-            "a",
+            "fvDOM:a",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -349,7 +349,7 @@ Foam::radiationModels::fvDOM::fvDOM
     (
         IOobject
         (
-            "a",
+            "fvDOM:a",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,

@@ -1888,7 +1888,9 @@ bool Foam::adaptiveFvMesh::balance()
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
-    balance_ = balanceDict.lookupOrDefault("balance", true);
+    balance_ =
+        balanceDict.lookupOrDefault("balance", true)
+     && Pstream::parRun();
 
     if(!balance_)
     {

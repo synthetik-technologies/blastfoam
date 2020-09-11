@@ -55,9 +55,6 @@ class linearActivation
 {
 // Private data
 
-        //- Detonation  points
-        List<vector> detonationPoints_;
-
         //- Detonation velocity
         dimensionedScalar vDet_;
 
@@ -69,6 +66,12 @@ class linearActivation
         {
             NotImplemented;
             return lambda_;
+        }
+
+        //- Do detonation points need to be specified
+        virtual bool needDetonationPoints() const
+        {
+            return true;
         }
 
 
