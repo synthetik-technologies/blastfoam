@@ -151,10 +151,6 @@ protected:
             //  Note: only possible when fixedLocations_ is true
             word interpolationScheme_;
 
-            //- Can the points be moved inside the mesh if the points are not
-            //  found
-            Switch adjustLocations_;
-
             //- Are the probes appended to the end of a previous output
             Switch append_;
 
@@ -211,7 +207,8 @@ protected:
         virtual void findElements
         (
             const fvMesh&,
-            const bool print
+            const bool print,
+            const bool movePts = false
         );
 
         //- Classify field type and Open/close file streams,

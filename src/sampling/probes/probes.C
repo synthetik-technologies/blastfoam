@@ -57,7 +57,8 @@ namespace Foam
 void Foam::probes::findElements
 (
     const fvMesh& mesh,
-    const bool print
+    const bool print,
+    const bool movePts
 )
 {
     if (debug)
@@ -108,12 +109,11 @@ void Foam::probes::findElements
         label celli = elementList_[probei];
         label facei = faceList_[probei];
 
-        label celliOrig = celli;
-
-        reduce(celli, maxOp<label>());
-
         if (Pstream::parRun())
         {
+            label celliOrig = celli;
+            reduce(celli, maxOp<label>());
+
             facei = -1;
             if (celli >= 0 && celli == celliOrig)
             {
@@ -191,7 +191,7 @@ void Foam::probes::findElements
         return;
     }
 
-    if (adjustLocations_&& nBadProbes > 0)
+    if (nBadProbes > 0 && movePts)
     {
         if (print)
         {
@@ -550,7 +550,6 @@ Foam::probes::probes
     fieldSelection_(),
     fixedLocations_(true),
     interpolationScheme_("cell"),
-    adjustLocations_(false),
     append_(false)
 {
     read(dict);
@@ -572,7 +571,6 @@ Foam::probes::probes
     fieldSelection_(),
     fixedLocations_(true),
     interpolationScheme_("cell"),
-    adjustLocations_(false),
     append_(false)
 {
     read(dict);
@@ -612,11 +610,15 @@ bool Foam::probes::read(const dictionary& dict)
         }
     }
 
-    dict.readIfPresent("adjustLocations", adjustLocations_);
     dict.readIfPresent("append", append_);
 
     // Initialise cells to sample from supplied locations
-    findElements(mesh_, true);
+    findElements
+    (
+        mesh_,
+        true,
+        dict.lookupOrDefault("adjustLocations", false)
+    );
     prepare();
 
     return true;

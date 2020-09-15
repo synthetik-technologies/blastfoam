@@ -48,7 +48,12 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::patchProbes::findElements(const fvMesh& mesh, const bool print)
+void Foam::patchProbes::findElements
+(
+    const fvMesh& mesh,
+    const bool print,
+    const bool movePts
+)
 {
     (void)mesh.tetBasePtIs();
 
