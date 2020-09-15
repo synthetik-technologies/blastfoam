@@ -468,6 +468,8 @@ int main(int argc, char *argv[])
     {
         meshCutter = hexRef::New(mesh);
     }
+    Switch debug = setFieldsDict.lookupOrDefault("debug", false);
+
     PackedBoolList protectedCell(mesh.nCells(), 0);
     initialize(mesh, protectedCell, meshCutter());
     volScalarField error
@@ -545,7 +547,17 @@ int main(int argc, char *argv[])
     labelList nOldCells(regions.size(), -1);
 
     label iter = 0;
-    label maxIter = setFieldsDict.lookupOrDefault("maxIter", 2*maxRefinement);
+    label maxIter =
+        max
+        (
+            1,
+            max
+            (
+                setFieldsDict.lookupOrDefault("maxIter", 2*maxRefinement),
+                gMax(meshCutter->cellLevel())*2
+            )
+        );
+
     while(!end)
     {
         if (maxIter <= iter)
@@ -553,7 +565,7 @@ int main(int argc, char *argv[])
             prepareToStop = true;
         }
 
-        error = -10.0;
+        error = -1.0;
         if (prepareToStop)
         {
             end = true;
@@ -627,11 +639,11 @@ int main(int argc, char *argv[])
                     {
                         const labelList& faces
                         (
-                            error.mesh().cells()[cells[celli]]
+                            mesh.cells()[cells[celli]]
                         );
                         forAll(faces, facei)
                         {
-                            if (faces[facei] < error.mesh().nInternalFaces())
+                            if (faces[facei] < mesh.nInternalFaces())
                             {
                                 error[owner[faces[facei]]] = 0.1;
                                 error[neighbour[faces[facei]]] = 0.1;
@@ -645,7 +657,7 @@ int main(int argc, char *argv[])
                     PtrList<setCellField> fieldValues
                     (
                         regions[regionI].dict().lookup("fieldValues"),
-                        setCellField::iNew(mesh, cells, end)
+                        setCellField::iNew(mesh, cells, end || debug)
                     );
                 }
                 nOldCells[regionI] = cells.size();
@@ -673,7 +685,7 @@ int main(int argc, char *argv[])
                     PtrList<setFaceField> fieldValues
                     (
                         regions[regionI].dict().lookup("fieldValues"),
-                        setFaceField::iNew(mesh, selectedFaces, end)
+                        setFaceField::iNew(mesh, selectedFaces, end || debug)
                     );
                 }
 
@@ -771,12 +783,65 @@ int main(int argc, char *argv[])
                     );
                 }
             }
+
             forAll(maxCellLevel, celli)
             {
                 if (maxCellLevel[celli] < 0)
                 {
                     maxCellLevel[celli] = maxRefinement;
                 }
+            }
+            forAll(error, celli)
+            {
+                if (meshCutter->cellLevel()[celli] > maxCellLevel[celli])
+                {
+                    error[celli] = -1.0;
+                }
+            }
+
+            if (debug)
+            {
+                bool writeOk = (mesh.write() && meshCutter->write());
+                volScalarField scalarCellLevel
+                (
+                    IOobject
+                    (
+                        "cellLevel",
+                        runTime.timeName(),
+                        mesh,
+                        IOobject::NO_READ,
+                        IOobject::AUTO_WRITE,
+                        false
+                    ),
+                    mesh,
+                    dimensionedScalar(dimless, 0)
+                );
+                volScalarField scalarMaxCellLevel
+                (
+                    IOobject
+                    (
+                        "maxCellLevel",
+                        runTime.timeName(),
+                        mesh,
+                        IOobject::NO_READ,
+                        IOobject::AUTO_WRITE,
+                        false
+                    ),
+                    mesh,
+                    dimensionedScalar(dimless, 0)
+                );
+
+                const labelList& cellLevel = meshCutter->cellLevel();
+
+                forAll(cellLevel, celli)
+                {
+                    scalarCellLevel[celli] = cellLevel[celli];
+                    scalarMaxCellLevel[celli] = maxCellLevel[celli];
+                }
+                writeOk = writeOk && scalarCellLevel.write();
+                error.write();
+                scalarMaxCellLevel.write();
+                runTime++;
             }
 
             prepareToStop =
