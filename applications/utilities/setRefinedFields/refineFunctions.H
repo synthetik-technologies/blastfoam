@@ -614,7 +614,7 @@ void checkEightAnchorPoints
                     }
                 }
 
-                if (!protectedCell[celli])
+                if (!protectedCell.get(celli))
                 {
                     nAnchorPoints[celli]++;
                 }
@@ -625,7 +625,7 @@ void checkEightAnchorPoints
 
     forAll(protectedCell, celli)
     {
-        if (!protectedCell[celli] && nAnchorPoints[celli] != 8)
+        if (!protectedCell.get(celli) && nAnchorPoints[celli] != 8)
         {
             protectedCell.set(celli, true);
             nProtected++;
@@ -721,17 +721,17 @@ bool update
     }
 
 
-    if (min(maxRefinement) <= 0)
+    if (min(maxRefinement) < 0)
     {
         FatalErrorInFunction
             << "Illegal maximum refinement level " << min(maxRefinement) << nl
-            << "The maxCells setting in the setFields should"
+            << "The maxRefinement setting in the setFields should"
             << " be > 0." << nl
             << exit(FatalError);
     }
 
-    const scalar lowerRefineLevel = 0.5;
-    const scalar unrefineLevel = -0.5;
+    const scalar lowerRefineLevel = 0;
+    const scalar unrefineLevel = 0;
 
     const label nBufferLayers =
         readLabel(refineDict.lookup("nBufferLayers"));
@@ -1109,7 +1109,7 @@ void initialize
             {
                 if (visibleCells[celli] >= 0)
                 {
-                    if (protectedCells[celli])
+                    if (protectedCells.get(celli))
                     {
                         protectedCells.unset(celli);
                         nProtected--;
@@ -1203,7 +1203,7 @@ void initialize
 
                 forAll(protectedCells, celli)
                 {
-                    if (protectedCells[celli])
+                    if (protectedCells.get(celli))
                     {
                         // Check if the cell has exactly 2 points on the axis
                         label numPointsOnAxis = 0;
@@ -1320,7 +1320,7 @@ void initialize
         cellSet pCells(mesh, "protectedCells", nProtected);
         forAll(protectedCells, celli)
         {
-            if (protectedCells[celli])
+            if (protectedCells.get(celli))
             {
                 pCells.insert(celli);
             }

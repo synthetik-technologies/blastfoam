@@ -1635,7 +1635,7 @@ bool Foam::adaptiveFvMesh::update()
         {
             FatalErrorInFunction
                 << "Illegal maximum refinement level " << maxRefinement << nl
-                << "The maxCells setting in the dynamicMeshDict should"
+                << "The maxRefinement setting in the dynamicMeshDict should"
                 << " be > 0." << nl
                 << exit(FatalError);
         }
