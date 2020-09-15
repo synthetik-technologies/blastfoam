@@ -285,7 +285,7 @@ Foam::detonatingFluidThermo<Thermo>::calce() const
     );
 
     //- Add detonation energy to initially reacted material
-    if (this->rho_.time().value() == this->rho_.time().startTime().value())
+    if (this->rho_.time().timeIndex() == 0)
     {
         eInit.ref() += activation_->e0()*activation_->lambda();
     }
