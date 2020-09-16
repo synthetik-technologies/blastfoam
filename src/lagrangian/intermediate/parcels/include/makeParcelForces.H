@@ -28,6 +28,7 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "instantDragForce.H"
 #include "SphereDragForce.H"
 #include "NonSphereDragForce.H"
 #include "SchillerNaumannDragForce.H"
@@ -52,6 +53,7 @@ License
 #define makeParcelForces(CloudType)                                            \
                                                                                \
     makeParticleForceModel(CloudType);                                         \
+    makeParticleForceModelType(instantDragForce, CloudType);                   \
     makeParticleForceModelType(SphereDragForce, CloudType);                    \
     makeParticleForceModelType(NonSphereDragForce, CloudType);                 \
     makeParticleForceModelType(SchillerNaumannDragForce, CloudType);           \

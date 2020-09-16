@@ -1,10 +1,19 @@
+/* General */
+fieldMax/fieldMax.C
+writeTimeList/writeTimeList.C
+
+
+/* Blast specific */
 impulse/impulse.C
 speedOfSound/speedOfSound.C
 blastMachNo/blastMachNos.C
-fieldMax/fieldMax.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
-writeTimeList/writeTimeList.C
 timeOfArrival/timeOfArrival.C
+
+
+/* Lagrangian */
+tracerParticles/tracerParticles.C
+
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

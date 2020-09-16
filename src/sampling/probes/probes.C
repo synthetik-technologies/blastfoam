@@ -74,6 +74,7 @@ void Foam::probes::findElements
 
     boolList foundList(size(), false);
     label nBadProbes = 0;
+    labelList oldCells(elementList_);
 
     forAll(*this, probei)
     {
@@ -83,23 +84,6 @@ void Foam::probes::findElements
 
         elementList_[probei] = celli;
         faceList_[probei] = findFaceIndex(mesh, celli, location);
-
-        if ((elementList_[probei] != -1 || faceList_[probei] != -1))
-        {
-            foundList[probei] = true;
-            if (debug)
-            {
-                Pout<< "probes : found point " << location
-                    << " in cell " << elementList_[probei]
-                    << " and face " << faceList_[probei] << endl;
-            }
-        }
-
-        reduce(foundList[probei], orOp<bool>());
-        if (!foundList[probei])
-        {
-            nBadProbes++;
-        }
     }
 
     // Check if all probes have been found.
@@ -111,23 +95,40 @@ void Foam::probes::findElements
 
         if (Pstream::parRun())
         {
-            label celliOrig = celli;
-            reduce(celli, maxOp<label>());
-
-            facei = -1;
-            if (celli >= 0 && celli == celliOrig)
+            label proc = -1;
+            // Favor keeping cells on the old processor if it is still valid
+            if (oldCells[probei] >= 0 && celli >= 0)
             {
-                facei = faceList_[probei];
+                proc = Pstream::myProcNo();
             }
-            else
+            if (returnReduce(proc, maxOp<label>()) < 0)
             {
+                proc = (celli < 0 ? -1 : Pstream::myProcNo());
+            }
+            reduce(proc, maxOp<label>());
+            if (proc < 0 || proc != Pstream::myProcNo())
+            {
+                celli = -1;
+                facei = -1;
                 elementList_[probei] = -1;
                 faceList_[probei] = -1;
             }
             reduce(facei, maxOp<label>());
+            reduce(celli, maxOp<label>());
         }
 
-        if (celli == -1)
+        if ((elementList_[probei] != -1 || faceList_[probei] != -1))
+        {
+            foundList[probei] = true;
+            if (debug)
+            {
+                Pout<< "probes : found point " << location
+                    << " in cell " << elementList_[probei]
+                    << " cell centre " << mesh.cellCentres()[celli]
+                    << " and face " << faceList_[probei] << endl;
+            }
+        }
+        else if (celli == -1)
         {
             if (print)
             {
@@ -182,6 +183,11 @@ void Foam::probes::findElements
                 }
             }
         }
+        reduce(foundList[probei], orOp<bool>());
+        if (!foundList[probei])
+        {
+            nBadProbes++;
+        }
     }
 
     needUpdate_ = false;
@@ -197,7 +203,8 @@ void Foam::probes::findElements
         {
             Info<< nl
                 << nBadProbes << " probes were not found in any domain." << nl
-                << "These probes are being moved to the nearest patch face." << nl
+                << "These probes are being moved to the nearest patch face."
+                << nl
                 << endl;
         }
 
@@ -235,8 +242,9 @@ void Foam::probes::findElements
 
             scalar trueMinDistance =
                 returnReduce(minDistance, minOp<scalar>());
+            vector pt(-great, -great, -great);
 
-            if (trueMinDistance == minDistance)
+            if (mag(trueMinDistance - minDistance) < small)
             {
                 label patchi = mesh.boundaryMesh().whichPatch(facei);
                 faceList_[probei] = facei;
@@ -244,13 +252,13 @@ void Foam::probes::findElements
                     facei - mesh.boundaryMesh()[patchi].start();
                 elementList_[probei] =
                     mesh.boundaryMesh()[patchi].faceCells()[localFaceID];
-                operator[](probei) = mesh.faceCentres()[faceList_[probei]];
+                pt = mesh.cellCentres()[elementList_[probei]];
 
-                if (print)
+                if (print || debug)
                 {
                     Pout<< "Moved probe " << probei << nl
                         << "    Original position: " << origPoint << nl
-                        << "    New position: " << operator[](probei) << nl
+                        << "    New position: " << pt << nl
                         << "    Located in cell " << elementList_[probei]
                         << ", face " << faceList_[probei] << endl;
                 }
@@ -260,6 +268,8 @@ void Foam::probes::findElements
                 elementList_[probei] = -1;
                 faceList_[probei] = -1;
             }
+            reduce(pt, maxOp<vector>());
+            operator[](probei) = pt;
         }
         if (print)
         {

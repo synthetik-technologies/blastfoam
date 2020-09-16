@@ -128,7 +128,6 @@ protected:
             {}
         };
 
-
     // Protected member data
 
         //- Const reference to fvMesh

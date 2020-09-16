@@ -50,8 +50,10 @@ maxCo 0.5;
 
 functions
 {
-    #includeFunc MachNo
-    #includeFunc residuals
+    tracer
+    {
+        type tracerParticles;
+    }
 }
 
 // ************************************************************************* //
