@@ -247,10 +247,10 @@ void Foam::isoSurface::fixTetBasePtIs()
     {
         if (tetBasePtIs_[facei] == -1)
         {
-            problemCells[faceOwner[facei]] = true;
+            problemCells.set(faceOwner[facei], true);
             if (mesh_.isInternalFace(facei))
             {
-                problemCells[faceNeighbour[facei]] = true;
+                problemCells.set(faceNeighbour[facei], true);
             }
         }
     }
@@ -261,7 +261,7 @@ void Foam::isoSurface::fixTetBasePtIs()
     PackedBoolList problemPoints(mesh_.points().size(), false);
     forAll(cells, celli)
     {
-        if (problemCells[celli])
+        if (problemCells.get(celli))
         {
             const cell& cFaces = cells[celli];
 
@@ -296,7 +296,7 @@ void Foam::isoSurface::fixTetBasePtIs()
                 }
                 if (iter() == 2)
                 {
-                    problemPoints[iter.key()] = true;
+                    problemPoints.set(iter.key(), true);
                 }
             }
         }
@@ -311,8 +311,11 @@ void Foam::isoSurface::fixTetBasePtIs()
     {
         if
         (
-            problemCells[faceOwner[facei]]
-         || (mesh_.isInternalFace(facei) && problemCells[faceNeighbour[facei]])
+            problemCells.get(faceOwner[facei])
+         || (
+                mesh_.isInternalFace(facei)
+             && problemCells.get(faceNeighbour[facei])
+            )
         )
         {
             const face& f = faces[facei];
@@ -321,8 +324,10 @@ void Foam::isoSurface::fixTetBasePtIs()
             // problem point. If not, the existing base point can be retained.
             const label fp0 = tetBasePtIs_[facei] < 0 ? 0 : tetBasePtIs_[facei];
 
-            const bool prevPointIsProblem = problemPoints[f[f.rcIndex(fp0)]];
-            const bool nextPointIsProblem = problemPoints[f[f.fcIndex(fp0)]];
+            const bool prevPointIsProblem =
+                problemPoints.get(f[f.rcIndex(fp0)]);
+            const bool nextPointIsProblem =
+                problemPoints.get(f[f.fcIndex(fp0)]);
 
             if (!prevPointIsProblem && !nextPointIsProblem)
             {
@@ -336,8 +341,10 @@ void Foam::isoSurface::fixTetBasePtIs()
             label maxFp = -1;
             forAll(f, fp)
             {
-                const bool prevPointIsProblem = problemPoints[f[f.rcIndex(fp)]];
-                const bool nextPointIsProblem = problemPoints[f[f.fcIndex(fp)]];
+                const bool prevPointIsProblem =
+                    problemPoints.get(f[f.rcIndex(fp)]);
+                const bool nextPointIsProblem =
+                    problemPoints.get(f[f.fcIndex(fp)]);
 
                 if (!prevPointIsProblem && !nextPointIsProblem)
                 {
@@ -1357,10 +1364,10 @@ Foam::isoSurface::isoSurface
                             const edge& verts1 = pointToVerts_[mp[e[1]]];
                             if
                             (
-                                isBoundaryPoint[verts0[0]]
-                             && isBoundaryPoint[verts0[1]]
-                             && isBoundaryPoint[verts1[0]]
-                             && isBoundaryPoint[verts1[1]]
+                                isBoundaryPoint.get(verts0[0])
+                             && isBoundaryPoint.get(verts0[1])
+                             && isBoundaryPoint.get(verts1[0])
+                             && isBoundaryPoint.get(verts1[1])
                             )
                             {
                                 // Open edge on boundary face. Keep
@@ -1393,7 +1400,7 @@ Foam::isoSurface::isoSurface
                 labelHashSet keepFaces(2*size());
                 forAll(removeFace, facei)
                 {
-                    if (!removeFace[facei])
+                    if (!removeFace.get(facei))
                     {
                         keepFaces.insert(facei);
                     }
