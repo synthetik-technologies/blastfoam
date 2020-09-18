@@ -8,9 +8,9 @@ wmake $targetType distributionModels
 wmake $targetType basic
 wmake $targetType solidParticle
 wmake $targetType intermediate
-# wmake $targetType turbulence
+wmake $targetType turbulence
 # wmake $targetType spray
-# wmake $targetType DSMC
+wmake $targetType DSMC
 # wmake $targetType coalCombustion
 
 molecularDynamics/Allwmake $targetType $*
