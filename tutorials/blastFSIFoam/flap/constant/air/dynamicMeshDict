@@ -16,7 +16,7 @@ FoamFile
 
 dynamicFvMesh   movingAdaptiveFvMesh;
 
-balance no;
+balance no
 
 errorEstimator densityGradient;      // Model used to estimate error
 
@@ -43,7 +43,7 @@ unrefineLevel   0.01;
 nBufferLayers   2;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   2;
+maxRefinement   1;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

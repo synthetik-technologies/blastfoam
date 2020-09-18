@@ -18,9 +18,9 @@ dynamicFvMesh   adaptiveFvMesh;
 
 balance no;
 
-errorEstimator scaledDelta;      // Model used to estimate error
-scaledDeltaField sigma;
-minValue 1000;
+errorEstimator scaledDelta;         // Model used to estimate error
+scaledDeltaField sigma;             // Refine based on stress
+minValue 1000;                      // Minum value to scale by
 
 // How often to refine
 refineInterval  3;
@@ -37,7 +37,7 @@ minValue 1e5;
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   3;
+maxRefinement   2;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;
