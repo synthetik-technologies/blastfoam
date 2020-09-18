@@ -630,28 +630,6 @@ int main(int argc, char *argv[])
                     cells = backupCellSet.toc();
                 }
 
-                //- Mark for possible refinement
-                {
-                    const labelUList& owner = error.mesh().owner();
-                    const labelUList& neighbour = error.mesh().neighbour();
-
-                    forAll(cells, celli)
-                    {
-                        const labelList& faces
-                        (
-                            mesh.cells()[cells[celli]]
-                        );
-                        forAll(faces, facei)
-                        {
-                            if (faces[facei] < mesh.nInternalFaces())
-                            {
-                                error[owner[faces[facei]]] = 0.1;
-                                error[neighbour[faces[facei]]] = 0.1;
-                            }
-                        }
-                    }
-                }
-
                 if (regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setCellField> fieldValues

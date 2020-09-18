@@ -29,7 +29,7 @@ void calcFaceDiff
             label nei = neighbour[facei];
             scalar e =
                 pos0(mag(field[own] - field[nei]) - 1e-6)
-              - 10.0*neg(mag(field[own] - field[nei]) - 1e-6);
+              - neg(mag(field[own] - field[nei]) - 1e-6);
 
             error[own] = max(error[own], e);
             error[nei] = max(error[nei], e);
@@ -57,8 +57,8 @@ void calcFaceDiff
                 {
                     scalar e =
                         pos0(mag(fp[facei] - fn[facei]) - 1e-6)
-                      - 10.0*neg(mag(fp[facei] - fn[facei]) - 1e-6);
-                    error[faceCells[facei]]=
+                      - neg(mag(fp[facei] - fn[facei]) - 1e-6);
+                    error[faceCells[facei]] =
                         max(error[faceCells[facei]], e);
                 }
             }
@@ -730,8 +730,8 @@ bool update
             << exit(FatalError);
     }
 
-    const scalar lowerRefineLevel = 0;
-    const scalar unrefineLevel = 0;
+    const scalar lowerRefineLevel = small;
+    const scalar unrefineLevel = -small;
 
     const label nBufferLayers =
         readLabel(refineDict.lookup("nBufferLayers"));
