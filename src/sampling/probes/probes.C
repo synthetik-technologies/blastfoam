@@ -96,7 +96,7 @@ void Foam::probes::findElements
         {
             label proc = -1;
             // Favor keeping cells at the old cell centre if it is still valid
-            if (celli >= 0)
+            if (celli >= 0 && facei >= 0)
             {
                 if
                 (
@@ -112,7 +112,7 @@ void Foam::probes::findElements
             }
             if (returnReduce(proc, maxOp<label>()) < 0)
             {
-                proc = (celli < 0 ? -1 : Pstream::myProcNo());
+                proc = (celli < 0 && facei < 0 ? -1 : Pstream::myProcNo());
             }
             reduce(proc, maxOp<label>());
             if (proc < 0 || proc != Pstream::myProcNo())
