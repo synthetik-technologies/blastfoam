@@ -95,6 +95,11 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
+    if (stepi == 1)
+    {
+        rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
+    }
+
     PtrList<volScalarField> alphasOld(alphas_.size());
     PtrList<volScalarField> alphaRhosOld(alphas_.size());
     forAll(alphas_, phasei)

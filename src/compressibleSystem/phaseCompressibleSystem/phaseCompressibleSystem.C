@@ -255,7 +255,7 @@ void Foam::phaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
-    if (stepi == 1 && turbulence_.valid())
+    if (stepi == 1)
     {
         rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
     }
@@ -332,7 +332,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
      || extESource_.valid()
     )
     {
-        rho_.oldTime() = rhoOldTmp_;
+        rho_.oldTime() = rhoOldTmp_();
 
         fvVectorMatrix UEqn
         (
@@ -383,6 +383,11 @@ void Foam::phaseCompressibleSystem::clearODEFields()
 
     extESource_.clear();
     dragSource_.clear();
+
+    if (rhoOldTmp_.valid())
+    {
+        rhoOldTmp_.clear();
+    }
 }
 
 

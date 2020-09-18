@@ -72,13 +72,13 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
 
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 
     Info<< "\nStarting time loop\n" << endl;
 
 
-
+    parcels.storeGlobalPositions();
     while (runTime.run())
     {
         //- Refine the mesh
@@ -118,10 +118,7 @@ int main(int argc, char *argv[])
 
         fluid.clearODEFields();
 
-        if (mesh.dynamic())
-        {
-            parcels.storeGlobalPositions();
-        }
+        parcels.storeGlobalPositions();
     }
 
     Info<< "End\n" << endl;
