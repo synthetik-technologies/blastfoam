@@ -83,6 +83,7 @@ public:
         void setDispersedVolumeFraction(const volScalarField& alphad)
         {
             alphadPtr_ = &alphad;
+            decode();
         }
 
         //- Return const access to volume fraction

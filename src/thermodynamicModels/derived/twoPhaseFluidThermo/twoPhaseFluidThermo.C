@@ -410,8 +410,11 @@ Foam::twoPhaseFluidThermo::Gamma(const label patchi) const
 Foam::scalar Foam::twoPhaseFluidThermo::Gammai(const label celli) const
 {
     return
-        volumeFraction_[celli]*thermo1_->Gammai(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->Gammai(celli);
+        1.0
+       /(
+            volumeFraction_[celli]/thermo1_->Gammai(celli)
+          + (1.0 - volumeFraction_[celli])/thermo2_->Gammai(celli)
+        );
 }
 
 

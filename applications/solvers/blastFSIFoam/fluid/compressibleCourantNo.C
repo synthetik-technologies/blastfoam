@@ -46,14 +46,7 @@ Foam::scalar Foam::compressibleCourantNo
             amaxSf.boundaryFieldRef() = Zero;
         }
     }
-    if (mesh.moving())
-    {
-        amaxSf += mag(fluid.phi() - mesh.phi());
-    }
-    else
-    {
-        amaxSf += mag(fluid.phi());
-    }
+    amaxSf += mag(fluid.phi());
 
     scalarField sumAmaxSf
     (

@@ -414,8 +414,8 @@ Foam::scalar Foam::multiphaseFluidThermo::TRhoEi
 Foam::tmp<Foam::scalarField>
 Foam::multiphaseFluidThermo::calcP(const label patchi) const
 {
-    scalarField pByGamma(this->rho_.boundaryField()[patchi].size());
-    scalarField rGamma(this->rho_.boundaryField()[patchi].size());
+    scalarField pByGamma(this->p_.boundaryField()[patchi].size(), 0.0);
+    scalarField rGamma(this->rho_.boundaryField()[patchi].size(), 0.0);
 
     forAll(thermos_, phasei)
     {
@@ -425,7 +425,7 @@ Foam::multiphaseFluidThermo::calcP(const label patchi) const
         pByGamma += alphaByGamma*thermos_[phasei].calcP(patchi)*pos(vf - small);
     }
 
-    return pByGamma/rGamma;
+    return pByGamma/max(rGamma, residualAlpha_.value());
 }
 
 
@@ -446,7 +446,7 @@ Foam::scalar Foam::multiphaseFluidThermo::calcPi(const label celli) const
         }
     }
 
-    return pByGamma/rGamma;
+    return pByGamma/max(rGamma, residualAlpha_.value());
 }
 
 
@@ -647,12 +647,21 @@ Foam::multiphaseFluidThermo::Gamma(const label patchi) const
 
 Foam::scalar Foam::multiphaseFluidThermo::Gammai(const label celli) const
 {
-    scalar f(volumeFractions_[0][celli]*thermos_[0].Gammai(celli));
+    scalar f(volumeFractions_[0][celli]/thermos_[0].Gammai(celli));
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
-        f += volumeFractions_[phasei][celli]*thermos_[phasei].Gammai(celli);
+        f += volumeFractions_[phasei][celli]/thermos_[phasei].Gammai(celli);
     }
-    return f;
+    if (sumVfPtr_ != nullptr)
+    {
+        f /=
+            max
+            (
+                (*sumVfPtr_)[celli],
+                residualAlpha().value()
+            );
+    }
+    return 1.0/f;
 }
 
 

@@ -76,7 +76,7 @@ void Foam::particle::writeFields(const TrackCloudType& c)
     IOPosition<TrackCloudType> ioP(c);
     ioP.write(np > 0);
 
-//     IOField<vector> points(c.fieldIOobject("positions", IOobject::NO_READ), np);
+    IOField<vector> points(c.fieldIOobject("points", IOobject::NO_READ), np);
     IOField<label> origProc
     (
         c.fieldIOobject("origProcId", IOobject::NO_READ),
@@ -91,13 +91,13 @@ void Foam::particle::writeFields(const TrackCloudType& c)
     label i = 0;
     forAllConstIter(typename TrackCloudType, c, iter)
     {
-//         points[i] = iter().position();
+        points[i] = iter().position();
         origProc[i] = iter().origProc_;
         origId[i] = iter().origId_;
         i++;
     }
 
-//     points.write(np > 0);
+    points.write(np > 0);
     origProc.write(np > 0);
     origId.write(np > 0);
 }
