@@ -173,10 +173,14 @@ protected:
             fieldGroup<symmTensor> surfaceSymmTensorFields_;
             fieldGroup<tensor> surfaceTensorFields_;
 
-            // Cells to be probed (obtained from the locations)
+            //- Cells to be probed (obtained from the locations)
             labelList elementList_;
 
-            // Faces to be probed
+            //- Physical location of cells to be probed
+            //  Used to find nearest point if mesh is refined/unrefined
+            pointField elementLocations_;
+
+            //- Faces to be probed
             labelList faceList_;
 
             //- Current open files

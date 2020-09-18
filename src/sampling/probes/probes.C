@@ -74,7 +74,6 @@ void Foam::probes::findElements
 
     boolList foundList(size(), false);
     label nBadProbes = 0;
-    labelList oldCells(elementList_);
 
     forAll(*this, probei)
     {
@@ -96,14 +95,24 @@ void Foam::probes::findElements
         if (Pstream::parRun())
         {
             label proc = -1;
-            // Favor keeping cells on the old processor if it is still valid
-            if (oldCells[probei] >= 0 && celli >= 0)
+            // Favor keeping cells at the old cell centre if it is still valid
+            if (celli >= 0 && facei >= 0)
             {
-                proc = Pstream::myProcNo();
+                if
+                (
+                    mag
+                    (
+                        mesh.cellCentres()[celli]
+                      - elementLocations_[probei]
+                    ) < small
+                )
+                {
+                    proc = Pstream::myProcNo();
+                }
             }
             if (returnReduce(proc, maxOp<label>()) < 0)
             {
-                proc = (celli < 0 ? -1 : Pstream::myProcNo());
+                proc = (celli < 0 || facei < 0 ? -1 : Pstream::myProcNo());
             }
             reduce(proc, maxOp<label>());
             if (proc < 0 || proc != Pstream::myProcNo())
@@ -112,9 +121,15 @@ void Foam::probes::findElements
                 facei = -1;
                 elementList_[probei] = -1;
                 faceList_[probei] = -1;
+                elementLocations_[probei] = vector(-great, -great, -great);
+            }
+            else
+            {
+                elementLocations_[probei] = mesh.cellCentres()[celli];
             }
             reduce(facei, maxOp<label>());
             reduce(celli, maxOp<label>());
+            reduce(elementLocations_[probei], maxOp<vector>());
         }
 
         if ((elementList_[probei] != -1 || faceList_[probei] != -1))
@@ -270,6 +285,7 @@ void Foam::probes::findElements
             }
             reduce(pt, maxOp<vector>());
             operator[](probei) = pt;
+            elementLocations_[probei] = pt;
         }
         if (print)
         {
@@ -621,6 +637,8 @@ bool Foam::probes::read(const dictionary& dict)
     }
 
     dict.readIfPresent("append", append_);
+    elementLocations_.clear();
+    elementLocations_.setSize(size());
 
     // Initialise cells to sample from supplied locations
     findElements
@@ -751,7 +769,7 @@ void Foam::probes::movePoints(const polyMesh& mesh)
 
     if (fixedLocations_ && &mesh == &mesh_)
     {
-        findElements(mesh_, false);
+        needUpdate_ = true;
     }
 }
 
