@@ -274,6 +274,9 @@ public:
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();
 
+        //- Refine the mesh
+        virtual bool refine(const bool correctError = true);
+
 
     // Writing
 

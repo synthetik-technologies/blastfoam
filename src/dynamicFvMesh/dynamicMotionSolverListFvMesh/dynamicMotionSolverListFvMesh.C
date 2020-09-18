@@ -67,6 +67,12 @@ Foam::dynamicMotionSolverListFvMesh::~dynamicMotionSolverListFvMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::dynamicMotionSolverListFvMesh::refine(const bool)
+{
+    return false;
+}
+
+
 bool Foam::dynamicMotionSolverListFvMesh::update()
 {
     if (motionSolvers_.size())

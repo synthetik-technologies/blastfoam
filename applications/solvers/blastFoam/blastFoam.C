@@ -69,26 +69,23 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
 
-    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
     Info<< "\nStarting time loop\n" << endl;
-
-
 
     while (runTime.run())
     {
+        //- Refine the mesh
+        mesh.refine();
+
+        //- Set the new time step and advance
         #include "eigenvalueCourantNo.H"
         #include "readTimeControls.H"
         #include "setDeltaT.H"
+
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //- Update conserved quantites before updating mesh and mapping
-        fluid->encode();
-
-        mesh.updateError();
-        mesh.updateErrorBoundaries();
+        //- Move the mesh
         mesh.update();
 
         Info<< "Calculating Fluxes" << endl;
@@ -110,6 +107,9 @@ int main(int argc, char *argv[])
             << nl << endl;
 
         fluid->clearODEFields();
+
+        //- Update conserved quantites
+        fluid->encode();
     }
 
     Info<< "End\n" << endl;

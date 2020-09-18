@@ -46,9 +46,7 @@ Description
 #include "fvOptions.H"
 #include "coordinateSystem.H"
 #include "dynamicFvMesh.H"
-
-#include "mappedPatchBase.H"
-#include "mappedWallFvPatch.H"
+#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -70,6 +68,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        #include "refineMeshes.H"
+
         #include "readTimeControls.H"
         #include "readSolidTimeControls.H"
 
@@ -82,6 +82,8 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         #include "updateMeshes.H"
+
+        #include "clearPatches.H"
 
         forAll(fluidRegions, i)
         {

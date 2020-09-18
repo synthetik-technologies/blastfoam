@@ -51,7 +51,8 @@ Foam::mappedPatchSelector::mappedPatchSelector
     }
     else
     {
-        mappedMovingPatchPtr_ = &refCast<const mappedMovingPatchBase>(pp.patch());
+        mappedMovingPatchPtr_ =
+            &refCast<const mappedMovingPatchBase>(pp.patch());
     }
 }
 
@@ -113,4 +114,66 @@ Foam::pointIndexHit Foam::mappedPatchSelector::facePoint
 }
 
 
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+// Function to clear patches if an update has occurred
+void Foam::clearMappedPatches(fvMesh& mesh)
+{
+    forAll(mesh.boundaryMesh(), patchi)
+    {
+        if (isA<mappedWallPolyPatch>(mesh.boundary()[patchi]))
+        {
+            polyBoundaryMesh& pbMesh =
+                const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());
+            refCast<mappedPatchBase>(pbMesh[patchi]).clearOut();
+        }
+        if (isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi]))
+        {
+            polyBoundaryMesh& pbMesh =
+                const_cast<polyBoundaryMesh&>
+                (
+                    mesh.boundaryMesh()
+                );
+            refCast<mappedMovingPatchBase>(pbMesh[patchi]).clearOut();
+        }
+    }
+}
+
+
+bool Foam::setMappedPatchDisplacement(fvMesh& mesh, const word& name)
+{
+    if (mesh.foundObject<volVectorField>(name))
+    {
+        const volVectorField& D =
+            mesh.lookupObject<volVectorField>(name);
+
+        forAll(mesh.boundaryMesh(), patchi)
+        {
+            if (isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi]))
+            {
+                polyBoundaryMesh& pbMesh =
+                    const_cast<polyBoundaryMesh&>
+                    (
+                        mesh.boundaryMesh()
+                    );
+                refCast<mappedMovingPatchBase>(pbMesh[patchi]).setOffsets(D);
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+
+bool Foam::isAMappedType(const fvPatch& patch)
+{
+    if (isA<mappedWallPolyPatch>(patch))
+    {
+        return true;
+    }
+    if (isA<mappedMovingWallFvPatch>(patch))
+    {
+        return true;
+    }
+    return false;
+}
 // ************************************************************************* //

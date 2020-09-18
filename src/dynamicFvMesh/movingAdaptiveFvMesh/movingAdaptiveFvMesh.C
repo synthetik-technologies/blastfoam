@@ -75,17 +75,12 @@ const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
 
 bool Foam::movingAdaptiveFvMesh::update()
 {
-    // Refine mesh
-    bool hasChanged = adaptiveFvMesh::update();
-    volScalarField::Internal Vold(this->V());
 
     //- Move mesh
     fvMesh::movePoints(motionPtr_->newPoints());
     velocityMotionCorrection_.update();
 
-    this->setV0() = Vold;
-
-    return hasChanged || moving();
+    return moving();
 }
 
 

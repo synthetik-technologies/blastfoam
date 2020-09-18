@@ -1,6 +1,6 @@
     const wordList solidsNames(rp["solid"]);
 
-    PtrList<fvMesh> solidRegions(solidsNames.size());
+    PtrList<dynamicFvMesh> solidRegions(solidsNames.size());
 
     forAll(solidsNames, i)
     {
@@ -10,7 +10,7 @@
         solidRegions.set
         (
             i,
-            new fvMesh
+            dynamicFvMesh::New
             (
                 IOobject
                 (
@@ -19,7 +19,7 @@
                     runTime,
                     IOobject::MUST_READ
                 )
-            )
+            ).ptr()
         );
 
         // Force calculation of geometric properties to prevent it being done

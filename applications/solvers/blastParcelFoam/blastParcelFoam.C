@@ -81,18 +81,17 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        //- Refine the mesh
+        mesh.refine();
+
         #include "eigenvalueCourantNo.H"
         #include "readTimeControls.H"
         #include "setDeltaT.H"
+
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        if (mesh.dynamic())
-        {
-            parcels.storeGlobalPositions();
-        }
-        mesh.updateError();
-        mesh.updateErrorBoundaries();
+        //- Move the mesh
         mesh.update();
 
         parcels.evolve();
@@ -118,6 +117,11 @@ int main(int argc, char *argv[])
             << nl << endl;
 
         fluid.clearODEFields();
+
+        if (mesh.dynamic())
+        {
+            parcels.storeGlobalPositions();
+        }
     }
 
     Info<< "End\n" << endl;

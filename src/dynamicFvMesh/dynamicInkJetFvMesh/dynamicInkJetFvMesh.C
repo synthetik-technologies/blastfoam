@@ -71,6 +71,12 @@ Foam::dynamicInkJetFvMesh::~dynamicInkJetFvMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::dynamicInkJetFvMesh::refine(const bool)
+{
+    return false;
+}
+
+
 bool Foam::dynamicInkJetFvMesh::update()
 {
     scalar scalingFunction =

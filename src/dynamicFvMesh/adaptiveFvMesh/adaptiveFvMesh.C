@@ -1625,9 +1625,21 @@ void Foam::adaptiveFvMesh::mapFields(const mapPolyMesh& mpm)
     mapNewInternalFaces<tensor>(mpm.faceMap());
 }
 
-
 bool Foam::adaptiveFvMesh::update()
 {
+    return false;
+}
+
+
+bool Foam::adaptiveFvMesh::refine(const bool correctError)
+{
+    //- Correct error
+    if (correctError)
+    {
+        updateError();
+        updateErrorBoundaries();
+    }
+
     // Re-read dictionary. Chosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.

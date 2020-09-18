@@ -49,11 +49,7 @@ Description
 #include "ThermalDiffusivity.H"
 #include "fvOptions.H"
 
-#include "mappedPatchBase.H"
-#include "mappedMovingPatchBase.H"
-
-#include "mappedWallFvPatch.H"
-#include "mappedMovingWallFvPatch.H"
+#include "mappedPatchSelector.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -76,6 +72,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        #include "refineMeshes.H"
+
         #include "readTimeControls.H"
 
         #include "compressibleMultiRegionCourantNo.H"
@@ -86,6 +84,8 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         #include "updateMeshes.H"
+
+        #include "clearPatches.H"
 
         // Solve
         forAll(fluidRegions, i)

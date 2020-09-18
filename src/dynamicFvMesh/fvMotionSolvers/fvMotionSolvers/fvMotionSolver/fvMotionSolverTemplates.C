@@ -27,7 +27,7 @@ License
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
 #include "coupledCellMotionFvPatchFields.H"
-#include "mappedWallFvPatch.H"
+#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -45,7 +45,7 @@ Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
 
     forAll(cmUbf, patchi)
     {
-        if (isA<mappedWallFvPatch>(fvMesh_.boundary()[patchi]))
+        if (isAMappedType(fvMesh_.boundary()[patchi]))
         {
             cmUbf[patchi] = coupledCellMotionFvPatchField<Type>::typeName;
         }

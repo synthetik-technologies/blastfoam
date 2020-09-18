@@ -86,6 +86,9 @@ public:
 
         //- Dummy update function which does not change the mesh
         virtual bool update();
+
+        //- Refine the mesh
+        virtual bool refine(const bool correctError = true);
 };
 
 

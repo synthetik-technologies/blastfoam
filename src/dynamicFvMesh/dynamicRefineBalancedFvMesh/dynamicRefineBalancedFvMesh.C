@@ -82,9 +82,15 @@ Foam::dynamicRefineBalancedFvMesh::~dynamicRefineBalancedFvMesh()
 
 bool Foam::dynamicRefineBalancedFvMesh::update()
 {
+    return false;
+}
+
+
+bool Foam::dynamicRefineBalancedFvMesh::refine(const bool)
+{
 
     //Part 1 - Call normal update from dynamicRefineFvMesh
-    bool hasChanged = dynamicRefineFvMesh::update();
+    bool hasChanged = dynamicRefineFvMesh::refine();
 
     if( Pstream::parRun() && hasChanged)
     {

@@ -59,4 +59,8 @@ bool Foam::staticFvMesh::update()
 }
 
 
+bool Foam::staticFvMesh::refine(const bool)
+{
+    return false;
+}
 // ************************************************************************* //

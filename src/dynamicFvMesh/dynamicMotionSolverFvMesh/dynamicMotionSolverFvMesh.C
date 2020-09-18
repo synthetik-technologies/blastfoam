@@ -61,6 +61,12 @@ const Foam::motionSolver& Foam::dynamicMotionSolverFvMesh::motion() const
 }
 
 
+bool Foam::dynamicMotionSolverFvMesh::refine(const bool)
+{
+    return false;
+}
+
+
 bool Foam::dynamicMotionSolverFvMesh::update()
 {
     fvMesh::movePoints(motionPtr_->newPoints());

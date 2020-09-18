@@ -1577,6 +1577,12 @@ Foam::dynamicRefineFvMesh::~dynamicRefineFvMesh()
 
 bool Foam::dynamicRefineFvMesh::update()
 {
+    return false;
+}
+
+
+bool Foam::dynamicRefineFvMesh::refine(const bool)
+{
     // Re-read dictionary. Choosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.

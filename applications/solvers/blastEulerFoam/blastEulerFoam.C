@@ -56,6 +56,9 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
+        //- Refine mesh
+        mesh.refine();
+
         #include "readTimeControls.H"
         #include "EigenCourantNos.H"
         #include "setDeltaT.H"
@@ -63,9 +66,7 @@ int main(int argc, char *argv[])
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        //- Update error and refine mesh
-        mesh.updateError();
-        mesh.updateErrorBoundaries();
+        //- Move mesh
         mesh.update();
 
         //- Integrate the hyperbolic fluxes

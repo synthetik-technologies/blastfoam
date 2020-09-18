@@ -164,6 +164,15 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// Function to clear patches if an update has occurred
+void clearMappedPatches(fvMesh& mesh);
+
+// Set the displacement field given a field
+bool setMappedPatchDisplacement(fvMesh& mesh, const word& name);
+
+//- Check if a patch is of a mapped type
+bool isAMappedType(const fvPatch& patch);
+
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
