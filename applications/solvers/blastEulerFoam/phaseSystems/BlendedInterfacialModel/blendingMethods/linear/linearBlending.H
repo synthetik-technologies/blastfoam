@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,102 +22,103 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialVelocityModel
+    Foam::blendingMethods::linear
 
 Description
 
 SourceFiles
-    interfacialVelocityModel.C
+    linear.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef interfacialVelocityModel_H
-#define interfacialVelocityModel_H
+#ifndef linearBlending_H
+#define linearBlending_H
+
+#include "blendingMethod.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseModel.H"
-#include "PtrListDictionary.H"
-#include "runTimeSelectionTables.H"
-
 namespace Foam
+{
+namespace blendingMethods
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class interfacialVelocityModel Declaration
+                         Class linear Declaration
 \*---------------------------------------------------------------------------*/
 
-class interfacialVelocityModel
+class linear
+:
+    public blendingMethod
 {
-protected:
+    // Private Data
 
-    typedef PtrListDictionary<phaseModel> phaseModelList;
+        //- Minimum fraction of phases which can be considered fully continuous
+        HashTable<dimensionedScalar, word, word::hash>
+            minFullyContinuousAlpha_;
 
-    // Protected data
-
-        //- Reference to list of phaseModels
-        const phaseModelList& phaseModels_;
+        //- Minimum fraction of phases which can be considered partly continuous
+        HashTable<dimensionedScalar, word, word::hash>
+            minPartlyContinuousAlpha_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("interfacialVelocityModel");
-
-
-    // Declare runtime construction
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            interfacialVelocityModel,
-            dictionary,
-            (
-                const dictionary& dict,
-                const phaseModelList& phaseModels
-            ),
-            (dict, phaseModels)
-        );
-
-
-    // Static data members
+    TypeName("linear");
 
 
     // Constructors
 
-        //- Construct froma dictionary and a phase pair
-        interfacialVelocityModel
+        //- Construct from a dictionary and two phases
+        linear
         (
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const wordList& phaseNames
         );
 
 
     //- Destructor
-    virtual ~interfacialVelocityModel();
-
-
-    // Selectors
-
-        static autoPtr<interfacialVelocityModel> New
-        (
-            const dictionary& dict,
-            const phaseModelList& phaseModels
-        );
+    ~linear();
 
 
     // Member Functions
 
-        //- Return the interfacial Velocity
-        virtual tmp<volVectorField> Ui() const = 0;
+        //- Factor for first phase
+        virtual tmp<volScalarField> f1
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
 
-        //- Return the interfacial volumetric flux
-        virtual tmp<surfaceScalarField> phi() const = 0;
+        //- Factor for first phase for a cell
+        virtual scalar f1i
+        (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Factor for second phase
+        virtual tmp<volScalarField> f2
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Factor for second phase for a cell
+        virtual scalar f2i
+        (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace blendingMethods
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

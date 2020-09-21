@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014-2019 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-2017-05-18 Jeff Heylmun:    Added support of polydisperse phase models
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -25,52 +23,76 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "turbulentDispersionModel.H"
-#include "BlendedInterfacialModel.H"
-#include "phasePair.H"
-#include "fvcGrad.H"
+#include "massAveragedInterfacialPressureModel.H"
+#include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(turbulentDispersionModel, 0);
-    defineBlendedInterfacialModelTypeNameAndDebug(turbulentDispersionModel, 0);
-    defineRunTimeSelectionTable(turbulentDispersionModel, dictionary);
+namespace interfacialPressureModels
+{
+    defineTypeNameAndDebug(massAveraged, 0);
+    addToRunTimeSelectionTable
+    (
+        interfacialPressureModel,
+        massAveraged,
+        dictionary
+    );
 }
-
-const Foam::dimensionSet Foam::turbulentDispersionModel::dimD(1, -1, -2, 0, 0);
-const Foam::dimensionSet Foam::turbulentDispersionModel::dimF(1, -2, -2, 0, 0);
+}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::turbulentDispersionModel::turbulentDispersionModel
+Foam::interfacialPressureModels::massAveraged::massAveraged
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    pair_(pair)
+    interfacialPressureModel(dict, pair)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::turbulentDispersionModel::~turbulentDispersionModel()
+Foam::interfacialPressureModels::massAveraged::~massAveraged()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField>
-Foam::turbulentDispersionModel::F
-(
-    const label nodei,
-    const label nodej
-) const
+Foam::tmp<Foam::volScalarField>
+Foam::interfacialPressureModels::massAveraged::Pi() const
 {
-    return D(nodei, nodej)*fvc::grad(pair_.dispersed().volumeFraction(nodei));
+    volScalarField alphaRho
+    (
+        this->pair_.phase1().alphaRho() + this->pair_.phase2().alphaRho()
+    );
+    volScalarField alphaRhoPi
+    (
+        this->pair_.phase1().alphaRho()*this->pair_.phase1().p()
+      + this->pair_.phase2().alphaRho()*this->pair_.phase2().p()
+    );
+
+    return alphaRhoPi/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
+}
+
+
+Foam::scalar
+Foam::interfacialPressureModels::massAveraged::Pi(const label celli) const
+{
+    const phaseModel& phase1 = this->pair_.phase1();
+    const phaseModel& phase2 = this->pair_.phase2();
+    scalar alphaRho(phase1.alphaRho()[celli] + phase2.alphaRho()[celli]);
+    scalar alphaRhoPi
+    (
+        phase1.alphaRho()[celli]*phase1.p()[celli]
+      + phase2.alphaRho()[celli]*phase2.p()[celli]
+    );
+
+    return alphaRhoPi/max(alphaRho, 1e-10);
 }
 
 // ************************************************************************* //

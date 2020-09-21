@@ -22,99 +22,70 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialPressureModel
+    Foam::interfacialPressureModels::massAveraged
 
 Description
+    One phase is used to determine the interfacial pressure
 
 SourceFiles
-    interfacialPressureModel.C
+    massAveragedPressureModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef interfacialPressureModel_H
-#define interfacialPressureModel_H
+#ifndef massAveragedInterfacialPressure_H
+#define massAveragedInterfacialPressure_H
+
+#include "interfacialPressureModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "phaseModel.H"
-#include "PtrListDictionary.H"
-#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
 
+namespace interfacialPressureModels
+{
+
 /*---------------------------------------------------------------------------*\
-                        Class interfacialPressureModel Declaration
+                          Class massAveraged Declaration
 \*---------------------------------------------------------------------------*/
 
-class interfacialPressureModel
+class massAveraged
+:
+    public interfacialPressureModel
 {
-protected:
-
-    typedef PtrListDictionary<phaseModel> phaseModelList;
-
-    // Protected data
-
-        //- Reference to list of phaseModels
-        const phaseModelList& phaseModels_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("interfacialPressureModel");
-
-
-    // Declare runtime construction
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            interfacialPressureModel,
-            dictionary,
-            (
-                const dictionary& dict,
-                const phaseModelList& phaseModels
-            ),
-            (dict, phaseModels)
-        );
-
-
-    // Static data members
+    TypeName("massAveraged");
 
 
     // Constructors
 
-        //- Construct froma dictionary and a phase pair
-        interfacialPressureModel
+        //- Construct from components
+        massAveraged
         (
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~interfacialPressureModel();
-
-
-    // Selectors
-
-        static autoPtr<interfacialPressureModel> New
-        (
-            const dictionary& dict,
-            const phaseModelList& phaseModels
-        );
+    virtual ~massAveraged();
 
 
     // Member Functions
 
-        //- Return the interfacial pressure
-        virtual tmp<volScalarField> Pi() const = 0;
+        //- The heat transfer function K used in the enthalpy equation
+        virtual tmp<volScalarField> Pi() const;
+
+        //- Return the interfacial pressure for a cell
+        virtual scalar Pi(const label celli) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace interfacialPressureModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

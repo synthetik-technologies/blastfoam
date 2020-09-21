@@ -23,47 +23,42 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "singleInterfacialPressureModel.H"
-#include "addToRunTimeSelectionTable.H"
+#include "interfacialPressureModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace interfacialPressureModels
-{
-    defineTypeNameAndDebug(single, 0);
-    addToRunTimeSelectionTable(interfacialPressureModel, single, dictionary);
-}
+    defineTypeNameAndDebug(interfacialPressureModel, 0);
+    defineRunTimeSelectionTable(interfacialPressureModel, dictionary);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::single::single
+Foam::interfacialPressureModel::interfacialPressureModel
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const phasePair& pair
 )
 :
-    interfacialPressureModel(dict, phaseModels),
-    p_(phaseModels_[dict.lookupType<word>("phase")].p())
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName(typeName, pair.name()),
+            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh()
+        )
+    ),
+    pair_(pair)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::single::~single()
+Foam::interfacialPressureModel::~interfacialPressureModel()
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::single::Pi() const
-{
-    return p_;
-}
 
 
 // ************************************************************************* //

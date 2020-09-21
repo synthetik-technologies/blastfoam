@@ -23,7 +23,7 @@ License
 
 #include "dragODE.H"
 
-Foam::label Foam::dragOde::calcNEqns()
+Foam::label Foam::dragODE::calcNEqns()
 {
     label i = 0;
     forAll(phaseModels_, phasei)
@@ -34,7 +34,7 @@ Foam::label Foam::dragOde::calcNEqns()
     return i;
 }
 
-void Foam::dragOde::setUs()
+void Foam::dragODE::setUs()
 {
     forAll(phaseModels_, phasei)
     {
@@ -62,7 +62,7 @@ void Foam::dragOde::setUs()
 }
 
 
-void Foam::dragOde::setq()
+void Foam::dragODE::setq()
 {
     forAll(phaseModels_, phasei)
     {
@@ -91,7 +91,7 @@ void Foam::dragOde::setq()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dragOde::dragOde(phaseSystem& fluid, dragModelTable& dragModels)
+Foam::dragODE::dragODE(phaseSystem& fluid, dragModelTable& dragModels)
 :
     ODESystem(),
     dict_(fluid.subDict("dragODECoeffs")),
@@ -131,14 +131,14 @@ Foam::dragOde::dragOde(phaseSystem& fluid, dragModelTable& dragModels)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dragOde::~dragOde()
+Foam::dragODE::~dragODE()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-void Foam::dragOde::derivatives
+void Foam::dragODE::derivatives
 (
     const scalar time,
     const scalarField& q,
@@ -177,7 +177,7 @@ void Foam::dragOde::derivatives
                         rAlphaRho2
                     );
 
-                scalar drag = dragModels_[pairi].K(celli_, nodei, nodej);
+                scalar drag = dragModels_[pairi].Ki(celli_, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 
@@ -215,7 +215,7 @@ void Foam::dragOde::derivatives
 }
 
 
-void Foam::dragOde::jacobian
+void Foam::dragODE::jacobian
 (
     const scalar t,
     const scalarField& q,
@@ -255,7 +255,7 @@ void Foam::dragOde::jacobian
                         rAlpha2
                     )*rho2;
 
-                scalar drag = dragModels_[pairi].K(celli_, nodei, nodej);
+                scalar drag = dragModels_[pairi].Ki(celli_, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 
@@ -309,13 +309,20 @@ void Foam::dragOde::jacobian
 }
 
 
-Foam::scalar Foam::dragOde::solve
+Foam::scalar Foam::dragODE::solve
 (
     const scalar& deltaT
 )
 {
     for(celli_ = 0; celli_ < phaseModels_[0].size(); celli_++)
     {
+        scalarList oldKs(phaseModels_.size());
+        forAll(oldKs, phasei)
+        {
+            oldKs[phasei] =
+                phaseModels_[phasei].alphaRho()[celli_]
+               *0.5*magSqr(phaseModels_[phasei].U()[celli_]);
+        }
         setq();
 
         scalar timeLeft = deltaT;
@@ -326,6 +333,14 @@ Foam::scalar Foam::dragOde::solve
             setUs();
             timeLeft -= dt;
             deltaT_[celli_] = dt;
+        }
+
+        forAll(phaseModels_, phasei)
+        {
+            phaseModels_[phasei].alphaRhoE()[celli_] +=
+                phaseModels_[phasei].alphaRho()[celli_]
+               *0.5*magSqr(phaseModels_[phasei].U()[celli_])
+              - oldKs[phasei];
         }
     }
     return min(deltaT_);

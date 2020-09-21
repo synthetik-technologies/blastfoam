@@ -23,33 +23,37 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "interfacialPressureModel.H"
+#include "interfacialVelocityModel.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-    defineTypeNameAndDebug(interfacialPressureModel, 0);
-    defineRunTimeSelectionTable(interfacialPressureModel, dictionary);
-}
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::interfacialPressureModel::interfacialPressureModel
+Foam::autoPtr<Foam::interfacialVelocityModel>
+Foam::interfacialVelocityModel::New
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const phasePair& pair
 )
-:
-    phaseModels_(phaseModels)
-{}
+{
+    word interfacialVelocityModelType(dict.lookup("type"));
 
+    Info<< "Selecting interfacialVelocityModel: "
+        << interfacialVelocityModelType << endl;
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(interfacialVelocityModelType);
 
-Foam::interfacialPressureModel::~interfacialPressureModel()
-{}
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown interfacialVelocityModelType type "
+            << interfacialVelocityModelType << endl << endl
+            << "Valid interfacialVelocityModelType types are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict, pair);
+}
 
 
 // ************************************************************************* //

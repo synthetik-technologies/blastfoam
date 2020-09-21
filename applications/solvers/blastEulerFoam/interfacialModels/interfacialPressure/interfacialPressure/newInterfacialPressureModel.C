@@ -23,50 +23,37 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "heatTransferModel.H"
-#include "BlendedInterfacialModel.H"
-#include "phasePair.H"
+#include "interfacialPressureModel.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-    defineTypeNameAndDebug(heatTransferModel, 0);
-    defineBlendedInterfacialModelTypeNameAndDebug(heatTransferModel, 0);
-    defineRunTimeSelectionTable(heatTransferModel, dictionary);
-}
-
-const Foam::dimensionSet Foam::heatTransferModel::dimK(1, -1, -3, -1, 0);
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::heatTransferModel::heatTransferModel
+Foam::autoPtr<Foam::interfacialPressureModel>
+Foam::interfacialPressureModel::New
 (
     const dictionary& dict,
     const phasePair& pair
 )
-:
-    pair_(pair),
-    residualAlpha_
-    (
-        "residualAlpha",
-        dimless,
-        dict.lookupOrDefault<scalar>
-        (
-            "residualAlpha",
-            pair_.ordered()
-          ? pair_.dispersed().residualAlpha().value()/pair_.dispersed().nNodes()
-          : pair_.phase1().residualAlpha().value()/pair_.phase1().nNodes()
-        )
-    )
-{}
+{
+    word interfacialPressureModelType(dict.lookup("type"));
 
+    Info<< "Selecting interfacialPressureModel: "
+        << interfacialPressureModelType << endl;
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(interfacialPressureModelType);
 
-Foam::heatTransferModel::~heatTransferModel()
-{}
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown interfacialPressureModelType type "
+            << interfacialPressureModelType << endl << endl
+            << "Valid interfacialPressureModelType types are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict, pair);
+}
 
 
 // ************************************************************************* //

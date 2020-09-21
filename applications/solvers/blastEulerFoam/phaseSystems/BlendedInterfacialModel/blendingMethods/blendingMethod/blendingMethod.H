@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,73 +22,112 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialPressureModels::single
+    Foam::blendingMethod
 
 Description
-    One phase is used to determine the interfacial pressure
 
 SourceFiles
-    singleInterfacialPressureModel.C
+    blendingMethod.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef singleInterfacialPressure_H
-#define singleInterfacialPressure_H
+#ifndef blendingMethod_H
+#define blendingMethod_H
 
-#include "interfacialPressureModel.H"
+#include "dictionary.H"
+#include "runTimeSelectionTables.H"
+#include "phaseModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-namespace interfacialPressureModels
-{
-
 /*---------------------------------------------------------------------------*\
-                          Class single Declaration
+                         Class blendingMethod Declaration
 \*---------------------------------------------------------------------------*/
 
-class single
-:
-    public interfacialPressureModel
+class blendingMethod
 {
-    //- Private data
-
-        //- Interfacial pressure
-        const volScalarField& p_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("single");
+    TypeName("blendingMethod");
+
+
+    // Declare runtime construction
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        blendingMethod,
+        dictionary,
+        (
+            const dictionary& dict,
+            const wordList& phaseNames
+        ),
+        (dict, phaseNames)
+    );
 
 
     // Constructors
 
-        //- Construct from components
-        single
+        //- Construct from a dictionary
+        blendingMethod
         (
+            const dictionary& dict
+        );
+
+
+    // Selector
+
+        static autoPtr<blendingMethod> New
+        (
+            const word& modelName,
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const wordList& phaseNames
         );
 
 
     //- Destructor
-    virtual ~single();
+    virtual ~blendingMethod();
 
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        virtual tmp<volScalarField> Pi() const;
+        //- Factor for first phase
+        virtual tmp<volScalarField> f1
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
+
+        //- Factor for first phase for a cell
+        virtual scalar f1i
+        (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
+
+        //- Factor for second phase
+        virtual tmp<volScalarField> f2
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
+
+        //- Factor for second phase for a cell
+        virtual scalar f2i
+        (
+            const label celli,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace interfacialPressureModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

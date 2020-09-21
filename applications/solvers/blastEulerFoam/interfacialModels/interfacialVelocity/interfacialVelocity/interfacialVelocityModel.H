@@ -22,76 +22,108 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialVelocityModels::massAveraged
+    Foam::interfacialVelocityModel
 
 Description
-    One phase is used to determine the interfacial Velocity
 
 SourceFiles
-    massAveragedVelocityModel.C
+    interfacialVelocityModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef massAveragedInterfacialVelocity_H
-#define massAveragedInterfacialVelocity_H
-
-#include "interfacialVelocityModel.H"
+#ifndef interfacialVelocityModel_H
+#define interfacialVelocityModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "phaseModel.H"
+#include "phasePair.H"
+#include "runTimeSelectionTables.H"
 
 namespace Foam
 {
 
-namespace interfacialVelocityModels
-{
-
 /*---------------------------------------------------------------------------*\
-                          Class massAveraged Declaration
+                        Class interfacialVelocityModel Declaration
 \*---------------------------------------------------------------------------*/
 
-class massAveraged
+class interfacialVelocityModel
 :
-    public interfacialVelocityModel
+    public regIOobject
 {
-    // Private data
+protected:
 
-        //- List of phase names used to determine interfacial Velocity
-        wordList phaseNames_;
+    // Protected data
+
+        //- Reference to list of phaseModels
+        const phasePair& pair_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("massAveraged");
+    TypeName("interfacialVelocityModel");
+
+
+    // Declare runtime construction
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            interfacialVelocityModel,
+            dictionary,
+            (
+                const dictionary& dict,
+                const phasePair& pair
+            ),
+            (dict, pair)
+        );
+
+
+    // Static data members
 
 
     // Constructors
 
-        //- Construct from components
-        massAveraged
+        //- Construct froma dictionary and a phase pair
+        interfacialVelocityModel
         (
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~massAveraged();
+    virtual ~interfacialVelocityModel();
+
+
+    // Selectors
+
+        static autoPtr<interfacialVelocityModel> New
+        (
+            const dictionary& dict,
+            const phasePair& pair
+        );
 
 
     // Member Functions
 
-        //- Return the interfacial velocity
-        virtual tmp<volVectorField> Ui() const;
+        //- Return the interfacial Velocity
+        virtual tmp<volVectorField> Ui() const = 0;
 
         //- Return the interfacial volumetric flux
-        virtual tmp<surfaceScalarField> phi() const;
+        virtual tmp<surfaceScalarField> phi() const = 0;
+
+        //- Dummy write for regIOobject
+        bool writeData(Ostream& os) const
+        {
+            return os.good();
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace interfacialVelocityModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "wallLubricationModel.H"
+#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
@@ -36,6 +37,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(wallLubricationModel, 0);
+    defineBlendedInterfacialModelTypeNameAndDebug(wallLubricationModel, 0);
     defineRunTimeSelectionTable(wallLubricationModel, dictionary);
 }
 

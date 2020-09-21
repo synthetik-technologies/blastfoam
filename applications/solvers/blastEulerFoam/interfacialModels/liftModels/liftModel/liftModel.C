@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "liftModel.H"
+#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "fvcCurl.H"
 #include "fvcFlux.H"
@@ -36,6 +37,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(liftModel, 0);
+    defineBlendedInterfacialModelTypeNameAndDebug(liftModel, 0);
     defineRunTimeSelectionTable(liftModel, dictionary);
 }
 

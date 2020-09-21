@@ -23,37 +23,61 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "interfacialPressureModel.H"
+#include "singleInterfacialVelocityModel.H"
+#include "addToRunTimeSelectionTable.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::interfacialPressureModel>
-Foam::interfacialPressureModel::New
-(
-    const dictionary& dict,
-    const phaseModelList& phaseModels
-)
+namespace Foam
 {
-    word interfacialPressureModelType(dict.lookup("type"));
-
-    Info<< "Selecting interfacialPressureModel: "
-        << interfacialPressureModelType << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(interfacialPressureModelType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown interfacialPressureModelType type "
-            << interfacialPressureModelType << endl << endl
-            << "Valid interfacialPressureModelType types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return cstrIter()(dict, phaseModels);
+namespace interfacialVelocityModels
+{
+    defineTypeNameAndDebug(single, 0);
+    addToRunTimeSelectionTable(interfacialVelocityModel, single, dictionary);
+}
 }
 
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::interfacialVelocityModels::single::single
+(
+    const dictionary& dict,
+    const phasePair& pair
+)
+:
+    interfacialVelocityModel(dict, pair),
+    phaseName_(dict.lookup("phase")),
+    phase_
+    (
+        pair_.phase1().name() == phaseName_
+      ? pair_.phase1()
+      : pair_.phase2()
+    ),
+    U_(phase_.U()),
+    phi_(phase_.phi())
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::interfacialVelocityModels::single::~single()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volVectorField>
+Foam::interfacialVelocityModels::single::Ui() const
+{
+    return U_;
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::interfacialVelocityModels::single::phi() const
+{
+    return phi_;
+}
 
 // ************************************************************************* //

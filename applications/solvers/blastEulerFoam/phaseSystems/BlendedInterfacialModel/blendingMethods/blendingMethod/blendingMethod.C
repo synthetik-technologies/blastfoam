@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,37 +23,30 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "interfacialVelocityModel.H"
+#include "blendingMethod.H"
 
-// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::interfacialVelocityModel>
-Foam::interfacialVelocityModel::New
-(
-    const dictionary& dict,
-    const phaseModelList& phaseModels
-)
+namespace Foam
 {
-    word interfacialVelocityModelType(dict.lookup("type"));
-
-    Info<< "Selecting interfacialVelocityModel: "
-        << interfacialVelocityModelType << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(interfacialVelocityModelType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown interfacialVelocityModelType type "
-            << interfacialVelocityModelType << endl << endl
-            << "Valid interfacialVelocityModelType types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return cstrIter()(dict, phaseModels);
+    defineTypeNameAndDebug(blendingMethod, 0);
+    defineRunTimeSelectionTable(blendingMethod, dictionary);
 }
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::blendingMethod::blendingMethod
+(
+    const dictionary& dict
+)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::blendingMethod::~blendingMethod()
+{}
 
 
 // ************************************************************************* //

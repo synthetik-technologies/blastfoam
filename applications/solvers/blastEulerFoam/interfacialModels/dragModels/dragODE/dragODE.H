@@ -20,16 +20,16 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 Class
-    Foam::dragOde
+    Foam::dragODE
 Description
     Basic ode solver for coupling two phases with drag
 SourceFiles
-    dragOdeI.H
-    dragOde.C
+    dragODEI.H
+    dragODE.C
 \*---------------------------------------------------------------------------*/
 
-#ifndef dragOde_H
-#define dragOde_H
+#ifndef dragODE_H
+#define dragODE_H
 
 #include "ODESystem.H"
 #include "ODESolver.H"
@@ -45,10 +45,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class dragOde Declaration
+                      Class dragODE Declaration
 \*---------------------------------------------------------------------------*/
 
-class dragOde
+class dragODE
 :
     public ODESystem
 {
@@ -61,7 +61,7 @@ class dragOde
         > phasePairTable;
     typedef HashTable
         <
-            autoPtr<dragModel>,
+            autoPtr<BlendedInterfacialModel<dragModel>>,
             phasePairKey,
             phasePairKey::hash
         > dragModelTable;
@@ -75,10 +75,10 @@ class dragOde
         void setq();
 
         //- Disallow copy constructor
-        dragOde(const dragOde&);
+        dragODE(const dragODE&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dragOde&);
+        void operator=(const dragODE&);
 
 
 protected:
@@ -99,7 +99,7 @@ protected:
         phaseModelList& phaseModels_;
 
         //- PrtList of references to dragModels
-        UPtrList<dragModel> dragModels_;
+        UPtrList<BlendedInterfacialModel<dragModel>> dragModels_;
 
         //- Reference to phase pairs
         UPtrList<phasePair> phasePairs_;
@@ -142,11 +142,11 @@ public:
     // Constructors
 
         //- Construct from thermo
-        dragOde(phaseSystem& fluid, dragModelTable& dragModels);
+        dragODE(phaseSystem& fluid, dragModelTable& dragModels);
 
 
     //- Destructor
-    virtual ~dragOde();
+    virtual ~dragODE();
 
 
     // Member Functions

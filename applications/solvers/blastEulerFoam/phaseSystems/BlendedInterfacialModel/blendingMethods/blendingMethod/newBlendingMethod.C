@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,50 +23,37 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "heatTransferModel.H"
-#include "BlendedInterfacialModel.H"
-#include "phasePair.H"
+#include "blendingMethod.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-namespace Foam
-{
-    defineTypeNameAndDebug(heatTransferModel, 0);
-    defineBlendedInterfacialModelTypeNameAndDebug(heatTransferModel, 0);
-    defineRunTimeSelectionTable(heatTransferModel, dictionary);
-}
-
-const Foam::dimensionSet Foam::heatTransferModel::dimK(1, -1, -3, -1, 0);
-
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::heatTransferModel::heatTransferModel
+Foam::autoPtr<Foam::blendingMethod> Foam::blendingMethod::New
 (
+    const word& modelName,
     const dictionary& dict,
-    const phasePair& pair
+    const wordList& phaseNames
 )
-:
-    pair_(pair),
-    residualAlpha_
-    (
-        "residualAlpha",
-        dimless,
-        dict.lookupOrDefault<scalar>
-        (
-            "residualAlpha",
-            pair_.ordered()
-          ? pair_.dispersed().residualAlpha().value()/pair_.dispersed().nNodes()
-          : pair_.phase1().residualAlpha().value()/pair_.phase1().nNodes()
-        )
-    )
-{}
+{
+    word blendingMethodType(dict.lookup("type"));
 
+    Info<< "Selecting " << modelName << " blending method: "
+        << blendingMethodType << endl;
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(blendingMethodType);
 
-Foam::heatTransferModel::~heatTransferModel()
-{}
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown blendingMethodType type "
+            << blendingMethodType << endl << endl
+            << "Valid blendingMethod types are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(dict, phaseNames);
+}
 
 
 // ************************************************************************* //

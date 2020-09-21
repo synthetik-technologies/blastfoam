@@ -32,12 +32,14 @@ License
 #include "liftModel.H"
 #include "turbulentDispersionModel.H"
 #include "heatTransferModel.H"
+#include "interfacialPressureModel.H"
+#include "interfacialVelocityModel.H"
+#include "dragModel.H"
 #include "dragODE.H"
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
 
 #include "SortableList.H"
-#include "dragModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -99,15 +101,36 @@ void Foam::phaseSystem::generatePairs
 
 void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 {
-    if (dragOde_.valid())
+    if (dragODE_.valid())
     {
         Info<< "Solving drag ODE system" <<endl;
-        dragOde_->solve(deltaT.value());
+        dragODE_->solve(deltaT.value());
         forAll(phaseModels_, phasei)
         {
             phaseModel& phase(phaseModels_[phasei]);
             phase.alphaRhoU() = phase.alphaRho()*phase.U();
         }
+    }
+
+    UiTable Uis;
+    forAllConstIter
+    (
+        interfacialVelocityModelTable,
+        interfacialVelocityModels_,
+        interfacialVelocityIter
+    )
+    {
+        const phasePair& pair(this->phasePairs_[interfacialVelocityIter.key()]);
+
+        Uis.insert
+        (
+            pair,
+            new volVectorField
+            (
+                IOobject::groupName("Ui", pair.name()),
+                interfacialVelocityIter()->Ui()
+            )
+        );
     }
 
     forAllConstIter
@@ -148,7 +171,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                 );
                 Kd += dragCoeff;
 
-                if (!dragOde_.valid())
+                if (!dragODE_.valid())
                 {
                     volScalarField alphaRho2
                     (
@@ -166,15 +189,16 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                        *(1.0/(dragCoeff*XiD*deltaT + 1.0) - 1.0)
                     );
 
+                    const volVectorField& Ui(*Uis[pair]);
                     phase1.alphaRhoU(nodei) += deltaM;
                     if (!phase1.granular())
                     {
-                        phase1.alphaRhoE() += deltaM & U_;
+                        phase1.alphaRhoE() += deltaM & Ui;
                     }
                     phase2.alphaRhoU(nodej) -= deltaM;
                     if (!phase2.granular())
                     {
-                        phase2.alphaRhoE() -= deltaM & U_;
+                        phase2.alphaRhoE() -= deltaM & Ui;
                     }
                 }
             }
@@ -268,18 +292,19 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 volVectorField liftForce
                 (
-                    liftModels_[pair]->F(nodei, nodej)*deltaT
+                    liftModelIter()->F<vector>(nodei, nodej)*deltaT
                 );
 
+                const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += liftForce;
                 if (!phase1.granular())
                 {
-                    phase1.alphaRhoE() += liftForce & U_;
+                    phase1.alphaRhoE() += liftForce & Ui;
                 }
                 phase2.alphaRhoU(nodej) -= liftForce;
                 if (!phase2.granular())
                 {
-                    phase2.alphaRhoE() -= liftForce & U_;
+                    phase2.alphaRhoE() -= liftForce & Ui;
                 }
             }
         }
@@ -367,27 +392,50 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 }
 
 
-void Foam::phaseSystem::calcRho()
+void Foam::phaseSystem::calcMixtureVariables()
 {
-    const label nPhases = phaseModels_.size();
-
-    rho_ = phaseModels_[0].alphaRho();
-    for (label phasei = 1; phasei < nPhases; ++ phasei)
+    tmp<volVectorField> alphaRhoU;
+    tmp<volScalarField> alphaRhop;
+    tmp<volScalarField> alphaRhoT;
+    tmp<volScalarField> palphaRho;
     {
-        rho_ += phaseModels_[phasei].alphaRho();
+        const phaseModel& phase = phaseModels_[0];
+        rho_ = phase.alphaRho();
+        alphaRhoU = phase.alphaRho()*phase.U();
+        alphaRhoT = phase.alphaRho()*phase.T();
+        if (!phase.granular())
+        {
+            palphaRho =
+                tmp<volScalarField>(new volScalarField(phase.alphaRho()));
+            alphaRhop = phase.alphaRho()*phase.p();
+        }
     }
-}
-
-
-void Foam::phaseSystem::calcT()
-{
-    const label nPhases = phaseModels_.size();
-
-    T_ = phaseModels_[0]*phaseModels_[0].T();
-    for (label phasei = 1; phasei < nPhases; ++ phasei)
+    for (label phasei = 1; phasei < phaseModels_.size(); ++ phasei)
     {
-        T_ += phaseModels_[phasei]*phaseModels_[phasei].T();
+        const phaseModel& phase = phaseModels_[phasei];
+        const volScalarField& alphaRho = phase.alphaRho();
+        rho_ += alphaRho;
+        alphaRhoU.ref() += alphaRho*phase.U();
+        alphaRhoT.ref() += alphaRho*phase.T();
+        if (!phase.granular())
+        {
+            if (alphaRhop.valid())
+            {
+                palphaRho.ref() += alphaRho;
+                alphaRhop.ref() += alphaRho*phase.p();
+            }
+            else
+            {
+                palphaRho =
+                    tmp<volScalarField>(new volScalarField(alphaRho));
+                alphaRhop = alphaRho*phase.p();
+            }
+        }
     }
+
+    p_ = alphaRhop/palphaRho;
+    U_ = alphaRhoU/rho_;
+    T_ = alphaRhoT/rho_;
 }
 
 
@@ -435,7 +483,7 @@ Foam::phaseSystem::phaseSystem
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedVector("0", dimVelocity, Zero)
@@ -468,28 +516,28 @@ Foam::phaseSystem::phaseSystem
         dimensionedScalar("0", dimTemperature, 0.0)
     ),
 
-    phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
-    interfacialPressure_
-    (
-        interfacialPressureModel::New
-        (
-            subDict("interfacialPressure"),
-            phaseModels_
-        )
-    ),
-    interfacialVelocity_
-    (
-        interfacialVelocityModel::New
-        (
-            subDict("interfacialVelocity"),
-            phaseModels_
-        )
-    ),
+    phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
     kineticTheoryPtr_(NULL),
     polydisperseKineticTheory_(false)
 {
+    // Blending methods
+    forAllConstIter(dictionary, subDict("blending"), iter)
+    {
+        blendingMethods_.insert
+        (
+            iter().keyword(),
+            blendingMethod::New
+            (
+                iter().keyword(),
+                iter().dict(),
+                phaseModels_.toc()
+            )
+        );
+    }
+
     // Sub-models
     generatePairsAndSubModels("aspectRatio", aspectRatioModels_);
     generatePairsAndSubModels("drag", dragModels_);
@@ -498,10 +546,20 @@ Foam::phaseSystem::phaseSystem
     generatePairsAndSubModels("turbulentDispersion", turbulentDispersionModels_);
     generatePairsAndSubModels("wallLubrication", wallLubricationModels_);
     generatePairsAndSubModels("heatTransfer", heatTransferModels_);
+    generatePairsAndSubModels
+    (
+        "interfacialPressure",
+        interfacialPressureModels_
+    );
+    generatePairsAndSubModels
+    (
+        "interfacialVelocity",
+        interfacialVelocityModels_
+    );
 
     if (lookupOrDefault<Switch>("solveDragODE", false))
     {
-        dragOde_.set(new dragOde(*this, dragModels_));
+        dragODE_.set(new dragODE(*this, dragModels_));
     }
 
     if (phaseModels_.size() == 2)
@@ -561,10 +619,7 @@ Foam::phaseSystem::phaseSystem
         }
     }
 
-    calcRho();
-    calcT();
-    U_ = interfacialVelocity_->Ui();
-    p_ = interfacialPressure_->Pi();
+    calcMixtureVariables();
 }
 
 
@@ -631,16 +686,26 @@ void Foam::phaseSystem::decode()
         kineticTheoryPtr_->correct();
     }
 
-    calcRho();
-    calcT();
-    U_ = interfacialVelocity_->Ui();
-    p_ = interfacialPressure_->Pi();
+    calcMixtureVariables();
 }
 
 
 Foam::tmp<Foam::surfaceScalarField> Foam::phaseSystem::phi() const
 {
-    return interfacialVelocity_->phi();
+    tmp<surfaceScalarField> phiTmp
+    (
+        new surfaceScalarField
+        (
+            "phi",
+            phaseModels_[0].alphaRhoPhi()
+        )
+    );
+    for (label phasei = 1; phasei < phaseModels_.size(); ++ phasei)
+    {
+        phiTmp.ref() += phaseModels_[phasei].alphaRhoPhi();
+    }
+    phiTmp.ref() /= fvc::interpolate(rho_);
+    return phiTmp;
 }
 
 
@@ -655,7 +720,7 @@ void Foam::phaseSystem::encode()
 
 void Foam::phaseSystem::update()
 {
-
+    decode();
     forAll(phaseModels_, phasei)
     {
         phaseModels_[phasei].update();
@@ -678,24 +743,14 @@ void Foam::phaseSystem::solve
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::phaseSystem::UMix() const
-{
-    tmp<volVectorField> rhoU
-    (
-        phaseModels_[0].alphaRho()*phaseModels_[0].U()
-    );
-    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
-    {
-        rhoU.ref() +=
-            phaseModels_[phasei].alphaRho()*phaseModels_[phasei].U();
-    }
-    return rhoU/rho_;
-}
-
-
 void Foam::phaseSystem::postUpdate()
 {
     const dimensionedScalar& deltaT(mesh_.time().deltaT());
+
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].postUpdate();
+    }
 
     decode();
 

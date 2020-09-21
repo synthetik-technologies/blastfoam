@@ -39,10 +39,19 @@ namespace Foam
 Foam::interfacialVelocityModel::interfacialVelocityModel
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const phasePair& pair
 )
 :
-    phaseModels_(phaseModels)
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName(typeName, pair.name()),
+            pair.phase1().mesh().time().timeName(),
+            pair.phase1().mesh()
+        )
+    ),
+    pair_(pair)
 {}
 
 

@@ -415,7 +415,7 @@ public:
             }
 
             //- Constant access to phasic density
-            virtual tmp<volScalarField> alphaRho(const label nodei = -1) const
+            virtual const volScalarField& alphaRho(const label nodei = -1) const
             {
                 return alphaRho_;
             }

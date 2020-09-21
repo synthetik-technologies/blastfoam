@@ -105,16 +105,32 @@ gas
     residualAlpha   1e-10;
 }
 
+blending
+{
+    default
+    {
+        type none;
+        continuousPhase gas;
+    }
+}
+
 interfacialPressure
-{
-    type single;
-    phase gas;
-}
+(
+    (gas and particles)
+    {
+        type single;
+        phase gas;
+    }
+);
+
 interfacialVelocity
-{
-    type single;
-    phase particles;
-}
+(
+    (gas and particles)
+    {
+        type single;
+        phase particles;
+    }
+);
 
 aspectRatio
 (

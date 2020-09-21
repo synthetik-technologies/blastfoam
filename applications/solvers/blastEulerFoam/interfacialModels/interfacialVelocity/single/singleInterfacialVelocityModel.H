@@ -55,6 +55,12 @@ class single
 {
     //- Private data
 
+        //- Name of phase
+        const word phaseName_;
+
+        //- const reference to phase model
+        const phaseModel& phase_;
+
         //- Interfacial Velocity
         const volVectorField& U_;
 
@@ -74,7 +80,7 @@ public:
         single
         (
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const phasePair& pair
         );
 
 

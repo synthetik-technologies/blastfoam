@@ -48,11 +48,10 @@ namespace interfacialVelocityModels
 Foam::interfacialVelocityModels::massAveraged::massAveraged
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const phasePair& pair
 )
 :
-    interfacialVelocityModel(dict, phaseModels),
-    phaseNames_(dict.lookup("phases"))
+    interfacialVelocityModel(dict, pair)
 {}
 
 
@@ -67,13 +66,15 @@ Foam::interfacialVelocityModels::massAveraged::~massAveraged()
 Foam::tmp<Foam::volVectorField>
 Foam::interfacialVelocityModels::massAveraged::Ui() const
 {
-    volScalarField alphaRho(phaseModels_[phaseNames_[0]].alphaRho());
-    volVectorField alphaRhoUi(phaseModels_[phaseNames_[0]].alphaRhoU());
-    for (label i = 1; i < phaseNames_.size(); i++)
-    {
-        alphaRho += phaseModels_[phaseNames_[i]].alphaRho();
-        alphaRhoUi += (phaseModels_[phaseNames_[i]].alphaRhoU());
-    }
+    volScalarField alphaRho
+    (
+        this->pair_.phase1().alphaRho() + this->pair_.phase2().alphaRho()
+    );
+    volVectorField alphaRhoUi
+    (
+        this->pair_.phase1().alphaRho()*this->pair_.phase1().U()
+      + this->pair_.phase2().alphaRho()*this->pair_.phase2().U()
+    );
 
     return alphaRhoUi/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
 }
@@ -81,24 +82,19 @@ Foam::interfacialVelocityModels::massAveraged::Ui() const
 Foam::tmp<Foam::surfaceScalarField>
 Foam::interfacialVelocityModels::massAveraged::phi() const
 {
-    surfaceScalarField alphaRhoPhi
+    volScalarField alphaRho
     (
-        phaseModels_[phaseNames_[0]].alphaRhoPhi()
+        this->pair_.phase1().alphaRho() + this->pair_.phase2().alphaRho()
     );
-    volScalarField alphaRho(phaseModels_[phaseNames_[0]].alphaRho());
-    for (label i = 1; i < phaseNames_.size(); i++)
-    {
-        alphaRhoPhi += phaseModels_[phaseNames_[i]].alphaRhoPhi();
-        alphaRho += (phaseModels_[phaseNames_[i]].alphaRho());
-    }
+    surfaceScalarField alphaRhoPhii
+    (
+        this->pair_.phase1().alphaRhoPhi()
+      + this->pair_.phase2().alphaRhoPhi()
+    );
 
     return
-        alphaRhoPhi
-       /max
-        (
-            fvc::interpolate(alphaRho),
-            dimensionedScalar(dimDensity, 1e-10)
-        );
+        alphaRhoPhii
+       /fvc::interpolate(max(alphaRho, dimensionedScalar(dimDensity, 1e-10)));
 }
 
 

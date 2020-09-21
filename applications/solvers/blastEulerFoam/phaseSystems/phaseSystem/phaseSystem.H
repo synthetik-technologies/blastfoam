@@ -41,11 +41,8 @@ SourceFiles
 #include "PtrListDictionary.H"
 #include "volFields.H"
 #include "surfaceFields.H"
-#include "dragModel.H"
 #include "integrationSystem.H"
 #include "timeIntegrator.H"
-#include "interfacialPressureModel.H"
-#include "interfacialVelocityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,9 +54,16 @@ class heatTransferModel;
 class liftModel;
 class wallLubricationModel;
 class turbulentDispersionModel;
-class dragOde;
-class pressureOde;
+class interfacialPressureModel;
+class interfacialVelocityModel;
+class dragModel;
+class dragODE;
 class kineticTheorySystem;
+
+class blendingMethod;
+template<class modelType>
+class BlendedInterfacialModel;
+
 
 /*---------------------------------------------------------------------------*\
                       Class phaseSystem Declaration
@@ -82,45 +86,88 @@ public:
 
         typedef HashTable
         <
-            autoPtr<dragModel>,
+            autoPtr<BlendedInterfacialModel<dragModel>>,
             phasePairKey,
             phasePairKey::hash
         > dragModelTable;
 
         typedef HashTable
         <
-            autoPtr<virtualMassModel>,
+            autoPtr<BlendedInterfacialModel<virtualMassModel>>,
             phasePairKey,
             phasePairKey::hash
         > virtualMassModelTable;
 
         typedef HashTable
         <
-            autoPtr<liftModel>,
+            autoPtr<BlendedInterfacialModel<liftModel>>,
             phasePairKey,
             phasePairKey::hash
         > liftModelTable;
 
         typedef HashTable
         <
-            autoPtr<wallLubricationModel>,
+            autoPtr<BlendedInterfacialModel<wallLubricationModel>>,
             phasePairKey,
             phasePairKey::hash
         > wallLubricationModelTable;
 
         typedef HashTable
         <
-            autoPtr<turbulentDispersionModel>,
+            autoPtr<BlendedInterfacialModel<turbulentDispersionModel>>,
             phasePairKey,
             phasePairKey::hash
         > turbulentDispersionModelTable;
 
         typedef HashTable
         <
-            autoPtr<heatTransferModel>,
+            autoPtr<BlendedInterfacialModel<heatTransferModel>>,
             phasePairKey,
             phasePairKey::hash
         > heatTransferModelTable;
+
+        typedef HashTable
+        <
+            autoPtr<interfacialPressureModel>,
+            phasePairKey,
+            phasePairKey::hash
+        > interfacialPressureModelTable;
+
+        typedef HashTable
+        <
+            autoPtr<interfacialVelocityModel>,
+            phasePairKey,
+            phasePairKey::hash
+        > interfacialVelocityModelTable;
+
+        // Coefficient tables
+        typedef HashPtrTable
+        <
+            volScalarField,
+            phasePairKey,
+            phasePairKey::hash
+        > KdTable;
+
+        typedef HashPtrTable
+        <
+            volScalarField,
+            phasePairKey,
+            phasePairKey::hash
+        > VmTable;
+
+        typedef HashPtrTable
+        <
+            volScalarField,
+            phasePairKey,
+            phasePairKey::hash
+        > PiTable;
+
+        typedef HashPtrTable
+        <
+            volVectorField,
+            phasePairKey,
+            phasePairKey::hash
+        > UiTable;
 
 
 protected:
@@ -130,6 +177,10 @@ protected:
         typedef
             HashTable<dictionary, phasePairKey, phasePairKey::hash>
             dictTable;
+
+        typedef
+            HashTable<autoPtr<blendingMethod>, word, word::hash>
+            blendingMethodTable;
 
         typedef
             HashTable
@@ -158,14 +209,11 @@ protected:
         //- Mixture temperature
         volScalarField T_;
 
+        //- Gravitational acceleration
+        const uniformDimensionedVectorField& g_;
+
         //- Phase models
         phaseModelList phaseModels_;
-
-        //- Interfacial pressure model
-        autoPtr<interfacialPressureModel> interfacialPressure_;
-
-        //- Interfacial velocity model
-        autoPtr<interfacialVelocityModel> interfacialVelocity_;
 
         //- Pointer to kinetic theory system
         kineticTheorySystem* kineticTheoryPtr_;
@@ -177,12 +225,15 @@ protected:
         phasePairTable phasePairs_;
 
         //- Ode system and solver for solving the  drag system
-        autoPtr<dragOde> dragOde_;
+        autoPtr<dragODE> dragODE_;
 
         //- Switch to solve drag in ode solver
         Switch solveDragOde_;
 
         // Sub Models
+
+            //- Blending methods
+            blendingMethodTable blendingMethods_;
 
             //- Aspect ratio models
             aspectRatioModelTable aspectRatioModels_;
@@ -204,6 +255,12 @@ protected:
 
             //- Heat transfer models
             heatTransferModelTable heatTransferModels_;
+
+            //- Interfacial pressure models
+            interfacialPressureModelTable interfacialPressureModels_;
+
+            //- Interfacial velocity models
+            interfacialVelocityModelTable interfacialVelocityModels_;
 
 
     // Private member functions
@@ -240,18 +297,32 @@ protected:
             >& models
         );
 
-        //- Generate pairs and sub-model tables
+        //- Generate pairs and blended sub-model tables
         template<class modelType>
         void generatePairsAndSubModels
         (
             const word& modelName,
             HashTable
             <
-                autoPtr<modelType>,
+                autoPtr<BlendedInterfacialModel<modelType>>,
                 phasePairKey,
                 phasePairKey::hash
             >& models,
-            const bool
+            const bool correctFixedFluxBCs = true
+        );
+
+        //- Generate pairs and two-sided sub-model tables
+        template<class modelType>
+        void generatePairsAndSubModels
+        (
+            const word& modelName,
+            HashTable
+            <
+                Pair<autoPtr<modelType>>,
+                phasePairKey,
+                phasePairKey::hash
+            >& models,
+            const bool correctFixedFluxBCs = true
         );
 
         //- Solve finite pressure relaxation (not implemented yet)
@@ -263,11 +334,8 @@ protected:
         //- Solve heat transfer between phases
         void relaxTemperature(const dimensionedScalar& deltaT);
 
-        //- Calculate the mixture density
-        void calcRho();
-
-        //- Calculate the mixture temperature
-        void calcT();
+        //- Calculate mixture properties
+        void calcMixtureVariables();
 
 
 public:
@@ -327,9 +395,6 @@ public:
             return p_;
         }
 
-        //- Return the mixture velocity
-        tmp<volVectorField> UMix() const;
-
         //- Calculate and return the total volumetric flux
         tmp<surfaceScalarField> phi() const;
 
@@ -373,7 +438,8 @@ public:
            bool foundSubModel
             (
                 const phaseModel& dispersed,
-                const phaseModel& continuous
+                const phaseModel& continuous,
+                const bool ordered = true
             ) const;
 
             //- Return a sub model between two phases
@@ -381,9 +447,18 @@ public:
             const modelType& lookupSubModel
             (
                 const phaseModel& dispersed,
-                const phaseModel& continuous
+                const phaseModel& continuous,
+                const bool ordered = true
             ) const;
 
+            //- Check availability of a blended sub model for a given phase pair
+            template<class modelType>
+            bool foundBlendedSubModel(const phasePair& key) const;
+
+            //- Return a blended sub model between a phase pair
+            template<class modelType>
+            const BlendedInterfacialModel<modelType>&
+            lookupBlendedSubModel(const phasePair& key) const;
 
             //- Return the surface tension coefficient
             const dimensionedScalar& sigma() const;

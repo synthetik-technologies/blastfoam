@@ -23,54 +23,61 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "singleInterfacialVelocityModel.H"
+#include "singleInterfacialPressureModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace interfacialVelocityModels
+namespace interfacialPressureModels
 {
     defineTypeNameAndDebug(single, 0);
-    addToRunTimeSelectionTable(interfacialVelocityModel, single, dictionary);
+    addToRunTimeSelectionTable(interfacialPressureModel, single, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfacialVelocityModels::single::single
+Foam::interfacialPressureModels::single::single
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const phasePair& pair
 )
 :
-    interfacialVelocityModel(dict, phaseModels),
-    U_(phaseModels_[dict.lookupType<word>("phase")].U()),
-    phi_(phaseModels_[U_.group()].phi())
+    interfacialPressureModel(dict, pair),
+    phaseName_(dict.lookup("phase")),
+    phase_
+    (
+        pair_.phase1().name() == phaseName_
+      ? pair_.phase1()
+      : pair_.phase2()
+    ),
+    p_(phase_.p())
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::interfacialVelocityModels::single::~single()
+Foam::interfacialPressureModels::single::~single()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField>
-Foam::interfacialVelocityModels::single::Ui() const
+Foam::tmp<Foam::volScalarField>
+Foam::interfacialPressureModels::single::Pi() const
 {
-    return U_;
+    return p_;
 }
 
 
-Foam::tmp<Foam::surfaceScalarField>
-Foam::interfacialVelocityModels::single::phi() const
+Foam::scalar
+Foam::interfacialPressureModels::single::Pi(const label celli) const
 {
-    return phi_;
+    return p_[celli];
 }
+
 
 // ************************************************************************* //

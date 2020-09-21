@@ -16,7 +16,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 phases (particles0 particles1 gas);
-pRef 67e3;
+
 particles0
 {
     phaseType        granular;
@@ -152,16 +152,42 @@ gas
     residualAlpha   1e-10;
 }
 
+blending
+{
+    default
+    {
+        type none;
+        continuousPhase gas;
+    }
+}
+
 interfacialPressure
-{
-    type single;
-    phase gas;
-}
+(
+    (gas and particles0)
+    {
+        type single;
+        phase gas;
+    }
+    (gas and particles1)
+    {
+        type single;
+        phase gas;
+    }
+);
+
 interfacialVelocity
-{
-    type massAveraged;
-    phases (particles0 particles1);
-}
+(
+    (gas and particles0)
+    {
+        type single;
+        phase particles0;
+    }
+    (gas and particles1)
+    {
+        type single;
+        phase particles1;
+    }
+);
 
 aspectRatio
 (

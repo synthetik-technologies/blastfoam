@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "virtualMassModel.H"
+#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "surfaceInterpolate.H"
 
@@ -34,6 +35,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(virtualMassModel, 0);
+    defineBlendedInterfacialModelTypeNameAndDebug(virtualMassModel, 0);
     defineRunTimeSelectionTable(virtualMassModel, dictionary);
 }
 

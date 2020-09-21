@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "dragModel.H"
+#include "BlendedInterfacialModel.H"
 #include "phasePair.H"
 #include "swarmCorrection.H"
 #include "fvcFlux.H"
@@ -37,6 +38,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dragModel, 0);
+    defineBlendedInterfacialModelTypeNameAndDebug(dragModel, 0);
     defineRunTimeSelectionTable(dragModel, dictionary);
 }
 

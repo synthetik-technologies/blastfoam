@@ -225,16 +225,32 @@ gas
     }
 }
 
+blending
+{
+    default
+    {
+        type none;
+        continuousPhase gas;
+    }
+}
+
 interfacialPressure
-{
-    type single;
-    phase gas;
-}
+(
+    (gas and aluminum)
+    {
+        type single;
+        phase gas;
+    }
+);
+
 interfacialVelocity
-{
-    type single;
-    phase aluminum;
-}
+(
+    (gas and aluminum)
+    {
+        type single;
+        phase aluminum;
+    }
+);
 
 aspectRatio
 (

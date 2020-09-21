@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialPressureModels::massAveraged
+    Foam::interfacialPressureModels::single
 
 Description
     One phase is used to determine the interfacial pressure
 
 SourceFiles
-    massAveragedPressureModel.C
+    singleInterfacialPressureModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef massAveragedInterfacialPressure_H
-#define massAveragedInterfacialPressure_H
+#ifndef singleInterfacialPressure_H
+#define singleInterfacialPressure_H
 
 #include "interfacialPressureModel.H"
 
@@ -46,43 +46,52 @@ namespace interfacialPressureModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class massAveraged Declaration
+                          Class single Declaration
 \*---------------------------------------------------------------------------*/
 
-class massAveraged
+class single
 :
     public interfacialPressureModel
 {
-    // Private data
+    //- Private data
 
-        //- List of phase names used to determine interfacial pressure
-        wordList phaseNames_;
+        //- Name of phase
+        const word phaseName_;
+
+        //- const reference to phase model
+        const phaseModel& phase_;
+
+        //- Interfacial pressure
+        const volScalarField& p_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("massAveraged");
+    TypeName("single");
 
 
     // Constructors
 
         //- Construct from components
-        massAveraged
+        single
         (
             const dictionary& dict,
-            const phaseModelList& phaseModels
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~massAveraged();
+    virtual ~single();
 
 
     // Member Functions
 
         //- The heat transfer function K used in the enthalpy equation
         virtual tmp<volScalarField> Pi() const;
+
+        //- Return the interfacial pressure for a cell
+        virtual scalar Pi(const label celli) const;
 };
 
 

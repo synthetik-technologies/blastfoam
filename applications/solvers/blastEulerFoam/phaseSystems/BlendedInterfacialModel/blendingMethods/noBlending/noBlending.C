@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2014-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,61 +23,99 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "massAveragedInterfacialPressureModel.H"
+#include "noBlending.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace interfacialPressureModels
+namespace blendingMethods
 {
-    defineTypeNameAndDebug(massAveraged, 0);
+    defineTypeNameAndDebug(noBlending, 0);
+
     addToRunTimeSelectionTable
     (
-        interfacialPressureModel,
-        massAveraged,
+        blendingMethod,
+        noBlending,
         dictionary
     );
 }
 }
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::massAveraged::massAveraged
+Foam::blendingMethods::noBlending::noBlending
 (
     const dictionary& dict,
-    const phaseModelList& phaseModels
+    const wordList& phaseNames
 )
 :
-    interfacialPressureModel(dict, phaseModels),
-    phaseNames_(dict.lookup("phases"))
+    blendingMethod(dict),
+    continuousPhase_(dict.lookup("continuousPhase"))
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::massAveraged::~massAveraged()
+Foam::blendingMethods::noBlending::~noBlending()
 {}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::massAveraged::Pi() const
+Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f1
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
 {
-    volScalarField alphaRho(phaseModels_[phaseNames_[0]].alphaRho());
-    volScalarField alphaRhoPi(alphaRho*phaseModels_[phaseNames_[0]].p());
-    for (label i = 1; i < phaseNames_.size(); i++)
-    {
-        const volScalarField& alphaRhoi =
-            phaseModels_[phaseNames_[i]].alphaRho();
-        alphaRho += alphaRhoi;
-        alphaRhoPi += (alphaRhoi*phaseModels_[phaseNames_[i]].p());
-    }
+    const fvMesh& mesh(phase1.mesh());
 
-    return alphaRhoPi/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));;
+    return volScalarField::New
+    (
+        "f",
+        mesh,
+        dimensionedScalar(dimless, phase2.name() == continuousPhase_)
+    );
+}
+
+
+Foam::scalar Foam::blendingMethods::noBlending::f1i
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return scalar(phase2.name() == continuousPhase_);
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::blendingMethods::noBlending::f2
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    const fvMesh& mesh(phase1.mesh());
+
+    return volScalarField::New
+    (
+        "f",
+        mesh,
+        dimensionedScalar(dimless, phase1.name() == continuousPhase_)
+    );
+}
+
+Foam::scalar Foam::blendingMethods::noBlending::f2i
+(
+    const label celli,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return scalar(phase1.name() == continuousPhase_);
 }
 
 

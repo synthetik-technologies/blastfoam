@@ -1,15 +1,5 @@
 phaseSystem/phaseSystem.C
 
-phaseSystem/interfacialPressure/interfacialPressure/interfacialPressureModel.C
-phaseSystem/interfacialPressure/interfacialPressure/newInterfacialPressureModel.C
-phaseSystem/interfacialPressure/single/singleInterfacialPressureModel.C
-phaseSystem/interfacialPressure/massAveraged/massAveragedInterfacialPressureModel.C
-
-phaseSystem/interfacialVelocity/interfacialVelocity/interfacialVelocityModel.C
-phaseSystem/interfacialVelocity/interfacialVelocity/newInterfacialVelocityModel.C
-phaseSystem/interfacialVelocity/single/singleInterfacialVelocityModel.C
-phaseSystem/interfacialVelocity/massAveraged/massAveragedInterfacialVelocityModel.C
-
 phaseModels/phaseModel.C
 phaseModels/newPhaseModel.C
 
@@ -30,5 +20,11 @@ phaseModels/phaseFluxFunctions/HLLC/HLLC.C
 phaseModels/phaseFluxFunctions/AUSMPlusUp/AUSMPlusUp.C
 phaseModels/phaseFluxFunctions/Tadmor/Tadmor.C
 phaseModels/phaseFluxFunctions/Kurganov/Kurganov.C
+
+BlendedInterfacialModel/blendingMethods/blendingMethod/blendingMethod.C
+BlendedInterfacialModel/blendingMethods/blendingMethod/newBlendingMethod.C
+BlendedInterfacialModel/blendingMethods/noBlending/noBlending.C
+BlendedInterfacialModel/blendingMethods/linear/linearBlending.C
+BlendedInterfacialModel/blendingMethods/hyperbolic/hyperbolicBlending.C
 
 LIB = $(BLAST_LIBBIN)/libblastPhaseSystems
