@@ -11,87 +11,45 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (aluminum gas);
-pRef 1e5;
-aluminum
+phases (particles gas);
+
+particles
 {
-    phaseType    granular;
+    phaseType        granular;
+
     diameterModel constant;
     d           50e-6;
 
     alphaMax    0.65;
     alphaMinFriction 0.5;
 
-    type detonating;
-    reactants
+    type basic;
+    thermoType
     {
-        thermoType
-        {
-            transport   constIso;
-            thermo      eConst;
-            equationOfState rhoConst;
-        }
-        specie
-        {
-            molWeight 26.981539;
-        }
-        equationOfState
-        {
-            rho0     2700;
-        }
-        transport
-        {
-            kappa       237;
-        }
-        thermodynamics
-        {
-            Cv          987;           // Heat capacity
-            Hf          0.0;
-        }
+        transport   constIso;
+        thermo      eConst;
+        equationOfState rhoConst;
     }
-    products
+    specie
     {
-        thermoType
-        {
-            transport   constIso;
-            thermo      eConst;
-            equationOfState rhoConst;
-        }
-        specie
-        {
-            molWeight 26.981539;
-        }
-        equationOfState
-        {
-            rho0     2700;
-        }
-        transport
-        {
-            kappa       237;
-        }
-        thermodynamics
-        {
-            Cv          987;           // Heat capacity
-            Hf          0.0;
-        }
+        molWeight 100.0;
     }
-
-    activationModel ArrheniusRate;
-
-    initiation
+    equationOfState
     {
-        e0      16.43e6; // Detonation energy
-        TName   T.gas;
-        Ts      2500;
-        Tign    1785;
-        ALow    6.25e10;
-        EaLow   251.04e6;
-        AHigh   1e8;
-        EaHigh  91.3952e6;
+        rho0     1470;
+    }
+    transport
+    {
+        kappa       237;
+    }
+    thermodynamics
+    {
+        Cv          987;           // Heat capacity
+        Hf          0.0;
     }
 
     residualAlpha 1e-10;
@@ -101,7 +59,6 @@ aluminum
     {
         e           0.9;
     }
-
 }
 
 gas
@@ -130,7 +87,7 @@ gas
                 n               7.4;
                 kappa           3.9e11;
                 Gamma           0.35;
-                gamma 1.35;
+                gamma           1.35;
                 pRef            101298;
             }
             specie
@@ -188,7 +145,7 @@ gas
         initiation
         {
             E0              9.0e9;
-            points ((0 0 0));
+            points ((0 -1 0));
             vDet       7850;            // Detonation velocity [m/s]
         }
     }
@@ -236,7 +193,7 @@ blending
 
 interfacialPressure
 (
-    (gas and aluminum)
+    (gas and particles)
     {
         type single;
         phase gas;
@@ -245,10 +202,10 @@ interfacialPressure
 
 interfacialVelocity
 (
-    (gas and aluminum)
+    (gas and particles)
     {
         type single;
-        phase aluminum;
+        phase particles;
     }
 );
 
@@ -258,7 +215,7 @@ aspectRatio
 
 drag
 (
-    (aluminum in gas)
+    (particles in gas)
     {
         type GidaspowErgunWenYu;
         residualRe 1e-3;
@@ -275,7 +232,7 @@ virtualMass
 
 heatTransfer
 (
-    (aluminum in gas)
+    (particles in gas)
     {
         type RanzMarshall;
     }
@@ -295,7 +252,7 @@ turbulentDispersion
 
 kineticTheory
 {
-    residualAlpha       1e-10;
+    residualAlpha       1e-6;
 
     radialModel SinclairJackson;
     viscosityModel Gidaspow;

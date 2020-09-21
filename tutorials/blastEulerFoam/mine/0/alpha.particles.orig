@@ -10,13 +10,13 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      p.orig;
+    object      alpha.particles;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [1 -1 -2 0 0 0 0];
+dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform 101298;
+internalField   uniform 0;
 
 boundaryField
 {

@@ -17,40 +17,23 @@ FoamFile
 dynamicFvMesh   adaptiveFvMesh;
 
 // How often to refine
-refineInterval  2;
-beginUnrefine 1e-5;
+refineInterval  1;
 
 // Field to be refinement on
-errorEstimator  multicomponent;
-estimators (density volumeFraction);
+errorEstimator  densityGradient;
+beginUnrefine 1e-5;
 
-density
-{
-    errorEstimator densityGradient;
+// Refine field in between lower..upper
+lowerRefineLevel 1e-2;
 
-    // Refine field in between lower..upper
-    lowerRefineLevel 1e-2;
-
-    // If value < unrefineLevel unrefine
-    unrefineLevel   1e-2;
-}
-volumeFraction
-{
-    errorEstimator delta;
-    deltaField alpha.aluminum;
-
-    // Refine field in between lower..upper
-    lowerRefineLevel 0.001;
-
-    // If value < unrefineLevel unrefine
-    unrefineLevel   0.001;
-}
+// If value < unrefineLevel unrefine
+unrefineLevel   1e-2;
 
 // Have slower than 2:1 refinement
-nBufferLayers   2;
+nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   3;
+maxRefinement   1;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

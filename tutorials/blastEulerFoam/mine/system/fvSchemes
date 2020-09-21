@@ -19,9 +19,9 @@ fluxSchemes
 {
     gas
     {
-        fluxScheme  Kurganov;
+        fluxScheme  Tadmor;
     }
-    aluminum
+    particles
     {
         fluxScheme          AUSM+Up;
         alphaMinFriction    0.5;
@@ -42,8 +42,7 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Riemann;
-    div(alphaRhoPhi.aluminum,lambda.aluminum) Riemann aluminum;
+    div(alphaRhoPhi.c4,lambda.c4) Gauss upwind;
     div(devRhoReff.gas) Gauss linear;
     div((devRhoReff.gas&U.gas)) Gauss linear;
 }
@@ -56,14 +55,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    "reconstruct\(alpha.*\)"  vanAlbada;
-    "reconstruct\(rho.*\)"  vanAlbada;
-    "reconstruct\(U.*\)"  vanAlbadaV;
-    "reconstruct\(e.*\)"  vanAlbada;
-    "reconstruct\(p.*\)"  vanAlbada;
-    "reconstruct\(speedOfSound.*\)"  vanAlbada;
-    "reconstruct\(Theta.*\)"  vanAlbada;
-    "reconstruct\(lambda.*\)"  vanAlbada;
+    "reconstruct\(alpha.*\)"  upwindMUSCL;
+    "reconstruct\(rho.*\)"  upwindMUSCL;
+    "reconstruct\(U.*\)"  upwindMUSCL;
+    "reconstruct\(e.*\)"  upwindMUSCL;
+    "reconstruct\(p.*\)"  upwindMUSCL;
+    "reconstruct\(speedOfSound.*\)"  upwindMUSCL;
+    "reconstruct\(Theta.*\)"  upwindMUSCL;
+    "reconstruct\(lambda.*\)"  upwindMUSCL;
 }
 
 snGradSchemes

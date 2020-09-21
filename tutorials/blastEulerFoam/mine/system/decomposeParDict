@@ -11,60 +11,42 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "system";
-    object      controlDict;
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastEulerFoam;
+numberOfSubdomains 4; // this is number of proc
 
-startFrom       startTime;
+// preservePatches (patch0 patch1 patch2);
 
-startTime       0;
+method         scotch; // automatic
 
-stopAt          endTime;
-
-endTime         1e-3;
-
-deltaT          1e-7;
-
-writeControl    adjustableRunTime;
-
-writeInterval   1e-5;
-
-cycleWrite      0;
-
-writeFormat     binary;
-
-writePrecision  6;
-
-writeCompression off;
-
-timeFormat      general; // fixed; // using precision below --- better for paraview
-
-timePrecision   12;
-
-runTimeModifiable true;
-
-adjustTimeStep  yes;
-
-maxCo           0.5;
-
-maxDeltaT       1e-5;
-
-// ************************************************************************* //
-functions
+simpleCoeffs // not auto
 {
-    toa
-    {
-        type timeOfArrival;
-        writeControl writeTime;
-    }
-    speedOfSound
-    {
-        type speedOfSound;
-        writeControl writeTime;
-        phaseName gas;
-    }
+    n               ( 2 2 1 );
+    delta           0.001;
 }
+
+hierarchicalCoeffs
+{
+    n               ( 4 3 2 );
+    delta           0.001;
+    order           xyz;
+}
+
+metisCoeffs
+{
+    // processorWeights ( 1 1 1 1 1 1 );
+}
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+distributed     no;
+
+roots           ( );
+
 
 // ************************************************************************* //

@@ -9,14 +9,14 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volVectorField;
-    object      U.aluminum;
+    class       volScalarField;
+    object      p;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 1 -1 0 0 0 0];
+dimensions      [1 -1 -2 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform 101298;
 
 boundaryField
 {

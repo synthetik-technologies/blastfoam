@@ -9,36 +9,50 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       volScalarField;
-    object      alpha.aluminum.orig;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [0 0 0 0 0 0 0];
+application     blastEulerFoam;
 
-internalField   uniform 0;
+startFrom       startTime;
 
-boundaryField
-{
-    walls
-    {
-        type            zeroGradient;
-    }
+startTime       0;
 
-    outlet
-    {
-        type            zeroGradient;
-    }
+stopAt          endTime;
 
-    "wedge.*"
-    {
-        type wedge;
-    }
+endTime         5e-3;
 
-    defaultFaces
-    {
-        type            empty;
-    }
-}
+deltaT          1e-6;
+
+writeControl    adjustableRunTime;
+
+writeInterval   5e-5;
+
+cycleWrite      0;
+
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general; // fixed; // using precision below --- better for paraview
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+maxCo           0.5;
+
+maxDeltaT       1e-5;
+
+// ************************************************************************* //
+functions
+{}
 
 // ************************************************************************* //
