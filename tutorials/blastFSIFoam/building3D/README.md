@@ -1,7 +1,10 @@
-# 1KT tutorial
+# Building 3-D with FSI tutorial
 
 ## Notes
 
-This cases uses the Doan-Nickel equation of state with a simple tabulated thermodynamic model (const Cv) to simulate a 1 kilo-ton TNT equivalent energy pill. The U.S. standard atmosphere model with gravitation acceleration is used. The energy pill is initialized using a 1.5 m uniform sphere. The case also showcases the axisymmetic automatic mesh refinement and load balancing.
+This case is designed to show a simple 3-D case setup using an STL file with snappyHexMesh and adaptive mesh refinement. The a c-4 charge placed inside a L-Shaped building. The c-4 is activated using the linear activation model. This cases also uses fluid structure interaction. The blastFSIFoam solver is still under development and changing the case setup may result in crashes.
 
-The case takes approximately 6 hours to run on a four core desktop.
+
+The case takes approximately 5 min to run on a four-core desktop.
+
+

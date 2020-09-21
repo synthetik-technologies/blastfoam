@@ -19,6 +19,8 @@ dynamicFvMesh   adaptiveFvMesh;
 errorEstimator delta;      // Model used to estimate error
 deltaField sigmaD;
 
+balance no;
+
 // How often to refine
 refineInterval  3;
 
