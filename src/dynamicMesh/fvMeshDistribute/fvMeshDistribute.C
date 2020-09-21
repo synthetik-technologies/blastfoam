@@ -2890,6 +2890,29 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         Zero
     );
 
+    //- Force fields used for
+    HashTable<surfaceScalarField*> surfScals
+    (
+        mesh_.objectRegistry::lookupClass<surfaceScalarField>()
+    );
+    forAllIter(typename HashTable<surfaceScalarField*>, surfScals, iter)
+    {
+        surfaceScalarField& fld = *iter();
+        if (fld.dimensions() == dimless)
+        {
+            if (label(fld.name().find("own")) >= 0)
+            {
+                Info<<fld.name()<<endl;
+                fld = 1.0;
+            }
+            else if (label(fld.name().find("nei")) >= 0)
+            {
+                Info<<fld.name()<<endl;
+                fld = -1.0;
+            }
+        }
+    }
+
 
     mesh_.setInstance(mesh_.time().timeName());
 
@@ -2945,6 +2968,5 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         )
     );
 }
-
 
 // ************************************************************************* //
