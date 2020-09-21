@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-29-4-2019 Jeff Heylmun:    Added moment transort
+29-4-2019 Jeff Heylmun:    Added moment transport
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.

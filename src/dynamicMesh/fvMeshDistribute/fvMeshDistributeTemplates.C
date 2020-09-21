@@ -201,39 +201,29 @@ void Foam::fvMeshDistribute::mapExposedFaces
     forAllIter(typename HashTable<fldType*>, flds, iter)
     {
         fldType& fld = *iter();
+        typename fldType::Boundary& bfld = fld.boundaryFieldRef();
 
-        if
-        (
-            label(fld.name().find("own")) < 0
-         && label(fld.name().find("nei")) < 0
-         && label(fld.name().find("Own")) < 0
-         && label(fld.name().find("Nei")) < 0
-        )
+        const Field<T>& oldInternal = oldFlds[fieldI++];
+
+        // Pull from old internal field into bfld.
+
+        forAll(bfld, patchi)
         {
-            typename fldType::Boundary& bfld = fld.boundaryFieldRef();
+            fvsPatchField<T>& patchFld = bfld[patchi];
 
-            const Field<T>& oldInternal = oldFlds[fieldI++];
-
-            // Pull from old internal field into bfld.
-
-            forAll(bfld, patchi)
+            forAll(patchFld, i)
             {
-                fvsPatchField<T>& patchFld = bfld[patchi];
+                const label faceI = patchFld.patch().start()+i;
 
-                forAll(patchFld, i)
+                label oldFaceI = faceMap[faceI];
+
+                if (oldFaceI < oldInternal.size())
                 {
-                    const label faceI = patchFld.patch().start()+i;
+                    patchFld[i] = oldInternal[oldFaceI];
 
-                    label oldFaceI = faceMap[faceI];
-
-                    if (oldFaceI < oldInternal.size())
+                    if (map.flipFaceFlux().found(faceI))
                     {
-                        patchFld[i] = oldInternal[oldFaceI];
-
-                        if (map.flipFaceFlux().found(faceI))
-                        {
-                            patchFld[i] = flipOp()(patchFld[i]);
-                        }
+                        patchFld[i] = flipOp()(patchFld[i]);
                     }
                 }
             }

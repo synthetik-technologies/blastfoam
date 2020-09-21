@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011-2020
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 20-06-2020 Jeff Heylmun     | Added use of compressibleSystem
 -------------------------------------------------------------------------------

@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-20-06-2020 Jeff Heylmun     | Added use of blastFoam thermodynamics
+05-08-2020 Jeff Heylmun     | Made blastFSIFoam solver
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -24,13 +24,21 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Application
-    blastMultiRegionFoam
+    blastFSIFoam
 
 Description
-    Solver for transient fluid flow and solid heat conduction, with
-    conjugate heat transfer between regions, buoyancy effects, turbulence,
-    and radiation modeling. Riemann fluxes are used to transport the fluid
-    phase.
+
+    EXPERIMENTAL
+
+    Solver for solving couple fluid structure interaction using the
+    standard blastFoam classes and the solidDisplacementFoam solver.
+    The fluid phase uses moving mesh, but the solid phase does not. For
+    this reason modified mapped boundaries use an offset of the solid
+    displacement to correctly map the boundary information between regions.
+
+    This solver is currently under developments and is not stable.
+    Adaptive refinement does work, however it is not robust. Dynamic
+    load balancing should not be used.
 
 \*---------------------------------------------------------------------------*/
 
