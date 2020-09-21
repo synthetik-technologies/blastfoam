@@ -414,7 +414,7 @@ Foam::scalar Foam::multiphaseFluidThermo::TRhoEi
 Foam::tmp<Foam::scalarField>
 Foam::multiphaseFluidThermo::calcP(const label patchi) const
 {
-    scalarField pByGamma(this->p_.boundaryField()[patchi].size(), 0.0);
+    scalarField pByGamma(this->rho_.boundaryField()[patchi].size(), 0.0);
     scalarField rGamma(this->rho_.boundaryField()[patchi].size(), 0.0);
 
     forAll(thermos_, phasei)
