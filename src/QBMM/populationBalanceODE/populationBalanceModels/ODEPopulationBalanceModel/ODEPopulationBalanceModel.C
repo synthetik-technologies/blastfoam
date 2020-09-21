@@ -49,11 +49,7 @@ Foam::ODEPopulationBalanceModel::ODEPopulationBalanceModel
     (
         phi.mesh().lookupObjectRef<IOdictionary>
         (
-            IOobject::groupName
-            (
-                "populationBalanceProperties",
-                name
-            )
+            "populationBalanceProperties"
         )
     ),
     phi_(phi)

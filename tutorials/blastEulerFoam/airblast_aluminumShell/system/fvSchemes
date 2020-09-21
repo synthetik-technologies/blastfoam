@@ -44,6 +44,8 @@ divSchemes
     default         none;
     div(alphaRhoPhi.c4,lambda.c4) Riemann;
     div(alphaRhoPhi.aluminum,lambda.aluminum) Riemann aluminum;
+    div(devRhoReff.gas) Gauss linear;
+    div((devRhoReff.gas&U.gas)) Gauss linear;
 }
 
 laplacianSchemes

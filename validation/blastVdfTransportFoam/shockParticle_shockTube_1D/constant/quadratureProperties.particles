@@ -27,15 +27,6 @@ basicVelocityMomentInversion
     }
 }
 
-extendedMomentInversion
-{
-    extendedMomentInversion lognormal;
-    basicQuadrature
-    {
-        univariateMomentInversion   Gauss;
-    }
-}
-
 momentAdvection
 {
     velocityMomentAdvection   Vikas;
@@ -62,8 +53,8 @@ moments
 
 nodes
 (
-    (0)
-    (1)
+    (0 0)
+    (1 0)
 //     (0 0)
 //     (0 1)
 //     (0 2)

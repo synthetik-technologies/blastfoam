@@ -43,6 +43,8 @@ gradSchemes
 divSchemes
 {
     default         none;
+    div(devRhoReff.gas) Gauss linear;
+    div((devRhoReff.gas&U.gas)) Gauss linear;
 }
 
 laplacianSchemes
@@ -53,14 +55,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    reconstruct(alpha)  vanLeer;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound) vanLeer;
-    "reconstruct\(Y.*\)" vanLeer;
-    reconstruct(Theta)  vanLeer;
+    reconstruct(alpha)  linearMUSCL vanLeer;
+    reconstruct(rho)    linearMUSCL vanLeer;
+    reconstruct(U)      linearMUSCL vanLeer;
+    reconstruct(e)      linearMUSCL vanLeer;
+    reconstruct(p)      linearMUSCL vanLeer;
+    reconstruct(speedOfSound) linearMUSCL vanLeer;
+    "reconstruct\(Y.*\)" linearMUSCL vanLeer;
+    reconstruct(Theta)  linearMUSCL vanLeer;
 }
 
 snGradSchemes

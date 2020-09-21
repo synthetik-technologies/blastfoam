@@ -30,7 +30,7 @@ sizeVelocityCoeffs
         solveSources off;
 
         ATol    1.0e-6;
-        RTol    1.0e-4;
+        RTol    1.0e-6;
         fac     0.7;
         facMin  0.9;
         facMax  2.0;
@@ -48,7 +48,7 @@ sizeVelocityCoeffs
 
     collisionKernel
     {
-        collisionKernel Boltzmann;
+        collisionKernel esBGK;
         e           0.9;
         rho         1300;
     }

@@ -33,6 +33,8 @@ divSchemes
     default         none;
     div(tauMC)   Gauss linear;
     div((muEff*dev2(T(grad(U))))) Gauss linear;
+    div((continuousVolumeFraction*devRhoReff)) Gauss linear;
+    div(((continuousVolumeFraction*devRhoReff)&U)) Gauss linear;
 }
 
 laplacianSchemes
@@ -48,7 +50,7 @@ interpolationSchemes
     reconstruct(e)      vanLeer;
     reconstruct(p)      vanLeer;
     reconstruct(rho)    vanLeer;
-    reconstruct(linearMUSCL)      vanLeer;
+    reconstruct(speedOfSound) vanLeer;
 }
 
 snGradSchemes

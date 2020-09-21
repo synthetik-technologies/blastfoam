@@ -47,7 +47,10 @@ velocityPDFODETransportModel
             support
         )
     )
-{}
+{
+    this->initializeODEFields();
+    this->lookupAndInitialize();
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -58,7 +61,7 @@ Foam::PDFTransportModels::velocityPDFODETransportModel::~velocityPDFODETransport
 
 void Foam::PDFTransportModels::velocityPDFODETransportModel::update()
 {
-    momentAdvection_().update();
+    momentAdvection_->update();
 }
 
 

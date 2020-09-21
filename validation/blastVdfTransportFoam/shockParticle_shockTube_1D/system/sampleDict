@@ -36,8 +36,8 @@ fields
 //     weight.node11.particles
 //     weight.node12.particles
 
-    weight.node0.particles
-    weight.node1.particles
+    weight.node00.particles
+    weight.node10.particles
 //     abscissa0.node0.particles
 //     abscissa0.node1.particles
 //     velocityAbscissae.node0.particles

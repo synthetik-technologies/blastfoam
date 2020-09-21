@@ -49,14 +49,13 @@ SourceFiles
 #include "fvc.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
+#include "phaseCompressibleTurbulenceModelFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-template<class Phase>
-class PhaseCompressibleTurbulenceModel;
 
 class phaseSystem;
 
@@ -146,6 +145,9 @@ protected:
         //- Diameter model
         autoPtr<diameterModel> dPtr_;
 
+        //- Turbulence model
+        autoPtr<phaseCompressibleTurbulenceModel> turbulence_;
+
         //- Is the volume fraction transported
         bool solveAlpha_;
 
@@ -161,6 +163,9 @@ protected:
             const scalarList& ai,
             const scalarList& bi
         );
+
+//         //- Set the turbulence model
+//         void setTurbulenceModel();
 
 
 public:

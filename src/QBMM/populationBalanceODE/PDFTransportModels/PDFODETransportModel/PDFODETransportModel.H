@@ -80,6 +80,9 @@ protected:
         //- Return number of moments
         virtual label nMoments() const = 0;
 
+        //- Initialize ODE fields
+        void initializeODEFields();
+
 
 public:
 

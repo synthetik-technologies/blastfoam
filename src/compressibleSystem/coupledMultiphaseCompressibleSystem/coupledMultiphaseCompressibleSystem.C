@@ -137,7 +137,10 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
 
     thermo_.solve(stepi, ai, bi);
 
-    surfaceScalarField alphaf(fluxScheme_->interpolate(volumeFraction_, "alpha"));
+    surfaceScalarField alphaf
+    (
+        fluxScheme_->interpolate(volumeFraction_, "alpha")
+    );
     PtrList<volScalarField> deltaAlphas(alphas_.size());
     PtrList<volScalarField> deltaAlphaRhos(alphas_.size());
     forAll(alphas_, phasei)
@@ -174,15 +177,27 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
       - p_*fvc::grad(alphaf)
       - g_*alphaRho_
     );
-    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
-    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
-
     volScalarField deltaRhoE
     (
         fvc::div(rhoEPhi_*alphaf)
       - ESource()
-      - (rhoU_ & g_)
+      - volumeFraction_*(rhoU_ & g_)
     );
+
+    if (turbulence_.valid())
+    {
+        volSymmTensorField alphaDevRhoReff
+        (
+            volumeFraction_*turbulence_->devRhoReff()
+        );
+        deltaRhoU += fvc::div(alphaDevRhoReff);
+        deltaRhoE +=
+            fvc::div(alphaDevRhoReff & U_)
+          - fvc::laplacian(volumeFraction_*turbulence_->alphaEff(), e());
+    }
+
+    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
+    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
     this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
     this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
 

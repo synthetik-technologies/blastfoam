@@ -13,7 +13,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I../interfacialModels/lnInclude \
-    -I../kineticTheoryModels/lnInclude
+    -I../kineticTheoryModels/lnInclude \
+    -I../phaseCompressibleTurbulenceModels/lnInclude
 
 
 LIB_LIBS = \

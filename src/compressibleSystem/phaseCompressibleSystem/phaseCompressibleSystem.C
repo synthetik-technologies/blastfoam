@@ -283,6 +283,13 @@ void Foam::phaseCompressibleSystem::solve
       - ESource()
       - (rhoU_ & g_)
     );
+    if (turbulence_.valid())
+    {
+        deltaRhoU += fvc::div(turbulence_->devRhoReff());
+        deltaRhoE +=
+            fvc::div(turbulence_->devRhoReff() & U_)
+          - fvc::laplacian(turbulence_->alphaEff(), e());
+    }
 
     //- Store changed in momentum and energy
     this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
@@ -327,8 +334,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
 
     if
     (
-        turbulence_.valid()
-     || dragSource_.valid()
+        dragSource_.valid()
      || extESource_.valid()
     )
     {
@@ -343,13 +349,6 @@ void Foam::phaseCompressibleSystem::postUpdate()
             fvm::ddt(rho_, e()) - fvc::ddt(rho_, e())
         );
 
-        if (turbulence_.valid())
-        {
-            UEqn += turbulence_->divDevRhoReff(U_);
-            eEqn -= fvm::laplacian(turbulence_->alphaEff(), e());
-
-            turbulence_->correct();
-        }
         if (dragSource_.valid())
         {
             UEqn -= dragSource_();
@@ -363,7 +362,10 @@ void Foam::phaseCompressibleSystem::postUpdate()
 
         rhoU_ = rho_*U_;
         rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+    }
 
+    if (turbulence_.valid())
+    {
         turbulence_->correct();
     }
 

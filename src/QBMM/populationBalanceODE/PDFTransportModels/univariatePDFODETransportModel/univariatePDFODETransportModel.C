@@ -49,7 +49,10 @@ Foam::PDFTransportModels::univariatePDFODETransportModel
             support
         )
     )
-{}
+{
+    this->initializeODEFields();
+    this->lookupAndInitialize();
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -61,7 +64,8 @@ Foam::PDFTransportModels::univariatePDFODETransportModel
 
 void Foam::PDFTransportModels::univariatePDFODETransportModel::update()
 {
-    momentAdvection_().update();
+    quadrature_.updateQuadrature();
+    momentAdvection_->update();
 }
 
 
@@ -106,12 +110,13 @@ void Foam::PDFTransportModels::univariatePDFODETransportModel::solve
         m = momentsOld[mi] - dT*deltaMoments[mi];
         m.correctBoundaryConditions();
     }
-    quadrature_.updateQuadrature();
 }
 
 
 void Foam::PDFTransportModels::univariatePDFODETransportModel::postUpdate()
 {
+    quadrature_.updateQuadrature();
+
     // List of moment transport equations
     PtrList<fvScalarMatrix> momentEqns(quadrature_.nMoments());
 

@@ -136,6 +136,12 @@ void Foam::granularPhaseModel::solve
             deltaAlphaRhoU += alpha*phase.gradP();
         }
     }
+
+    if (turbulence_.valid())
+    {
+        deltaAlphaRhoU += fvc::div(this->devRhoReff());
+    }
+
     volScalarField deltaAlphaRhoPTE
     (
         fvc::div(alphaRhoPTEPhi_)
@@ -165,6 +171,10 @@ void Foam::granularPhaseModel::solve
         fvc::div(alphaRhoEPhi_)
       - ESource()
     );
+//     if (turbulence_.valid())
+//     {
+//         deltaAlphaRhoE -= fvc::laplacian(this->alphaEff(), e());
+//     }
     this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
     this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
 

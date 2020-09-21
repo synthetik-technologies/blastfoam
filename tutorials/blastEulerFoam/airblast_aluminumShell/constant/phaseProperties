@@ -19,7 +19,7 @@ phases (aluminum gas);
 pRef 1e5;
 aluminum
 {
-    phaseType        granular;
+    phaseType    granular;
     diameterModel constant;
     d           50e-6;
 
@@ -106,7 +106,7 @@ aluminum
 
 gas
 {
-    phaseType            multiphase;
+    phaseType       multiphase;
     diameterModel   constant;
     d               0;
 

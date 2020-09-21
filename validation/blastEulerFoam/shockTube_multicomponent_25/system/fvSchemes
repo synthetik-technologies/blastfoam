@@ -48,6 +48,8 @@ divSchemes
 laplacianSchemes
 {
     default         Gauss linear corrected;
+    div(devRhoReff.gas) Gauss linear;
+    div((devRhoReff.gas&U.gas)) Gauss linear;
 }
 
 interpolationSchemes

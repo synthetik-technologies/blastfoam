@@ -1,4 +1,5 @@
 EXE_INC = \
+    -DFULLDEBUG -O0 -g \
     -I$(LIB_SRC)/transportModels \
     -I$(LIB_SRC)/transportModels/compressible/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \

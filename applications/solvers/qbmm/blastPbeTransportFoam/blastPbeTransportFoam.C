@@ -60,14 +60,14 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        mesh.refine();
+
         #include "CourantNos.H"
         #include "readTimeControls.H"
         #include "setDeltaT.H"
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
-        mesh.updateError();
-        mesh.updateErrorBoundaries();
         mesh.update();
 
         fluid->encode();

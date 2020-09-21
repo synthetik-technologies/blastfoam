@@ -75,9 +75,6 @@ protected:
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
 
-        //- Turbulence model
-        autoPtr<PhaseCompressibleTurbulenceModel<phaseModel>> turbulence_;
-
         virtual tmp<volScalarField> ESource() const;
 
 

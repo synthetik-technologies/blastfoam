@@ -34,7 +34,7 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "PhaseCompressibleTurbulenceModel.H"
+#include "phaseCompressibleTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -191,6 +191,21 @@ Foam::phaseModel::phaseModel
 }
 
 
+// void Foam::phaseModel::setTurbulenceModel()
+// {
+//     turbulence_ =
+//         PhaseCompressibleTurbulenceModel<phaseModel>::New
+//         (
+//             *this,
+//             this->rho(),
+//             this->U(),
+//             alphaRhoPhi_,
+//             phi_,
+//             *this
+//         );
+// }
+
+
 Foam::autoPtr<Foam::phaseModel> Foam::phaseModel::clone() const
 {
     NotImplemented;
@@ -310,6 +325,13 @@ void Foam::phaseModel::solve
         {
             deltaAlphaRhoE += p()*fvc::div(phase.alphaPhi());
         }
+    }
+    if (turbulence_.valid())
+    {
+        volSymmTensorField dRR(turbulence_->devRhoReff());
+        deltaAlphaRhoU += fvc::div(dRR);
+        deltaAlphaRhoE +=
+            fvc::div(dRR & U_) - fvc::laplacian(turbulence_->alphaEff(), e());
     }
 
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);

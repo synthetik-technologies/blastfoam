@@ -41,9 +41,7 @@ Foam::PDFODETransportModel::PDFODETransportModel
     ),
     name_(name),
     mesh_(mesh)
-{
-    this->lookupAndInitialize();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -54,17 +52,24 @@ Foam::PDFODETransportModel::~PDFODETransportModel()
 
 // * * * * * * * * * * * * Public Member functions * * * * * * * * * * * * * //
 
+void Foam::PDFODETransportModel::initializeODEFields()
+{
+    momentsOld_ = PtrList<PtrList<volScalarField>>(nMoments());
+    deltaMoments_ = PtrList<PtrList<volScalarField>>(nMoments());
+    forAll(momentsOld_, mi)
+    {
+        momentsOld_.set(mi, new PtrList<volScalarField>());
+        deltaMoments_.set(mi, new PtrList<volScalarField>());
+    }
+}
+
+
 void Foam::PDFODETransportModel::clearODEFields()
 {
-    forAll(momentsOld_, stepi)
+    forAll(momentsOld_, mi)
     {
-        momentsOld_[stepi].clear();
-        momentsOld_[stepi].resize(nMoments());
-    }
-    forAll(deltaMoments_, stepi)
-    {
-        deltaMoments_[stepi].clear();
-        deltaMoments_[stepi].resize(nMoments());
+        this->clearOld(momentsOld_[mi]);
+        this->clearOld(deltaMoments_[mi]);
     }
 }
 

@@ -32,7 +32,7 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvc.H"
 #include "surfaceInterpolate.H"
-#include "PhaseCompressibleTurbulenceModel.H"
+#include "phaseCompressibleTurbulenceModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "SortableList.H"
 
@@ -198,19 +198,16 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
     T_.correctBoundaryConditions();
     correctThermo();
 
-    if (Foam::max(mu()).value() > 0)
-    {
-        turbulence_ =
-            PhaseCompressibleTurbulenceModel<phaseModel>::New
-            (
-                *this,
-                rho_,
-                U_,
-                alphaRhoPhi_,
-                phi_,
-                *this
-            );
-    }
+    this->turbulence_ =
+        phaseCompressibleTurbulenceModel::New
+        (
+            *this,
+            rho_,
+            U_,
+            alphaRhoPhi_,
+            phi_,
+            *this
+        );
 }
 
 

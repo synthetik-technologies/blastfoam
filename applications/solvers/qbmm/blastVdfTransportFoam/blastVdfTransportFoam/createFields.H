@@ -34,8 +34,6 @@ volScalarField& p = fluid.p();
 const volVectorField& U = fluid.U();
 const volScalarField& rho = fluid.rho();
 const surfaceScalarField& phi = fluid.phi();
-fluid.update();
-
 
 Info<< "Reading populationBalanceProperties\n" << endl;
 
@@ -160,6 +158,4 @@ if (computeVariance)
 }
 
 fluid.setDispersedVolumeFraction(alpha);
-fluid.decode();
-fluid.encode();
 #include "computeParticleFields.H"

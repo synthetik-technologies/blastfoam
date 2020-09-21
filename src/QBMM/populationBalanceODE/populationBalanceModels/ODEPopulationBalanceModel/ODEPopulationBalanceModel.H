@@ -67,7 +67,7 @@ protected:
 
         //- Reference to populationBalanceProperties
         //  Non-const so ode solver can read on modification
-        IOdictionary& populationBalanceProperties_;
+        dictionary& populationBalanceProperties_;
 
         //- Fluid-phase face-normal velocity
         const surfaceScalarField& phi_;

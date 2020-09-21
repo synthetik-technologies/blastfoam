@@ -57,17 +57,8 @@ functions
         functionObjectLibs ( "libutilityFunctionObjects.so" );
         objects
         (
-            weight.node0.particles
-            weight.node1.particles
-//             velocityAbscissae.node0.particles
-//             velocityAbscissae.node1.particles
-
-//             weight.node00.particles
-//             weight.node01.particles
-//             weight.node02.particles
-//             weight.node10.particles
-//             weight.node11.particles
-//             weight.node12.particles
+            weight.node00.particles
+            weight.node10.particles
         );
         writeControl outputTime;
         writeInterval       1;

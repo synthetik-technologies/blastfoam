@@ -10,7 +10,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
-    -I../phaseSystems/lnInclude
+    -I../phaseSystems/lnInclude \
+    -I../phaseCompressibleTurbulenceModels/lnInclude
 
 LIB_LIBS = \
     -lODE \
