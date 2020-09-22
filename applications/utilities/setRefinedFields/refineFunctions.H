@@ -346,30 +346,14 @@ void selectRefineCandidates
     const fvMesh& mesh,
     const scalar lowerRefineLevel,
     const scalar upperRefineLevel,
-    const scalarField& vFld,
+    const scalarField& cellError,
     PackedBoolList& candidateCell
 )
 {
-    // Get error per cell. Is -1 (not to be refined) to >0 (to be refined,
-    // higher more desirable to be refined).
-    scalarField cellError
-    (
-        maxPointField
-        (
-            mesh,
-            calcError
-            (
-                cellToPoint(mesh, vFld),
-                lowerRefineLevel,
-                upperRefineLevel
-            )
-        )
-    );
-
     // Mark cells that are candidates for refinement.
     forAll(cellError, celli)
     {
-        if (cellError[celli] > 0)
+        if (cellError[celli] >= small)
         {
             candidateCell.set(celli, 1);
         }
