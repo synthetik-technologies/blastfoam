@@ -59,7 +59,7 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
     (
         mesh.foundObject<volScalarField>(IOobject::groupName("d", phaseName))
       ? autoPtr<diameterModel>()
-      :diameterModel::New(mesh, dict, phaseName)
+      : diameterModel::New(mesh, dict, phaseName)
     ),
     dp_(mesh.lookupObject<volScalarField>(IOobject::groupName("d", phaseName))),
     Tign_("Tign", dimTemperature, dict),
