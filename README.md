@@ -19,19 +19,19 @@ Several validation and tutorial cases are included in the repository, and are do
 
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
 
-Thank you to everyone who attended! 
+Thank you to everyone who attended!
 
-The workshop tutorial case and modifications have been added to the repository: [tutorials/blastFoam/building3DWorkshop](tutorials/blastFoam/building3DWorkshop). 
+The workshop tutorial case and modifications have been added to the repository: [tutorials/blastFoam/building3DWorkshop](tutorials/blastFoam/building3DWorkshop).
 
-A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U). 
+A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U).
 
 The slides from the workshop have been added to the repository: [blastFoam May Workshop Slides](media/Synthetik-Applied-Technologies-blastFoam-Workshop-May-Final-20200513.pdf)
 
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
 
-Thank you to everyone who attended! 
+Thank you to everyone who attended!
 
-A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4). 
+A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4).
 
 ### blastFoam workshop | Date: September 15, 2020 | Location: Virtual/Online | Cost: Free
 
@@ -55,14 +55,14 @@ An installation video for Windows 10 is available on our YouTube channel: https:
 
 
 ### How to Install OpenFOAM for macOS
-Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS. The main steps from the guide are reproduced below. 
+Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS. The main steps from the guide are reproduced below.
 
 1. Install the Homebrew package manager, if not already installed:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 ```
 
-2. Install OpenFOAM dependencies: 
+2. Install OpenFOAM dependencies:
 ```bash
 brew install open-mpi
 brew install boost
@@ -112,9 +112,45 @@ echo "source $HOME/OpenFOAM/OpenFOAM-7/etc/bashrc" >> ~/.zshrc
 ```
 
 
+### How to install OpenQBMM
+
+1. Install OpenFOAM-7 (if not already installed, see above)
+
+See https://openfoam.org/version/7 for OpenFOAM installation instructions.
+
+2. Create the OpenFOAM directory
+```bash
+mkdir -p $HOME/OpenFOAM
+```
+
+3. Go to the $HOME/OpenFOAM directory
+```bash
+cd $HOME/OpenFOAM
+```
+
+4. Clone the OpenQBMM repository
+```bash
+https://github.com/OpenQBMM/OpenQBMM/tree/master
+```
+
+5. Go to the OpenQBMM directory
+```bash
+cd $HOME/OpenFOAM/OpenQBMM
+```
+
+6. Switch to the development-openfoam.org branch
+```bash
+git checkout development-openfoam.org
+```
+8. Compile OpenQBMM (for parallel use "-j")
+```bash
+./Allwmake -j
+```
+
+9. Test your installation by running the tutorial and validation cases
 
 
-### How to install blastFoam 
+### How to install blastFoam
 
 1. Install OpenFOAM-7 (if not already installed, see above)
 
@@ -146,19 +182,26 @@ echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.bashrc
 echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
 ```
 
-7. Load and set the bash environment to compile blastFoam
+
+7. (Optional) Set the location of OpenQBMM in the etc/bashrc by setting QBMM_INST_DIR
 ```bash
-source $HOME/.bashrc 
-# or if using zsh: 
+export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
+```
+
+
+8. Load and set the bash environment to compile blastFoam
+```bash
+source $HOME/.bashrc
+# or if using zsh:
 source $HOME/.zshrc
 ```
 
-8. Compile blastFoam (for parallel use "-j")
+9. Compile blastFoam (for parallel use "-j")
 ```bash
 ./Allwmake -j
 ```
 
-9. Test your installation by running the tutorial and validation cases
+10. Test your installation by running the tutorial and validation cases
 
 
 
