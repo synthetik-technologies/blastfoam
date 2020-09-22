@@ -485,25 +485,46 @@ int main(int argc, char *argv[])
     );
     wordList fieldNames(setFieldsDict.lookup("fields"));
     PtrList<volScalarField> fields(fieldNames.size());
+    label fi = 0;
     forAll(fields, fieldi)
     {
-        fields.set
+        // Check the current time directory
+        IOobject fieldHeader
         (
-            fieldi,
-            new volScalarField
-            (
-                IOobject
-                (
-                    fieldNames[fieldi],
-                    runTime.timeName(),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh
-            )
+            fieldNames[fieldi],
+            runTime.timeName(),
+            mesh,
+            IOobject::MUST_READ
         );
+
+        // Check the "constant" directory
+        if (fieldHeader.typeHeaderOk<volScalarField>(true))
+        {
+            fields.set
+            (
+                fi++,
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        fieldNames[fieldi],
+                        runTime.timeName(),
+                        mesh,
+                        IOobject::MUST_READ,
+                        IOobject::AUTO_WRITE
+                    ),
+                    mesh
+                )
+            );
+        }
+        else
+        {
+            WarningInFunction
+                << "Field " << fieldNames[fieldi] << " specified for "
+                << "setting refinement was not found. " << endl;
+        }
     }
+    fields.resize(fi);
 
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
