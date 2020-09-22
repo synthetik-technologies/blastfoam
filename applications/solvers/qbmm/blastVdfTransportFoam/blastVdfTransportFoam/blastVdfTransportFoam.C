@@ -83,10 +83,6 @@ int main(int argc, char *argv[])
         integrator->integrate();
 
         #include "vEqns.H"
-
-        fluid.decode();
-
-
         #include "computeParticleFields.H"
 
         fluid.clearODEFields();

@@ -69,7 +69,7 @@ univariateCoeffs
     odeCoeffs
     {
         solveOde on;
-        ATol    1.0e-6;
+        ATol    1.0e-4;
         RTol    1.0e-3;
         fac     0.9;
         facMin  0.1;

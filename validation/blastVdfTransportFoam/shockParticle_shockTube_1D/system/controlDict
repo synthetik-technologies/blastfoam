@@ -59,6 +59,10 @@ functions
         (
             weight.node00.particles
             weight.node10.particles
+            velocityAbscissae.node00.particles
+            velocityAbscissae.node10.particles
+            abscissa0.node00.particles
+            abscissa0.node10.particles
         );
         writeControl outputTime;
         writeInterval       1;

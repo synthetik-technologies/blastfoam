@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  dev
+    \\  /    A nd           | Version:  7
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -17,36 +17,31 @@ FoamFile
 
 dimensions      [0 1 0 0 0 0 0];
 
-internalField   uniform 5.0e-11;
+internalField   uniform 5e-11;
 
 boundaryField
 {
     inlet
     {
         type            fixedValue;
-        value           uniform 5.0e-11;
+        value           uniform 5e-11;
     }
-
     outlet
     {
         type            zeroGradient;
     }
-
     bottom
     {
         type            symmetryPlane;
     }
-
     top
     {
         type            symmetryPlane;
     }
-
     obstacle
     {
         type            zeroGradient;
     }
-
     defaultFaces
     {
         type            empty;

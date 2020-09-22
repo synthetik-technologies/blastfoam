@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  dev
+    \\  /    A nd           | Version:  7
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
@@ -26,29 +26,24 @@ boundaryField
         type            calculated;
         value           uniform 0;
     }
-
     outlet
     {
         type            calculated;
         value           uniform 0;
     }
-
     bottom
     {
         type            symmetryPlane;
     }
-
     top
     {
         type            symmetryPlane;
     }
-
     obstacle
     {
         type            nutkWallFunction;
         value           uniform 0;
     }
-
     defaultFaces
     {
         type            empty;

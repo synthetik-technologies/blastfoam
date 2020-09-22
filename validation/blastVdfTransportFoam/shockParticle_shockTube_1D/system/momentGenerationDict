@@ -25,7 +25,6 @@ boundaries
     inlet
     {
         type            zeroGradient;
-        value           uniform 0;
     }
 
     outlet
@@ -48,15 +47,6 @@ particles
 
     default
     {}
-    inlet
-    {
-        node0
-        {
-            weight      uniform 0;
-            abscissae0  uniform 0;
-            abscissae1  uniform 0;
-        }
-    }
 
     regions
     (

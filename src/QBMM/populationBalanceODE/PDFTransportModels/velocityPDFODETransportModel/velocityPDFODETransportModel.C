@@ -61,6 +61,7 @@ Foam::PDFTransportModels::velocityPDFODETransportModel::~velocityPDFODETransport
 
 void Foam::PDFTransportModels::velocityPDFODETransportModel::update()
 {
+    quadrature_.updateQuadrature();
     momentAdvection_->update();
 }
 
@@ -106,12 +107,13 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve
         m = momentsOld[mi] - dT*deltaMoments[mi];
         m.correctBoundaryConditions();
     }
-    quadrature_.updateQuadrature();
 }
 
 
 void Foam::PDFTransportModels::velocityPDFODETransportModel::postUpdate()
 {
+    quadrature_.updateQuadrature();
+
     // Solve moment transport equations
     updateImplicitMomentSource();
 
@@ -141,7 +143,6 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::postUpdate()
         momentEqns[mEqni].relax();
         momentEqns[mEqni].solve();
     }
-
     quadrature_.updateQuadrature();
 
     if (solveMomentSources())

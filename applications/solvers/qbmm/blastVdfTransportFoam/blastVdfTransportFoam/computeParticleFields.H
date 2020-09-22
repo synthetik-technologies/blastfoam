@@ -1,5 +1,5 @@
 labelList orderZero(momentOrders[0].size(), 0);
-volScalarField m0(max(moments(orderZero), residualAlpha));
+volScalarField m0(max(moments(orderZero), 1e-10));
 
 forAll(velocityIndexes, cmpt)
 {

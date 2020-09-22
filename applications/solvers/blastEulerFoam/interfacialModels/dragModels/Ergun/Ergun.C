@@ -72,7 +72,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Ergun::CdRe
         (4.0/3.0)
        *(
             150
-           *pair_.dispersed().volumeFraction()
+           *max(1.0 - pair_.continuous(), pair_.continuous().residualAlpha())
            /max
             (
                 pair_.continuous(),
@@ -94,7 +94,11 @@ Foam::scalar Foam::dragModels::Ergun::CdRe
         (4.0/3.0)
        *(
             150
-           *pair_.dispersed().volumeFractioni(celli, nodei)
+           *max
+            (
+                1.0 - pair_.continuous()[celli],
+                pair_.continuous().residualAlpha().value()
+            )
            /max
             (
                 pair_.continuous()[celli],

@@ -17,9 +17,6 @@ FoamFile
 
 phases (gas);
 
-continuousPhase gas;
-dilutePhase     particles;
-
 gas
 {
     type basic;
@@ -53,19 +50,4 @@ gas
     residualAlpha   1e-10;
 }
 
-aspectRatio
-{
-    type constant;
-    E0   1.0;
-}
 
-drag
-{
-    type        SchillerNaumann;
-    residualRe  1e-3;
-
-    swarmCorrection
-    {
-        type none;
-    }
-}

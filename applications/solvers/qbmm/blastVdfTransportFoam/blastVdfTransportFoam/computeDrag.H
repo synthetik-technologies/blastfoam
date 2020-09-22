@@ -4,13 +4,13 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
 {
     const volVectorField& Ui = nodes[nodei].velocityAbscissae();
     volScalarField d(nodes[nodei].primaryAbscissae()[sizeIndex]);
-    d.max(1e-6);
+    d.max(1e-8);
     volScalarField Re
     (
         "Re",
-        mag(U - nodes[nodei].velocityAbscissae())*d/fluid.thermo().nu()
+        max(mag(U - Ui)*d/fluid.thermo().nu(), 1e-3)
     );
-    const volScalarField alphai = nodes[nodei].primaryWeight();
+    const volScalarField& alphai = nodes[nodei].primaryWeight();
 
     tmp<volScalarField> CdRe;
     if (dragModel == "SchillerNaumann")
@@ -30,21 +30,22 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
     {
         tmp<volScalarField> CdReWenYu;
         tmp<volScalarField> CdReErgun;
-        volScalarField alpha2(max(scalar(1) - alpha, residualAlpha));
 
         if (dragModel == "WenYu" || dragModel == "GidaspowErgunWenYu")
         {
+            volScalarField alpha2(max(alphac, residualAlpha));
             volScalarField Res(alpha2*Re);
             volScalarField CdsRes
             (
                 neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))
-              + pos0(Res - 1000)*0.44*Res
+              + pos0(Res - 1000)*0.44*max(Res, 1e-3)
             );
 
             CdReWenYu =
             (
                 CdsRes
-               *pow(alpha2, -2.65)
+               *pow(alpha2, -3.65)
+               *max(alphac, residualAlpha)
             );
         }
         if (dragModel == "Ergun" || dragModel == "GidaspowErgunWenYu")
@@ -52,7 +53,7 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
             CdReErgun =
                 (4.0/3.0)
                *(
-                    150*alphai/max(alpha2, residualAlpha)
+                    150*(1.0 - alphac)/max(alphac, residualAlpha)
                   + 1.75*Re
                 );
         }
@@ -60,8 +61,8 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
         if (CdReWenYu.valid() && CdReErgun.valid())
         {
             CdRe =
-                pos0(alpha2 - 0.8)*CdReWenYu
-              + neg(alpha2 - 0.8)*CdReErgun;
+                pos0(alphac - 0.8)*CdReWenYu
+              + neg(alphac - 0.8)*CdReErgun;
         }
         else if (CdReWenYu.valid())
         {
@@ -79,14 +80,13 @@ for (label nodei = 0; nodei < nodes.size(); nodei++)
             << abort(FatalError);
     }
 
-    volScalarField Kdi(0.75*CdRe*rho*fluid.thermo().nu()/sqr(d));
+    volScalarField Kdi(0.75*CdRe*fluid.thermo().mu()/sqr(d));
     Kds.set
     (
         nodei,
         max(alphai, residualAlpha)*Kdi
     );
-    volScalarField KD(Kdi*nodes[nodei].primaryWeight());
 
-    fluid.addUCoeff(KD);
-    fluid.addUSource(KD*Ui);
+    fluid.addUCoeff(Kds[nodei]);
+    fluid.addUSource(Kds[nodei]*Ui);
 }

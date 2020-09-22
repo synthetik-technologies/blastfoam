@@ -46,10 +46,8 @@ title=blastFoam_shockTube_alpha_$4
                 with points linewidth 8 linecolor rgb 'red',\
             "$2" using 1:(\$2/100) title 'Lai 2018 (large)'\
                 with points lt 1 linewidth 8 linecolor rgb 'green',\
-            "$3" using 1:(\$2) title 'blastFoam (small)'\
-                with lines linewidth 2 linecolor rgb 'red', \
-            "$3" using 1:(\$3) title 'blastFoam (large)'\
-                with lines linewidth 2 linecolor rgb 'green'
+            "$3" using 1:(\$2 + \$3) title 'blastFoam'\
+                with lines linewidth 2 linecolor rgb 'red'
 EOF
 }
 

@@ -190,9 +190,9 @@ void Foam::coupledMultiphaseCompressibleSystem::solve
         (
             volumeFraction_*turbulence_->devRhoReff()
         );
-        deltaRhoU += fvc::div(alphaDevRhoReff);
+        deltaRhoU += fvc::div(alphaDevRhoReff, "div(tauMC)");
         deltaRhoE +=
-            fvc::div(alphaDevRhoReff & U_)
+            fvc::div(alphaDevRhoReff & U_, "div(tauMC)")
           - fvc::laplacian(volumeFraction_*turbulence_->alphaEff(), e());
     }
 

@@ -22,71 +22,19 @@ errorEstimator densityGradient;
 // How often to refine
 refineInterval  2;
 
-// Field to be refinement on
-field           error;
-
 // Refine field in between lower..upper
 lowerRefineLevel 0.01;
-upperRefineLevel 10.0;
 
 // If value < unrefineLevel unrefine
 unrefineLevel   0.01;
 
 // Have slower than 2:1 refinement
 nBufferLayers   1;
-nBufferLayersR 2;
 
 // Refine cells only up to maxRefinement levels
 maxRefinement   2;
 
-// Stop refinement if maxCells reached
-maxCells        200000;
-
-// Flux field and corresponding velocity field. Fluxes on changed
-// faces get recalculated by interpolating the velocity. Use 'none'
-// on surfaceScalarFields that do not need to be reinterpolated.
-correctFluxes
-(
-    (massFlux none)
-    (momentumFlux none)
-    (energyFlux none)
-    (meshPhi none)
-    (phi none)
-
-    (fluxFunction:own none)
-    (fluxFunction:nei none)
-
-    (univariateMomentAdvection:own.populationBalance none)
-    (univariateMomentAdvection:nei.populationBalance none)
-
-    (weight.nodeRadau0Own.populationBalance none)
-    (weight.nodeRadau0Nei.populationBalance none)
-    (weight.nodeRadau1Nei.populationBalance none)
-    (weight.nodeRadau1Own.populationBalance none)
-    (weight.nodeRadau2Nei.populationBalance none)
-    (weight.nodeRadau2Own.populationBalance none)
-
-    (abscissa0.nodeRadau0Own.populationBalance none)
-    (abscissa0.nodeRadau0Nei.populationBalance none)
-    (abscissa0.nodeRadau1Own.populationBalance none)
-    (abscissa0.nodeRadau1Nei.populationBalance none)
-    (abscissa0.nodeRadau2Own.populationBalance none)
-    (abscissa0.nodeRadau2Nei.populationBalance none)
-
-    (momentOwn.0.populationBalance none)
-    (momentNei.0.populationBalance none)
-    (momentOwn.1.populationBalance none)
-    (momentNei.1.populationBalance none)
-    (momentOwn.2.populationBalance none)
-    (momentNei.2.populationBalance none)
-    (momentOwn.3.populationBalance none)
-    (momentNei.3.populationBalance none)
-    (momentOwn.4.populationBalance none)
-    (momentNei.4.populationBalance none)
-);
-
 // Write the refinement level as a volScalarField
 dumpLevel       true;
-}
 
 // ************************************************************************* //

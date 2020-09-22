@@ -104,15 +104,16 @@ functions
         type            probes;
         writeControl   timeStep;
         writeInterval  1;
+        adjustLocations yes;
 
         probeLocations
         (
+            (1 0 0)
+            (2 0 0)
+            (5 0 0)
             (10 0 0)
+            (15 0 0)
             (20 0 0)
-            (50 0 0)
-            (100 0 0)
-            (200 0 0)
-            (500 0 0)
         );
         fields
         (

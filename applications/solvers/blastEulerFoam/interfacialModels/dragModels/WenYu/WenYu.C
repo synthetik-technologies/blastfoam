@@ -71,7 +71,11 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
 {
     volScalarField alpha2
     (
-        max(pair_.continuous(), pair_.continuous().residualAlpha())
+        max
+        (
+            1.0 - pair_.dispersed().volumeFraction(nodei),
+            pair_.continuous().residualAlpha()
+        )
     );
 
     volScalarField Res(alpha2*pair_.Re(nodei, nodej));
@@ -84,7 +88,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
     return
         CdsRes
        *pow(alpha2, -3.65)
-       *alpha2;
+       *max(pair_.continuous(), pair_.continuous().residualAlpha());
 }
 
 
@@ -99,7 +103,7 @@ Foam::scalar Foam::dragModels::WenYu::CdRe
     (
         max
         (
-            pair_.continuous()[celli],
+            1.0 - pair_.dispersed().volumeFractioni(celli, nodei),
             pair_.continuous().residualAlpha().value()
         )
     );
@@ -114,7 +118,11 @@ Foam::scalar Foam::dragModels::WenYu::CdRe
     return
         CdsRes
        *pow(alpha2, -3.65)
-       *alpha2;
+       *max
+        (
+            pair_.continuous()[celli],
+            pair_.continuous().residualAlpha().value()
+        );
 }
 
 // ************************************************************************* //

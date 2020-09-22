@@ -34,6 +34,7 @@ volScalarField& p = fluid.p();
 const volVectorField& U = fluid.U();
 const volScalarField& rho = fluid.rho();
 const surfaceScalarField& phi = fluid.phi();
+const volScalarField& alphac = fluid.volumeFraction();
 
 Info<< "Reading populationBalanceProperties\n" << endl;
 

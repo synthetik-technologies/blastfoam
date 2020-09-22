@@ -5,5 +5,8 @@ cd ${0%/*} || exit 1    # Run from this directory
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
 runApplication blockMesh
-runApplication generateMoments
-runApplication $(getApplication)
+runApplication decomposePar
+runParallel $(getApplication)
+
+runApplication reconstructParMesh -constant -mergeTol 1e-6
+runApplication reconstructPar

@@ -18,7 +18,7 @@ FoamFile
 p1  142040;
 T1  370.13;
 rho1 1.337;
-U1  195.73;
+U1  198.9;
 
 p2  67.0e3;
 T2  295;
@@ -30,6 +30,7 @@ defaultFieldValues
     volScalarFieldValue p $p2
     volScalarFieldValue T $T2
     volVectorFieldValue U (0 0 0)
+    volScalarFieldValue alpha.gas 1.0
 );
 
 regions
@@ -42,6 +43,7 @@ regions
             volScalarFieldValue p $p1
             volScalarFieldValue rho.gas $rho1
             volVectorFieldValue U ($U1 0 0)
+            volScalarFieldValue alpha.gas 0.99948
         );
     }
 );
