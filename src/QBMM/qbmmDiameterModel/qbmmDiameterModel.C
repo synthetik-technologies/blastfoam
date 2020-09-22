@@ -52,7 +52,7 @@ Foam::diameterModels::qbmmDiameterModel::qbmmDiameterModel
     (
         IOobject
         (
-            IOobject::groupName("populationBalanceProperties", phaseName),
+            "populationBalanceProperties",
             mesh.time().constant(),
             mesh,
             IOobject::MUST_READ
@@ -141,4 +141,9 @@ void Foam::diameterModels::qbmmDiameterModel::solve
     this->d_ = vfD_/max(vf_, 1e-10);
 }
 
+
+void Foam::diameterModels::qbmmDiameterModel::postUpdate()
+{
+    pbe_.postUpdate();
+}
 // ************************************************************************* //

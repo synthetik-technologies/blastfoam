@@ -120,6 +120,14 @@ void Foam::detonatingFluidThermo<Thermo>::solve
 
 
 template<class Thermo>
+void Foam::detonatingFluidThermo<Thermo>::postUpdate()
+{
+    activation_->postUpdate();
+    afterburn_->postUpdate();
+}
+
+
+template<class Thermo>
 void Foam::detonatingFluidThermo<Thermo>::clearODEFields()
 {
     activation_->clearODEFields();

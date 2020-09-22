@@ -21,7 +21,7 @@ univariateCoeffs
 {
     diffusionModel
     {
-        diffusionModel  none;
+        diffusionModel  molecularDiffusion;
         gammaLam        gammaLam    [ 0 2 -1 0 0 0 0 ] 1.0e-6;
         Sc              0.7;
     }

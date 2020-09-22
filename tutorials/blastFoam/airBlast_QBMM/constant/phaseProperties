@@ -90,16 +90,17 @@ c4
     {
         E0          9.0e9; // Detonation energy
         points     ((-0.3048 0.3048 0)); // m center top detonated
-        r           0.01;
+        radius     0.01;
         vDet       7850; // 8285; // m/s
 
         diameterModel qbmm;
 
-        Ts 2000;
-        AHigh 1e-2;
-        TaLow 800;
-        ALow 6.25e10;
-        TaHigh 400;
+        Ts      2000;
+        Tign    50a0qz;
+        ALow    6.25e10;
+        EaLow   112000;
+        AHigh   1e8;
+        EaHigh  560000;
 
     }
 

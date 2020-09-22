@@ -285,9 +285,9 @@ void Foam::phaseCompressibleSystem::solve
     );
     if (turbulence_.valid())
     {
-        deltaRhoU += fvc::div(turbulence_->devRhoReff());
+        deltaRhoU += fvc::div(turbulence_->devRhoReff(), "div(tauMC)");
         deltaRhoE +=
-            fvc::div(turbulence_->devRhoReff() & U_)
+            fvc::div(turbulence_->devRhoReff() & U_, "div(tauMC)")
           - fvc::laplacian(turbulence_->alphaEff(), e());
     }
 
@@ -369,7 +369,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
         turbulence_->correct();
     }
 
-    this->thermo().correct();
+    this->thermo().postUpdate();
 }
 
 

@@ -118,8 +118,7 @@ public:
         virtual void clearODEFields();
 
         //- Post update
-        virtual void postUpdate()
-        {}
+        virtual void postUpdate();
 
         //- Correct fields
         virtual void correct();

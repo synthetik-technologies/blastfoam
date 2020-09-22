@@ -156,4 +156,13 @@ void Foam::activationModels::ArrheniusRateActivation::solve
     }
     activationModel::solve(stepi, ai, bi);
 }
+
+void Foam::activationModels::ArrheniusRateActivation::postUpdate()
+{
+    if (dModel_.valid())
+    {
+        dModel_->postUpdate();
+    }
+    activationModel::postUpdate();
+}
 // ************************************************************************* //

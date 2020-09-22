@@ -49,7 +49,7 @@ c4
         node0
         {
             weight      uniform 0;
-            abscissae0  uniform 20e-6;
+            abscissae0  uniform 50e-6;
         }
     }
 
@@ -63,7 +63,7 @@ c4
             node0
             {
                 weight      uniform 1e6;
-                abscissae0  uniform 20e-6;
+                abscissae0  uniform 50e-6;
             }
         }
     );
