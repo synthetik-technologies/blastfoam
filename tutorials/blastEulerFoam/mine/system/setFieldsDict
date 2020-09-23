@@ -55,9 +55,8 @@ regions
             volScalarFieldValue alpha.particles 0
             volScalarFieldValue alpha.c4        1
             volScalarFieldValue alpha.air       0
-            volScalarFieldValue error 1
         );
     }
- );
+);
 
 // ************************************************************************* //

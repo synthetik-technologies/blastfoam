@@ -137,10 +137,18 @@ void Foam::granularPhaseModel::solve
         }
     }
 
-    if (turbulence_.valid())
-    {
-        deltaAlphaRhoU += fvc::div(this->devRhoReff());
-    }
+//     {
+//         volSymmTensorField tauMC(kineticTheoryModel::devRhoReff());
+//         deltaAlphaRhoU +=
+//             fvc::div
+//             (
+//                 fluxScheme_->interpolate
+//                 (
+//                     tauMC,
+//                     IOobject::groupName("tauMC", this->name_)
+//                 ) & rho_.mesh().Sf()
+//             );
+//     }
 
     volScalarField deltaAlphaRhoPTE
     (

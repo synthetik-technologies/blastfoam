@@ -43,8 +43,7 @@ divSchemes
 {
     default         none;
     div(alphaRhoPhi.c4,lambda.c4) Gauss upwind;
-    div(devRhoReff.gas) Gauss linear;
-    div((devRhoReff.gas&U.gas)) Gauss linear;
+    div(tauMC.gas) Gauss linear;
 }
 
 laplacianSchemes

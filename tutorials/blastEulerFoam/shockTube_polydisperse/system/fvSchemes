@@ -45,8 +45,7 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(devRhoReff.gas) Gauss linear;
-    div((devRhoReff.gas&U.gas)) Gauss linear;
+    div(tauMC.gas) Gauss linear;
 }
 
 laplacianSchemes

@@ -24,7 +24,7 @@ solvers
         relTol          0;
     }
 
-    "(U|e)"
+    "(U|e).*"
     {
         solver          PBiCGStab;
         preconditioner  DIC;

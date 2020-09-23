@@ -329,9 +329,19 @@ void Foam::phaseModel::solve
     if (turbulence_.valid())
     {
         volSymmTensorField dRR(turbulence_->devRhoReff());
-        deltaAlphaRhoU += fvc::div(dRR);
+        deltaAlphaRhoU +=
+            fvc::div
+            (
+                dRR,
+                "div(" + IOobject::groupName("tauMC", name_) + ')'
+            );
         deltaAlphaRhoE +=
-            fvc::div(dRR & U_) - fvc::laplacian(turbulence_->alphaEff(), e());
+            fvc::div
+            (
+                dRR & U_,
+                "div(" + IOobject::groupName("tauMC", name_) + ')'
+            )
+          - fvc::laplacian(turbulence_->alphaEff(), e());
     }
 
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
