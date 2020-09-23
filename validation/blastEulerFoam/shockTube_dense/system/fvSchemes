@@ -31,7 +31,7 @@ fluxSchemes
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK4SSP;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes
@@ -42,8 +42,8 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(devRhoReff.gas) Gauss linear;
-    div((devRhoReff.gas&U.gas)) Gauss linear;
+    div(tauMC.gas) Gauss linear;
+    div(tauMC.particles) Gauss linear;
 }
 
 laplacianSchemes
@@ -54,13 +54,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default cubic;
-    reconstruct(alpha)  quadraticMUSCL Minmod;
-    reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      quadraticMUSCL Minmod;
-    reconstruct(p)      quadraticMUSCL Minmod;
-    reconstruct(speedOfSound) quadraticMUSCL Minmod;
-    reconstruct(Theta)  quadraticMUSCL Minmod;
+    reconstruct(alpha)  quadraticMUSCL vanAlbada;
+    reconstruct(rho)    quadraticMUSCL vanAlbada;
+    reconstruct(U)      quadraticMUSCL vanAlbada;
+    reconstruct(e)      quadraticMUSCL vanAlbada;
+    reconstruct(p)      quadraticMUSCL vanAlbada;
+    reconstruct(speedOfSound) quadraticMUSCL vanAlbada;
+    reconstruct(Theta)  quadraticMUSCL vanAlbada;
+    reconstruct(tauMC)  quadraticMUSCL vanAlbada;
 }
 
 snGradSchemes

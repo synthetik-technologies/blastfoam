@@ -141,8 +141,25 @@ void Foam::granularPhaseModel::solve
         }
     }
 
+    volScalarField deltaAlphaRhoPTE
+    (
+        fvc::div(alphaRhoPTEPhi_)
+      + Ps_*fvc::div(phi_)
+    );
 //     {
-//         volSymmTensorField tauMC(kineticTheoryModel::devRhoReff());
+//         tmp<volTensorField> tgradU
+//         (
+//             fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+//         );
+//         const volTensorField& gradU(tgradU());
+//         volSymmTensorField D(symm(gradU));
+//
+//         //- Do not include stress for small volume fractions
+//         volSymmTensorField tauMC
+//         (
+//             kineticTheoryModel::devRhoReff()
+//            *Foam::pos(*this - 1e-4)
+//         );
 //         deltaAlphaRhoU +=
 //             fvc::div
 //             (
@@ -152,13 +169,9 @@ void Foam::granularPhaseModel::solve
 //                     IOobject::groupName("tauMC", this->name_)
 //                 ) & rho_.mesh().Sf()
 //             );
+//         deltaAlphaRhoPTE += (tauMC && gradU);
+//
 //     }
-
-    volScalarField deltaAlphaRhoPTE
-    (
-        fvc::div(alphaRhoPTEPhi_)
-      + Ps_*fvc::div(phi_)
-    );
 
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
@@ -183,10 +196,7 @@ void Foam::granularPhaseModel::solve
         fvc::div(alphaRhoEPhi_)
       - ESource()
     );
-//     if (turbulence_.valid())
-//     {
-//         deltaAlphaRhoE -= fvc::laplacian(this->alphaEff(), e());
-//     }
+
     this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
     this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
 

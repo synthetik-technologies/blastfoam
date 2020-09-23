@@ -130,7 +130,7 @@ gas
             transport
             {
                 mu              1.81e-5;              // Viscosity
-                Pr              1;              // Prandtl number
+                Pr              0.7;              // Prandtl number
             }
             thermodynamics
             {
@@ -170,7 +170,7 @@ gas
         transport
         {
             mu              1.81e-5;              // Viscosity
-            Pr              1;              // Prandtl number
+            Pr              0.7;              // Prandtl number
         }
         thermodynamics
         {

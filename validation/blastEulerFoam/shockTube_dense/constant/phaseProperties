@@ -92,7 +92,7 @@ gas
     transport
     {
         mu              1.81e-5;
-        Pr              1;
+        Pr              0.71;
     }
     thermodynamics
     {

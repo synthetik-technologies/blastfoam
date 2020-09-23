@@ -71,14 +71,21 @@ Foam::MUSCLReconstructionScheme<Type>::New
     )
     {
         //- Default to lookup of density scheme
-        name = "reconstruct(rho)";
-        if (debug)
+        if
+        (
+            debug
+         || !phi.mesh().schemesDict().subDict
+            (
+                "interpolationSchemes"
+            ).found("reconstruct(rho)")
+        )
         {
             WarningInFunction
                 << "Riemann fluxes are used, but no limiter is " << nl
                 << "specified for " << name << "." << nl
                 << "This may result in unstable solutions." << endl;
         }
+        name = "reconstruct(rho)";
     }
 
     Istream& is(phi.mesh().interpolationScheme(name));

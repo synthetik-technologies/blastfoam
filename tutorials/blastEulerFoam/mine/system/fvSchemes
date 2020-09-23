@@ -19,7 +19,7 @@ fluxSchemes
 {
     gas
     {
-        fluxScheme  Tadmor;
+        fluxScheme  HLLC;
     }
     particles
     {
@@ -42,7 +42,6 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(alphaRhoPhi.c4,lambda.c4) Gauss upwind;
     div(tauMC.gas) Gauss linear;
 }
 
@@ -53,15 +52,16 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
-    "reconstruct\(alpha.*\)"  upwindMUSCL;
-    "reconstruct\(rho.*\)"  upwindMUSCL;
-    "reconstruct\(U.*\)"  upwindMUSCL;
-    "reconstruct\(e.*\)"  upwindMUSCL;
-    "reconstruct\(p.*\)"  upwindMUSCL;
-    "reconstruct\(speedOfSound.*\)"  upwindMUSCL;
-    "reconstruct\(Theta.*\)"  upwindMUSCL;
-    "reconstruct\(lambda.*\)"  upwindMUSCL;
+    default             linear;
+    "reconstruct\(alpha.*\)"  linearMUSCL Minmod;
+    "reconstruct\(rho.*\)"  linearMUSCL Minmod;
+    "reconstruct\(U.*\)"  linearMUSCL Minmod;
+    "reconstruct\(e.*\)"  linearMUSCL Minmod;
+    "reconstruct\(p.*\)"  linearMUSCL Minmod;
+    "reconstruct\(speedOfSound.*\)"  linearMUSCL Minmod;
+    "reconstruct\(Theta.*\)"  linearMUSCL Minmod;
+    "reconstruct\(lambda.*\)"  linearMUSCL Minmod;
+    "reconstruct\(tauMC\)" linearMUSCL Minmod;
 }
 
 snGradSchemes

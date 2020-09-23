@@ -66,7 +66,7 @@ Foam::heatTransferModels::RanzMarshall::K
     const label nodej
 ) const
 {
-    const volScalarField& alphag(pair_.continuous().volumeFraction(nodei));
+    const volScalarField& alphag(pair_.continuous().volumeFraction(nodej));
     volScalarField Pr(pair_.Pr(nodei, nodej));
     volScalarField Re(pair_.Re(nodei, nodej));
     volScalarField Nu
