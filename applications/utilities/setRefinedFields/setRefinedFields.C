@@ -441,6 +441,141 @@ public:
 };
 
 
+PtrList<entry> addRegions(const PtrList<entry>& regions)
+{
+    label regioni = 0;
+    PtrList<entry> newRegions(regions.size());
+    forAll(regions, regionI)
+    {
+        word type = regions[regionI].keyword();
+
+        bool readList = false;
+        bool hasBackup = regions[regionI].dict().found("backup");
+
+        if (label(type.find("List")) >= 0)
+        {
+            type.replaceAll("List", "");
+            readList = true;
+        }
+
+        if (!readList)
+        {
+            newRegions.set
+            (
+                regioni++,
+                regions[regionI].clone()
+            );
+        }
+        else if (type == "sphereToCell")
+        {
+            dictionary regionDict(regions[regionI].dict());
+
+            scalarList radii(regionDict.lookup("radii"));
+            List<vector> centres(regionDict.lookup("centres"));
+            scalarList backupR
+            (
+                hasBackup
+              ? regionDict.subDict("backup").lookup("radii")
+              : scalarList()
+            );
+            regionDict.remove("radii");
+            regionDict.remove("centres");
+            if (hasBackup)
+            {
+                regionDict.subDict("backup").remove("radii");
+            }
+
+            newRegions.resize(newRegions.size() + radii.size() - 1);
+
+            forAll(radii, i)
+            {
+                newRegions.set(regioni, regions[regionI].clone());
+                newRegions[regioni].keyword() = type;
+                dictionary& dict = newRegions[regioni].dict();
+                dict = regionDict;
+
+                dict.add("radius", radii[i], true);
+                dict.add("centre", centres[i], true);
+
+                if (hasBackup)
+                {
+                    dictionary bDict;
+                    bDict.add("radius", backupR[i], true);
+                    bDict.add("centre", centres[i], true);
+                    dict.add("backup", bDict, true);
+                }
+                regioni++;
+            }
+        }
+        else if (type == "cylinderToCell")
+        {
+            dictionary regionDict(regions[regionI].dict());
+
+            scalarList radii(regionDict.lookup("radii"));
+            List<vector> p1s(regionDict.lookup("p1s"));
+            List<vector> p2s(regionDict.lookup("p2s"));
+            scalarList backupR
+            (
+                hasBackup
+              ? regionDict.subDict("backup").lookup("radii")
+              : scalarList()
+            );
+            List<vector> backupP1s
+            (
+                hasBackup
+              ? regionDict.subDict("backup").lookup("p1s")
+              : List<vector>()
+            );
+            List<vector> backupP2s
+            (
+                hasBackup
+              ? regionDict.subDict("backup").lookup("p2s")
+              : List<vector>()
+            );
+            regionDict.remove("radii");
+            regionDict.remove("p1s");
+            regionDict.remove("p2s");
+            if (hasBackup)
+            {
+                regionDict.subDict("backup").remove("radii");
+                regionDict.subDict("backup").remove("p1s");
+                regionDict.subDict("backup").remove("p2s");
+            }
+
+            newRegions.resize(newRegions.size() + radii.size() - 1);
+
+            forAll(radii, i)
+            {
+                newRegions.set(regioni, regions[regionI].clone());
+                newRegions[regioni].keyword() = type;
+                dictionary& dict = newRegions[regioni].dict();
+                dict = regionDict;
+
+                dict.add("radius", radii[i], true);
+                dict.add("p1", p1s[i], true);
+                dict.add("p2", p2s[i], true);
+
+                if (hasBackup)
+                {
+                    dictionary bDict;
+                    bDict.add("radius", backupR[i], true);
+                    bDict.add("p1", backupP1s[i], true);
+                    bDict.add("p2", backupP2s[i], true);
+                    dict.add("backup", bDict, true);
+                }
+                regioni++;
+            }
+        }
+        else
+        {
+            WarningInFunction
+                << "List for topoSetSource type " << type
+                << "is not currently supported." << endl;
+        }
+    }
+
+    return newRegions;
+}
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -528,6 +663,7 @@ int main(int argc, char *argv[])
 
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
+    regions = addRegions(regions);
 
     //- List of source
     PtrList<topoSetSource> sources(regions.size());
