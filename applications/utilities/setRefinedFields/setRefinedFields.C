@@ -472,11 +472,21 @@ PtrList<entry> addRegions(const PtrList<entry>& regions)
 
             scalarList radii(regionDict.lookup("radii"));
             List<vector> centres(regionDict.lookup("centres"));
+            List<vector> backupCentres
+            (
+                hasBackup
+              ? regionDict.subDict("backup").lookupOrDefault
+                (
+                    "centres",
+                    centres
+                )
+              : centres
+            );
             scalarList backupR
             (
                 hasBackup
               ? regionDict.subDict("backup").lookup("radii")
-              : scalarList()
+              : radii
             );
             regionDict.remove("radii");
             regionDict.remove("centres");
@@ -518,19 +528,27 @@ PtrList<entry> addRegions(const PtrList<entry>& regions)
             (
                 hasBackup
               ? regionDict.subDict("backup").lookup("radii")
-              : scalarList()
+              : radii
             );
             List<vector> backupP1s
             (
                 hasBackup
-              ? regionDict.subDict("backup").lookup("p1s")
-              : List<vector>()
+              ? regionDict.subDict("backup").lookupOrDefault
+                (
+                    "p1s",
+                    p1s
+                )
+              : p1s
             );
             List<vector> backupP2s
             (
                 hasBackup
-              ? regionDict.subDict("backup").lookup("p2s")
-              : List<vector>()
+              ? regionDict.subDict("backup").lookupOrDefault
+                (
+                    "p2s",
+                    p2s
+                )
+              : p2s
             );
             regionDict.remove("radii");
             regionDict.remove("p1s");
