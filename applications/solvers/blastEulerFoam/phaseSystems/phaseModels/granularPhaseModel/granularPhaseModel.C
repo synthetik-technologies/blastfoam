@@ -126,7 +126,11 @@ void Foam::granularPhaseModel::solve
     this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
     this->blendOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_, ai);
 
-    volVectorField deltaAlphaRhoU(fvc::div(alphaRhoUPhi_));
+    volVectorField deltaAlphaRhoU
+    (
+        fvc::div(alphaRhoUPhi_)
+      - alphaRho_*fluid_.g()
+    );
     const volScalarField& alpha = *this;
     forAll(fluid_.phases(), phasei)
     {

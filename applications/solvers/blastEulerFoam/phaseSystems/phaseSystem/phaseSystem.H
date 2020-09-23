@@ -395,6 +395,12 @@ public:
             return p_;
         }
 
+        //- Return gravitational acceleration
+        const uniformDimensionedVectorField& g() const
+        {
+            return g_;
+        }
+
         //- Calculate and return the total volumetric flux
         tmp<surfaceScalarField> phi() const;
 

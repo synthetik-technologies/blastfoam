@@ -313,10 +313,13 @@ void Foam::phaseModel::solve
     (
         fvc::div(alphaRhoUPhi_)
       - p()*gradAlpha()
+      - alphaRho_*fluid_.g()
     );
     volScalarField deltaAlphaRhoE
     (
-        fvc::div(alphaRhoEPhi_) - ESource()
+        fvc::div(alphaRhoEPhi_)
+      - ESource()
+      - (alphaRhoU_ & fluid_.g())
     );
     forAll(fluid_.phases(), phasei)
     {
