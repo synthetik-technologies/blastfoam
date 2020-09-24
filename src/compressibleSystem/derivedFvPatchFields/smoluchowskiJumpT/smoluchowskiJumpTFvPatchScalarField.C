@@ -62,7 +62,7 @@ Foam::smoluchowskiJumpTFvPatchScalarField::smoluchowskiJumpTFvPatchScalarField
     mixedFvPatchScalarField(ptf, p, iF, mapper),
     Pr_(ptf.Pr_),
     accommodationCoeff_(ptf.accommodationCoeff_),
-    Twall_(ptf.Twall_),
+    Twall_(mapper(ptf.Twall_)),
     gamma_(ptf.gamma_)
 {}
 

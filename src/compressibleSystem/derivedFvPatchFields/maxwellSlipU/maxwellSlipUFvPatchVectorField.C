@@ -59,7 +59,7 @@ Foam::maxwellSlipUFvPatchVectorField::maxwellSlipUFvPatchVectorField
 :
     mixedFixedValueSlipFvPatchVectorField(mspvf, p, iF, mapper),
     accommodationCoeff_(mspvf.accommodationCoeff_),
-    Uwall_(mspvf.Uwall_),
+    Uwall_(mapper(mspvf.Uwall_)),
     thermalCreep_(mspvf.thermalCreep_),
     curvature_(mspvf.curvature_)
 {}
