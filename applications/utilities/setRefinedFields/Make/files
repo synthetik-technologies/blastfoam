@@ -1,3 +1,5 @@
+cellSources/cylinderListToCell/cylinderListToCell.C
+cellSources/sphereListToCell/sphereListToCell.C
 setRefinedFields.C
 
 EXE = $(BLAST_APPBIN)/setRefinedFields
