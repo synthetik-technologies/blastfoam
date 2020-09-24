@@ -2,8 +2,10 @@
 
 ## Notes
 
-This case is designed to show a simple case of deflagration to detonation using the blastXiFoam solver. The case is based on the work of Ettner et al. (2014)
+This case is designed to show a simple case of deflagration to detonation using the blastXiFoam solver. The case is based on the work of Ettner et al. (2014). The original setup uses different source terms for quenching and ignition specific for hydrogen, however the general setup and solution method is the same.
 
+
+This case take approximately 1.5 hrs to run on an eight-core desktop.
 
 
 ## Reference

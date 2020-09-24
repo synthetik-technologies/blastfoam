@@ -20,7 +20,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK4SSP;
 }
 
 gradSchemes
@@ -32,7 +32,6 @@ divSchemes
 {
     default         none;
     div(tauMC)      Gauss linear;
-    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
 }
 
 laplacianSchemes

@@ -1,4 +1,4 @@
-# Oblique shock tutorial
+# aerofoilNACA0012 tutorial
 
 ## Notes
 

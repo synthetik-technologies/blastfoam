@@ -1,8 +1,8 @@
-# Validation of granular (25e-6 m) with a multicomponent gas
+# Validation of granular with a multicomponent gas
 
 ## Notes
 
-This case uses a single granular phases within a continuous air phase of Nitrogen and Helium. This a dilute simulation where packing of particles does not occur. The particle phase have a density of 2500 kg/m^3, a coefficient of restitution of 0.999, and a diameter of 25e-6 m.
+These cases uses a single granular phases within a continuous air phase of Nitrogen and Helium. This a dilute simulation where packing of particles does not occur. The particle phase have a density of 2500 kg/m^3, a coefficient of restitution of 0.999, and one case uses a diameter of 10e-6 m, and the other uses a diameter of 25e-6 m.
 
 Original plots were digitized using WebPlotDigitizer: https://github.com/ankitrohatgi/WebPlotDigitizer/releases The quality of the plots in the original publication (below) was not ideal for reproduction, but we have made an effort to reproduce them as faithfully as possible, and the points are found in the "validation/validationData" directory.
 

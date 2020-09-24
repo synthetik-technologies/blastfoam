@@ -5,11 +5,9 @@ cd ${0%/*} || exit 1    # run from this directory
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
 runApplication blockMesh
-runApplication topoSet
-runApplication subsetMesh -overwrite c0 -patch wall
+runApplication generateMoments
 runApplication decomposePar
 runParallel setRefinedFields
-
 
 # -- run the calc
 runParallel $(getApplication)
