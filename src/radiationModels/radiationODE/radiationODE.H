@@ -79,11 +79,11 @@ protected:
 
     // Protected data
 
+        //- Is the ode solved
+        Switch solve_;
+
         //- Ode dictionary
         const dictionary& dict_;
-
-        //- Is the ode solved
-        bool solve_;
 
         //- Number of equations solved
         label nEqns_;
@@ -125,7 +125,7 @@ public:
 
         bool solve() const
         {
-            return solve_;
+            return solve_ && odeSolver_.valid();
         }
 
         //- Solve the reaction system for the given time step

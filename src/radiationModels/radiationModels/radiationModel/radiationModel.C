@@ -193,6 +193,7 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModel::calcRhoE
 {
     if (radODE_.solve())
     {
+        Info<< "Solving radiation ODE" << endl;
         tmp<volScalarField> rhoENew(rho*e);
         volScalarField K(rhoE - rhoENew());
 

@@ -40,8 +40,13 @@ Foam::radiationODE::radiationODE
     ODESystem(),
     rad_(rad),
     thermo_(mesh.lookupObject<basicThermoModel>("basicThermo")),
-    dict_(rad.optionalSubDict("radiationODECoeffs")),
-    solve_(dict_.lookupOrDefault("solveODE", false)),
+    solve_(rad_.lookupOrDefault("solveODE", false)),
+    dict_
+    (
+        solve_
+      ? rad.subDict("radiationODECoeffs")
+      : rad_
+    ),
     nEqns_(1),
     q_(1, 0.0),
     dqdt_(1, 0.0),
@@ -82,7 +87,7 @@ void Foam::radiationODE::derivatives
 {
     scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
     scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = max(rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T), -q_[0]/deltaT_[celli_]);
+    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
 }
 
 
@@ -96,8 +101,12 @@ void Foam::radiationODE::jacobian
 {
     scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
     scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = max(rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T), -q_[0]/deltaT_[celli_]);
-    J = 0;
+    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
+    J = scalarSquareMatrix
+        (
+            1,
+            -4.0*rad_.Rp(celli_)*pow3(T)/thermo_.Cvi(celli_)
+        );
 }
 
 
