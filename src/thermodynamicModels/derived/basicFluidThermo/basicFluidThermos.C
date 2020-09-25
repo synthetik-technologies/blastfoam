@@ -103,6 +103,13 @@ namespace Foam
     (
         constTransport,
         equationOfState,
+        AbelNobel
+    );
+
+    addFluidThermos
+    (
+        constTransport,
+        equationOfState,
         BKW
     );
 
