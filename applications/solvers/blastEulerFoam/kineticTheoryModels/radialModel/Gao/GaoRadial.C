@@ -93,7 +93,7 @@ Foam::kineticTheoryModels::radialModels::Gao::gs0
         1.0
        /(
            1.0
-         - cbrt(min(phase1, kt_.alphaMinFriction())/phase2.alphaMax())
+         - cbrt(min(phase2, kt_.alphaMinFriction())/phase2.alphaMax())
         )
     );
 
