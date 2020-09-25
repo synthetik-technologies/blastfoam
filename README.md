@@ -7,9 +7,9 @@
 
 
 
-# blastFoam Version 3.5
+# blastFoam Version 4.0
 
-blastFoam is a solver for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
+blastFoam is a library for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
 
 ## How to use blastFoam
@@ -85,6 +85,9 @@ hdiutil attach -mountpoint $HOME/OpenFOAM OpenFOAM.sparsebundle
 ```bash
 cd $HOME/OpenFOAM
 git clone https://github.com/OpenFOAM/OpenFOAM-7.git
+# or from the Synthetik repository which includes several bug fixes
+git clone https://github.com/synthetik-technologies/OpenFOAM-7.git
+
 cd OpenFOAM-7
 curl -L https://raw.githubusercontent.com/mrklein/openfoam-os-x/master/OpenFOAM-7-83cd285f0.patch > OpenFOAM-7-83cd285f0.patch
 git checkout -b local-install 83cd285f0
@@ -144,7 +147,7 @@ git checkout development-openfoam.org
 ```
 8. Compile OpenQBMM (for parallel use "-j")
 ```bash
-./Allwmake -j
+./Allwmake
 ```
 
 9. Test your installation by running the tutorial and validation cases
@@ -152,8 +155,7 @@ git checkout development-openfoam.org
 
 ### How to install blastFoam
 
-1. Install OpenFOAM-7 (if not already installed, see above)
-
+1. Install OpenFOAM-7 (if not already installed, see above). A modified versino of OpenFOAM-7 is available for download from (https://github.com/synthetik-technologies/OpenFOAM-7) which includes several additional bug fixes. The only required change to use this version is the download location.
 See https://openfoam.org/version/7 for OpenFOAM installation instructions.
 
 2. Create the OpenFOAM directory
@@ -168,7 +170,7 @@ cd $HOME/OpenFOAM
 
 4. Clone the blastFoam repository
 ```bash
-git clone https://github.com/synthetik-technologies/blastfoam
+git clone https://github.com/synthetik-technologies/blastfoam.git
 ```
 
 5. Go to the blastfoam directory
@@ -176,16 +178,16 @@ git clone https://github.com/synthetik-technologies/blastfoam
 cd $HOME/OpenFOAM/blastfoam
 ```
 
-6. Append the etc/bashrc to your .bashrc and/or .zshrc file
-```bash
-echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.bashrc
-echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
-```
-
-
-7. (Optional) Set the location of OpenQBMM in the etc/bashrc by setting QBMM_INST_DIR
+6. (Optional) Set the location of OpenQBMM in the etc/bashrc by setting QBMM_INST_DIR
 ```bash
 export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
+```
+
+7. Append the etc/bashrc to your .bashrc and/or .zshrc file
+```bash
+echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.bashrc
+# or if using zsh:
+echo "source $HOME/OpenFOAM/blastfoam/etc/bashrc" >> $HOME/.zshrc
 ```
 
 
@@ -206,8 +208,8 @@ source $HOME/.zshrc
 
 
 
-## Questions and Availability
-If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com. blastFoam is also available on the Texas Advanced Computing Center https://www.tacc.utexas.edu (TACC) as well as several other HPC centers.
+## Questions
+If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com.
 
 
 
@@ -264,6 +266,11 @@ BiBTex:
 1. P. Vonk, "A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation," presented at the OpenFOAM Users Conference, Cologne, Germany, 2016.
 1. P. Vonk, T. Brewer, "A New OpenFOAM Solver for Compressible Multi-Fluid Flow with Application to High-Explosive Detonation and Extended Validation," presented at the OpenFOAM Users Conference, USA, 2016.
 
+
+
+
+
+## blastFoam Version 4.0 Release Notes and Features
 
 
 
