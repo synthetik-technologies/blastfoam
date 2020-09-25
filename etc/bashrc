@@ -49,15 +49,11 @@ export BLAST_APPBIN=$FOAM_USER_APPBIN
 #export BLAST_APPBIN=$FOAM_SITE_APPBIN
 
 # OpenQBMM install directory
-export QBMM_INST_DIR=
-export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
-
-
+if [ -n "$QBMM_INST_DIR" ]
+then
 export QBMM_LIBBIN=$FOAM_USER_LIBBIN
 export QBMM_APPBIN=$FOAM_USER_APPBIN
 
-if [ -n "$QBMM_INST_DIR" ]
-then
 export QBMM_LIBS="-L\$(QBMM_LIBBIN) -leigenSolver -lquadratureNode -lmomentSets -lmomentInversion -lfieldMomentInversion -lquadratureApproximation -lmomentAdvection -lPDFTransportModel -lmixing -lpopulationBalance"
 export BLAST_QBMM_LIBS="-L\$(BLAST_LIBBIN) -lblastQBMM $QBMM_LIBS"
 

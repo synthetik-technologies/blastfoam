@@ -130,7 +130,7 @@ cd $HOME/OpenFOAM
 
 4. Clone the OpenQBMM repository
 ```bash
-https://github.com/OpenQBMM/OpenQBMM/tree/master
+git clone https://github.com/OpenQBMM/OpenQBMM.git
 ```
 
 5. Go to the OpenQBMM directory
