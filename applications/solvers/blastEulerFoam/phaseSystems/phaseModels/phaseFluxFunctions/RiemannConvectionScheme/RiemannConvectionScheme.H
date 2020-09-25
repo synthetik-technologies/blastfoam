@@ -104,7 +104,7 @@ public:
         )
         :
             convectionScheme<Type>(mesh, faceFlux),
-            phaseName_(is),
+            phaseName_(faceFlux.group()),
             fluxScheme_
             (
                 mesh.lookupObject<fluxScheme>
