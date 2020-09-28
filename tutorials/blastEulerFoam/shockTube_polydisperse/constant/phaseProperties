@@ -558,8 +558,8 @@ kineticTheory
     residualAlpha 1e-10;
 
     radialModel Lebowitz;
-    viscosityModel Gidaspow;
-    conductivityModel Gidaspow;
+    viscosityModel none;
+    conductivityModel Syamlal;
     granularPressureModel Huilin;
     frictionalStressModel JohnsonJackson;
 

@@ -124,6 +124,9 @@ protected:
             //- Frictional viscosity
             volScalarField nuFric_;
 
+            //- Total viscosity
+            volScalarField nuTotal_;
+
             //- Coefficient of restitution
             scalar es_;
 
@@ -163,6 +166,12 @@ public:
 
     // Member Functions
 
+        //- Return true if viscosity is included
+        bool includeViscosity() const
+        {
+            return kineticTheorySystem_.includeViscosity();
+        }
+
         //- Return the effective viscosity on patch
         virtual tmp<scalarField> nuEff(const label patchi) const
         {
@@ -171,7 +180,7 @@ public:
 
         tmp<volScalarField> nuEff() const
         {
-            return nut_;
+            return nuTotal_;
         }
 
         //- Return the effective stress tensor

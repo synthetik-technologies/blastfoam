@@ -139,7 +139,7 @@ gas
     transport
     {
         mu              1.81e-5;
-        Pr              1;
+        Pr              0.7;
     }
     thermodynamics
     {
@@ -266,8 +266,8 @@ kineticTheory
     residualAlpha 1e-10;
 
     radialModel Lebowitz;
-    viscosityModel Gidaspow;
-    conductivityModel Gidaspow;
+    viscosityModel none;
+    conductivityModel Syamlal;
     granularPressureModel Huilin;
     frictionalStressModel JohnsonJackson;
 

@@ -211,6 +211,20 @@ Foam::kineticTheoryModel::kineticTheoryModel
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
     ),
+
+    nuTotal_
+    (
+        IOobject
+        (
+            IOobject::groupName("nuTotal", phase.name()),
+            Theta_.time().timeName(),
+            Theta_.mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        Theta_.mesh(),
+        dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
+    ),
     es_(dict.lookupType<scalar>("e"))
 {
     kineticTheorySystem_.addPhase(*this);
@@ -240,7 +254,7 @@ Foam::kineticTheoryModel::devRhoReff() const
                 IOobject::NO_READ,
                 IOobject::NO_WRITE
             ),
-          - (phase_.rho()*nut_)*dev(twoSymm(fvc::grad(phase_.U())))
+          - (phase_.rho()*nuTotal_)*dev(twoSymm(fvc::grad(phase_.U())))
           - ((phase_.rho()*lambda_)*fvc::div(phase_.phi()))*symmTensor::I
         )
     );
@@ -255,10 +269,10 @@ Foam::kineticTheoryModel::divDevRhoReff
 {
     return
     (
-      - fvm::laplacian(phase_.rho()*nut_, U)
+      - fvm::laplacian(phase_.rho()*nuTotal_, U)
       - fvc::div
         (
-            (phase_.rho()*nut_)*dev2(T(fvc::grad(U)))
+            (phase_.rho()*nuTotal_)*dev2(T(fvc::grad(U)))
           + ((phase_.rho()*lambda_)*fvc::div(phase_.phi()))
            *dimensioned<symmTensor>("I", dimless, symmTensor::I)
         )
@@ -279,11 +293,6 @@ void Foam::kineticTheoryModel::correct()
 {
     // Local references
     volScalarField alpha(max(phase_, scalar(0)));
-
-    const scalar sqrtPi = sqrt(constant::mathematical::pi);
-
-    tmp<volScalarField> tda(phase_.d());
-    const volScalarField& da = tda();
 
     tmp<volTensorField> tgradU(fvc::grad(phase_.U()));
     const volTensorField& gradU(tgradU());
@@ -306,18 +315,19 @@ void Foam::kineticTheoryModel::correct()
     volScalarField ThetaSqrt("sqrtTheta", sqrt(Theta_));
 
     // Bulk viscosity  p. 45 (Lun et al. 1984).
-    lambda_ = (4.0/3.0)*sqr(alpha)*da*gs0_*(1.0 + es_)*ThetaSqrt/sqrtPi;
+//     lambda_ = (4.0/3.0)*sqr(alpha)*da*gs0_*(1.0 + es_)*ThetaSqrt/sqrtPi;
+    lambda_ = kineticTheorySystem_.lambda(phase_);
 
     // Limit viscosity and add frictional viscosity
     nut_.min(maxNut_);
-    nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_ - nut_);
-    nut_ += nuFric_;
+    nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_);
+    nuTotal_ = max(maxNut_, nut_ + nuFric_);
 
     if (debug)
     {
         Info<< typeName << ':' << nl
             << "    max(Theta) = " << max(Theta_).value() << nl
-            << "    max(nut) = " << max(nut_).value() << endl;
+            << "    max(nut) = " << max(nuTotal_).value() << endl;
     }
 }
 

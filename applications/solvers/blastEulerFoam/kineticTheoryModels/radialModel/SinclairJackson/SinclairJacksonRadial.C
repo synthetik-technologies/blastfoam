@@ -74,6 +74,16 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0
     const phaseModel& phase2
 ) const
 {
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0prime",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
     return
         1.0
        /(
@@ -90,6 +100,16 @@ Foam::kineticTheoryModels::radialModels::SinclairJackson::gs0prime
  const phaseModel& phase2
 ) const
 {
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0prime",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
     volScalarField aByaMax
     (
         cbrt

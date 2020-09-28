@@ -198,6 +198,9 @@ public:
         //- Return if granular system is polydiserse
         bool polydisperse() const;
 
+        //- Return true if viscosity is included
+        bool includeViscosity() const;
+
         //- Re-read model coefficients if they have changed
         virtual bool read();
 
@@ -310,6 +313,9 @@ public:
             const phaseModel&,
             const volScalarField&
         ) const;
+
+        //- Return the bulk viscosity for a given phase
+        tmp<volScalarField> lambda(const phaseModel& phase) const;
 
         //- Return the fricitional-pressure
         const volScalarField& frictionalPressure() const;

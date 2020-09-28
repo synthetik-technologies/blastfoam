@@ -74,7 +74,16 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0
     const phaseModel& phase2
 ) const
 {
-
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0prime",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
     return pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax());
 }
 
@@ -86,6 +95,16 @@ Foam::kineticTheoryModels::radialModels::LunSavage::gs0prime
     const phaseModel& phase2
 ) const
 {
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0prime",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
     return 2.5*pow(1 - phase1/phase1.alphaMax(), -2.5*phase1.alphaMax() - 1);
 }
 

@@ -74,11 +74,20 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0
     const phaseModel& phase2
 ) const
 {
-
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
     return
         1.0/(1 - phase1)
-        + 3*phase1/(2*sqr(1 - phase1))
-        + sqr(phase1)/(2*pow3(1 - phase1));
+      + 3*phase1/(2*sqr(1 - phase1))
+      + sqr(phase1)/(2*pow3(1 - phase1));
 }
 
 
@@ -89,10 +98,21 @@ Foam::kineticTheoryModels::radialModels::CarnahanStarling::gs0prime
     const phaseModel& phase2
 ) const
 {
+    if (&phase1 != &phase2)
+    {
+        return
+            volScalarField::New
+            (
+                "gs0prime",
+                phase1.mesh(),
+                dimensionedScalar(dimless, 0.0)
+            );
+    }
+
     return
         2.5/sqr(1 - phase1)
-        + 4*phase1/pow3(1 - phase1)
-        + 1.5*sqr(phase1)/pow4(1 - phase1);
+      + 4*phase1/pow3(1 - phase1)
+      + 1.5*sqr(phase1)/pow4(1 - phase1);
 }
 
 

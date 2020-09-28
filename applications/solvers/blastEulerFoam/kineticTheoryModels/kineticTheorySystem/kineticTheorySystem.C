@@ -35,6 +35,7 @@ License
 #include "mathematicalConstants.H"
 #include "SortableList.H"
 #include "zeroGradientFvPatchFields.H"
+#include "noneViscosity.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -286,7 +287,13 @@ bool Foam::kineticTheorySystem::polydisperse() const
 {
     return (phaseIndexes_.size() > 1);
 }
-//
+
+
+bool Foam::kineticTheorySystem::includeViscosity() const
+{
+    return !isA<kineticTheoryModels::noneViscosity>(viscosityModel_());
+}
+
 
 Foam::scalar Foam::kineticTheorySystem::es(const phasePairKey& pair) const
 {
@@ -495,6 +502,57 @@ Foam::kineticTheorySystem::kappa
         phase.d(),
         dimensionedScalar("e", dimless, es(key))
     );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::kineticTheorySystem::lambda
+(
+    const phaseModel& phase
+) const
+{
+    tmp<volScalarField> tmpLambda
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "lambda",
+                fluid_.mesh().time().timeName(),
+                fluid_.mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            fluid_.mesh(),
+            dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), 0)
+        )
+    );
+    volScalarField& l = tmpLambda.ref();
+
+    scalar pi = Foam::constant::mathematical::pi;
+    volScalarField m1(phase.rho()*pi*pow3(phase.d())/6.0);
+    const volScalarField& Theta1 = phase.Theta();
+    forAll(phaseIndexes_, phasei)
+    {
+        const phaseModel& phase2 = fluid_.phases()[phaseIndexes_[phasei]];
+        volScalarField m2(phase2.rho()*pi*pow3(phase2.d())/6.0);
+        const volScalarField& Theta2 = phase2.Theta();
+        volScalarField Psij(Ps(phase, phase2));
+
+        l +=
+            Psij*(phase.d() + phase2.d())/6.0
+           *sqrt
+            (
+                2.0*sqr(m1*Theta1 + m2*Theta2)
+               /max
+                (
+                    pi*Theta1*Theta2*(sqr(m1)*Theta1 + sqr(m2)*Theta2),
+                    dimensionedScalar(dimensionSet(2, 6, -6, 0, 0), small)
+                )
+            );
+    }
+    return tmpLambda/phase.rho();
 }
 
 

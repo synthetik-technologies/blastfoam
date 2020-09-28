@@ -146,32 +146,43 @@ void Foam::granularPhaseModel::solve
         fvc::div(alphaRhoPTEPhi_)
       + Ps_*fvc::div(phi_)
     );
-//     {
-//         tmp<volTensorField> tgradU
-//         (
-//             fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
-//         );
-//         const volTensorField& gradU(tgradU());
-//         volSymmTensorField D(symm(gradU));
-//
-//         //- Do not include stress for small volume fractions
-//         volSymmTensorField tauMC
-//         (
-//             kineticTheoryModel::devRhoReff()
-//            *Foam::pos(*this - 1e-4)
-//         );
-//         deltaAlphaRhoU +=
-//             fvc::div
-//             (
-//                 fluxScheme_->interpolate
-//                 (
-//                     tauMC,
-//                     IOobject::groupName("tauMC", this->name_)
-//                 ) & rho_.mesh().Sf()
-//             );
-//         deltaAlphaRhoPTE += (tauMC && gradU);
-//
-//     }
+
+    //- Add collisional viscosity terms
+    if (this->includeViscosity())
+    {
+        tmp<volTensorField> tgradU
+        (
+            fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+        );
+        const volTensorField& gradU(tgradU());
+        volSymmTensorField D(symm(gradU));
+
+        //- Do not include stress for small volume fractions
+        volSymmTensorField tauMC
+        (
+            kineticTheoryModel::devRhoReff()*pos((*this) - 1e-4)
+        );
+        volSymmTensorField tau
+        (
+            rho_
+           *(
+                2*this->nut_*D
+              + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
+            )
+        );
+        deltaAlphaRhoU +=
+            fvc::div
+            (
+                fluxScheme_->interpolate
+                (
+                    tauMC,
+                    IOobject::groupName("tauMC", this->name_)
+                ) & rho_.mesh().Sf()
+            );
+        deltaAlphaRhoPTE -=
+            ((tau*(*this)) && gradU)
+          + fvc::laplacian(this->kappa_, Theta_);
+    }
 
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
