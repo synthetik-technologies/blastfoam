@@ -344,7 +344,7 @@ void Foam::phaseModel::solve
                 dRR & U_,
                 "div(" + IOobject::groupName("tauMC", name_) + ')'
             )
-          - fvc::laplacian(turbulence_->alphaEff(), e());
+          - fvc::laplacian((*this)*turbulence_->alphaEff(), e());
     }
 
     this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);

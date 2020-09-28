@@ -211,7 +211,6 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     scalarField TcNbr(nbrField.patchInternalField());
     mpp.distribute(TcNbr);
 
-
     // Swap to obtain full local values of neighbour K*delta
     scalarField KDeltaNbr;
     if (contactRes_ == 0.0)
@@ -240,9 +239,10 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
         mpp.distribute(qrNbr);
     }
 
-    valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
+    valueFraction() = min(max(KDeltaNbr/max((KDeltaNbr + KDelta), small), 0.0), 1.0);
     refValue() = TcNbr;
-    refGrad() = (qr + qrNbr)/K;
+
+    refGrad() = (qr + qrNbr)/max(K, small);
 
     mixedFvPatchScalarField::updateCoeffs();
 
