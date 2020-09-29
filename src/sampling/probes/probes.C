@@ -639,6 +639,7 @@ bool Foam::probes::read(const dictionary& dict)
     dict.readIfPresent("append", append_);
     elementLocations_.clear();
     elementLocations_.setSize(size());
+    elementLocations_ = Zero;
 
     // Initialise cells to sample from supplied locations
     findElements
