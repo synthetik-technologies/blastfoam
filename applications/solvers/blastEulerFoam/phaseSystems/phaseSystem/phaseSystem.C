@@ -105,11 +105,6 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
     {
         Info<< "Solving drag ODE system" <<endl;
         dragODE_->solve(deltaT.value());
-        forAll(phaseModels_, phasei)
-        {
-            phaseModel& phase(phaseModels_[phasei]);
-            phase.alphaRhoU() = phase.alphaRho()*phase.U();
-        }
     }
 
     UiTable Uis;

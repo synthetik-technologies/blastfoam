@@ -119,11 +119,8 @@ protected:
         //- Temporary field (u1 v1 w1, u2 v2 w2 ...)
         scalarField q_;
 
-        //- Temporary rate-of-change of variables field
-        scalarField dqdt_;
-
         //- Stored time step
-        scalarField deltaT_;
+        volScalarField::Internal deltaT_;
 
         //- Current cell
         label celli_ = 0;

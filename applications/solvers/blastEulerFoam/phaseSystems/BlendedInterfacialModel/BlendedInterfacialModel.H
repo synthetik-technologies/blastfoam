@@ -190,7 +190,7 @@ public:
         tmp<volScalarField> K(const label, const label) const;
 
         //- Return the blended force coefficient
-        scalar Ki(const label, const label, const label) const;
+        scalar K(const label, const label, const label) const;
 
         //- Return the face blended force coefficient
         tmp<surfaceScalarField> Kf(const label, const label) const;
@@ -205,7 +205,7 @@ public:
 
         //- Return the blended force for a cell
         template<class Type>
-        Type Fi
+        Type F
         (
             const label,
             const label,
@@ -219,13 +219,13 @@ public:
         tmp<volScalarField> D(const label, const label) const;
 
         //- Return the blended diffusivity for a cell
-        scalar Di(const label, const label, const label) const;
+        scalar D(const label, const label, const label) const;
 
         //- Return the blended mass transfer rate
         tmp<volScalarField> dmdt(const label, const label) const;
 
         //- Return the blended mass transfer rate for a cell
-        scalar dmdti(const label, const label, const label) const;
+        scalar dmdt(const label, const label, const label) const;
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;

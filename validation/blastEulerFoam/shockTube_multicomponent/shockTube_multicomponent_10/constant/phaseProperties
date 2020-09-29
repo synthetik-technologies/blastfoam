@@ -173,6 +173,13 @@ aspectRatio
 (
 );
 
+solveDragODE off;
+dragODECoeffs
+{
+    solver seulex;
+    relTol 1e-3;
+}
+
 drag
 (
     (particles in gas)
