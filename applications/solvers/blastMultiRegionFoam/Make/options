@@ -11,7 +11,6 @@ EXE_INC = \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
-    -I$(LIB_SRC)/radiationModels/lnInclude \
     -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
@@ -30,7 +29,6 @@ EXE_LIBS = \
     -lcompressibleTurbulenceModels \
     -lmeshTools \
     -lfiniteVolume \
-    -lfvOptions \
     -lregionModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \

@@ -46,7 +46,6 @@ Description
 #include "compressibleCourantNo.H"
 #include "solidRegionDiffNo.H"
 #include "radiationModel.H"
-#include "fvOptions.H"
 #include "coordinateSystem.H"
 #include "dynamicFvMesh.H"
 #include "mappedPatchSelector.H"

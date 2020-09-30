@@ -28,4 +28,4 @@ volScalarField& e = thermo.e();
 
 const volScalarField& betav = betavSolid[i];
 
-fv::options& fvOptions = solidHeatSources[i];
+// fv::options& fvOptions = solidHeatSources[i];

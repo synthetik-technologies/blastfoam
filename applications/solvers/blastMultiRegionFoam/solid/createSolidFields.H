@@ -2,7 +2,7 @@
 PtrList<coordinateSystem> coordinates(solidRegions.size());
 PtrList<solidThermoModel> thermos(solidRegions.size());
 PtrList<radiationModel> radiations(solidRegions.size());
-PtrList<fv::options> solidHeatSources(solidRegions.size());
+// PtrList<fv::options> solidHeatSources(solidRegions.size());
 PtrList<volScalarField> betavSolid(solidRegions.size());
 PtrList<volSymmTensorField> aniAlphas(solidRegions.size());
 
@@ -41,12 +41,12 @@ forAll(solidRegions, i)
     Info<< "    Adding to radiations\n" << endl;
     radiations.set(i, radiationModel::New(thermos[i].T()));
 
-    Info<< "    Adding fvOptions\n" << endl;
-    solidHeatSources.set
-    (
-        i,
-        new fv::options(solidRegions[i])
-    );
+//     Info<< "    Adding fvOptions\n" << endl;
+//     solidHeatSources.set
+//     (
+//         i,
+//         new fv::options(solidRegions[i])
+//     );
 
     if (!thermos[i].isotropic())
     {

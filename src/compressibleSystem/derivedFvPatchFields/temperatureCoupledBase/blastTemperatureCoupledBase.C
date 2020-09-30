@@ -154,14 +154,12 @@ Foam::tmp<Foam::scalarField> Foam::blast::temperatureCoupledBase::kappa
             {
                 const turbulenceModel& turbModel =
                     mesh.lookupObject<turbulenceModel>(turbName);
-
                 return turbModel.kappaEff(patchi);
             }
             else if (mesh.foundObject<fluidThermoModel>(thermoName))
             {
                 const fluidThermoModel& thermo =
                     mesh.lookupObject<fluidThermoModel>(thermoName);
-
                 return thermo.kappa(patchi);
             }
             else
@@ -180,7 +178,6 @@ Foam::tmp<Foam::scalarField> Foam::blast::temperatureCoupledBase::kappa
         {
             const solidThermoModel& thermo =
                 mesh.lookupObject<solidThermoModel>(thermoName);
-
             return thermo.kappa(patchi);
             break;
         }

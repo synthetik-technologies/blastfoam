@@ -164,7 +164,7 @@ turbulentTemperatureRadCoupledMixedFvPatchScalarField
 
 void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
 {
-    if (updated())
+    if (updated() || patch().boundaryMesh().mesh().time().value() == patch().boundaryMesh().mesh().time().startTime().value())
     {
         return;
     }
@@ -239,10 +239,9 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
         mpp.distribute(qrNbr);
     }
 
-    valueFraction() = min(max(KDeltaNbr/max((KDeltaNbr + KDelta), small), 0.0), 1.0);
+    valueFraction() = KDeltaNbr/stabilise((KDeltaNbr + KDelta), small);
     refValue() = TcNbr;
-
-    refGrad() = (qr + qrNbr)/max(K, small);
+    refGrad() = (qr + qrNbr)/stabilise(K, small);
 
     mixedFvPatchScalarField::updateCoeffs();
 
