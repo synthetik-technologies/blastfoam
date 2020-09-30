@@ -25,6 +25,7 @@ if (!thermo.isotropic())
 
 
 volScalarField& e = thermo.e();
+volScalarField& T = thermo.T();
 
 const volScalarField& betav = betavSolid[i];
 

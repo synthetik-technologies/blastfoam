@@ -25,6 +25,9 @@ do
 
     if (!lastIter)
     {
+        e.storePrevIter();
+
+        e.relax();
         eEqn.relax();
     }
 
@@ -34,7 +37,6 @@ do
 
 //     fvOptions.correct(e);
 
-    e.storePrevIter();
 } while (++iter < maxIter && !lastIter);
 if (converged)
 {
@@ -47,5 +49,5 @@ else
 
 thermo.correct();
 
-Info<< "max(T): " << max(thermo.T()).value()
-    << ", min(T): " << min(thermo.T()).value() << endl;
+Info<< "max(T): " << max(T).value()
+    << ", min(T): " << min(T).value() << endl;

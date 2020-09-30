@@ -25,6 +25,7 @@ License
 
 #include "solidRegionDiffNo.H"
 #include "surfaceInterpolate.H"
+#include "fvc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -32,13 +33,14 @@ Foam::scalar Foam::solidRegionDiffNo
 (
     const fvMesh& mesh,
     const Time& runTime,
+    const volScalarField& T,
     const volScalarField& Cprho,
     const volScalarField& kappa
 )
 {
     surfaceScalarField kapparhoCpbyDelta
     (
-        sqr(mesh.surfaceInterpolation::deltaCoeffs())
+        (fvc::interpolate(fvc::grad(T)) & mesh.Sf())
        *fvc::interpolate(kappa)
        /fvc::interpolate(Cprho)
     );

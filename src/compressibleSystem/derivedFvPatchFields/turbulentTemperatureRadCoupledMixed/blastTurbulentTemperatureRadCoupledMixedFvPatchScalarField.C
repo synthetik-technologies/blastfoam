@@ -241,7 +241,29 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
 
     valueFraction() = KDeltaNbr/stabilise((KDeltaNbr + KDelta), small);
     refValue() = TcNbr;
-    refGrad() = (qr + qrNbr)/stabilise(K, small);
+
+    scalarField grad((qr + qrNbr)/stabilise(K, small));
+
+    // Limit gradients based on internal fields
+    scalarField minT(min(TcNbr, patchInternalField()));
+    scalarField maxT(max(TcNbr, patchInternalField()));
+    scalarField maxGradT
+    (
+        (
+            (maxT - vf*val)/max(vf, small)
+          - patchInternalField()
+        )*patch().deltaCoeffs()
+    );
+    scalarField minGradT
+    (
+        (
+            (minT - vf*val)/max(vf, small)
+          - patchInternalField()
+        )*patch().deltaCoeffs()
+    );
+    grad = min(max(minGradT, grad), maxGradT);
+
+    refGrad() = grad;
 
     mixedFvPatchScalarField::updateCoeffs();
 

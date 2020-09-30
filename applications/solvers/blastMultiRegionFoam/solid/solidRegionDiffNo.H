@@ -38,6 +38,7 @@ namespace Foam
     (
         const fvMesh& mesh,
         const Time& runTime,
+        const volScalarField& T,
         const volScalarField& Cprho,
         const volScalarField& kappa
     );

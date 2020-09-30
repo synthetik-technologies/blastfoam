@@ -28,6 +28,7 @@ forAll(solidRegions, i)
         (
             solidRegions[i],
             runTime,
+            thermo.T(),
             rho*cp,
             magKappa()
         ),
