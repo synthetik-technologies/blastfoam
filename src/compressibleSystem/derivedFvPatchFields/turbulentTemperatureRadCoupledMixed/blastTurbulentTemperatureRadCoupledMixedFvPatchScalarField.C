@@ -242,30 +242,38 @@ void turbulentTemperatureRadCoupledMixedFvPatchScalarField::updateCoeffs()
     valueFraction() = KDeltaNbr/stabilise((KDeltaNbr + KDelta), small);
     refValue() = TcNbr;
 
-    scalarField grad((qr + qrNbr)/stabilise(K, small));
+    scalarField grad((qr + qrNbr)/max(K, small));
 
-    // Limit gradients based on internal fields
-    scalarField minT(min(TcNbr, patchInternalField()));
-    scalarField maxT(max(TcNbr, patchInternalField()));
-    scalarField maxGradT
-    (
-        (
-            (maxT - vf*val)/max(vf, small)
-          - patchInternalField()
-        )*patch().deltaCoeffs()
-    );
+    // Limit gradients based on neighbour cells and max/min coupled region
+    scalarField minT(min(min(nbrField.primitiveField()), patchInternalField()));
+    scalarField maxT(max(max(nbrField.primitiveField()), patchInternalField()));
+    const scalarField& vf = valueFraction();
+
     scalarField minGradT
     (
         (
-            (minT - vf*val)/max(vf, small)
+            (minT - vf*refValue())/max(1.0 - vf, small)
           - patchInternalField()
         )*patch().deltaCoeffs()
     );
-    grad = min(max(minGradT, grad), maxGradT);
+    scalarField maxGradT
+    (
+        (
+            (maxT - vf*refValue())/max(1.0 - vf, small)
+          - patchInternalField()
+        )*patch().deltaCoeffs()
+    );
 
+    //- Make sure resulting temperature is within  physical bounds
+    forAll(grad, i)
+    {
+        grad[i] =
+            vf[i] > small
+          ? min(max(grad[i], minGradT[i]), maxGradT[i]) : grad[i];
+    }
     refGrad() = grad;
-
     mixedFvPatchScalarField::updateCoeffs();
+
 
     if (debug)
     {

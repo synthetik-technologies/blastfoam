@@ -26,9 +26,7 @@ do
     if (!lastIter)
     {
         e.storePrevIter();
-
         e.relax();
-        eEqn.relax();
     }
 
 //     fvOptions.constrain(eEqn);

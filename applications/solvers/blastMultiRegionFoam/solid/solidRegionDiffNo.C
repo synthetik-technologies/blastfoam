@@ -40,7 +40,7 @@ Foam::scalar Foam::solidRegionDiffNo
 {
     surfaceScalarField kapparhoCpbyDelta
     (
-        (fvc::interpolate(fvc::grad(T)) & mesh.Sf())
+        mag((fvc::interpolate(fvc::grad(T)) & mesh.Sf()))
        *fvc::interpolate(kappa)
        /fvc::interpolate(Cprho)
     );
