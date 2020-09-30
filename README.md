@@ -271,8 +271,21 @@ BiBTex:
 
 
 ## blastFoam Version 4.0 Release Notes and Features
+blastFoam 4.0 introduces particle solvers. This includes Eulerian multi-fluid methods (blastEulerFoam), Lagrangian (blastParcelFoam), and possible coupling to OpenQBMM for number-density function transport coupling (blastPbeTransportFoam, blastUncoupledVdfTransportFoam, and blastVdfTransportFoam).
 
+Additional equations of state have been added including the Tillotson equation of state for cavitating fluids and the Abel-Nobel equation of state for propellants.
 
+The optional use of delayed detonations has been added to all activation models, as well as the support for specifying the size of detonation points in a material.
+
+Diameter models have been added for use with the Arrhenius rate activation model, as well as the phase models used in the blastEulerFoam solver. These include constant diameter, constant mass, and a quadrature-based method of moments (qbmm) diameter.
+
+New numerical schemes have been added which include 1st, 2nd, and 3rd order MUSCL reconstruction with limiters.
+
+A new tracer particle functionObject has been added, allowing for the transport of passive particles.
+
+A simple fluid-structure-interaction solver (blastFSIFoam) has been added, however this is still experimental and not yet stable.
+
+Further improvements have been made to the setRefinedFields utility for more control over setting fields and faster convergence.
 
 
 
