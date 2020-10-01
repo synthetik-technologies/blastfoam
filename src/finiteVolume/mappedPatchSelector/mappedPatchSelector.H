@@ -173,6 +173,9 @@ bool setMappedPatchDisplacement(fvMesh& mesh, const word& name);
 //- Check if a patch is of a mapped type
 bool isAMappedType(const fvPatch& patch);
 
+//- Replace mappedFvPatches with  mappedMovingPatches
+void replaceMappedWithMappedMoving(fvMesh& mesh);
+
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

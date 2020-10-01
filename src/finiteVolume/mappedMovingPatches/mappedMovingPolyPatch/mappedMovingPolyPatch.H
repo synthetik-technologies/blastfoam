@@ -109,6 +109,18 @@ public:
             const label start,
             const label index,
             const word& sampleRegion,
+            const word& samplePatch,
+            const polyBoundaryMesh& bm
+        );
+
+        //- Construct from components
+        mappedMovingPolyPatch
+        (
+            const word& name,
+            const label size,
+            const label start,
+            const label index,
+            const word& sampleRegion,
             const mappedMovingPatchBase::sampleMode mode,
             const word& samplePatch,
             const vectorField& offset,

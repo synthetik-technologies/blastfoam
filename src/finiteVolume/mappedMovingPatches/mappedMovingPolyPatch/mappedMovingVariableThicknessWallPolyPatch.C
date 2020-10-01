@@ -78,7 +78,18 @@ Foam::mappedMovingVariableThicknessWallPolyPatch::mappedMovingVariableThicknessW
     const polyBoundaryMesh& bm
 )
 :
-    mappedMovingWallPolyPatch(name, size, start, index, bm, typeName),
+    mappedMovingWallPolyPatch
+    (
+        name,
+        size,
+        start,
+        index,
+        sampleRegion,
+        mode,
+        samplePatch,
+        offset,
+        bm
+    ),
     thickness_(size)
 {}
 
@@ -96,7 +107,43 @@ Foam::mappedMovingVariableThicknessWallPolyPatch::mappedMovingVariableThicknessW
     const polyBoundaryMesh& bm
 )
 :
-    mappedMovingWallPolyPatch(name, size, start, index, bm, typeName),
+    mappedMovingWallPolyPatch
+    (
+        name,
+        size,
+        start,
+        index,
+        sampleRegion,
+        mode,
+        samplePatch,
+        offset,
+        bm
+    ),
+    thickness_(size)
+{}
+
+
+Foam::mappedMovingVariableThicknessWallPolyPatch::mappedMovingVariableThicknessWallPolyPatch
+(
+    const word& name,
+    const label size,
+    const label start,
+    const label index,
+    const word& sampleRegion,
+    const word& samplePatch,
+    const polyBoundaryMesh& bm
+)
+:
+    mappedMovingWallPolyPatch
+    (
+        name,
+        size,
+        start,
+        index,
+        sampleRegion,
+        samplePatch,
+        bm
+    ),
     thickness_(size)
 {}
 

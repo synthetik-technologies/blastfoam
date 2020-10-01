@@ -119,6 +119,27 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
 Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
 (
     const word& name,
+    const label size,
+    const label start,
+    const label index,
+    const word& sampleRegion,
+    const word& samplePatch,
+    const polyBoundaryMesh& bm
+)
+:
+    wallPolyPatch(name, size, start, index, bm, typeName),
+    mappedMovingPatchBase
+    (
+        static_cast<const polyPatch&>(*this),
+        sampleRegion,
+        samplePatch
+    )
+{}
+
+
+Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
+(
+    const word& name,
     const dictionary& dict,
     const label index,
     const polyBoundaryMesh& bm,

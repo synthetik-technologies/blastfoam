@@ -27,6 +27,14 @@ License
 #include "mappedWallFvPatch.H"
 #include "mappedMovingWallFvPatch.H"
 
+#include "mappedPolyPatch.H"
+#include "mappedWallPolyPatch.H"
+#include "mappedVariableThicknessWallPolyPatch.H"
+
+#include "mappedMovingPolyPatch.H"
+#include "mappedMovingWallPolyPatch.H"
+#include "mappedMovingVariableThicknessWallPolyPatch.H"
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -176,4 +184,96 @@ bool Foam::isAMappedType(const fvPatch& patch)
     }
     return false;
 }
+
+
+void Foam::replaceMappedWithMappedMoving(fvMesh& mesh)
+{
+    List<polyPatch*> newPolyPatches(mesh.boundaryMesh().size());
+    polyBoundaryMesh& bm = const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());
+    fvBoundaryMesh& fvBm = const_cast<fvBoundaryMesh&>(mesh.boundary());
+    forAll(bm, patchi)
+    {
+        bool set = false;
+        if (isA<mappedPolyPatch>(mesh.boundaryMesh()[patchi]))
+        {
+            const mappedPolyPatch& patch =
+                refCast<const mappedPolyPatch>(mesh.boundaryMesh()[patchi]);
+
+            bm.set(patchi,
+                new mappedMovingPolyPatch
+                (
+                    patch.name(),
+                    patch.size(),
+                    patch.start(),
+                    patch.index(),
+                    patch.sampleRegion(),
+                    patch.samplePatch(),
+                    mesh.boundaryMesh()
+                ));
+            set = true;
+        }
+        else if (isA<mappedWallPolyPatch>(mesh.boundaryMesh()[patchi]))
+        {
+            const mappedWallPolyPatch& patch =
+                refCast<const mappedWallPolyPatch>(mesh.boundaryMesh()[patchi]);
+
+            bm.set(patchi,
+                new mappedMovingWallPolyPatch
+                (
+                    patch.name(),
+                    patch.size(),
+                    patch.start(),
+                    patch.index(),
+                    patch.sampleRegion(),
+                    patch.samplePatch(),
+                    mesh.boundaryMesh()
+                ));
+            set = true;
+        }
+        else if
+        (
+            isA<mappedVariableThicknessWallPolyPatch>
+            (
+                mesh.boundaryMesh()[patchi]
+            )
+        )
+        {
+            const mappedVariableThicknessWallPolyPatch& patch =
+                refCast<const mappedVariableThicknessWallPolyPatch>
+                (
+                    mesh.boundaryMesh()[patchi]
+                );
+
+            bm.set(patchi,
+                new mappedMovingVariableThicknessWallPolyPatch
+                (
+                    patch.name(),
+                    patch.size(),
+                    patch.start(),
+                    patch.index(),
+                    patch.sampleRegion(),
+                    patch.samplePatch(),
+                    mesh.boundaryMesh()
+                ));
+            set = true;
+        }
+
+        if (set)
+        {
+            fvBm.set
+            (
+                patchi,
+                new mappedMovingWallFvPatch
+                (
+                    mesh.boundaryMesh()[patchi],
+                    mesh.boundary()
+                )
+            );
+        }
+    }
+
+    mesh.clearOut();
+}
+
+
 // ************************************************************************* //

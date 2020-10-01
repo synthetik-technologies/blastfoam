@@ -963,6 +963,28 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
 (
     const polyPatch& pp,
     const word& sampleRegion,
+    const word& samplePatch
+)
+:
+    patch_(pp),
+    sampleRegion_(sampleRegion),
+    mode_(NEARESTPATCHFACE),
+    samplePatch_(samplePatch),
+    coupleGroup_(),
+    displacementPtr_(nullptr),
+    sameRegion_(sampleRegion_ == patch_.boundaryMesh().mesh().name()),
+    mapPtr_(nullptr),
+    AMIPtr_(nullptr),
+    AMIReverse_(false),
+    surfPtr_(nullptr),
+    surfDict_(fileName("surface"))
+{}
+
+
+Foam::mappedMovingPatchBase::mappedMovingPatchBase
+(
+    const polyPatch& pp,
+    const word& sampleRegion,
     const sampleMode mode,
     const word& samplePatch,
     const vector& offset

@@ -108,6 +108,18 @@ public:
             const polyBoundaryMesh& bm
         );
 
+        //- Construct from components. Uniform offset.
+        mappedMovingVariableThicknessWallPolyPatch
+        (
+            const word& name,
+            const label size,
+            const label start,
+            const label index,
+            const word& sampleRegion,
+            const word& samplePatch,
+            const polyBoundaryMesh& bm
+        );
+
         //- Construct from dictionary
         mappedMovingVariableThicknessWallPolyPatch
         (

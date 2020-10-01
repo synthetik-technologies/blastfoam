@@ -16,11 +16,13 @@ createEpsP()
     set ylabel "Pressure [Pa]"
     set grid
     set key right top
-    set key off
+    set key on
     set size 2,2
     set autoscale
-    plot    "$1" using 1:2 notitle \
-            with lines lt 1 linewidth 2 linecolor rgb 'black'
+    plot    "$1" using 1:2 title 'Tabulated' \
+            with lines lt 1 linewidth 2 linecolor rgb 'black', \
+            "$2" using 1:2 every 20 title 'Ideal gas' \
+            with points pt 5 ps 3 linecolor rgb 'red'
 EOF
 }
 
@@ -35,11 +37,13 @@ createEpsRho()
     set ylabel "Density [kg/m^3]"
     set grid
     set key right top
-    set key off
+    set key on
     set size 2,2
     set autoscale
-    plot    "$1" using 1:3 notitle \
-            with lines lt 1 linewidth 2 linecolor rgb 'black'
+    plot    "$1" using 1:3 title 'Tabulated' \
+            with lines lt 1 linewidth 2 linecolor rgb 'black', \
+            "$2" using 1:3 every 20 title 'Ideal gas' \
+            with points pt 5 ps 3 linecolor rgb 'red'
 EOF
 }
 
@@ -54,11 +58,13 @@ createEpsUx()
     set ylabel "Velocity [m/s]"
     set grid
     set key left top
-    set key off
+    set key on
     set size 2,2
     set autoscale
-    plot    "$1" using 1:2 notitle \
-            with lines lt 1 linewidth 2 linecolor rgb 'black'
+    plot    "$1" using 1:2 title 'Tabulated' \
+            with lines lt 1 linewidth 2 linecolor rgb 'black', \
+            "$2" using 1:2 every 20 title 'Ideal gas' \
+            with points pt 5 ps 3 linecolor rgb 'red'
 EOF
 }
 
@@ -76,8 +82,11 @@ time=$(foamListTimes -latestTime -case ../)
 pRhoBlastFOAM="../postProcessing/sampleDict/$time/Centerline_p*"
 UBlastFOAM="../postProcessing/sampleDict/$time/Centerline_U*"
 
-createEpsP $pRhoBlastFOAM
-createEpsRho $pRhoBlastFOAM
-createEpsUx $UBlastFOAM
+pRhoIdeal="data/Centerline_p*"
+UIdeal="data/Centerline_U*"
+
+createEpsP $pRhoBlastFOAM $pRhoIdeal
+createEpsRho $pRhoBlastFOAM $pRhoIdeal
+createEpsUx $UBlastFOAM $UIdeal
 
 echo Done

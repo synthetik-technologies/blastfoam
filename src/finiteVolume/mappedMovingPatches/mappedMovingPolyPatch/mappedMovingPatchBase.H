@@ -299,6 +299,15 @@ public:
             const vector& offset
         );
 
+        //- Construct from offsetMode=uniform
+        mappedMovingPatchBase
+        (
+            const polyPatch& pp,
+            const word& sampleRegion,
+            const word& samplePatch
+        );
+
+
         //- Construct from offsetMode=normal and distance
         mappedMovingPatchBase
         (
