@@ -715,9 +715,23 @@ Foam::phaseSystem::phaseSystem
     }
 
     volScalarField sumAlpha(phaseModels_[0]);
+    label nFluids = phaseModels_[0].granular() ? 0 : 1;
     for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
     {
         sumAlpha += phaseModels_[phasei];
+        if (!phaseModels_[phasei].granular())
+        {
+            nFluids++;
+        }
+    }
+
+    if (nFluids > 1)
+    {
+        FatalErrorInFunction
+            << "Only one fluid phase is currently supported by blastEulerFoam. "
+            << "Multifluid implementations are under development."
+            << endl
+            << abort(FatalError);
     }
 
     if
