@@ -260,6 +260,31 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
         }
     }
 
+    //- Transformation of granular energy to thermal energy
+    //  due to inelastic collisions
+    forAll(phaseModels_, phasei)
+    {
+        forAll(phaseModels_, phasej)
+        {
+            if
+            (
+                phaseModels_[phasei].granular()
+             && phaseModels_[phasej].granular()
+            )
+            {
+                volScalarField gammaDot
+                (
+                    phaseModels_[phasei].dissipationSource
+                    (
+                        phaseModels_[phasej]
+                    )*deltaT
+                );
+                phaseModels_[phasei].alphaRhoPTE() -= gammaDot;
+                phaseModels_[phasei].alphaRhoE() += gammaDot;
+            }
+        }
+    }
+
     forAllConstIter
     (
         liftModelTable,
@@ -285,45 +310,165 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                     max(phase2.alphaRho(nodej), phase2.residualAlphaRho())
                 );
 
-                volVectorField liftForce
+                volVectorField Fl
                 (
                     liftModelIter()->F<vector>(nodei, nodej)*deltaT
                 );
 
                 const volVectorField& Ui(*Uis[pair]);
-                phase1.alphaRhoU(nodei) += liftForce;
+                phase1.alphaRhoU(nodei) += Fl;
                 if (!phase1.granular())
                 {
-                    phase1.alphaRhoE() += liftForce & Ui;
+                    phase1.alphaRhoE() += Fl & Ui;
                 }
-                phase2.alphaRhoU(nodej) -= liftForce;
+                phase2.alphaRhoU(nodej) -= Fl;
                 if (!phase2.granular())
                 {
-                    phase2.alphaRhoE() -= liftForce & Ui;
+                    phase2.alphaRhoE() -= Fl & Ui;
                 }
             }
         }
     }
 
-    forAll(phaseModels_, phasei)
+    forAllConstIter
+    (
+        virtualMassModelTable,
+        virtualMassModels_,
+        virtualMassIter
+    )
     {
-        forAll(phaseModels_, phasej)
+        const phasePair& pair(this->phasePairs_[virtualMassIter.key()]);
+        phaseModel& phase1 = phaseModels_[pair.phase1().name()];
+        phaseModel& phase2 = phaseModels_[pair.phase2().name()];
+
+        for (label nodei = 0; nodei < phase1.nNodes(); nodei++)
         {
-            if
+            volScalarField alphaRho1
             (
-                phaseModels_[phasei].granular()
-             && phaseModels_[phasej].granular()
-            )
+                max(phase1.alphaRho(nodei), phase1.residualAlphaRho())
+            );
+
+            for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
             {
-                volScalarField gammaDot
+                volScalarField alphaRho2
                 (
-                    phaseModels_[phasei].dissipationSource
-                    (
-                        phaseModels_[phasej]
-                    )*deltaT
+                    max(phase2.alphaRho(nodej), phase2.residualAlphaRho())
                 );
-                phaseModels_[phasei].alphaRhoPTE() -= gammaDot;
-                phaseModels_[phasei].alphaRhoE() += gammaDot;
+
+                volVectorField Fvm
+                (
+                   -virtualMassIter()->K(nodei, nodej)*deltaT
+                   *(
+                        fvc::ddt(phase1.U())
+                      + (phase1.U() & fvc::grad(phase1.U()))
+                      - fvc::ddt(phase2.U())
+                      - (phase2.U() & fvc::grad(phase2.U()))
+                    )
+                );
+
+                const volVectorField& Ui(*Uis[pair]);
+                phase1.alphaRhoU(nodei) += Fvm;
+                if (!phase1.granular())
+                {
+                    phase1.alphaRhoE() += Fvm & Ui;
+                }
+                phase2.alphaRhoU(nodej) -= Fvm;
+                if (!phase2.granular())
+                {
+                    phase2.alphaRhoE() -= Fvm & Ui;
+                }
+            }
+        }
+    }
+
+    forAllConstIter
+    (
+        wallLubricationModelTable,
+        wallLubricationModels_,
+        wallLubricationIter
+    )
+    {
+        const phasePair& pair(this->phasePairs_[wallLubricationIter.key()]);
+        phaseModel& phase1 = phaseModels_[pair.phase1().name()];
+        phaseModel& phase2 = phaseModels_[pair.phase2().name()];
+
+        for (label nodei = 0; nodei < phase1.nNodes(); nodei++)
+        {
+            volScalarField alphaRho1
+            (
+                max(phase1.alphaRho(nodei), phase1.residualAlphaRho())
+            );
+
+            for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
+            {
+                volScalarField alphaRho2
+                (
+                    max(phase2.alphaRho(nodej), phase2.residualAlphaRho())
+                );
+
+                volVectorField Fwl
+                (
+                    wallLubricationIter()->F<vector>(nodei, nodej)*deltaT
+                );
+
+                const volVectorField& Ui(*Uis[pair]);
+                phase1.alphaRhoU(nodei) += Fwl;
+                if (!phase1.granular())
+                {
+                    phase1.alphaRhoE() += Fwl & Ui;
+                }
+                phase2.alphaRhoU(nodej) -= Fwl;
+                if (!phase2.granular())
+                {
+                    phase2.alphaRhoE() -= Fwl & Ui;
+                }
+            }
+        }
+    }
+
+    forAllConstIter
+    (
+        turbulentDispersionModelTable,
+        turbulentDispersionModels_,
+        turbulentDispersionIter
+    )
+    {
+        const phasePair& pair(this->phasePairs_[turbulentDispersionIter.key()]);
+        phaseModel& phase1 = phaseModels_[pair.phase1().name()];
+        phaseModel& phase2 = phaseModels_[pair.phase2().name()];
+
+        for (label nodei = 0; nodei < phase1.nNodes(); nodei++)
+        {
+            volScalarField alphaRho1
+            (
+                max(phase1.alphaRho(nodei), phase1.residualAlphaRho())
+            );
+
+            for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
+            {
+                volScalarField alphaRho2
+                (
+                    max(phase2.alphaRho(nodej), phase2.residualAlphaRho())
+                );
+
+                volVectorField Fwl
+                (
+                    turbulentDispersionIter()->D(nodei, nodej)*deltaT
+                   *phase1.gradAlpha()
+
+                );
+
+                const volVectorField& Ui(*Uis[pair]);
+                phase1.alphaRhoU(nodei) += Fwl;
+                if (!phase1.granular())
+                {
+                    phase1.alphaRhoE() += Fwl & Ui;
+                }
+                phase2.alphaRhoU(nodej) -= Fwl;
+                if (!phase2.granular())
+                {
+                    phase2.alphaRhoE() -= Fwl & Ui;
+                }
             }
         }
     }

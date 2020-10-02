@@ -468,7 +468,7 @@ Foam::BlendedInterfacialModel<ModelType>::D
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::D, "D", ModelType::dimD, false);
+    return evaluate(&ModelType::D, "D", ModelType::dimD, false, nodei, nodej);
 }
 
 
