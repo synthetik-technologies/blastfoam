@@ -112,6 +112,7 @@ void Foam::blastGradientEnergyFvPatchScalarField::updateCoeffs()
     const scalarField& rhow = thermo.rho().boundaryField()[patchID];
     const scalarField& ew = thermo.e().boundaryField()[patchID];
     fvPatchScalarField& Tw = thermo.T().boundaryFieldRef()[patchID];
+    Tw.evaluate();
 
     gradient() = thermo.Cv(rhow, ew, Tw, patchID)*Tw.snGrad()
       + patch().deltaCoeffs()*

@@ -117,16 +117,36 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
     const scalar& T
 ) const
 {
-    if (ThermoType::temperatureBased())
-    {
-        scalar E = ThermoType::Es(rho, e, T);
-        return E;
-    }
-
     if (rho < small)
     {
         return 0.0;
     }
+
+    if (ThermoType::temperatureBased())
+    {
+        scalar Test = 1000.0;
+        scalar Tnew = 1000.0;
+        scalar Ttol = Test*tolerance_;
+        int    iter = 0;
+        do
+        {
+            Test = Tnew;
+
+            Tnew -=
+                (ThermoType::p(rho, e, Test) - p)
+               /stabilise(ThermoType::dpdT(rho, e, Test), small);
+
+            if (iter++ > 100)
+            {
+                FatalErrorInFunction
+                    << "Maximum number of iterations exceeded: " << 100
+                    << abort(FatalError);
+            }
+
+        } while (mag(Tnew - Test)/Test > Ttol);
+        return ThermoType::Es(rho, e, Test);
+    }
+
     scalar Eest = 1000.0;
     scalar Enew = 1000.0;
     scalar Etol = Eest*tolerance_;

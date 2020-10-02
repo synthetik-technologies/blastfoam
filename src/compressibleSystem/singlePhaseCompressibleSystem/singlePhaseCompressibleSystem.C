@@ -81,6 +81,8 @@ void Foam::singlePhaseCompressibleSystem::solve
     const scalarList& bi
 )
 {
+    phaseCompressibleSystem::solve(stepi, ai, bi);
+
     volScalarField rhoOld(rho_);
     this->storeOld(stepi, rhoOld, rhoOld_);
     this->blendOld(stepi, rhoOld, rhoOld_, ai);
@@ -95,7 +97,6 @@ void Foam::singlePhaseCompressibleSystem::solve
     rho_.correctBoundaryConditions();
 
     thermo_->solve(stepi, ai, bi);
-    phaseCompressibleSystem::solve(stepi, ai, bi);
 }
 
 
@@ -137,14 +138,12 @@ Foam::singlePhaseCompressibleSystem::ESource() const
 
 void Foam::singlePhaseCompressibleSystem::decode()
 {
-    volScalarField rho(rho_);
-    U_.ref() = rhoU_()/rho();
+    U_.ref() = rhoU_()/rho_();
     U_.correctBoundaryConditions();
 
     rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
 
-    e_.ref() = rhoE_()/rho() - 0.5*magSqr(U_());
-    e_.correctBoundaryConditions();
+    e_.ref() = rhoE_()/rho_() - 0.5*magSqr(U_());
 
     //- Limit internal energy it there is a negative temperature
     if(min(T_).value() < TLow_.value() && thermo_->limit())
