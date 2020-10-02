@@ -62,9 +62,12 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
     //  This is only done at the first time step (Not on restart)
     if
     (
-        Thermo::thermoType1::solid()
-     && dict.lookupOrDefault<Switch>("calculateDensity", false)
-     && this->rho_.time().value() == this->rho_.time().startTime().value()
+        max(this->rho_).value() == 0
+     || (
+            Thermo::thermoType1::solid()
+         && dict.lookupOrDefault<Switch>("calculateDensity", false)
+         && this->rho_.time().timeIndex() == 0
+        )
     )
     {
         volScalarField rhoInit
