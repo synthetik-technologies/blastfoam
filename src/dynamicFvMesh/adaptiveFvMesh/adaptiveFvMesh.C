@@ -1851,20 +1851,20 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
             // Unrefinement causes holes in the refinementHistory.
             const_cast<refinementHistory&>(meshCutter().history()).compact();
         }
+
+        reduce(hasChanged, orOp<bool>());
+        topoChanging(hasChanged);
+        if (hasChanged)
+        {
+            balance();
+
+            // Reset moving flag (if any). If not using inflation we'll not
+            // move, if are using inflation any follow on movePoints will set
+            // it.
+            moving(false);
+        }
+
         nRefinementIterations_++;
-
-
-    }
-
-    reduce(hasChanged, orOp<bool>());
-    topoChanging(hasChanged);
-    if (hasChanged)
-    {
-        balance();
-
-        // Reset moving flag (if any). If not using inflation we'll not move,
-        // if are using inflation any follow on movePoints will set it.
-        moving(false);
     }
 
     return hasChanged;
@@ -1910,7 +1910,7 @@ bool Foam::adaptiveFvMesh::balance()
     }
     if
     (
-        (nRefinementIterations_ % balanceInterval) != 0
+        (nRefinementIterations_ % balanceInterval != 0)
      && (nRefinementIterations_ != 1)
     )
     {
@@ -1953,10 +1953,8 @@ bool Foam::adaptiveFvMesh::balance()
         // weights equal to their number of subcells. This partitioning works
         // as long as the number of level 0 cells is several times greater than
         // the number of processors.
-        if( maxImbalance > allowableImbalance)
+        if (maxImbalance > allowableImbalance)
         {
-            Info << "\n**Solver hold for redistribution at time = "  << time().timeName() << " s" << endl;
-
             const labelIOList& cellLevel = meshCutter().cellLevel();
             Map<label> coarseIDmap(100);
             labelList uniqueIndex(nCells(),0);

@@ -42,7 +42,14 @@ Foam::solidJWL<Specie>::solidJWL
     A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
     B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
     R1_(dict.subDict("equationOfState").lookupType<scalar>("R1")),
-    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2"))
-{}
+    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2")),
+    pRef_(dict.subDict("equationOfState").lookupType<scalar>("pRef"))
+{
+    e0_ =
+        (
+          - A_*(omega_/(R1_) - 1.0)*exp(-R1_)
+          - B_*(omega_/(R2_) - 1.0)*exp(-R2_)
+        )/(rho0_*omega_);
+}
 
 // ************************************************************************* //

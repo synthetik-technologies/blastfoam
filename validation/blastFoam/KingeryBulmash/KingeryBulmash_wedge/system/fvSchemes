@@ -31,7 +31,6 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(alphaRhoPhi.tnt,lambda.tnt) Riemann;
 }
 
 laplacianSchemes
@@ -47,9 +46,7 @@ interpolationSchemes
     reconstruct(U)      vanAlbadaV;
     reconstruct(e)      vanAlbada;
     reconstruct(p)      vanAlbada;
-    reconstruct(speedOfSound)      vanAlbada;
-
-    reconstruct(lambda.c4) vanAlbada;
+    reconstruct(speedOfSound) vanAlbada;
 }
 
 snGradSchemes

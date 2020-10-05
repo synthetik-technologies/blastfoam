@@ -49,6 +49,8 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
 :
     activationModel(mesh, dict, phaseName),
 
+    pScale_(dict.lookupOrDefault("pScale", 1.0)),
+
     I_("I", inv(dimTime), 0.0),
     a_("a", dimless, 0.0),
     b_("b", dimless, 0.0),
@@ -128,6 +130,10 @@ Foam::activationModels::pressureBasedActivation::delta() const
 {
     // Remove pressures less than minimum pressure
     volScalarField p(p_*pos(p_ - pMin_));
+    if (pScale_ != 1.0)
+    {
+        p *= pScale_;
+    }
     p.max(small);
     tmp<volScalarField> R
     (

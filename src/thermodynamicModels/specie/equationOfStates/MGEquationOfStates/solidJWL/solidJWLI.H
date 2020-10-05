@@ -25,6 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
+#include <boost/math/special_functions/expint.hpp>
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -50,7 +51,9 @@ Foam::scalar Foam::solidJWL<Specie>::Pi
     scalar V(rho0_/max(rho, 1e-10));
     return
         A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
-      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V);
+      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
+      + omega_*rho*(e - e0_)
+      - pRef_;
 
 }
 
@@ -70,6 +73,7 @@ Foam::scalar Foam::solidJWL<Specie>::delta
            *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
           + B_*exp(-R2_*rho0_/rhos)
            *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
+          + omega_*(e - e0_)
         )/omega_;
 }
 
@@ -83,10 +87,12 @@ Foam::scalar Foam::solidJWL<Specie>::dpdv
 {
     scalar rhos(max(rho, 1e-10));
     return
-      - omega_*e*sqr(rho)
       - (
-            A_*exp(-R1_*rho0_/rhos)*R1_*rho0_
-          + B_*exp(-R2_*rho0_/rhos)*R2_*rho0_
+            A_*exp(-R1_*rho0_/rhos)
+           *(R1_*rho0_ - omega_*rho*(1.0 + rho/R1_/rho0_))
+          + B_*exp(-R2_*rho0_/rhos)
+           *(R2_*rho0_ - omega_*rho*(1.0 + rho/R2_/rho0_))
+          + omega_*(e0_)*sqr(rhos)
         );
 }
 
@@ -98,7 +104,7 @@ Foam::scalar Foam::solidJWL<Specie>::dpde
     const scalar& e
 ) const
 {
-    return omega_*rho;
+    return 0.0;
 }
 
 
@@ -109,8 +115,13 @@ Foam::scalar Foam::solidJWL<Specie>::E
     const scalar& e
 ) const
 {
-    scalar V(rho0_/max(rho, 1e-10));
-    return A_/(R1_*rho0_)*exp(-R1_*V) + B_/(R2_*V)*exp(-R2_*rho0_);
+    scalar rhos = max(rho, 1e-10);
+    scalar V(rho0_/rhos);
+    return
+        A_/(R1_*rho0_)*(omega_*boost::math::expint(-R1_*V) + exp(-R1_*V))
+      + B_/(R2_*rho0_)*(omega_*boost::math::expint(-R2_*V) + exp(-R2_*V))
+      + e0_*omega_*log(rhos)
+      - pRef_/rhos;
 }
 
 
@@ -144,9 +155,21 @@ Foam::scalar Foam::solidJWL<Specie>::H
 ) const
 {
     scalar rhos(max(rho, 1e-10));
+    scalar V(rho0_/rhos);
     return
-        A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
-      + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos);
+        A_
+       *(
+          - 1.0/rhos
+          + exp(-R1_*V)*(1.0/rhos - omega_/R1_/rho0_)
+          + omega_/R1_/rho0_*boost::math::expint(-R1_*V)
+        )
+      + B_
+       *(
+          - 1.0/rhos
+          + exp(-R2_*V)*(1.0/rhos - omega_/R2_/rho0_)
+          + omega_/R2_/rho0_*boost::math::expint(-R2_*V)
+        )
+      + e0_*omega_*log(rhos);
 }
 
 template<class Specie>

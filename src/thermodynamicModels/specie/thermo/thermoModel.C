@@ -124,7 +124,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     if (ThermoType::temperatureBased())
     {
-        if (ThermoType::dpdT(rho, e, T) < small)
+        if (mag(ThermoType::dpdT(rho, e, T)) < small)
         {
             return ThermoType::Es(rho, e, T);
         }
@@ -150,6 +150,11 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
         } while (mag(Tnew - Test)/Test > Ttol);
         return ThermoType::Es(rho, e, Test);
+    }
+
+    if (mag(ThermoType::dpde(rho, e, T)) < small)
+    {
+        return ThermoType::Es(rho, e, T);
     }
 
     scalar Eest = 1000.0;

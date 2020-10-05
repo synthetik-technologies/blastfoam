@@ -43,7 +43,7 @@ tnt
         }
         thermodynamics
         {
-            Cv              1095;           // Heat capacity
+            Cv              1500;           // Heat capacity
             Hf              0.0;
         }
     }

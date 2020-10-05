@@ -62,6 +62,9 @@ class pressureBasedActivation
 {
 // Private data
 
+    //- Scale for pressure (Mpa = 1e-6)
+    scalar pScale_;
+
     //- Ignition coefficients
     dimensionedScalar I_;
     dimensionedScalar a_;

@@ -17,9 +17,9 @@ createEps()
     set xrange [1:10]
     plot    "$7" using 1:(\$$8) title 'Swisdak (1994)'\
                 with points pt 5 ps 2 lc rgb 'blue',\
-            "$3" using 1:(\$$5*$6) every 3 title 'blastFoam (x)'\
+            "$3" using 1:(\$$5*$6) every 1 title 'blastFoam (x)'\
                 with lines lt 1 linewidth 2 lc rgb 'black', \
-            "$4" using 1:(\$$5*$6) every 3 title 'blastFoam (y)'\
+            "$4" using 1:(\$$5*$6) every 1 title 'blastFoam (y)'\
                 with lines dt 2 linewidth 2 lc rgb 'red'
 
 EOF

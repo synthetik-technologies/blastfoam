@@ -105,7 +105,7 @@ void Foam::activationModels::linearActivation::solve
     const scalarList& bi
 )
 {
-    if (stepi > 1 || min(lambda_).value() == 1)
+    if (stepi > 1)
     {
         return;
     }
@@ -135,7 +135,7 @@ void Foam::activationModels::linearActivation::solve
             if
             (
                 mag(detPointID_[celli] - scalar(pointi)) < 1.0
-             && detPointID_[celli] >= 0
+             || detPointID_[celli] < 0
             )
             {
                 lambda_[celli] =

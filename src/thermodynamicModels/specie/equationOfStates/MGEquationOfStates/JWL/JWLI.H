@@ -25,6 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
+#include <boost/math/special_functions/expint.hpp>
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -138,8 +139,11 @@ Foam::scalar Foam::JWL<Specie>::E
         return 0.0;
     }
 
-    scalar V(rho0_/max(rho, 1e-10));
-    return A_/(R1_*rho0_)*exp(-R1_*V) + B_/(R2_*V)*exp(-R2_*rho0_);
+    scalar rhos = max(rho, 1e-10);
+    scalar V(rho0_/rhos);
+    return
+        A_/(R1_*rho0_)*(omega_*boost::math::expint(-R1_*V) + exp(-R1_*V))
+      + B_/(R2_*rho0_)*(omega_*boost::math::expint(-R2_*V) + exp(-R2_*V));
 }
 
 
@@ -178,9 +182,20 @@ Foam::scalar Foam::JWL<Specie>::H
     }
 
     scalar rhos(max(rho, 1e-10));
+    scalar V(rho0_/rhos);
     return
-        A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
-      + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos);
+        A_
+       *(
+          - 1.0/rhos
+          + exp(-R1_*V)*(1.0/rhos - omega_/R1_/rho0_)
+          + omega_/R1_/rho0_*boost::math::expint(-R1_*V)
+        )
+      + B_
+       *(
+          - 1.0/rhos
+          + exp(-R2_*V)*(1.0/rhos - omega_/R2_/rho0_)
+          + omega_/R2_/rho0_*boost::math::expint(-R2_*V)
+        );
 }
 
 template<class Specie>

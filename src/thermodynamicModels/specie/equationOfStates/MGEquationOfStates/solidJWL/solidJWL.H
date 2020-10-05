@@ -76,6 +76,12 @@ class solidJWL
         scalar R1_;
         scalar R2_;
 
+        //- Reference pressure
+        scalar pRef_;
+
+        //- Internal energy that gives 0 pressure at reference density
+        scalar e0_;
+
 
 
 public:
