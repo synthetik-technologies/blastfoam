@@ -714,10 +714,13 @@ Foam::phaseSystem::phaseSystem
         }
     }
 
-    volScalarField sumAlpha(phaseModels_[0]);
+    volScalarField sumAlpha("sumAlpha", phaseModels_[0]);
     label nFluids = phaseModels_[0].granular() ? 0 : 1;
     for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
     {
+        // Update boundaries
+        phaseModels_[phasei].correctBoundaryConditions();
+
         sumAlpha += phaseModels_[phasei];
         if (!phaseModels_[phasei].granular())
         {

@@ -200,6 +200,8 @@ Foam::multiPhaseModel::multiPhaseModel
     // Reset density to correct value
     volScalarField& alpha = *this;
     alpha = sumAlpha;
+    alpha.correctBoundaryConditions();
+
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
     thermo_.setTotalVolumeFractionPtr(*this);
     correctThermo();
