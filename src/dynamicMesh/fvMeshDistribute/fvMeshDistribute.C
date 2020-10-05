@@ -2902,12 +2902,10 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         {
             if (label(fld.name().find("own")) >= 0)
             {
-                Info<<fld.name()<<endl;
                 fld = 1.0;
             }
             else if (label(fld.name().find("nei")) >= 0)
             {
-                Info<<fld.name()<<endl;
                 fld = -1.0;
             }
         }

@@ -127,8 +127,8 @@ Foam::tmp<Foam::volScalarField>
 Foam::activationModels::pressureBasedActivation::delta() const
 {
     // Remove pressures less than minimum pressure
-    tmp<volScalarField> p(p_*pos(p_ - pMin_));
-    p.ref().max(small);
+    volScalarField p(p_*pos(p_ - pMin_));
+    p.max(small);
     tmp<volScalarField> R
     (
         new volScalarField

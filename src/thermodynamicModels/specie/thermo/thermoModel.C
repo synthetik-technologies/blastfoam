@@ -124,8 +124,13 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     if (ThermoType::temperatureBased())
     {
-        scalar Test = 1000.0;
-        scalar Tnew = 1000.0;
+        if (ThermoType::dpdT(rho, e, T) < small)
+        {
+            return ThermoType::Es(rho, e, T);
+        }
+
+        scalar Test = T;
+        scalar Tnew = T;
         scalar Ttol = Test*tolerance_;
         int    iter = 0;
         do

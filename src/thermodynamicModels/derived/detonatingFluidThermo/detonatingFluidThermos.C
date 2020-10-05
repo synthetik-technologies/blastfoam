@@ -282,14 +282,12 @@ namespace Foam
     );
 
 // Blended JWL
-    addDetonatingFluidThermo
+    addDetonatingFluidThermos
     (
         constTransport,
-        hConst,
         MGEquationOfState,
         solidJWL,
         constTransport,
-        eConst,
         MGEquationOfState,
         JWL
     );
