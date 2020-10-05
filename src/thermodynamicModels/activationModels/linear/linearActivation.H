@@ -58,6 +58,9 @@ class linearActivation
         //- Detonation velocity
         dimensionedScalar vDet_;
 
+        //- Number of activating point index
+        volScalarField::Internal detPointID_;
+
         //- Stored times
         List<dimensionedScalar> times_;
 

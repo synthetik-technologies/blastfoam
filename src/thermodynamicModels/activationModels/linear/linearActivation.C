@@ -48,8 +48,40 @@ Foam::activationModels::linearActivation::linearActivation
 )
 :
     activationModel(mesh, dict, phaseName),
-    vDet_("vDet", dimVelocity, dict)
-{}
+    vDet_("vDet", dimVelocity, dict),
+    detPointID_
+    (
+        IOobject
+        (
+            IOobject::groupName("detPointID", phaseName),
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        mesh,
+        -1.0
+
+    )
+{
+    if (dict.lookupOrDefault<Switch>("multipleCharges", false))
+    {
+        scalarField distance(detPointID_.size(), great);
+        forAll(this->detonationPoints_, pointi)
+        {
+            const detonationPoint& dp = this->detonationPoints_[pointi];
+            forAll(distance, celli)
+            {
+                scalar d = mag(mesh.cellCentres()[celli] - dp);
+                if (d < distance[celli])
+                {
+                    distance[celli] = d;
+                    detPointID_[celli] = scalar(pointi);
+                }
+            }
+        }
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -73,7 +105,7 @@ void Foam::activationModels::linearActivation::solve
     const scalarList& bi
 )
 {
-    if (stepi > 1)
+    if (stepi > 1 || min(lambda_).value() == 1)
     {
         return;
     }
@@ -96,13 +128,28 @@ void Foam::activationModels::linearActivation::solve
             dimLength,
             dp
         );
-        lambda_ =
-            max
+        forAll(lambda_, celli)
+        {
+            //- Activate if closest point is setActivated
+            //  rounding is used for AMR
+            if
             (
-                pos(detonationFrontDistance - mag(lambda_.mesh().C() - xDet)),
-                lambda_
-            );
-
+                mag(detPointID_[celli] - scalar(pointi)) < 1.0
+             && detPointID_[celli] >= 0
+            )
+            {
+                lambda_[celli] =
+                    max
+                    (
+                        pos
+                        (
+                            detonationFrontDistance.value()
+                          - mag(lambda_.mesh().C()[celli] - xDet.value())
+                        ),
+                        lambda_[celli]
+                    );
+            }
+        }
     }
     lambda_ = max(lambdaOld, lambda_);
 
