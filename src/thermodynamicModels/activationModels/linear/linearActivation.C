@@ -48,25 +48,27 @@ Foam::activationModels::linearActivation::linearActivation
 )
 :
     activationModel(mesh, dict, phaseName),
-    vDet_("vDet", dimVelocity, dict),
-    detPointID_
-    (
-        IOobject
-        (
-            IOobject::groupName("detPointID", phaseName),
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        -1.0
-
-    )
+    vDet_("vDet", dimVelocity, dict)
 {
     if (dict.lookupOrDefault<Switch>("multipleCharges", false))
     {
-        scalarField distance(detPointID_.size(), great);
+        detPointIDPtr_.set
+        (
+            new volScalarField::Internal
+            (
+                IOobject
+                (
+                    IOobject::groupName("detPointID", phaseName),
+                    mesh.time().timeName(),
+                    mesh,
+                    IOobject::NO_READ,
+                    IOobject::NO_WRITE
+                ),
+                mesh,
+                -1.0
+            )
+        );
+        scalarField distance(detPointIDPtr_().size(), great);
         forAll(this->detonationPoints_, pointi)
         {
             const detonationPoint& dp = this->detonationPoints_[pointi];
@@ -76,7 +78,7 @@ Foam::activationModels::linearActivation::linearActivation
                 if (d < distance[celli])
                 {
                     distance[celli] = d;
-                    detPointID_[celli] = scalar(pointi);
+                    detPointIDPtr_()[celli] = scalar(pointi);
                 }
             }
         }
@@ -109,10 +111,19 @@ void Foam::activationModels::linearActivation::solve
     {
         return;
     }
+    if (min(lambda_).value() == 1.0)
+    {
+        ddtLambda_ = volScalarField::New
+        (
+            "ddt(" + lambda_.name() + ")",
+            lambda_.mesh(),
+            dimensionedScalar(inv(dimTime), 0.0)
+        );
+        return;
+    }
 
     dimensionedScalar dt(lambda_.time().deltaT());
     volScalarField lambdaOld(lambda_);
-
     forAll(this->detonationPoints_, pointi)
     {
         detonationPoint& dp = this->detonationPoints_[pointi];
@@ -120,7 +131,7 @@ void Foam::activationModels::linearActivation::solve
         dimensionedScalar delay(dimTime, dp.delay());
         dimensionedScalar detonationFrontDistance
         (
-            (lambda_.time() - delay)*vDet_
+            max(lambda_.time() - delay, dimensionedScalar(dimTime, 0.0))*vDet_
         );
         dimensionedVector xDet
         (
@@ -128,34 +139,50 @@ void Foam::activationModels::linearActivation::solve
             dimLength,
             dp
         );
-        forAll(lambda_, celli)
+        if (detPointIDPtr_.valid())
         {
-            //- Activate if closest point is setActivated
-            //  rounding is used for AMR
-            if
-            (
-                mag(detPointID_[celli] - scalar(pointi)) < 1.0
-             || detPointID_[celli] < 0
-            )
+            forAll(lambda_, celli)
             {
-                lambda_[celli] =
-                    max
-                    (
-                        pos
+                //- Activate if closest point is setActivated
+                //  rounding is used for AMR
+                if (mag(detPointIDPtr_()[celli] - scalar(pointi)) < 1.0)
+                {
+                    lambda_[celli] =
+                        max
                         (
-                            detonationFrontDistance.value()
-                          - mag(lambda_.mesh().C()[celli] - xDet.value())
-                        ),
-                        lambda_[celli]
-                    );
+                            pos
+                            (
+                                detonationFrontDistance.value()
+                              - mag(lambda_.mesh().C()[celli] - xDet.value())
+                            ),
+                            lambda_[celli]
+                        );
+                }
             }
+        }
+        else
+        {
+            lambda_ =
+                max
+                (
+                    pos
+                    (
+                        detonationFrontDistance
+                      - mag(lambda_.mesh().C() - xDet)
+                    ),
+                    lambda_
+                );
         }
     }
     lambda_ = max(lambdaOld, lambda_);
 
     ddtLambda_ = tmp<volScalarField>
     (
-        new volScalarField((lambda_ - lambdaOld)/dt)
+        new volScalarField
+        (
+            "ddt(" + lambda_.name() + ")",
+            (lambda_ - lambdaOld)/dt
+        )
     );
 }
 

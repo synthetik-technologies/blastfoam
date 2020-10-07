@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,19 +22,25 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::activationModels::linearActivation
+    Foam::activationModels::programmedIgnitionActivation
 
 Description
-    Activation rate based on detonation velocity and location relative to
-    detonation points
+    Activation model using linear velocity and compression based ignition options
+
+    References:
+    \verbatim
+        Giroux, E. D. (1973).
+        Hemp User's Manual,
+        Lawrence Livermore Laboratory
+    \endverbatim
 
 SourceFiles
-    linearActivation.C
+    programmedIgnitionActivation.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef linearActivation_H
-#define linearActivation_H
+#ifndef programmedIgnitionActivation_H
+#define programmedIgnitionActivation_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,23 +52,50 @@ namespace activationModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class linearActivation Declaration
+                           Class programmedIgnitionActivation Declaration
 \*---------------------------------------------------------------------------*/
 
-class linearActivation
+class programmedIgnitionActivation
 :
     public activationModel
 {
+public:
+    //- Burn models
+        enum burnModel
+        {
+            BETA,           // Compression based
+            PROGRAMMED,     // Programmed burn
+            PROGRAMMEDBETA  // Compression and programmed burn
+        };
+
+        static const NamedEnum<burnModel, 3> burnModelNames_;
+
+private:
 // Private data
+
+        //- Const reference to density
+        const volScalarField& rho_;
 
         //- Detonation velocity
         dimensionedScalar vDet_;
 
-        //- Number of activating point index
-        autoPtr<volScalarField::Internal> detPointIDPtr_;
+        //- Chapmann-Jouguet pressure
+        dimensionedScalar Pcj_;
 
-        //- Stored times
-        List<dimensionedScalar> times_;
+        //- Reference density
+        dimensionedScalar rho0_;
+
+        //- Chapmann-Jouguet specific volume
+        dimensionedScalar Vcj_;
+
+        //- Burn model
+        burnModel model_;
+
+        //- Number of activating point index
+        volScalarField::Internal detPointID_;
+
+        //- Ignition time
+        volScalarField::Internal tIgn_;
 
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const
@@ -74,7 +107,7 @@ class linearActivation
         //- Do detonation points need to be specified
         virtual bool needDetonationPoints() const
         {
-            return true;
+            return false;
         }
 
 
@@ -82,10 +115,10 @@ class linearActivation
 public:
 
     //- Runtime type information
-    TypeName("linear");
+    TypeName("programmedIgnition");
 
     // Constructor
-    linearActivation
+    programmedIgnitionActivation
     (
         const fvMesh& mesh,
         const dictionary& dict,
@@ -94,7 +127,7 @@ public:
 
 
     //- Destructor
-    virtual ~linearActivation();
+    virtual ~programmedIgnitionActivation();
 
 
     // Member Functions

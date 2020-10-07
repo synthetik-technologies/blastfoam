@@ -42,7 +42,7 @@ Foam::JWL<Specie>::JWL
         dict.subDict("equationOfState").lookupOrDefault
         (
             "rhoCutOff",
-            rho0_/100.0
+            0.0
         )
     ),
     omega_(dict.subDict("equationOfState").lookupType<scalar>("omega")),

@@ -36,9 +36,28 @@ Foam::Murnaghan<Specie>::Murnaghan
     Specie(dict),
     rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
     pRef_(dict.subDict("equationOfState").lookupType<scalar>("pRef")),
-    n_(dict.subDict("equationOfState").lookupType<scalar>("n")),
-    kappa_(dict.subDict("equationOfState").lookupType<scalar>("kappa")),
+    n_(0.0),
+    kappa_(0.0),
     Gamma_(dict.subDict("equationOfState").lookupType<scalar>("Gamma"))
-{}
+{
+    const dictionary& eosDict = dict.subDict("equationOfState");
+    if (eosDict.found("kappa"))
+    {
+        kappa_ = eosDict.lookupType<scalar>("kappa");
+    }
+    else
+    {
+        kappa_ = 1.0/max(eosDict.lookupType<scalar>("K0"), small);
+    }
+
+    if (eosDict.found("n"))
+    {
+        n_ = eosDict.lookupType<scalar>("n");
+    }
+    else
+    {
+        n_ = eosDict.lookupOrDefault<scalar>("K0Prime", 1.0);
+    }
+}
 
 // ************************************************************************* //

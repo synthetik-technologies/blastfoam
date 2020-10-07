@@ -22,6 +22,7 @@ activationModels/activationModel/activationModel.C
 activationModels/activationModel/newActivationModel.C
 activationModels/none/noneActivation.C
 activationModels/linear/linearActivation.C
+activationModels/programmedIgnition/programmedIgnitionActivation.C
 activationModels/ArrheniusRate/ArrheniusRateActivation.C
 activationModels/pressureBased/pressureBasedActivation.C
 activationModels/reactionRate/reactionRateActivation.C

@@ -299,7 +299,6 @@ Foam::activationModel::activationModel
                 radii[i]
             )
         );
-        detonationPoints_[i].setActivated(lambda_, true);
     }
 }
 
