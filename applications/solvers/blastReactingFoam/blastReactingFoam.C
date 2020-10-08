@@ -59,17 +59,20 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        //- Refine the mesh
+        mesh.refine();
+
+        //- Set the new time step and advance
         #include "eigenvalueCourantNo.H"
         #include "readTimeControls.H"
         #include "setDeltaT.H"
+
         runTime++;
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
+        //- Move the mesh
         mesh.update();
 
-        fluid->encode();
-
-        Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
         fluid->clearODEFields();
 

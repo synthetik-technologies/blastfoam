@@ -60,8 +60,6 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     deltaAlphas_(alphas_.size()),
     deltaAlphaRhos_(alphas_.size())
 {
-    this->lookupAndInitialize();
-
     forAll(alphas_, phasei)
     {
         word phaseName = alphas_[phasei].group();
@@ -117,6 +115,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         deltaAlphaRhos_.set(phasei, new PtrList<volScalarField>());
     }
 
+    this->lookupAndInitialize();
     setModels(dict);
     encode();
 }

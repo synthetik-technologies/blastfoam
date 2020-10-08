@@ -78,8 +78,6 @@ int main(int argc, char *argv[])
 
         mesh.update();
 
-        fluid->encode();
-
         integrator->integrate();
 
         Info<< "Solving velocity abscissae" << endl;

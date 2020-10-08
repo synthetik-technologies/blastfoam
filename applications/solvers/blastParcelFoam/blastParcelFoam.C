@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
         //- Move the mesh
         mesh.update();
 
+        fluid.decode();
         parcels.evolve();
         theta = parcels.theta();
         fluid.encode();
