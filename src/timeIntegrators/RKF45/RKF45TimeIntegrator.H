@@ -55,41 +55,41 @@ class RKF45
 
     // Coefficients
 
-    scalar a10 = 0.25;
+    scalar b10 = 0.25;
 
-    scalar a20 = 3.0/32.0;
-    scalar a21 = 9.0/32.0;
+    scalar b20 = 3.0/32.0;
+    scalar b21 = 9.0/32.0;
 
-    scalar a30 = 1932.0/2197.0;
-    scalar a31 = -7200.0/2197.0;
-    scalar a32 = 7296.0/2197.0;
+    scalar b30 = 1932.0/2197.0;
+    scalar b31 = -7200.0/2197.0;
+    scalar b32 = 7296.0/2197.0;
 
-    scalar a40 = 439.0/216.0;
-    scalar a41 = -8.0;
-    scalar a42 = 3680.0/513.0;
-    scalar a43 = -845.0/4104.0;
+    scalar b40 = 439.0/216.0;
+    scalar b41 = -8.0;
+    scalar b42 = 3680.0/513.0;
+    scalar b43 = -845.0/4104.0;
 
-    scalar a50 = -8.0/27.0;
-    scalar a51 = 2.0;
-    scalar a52 = -3544.0/2565.0;
-    scalar a53 = 1859.0/4104.0;
-    scalar a54 = -11.0/40.0;
+    scalar b50 = -8.0/27.0;
+    scalar b51 = 2.0;
+    scalar b52 = -3544.0/2565.0;
+    scalar b53 = 1859.0/4104.0;
+    scalar b54 = -11.0/40.0;
 
     //- Fourth order coefficients
-    scalar a60 = 25.0/216.0;
-    scalar a61 = 0.0;
-    scalar a62 = 1408.0/2565.0;
-    scalar a63 = 2197.0/4104.0;
-    scalar a64 = -1.0/5.0;
-    scalar a65 = 0.0;
+    scalar b60 = 25.0/216.0;
+    scalar b61 = 0.0;
+    scalar b62 = 1408.0/2565.0;
+    scalar b63 = 2197.0/4104.0;
+    scalar b64 = -1.0/5.0;
+    scalar b65 = 0.0;
 
     //- Fifth order coefficients
-//     scalar a60 = 16.0/135.0;
-//     scalar a61 = 0.0;
-//     scalar a62 = 6656.0/12825.0;
-//     scalar a63 = 28561.0/56430.0;
-//     scalar a64 = -9.0/50.0;
-//     scalar a65 = 2.0/55.0;
+//     scalar b60 = 16.0/135.0;
+//     scalar b61 = 0.0;
+//     scalar b62 = 6656.0/12825.0;
+//     scalar b63 = 28561.0/56430.0;
+//     scalar b64 = -9.0/50.0;
+//     scalar b65 = 2.0/55.0;
 
 
 public:
@@ -103,15 +103,6 @@ public:
 
     //- Destructor
     virtual ~RKF45();
-
-
-    // Member Functions
-
-        //- Set ode fields
-        virtual void setODEFields(integrationSystem& system) const;
-
-        //- Update
-        virtual void integrate();
 };
 
 

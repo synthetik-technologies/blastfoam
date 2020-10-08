@@ -64,15 +64,6 @@ public:
 
     //- Destructor
     virtual ~RK4();
-
-
-    // Member Functions
-
-        //- Set ode fields
-        virtual void setODEFields(integrationSystem& system) const;
-
-        //- Update
-        virtual void integrate();
 };
 
 

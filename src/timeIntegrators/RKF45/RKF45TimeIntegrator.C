@@ -42,7 +42,26 @@ Foam::timeIntegrators::RKF45::RKF45
 )
 :
     timeIntegrator(mesh)
-{}
+{
+    this->as_ =
+    {
+        {1.0},
+        {0.0, 1.0},
+        {0.0, 0.0, 1.0},
+        {0.0, 0.0, 0.0, 1.0},
+        {0.0, 0.0, 0.0, 0.0, 1.0},
+        {1.0, 0.0, 0.0, 0.0, 0.0, 0.0}
+    };
+    this->bs_ =
+    {
+        {b10},
+        {b20, b21},
+        {b30, b31, b32},
+        {b40, b41, b42, b43},
+        {b50, b51, b52, b53, b54},
+        {b60, b61, b62, b63, b64, b65}
+    };
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -50,91 +69,4 @@ Foam::timeIntegrators::RKF45::RKF45
 Foam::timeIntegrators::RKF45::~RKF45()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::RKF45::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields
-    (
-        6,
-        {true, false, false, false, false, false},
-        {true, true, true, true, true, false}
-    );
-}
-
-
-void Foam::timeIntegrators::RKF45::integrate()
-{
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 1" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {a10});
-    }
-
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 2" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(2, {0.0, 1.0}, {a20, a21});
-    }
-
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 3" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(3, {0.0, 0.0, 1.0}, {a30, a31, a32});
-    }
-
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 4" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve
-        (
-            4,
-            {0.0, 0.0, 0.0, 1.0},
-            {a40, a41, a42, a43}
-        );
-    }
-
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 5" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve
-        (
-            5,
-            {0.0, 0.0, 0.0, 0.0, 1.0},
-            {a50, a51, a52, a53, a54}
-        );
-    }
-
-    // Update and store original fields
-    Info<< nl << "RKF45: Step 6" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve
-        (
-            6,
-            {1.0, 0.0, 0.0, 0.0, 0.0, 0.0},
-            {a60, a61, a62, a63, a64, a65}
-        );
-    }
-
-    this->postUpdateAll();
-}
 // ************************************************************************* //

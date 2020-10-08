@@ -61,6 +61,15 @@ protected:
     //- Reference to compressible system
     UPtrList<integrationSystem> systems_;
 
+    //- Current step index
+    label stepi_;
+
+    //- Old value coefficients
+    List<List<scalar>> as_;
+
+    //- Delta coefficients
+    List<List<scalar>> bs_;
+
     //- Update all stored systems
     void updateAll();
 
@@ -101,10 +110,16 @@ public:
 
         void addSystem(integrationSystem& system);
 
-        virtual void setODEFields(integrationSystem& system) const = 0;
+        virtual void setODEFields(integrationSystem& system) const;
 
         //- Integrate fluxes in time
-        virtual void integrate() = 0;
+        virtual void integrate();
+
+        //- Return local step fraction
+        scalar f() const;
+
+        //- Return start fraction of the current step
+        scalar f0() const;
 
         //- Dummy IO operations
         virtual bool writeData(Ostream& os) const

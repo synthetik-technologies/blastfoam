@@ -46,43 +46,14 @@ Foam::timeIntegrators::RK2::RK2
 )
 :
     timeIntegrator(mesh)
-{}
+{
+    this->as_ = {{1.0}, {1.0, 0.0}};
+    this->bs_ = {{0.5}, {0.0, 1.0}};
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::timeIntegrators::RK2::~RK2()
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::RK2::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields(2, {true, false}, {false, false});
-}
-
-
-void Foam::timeIntegrators::RK2::integrate()
-{
-    // Update and solve predictor step
-    Info<< nl << "RK2: Predictor" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {0.5});
-    }
-
-    // Update and solve corrector step
-    Info<< nl << "RK2: Corrector" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(2, {1.0, 0.0}, {0.0, 1.0});
-    }
-
-    this->postUpdateAll();
-}
 // ************************************************************************* //

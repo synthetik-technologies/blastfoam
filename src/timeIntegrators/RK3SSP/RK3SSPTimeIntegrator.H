@@ -72,15 +72,6 @@ public:
 
     //- Destructor
     virtual ~RK3SSP();
-
-
-    // Member Functions
-
-        //- Set ode fields
-        virtual void setODEFields(integrationSystem& system) const;
-
-        //- Update
-        virtual void integrate();
 };
 
 

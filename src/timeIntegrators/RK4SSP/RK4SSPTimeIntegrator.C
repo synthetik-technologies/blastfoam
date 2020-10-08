@@ -46,7 +46,22 @@ Foam::timeIntegrators::RK4SSP::RK4SSP
 )
 :
     timeIntegrator(mesh)
-{}
+{
+    this->as_ =
+    {
+        {1.0},
+        {a20, a21},
+        {a30, a31, a32},
+        {a40, a41, a42, a43}
+    };
+    this->bs_ =
+    {
+        {0.5},
+        {b20, b21},
+        {b30, b31, b32},
+        {b40, b41, b42, b43}
+    };
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -55,62 +70,4 @@ Foam::timeIntegrators::RK4SSP::~RK4SSP()
 {}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::RK4SSP::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields
-    (
-        4,
-        {true, true, true, false},
-        {true, true, true, false}
-    );
-}
-
-
-void Foam::timeIntegrators::RK4SSP::integrate()
-{
-    // Update and store original fields
-    Info<< nl << "RK4SSP: Step 1" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {0.5});
-    }
-
-    // Update and store 2nd step
-    Info<< nl << "RK4SSP: Step 2" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(2, {a20, a21}, {b20, b21});
-    }
-
-    // Update and store 3rd step
-    Info<< nl << "RK4SSP: Step 3" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(3, {a30, a31, a32}, {b30, b31, b32});
-    }
-
-    // Update and store 4th step
-    Info<< nl << "RK4SSP: Step 4" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve
-        (
-            4,
-            {a40, a41, a42, a43},
-            {b40, b41, b42, b43}
-        );
-    }
-
-    this->postUpdateAll();
-}
 // ************************************************************************* //

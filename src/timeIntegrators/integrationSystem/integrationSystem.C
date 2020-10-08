@@ -35,7 +35,8 @@ Foam::integrationSystem::integrationSystem
 )
 :
     mesh_(mesh),
-    name_(name)
+    name_(name),
+    timeInt_(nullptr)
 {}
 
 
@@ -49,10 +50,9 @@ Foam::integrationSystem::~integrationSystem()
 
 void Foam::integrationSystem::lookupAndInitialize(const word& name)
 {
-    if (mesh_.foundObject<timeIntegrator>(name))
-    {
-        mesh_.lookupObjectRef<timeIntegrator>(name).setODEFields(*this);
-    }
+    timeInt_ = &mesh_.lookupObject<timeIntegrator>(name);
+
+    timeInt_->setODEFields(*this);
 }
 
 
@@ -99,22 +99,15 @@ void Foam::integrationSystem::setODEFields
 }
 
 
-Foam::scalar Foam::integrationSystem::f
-(
-    const label stepi,
-    const scalarList& b
-) const
+Foam::scalar Foam::integrationSystem::f() const
 {
-    scalar ft = b[stepi - 1];
-    for (label j = 0; j < stepi - 1; j++)
-    {
-        label i = deltaIs_[j];
-        if (i != -1)
-        {
-            ft += b[i];
-        }
-    }
-    return ft;
+    return timeInt_->f();
+}
+
+
+Foam::scalar Foam::integrationSystem::f0() const
+{
+    return timeInt_->f0();
 }
 
 

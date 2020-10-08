@@ -46,57 +46,14 @@ Foam::timeIntegrators::RK3SSP::RK3SSP
 )
 :
     timeIntegrator(mesh)
-{}
-
+{
+    this->as_ = {{1.0}, {0.75, 0.25}, {1.0/3.0, 0.0, 2.0/3.0}};
+    this->bs_ = {{1.0}, {0.0, 0.25}, {0.0, 0.0, 2.0/3.0}};
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::timeIntegrators::RK3SSP::~RK3SSP()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::RK3SSP::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields
-    (
-        3,
-        {true, false, false},
-        {false, false, false}
-    );
-}
-
-
-void Foam::timeIntegrators::RK3SSP::integrate()
-{
-    // Update and store original fields
-    Info<< nl << "RK3SSP: Step 1" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {1.0});
-    }
-
-    // Update and store 2nd step
-    Info<< nl << "RK3SSP: Step 2" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(2, {0.75, 0.25}, {0.0, 0.25});
-    }
-
-    // Update and store 3rd step
-    Info<< nl << "RK3SSP: Step 3" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(3, {1.0/3.0, 0.0, 2.0/3.0}, {0.0, 0.0, 2.0/3.0});
-    }
-
-    this->postUpdateAll();
-}
 // ************************************************************************* //

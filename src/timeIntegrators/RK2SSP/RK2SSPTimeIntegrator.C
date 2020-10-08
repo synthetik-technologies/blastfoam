@@ -46,7 +46,10 @@ Foam::timeIntegrators::RK2SSP::RK2SSP
 )
 :
     timeIntegrator(mesh)
-{}
+{
+    this->as_ = {{1.0}, {0.5, 0.5}};
+    this->bs_ = {{1.0}, {0.0, 0.5}};
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -54,35 +57,4 @@ Foam::timeIntegrators::RK2SSP::RK2SSP
 Foam::timeIntegrators::RK2SSP::~RK2SSP()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::RK2SSP::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields(2, {true, false}, {false, false});
-}
-
-
-void Foam::timeIntegrators::RK2SSP::integrate()
-{
-    // Update and store original fields
-    Info<< nl << "RK2SSP: Predictor" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {1.0});
-    }
-
-    // Update and store 1st step
-    Info<< nl << "RK2SSP: Corrector" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(2, {0.5, 0.5}, {0.0, 0.5});
-    }
-
-    this->postUpdateAll();
-}
 // ************************************************************************* //

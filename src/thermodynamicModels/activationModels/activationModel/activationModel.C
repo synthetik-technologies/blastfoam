@@ -365,7 +365,7 @@ void Foam::activationModel::solve
     this->blendOld(stepi, lambdaOld, lambdaOld_, ai);
 
 
-    scalar f = this->f(stepi, bi);
+    scalar f = this->f();
 
     volScalarField deltaLambda(delta());
     deltaLambda = Foam::min(deltaLambda, (1.0 - lambda_)/(f*dT));

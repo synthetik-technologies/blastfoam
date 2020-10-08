@@ -45,6 +45,8 @@ SourceFiles
 namespace Foam
 {
 
+class timeIntegrator;
+
 /*---------------------------------------------------------------------------*\
                            Class integrationSystem Declaration
 \*---------------------------------------------------------------------------*/
@@ -135,6 +137,12 @@ protected:
         void lookupAndInitialize(const word& name = "globalTimeIntegrator");
 
 
+private:
+
+    //- Stored reference to time integrator
+    const timeIntegrator* timeInt_;
+
+
 public:
 
 
@@ -184,7 +192,10 @@ public:
         virtual void clearODEFields() = 0;
 
         //- Return the time step fraction
-        scalar f(const label stepi, const scalarList& b) const;
+        scalar f() const;
+
+        //- Return the initial time fraction
+        scalar f0() const;
 
 
         //- Dummy write for regIOobject

@@ -143,7 +143,7 @@ void Foam::afterburnModels::MillerAfterburn::solve
 
     this->storeDelta(stepi, deltaC, deltaC_);
     this->blendDelta(stepi, deltaC, deltaC_, bi);
-    scalar f = this->f(stepi, bi);
+    scalar f = this->f();
 
     dimensionedScalar dT = alphaRho.time().deltaT();
     c_ = cOld + dT*deltaC;

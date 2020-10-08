@@ -46,7 +46,10 @@ Foam::timeIntegrators::Euler::Euler
 )
 :
     timeIntegrator(mesh)
-{}
+{
+    this->as_ = {{1.0}};
+    this->bs_ = {{1.0}};
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -54,25 +57,4 @@ Foam::timeIntegrators::Euler::Euler
 Foam::timeIntegrators::Euler::~Euler()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::timeIntegrators::Euler::setODEFields(integrationSystem& system) const
-{
-    system.setODEFields(1, {false}, {false});
-}
-
-
-void Foam::timeIntegrators::Euler::integrate()
-{
-    // Update and solve
-    Info<< nl << "Euler:" << endl;
-    this->updateAll();
-    forAll(systems_, i)
-    {
-        Info<< "Solving " << systems_[i].name() << endl;
-        systems_[i].solve(1, {1.0}, {1.0});
-    }
-    this->postUpdateAll();
-}
 // ************************************************************************* //
