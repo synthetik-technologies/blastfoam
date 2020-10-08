@@ -8,4 +8,4 @@ cd ${0%/*} || exit 1    # run from this directory
 runApplication blockMesh
 
 # -- run the calc
-runParallel $(getApplication)
+runApplication $(getApplication)

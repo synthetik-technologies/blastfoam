@@ -6,7 +6,7 @@ writeTimeList/writeTimeList.C
 /* Blast specific */
 impulse/impulse.C
 speedOfSound/speedOfSound.C
-blastMachNo/blastMachNos.C
+blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C

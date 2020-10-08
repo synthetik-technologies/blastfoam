@@ -54,14 +54,11 @@ namespace functionObjects
                           Class MachNo Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class CompressibleSystem>
 class blastMachNo
 :
     public fvMeshFunctionObject
 {
     // Private Member data
-
-        static const word systemType_;
 
         //- Name of phase
         word phaseName_;
@@ -78,6 +75,8 @@ class blastMachNo
 
 public:
 
+    //- Runtime type information
+    TypeName("blastMachNo");
 
     // Constructors
 
@@ -119,33 +118,12 @@ public:
         void operator=(const blastMachNo&) = delete;
 };
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define makeMachNo(systemType, name)                                        \
-template<class systemType>                                                  \
-const word blastMachNo<systemType>::systemType_ = #systemType;              \
-                                                                            \
-typedef blastMachNo<systemType> systemType##MachNo;                         \
-                                                                            \
-addNamedToRunTimeSelectionTable                                             \
-(                                                                           \
-    functionObject,                                                         \
-    systemType##MachNo,                                                     \
-    dictionary,                                                             \
-    name                                                                    \
-);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace functionObjects
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "blastMachNo.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

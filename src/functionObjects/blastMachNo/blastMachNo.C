@@ -26,11 +26,22 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastMachNo.H"
+#include "fluidThermoModel.H"
+#include "addToRunTimeSelectionTable.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+namespace functionObjects
+{
+    defineTypeNameAndDebug(blastMachNo, 0);
+    addToRunTimeSelectionTable(functionObject, blastMachNo, dictionary);
+}
+}
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class CompressibleSystem>
-Foam::functionObjects::blastMachNo<CompressibleSystem>::blastMachNo
+Foam::functionObjects::blastMachNo::blastMachNo
 (
     const word& name,
     const Time& runTime,
@@ -39,7 +50,7 @@ Foam::functionObjects::blastMachNo<CompressibleSystem>::blastMachNo
 :
     fvMeshFunctionObject(name, runTime, dict),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
-    systemName_(IOobject::groupName(systemType_, phaseName_)),
+    systemName_(IOobject::groupName("basicThermo", phaseName_)),
     resultName_(IOobject::groupName("Ma", phaseName_)),
     UName_(IOobject::groupName("U", phaseName_))
 {}
@@ -47,15 +58,13 @@ Foam::functionObjects::blastMachNo<CompressibleSystem>::blastMachNo
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class CompressibleSystem>
-Foam::functionObjects::blastMachNo<CompressibleSystem>::~blastMachNo()
+Foam::functionObjects::blastMachNo::~blastMachNo()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class CompressibleSystem>
-bool Foam::functionObjects::blastMachNo<CompressibleSystem>::read
+bool Foam::functionObjects::blastMachNo::read
 (
     const dictionary& dict
 )
@@ -64,18 +73,17 @@ bool Foam::functionObjects::blastMachNo<CompressibleSystem>::read
 }
 
 
-template<class CompressibleSystem>
-bool Foam::functionObjects::blastMachNo<CompressibleSystem>::execute()
+bool Foam::functionObjects::blastMachNo::execute()
 {
     if
     (
         foundObject<volVectorField>(UName_)
-     && foundObject<CompressibleSystem>(systemName_)
+     && foundObject<fluidThermoModel>(systemName_)
     )
     {
         tmp<volScalarField> speedOfSound
         (
-            lookupObject<CompressibleSystem>(systemName_).speedOfSound()
+            lookupObject<fluidThermoModel>(systemName_).speedOfSound()
         );
         speedOfSound.ref().max(small);
 
@@ -98,16 +106,14 @@ bool Foam::functionObjects::blastMachNo<CompressibleSystem>::execute()
 }
 
 
-template<class CompressibleSystem>
-bool Foam::functionObjects::blastMachNo<CompressibleSystem>::write()
+bool Foam::functionObjects::blastMachNo::write()
 {
     writeObject(resultName_);
     return true;
 }
 
 
-template<class CompressibleSystem>
-bool Foam::functionObjects::blastMachNo<CompressibleSystem>::clear()
+bool Foam::functionObjects::blastMachNo::clear()
 {
     return clearObject(resultName_);
 }
