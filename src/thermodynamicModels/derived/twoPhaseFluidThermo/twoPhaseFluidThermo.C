@@ -134,15 +134,10 @@ void Foam::twoPhaseFluidThermo::postUpdate()
 }
 
 
-void Foam::twoPhaseFluidThermo::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::twoPhaseFluidThermo::solve()
 {
-    thermo1_->solve(stepi, ai, bi);
-    thermo2_->solve(stepi, ai, bi);
+    thermo1_->solve();
+    thermo2_->solve();
 }
 
 

@@ -125,21 +125,16 @@ Foam::tmp<Foam::volScalarField> Foam::fluidPhaseModel::ESource() const
 }
 
 
-void Foam::fluidPhaseModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::fluidPhaseModel::solve()
 {
     // Solve phase density transport to store old time values
-    phaseModel::solveAlphaRho(stepi, ai, bi);
+    phaseModel::solveAlphaRho();
 
     // Solve thermodynamic models (activation and afterburn)
-    thermo_->solve(stepi, ai, bi);
+    thermo_->solve();
 
     // Solve momentum and energy transport
-    phaseModel::solve(stepi, ai, bi);
+    phaseModel::solve();
 }
 
 

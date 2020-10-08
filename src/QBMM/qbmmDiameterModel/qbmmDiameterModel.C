@@ -130,14 +130,9 @@ void Foam::diameterModels::qbmmDiameterModel::clearODEFields()
 }
 
 
-void Foam::diameterModels::qbmmDiameterModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::diameterModels::qbmmDiameterModel::solve()
 {
-    pbe_.solve(stepi, ai, bi);
+    pbe_.solve();
     this->d_ = vfD_/max(vf_, 1e-10);
 }
 

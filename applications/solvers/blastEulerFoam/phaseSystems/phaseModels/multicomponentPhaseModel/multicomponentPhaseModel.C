@@ -219,12 +219,7 @@ Foam::multicomponentPhaseModel::~multicomponentPhaseModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::multicomponentPhaseModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::multicomponentPhaseModel::solve()
 {
     PtrList<volScalarField> YsOld(Ys_.size());
     forAll(Ys_, i)
@@ -233,8 +228,7 @@ void Foam::multicomponentPhaseModel::solve
         (
             i, new volScalarField(Ys_[i])
         );
-        this->storeOld(stepi, YsOld[i], YsOld_[i]);
-        this->blendOld(stepi, YsOld[i], YsOld_[i], ai);
+        this->storeAndBlendOld(YsOld[i], YsOld_[i]);
     }
 
     PtrList<volScalarField> deltaAlphaRhoYs(Ys_.size());
@@ -245,22 +239,14 @@ void Foam::multicomponentPhaseModel::solve
             i,
             new volScalarField(fvc::div(alphaRhoYPhis_[i]))
         );
-        this->storeDelta
+        this->storeAndBlendDelta
         (
-            stepi,
             deltaAlphaRhoYs[i],
             deltaAlphaRhoYs_[i]
         );
-        this->blendDelta
-        (
-            stepi,
-            deltaAlphaRhoYs[i],
-            deltaAlphaRhoYs_[i],
-            bi
-        );
     }
 
-    phaseModel::solveAlphaRho(stepi, ai, bi);
+    phaseModel::solveAlphaRho();
 
     dimensionedScalar dT = this->rho_.time().deltaT();
 
@@ -271,10 +257,10 @@ void Foam::multicomponentPhaseModel::solve
           /(Foam::max(this->alphaRho_, residualAlphaRho()));
         Ys_[i].correctBoundaryConditions();
 
-        thermos_[i].solve(stepi, ai, bi);
+        thermos_[i].solve();
     }
 
-    phaseModel::solve(stepi, ai, bi);
+    phaseModel::solve();
 }
 
 

@@ -103,15 +103,10 @@ Foam::detonatingSolidThermo<Thermo>::~detonatingSolidThermo()
 
 
 template<class Thermo>
-void Foam::detonatingSolidThermo<Thermo>::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::detonatingSolidThermo<Thermo>::solve()
 {
-    activation_->solve(stepi, ai, bi);
-    afterburn_->solve(stepi, ai, bi);
+    activation_->solve();
+    afterburn_->solve();
 }
 
 

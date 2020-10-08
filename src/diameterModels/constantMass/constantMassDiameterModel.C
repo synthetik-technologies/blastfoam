@@ -69,12 +69,7 @@ Foam::diameterModels::constantMassDiameter::~constantMassDiameter()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::diameterModels::constantMassDiameter::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::diameterModels::constantMassDiameter::solve()
 {
     const volScalarField& rho =
         this->d_.mesh().lookupObject<volScalarField>

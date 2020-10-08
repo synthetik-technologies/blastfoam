@@ -194,14 +194,9 @@ Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
 
 void
 Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
-::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+::solve()
 {
-    velocityPDFODETransportModel::solve(stepi, ai, bi);
+    velocityPDFODETransportModel::solve();
 }
 
 

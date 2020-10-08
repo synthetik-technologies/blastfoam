@@ -102,7 +102,8 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         ),
         mesh,
         dimensionedScalar(dimTime, great)
-    )
+    ),
+    finished_(false)
 {
     scalarField distance(detPointID_.size(), great);
     forAll(this->detonationPoints_, pointi)
@@ -131,24 +132,9 @@ Foam::activationModels::programmedIgnitionActivation::~programmedIgnitionActivat
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::programmedIgnitionActivation::clearODEFields()
+void Foam::activationModels::programmedIgnitionActivation::solve()
 {
-    ddtLambda_.clear();
-}
-
-
-void Foam::activationModels::programmedIgnitionActivation::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
-{
-    if (stepi > 1)
-    {
-        return;
-    }
-    if (min(lambda_).value() == 1.0)
+    if (finished_)
     {
         ddtLambda_ = volScalarField::New
         (
@@ -159,17 +145,29 @@ void Foam::activationModels::programmedIgnitionActivation::solve
         return;
     }
 
-    dimensionedScalar dt(lambda_.time().deltaT());
+    if (min(lambda_).value() == 1.0 && this->step() == 1)
+    {
+        finished_ = true;
+    }
+
+    dimensionedScalar dt(this->deltaT());
+    dimensionedScalar t(this->time());
     volScalarField lambdaOld(lambda_);
+
+    // Do not include volume changes
+    this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
+
     const cellList& cells = mesh_.cells();
     const scalarField Sf(mag(mesh_.faceAreas()));
+    lambda_ = lambdaOld;
+
     forAll(this->detonationPoints_, pointi)
     {
         detonationPoint& dp = this->detonationPoints_[pointi];
         dimensionedScalar delay(dimTime, dp.delay());
         dimensionedScalar detonationFrontDistance
         (
-            max(lambda_.time() - delay, dimensionedScalar(dimTime, 0.0))*vDet_
+            max(t - delay, dimensionedScalar(dimTime, 0.0))*vDet_
         );
         dimensionedVector xDet
         (
@@ -207,7 +205,7 @@ void Foam::activationModels::programmedIgnitionActivation::solve
                     }
                     scalar edgeLength = mesh_.V()[celli]/A;
                     lambdaProgram =
-                        max(lambda_.time().value() - tIgn_[celli], 0.0)
+                        max(t.value() - tIgn_[celli], 0.0)
                        *vDet_.value()/(1.5*edgeLength);
                 }
 
@@ -220,14 +218,19 @@ void Foam::activationModels::programmedIgnitionActivation::solve
             }
         }
     }
-    lambda_ = max(lambdaOld, lambda_);
+    volScalarField deltaLambda(max(lambda_ - lambdaOld, 0.0)/dt);
+    this->storeAndBlendDelta(deltaLambda, deltaLambda_);
+
+    lambda_ = lambdaOld + deltaLambda*lambda_.mesh().time().deltaT();
+    lambda_.maxMin(0.0, 1.0);
+    lambda_.correctBoundaryConditions();
 
     ddtLambda_ = tmp<volScalarField>
     (
         new volScalarField
         (
             "ddt(" + lambda_.name() + ")",
-            (lambda_ - lambdaOld)/dt
+            max(lambda_ - lambdaOld, 0.0)/dt
         )
     );
 }

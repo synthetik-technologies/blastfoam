@@ -885,17 +885,11 @@ void Foam::phaseSystem::update()
 }
 
 
-void Foam::phaseSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::phaseSystem::solve()
 {
-    decode();
     forAll(phaseModels_, phasei)
     {
-        phaseModels_[phasei].solve(stepi, ai, bi);
+        phaseModels_[phasei].solve();
     }
 }
 

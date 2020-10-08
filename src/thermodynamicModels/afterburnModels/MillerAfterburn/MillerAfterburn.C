@@ -111,12 +111,7 @@ void Foam::afterburnModels::MillerAfterburn::clearODEFields()
 }
 
 
-void Foam::afterburnModels::MillerAfterburn::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::afterburnModels::MillerAfterburn::solve()
 {
     const volScalarField& alphaRho
     (
@@ -130,8 +125,7 @@ void Foam::afterburnModels::MillerAfterburn::solve
     volScalarField cOld(c_);
 
     // Do not include volume changes
-    this->storeOld(stepi, c_, cOld_, false);
-    this->blendOld(stepi, c_, cOld_, ai);
+    this->storeAndBlendOld(c_, cOld_, false);
 
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
@@ -141,8 +135,7 @@ void Foam::afterburnModels::MillerAfterburn::solve
         a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
     );
 
-    this->storeDelta(stepi, deltaC, deltaC_);
-    this->blendDelta(stepi, deltaC, deltaC_, bi);
+    this->storeAndBlendDelta(deltaC, deltaC_);
     scalar f = this->f();
 
     dimensionedScalar dT = alphaRho.time().deltaT();
@@ -164,8 +157,8 @@ void Foam::afterburnModels::MillerAfterburn::solve
     }
 
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeDelta(stepi, deltaAlphaRhoC, deltaAlphaRhoC_);
-    this->blendDelta(stepi, deltaAlphaRhoC, deltaAlphaRhoC_, bi);
+    this->storeDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
+    this->blendDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
 
     c_ =
         (

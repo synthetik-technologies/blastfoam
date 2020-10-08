@@ -62,6 +62,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
         )
     )
 {
+    this->lookupAndInitialize();
     setModels(dict);
     encode();
 }
@@ -74,29 +75,22 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::singlePhaseCompressibleSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::singlePhaseCompressibleSystem::solve()
 {
-    phaseCompressibleSystem::solve(stepi, ai, bi);
+    phaseCompressibleSystem::solve();
 
     volScalarField rhoOld(rho_);
-    this->storeOld(stepi, rhoOld, rhoOld_);
-    this->blendOld(stepi, rhoOld, rhoOld_, ai);
+    this->storeAndBlendOld(rhoOld, rhoOld_);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
-    this->storeDelta(stepi, deltaRho, deltaRho_);
-    this->blendDelta(stepi, deltaRho, deltaRho_, bi);
+    this->storeAndBlendDelta(deltaRho, deltaRho_);
 
     dimensionedScalar dT = rho_.time().deltaT();
     rho_.oldTime() = rhoOld;
     rho_ = rhoOld - dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    thermo_->solve(stepi, ai, bi);
+    thermo_->solve();
 }
 
 

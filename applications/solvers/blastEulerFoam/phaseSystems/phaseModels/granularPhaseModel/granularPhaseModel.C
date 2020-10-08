@@ -107,24 +107,15 @@ Foam::granularPhaseModel::~granularPhaseModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::granularPhaseModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::granularPhaseModel::solve()
 {
     volVectorField alphaRhoUOld(alphaRhoU_);
     volScalarField alphaRhoEOld(alphaRhoE_);
     volScalarField alphaRhoPTEOld(alphaRhoPTE_);
 
-    this->storeOld(stepi, alphaRhoUOld, alphaRhoUOld_);
-    this->storeOld(stepi, alphaRhoEOld, alphaRhoEOld_);
-    this->storeOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_);
-
-    this->blendOld(stepi, alphaRhoUOld, alphaRhoUOld_, ai);
-    this->blendOld(stepi, alphaRhoEOld, alphaRhoEOld_, ai);
-    this->blendOld(stepi, alphaRhoPTEOld, alphaRhoPTEOld_, ai);
+    this->storeAndBlendOld(alphaRhoUOld, alphaRhoUOld_);
+    this->storeAndBlendOld(alphaRhoEOld, alphaRhoEOld_);
+    this->storeAndBlendOld(alphaRhoPTEOld, alphaRhoPTEOld_);
 
     volVectorField deltaAlphaRhoU
     (
@@ -184,23 +175,20 @@ void Foam::granularPhaseModel::solve
           + fvc::laplacian(this->kappa_, Theta_);
     }
 
-    this->storeDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_);
-    this->storeDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
-
-    this->blendDelta(stepi, deltaAlphaRhoU, deltaAlphaRhoU_, bi);
-    this->blendDelta(stepi, deltaAlphaRhoPTE, deltaAlphaRhoPTE_, bi);
+    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
+    this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
 
 
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
 
-    phaseModel::solveAlphaRho(stepi, ai, bi);
+    phaseModel::solveAlphaRho();
 
     alphaRho_.max(0);
     alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
     alphaRhoPTE_ = alphaRhoPTEOld - dT*(deltaAlphaRhoPTE);
 
-    thermo_->solve(stepi, ai, bi);
+    thermo_->solve();
 
     volScalarField deltaAlphaRhoE
     (
@@ -208,8 +196,7 @@ void Foam::granularPhaseModel::solve
       - ESource()
     );
 
-    this->storeDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_);
-    this->blendDelta(stepi, deltaAlphaRhoE, deltaAlphaRhoE_, bi);
+    this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
 
     alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
 }

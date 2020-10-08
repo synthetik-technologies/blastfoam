@@ -53,35 +53,6 @@ void Foam::timeIntegrator::postUpdateAll()
     }
 }
 
-Foam::scalar Foam::timeIntegrator::f() const
-{
-    return sum(bs_[stepi_]);
-}
-
-Foam::scalar Foam::timeIntegrator::f0() const
-{
-    if (stepi_ == 0)
-    {
-        return 0.0;
-    }
-
-    scalarList t0s(stepi_, 0.0);
-    scalarList dts(stepi_, 0.0);
-    dts[0] = bs_[0][0];
-
-    for (label i = 1; i < stepi_; i++)
-    {
-        forAll(as_[i], j)
-        {
-            t0s[i] += as_[i][j]*t0s[j];
-            dts[i] += bs_[i][j];
-        }
-        t0s[i] += dts[i-1];
-    }
-    Info<<t0s<<endl;
-    return t0s.last();
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -138,7 +109,6 @@ void Foam::timeIntegrator::setODEFields(integrationSystem& system) const
 
     system.setODEFields
     (
-        6,
         saveOlds,
         saveDeltas
     );
@@ -148,19 +118,57 @@ void Foam::timeIntegrator::setODEFields(integrationSystem& system) const
 void Foam::timeIntegrator::integrate()
 {
     // Update and store original fields
-    for (stepi_ = 0; stepi_ < as_.size(); stepi_++)
+    for (stepi_ = 1; stepi_ <= as_.size(); stepi_++)
     {
         Info<< nl << this->type() << ": step " << stepi_ << endl;
         this->updateAll();
         forAll(systems_, i)
         {
             Info<< "Solving " << systems_[i].name() << endl;
-            systems_[i].solve(stepi_+1, as_[stepi_], bs_[stepi_]);
+            systems_[i].solve();
         }
     }
 
     this->postUpdateAll();
 }
+
+
+Foam::scalar Foam::timeIntegrator::f() const
+{
+    return sum(bs_[stepi_-1]);
+}
+
+Foam::scalar Foam::timeIntegrator::f0() const
+{
+    if (stepi_ == 1)
+    {
+        return 0.0;
+    }
+    scalarList ts(stepi_+1, 0.0);
+    scalarList dts(stepi_, 0.0);
+    forAll(dts, i)
+    {
+        dts[i] = sum(bs_[i]);
+    }
+    ts[1] = dts[0];
+
+    for (label i = 1; i < stepi_; i++)
+    {
+        for (label j = 0; j < as_[i].size(); j++)
+        {
+            ts[i+1] += as_[i][j]*ts[j];
+        }
+        ts[i+1] += dts[i];
+    }
+    return ts.last() - dts.last();
+}
+
+
+bool Foam::timeIntegrator::finalStep() const
+{
+    return stepi_ == as_.size();
+}
+
 
 
 // ************************************************************************* //

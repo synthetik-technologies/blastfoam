@@ -88,12 +88,7 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
 void Foam::diameterModel::update()
 {}
 
-void Foam::diameterModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::diameterModel::solve()
 {}
 
 void Foam::diameterModel::postUpdate()

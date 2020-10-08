@@ -235,12 +235,7 @@ void Foam::multiPhaseModel::solveAlpha(const bool s)
 }
 
 
-void Foam::multiPhaseModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::multiPhaseModel::solve()
 {
     PtrList<volScalarField> alphasOld(alphas_.size());
     PtrList<volScalarField> alphaRhosOld(alphas_.size());
@@ -256,11 +251,8 @@ void Foam::multiPhaseModel::solve
             phasei, new volScalarField(alphaRhos_[phasei])
         );
 
-        this->storeOld(stepi, alphasOld[phasei], alphasOld_[phasei]);
-        this->blendOld(stepi, alphasOld[phasei], alphasOld_[phasei], ai);
-
-        this->storeOld(stepi, alphaRhosOld[phasei], alphaRhosOld_[phasei]);
-        this->blendOld(stepi, alphaRhosOld[phasei], alphaRhosOld_[phasei], ai);
+        this->storeAndBlendOld(alphasOld[phasei], alphasOld_[phasei]);
+        this->storeAndBlendOld(alphaRhosOld[phasei], alphaRhosOld_[phasei]);
     }
 
     PtrList<volScalarField> deltaAlphas(alphas_.size());
@@ -281,16 +273,11 @@ void Foam::multiPhaseModel::solve
             phasei, new volScalarField(fvc::div(alphaRhoPhis_[phasei]))
         );
 
-        this->storeDelta(stepi, deltaAlphas[phasei], deltaAlphas_[phasei]);
-        this->blendDelta(stepi, deltaAlphas[phasei], deltaAlphas_[phasei], bi);
-
-        this->storeDelta(stepi, deltaAlphaRhos[phasei], deltaAlphaRhos_[phasei]);
-        this->blendDelta
+        this->storeAndBlendDelta(deltaAlphas[phasei], deltaAlphas_[phasei]);
+        this->storeAndBlendDelta
         (
-            stepi,
             deltaAlphaRhos[phasei],
-            deltaAlphaRhos_[phasei],
-            bi
+            deltaAlphaRhos_[phasei]
         );
     }
 
@@ -306,8 +293,8 @@ void Foam::multiPhaseModel::solve
         alphaRhos_[phasei].correctBoundaryConditions();
     }
 
-    thermo_.solve(stepi, ai, bi);
-    phaseModel::solve(stepi, ai, bi);
+    thermo_.solve();
+    phaseModel::solve();
 }
 
 

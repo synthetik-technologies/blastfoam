@@ -163,12 +163,7 @@ public:
             virtual void update();
 
             //- Solve sub-step stepi
-            virtual void solve
-            (
-                const label stepi,
-                const scalarList& ai,
-                const scalarList& bi
-            );
+            virtual void solve();
 
             //- Update viscous terms
             virtual void postUpdate();

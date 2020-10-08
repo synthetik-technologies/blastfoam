@@ -248,14 +248,9 @@ Foam::phaseCompressibleSystem::~phaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::phaseCompressibleSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::phaseCompressibleSystem::solve()
 {
-    if (stepi == 1)
+    if (step() == 1)
     {
         rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
     }
@@ -264,12 +259,8 @@ void Foam::phaseCompressibleSystem::solve
     volScalarField rhoEOld(rhoE_);
 
     //- Store old values
-    this->storeOld(stepi, rhoUOld, rhoUOld_);
-    this->storeOld(stepi, rhoEOld, rhoEOld_);
-
-    //- Blend steps to get starting field for the sub step
-    this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
-    this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
+    this->storeAndBlendOld(rhoUOld, rhoUOld_);
+    this->storeAndBlendOld(rhoEOld, rhoEOld_);
 
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU
@@ -292,12 +283,8 @@ void Foam::phaseCompressibleSystem::solve
     }
 
     //- Store changed in momentum and energy
-    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
-    this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
-
-    //- Get actual changes by blending stored values
-    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
-    this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
+    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
+    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
 
 
     dimensionedScalar dT = rho_.time().deltaT();

@@ -115,11 +115,39 @@ public:
         //- Integrate fluxes in time
         virtual void integrate();
 
+        //- Return old coefficients for the current step
+        scalarList a() const
+        {
+            return as_[stepi_ - 1];
+        }
+
+        //- Return delta coefficients for the current step
+        scalarList b() const
+        {
+            return bs_[stepi_ - 1];
+        }
+
+
+        //- Return the number of steps
+        label nSteps() const
+        {
+            return as_.size();
+        }
+
+        //- Return current step
+        label step() const
+        {
+            return stepi_;
+        }
+
         //- Return local step fraction
         scalar f() const;
 
         //- Return start fraction of the current step
         scalar f0() const;
+
+        //- Is the current step the last
+        bool finalStep() const;
 
         //- Dummy IO operations
         virtual bool writeData(Ostream& os) const

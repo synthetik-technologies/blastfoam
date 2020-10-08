@@ -105,12 +105,7 @@ public:
         virtual void encode();
 
         //- Solve a sub-step
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        );
+        virtual void solve();
 
 
     //- Return functions for transport model

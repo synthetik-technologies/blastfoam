@@ -49,16 +49,9 @@ Foam::afterburnModel::afterburnModel
         mesh
     ),
     mesh_(mesh),
-    dict_(dict),
-    time_(mesh.time()),
-    dt_(mesh.time().deltaT())
+    dict_(dict)
 {
     this->lookupAndInitialize();
-    times_.resize(this->oldIs_.size() + 1);
-    forAll(times_, ti)
-    {
-        times_[ti].dimensions().reset(dimTime);
-    }
 }
 
 
@@ -66,32 +59,6 @@ Foam::afterburnModel::afterburnModel
 
 Foam::afterburnModel::~afterburnModel()
 {}
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::afterburnModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
-{
-    dt_ = mesh_.time().deltaT();
-    dimensionedScalar t0(dimTime, 0.0);
-    if (stepi == 1)
-    {
-        times_[0] = mesh_.time();
-    }
-    scalar f = 0;
-    for (label i = 0; i < stepi; i++)
-    {
-        t0 += ai[i]*times_[i];
-        f += bi[i];
-    }
-    dt_ *= f;
-    time_ = t0 + dt_;
-    times_[stepi] = time_;
-}
 
 
 // ************************************************************************* //

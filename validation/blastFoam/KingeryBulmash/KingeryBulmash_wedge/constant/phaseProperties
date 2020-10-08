@@ -80,7 +80,7 @@ tnt
         }
     }
 
-    activationModel linear;
+    activationModel programmedIgnition;
     initiation
     {
         E0          7.0e9;
@@ -89,6 +89,8 @@ tnt
             (0 0 0)
         );
         vDet       6985; //7850;
+        Pcj 18.46e9;
+        burnModel programmed;
     }
 
     residualRho     1e-6;           // Minimum density of the phase

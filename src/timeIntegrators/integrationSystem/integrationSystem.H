@@ -78,7 +78,6 @@ protected:
         template<class fieldType>
         void storeOld
         (
-            const label stepi,
             fieldType& f,
             PtrList<fieldType>& fList,
             const bool moving = true
@@ -88,8 +87,40 @@ protected:
         template<class fieldType>
         void storeDelta
         (
-            const label stepi,
             const fieldType& f,
+            PtrList<fieldType>& fList
+        ) const;
+
+        //- Combine old fields using time step coefficients
+        template<class fieldType>
+        void blendOld
+        (
+            fieldType& f,
+            const PtrList<fieldType>& fList
+        ) const;
+
+        //- Combine delta fields using time step coefficients
+        template<class fieldType>
+        void blendDelta
+        (
+            fieldType& f,
+            const PtrList<fieldType>& fList
+        ) const;
+
+        //- Combine old fields using time step coefficients
+        template<class fieldType>
+        void storeAndBlendOld
+        (
+            fieldType& f,
+            PtrList<fieldType>& fList,
+            const bool moving = true
+        ) const;
+
+        //- Combine delta fields using time step coefficients
+        template<class fieldType>
+        void storeAndBlendDelta
+        (
+            fieldType& f,
             PtrList<fieldType>& fList
         ) const;
 
@@ -98,28 +129,7 @@ protected:
         template<class fieldType>
         void blendSteps
         (
-            const label stepi,
             const labelList& indices,
-            fieldType& f,
-            const PtrList<fieldType>& fList,
-            const scalarList& scales
-        ) const;
-
-        //- Combine old fields using time step coefficients
-        template<class fieldType>
-        void blendOld
-        (
-            const label stepi,
-            fieldType& f,
-            const PtrList<fieldType>& fList,
-            const scalarList& scales
-        ) const;
-
-        //- Combine delta fields using time step coefficients
-        template<class fieldType>
-        void blendDelta
-        (
-            const label stepi,
             fieldType& f,
             const PtrList<fieldType>& fList,
             const scalarList& scales
@@ -169,7 +179,6 @@ public:
         //- Set old lists and fluxes (initialization of fields)
         void setODEFields
         (
-            const label nSteps,
             const boolList& storeFields,
             const boolList& storeDeltas
         );
@@ -181,15 +190,19 @@ public:
         virtual void postUpdate() = 0;
 
         //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        ) = 0;
+        virtual void solve() = 0;
 
         //- Remove stored fields
         virtual void clearODEFields() = 0;
+
+        //- Return the current step
+        label step() const;
+
+        //- Return old coefficients for the current step
+        scalarList a() const;
+
+        //- Return delta coefficients for the current step
+        scalarList b() const;
 
         //- Return the time step fraction
         scalar f() const;
@@ -197,6 +210,14 @@ public:
         //- Return the initial time fraction
         scalar f0() const;
 
+        //- Is the current step the last
+        bool finalStep() const;
+
+        //- Current time for substep
+        dimensionedScalar time() const;
+
+        //- Current time step size
+        dimensionedScalar deltaT() const;
 
         //- Dummy write for regIOobject
         virtual bool writeData(Ostream& os) const;

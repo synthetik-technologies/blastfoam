@@ -157,12 +157,7 @@ protected:
         //- Solve phase density
         //  Seperated to allow solving before thermodynamics,
         //  and solve thermo before energy
-        void solveAlphaRho
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        );
+        void solveAlphaRho();
 
 //         //- Set the turbulence model
 //         void setTurbulenceModel();
@@ -320,12 +315,7 @@ public:
             virtual void update() = 0;
 
             //- Solve sub-step stepi
-            virtual void solve
-            (
-                const label stepi,
-                const scalarList& ai,
-                const scalarList& bi
-            );
+            virtual void solve();
 
             //- Solve viscous terms
             virtual void postUpdate();
@@ -584,10 +574,6 @@ public:
             NotImplemented;
             return *this;
         }
-
-        //- Solve the underlying population balance model
-        virtual void solve()
-        {}
 
         //- Correct
         virtual void correct()

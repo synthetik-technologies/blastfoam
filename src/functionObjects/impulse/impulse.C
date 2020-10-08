@@ -130,6 +130,7 @@ bool Foam::functionObjects::impulse::read(const dictionary& dict)
 
 bool Foam::functionObjects::impulse::execute()
 {
+    Info<<"impulse"<<endl;
     impulse_ += (p_ - pRef_)*obr_.time().deltaT();
 
     return true;

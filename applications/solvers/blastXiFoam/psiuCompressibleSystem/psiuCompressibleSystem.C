@@ -160,6 +160,8 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
+    this->lookupAndInitialize();
+
     rho_ = thermo_->rho();
 
     thermo_->validate("psiuCompressibleSystem", "ea");
@@ -189,38 +191,18 @@ Foam::psiuCompressibleSystem::~psiuCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::psiuCompressibleSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::psiuCompressibleSystem::solve()
 {
-    const fvMesh& mesh(rho_.mesh());
     volScalarField rhoOld(rho_);
     volVectorField rhoUOld(rhoU_);
     volScalarField rhoEOld(rhoE_);
     volScalarField rhoEuOld(rhoEu_);
-    if (mesh.moving() && stepi == 1)
-    {
-        volScalarField::Internal v0Byv(mesh.Vsc0()/mesh.Vsc());
-        rhoOld.ref() *= v0Byv;
-        rhoUOld.ref() *= v0Byv;
-        rhoEOld.ref() *= v0Byv;
-        rhoEuOld.ref() *= v0Byv;
-    }
 
     //- Store old values
-    this->storeOld(stepi, rhoOld, rhoOld_);
-    this->storeOld(stepi, rhoUOld, rhoUOld_);
-    this->storeOld(stepi, rhoEOld, rhoEOld_);
-    this->storeOld(stepi, rhoEuOld, rhoEuOld_);
-
-    //- Blend steps to get starting field for the sub step
-    this->blendOld(stepi, rhoOld, rhoOld_, ai);
-    this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
-    this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
-    this->blendOld(stepi, rhoEuOld, rhoEuOld_, ai);
+    this->storeAndBlendOld(rhoOld, rhoOld_);
+    this->storeAndBlendOld(rhoUOld, rhoUOld_);
+    this->storeAndBlendOld(rhoEOld, rhoEOld_);
+    this->storeAndBlendOld(rhoEuOld, rhoEuOld_);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -236,16 +218,10 @@ void Foam::psiuCompressibleSystem::solve
     );
 
     //- Store changed in mass, momentum and energy
-    this->storeDelta(stepi, deltaRho, deltaRho_);
-    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
-    this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
-    this->storeDelta(stepi, deltaRhoEu, deltaRhoEu_);
-
-    //- Get actual changes by blending stored values
-    this->blendDelta(stepi, deltaRho, deltaRho_, bi);
-    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
-    this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
-    this->blendDelta(stepi, deltaRhoEu, deltaRhoEu_, bi);
+    this->storeAndBlendDelta(deltaRho, deltaRho_);
+    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
+    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
+    this->storeAndBlendDelta(deltaRhoEu, deltaRhoEu_);
 
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = rhoOld - dT*deltaRho;

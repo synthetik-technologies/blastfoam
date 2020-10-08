@@ -341,12 +341,7 @@ void Foam::activationModel::clearODEFields()
 }
 
 
-void Foam::activationModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::activationModel::solve()
 {
     const volScalarField& alphaRho
     (
@@ -361,16 +356,12 @@ void Foam::activationModel::solve
     volScalarField lambdaOld(lambda_);
 
     // Do not include volume changes
-    this->storeOld(stepi, lambdaOld, lambdaOld_, false);
-    this->blendOld(stepi, lambdaOld, lambdaOld_, ai);
-
+    this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
 
     scalar f = this->f();
-
     volScalarField deltaLambda(delta());
     deltaLambda = Foam::min(deltaLambda, (1.0 - lambda_)/(f*dT));
-    this->storeDelta(stepi, deltaLambda, deltaLambda_);
-    this->blendDelta(stepi, deltaLambda, deltaLambda_, bi);
+    this->storeAndBlendDelta(deltaLambda, deltaLambda_);
 
     lambda_ = lambdaOld + deltaLambda*dT;
     lambda_.min(1);
@@ -382,35 +373,23 @@ void Foam::activationModel::solve
         detonationPoints_[pointi].setActivated
         (
             lambda_,
-            stepi == oldIs_.size()
+            this->finalStep()
         );
     }
 
     lambda_.correctBoundaryConditions();
 
-    if (!ddtLambda_.valid())
-    {
-        ddtLambda_ = tmp<volScalarField>
-        (
-            new volScalarField(Foam::max(lambda_ - lambdaOld, 0.0)/(f*dT))
-        );
-    }
-    else
-    {
-        ddtLambda_ = Foam::max(lambda_ - lambdaOld, 0.0)/(f*dT);
-    }
+    ddtLambda_ = Foam::max(lambda_ - lambdaOld, 0.0)/(f*dT);
 
     volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
-    this->storeDelta(stepi, deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
-    this->blendDelta(stepi, deltaAlphaRhoLambda, deltaAlphaRhoLambda_, bi);
+    this->storeAndBlendDelta(deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
 
     lambda_ =
         (
             lambdaOld*alphaRho.oldTime()
             + dT*(ddtLambda_()*f*alphaRho - deltaAlphaRhoLambda)
         )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
-    lambda_.min(1);
-    lambda_.max(0);
+    lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 }
 

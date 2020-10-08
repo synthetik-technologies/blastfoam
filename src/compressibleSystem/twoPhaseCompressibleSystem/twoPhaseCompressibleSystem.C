@@ -108,6 +108,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     )
 {
+    this->lookupAndInitialize();
     encode();
     setModels(dict);
 }
@@ -121,12 +122,7 @@ Foam::twoPhaseCompressibleSystem::~twoPhaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::twoPhaseCompressibleSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::twoPhaseCompressibleSystem::solve()
 {
     volScalarField alphaOld(volumeFraction_);
     volScalarField alphaRho1Old(alphaRho1_);
@@ -134,13 +130,10 @@ void Foam::twoPhaseCompressibleSystem::solve
 
     // Volume fraction is not scaled by change in volume because it is not
     // conserved
-    this->storeOld(stepi, alphaOld, alphaOld_, false);
-    this->storeOld(stepi, alphaRho1Old, alphaRho1Old_);
-    this->storeOld(stepi, alphaRho2Old, alphaRho2Old_);
+    this->storeAndBlendOld(alphaOld, alphaOld_, false);
+    this->storeAndBlendOld(alphaRho1Old, alphaRho1Old_);
+    this->storeAndBlendOld(alphaRho2Old, alphaRho2Old_);
 
-    this->blendOld(stepi, alphaOld, alphaOld_, ai);
-    this->blendOld(stepi, alphaRho1Old, alphaRho1Old_, ai);
-    this->blendOld(stepi, alphaRho2Old, alphaRho2Old_, ai);
 
     // Set old values for use by other classes
     this->rho_.oldTime() = alphaRho1Old + alphaRho2Old;
@@ -155,13 +148,9 @@ void Foam::twoPhaseCompressibleSystem::solve
     volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
 
-    this->storeDelta(stepi, deltaAlpha, deltaAlpha_);
-    this->storeDelta(stepi, deltaAlphaRho1, deltaAlphaRho1_);
-    this->storeDelta(stepi, deltaAlphaRho2, deltaAlphaRho2_);
-
-    this->blendDelta(stepi, deltaAlpha, deltaAlpha_, bi);
-    this->blendDelta(stepi, deltaAlphaRho1, deltaAlphaRho1_, bi);
-    this->blendDelta(stepi, deltaAlphaRho2, deltaAlphaRho2_, bi);
+    this->storeAndBlendDelta(deltaAlpha, deltaAlpha_);
+    this->storeAndBlendDelta(deltaAlphaRho1, deltaAlphaRho1_);
+    this->storeAndBlendDelta(deltaAlphaRho2, deltaAlphaRho2_);
 
 
     dimensionedScalar dT = rho_.time().deltaT();
@@ -174,8 +163,8 @@ void Foam::twoPhaseCompressibleSystem::solve
     alphaRho2_ = alphaRho2Old - dT*deltaAlphaRho2;
     alphaRho2_.correctBoundaryConditions();
 
-    thermo_.solve(stepi, ai, bi);
-    phaseCompressibleSystem::solve(stepi, ai, bi);
+    thermo_.solve();
+    phaseCompressibleSystem::solve();
 }
 
 

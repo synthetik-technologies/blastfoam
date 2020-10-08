@@ -137,12 +137,7 @@ public:
         }
 
         //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        ) = 0;
+        virtual void solve() = 0;
 
         //- Set old lists and fluxes (initialization of fields)
         virtual void postUpdate() = 0;

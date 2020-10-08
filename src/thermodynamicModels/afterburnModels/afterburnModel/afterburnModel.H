@@ -66,15 +66,6 @@ protected:
         //- Dictionary containing coefficients
         const dictionary& dict_;
 
-        //- Stored times
-        List<dimensionedScalar> times_;
-
-        //- Current time
-        dimensionedScalar time_;
-
-        //- Current time step
-        dimensionedScalar dt_;
-
 
 public:
 
@@ -127,12 +118,8 @@ public:
         {}
 
         //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        );
+        virtual void solve()
+        {}
 
         //- Post update
         virtual void postUpdate()

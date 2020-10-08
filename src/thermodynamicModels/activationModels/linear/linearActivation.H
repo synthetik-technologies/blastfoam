@@ -61,8 +61,8 @@ class linearActivation
         //- Number of activating point index
         autoPtr<volScalarField::Internal> detPointIDPtr_;
 
-        //- Stored times
-        List<dimensionedScalar> times_;
+        //- Is the domain full activated
+        bool finished_;
 
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const
@@ -100,16 +100,7 @@ public:
     // Member Functions
 
         //- Solve sub-step stepi
-        virtual void solve
-        (
-            const label stepi,
-            const scalarList& ai,
-            const scalarList& bi
-        );
-
-
-        //- Remove stored fields
-        virtual void clearODEFields();
+        virtual void solve();
 };
 
 

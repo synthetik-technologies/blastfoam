@@ -146,6 +146,8 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
+    this->lookupAndInitialize();
+
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
 
@@ -192,26 +194,16 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::reactingCompressibleSystem::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::reactingCompressibleSystem::solve()
 {
     volScalarField rhoOld(rho_);
     volVectorField rhoUOld(rhoU_);
     volScalarField rhoEOld(rhoE_);
 
     //- Store old values
-    this->storeOld(stepi, rhoOld, rhoOld_);
-    this->storeOld(stepi, rhoUOld, rhoUOld_);
-    this->storeOld(stepi, rhoEOld, rhoEOld_);
-
-    //- Blend steps to get starting field for the sub step
-    this->blendOld(stepi, rhoOld, rhoOld_, ai);
-    this->blendOld(stepi, rhoUOld, rhoUOld_, ai);
-    this->blendOld(stepi, rhoEOld, rhoEOld_, ai);
+    this->storeAndBlendOld(rhoOld, rhoOld_);
+    this->storeAndBlendOld(rhoUOld, rhoUOld_);
+    this->storeAndBlendOld(rhoEOld, rhoEOld_);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -222,14 +214,9 @@ void Foam::reactingCompressibleSystem::solve
     );
 
     //- Store changed in mass, momentum and energy
-    this->storeDelta(stepi, deltaRho, deltaRho_);
-    this->storeDelta(stepi, deltaRhoU, deltaRhoU_);
-    this->storeDelta(stepi, deltaRhoE, deltaRhoE_);
-
-    //- Get actual changes by blending stored values
-    this->blendDelta(stepi, deltaRho, deltaRho_, bi);
-    this->blendDelta(stepi, deltaRhoU, deltaRhoU_, bi);
-    this->blendDelta(stepi, deltaRhoE, deltaRhoE_, bi);
+    this->storeAndBlendDelta(deltaRho, deltaRho_);
+    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
+    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
 
 
     dimensionedScalar dT = rho_.time().deltaT();

@@ -58,15 +58,14 @@ void Foam::integrationSystem::lookupAndInitialize(const word& name)
 
 void Foam::integrationSystem::setODEFields
 (
-    const label nSteps,
     const boolList& storeFields,
     const boolList& storeDeltas
 )
 {
-    oldIs_.resize(nSteps);
-    deltaIs_.resize(nSteps);
+    oldIs_.resize(timeInt_->nSteps());
+    deltaIs_.resize(timeInt_->nSteps());
     label fi = 0;
-    for (label i = 0; i < nSteps; i++)
+    for (label i = 0; i < timeInt_->nSteps(); i++)
     {
         if (storeFields[i])
         {
@@ -81,7 +80,7 @@ void Foam::integrationSystem::setODEFields
     nOld_ = fi;
 
     fi = 0;
-    for (label i = 0; i < nSteps; i++)
+    for (label i = 0; i < timeInt_->nSteps(); i++)
     {
         if (storeDeltas[i])
         {
@@ -99,6 +98,24 @@ void Foam::integrationSystem::setODEFields
 }
 
 
+Foam::label Foam::integrationSystem::step() const
+{
+    return timeInt_->step();
+}
+
+
+Foam::scalarList Foam::integrationSystem::a() const
+{
+    return timeInt_->a();
+}
+
+
+Foam::scalarList Foam::integrationSystem::b() const
+{
+    return timeInt_->b();
+}
+
+
 Foam::scalar Foam::integrationSystem::f() const
 {
     return timeInt_->f();
@@ -108,6 +125,24 @@ Foam::scalar Foam::integrationSystem::f() const
 Foam::scalar Foam::integrationSystem::f0() const
 {
     return timeInt_->f0();
+}
+
+
+bool Foam::integrationSystem::finalStep() const
+{
+    return timeInt_->finalStep();
+}
+
+
+Foam::dimensionedScalar Foam::integrationSystem::time() const
+{
+    return mesh_.time() - mesh_.time().deltaT()*(1.0 - (f0() + f()));
+}
+
+
+Foam::dimensionedScalar Foam::integrationSystem::deltaT() const
+{
+    return mesh_.time().deltaT()*f();
 }
 
 

@@ -77,7 +77,7 @@ Foam::afterburnModels::constantAfterburn::ESource() const
                 false
             ),
             mesh_,
-            Q0_/dt_
+            Q0_/this->deltaT()
         )
     );
 }

@@ -143,18 +143,13 @@ void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
 }
 
 
-void Foam::activationModels::ArrheniusRateActivation::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::activationModels::ArrheniusRateActivation::solve()
 {
     if (dModel_.valid())
     {
-        dModel_->solve(stepi, ai, bi);
+        dModel_->solve();
     }
-    activationModel::solve(stepi, ai, bi);
+    activationModel::solve();
 }
 
 void Foam::activationModels::ArrheniusRateActivation::postUpdate()

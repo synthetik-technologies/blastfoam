@@ -69,12 +69,7 @@ void Foam::PDFTransportModels::univariatePDFODETransportModel::update()
 }
 
 
-void Foam::PDFTransportModels::univariatePDFODETransportModel::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::PDFTransportModels::univariatePDFODETransportModel::solve()
 {
     //- Set initial values for stepi
     PtrList<volScalarField> momentsOld(nMoments());
@@ -85,8 +80,7 @@ void Foam::PDFTransportModels::univariatePDFODETransportModel::solve
         (
             mi, new volScalarField(quadrature_.moments()[mi])
         );
-        this->storeOld(stepi, momentsOld[mi], momentsOld_[mi]);
-        this->blendOld(stepi, momentsOld[mi], momentsOld_[mi], ai);
+        this->storeAndBlendOld(momentsOld[mi], momentsOld_[mi]);
     }
 
     //- Calculate true deltas for stepi
@@ -98,8 +92,7 @@ void Foam::PDFTransportModels::univariatePDFODETransportModel::solve
             mi,
             new volScalarField(momentAdvection_->divMoments()[mi])
         );
-        this->storeDelta(stepi, deltaMoments[mi], deltaMoments_[mi]);
-        this->blendDelta(stepi, deltaMoments[mi], deltaMoments_[mi], bi);
+        this->storeAndBlendDelta(deltaMoments[mi], deltaMoments_[mi]);
     }
 
     dimensionedScalar dT = mesh_.time().deltaT();

@@ -253,14 +253,9 @@ Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalanc
 
 void
 Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
-::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+::solve()
 {
-    univariatePDFODETransportModel::solve(stepi, ai, bi);
+    univariatePDFODETransportModel::solve();
 }
 
 

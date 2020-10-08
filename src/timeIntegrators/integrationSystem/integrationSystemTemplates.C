@@ -30,25 +30,24 @@ License
 template<class fieldType>
 void Foam::integrationSystem::storeOld
 (
-    const label stepi,
     fieldType& f,
     PtrList<fieldType>& fList,
     const bool moving
 ) const
 {
     // Correct old field for mesh motion before storage
-    if (f.mesh().moving() && stepi == 1 && moving)
+    if (f.mesh().moving() && step() == 1 && moving)
     {
         f.ref() *= f.mesh().V0()/f.mesh().V();
     }
 
     // Store fields if needed later
-    if (oldIs_[stepi - 1] != -1)
+    if (oldIs_[step() - 1] != -1)
     {
         fList.set
         (
-            oldIs_[stepi - 1],
-            new fieldType(f.name() + Foam::name(stepi - 1), f)
+            oldIs_[step() - 1],
+            new fieldType(f.name() + Foam::name(step() - 1), f)
         );
     }
 }
@@ -57,18 +56,17 @@ void Foam::integrationSystem::storeOld
 template<class fieldType>
 void Foam::integrationSystem::storeDelta
 (
-    const label stepi,
     const fieldType& f,
     PtrList<fieldType>& fList
 ) const
 {
     // Store fields if needed later
-    if (deltaIs_[stepi - 1] != -1)
+    if (deltaIs_[step() - 1] != -1)
     {
         fList.set
         (
-            deltaIs_[stepi - 1],
-            new fieldType(f.name() + Foam::name(stepi - 1), f)
+            deltaIs_[step() - 1],
+            new fieldType(f.name() + Foam::name(step() - 1), f)
         );
     }
 }
@@ -77,7 +75,6 @@ void Foam::integrationSystem::storeDelta
 template<class fieldType>
 void Foam::integrationSystem::blendSteps
 (
-    const label stepi,
     const labelList& indices,
     fieldType& f,
     const PtrList<fieldType>& fList,
@@ -85,8 +82,8 @@ void Foam::integrationSystem::blendSteps
 ) const
 {
     // Scale current step by weight
-    f *= scales[stepi - 1];
-    for (label i = 0; i < stepi - 1; i++)
+    f *= scales[step() - 1];
+    for (label i = 0; i < step() - 1; i++)
     {
         label fi = indices[i];
         if (fi != -1 && scales[fi] != 0)
@@ -100,26 +97,47 @@ void Foam::integrationSystem::blendSteps
 template<class fieldType>
 void Foam::integrationSystem::blendOld
 (
-    const label stepi,
     fieldType& f,
-    const PtrList<fieldType>& fList,
-    const scalarList& scales
+    const PtrList<fieldType>& fList
 ) const
 {
-    blendSteps(stepi, oldIs_, f, fList, scales);
+    blendSteps(oldIs_, f, fList, a());
 }
 
 
 template<class fieldType>
 void Foam::integrationSystem::blendDelta
 (
-    const label stepi,
     fieldType& f,
-    const PtrList<fieldType>& fList,
-    const scalarList& scales
+    const PtrList<fieldType>& fList
 ) const
 {
-    blendSteps(stepi, deltaIs_, f, fList, scales);
+    blendSteps(deltaIs_, f, fList, b());
+}
+
+
+template<class fieldType>
+void Foam::integrationSystem::storeAndBlendOld
+(
+    fieldType& f,
+    PtrList<fieldType>& fList,
+    const bool moving
+) const
+{
+    storeOld(f, fList, moving);
+    blendSteps(oldIs_, f, fList, a());
+}
+
+
+template<class fieldType>
+void Foam::integrationSystem::storeAndBlendDelta
+(
+    fieldType& f,
+    PtrList<fieldType>& fList
+) const
+{
+    storeDelta(f, fList);
+    blendSteps(deltaIs_, f, fList, b());
 }
 
 

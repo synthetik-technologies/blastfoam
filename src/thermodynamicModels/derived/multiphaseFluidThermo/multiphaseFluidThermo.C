@@ -157,16 +157,11 @@ void Foam::multiphaseFluidThermo::update()
 }
 
 
-void Foam::multiphaseFluidThermo::solve
-(
-    const label stepi,
-    const scalarList& ai,
-    const scalarList& bi
-)
+void Foam::multiphaseFluidThermo::solve()
 {
     forAll(phases_, phasei)
     {
-        thermos_[phasei].solve(stepi, ai, bi);
+        thermos_[phasei].solve();
     }
 }
 
