@@ -50,7 +50,7 @@ namespace radiationModels
 void Foam::radiationModels::fvDOM::initialise()
 {
     // 3D
-    if (mesh_.nSolutionD() == 3)
+    if (mesh_.nGeometricD() == 3)
     {
         nRay_ = 4*nPhi_*nTheta_;
         IRay_.setSize(nRay_);
@@ -85,7 +85,7 @@ void Foam::radiationModels::fvDOM::initialise()
         }
     }
     // 2D
-    else if (mesh_.nSolutionD() == 2)
+    else if (mesh_.nGeometricD() == 2)
     {
         const scalar thetai = piByTwo;
         const scalar deltaTheta = pi;
@@ -205,7 +205,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
     (
         IOobject
         (
-            "G",
+            "fvDOM:G",
             mesh_.time().timeName(),
             mesh_,
             IOobject::NO_READ,
@@ -297,7 +297,7 @@ Foam::radiationModels::fvDOM::fvDOM
     (
         IOobject
         (
-            "G",
+            "fvDOM:G",
             mesh_.time().timeName(),
             mesh_,
             IOobject::READ_IF_PRESENT,

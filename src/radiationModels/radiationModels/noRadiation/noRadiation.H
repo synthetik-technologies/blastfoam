@@ -80,10 +80,10 @@ public:
         // Edit
 
             //- Main update/correction routine
-            void correct();
+            virtual void correct();
 
             //- Solve radiation equation(s)
-            void calculate();
+            virtual void calculate();
 
             //- Read radiationProperties dictionary
             bool read();

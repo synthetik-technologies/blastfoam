@@ -81,7 +81,7 @@ public:
         // Edit
 
             //- Solve radiation equation(s)
-            void calculate();
+            virtual void calculate();
 
             //- Read radiationProperties dictionary
             bool read();

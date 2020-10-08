@@ -85,7 +85,8 @@ class fvDOM
 :
     public radiationModel
 {
-    // Private Data
+protected:
+    // Protected Data
 
 
         //- Incident radiation  [W/m^2]
@@ -170,7 +171,7 @@ public:
         // Edit
 
             //- Solve radiation equation(s)
-            void calculate();
+            virtual void calculate();
 
             //- Read radiation properties dictionary
             bool read();
