@@ -53,7 +53,7 @@ functions
 {
     Ma
     {
-        type            singlePhaseMachNo;
+        type            blastMachNo;
         executeControl  writeTime;
         writeControl    writeTime;
     }
