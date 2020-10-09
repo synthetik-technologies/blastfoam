@@ -69,7 +69,7 @@ void Foam::PDFODETransportModel::clearODEFields()
     forAll(momentsOld_, mi)
     {
         this->clearOld(momentsOld_[mi]);
-        this->clearOld(deltaMoments_[mi]);
+        this->clearDelta(deltaMoments_[mi]);
     }
 }
 

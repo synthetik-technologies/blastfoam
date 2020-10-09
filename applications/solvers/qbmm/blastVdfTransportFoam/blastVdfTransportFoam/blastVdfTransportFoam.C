@@ -77,9 +77,9 @@ int main(int argc, char *argv[])
 
         mesh.update();
 
-        #include "computeDrag.H"
+        fluid.decode();
 
-        fluid.encode();
+        #include "computeDrag.H"
         integrator->integrate();
 
         #include "vEqns.H"

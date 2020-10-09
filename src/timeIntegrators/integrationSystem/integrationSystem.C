@@ -36,6 +36,7 @@ Foam::integrationSystem::integrationSystem
 :
     mesh_(mesh),
     name_(name),
+    nSteps_(0),
     timeInt_(nullptr)
 {}
 
@@ -51,7 +52,7 @@ Foam::integrationSystem::~integrationSystem()
 void Foam::integrationSystem::lookupAndInitialize(const word& name)
 {
     timeInt_ = &mesh_.lookupObject<timeIntegrator>(name);
-
+    nSteps_ = timeInt_->nSteps();
     timeInt_->setODEFields(*this);
 }
 
@@ -62,10 +63,10 @@ void Foam::integrationSystem::setODEFields
     const boolList& storeDeltas
 )
 {
-    oldIs_.resize(timeInt_->nSteps());
-    deltaIs_.resize(timeInt_->nSteps());
+    oldIs_.resize(nSteps_);
+    deltaIs_.resize(nSteps_);
     label fi = 0;
-    for (label i = 0; i < timeInt_->nSteps(); i++)
+    for (label i = 0; i < nSteps_; i++)
     {
         if (storeFields[i])
         {
@@ -80,7 +81,7 @@ void Foam::integrationSystem::setODEFields
     nOld_ = fi;
 
     fi = 0;
-    for (label i = 0; i < timeInt_->nSteps(); i++)
+    for (label i = 0; i < nSteps_; i++)
     {
         if (storeDeltas[i])
         {

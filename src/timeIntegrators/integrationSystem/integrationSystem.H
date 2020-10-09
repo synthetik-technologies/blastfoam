@@ -62,6 +62,9 @@ protected:
         //- Name of system
         const word name_;
 
+        //- Number of steps
+        label nSteps_;
+
         //- Stored old field indexes
         labelList oldIs_;
 
