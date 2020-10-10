@@ -249,13 +249,10 @@ void Foam::phaseModel::solveAlpha(const bool s)
 void Foam::phaseModel::solveAlphaRho()
 {
     volScalarField alphaRhoOld(alphaRho_);
-    this->storeOld(alphaRhoOld, alphaRhoOld_);
-    this->blendOld(alphaRhoOld, alphaRhoOld_);
+    this->storeAndBlendOld(alphaRhoOld, alphaRhoOld_);
 
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
-
-    this->storeDelta(deltaAlphaRho, deltaAlphaRho_);
-    this->blendDelta(deltaAlphaRho, deltaAlphaRho_);
+    this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRho_);
 
     alphaRho_.oldTime() = alphaRhoOld;
     alphaRho_ = alphaRhoOld - this->mesh().time().deltaT()*deltaAlphaRho;
@@ -333,7 +330,7 @@ void Foam::phaseModel::solve()
     }
 
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
-    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
+    this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
 
     dimensionedScalar dT = this->mesh().time().deltaT();
     vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
