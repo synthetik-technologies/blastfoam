@@ -15,10 +15,11 @@ wmake $targetType dynamicMesh
 wmake $targetType decompositionMethods
 wmake $targetType errorEstimators
 wmake $targetType dynamicFvMesh
+wmake $targetType sampling
+
 lagrangian/Allwmake $targetType $*
 
 wmake $targetType functionObjects
-wmake $targetType sampling
 wmake $targetType atmosphereModels
 
 if [ -z "$QBMM_INST_DIR" ]
