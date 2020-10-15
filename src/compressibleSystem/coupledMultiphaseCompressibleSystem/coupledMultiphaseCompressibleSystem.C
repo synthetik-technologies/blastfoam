@@ -94,7 +94,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 {
     if (this->step() == 1)
     {
-        rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
+        rhoOldTmp_ = tmp<volScalarField>(new volScalarField(alphaRho_));
     }
 
     PtrList<volScalarField> alphasOld(alphas_.size());
@@ -162,28 +162,16 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
     volVectorField deltaRhoU
     (
-        fvc::div(rhoUPhi_*alphaf)
+        fvc::div(rhoUPhi_) // alphaRhoUPhi_
       - p_*fvc::grad(alphaf)
       - g_*alphaRho_
     );
     volScalarField deltaRhoE
     (
-        fvc::div(rhoEPhi_*alphaf)
+        fvc::div(rhoEPhi_) // alphaRhoEPhi
       - ESource()
       - volumeFraction_*(rhoU_ & g_)
     );
-
-    if (turbulence_.valid())
-    {
-        volSymmTensorField alphaDevRhoReff
-        (
-            volumeFraction_*turbulence_->devRhoReff()
-        );
-        deltaRhoU += fvc::div(alphaDevRhoReff, "div(tauMC)");
-        deltaRhoE +=
-            fvc::div(alphaDevRhoReff & U_, "div(tauMC)")
-          - fvc::laplacian(volumeFraction_*turbulence_->alphaEff(), e());
-    }
 
     this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
     this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
@@ -193,14 +181,6 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
     rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
-    if (radiation_->type() != "none")
-    {
-        NotImplemented;
-//         calcAlphaAndRho();
-//         e() = rhoE_/alphaRho_ - 0.5*magSqr(U_);
-//         e().correctBoundaryConditions();
-//         rhoE_ = radiation_->calcRhoE(f*dT, rhoE_, alphaRho_, e(), Cv());
-    }
 
     forAll(alphas_, phasei)
     {
@@ -211,6 +191,89 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
         alphaRhos_[phasei] = alphaRhosOld[phasei] - dT*deltaAlphaRhos[phasei];
     }
 }
+
+
+void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
+{
+    this->decode();
+
+    //- Store value of density so volume fraction can be included
+    volScalarField rho(rho_);
+
+    // Modify for turbulence
+    rho_ = alphaRho_;
+    rho_.oldTime() = rhoOldTmp_();
+
+    if
+    (
+        dragSource_.valid()
+     || extESource_.valid()
+     || turbulence_.valid()
+    )
+    {
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+        );
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alphaRho_, e()) - fvc::ddt(alphaRho_, e())
+        );
+
+        if (dragSource_.valid())
+        {
+            UEqn -= dragSource_();
+        }
+        if (extESource_.valid())
+        {
+            eEqn -= extESource_();
+        }
+
+
+        if (turbulence_.valid())
+        {
+            //- Volume fraction is include in stress since we modify the density
+            UEqn += turbulence_->divDevRhoReff(U_);
+            eEqn -=
+                fvm::laplacian
+                (
+                    volumeFraction_*turbulence_->alphaEff(),
+                    e()
+                );
+        }
+
+        UEqn.solve();
+        eEqn.solve();
+
+        rhoU_ = rho_*U_;
+        rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+    }
+
+    if (turbulence_.valid())
+    {
+        turbulence_->correct();
+    }
+
+    //- Reset density to the correct field
+    rho_ = rho;
+
+    this->thermo().postUpdate();
+}
+
+
+void Foam::coupledMultiphaseCompressibleSystem::update()
+{
+    multiphaseCompressibleSystem::update();
+    surfaceScalarField alphaf
+    (
+        fluxScheme_->interpolate(volumeFraction_, "alpha")
+    );
+
+    rhoPhi_ *= alphaf;
+    rhoUPhi_ *= alphaf;
+    rhoEPhi_ *= alphaf;
+}
+
 
 void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
 {

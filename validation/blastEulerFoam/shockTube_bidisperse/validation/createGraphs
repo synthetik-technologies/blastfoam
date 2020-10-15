@@ -31,11 +31,11 @@ title=bidisperse_shockTube_validation_Ux_$5
                 with points linewidth 8 linecolor rgb 'red',\
             "$3" using 1:2 title 'Lai 2018 (large)'\
                 with points lt 1 linewidth 8 linecolor rgb 'green',\
-            "$4" using 1:8 title 'blastFoam (gas)'\
+            "$4" using 1:11 title 'blastFoam (gas)'\
                 with lines linewidth 2 linecolor rgb 'black', \
-            "$4" using 1:2 title 'blastFoam (small)'\
+            "$4" using 1:(\$2 >= 1e-6 ? \$5 : 0) title 'blastFoam (small)'\
                 with lines linewidth 2 linecolor rgb 'red', \
-            "$4" using 1:5 title 'blastFoam (large)'\
+            "$4" using 1:(\$3 >= 1e-6 ? \$8 : 0) title 'blastFoam (large)'\
                 with lines linewidth 2 linecolor rgb 'green'
 EOF
 }
@@ -105,13 +105,19 @@ UBlastFOAM1="../postProcessing/sampleDict/0.0001/Centerline_U*"
 nodeBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_alpha*"
 UBlastFOAM2="../postProcessing/sampleDict/0.0002/Centerline_U*"
 
-createEpsUx $Lai_Ug_17 $Lai_U2_17 $Lai_U1_17 $UBlastFOAM17 17
-createEpsAlpha $Lai_alpha2_17 $Lai_alpha1_17 $nodeBlastFOAM17 17
+paste $nodeBlastFOAM17 $UBlastFOAM17 > blastFoam17
+paste $nodeBlastFOAM1 $UBlastFOAM1 > blastFoam1
+paste $nodeBlastFOAM2 $UBlastFOAM2 > blastFoam2
 
-createEpsUx $Lai_Ug_100 $Lai_U2_100 $Lai_U1_100 $UBlastFOAM1 1
-createEpsAlpha $Lai_alpha2_100 $Lai_alpha1_100 $nodeBlastFOAM1 1
 
-createEpsUx $Lai_Ug_200 $Lai_U2_200 $Lai_U1_200 $UBlastFOAM2 2
-createEpsAlpha $Lai_alpha2_200 $Lai_alpha1_200 $nodeBlastFOAM2 2
+createEpsUx $Lai_Ug_17 $Lai_U2_17 $Lai_U1_17 blastFoam17 17
+createEpsAlpha $Lai_alpha2_17 $Lai_alpha1_17 blastFoam17 17
 
+createEpsUx $Lai_Ug_100 $Lai_U2_100 $Lai_U1_100 blastFoam1 1
+createEpsAlpha $Lai_alpha2_100 $Lai_alpha1_100 blastFoam1 1
+
+createEpsUx $Lai_Ug_200 $Lai_U2_200 $Lai_U1_200 blastFoam2 2
+createEpsAlpha $Lai_alpha2_200 $Lai_alpha1_200 blastFoam2 2
+
+rm blastFoam1 blastFoam2 blastFoam17
 echo Done

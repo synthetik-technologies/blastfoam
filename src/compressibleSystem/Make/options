@@ -11,6 +11,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
 
 LIB_LIBS = \
+    -lturbulenceModels \
+    -lcompressibleTurbulenceModels \
     -L$(BLAST_LIBBIN) \
     -ltimeIntegrators \
     -ldiameterModels \

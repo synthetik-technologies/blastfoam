@@ -12,4 +12,5 @@ EXE_LIBS = \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
+    -lphaseCompressibleSystems \
     -latmosphereModels

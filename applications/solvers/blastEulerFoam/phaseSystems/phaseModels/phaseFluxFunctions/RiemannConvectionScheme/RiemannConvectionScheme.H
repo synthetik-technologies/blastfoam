@@ -104,7 +104,15 @@ public:
         )
         :
             convectionScheme<Type>(mesh, faceFlux),
-            phaseName_(faceFlux.group()),
+            phaseName_
+            (
+                mesh.foundObject<fluxScheme>
+                (
+                    IOobject::groupName("fluxScheme", faceFlux.group())
+                )
+              ? faceFlux.group()
+              : word(is)
+            ),
             fluxScheme_
             (
                 mesh.lookupObject<fluxScheme>

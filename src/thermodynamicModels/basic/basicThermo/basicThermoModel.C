@@ -381,8 +381,7 @@ Foam::basicThermoModel::eBoundaryTypes(const volScalarField& T)
         }
         else if
         (
-            isA<zeroGradientFvPatchScalarField>(T.boundaryField()[patchi])
-         || isA<fixedGradientFvPatchScalarField>(T.boundaryField()[patchi])
+            isA<fixedGradientFvPatchScalarField>(T.boundaryField()[patchi])
          || isA<blastGradientEnergyCalculatedTemperatureFvPatchScalarField>
             (
                 T.boundaryField()[patchi]

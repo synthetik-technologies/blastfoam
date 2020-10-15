@@ -525,7 +525,7 @@ Foam::kineticTheorySystem::lambda
                 false
             ),
             fluid_.mesh(),
-            dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), 0)
+            dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
         )
     );
     volScalarField& l = tmpLambda.ref();
@@ -541,7 +541,7 @@ Foam::kineticTheorySystem::lambda
         volScalarField Psij(Ps(phase, phase2));
 
         l +=
-            Psij*(phase.d() + phase2.d())/6.0
+            Psij/phase.rho()*(phase.d() + phase2.d())/6.0
            *sqrt
             (
                 2.0*sqr(m1*Theta1 + m2*Theta2)
@@ -552,7 +552,7 @@ Foam::kineticTheorySystem::lambda
                 )
             );
     }
-    return tmpLambda/phase.rho();
+    return tmpLambda;
 }
 
 

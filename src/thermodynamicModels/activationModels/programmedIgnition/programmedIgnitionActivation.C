@@ -77,19 +77,6 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
     ),
     Vcj_("Vcj", 1.0/rho0_ - Pcj_/sqr(rho0_*vDet_)),
     model_(burnModelNames_.read(dict.lookup("burnModel"))),
-    detPointID_
-    (
-        IOobject
-        (
-            IOobject::groupName("detPointID", phaseName),
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        -1.0
-    ),
     tIgn_
     (
         IOobject
@@ -102,10 +89,9 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         ),
         mesh,
         dimensionedScalar(dimTime, great)
-    ),
-    finished_(false)
+    )
 {
-    scalarField distance(detPointID_.size(), great);
+    scalarField distance(tIgn_.size(), great);
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
@@ -115,7 +101,6 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
             if (d < distance[celli])
             {
                 distance[celli] = d;
-                detPointID_[celli] = scalar(pointi);
                 tIgn_[celli] =
                     dp.delay() + mag(mesh_.C()[celli] - dp)/vDet_.value();
             }
@@ -132,107 +117,67 @@ Foam::activationModels::programmedIgnitionActivation::~programmedIgnitionActivat
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::programmedIgnitionActivation::solve()
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::programmedIgnitionActivation::delta() const
 {
-    if (finished_)
-    {
-        ddtLambda_ = volScalarField::New
-        (
-            "ddt(" + lambda_.name() + ")",
-            lambda_.mesh(),
-            dimensionedScalar(inv(dimTime), 0.0)
-        );
-        return;
-    }
-
-    if (min(lambda_).value() == 1.0 && this->step() == 1)
-    {
-        finished_ = true;
-    }
-
-    dimensionedScalar dt(this->deltaT());
-    dimensionedScalar t(this->time());
-    volScalarField lambdaOld(lambda_);
-
-    // Do not include volume changes
-    this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
-
-    const cellList& cells = mesh_.cells();
-    const scalarField Sf(mag(mesh_.faceAreas()));
-    lambda_ = lambdaOld;
-
-    forAll(this->detonationPoints_, pointi)
-    {
-        detonationPoint& dp = this->detonationPoints_[pointi];
-        dimensionedScalar delay(dimTime, dp.delay());
-        dimensionedScalar detonationFrontDistance
-        (
-            max(t - delay, dimensionedScalar(dimTime, 0.0))*vDet_
-        );
-        dimensionedVector xDet
-        (
-            "xDet",
-            dimLength,
-            dp
-        );
-
-        forAll(lambda_, celli)
-        {
-            //- Activate if closest point is setActivated
-            //  rounding is used for AMR
-            if
-            (
-                mag(detPointID_[celli] - scalar(pointi)) < 1.0
-             || detPointID_[celli] < 0
-            )
-            {
-                scalar lambdaBeta = 0;
-                scalar lambdaProgram = 0;
-
-                if (model_ == BETA || model_ == PROGRAMMEDBETA)
-                {
-                    lambdaBeta =
-                        (1.0 - 1.0/max(rho_[celli], small))
-                       /(1.0 - Vcj_.value());
-                }
-                if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
-                {
-                    const cell& c = cells[celli];
-                    scalar A = 0.0;
-                    forAll(c, facei)
-                    {
-                        A += Sf[c[facei]];
-                    }
-                    scalar edgeLength = mesh_.V()[celli]/A;
-                    lambdaProgram =
-                        max(t.value() - tIgn_[celli], 0.0)
-                       *vDet_.value()/(1.5*edgeLength);
-                }
-
-                lambda_[celli] =
-                    max
-                    (
-                        min(max(lambdaBeta, lambdaProgram), 1.0),
-                        lambda_[celli]
-                    );
-            }
-        }
-    }
-    volScalarField deltaLambda(max(lambda_ - lambdaOld, 0.0)/dt);
-    this->storeAndBlendDelta(deltaLambda, deltaLambda_);
-
-    lambda_ = lambdaOld + deltaLambda*lambda_.mesh().time().deltaT();
-    lambda_.maxMin(0.0, 1.0);
-    lambda_.correctBoundaryConditions();
-
-    ddtLambda_ = tmp<volScalarField>
+    tmp<volScalarField> deltaLambdaTmp
     (
         new volScalarField
         (
-            "ddt(" + lambda_.name() + ")",
-            max(lambda_ - lambdaOld, 0.0)/dt
+            IOobject
+            (
+                "deltaLambda",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedScalar("zero", inv(dimTime), 0.0)
         )
     );
+    volScalarField& deltaLambda = deltaLambdaTmp.ref();
+
+    const cellList& cells = mesh_.cells();
+    const scalarField Sf(mag(mesh_.faceAreas()));
+
+    dimensionedScalar dt(lambda_.time().deltaT());
+    dimensionedScalar t(lambda_.time());
+
+    forAll(lambda_, celli)
+    {
+        scalar lambdaBeta = 0;
+        scalar lambdaProgram = 0;
+
+        if (model_ == BETA || model_ == PROGRAMMEDBETA)
+        {
+            lambdaBeta =
+                (1.0 - 1.0/max(rho_[celli], small))
+                /(1.0 - Vcj_.value());
+        }
+        if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
+        {
+            const cell& c = cells[celli];
+            scalar A = 0.0;
+            forAll(c, facei)
+            {
+                A += Sf[c[facei]];
+            }
+            scalar edgeLength = mesh_.V()[celli]/A;
+            lambdaProgram =
+                max(t.value() - tIgn_[celli], 0.0)
+                *vDet_.value()/(1.5*edgeLength);
+        }
+
+        deltaLambda[celli] =
+            (
+                min(max(lambdaBeta, lambdaProgram), 1.0)
+              - lambda_[celli]
+            )/dt.value();
+    }
+
+    return deltaLambdaTmp;
 }
 
 // ************************************************************************* //

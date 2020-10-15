@@ -70,6 +70,12 @@ protected:
     //- Delta coefficients
     List<List<scalar>> bs_;
 
+    //- Time step fractions
+    scalarList f_;
+
+    //- Starting time step fractions
+    scalarList f0_;
+
     //- Update all stored systems
     void updateAll();
 

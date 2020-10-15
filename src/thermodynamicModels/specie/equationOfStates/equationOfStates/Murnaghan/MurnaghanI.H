@@ -96,7 +96,7 @@ Foam::scalar Foam::Murnaghan<Specie>::E
     scalar rhos(max(rho, 1e-10));
     return
        -pRef_/rhos
-      + (pow(rho/rho0_, n_) - (n_ - 1.0))/(kappa_*n_*rhos*(n_ - 1.0));
+      + (pow(rho/rho0_, n_) - (n_ - 1.0))/(kappa_*n_*rhos*max(n_ - 1.0, small));
 }
 
 

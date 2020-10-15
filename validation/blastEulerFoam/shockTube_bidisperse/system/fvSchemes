@@ -41,8 +41,9 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(tauMC.gas) Gauss linear;
-    "div\(tauMC.particles.*\)" Gauss linear;
+    div((((alpha.gas*rho.gas)*nuEff.gas)*dev2(T(grad(U.gas))))) Gauss linear;
+    div(sigma.particles0) Gauss linear;
+    div(sigma.particles1) Gauss linear;
 }
 
 laplacianSchemes

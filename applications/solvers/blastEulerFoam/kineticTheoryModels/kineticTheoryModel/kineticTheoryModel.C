@@ -122,7 +122,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
@@ -220,7 +220,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
             Theta_.time().timeName(),
             Theta_.mesh(),
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
@@ -274,7 +274,8 @@ Foam::kineticTheoryModel::divDevRhoReff
         (
             (phase_.rho()*nuTotal_)*dev2(T(fvc::grad(U)))
           + ((phase_.rho()*lambda_)*fvc::div(phase_.phi()))
-           *dimensioned<symmTensor>("I", dimless, symmTensor::I)
+           *dimensioned<symmTensor>("I", dimless, symmTensor::I),
+            "div(sigma." + phase_.name() + ')'
         )
     );
 }
@@ -321,7 +322,7 @@ void Foam::kineticTheoryModel::correct()
     // Limit viscosity and add frictional viscosity
     nut_.min(maxNut_);
     nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_);
-    nuTotal_ = max(maxNut_, nut_ + nuFric_);
+    nuTotal_ = min(maxNut_, nut_ + nuFric_);
 
     if (debug)
     {

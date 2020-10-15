@@ -68,8 +68,11 @@ class Murnaghan
     scalar pRef_;
 
     //- Coefficients
-    scalar n_;
+    scalar K0_;
     scalar kappa_;
+
+    scalar K0Prime_;
+    scalar n_;
 
     //- Mie Grunsien coefficient
     scalar Gamma_;

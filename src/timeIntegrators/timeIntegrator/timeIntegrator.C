@@ -70,7 +70,9 @@ Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh)
         )
     ),
     mesh_(mesh),
-    stepi_(0)
+    stepi_(0),
+    f_(0),
+    f0_(0)
 {}
 
 
@@ -84,11 +86,41 @@ Foam::timeIntegrator::~timeIntegrator()
 
 void Foam::timeIntegrator::addSystem(integrationSystem& system)
 {
+
     label oldSize = systems_.size();
 
     setODEFields(system);
     systems_.resize(oldSize + 1);
     systems_.set(oldSize, &system);
+
+    if (f_.size() == 0)
+    {
+        f_.resize(nSteps());
+        f0_.resize(nSteps());
+        f0_[0] = 0.0;
+        f_[0] = sum(bs_[0]);
+        for (label stepi = 2; stepi <= nSteps(); stepi++)
+        {
+            f_[stepi-1] = sum(bs_[stepi-1]);
+            scalarList ts(stepi+1, 0.0);
+            scalarList dts(stepi, 0.0);
+            forAll(dts, i)
+            {
+                dts[i] = sum(bs_[i]);
+            }
+            ts[1] = dts[0];
+
+            for (label i = 1; i < stepi; i++)
+            {
+                for (label j = 0; j < as_[i].size(); j++)
+                {
+                    ts[i+1] += as_[i][j]*ts[j];
+                }
+                ts[i+1] += dts[i];
+            }
+            f0_[stepi-1] = ts.last() - dts.last();
+        }
+    }
 }
 
 
@@ -135,32 +167,12 @@ void Foam::timeIntegrator::integrate()
 
 Foam::scalar Foam::timeIntegrator::f() const
 {
-    return sum(bs_[stepi_-1]);
+    return f_[stepi_-1];
 }
 
 Foam::scalar Foam::timeIntegrator::f0() const
 {
-    if (stepi_ == 1)
-    {
-        return 0.0;
-    }
-    scalarList ts(stepi_+1, 0.0);
-    scalarList dts(stepi_, 0.0);
-    forAll(dts, i)
-    {
-        dts[i] = sum(bs_[i]);
-    }
-    ts[1] = dts[0];
-
-    for (label i = 1; i < stepi_; i++)
-    {
-        for (label j = 0; j < as_[i].size(); j++)
-        {
-            ts[i+1] += as_[i][j]*ts[j];
-        }
-        ts[i+1] += dts[i];
-    }
-    return ts.last() - dts.last();
+    return f0_[stepi_ - 1];
 }
 
 

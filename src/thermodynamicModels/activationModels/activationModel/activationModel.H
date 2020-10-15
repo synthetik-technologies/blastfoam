@@ -104,7 +104,12 @@ protected:
                 }
 
                 //- Set activated cells
-                void setActivated(volScalarField&, const bool update);
+                void setActivated
+                (
+                    volScalarField&,
+                    const volScalarField&,
+                    bool update
+                );
         };
 
 
@@ -146,9 +151,6 @@ protected:
 
 
     // Protected functions
-
-        //- Limit change in lambda
-        void limit();
 
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const = 0;

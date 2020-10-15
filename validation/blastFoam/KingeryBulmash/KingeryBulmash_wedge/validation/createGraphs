@@ -31,11 +31,10 @@ then
     echo "gnuplot not found - skipping graph creation" >&2
     exit 1
 fi
-
-BLASTFOAM_clx="../postProcessing/sampleDict/*/Centerlinex*"
-BLASTFOAM_cly="../postProcessing/sampleDict/*/Centerliney*"
+time=$(foamListTimes -latestTime -processor -case ..)
+BLASTFOAM_clx="../postProcessing/sampleDict/$time/Centerlinex*"
+BLASTFOAM_cly="../postProcessing/sampleDict/$time/Centerliney*"
 Swisdak="validationData/SwisdakData.csv"
-
 
 createEps "Maximum Overpressure" "kPa" $BLASTFOAM_clx $BLASTFOAM_cly 2 0.001 $Swisdak 2 "overpressure"
 createEps "Maximum Impulse" "kPa ms" $BLASTFOAM_clx $BLASTFOAM_cly 3 1.0 $Swisdak 3 "impulse"

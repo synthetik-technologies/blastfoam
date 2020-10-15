@@ -91,21 +91,11 @@ private:
         //- Burn model
         burnModel model_;
 
-        //- Number of activating point index
-        volScalarField::Internal detPointID_;
-
         //- Ignition time
         volScalarField::Internal tIgn_;
 
-        //- Is the domain full activated
-        bool finished_;
-
         //- Return the time rate of chage of lambda
-        virtual tmp<volScalarField> delta() const
-        {
-            NotImplemented;
-            return lambda_;
-        }
+        virtual tmp<volScalarField> delta() const;
 
         //- Do detonation points need to be specified
         virtual bool needDetonationPoints() const
@@ -131,12 +121,6 @@ public:
 
     //- Destructor
     virtual ~programmedIgnitionActivation();
-
-
-    // Member Functions
-
-        //- Solve sub-step stepi
-        virtual void solve();
 };
 
 

@@ -49,8 +49,36 @@ Foam::activationModels::linearActivation::linearActivation
 :
     activationModel(mesh, dict, phaseName),
     vDet_("vDet", dimVelocity, dict),
-    finished_(false)
-{}
+    tIgn_
+    (
+        IOobject
+        (
+            IOobject::groupName("tIgn", phaseName),
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        dimensionedScalar(dimTime, great)
+    )
+{
+    scalarField distance(tIgn_.size(), great);
+    forAll(this->detonationPoints_, pointi)
+    {
+        const detonationPoint& dp = this->detonationPoints_[pointi];
+        forAll(distance, celli)
+        {
+            scalar d = mag(mesh.cellCentres()[celli] - dp);
+            if (d < distance[celli])
+            {
+                distance[celli] = d;
+                tIgn_[celli] =
+                    dp.delay() + mag(mesh_.C()[celli] - dp)/vDet_.value();
+            }
+        }
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -61,73 +89,40 @@ Foam::activationModels::linearActivation::~linearActivation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::linearActivation::solve()
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::linearActivation::delta() const
 {
-    if (finished_)
-    {
-        ddtLambda_ = volScalarField::New
-        (
-            "ddt(" + lambda_.name() + ")",
-            lambda_.mesh(),
-            dimensionedScalar(inv(dimTime), 0.0)
-        );
-        return;
-    }
-
-    if (min(lambda_).value() == 1.0 && this->step() == 1)
-    {
-        finished_ = true;
-    }
-
-    dimensionedScalar dt(this->deltaT());
-    dimensionedScalar t(this->time());
-    volScalarField lambdaOld(lambda_);
-
-    // Do not include volume changes
-    this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
-
-    lambda_ = lambdaOld;
-    forAll(this->detonationPoints_, pointi)
-    {
-        detonationPoint& dp = this->detonationPoints_[pointi];
-        dimensionedScalar delay(dimTime, dp.delay());
-        dimensionedScalar detonationFrontDistance
-        (
-            max(t - delay, dimensionedScalar(dimTime, 0.0))*vDet_
-        );
-        dimensionedVector xDet
-        (
-            "xDet",
-            dimLength,
-            dp
-        );
-        lambda_ =
-            max
-            (
-                pos
-                (
-                    detonationFrontDistance
-                  - mag(lambda_.mesh().C() - xDet)
-                ),
-                lambda_
-            );
-    }
-
-    volScalarField deltaLambda(max(lambda_ - lambdaOld, 0.0)/dt);
-    this->storeAndBlendDelta(deltaLambda, deltaLambda_);
-
-    lambda_ = lambdaOld + deltaLambda*lambda_.mesh().time().deltaT();
-    lambda_.maxMin(0.0, 1.0);
-    lambda_.correctBoundaryConditions();
-
-    ddtLambda_ = tmp<volScalarField>
+    tmp<volScalarField> deltaLambdaTmp
     (
         new volScalarField
         (
-            "ddt(" + lambda_.name() + ")",
-            max(lambda_ - lambdaOld, 0.0)/dt
+            IOobject
+            (
+                "deltaLambda",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedScalar("zero", inv(dimTime), 0.0)
         )
     );
+    volScalarField& deltaLambda = deltaLambdaTmp.ref();
+
+    dimensionedScalar dt(lambda_.time().deltaT());
+    dimensionedScalar t(lambda_.time());
+
+    forAll(lambda_, celli)
+    {
+        if (t.value() > tIgn_[celli])
+        {
+            deltaLambda[celli] = (1.0 - lambda_.oldTime()[celli])/dt.value();
+        }
+    }
+
+    return deltaLambdaTmp;
 }
 
 // ************************************************************************* //

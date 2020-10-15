@@ -77,74 +77,93 @@ protected:
         //- Number of stored deltas
         label nDelta_;
 
-        //- Store old fields
-        template<class fieldType>
-        void storeOld
-        (
-            fieldType& f,
-            PtrList<fieldType>& fList,
-            const bool moving = true
-        ) const;
 
-        //- Store delta fields
-        template<class fieldType>
-        void storeDelta
-        (
-            const fieldType& f,
-            PtrList<fieldType>& fList
-        ) const;
+        // Storage for fields
 
-        //- Combine old fields using time step coefficients
-        template<class fieldType>
-        void blendOld
-        (
-            fieldType& f,
-            const PtrList<fieldType>& fList
-        ) const;
+            //- Store old fields
+            template<class fieldType>
+            void storeOld
+            (
+                fieldType& f,
+                PtrList<fieldType>& fList,
+                const bool moving = true
+            ) const;
 
-        //- Combine delta fields using time step coefficients
-        template<class fieldType>
-        void blendDelta
-        (
-            fieldType& f,
-            const PtrList<fieldType>& fList
-        ) const;
+            //- Store delta fields
+            template<class fieldType>
+            void storeDelta
+            (
+                const fieldType& f,
+                PtrList<fieldType>& fList
+            ) const;
 
-        //- Combine old fields using time step coefficients
-        template<class fieldType>
-        void storeAndBlendOld
-        (
-            fieldType& f,
-            PtrList<fieldType>& fList,
-            const bool moving = true
-        ) const;
 
-        //- Combine delta fields using time step coefficients
-        template<class fieldType>
-        void storeAndBlendDelta
-        (
-            fieldType& f,
-            PtrList<fieldType>& fList
-        ) const;
+        // storage for single quantities
 
-        //- Combine fields using time step coefficients
-        //  f must be the most recent value of the field
-        template<class fieldType>
-        void blendSteps
-        (
-            const labelList& indices,
-            fieldType& f,
-            const PtrList<fieldType>& fList,
-            const scalarList& scales
-        ) const;
+            //- Store old fields
+            //  moving keyword used for template function
+            template<class Type>
+            void storeOld(Type& f, List<Type>& fList, bool moving = false) const;
 
-        //- Clear and resize stored old fields
-        template<class fieldType>
-        void clearOld(PtrList<fieldType>& fList) const;
+            //- Store delta fields
+            template<class Type>
+            void storeDelta(const Type& f, List<Type>& fList) const;
 
-        //- Clear and resize stored delta fields
-        template<class fieldType>
-        void clearDelta(PtrList<fieldType>& fList) const;
+
+        // General functions
+
+            //- Combine old fields using time step coefficients
+            template<template<class> class ListType, class Type>
+            void blendOld
+            (
+                Type& f,
+                const ListType<Type>& fList
+            ) const;
+
+            //- Combine delta fields using time step coefficients
+            template<template<class> class ListType, class Type>
+            void blendDelta
+            (
+                Type& f,
+                const ListType<Type>& fList
+            ) const;
+
+            //- Combine old fields using time step coefficients
+            template<template<class> class ListType, class Type>
+            void storeAndBlendOld
+            (
+                Type& f,
+                ListType<Type>& fList,
+                const bool moving = true
+            ) const;
+
+            //- Combine delta fields using time step coefficients
+            template<template<class> class ListType, class Type>
+            void storeAndBlendDelta
+            (
+                Type& f,
+                ListType<Type>& fList
+            ) const;
+
+            //- Combine fields using time step coefficients
+            //  f must be the most recent value of the field
+            template<template<class> class ListType, class Type>
+            void blendSteps
+            (
+                const labelList& indices,
+                Type& f,
+                const ListType<Type>& fList,
+                const scalarList& scales
+            ) const;
+
+            //- Clear and resize stored old fields
+            template<class fieldType>
+            void clearOld(PtrList<fieldType>& fList) const;
+
+            //- Clear and resize stored delta fields
+            template<class fieldType>
+            void clearDelta(PtrList<fieldType>& fList) const;
+
 
         //- Lookup global integrator and initialize
         void lookupAndInitialize(const word& name = "globalTimeIntegrator");

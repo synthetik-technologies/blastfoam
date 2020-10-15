@@ -274,23 +274,18 @@ void Foam::phaseCompressibleSystem::solve()
       - ESource()
       - (rhoU_ & g_)
     );
-    if (turbulence_.valid())
-    {
-        deltaRhoU += fvc::div(turbulence_->devRhoReff(), "div(tauMC)");
-        deltaRhoE +=
-            fvc::div(turbulence_->devRhoReff() & U_, "div(tauMC)")
-          - fvc::laplacian(turbulence_->alphaEff(), e());
-    }
 
     //- Store changed in momentum and energy
     this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
     this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
 
-
+    //- Solve for momentum and energy
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
     rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
+    Info<< "energy: "
+        << sum(rhoE_()*rho_.mesh().V()).value()<<endl;
 }
 
 
@@ -323,6 +318,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
     (
         dragSource_.valid()
      || extESource_.valid()
+     || turbulence_.valid()
     )
     {
         rho_.oldTime() = rhoOldTmp_();
@@ -344,6 +340,14 @@ void Foam::phaseCompressibleSystem::postUpdate()
         {
             eEqn -= extESource_();
         }
+
+
+        if (turbulence_.valid())
+        {
+            UEqn += turbulence_->divDevRhoReff(U_);
+            eEqn -= fvm::laplacian(turbulence_->alphaEff(), e());
+        }
+
         UEqn.solve();
         eEqn.solve();
 
@@ -414,7 +418,10 @@ void Foam::phaseCompressibleSystem::addESource
 }
 
 
-void Foam::phaseCompressibleSystem::addUCoeff(const volScalarField::Internal& UCoeff)
+void Foam::phaseCompressibleSystem::addUCoeff
+(
+    const volScalarField::Internal& UCoeff
+)
 {
     if (!dragSource_.valid())
     {

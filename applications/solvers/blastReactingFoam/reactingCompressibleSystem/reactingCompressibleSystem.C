@@ -244,9 +244,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-     ==
-        fvm::laplacian(muEff, U_)
-      + fvc::div(tauMC)
+      + turbulence_->divDevRhoReff(U_)
     );
 
     UEqn.solve();

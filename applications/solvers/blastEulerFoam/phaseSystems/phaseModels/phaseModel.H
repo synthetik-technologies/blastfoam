@@ -47,6 +47,7 @@ SourceFiles
 #include "fvMatricesFwd.H"
 #include "diameterModel.H"
 #include "fvc.H"
+#include "fvm.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
 #include "phaseCompressibleTurbulenceModelFwd.H"
@@ -141,6 +142,8 @@ protected:
         PtrList<volVectorField> deltaAlphaRhoU_;
         PtrList<volScalarField> deltaAlphaRhoE_;
 
+        //- Stored value of alphaRho from the initial ode time step
+        tmp<volScalarField> alphaRho0_;
 
         //- Diameter model
         autoPtr<diameterModel> dPtr_;

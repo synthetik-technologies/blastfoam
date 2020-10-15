@@ -58,18 +58,11 @@ class linearActivation
         //- Detonation velocity
         dimensionedScalar vDet_;
 
-        //- Number of activating point index
-        autoPtr<volScalarField::Internal> detPointIDPtr_;
-
-        //- Is the domain full activated
-        bool finished_;
+        //- Ignition time
+        volScalarField::Internal tIgn_;
 
         //- Return the time rate of chage of lambda
-        virtual tmp<volScalarField> delta() const
-        {
-            NotImplemented;
-            return lambda_;
-        }
+        virtual tmp<volScalarField> delta() const;
 
         //- Do detonation points need to be specified
         virtual bool needDetonationPoints() const
@@ -95,12 +88,6 @@ public:
 
     //- Destructor
     virtual ~linearActivation();
-
-
-    // Member Functions
-
-        //- Solve sub-step stepi
-        virtual void solve();
 };
 
 

@@ -101,11 +101,17 @@ public:
         //- Decode primative variables
         virtual void decode();
 
+        //- Update fluxes
+        virtual void update();
+
         //- Encode conserved variables
         virtual void encode();
 
         //- Solve a sub-step
         virtual void solve();
+
+        //- Solve implicit terms
+        virtual void postUpdate();
 
 
     //- Return functions for transport model

@@ -178,7 +178,7 @@ kineticTheory
     alphaMinFriction 0.5;
 
     radialModel SinclairJackson;
-    viscosityModel none;
+    viscosityModel Syamlal;
     conductivityModel Syamlal;
     granularPressureModel Lun;
     frictionalStressModel JohnsonJackson;

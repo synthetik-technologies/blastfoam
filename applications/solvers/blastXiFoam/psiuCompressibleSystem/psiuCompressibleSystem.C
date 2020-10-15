@@ -270,7 +270,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
     Foam::solve
     (
         fvm::ddt(rho_, eu_) - fvc::ddt(rho_, eu_)
-        - fvm::laplacian(turbulence_->alphaEff(), eu_)
+      - fvm::laplacian(turbulence_->alphaEff(), eu_)
     );
 
     // Includes change to total energy from viscous term in momentum equation

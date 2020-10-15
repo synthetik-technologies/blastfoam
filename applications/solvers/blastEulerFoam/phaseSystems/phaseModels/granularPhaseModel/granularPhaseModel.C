@@ -109,6 +109,11 @@ Foam::granularPhaseModel::~granularPhaseModel()
 
 void Foam::granularPhaseModel::solve()
 {
+    if (this->step() == 1)
+    {
+        alphaRho0_ = tmp<volScalarField>(new volScalarField(alphaRho_));
+    }
+
     volVectorField alphaRhoUOld(alphaRhoU_);
     volScalarField alphaRhoEOld(alphaRhoE_);
     volScalarField alphaRhoPTEOld(alphaRhoPTE_);
@@ -137,43 +142,6 @@ void Foam::granularPhaseModel::solve()
         fvc::div(alphaRhoPTEPhi_)
       + Ps_*fvc::div(phi_)
     );
-
-    //- Add collisional viscosity terms
-    if (this->includeViscosity())
-    {
-        tmp<volTensorField> tgradU
-        (
-            fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
-        );
-        const volTensorField& gradU(tgradU());
-        volSymmTensorField D(symm(gradU));
-
-        //- Do not include stress for small volume fractions
-        volSymmTensorField tauMC
-        (
-            kineticTheoryModel::devRhoReff()*pos((*this) - 1e-4)
-        );
-        volSymmTensorField tau
-        (
-            rho_
-           *(
-                2*this->nut_*D
-              + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
-            )
-        );
-        deltaAlphaRhoU +=
-            fvc::div
-            (
-                fluxScheme_->interpolate
-                (
-                    tauMC,
-                    IOobject::groupName("tauMC", this->name_)
-                ) & rho_.mesh().Sf()
-            );
-        deltaAlphaRhoPTE -=
-            ((tau*(*this)) && gradU)
-          + fvc::laplacian(this->kappa_, Theta_);
-    }
 
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
@@ -204,7 +172,59 @@ void Foam::granularPhaseModel::solve()
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    phaseModel::postUpdate();
+    volScalarField alphaRho(alphaRho_);
+    alphaRho.max(small);
+    if (alphaRho0_.valid())
+    {
+        alphaRho.oldTime() = alphaRho0_;
+    }
+
+    //- Add collisional viscosity terms
+    if (this->includeViscosity())
+    {
+        tmp<volTensorField> tgradU
+        (
+            fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+        );
+        const volTensorField& gradU(tgradU());
+        volSymmTensorField D(symm(gradU));
+
+        volSymmTensorField tau
+        (
+            rho_
+           *(
+                2.0*this->nut_*D
+              + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
+            )
+        );
+
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alphaRho, U_)
+          - fvc::ddt(alphaRho, U_)
+          + this->divDevRhoReff(U_)
+        );
+        fvScalarMatrix ThetaEqn
+        (
+            1.5
+           *(
+                fvm::ddt(alphaRho, Theta_)
+              - fvc::ddt(alphaRho, Theta_)
+            )
+          - fvc::laplacian(this->kappa_, Theta_)
+         ==
+            ((tau*(*this)) && gradU)
+        );
+
+        UEqn.relax();
+        UEqn.solve();
+        ThetaEqn.solve();
+
+        alphaRhoU_ =  alphaRho_*U_;
+        alphaRhoPTE_ =  alphaRho_*1.5*Theta_;
+
+    }
+
     thermo_->postUpdate();
 }
 

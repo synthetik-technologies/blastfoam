@@ -31,6 +31,7 @@ gradSchemes
 divSchemes
 {
     default         none;
+    div(alphaRhoPhi.c4,lambda.c4) Riemann;
     div(alphaRhoPhi.c4,c.c4) Riemann;
 }
 
@@ -48,6 +49,8 @@ interpolationSchemes
     reconstruct(e)      Minmod;
     reconstruct(p)      Minmod;
     reconstruct(speedOfSound)      Minmod;
+
+    reconstruct(lambda.c4)   Minmod;
 
     // Afterburn reaction progress variable
     reconstruct(c.c4)   Minmod;

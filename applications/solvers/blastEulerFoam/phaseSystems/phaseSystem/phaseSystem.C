@@ -896,15 +896,13 @@ void Foam::phaseSystem::solve()
 
 void Foam::phaseSystem::postUpdate()
 {
-    const dimensionedScalar& deltaT(mesh_.time().deltaT());
-
+    decode();
     forAll(phaseModels_, phasei)
     {
         phaseModels_[phasei].postUpdate();
     }
 
-    decode();
-
+    const dimensionedScalar& deltaT(mesh_.time().deltaT());
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
 }

@@ -31,8 +31,9 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(tauMC)      Gauss linear;
+    div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
     div(alphaRhoPhi.tnt,lambda.tnt) Riemann;
+    div(alphaRhoPhi.RDX,lambda.RDX) Riemann
     div(rhoPhi,k)   Riemann;
     div(rhoPhi,epsilon) Riemann;
 }

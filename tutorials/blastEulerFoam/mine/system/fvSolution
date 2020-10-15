@@ -17,26 +17,26 @@ FoamFile
 
 solvers
 {
-    "(rho|rhoU|rhoE|alpha|.*)"
+    "(rho|rhoU|rhoE|alpha)"
     {
         solver          diagonal;
     }
 
-    // U
-    // {
-    //     solver          smoothSolver;
-    //     smoother        GaussSeidel;
-    //     nSweeps         3; // 2;
-    //     tolerance       1e-09;
-    //     relTol          0.01;
-    // }
-    //
-    // h
-    // {
-    //     $U;
-    //     tolerance       1e-10;
-    //     relTol          0;
-    // }
+    "(U|e).*"
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        minIter         1;
+        tolerance       1e-09;
+        relTol          0;
+    }
+
+    "Theta.*"
+    {
+        $U;
+        tolerance       1e-10;
+        relTol          0;
+    }
 }
 
 

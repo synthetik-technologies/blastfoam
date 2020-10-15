@@ -262,6 +262,11 @@ void Foam::phaseModel::solveAlphaRho()
 
 void Foam::phaseModel::solve()
 {
+    if (this->step() == 1)
+    {
+        alphaRho0_ = tmp<volScalarField>(new volScalarField(alphaRho_));
+    }
+
     // Transport volume fraction if required
     if (solveAlpha_)
     {
@@ -311,23 +316,6 @@ void Foam::phaseModel::solve()
             deltaAlphaRhoE += p()*fvc::div(phase.alphaPhi());
         }
     }
-    if (turbulence_.valid())
-    {
-        volSymmTensorField dRR(turbulence_->devRhoReff());
-        deltaAlphaRhoU +=
-            fvc::div
-            (
-                dRR,
-                "div(" + IOobject::groupName("tauMC", name_) + ')'
-            );
-        deltaAlphaRhoE +=
-            fvc::div
-            (
-                dRR & U_,
-                "div(" + IOobject::groupName("tauMC", name_) + ')'
-            )
-          - fvc::laplacian((*this)*turbulence_->alphaEff(), e());
-    }
 
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
@@ -345,7 +333,34 @@ void Foam::phaseModel::solve()
 
 
 void Foam::phaseModel::postUpdate()
-{}
+{
+    volScalarField alphaRho(alphaRho_);
+    alphaRho.max(small);
+    if (alphaRho0_.valid())
+    {
+        alphaRho.oldTime() = alphaRho0_;
+    }
+
+    if (turbulence_.valid())
+    {
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alphaRho, U_) - fvc::ddt(alphaRho, U_)
+          + turbulence_->divDevRhoReff(U_)
+        );
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alphaRho, e_) - fvc::ddt(alphaRho, e_)
+          - fvm::laplacian(turbulence_->alphaEff(), e_)
+        );
+
+        UEqn.solve();
+        eEqn.solve();
+
+        alphaRhoU_ = alphaRho_*U_;
+        alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
+    }
+}
 
 void Foam::phaseModel::clearODEFields()
 {

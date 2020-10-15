@@ -26,11 +26,14 @@ tnt
         {
             transport   const;
             thermo      eConst;
-            equationOfState idealGas;
+            equationOfState Murnaghan;
         }
         equationOfState
         {
-            gamma           1.29;
+            rho0            1630;
+            Gamma           0.29;
+            K0              0.0;
+            pRef            101325;
         }
         specie
         {

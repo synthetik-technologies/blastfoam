@@ -255,7 +255,7 @@ kineticTheory
     residualAlpha       1e-6;
 
     radialModel SinclairJackson;
-    viscosityModel none;
+    viscosityModel Syamlal;
     conductivityModel Syamlal;
     granularPressureModel Lun;
     frictionalStressModel JohnsonJackson;

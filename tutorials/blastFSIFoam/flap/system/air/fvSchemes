@@ -24,9 +24,8 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(tauMC)      Gauss linear;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
-    div(devRhoReff) Gauss linear;
+    div(alphaRhoPhi.c4,lambda.c4) Riemann;
 }
 
 laplacianSchemes

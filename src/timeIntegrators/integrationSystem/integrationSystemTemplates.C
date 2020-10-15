@@ -72,12 +72,65 @@ void Foam::integrationSystem::storeDelta
 }
 
 
-template<class fieldType>
+template<class Type>
+void Foam::integrationSystem::storeOld
+(
+    Type& f,
+    List<Type>& fList,
+    const bool
+) const
+{
+    // Store fields if needed later
+    if (oldIs_[step() - 1] != -1)
+    {
+        fList[oldIs_[step() - 1]] = f;
+    }
+}
+
+
+template<class Type>
+void Foam::integrationSystem::storeDelta
+(
+    const Type& f,
+    List<Type>& fList
+) const
+{
+    // Store fields if needed later
+    if (deltaIs_[step() - 1] != -1)
+    {
+        fList[deltaIs_[step() - 1]] = f;
+    }
+}
+
+
+template<template<class> class ListType, class Type>
+void Foam::integrationSystem::blendOld
+(
+    Type& f,
+    const ListType<Type>& fList
+) const
+{
+    blendSteps(oldIs_, f, fList, a());
+}
+
+
+template<template<class> class ListType, class Type>
+void Foam::integrationSystem::blendDelta
+(
+    Type& f,
+    const ListType<Type>& fList
+) const
+{
+    blendSteps(deltaIs_, f, fList, b());
+}
+
+
+template<template<class> class ListType, class Type>
 void Foam::integrationSystem::blendSteps
 (
     const labelList& indices,
-    fieldType& f,
-    const PtrList<fieldType>& fList,
+    Type& f,
+    const ListType<Type>& fList,
     const scalarList& scales
 ) const
 {
@@ -94,33 +147,11 @@ void Foam::integrationSystem::blendSteps
 }
 
 
-template<class fieldType>
-void Foam::integrationSystem::blendOld
-(
-    fieldType& f,
-    const PtrList<fieldType>& fList
-) const
-{
-    blendSteps(oldIs_, f, fList, a());
-}
-
-
-template<class fieldType>
-void Foam::integrationSystem::blendDelta
-(
-    fieldType& f,
-    const PtrList<fieldType>& fList
-) const
-{
-    blendSteps(deltaIs_, f, fList, b());
-}
-
-
-template<class fieldType>
+template<template<class> class ListType, class Type>
 void Foam::integrationSystem::storeAndBlendOld
 (
-    fieldType& f,
-    PtrList<fieldType>& fList,
+    Type& f,
+    ListType<Type>& fList,
     const bool moving
 ) const
 {
@@ -129,11 +160,12 @@ void Foam::integrationSystem::storeAndBlendOld
 }
 
 
-template<class fieldType>
+
+template<template<class> class ListType, class Type>
 void Foam::integrationSystem::storeAndBlendDelta
 (
-    fieldType& f,
-    PtrList<fieldType>& fList
+    Type& f,
+    ListType<Type>& fList
 ) const
 {
     storeDelta(f, fList);
