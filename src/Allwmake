@@ -15,6 +15,9 @@ wmake $targetType dynamicMesh
 wmake $targetType decompositionMethods
 wmake $targetType errorEstimators
 wmake $targetType dynamicFvMesh
+
+wmake $targetType lagrangian/basic
+
 wmake $targetType sampling
 
 lagrangian/Allwmake $targetType $*

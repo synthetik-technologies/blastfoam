@@ -27,7 +27,7 @@ solvers
         solver          PBiCGStab;
         preconditioner  DIC;
         minIter         1;
-        tolerance       1e-09;
+        tolerance       1e-10;
         relTol          0;
     }
 

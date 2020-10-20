@@ -343,6 +343,9 @@ public:
             return rhoEPhi_;
         }
 
+        //- Return the maximum Courant number
+        virtual scalar maxCo() const;
+
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;
 };

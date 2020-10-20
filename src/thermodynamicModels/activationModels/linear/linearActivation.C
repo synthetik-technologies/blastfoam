@@ -78,6 +78,7 @@ Foam::activationModels::linearActivation::linearActivation
             }
         }
     }
+    lambda_ = 1.0;
 }
 
 
@@ -89,40 +90,36 @@ Foam::activationModels::linearActivation::~linearActivation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::activationModels::linearActivation::delta() const
+void Foam::activationModels::linearActivation::solve()
 {
-    tmp<volScalarField> deltaLambdaTmp
+    lambda_.ref() = pos0(this->time() - tIgn_);
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::linearActivation::ddtLambda() const
+{
+    return tmp<volScalarField>
     (
         new volScalarField
         (
             IOobject
             (
-                "deltaLambda",
-                mesh_.time().timeName(),
-                mesh_,
+                "linearActivation:ddtLambda",
+                lambda_.time().timeName(),
+                lambda_.mesh(),
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 false
             ),
-            mesh_,
-            dimensionedScalar("zero", inv(dimTime), 0.0)
+            lambda_.mesh(),
+            dimensionedScalar
+            (
+                "ESource",
+                inv(dimTime),
+                0.0
+            )
         )
     );
-    volScalarField& deltaLambda = deltaLambdaTmp.ref();
-
-    dimensionedScalar dt(lambda_.time().deltaT());
-    dimensionedScalar t(lambda_.time());
-
-    forAll(lambda_, celli)
-    {
-        if (t.value() > tIgn_[celli])
-        {
-            deltaLambda[celli] = (1.0 - lambda_.oldTime()[celli])/dt.value();
-        }
-    }
-
-    return deltaLambdaTmp;
 }
-
 // ************************************************************************* //

@@ -106,6 +106,8 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
             }
         }
     }
+
+    lambda_ = 1.0;
 }
 
 
@@ -117,33 +119,12 @@ Foam::activationModels::programmedIgnitionActivation::~programmedIgnitionActivat
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::activationModels::programmedIgnitionActivation::delta() const
+void Foam::activationModels::programmedIgnitionActivation::solve()
 {
-    tmp<volScalarField> deltaLambdaTmp
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "deltaLambda",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedScalar("zero", inv(dimTime), 0.0)
-        )
-    );
-    volScalarField& deltaLambda = deltaLambdaTmp.ref();
-
     const cellList& cells = mesh_.cells();
     const scalarField Sf(mag(mesh_.faceAreas()));
 
-    dimensionedScalar dt(lambda_.time().deltaT());
-    dimensionedScalar t(lambda_.time());
+    dimensionedScalar t(this->time());
 
     forAll(lambda_, celli)
     {
@@ -170,14 +151,37 @@ Foam::activationModels::programmedIgnitionActivation::delta() const
                 *vDet_.value()/(1.5*edgeLength);
         }
 
-        deltaLambda[celli] =
-            (
-                min(max(lambdaBeta, lambdaProgram), 1.0)
-              - lambda_[celli]
-            )/dt.value();
+        lambda_[celli] = min(max(lambdaBeta, lambdaProgram), 1.0);
     }
-
-    return deltaLambdaTmp;
 }
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::programmedIgnitionActivation::ddtLambda() const
+{
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "programmedIgnitionActivation:ddtLambda",
+                lambda_.time().timeName(),
+                lambda_.mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            lambda_.mesh(),
+            dimensionedScalar
+            (
+                "ESource",
+                inv(dimTime),
+                0.0
+            )
+        )
+    );
+}
+
 
 // ************************************************************************* //

@@ -115,7 +115,7 @@ Foam::scalar Foam::functionObjects::writeTimeList::timeToNextWrite()
 
 bool Foam::functionObjects::writeTimeList::write()
 {
-    if (mag(this->timeToNextWrite()) < small)
+    if (mag(this->timeToNextWrite()) == 0)
     {
         Time& time(const_cast<Time&>(time_));
         time.writeNow();

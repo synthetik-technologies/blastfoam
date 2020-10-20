@@ -27,6 +27,7 @@ License
 #include "blastCompressibleTurbulenceModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
+#include "wedgeFvPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -452,6 +453,31 @@ Foam::blast::turbulenceModel&
 Foam::phaseCompressibleSystem::turbulence()
 {
     return turbulence_();
+}
+
+
+Foam::scalar Foam::phaseCompressibleSystem::maxCo() const
+{
+    surfaceScalarField amaxSf
+    (
+        fvc::interpolate(speedOfSound())*mesh_.magSf()
+    );
+    // Remove wave speed from wedge boundaries
+    forAll(amaxSf.boundaryField(), patchi)
+    {
+        if (isA<wedgeFvPatch>(mesh_.boundary()[patchi]))
+        {
+            amaxSf.boundaryFieldRef() = Zero;
+        }
+    }
+    amaxSf += mag(phi_);
+
+    scalarField sumAmaxSf
+    (
+        fvc::surfaceSum(amaxSf)().primitiveField()
+    );
+
+    return 0.5*gMax(sumAmaxSf/mesh_.V().field())*mesh_.time().deltaTValue();
 }
 
 

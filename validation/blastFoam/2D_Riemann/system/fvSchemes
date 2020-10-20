@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      AUSM+;
+fluxScheme      HLLC;
 
 ddtSchemes
 {
@@ -41,11 +41,11 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(rho)    Minmod;
-    reconstruct(U)      MinmodV;
-    reconstruct(e)      Minmod;
-    reconstruct(p)      Minmod;
-    reconstruct(speedOfSound)      Minmod;
+    reconstruct(rho)    quadraticMUSCL Minmod;
+    reconstruct(U)      quadraticMUSCL Minmod;
+    reconstruct(e)      quadraticMUSCL Minmod;
+    reconstruct(p)      quadraticMUSCL Minmod;
+    reconstruct(speedOfSound)      quadraticMUSCL Minmod;
 }
 
 snGradSchemes

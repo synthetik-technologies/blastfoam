@@ -22,17 +22,17 @@ nz  -0.2180969368;
 vertices
 (
     // this domain is slightly larger than the bounds of the geometry in the stl
-    (0 -2.5 0)
-    ($x -2.5 $nz)
+    (0 -5 0)
+    ($x -5 $nz)
     ($x 5  $nz)
     (0  5  0)
-    ($x -2.5 $z)
+    ($x -5 $z)
     ($x 5  $z)
 );
 
 blocks
 (
-	 hex (0 1 2 3 0 4 5 3) (50 75 1) simpleGrading (1 1 1) // control refinement of background mesh here
+	 hex (0 1 2 3 0 4 5 3) (50 100 1) simpleGrading (1 1 1) // control refinement of background mesh here
 	// this is the coarsest element in the mesh, is "level 0" in refinement; make this is "fine enough"
 );
 

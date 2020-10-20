@@ -62,7 +62,11 @@ class linearActivation
         volScalarField::Internal tIgn_;
 
         //- Return the time rate of chage of lambda
-        virtual tmp<volScalarField> delta() const;
+        virtual tmp<volScalarField> delta() const
+        {
+            NotImplemented;
+            return lambda_;
+        }
 
         //- Do detonation points need to be specified
         virtual bool needDetonationPoints() const
@@ -88,6 +92,13 @@ public:
 
     //- Destructor
     virtual ~linearActivation();
+
+
+        //- Solve sub-step stepi
+        virtual void solve();
+
+        //- Return the detonation energy
+        virtual tmp<volScalarField> ddtLambda() const;
 };
 
 
