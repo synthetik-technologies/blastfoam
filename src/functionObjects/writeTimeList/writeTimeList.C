@@ -50,22 +50,10 @@ Foam::functionObjects::writeTimeList::writeTimeList
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    writeTimes_(dict.lookup("times")),
+    writeTimes_(),
     index_(0)
 {
-    writeTimes_.append(great);
-    SortableList<scalar> sortedTimes(writeTimes_);
-    sortedTimes.sort();
-    writeTimes_ = sortedTimes;
-
-    forAll(writeTimes_, ti)
-    {
-        if (writeTimes_[ti] > runTime.value())
-        {
-            index_ = ti;
-            break;
-        }
-    }
+    read(dict);
 }
 
 
@@ -84,10 +72,24 @@ bool Foam::functionObjects::writeTimeList::read
 {
     writeTimes_ = dict.lookupType<scalarList>("times");
     writeTimes_.append(great);
-    SortableList<scalar> sortedTimes(writeTimes_);
-    sortedTimes.sort();
-    writeTimes_ = sortedTimes;
 
+    // Sort times from smallest to largest
+    scalarList sortedTimes(writeTimes_);
+    sort(sortedTimes);
+
+    // Remove duplicate entries
+    label j = 0;
+    forAll(sortedTimes, i)
+    {
+        while (sortedTimes[i] == sortedTimes[i+1])
+        {
+            i++;
+        }
+        writeTimes_[j++] = sortedTimes[i];
+    }
+    writeTimes_.resize(j);
+
+    // Get current location
     forAll(writeTimes_, ti)
     {
         if (writeTimes_[ti] > obr_.time().value())
