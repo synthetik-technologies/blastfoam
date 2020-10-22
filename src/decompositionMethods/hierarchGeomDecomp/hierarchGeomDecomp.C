@@ -46,7 +46,7 @@ namespace Foam
 
 void Foam::hierarchGeomDecomp::setDecompOrder()
 {
-    const word order(geomDecomDict_.lookup("order"));
+    const word order(geomDecomDict_.lookupType<word>("order"));
 
     if (order.size() != 3)
     {

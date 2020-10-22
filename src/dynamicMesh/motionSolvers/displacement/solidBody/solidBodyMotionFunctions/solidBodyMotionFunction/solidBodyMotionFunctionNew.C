@@ -33,7 +33,10 @@ Foam::autoPtr<Foam::solidBodyMotionFunction> Foam::solidBodyMotionFunction::New
     const Time& runTime
 )
 {
-    const word motionType(SBMFCoeffs.lookup("solidBodyMotionFunction"));
+    const word motionType
+    (
+        SBMFCoeffs.lookupType<word>("solidBodyMotionFunction")
+    );
 
     Info<< "Selecting solid-body motion function " << motionType << endl;
 

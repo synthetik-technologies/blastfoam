@@ -81,7 +81,7 @@ Foam::decompositionMethod::decompositionMethod
         {
             const dictionary& dict = iter().dict();
 
-            constraintTypes_.append(dict.lookup("type"));
+            constraintTypes_.append(dict.lookupType<word>("type"));
 
             constraints_.append
             (
@@ -181,7 +181,7 @@ Foam::autoPtr<Foam::decompositionMethod> Foam::decompositionMethod::New
 {
     Pout << " Foam::decompositionMethod::New " << decompositionDict << endl;
 
-    const word methodType(decompositionDict.lookup("method"));
+    const word methodType(decompositionDict.lookupType<word>("method"));
 
     Pout<< "Selecting decompositionMethod " << methodType << endl;
 

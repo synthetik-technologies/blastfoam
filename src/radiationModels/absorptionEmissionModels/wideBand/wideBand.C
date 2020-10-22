@@ -104,7 +104,7 @@ Foam::radiationModels::absorptionEmissionModels::wideBand::wideBand
 
     if (coeffsDict_.found("lookUpTableFileName"))
     {
-        const word name = coeffsDict_.lookup("lookUpTableFileName");
+        const word name(coeffsDict_.lookupType<word>("lookUpTableFileName"));
         if (name != "none")
         {
             lookUpTablePtr_.set

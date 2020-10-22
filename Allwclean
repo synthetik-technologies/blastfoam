@@ -1,8 +1,9 @@
 #!/bin/sh
-cd ${0%/*} || exit 1    # run from this directory
-set -x
+cd "${0%/*}" || exit                                # Run from this directory
+#------------------------------------------------------------------------------
 
-(cd src && ./Allwclean)
-(cd applications && wclean all)
+src/Allwclean
 
-# ----------------------------------------------------------------- end-of-file
+wclean all applications
+
+#------------------------------------------------------------------------------
