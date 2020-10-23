@@ -77,20 +77,23 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 void Foam::singlePhaseCompressibleSystem::solve()
 {
-    phaseCompressibleSystem::solve();
-
-    volScalarField rhoOld(rho_);
-    this->storeAndBlendOld(rhoOld, rhoOld_);
-
+    if (this->step() == 1)
+    {
+        rho_.storeOldTime();
+    }
     volScalarField deltaRho(fvc::div(rhoPhi_));
     this->storeAndBlendDelta(deltaRho, deltaRho_);
 
     dimensionedScalar dT = rho_.time().deltaT();
-    rho_.oldTime() = rhoOld;
-    rho_ = rhoOld - dT*deltaRho;
+    this->storeAndBlendOld(rho_, rhoOld_);
+    rho_.storePrevIter();
+
+    rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
     thermo_->solve();
+
+    phaseCompressibleSystem::solve();
 }
 
 

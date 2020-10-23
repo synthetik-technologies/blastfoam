@@ -248,53 +248,38 @@ void Foam::phaseModel::solveAlpha(const bool s)
 
 void Foam::phaseModel::solveAlphaRho()
 {
-    volScalarField alphaRhoOld(alphaRho_);
-    this->storeAndBlendOld(alphaRhoOld, alphaRhoOld_);
-
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRho_);
 
-    alphaRho_.oldTime() = alphaRhoOld;
-    alphaRho_ = alphaRhoOld - this->mesh().time().deltaT()*deltaAlphaRho;
+    this->storeAndBlendOld(alphaRho_, alphaRhoOld_);
+    alphaRho_.storePrevIter();
+
+    alphaRho_ -= this->mesh().time().deltaT()*deltaAlphaRho;
     alphaRho_.max(0);
 }
 
 
 void Foam::phaseModel::solve()
 {
-    if (this->step() == 1)
-    {
-        alphaRho0_ = tmp<volScalarField>(new volScalarField(alphaRho_));
-    }
+    dimensionedScalar dT = rho().time().deltaT();
+    vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
 
     // Transport volume fraction if required
     if (solveAlpha_)
     {
         volScalarField& alpha = *this;
-        volScalarField alphaOld(alpha);
-        this->storeAndBlendOld(alphaOld, alphaOld_);
-
         volScalarField deltaAlpha
         (
             fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
         );
-
         this->storeAndBlendDelta(deltaAlpha, deltaAlpha_);
 
-
-        dimensionedScalar dT = rho().time().deltaT();
-
-        alpha = alphaOld - dT*(deltaAlpha);
+        this->storeAndBlendOld(alpha, alphaOld_);
+        alpha -= dT*(deltaAlpha);
         alpha.max(0);
         alpha.min(alphaMax_);
         alpha.correctBoundaryConditions();
     }
-
-    volVectorField alphaRhoUOld(alphaRhoU_);
-    volScalarField alphaRhoEOld(alphaRhoE_);
-
-    this->storeAndBlendOld(alphaRhoUOld, alphaRhoUOld_);
-    this->storeAndBlendOld(alphaRhoEOld, alphaRhoEOld_);
 
     volVectorField deltaAlphaRhoU
     (
@@ -320,12 +305,12 @@ void Foam::phaseModel::solve()
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
 
-    dimensionedScalar dT = this->mesh().time().deltaT();
-    vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
 
-    alphaRhoU_ =
-        cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
-    alphaRhoE_ = alphaRhoEOld - dT*deltaAlphaRhoE;
+    this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
+    this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
+
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoE_ -= dT*deltaAlphaRhoE;
 
     //- Update diameterModel
     dPtr_->solve();
@@ -334,23 +319,16 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
-    volScalarField alphaRho(alphaRho_);
-    alphaRho.max(small);
-    if (alphaRho0_.valid())
-    {
-        alphaRho.oldTime() = alphaRho0_;
-    }
-
     if (turbulence_.valid())
     {
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho, U_) - fvc::ddt(alphaRho, U_)
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
           + turbulence_->divDevRhoReff(U_)
         );
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho, e_) - fvc::ddt(alphaRho, e_)
+            fvm::ddt(alphaRho_, e_) - fvc::ddt(alphaRho_, e_)
           - fvm::laplacian(turbulence_->alphaEff(), e_)
         );
 

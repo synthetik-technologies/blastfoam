@@ -34,7 +34,7 @@ c4
             n               7.4;
             kappa           3.9e11;
             Gamma           0.35;
-            pRef            101298;
+            pRef            0.90530979e5;
         }
         specie
         {

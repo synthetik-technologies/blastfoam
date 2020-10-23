@@ -109,19 +109,6 @@ Foam::granularPhaseModel::~granularPhaseModel()
 
 void Foam::granularPhaseModel::solve()
 {
-    if (this->step() == 1)
-    {
-        alphaRho0_ = tmp<volScalarField>(new volScalarField(alphaRho_));
-    }
-
-    volVectorField alphaRhoUOld(alphaRhoU_);
-    volScalarField alphaRhoEOld(alphaRhoE_);
-    volScalarField alphaRhoPTEOld(alphaRhoPTE_);
-
-    this->storeAndBlendOld(alphaRhoUOld, alphaRhoUOld_);
-    this->storeAndBlendOld(alphaRhoEOld, alphaRhoEOld_);
-    this->storeAndBlendOld(alphaRhoPTEOld, alphaRhoPTEOld_);
-
     volVectorField deltaAlphaRhoU
     (
         fvc::div(alphaRhoUPhi_)
@@ -152,33 +139,27 @@ void Foam::granularPhaseModel::solve()
 
     phaseModel::solveAlphaRho();
 
-    alphaRho_.max(0);
-    alphaRhoU_ = cmptMultiply(alphaRhoUOld - dT*deltaAlphaRhoU, solutionDs);
-    alphaRhoPTE_ = alphaRhoPTEOld - dT*(deltaAlphaRhoPTE);
+    this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
+    this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
 
     thermo_->solve();
 
     volScalarField deltaAlphaRhoE
     (
-        fvc::div(alphaRhoEPhi_)
-      - ESource()
+        fvc::div(alphaRhoEPhi_) - ESource()
     );
 
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
+    this->storeAndBlendOld(alphaRhoPTE_, alphaRhoPTEOld_);
 
-    alphaRhoE_ = alphaRhoEOld - dT*(deltaAlphaRhoE);
+    alphaRhoE_ -= dT*(deltaAlphaRhoE);
 }
 
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    volScalarField alphaRho(alphaRho_);
-    alphaRho.max(small);
-    if (alphaRho0_.valid())
-    {
-        alphaRho.oldTime() = alphaRho0_;
-    }
-
     //- Add collisional viscosity terms
     if (this->includeViscosity())
     {
@@ -200,16 +181,16 @@ void Foam::granularPhaseModel::postUpdate()
 
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho, U_)
-          - fvc::ddt(alphaRho, U_)
+            fvm::ddt(alphaRho_, U_)
+          - fvc::ddt(alphaRho_, U_)
           + this->divDevRhoReff(U_)
         );
         fvScalarMatrix ThetaEqn
         (
             1.5
            *(
-                fvm::ddt(alphaRho, Theta_)
-              - fvc::ddt(alphaRho, Theta_)
+                fvm::ddt(alphaRho_, Theta_)
+              - fvc::ddt(alphaRho_, Theta_)
             )
           - fvc::laplacian(this->kappa_, Theta_)
          ==

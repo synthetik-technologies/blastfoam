@@ -251,18 +251,6 @@ Foam::phaseCompressibleSystem::~phaseCompressibleSystem()
 
 void Foam::phaseCompressibleSystem::solve()
 {
-    if (step() == 1)
-    {
-        rhoOldTmp_ = tmp<volScalarField>(new volScalarField(rho_));
-    }
-
-    volVectorField rhoUOld(rhoU_);
-    volScalarField rhoEOld(rhoE_);
-
-    //- Store old values
-    this->storeAndBlendOld(rhoUOld, rhoUOld_);
-    this->storeAndBlendOld(rhoEOld, rhoEOld_);
-
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU
     (
@@ -276,6 +264,10 @@ void Foam::phaseCompressibleSystem::solve()
       - (rhoU_ & g_)
     );
 
+    //- Store old values
+    this->storeAndBlendOld(rhoU_, rhoUOld_);
+    this->storeAndBlendOld(rhoE_, rhoEOld_);
+
     //- Store changed in momentum and energy
     this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
     this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
@@ -283,8 +275,8 @@ void Foam::phaseCompressibleSystem::solve()
     //- Solve for momentum and energy
     dimensionedScalar dT = rho_.time().deltaT();
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
-    rhoE_ = rhoEOld - dT*deltaRhoE;
+    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
+    rhoE_ -= dT*deltaRhoE;
     Info<< "energy: "
         << sum(rhoE_()*rho_.mesh().V()).value()<<endl;
 }
@@ -322,8 +314,6 @@ void Foam::phaseCompressibleSystem::postUpdate()
      || turbulence_.valid()
     )
     {
-        rho_.oldTime() = rhoOldTmp_();
-
         fvVectorMatrix UEqn
         (
             fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
@@ -377,11 +367,6 @@ void Foam::phaseCompressibleSystem::clearODEFields()
 
     extESource_.clear();
     dragSource_.clear();
-
-    if (rhoOldTmp_.valid())
-    {
-        rhoOldTmp_.clear();
-    }
 }
 
 

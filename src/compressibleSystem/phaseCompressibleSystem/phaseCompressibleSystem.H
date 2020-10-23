@@ -113,9 +113,6 @@ protected:
 
     // ODE variables
 
-        //- Stored value of rhoOld
-        tmp<volScalarField> rhoOldTmp_;
-
         //- Old values for ode solver
         PtrList<volVectorField> rhoUOld_;
         PtrList<volScalarField> rhoEOld_;

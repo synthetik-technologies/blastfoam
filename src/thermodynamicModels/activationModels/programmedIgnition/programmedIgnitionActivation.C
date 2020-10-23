@@ -153,6 +153,14 @@ void Foam::activationModels::programmedIgnitionActivation::solve()
 
         lambda_[celli] = min(max(lambdaBeta, lambdaProgram), 1.0);
     }
+    forAll(this->detonationPoints_, pointi)
+    {
+        this->detonationPoints_[pointi].setActivated
+        (
+            lambda_,
+            this->finalStep()
+        );
+    }
 }
 
 

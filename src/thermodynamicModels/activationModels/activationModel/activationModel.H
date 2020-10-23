@@ -65,7 +65,7 @@ protected:
             public vector
         {
             //- Has this point been activated
-            bool activated_;
+            mutable bool activated_;
 
             //- Delay time
             scalar delay_;
@@ -103,13 +103,17 @@ protected:
                     return delay_;
                 }
 
-                //- Set activated cells
+                //- Set activated cells by adding to the time rate of change
+                //  of lambda
                 void setActivated
                 (
                     volScalarField&,
                     const volScalarField&,
                     bool update
-                );
+                ) const;
+
+                //- Set activated cells by setting lambda
+                void setActivated(volScalarField&, bool update) const;
         };
 
 

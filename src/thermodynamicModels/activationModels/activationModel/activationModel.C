@@ -93,7 +93,7 @@ void Foam::activationModel::detonationPoint::setActivated
     volScalarField& deltaLambda,
     const volScalarField& lambdaOld,
     const bool update
-)
+) const
 {
     const scalar& t = lambdaOld.time().value();
     const scalar& dt = lambdaOld.time().deltaTValue();
@@ -122,6 +122,53 @@ void Foam::activationModel::detonationPoint::setActivated
         if (celli >= 0)
         {
             deltaLambda[celli] = (1.0 - lambdaOld[celli])/dt;
+            nCells++;
+        }
+    }
+    if (returnReduce(nCells, sumOp<label>()) == 0)
+    {
+        WarningInFunction
+            << "No cells were activated using the "
+            << "detonation point " << *this << endl;
+    }
+    if (update)
+    {
+        activated_ = true;
+    }
+}
+
+void Foam::activationModel::detonationPoint::setActivated
+(
+    volScalarField& lambda,
+    const bool update
+) const
+{
+    const scalar& t = lambda.time().value();
+    if (activated_ || t < delay_)
+    {
+        return;
+    }
+    Info<<"activating point " << *this << endl;
+
+    const fvMesh& mesh = lambda.mesh();
+    label nCells = 0;
+    if (radius_ > small)
+    {
+        forAll(mesh.C(), celli)
+        {
+            if (mag(mesh.C()[celli] - *this) < radius_)
+            {
+                lambda[celli] = 1.0;
+                nCells++;
+            }
+        }
+    }
+    else
+    {
+        label celli = mesh.findCell(*this);
+        if (celli >= 0)
+        {
+            lambda[celli] = 1.0;
             nCells++;
         }
     }
@@ -319,7 +366,15 @@ Foam::vector Foam::activationModel::centerOfMass
 {
     scalarField Vtot(mesh.V()*alpha.primitiveField());
     vectorField m1(Vtot*mesh.C().primitiveField());
-    return gSum(m1)/gSum(Vtot);
+    scalar V(gSum(Vtot));
+    if (V < small)
+    {
+        FatalErrorInFunction
+            << "No mass was found at the center of mass" << endl
+            <<abort(FatalError);
+    }
+
+    return gSum(m1)/V;
 }
 
 

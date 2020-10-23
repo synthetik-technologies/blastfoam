@@ -221,16 +221,6 @@ Foam::multicomponentPhaseModel::~multicomponentPhaseModel()
 
 void Foam::multicomponentPhaseModel::solve()
 {
-    PtrList<volScalarField> YsOld(Ys_.size());
-    forAll(Ys_, i)
-    {
-        YsOld.set
-        (
-            i, new volScalarField(Ys_[i])
-        );
-        this->storeAndBlendOld(YsOld[i], YsOld_[i]);
-    }
-
     PtrList<volScalarField> deltaAlphaRhoYs(Ys_.size());
     forAll(Ys_, i)
     {
@@ -239,11 +229,7 @@ void Foam::multicomponentPhaseModel::solve()
             i,
             new volScalarField(fvc::div(alphaRhoYPhis_[i]))
         );
-        this->storeAndBlendDelta
-        (
-            deltaAlphaRhoYs[i],
-            deltaAlphaRhoYs_[i]
-        );
+
     }
 
     phaseModel::solveAlphaRho();
@@ -252,11 +238,15 @@ void Foam::multicomponentPhaseModel::solve()
 
     forAll(Ys_, i)
     {
+        volScalarField deltaAlphaRhoY(fvc::div(alphaRhoYPhis_[i]));
+        this->storeAndBlendDelta(deltaAlphaRhoY, deltaAlphaRhoYs_[i]);
+        this->storeAndBlendOld(Ys_[i], YsOld_[i]);
         Ys_[i] =
-            (this->alphaRho_.oldTime()*YsOld[i] - dT*deltaAlphaRhoYs[i])
-          /(Foam::max(this->alphaRho_, residualAlphaRho()));
+            (
+                this->alphaRho_.prevIter()*Ys_[i]   // Old time
+              - dT*deltaAlphaRhoY                   // Add change
+            )/(Foam::max(this->alphaRho_, residualAlphaRho()));
         Ys_[i].correctBoundaryConditions();
-
         thermos_[i].solve();
     }
 

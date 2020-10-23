@@ -58,6 +58,9 @@ class linearActivation
         //- Detonation velocity
         dimensionedScalar vDet_;
 
+        //- Reference density
+        dimensionedScalar rho0_;
+
         //- Ignition time
         volScalarField::Internal tIgn_;
 
@@ -94,10 +97,12 @@ public:
     virtual ~linearActivation();
 
 
+    // Member Functions
+
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Return the detonation energy
+        //- Return energy source
         virtual tmp<volScalarField> ddtLambda() const;
 };
 

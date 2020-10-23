@@ -131,32 +131,9 @@ Foam::multiphaseCompressibleSystem::~multiphaseCompressibleSystem()
 
 void Foam::multiphaseCompressibleSystem::solve()
 {
-    PtrList<volScalarField> alphasOld(alphas_.size());
-    PtrList<volScalarField> alphaRhosOld(alphas_.size());
-
-    forAll(alphas_, phasei)
-    {
-        alphasOld.set
-        (
-            phasei, new volScalarField(alphas_[phasei])
-        );
-        this->storeAndBlendOld(alphasOld[phasei], alphasOld_[phasei]);
-
-        alphaRhosOld.set
-        (
-            phasei, new volScalarField(alphaRhos_[phasei])
-        );
-        this->storeAndBlendOld(alphaRhosOld[phasei], alphaRhosOld_[phasei]);
-    }
-
-    rho_.oldTime() = alphaRhosOld[0];
-    for (label i = 1; i < alphaRhosOld.size(); i++)
-    {
-        rho_.oldTime() += alphaRhosOld[i];
-    }
-
     PtrList<volScalarField> deltaAlphas(alphas_.size());
     PtrList<volScalarField> deltaAlphaRhos(alphas_.size());
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
     forAll(alphas_, phasei)
     {
         deltaAlphas.set
@@ -169,6 +146,7 @@ void Foam::multiphaseCompressibleSystem::solve()
             )
         );
         this->storeAndBlendDelta(deltaAlphas[phasei], deltaAlphas_[phasei]);
+        this->storeAndBlendOld(alphas_[phasei], alphasOld_[phasei]);
 
         deltaAlphaRhos.set
         (
@@ -179,18 +157,23 @@ void Foam::multiphaseCompressibleSystem::solve()
             deltaAlphaRhos[phasei],
             deltaAlphaRhos_[phasei]
         );
+        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
+        rho_ += alphaRhos_[phasei];
     }
+    rho_.storePrevIter();
 
     dimensionedScalar dT = rho_.time().deltaT();
-
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
     forAll(alphas_, phasei)
     {
-        alphas_[phasei] = alphasOld[phasei] - dT*deltaAlphas[phasei];
+        alphas_[phasei] -= dT*deltaAlphas[phasei];
         alphas_[phasei].correctBoundaryConditions();
 
-        alphaRhos_[phasei].oldTime() = alphaRhosOld[phasei];
-        alphaRhos_[phasei] = alphaRhosOld[phasei] - dT*deltaAlphaRhos[phasei];
+        alphaRhos_[phasei].storePrevIter();
+        alphaRhos_[phasei] -= dT*deltaAlphaRhos[phasei];
         alphaRhos_[phasei].correctBoundaryConditions();
+
+        rho_ += alphaRhos_[phasei];
     }
 
     thermo_.solve();

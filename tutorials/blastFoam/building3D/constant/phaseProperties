@@ -26,11 +26,14 @@ c4
         {
             transport   const;
             thermo      eConst;
-            equationOfState idealGas;
+            equationOfState Murnaghan;
         }
         equationOfState
         {
-            gamma           1.25;
+            rho0            1601;
+            Gamma           0.25;
+            pRef            101298;
+            K0              0;
         }
         specie
         {
