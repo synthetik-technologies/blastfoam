@@ -34,6 +34,47 @@ License
 
 namespace Foam
 {
+//- Ideal gas
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        MGEquationOfState,
+        JWL
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        equationOfState,
+        JWLC
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        MGEquationOfState,
+        LSZK
+    );
+
+    addDetonatingFluidThermos
+    (
+        constTransport,
+        MGEquationOfState,
+        idealGas,
+        constTransport,
+        equationOfState,
+        BKW
+    );
+
 //- Stiffened gas
     addDetonatingFluidThermos
     (
