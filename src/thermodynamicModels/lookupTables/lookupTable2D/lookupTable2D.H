@@ -190,11 +190,11 @@ public:
         lookupTable2D
         (
             const Field<scalarField>& data,
+            const scalarField& x,
+            const scalarField& y,
             const word& mod,
             const word& xMod,
             const word& yMod,
-            const scalarField& x,
-            const scalarField& y,
             const bool modified
         );
 

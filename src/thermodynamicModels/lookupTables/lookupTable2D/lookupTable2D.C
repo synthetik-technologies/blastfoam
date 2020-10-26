@@ -441,11 +441,11 @@ Foam::lookupTable2D::lookupTable2D
 Foam::lookupTable2D::lookupTable2D
 (
     const Field<scalarField>& data,
+    const scalarField& x,
+    const scalarField& y,
     const word& modType,
     const word& modXType,
     const word& modYType,
-    const scalarField& x,
-    const scalarField& y,
     const bool modified
 )
 :
