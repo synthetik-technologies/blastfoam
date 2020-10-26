@@ -16,6 +16,7 @@ wclean $targetType functionObjects
 wclean $targetType sampling
 wclean all lagrangian
 wclean $targetType atmosphereModels
+wclean $targetType diameterModels
 
 wclean $targetType QBMM
 # ----------------------------------------------------------------- end-of-file
