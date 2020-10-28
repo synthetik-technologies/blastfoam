@@ -91,7 +91,7 @@ public:
     TypeName("RK4SSP");
 
     // Constructor
-    RK4SSP(const fvMesh& mesh);
+    RK4SSP(const fvMesh& mesh, const label nSteps);
 
 
     //- Destructor

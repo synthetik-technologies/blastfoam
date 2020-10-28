@@ -58,18 +58,23 @@ class linearActivation
         //- Detonation velocity
         dimensionedScalar vDet_;
 
-        //- Reference density
-        dimensionedScalar rho0_;
+        //- Is advection included
+        Switch advection_;
 
         //- Ignition time
         volScalarField::Internal tIgn_;
 
-        //- Return the time rate of chage of lambda
-        virtual tmp<volScalarField> delta() const
+        //- Is advection used
+        virtual bool advection() const
         {
-            NotImplemented;
-            return lambda_;
+            return advection_;
         }
+
+        //- Return the time rate of chage of lambda
+        virtual tmp<volScalarField> delta() const;
+
+        //- Correct lambda field after advection
+        virtual void correct();
 
         //- Do detonation points need to be specified
         virtual bool needDetonationPoints() const
@@ -95,15 +100,6 @@ public:
 
     //- Destructor
     virtual ~linearActivation();
-
-
-    // Member Functions
-
-        //- Solve sub-step stepi
-        virtual void solve();
-
-        //- Return energy source
-        virtual tmp<volScalarField> ddtLambda() const;
 };
 
 

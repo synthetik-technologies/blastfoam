@@ -103,15 +103,6 @@ protected:
                     return delay_;
                 }
 
-                //- Set activated cells by adding to the time rate of change
-                //  of lambda
-                void setActivated
-                (
-                    volScalarField&,
-                    const volScalarField&,
-                    bool update
-                ) const;
-
                 //- Set activated cells by setting lambda
                 void setActivated(volScalarField&, bool update) const;
         };
@@ -141,6 +132,12 @@ protected:
         //- Is the change in lambda limited
         bool limit_;
 
+        //- Is advection used
+        virtual bool advection() const
+        {
+            return true;
+        }
+
         //- Stored old values
         PtrList<volScalarField> lambdaOld_;
 
@@ -158,6 +155,10 @@ protected:
 
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const = 0;
+
+        //- Correct lambda field after advection
+        virtual void correct()
+        {}
 
         //- Return the center of centerOfMass
         //  Only valid for a single detonation point

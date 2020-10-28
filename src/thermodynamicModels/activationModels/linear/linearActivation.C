@@ -49,6 +49,7 @@ Foam::activationModels::linearActivation::linearActivation
 :
     activationModel(mesh, dict, phaseName),
     vDet_("vDet", dimVelocity, dict),
+    advection_(dict.lookupOrDefault("advection", false)),
     tIgn_
     (
         IOobject
@@ -78,7 +79,6 @@ Foam::activationModels::linearActivation::linearActivation
             }
         }
     }
-    lambda_ = 1.0;
 }
 
 
@@ -90,14 +90,8 @@ Foam::activationModels::linearActivation::~linearActivation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::linearActivation::solve()
-{
-    lambda_.ref() = pos0(this->time() - tIgn_);
-}
-
-
 Foam::tmp<Foam::volScalarField>
-Foam::activationModels::linearActivation::ddtLambda() const
+Foam::activationModels::linearActivation::delta() const
 {
     return tmp<volScalarField>
     (
@@ -105,7 +99,7 @@ Foam::activationModels::linearActivation::ddtLambda() const
         (
             IOobject
             (
-                "linearActivation:ddtLambda",
+                "linearActivation:delta",
                 lambda_.time().timeName(),
                 lambda_.mesh(),
                 IOobject::NO_READ,
@@ -115,11 +109,23 @@ Foam::activationModels::linearActivation::ddtLambda() const
             lambda_.mesh(),
             dimensionedScalar
             (
-                "ESource",
+                "delta",
                 inv(dimTime),
                 0.0
             )
         )
     );
 }
+
+
+void Foam::activationModels::linearActivation::correct()
+{
+    volScalarField::Internal lambda0
+    (
+        pos0(lambda_.time() - lambda_.time().deltaT() - tIgn_)
+    );
+    volScalarField::Internal diff(pos0(lambda_.time() - tIgn_) - lambda0);
+    lambda_.ref() = max(lambda0 + diff*(this->f() - this->f0()), lambda_());
+}
+
 // ************************************************************************* //

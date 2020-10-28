@@ -137,7 +137,7 @@ bool Foam::integrationSystem::finalStep() const
 
 Foam::dimensionedScalar Foam::integrationSystem::time() const
 {
-    return mesh_.time() - mesh_.time().deltaT()*(1.0 - (f0() + f()));
+    return mesh_.time() - mesh_.time().deltaT()*(1.0 - f());
 }
 
 

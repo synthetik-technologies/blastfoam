@@ -87,56 +87,6 @@ Foam::activationModel::detonationPoint::detonationPoint
     }
 }
 
-
-void Foam::activationModel::detonationPoint::setActivated
-(
-    volScalarField& deltaLambda,
-    const volScalarField& lambdaOld,
-    const bool update
-) const
-{
-    const scalar& t = lambdaOld.time().value();
-    const scalar& dt = lambdaOld.time().deltaTValue();
-    if (activated_ || t < delay_)
-    {
-        return;
-    }
-    Info<<"activating point " << *this << endl;
-
-    const fvMesh& mesh = lambdaOld.mesh();
-    label nCells = 0;
-    if (radius_ > small)
-    {
-        forAll(mesh.C(), celli)
-        {
-            if (mag(mesh.C()[celli] - *this) < radius_)
-            {
-                deltaLambda[celli] = (1.0 - lambdaOld[celli])/dt;
-                nCells++;
-            }
-        }
-    }
-    else
-    {
-        label celli = mesh.findCell(*this);
-        if (celli >= 0)
-        {
-            deltaLambda[celli] = (1.0 - lambdaOld[celli])/dt;
-            nCells++;
-        }
-    }
-    if (returnReduce(nCells, sumOp<label>()) == 0)
-    {
-        WarningInFunction
-            << "No cells were activated using the "
-            << "detonation point " << *this << endl;
-    }
-    if (update)
-    {
-        activated_ = true;
-    }
-}
-
 void Foam::activationModel::detonationPoint::setActivated
 (
     volScalarField& lambda,
@@ -388,7 +338,8 @@ void Foam::activationModel::clearODEFields()
 
 void Foam::activationModel::solve()
 {
-    volScalarField alphaRho
+    //- Lookup phase mass and phase mass flux
+    const volScalarField& alphaRho
     (
         lambda_.mesh().lookupObject<volScalarField>(alphaRhoName_)
     );
@@ -397,44 +348,102 @@ void Foam::activationModel::solve()
         lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
     );
 
-    dimensionedScalar dT(alphaRho.time().deltaT());
-    scalar f = this->f();
+    // Store old value of lambda, old value of alphaRho is stored in the
+    // phaseCompressible system
     volScalarField lambdaOld(lambda_);
-    lambda_.oldTime() = lambdaOld;
-
-    // Do not include volume changes
     this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
 
-    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
-    this->storeAndBlendDelta(deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
+    dimensionedScalar dT(alphaRho.time().deltaT());
+    dimensionedScalar smallRho("small", dimDensity, small);
 
-    alphaRho.max(1e-10);
-    lambda_ =
-        (
-            lambdaOld*alphaRho.oldTime() - dT*deltaAlphaRhoLambda
-        )/alphaRho;
-    lambda_.maxMin(0.0, 1.0);
-
-    // Activate points that are delayed
-    volScalarField deltaLambda(delta());
-    forAll(detonationPoints_, pointi)
+    // Calculate delta due to reaction with no advection
+    if (!advection())
     {
-        detonationPoints_[pointi].setActivated
-        (
-            deltaLambda,
-            lambdaOld,
-            this->finalStep()
-        );
-    }
-    deltaLambda = Foam::min(deltaLambda, (1.0 - lambda_)/(f*dT));
-    deltaLambda.max(0.0);
-    ddtLambda_ = deltaLambda*1.0;
-    this->storeAndBlendDelta(deltaLambda, deltaLambda_);
+        lambda_ = lambdaOld;
 
-    lambda_ += deltaLambda*dT;
-    lambda_.maxMin(0.0, 1.0);
-    lambda_.correctBoundaryConditions();
+        //- Correct the lambda field since zero mass will cause "unactivation"
+        //  which is not correct for some models
+        forAll(this->detonationPoints_, pointi)
+        {
+            this->detonationPoints_[pointi].setActivated
+            (
+                lambda_,
+                this->finalStep()
+            );
+        }
+        this->correct();
+
+        // Compute the limited change in lambda
+        ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
+
+        //- Compute actual delta for the time step knowing the blended
+        ddtLambda_.ref() = this->calcDelta(ddtLambda_(), deltaLambda_);
+
+        //- Store the actual sub-step delta
+        this->storeDelta(ddtLambda_(), deltaLambda_);
+
+        return;
+    }
+    // Compute change in lambda with advection included
+    else
+    {
+        //- Blend rates at current and old steps
+        volScalarField deltaLambda(delta());
+        deltaLambda.max(0.0);
+        this->storeAndBlendDelta(deltaLambda, deltaLambda_);
+
+        //- Update advection before advancing due to reaction rate
+        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
+        this->storeAndBlendDelta
+        (
+            deltaAlphaRhoLambda,
+            deltaAlphaRhoLambda_
+        );
+
+        //- Solve changes from reaction rate (function based)
+        lambda_ = lambdaOld + deltaLambda*dT;
+
+        //- Set lambdas based on explicit methods
+        forAll(this->detonationPoints_, pointi)
+        {
+            this->detonationPoints_[pointi].setActivated
+            (
+                lambda_,
+                this->finalStep()
+            );
+        }
+        this->correct();
+        lambda_.maxMin(0.0, 1.0);
+        lambda_.correctBoundaryConditions();
+
+        // Compute the limited change in lambda
+        volScalarField ddtLambda(Foam::max(lambda_ - lambdaOld, 0.0)/dT);
+
+        //- Compute actual delta for the time step knowing the blended value
+        //  Not limited to 0 since the delta coefficients can be negative
+        ddtLambda_ = this->calcDelta(ddtLambda, deltaLambda_);
+
+        //- Store the actual sub-step delta
+        this->storeDelta(ddtLambda_(), deltaLambda_);
+
+        //- Solve advection
+        lambda_ =
+            (
+                lambdaOld*alphaRho.prevIter() - dT*deltaAlphaRhoLambda
+            )/max(alphaRho, smallRho)
+          + dT*ddtLambda;
+
+        //- Correct the lambda field since zero mass will cause "unactivation"
+        //  which is not correct for some models
+        //  Detonation points are not corrected since they should have mass at
+        //  the detonation points
+        this->correct();
+
+        lambda_.maxMin(0.0, 1.0);
+        lambda_.correctBoundaryConditions();
+    }
 }
+
 
 Foam::tmp<Foam::volScalarField> Foam::activationModel::ESource() const
 {

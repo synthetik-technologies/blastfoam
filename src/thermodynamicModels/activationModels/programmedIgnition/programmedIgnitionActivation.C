@@ -76,6 +76,7 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         dict.parent().subDict("products").subDict("equationOfState")
     ),
     Vcj_("Vcj", 1.0/rho0_ - Pcj_/sqr(rho0_*vDet_)),
+    advection_(dict.lookupOrDefault("advection", false)),
     model_(burnModelNames_.read(dict.lookup("burnModel"))),
     tIgn_
     (
@@ -106,8 +107,6 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
             }
         }
     }
-
-    lambda_ = 1.0;
 }
 
 
@@ -119,53 +118,8 @@ Foam::activationModels::programmedIgnitionActivation::~programmedIgnitionActivat
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::activationModels::programmedIgnitionActivation::solve()
-{
-    const cellList& cells = mesh_.cells();
-    const scalarField Sf(mag(mesh_.faceAreas()));
-
-    dimensionedScalar t(this->time());
-
-    forAll(lambda_, celli)
-    {
-        scalar lambdaBeta = 0;
-        scalar lambdaProgram = 0;
-
-        if (model_ == BETA || model_ == PROGRAMMEDBETA)
-        {
-            lambdaBeta =
-                (1.0 - 1.0/max(rho_[celli], small))
-                /(1.0 - Vcj_.value());
-        }
-        if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
-        {
-            const cell& c = cells[celli];
-            scalar A = 0.0;
-            forAll(c, facei)
-            {
-                A += Sf[c[facei]];
-            }
-            scalar edgeLength = mesh_.V()[celli]/A;
-            lambdaProgram =
-                max(t.value() - tIgn_[celli], 0.0)
-                *vDet_.value()/(1.5*edgeLength);
-        }
-
-        lambda_[celli] = min(max(lambdaBeta, lambdaProgram), 1.0);
-    }
-    forAll(this->detonationPoints_, pointi)
-    {
-        this->detonationPoints_[pointi].setActivated
-        (
-            lambda_,
-            this->finalStep()
-        );
-    }
-}
-
-
 Foam::tmp<Foam::volScalarField>
-Foam::activationModels::programmedIgnitionActivation::ddtLambda() const
+Foam::activationModels::programmedIgnitionActivation::delta() const
 {
     return tmp<volScalarField>
     (
@@ -173,7 +127,7 @@ Foam::activationModels::programmedIgnitionActivation::ddtLambda() const
         (
             IOobject
             (
-                "programmedIgnitionActivation:ddtLambda",
+                "programmedIgnition:delta",
                 lambda_.time().timeName(),
                 lambda_.mesh(),
                 IOobject::NO_READ,
@@ -183,12 +137,49 @@ Foam::activationModels::programmedIgnitionActivation::ddtLambda() const
             lambda_.mesh(),
             dimensionedScalar
             (
-                "ESource",
+                "delta",
                 inv(dimTime),
                 0.0
             )
         )
     );
+}
+
+void Foam::activationModels::programmedIgnitionActivation::correct()
+{
+    const cellList& cells = mesh_.cells();
+    const scalarField magSf(mag(mesh_.faceAreas()));
+
+    dimensionedScalar t(this->time());
+
+    forAll(lambda_, celli)
+    {
+        scalar lambdaBeta = 0;
+        scalar lambdaProgram = 0;
+
+        //- Compression based activation
+        if (model_ == BETA || model_ == PROGRAMMEDBETA)
+        {
+            lambdaBeta =
+                (1.0 - 1.0/max(rho_[celli], small))
+               /(1.0 - Vcj_.value());
+        }
+        //- Position based activation
+        if (model_ == PROGRAMMED || model_ == PROGRAMMEDBETA)
+        {
+            const cell& c = cells[celli];
+            scalar A = 0.0;
+            forAll(c, facei)
+            {
+                A += magSf[c[facei]];
+            }
+            scalar edgeLength = mesh_.V()[celli]/A;
+            lambdaProgram =
+                max(t.value() - tIgn_[celli], 0.0)
+                *vDet_.value()/(1.5*edgeLength);
+        }
+        lambda_[celli] = max(max(lambdaBeta, lambdaProgram), lambda_[celli]);
+    }
 }
 
 

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "RK2SSPTimeIntegrator.H"
+#include "IOstreams.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -42,13 +43,45 @@ namespace timeIntegrators
 
 Foam::timeIntegrators::RK2SSP::RK2SSP
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const label nSteps
 )
 :
-    timeIntegrator(mesh)
+    timeIntegrator(mesh, nSteps)
 {
-    this->as_ = {{1.0}, {0.5, 0.5}};
-    this->bs_ = {{1.0}, {0.0, 0.5}};
+    if (nSteps <= 2)
+    {
+        this->as_ = {{1.0}, {0.5, 0.5}};
+        this->bs_ = {{1.0}, {0.0, 0.5}};
+    }
+    else if (nSteps == 3)
+    {
+        this->as_ = {{1.0}, {0.0, 1.0}, {1.0/3.0, 0.0, 2.0/3.0}};
+        this->bs_ = {{0.5}, {0.0, 0.5}, {0.0, 0.0, 0.5}};
+    }
+    else
+    {
+        if (nSteps > 4)
+        {
+            WarningInFunction
+                << "RK2SSP only supports a maximum of 4 steps."
+                << endl;
+        }
+        this->as_ =
+        {
+            {1.0},
+            {0.0, 1.0},
+            {0.0, 0.0, 1.0},
+            {0.25, 0.0, 0.0, 0.75}
+        };
+        this->bs_ =
+        {
+            {1.0/3.0},
+            {0.0, 1.0/3.0},
+            {0.0, 0.0, 1.0/3.0},
+            {0.0, 0.0, 0.0, 0.25}
+        };
+    }
 }
 
 

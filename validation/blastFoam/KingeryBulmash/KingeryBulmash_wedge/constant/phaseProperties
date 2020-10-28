@@ -83,7 +83,7 @@ tnt
         }
     }
 
-    activationModel programmedIgnition;
+    activationModel linear;
     initiation
     {
         E0          7.0e9;
@@ -93,6 +93,7 @@ tnt
         );
         vDet       6985; //7850;
         Pcj 18.46e9;
+        advection yes;
         burnModel programmed;
     }
 

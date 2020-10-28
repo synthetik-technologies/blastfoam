@@ -42,13 +42,43 @@ namespace timeIntegrators
 
 Foam::timeIntegrators::Euler::Euler
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const label nSteps
 )
 :
-    timeIntegrator(mesh)
+    timeIntegrator(mesh, nSteps)
 {
-    this->as_ = {{1.0}};
-    this->bs_ = {{1.0}};
+    if (nSteps <= 1)
+    {
+        this->as_ = {{1.0}};
+        this->bs_ = {{1.0}};
+    }
+    else if (nSteps == 2)
+    {
+        this->as_ = {{1.0}, {0.0, 0.5}};
+        this->bs_ = {{0.5}, {0.0, 0.5}};
+    }
+    else
+    {
+        if (nSteps > 3)
+        {
+            WarningInFunction
+                << "Euler only supports a maximum of 3 steps."
+                << endl;
+        }
+        this->as_ =
+        {
+            {1.0},
+            {0.0, 1.0},
+            {0.0, 0.0, 1.0},
+        };
+        this->bs_ =
+        {
+            {1.0/3.0},
+            {0.0, 1.0/3.0},
+            {0.0, 0.0, 1.0/3.0},
+        };
+    }
 }
 
 

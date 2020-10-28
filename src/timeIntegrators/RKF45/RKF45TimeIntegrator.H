@@ -76,20 +76,20 @@ class RKF45
     scalar b54 = -11.0/40.0;
 
     //- Fourth order coefficients
-    scalar b60 = 25.0/216.0;
-    scalar b61 = 0.0;
-    scalar b62 = 1408.0/2565.0;
-    scalar b63 = 2197.0/4104.0;
-    scalar b64 = -1.0/5.0;
-    scalar b65 = 0.0;
+//     scalar b60 = 25.0/216.0;
+//     scalar b61 = 0.0;
+//     scalar b62 = 1408.0/2565.0;
+//     scalar b63 = 2197.0/4104.0;
+//     scalar b64 = -1.0/5.0;
+//     scalar b65 = 0.0;
 
     //- Fifth order coefficients
-//     scalar b60 = 16.0/135.0;
-//     scalar b61 = 0.0;
-//     scalar b62 = 6656.0/12825.0;
-//     scalar b63 = 28561.0/56430.0;
-//     scalar b64 = -9.0/50.0;
-//     scalar b65 = 2.0/55.0;
+    scalar b60 = 16.0/135.0;
+    scalar b61 = 0.0;
+    scalar b62 = 6656.0/12825.0;
+    scalar b63 = 28561.0/56430.0;
+    scalar b64 = -9.0/50.0;
+    scalar b65 = 2.0/55.0;
 
 
 public:
@@ -98,7 +98,7 @@ public:
     TypeName("RKF45");
 
     // Constructor
-    RKF45(const fvMesh& mesh);
+    RKF45(const fvMesh& mesh, const label nSteps);
 
 
     //- Destructor

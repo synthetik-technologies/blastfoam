@@ -96,12 +96,12 @@ public:
             autoPtr,
             timeIntegrator,
             dictionary,
-            (const fvMesh& mesh),
-            (mesh)
+            (const fvMesh& mesh, const label nSteps),
+            (mesh, nSteps)
         );
 
     // Constructor
-    timeIntegrator(const fvMesh& mesh);
+    timeIntegrator(const fvMesh& mesh, const label nSteps);
 
 
     //- Destructor

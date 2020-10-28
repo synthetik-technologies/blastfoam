@@ -42,10 +42,11 @@ namespace timeIntegrators
 
 Foam::timeIntegrators::RK4SSP::RK4SSP
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const label nSteps
 )
 :
-    timeIntegrator(mesh)
+    timeIntegrator(mesh, nSteps)
 {
     this->as_ =
     {

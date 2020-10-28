@@ -156,6 +156,14 @@ protected:
                 const scalarList& scales
             ) const;
 
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
+            Foam::tmp<Type> calcDelta
+            (
+                const Type& f,
+                const ListType<Type>& fList
+            ) const;
+
             //- Clear and resize stored old fields
             template<class fieldType>
             void clearOld(PtrList<fieldType>& fList) const;

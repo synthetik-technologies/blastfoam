@@ -59,7 +59,7 @@ public:
     TypeName("RK2");
 
     // Constructor
-    RK2(const fvMesh& mesh);
+    RK2(const fvMesh& mesh, const label nSteps);
 
 
     //- Destructor

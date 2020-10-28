@@ -63,11 +63,18 @@ void Foam::integrationSystem::storeDelta
     // Store fields if needed later
     if (deltaIs_[step() - 1] != -1)
     {
-        fList.set
-        (
-            deltaIs_[step() - 1],
-            new fieldType(f.name() + Foam::name(step() - 1), f)
-        );
+        if (fList.set(step() - 1))
+        {
+            fList[step() - 1] = f;
+        }
+        else
+        {
+            fList.set
+            (
+                deltaIs_[step() - 1],
+                new fieldType(f.name() + Foam::name(step() - 1), f)
+            );
+        }
     }
 }
 
@@ -170,6 +177,36 @@ void Foam::integrationSystem::storeAndBlendDelta
 {
     storeDelta(f, fList);
     blendSteps(deltaIs_, f, fList, b());
+}
+
+
+template<template<class> class ListType, class Type>
+Foam::tmp<Type> Foam::integrationSystem::calcDelta
+(
+    const Type& f,
+    const ListType<Type>& fList
+) const
+{
+    tmp<Type> fN(new Type(f));
+    const scalarList& scales(b());
+    const labelList& indices(deltaIs_);
+
+    if (scales[step() - 1] == 0)
+    {
+        return fN*0.0;
+    }
+
+    // Remove old steps
+    for (label i = 0; i < step() - 1; i++)
+    {
+        label fi = indices[i];
+        if (fi != -1 && scales[fi] != 0)
+        {
+            fN.ref() -= scales[fi]*fList[fi];
+        }
+    }
+    fN.ref() /= scales[step() - 1];
+    return fN;
 }
 
 

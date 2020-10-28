@@ -277,8 +277,6 @@ void Foam::phaseCompressibleSystem::solve()
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
     rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
     rhoE_ -= dT*deltaRhoE;
-    Info<< "energy: "
-        << sum(rhoE_()*rho_.mesh().V()).value()<<endl;
 }
 
 

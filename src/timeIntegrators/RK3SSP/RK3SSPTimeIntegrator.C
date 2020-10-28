@@ -42,13 +42,41 @@ namespace timeIntegrators
 
 Foam::timeIntegrators::RK3SSP::RK3SSP
 (
-    const fvMesh& mesh
+    const fvMesh& mesh,
+    const label nSteps
 )
 :
-    timeIntegrator(mesh)
+    timeIntegrator(mesh, nSteps)
 {
-    this->as_ = {{1.0}, {0.75, 0.25}, {1.0/3.0, 0.0, 2.0/3.0}};
-    this->bs_ = {{1.0}, {0.0, 0.25}, {0.0, 0.0, 2.0/3.0}};
+    if (nSteps <= 3)
+    {
+        this->as_ = {{1.0}, {0.75, 0.25}, {1.0/3.0, 0.0, 2.0/3.0}};
+        this->bs_ = {{1.0}, {0.0, 0.25}, {0.0, 0.0, 2.0/3.0}};
+    }
+    else
+    {
+        if (nSteps > 4)
+        {
+            WarningInFunction
+                << "RK3SSP only supports a maximum of 4 steps."
+                << endl;
+        }
+        this->as_ =
+        {
+            {1.0},
+            {0.0, 1.0},
+            {2.0/3.0, 0.0, 1.0/3.0},
+            {0.0, 0.0, 0.0, 1.0}
+        };
+        this->bs_ =
+        {
+            {0.5},
+            {0.0, 0.5},
+            {0.0, 0.0, 1.0/6.0},
+            {0.0, 0.0, 0.0, 0.5}
+        };
+    }
+
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

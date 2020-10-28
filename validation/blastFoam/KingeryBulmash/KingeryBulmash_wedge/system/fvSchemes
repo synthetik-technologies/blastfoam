@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      AUSM+up;
+fluxScheme      Kurganov;
 
 ddtSchemes
 {

@@ -32,10 +32,16 @@ Foam::autoPtr<Foam::timeIntegrator> Foam::timeIntegrator::New
     const fvMesh& mesh
 )
 {
-    word timeIntegratorType
+    ITstream is
     (
         mesh.schemesDict().subDict("ddtSchemes").lookup("timeIntegrator")
     );
+    word timeIntegratorType(is);
+    label nSteps = 0;
+    if (!is.eof())
+    {
+        nSteps = readLabel(is);
+    }
 
     Info<< "Selecting timeIntegrator: " << timeIntegratorType << endl;
 
@@ -52,7 +58,7 @@ Foam::autoPtr<Foam::timeIntegrator> Foam::timeIntegrator::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh);
+    return cstrIter()(mesh, nSteps);
 }
 
 

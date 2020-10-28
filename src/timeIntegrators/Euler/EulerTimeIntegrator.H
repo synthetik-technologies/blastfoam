@@ -59,7 +59,7 @@ public:
     TypeName("Euler");
 
     // Constructor
-    Euler(const fvMesh& mesh);
+    Euler(const fvMesh& mesh, const label nSteps);
 
 
     //- Destructor
