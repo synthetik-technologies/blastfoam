@@ -1,6 +1,7 @@
 /* General */
 fieldMax/fieldMax.C
 writeTimeList/writeTimeList.C
+conservedQuantities/conservedQuantities.C
 
 
 /* Blast specific */
