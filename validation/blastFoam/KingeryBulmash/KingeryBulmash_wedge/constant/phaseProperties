@@ -93,8 +93,8 @@ tnt
         );
         vDet       6985; //7850;
         Pcj 18.46e9;
-        advection yes;
-        burnModel programmed;
+        advection yes;              // The reaction progress variable is allowed
+                                    // to move with the explosive mass
     }
 
     residualRho     1e-6;           // Minimum density of the phase

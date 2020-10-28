@@ -92,6 +92,8 @@ tnt
             (0 0 0)
         );
         vDet       6985; //7850;
+        advection yes;              // The reaction progress variable is allowed
+                                    // to move with the explosive mass
     }
 
     residualRho     1e-6;           // Minimum density of the phase

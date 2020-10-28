@@ -44,6 +44,8 @@ Description
 #include "syncTools.H"
 #include "wedgePolyPatch.H"
 
+#include "IOobjectList.H"
+
 using namespace Foam;
 
 #include "refineFunctions.H"
@@ -118,13 +120,15 @@ bool setCellFieldType
             << field->headerClassName()
             << " " << fieldName << endl;
     }
-    else
+    else // Field is not found, so exit
     {
         WarningInFunction
             << "Field " << fieldName << " not found" << endl;
 
         // Consume value
         (void)pTraits<Type>(fieldValueStream);
+
+        return true;
     }
 
     if (useOrig)
@@ -441,10 +445,65 @@ public:
 };
 
 
+//- Read and add fields to the database
+template<class FieldType>
+void readAndAddFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        mesh
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
+//- Read and add all fields to the database
+void readAndAddAllFields(const fvMesh& mesh)
+{
+    // Get all fields present at the current time
+    IOobjectList objects(mesh, mesh.time().timeName());
+
+    readAndAddFields<volScalarField>(mesh, objects);
+    readAndAddFields<volVectorField>(mesh, objects);
+    readAndAddFields<volSphericalTensorField>(mesh, objects);
+    readAndAddFields<volSymmTensorField>(mesh, objects);
+    readAndAddFields<volTensorField>(mesh, objects);
+}
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
+    argList::addBoolOption
+    (
+        "updateAll",
+        "Update size of all fields in the current time step"
+    );
+
     #include "addDictOption.H"
     #include "addRegionOption.H"
     #include "setRootCase.H"
@@ -453,6 +512,10 @@ int main(int argc, char *argv[])
 
     const word dictName("setFieldsDict");
     #include "setSystemMeshDictionaryIO.H"
+
+    // Update All fields in the current time folder
+    // Resizes to make sure all fields are consistent with the mesh
+    bool updateAll(args.optionFound("updateAll"));
 
     Info<< "Reading " << dictName << "\n" << endl;
 
@@ -524,6 +587,12 @@ int main(int argc, char *argv[])
         }
     }
     fields.resize(fi);
+
+    // Read in all fields to allow resizing
+    if (updateAll)
+    {
+        readAndAddAllFields(mesh);
+    }
 
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
@@ -858,30 +927,43 @@ int main(int argc, char *argv[])
         iter++;
     }
 
-    bool writeOk = (mesh.write() && meshCutter->write());
-
-    volScalarField scalarCellLevel
-    (
-        IOobject
-        (
-            "cellLevel",
-            runTime.timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE,
-            false
-        ),
-        mesh,
-        dimensionedScalar(dimless, 0)
-    );
-
-    const labelList& cellLevel = meshCutter->cellLevel();
-
-    forAll(cellLevel, celli)
+    // Write all fields
+    if (updateAll)
     {
-        scalarCellLevel[celli] = cellLevel[celli];
+        runTime.write();
     }
-    writeOk = writeOk && scalarCellLevel.write();
+
+    const labelIOList& cellLevel = meshCutter->cellLevel();
+    if (mesh.foundObject<volScalarField>("cellLevel"))
+    {
+        volScalarField& scalarCellLevel =
+            mesh.lookupObjectRef<volScalarField>("cellLevel");
+        forAll(cellLevel, celli)
+        {
+            scalarCellLevel[celli] = cellLevel[celli];
+        }
+        scalarCellLevel.write();
+    }
+    else
+    {
+        volScalarField scalarCellLevel
+        (
+            IOobject
+            (
+                "cellLevel",
+                runTime.timeName(),
+                mesh
+            ),
+            mesh,
+            dimensionedScalar(dimless, 0)
+        );
+        forAll(cellLevel, celli)
+        {
+            scalarCellLevel[celli] = cellLevel[celli];
+        }
+        scalarCellLevel.write();
+    }
+    bool writeOk = (mesh.write() && meshCutter->write());
 
     Info<< "\nEnd\n" << endl;
 

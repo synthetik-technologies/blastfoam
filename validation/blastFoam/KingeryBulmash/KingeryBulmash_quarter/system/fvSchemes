@@ -20,7 +20,8 @@ fluxScheme      Kurganov;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK2SSP 4;   // 4 step RK2SSP
+                                // (gives more accurate energy release)
 }
 
 gradSchemes
