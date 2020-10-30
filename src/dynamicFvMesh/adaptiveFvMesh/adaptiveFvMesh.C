@@ -1908,6 +1908,40 @@ bool Foam::adaptiveFvMesh::balance()
     {
         return false;
     }
+
+    if (balance_ && !decomposer_.valid())
+    {
+        // Change decomposition method if entry is present
+        if (balanceDict.found("method"))
+        {
+            decompositionDict_.set
+            (
+                "method",
+                balanceDict.lookup("method")
+            );
+        }
+
+        // Add refinementHistory constraint
+        {
+            dictionary refinementHistoryDict;
+            refinementHistoryDict.add("type", "refinementHistory");
+            dictionary constraintsDict;
+            constraintsDict.add("refinementHistory", refinementHistoryDict);
+            decompositionDict_.add("constraints", constraintsDict);
+        }
+
+        decomposer_ = decompositionMethod::New(decompositionDict_);
+        if (!decomposer_->parallelAware())
+        {
+            FatalErrorInFunction
+                << "You have selected decomposition method "
+                << decomposer_->typeName
+                << " which is not parallel aware." << endl
+                << "Please select one that is (scotch, hierarchical, ptscotch)"
+                << exit(FatalError);
+        }
+    }
+
     if
     (
         (nRefinementIterations_ % balanceInterval != 0)
