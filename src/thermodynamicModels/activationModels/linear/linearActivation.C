@@ -88,7 +88,7 @@ void Foam::activationModels::linearActivation::solve
         dimensionedScalar delay(dimTime, dp.delay());
         dimensionedScalar detonationFrontDistance
         (
-            (lambda_.time() + dt - delay)*vDet_
+            (lambda_.time() - delay)*vDet_
         );
         dimensionedVector xDet
         (
