@@ -43,6 +43,7 @@ Description
 #include "polyTopoChange.H"
 #include "syncTools.H"
 #include "wedgePolyPatch.H"
+#include "errorEstimator.H"
 
 #include "IOobjectList.H"
 
@@ -545,7 +546,7 @@ int main(int argc, char *argv[])
         mesh,
         0.0
     );
-    wordList fieldNames(setFieldsDict.lookup("fields"));
+    wordList fieldNames(setFieldsDict.lookupOrDefault("fields", wordList()));
     PtrList<volScalarField> fields(fieldNames.size());
     label fi = 0;
     forAll(fields, fieldi)
@@ -629,7 +630,17 @@ int main(int argc, char *argv[])
         levels[regionI] =
             regions[regionI].dict().lookupType<label>("level");
     }
-    label maxRefinement(max(levels));
+    label maxRefinement
+    (
+        levels.size()
+      ? max(levels)
+      : setFieldsDict.lookupType<scalar>("maxLevel")
+    );
+    autoPtr<errorEstimator> EE;
+    if (setFieldsDict.found("errorEstimator"))
+    {
+        EE = errorEstimator::New(mesh, setFieldsDict);
+    }
 
     bool end = false;
     bool prepareToStop = false;
@@ -781,7 +792,14 @@ int main(int argc, char *argv[])
         if (!end)
         {
             // Refine internal cells
-            calcFaceDiff(error, fields);
+            if (EE.valid())
+            {
+                EE->update();
+            }
+            else
+            {
+                calcFaceDiff(error, fields);
+            }
             labelList maxCellLevel(mesh.nCells(), -1);
             forAll(regions, regionI)
             {
@@ -824,7 +842,7 @@ int main(int argc, char *argv[])
                     (
                         refineKeyword,
                         false
-                    )
+                    ) && !EE.valid()
                 )
                 {
                     forAll(savedCells[regionI], celli)
