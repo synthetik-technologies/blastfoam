@@ -40,9 +40,9 @@ Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
     pTable_
     (
         dict.subDict("equationOfState").lookupType<fileName>("file"),
-        dict.subDict("equationOfState").lookup("mod"),
-        dict.subDict("equationOfState").lookup("rhoMod"),
-        dict.subDict("equationOfState").lookup("eMod"),
+        dict.subDict("equationOfState").lookupType<word>("mod"),
+        dict.subDict("equationOfState").lookupType<word>("rhoMod"),
+        dict.subDict("equationOfState").lookupType<word>("eMod"),
         dict.subDict("equationOfState").lookupType<label>("nRho"),
         dict.subDict("equationOfState").lookupType<label>("ne"),
         dict.subDict("equationOfState").lookupType<scalar>("minRho"),
@@ -53,9 +53,9 @@ Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
     TTable_
     (
         dict.subDict("thermodynamics").lookupType<fileName>("file"),
-        dict.subDict("thermodynamics").lookup("mod"),
-        dict.subDict("thermodynamics").lookup("rhoMod"),
-        dict.subDict("thermodynamics").lookup("eMod"),
+        dict.subDict("thermodynamics").lookupType<word>("mod"),
+        dict.subDict("thermodynamics").lookupType<word>("rhoMod"),
+        dict.subDict("thermodynamics").lookupType<word>("eMod"),
         dict.subDict("thermodynamics").lookupType<label>("nRho"),
         dict.subDict("thermodynamics").lookupType<label>("ne"),
         dict.subDict("thermodynamics").lookupType<scalar>("minRho"),

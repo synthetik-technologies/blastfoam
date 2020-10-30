@@ -32,7 +32,7 @@ Foam::autoPtr<Foam::errorEstimator> Foam::errorEstimator::New
     const dictionary& dict
 )
 {
-    word errorEstimatorType(dict.lookup("errorEstimator"));
+    const word errorEstimatorType(dict.lookupType<word>("errorEstimator"));
 
     Info<< "Selecting errorEstimator: " << errorEstimatorType << endl;
 
