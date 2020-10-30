@@ -45,7 +45,7 @@ void mapVolFields
 (
     const fvMesh& meshSource,
     const fvMesh& meshTarget,
-    const labelList& meshMap,
+    const labelList& cellMap,
     const IOobjectList& objects,
     const tensorField& R
 )
@@ -76,9 +76,9 @@ void mapVolFields
                 meshTarget
             );
 
-            forAll(meshMap, celli)
+            forAll(cellMap, celli)
             {
-                label cellj = meshMap[celli];
+                label cellj = cellMap[celli];
                 if (cellj != -1)
                 {
                     Type v = fieldSource[cellj];
@@ -95,7 +95,7 @@ void mapVolFields<scalar>
 (
     const fvMesh& meshSource,
     const fvMesh& meshTarget,
-    const labelList& meshMap,
+    const labelList& cellMap,
     const IOobjectList& objects,
     const tensorField&
 )
@@ -126,9 +126,9 @@ void mapVolFields<scalar>
                 meshTarget
             );
 
-            forAll(meshMap, celli)
+            forAll(cellMap, celli)
             {
-                label cellj = meshMap[celli];
+                label cellj = cellMap[celli];
                 if (cellj != -1)
                 {
                     fieldTarget[celli] = fieldSource[cellj];
@@ -143,7 +143,7 @@ void mapFields
 (
     const fvMesh& meshSource,
     const fvMesh& meshTarget,
-    const labelList& meshMap,
+    const labelList& cellMap,
     const HashSet<word>& fields,
     const tensorField& R
 )
@@ -161,12 +161,131 @@ void mapFields
     }
 
 
-    mapVolFields<scalar>(meshSource, meshTarget, meshMap, objects, tensorField());
-    mapVolFields<vector>(meshSource, meshTarget, meshMap, objects, R);
-//     mapVolFields<sphericalTensor>(meshSource, meshTarget, meshMap, objects, R);
-//     mapVolFields<symmTensor>(meshSource, meshTarget, meshMap, objects, R);
-    mapVolFields<tensor>(meshSource, meshTarget, meshMap, objects, R);
+    mapVolFields<scalar>(meshSource, meshTarget, cellMap, objects, tensorField());
+    mapVolFields<vector>(meshSource, meshTarget, cellMap, objects, R);
+//     mapVolFields<sphericalTensor>(meshSource, meshTarget, cellMap, objects, R);
+//     mapVolFields<symmTensor>(meshSource, meshTarget, cellMap, objects, R);
+    mapVolFields<tensor>(meshSource, meshTarget, cellMap, objects, R);
 }
+
+
+void calcMapAndR
+(
+    const fvMesh& meshSource,
+    const fvMesh& meshTarget,
+    const scalar& maxR,
+    const vector& centreTarget,
+    labelList& cellMap,
+    tensorField& R
+)
+{
+    Vector<label> targetGeoD(meshTarget.geometricD());
+    Vector<label> targetSolD(meshTarget.solutionD());
+    Vector<label> targetD(0, 0, 0);
+    forAll(targetGeoD, i)
+    {
+        if (targetGeoD[i] == targetSolD[i])
+        {
+            targetD[i] = 1;
+        }
+    }
+
+    Vector<label> sourceGeoD(meshSource.geometricD());
+    Vector<label> sourceSolD(meshSource.solutionD());
+    Vector<label> sourceD(0, 0, 0);
+    forAll(sourceGeoD, i)
+    {
+        if (sourceGeoD[i] == sourceSolD[i])
+        {
+            sourceD[i] = 1;
+        }
+    }
+
+    vector rotDir(0.0, 0.0, 0.0);
+    forAll(sourceD, i)
+    {
+        if (sourceD[i] != targetD[i])
+        {
+            rotDir[i] = 1.0;
+        }
+    }
+    vector solDir(0.0, 0.0, 0.0);
+    forAll(sourceD, i)
+    {
+        if (sourceD[i] == 1 && targetD[i] == 1)
+        {
+            solDir[i] = 1.0;
+        }
+    }
+
+    vector centre
+    (
+        (
+            sum
+            (
+                cmptMultiply
+                (
+                    meshSource.C()()*meshSource.V(),
+                    rotDir
+                )
+            )/sum(meshSource.V())
+        ).value()
+    );
+
+    // Create map
+    cellMap = labelList(meshTarget.nCells(), -1);
+    R = tensorField(meshTarget.nCells(), tensor::I);
+    forAll(cellMap, celli)
+    {
+        // Get the position on the target mesh
+        vector ptTarget =
+            cmptMultiply(meshTarget.cellCentres()[celli], (solDir + rotDir));
+
+        // Offset from the center of the source mesh
+        vector nTarget = ptTarget - centre - centreTarget;
+
+        // Radius
+        scalar r = mag(nTarget);
+
+        // Remove points outside of the maximum radius
+        if (r > maxR)
+        {
+            r = great;
+        }
+
+        // Offset from the source mesh center (only solved directions)
+        vector nSource(r*solDir);
+
+        // Actual point on the source mesh
+        vector ptSource = nSource + centre;
+
+        // Map from the source mesh to the target mesh
+        cellMap[celli] = meshSource.findCell(ptSource);
+
+        // Extend radius is the target point is outside of the source mesh
+        if (maxR < 0 && cellMap[celli] < 0)
+        {
+            cellMap[celli] = meshSource.findNearestCell(ptSource);
+        }
+
+        // Calculate the rotation matrix for vectors and tensors
+        if (cellMap[celli] >= 0)
+        {
+            vector a = nSource/mag(nSource);
+            vector b = nTarget/mag(nTarget);
+            vector v = (a ^ b);
+            scalar c = a & b;
+            tensor A
+            (
+                0.0, -v[2], v[1],
+                v[2], 0.0, -v[0],
+                -v[1], v[0], 0.0
+            );
+            R[celli] = tensor::I + A + (A & A)/(1.0 + c);
+        }
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -219,6 +338,12 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
+        "centre",
+        "vector|'(0 0 0)'",
+        "Location of center in the target mesh"
+    );
+    argList::addOption
+    (
         "fields",
         "wordList|'(rho U)'",
         "List of fields to map"
@@ -255,12 +380,21 @@ int main(int argc, char *argv[])
     }
 
 //     const bool parallelSource = args.optionFound("parallelSource");
-    const bool extended = args.optionFound("extend");
 
     scalar maxR(great);
     if (args.optionFound("maxR"))
     {
         maxR = args.optionRead<scalar>("maxR");
+    }
+    else if (args.optionFound("extend"))
+    {
+        maxR = -great;
+    }
+
+    vector centreTarget(Zero);
+    if (args.optionFound("centre"))
+    {
+        centreTarget = args.optionRead<vector>("centre");
     }
 
     wordList fieldNames;
@@ -291,18 +425,6 @@ int main(int argc, char *argv[])
     );
     setEnv("FOAM_CASE", caseDirOrig, true);
     setEnv("FOAM_CASENAME", caseNameOrig, true);
-
-    Vector<label> targetGeoD(meshTarget.geometricD());
-    Vector<label> targetSolD(meshTarget.solutionD());
-    Vector<label> targetD(0, 0, 0);
-    forAll(targetGeoD, i)
-    {
-        if (targetGeoD[i] == targetSolD[i])
-        {
-            targetD[i] = 1;
-        }
-    }
-
 
 //     if (parallelSource)
 //     {
@@ -429,100 +551,9 @@ int main(int argc, char *argv[])
         Info<< "Source mesh size: " << meshSource.nCells() << tab
             << "Target mesh size: " << meshTarget.nCells() << nl << endl;
 
-        Vector<label> sourceGeoD(meshSource.geometricD());
-        Vector<label> sourceSolD(meshSource.solutionD());
-        Vector<label> sourceD(0, 0, 0);
-        forAll(sourceGeoD, i)
-        {
-            if (sourceGeoD[i] == sourceSolD[i])
-            {
-                sourceD[i] = 1;
-            }
-        }
-
-        vector rotDir(0.0, 0.0, 0.0);
-        forAll(sourceD, i)
-        {
-            if (sourceD[i] != targetD[i])
-            {
-                rotDir[i] = 1.0;
-            }
-        }
-        vector solDir(0.0, 0.0, 0.0);
-        forAll(sourceD, i)
-        {
-            if (sourceD[i] == 1 && targetD[i] == 1)
-            {
-                solDir[i] = 1.0;
-            }
-        }
-
-        vector centre
-        (
-            (
-                sum
-                (
-                    cmptMultiply
-                    (
-                        meshSource.C()()*meshSource.V(),
-                        rotDir
-                    )
-                )/sum(meshSource.V())
-            ).value()
-        );
-
-        // Create map
-        labelList cellMap(meshTarget.nCells(), -1);
-        tensorField R(meshTarget.nCells(), tensor::I);
-        forAll(cellMap, celli)
-        {
-            // Get the position on the target mesh
-            vector ptTarget =
-                cmptMultiply(meshTarget.cellCentres()[celli], (solDir + rotDir));
-
-            // Offset from the center of the source mesh
-            vector nTarget = ptTarget - centre;
-
-            // Radius
-            scalar r = mag(nTarget);
-
-            // Remove points outside of the maximum radius
-            if (r > maxR)
-            {
-                r = great;
-            }
-
-            // Offset from the source mesh center (only solved directions)
-            vector nSource(r*solDir);
-
-            // Actual point on the source mesh
-            vector ptSource = nSource + centre;
-
-            // Map from the source mesh to the target mesh
-            cellMap[celli] = meshSource.findCell(ptSource);
-
-            // Extend radius is the target point is outside of the source mesh
-            if (extended && cellMap[celli] < 0)
-            {
-                cellMap[celli] = meshSource.findNearestCell(ptSource);
-            }
-
-            // Calculate the rotation matrix for vectors and tensors
-            if (cellMap[celli] >= 0)
-            {
-                vector a = nSource/mag(nSource);
-                vector b = nTarget/mag(nTarget);
-                vector v = (a ^ b);
-                scalar c = a & b;
-                tensor A
-                (
-                    0.0, -v[2], v[1],
-                    v[2], 0.0, -v[0],
-                    -v[1], v[0], 0.0
-                );
-                R[celli] = tensor::I + A + (A & A)/(1.0 + c);
-            }
-        }
+        labelList cellMap;
+        tensorField R;
+        calcMapAndR(meshSource, meshTarget, maxR, centreTarget, cellMap, R);
 
         // Map fields from the source mesh to the target mesh
         mapFields(meshSource, meshTarget, cellMap, fieldNames, R);
