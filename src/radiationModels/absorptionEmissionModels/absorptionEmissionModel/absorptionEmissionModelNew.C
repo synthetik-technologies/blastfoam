@@ -35,7 +35,7 @@ Foam::radiationModels::absorptionEmissionModel::New
     const fvMesh& mesh
 )
 {
-    const word modelType(dict.lookup("absorptionEmissionModel"));
+    const word modelType(dict.lookupType<word>("absorptionEmissionModel"));
 
     Info<< "Selecting absorptionEmissionModel " << modelType << endl;
 

@@ -1,13 +1,11 @@
 #!/bin/sh
-cd ${0%/*} || exit 1    # run from this directory
+cd "${0%/*}" || exit                                # Run from this directory
+. "${WM_PROJECT_DIR:?}"/wmake/scripts/AllwmakeParseArguments
 
-# Parse arguments for library compilation
-. $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
+#------------------------------------------------------------------------------
 
-# (wmake libso BCs && wmake && wmake rhoCentralDyMFoam)
-
-(cd src && wmake all)
+src/Allwmake $targetType $*
 
 wmake all applications
 
-# ----------------------------------------------------------------- end-of-file
+# -----------------------------------------------------------------------------

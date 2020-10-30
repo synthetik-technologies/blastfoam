@@ -41,7 +41,7 @@ Foam::autoPtr<Foam::polyMeshModifier> Foam::polyMeshModifier::New
         InfoInFunction << "Constructing polyMeshModifier" << endl;
     }
 
-    const word modifierType(dict.lookup("type"));
+    const word modifierType(dict.lookupType<word>("type"));
 
     dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(modifierType);

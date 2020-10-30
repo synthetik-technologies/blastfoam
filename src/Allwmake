@@ -1,8 +1,8 @@
 #!/bin/sh
-cd ${0%/*} || exit 1    # run from this directory
+cd "${0%/*}" || exit                                # Run from this directory
+. "${WM_PROJECT_DIR:?}"/wmake/scripts/AllwmakeParseArguments
 
-# Parse arguments for library compilation
-. $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
+#------------------------------------------------------------------------------
 
 wmake $targetType timeIntegrators
 wmake $targetType thermodynamicModels
@@ -17,5 +17,4 @@ wmake $targetType functionObjects
 wmake $targetType sampling
 wmake $targetType atmosphereModels
 
-# ----------------------------------------------------------------- end-of-file
-
+# -----------------------------------------------------------------------------

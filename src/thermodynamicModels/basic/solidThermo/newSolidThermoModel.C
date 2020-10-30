@@ -75,7 +75,8 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const bool master
 )
 {
-    word type = dict.subDict("mixture").lookup("type");
+    const word type(dict.subDict("mixture").lookupType<word>("type"));
+
     if (type == "basic")
     {
         return NewBasic(phaseName, mesh, dict, master);

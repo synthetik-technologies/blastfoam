@@ -240,7 +240,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
         dict.lookup("fields") >> fieldSelection_;
 
         dict.lookup("interpolationScheme") >> interpolationScheme_;
-        const word writeType(dict.lookup("surfaceFormat"));
+        const word writeType(dict.lookupType<word>("surfaceFormat"));
 
         // Define the surface formatter
         // Optionally defined extra controls for the output formats
