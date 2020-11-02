@@ -387,33 +387,24 @@ void Foam::activationModel::solve()
     // Compute change in lambda with advection included
     else
     {
-        //- Blend rates at current and old steps
         volScalarField deltaLambda(delta());
         deltaLambda.max(0.0);
         this->storeAndBlendDelta(deltaLambda, deltaLambda_);
 
-        //- Update advection before advancing due to reaction rate
-        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
-        this->storeAndBlendDelta
-        (
-            deltaAlphaRhoLambda,
-            deltaAlphaRhoLambda_
-        );
-
-        //- Solve changes from reaction rate (function based)
         lambda_ = lambdaOld + deltaLambda*dT;
 
-        //- Set lambdas based on explicit methods
-        forAll(this->detonationPoints_, pointi)
+        // Activate points that are delayed
+        forAll(detonationPoints_, pointi)
         {
-            this->detonationPoints_[pointi].setActivated
+            detonationPoints_[pointi].setActivated
             (
                 lambda_,
                 this->finalStep()
             );
         }
         this->correct();
-        lambda_.maxMin(0.0, 1.0);
+        lambda_.min(1);
+        lambda_.max(0);
         lambda_.correctBoundaryConditions();
 
         // Compute the limited change in lambda
@@ -425,6 +416,9 @@ void Foam::activationModel::solve()
 
         //- Store the actual sub-step delta
         this->storeDelta(ddtLambda_(), deltaLambda_);
+
+        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
+        this->storeAndBlendDelta(deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
 
         //- Solve advection
         lambda_ =

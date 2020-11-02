@@ -161,7 +161,7 @@ void Foam::twoPhaseCompressibleSystem::solve()
     alphaRho1_ -= dT*deltaAlphaRho1;
     alphaRho1_.correctBoundaryConditions();
 
-    alphaRho1_.storePrevIter();
+    alphaRho2_.storePrevIter();
     alphaRho2_ -= dT*deltaAlphaRho2;
     alphaRho2_.correctBoundaryConditions();
 

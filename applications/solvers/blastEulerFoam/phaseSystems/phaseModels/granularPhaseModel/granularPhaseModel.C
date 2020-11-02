@@ -178,11 +178,14 @@ void Foam::granularPhaseModel::postUpdate()
               + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
             )
         );
+        dimensionedScalar smallAlphaRho(dimDensity, 1e-10);
 
         fvVectorMatrix UEqn
         (
             fvm::ddt(alphaRho_, U_)
           - fvc::ddt(alphaRho_, U_)
+          + fvc::ddt(smallAlphaRho, U_)
+          - fvm::ddt(smallAlphaRho, U_)
           + this->divDevRhoReff(U_)
         );
         fvScalarMatrix ThetaEqn
@@ -191,6 +194,8 @@ void Foam::granularPhaseModel::postUpdate()
            *(
                 fvm::ddt(alphaRho_, Theta_)
               - fvc::ddt(alphaRho_, Theta_)
+              + fvc::ddt(smallAlphaRho, Theta_)
+              - fvm::ddt(smallAlphaRho, Theta_)
             )
           - fvc::laplacian(this->kappa_, Theta_)
          ==
