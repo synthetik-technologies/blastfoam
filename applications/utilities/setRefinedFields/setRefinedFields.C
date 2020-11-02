@@ -504,6 +504,16 @@ int main(int argc, char *argv[])
         "updateAll",
         "Update size of all fields in the current time step"
     );
+    argList::addBoolOption
+    (
+        "debug",
+        "Output partial updates and additional fields"
+    );
+    argList::addBoolOption
+    (
+        "force3D",
+        "Force 3-D refinement"
+    );
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -523,7 +533,7 @@ int main(int argc, char *argv[])
     IOdictionary setFieldsDict(dictIO);
 
     autoPtr<hexRef> meshCutter;
-    if (setFieldsDict.lookupOrDefault("force3D", Switch(false)))
+    if (args.optionFound("force3D"))
     {
         meshCutter.set(new hexRef8(mesh));
     }
@@ -531,7 +541,9 @@ int main(int argc, char *argv[])
     {
         meshCutter = hexRef::New(mesh);
     }
-    Switch debug = setFieldsDict.lookupOrDefault("debug", false);
+    Switch debug(args.optionFound("debug"));
+
+    label nBufferLayers(setFieldsDict.lookupOrDefault("nBufferLayers", 0));
 
     PackedBoolList protectedCell(mesh.nCells(), 0);
     initialize(mesh, protectedCell, meshCutter());
@@ -598,7 +610,8 @@ int main(int argc, char *argv[])
     // Regions to refine based on a field
     PtrList<entry> regions(setFieldsDict.lookup("regions"));
 
-    //- List of source
+    //- List of sources (and backups if present)
+    // Stored to reduce the number of reads
     PtrList<topoSetSource> sources(regions.size());
     PtrList<topoSetSource> backupSources(regions.size());
     labelList levels(regions.size(), 0);
@@ -628,24 +641,23 @@ int main(int argc, char *argv[])
             );
         }
         levels[regionI] =
-            regions[regionI].dict().lookupType<label>("level");
+            regions[regionI].dict().lookupOrDefault("level", 0);
     }
     label maxRefinement
     (
-        levels.size()
+        levels.size() && !setFieldsDict.found("maxLevel")
       ? max(levels)
       : setFieldsDict.lookupType<scalar>("maxLevel")
     );
+
+    // Error fields is the same since it is looked up
     autoPtr<errorEstimator> EE;
     if (setFieldsDict.found("errorEstimator"))
     {
         EE = errorEstimator::New(mesh, setFieldsDict);
     }
 
-    bool end = false;
-    bool prepareToStop = false;
-    labelList nOldCells(regions.size(), -1);
-
+    // Maximum number of iterations
     label iter = 0;
     label maxIter =
         max
@@ -658,6 +670,12 @@ int main(int argc, char *argv[])
             )
         );
 
+    // Flag for final iteration
+    bool end = false;
+
+    // Flag to initiate end
+    bool prepareToStop = false;
+
     while(!end)
     {
         if (maxIter <= iter)
@@ -666,10 +684,14 @@ int main(int argc, char *argv[])
         }
 
         error = -1.0;
+
+        // Check if this is the final iteration so correct cell shapes are used
         if (prepareToStop)
         {
             end = true;
         }
+
+        // Read default values and set fields
         if (setFieldsDict.found("defaultFieldValues"))
         {
             Info<< "Setting field default values" << endl;
@@ -681,11 +703,13 @@ int main(int argc, char *argv[])
             Info<< endl;
         }
 
+        // List of saved cells (per cell set)
         labelListList savedCells;
 
         Info<< "Setting field region values" << endl;
         forAll(regions, regionI)
         {
+            // Cell sets
             if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
             {
                 cellSet selectedCellSet
@@ -703,6 +727,7 @@ int main(int argc, char *argv[])
 
                 labelList cells = selectedCellSet.toc();
 
+                // Set to the actual cell set if at least one cells is found
                 if
                 (
                     returnReduce
@@ -713,6 +738,7 @@ int main(int argc, char *argv[])
                 {
                     cells = selectedCellSet.toc();
                 }
+                // Use the backup region to expand search area
                 else if (!end && backupSources.set(regionI))
                 {
                     cellSet backupCellSet
@@ -730,6 +756,7 @@ int main(int argc, char *argv[])
                     cells = backupCellSet.toc();
                 }
 
+                // Set field values
                 if (regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setCellField> fieldValues
@@ -738,10 +765,12 @@ int main(int argc, char *argv[])
                         setCellField::iNew(mesh, cells, end || debug)
                     );
                 }
-                nOldCells[regionI] = cells.size();
+
+                // Save the number of cells in the set
                 savedCells.append(cells);
 
             }
+            // Face sets
             else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
             {
                 faceSet selectedFaceSet
@@ -767,6 +796,7 @@ int main(int argc, char *argv[])
                     );
                 }
 
+                // Set owner and neighbor cells of the selected faces
                 labelList faceCells(selectedFaces.size()*2);
                 label nFaces = 0;
                 forAll(selectedFaces, i)
@@ -784,18 +814,22 @@ int main(int argc, char *argv[])
                 savedCells.append(faceCells);
             }
         }
+
+        // Update boundary conditions of fields used for refinement
         forAll(fields, fieldi)
         {
             fields[fieldi].correctBoundaryConditions();
         }
 
+        // Update error and mesh if not the final iteration
         if (!end)
         {
-            // Refine internal cells
+            // Use error estimator to calculate error
             if (EE.valid())
             {
                 EE->update();
             }
+            // Check for any difference
             else
             {
                 calcFaceDiff(error, fields);
@@ -803,6 +837,7 @@ int main(int argc, char *argv[])
             labelList maxCellLevel(mesh.nCells(), -1);
             forAll(regions, regionI)
             {
+                // Set keyword to lookup for refinement
                 word refineKeyword;
                 if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
                 {
@@ -812,6 +847,9 @@ int main(int argc, char *argv[])
                 {
                     refineKeyword = "refineFaces";
                 }
+
+                // Do not use the max level, use current
+                // Order is important in the definitions of regions
                 Switch overwrite =
                     regions[regionI].dict().lookupOrDefault<Switch>
                     (
@@ -819,6 +857,7 @@ int main(int argc, char *argv[])
                         false
                     );
 
+                // Set actual max cell level
                 forAll(savedCells[regionI], celli)
                 {
                     if (overwrite)
@@ -836,6 +875,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
+                // Set specified cells to be refined
                 if
                 (
                     regions[regionI].dict().lookupOrDefault<Switch>
@@ -851,11 +891,7 @@ int main(int argc, char *argv[])
                     }
                 }
 
-
-                label nBufferLayers
-                (
-                    setFieldsDict.lookupType<label>("nBufferLayers")
-                );
+                // Extend refinement by nBufferLayers
                 for (label i = 0; i < nBufferLayers; i++)
                 {
                     extendMaxCellLevel
@@ -869,6 +905,7 @@ int main(int argc, char *argv[])
                 }
             }
 
+            // Set the maxCell level
             forAll(maxCellLevel, celli)
             {
                 if (maxCellLevel[celli] < 0)
@@ -876,6 +913,8 @@ int main(int argc, char *argv[])
                     maxCellLevel[celli] = maxRefinement;
                 }
             }
+
+            // Mark cells greater than the max cell level for unrefinment
             forAll(error, celli)
             {
                 if (meshCutter->cellLevel()[celli] > maxCellLevel[celli])
@@ -884,6 +923,7 @@ int main(int argc, char *argv[])
                 }
             }
 
+            // Write fields and mesh if using debug
             if (debug)
             {
                 bool writeOk = (mesh.write() && meshCutter->write());
@@ -929,6 +969,7 @@ int main(int argc, char *argv[])
                 runTime++;
             }
 
+            // Update mesh (return if mesh changes)
             prepareToStop =
                !update
                 (
@@ -951,6 +992,8 @@ int main(int argc, char *argv[])
         runTime.write();
     }
 
+    // Handle cell level (as volScalarField) explicitly
+    // Important when using mapFields or rotateFields
     const labelIOList& cellLevel = meshCutter->cellLevel();
     if (mesh.foundObject<volScalarField>("cellLevel"))
     {
@@ -981,7 +1024,10 @@ int main(int argc, char *argv[])
         }
         scalarCellLevel.write();
     }
-    bool writeOk = (mesh.write() && meshCutter->write());
+
+    // Write mesh and cell levels
+    mesh.write();
+    meshCutter->write();
 
     Info<< "\nEnd\n" << endl;
 
