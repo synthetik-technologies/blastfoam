@@ -33,7 +33,6 @@ License
 #include "makeParcelInjectionModels.H"
 #include "makeParcelPatchInteractionModels.H"
 #include "makeParcelStochasticCollisionModels.H"
-#include "makeParcelSurfaceFilmModels.H"
 
 // MPPIC sub-models
 #include "makeMPPICParcelDampingModels.H"
@@ -51,7 +50,6 @@ makeParcelDispersionModels(basicKinematicMPPICCloud);
 makeParcelInjectionModels(basicKinematicMPPICCloud);
 makeParcelPatchInteractionModels(basicKinematicMPPICCloud);
 makeParcelStochasticCollisionModels(basicKinematicMPPICCloud);
-makeParcelSurfaceFilmModels(basicKinematicMPPICCloud);
 
 // MPPIC sub-models
 makeMPPICParcelDampingModels(basicKinematicMPPICCloud);

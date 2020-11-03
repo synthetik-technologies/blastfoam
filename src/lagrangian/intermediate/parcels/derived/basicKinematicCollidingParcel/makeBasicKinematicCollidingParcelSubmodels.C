@@ -34,7 +34,6 @@ License
 #include "makeParcelCollisionModels.H"
 #include "makeParcelPatchInteractionModels.H"
 #include "makeParcelStochasticCollisionModels.H"
-// #include "makeParcelSurfaceFilmModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,7 +46,6 @@ makeParcelInjectionModels(basicKinematicCollidingCloud);
 makeParcelCollisionModels(basicKinematicCollidingCloud);
 makeParcelPatchInteractionModels(basicKinematicCollidingCloud);
 makeParcelStochasticCollisionModels(basicKinematicCollidingCloud);
-// makeParcelSurfaceFilmModels(basicKinematicCollidingCloud);
 
 
 // ************************************************************************* //

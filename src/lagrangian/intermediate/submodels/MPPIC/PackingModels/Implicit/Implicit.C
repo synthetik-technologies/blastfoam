@@ -31,6 +31,7 @@ License
 #include "fvcReconstruct.H"
 #include "volPointInterpolation.H"
 #include "zeroGradientFvPatchFields.H"
+#include "fixedValueFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
