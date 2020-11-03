@@ -107,27 +107,6 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
         dragODE_->solve(deltaT.value());
     }
 
-    UiTable Uis;
-    forAllConstIter
-    (
-        interfacialVelocityModelTable,
-        interfacialVelocityModels_,
-        interfacialVelocityIter
-    )
-    {
-        const phasePair& pair(this->phasePairs_[interfacialVelocityIter.key()]);
-
-        Uis.insert
-        (
-            pair,
-            new volVectorField
-            (
-                IOobject::groupName("Ui", pair.name()),
-                interfacialVelocityIter()->Ui()
-            )
-        );
-    }
-
     forAllConstIter
     (
         dragModelTable,
@@ -184,17 +163,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                        *(1.0/(dragCoeff*XiD*deltaT + 1.0) - 1.0)
                     );
 
-                    const volVectorField& Ui(*Uis[pair]);
                     phase1.alphaRhoU(nodei) += deltaM;
-                    if (!phase1.granular())
-                    {
-                        phase1.alphaRhoE() += deltaM & Ui;
-                    }
                     phase2.alphaRhoU(nodej) -= deltaM;
-                    if (!phase2.granular())
-                    {
-                        phase2.alphaRhoE() -= deltaM & Ui;
-                    }
                 }
             }
         }
@@ -242,11 +212,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
             (
                 pow
                 (
-
-                    particles->productionSource(*gas)
-                   /(Kd*XiD*deltaT + 1.0)
-                   /alphaRhop
-                   *deltaT
+                    particles->productionSource(*gas)*deltaT
+                   /((Kd*XiD*deltaT + 1.0)*alphaRhop)
                   + pow(ThetaStar, 1.5),
                     2.0/3.0
                 )
@@ -315,17 +282,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                     liftModelIter()->F<vector>(nodei, nodej)*deltaT
                 );
 
-                const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fl;
-                if (!phase1.granular())
-                {
-                    phase1.alphaRhoE() += Fl & Ui;
-                }
                 phase2.alphaRhoU(nodej) -= Fl;
-                if (!phase2.granular())
-                {
-                    phase2.alphaRhoE() -= Fl & Ui;
-                }
             }
         }
     }
@@ -366,17 +324,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                     )
                 );
 
-                const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fvm;
-                if (!phase1.granular())
-                {
-                    phase1.alphaRhoE() += Fvm & Ui;
-                }
                 phase2.alphaRhoU(nodej) -= Fvm;
-                if (!phase2.granular())
-                {
-                    phase2.alphaRhoE() -= Fvm & Ui;
-                }
             }
         }
     }
@@ -411,17 +360,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                     wallLubricationIter()->F<vector>(nodei, nodej)*deltaT
                 );
 
-                const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fwl;
-                if (!phase1.granular())
-                {
-                    phase1.alphaRhoE() += Fwl & Ui;
-                }
                 phase2.alphaRhoU(nodej) -= Fwl;
-                if (!phase2.granular())
-                {
-                    phase2.alphaRhoE() -= Fwl & Ui;
-                }
             }
         }
     }
@@ -458,18 +398,26 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 );
 
-                const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fwl;
-                if (!phase1.granular())
-                {
-                    phase1.alphaRhoE() += Fwl & Ui;
-                }
                 phase2.alphaRhoU(nodej) -= Fwl;
-                if (!phase2.granular())
-                {
-                    phase2.alphaRhoE() -= Fwl & Ui;
-                }
             }
+        }
+    }
+    forAll(phaseModels_, phasei)
+    {
+        if (!phaseModels_[phasei].granular())
+        {
+            phaseModel& phase = phaseModels_[phasei];
+            phase.alphaRhoE() +=
+                phase.alphaRho()*0.5
+               *(
+                    magSqr
+                    (
+                        phase.alphaRhoU()
+                       /max(phase.alphaRho(), phase.residualAlphaRho())
+                    )
+                  - magSqr(phase.U())
+                );
         }
     }
 }
