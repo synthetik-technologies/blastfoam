@@ -89,21 +89,18 @@ c4
     initiation
     {
         E0          9.0e9; // Detonation energy
-        points     ((-0.3048 0.3048 0)); // m center top detonated
-        radius     0.01;
-        vDet       7850; // 8285; // m/s
+        useCOM      yes;
+        radius      0.02;
+
+        Ts          2000;
+        Tign        700;
+        ALow        6.25e10;
+        EaLow       112000;
+        AHigh       1e8;
+        EaHigh      560000;
 
         diameterModel qbmm;
-
-        Ts      2000;
-        Tign    50a0qz;
-        ALow    6.25e10;
-        EaLow   112000;
-        AHigh   1e8;
-        EaHigh  560000;
-
     }
-
     residualRho     1e-6;           // Minimum density of the phase
     residualAlpha   1e-10;          // Minimum volume fraction used for division
 }

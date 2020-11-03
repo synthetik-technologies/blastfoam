@@ -18,11 +18,11 @@ FoamFile
 fields (alpha.c4);
 nBufferLayers 1;
 
-//- Calc
+//- Calc charge size
 rho     1601.0;
 mass    10.0; // pounds
-V       #calc "$mass/2.20462/$rho";
-R       #calc "cbrt($V/4/3.141529*3)";
+V       #calc "$mass/2.20462/$rho"; // convert to kg and get volume
+R       #calc "cbrt($V/4/3.141529*3)"; // Calculate radius from volume
 
 defaultFieldValues
 (
@@ -34,11 +34,11 @@ regions
 (
     sphereToCell // Use cylinder for 3D
     {
-        centre (-0.3048 0.3048 0);
+        centre (0 0 0);
         radius $R;
         backup
         {
-            centre (-0.3048 0.3048 0);
+            centre (0 0 0);
             radius 0.25;
         }
         refineInternal yes;

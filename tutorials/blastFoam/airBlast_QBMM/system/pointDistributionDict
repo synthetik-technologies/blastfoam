@@ -15,9 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-phases (populationBalance);
+phases (c4);
 
-populationBalance
+c4
 {
     xMax    1e-5;
     xMin    1e-7;
@@ -41,7 +41,7 @@ populationBalance
 
         probeLocations
         (
-            ( 0.5 0.25 0 )
+            ( 0 0 0 )
         );
     }
 }

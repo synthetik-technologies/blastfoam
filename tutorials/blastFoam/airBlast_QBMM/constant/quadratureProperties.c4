@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fieldMomentInversion    basicFieldMomentInversion;
+fieldMomentInversion    extendedFieldMomentInversion;
 
 basicMomentInversion
 {
@@ -26,10 +26,19 @@ extendedMomentInversion
 {
     extendedMomentInversion     lognormal;
 
+    // Run time tolerances
     maxSigmaIter        1000;
     momentsTol          1.0e-6;
     sigmaTol            1.0e-8;
     targetFunctionTol   1.0e-8;
+
+//     // Tolerances for using reconstructPointDistribution
+//     maxSigmaIter        1000;
+//     minVariance         1.0e-15;
+//     momentsTol          1.0e-12;
+//     sigmaTol            1.0e-15;
+//     sigmaMin            1.0e-15;
+//     targetFunctionTol   1.0e-12;
 
     basicQuadrature
     {

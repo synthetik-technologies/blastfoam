@@ -62,7 +62,7 @@ c4
     (
         sphereToCell // Use cylinder for 3D
         {
-            centre (-0.3048 0.3048 0);
+            centre (0 0 0);
             radius 0.0877805;
 
             node0
