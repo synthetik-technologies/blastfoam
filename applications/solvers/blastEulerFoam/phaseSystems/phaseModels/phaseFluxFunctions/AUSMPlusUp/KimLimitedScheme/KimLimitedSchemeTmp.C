@@ -50,13 +50,13 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
     const GeometricField<typename Limiter::gradPhiType, fvPatchField, volMesh>&
         gradc = tgradc();
 
-    tmp<volScalarField> zeta
+    volScalarField alphap(kineticTheory_.alphap());
+    volScalarField alphaMinFriction(kineticTheory_.alphaMinFriction());
+    volScalarField alphaMax(kineticTheory_.alphaMax());
     (
         (kineticTheory_.alphap() - kineticTheory_.alphaMinFriction())
        /(kineticTheory_.alphaMax() - kineticTheory_.alphaMinFriction())
     );
-    zeta.ref().max(0);
-    volScalarField G(max(2.0*(1.0 - D_*sqr(zeta)), 0.0));
 
     const surfaceScalarField& CDweights = mesh.surfaceInterpolation::weights();
 
@@ -71,6 +71,18 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
     {
         label own = owner[face];
         label nei = neighbour[face];
+        scalar alphaM(max(alphap[own], alphap[nei]));
+        scalar alphaMinFric(min(alphaMinFriction[own], alphaMinFriction[nei]));
+        scalar alphaMaxi(min(alphaMax[own], alphaMax[nei]));
+        scalar zeta
+        (
+            max
+            (
+                (alphaM - alphaMinFric)/(alphaMaxi - alphaMinFric),
+                0.0
+            )
+        );
+        scalar G(max(2.0*(1.0 - D_*sqr(zeta)), 0.0));
 
         pLim[face] = limiter
         (
@@ -81,7 +93,7 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
             gradc[own],
             gradc[nei],
             C[nei] - C[own],
-            min(G[own], G[nei])
+            G
         );
     }
 
@@ -114,14 +126,40 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
             (
                 gradc.boundaryField()[patchi].patchNeighbourField()
             );
-            scalarField Gbf
+
+            scalarField alphaM
             (
                 max
                 (
-                    G.boundaryField()[patchi].patchInternalField(),
-                    G.boundaryField()[patchi].patchNeighbourField()
+                    alphap.boundaryField()[patchi].patchInternalField(),
+                    alphap.boundaryField()[patchi].patchNeighbourField()
                 )
             );
+            scalarField alphaMinFric
+            (
+                min
+                (
+                    alphaMinFriction.boundaryField()[patchi].patchInternalField(),
+                    alphaMinFriction.boundaryField()[patchi].patchNeighbourField()
+                )
+            );
+            scalarField alphaMaxi
+            (
+                min
+                (
+                    alphaMax.boundaryField()[patchi].patchInternalField(),
+                    alphaMax.boundaryField()[patchi].patchNeighbourField()
+                )
+            );
+            scalarField zeta
+            (
+                max
+                (
+                    (alphaM - alphaMinFric)/(alphaMaxi - alphaMinFric),
+                    0.0
+                )
+            );
+            scalarField G(max(2.0*(1.0 - D_*sqr(zeta)), 0.0));
 
 
             // Build the d-vectors
@@ -138,7 +176,7 @@ void Foam::KimLimitedScheme<Type, Limiter, LimitFunc>::calcLimiter
                     pGradcP[face],
                     pGradcN[face],
                     pd[face],
-                    Gbf[face]
+                    G[face]
                 );
             }
         }
