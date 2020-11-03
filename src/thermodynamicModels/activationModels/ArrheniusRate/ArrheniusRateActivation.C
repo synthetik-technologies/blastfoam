@@ -133,6 +133,16 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
 }
 
 
+void Foam::activationModels::ArrheniusRateActivation::update()
+{
+    activationModel::update();
+    if (dModel_.valid())
+    {
+        dModel_->update();
+    }
+}
+
+
 void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
 {
     activationModel::clearODEFields();

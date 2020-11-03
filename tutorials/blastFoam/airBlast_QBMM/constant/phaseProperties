@@ -42,7 +42,7 @@ c4
         }
         transport
         {
-            mu              0;              // Viscosity
+            mu              1.81e-5;        // Viscosity
             Pr              1;              // Prandtl number
         }
         thermodynamics
@@ -74,7 +74,7 @@ c4
         }
         transport
         {
-            mu              0;              // Viscosity
+            mu              1.81e-5;        // Viscosity
             Pr              1;              // Prandtl number
         }
         thermodynamics
@@ -127,7 +127,7 @@ air
     }
     transport
     {
-        mu              0;
+        mu              1.81e-5;        // Viscosity
         Pr              1;
     }
     thermodynamics

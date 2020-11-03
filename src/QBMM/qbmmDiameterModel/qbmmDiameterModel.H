@@ -91,6 +91,9 @@ public:
 
     // Member Functions
 
+        //- Update fluxes
+        virtual void update();
+
         //- Solve sub-step stepi
         virtual void solve();
 

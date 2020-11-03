@@ -184,26 +184,16 @@ Foam::phaseModel::phaseModel
         ),
         fluid.mesh(),
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
-    ),
-    dPtr_(diameterModel::New(fluid.mesh(), phaseDict_, phaseName))
+    )
 {
     this->lookupAndInitialize();
 }
 
 
-// void Foam::phaseModel::setTurbulenceModel()
-// {
-//     turbulence_ =
-//         PhaseCompressibleTurbulenceModel<phaseModel>::New
-//         (
-//             *this,
-//             this->rho(),
-//             this->U(),
-//             alphaRhoPhi_,
-//             phi_,
-//             *this
-//         );
-// }
+void Foam::phaseModel::initializeModels()
+{
+    dPtr_ = diameterModel::New(fluid_.mesh(), phaseDict_, name_);
+}
 
 
 Foam::autoPtr<Foam::phaseModel> Foam::phaseModel::clone() const

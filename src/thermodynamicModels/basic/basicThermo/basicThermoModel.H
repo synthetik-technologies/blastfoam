@@ -63,6 +63,9 @@ protected:
 
     // Protected data
 
+        // Thermo dictionary
+        dictionary thermoDict_;
+
         //- Is this the top level thermo model
         bool master_;
 
@@ -150,6 +153,10 @@ public:
             const bool master = true,
             const word& masterName = word::null
         );
+
+        //- Initialize models
+        virtual void initializeModels()
+        {}
 
 
     //- Destructor

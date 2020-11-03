@@ -95,6 +95,8 @@ Foam::granularPhaseModel::granularPhaseModel
     fluxScheme_(new fluxSchemes::AUSMPlusUp(fluid.mesh(), phaseName))
 {
     thermo_->read(phaseDict_);
+    phaseModel::initializeModels();
+    thermo_->initializeModels();
     encode();
 }
 

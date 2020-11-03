@@ -123,13 +123,24 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
             this->residualRho_ = thermos_[phasei].residualRho();
         }
 
+        mu_ += volumeFractions_[phasei]*thermos_[phasei].mu();
+        alpha_ += volumeFractions_[phasei]*thermos_[phasei].alpha();
+
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
     }
     rho_ /= max(sumAlpha, residualAlpha());
-    this->initialize();
 }
 
+
+void Foam::multiphaseFluidThermo::initializeModels()
+{
+    forAll(thermos_, phasei)
+    {
+        thermos_[phasei].initializeModels();
+    }
+    this->initialize();
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

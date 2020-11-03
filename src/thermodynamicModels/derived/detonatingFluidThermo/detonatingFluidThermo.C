@@ -54,10 +54,48 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
         dict.subDict("products"),
         master,
         masterName
-    ),
-    activation_(activationModel::New(rho.mesh(), dict, name)),
-    afterburn_(afterburnModel::New(rho.mesh(), dict, name))
+    )
 {
+    this->fluidThermoModel::mu_ =
+        max
+        (
+            Thermo::volScalarFieldProperty
+            (
+                "mu",
+                dimDynamicViscosity,
+                &Thermo::thermoType1::mu,
+                this->rho_,
+                this->e_,
+                this->T_
+            ),
+            Thermo::volScalarFieldProperty
+            (
+                "mu",
+                dimDynamicViscosity,
+                &Thermo::thermoType2::mu,
+                this->rho_,
+                this->e_,
+                this->T_
+            )
+        );
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidThermo<Thermo>::initializeModels()
+{
+    activation_ = activationModel::New
+    (
+        this->mesh_,
+        this->thermoDict_,
+        this->name_
+    );
+    afterburn_ = afterburnModel::New
+    (
+        this->mesh_,
+        this->thermoDict_,
+        this->name_
+    );
     //- Initialize the density using the pressure and temperature
     //  This is only done at the first time step (Not on restart)
     if
@@ -65,7 +103,11 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
         max(this->rho_).value() == 0
      || (
             Thermo::thermoType1::solid()
-         && dict.lookupOrDefault<Switch>("calculateDensity", false)
+         && this->thermoDict_.template lookupOrDefault<Switch>
+            (
+                "calculateDensity",
+                false
+            )
          && this->rho_.time().timeIndex() == 0
         )
     )
@@ -107,6 +149,13 @@ Foam::detonatingFluidThermo<Thermo>::~detonatingFluidThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::detonatingFluidThermo<Thermo>::update()
+{
+    activation_->update();
+    afterburn_->update();
+}
 
 
 template<class Thermo>

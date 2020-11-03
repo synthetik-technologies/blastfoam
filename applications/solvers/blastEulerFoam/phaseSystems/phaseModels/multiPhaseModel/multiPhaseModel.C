@@ -204,9 +204,6 @@ Foam::multiPhaseModel::multiPhaseModel
 
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
     thermo_.setTotalVolumeFractionPtr(*this);
-    correctThermo();
-
-    encode();
 
     this->turbulence_ =
         phaseCompressibleTurbulenceModel::New
@@ -218,6 +215,11 @@ Foam::multiPhaseModel::multiPhaseModel
             phi_,
             *this
         );
+    phaseModel::initializeModels();
+    thermo_.initializeModels();
+    correctThermo();
+
+    encode();
 }
 
 

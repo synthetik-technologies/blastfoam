@@ -21,20 +21,20 @@ univariateCoeffs
 {
     diffusionModel
     {
-        diffusionModel  molecularDiffusion;
+        diffusionModel  turbulentDiffusion;
         gammaLam        gammaLam    [ 0 2 -1 0 0 0 0 ] 1.0e-6;
         Sc              0.7;
     }
 
-    aggregation off;
+    aggregation on;
 
     aggregationKernel
     {
-        aggregationKernel constant;
-        Ca Ca [0 0 -1 0 0 0 0] 1e-6;
+        aggregationKernel turbulentBrownian;
+        Ca Ca [0 0 -1 0 0 0 0] 1;
     }
 
-    breakup off;
+    breakup on;
 
     breakupKernel
     {
@@ -69,8 +69,8 @@ univariateCoeffs
 
     odeCoeffs
     {
-        solveOde off;
-        ATol    1.0e-6;
+        solveOde on;
+        ATol    1.0e-4;
         RTol    1.0e-3;
         fac     0.9;
         facMin  0.1;

@@ -32,6 +32,11 @@ boundaries
         type            zeroGradient;
     }
 
+    processor
+    {
+        type            processor;
+    }
+
     defaultFaces
     {
         type            empty;

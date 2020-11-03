@@ -163,6 +163,7 @@ Foam::basicThermoModel::basicThermoModel
         IOobject::groupName("basicThermo", phaseName),
         p.mesh()
     ),
+    thermoDict_(dict),
     master_(master),
     masterName_(masterName),
     name_(phaseName),
@@ -213,6 +214,7 @@ Foam::basicThermoModel::basicThermoModel
         IOobject::groupName("basicThermo", phaseName),
         mesh
     ),
+    thermoDict_(dict),
     master_(master),
     masterName_(masterName),
     name_(phaseName),

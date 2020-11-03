@@ -116,6 +116,9 @@ public:
 
     // Public functions
 
+        //- Update
+        virtual void update();
+
         //- Solve sub-step stepi
         virtual void solve();
 

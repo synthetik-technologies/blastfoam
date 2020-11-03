@@ -62,8 +62,9 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
         )
     )
 {
-    this->lookupAndInitialize();
     setModels(dict);
+    thermo_->initializeModels();
+    this->lookupAndInitialize();
     encode();
 }
 
@@ -123,6 +124,7 @@ void Foam::singlePhaseCompressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
+    thermo_->update();
 }
 
 

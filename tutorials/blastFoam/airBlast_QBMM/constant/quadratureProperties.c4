@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fieldMomentInversion    extendedFieldMomentInversion;
+fieldMomentInversion    basicFieldMomentInversion;
 
 basicMomentInversion
 {

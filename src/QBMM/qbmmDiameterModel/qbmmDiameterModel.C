@@ -124,6 +124,12 @@ Foam::diameterModels::qbmmDiameterModel::~qbmmDiameterModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::diameterModels::qbmmDiameterModel::update()
+{
+    pbe_.update();
+}
+
+
 void Foam::diameterModels::qbmmDiameterModel::clearODEFields()
 {
     pbe_.clearODEFields();

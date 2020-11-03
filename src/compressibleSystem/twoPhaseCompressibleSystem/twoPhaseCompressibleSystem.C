@@ -108,9 +108,12 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     )
 {
+    rho_ = alphaRho1_ + alphaRho2_;
+    Info<<min(thermo_.mu()).value()<<endl;
+    setModels(dict);
+    thermo_.initializeModels();
     this->lookupAndInitialize();
     encode();
-    setModels(dict);
 }
 
 
@@ -206,6 +209,7 @@ void Foam::twoPhaseCompressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
+    thermo_.update();
 }
 
 
@@ -226,11 +230,13 @@ void Foam::twoPhaseCompressibleSystem::calcAlphaAndRho()
 
     alphaRho1_.max(0);
     rho1_.ref() = alphaRho1_()/alpha1();
+    rho1_.max(small);
     rho1_.correctBoundaryConditions();
     alphaRho1_ = volumeFraction_*rho1_;
 
     alphaRho2_.max(0);
     rho2_.ref() = alphaRho2_()/alpha2();
+    rho2_.max(small);
     rho2_.correctBoundaryConditions();
     alphaRho2_ = (1.0 - volumeFraction_)*rho2_;
 

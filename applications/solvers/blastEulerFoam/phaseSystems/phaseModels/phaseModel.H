@@ -233,6 +233,9 @@ public:
             const label index
         );
 
+    //- Initialize models
+    virtual void initializeModels();
+
 
     //- Destructor
     virtual ~phaseModel();

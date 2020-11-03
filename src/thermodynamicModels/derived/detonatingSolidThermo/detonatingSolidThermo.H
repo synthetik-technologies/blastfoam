@@ -92,6 +92,9 @@ public:
         const word& masterName = word::null
     );
 
+    //- Initialize models
+    virtual void initializeModels();
+
 
     //- Destructor
     virtual ~detonatingSolidThermo();
@@ -100,8 +103,7 @@ public:
     // Member Functions
 
         //- Pre update
-        virtual void update()
-        {}
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();
@@ -110,8 +112,7 @@ public:
         virtual void clearODEFields();
 
         //- Post update
-        virtual void postUpdate()
-        {}
+        virtual void postUpdate();
 
         //- Correct fields
         virtual void correct();

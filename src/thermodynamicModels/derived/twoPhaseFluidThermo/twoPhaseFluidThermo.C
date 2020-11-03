@@ -114,9 +114,20 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
     // Update total density
     rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
-    this->initialize();
+    mu_ =
+        volumeFraction_*thermo1_->mu()
+      + (1.0 - volumeFraction_)*thermo2_->mu();
+    alpha_ =
+        volumeFraction_*thermo1_->alpha()
+        + (1.0 - volumeFraction_)*thermo2_->alpha();
 }
 
+void Foam::twoPhaseFluidThermo::initializeModels()
+{
+    thermo1_->initializeModels();
+    thermo2_->initializeModels();
+    this->initialize();
+}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -128,7 +139,6 @@ Foam::twoPhaseFluidThermo::~twoPhaseFluidThermo()
 
 void Foam::twoPhaseFluidThermo::postUpdate()
 {
-
     thermo1_->postUpdate();
     thermo2_->postUpdate();
 }

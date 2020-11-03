@@ -106,6 +106,9 @@ public:
         const word& masterName = word::null
     );
 
+    //- Initialize models
+    virtual void initializeModels();
+
 
     //- Destructor
     virtual ~multiphaseFluidThermo();

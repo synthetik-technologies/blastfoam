@@ -108,6 +108,8 @@ Foam::fluidPhaseModel::fluidPhaseModel
             phi_,
             *this
         );
+    phaseModel::initializeModels();
+    thermo_->initializeModels();
 }
 
 

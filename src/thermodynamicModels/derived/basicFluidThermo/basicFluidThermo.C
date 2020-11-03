@@ -90,6 +90,16 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
         }
     }
 
+    this->fluidThermoModel::mu_ = Thermo::volScalarFieldProperty
+        (
+            "thermo:mu",
+            dimDynamicViscosity,
+            &Thermo::thermoType::mu,
+            this->rho_,
+            this->e_,
+            this->T_
+        );
+
     this->initialize();
 }
 

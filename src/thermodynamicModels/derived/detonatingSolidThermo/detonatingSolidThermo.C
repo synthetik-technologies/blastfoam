@@ -48,10 +48,25 @@ Foam::detonatingSolidThermo<Thermo>::detonatingSolidThermo
         dict.subDict("products"),
         master,
         masterName
-    ),
-    activation_(activationModel::New(mesh, dict, phaseName)),
-    afterburn_(afterburnModel::New(mesh, dict, phaseName))
+    )
+{}
+
+
+template<class Thermo>
+void Foam::detonatingSolidThermo<Thermo>::initializeModels()
 {
+    activation_ = activationModel::New
+    (
+        this->mesh_,
+        this->thermoDict_,
+        this->name_
+    );
+    afterburn_ = afterburnModel::New
+    (
+        this->mesh_,
+        this->thermoDict_,
+        this->name_
+    );
     volScalarField& rhoRef(solidThermoModel::rho_);
     volScalarField rhos
     (
@@ -91,7 +106,6 @@ Foam::detonatingSolidThermo<Thermo>::detonatingSolidThermo
     this->correct();
 }
 
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 template<class Thermo>
@@ -101,6 +115,13 @@ Foam::detonatingSolidThermo<Thermo>::~detonatingSolidThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+template<class Thermo>
+void Foam::detonatingSolidThermo<Thermo>::update()
+{
+    activation_->update();
+    afterburn_->update();
+}
+
 
 template<class Thermo>
 void Foam::detonatingSolidThermo<Thermo>::solve()
@@ -108,6 +129,15 @@ void Foam::detonatingSolidThermo<Thermo>::solve()
     activation_->solve();
     afterburn_->solve();
 }
+
+
+template<class Thermo>
+void Foam::detonatingSolidThermo<Thermo>::postUpdate()
+{
+    activation_->postUpdate();
+    afterburn_->postUpdate();
+}
+
 
 
 template<class Thermo>
