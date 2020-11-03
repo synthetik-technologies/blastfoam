@@ -11,11 +11,9 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      MieGruneisenEOSProperties;
+    object      phaseProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-radiationModel none;
 
 mixture
 {
