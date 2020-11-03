@@ -52,7 +52,8 @@ Foam::autoPtr<Foam::MUSCLReconstructionScheme<Type>>
 Foam::MUSCLReconstructionScheme<Type>::New
 (
     const GeometricField<Type, fvPatchField, volMesh>& phi,
-    const word& fieldName
+    const word& fieldName,
+    const word& phaseName
 )
 {
     word name
@@ -61,8 +62,24 @@ Foam::MUSCLReconstructionScheme<Type>::New
       + fieldName
       + ")"
     );
+    word namePhase
+    (
+        "reconstruct("
+      + IOobject::groupName(fieldName, phaseName)
+      + ")"
+    );
 
     if
+    (
+        phi.mesh().schemesDict().subDict
+        (
+            "interpolationSchemes"
+        ).found(namePhase)
+    )
+    {
+        name = namePhase;
+    }
+    else if
     (
         !phi.mesh().schemesDict().subDict
         (

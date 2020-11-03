@@ -143,7 +143,8 @@ public:
         static autoPtr<MUSCLReconstructionScheme<Type>> New
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
-            const word& name
+            const word& name,
+            const word& phaseName = word::null
         );
 
         //- Disallow default bitwise copy construction

@@ -336,30 +336,31 @@ void Foam::fluxScheme::update
 )
 {
     createSavedFields();
+    const word phaseName(U.group());
 
     autoPtr<MUSCLReconstructionScheme<scalar>> alphaLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(alpha, "alpha")
+        MUSCLReconstructionScheme<scalar>::New(alpha, "alpha", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho, "rho")
+        MUSCLReconstructionScheme<scalar>::New(rho, "rho", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        MUSCLReconstructionScheme<vector>::New(U, "U", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        MUSCLReconstructionScheme<scalar>::New(e, "e", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        MUSCLReconstructionScheme<scalar>::New(p, "p", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> cLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
+        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName)
     );
 
     tmp<surfaceScalarField> talphaOwn(alphaLimiter->interpolateOwn());
@@ -465,7 +466,7 @@ void Foam::fluxScheme::update
 )
 {
     createSavedFields();
-    const word phaseName = U.group();
+    const word phaseName(U.group());
 
     // Interpolate fields
     PtrList<surfaceScalarField> alphasOwn(alphas.size());
@@ -522,13 +523,19 @@ void Foam::fluxScheme::update
 
     forAll(alphas, phasei)
     {
+        const word phaseNamei(alphas[phasei].group());
         autoPtr<MUSCLReconstructionScheme<scalar>> alphaLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(alphas[phasei], "alpha")
+            MUSCLReconstructionScheme<scalar>::New
+            (
+                alphas[phasei],
+                "alpha",
+                phaseNamei
+            )
         );
         autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(rhos[phasei], "rho")
+            MUSCLReconstructionScheme<scalar>::New(rhos[phasei], "rho", phaseNamei)
         );
         alphasOwn.set
         (
@@ -560,19 +567,19 @@ void Foam::fluxScheme::update
 
     autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
     (
-        MUSCLReconstructionScheme<vector>::New(U, "U")
+        MUSCLReconstructionScheme<vector>::New(U, "U", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> eLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(e, "e")
+        MUSCLReconstructionScheme<scalar>::New(e, "e", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> pLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(p, "p")
+        MUSCLReconstructionScheme<scalar>::New(p, "p", phaseName)
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> cLimiter
     (
-        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
+        MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound", phaseName)
     );
 
     tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
