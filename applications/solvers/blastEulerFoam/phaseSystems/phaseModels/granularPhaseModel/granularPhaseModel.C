@@ -131,7 +131,6 @@ void Foam::granularPhaseModel::solve()
         fvc::div(alphaRhoPTEPhi_)
       + Ps_*fvc::div(phi_)
     );
-
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
 
@@ -186,8 +185,8 @@ void Foam::granularPhaseModel::postUpdate()
         (
             fvm::ddt(alphaRho_, U_)
           - fvc::ddt(alphaRho_, U_)
-          + fvc::ddt(smallAlphaRho, U_)
-          - fvm::ddt(smallAlphaRho, U_)
+          + fvm::ddt(smallAlphaRho, U_)
+          - fvc::ddt(smallAlphaRho, U_)
           + this->divDevRhoReff(U_)
         );
         fvScalarMatrix ThetaEqn
@@ -196,15 +195,14 @@ void Foam::granularPhaseModel::postUpdate()
            *(
                 fvm::ddt(alphaRho_, Theta_)
               - fvc::ddt(alphaRho_, Theta_)
-              + fvc::ddt(smallAlphaRho, Theta_)
-              - fvm::ddt(smallAlphaRho, Theta_)
+              + fvm::ddt(smallAlphaRho, Theta_)
+              - fvc::ddt(smallAlphaRho, Theta_)
             )
-          - fvc::laplacian(this->kappa_, Theta_)
+          - fvm::laplacian(this->kappa_, Theta_)
          ==
             ((tau*(*this)) && gradU)
         );
 
-        UEqn.relax();
         UEqn.solve();
         ThetaEqn.solve();
 

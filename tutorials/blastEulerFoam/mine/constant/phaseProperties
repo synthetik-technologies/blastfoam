@@ -145,8 +145,8 @@ gas
         initiation
         {
             E0              9.0e9;
-            points ((0 -1 0));
-            vDet       7850;            // Detonation velocity [m/s]
+            points          ((0 -1 0));
+            vDet            7850;            // Detonation velocity [m/s]
         }
     }
 
@@ -255,7 +255,7 @@ kineticTheory
     residualAlpha       1e-6;
 
     radialModel SinclairJackson;
-    viscosityModel Syamlal;
+    viscosityModel none;
     conductivityModel Syamlal;
     granularPressureModel Lun;
     frictionalStressModel JohnsonJackson;

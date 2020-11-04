@@ -71,7 +71,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
     (
         "maxNut",
         dimensionSet(0,2,-1,0,0),
-        dict.lookupOrDefault<scalar>("maxNut", 1000)
+        dict.lookupOrDefault<scalar>("maxNut", 1e6)
     ),
 
     Theta_
@@ -316,13 +316,12 @@ void Foam::kineticTheoryModel::correct()
     volScalarField ThetaSqrt("sqrtTheta", sqrt(Theta_));
 
     // Bulk viscosity  p. 45 (Lun et al. 1984).
-//     lambda_ = (4.0/3.0)*sqr(alpha)*da*gs0_*(1.0 + es_)*ThetaSqrt/sqrtPi;
     lambda_ = kineticTheorySystem_.lambda(phase_);
 
     // Limit viscosity and add frictional viscosity
     nut_.min(maxNut_);
-    nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_);
-    nuTotal_ = min(maxNut_, nut_ + nuFric_);
+    nuFric_ = min(kineticTheorySystem_.nuFrictional(), maxNut_ - nut_);
+    nuTotal_ = nut_ + nuFric_;
 
     if (debug)
     {

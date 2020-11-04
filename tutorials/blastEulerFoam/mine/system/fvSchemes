@@ -52,18 +52,19 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
+limiter linearMUSCL Minmod;
 interpolationSchemes
 {
     default             linear;
-    "reconstruct\(alpha.*\)"  linearMUSCL Minmod;
-    "reconstruct\(rho.*\)"  linearMUSCL Minmod;
-    "reconstruct\(U.*\)"  linearMUSCL Minmod;
-    "reconstruct\(e.*\)"  linearMUSCL Minmod;
-    "reconstruct\(p.*\)"  linearMUSCL Minmod;
-    "reconstruct\(speedOfSound.*\)"  linearMUSCL Minmod;
-    "reconstruct\(Theta.*\)"  linearMUSCL Minmod;
-    "reconstruct\(lambda.*\)"  linearMUSCL Minmod;
-    "reconstruct\(tauMC\)" linearMUSCL Minmod;
+    "reconstruct\(alpha.*\)"        $limiter;
+    "reconstruct\(rho.*\)"          $limiter;
+    "reconstruct\(U.*\)"            $limiter;
+    "reconstruct\(e.*\)"            $limiter;
+    "reconstruct\(p.*\)"            $limiter;
+    "reconstruct\(speedOfSound.*\)" $limiter;
+    "reconstruct\(Theta.*\)"        $limiter;
+    "reconstruct\(lambda.*\)"       $limiter;
+    "reconstruct\(tauMC\)"          $limiter;
 }
 
 snGradSchemes

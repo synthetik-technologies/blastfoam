@@ -199,10 +199,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
             (
                 1.0/alphaRhop + 1.0/alphaRhog
             );
-            volScalarField ThetaOld
-            (
-                particles->alphaRhoPTE()/(1.5*alphaRhop)
-            );
+            volScalarField ThetaOld(particles->Theta());
             volScalarField ThetaStar
             (
                 ThetaOld*exp(-2.0*Kd*deltaT/alphaRhop)

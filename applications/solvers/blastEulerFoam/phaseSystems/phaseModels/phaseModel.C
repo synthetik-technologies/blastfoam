@@ -238,6 +238,10 @@ void Foam::phaseModel::solveAlpha(const bool s)
 
 void Foam::phaseModel::solveAlphaRho()
 {
+    if (this->step() == 1)
+    {
+        alphaRho_.storeOldTime();
+    }
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRho_);
 
