@@ -31,7 +31,7 @@ fluxSchemes
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP 4;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
@@ -52,7 +52,7 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
-limiter linearMUSCL vanAlbada;
+limiter vanAlbada;
 interpolationSchemes
 {
     default             linear;

@@ -93,7 +93,6 @@ Foam::coupledMultiphaseCompressibleSystem::~coupledMultiphaseCompressibleSystem(
 void Foam::coupledMultiphaseCompressibleSystem::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
-    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
 
     surfaceScalarField alphaf
     (
@@ -140,7 +139,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
 
     this->storeAndBlendOld(rhoU_, rhoUOld_);
-    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
+    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs_);
 
     this->storeAndBlendOld(rhoE_, rhoEOld_);
     rhoE_ -= dT*deltaRhoE;
@@ -199,7 +198,7 @@ void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
         UEqn.solve();
         eEqn.solve();
 
-        rhoU_ = rho_*U_;
+        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
         rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
     }
 

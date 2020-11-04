@@ -109,7 +109,6 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     )
 {
     rho_ = alphaRho1_ + alphaRho2_;
-    Info<<min(thermo_.mu()).value()<<endl;
     setModels(dict);
     thermo_.initializeModels();
     this->lookupAndInitialize();

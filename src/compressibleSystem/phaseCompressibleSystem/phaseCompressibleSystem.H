@@ -133,6 +133,9 @@ protected:
         //- Minimum temperature
         dimensionedScalar TLow_;
 
+        //- Solution directions
+        vector solutionDs_;
+
 
         //- Allocate turbulence model if mu >= 0
         virtual void setModels(const dictionary& dict);

@@ -236,8 +236,20 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
     ),
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
-    TLow_("TLow", dimTemperature, 0.0)
+    TLow_("TLow", dimTemperature, 0.0),
+    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
+    scalar emptyDirV
+    (
+        Foam::max(mag(U_ & (vector::one - solutionDs_))).value()
+    );
+
+    // Remove wedge directions if not used
+    if (emptyDirV < small)
+    {
+        solutionDs_ = ((vector(mesh.geometricD()) + vector::one)/2.0);
+    }
+
     TLow_.readIfPresent(dict);
 }
 
@@ -274,8 +286,7 @@ void Foam::phaseCompressibleSystem::solve()
 
     //- Solve for momentum and energy
     dimensionedScalar dT = rho_.time().deltaT();
-    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
+    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs_);
     rhoE_ -= dT*deltaRhoE;
 }
 
@@ -289,7 +300,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
         radiation_->correct();
 
         calcAlphaAndRho();
-        U_ = rhoU_/rho_;
+        U_.ref() = rhoU_()/rho_();
         U_.correctBoundaryConditions();
 
         e() = rhoE_/rho_ - 0.5*magSqr(U_);
@@ -340,7 +351,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
         UEqn.solve();
         eEqn.solve();
 
-        rhoU_ = rho_*U_;
+        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
         rhoE_ = rho_*(e() + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
     }
 

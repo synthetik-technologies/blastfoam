@@ -34,6 +34,7 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
+#include "basicThermoModel.H"
 #include "phaseCompressibleTurbulenceModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -114,9 +115,10 @@ Foam::phaseModel::phaseModel
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        fluid.mesh(),
-        dimensionedScalar("0", sqr(dimVelocity), -1),
-        T_.boundaryField().types()
+        fluid_.mesh(),
+        dimensionedScalar(sqr(dimVelocity), -1.0),
+        basicThermoModel::eBoundaryTypes(T_),
+        basicThermoModel::eBoundaryBaseTypes(T_)
     ),
     alphaRho_
     (
@@ -184,8 +186,19 @@ Foam::phaseModel::phaseModel
         ),
         fluid.mesh(),
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
-    )
+    ),
+    solutionDs_((vector(this->mesh().solutionD()) + vector::one)/2.0)
 {
+    scalar emptyDirV
+    (
+        Foam::max(mag(U_ & (vector::one - solutionDs_))).value()
+    );
+
+    // Remove wedge directions if not used
+    if (emptyDirV < small)
+    {
+        solutionDs_ = ((vector(this->mesh().geometricD()) + vector::one)/2.0);
+    }
     this->lookupAndInitialize();
 }
 
@@ -252,7 +265,6 @@ void Foam::phaseModel::solveAlphaRho()
 void Foam::phaseModel::solve()
 {
     dimensionedScalar dT = rho().time().deltaT();
-    vector solutionDs((vector(this->mesh().geometricD()) + vector::one)/2.0);
 
     volVectorField deltaAlphaRhoU
     (
@@ -280,7 +292,7 @@ void Foam::phaseModel::solve()
 
 
     this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
-    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
     alphaRhoU_.correctBoundaryConditions();
 
     this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
@@ -298,7 +310,7 @@ void Foam::phaseModel::solve()
         this->storeAndBlendDelta(deltaAlpha, deltaAlpha_);
 
         this->storeAndBlendOld(alpha, alphaOld_);
-        alpha -= dT*(deltaAlpha);
+        alpha -= dT*deltaAlpha;
         alpha.max(0);
         alpha.min(alphaMax_);
         alpha.correctBoundaryConditions();
@@ -330,7 +342,7 @@ void Foam::phaseModel::postUpdate()
         );
         eEqn.solve();
 
-        alphaRhoU_ = alphaRho_*U_;
+        alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
         alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 
         turbulence_->correct();

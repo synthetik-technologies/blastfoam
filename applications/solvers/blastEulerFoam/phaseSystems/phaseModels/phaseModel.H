@@ -151,6 +151,9 @@ protected:
         //- Is the volume fraction transported
         bool solveAlpha_;
 
+        //- Solution vector
+        vector solutionDs_;
+
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
 
@@ -293,6 +296,12 @@ public:
         scalar alphaMax() const
         {
             return alphaMax_;
+        }
+
+        //- Return the solution directions
+        const vector& solutionDs() const
+        {
+            return solutionDs_;
         }
 
 

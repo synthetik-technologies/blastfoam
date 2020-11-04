@@ -405,6 +405,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
         if (!phaseModels_[phasei].granular())
         {
             phaseModel& phase = phaseModels_[phasei];
+            phase.alphaRhoU() = cmptMultiply(phase.alphaRhoU(), phase.solutionDs());
             phase.alphaRhoE() +=
                 phase.alphaRho()*0.5
                *(
@@ -690,8 +691,13 @@ Foam::phaseSystem::phaseSystem
     {
         refCast<volScalarField>(phaseModels_.last()) = 1.0 - sumAlpha;
     }
-    else if (max(sumAlpha).value() != 1 && min(sumAlpha).value() != 1)
+    else if
+    (
+        max(sumAlpha()).value() - 1 > small
+     && min(sumAlpha()).value() - 1 > small
+    )
     {
+        Info<<max(sumAlpha()).value()<<' '<<min(sumAlpha()).value()<<endl;
         FatalErrorInFunction
             << "Initial volume fractions do not sum to one." << nl
             << "min(sum(alphas)) = " << min(sumAlpha).value()

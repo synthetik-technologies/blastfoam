@@ -53,12 +53,6 @@ class SinclairJackson
 :
     public radialModel
 {
-    // Private data
-
-        //- Minimum alpha friction is turned on
-        scalar alphaMinFriction_;
-
-
 public:
 
     //- Runtime type information

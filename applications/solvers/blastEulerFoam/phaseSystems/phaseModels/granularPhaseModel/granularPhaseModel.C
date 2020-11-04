@@ -112,7 +112,6 @@ Foam::granularPhaseModel::~granularPhaseModel()
 void Foam::granularPhaseModel::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
-    vector solutionDs((vector(this->mesh().geometricD()) + vector::one)/2.0);
 
     //- Momentum transport
     volVectorField deltaAlphaRhoU
@@ -140,10 +139,10 @@ void Foam::granularPhaseModel::solve()
     //- Solve thermodynamics to get energy production
     thermo_->solve();
 
-
     //- Blend deltas
     this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
 
+    //- Add energy from thermodynaics
     deltaAlphaRhoE -= ESource();
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
 
@@ -151,7 +150,7 @@ void Foam::granularPhaseModel::solve()
 
     //- Solve momentum transport
     this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
-    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
     alphaRhoU_.correctBoundaryConditions();
 
     // Solve thermal energy transport
@@ -216,7 +215,7 @@ void Foam::granularPhaseModel::postUpdate()
         ThetaEqn.solve();
 
         //- Update conservative variables
-        alphaRhoU_ =  alphaRho_*U_;
+        alphaRhoU_ =  cmptMultiply(alphaRho_*U_, solutionDs_);
         alphaRhoPTE_ =  alphaRho_*1.5*Theta_;
 
     }
@@ -280,7 +279,7 @@ void Foam::granularPhaseModel::decode()
     volScalarField alphaRho(Foam::max(alpha, residualAlpha_)*rho_);
 
     //- Calculate velocity from momentum
-    U_.ref() = alphaRhoU_()/(alphaRho());
+    U_.ref() = alphaRhoU_()/alphaRho();
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
