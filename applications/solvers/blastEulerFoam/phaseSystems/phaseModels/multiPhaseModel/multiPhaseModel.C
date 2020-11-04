@@ -246,14 +246,16 @@ void Foam::multiPhaseModel::solve()
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
         );
+        this->storeAndBlendDelta(deltaAlpha, deltaAlphas_[phasei]);
+
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
+        this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRhos_[phasei]);
 
         this->storeAndBlendOld(alphas_[phasei], alphasOld_[phasei]);
-        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
-
         alphas_[phasei] -= dT*deltaAlpha;
         alphas_[phasei].correctBoundaryConditions();
 
+        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
@@ -291,7 +293,6 @@ void Foam::multiPhaseModel::clearODEFields()
 void Foam::multiPhaseModel::update()
 {
     tmp<volScalarField> c(speedOfSound());
-
     fluxScheme_->update
     (
         alphas_,
@@ -308,6 +309,9 @@ void Foam::multiPhaseModel::update()
         alphaRhoUPhi_,
         alphaRhoEPhi_
     );
+
+    phaseModel::update();
+    thermo_.update();
 }
 
 
@@ -379,7 +383,7 @@ void Foam::multiPhaseModel::decode()
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
-        (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
+        alphaRho_.boundaryField()*U_.boundaryField();
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
@@ -402,8 +406,7 @@ void Foam::multiPhaseModel::decode()
     e_.correctBoundaryConditions();
 
     alphaRhoE_.boundaryFieldRef() =
-        (*this).boundaryField()
-       *rho_.boundaryField()
+        alphaRho_.boundaryField()
        *(
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())

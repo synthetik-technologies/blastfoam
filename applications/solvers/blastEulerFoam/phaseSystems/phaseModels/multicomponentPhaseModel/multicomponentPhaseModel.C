@@ -221,17 +221,6 @@ Foam::multicomponentPhaseModel::~multicomponentPhaseModel()
 
 void Foam::multicomponentPhaseModel::solve()
 {
-    PtrList<volScalarField> deltaAlphaRhoYs(Ys_.size());
-    forAll(Ys_, i)
-    {
-        deltaAlphaRhoYs.set
-        (
-            i,
-            new volScalarField(fvc::div(alphaRhoYPhis_[i]))
-        );
-
-    }
-
     phaseModel::solveAlphaRho();
 
     dimensionedScalar dT = this->rho_.time().deltaT();
@@ -249,7 +238,6 @@ void Foam::multicomponentPhaseModel::solve()
         Ys_[i].correctBoundaryConditions();
         thermos_[i].solve();
     }
-
     phaseModel::solve();
 }
 
@@ -257,7 +245,6 @@ void Foam::multicomponentPhaseModel::solve()
 void Foam::multicomponentPhaseModel::postUpdate()
 {
     phaseModel::postUpdate();
-
     forAll(thermos_, i)
     {
         thermos_[i].postUpdate();
@@ -316,8 +303,11 @@ void Foam::multicomponentPhaseModel::update()
             alphaRhoEPhi_
         );
     }
+
+    phaseModel::update();
     forAll(Ys_, i)
     {
+        thermos_[i].update();
         alphaRhoYPhis_[i] =
             alphaRhoPhi_*fluxScheme_->interpolate(Ys_[i], Ys_[i].name());
     }

@@ -315,7 +315,7 @@ public:
             virtual void encode() = 0;
 
             //- Update fluxes
-            virtual void update() = 0;
+            virtual void update();
 
             //- Solve sub-step stepi
             virtual void solve();

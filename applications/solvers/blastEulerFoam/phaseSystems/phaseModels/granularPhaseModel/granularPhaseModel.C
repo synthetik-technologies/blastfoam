@@ -111,57 +111,67 @@ Foam::granularPhaseModel::~granularPhaseModel()
 
 void Foam::granularPhaseModel::solve()
 {
+    dimensionedScalar dT = rho_.time().deltaT();
+    vector solutionDs((vector(this->mesh().geometricD()) + vector::one)/2.0);
+
+    //- Momentum transport
     volVectorField deltaAlphaRhoU
     (
-        fvc::div(alphaRhoUPhi_)
-      - alphaRho_*fluid_.g()
+        fvc::div(alphaRhoUPhi_) - alphaRho_*fluid_.g()
     );
-    const volScalarField& alpha = *this;
     forAll(fluid_.phases(), phasei)
     {
         const phaseModel& phase = fluid_.phases()[phasei];
         if (!phase.granular())
         {
-            deltaAlphaRhoU += alpha*phase.gradP();
+            deltaAlphaRhoU += (*this)*phase.gradP();
         }
     }
 
-    volScalarField deltaAlphaRhoPTE
-    (
-        fvc::div(alphaRhoPTEPhi_)
-      + Ps_*fvc::div(phi_)
-    );
-    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
-    this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
+    //- Thermal energy transport
+    volScalarField deltaAlphaRhoE(fvc::div(alphaRhoEPhi_));
 
+    //- Pseudo thermal energy transport
+    volScalarField deltaAlphaRhoPTE(fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_));
 
-    dimensionedScalar dT = rho_.time().deltaT();
-    vector solutionDs((vector(this->mesh().solutionD()) + vector::one)/2.0);
-
+    //- Solve phase mass transport
     phaseModel::solveAlphaRho();
 
-    this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
-    this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
-    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
-    alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
-
+    //- Solve thermodynamics to get energy production
     thermo_->solve();
 
-    volScalarField deltaAlphaRhoE
-    (
-        fvc::div(alphaRhoEPhi_) - ESource()
-    );
 
+    //- Blend deltas
+    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
+
+    deltaAlphaRhoE -= ESource();
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
-    this->storeAndBlendOld(alphaRhoPTE_, alphaRhoPTEOld_);
 
-    alphaRhoE_ -= dT*(deltaAlphaRhoE);
+    this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
+
+    //- Solve momentum transport
+    this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
+    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs);
+    alphaRhoU_.correctBoundaryConditions();
+
+    // Solve thermal energy transport
+    this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
+    alphaRhoE_ -= dT*deltaAlphaRhoE;
+    alphaRhoE_.correctBoundaryConditions();
+
+    //- Solve pseudo thermal energy transport
+    this->storeAndBlendOld(alphaRhoPTE_, alphaRhoPTEOld_);
+    alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
+    alphaRhoPTE_.correctBoundaryConditions();
+
+    //- Update diameterModel
+    this->dPtr_->solve();
 }
 
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    //- Add collisional viscosity terms
+    //- Solve for collisional viscosity terms
     if (this->includeViscosity())
     {
         tmp<volTensorField> tgradU
@@ -181,36 +191,37 @@ void Foam::granularPhaseModel::postUpdate()
         );
         dimensionedScalar smallAlphaRho(dimDensity, 1e-10);
 
+        //- Solve momentum equation (implicit stresses)
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_)
-          - fvc::ddt(alphaRho_, U_)
-          + fvm::ddt(smallAlphaRho, U_)
-          - fvc::ddt(smallAlphaRho, U_)
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+          + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
           + this->divDevRhoReff(U_)
         );
+        UEqn.solve();
+
+        //- Solve granular temperature equation including solid stress and
+        //  conductivity
         fvScalarMatrix ThetaEqn
         (
             1.5
            *(
-                fvm::ddt(alphaRho_, Theta_)
-              - fvc::ddt(alphaRho_, Theta_)
-              + fvm::ddt(smallAlphaRho, Theta_)
-              - fvc::ddt(smallAlphaRho, Theta_)
+                fvm::ddt(alphaRho_, Theta_) - fvc::ddt(alphaRho_, Theta_)
+              + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
             )
           - fvm::laplacian(this->kappa_, Theta_)
          ==
             ((tau*(*this)) && gradU)
         );
-
-        UEqn.solve();
         ThetaEqn.solve();
 
+        //- Update conservative variables
         alphaRhoU_ =  alphaRho_*U_;
         alphaRhoPTE_ =  alphaRho_*1.5*Theta_;
 
     }
 
+    dPtr_->postUpdate();
     thermo_->postUpdate();
 }
 
@@ -229,7 +240,6 @@ void Foam::granularPhaseModel::clearODEFields()
 
 void Foam::granularPhaseModel::update()
 {
-    volScalarField c(speedOfSound());
     fluxScheme_->update
     (
         *this,
@@ -237,14 +247,20 @@ void Foam::granularPhaseModel::update()
         U_,
         e_,
         Ptot_,
-        c,
+        speedOfSound()(),
         phi_,
         alphaRhoPhi_,
         alphaRhoUPhi_,
         alphaRhoEPhi_
     );
+
+    //- Calculate PTE flux by using Riemann flux scheme to interpolate
+    //  granular energy
     alphaRhoPTEPhi_ =
         1.5*alphaRhoPhi_*fluxScheme_->interpolate(Theta_, "Theta");
+
+    thermo_->update();
+    phaseModel::update();
 }
 
 
@@ -252,29 +268,36 @@ void Foam::granularPhaseModel::decode()
 {
     volScalarField& alpha(*this);
 
+    //- Update volume fraction since density is known
     alpha.ref() = alphaRho_()/rho();
     alpha.correctBoundaryConditions();
+
+    //- Correct phase mass at boundaries
     alphaRho_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField();
+
+    //- Store limited phase mass (only used for division)
     volScalarField alphaRho(Foam::max(alpha, residualAlpha_)*rho_);
 
+    //- Calculate velocity from momentum
     U_.ref() = alphaRhoU_()/(alphaRho());
     U_.correctBoundaryConditions();
 
-    alphaRhoU_.boundaryFieldRef() =
-        (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
+    //- Correct momentum at boundaries
+    alphaRhoU_.boundaryFieldRef() = alphaRho_.boundaryField()*U_.boundaryField();
 
+    //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.ref() = alphaRhoE_()/alphaRho();
     e_.correctBoundaryConditions();
-    alphaRhoE_.boundaryFieldRef() =
-        alphaRho.boundaryField()*e_.boundaryField();
+    alphaRhoE_.boundaryFieldRef() = alphaRho_.boundaryField()*e_.boundaryField();
 
+    //- Compute granular temperature
+    alphaRhoPTE_.max(0.0);
     Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRho());
-    Theta_.max(0.0);
     Theta_.correctBoundaryConditions();
     alphaRhoPTE_.boundaryFieldRef() =
-        Theta_.boundaryField()*alphaRho.boundaryField();
+        1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
     thermo_->correct();
     kineticTheoryModel::correct();
@@ -325,13 +348,8 @@ Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
         (
             (
                 3.0/this->d()
-               *sqrt
-                (
-                    2.0*sqr(m0)*Theta_*phase2.Theta()
-                    /(pi*m1Thetam2Theta)
-                )
-              - (3.0*m0*(m1*Theta_ + m2*phase2.Theta()))
-               /(4.0*m1Thetam2Theta)
+               *sqrt(2.0*sqr(m0)*Theta_*phase2.Theta()/(pi*m1Thetam2Theta))
+              - (3.0*m0*(m1*Theta_ + m2*phase2.Theta()))/(4.0*m1Thetam2Theta)
                *fvc::div(phi_)
             )
            *(1.0 - kineticTheorySystem_.es(key))
@@ -349,12 +367,7 @@ Foam::granularPhaseModel::productionSource(const phaseModel& phase) const
         new volScalarField
         (
             81.0*(*this)*sqr(phase.mu())*magSqr(U_ - phase.U())
-           /(
-                gs0_
-               *pow3(d())
-               *rho_
-               *sqrt(Foam::constant::mathematical::pi)
-            )
+           /(gs0_*pow3(d())*rho_*sqrt(Foam::constant::mathematical::pi))
         )
     );
 }
@@ -366,7 +379,7 @@ Foam::granularPhaseModel::speedOfSound() const
 {
     tmp<volScalarField> cSqr
     (
-        pPrime()/rho_
+        this->pPrime()/rho_
       + 2.0/3.0*sqr(kineticTheorySystem_.dPsdTheta(*this))*Theta_
        /sqr(Foam::max(*this, residualAlpha())*rho_)
     );

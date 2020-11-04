@@ -33,10 +33,6 @@ Thank you to everyone who attended!
 
 A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4).
 
-### blastFoam workshop | Date: September 15, 2020 | Location: Virtual/Online | Cost: Free
-
-Book places here: [blastFoam Workshop September 15, 2020](https://www.eventbrite.com/e/blastfoam-workshop-september-15-2020-tickets-105146309442)
-
 
 ## Installation
 

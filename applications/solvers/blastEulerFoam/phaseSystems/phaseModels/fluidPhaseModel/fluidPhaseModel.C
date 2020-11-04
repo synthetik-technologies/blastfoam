@@ -191,6 +191,9 @@ void Foam::fluidPhaseModel::update()
             alphaRhoEPhi_
         );
     }
+
+    thermo_->update();
+    phaseModel::update();
 }
 
 
@@ -231,7 +234,6 @@ void Foam::fluidPhaseModel::decode()
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
-
     thermo_->correct();
 }
 

@@ -65,7 +65,7 @@ gas
 {
     phaseType       multiphase;
     diameterModel   constant;
-    d               0;
+    d               1;
 
     phases (c4 air);
 
@@ -152,6 +152,7 @@ gas
 
     air
     {
+        calculateDensity yes;
         type basic;
         thermoType
         {
@@ -255,7 +256,7 @@ kineticTheory
     residualAlpha       1e-6;
 
     radialModel SinclairJackson;
-    viscosityModel none;
+    viscosityModel Syamlal;
     conductivityModel Syamlal;
     granularPressureModel Lun;
     frictionalStressModel JohnsonJackson;

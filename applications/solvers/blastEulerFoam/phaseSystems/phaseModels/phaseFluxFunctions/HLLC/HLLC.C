@@ -173,8 +173,8 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar rhoOwn = max(rhoO, 1e-6);
-    scalar rhoNei = max(rhoN, 1e-6);
+    scalar rhoOwn = max(rhoO, 1e-10);
+    scalar rhoNei = max(rhoN, 1e-10);
 
     scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
     scalar wNei(1.0 - wOwn);
@@ -292,8 +292,8 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     scalar UvOwn((UOwn & normal) - vMesh);
     scalar UvNei((UNei & normal) - vMesh);
 
-    scalar rhoOwn = max(rhoO, 1e-6);
-    scalar rhoNei = max(rhoN, 1e-6);
+    scalar rhoOwn = max(rhoO, 1e-10);
+    scalar rhoNei = max(rhoN, 1e-10);
 
     scalar wOwn(sqrt(rhoOwn)/(sqrt(rhoOwn) + sqrt(rhoNei)));
     scalar wNei(1.0 - wOwn);
