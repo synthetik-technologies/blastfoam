@@ -21,41 +21,59 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
+Class
+    Foam::timeIntegrators::RK1SSP
+
+Description
+    First order, RK1SSP integration
+
+SourceFiles
+    RK1SSPTimeIntegrator.C
+
 \*---------------------------------------------------------------------------*/
 
-#include "EulerTimeIntegrator.H"
-#include "addToRunTimeSelectionTable.H"
+#ifndef RK1SSPTimeIntegrator_H
+#define RK1SSPTimeIntegrator_H
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "timeIntegrator.H"
 
 namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Euler, 0);
-    addToRunTimeSelectionTable(timeIntegrator, Euler, dictionary);
-}
-}
 
+/*---------------------------------------------------------------------------*\
+                           Class RK1SSP Declaration
+\*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::timeIntegrators::Euler::Euler
-(
-    const fvMesh& mesh,
-    const label nSteps
-)
+class RK1SSP
 :
-    timeIntegrator(mesh, nSteps)
+    public timeIntegrator
 {
-    this->as_ = {{1.0}};
-    this->bs_ = {{1.0}};
-}
+
+public:
+
+    //- Runtime type information
+    TypeName("RK1SSP");
+
+    // Constructor
+    RK1SSP(const fvMesh& mesh, const label nSteps);
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    //- Destructor
+    virtual ~RK1SSP();
+};
 
-Foam::timeIntegrators::Euler::~Euler()
-{}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace timeIntegrators
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

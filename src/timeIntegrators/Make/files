@@ -4,6 +4,7 @@ timeIntegrator/timeIntegrator.C
 timeIntegrator/newTimeIntegrator.C
 
 Euler/EulerTimeIntegrator.C
+RK1SSP/RK1SSPTimeIntegrator.C
 RK2/RK2TimeIntegrator.C
 RK2SSP/RK2SSPTimeIntegrator.C
 RK3SSP/RK3SSPTimeIntegrator.C

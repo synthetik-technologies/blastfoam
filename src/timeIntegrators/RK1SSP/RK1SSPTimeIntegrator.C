@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "EulerTimeIntegrator.H"
+#include "RK1SSPTimeIntegrator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,15 +32,15 @@ namespace Foam
 {
 namespace timeIntegrators
 {
-    defineTypeNameAndDebug(Euler, 0);
-    addToRunTimeSelectionTable(timeIntegrator, Euler, dictionary);
+    defineTypeNameAndDebug(RK1SSP, 0);
+    addToRunTimeSelectionTable(timeIntegrator, RK1SSP, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Euler::Euler
+Foam::timeIntegrators::RK1SSP::RK1SSP
 (
     const fvMesh& mesh,
     const label nSteps
@@ -48,14 +48,43 @@ Foam::timeIntegrators::Euler::Euler
 :
     timeIntegrator(mesh, nSteps)
 {
-    this->as_ = {{1.0}};
-    this->bs_ = {{1.0}};
+    if (nSteps <= 1)
+    {
+        this->as_ = {{1.0}};
+        this->bs_ = {{1.0}};
+    }
+    else if (nSteps == 2)
+    {
+        this->as_ = {{1.0}, {0.0, 0.5}};
+        this->bs_ = {{0.5}, {0.0, 0.5}};
+    }
+    else
+    {
+        if (nSteps > 3)
+        {
+            WarningInFunction
+                << "RK1SSP only supports a maximum of 3 steps."
+                << endl;
+        }
+        this->as_ =
+        {
+            {1.0},
+            {0.0, 1.0},
+            {0.0, 0.0, 1.0},
+        };
+        this->bs_ =
+        {
+            {1.0/3.0},
+            {0.0, 1.0/3.0},
+            {0.0, 0.0, 1.0/3.0},
+        };
+    }
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::timeIntegrators::Euler::~Euler()
+Foam::timeIntegrators::RK1SSP::~RK1SSP()
 {}
 
 // ************************************************************************* //
