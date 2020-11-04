@@ -123,8 +123,14 @@ protected:
         //- Density name
         word alphaRhoName_;
 
+        //- Reference to phase mass
+        const volScalarField& alphaRho_;
+
         //- Name of flux
         word alphaRhoPhiName_;
+
+        //- Reference to phase mass flux
+        const surfaceScalarField& alphaRhoPhi_;
 
         //- Maximum change in lambda per time step
         scalar maxDLambda_;

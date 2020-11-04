@@ -187,6 +187,7 @@ Foam::activationModel::activationModel
           : IOobject::groupName("alphaRho", phaseName)
         )
     ),
+    alphaRho_(mesh.lookupObject<volScalarField>(alphaRhoName_)),
     alphaRhoPhiName_
     (
         dict.lookupOrDefault
@@ -197,7 +198,7 @@ Foam::activationModel::activationModel
           : IOobject::groupName("alphaRhoPhi", phaseName)
         )
     ),
-
+    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName_)),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
     this->lookupAndInitialize();
@@ -338,22 +339,13 @@ void Foam::activationModel::clearODEFields()
 
 void Foam::activationModel::solve()
 {
-    //- Lookup phase mass and phase mass flux
-    const volScalarField& alphaRho
-    (
-        lambda_.mesh().lookupObject<volScalarField>(alphaRhoName_)
-    );
-    const surfaceScalarField& alphaRhoPhi
-    (
-        lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
-    );
 
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system
     volScalarField lambdaOld(lambda_);
     this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
 
-    dimensionedScalar dT(alphaRho.time().deltaT());
+    dimensionedScalar dT(this->mesh_.time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, small);
 
     // Calculate delta due to reaction with no advection
@@ -387,7 +379,7 @@ void Foam::activationModel::solve()
     // Compute change in lambda with advection included
     else
     {
-        volScalarField deltaLambda(delta());
+        volScalarField deltaLambda(this->delta());
         deltaLambda.max(0.0);
         this->storeAndBlendDelta(deltaLambda, deltaLambda_);
 
@@ -417,14 +409,14 @@ void Foam::activationModel::solve()
         //- Store the actual sub-step delta
         this->storeDelta(ddtLambda_(), deltaLambda_);
 
-        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi, lambda_));
+        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi_, lambda_));
         this->storeAndBlendDelta(deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
 
         //- Solve advection
         lambda_ =
             (
-                lambdaOld*alphaRho.prevIter() - dT*deltaAlphaRhoLambda
-            )/max(alphaRho, smallRho)
+                lambdaOld*alphaRho_.prevIter() - dT*deltaAlphaRhoLambda
+            )/max(alphaRho_, smallRho)
           + dT*ddtLambda;
 
         //- Correct the lambda field since zero mass will cause "unactivation"
