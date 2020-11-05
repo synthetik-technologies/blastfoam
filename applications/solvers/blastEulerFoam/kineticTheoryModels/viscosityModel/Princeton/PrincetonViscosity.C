@@ -169,7 +169,7 @@ Foam::kineticTheoryModels::viscosityModels::Princeton::nu
         )
     );
     return
-        (2.0 + e)/3.0
+        3.6/3.0
        *(
             nuStar/(g0*eta*(2.0 - eta))
            *(1.0 + 8.0/5.0*eta*alphag0)

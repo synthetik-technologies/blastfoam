@@ -253,17 +253,17 @@ BiBTex:
 ## User Guide
 To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
-J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 3.0 User Guide", Synthetik Applied Technologies, LLC., 13-Apr-2020.
+J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 4.0 User Guide", Synthetik Applied Technologies, LLC., 06-Nov-2020.
 ```
 BiBTex:
 ```
 @misc{heylmun_blastfoamguide_2020,
-	title = {{blastFoam version 3.0} {User} {Guide} },
+	title = {{blastFoam version 4.0} {User} {Guide} },
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
 	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
-	month = apr,
+	month = nov,
 	year = {2020}
 }
 ```
