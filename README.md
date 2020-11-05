@@ -40,6 +40,26 @@ Detailed instructions on how to install and use blastFoam are found in the [blas
 
 
 
+### How to install OpenFOAM for Linux
+Compiling OpenFOAM is straight forward, and a more detailed guide to installation can be found [here]{https://openfoam.org/download/source/software-for-compilation}. Once the necessary dependencies have been installed
+
+1. Clone the OpenFOAM-7 repository
+```bash
+cd $HOME/OpenFOAM
+git clone https://github.com/OpenFOAM/OpenFOAM-7.git
+# or from the Synthetik repository which includes several bug fixes
+git clone https://github.com/synthetik-technologies/OpenFOAM-7.git
+```
+
+2. Compile OpenFOAM
+```bash
+cd OpenFOAM-7
+echo "source $HOME/OpenFOAM/OpenFOAM-7/etc/bashrc" >> ~/.bashrc
+source etc/bashrc
+./Allwmake > log.Allwmake 2>&1
+```
+
+
 ### How to install OpenFOAM for Windows 10
 An installation video for Windows 10 is available on our YouTube channel: https://youtu.be/vfd610LadSU
 
