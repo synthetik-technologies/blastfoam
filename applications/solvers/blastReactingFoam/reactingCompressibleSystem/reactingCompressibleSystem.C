@@ -182,6 +182,31 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         );
         word inertSpecie(thermo_->lookup("inertSpecie"));
         inertIndex_ = thermo_->composition().species()[inertSpecie];
+
+        YsOld_.setSize(thermo_->composition().species().size());
+        deltaRhoYs_.setSize(thermo_->composition().species().size());
+        forAll(YsOld_, i)
+        {
+            YsOld_.set(i, new PtrList<volScalarField>());
+            deltaRhoYs_.set(i, new PtrList<volScalarField>());
+        }
+    }
+
+    IOobject radIO
+    (
+        "radiationProperties",
+        mesh.time().constant(),
+        mesh
+    );
+    if (radIO.typeHeaderOk<IOdictionary>(true))
+    {
+        radiation_ = radiationModel::New(T_);
+    }
+    else
+    {
+        dictionary radDict;
+        radDict.add("radiationModel", "none");
+        radiation_ = radiationModel::New(radDict, T_);
     }
     encode();
 }
@@ -226,6 +251,34 @@ void Foam::reactingCompressibleSystem::solve()
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
     rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
     rhoE_ = rhoEOld - dT*deltaRhoE;
+
+    if (reaction_.valid())
+    {
+        PtrList<volScalarField>& Ys = thermo_->composition().Y();
+        volScalarField Yt(0.0*Ys[0]);
+        forAll(Ys, i)
+        {
+            if (i != inertIndex_ && thermo_->composition().active(i))
+            {
+                volScalarField YOld(Ys[i]);
+                this->storeAndBlendOld(YOld, YsOld_[i]);
+
+                volScalarField deltaRhoY
+                (
+                    fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
+                );
+                this->storeAndBlendDelta(deltaRhoY, deltaRhoYs_[i]);
+
+                Ys[i] = (YOld*rhoOld - dT*deltaRhoY)/rho_;
+                Ys[i].correctBoundaryConditions();
+
+                Ys[i].max(0.0);
+                Yt += Ys[i];
+            }
+            Ys[inertIndex_] = scalar(1) - Yt;
+            Ys[inertIndex_].max(0.0);
+        }
+    }
 }
 
 
@@ -257,10 +310,9 @@ void Foam::reactingCompressibleSystem::postUpdate()
       - fvm::laplacian(turbulence_->alphaEff(), e_)
     );
 
-    turbulence_->correct();
-
     if (reaction_.valid())
     {
+        Info<< "Solving reactions" << endl;
         reaction_->correct();
 
         eEqn -= reaction_->Qdot();
@@ -275,7 +327,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 fvScalarMatrix YiEqn
                 (
                     fvm::ddt(rho_, Yi)
-                  + fvm::div(rhoPhi_, Yi, "div(rhoPhi,Yi)")
+                  - fvc::ddt(rho_, Yi)
                   - fvm::laplacian(turbulence_->muEff(), Yi)
                  ==
                     reaction_->R(Yi)
@@ -299,6 +351,8 @@ void Foam::reactingCompressibleSystem::postUpdate()
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
+
+    turbulence_->correct();
 }
 
 
@@ -312,6 +366,15 @@ void Foam::reactingCompressibleSystem::clearODEFields()
     this->clearDelta(deltaRho_);
     this->clearDelta(deltaRhoU_);
     this->clearDelta(deltaRhoE_);
+
+    if (reaction_.valid())
+    {
+        forAll(YsOld_, i)
+        {
+            this->clearOld(YsOld_[i]);
+            this->clearDelta(deltaRhoYs_[i]);
+        }
+    }
 }
 
 

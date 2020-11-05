@@ -44,6 +44,7 @@ SourceFiles
 #include "CombustionModel.H"
 #include "turbulentFluidThermoModel.H"
 #include "uniformDimensionedFields.H"
+#include "radiationModel.H"
 
 namespace Foam
 {
@@ -113,7 +114,11 @@ protected:
     //- Chemistry
     autoPtr<CombustionModel<rhoReactionThermo>> reaction_;
 
+    //- Index of inert specie
     label inertIndex_;
+
+    //- Radiation model
+    autoPtr<radiationModel> radiation_;
 
 
     // ODE variables
@@ -122,11 +127,13 @@ protected:
         PtrList<volScalarField> rhoOld_;
         PtrList<volVectorField> rhoUOld_;
         PtrList<volScalarField> rhoEOld_;
+        PtrList<PtrList<volScalarField>> YsOld_;
 
         //- Stored delta fields
         PtrList<volScalarField> deltaRho_;
         PtrList<volVectorField> deltaRhoU_;
         PtrList<volScalarField> deltaRhoE_;
+        PtrList<PtrList<volScalarField>> deltaRhoYs_;
 
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
