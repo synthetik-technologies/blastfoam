@@ -329,6 +329,7 @@ Foam::granularPhaseModel::gradAlpha() const
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
 {
+    // Dissipation of granular energy (Huilin and Gidaspow 2003, Eq. 25)
     scalar pi(Foam::constant::mathematical::pi);
     volScalarField Theta1(Theta_);
     Theta1.max(1e-10);
@@ -361,6 +362,7 @@ Foam::granularPhaseModel::dissipationSource(const phaseModel& phase2) const
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::productionSource(const phaseModel& phase) const
 {
+    // Production of granular energy (Houim and Oran 2016, Eq. 3.49, Eq. B 66)
     return tmp<volScalarField>
     (
         new volScalarField
@@ -376,6 +378,7 @@ Foam::granularPhaseModel::productionSource(const phaseModel& phase) const
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::speedOfSound() const
 {
+    // Speed of sound based on particle collisions
     tmp<volScalarField> cSqr
     (
         this->pPrime()/rho_

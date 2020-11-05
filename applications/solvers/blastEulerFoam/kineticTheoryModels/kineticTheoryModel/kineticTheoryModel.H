@@ -25,17 +25,7 @@ Class
     Foam::kineticTheoryModel
 
 Description
-    Kinetic theory particle phase RAS model
-
-    Reference:
-    \verbatim
-        van Wachem, B. G. M. (2000).
-        Derivation, implementation, and validation of computer simulation models
-        for gas-solid fluidized beds.
-        PhD Thesis, TU Delft.
-    \endverbatim
-
-    There are no default model coefficients.
+    Kinetic theory for particle phase model
 
 SourceFiles
     kineticTheoryModel.C

@@ -511,6 +511,7 @@ Foam::kineticTheorySystem::lambda
     const phaseModel& phase
 ) const
 {
+    // Bulk viscosity as a function of all phases (Eq. 10, pg. 3780)
     tmp<volScalarField> tmpLambda
     (
         new volScalarField

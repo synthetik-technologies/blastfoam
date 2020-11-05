@@ -303,19 +303,18 @@ void Foam::kineticTheoryModel::correct()
     gs0_ = kineticTheorySystem_.gs0(phase_, phase_, true);
     gs0Prime_ = kineticTheorySystem_.gs0Prime(phase_, phase_, true);
 
+    // Calculate the solid, frictional, and total pressures
     Ps_ = kineticTheorySystem_.Ps(phase_);
     Pfric_ = alpha*kineticTheorySystem_.frictionalPressure();
     Ptot_ = Ps_ + Pfric_;
 
-    // 'thermal' conductivity (Table 3.3, p. 49)
+    // Calculate the granular conductivity
     kappa_ = kineticTheorySystem_.kappa(phase_, Theta_);
 
-    // particle viscosity (Table 3.2, p.47)
+    // Particle viscosity
     nut_ = kineticTheorySystem_.nu(phase_, Theta_);
 
-    volScalarField ThetaSqrt("sqrtTheta", sqrt(Theta_));
-
-    // Bulk viscosity  p. 45 (Lun et al. 1984).
+    // Bulk viscosity
     lambda_ = kineticTheorySystem_.lambda(phase_);
 
     // Limit viscosity and add frictional viscosity

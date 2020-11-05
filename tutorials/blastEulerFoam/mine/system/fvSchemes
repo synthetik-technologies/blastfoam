@@ -52,7 +52,7 @@ laplacianSchemes
     default         Gauss linear corrected;
 }
 
-limiter vanAlbada;
+limiter quadraticMUSCL vanAlbada;
 interpolationSchemes
 {
     default             linear;

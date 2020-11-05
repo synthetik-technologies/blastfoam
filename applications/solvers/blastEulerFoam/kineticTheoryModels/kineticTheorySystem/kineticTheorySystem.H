@@ -29,6 +29,14 @@ Description
     are stored within, and one model applies to all phases. The models are
     read from the kineticTheory subDict in phase properties.
 
+    Reference:
+    \verbatim
+        Huilin, L., Gidaspow, D. (2003).
+        Hydrodynamics of binary fluidization in a riser: CFD simulation using two
+        granular temperatures.
+        Chemical Engineering Science 58, 3777–3792.
+    \endverbatim
+
 SourceFiles
     kineticTheorySystem.C
 

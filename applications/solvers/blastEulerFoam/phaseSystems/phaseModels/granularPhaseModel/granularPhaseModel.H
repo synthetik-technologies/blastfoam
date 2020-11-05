@@ -27,8 +27,22 @@ Class
     Foam::granularPhaseModel
 
 Description
-    Base class for a moving phase model. Functions are made so that the class
-    can be abstracted to a polydisperse phase.
+    Phase model to describe a solid phase
+
+Reference:
+    \verbatim
+        Houim, R.W., Oran, E.S. (2016).
+        A multiphase model for compressible granular–gaseous flows: formulation and
+        initial tests.
+        Journal of Fluid Mechanics 789, 166–220.
+    \endverbatim
+
+    \verbatim
+        Huilin, L., Gidaspow, D. (2003).
+        Hydrodynamics of binary fluidization in a riser: CFD simulation using two
+        granular temperatures.
+        Chemical Engineering Science 58, 3777–3792.
+    \endverbatim
 
 SourceFiles
     granularPhaseModel.C
