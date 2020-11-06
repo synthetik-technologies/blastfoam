@@ -178,7 +178,7 @@ Foam::tmp<Foam::volScalarField> Foam::fluidThermoModel::calcP() const
     {
         p.boundaryFieldRef()[patchi] = this->calcP(patchi);
     }
-
+    p.max(small);
     return pTmp;
 }
 

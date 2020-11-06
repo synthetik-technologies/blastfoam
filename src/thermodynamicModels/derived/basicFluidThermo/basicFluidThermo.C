@@ -208,17 +208,13 @@ Foam::tmp<Foam::scalarField>
 Foam::basicFluidThermo<Thermo>::calcP(const label patchi) const
 {
     return
-        max
+        Thermo::patchFieldProperty
         (
-            Thermo::patchFieldProperty
-            (
-                &Thermo::thermoType::p,
-                patchi,
-                this->rho_.boundaryField()[patchi],
-                this->e_.boundaryField()[patchi],
-                this->T_.boundaryField()[patchi]
-            ),
-            small
+            &Thermo::thermoType::p,
+            patchi,
+            this->rho_.boundaryField()[patchi],
+            this->e_.boundaryField()[patchi],
+            this->T_.boundaryField()[patchi]
         );
 }
 
@@ -227,15 +223,11 @@ template<class Thermo>
 Foam::scalar Foam::basicFluidThermo<Thermo>::calcPi(const label celli) const
 {
     return
-        max
+        Thermo::thermoType::p
         (
-            Thermo::thermoType::p
-            (
-                this->rho_[celli],
-                this->e_[celli],
-                this->T_[celli]
-            ),
-            small
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
         );
 }
 
