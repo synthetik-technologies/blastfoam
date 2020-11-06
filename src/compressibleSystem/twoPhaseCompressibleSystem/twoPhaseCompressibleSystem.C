@@ -167,6 +167,8 @@ void Foam::twoPhaseCompressibleSystem::solve()
     alphaRho2_ -= dT*deltaAlphaRho2;
     alphaRho2_.correctBoundaryConditions();
 
+    rho_ = alphaRho1_ + alphaRho2_;
+
     thermo_.solve();
     phaseCompressibleSystem::solve();
 }
@@ -285,12 +287,6 @@ void Foam::twoPhaseCompressibleSystem::decode()
 
 void Foam::twoPhaseCompressibleSystem::encode()
 {
-    volumeFraction_.correctBoundaryConditions();
-    rho1_.correctBoundaryConditions();
-    rho2_.correctBoundaryConditions();
-    U_.correctBoundaryConditions();
-    e_.correctBoundaryConditions();
-
     alphaRho1_ = volumeFraction_*rho1_;
     alphaRho2_ = (1.0 - volumeFraction_)*rho2_;
     rho_ = alphaRho1_ + alphaRho2_;

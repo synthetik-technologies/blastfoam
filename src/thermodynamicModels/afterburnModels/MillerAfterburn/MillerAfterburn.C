@@ -134,27 +134,23 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     (
         a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
     );
-
+    deltaC.max(0.0);
     this->storeAndBlendDelta(deltaC, deltaC_);
-    scalar f = this->f();
 
     dimensionedScalar dT = alphaRho.time().deltaT();
     c_ = cOld + dT*deltaC;
-    c_.min(1);
-    c_.max(0);
+    c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 
-    if (!ddtC_.valid())
-    {
-        ddtC_ = tmp<volScalarField>
-        (
-            new volScalarField(Foam::max(c_ - cOld, 0.0)/(dT*f))
-        );
-    }
-    else
-    {
-        ddtC_.ref() = Foam::max(c_ - cOld, 0.0)/(dT*f);
-    }
+    // Compute the limited change in c
+    volScalarField ddtC(Foam::max(c_ - cOld, 0.0)/dT);
+
+    //- Compute actual delta for the time step knowing the blended value
+    //  Not limited to 0 since the delta coefficients can be negative
+    ddtC_ = this->calcDelta(ddtC, deltaC_);
+
+    //- Store the actual sub-step delta
+    this->storeDelta(ddtC_(), deltaC_);
 
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
     this->storeDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
@@ -163,10 +159,10 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     c_ =
         (
             cOld*alphaRho.oldTime()
-          + dT*(ddtC_()*f*alphaRho - deltaAlphaRhoC)
-        )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
-    c_.min(1);
-    c_.max(0);
+          - dT*deltaAlphaRhoC
+        )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10))
+      + ddtC;
+    c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 }
 
