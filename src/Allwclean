@@ -1,6 +1,7 @@
 #!/bin/sh
-cd ${0%/*} || exit 1    # run from this directory
-set -x
+cd "${0%/*}" || exit                                # Run from this directory
+#------------------------------------------------------------------------------
+# set -x
 
 wclean $targetType thermodynamicModels
 wclean $targetType fluxSchemes
@@ -19,4 +20,4 @@ wclean $targetType atmosphereModels
 wclean $targetType diameterModels
 
 wclean $targetType QBMM
-# ----------------------------------------------------------------- end-of-file
+#------------------------------------------------------------------------------

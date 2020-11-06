@@ -61,7 +61,7 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
     DynamicList<Tuple2<scalar, scalar>> values;
 
     bool mergeSeparators_=false;
-    string separator_=';';
+    string separator_(';');
 
     label i = 0;
     while (is.good())

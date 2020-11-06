@@ -40,9 +40,9 @@ Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
     TTable_
     (
         dict.subDict("thermodynamics").lookupType<fileName>("file"),
-        dict.subDict("thermodynamics").lookup("mod"),
-        dict.subDict("thermodynamics").lookup("rhoMod"),
-        dict.subDict("thermodynamics").lookup("eMod"),
+        dict.subDict("thermodynamics").lookupType<word>("mod"),
+        dict.subDict("thermodynamics").lookupType<word>("rhoMod"),
+        dict.subDict("thermodynamics").lookupType<word>("eMod"),
         dict.subDict("thermodynamics").lookupType<label>("nRho"),
         dict.subDict("thermodynamics").lookupType<label>("ne"),
         dict.subDict("thermodynamics").lookupType<scalar>("minRho"),
