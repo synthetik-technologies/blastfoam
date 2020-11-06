@@ -62,6 +62,7 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
         mesh_,
         0.0
     ),
+    pScale_(dict.lookupOrDefault("pScale", 1.0)),
     pName_(dict_.lookupOrDefault("pName", word("p"))),
     p_(mesh_.lookupObject<volScalarField>(pName_)),
     alphaRhoName_
@@ -129,6 +130,10 @@ void Foam::afterburnModels::MillerAfterburn::solve()
 
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
+    if (pScale_ != 1.0)
+    {
+        p.ref() *= pScale_;
+    }
     p.ref().max(small);
     volScalarField deltaC
     (
@@ -153,15 +158,13 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     this->storeDelta(ddtC_(), deltaC_);
 
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
-    this->blendDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
+    this->storeAndBlendDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
 
     c_ =
         (
-            cOld*alphaRho.oldTime()
-          - dT*deltaAlphaRhoC
+            cOld*alphaRho.prevIter() - dT*deltaAlphaRhoC
         )/max(alphaRho, dimensionedScalar(dimDensity, 1e-10))
-      + ddtC;
+      + dT*ddtC;
     c_.maxMin(0.0, 1.0);
     c_.correctBoundaryConditions();
 }

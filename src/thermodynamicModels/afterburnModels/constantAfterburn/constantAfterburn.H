@@ -54,8 +54,8 @@ class constantAfterburn
 {
     // Private data
 
-        //- Afterburn energy
-        dimensionedScalar Q0_;
+        //- Afterburn energy rate
+        dimensionedScalar Qdot_;
 
 
 public:

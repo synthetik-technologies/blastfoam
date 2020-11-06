@@ -48,7 +48,7 @@ Foam::afterburnModels::constantAfterburn::constantAfterburn
 )
 :
     afterburnModel(mesh, dict, phaseName),
-    Q0_("Q0", sqr(dimVelocity), dict)
+    Qdot_("Qdot", sqr(dimVelocity)/dimTime, dict)
 {}
 
 
@@ -77,7 +77,7 @@ Foam::afterburnModels::constantAfterburn::ESource() const
                 false
             ),
             mesh_,
-            Q0_/this->deltaT()
+            Qdot_
         )
     );
 }

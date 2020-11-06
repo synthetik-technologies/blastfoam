@@ -64,6 +64,9 @@ class MillerAfterburn
         //- Activation ratio
         volScalarField c_;
 
+        //- Scale for pressure (Mpa = 1e-6)
+        scalar pScale_;
+
         //- Name of pressure
         word pName_;
 

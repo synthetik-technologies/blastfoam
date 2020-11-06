@@ -89,12 +89,13 @@ c4
 
     MillerCoeffs
     {
-        Q0  1e7;
-        m   0.1667;
-        n   0.5;
-        a   0.0195e6;
+        Q0  10e6;
+        m   0.5;
+        n   0.1667;
+        a   0.0065;
 
-        pMin 1.1e5;
+        pMin 1e5;
+        pScale 1e-6; // convert to MPa
     }
 
     activationModel linear;
