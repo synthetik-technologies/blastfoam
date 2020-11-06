@@ -105,7 +105,7 @@ SourceFiles
 #include "absorptionEmissionModel.H"
 #include "HashTable.H"
 #include "absorptionCoeffs.H"
-#include "fluidThermo.H"
+#include "fluidThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

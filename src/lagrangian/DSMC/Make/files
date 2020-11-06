@@ -10,4 +10,4 @@ parcels/derived/dsmcParcel/makeDSMCParcelBinaryCollisionModels.C
 parcels/derived/dsmcParcel/makeDSMCParcelWallInteractionModels.C
 parcels/derived/dsmcParcel/makeDSMCParcelInflowBoundaryModels.C
 
-LIB = $(FOAM_LIBBIN)/libDSMC
+LIB = $(BLAST_LIBBIN)/libblastDSMC

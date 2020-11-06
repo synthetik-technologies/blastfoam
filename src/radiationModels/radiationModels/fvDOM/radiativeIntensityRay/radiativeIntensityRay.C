@@ -139,7 +139,7 @@ Foam::radiationModels::radiativeIntensityRay::radiativeIntensityRay
 
     // Transform directions so that they fall inside the bounds of reduced
     // dimension cases
-    if (mesh_.nGeometricD() == 2)
+    if (mesh_.nSolutionD() == 2)
     {
         vector meshDir(vector::zero);
         for (direction cmpt=0; cmpt<vector::nComponents; cmpt++)
@@ -156,7 +156,7 @@ Foam::radiationModels::radiativeIntensityRay::radiativeIntensityRay
         dAve_ = coordRot & dAve_;
         d_ = coordRot & d_;
     }
-    else if (mesh_.nGeometricD() == 1)
+    else if (mesh_.nSolutionD() == 1)
     {
         vector meshDir(vector::zero);
         for (direction cmpt=0; cmpt<vector::nComponents; cmpt++)
