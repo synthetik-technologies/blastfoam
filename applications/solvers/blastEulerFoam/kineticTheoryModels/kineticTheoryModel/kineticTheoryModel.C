@@ -239,6 +239,12 @@ Foam::kineticTheoryModel::~kineticTheoryModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::kineticTheoryModel::includeViscosity() const
+{
+    return kineticTheorySystem_.includeViscosity();
+}
+
+
 Foam::tmp<Foam::volSymmTensorField>
 Foam::kineticTheoryModel::devRhoReff() const
 {
