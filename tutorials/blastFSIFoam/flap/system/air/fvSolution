@@ -1,3 +1,10 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -17,9 +24,9 @@ solvers
 
     "(U|cellDisplacement|e)"
     {
-        solver          PBiCGStab;
-        preconditioner  DIC ;
-        tolerance       1e-6;
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-12;
         relTol          0;
         minIter         1;
     }

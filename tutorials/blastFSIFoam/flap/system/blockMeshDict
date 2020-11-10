@@ -1,3 +1,10 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
 FoamFile
 {
     version     2.0;
@@ -7,16 +14,16 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-scale   1.;
+scale   1.0;
 
-x0 -3.;
+x0 -3.0;
 x1 -0.05;
 x2 0.05;
-x3 3.;
+x3 3.0;
 
-z0 0.;
-z1 1.;
-z2 4.;
+z0 0.0;
+z1 1.0;
+z2 4.0;
 
 w 0.3;
 
@@ -57,29 +64,12 @@ v2 120;
 
 blocks
 (
-    hex (   0   1   5   4   12  13  17  16  ) air
-    ($h1 $v1 1 )
-    simpleGrading (1 1 1)
-
-    hex (   2   3   7   6   14  15  19  18  ) air
-    ($h1 $v1 1)
-    simpleGrading (1 1 1)
-
-    hex (   4   5   9   8   16  17  21  20  ) air
-    ($h1 $v2 1)
-    simpleGrading (1 1 1)
-
-    hex (   5   6   10  9   17  18  22  21  ) air
-    ($h2 $v2 1)
-    simpleGrading (1 1 1)
-
-    hex (   6   7   11  10  18  19  23  22  ) air
-    ($h1 $v2 1 )
-    simpleGrading (1 1 1)
-
-    hex (   1   2   6   5   13  14  18  17  ) flap
-    ($h2 $v1 1)
-    simpleGrading (1 1 1)
+    hex (0 1 5 4 12 13 17 16) air ($h1 $v1 1 ) simpleGrading (1 1 1)
+    hex (2 3 7 6 14 15 19 18) air ($h1 $v1 1) simpleGrading (1 1 1)
+    hex (4 5 9 8 16 17 21 20) air ($h1 $v2 1) simpleGrading (1 1 1)
+    hex (5 6 10 9 17 18 22 21) air ($h2 $v2 1) simpleGrading (1 1 1)
+    hex (6 7 11 10 18 19 23 22) air ($h1 $v2 1 ) simpleGrading (1 1 1)
+    hex (1 2 6 5 13 14 18 17) flap ($h2 $v1 1) simpleGrading (1 1 1)
 );
 
 edges
