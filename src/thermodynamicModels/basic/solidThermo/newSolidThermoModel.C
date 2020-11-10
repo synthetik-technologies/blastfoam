@@ -78,7 +78,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
     const word& masterName
 )
 {
-    const word type(dict.subDict("mixture").lookupType<word>("type"));
+    const word type(dict.lookupType<word>("type"));
 
     if (type == "basic")
     {
