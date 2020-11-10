@@ -173,6 +173,9 @@ class kineticTheorySystem
             //- Minimum granular temperature
             dimensionedScalar minTheta_;
 
+            //- Are viscous effects included
+            bool includeViscosity_;
+
 
     // Private Member Functions
 
@@ -207,7 +210,10 @@ public:
         bool polydisperse() const;
 
         //- Return true if viscosity is included
-        bool includeViscosity() const;
+        bool includeViscosity() const
+        {
+            return includeViscosity_;
+        }
 
         //- Re-read model coefficients if they have changed
         virtual bool read();

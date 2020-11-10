@@ -235,6 +235,10 @@ Foam::kineticTheorySystem::kineticTheorySystem
             sqr(dimVelocity),
             1e-8
         )
+    ),
+    includeViscosity_
+    (
+        !isA<kineticTheoryModels::noneViscosity>(viscosityModel_())
     )
 {}
 
@@ -286,12 +290,6 @@ bool Foam::kineticTheorySystem::readIfModified()
 bool Foam::kineticTheorySystem::polydisperse() const
 {
     return (phaseIndexes_.size() > 1);
-}
-
-
-bool Foam::kineticTheorySystem::includeViscosity() const
-{
-    return !isA<kineticTheoryModels::noneViscosity>(viscosityModel_());
 }
 
 

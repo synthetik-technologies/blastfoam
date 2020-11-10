@@ -157,7 +157,10 @@ public:
     // Member Functions
 
         //- Return true if viscosity is included
-        bool includeViscosity() const;
+        bool includeViscosity() const
+        {
+            return kineticTheorySystem_.includeViscosity();
+        }
 
         //- Return the effective viscosity on patch
         virtual tmp<scalarField> nuEff(const label patchi) const
