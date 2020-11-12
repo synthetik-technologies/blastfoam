@@ -53,6 +53,8 @@ export BLAST_APPBIN="$FOAM_USER_APPBIN"
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
+export BOOST_ARCH_PATH="/usr/include/boost"
+
 # OpenQBMM install directory
 if [ -n "$QBMM_INST_DIR" ]
 then
