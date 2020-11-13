@@ -1,5 +1,5 @@
 EXE_INC = \
-    -I$(BOOST_ARCH_PATH) \
+    -I$(BOOST_ARCH_PATH)/include \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
