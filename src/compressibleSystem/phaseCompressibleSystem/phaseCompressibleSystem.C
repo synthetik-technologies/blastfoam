@@ -470,4 +470,9 @@ bool Foam::phaseCompressibleSystem::writeData(Ostream& os) const
     return os.good();
 }
 
+bool Foam::phaseCompressibleSystem::read()
+{
+    return regIOobject::read();
+}
+
 // ************************************************************************* //

@@ -344,6 +344,9 @@ public:
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;
+
+        //- Read phaseProperties
+        virtual bool read();
 };
 
 
