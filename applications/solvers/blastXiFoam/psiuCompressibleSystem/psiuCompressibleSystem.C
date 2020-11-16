@@ -37,8 +37,7 @@ namespace Foam
 
 Foam::psiuCompressibleSystem::psiuCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
     integrationSystem("phaseCompressibleSystem", mesh),

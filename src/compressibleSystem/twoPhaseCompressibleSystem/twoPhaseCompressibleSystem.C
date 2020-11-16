@@ -43,12 +43,11 @@ namespace Foam
 
 Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh, dict),
-    thermo_(word::null, p_, rho_, e_, T_, dict, true),
+    phaseCompressibleSystem(mesh),
+    thermo_(word::null, p_, rho_, e_, T_, *this, true),
     volumeFraction_(thermo_.volumeFraction()),
     rho1_(thermo_.thermo1().rho()),
     rho2_(thermo_.thermo2().rho()),
@@ -109,7 +108,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     )
 {
     rho_ = alphaRho1_ + alphaRho2_;
-    setModels(dict);
+    setModels(*this);
     thermo_.initializeModels();
     this->lookupAndInitialize();
     encode();

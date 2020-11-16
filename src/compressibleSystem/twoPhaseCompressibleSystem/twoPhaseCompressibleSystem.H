@@ -111,7 +111,7 @@ public:
     TypeName("twoPhaseCompressibleSystem");
 
     // Constructor
-    twoPhaseCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    twoPhaseCompressibleSystem(const fvMesh& mesh);
 
 
     //- Destructor

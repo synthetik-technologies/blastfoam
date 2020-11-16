@@ -100,7 +100,7 @@ public:
     TypeName("multiphaseCompressibleSystem");
 
     // Constructor
-    multiphaseCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    multiphaseCompressibleSystem(const fvMesh& mesh);
 
 
     //- Destructor

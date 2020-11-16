@@ -55,6 +55,7 @@ namespace Foam
 
 class phaseCompressibleSystem
 :
+    public IOdictionary,
     public integrationSystem
 {
 protected:
@@ -155,22 +156,17 @@ public:
             phaseCompressibleSystem,
             dictionary,
             (
-                const fvMesh& mesh,
-                const dictionary& dict
+                const fvMesh& mesh
             ),
-            (mesh, dict)
+            (mesh)
         );
 
     // Constructor
-    phaseCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    phaseCompressibleSystem(const fvMesh& mesh);
 
 
     // Selector
-        static autoPtr<phaseCompressibleSystem> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict
-        );
+        static autoPtr<phaseCompressibleSystem> New(const fvMesh& mesh);
 
     //- Destructor
     virtual ~phaseCompressibleSystem();

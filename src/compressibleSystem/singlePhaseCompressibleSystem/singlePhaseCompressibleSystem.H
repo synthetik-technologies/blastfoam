@@ -79,7 +79,7 @@ public:
     TypeName("singlePhaseCompressibleSystem");
 
     // Constructor
-    singlePhaseCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    singlePhaseCompressibleSystem(const fvMesh& mesh);
 
     //- Destructor
     virtual ~singlePhaseCompressibleSystem();

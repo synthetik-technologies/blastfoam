@@ -13,21 +13,8 @@ uniformDimensionedVectorField g
     dimensionedVector(dimAcceleration, Zero)
 );
 
-Info<< "Reading phaseProperties dictionary\n" << endl;
-IOdictionary phaseProperties
-(
-     IOobject
-     (
-          "phaseProperties",
-          runTime.constant(),
-          mesh,
-          IOobject::MUST_READ,
-          IOobject::NO_WRITE
-     )
-);
-
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
-coupledMultiphaseCompressibleSystem fluid(mesh, phaseProperties);
+coupledMultiphaseCompressibleSystem fluid(mesh);
 integrator->addSystem(fluid);
 
 volScalarField& p = fluid.p();

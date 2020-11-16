@@ -29,24 +29,11 @@ forAll(fluidRegions, i)
         )
     );
 
-    Info<< "Reading phaseProperties dictionary\n" << endl;
-    IOdictionary phaseProperties
-    (
-        IOobject
-        (
-            "phaseProperties",
-            runTime.constant(),
-            fluidRegions[i],
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    );
-
     timeIntegrators.set(i, timeIntegrator::New(fluidRegions[i]));
     fluids.set
     (
         i,
-        phaseCompressibleSystem::New(fluidRegions[i], phaseProperties)
+        phaseCompressibleSystem::New(fluidRegions[i])
     );
     timeIntegrators[i].addSystem(fluids[i]);
     fluids[i].update();

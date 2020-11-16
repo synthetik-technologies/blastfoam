@@ -45,11 +45,10 @@ namespace Foam
 
 Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
-    multiphaseCompressibleSystem(mesh, dict),
+    multiphaseCompressibleSystem(mesh),
     volumeFraction_
     (
         IOobject

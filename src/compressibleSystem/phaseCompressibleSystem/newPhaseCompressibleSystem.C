@@ -28,20 +28,38 @@ License
 
 Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 {
-    word phaseCompressibleSystemType
+    word phaseCompressibleSystemType(word::null);
+
+    // Create temporary phase properties to lookup type
+    // not store in the database to remove possible conflict
+    Info<< "Reading phaseProperties dictionary\n" << endl;
+    IOdictionary phaseProperties
     (
-        dict.lookupOrDefault("systemType", word::null)
+        IOobject
+        (
+            "phaseProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
     );
+
+    if (phaseProperties.found("systemType"))
+    {
+        phaseCompressibleSystemType =
+            phaseProperties.lookupType<word>("systemType");
+    }
 
     if (phaseCompressibleSystemType == word::null)
     {
         wordList phases
         (
-            dict.lookupOrDefault("phases", wordList())
+            phaseProperties.lookupOrDefault("phases", wordList())
         );
         if (phases.size() == 2)
         {
@@ -72,7 +90,7 @@ Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict);
+    return cstrIter()(mesh);
 }
 
 

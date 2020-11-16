@@ -38,8 +38,7 @@ namespace Foam
 
 Foam::reactingCompressibleSystem::reactingCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
     integrationSystem("phaseCompressibleSystem", mesh),

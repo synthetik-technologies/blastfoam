@@ -44,12 +44,11 @@ namespace Foam
 
 Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh, dict),
-    thermo_(word::null, p_, rho_, e_, T_, dict, true),
+    phaseCompressibleSystem(mesh),
+    thermo_(word::null, p_, rho_, e_, T_, *this, true),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
@@ -115,7 +114,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         deltaAlphaRhos_.set(phasei, new PtrList<volScalarField>());
     }
 
-    setModels(dict);
+    setModels(*this);
     thermo_.initializeModels();
     this->lookupAndInitialize();
     encode();

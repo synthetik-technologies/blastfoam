@@ -43,11 +43,10 @@ namespace Foam
 
 Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 (
-    const fvMesh& mesh,
-    const dictionary& dict
+    const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh, dict),
+    phaseCompressibleSystem(mesh),
     thermo_
     (
         fluidThermoModel::New
@@ -57,12 +56,12 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
             rho_,
             e_,
             T_,
-            dict.subDict("mixture"),
+            this->subDict("mixture"),
             true
         )
     )
 {
-    setModels(dict);
+    setModels(*this);
     thermo_->initializeModels();
     this->lookupAndInitialize();
     encode();

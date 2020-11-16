@@ -15,7 +15,7 @@ uniformDimensionedVectorField g
 );
 
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
-psiuCompressibleSystem fluid(mesh, dictionary());
+psiuCompressibleSystem fluid(mesh);
 integrator->addSystem(fluid);
 
 psiuReactionThermo& thermo = fluid.thermo();

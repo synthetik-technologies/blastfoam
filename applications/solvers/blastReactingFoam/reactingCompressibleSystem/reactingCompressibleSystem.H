@@ -144,7 +144,7 @@ public:
     TypeName("reactingCompressibleSystem");
 
     // Constructor
-    reactingCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    reactingCompressibleSystem(const fvMesh& mesh);
 
     //- Destructor
     virtual ~reactingCompressibleSystem();

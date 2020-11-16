@@ -16,7 +16,7 @@ uniformDimensionedVectorField g
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 autoPtr<reactingCompressibleSystem> fluid
 (
-    new reactingCompressibleSystem(mesh, dictionary())
+    new reactingCompressibleSystem(mesh)
 );
 integrator->addSystem(fluid());
 

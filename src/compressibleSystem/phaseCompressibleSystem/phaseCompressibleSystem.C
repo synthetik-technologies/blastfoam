@@ -91,12 +91,19 @@ void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseCompressibleSystem::phaseCompressibleSystem
-(
-    const fvMesh& mesh,
-    const dictionary& dict
-)
+Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
 :
+    IOdictionary
+    (
+        IOobject
+        (
+            "phaseProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    ),
     integrationSystem("phaseCompressibleSystem", mesh),
     rho_
     (
@@ -250,7 +257,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
         solutionDs_ = ((vector(mesh.geometricD()) + vector::one)/2.0);
     }
 
-    TLow_.readIfPresent(dict);
+    TLow_.readIfPresent(*this);
 }
 
 

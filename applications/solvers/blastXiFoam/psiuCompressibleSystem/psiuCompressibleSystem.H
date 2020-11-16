@@ -145,7 +145,7 @@ public:
     TypeName("psiuCompressibleSystem");
 
     // Constructor
-    psiuCompressibleSystem(const fvMesh& mesh, const dictionary& dict);
+    psiuCompressibleSystem(const fvMesh& mesh);
 
     //- Destructor
     virtual ~psiuCompressibleSystem();
