@@ -61,7 +61,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
         )
     )
 {
-    setModels(*this);
+    this->setModels();
     thermo_->initializeModels();
     this->lookupAndInitialize();
     encode();

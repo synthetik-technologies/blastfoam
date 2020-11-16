@@ -38,7 +38,7 @@ namespace Foam
 }
 
 
-void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
+void Foam::phaseCompressibleSystem::setModels()
 {
     if (Foam::max(this->thermo().mu()).value() > 0)
     {
@@ -55,38 +55,21 @@ void Foam::phaseCompressibleSystem::setModels(const dictionary& dict)
         turbulence_->validate();
     }
 
-    bool usesRadProperties = false;
-    {
-        IOdictionary radIODict
-        (
-            IOobject
-            (
-                "radiationProperties",
-                rho_.time().constant(),
-                rho_.mesh(),
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            )
-        );
-        usesRadProperties = radIODict.found("radiationModel");
-    }
+
+    IOobject radPropertiesIO
+    (
+        "radiationProperties",
+        rho_.time().constant(),
+        rho_.mesh(),
+        IOobject::MUST_READ_IF_MODIFIED,
+        IOobject::NO_WRITE
+    );
 
 
-    if (dict.found("radiationModel"))
-    {
-        radiation_.set(radiationModel::New(dict, this->T()).ptr());
-    }
-    else if(usesRadProperties)
+    if (radPropertiesIO.typeHeaderOk<IOdictionary>(true))
     {
         radiation_.set(radiationModel::New(this->T()).ptr());
     }
-    else
-    {
-        dictionary radDict;
-        radDict.add("radiationModel", "none");
-        radiation_.set(radiationModel::New(radDict, this->T()).ptr());
-    }
-
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -302,7 +285,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
 {
     this->decode();
 
-    if (radiation_->type() != "none")
+    if (radiation_.valid())
     {
         radiation_->correct();
 

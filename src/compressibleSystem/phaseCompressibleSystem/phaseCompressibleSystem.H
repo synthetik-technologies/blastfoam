@@ -138,8 +138,8 @@ protected:
         vector solutionDs_;
 
 
-        //- Allocate turbulence model if mu >= 0
-        virtual void setModels(const dictionary& dict);
+        //- Allocate models
+        virtual void setModels();
 
         //- Calculate new alpha and rho fields
         virtual void calcAlphaAndRho() = 0;

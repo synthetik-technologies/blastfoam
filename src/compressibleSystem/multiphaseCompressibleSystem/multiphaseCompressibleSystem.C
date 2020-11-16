@@ -114,7 +114,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         deltaAlphaRhos_.set(phasei, new PtrList<volScalarField>());
     }
 
-    setModels(*this);
+    this->setModels();
     thermo_.initializeModels();
     this->lookupAndInitialize();
     encode();
