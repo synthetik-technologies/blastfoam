@@ -47,7 +47,11 @@ void Foam::integrationSystem::storeOld
         fList.set
         (
             oldIs_[step() - 1],
-            new fieldType(f.name() + Foam::name(step() - 1), f)
+            new fieldType
+            (
+                f.name() + "_old_" + Foam::name(step() - 1),
+                f
+            )
         );
     }
 }
@@ -72,7 +76,11 @@ void Foam::integrationSystem::storeDelta
             fList.set
             (
                 deltaIs_[step() - 1],
-                new fieldType(f.name() + Foam::name(step() - 1), f)
+                new fieldType
+                (
+                    f.name() + "_delta_" + Foam::name(step() - 1),
+                    f
+                )
             );
         }
     }
