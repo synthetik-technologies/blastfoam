@@ -9,12 +9,19 @@
 
 # blastFoam Version 4.0
 
-blastFoam is a library for multi-phase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
+blastFoam is a library for single and multiphase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
 
 ## How to use blastFoam
 
 Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
+
+
+### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
+
+Thank you to everyone who attended!
+
+A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4).
 
 
 ### blastFoam workshop | Date: May 13, 2020 | Location: Virtual/Online | Cost: Free
@@ -26,12 +33,6 @@ The workshop tutorial case and modifications have been added to the repository: 
 A recording of the workshop is also available on YouTube: [blastFoam May 13, 2020 Workshop on YouTube](https://www.youtube.com/watch?v=0YYrkwNWM6U).
 
 The slides from the workshop have been added to the repository: [blastFoam May Workshop Slides](media/Synthetik-Applied-Technologies-blastFoam-Workshop-May-Final-20200513.pdf)
-
-### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
-
-Thank you to everyone who attended!
-
-A recording of the workshop is also available on YouTube: [blastFoam July 14, 2020 Workshop on YouTube](https://youtu.be/OLpRcjR3cW4).
 
 
 ## Installation
@@ -48,6 +49,7 @@ Compiling OpenFOAM is straight forward, and a more detailed guide to installatio
 cd $HOME/OpenFOAM
 git clone https://github.com/OpenFOAM/OpenFOAM-7.git
 # or from the Synthetik repository which includes several bug fixes
+# for moving meshes
 git clone https://github.com/synthetik-technologies/OpenFOAM-7.git
 ```
 
@@ -102,6 +104,7 @@ hdiutil attach -mountpoint $HOME/OpenFOAM OpenFOAM.sparsebundle
 cd $HOME/OpenFOAM
 git clone https://github.com/OpenFOAM/OpenFOAM-7.git
 # or from the Synthetik repository which includes several bug fixes
+# for moving meshes
 git clone https://github.com/synthetik-technologies/OpenFOAM-7.git
 
 cd OpenFOAM-7
@@ -118,6 +121,8 @@ echo 'WM_COMPILE_OPTION=Opt' >> $HOME/.OpenFOAM/prefs.sh
 echo 'WM_MPLIB=SYSTEMOPENMPI' >> $HOME/.OpenFOAM/prefs.sh
 echo 'export WM_NCOMPPROCS=$(sysctl -n hw.ncpu)' >> $HOME/.OpenFOAM/prefs.sh
 echo 'WM_LABEL_SIZE=32' >> $HOME/.OpenFOAM/prefs.sh
+# Set the location of the boost library
+echo 'BOOST_ARCH_PATH=/usr/local' >> $HOME/.OpenFOAM/prefs.sh
 ```
 
 
@@ -224,13 +229,13 @@ source $HOME/.zshrc
 
 
 
-## Questions
+### Questions
 If you find any bugs, please let us know in the issues section of the repository. If you want to get in touch: info@synthetik-technologies.com.
 
 
 
 
-## Citation
+### Citation
 If you use this code for your work or research, please use this citation:
 
 ```
@@ -273,9 +278,9 @@ BiBTex:
 
 
 
-## blastFoam Publications:
+### blastFoam Publications:
 
-### Journals/Conferences
+## Journals/Conferences
 
 1. T. Brewer, J. Heylmun, and P. Vonk, "Employment of the Open-source Airblast Solver blastFoam to Support the Super Heavy Improvised Explosive Loading Demonstration (SHIELD) Test Program" presented at the ISIEMS, USA, 2019.
 1. D. Stephens, P. Vonk, and T. Brewer, "Validation of Open-source Airblast Solver (blastFoam) in an Urban Environment," presented at the MABS 25, Hague, Netherlands, 2018.
@@ -286,24 +291,26 @@ BiBTex:
 
 
 
-## blastFoam Version 4.0 Release Notes and Features
+### blastFoam Version 4.0 Release Notes and Features
 blastFoam 4.0 introduces particle solvers. This includes Eulerian multi-fluid methods (blastEulerFoam), Lagrangian (blastParcelFoam), and possible coupling to OpenQBMM for number-density function transport coupling (blastPbeTransportFoam, blastUncoupledVdfTransportFoam, and blastVdfTransportFoam).
 
 Additional equations of state have been added including the Tillotson equation of state for cavitating fluids and the Abel-Nobel equation of state for propellants.
 
-The optional use of delayed detonations has been added to all activation models, as well as the support for specifying the size of detonation points in a material.
+Improvements for activation model including the optional use of delayed detonations and the size of activation points for all activation models, as well as the new programmedIgnition activation model.
 
 Diameter models have been added for use with the Arrhenius rate activation model, as well as the phase models used in the blastEulerFoam solver. These include constant diameter, constant mass, and a quadrature-based method of moments (qbmm) diameter.
 
-New numerical schemes have been added which include 1st, 2nd, and 3rd order MUSCL reconstruction with limiters.
+New numerical schemes have been added which include 1st, 2nd, and 3rd order MUSCL reconstruction with limiters. Additional options for Strong-stability-preserving Runge-Kutta methods have been added including one, two, and three step RK1-SSP, two, three, and four step RK2-SSP, and three and four step RK3-SSP.
 
-A new tracer particle functionObject has been added, allowing for the transport of passive particles.
+A new functionObjects including tracer particles for the transport of passive particles and the monitoring of conserved quantities.
 
 A simple fluid-structure-interaction solver (blastFSIFoam) has been added, however this is still experimental and not yet stable.
 
-Further improvements have been made to the setRefinedFields utility for more control over setting fields and faster convergence.
+Further improvements have been made to the setRefinedFields utility for more control over setting fields and faster convergence of refinement.
 
 
+
+### Previous Releases
 
 ## blastFoam Version 3.0 Release Notes and Features
 
@@ -385,13 +392,13 @@ blastFoam includes the following afterburn models
 
 
 
-## Verification and Validation
+### Verification and Validation
 
 blastFoam has been validated against known solutions to standard hydrodynamics problems, and against data from physical tests. Validation cases are included with example/tutorial cases as part of the solver source code.
 
 
 
 
-## Disclaimer
+### Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
