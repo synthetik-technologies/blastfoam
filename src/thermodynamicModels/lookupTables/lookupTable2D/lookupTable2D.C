@@ -205,46 +205,11 @@ void Foam::lookupTable2D::findNonuniformIndexes
 }
 
 
-Foam::label Foam::lookupTable2D::boundi
+void Foam::lookupTable2D::boundi
 (
     const scalar& f,
     const Field<scalarField>& data,
-    const label j
-) const
-{
-    for (label i = 0; i < data.size() - 1; i++)
-    {
-        if (f > data[i][j] && f < data[i+1][j])
-        {
-            return i;
-        }
-    }
-    return data.size() - 2;
-}
-
-
-Foam::label Foam::lookupTable2D::boundj
-(
-    const scalar& f,
-    const Field<scalarField>& data,
-    const label i
-) const
-{
-    for (label j = 0; j < data[i].size() - 1; j++)
-    {
-        if (f > data[i][j] && f < data[i][j+1])
-        {
-            return j;
-        }
-    }
-    return data[i].size() - 2;
-}
-
-
-void Foam::lookupTable2D::boundij
-(
-    const scalar& f,
-    const Field<scalarField>& data,
+    const scalar& y,
     label& i,
     label& j
 ) const
@@ -253,20 +218,53 @@ void Foam::lookupTable2D::boundij
     {
         for (j = 0; j < data[i].size() - 1; j++)
         {
-            if
-            (
-                f > data[i][j]
-             && f < data[i+1][j]
-             && f < data[i][j+1]
-             && f < data[i+1][j+1]
-            )
+            if (y > yMod_[j] && y < yMod_[j+1])
             {
-                return;
+                if
+                (
+                    f > data[i][j]
+                && f < data[i][j+1]
+                && f > data[i+1][j]
+                && f < data[i+1][j+1]
+                )
+                {
+                    return;
+                }
             }
         }
     }
-    i--;
-    j--;
+    return;
+}
+
+
+void Foam::lookupTable2D::boundj
+(
+    const scalar& f,
+    const Field<scalarField>& data,
+    const scalar& x,
+    label& i,
+    label& j
+) const
+{
+    for (i = 0; i < data.size() - 1; i++)
+    {
+        if (x > xMod_[i] && x < xMod_[i+1])
+        {
+            for (j = 0; j < data[i].size() - 1; j++)
+            {
+                if
+                (
+                    f > data[i][j]
+                && f < data[i+1][j]
+                && f > data[i][j+1]
+                && f < data[i+1][j+1]
+                )
+                {
+                    return;
+                }
+            }
+        }
+    }
     return;
 }
 
@@ -573,10 +571,10 @@ Foam::scalar
 Foam::lookupTable2D::reverseLookupY(const scalar& fin, const scalar& x) const
 {
     scalar f(modFunc_(fin));
-    scalar fx;
-    label i;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    label j = boundj(f, data_, i);
+    scalar modX(modXFunc_(x));
+    label i, j;
+    boundj(f, data_, modX, i, j);
+    scalar fx = 1.0 - (modX - xMod_[i])/(xMod_[i+1] - xMod_[i]);
 
     const scalar& mm(data_[i][j]);
     const scalar& pm(data_[i+1][j]);
@@ -595,10 +593,10 @@ Foam::scalar
 Foam::lookupTable2D::reverseLookupX(const scalar& fin, const scalar& y) const
 {
     scalar f(modFunc_(fin));
-    scalar fy;
-    label j;
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
-    label i = boundi(f, data_, j);
+    scalar modY(modYFunc_(y));
+    label i, j;
+    boundi(f, data_, modY, i, j);
+    scalar fy = 1.0 - (modY - yMod_[j])/(yMod_[j+1] - yMod_[j]);
 
     scalar mm(data_[i][j]);
     scalar pm(data_[i+1][j]);
