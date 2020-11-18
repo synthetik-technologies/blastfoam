@@ -43,7 +43,7 @@ export FOAM_EXTRA_CXXFLAGS="-DCOMPAT_OPENFOAM_ORG"
 # the directory containing this file if sourced by a bash shell.
 # Set to one directory level higher than the current by default
 #
-export BLAST_DIR="$( cd ../ && pwd )"
+export BLAST_DIR="$( cd $(dirname ${BASH_SOURCE[0]})/../ && pwd )"
 
 # Export location of libraries and executables
 export BLAST_LIBBIN="$FOAM_USER_LIBBIN"
