@@ -82,6 +82,9 @@ class JWL
         scalar R1_;
         scalar R2_;
 
+        //- Internal energy that gives 0 pressure at reference density
+        scalar e0_;
+
 
 
 public:

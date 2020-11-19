@@ -68,20 +68,18 @@ Foam::activationModels::linearActivation::linearActivation
     // if no, the closest point is used
     Switch useDelay(dict.lookupOrDefault("delayOffset", true));
 
-    scalarField distance(tIgn_.size(), great);
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
-        forAll(distance, celli)
+        forAll(tIgn_, celli)
         {
-            scalar d = mag(mesh.cellCentres()[celli] - dp);
-            if (d < distance[celli])
-            {
-                distance[celli] = d;
-                tIgn_[celli] =
+            tIgn_[celli] =
+                min
+                (
+                    tIgn_[celli],
                     (useDelay ? dp.delay() : 0.0)
-                  + mag(mesh_.C()[celli] - dp)/vDet_.value();
-            }
+                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                );
         }
     }
 }

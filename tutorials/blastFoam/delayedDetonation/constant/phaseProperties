@@ -85,7 +85,7 @@ RDX
         }
     }
 
-    activationModel linear;
+    activationModel programmedIgnition;
     initiation
     {
         // Detonation energy
@@ -127,6 +127,12 @@ RDX
 
         // Detonation velocity
         vDet    7850;
+
+        // Chapman-Jouguet pressure
+        Pcj     0.1017e11;
+
+        // Linear and compression activation
+        burnModel programmedBeta;
     }
 
     residualRho     1e-6;           // Minimum density of the phase

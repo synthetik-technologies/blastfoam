@@ -92,19 +92,22 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         dimensionedScalar(dimTime, great)
     )
 {
-    scalarField distance(tIgn_.size(), great);
+    // Are delays used to calculate ignition time
+    // if no, the closest point is used
+    Switch useDelay(dict.lookupOrDefault("delayOffset", true));
+
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
-        forAll(distance, celli)
+        forAll(tIgn_, celli)
         {
-            scalar d = mag(mesh.cellCentres()[celli] - dp);
-            if (d < distance[celli])
-            {
-                distance[celli] = d;
-                tIgn_[celli] =
-                    dp.delay() + mag(mesh_.C()[celli] - dp)/vDet_.value();
-            }
+            tIgn_[celli] =
+                min
+                (
+                    tIgn_[celli],
+                    (useDelay ? dp.delay() : 0.0)
+                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                );
         }
     }
 }
@@ -161,7 +164,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
         if (model_ == BETA || model_ == PROGRAMMEDBETA)
         {
             lambdaBeta =
-                (1.0 - 1.0/max(rho_[celli], small))
+                (1.0 - rho0_.value()/max(rho_[celli], small))
                /(1.0 - Vcj_.value());
         }
         //- Position based activation

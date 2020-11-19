@@ -57,7 +57,8 @@ Foam::JWL<Specie>::JWL
     A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
     B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
     R1_(dict.subDict("equationOfState").lookupType<scalar>("R1")),
-    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2"))
+    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2")),
+    e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0))
 {}
 
 // ************************************************************************* //
