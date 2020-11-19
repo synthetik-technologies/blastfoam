@@ -129,23 +129,19 @@ class lookupTable2D
 
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline void boundi
+    inline label boundi
     (
         const scalar& f,
         const Field<scalarField>& data,
-        const scalar& y,
-        label& i,
-        label& j
+        const label& j
     ) const;
 
     //- Find bottom of interpolation region, return index and weight between j and j+1
-    inline void boundj
+    inline label boundj
     (
         const scalar& f,
         const Field<scalarField>& data,
-        const scalar& x,
-        label& i,
-        label& j
+        const label& i
     ) const;
 
     //- Return value from a given list from lower index and weight
