@@ -121,8 +121,6 @@ echo 'WM_COMPILE_OPTION=Opt' >> $HOME/.OpenFOAM/prefs.sh
 echo 'WM_MPLIB=SYSTEMOPENMPI' >> $HOME/.OpenFOAM/prefs.sh
 echo 'export WM_NCOMPPROCS=$(sysctl -n hw.ncpu)' >> $HOME/.OpenFOAM/prefs.sh
 echo 'WM_LABEL_SIZE=32' >> $HOME/.OpenFOAM/prefs.sh
-# Set the location of the boost library
-echo 'BOOST_ARCH_PATH=/usr/local' >> $HOME/.OpenFOAM/prefs.sh
 ```
 
 
