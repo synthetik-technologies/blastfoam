@@ -76,6 +76,9 @@ class CochranChan
         scalar B_;
         scalar Epsilon2_;
 
+        //- Offset energy
+        scalar e0_;
+
 
 public:
 

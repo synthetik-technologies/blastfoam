@@ -35,6 +35,7 @@ copper
         Epsilon1    2.994;
         Epsilon2    1.994;
         rho0        8900;
+        e0          117900;
     }
     specie
     {

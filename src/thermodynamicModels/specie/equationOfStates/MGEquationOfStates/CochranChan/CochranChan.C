@@ -39,7 +39,8 @@ Foam::CochranChan<Specie>::CochranChan(const dictionary& dict)
     A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
     Epsilon1_(dict.subDict("equationOfState").lookupType<scalar>("Epsilon1")),
     B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    Epsilon2_(dict.subDict("equationOfState").lookupType<scalar>("Epsilon2"))
+    Epsilon2_(dict.subDict("equationOfState").lookupType<scalar>("Epsilon2")),
+    e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0))
 {}
 
 // ************************************************************************* //
