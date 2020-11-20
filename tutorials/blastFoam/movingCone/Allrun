@@ -7,7 +7,6 @@ cd ${0%/*} || exit 1    # Run from this directory
 application="$(getApplication)"
 
 runApplication blockMesh
-runApplication decomposePar
-runParallel $application
+runApplication $application
 
 #------------------------------------------------------------------------------
