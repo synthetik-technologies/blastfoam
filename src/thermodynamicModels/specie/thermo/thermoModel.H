@@ -51,6 +51,32 @@ using namespace Foam::constant::thermodynamic;
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class ThermoType> class thermoModel;
+
+template<class ThermoType>
+inline thermoModel<ThermoType> operator+
+(
+    const thermoModel<ThermoType>&,
+    const thermoModel<ThermoType>&
+);
+
+template<class ThermoType>
+inline thermoModel<ThermoType> operator*
+(
+    const scalar,
+    const thermoModel<ThermoType>&
+);
+
+template<class ThermoType>
+inline thermoModel<ThermoType> operator==
+(
+    const thermoModel<ThermoType>&,
+    const thermoModel<ThermoType>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class thermoModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -73,14 +99,23 @@ protected:
 
 public:
 
+    // Constructors
+
+        //- Construct from components
+        inline thermoModel(const ThermoType& sp);
+
+        //- Construct from dictionary
+        thermoModel(const dictionary& dict);
+
+        //- Construct as named copy
+        inline thermoModel(const word& name, const ThermoType&);
+
+
     //- Return the instantiated type name
         static word typeName()
         {
             return  word(ThermoType::typeName());
         }
-
-    // Constructor
-    thermoModel(const dictionary& dict);
 
 
     // Member Functions
@@ -135,6 +170,34 @@ public:
             const scalar& e,
             const scalar& T
         ) const;
+
+
+    // Member Operators
+
+        inline void operator+=(const thermoModel&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend thermoModel operator+
+        (
+            const thermoModel&,
+            const thermoModel&
+        );
+
+        friend thermoModel operator*
+        (
+            const scalar s,
+            const thermoModel&
+        );
+
+        friend thermoModel operator==
+        (
+            const thermoModel&,
+            const thermoModel&
+        );
+
 };
 
 
@@ -168,6 +231,8 @@ typedef                                                                     \
     defineThermoType(Transport, hConst, EoSType, EoS, Specie)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "thermoModelI.H"
 
 #ifdef NoRepository
     #include "thermoModel.C"

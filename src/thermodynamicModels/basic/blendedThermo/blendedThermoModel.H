@@ -332,55 +332,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define addblendedThermoModel(uTransport, Thermo1, uEoSType, uEoS, rTransport, Thermo2, rEoSType, rEoS) \
-    typedef blendedThermoModel                                               \
-        <                                                                       \
-            uTransport##Thermo1##uEoSType##uEoS,                                \
-            rTransport##Thermo2##rEoSType##rEoS                                 \
-        >                                                                       \
-        detonating##uTransport##Thermo1##uEoSType##uEoS##rTransport##Thermo2##rEoSType##rEoS; \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        detonating##uTransport##Thermo1##uEoSType##uEoS##rTransport##Thermo2##rEoSType##rEoS, \
-        (                                                                       \
-            "detonating<"                                                       \
-          + word(uTransport##Thermo1##uEoSType##uEoS::typeName())               \
-          + ','                                                                 \
-          + word(rTransport##Thermo2##rEoSType##rEoS::typeName())               \
-          + '>'                                                                 \
-        ).c_str(),                                                              \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        fluidThermoModel,                                                       \
-        detonating##uTransport##Thermo1##uEoSType##uEoS##rTransport##Thermo2##rEoSType##rEoS,                                       \
-        detonating                                                               \
-    );
-
-#define addblendedThermoModels(uTransport, uEoSType, uEoS, rTransport, rEoSType, rEoS) \
-    addblendedThermoModel                                                    \
-    (                                                                           \
-        uTransport, eConst, uEoSType, uEoS,                                     \
-        rTransport, eConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addblendedThermoModel                                                    \
-    (                                                                           \
-        uTransport, hConst, uEoSType, uEoS,                                     \
-        rTransport, hConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addblendedThermoModel                                                    \
-    (                                                                           \
-        uTransport, hConst, uEoSType, uEoS,                                     \
-        rTransport, eConst, rEoSType, rEoS                                      \
-    );                                                                          \
-    addblendedThermoModel                                                    \
-    (                                                                           \
-        uTransport, eConst, uEoSType, uEoS,                                     \
-        rTransport, hConst, rEoSType, rEoS                                      \
-    );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

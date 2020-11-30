@@ -53,6 +53,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class CochranChan;
+
+template<class Specie>
+inline CochranChan<Specie> operator+
+(
+    const CochranChan<Specie>&,
+    const CochranChan<Specie>&
+);
+
+template<class Specie>
+inline CochranChan<Specie> operator*
+(
+    const scalar,
+    const CochranChan<Specie>&
+);
+
+template<class Specie>
+inline CochranChan<Specie> operator==
+(
+    const CochranChan<Specie>&,
+    const CochranChan<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const CochranChan<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class CochranChan Declaration
 \*---------------------------------------------------------------------------*/
@@ -83,8 +116,37 @@ class CochranChan
 public:
 
 
-    //- Constructor
+    //- Construct from components
+        inline CochranChan
+        (
+            const Specie& sp,
+            const scalar rho0,
+            const scalar Gamma0,
+            const scalar A,
+            const scalar Epsilon1,
+            const scalar B,
+            const scalar Epsilon2,
+            const scalar e0
+        );
+
+        //- Construct from dictionary
         CochranChan(const dictionary& dict);
+
+        //- Construct as named copy
+        inline CochranChan
+        (
+            const word& name,
+            const CochranChan&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<CochranChan> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<CochranChan> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -94,7 +156,7 @@ public:
         {
             return
                 "CochranChan<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -181,6 +243,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const CochranChan&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend CochranChan operator+ <Specie>
+        (
+            const CochranChan&,
+            const CochranChan&
+        );
+
+        friend CochranChan operator* <Specie>
+        (
+            const scalar s,
+            const CochranChan&
+        );
+
+        friend CochranChan operator== <Specie>
+        (
+            const CochranChan&,
+            const CochranChan&
+        );
 };
 
 

@@ -26,6 +26,56 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::MGEquationOfState<EoS>::MGEquationOfState
+(
+    const EoS& sp
+)
+:
+    EoS(sp)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::MGEquationOfState<EoS>::MGEquationOfState
+(
+    const word& name,
+    const MGEquationOfState<EoS>& pf
+)
+:
+    EoS(name, pf)
+{}
+
+
+template<class EoS>
+inline Foam::autoPtr<Foam::MGEquationOfState<EoS>>
+Foam::MGEquationOfState<EoS>::clone() const
+{
+    return autoPtr<MGEquationOfState<EoS>>
+    (
+        new MGEquationOfState<EoS>(*this)
+    );
+}
+
+
+template<class EoS>
+inline Foam::autoPtr<Foam::MGEquationOfState<EoS>>
+Foam::MGEquationOfState<EoS>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<MGEquationOfState<EoS>>
+    (
+        new MGEquationOfState<EoS>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class EoS>
@@ -165,5 +215,75 @@ Foam::scalar Foam::MGEquationOfState<EoS>::CpMCv
 {
     return EoS::CpMCv(rho, e);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EoS>
+inline void Foam::MGEquationOfState<EoS>::operator+=
+(
+    const MGEquationOfState<EoS>& pf
+)
+{
+    EoS::operator+=(pf);
+}
+
+
+template<class EoS>
+inline void Foam::MGEquationOfState<EoS>::operator*=(const scalar s)
+{
+    EoS::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::MGEquationOfState<EoS> Foam::operator+
+(
+    const MGEquationOfState<EoS>& pf1,
+    const MGEquationOfState<EoS>& pf2
+)
+{
+    EoS eos
+    (
+        static_cast<const EoS&>(pf1)
+      + static_cast<const EoS&>(pf2)
+    );
+
+    return MGEquationOfState<EoS>(eos);
+}
+
+
+template<class EoS>
+inline Foam::MGEquationOfState<EoS> Foam::operator*
+(
+    const scalar s,
+    const MGEquationOfState<EoS>& pf
+)
+{
+    return MGEquationOfState<EoS>
+    (
+        s*static_cast<const EoS&>(pf)
+    );
+}
+
+
+template<class EoS>
+inline Foam::MGEquationOfState<EoS> Foam::operator==
+(
+    const MGEquationOfState<EoS>& pf1,
+    const MGEquationOfState<EoS>& pf2
+)
+{
+    EoS eos
+    (
+        static_cast<const EoS&>(pf1)
+     == static_cast<const EoS&>(pf2)
+    );
+
+    return MGEquationOfState<EoS>(eos);
+}
+
 
 // ************************************************************************* //

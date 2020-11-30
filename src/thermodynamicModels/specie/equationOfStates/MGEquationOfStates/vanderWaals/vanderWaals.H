@@ -53,6 +53,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class vanderWaals;
+
+template<class Specie>
+inline vanderWaals<Specie> operator+
+(
+    const vanderWaals<Specie>&,
+    const vanderWaals<Specie>&
+);
+
+template<class Specie>
+inline vanderWaals<Specie> operator*
+(
+    const scalar,
+    const vanderWaals<Specie>&
+);
+
+template<class Specie>
+inline vanderWaals<Specie> operator==
+(
+    const vanderWaals<Specie>&,
+    const vanderWaals<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const vanderWaals<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class vanderWaals Declaration
 \*---------------------------------------------------------------------------*/
@@ -75,8 +108,34 @@ class vanderWaals
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline vanderWaals
+        (
+            const Specie& sp,
+            const scalar a,
+            const scalar b,
+            const scalar c,
+            const scalar gamma
+        );
+
+        //- Construct from dictionary
         vanderWaals(const dictionary& dict);
+
+        //- Construct as named copy
+        inline vanderWaals
+        (
+            const word& name,
+            const vanderWaals&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<vanderWaals> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<vanderWaals> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -86,7 +145,7 @@ public:
         {
             return
                 "vanderWaals<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -173,6 +232,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const vanderWaals&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend vanderWaals operator+ <Specie>
+        (
+            const vanderWaals&,
+            const vanderWaals&
+        );
+
+        friend vanderWaals operator* <Specie>
+        (
+            const scalar s,
+            const vanderWaals&
+        );
+
+        friend vanderWaals operator== <Specie>
+        (
+            const vanderWaals&,
+            const vanderWaals&
+        );
 };
 
 

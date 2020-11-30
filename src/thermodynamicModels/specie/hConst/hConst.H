@@ -45,6 +45,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EquationOfState> class hConst;
+
+template<class EquationOfState>
+inline hConst<EquationOfState> operator+
+(
+    const hConst<EquationOfState>&,
+    const hConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline hConst<EquationOfState> operator*
+(
+    const scalar,
+    const hConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline hConst<EquationOfState> operator==
+(
+    const hConst<EquationOfState>&,
+    const hConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+Ostream& operator<<
+(
+    Ostream&,
+    const hConst<EquationOfState>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class hConst Declaration
 \*---------------------------------------------------------------------------*/
@@ -63,8 +96,31 @@ class hConst
         scalar Hf_;
 
 
+        //- Construct from components
+        inline hConst
+        (
+            const EquationOfState& st,
+            const scalar cv,
+            const scalar hf
+        );
+
 
 public:
+
+    // Constructors
+
+        //- Construct from dictionary
+        hConst(const dictionary& dict);
+
+        //- Construct as named copy
+        inline hConst(const word&, const hConst&);
+
+        //- Construct and return a clone
+        inline autoPtr<hConst> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<hConst> New(const dictionary& dict);
+
 
     //- Return the instantiated type name
         static word typeName()
@@ -74,68 +130,72 @@ public:
               + word(EquationOfState::typeName()) + '>';
         }
 
-    // Constructor
-    hConst(const dictionary& dict);
-
 
     // Member Functions
 
         //- Heat capacity at constant pressure of mixture [J/kg/K]
-        scalar Cp
+        inline scalar Cp
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cp_ + EquationOfState::Cp(rho, e, T);
-        }
+        ) const;
 
         //- Sensible enthalpy [J/kg]
-        scalar Hs
+        inline scalar Hs
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cp(rho, e, T)*T + EquationOfState::H(rho, e, T);
-        }
+        ) const;
 
         //- Absolute enthalpy [J/kg]
-        scalar Ha
+        inline scalar Ha
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Hs(rho, e, T) + Hf_;
-        }
+        ) const;
 
         #include "HtoEFuncs.H"
 
         //- Heat of formation [J/kg]
-        scalar Hf
-        (
-            const scalar& rho,
-            const scalar& T
-        ) const
-        {
-            return Hf_;
-        }
+        inline scalar Hf() const;
 
         //- Entropy [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar& p,
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(rho, T);
-        }
+        ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const hConst&);
+
+
+    // Friend operators
+
+        friend hConst operator+ <EquationOfState>
+        (
+            const hConst&,
+            const hConst&
+        );
+
+        friend hConst operator* <EquationOfState>
+        (
+            const scalar,
+            const hConst&
+        );
+
+        friend hConst operator== <EquationOfState>
+        (
+            const hConst&,
+            const hConst&
+        );
 };
 
 
@@ -144,6 +204,8 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "hConstI.H"
 
 #ifdef NoRepository
     #include "hConst.C"

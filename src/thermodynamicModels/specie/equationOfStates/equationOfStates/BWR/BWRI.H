@@ -23,6 +23,83 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BWR<Specie>::BWR
+(
+    const Specie& sp,
+    const scalar A0,
+    const scalar B0,
+    const scalar C0,
+    const scalar a,
+    const scalar b,
+    const scalar c,
+    const scalar alpha,
+    const scalar rhoc,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    A0_(A0),
+    B0_(B0),
+    C0_(C0),
+    a_(a),
+    b_(b),
+    c_(c),
+    alpha_(alpha),
+    rhoc_(rhoc),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BWR<Specie>::BWR
+(
+    const word& name,
+    const BWR<Specie>& pf
+)
+:
+    Specie(name, pf),
+    A0_(pf.A0_),
+    B0_(pf.B0_),
+    C0_(pf.C0_),
+    a_(pf.a_),
+    b_(pf.b_),
+    c_(pf.c_),
+    alpha_(pf.alpha_),
+    rhoc_(pf.rhoc_),
+    gamma_(pf.gamma)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BWR<Specie>>
+Foam::BWR<Specie>::clone() const
+{
+    return autoPtr<BWR<Specie>>
+    (
+        new BWR<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BWR<Specie>>
+Foam::BWR<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<BWR<Specie>>
+    (
+        new BWR<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -192,5 +269,150 @@ Foam::scalar Foam::BWR<Specie>::S
 {
     return 0.0;
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::BWR<Specie>::operator+=
+(
+    const BWR<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        A0_ = Y1*A0_ + Y2*pf.A0_;
+        B0_ = Y1*B0_ + Y2*pf.B0_;
+        C0_ = Y1*C0_ + Y2*pf.C0_;
+        a_ = Y1*a_ + Y2*pf.a_;
+        b_ = Y1*b_ + Y2*pf.b_;
+        c_ = Y1*c_ + Y2*pf.c_;
+        alpha_ = Y1*alpha_ + Y2*pf.alpha_;
+        rhoc_ = Y1*rhoc_ + Y2*pf.rhoc_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::BWR<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BWR<Specie> Foam::operator+
+(
+    const BWR<Specie>& pf1,
+    const BWR<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return BWR<Specie>
+        (
+            sp,
+            pf1.A0_,
+            pf1.B0_,
+            pf1.C0_,
+            pf1.a_,
+            pf1.b_,
+            pf1.c_,
+            pf1.alpha_,
+            pf1.rhoc_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return BWR<Specie>
+        (
+            sp,
+            Y1*pf1.A0_ + Y2*pf2.A0_,
+            Y1*pf1.B0_ + Y2*pf2.B0_,
+            Y1*pf1.C0_ + Y2*pf2.C0_,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.b_ + Y2*pf2.b_,
+            Y1*pf1.c_ + Y2*pf2.c_,
+            Y1*pf1.alpha_ + Y2*pf2.alpha_,
+            Y1*pf1.rhoc_ + Y2*pf2.rhoc_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::BWR<Specie> Foam::operator*
+(
+    const scalar s,
+    const BWR<Specie>& pf
+)
+{
+    return BWR<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.A0_,
+        pf.B0_,
+        pf.C0_,
+        pf.a_,
+        pf.b_,
+        pf.c_,
+        pf.alpha_,
+        pf.rhoc_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::BWR<Specie> Foam::operator==
+(
+    const BWR<Specie>& pf1,
+    const BWR<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return BWR<Specie>
+    (
+        sp,
+        Y2*pf2.A0_ - Y1*pf1.A0_,
+        Y2*pf2.B0_ - Y1*pf1.B0_,
+        Y2*pf2.C0_ - Y1*pf1.C0_,
+        Y2*pf2.a_ - Y1*pf1.a_,
+        Y2*pf2.b_ - Y1*pf1.b_,
+        Y2*pf2.c_ - Y1*pf1.c_,
+        Y2*pf2.alpha_ - Y1*pf1.alpha_,
+        Y2*pf2.rhoc_ - Y1*pf1.rhoc_,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //

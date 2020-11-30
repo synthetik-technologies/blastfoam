@@ -26,6 +26,77 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::CochranChan<Specie>::CochranChan
+(
+    const Specie& sp,
+    const scalar rho0,
+    const scalar Gamma0,
+    const scalar A,
+    const scalar Epsilon1,
+    const scalar B,
+    const scalar Epsilon2,
+    const scalar e0
+)
+:
+    Specie(sp),
+    rho0_(rho0),
+    Gamma0_(Gamma0),
+    A_(A),
+    Epsilon1_(Epsilon1),
+    B_(B),
+    Epsilon2_(Epsilon2),
+    e0_(e0)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::CochranChan<Specie>::CochranChan
+(
+    const word& name,
+    const CochranChan<Specie>& pf
+)
+:
+    Specie(name, pf),
+    rho0_(pf.rho0_),
+    Gamma0_(pf.Gamma0_),
+    A_(pf.A_),
+    Epsilon1_(pf.Epsilon1_),
+    B_(pf.B_),
+    Epsilon2_(pf.Epsilon2_),
+    e0_(pf.e0_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::CochranChan<Specie>>
+Foam::CochranChan<Specie>::clone() const
+{
+    return autoPtr<CochranChan<Specie>>
+    (
+        new CochranChan<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::CochranChan<Specie>>
+Foam::CochranChan<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<CochranChan<Specie>>
+    (
+        new CochranChan<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -189,5 +260,140 @@ Foam::scalar Foam::CochranChan<Specie>::S
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::CochranChan<Specie>::operator+=
+(
+    const CochranChan<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        rho0_ = Y1*rho0_ + Y2*pf.rho0_;
+        Gamma0_ = Y1*Gamma0_ + Y2*pf.Gamma0_;
+        A_ = Y1*A_ + Y2*pf.A_;
+        Epsilon1_ = Y1*Epsilon1_ + Y2*pf.Epsilon1_;
+        B_ = Y1*B_ + Y2*pf.B_;
+        Epsilon2_ = Y1*Epsilon2_ + Y2*pf.Epsilon2_;
+        e0_= Y1*e0_ + Y2*pf.e0_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::CochranChan<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::CochranChan<Specie> Foam::operator+
+(
+    const CochranChan<Specie>& pf1,
+    const CochranChan<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return CochranChan<Specie>
+        (
+            sp,
+            pf1.rho0_,
+            pf1.Gamma0_,
+            pf1.A_,
+            pf1.Epsilon1_,
+            pf1.B_,
+            pf1.Epsilon2_,
+            pf1.e0_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return CochranChan<Specie>
+        (
+            sp,
+            Y1*pf1.rho0_ + Y2*pf2.rho0_,
+            Y1*pf1.Gamma0_ + Y2*pf2.Gamma0_,
+            Y1*pf1.A_ + Y2*pf2.A_,
+            Y1*pf1.Epsilon1_ + Y2*pf2.Epsilon1_,
+            Y1*pf1.B_ + Y2*pf2.B_,
+            Y1*pf1.Epsilon2_ + Y2*pf2.Epsilon2_,
+            Y1*pf1.e0_ + Y2*pf2.e0_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::CochranChan<Specie> Foam::operator*
+(
+    const scalar s,
+    const CochranChan<Specie>& pf
+)
+{
+    return CochranChan<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.rho0_,
+        pf.Gamma0_,
+        pf.A_,
+        pf.Epsilon1_,
+        pf.B_,
+        pf.Epsilon2_,
+        pf.e0_
+    );
+}
+
+
+template<class Specie>
+inline Foam::CochranChan<Specie> Foam::operator==
+(
+    const CochranChan<Specie>& pf1,
+    const CochranChan<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return CochranChan<Specie>
+    (
+        sp,
+        Y2*pf2.rho0_ - Y1*pf1.rho0_,
+        Y2*pf2.Gamma0_ - Y1*pf1.Gamma0_,
+        Y2*pf2.A_ - Y1*pf1.A_,
+        Y2*pf2.Epsilon1_ - Y1*pf1.Epsilon1_,
+        Y2*pf2.B_ - Y1*pf1.B_,
+        Y2*pf2.Epsilon2_ - Y1*pf1.Epsilon2_,
+        Y2*pf2.e0_ - Y1*pf1.e0_
+    );
+}
+
 
 // ************************************************************************* //

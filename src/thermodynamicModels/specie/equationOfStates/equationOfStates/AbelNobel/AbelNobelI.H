@@ -26,6 +26,59 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::AbelNobel<Specie>::AbelNobel
+(
+    const Specie& sp,
+    const scalar b
+)
+:
+    Specie(sp),
+    b_(b)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::AbelNobel<Specie>::AbelNobel
+(
+    const word& name,
+    const AbelNobel<Specie>& pf
+)
+:
+    Specie(name, pf),
+    b_(pf.b_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::AbelNobel<Specie>>
+Foam::AbelNobel<Specie>::clone() const
+{
+    return autoPtr<AbelNobel<Specie>>
+    (
+        new AbelNobel<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::AbelNobel<Specie>>
+Foam::AbelNobel<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<AbelNobel<Specie>>
+    (
+        new AbelNobel<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -155,5 +208,110 @@ Foam::scalar Foam::AbelNobel<Specie>::S
 {
     return 0.0;
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::AbelNobel<Specie>::operator+=
+(
+    const AbelNobel<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        b_ = Y1*b_ + Y2*pf.b_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::AbelNobel<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::AbelNobel<Specie> Foam::operator+
+(
+    const AbelNobel<Specie>& pf1,
+    const AbelNobel<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return AbelNobel<Specie>
+        (
+            sp,
+            pf1.b_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return AbelNobel<Specie>
+        (
+            sp,
+            Y1*pf1.b_ + Y2*pf2.b_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::AbelNobel<Specie> Foam::operator*
+(
+    const scalar s,
+    const AbelNobel<Specie>& pf
+)
+{
+    return AbelNobel<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.b_
+    );
+}
+
+
+template<class Specie>
+inline Foam::AbelNobel<Specie> Foam::operator==
+(
+    const AbelNobel<Specie>& pf1,
+    const AbelNobel<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return AbelNobel<Specie>
+    (
+        sp,
+        Y2*pf2.b_    - Y1*pf1.b_
+    );
+}
+
 
 // ************************************************************************* //

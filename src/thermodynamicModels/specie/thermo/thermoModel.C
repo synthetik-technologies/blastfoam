@@ -41,43 +41,6 @@ Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::Gamma
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return ThermoType::Gamma(rho, e, T, ThermoType::Cv(rho, e, T));
-}
-
-
-template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::speedOfSound
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return ThermoType::speedOfSound(p, rho, e, T, ThermoType::Cv(rho, e, T));
-}
-
-
-template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::CpByCv
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return ThermoType::Cp(rho, e, T)/ThermoType::Cv(rho, e, T);
-}
-
-
-template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
 (
     const scalar& T0,

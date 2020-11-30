@@ -26,7 +26,76 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "JWLC.H"
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWLC<Specie>::JWLC
+(
+    const Specie& sp,
+    const scalar rho0,
+    const scalar omega,
+    const scalar A,
+    const scalar B,
+    const scalar C,
+    const scalar R1,
+    const scalar R2
+)
+:
+    Specie(sp),
+    rho0_(rho0),
+    omega_(omega),
+    A_(A),
+    B_(B),
+    C_(C),
+    R1_(R1),
+    R2_(R2)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWLC<Specie>::JWLC
+(
+    const word& name,
+    const JWLC<Specie>& pf
+)
+:
+    Specie(name, pf),
+    rho0_(pf.rho0_),
+    omega_(pf.omega_),
+    A_(pf.A_),
+    B_(pf.B_),
+    C_(pf.C_),
+    R1_(pf.R1_),
+    R2_(pf.R2_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::JWLC<Specie>>
+Foam::JWLC<Specie>::clone() const
+{
+    return autoPtr<JWLC<Specie>>
+    (
+        new JWLC<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::JWLC<Specie>>
+Foam::JWLC<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<JWLC<Specie>>
+    (
+        new JWLC<Specie>(dict)
+    );
+}
+
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -184,5 +253,140 @@ Foam::scalar Foam::JWLC<Specie>::S
 {
     return 0.0;
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::JWLC<Specie>::operator+=
+(
+    const JWLC<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        rho0_ = Y1*rho0_ + Y2*pf.rho0_;
+        omega_ = Y1*omega_ + Y2*pf.omega_;
+        A_ = Y1*A_ + Y2*pf.A_;
+        B_ = Y1*B_ + Y2*pf.B_;
+        C_ = Y1*C_ + Y2*pf.C_;
+        R1_ = Y1*R1_ + Y2*pf.R1_;
+        R2_ = Y1*R2_ + Y2*pf.R2_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::JWLC<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWLC<Specie> Foam::operator+
+(
+    const JWLC<Specie>& pf1,
+    const JWLC<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return JWLC<Specie>
+        (
+            sp,
+            pf1.rho0_,
+            pf1.omega_,
+            pf1.A_,
+            pf1.B_,
+            pf1.C_,
+            pf1.R1_,
+            pf1.R2_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return JWLC<Specie>
+        (
+            sp,
+            Y1*pf1.rho0_ + Y2*pf2.rho0_,
+            Y1*pf1.omega_ + Y2*pf2.omega_,
+            Y1*pf1.A_ + Y2*pf2.A_,
+            Y1*pf1.B_ + Y2*pf2.B_,
+            Y1*pf1.C_ + Y2*pf2.C_,
+            Y1*pf1.R1_ + Y2*pf2.R1_,
+            Y1*pf1.R2_ + Y2*pf2.R2_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::JWLC<Specie> Foam::operator*
+(
+    const scalar s,
+    const JWLC<Specie>& pf
+)
+{
+    return JWLC<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.rho0_,
+        pf.omega_,
+        pf.A_,
+        pf.B_,
+        pf.C_,
+        pf.R1_,
+        pf.R2_
+    );
+}
+
+
+template<class Specie>
+inline Foam::JWLC<Specie> Foam::operator==
+(
+    const JWLC<Specie>& pf1,
+    const JWLC<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return JWLC<Specie>
+    (
+        sp,
+        Y2*pf2.rho0_ - Y1*pf1.rho0_,
+        Y2*pf2.omega_ - Y1*pf1.omega_,
+        Y2*pf2.A_ - Y1*pf1.A_,
+        Y2*pf2.B_ - Y1*pf1.B_,
+        Y2*pf2.C_ - Y1*pf1.C_,
+        Y2*pf2.R1_ - Y1*pf1.R1_,
+        Y2*pf2.R2_ - Y1*pf1.R2_
+    );
+}
+
 
 // ************************************************************************* //

@@ -53,6 +53,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class Tait;
+
+template<class Specie>
+inline Tait<Specie> operator+
+(
+    const Tait<Specie>&,
+    const Tait<Specie>&
+);
+
+template<class Specie>
+inline Tait<Specie> operator*
+(
+    const scalar,
+    const Tait<Specie>&
+);
+
+template<class Specie>
+inline Tait<Specie> operator==
+(
+    const Tait<Specie>&,
+    const Tait<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const Tait<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class Tait Declaration
 \*---------------------------------------------------------------------------*/
@@ -74,9 +106,33 @@ class Tait
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline Tait
+        (
+            const Specie& sp,
+            const scalar a,
+            const scalar b,
+            const scalar gamma
+        );
 
+        //- Construct from dictionary
         Tait(const dictionary& dict);
+
+        //- Construct as named copy
+        inline Tait
+        (
+            const word& name,
+            const Tait&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<Tait> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<Tait> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -86,7 +142,7 @@ public:
         {
             return
                 "Tait<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -173,6 +229,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const Tait&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend Tait operator+ <Specie>
+        (
+            const Tait&,
+            const Tait&
+        );
+
+        friend Tait operator* <Specie>
+        (
+            const scalar s,
+            const Tait&
+        );
+
+        friend Tait operator== <Specie>
+        (
+            const Tait&,
+            const Tait&
+        );
 };
 
 

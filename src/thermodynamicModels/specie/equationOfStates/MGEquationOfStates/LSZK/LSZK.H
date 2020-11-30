@@ -51,6 +51,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class LSZK;
+
+template<class Specie>
+inline LSZK<Specie> operator+
+(
+    const LSZK<Specie>&,
+    const LSZK<Specie>&
+);
+
+template<class Specie>
+inline LSZK<Specie> operator*
+(
+    const scalar,
+    const LSZK<Specie>&
+);
+
+template<class Specie>
+inline LSZK<Specie> operator==
+(
+    const LSZK<Specie>&,
+    const LSZK<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const LSZK<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class LSZK Declaration
 \*---------------------------------------------------------------------------*/
@@ -73,9 +106,34 @@ class LSZK
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline LSZK
+        (
+            const Specie& sp,
+            const scalar a,
+            const scalar b,
+            const scalar gamma
+        );
 
+        //- Construct from dictionary
         LSZK(const dictionary& dict);
+
+        //- Construct as named copy
+        inline LSZK
+        (
+            const word& name,
+            const LSZK&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<LSZK> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<LSZK> New
+        (
+            const dictionary& dict
+        );
+
 
     // Member Functions
 
@@ -84,7 +142,7 @@ public:
         {
             return
                 "LSZK<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -171,6 +229,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const LSZK&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend LSZK operator+ <Specie>
+        (
+            const LSZK&,
+            const LSZK&
+        );
+
+        friend LSZK operator* <Specie>
+        (
+            const scalar s,
+            const LSZK&
+        );
+
+        friend LSZK operator== <Specie>
+        (
+            const LSZK&,
+            const LSZK&
+        );
 };
 
 

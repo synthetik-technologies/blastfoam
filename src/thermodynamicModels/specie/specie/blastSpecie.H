@@ -38,12 +38,23 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "word.H"
+#include "scalar.H"
 #include "dictionary.H"
 
+#include "thermodynamicConstants.H"
 using namespace Foam::constant::thermodynamic;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+class blastSpecie;
+
+inline blastSpecie operator+(const blastSpecie&, const blastSpecie&);
+inline blastSpecie operator*(const scalar, const blastSpecie&);
+inline blastSpecie operator==(const blastSpecie&, const blastSpecie&);
 
 /*---------------------------------------------------------------------------*\
                            Class blastSpecie Declaration
@@ -55,38 +66,80 @@ protected:
 
     // Protected data
 
+        //- Name of specie
+        word specieName_;
+
+        //- Number of moles of this component in the mixture
+        scalar Y_;
+
         //- Molecular weight
-        scalar W_;
+        scalar molWeight_;
 
 
 public:
 
-    //- Return the instantiated type name
-        static word typeName()
-        {
-            return word("specie");
-        }
+    //- Runtime type information
+    ClassName("specie");
 
-    // Constructor
-    blastSpecie(const dictionary& dict)
-    :
-        W_(dict.subDict("specie").lookupType<scalar>("molWeight"))
-    {}
+
+
+    // Constructors
+
+        //- Construct from components without name
+        inline blastSpecie(const scalar Y, const scalar molWeight);
+
+        //- Construct from components with name
+        inline blastSpecie
+        (
+            const word& name,
+            const scalar Y,
+            const scalar molWeight
+        );
+
+        //- Construct as named copy
+        inline blastSpecie(const word& name, const blastSpecie&);
+
+        //- Construct from dictionary
+        blastSpecie(const dictionary& dict);
 
 
     // Member Functions
 
-        //- Return molecular weight
-        scalar W() const
-        {
-            return W_;
-        }
+        // Access
 
-        //- Return molecular weight
-        scalar R() const
-        {
-            return RR/W_;
-        }
+            //- Name
+            inline const word& specieName() const;
+
+            //- Molecular weight [kg/kmol]
+            inline scalar W() const;
+
+            //- No of moles of this species in mixture
+            inline scalar Y() const;
+
+            //- Gas constant [J/(kg K)]
+            inline scalar R() const;
+
+
+    // Member operators
+
+        inline void operator=(const blastSpecie&);
+        inline void operator+=(const blastSpecie&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        inline friend blastSpecie operator+
+        (
+            const blastSpecie&,
+            const blastSpecie&
+        );
+        inline friend blastSpecie operator*(const scalar, const blastSpecie&);
+        inline friend blastSpecie operator==
+        (
+            const blastSpecie&,
+            const blastSpecie&
+        );
 };
 
 
@@ -96,9 +149,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// #ifdef NoRepository
-//     #include "blastSpecie.C"
-// #endif
+#include "blastSpecieI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

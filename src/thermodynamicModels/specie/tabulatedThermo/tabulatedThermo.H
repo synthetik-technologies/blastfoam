@@ -48,6 +48,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EquationOfState> class eConstThermo;
+
+template<class EquationOfState>
+inline eConstThermo<EquationOfState> operator+
+(
+    const eConstThermo<EquationOfState>&,
+    const eConstThermo<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline eConstThermo<EquationOfState> operator*
+(
+    const scalar,
+    const eConstThermo<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline eConstThermo<EquationOfState> operator==
+(
+    const eConstThermo<EquationOfState>&,
+    const eConstThermo<EquationOfState>&
+);
+
+template<class EquationOfState>
+Ostream& operator<<
+(
+    Ostream&,
+    const eConstThermo<EquationOfState>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                         Class tabulatedThermo Declaration
 \*---------------------------------------------------------------------------*/

@@ -26,6 +26,71 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BirchMurnaghan3<Specie>::BirchMurnaghan3
+(
+    const Specie& sp,
+    const scalar rho0,
+    const scalar pRef,
+    const scalar K0,
+    const scalar K0Prime,
+    const scalar Gamma
+)
+:
+    Specie(sp),
+    rho0_(rho0),
+    pRef_(pRef),
+    K0_(K0),
+    K0Prime_(K0Prime),
+    Gamma_(Gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BirchMurnaghan3<Specie>::BirchMurnaghan3
+(
+    const word& name,
+    const BirchMurnaghan3<Specie>& pf
+)
+:
+    Specie(name, pf),
+    rho0_(pf.rho0_),
+    pRef_(pf.pRef_),
+    K0_(pf.K0_),
+    K0Prime_(pf.K0Prime_),
+    Gamma_(pf.Gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BirchMurnaghan3<Specie>>
+Foam::BirchMurnaghan3<Specie>::clone() const
+{
+    return autoPtr<BirchMurnaghan3<Specie>>
+    (
+        new BirchMurnaghan3<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BirchMurnaghan3<Specie>>
+Foam::BirchMurnaghan3<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<BirchMurnaghan3<Specie>>
+    (
+        new BirchMurnaghan3<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -196,6 +261,130 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::S
 ) const
 {
     return 0;
+}
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::BirchMurnaghan3<Specie>::operator+=
+(
+    const BirchMurnaghan3<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        rho0_ = Y1*rho0_ + Y2*pf.rho0_;
+        pRef_ = Y1*pRef_ + Y2*pf.pRef_;
+        K0_ = Y1*K0_ + Y2*pf.K0_;
+        K0Prime_ = Y1*K0Prime_ + Y2*pf.K0Prime_;
+        Gamma_ = Y1*Gamma_ + Y2*pf.Gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::BirchMurnaghan3<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BirchMurnaghan3<Specie> Foam::operator+
+(
+    const BirchMurnaghan3<Specie>& pf1,
+    const BirchMurnaghan3<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return BirchMurnaghan3<Specie>
+        (
+            sp,
+            pf1.rho0_,
+            pf1.pRef_,
+            pf1.K0_,
+            pf1.K0Prime_,
+            pf1.Gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return BirchMurnaghan3<Specie>
+        (
+            sp,
+            Y1*pf1.rho0_ + Y2*pf2.rho0_,
+            Y1*pf1.pRef_ + Y2*pf2.pRef_,
+            Y1*pf1.K0_ + Y2*pf2.K0_,
+            Y1*pf1.K0Prime_ + Y2*pf2.K0Prime_,
+            Y1*pf1.Gamma_ + Y2*pf2.Gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::BirchMurnaghan3<Specie> Foam::operator*
+(
+    const scalar s,
+    const BirchMurnaghan3<Specie>& pf
+)
+{
+    return BirchMurnaghan3<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.rho0_,
+        pf.pRef_,
+        pf.K0_,
+        pf.K0Prime_,
+        pf.Gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::BirchMurnaghan3<Specie> Foam::operator==
+(
+    const BirchMurnaghan3<Specie>& pf1,
+    const BirchMurnaghan3<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return BirchMurnaghan3<Specie>
+    (
+        sp,
+        Y2*pf2.rho0_ - Y1*pf1.rho0_,
+        Y2*pf2.pRef_ - Y1*pf1.pRef_,
+        Y2*pf2.K0_ - Y1*pf1.K0_,
+        Y2*pf2.K0Prime_ - Y1*pf1.K0Prime_,
+        Y2*pf2.Gamma_ - Y1*pf1.Gamma_
+    );
 }
 
 

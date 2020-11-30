@@ -53,6 +53,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class JWLC;
+
+template<class Specie>
+inline JWLC<Specie> operator+
+(
+    const JWLC<Specie>&,
+    const JWLC<Specie>&
+);
+
+template<class Specie>
+inline JWLC<Specie> operator*
+(
+    const scalar,
+    const JWLC<Specie>&
+);
+
+template<class Specie>
+inline JWLC<Specie> operator==
+(
+    const JWLC<Specie>&,
+    const JWLC<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const JWLC<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class JWLC Declaration
 \*---------------------------------------------------------------------------*/
@@ -81,8 +113,39 @@ class JWLC
 
 public:
 
-    // Constructor
-    JWLC(const dictionary& dict);
+    // Constructors
+
+        //- Construct from components
+        inline JWLC
+        (
+            const Specie& sp,
+            const scalar rho0,
+            const scalar omega,
+            const scalar A,
+            const scalar B,
+            const scalar C,
+            const scalar R1,
+            const scalar R2
+        );
+
+        //- Construct from dictionary
+        JWLC(const dictionary& dict);
+
+        //- Construct as named copy
+        inline JWLC
+        (
+            const word& name,
+            const JWLC&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<JWLC> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<JWLC> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -92,7 +155,7 @@ public:
         {
             return
                 "JWLC<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -181,6 +244,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const JWLC&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend JWLC operator+ <Specie>
+        (
+            const JWLC&,
+            const JWLC&
+        );
+
+        friend JWLC operator* <Specie>
+        (
+            const scalar s,
+            const JWLC&
+        );
+
+        friend JWLC operator== <Specie>
+        (
+            const JWLC&,
+            const JWLC&
+        );
 };
 
 

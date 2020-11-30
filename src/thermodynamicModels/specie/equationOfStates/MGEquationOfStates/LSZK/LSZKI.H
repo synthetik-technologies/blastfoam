@@ -26,6 +26,65 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::LSZK<Specie>::LSZK
+(
+    const Specie& sp,
+    const scalar a,
+    const scalar b,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    a_(a),
+    b_(b),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::LSZK<Specie>::LSZK
+(
+    const word& name,
+    const LSZK<Specie>& pf
+)
+:
+    Specie(name, pf),
+    a_(pf.a_),
+    b_(pf.b_),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::LSZK<Specie>>
+Foam::LSZK<Specie>::clone() const
+{
+    return autoPtr<LSZK<Specie>>
+    (
+        new LSZK<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::LSZK<Specie>>
+Foam::LSZK<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<LSZK<Specie>>
+    (
+        new LSZK<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -151,6 +210,120 @@ Foam::scalar Foam::LSZK<Specie>::S
 {
     // check
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
+}
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::LSZK<Specie>::operator+=
+(
+    const LSZK<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        a_ = Y1*a_ + Y2*pf.a_;
+        b_ = Y1*b_ + Y2*pf.b_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::LSZK<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::LSZK<Specie> Foam::operator+
+(
+    const LSZK<Specie>& pf1,
+    const LSZK<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return LSZK<Specie>
+        (
+            sp,
+            pf1.a_,
+            pf1.b_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return LSZK<Specie>
+        (
+            sp,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.b_ + Y2*pf2.b_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::LSZK<Specie> Foam::operator*
+(
+    const scalar s,
+    const LSZK<Specie>& pf
+)
+{
+    return LSZK<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.a_,
+        pf.b_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::LSZK<Specie> Foam::operator==
+(
+    const LSZK<Specie>& pf1,
+    const LSZK<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return LSZK<Specie>
+    (
+        sp,
+        Y2*pf2.a_    - Y1*pf1.a_,
+        Y2*pf2.b_  - Y1*pf1.b_,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
 }
 
 

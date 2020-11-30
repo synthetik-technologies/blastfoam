@@ -53,6 +53,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class stiffenedGas;
+
+template<class Specie>
+inline stiffenedGas<Specie> operator+
+(
+    const stiffenedGas<Specie>&,
+    const stiffenedGas<Specie>&
+);
+
+template<class Specie>
+inline stiffenedGas<Specie> operator*
+(
+    const scalar,
+    const stiffenedGas<Specie>&
+);
+
+template<class Specie>
+inline stiffenedGas<Specie> operator==
+(
+    const stiffenedGas<Specie>&,
+    const stiffenedGas<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const stiffenedGas<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class stiffenedGas Declaration
 \*---------------------------------------------------------------------------*/
@@ -74,8 +107,32 @@ class stiffenedGas
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline stiffenedGas
+        (
+            const Specie& sp,
+            const scalar a,
+            const scalar gamma
+        );
+
+        //- Construct from dictionary
         stiffenedGas(const dictionary& dict);
+
+        //- Construct as named copy
+        inline stiffenedGas
+        (
+            const word& name,
+            const stiffenedGas&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<stiffenedGas> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<stiffenedGas> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -85,7 +142,7 @@ public:
         {
             return
                 "stiffenedGas<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -172,6 +229,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const stiffenedGas&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend stiffenedGas operator+ <Specie>
+        (
+            const stiffenedGas&,
+            const stiffenedGas&
+        );
+
+        friend stiffenedGas operator* <Specie>
+        (
+            const scalar s,
+            const stiffenedGas&
+        );
+
+        friend stiffenedGas operator== <Specie>
+        (
+            const stiffenedGas&,
+            const stiffenedGas&
+        );
 };
 
 

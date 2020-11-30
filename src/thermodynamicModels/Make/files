@@ -1,3 +1,6 @@
+specie/specie/blastSpecie.C
+specie/specie/rBlastSpecie.C
+
 basic/basicThermo/basicThermoModel.C
 
 basic/fluidThermo/fluidThermoModel.C
@@ -7,7 +10,7 @@ basic/solidThermo/solidThermoModel.C
 basic/solidThermo/newSolidThermoModel.C
 
 derived/basicFluidThermo/basicFluidThermos.C
-derived/detonatingFluidThermo/detonatingFluidThermos.C
+/*derived/detonatingFluidThermo/detonatingFluidThermos.C*/
 
 derived/basicSolidThermo/basicSolidThermoModels.C
 derived/detonatingSolidThermo/detonatingSolidThermos.C

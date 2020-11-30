@@ -26,6 +26,59 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::idealGas<Specie>::idealGas
+(
+    const Specie& sp,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::idealGas<Specie>::idealGas
+(
+    const word& name,
+    const idealGas<Specie>& pf
+)
+:
+    Specie(name, pf),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::idealGas<Specie>>
+Foam::idealGas<Specie>::clone() const
+{
+    return autoPtr<idealGas<Specie>>
+    (
+        new idealGas<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::idealGas<Specie>>
+Foam::idealGas<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<idealGas<Specie>>
+    (
+        new idealGas<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
@@ -152,5 +205,110 @@ Foam::scalar Foam::idealGas<Specie>::S
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::idealGas<Specie>::operator+=
+(
+    const idealGas<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::idealGas<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::idealGas<Specie> Foam::operator+
+(
+    const idealGas<Specie>& pf1,
+    const idealGas<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return idealGas<Specie>
+        (
+            sp,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return idealGas<Specie>
+        (
+            sp,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::idealGas<Specie> Foam::operator*
+(
+    const scalar s,
+    const idealGas<Specie>& pf
+)
+{
+    return idealGas<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::idealGas<Specie> Foam::operator==
+(
+    const idealGas<Specie>& pf1,
+    const idealGas<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return idealGas<Specie>
+    (
+        sp,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //

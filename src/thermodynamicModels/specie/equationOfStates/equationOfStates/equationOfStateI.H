@@ -26,6 +26,55 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::equationOfState<EoS>::equationOfState
+(
+    const EoS& sp
+)
+:
+    EoS(sp)
+{}
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::equationOfState<EoS>::equationOfState
+(
+    const word& name,
+    const equationOfState<EoS>& pf
+)
+:
+    EoS(name, pf)
+{}
+
+
+template<class EoS>
+inline Foam::autoPtr<Foam::equationOfState<EoS>>
+Foam::equationOfState<EoS>::clone() const
+{
+    return autoPtr<equationOfState<EoS>>
+    (
+        new equationOfState<EoS>(*this)
+    );
+}
+
+
+template<class EoS>
+inline Foam::autoPtr<Foam::equationOfState<EoS>>
+Foam::equationOfState<EoS>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<equationOfState<EoS>>
+    (
+        new equationOfState<EoS>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class EoS>
@@ -163,5 +212,74 @@ Foam::scalar Foam::equationOfState<EoS>::CpMCv
 {
     return EoS::CpMCv(rho, T);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EoS>
+inline void Foam::equationOfState<EoS>::operator+=
+(
+    const equationOfState<EoS>& pf
+)
+{
+    EoS::operator+=(pf);
+}
+
+
+template<class EoS>
+inline void Foam::equationOfState<EoS>::operator*=(const scalar s)
+{
+    EoS::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class EoS>
+inline Foam::equationOfState<EoS> Foam::operator+
+(
+    const equationOfState<EoS>& pf1,
+    const equationOfState<EoS>& pf2
+)
+{
+    EoS eos
+    (
+        static_cast<const EoS&>(pf1)
+      + static_cast<const EoS&>(pf2)
+    );
+    return equationOfState<EoS>(eos);
+}
+
+
+template<class EoS>
+inline Foam::equationOfState<EoS> Foam::operator*
+(
+    const scalar s,
+    const equationOfState<EoS>& pf
+)
+{
+    return equationOfState<EoS>
+    (
+        s*static_cast<const EoS&>(pf)
+    );
+}
+
+
+template<class EoS>
+inline Foam::equationOfState<EoS> Foam::operator==
+(
+    const equationOfState<EoS>& pf1,
+    const equationOfState<EoS>& pf2
+)
+{
+    EoS eos
+    (
+        static_cast<const EoS&>(pf1)
+     == static_cast<const EoS&>(pf2)
+    );
+
+    return equationOfState<EoS>(eos);
+}
+
 
 // ************************************************************************* //

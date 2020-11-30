@@ -24,10 +24,9 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::blastSpecie2
+    Foam::rBlastSpecie
 
 Description
-    Copy of specie used to remove templating from the same type
 
 SourceFiles
     rBlastSpecie.C
@@ -39,12 +38,23 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "word.H"
+#include "scalar.H"
 #include "dictionary.H"
 
+#include "thermodynamicConstants.H"
 using namespace Foam::constant::thermodynamic;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+class rBlastSpecie;
+
+inline rBlastSpecie operator+(const rBlastSpecie&, const rBlastSpecie&);
+inline rBlastSpecie operator*(const scalar, const rBlastSpecie&);
+inline rBlastSpecie operator==(const rBlastSpecie&, const rBlastSpecie&);
 
 /*---------------------------------------------------------------------------*\
                            Class rBlastSpecie Declaration
@@ -56,38 +66,80 @@ protected:
 
     // Protected data
 
+        //- Name of specie
+        word specieName_;
+
+        //- Number of moles of this component in the mixture
+        scalar Y_;
+
         //- Molecular weight
-        scalar W_;
+        scalar molWeight_;
 
 
 public:
 
-    //- Return the instantiated type name
-        static word typeName()
-        {
-            return word("specie");
-        }
+    //- Runtime type information
+    ClassName("specie");
 
-    // Constructor
-    rBlastSpecie(const dictionary& dict)
-    :
-        W_(dict.subDict("specie").lookupType<scalar>("molWeight"))
-    {}
+
+
+    // Constructors
+
+        //- Construct from components without name
+        inline rBlastSpecie(const scalar Y, const scalar molWeight);
+
+        //- Construct from components with name
+        inline rBlastSpecie
+        (
+            const word& name,
+            const scalar Y,
+            const scalar molWeight
+        );
+
+        //- Construct as named copy
+        inline rBlastSpecie(const word& name, const rBlastSpecie&);
+
+        //- Construct from dictionary
+        rBlastSpecie(const dictionary& dict);
 
 
     // Member Functions
 
-        //- Return molecular weight
-        scalar W() const
-        {
-            return W_;
-        }
+        // Access
 
-        //- Return molecular weight
-        scalar R() const
-        {
-            return RR/W_;
-        }
+            //- Name
+            inline const word& specieName() const;
+
+            //- Molecular weight [kg/kmol]
+            inline scalar W() const;
+
+            //- No of moles of this species in mixture
+            inline scalar Y() const;
+
+            //- Gas constant [J/(kg K)]
+            inline scalar R() const;
+
+
+    // Member operators
+
+        inline void operator=(const rBlastSpecie&);
+        inline void operator+=(const rBlastSpecie&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        inline friend rBlastSpecie operator+
+        (
+            const rBlastSpecie&,
+            const rBlastSpecie&
+        );
+        inline friend rBlastSpecie operator*(const scalar, const rBlastSpecie&);
+        inline friend rBlastSpecie operator==
+        (
+            const rBlastSpecie&,
+            const rBlastSpecie&
+        );
 };
 
 
@@ -97,9 +149,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// #ifdef NoRepository
-//     #include "rBlastSpecie.C"
-// #endif
+#include "rBlastSpecieI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

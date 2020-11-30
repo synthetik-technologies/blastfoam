@@ -48,6 +48,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class tabulatedThermoEOS;
+
+template<class Specie>
+inline tabulatedThermoEOS<Specie> operator+
+(
+    const tabulatedThermoEOS<Specie>&,
+    const tabulatedThermoEOS<Specie>&
+);
+
+template<class Specie>
+inline tabulatedThermoEOS<Specie> operator*
+(
+    const scalar,
+    const tabulatedThermoEOS<Specie>&
+);
+
+template<class Specie>
+inline tabulatedThermoEOS<Specie> operator==
+(
+    const tabulatedThermoEOS<Specie>&,
+    const tabulatedThermoEOS<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const tabulatedThermoEOS<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                     Class tabulatedThermoEOS Declaration
 \*---------------------------------------------------------------------------*/
@@ -68,17 +100,40 @@ class tabulatedThermoEOS
 
 public:
 
+    //- Construct from components
+        inline tabulatedThermoEOS
+        (
+            const Specie& sp
+        );
+
+        //- Construct from dictionary
+        tabulatedThermoEOS(const dictionary& dict);
+
+        //- Construct as named copy
+        inline tabulatedThermoEOS
+        (
+            const word& name,
+            const tabulatedThermoEOS&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<tabulatedThermoEOS> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<tabulatedThermoEOS> New
+        (
+            const dictionary& dict
+        );
+
+
     //- Return the instantiated type name
         static word typeName()
         {
             return
                 "tabulated<tabulated<"
-              + word(Specie::typeName()) + ">>";
+              + word(Specie::typeName_()) + ">>";
         }
 
-    // Constructors
-
-        tabulatedThermoEOS(const dictionary& dict);
 
     // Member Functions
 
@@ -234,6 +289,32 @@ public:
                 const scalar& e,
                 const scalar& T
             ) const;
+
+        // Member operators
+
+        inline void operator+=(const tabulatedThermoEOS&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend tabulatedThermoEOS operator+ <Specie>
+        (
+            const tabulatedThermoEOS&,
+            const tabulatedThermoEOS&
+        );
+
+        friend tabulatedThermoEOS operator* <Specie>
+        (
+            const scalar s,
+            const tabulatedThermoEOS&
+        );
+
+        friend tabulatedThermoEOS operator== <Specie>
+        (
+            const tabulatedThermoEOS&,
+            const tabulatedThermoEOS&
+        );
 };
 
 

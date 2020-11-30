@@ -26,6 +26,74 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BKW<Specie>::BKW
+(
+    const Specie& sp,
+    const scalar k,
+    const scalar kappa,
+    const scalar Theta,
+    const scalar a,
+    const scalar beta,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    k_(k),
+    kappa_(kappa),
+    Theta_(Theta),
+    a_(a),
+    beta_(beta),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BKW<Specie>::BKW
+(
+    const word& name,
+    const BKW<Specie>& pf
+)
+:
+    Specie(name, pf),
+    k_(pf.k_),
+    kappa_(pf.kappa_),
+    Theta_(pf.Theta_),
+    a_(pf.a_),
+    beta_(pf.beta_),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BKW<Specie>>
+Foam::BKW<Specie>::clone() const
+{
+    return autoPtr<BKW<Specie>>
+    (
+        new BKW<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::BKW<Specie>>
+Foam::BKW<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<BKW<Specie>>
+    (
+        new BKW<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -181,5 +249,135 @@ Foam::scalar Foam::BKW<Specie>::S
 {
     return 0.0;
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::BKW<Specie>::operator+=
+(
+    const BKW<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        k_ = Y1*k_ + Y2*pf.k_;
+        kappa_ = Y1*kappa_ + Y2*pf.kappa_;
+        Theta_ = Y1*Theta_ + Y2*pf.Theta_;
+        a_ = Y1*a_ + Y2*pf.a_;
+        beta_ = Y1*beta_ + Y2*pf.beta_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::BKW<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::BKW<Specie> Foam::operator+
+(
+    const BKW<Specie>& pf1,
+    const BKW<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return BKW<Specie>
+        (
+            sp,
+            pf1.k_,
+            pf1.kappa,
+            pf1.Theta_,
+            pf1.a_,
+            pf1.beta_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return BKW<Specie>
+        (
+            sp,
+            Y1*pf1.k_ + Y2*pf2.k_,
+            Y1*pf1.kappa_ + Y2*pf2.kappa,
+            Y1*pf1.Theta_ + Y2*pf2.Theta_,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.beta_ + Y2*pf2.beta_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::BKW<Specie> Foam::operator*
+(
+    const scalar s,
+    const BKW<Specie>& pf
+)
+{
+    return BKW<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.k_,
+        pf.kappa,
+        pf.Theta_,
+        pf.a_,
+        pf.beta_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::BKW<Specie> Foam::operator==
+(
+    const BKW<Specie>& pf1,
+    const BKW<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return BKW<Specie>
+    (
+        sp,
+        Y2*pf2.k_ - Y1*pf1.k_,
+        Y2*pf2.kappa_ - Y1*pf1.kappa,
+        Y2*pf2.Theta_ - Y1*pf1.Theta_,
+        Y2*pf2.a_ - Y1*pf1.a_,
+        Y2*pf2.beta_ - Y1*pf1.beta_,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //

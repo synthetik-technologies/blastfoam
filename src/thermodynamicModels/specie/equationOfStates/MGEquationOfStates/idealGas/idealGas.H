@@ -43,6 +43,40 @@ SourceFiles
 
 namespace Foam
 {
+
+// Forward declaration of friend functions and operators
+
+template<class Specie> class idealGas;
+
+template<class Specie>
+inline idealGas<Specie> operator+
+(
+    const idealGas<Specie>&,
+    const idealGas<Specie>&
+);
+
+template<class Specie>
+inline idealGas<Specie> operator*
+(
+    const scalar,
+    const idealGas<Specie>&
+);
+
+template<class Specie>
+inline idealGas<Specie> operator==
+(
+    const idealGas<Specie>&,
+    const idealGas<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const idealGas<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class idealGas Declaration
 \*---------------------------------------------------------------------------*/
@@ -60,10 +94,31 @@ class idealGas
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline idealGas
+        (
+            const Specie& sp,
+            const scalar gamma
+        );
 
-        //- Single phase constructor
+        //- Construct from dictionary
         idealGas(const dictionary& dict);
+
+        //- Construct as named copy
+        inline idealGas
+        (
+            const word& name,
+            const idealGas&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<idealGas> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<idealGas> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -73,7 +128,7 @@ public:
         {
             return
                 "idealGas<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -160,6 +215,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const idealGas&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend idealGas operator+ <Specie>
+        (
+            const idealGas&,
+            const idealGas&
+        );
+
+        friend idealGas operator* <Specie>
+        (
+            const scalar s,
+            const idealGas&
+        );
+
+        friend idealGas operator== <Specie>
+        (
+            const idealGas&,
+            const idealGas&
+        );
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

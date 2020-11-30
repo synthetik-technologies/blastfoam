@@ -44,6 +44,32 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Thermo> class constTransport;
+
+template<class Thermo>
+inline constTransport<Thermo> operator+
+(
+    const constTransport<Thermo>&,
+    const constTransport<Thermo>&
+);
+
+template<class Thermo>
+inline constTransport<Thermo> operator*
+(
+    const scalar,
+    const constTransport<Thermo>&
+);
+
+template<class Thermo>
+Ostream& operator<<
+(
+    Ostream&,
+    const constTransport<Thermo>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class const Declaration
 \*---------------------------------------------------------------------------*/
@@ -62,8 +88,30 @@ class constTransport
         scalar Pr_;
 
 
+        //- Construct from components
+        inline constTransport
+        (
+            const Thermo& t,
+            const scalar mu,
+            const scalar Pr
+        );
+
 
 public:
+
+    // Constructors
+
+        //- Construct as named copy
+        inline constTransport(const word&, const constTransport&);
+
+        //- Construct from dictionary
+        constTransport(const dictionary& dict);
+
+        //- Construct and return a clone
+        inline autoPtr<constTransport> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<constTransport> New(const dictionary& dict);
 
     //- Return the instantiated type name
         static word typeName()
@@ -73,8 +121,6 @@ public:
               + word(Thermo::typeName()) + '>';
         }
 
-    // Constructor
-    constTransport(const dictionary& dict);
 
     // Member Functions
 
@@ -84,10 +130,7 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return mu_;
-        }
+        ) const;
 
         //- Thermal conductivity [W/mK]
         scalar kappa
@@ -95,10 +138,7 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Thermo::Cp(rho, e, T)*mu(rho, e, T)/Pr_;
-        }
+        ) const;
 
         //- Thermal diffusivity of enthalpy [kg/ms]
         scalar alphah
@@ -106,10 +146,28 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return mu(rho, e, T)/Pr_;
-        }
+        ) const;
+
+
+    // Member Operators
+
+        inline void operator+=(const constTransport&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend constTransport operator+ <Thermo>
+        (
+            const constTransport&,
+            const constTransport&
+        );
+
+        friend constTransport operator* <Thermo>
+        (
+            const scalar,
+            const constTransport&
+        );
 };
 
 
@@ -118,6 +176,8 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "constTransportI.H"
 
 #ifdef NoRepository
     #include "constTransport.C"

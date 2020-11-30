@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "janafThermo.H"
+#include "janaf.H"
 #include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -42,9 +42,12 @@ Foam::janaf<EquationOfState>::janaf(const dictionary& dict)
     lowCpCoeffs_(dict.subDict("thermodynamics").lookup("lowCpCoeffs"))
 {
     // Convert coefficients to mass-basis
-    for (label coefLabel=0; coefLabel<nCoeffs_; coefLabel++)
+    forAll(highCpCoeffs_, coefLabel)
     {
         highCpCoeffs_[coefLabel] *= this->R();
+    }
+    forAll(lowCpCoeffs_, coefLabel)
+    {
         lowCpCoeffs_[coefLabel] *= this->R();
     }
 

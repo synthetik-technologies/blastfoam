@@ -28,6 +28,65 @@ License
 
 #include "constants.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tait<Specie>::Tait
+(
+    const Specie& sp,
+    const scalar a,
+    const scalar b,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    a_(a),
+    b_(b),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tait<Specie>::Tait
+(
+    const word& name,
+    const Tait<Specie>& pf
+)
+:
+    Specie(name, pf),
+    a_(pf.a_),
+    b_(pf.b_),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::Tait<Specie>>
+Foam::Tait<Specie>::clone() const
+{
+    return autoPtr<Tait<Specie>>
+    (
+        new Tait<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::Tait<Specie>>
+Foam::Tait<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<Tait<Specie>>
+    (
+        new Tait<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -154,6 +213,121 @@ Foam::scalar Foam::Tait<Specie>::S
     // Check
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::Tait<Specie>::operator+=
+(
+    const Tait<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        a_ = Y1*a_ + Y2*pf.a_;
+        b_ = Y1*b_ + Y2*pf.b_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::Tait<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tait<Specie> Foam::operator+
+(
+    const Tait<Specie>& pf1,
+    const Tait<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return Tait<Specie>
+        (
+            sp,
+            pf1.a_,
+            pf1.b_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return Tait<Specie>
+        (
+            sp,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.b_ + Y2*pf2.b_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::Tait<Specie> Foam::operator*
+(
+    const scalar s,
+    const Tait<Specie>& pf
+)
+{
+    return Tait<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.a_,
+        pf.b_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::Tait<Specie> Foam::operator==
+(
+    const Tait<Specie>& pf1,
+    const Tait<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return Tait<Specie>
+    (
+        sp,
+        Y2*pf2.a_    - Y1*pf1.a_,
+        Y2*pf2.b_  - Y1*pf1.b_,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //
 

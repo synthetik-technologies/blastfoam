@@ -46,6 +46,28 @@ SourceFiles
 namespace Foam
 {
 
+template<class Specie> class rhoConst;
+
+template<class Specie>
+inline rhoConst<Specie> operator+
+(
+    const rhoConst<Specie>&,
+    const rhoConst<Specie>&
+);
+
+template<class Specie>
+inline rhoConst<Specie> operator*
+(
+    const scalar,
+    const rhoConst<Specie>&
+);
+
+template<class Specie>
+inline rhoConst<Specie> operator==
+(
+    const rhoConst<Specie>&,
+    const rhoConst<Specie>&
+);
 /*---------------------------------------------------------------------------*\
                            Class rhoConst Declaration
 \*---------------------------------------------------------------------------*/
@@ -65,8 +87,19 @@ class rhoConst
 
 public:
 
-    // Constructor
-    rhoConst(const dictionary& dict);
+    // Constructors
+
+        //- Construct from components
+        inline rhoConst(const Specie& sp, const scalar rho, const scalar pRef);
+
+        //- Construct from dictionary
+        rhoConst(const dictionary& dict);
+
+        //- Construct as named copy
+        inline rhoConst(const word& name, const rhoConst&);
+
+        //- Construct and return a clone
+        inline autoPtr<rhoConst> clone() const;
 
 
     // Member Functions
@@ -76,7 +109,7 @@ public:
         {
             return
                 "rhoConst<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -170,6 +203,32 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+        // Member operators
+
+            inline void operator+=(const rhoConst&);
+            inline void operator*=(const scalar);
+
+        // Friend operators
+
+        friend rhoConst operator+ <Specie>
+        (
+            const rhoConst&,
+            const rhoConst&
+        );
+
+        friend rhoConst operator* <Specie>
+        (
+            const scalar s,
+            const rhoConst&
+        );
+
+        friend rhoConst operator== <Specie>
+        (
+            const rhoConst&,
+            const rhoConst&
+        );
 };
 
 

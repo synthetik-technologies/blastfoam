@@ -50,6 +50,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class BirchMurnaghan3;
+
+template<class Specie>
+inline BirchMurnaghan3<Specie> operator+
+(
+    const BirchMurnaghan3<Specie>&,
+    const BirchMurnaghan3<Specie>&
+);
+
+template<class Specie>
+inline BirchMurnaghan3<Specie> operator*
+(
+    const scalar,
+    const BirchMurnaghan3<Specie>&
+);
+
+template<class Specie>
+inline BirchMurnaghan3<Specie> operator==
+(
+    const BirchMurnaghan3<Specie>&,
+    const BirchMurnaghan3<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const BirchMurnaghan3<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class BirchMurnaghan Declaration
 \*---------------------------------------------------------------------------*/
@@ -81,8 +113,35 @@ public:
 
     // Constructors
 
-        //- Multiphase constuctor
+        //- Construct from components
+        inline BirchMurnaghan3
+        (
+            const Specie& sp,
+            const scalar rho0,
+            const scalar pRef,
+            const scalar K0,
+            const scalar K0Prime,
+            const scalar Gamma
+        );
+
+        //- Construct from dictionary
         BirchMurnaghan3(const dictionary& dict);
+
+        //- Construct as named copy
+        inline BirchMurnaghan3
+        (
+            const word& name,
+            const BirchMurnaghan3&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<BirchMurnaghan3> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<BirchMurnaghan3> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -92,7 +151,7 @@ public:
         {
             return
                 "BirchMurnaghan3<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -181,6 +240,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const BirchMurnaghan3&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend BirchMurnaghan3 operator+ <Specie>
+        (
+            const BirchMurnaghan3&,
+            const BirchMurnaghan3&
+        );
+
+        friend BirchMurnaghan3 operator* <Specie>
+        (
+            const scalar s,
+            const BirchMurnaghan3&
+        );
+
+        friend BirchMurnaghan3 operator== <Specie>
+        (
+            const BirchMurnaghan3&,
+            const BirchMurnaghan3&
+        );
 };
 
 

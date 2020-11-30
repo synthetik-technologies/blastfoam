@@ -54,6 +54,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class BWR;
+
+template<class Specie>
+inline BWR<Specie> operator+
+(
+    const BWR<Specie>&,
+    const BWR<Specie>&
+);
+
+template<class Specie>
+inline BWR<Specie> operator*
+(
+    const scalar,
+    const BWR<Specie>&
+);
+
+template<class Specie>
+inline BWR<Specie> operator==
+(
+    const BWR<Specie>&,
+    const BWR<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const BWR<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class BWR Declaration
 \*---------------------------------------------------------------------------*/
@@ -79,8 +111,41 @@ class BWR
 
 public:
 
-    // Constructor
-    BWR(const dictionary& dict);
+    // Constructors
+
+        //- Construct from components
+        inline BWR
+        (
+            const Specie& sp,
+            const scalar A0,
+            const scalar B0,
+            const scalar C0,
+            const scalar a,
+            const scalar b,
+            const scalar c,
+            const scalar alpha,
+            const scalar rhoc,
+            const scalar gamma
+        );
+
+        //- Construct from dictionary
+        BWR(const dictionary& dict);
+
+        //- Construct as named copy
+        inline BWR
+        (
+            const word& name,
+            const BWR&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<BWR> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<BWR> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -90,7 +155,7 @@ public:
         {
             return
                 "BWR<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -179,6 +244,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const BWR&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend BWR operator+ <Specie>
+        (
+            const BWR&,
+            const BWR&
+        );
+
+        friend BWR operator* <Specie>
+        (
+            const scalar s,
+            const BWR&
+        );
+
+        friend BWR operator== <Specie>
+        (
+            const BWR&,
+            const BWR&
+        );
 };
 
 

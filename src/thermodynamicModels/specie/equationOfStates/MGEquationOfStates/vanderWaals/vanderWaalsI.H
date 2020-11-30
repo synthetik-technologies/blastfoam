@@ -28,6 +28,68 @@ License
 
 #include "constants.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::vanderWaals<Specie>::vanderWaals
+(
+    const Specie& sp,
+    const scalar a,
+    const scalar b,
+    const scalar c,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    a_(a),
+    b_(b),
+    c_(c),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::vanderWaals<Specie>::vanderWaals
+(
+    const word& name,
+    const vanderWaals<Specie>& pf
+)
+:
+    Specie(name, pf),
+    a_(pf.a_),
+    b_(pf.b_),
+    c_(pf.c_),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::vanderWaals<Specie>>
+Foam::vanderWaals<Specie>::clone() const
+{
+    return autoPtr<vanderWaals<Specie>>
+    (
+        new vanderWaals<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::vanderWaals<Specie>>
+Foam::vanderWaals<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<vanderWaals<Specie>>
+    (
+        new vanderWaals<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -191,5 +253,124 @@ Foam::scalar Foam::vanderWaals<Specie>::S
     // Check
     return 0;
 }
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::vanderWaals<Specie>::operator+=
+(
+    const vanderWaals<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        a_ = Y1*a_ + Y2*pf.a_;
+        b_ = Y1*b_ + Y2*pf.b_;
+        c_ = Y1*c_ + Y2*pf.c_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::vanderWaals<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::vanderWaals<Specie> Foam::operator+
+(
+    const vanderWaals<Specie>& pf1,
+    const vanderWaals<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return vanderWaals<Specie>
+        (
+            sp,
+            pf1.a_,
+            pf1.b_,
+            pf1.c_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return vanderWaals<Specie>
+        (
+            sp,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.b_ + Y2*pf2.b_,
+            Y1*pf1.c_ + Y2*pf2.c_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::vanderWaals<Specie> Foam::operator*
+(
+    const scalar s,
+    const vanderWaals<Specie>& pf
+)
+{
+    return vanderWaals<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.a_,
+        pf.b_,
+        pf.c_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::vanderWaals<Specie> Foam::operator==
+(
+    const vanderWaals<Specie>& pf1,
+    const vanderWaals<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return vanderWaals<Specie>
+    (
+        sp,
+        Y2*pf2.a_    - Y1*pf1.a_,
+        Y2*pf2.b_  - Y1*pf1.b_,
+        Y2*pf2.c_ - Y1*pf1.c_,
+        Y2*pf2.gamma_     - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //

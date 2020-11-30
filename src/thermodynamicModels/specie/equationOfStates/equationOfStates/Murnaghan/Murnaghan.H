@@ -50,6 +50,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class Murnaghan;
+
+template<class Specie>
+inline Murnaghan<Specie> operator+
+(
+    const Murnaghan<Specie>&,
+    const Murnaghan<Specie>&
+);
+
+template<class Specie>
+inline Murnaghan<Specie> operator*
+(
+    const scalar,
+    const Murnaghan<Specie>&
+);
+
+template<class Specie>
+inline Murnaghan<Specie> operator==
+(
+    const Murnaghan<Specie>&,
+    const Murnaghan<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const Murnaghan<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class Murnaghan Declaration
 \*---------------------------------------------------------------------------*/
@@ -82,8 +114,37 @@ public:
 
     // Constructors
 
-        //- Multiphase constuctor
+        //- Construct from components
+        inline Murnaghan
+        (
+            const Specie& sp,
+            const scalar rho0,
+            const scalar pRef,
+            const scalar K0,
+            const scalar kappa,
+            const scalar K0Prime,
+            const scalar n,
+            const scalar Gamma
+        );
+
+        //- Construct from dictionary
         Murnaghan(const dictionary& dict);
+
+        //- Construct as named copy
+        inline Murnaghan
+        (
+            const word& name,
+            const Murnaghan&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<Murnaghan> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<Murnaghan> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -93,7 +154,7 @@ public:
         {
             return
                 "Murnaghan<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -182,6 +243,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const Murnaghan&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend Murnaghan operator+ <Specie>
+        (
+            const Murnaghan&,
+            const Murnaghan&
+        );
+
+        friend Murnaghan operator* <Specie>
+        (
+            const scalar s,
+            const Murnaghan&
+        );
+
+        friend Murnaghan operator== <Specie>
+        (
+            const Murnaghan&,
+            const Murnaghan&
+        );
 };
 
 

@@ -28,6 +28,62 @@ License
 
 #include "stiffenedGas.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::stiffenedGas<Specie>::stiffenedGas
+(
+    const Specie& sp,
+    const scalar a,
+    const scalar gamma
+)
+:
+    Specie(sp),
+    a_(a),
+    gamma_(gamma)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::stiffenedGas<Specie>::stiffenedGas
+(
+    const word& name,
+    const stiffenedGas<Specie>& pf
+)
+:
+    Specie(name, pf),
+    a_(pf.a_),
+    gamma_(pf.gamma_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::stiffenedGas<Specie>>
+Foam::stiffenedGas<Specie>::clone() const
+{
+    return autoPtr<stiffenedGas<Specie>>
+    (
+        new stiffenedGas<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::stiffenedGas<Specie>>
+Foam::stiffenedGas<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<stiffenedGas<Specie>>
+    (
+        new stiffenedGas<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -154,5 +210,115 @@ Foam::scalar Foam::stiffenedGas<Specie>::S
     scalar rho0((Pstd - gamma_*a_)/this->R()*Tstd);
     return this->R()*(log(rho0) - log(rho));
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::stiffenedGas<Specie>::operator+=
+(
+    const stiffenedGas<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        a_ = Y1*a_ + Y2*pf.a_;
+        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::stiffenedGas<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::stiffenedGas<Specie> Foam::operator+
+(
+    const stiffenedGas<Specie>& pf1,
+    const stiffenedGas<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return stiffenedGas<Specie>
+        (
+            sp,
+            pf1.a_,
+            pf1.gamma_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return stiffenedGas<Specie>
+        (
+            sp,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.gamma_ + Y2*pf2.gamma_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::stiffenedGas<Specie> Foam::operator*
+(
+    const scalar s,
+    const stiffenedGas<Specie>& pf
+)
+{
+    return stiffenedGas<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.a_,
+        pf.gamma_
+    );
+}
+
+
+template<class Specie>
+inline Foam::stiffenedGas<Specie> Foam::operator==
+(
+    const stiffenedGas<Specie>& pf1,
+    const stiffenedGas<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return stiffenedGas<Specie>
+    (
+        sp,
+        Y2*pf2.a_    - Y1*pf1.a_,
+        Y2*pf2.gamma_ - Y1*pf1.gamma_
+    );
+}
+
 
 // ************************************************************************* //

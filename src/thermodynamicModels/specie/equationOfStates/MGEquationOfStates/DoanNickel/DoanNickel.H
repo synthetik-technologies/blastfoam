@@ -54,6 +54,39 @@ SourceFiles
 namespace Foam
 {
 
+    // Forward declaration of friend functions and operators
+
+template<class Specie> class DoanNickel;
+
+template<class Specie>
+inline DoanNickel<Specie> operator+
+(
+    const DoanNickel<Specie>&,
+    const DoanNickel<Specie>&
+);
+
+template<class Specie>
+inline DoanNickel<Specie> operator*
+(
+    const scalar,
+    const DoanNickel<Specie>&
+);
+
+template<class Specie>
+inline DoanNickel<Specie> operator==
+(
+    const DoanNickel<Specie>&,
+    const DoanNickel<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const DoanNickel<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class DoanNickel Declaration
 \*---------------------------------------------------------------------------*/
@@ -121,10 +154,30 @@ class DoanNickel
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline DoanNickel
+        (
+            const Specie& sp
+        );
 
-        //- Single phase constructor
+        //- Construct from dictionary
         DoanNickel(const dictionary& dict);
+
+        //- Construct as named copy
+        inline DoanNickel
+        (
+            const word& name,
+            const DoanNickel&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<DoanNickel> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<DoanNickel> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -134,7 +187,7 @@ public:
         {
             return
                 "DoanNickel<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -221,6 +274,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const DoanNickel&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend DoanNickel operator+ <Specie>
+        (
+            const DoanNickel&,
+            const DoanNickel&
+        );
+
+        friend DoanNickel operator* <Specie>
+        (
+            const scalar s,
+            const DoanNickel&
+        );
+
+        friend DoanNickel operator== <Specie>
+        (
+            const DoanNickel&,
+            const DoanNickel&
+        );
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

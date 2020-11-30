@@ -46,6 +46,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EquationOfState> class janaf;
+
+template<class EquationOfState>
+inline janaf<EquationOfState> operator+
+(
+    const janaf<EquationOfState>&,
+    const janaf<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline janaf<EquationOfState> operator*
+(
+    const scalar,
+    const janaf<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline janaf<EquationOfState> operator==
+(
+    const janaf<EquationOfState>&,
+    const janaf<EquationOfState>&
+);
+
+template<class EquationOfState>
+Ostream& operator<<
+(
+    Ostream&,
+    const janaf<EquationOfState>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class janaf Declaration
 \*---------------------------------------------------------------------------*/
@@ -59,8 +92,7 @@ public:
 
     // Public data
 
-        static const int nCoeffs_ = 7;
-        typedef FixedList<scalar, nCoeffs_> coeffArray;
+        typedef List<scalar> coeffArray;
 
 
 private:
@@ -77,21 +109,32 @@ private:
     // Private Member Functions
 
         //- Return the coefficients corresponding to the given temperature
-        const coeffArray& coeffs(const scalar& T) const
-        {
-            if (T < Tcommon_)
-            {
-                return lowCpCoeffs_;
-            }
-            else
-            {
-                return highCpCoeffs_;
-            }
-        }
+        const coeffArray& coeffs(const scalar& T) const;
 
 
 
 public:
+
+    // Constructors
+
+        //- Construct from components
+        inline janaf
+        (
+            const EquationOfState& st,
+            const scalar Tlow,
+            const scalar Thigh,
+            const scalar Tcommon,
+            const coeffArray& highCpCoeffs,
+            const coeffArray& lowCpCoeffs,
+            const bool convertCoeffs = false
+        );
+
+        //- Construct from dictionary
+        janaf(const dictionary& dict);
+
+        //- Construct as a named copy
+        inline janaf(const word&, const janaf&);
+
 
     //- Return the instantiated type name
         static word typeName()
@@ -101,92 +144,90 @@ public:
               + word(EquationOfState::typeName()) + '>';
         }
 
-    // Constructor
-    janaf(const dictionary& dict);
+
+    // Access
+
+            //- Return const access to the low temperature limit
+            inline scalar Tlow() const;
+
+            //- Return const access to the high temperature limit
+            inline scalar Thigh() const;
+
+            //- Return const access to the common temperature
+            inline scalar Tcommon() const;
+
+            //- Return const access to the high temperature poly coefficients
+            inline const coeffArray& highCpCoeffs() const;
+
+            //- Return const access to the low temperature poly coefficients
+            inline const coeffArray& lowCpCoeffs() const;
 
 
     // Member Functions
 
         //- Heat capacity at constant pressure of mixture [J/kg/K]
-        scalar Cp
+        inline scalar Cp
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            const coeffArray& a = coeffs(T);
-            return
-                ((((a[4]*T + a[3])*T + a[2])*T + a[1])*T + a[0])
-              + EquationOfState::Cp(rho, e, T);
-        }
+        ) const;
 
         //- Sensible enthalpy [J/kg]
-        scalar Hs
+        inline scalar Hs
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Ha(rho, e, T) - Hf(rho, e, T);
-        }
+        ) const;
 
         //- Absolute enthalpy [J/kg]
-        scalar Ha
+        inline scalar Ha
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            const coeffArray& a = coeffs(T);
-            return
-            (
-                ((((a[4]/5.0*T + a[3]/4.0)*T + a[2]/3.0)*T + a[1]/2.0)*T + a[0])*T
-              + a[5]
-            ) + EquationOfState::H(rho, e, T);
-        }
+        ) const;
 
         #include "HtoEFuncs.H"
 
         //- Heat of formation [J/kg]
-        scalar Hf
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const
-        {
-            const coeffArray& a = lowCpCoeffs_;
-            return
-            (
-                (
-                    (
-                        ((a[4]/5.0*Tstd + a[3]/4.0)*Tstd + a[2]/3.0)*Tstd
-                      + a[1]/2.0
-                    )*Tstd
-                  + a[0]
-                )*Tstd + a[5]
-            );
-        }
+        inline scalar Hf() const;
 
         //- Entropy [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar& p,
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            const coeffArray& a = coeffs(T);
-            return
-            (
-                (((a[4]/4.0*T + a[3]/3.0)*T + a[2]/2.0)*T + a[1])*T + a[0]*log(T)
-              + a[6]
-            ) + EquationOfState::S(p, rho, e, T);
-        }
+        ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const janaf&);
+
+
+    // Friend operators
+
+        friend janaf operator+ <EquationOfState>
+        (
+            const janaf&,
+            const janaf&
+        );
+
+        friend janaf operator* <EquationOfState>
+        (
+            const scalar,
+            const janaf&
+        );
+
+        friend janaf operator== <EquationOfState>
+        (
+            const janaf&,
+            const janaf&
+        );
 };
 
 
@@ -196,8 +237,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "janafI.H"
+
 #ifdef NoRepository
-    #include "janafThermo.C"
+    #include "janaf.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

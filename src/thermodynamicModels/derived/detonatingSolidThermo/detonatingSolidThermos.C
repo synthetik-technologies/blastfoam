@@ -49,25 +49,11 @@ namespace Foam
 {
     addDetonatingSolidThermos
     (
-        constSolidIsoTransport,
         constSolidIsoTransport
     );
 
     addDetonatingSolidThermos
     (
-        constSolidIsoTransport,
-        constSolidAnIsoTransport
-    );
-
-    addDetonatingSolidThermos
-    (
-        constSolidAnIsoTransport,
-        constSolidIsoTransport
-    );
-
-    addDetonatingSolidThermos
-    (
-        constSolidAnIsoTransport,
         constSolidAnIsoTransport
     );
 }

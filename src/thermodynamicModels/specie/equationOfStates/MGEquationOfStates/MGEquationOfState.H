@@ -47,6 +47,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EoS> class MGEquationOfState;
+
+template<class EoS>
+inline MGEquationOfState<EoS> operator+
+(
+    const MGEquationOfState<EoS>&,
+    const MGEquationOfState<EoS>&
+);
+
+template<class EoS>
+inline MGEquationOfState<EoS> operator*
+(
+    const scalar,
+    const MGEquationOfState<EoS>&
+);
+
+template<class EoS>
+inline MGEquationOfState<EoS> operator==
+(
+    const MGEquationOfState<EoS>&,
+    const MGEquationOfState<EoS>&
+);
+
+template<class EoS>
+Ostream& operator<<
+(
+    Ostream&,
+    const MGEquationOfState<EoS>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class MGEquationOfState Declaration
 \*---------------------------------------------------------------------------*/
@@ -59,15 +92,38 @@ class MGEquationOfState
 
 public:
 
+    //- Construct from components
+        inline MGEquationOfState
+        (
+            const EoS& sp
+        );
+
+        //- Construct from dictionary
+        MGEquationOfState(const dictionary& dict);
+
+        //- Construct as named copy
+        inline MGEquationOfState
+        (
+            const word& name,
+            const MGEquationOfState&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<MGEquationOfState> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<MGEquationOfState> New
+        (
+            const dictionary& dict
+        );
+
+
     //- Return the instantiated type name
         static word typeName()
         {
             return word(EoS::typeName());
         }
 
-    // Constructors
-
-        MGEquationOfState(const dictionary& dict);
 
     // Member Functions
 
@@ -162,6 +218,32 @@ public:
             const scalar& e,
             const scalar& T
         ) const;
+
+    // Member operators
+
+        inline void operator+=(const MGEquationOfState&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend MGEquationOfState operator+ <EoS>
+        (
+            const MGEquationOfState&,
+            const MGEquationOfState&
+        );
+
+        friend MGEquationOfState operator* <EoS>
+        (
+            const scalar s,
+            const MGEquationOfState&
+        );
+
+        friend MGEquationOfState operator== <EoS>
+        (
+            const MGEquationOfState&,
+            const MGEquationOfState&
+        );
 
 };
 

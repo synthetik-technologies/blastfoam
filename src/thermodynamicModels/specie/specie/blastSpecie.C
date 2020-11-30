@@ -27,11 +27,20 @@ License
 
 #include "blastSpecie.H"
 
+/* * * * * * * * * * * * * * * public constants  * * * * * * * * * * * * * * */
+
+namespace Foam
+{
+    defineTypeNameAndDebug(blastSpecie, 0);
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::blastSpecie::blastSpecie(const dictionary& dict)
 :
-    W_(dict.subDict("specie").lookupType<scalar>("molWeight"))
+    specieName_(dict.dictName()),
+    Y_(dict.subDict("specie").lookupOrDefault("massFraction", 1.0)),
+    molWeight_(dict.subDict("specie").lookupType<scalar>("molWeight"))
 {}
 
 // ************************************************************************* //

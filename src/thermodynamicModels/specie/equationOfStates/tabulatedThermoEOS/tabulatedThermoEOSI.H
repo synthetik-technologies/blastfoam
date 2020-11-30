@@ -26,6 +26,58 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
+(
+    const Specie& sp
+)
+:
+    Specie(sp)
+{
+    NotImplemented;
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
+(
+    const word& name,
+    const tabulatedThermoEOS<Specie>& pf
+)
+:
+    Specie(name, pf)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::tabulatedThermoEOS<Specie>>
+Foam::tabulatedThermoEOS<Specie>::clone() const
+{
+    return autoPtr<tabulatedThermoEOS<Specie>>
+    (
+        new tabulatedThermoEOS<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::tabulatedThermoEOS<Specie>>
+Foam::tabulatedThermoEOS<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<tabulatedThermoEOS<Specie>>
+    (
+        new tabulatedThermoEOS<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -229,4 +281,81 @@ Foam::scalar Foam::tabulatedThermoEOS<Specied>::initializeRho
 {
     return rho;
 }
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::tabulatedThermoEOS<Specie>::operator+=
+(
+    const tabulatedThermoEOS<Specie>& pf
+)
+{
+    NotImplemented;
+    Specie::operator+=(pf);
+}
+
+
+template<class Specie>
+inline void Foam::tabulatedThermoEOS<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::tabulatedThermoEOS<Specie> Foam::operator+
+(
+    const tabulatedThermoEOS<Specie>& pf1,
+    const tabulatedThermoEOS<Specie>& pf2
+)
+{
+    NotImplemented;
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    return tabulatedThermoEOS<Specie>
+    (
+        sp
+    );
+}
+
+
+template<class Specie>
+inline Foam::tabulatedThermoEOS<Specie> Foam::operator*
+(
+    const scalar s,
+    const tabulatedThermoEOS<Specie>& pf
+)
+{
+    NotImplemented;
+    return tabulatedThermoEOS<Specie>
+    (
+        s*static_cast<const Specie&>(pf)
+    );
+}
+
+
+template<class Specie>
+inline Foam::tabulatedThermoEOS<Specie> Foam::operator==
+(
+    const tabulatedThermoEOS<Specie>& pf1,
+    const tabulatedThermoEOS<Specie>& pf2
+)
+{
+    NotImplemented;
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    return tabulatedThermoEOS<Specie>(sp);
+}
+
+
 // ************************************************************************* //

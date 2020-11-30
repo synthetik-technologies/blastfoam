@@ -38,7 +38,7 @@ Foam::constTransport<Thermo>::constTransport
 :
     Thermo(dict),
     mu_(readScalar(dict.subDict("transport").lookup("mu"))),
-    Pr_(readScalar(dict.subDict("transport").lookup("Pr")))
+    Pr_(max(readScalar(dict.subDict("transport").lookup("Pr")), small))
 {}
 
 

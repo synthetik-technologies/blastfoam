@@ -53,6 +53,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class solidJWL;
+
+template<class Specie>
+inline solidJWL<Specie> operator+
+(
+    const solidJWL<Specie>&,
+    const solidJWL<Specie>&
+);
+
+template<class Specie>
+inline solidJWL<Specie> operator*
+(
+    const scalar,
+    const solidJWL<Specie>&
+);
+
+template<class Specie>
+inline solidJWL<Specie> operator==
+(
+    const solidJWL<Specie>&,
+    const solidJWL<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const solidJWL<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class solidJWL Declaration
 \*---------------------------------------------------------------------------*/
@@ -85,10 +117,39 @@ class solidJWL
 
 
 public:
-    // Constructors
 
-        //- Multiphase constuctor
+    //- Construct from components
+        inline solidJWL
+        (
+            const Specie& sp,
+            const scalar rho0,
+            const scalar omega,
+            const scalar A,
+            const scalar B,
+            const scalar R1,
+            const scalar R2,
+            const scalar pRef,
+            const scalar e0
+        );
+
+        //- Construct from dictionary
         solidJWL(const dictionary& dict);
+
+        //- Construct as named copy
+        inline solidJWL
+        (
+            const word& name,
+            const solidJWL&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<solidJWL> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<solidJWL> New
+        (
+            const dictionary& dict
+        );
 
     // Member Functions
 
@@ -97,7 +158,7 @@ public:
         {
             return
                 "solidJWL<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -184,6 +245,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const solidJWL&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend solidJWL operator+ <Specie>
+        (
+            const solidJWL&,
+            const solidJWL&
+        );
+
+        friend solidJWL operator* <Specie>
+        (
+            const scalar s,
+            const solidJWL&
+        );
+
+        friend solidJWL operator== <Specie>
+        (
+            const solidJWL&,
+            const solidJWL&
+        );
 };
 
 

@@ -45,6 +45,39 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EquationOfState> class eConst;
+
+template<class EquationOfState>
+inline eConst<EquationOfState> operator+
+(
+    const eConst<EquationOfState>&,
+    const eConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline eConst<EquationOfState> operator*
+(
+    const scalar,
+    const eConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+inline eConst<EquationOfState> operator==
+(
+    const eConst<EquationOfState>&,
+    const eConst<EquationOfState>&
+);
+
+template<class EquationOfState>
+Ostream& operator<<
+(
+    Ostream&,
+    const eConst<EquationOfState>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class eConst Declaration
 \*---------------------------------------------------------------------------*/
@@ -63,8 +96,31 @@ class eConst
         scalar Hf_;
 
 
+        //- Construct from components
+        inline eConst
+        (
+            const EquationOfState& st,
+            const scalar cv,
+            const scalar hf
+        );
+
 
 public:
+
+    // Constructors
+
+        //- Construct from dictionary
+        eConst(const dictionary& dict);
+
+        //- Construct as named copy
+        inline eConst(const word&, const eConst&);
+
+        //- Construct and return a clone
+        inline autoPtr<eConst> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<eConst> New(const dictionary& dict);
+
 
     //- Return the instantiated type name
         static word typeName()
@@ -74,68 +130,72 @@ public:
               + word(EquationOfState::typeName()) + '>';
         }
 
-    // Constructor
-    eConst(const dictionary& dict);
-
 
     // Member Functions
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar Cv
+        inline scalar Cv
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cv_ + EquationOfState::Cv(rho, e, T);
-        }
+        ) const;
 
         //- Sensible internal energy [J/kg]
-        scalar Es
+        inline scalar Es
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cv(rho, e, T)*T + EquationOfState::E(rho, e, T);
-        }
+        ) const;
 
         //- Absolute internal energy [J/kg]
-        scalar Ea
+        inline scalar Ea
         (
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Es(rho, e, T) + Hf_;
-        }
+        ) const;
 
         #include "EtoHFuncs.H"
 
         //- Heat of formation [J/kg]
-        scalar Hf
-        (
-            const scalar& rho,
-            const scalar& T
-        ) const
-        {
-            return Hf_;
-        }
+        inline scalar Hf() const;
 
         //- Entropy [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar& p,
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(p, rho, T);
-        }
+        ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const eConst&);
+
+
+    // Friend operators
+
+        friend eConst operator+ <EquationOfState>
+        (
+            const eConst&,
+            const eConst&
+        );
+
+        friend eConst operator* <EquationOfState>
+        (
+            const scalar,
+            const eConst&
+        );
+
+        friend eConst operator== <EquationOfState>
+        (
+            const eConst&,
+            const eConst&
+        );
 };
 
 
@@ -144,6 +204,8 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include"eConstI.H"
 
 #ifdef NoRepository
     #include "eConst.C"

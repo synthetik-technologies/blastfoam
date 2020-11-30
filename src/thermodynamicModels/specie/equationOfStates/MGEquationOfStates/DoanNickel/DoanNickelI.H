@@ -26,6 +26,56 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::DoanNickel<Specie>::DoanNickel
+(
+    const Specie& sp
+)
+:
+    Specie(sp)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::DoanNickel<Specie>::DoanNickel
+(
+    const word& name,
+    const DoanNickel<Specie>& pf
+)
+:
+    Specie(name, pf)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::DoanNickel<Specie>>
+Foam::DoanNickel<Specie>::clone() const
+{
+    return autoPtr<DoanNickel<Specie>>
+    (
+        new DoanNickel<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::DoanNickel<Specie>>
+Foam::DoanNickel<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<DoanNickel<Specie>>
+    (
+        new DoanNickel<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -351,5 +401,72 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
 
     return (g*log(rhoByRho0)*dA + dg)*pow(rhoByRho0, A);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::DoanNickel<Specie>::operator+=
+(
+    const DoanNickel<Specie>& pf
+)
+{
+    Specie::operator+=(pf);
+}
+
+
+template<class Specie>
+inline void Foam::DoanNickel<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::DoanNickel<Specie> Foam::operator+
+(
+    const DoanNickel<Specie>& pf1,
+    const DoanNickel<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    return DoanNickel<Specie>(sp);
+}
+
+
+template<class Specie>
+inline Foam::DoanNickel<Specie> Foam::operator*
+(
+    const scalar s,
+    const DoanNickel<Specie>& pf
+)
+{
+    return DoanNickel<Specie>(s*static_cast<const Specie&>(pf));
+}
+
+
+template<class Specie>
+inline Foam::DoanNickel<Specie> Foam::operator==
+(
+    const DoanNickel<Specie>& pf1,
+    const DoanNickel<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    return DoanNickel<Specie>(sp);
+}
+
 
 // ************************************************************************* //

@@ -46,6 +46,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class EoS> class equationOfState;
+
+template<class EoS>
+inline equationOfState<EoS> operator+
+(
+    const equationOfState<EoS>&,
+    const equationOfState<EoS>&
+);
+
+template<class EoS>
+inline equationOfState<EoS> operator*
+(
+    const scalar,
+    const equationOfState<EoS>&
+);
+
+template<class EoS>
+inline equationOfState<EoS> operator==
+(
+    const equationOfState<EoS>&,
+    const equationOfState<EoS>&
+);
+
+template<class EoS>
+Ostream& operator<<
+(
+    Ostream&,
+    const equationOfState<EoS>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class equationOfState Declaration
 \*---------------------------------------------------------------------------*/
@@ -60,7 +92,28 @@ public:
 
     // Constructors
 
+    //- Construct from components
+        inline equationOfState(const EoS& eos);
+
+        //- Construct from dictionary
         equationOfState(const dictionary& dict);
+
+        //- Construct as named copy
+        inline equationOfState
+        (
+            const word& name,
+            const equationOfState&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<equationOfState> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<equationOfState> New
+        (
+            const dictionary& dict
+        );
+
 
     // Member Functions
 
@@ -161,6 +214,33 @@ public:
             const scalar& e,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const equationOfState&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend equationOfState operator+ <EoS>
+        (
+            const equationOfState&,
+            const equationOfState&
+        );
+
+        friend equationOfState operator* <EoS>
+        (
+            const scalar s,
+            const equationOfState&
+        );
+
+        friend equationOfState operator== <EoS>
+        (
+            const equationOfState&,
+            const equationOfState&
+        );
 
 };
 

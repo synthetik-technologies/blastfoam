@@ -26,6 +26,83 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWL<Specie>::JWL
+(
+    const Specie& sp,
+    const scalar rho0,
+    const scalar rhoCutOff,
+    const scalar omega,
+    const scalar gammaIdeal,
+    const scalar A,
+    const scalar B,
+    const scalar R1,
+    const scalar R2,
+    const scalar e0
+)
+:
+    Specie(sp),
+    rho0_(rho0),
+    rhoCutOff_(rhoCutOff),
+    omega_(omega),
+    gammaIdeal_(gammaIdeal),
+    A_(A),
+    B_(B),
+    R1_(R1),
+    R2_(R2),
+    e0_(e0)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWL<Specie>::JWL
+(
+    const word& name,
+    const JWL<Specie>& pf
+)
+:
+    Specie(name, pf),
+    rho0_(pf.rho0_),
+    rhoCutOff_(pf.rhoCutOff_),
+    omega_(pf.omega_),
+    gammaIdeal_(pf.gammaIdeal_),
+    A_(pf.A_),
+    B_(pf.B_),
+    R1_(pf.R1_),
+    R2_(pf.R2_),
+    e0_(pf.e0_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::JWL<Specie>>
+Foam::JWL<Specie>::clone() const
+{
+    return autoPtr<JWL<Specie>>
+    (
+        new JWL<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::JWL<Specie>>
+Foam::JWL<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<JWL<Specie>>
+    (
+        new JWL<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
@@ -210,5 +287,151 @@ Foam::scalar Foam::JWL<Specie>::S
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::JWL<Specie>::operator+=
+(
+    const JWL<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        rho0_ = Y1*rho0_ + Y2*pf.rho0_;
+        rhoCutOff_ = Y1*rhoCutOff_ + Y2*pf.rhoCutOff_;
+        omega_ = Y1*omega_ + Y2*pf.omega_;
+        gammaIdeal_ = Y1*gammaIdeal_ + Y2*pf.gammaIdeal_;
+        A_ = Y1*A_ + Y2*pf.A_;
+        B_ = Y1*B_ + Y2*pf.B_;
+        R1_ = Y1*R1_ + Y2*pf.R1_;
+        R2_ = Y1*R2_ + Y2*pf.R2_;
+        e0_ = Y1*e0_ + Y2*pf.e0_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::JWL<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::JWL<Specie> Foam::operator+
+(
+    const JWL<Specie>& pf1,
+    const JWL<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return JWL<Specie>
+        (
+            sp,
+            pf1.rho0_,
+            pf1.rhoCutOff_,
+            pf1.omega_,
+            pf1.gammaIdeal_,
+            pf1.A_,
+            pf1.B_,
+            pf1.R1_,
+            pf1.R2_,
+            pf1.e0_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return JWL<Specie>
+        (
+            sp,
+            Y1*pf1.rho0_ + Y2*pf2.rho0_,
+            Y1*pf1.rhoCutOff_ + Y2*pf2.rhoCutOff_,
+            Y1*pf1.omega_ + Y2*pf2.omega_,
+            Y1*pf1.gammaIdeal_ + Y2*pf2.gammaIdeal_,
+            Y1*pf1.A_ + Y2*pf2.A_,
+            Y1*pf1.B_ + Y2*pf2.B_,
+            Y1*pf1.R1_ + Y2*pf2.R1_,
+            Y1*pf1.R2_ + Y2*pf2.R2_,
+            Y1*pf1.e0_ + Y2*pf2.e0_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::JWL<Specie> Foam::operator*
+(
+    const scalar s,
+    const JWL<Specie>& pf
+)
+{
+    return JWL<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.rho0_,
+        pf.rhoCutOff_,
+        pf.omega_,
+        pf.gammaIdeal_,
+        pf.A_,
+        pf.B_,
+        pf.R1_,
+        pf.R2_,
+        pf.e0_
+    );
+}
+
+
+template<class Specie>
+inline Foam::JWL<Specie> Foam::operator==
+(
+    const JWL<Specie>& pf1,
+    const JWL<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return JWL<Specie>
+    (
+        sp,
+        Y2*pf2.rho0_ - Y1*pf1.rho0_,
+        Y2*pf2.rhoCutOff_ - Y1*pf1.rhoCutOff_,
+        Y2*pf2.omega_ - Y1*pf1.omega_,
+        Y2*pf2.gammaIdeal_ - Y1*pf1.gammaIdeal_,
+        Y2*pf2.A_ - Y1*pf1.A_,
+        Y2*pf2.B_ - Y1*pf1.B_,
+        Y2*pf2.R1_ - Y1*pf1.R1_,
+        Y2*pf2.R2_ - Y1*pf1.R2_,
+        Y2*pf2.e0_ - Y1*pf1.e0_
+    );
+}
+
+
 
 // ************************************************************************* //

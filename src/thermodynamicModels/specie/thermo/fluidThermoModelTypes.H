@@ -35,7 +35,7 @@ License
 
 #include "hConst.H"
 #include "eConst.H"
-#include "janafThermo.H"
+#include "janaf.H"
 
 #include "equationOfState.H"
 #include "MGEquationOfState.H"

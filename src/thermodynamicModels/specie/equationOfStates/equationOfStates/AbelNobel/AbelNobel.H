@@ -53,6 +53,38 @@ SourceFiles
 namespace Foam
 {
 
+// Forward declaration of friend functions and operators
+
+template<class Specie> class AbelNobel;
+
+template<class Specie>
+inline AbelNobel<Specie> operator+
+(
+    const AbelNobel<Specie>&,
+    const AbelNobel<Specie>&
+);
+
+template<class Specie>
+inline AbelNobel<Specie> operator*
+(
+    const scalar,
+    const AbelNobel<Specie>&
+);
+
+template<class Specie>
+inline AbelNobel<Specie> operator==
+(
+    const AbelNobel<Specie>&,
+    const AbelNobel<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const AbelNobel<Specie>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class AbelNobel Declaration
 \*---------------------------------------------------------------------------*/
@@ -70,8 +102,33 @@ class AbelNobel
 
 public:
 
-    // Constructor
-    AbelNobel(const dictionary& dict);
+    // Constructors
+
+        //- Construct from components
+        inline AbelNobel
+        (
+            const Specie& sp,
+            const scalar b
+        );
+
+        //- Construct from dictionary
+        AbelNobel(const dictionary& dict);
+
+        //- Construct as named copy
+        inline AbelNobel
+        (
+            const word& name,
+            const AbelNobel&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<AbelNobel> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<AbelNobel> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -81,7 +138,7 @@ public:
         {
             return
                 "AbelNobel<"
-            + word(Specie::typeName()) + '>';
+            + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -170,6 +227,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const AbelNobel&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend AbelNobel operator+ <Specie>
+        (
+            const AbelNobel&,
+            const AbelNobel&
+        );
+
+        friend AbelNobel operator* <Specie>
+        (
+            const scalar s,
+            const AbelNobel&
+        );
+
+        friend AbelNobel operator== <Specie>
+        (
+            const AbelNobel&,
+            const AbelNobel&
+        );
 };
 
 

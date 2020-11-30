@@ -51,6 +51,40 @@ SourceFiles
 
 namespace Foam
 {
+
+// Forward declaration of friend functions and operators
+
+template<class Specie> class Tillotson;
+
+template<class Specie>
+inline Tillotson<Specie> operator+
+(
+    const Tillotson<Specie>&,
+    const Tillotson<Specie>&
+);
+
+template<class Specie>
+inline Tillotson<Specie> operator*
+(
+    const scalar,
+    const Tillotson<Specie>&
+);
+
+template<class Specie>
+inline Tillotson<Specie> operator==
+(
+    const Tillotson<Specie>&,
+    const Tillotson<Specie>&
+);
+
+template<class Specie>
+Ostream& operator<<
+(
+    Ostream&,
+    const Tillotson<Specie>&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class Tillotson Declaration
 \*---------------------------------------------------------------------------*/
@@ -90,10 +124,40 @@ class Tillotson
 
 public:
 
-    // Constructors
+    //- Construct from components
+        inline Tillotson
+        (
+            const Specie& sp,
+            const scalar p0,
+            const scalar pCav,
+            const scalar rho0,
+            const scalar rhoCav,
+            const scalar e0,
+            const scalar omega,
+            const scalar k,
+            const scalar A,
+            const scalar B,
+            const scalar C
+        );
 
-        //- Single phase constructor
+        //- Construct from dictionary
         Tillotson(const dictionary& dict);
+
+        //- Construct as named copy
+        inline Tillotson
+        (
+            const word& name,
+            const Tillotson&
+        );
+
+        //- Construct and return a clone
+        inline autoPtr<Tillotson> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<Tillotson> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
@@ -103,7 +167,7 @@ public:
         {
             return
                 "Tillotson<"
-              + word(Specie::typeName()) + '>';
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -227,6 +291,33 @@ public:
             const scalar& rho,
             const scalar& T
         ) const;
+
+
+    // Member operators
+
+        inline void operator+=(const Tillotson&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend Tillotson operator+ <Specie>
+        (
+            const Tillotson&,
+            const Tillotson&
+        );
+
+        friend Tillotson operator* <Specie>
+        (
+            const scalar s,
+            const Tillotson&
+        );
+
+        friend Tillotson operator== <Specie>
+        (
+            const Tillotson&,
+            const Tillotson&
+        );
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

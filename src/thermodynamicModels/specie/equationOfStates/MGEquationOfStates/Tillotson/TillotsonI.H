@@ -26,6 +26,86 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tillotson<Specie>::Tillotson
+(
+    const Specie& sp,
+    const scalar p0,
+    const scalar pCav,
+    const scalar rho0,
+    const scalar rhoCav,
+    const scalar e0,
+    const scalar omega,
+    const scalar k,
+    const scalar A,
+    const scalar B,
+    const scalar C
+)
+:
+    Specie(sp),
+    p0_(p0),
+    pCav_(pCav),
+    rho0_(rho0),
+    rhoCav_(rhoCav),
+    e0_(e0),
+    omega_(omega),
+    k_(k),
+    A_(A),
+    B_(B),
+    C_(C)
+{}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tillotson<Specie>::Tillotson
+(
+    const word& name,
+    const Tillotson<Specie>& pf
+)
+:
+    Specie(name, pf),
+    p0_(pf.p0_),
+    pCav_(pf.pCav_),
+    rho0_(pf.rho0_),
+    rhoCav_(pf.rhoCav_),
+    e0_(pf.e0_),
+    omega_(pf.omega_),
+    k_(pf.k_),
+    A_(pf.A_),
+    B_(pf.B_),
+    C_(pf.C_)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::Tillotson<Specie>>
+Foam::Tillotson<Specie>::clone() const
+{
+    return autoPtr<Tillotson<Specie>>
+    (
+        new Tillotson<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::Tillotson<Specie>>
+Foam::Tillotson<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<Tillotson<Specie>>
+    (
+        new Tillotson<Specie>(dict)
+    );
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -292,5 +372,155 @@ Foam::scalar Foam::Tillotson<Specie>::S
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
+
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline void Foam::Tillotson<Specie>::operator+=
+(
+    const Tillotson<Specie>& pf
+)
+{
+    scalar Y1 = this->Y();
+    Specie::operator+=(pf);
+
+    if (mag(this->Y()) > SMALL)
+    {
+        Y1 /= this->Y();
+        const scalar Y2 = pf.Y()/this->Y();
+
+        p0_ = Y1*p0_ + Y2*pf.p0_;
+        pCav_ = Y1*pCav_ + Y2*pf.pCav_;
+        rho0_ = Y1*rho0_ + Y2*pf.rho0_;
+        rhoCav_ = Y1*rhoCav_ + Y2*pf.rhoCav_;
+        e0_ = Y1*e0_ + Y2*pf.e0_;
+        omega_ = Y1*omega_ + Y2*pf.omega_;
+        k_ = Y1*k_ + Y2*pf.k_;
+        A_ = Y1*A_ + Y2*pf.A_;
+        B_ = Y1*B_ + Y2*pf.B_;
+        C_ = Y1*C_ + Y2*pf.C_;
+    }
+}
+
+
+template<class Specie>
+inline void Foam::Tillotson<Specie>::operator*=(const scalar s)
+{
+    Specie::operator*=(s);
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::Tillotson<Specie> Foam::operator+
+(
+    const Tillotson<Specie>& pf1,
+    const Tillotson<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+      + static_cast<const Specie&>(pf2)
+    );
+
+    if (mag(sp.Y()) < SMALL)
+    {
+        return Tillotson<Specie>
+        (
+            sp,
+            pf1.p0_,
+            pf1.pCav_,
+            pf1.rho0_,
+            pf1.rhoCav_,
+            pf1.e0_,
+            pf1.omega_,
+            pf1.k_,
+            pf1.A_,
+            pf1.B_,
+            pf1.C_
+        );
+    }
+    else
+    {
+        const scalar Y1 = pf1.Y()/sp.Y();
+        const scalar Y2 = pf2.Y()/sp.Y();
+
+        return Tillotson<Specie>
+        (
+            sp,
+            Y1*pf1.p0_ + Y2*pf2.p0_,
+            Y1*pf1.pCav_ + Y2*pf2.pCav_,
+            Y1*pf1.rho0_ + Y2*pf2.rho0_,
+            Y1*pf1.rhoCav_ + Y2*pf2.rhoCav_,
+            Y1*pf1.e0_ + Y2*pf2.e0_,
+            Y1*pf1.omega_ + Y2*pf2.omega_,
+            Y1*pf1.k_ + Y2*pf2.k_,
+            Y1*pf1.A_ + Y2*pf2.A_,
+            Y1*pf1.B_ + Y2*pf2.B_,
+            Y1*pf1.C_ + Y2*pf2.C_
+        );
+    }
+}
+
+
+template<class Specie>
+inline Foam::Tillotson<Specie> Foam::operator*
+(
+    const scalar s,
+    const Tillotson<Specie>& pf
+)
+{
+    return Tillotson<Specie>
+    (
+        s*static_cast<const Specie&>(pf),
+        pf.p0_,
+        pf.pCav_,
+        pf.rho0_,
+        pf.rhoCav_,
+        pf.e0_,
+        pf.omega_,
+        pf.k_,
+        pf.A_,
+        pf.B_,
+        pf.C_
+    );
+}
+
+
+template<class Specie>
+inline Foam::Tillotson<Specie> Foam::operator==
+(
+    const Tillotson<Specie>& pf1,
+    const Tillotson<Specie>& pf2
+)
+{
+    Specie sp
+    (
+        static_cast<const Specie&>(pf1)
+     == static_cast<const Specie&>(pf2)
+    );
+
+    const scalar Y1 = pf1.Y()/sp.Y();
+    const scalar Y2 = pf2.Y()/sp.Y();
+
+    return Tillotson<Specie>
+    (
+        sp,
+        Y2*pf2.p0_    - Y1*pf1.p0_,
+        Y2*pf2.pCav_  - Y1*pf1.pCav_,
+        Y2*pf2.rho0_    - Y1*pf1.rho0_,
+        Y2*pf2.rhoCav_  - Y1*pf1.rhoCav_,
+        Y2*pf2.e0_    - Y1*pf1.e0_,
+        Y2*pf2.omega_  - Y1*pf1.omega_,
+        Y2*pf2.k_    - Y1*pf1.k_,
+        Y2*pf2.A_  - Y1*pf1.A_,
+        Y2*pf2.B_ - Y1*pf1.B_,
+        Y2*pf2.C_     - Y1*pf1.C_
+    );
+}
+
 
 // ************************************************************************* //
