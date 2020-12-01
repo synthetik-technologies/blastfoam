@@ -22,6 +22,8 @@ defaultFieldValues
     volScalarFieldValue rho.gas         1.13875
     volScalarFieldValue Y.N2            1
     volScalarFieldValue Y.He            0
+    volScalarFieldValue N2.gas            1
+    volScalarFieldValue He.gas            0
 );
 
 regions
@@ -37,6 +39,8 @@ regions
             volScalarFieldValue alpha.particles 0
             volScalarFieldValue Y.N2            0
             volScalarFieldValue Y.He            1
+            volScalarFieldValue N2.gas            0
+            volScalarFieldValue He.gas            1
         );
     }
  );

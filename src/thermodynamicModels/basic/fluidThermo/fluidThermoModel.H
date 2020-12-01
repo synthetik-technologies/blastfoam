@@ -115,6 +115,24 @@ public:
             (name, p, rho, e, T, dict, master, masterName)
         );
 
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fluidThermoModel,
+            multicomponent,
+            (
+                const word& name,
+                volScalarField& p,
+                volScalarField& rho,
+                volScalarField& e,
+                volScalarField& T,
+                const dictionary& dict,
+                const bool master,
+                const word& masterName
+            ),
+            (name, p, rho, e, T, dict, master, masterName)
+        );
+
     // Constructor
 
         //- Construct with input field
@@ -156,6 +174,18 @@ public:
         );
 
         static autoPtr<fluidThermoModel> NewDetonating
+        (
+            const word& name,
+            volScalarField& p,
+            volScalarField& rho,
+            volScalarField& e,
+            volScalarField& T,
+            const dictionary& dict,
+            const bool master = true,
+            const word& masterName = word::null
+        );
+
+        static autoPtr<fluidThermoModel> NewMulticomponent
         (
             const word& name,
             volScalarField& p,

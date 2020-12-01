@@ -92,12 +92,12 @@ inline scalar blastSpecie::R() const
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
-inline void blastSpecie::operator=(const blastSpecie& st)
-{
-    //name_ = st.name_;
-    Y_ = st.Y_;
-    molWeight_ = st.molWeight_;
-}
+// inline void blastSpecie::operator=(const blastSpecie& st)
+// {
+//     nameName_ = st.name_;
+//     Y_ = st.Y_;
+//     molWeight_ = st.molWeight_;
+// }
 
 
 inline void blastSpecie::operator+=(const blastSpecie& st)

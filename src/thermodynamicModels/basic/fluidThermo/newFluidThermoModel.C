@@ -75,6 +75,30 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
     return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
 }
 
+
+Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewMulticomponent
+(
+    const word& phaseName,
+    volScalarField& p,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const bool master,
+    const word& masterName
+)
+{
+    multicomponentConstructorTable::iterator cstrIter =
+        lookupThermo<multicomponentConstructorTable>
+        (
+            dict,
+            multicomponentConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+}
+
+
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
 (
     const word& phaseName,
@@ -90,11 +114,21 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     const word type(dict.lookupType<word>("type"));
     if (type == "basic")
     {
+        Info<<"basic"<<endl;
         return NewBasic(phaseName, p, rho, e, T, dict, master, masterName);
     }
     else if (type == "detonating")
     {
+        Info<<"detonating"<<endl;
         return NewDetonating(phaseName, p, rho, e, T, dict, master, masterName);
+    }
+    else if (type == "multicomponent")
+    {
+        Info<<"multicomponent"<<endl;
+        return NewMulticomponent
+        (
+            phaseName, p, rho, e, T, dict, master, masterName
+        );
     }
     else
     {
@@ -103,6 +137,7 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
             << "Valid " << fluidThermoModel::typeName << " types are:" << nl
             << "basic" << nl
             << "detonating" << nl
+            << "multicomponent" << nl
             << abort(FatalError);
     }
     return autoPtr<fluidThermoModel>();

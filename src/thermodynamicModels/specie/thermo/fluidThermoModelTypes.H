@@ -47,6 +47,7 @@ License
 #include "solidJWL.H"
 
 #include "idealGas.H"
+#include "perfectGas.H"
 #include "stiffenedGas.H"
 #include "Tait.H"
 #include "AbelNobel.H"
@@ -122,6 +123,22 @@ namespace Foam
         janaf,
         MGEquationOfState,
         idealGas,
+        blastSpecie
+    );
+
+    defineThermoTypes
+    (
+        constTransport,
+        equationOfState,
+        perfectGas,
+        blastSpecie
+    );
+    defineThermoType
+    (
+        constTransport,
+        janaf,
+        equationOfState,
+        perfectGas,
         blastSpecie
     );
 

@@ -122,7 +122,7 @@ public:
 
     // Member operators
 
-        inline void operator=(const rBlastSpecie&);
+//         inline void operator=(const rBlastSpecie&);
         inline void operator+=(const rBlastSpecie&);
         inline void operator*=(const scalar);
 

@@ -34,7 +34,9 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     const ThermoType& sp
 )
 :
-    ThermoType(sp)
+    ThermoType(sp),
+    tolerance_(1e-4),
+    maxIter_(100)
 {}
 
 
@@ -45,7 +47,9 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     const ThermoType& sp
 )
 :
-    ThermoType(name, sp)
+    ThermoType(name, sp),
+    tolerance_(1e-4),
+    maxIter_(100)
 {}
 
 

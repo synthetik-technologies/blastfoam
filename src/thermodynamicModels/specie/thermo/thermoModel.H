@@ -44,6 +44,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
+#include "thermoModel.H"
 #include "thermodynamicConstants.H"
 
 using namespace Foam::constant::thermodynamic;
@@ -180,30 +181,38 @@ public:
 
     // Friend operators
 
-        friend thermoModel operator+
+        inline friend thermoModel operator+ <ThermoType>
         (
             const thermoModel&,
             const thermoModel&
         );
 
-        friend thermoModel operator*
+        inline friend thermoModel operator* <ThermoType>
         (
             const scalar s,
             const thermoModel&
         );
 
-        friend thermoModel operator==
+        inline friend thermoModel operator== <ThermoType>
         (
             const thermoModel&,
             const thermoModel&
         );
-
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "thermoModelI.H"
+
+#ifdef NoRepository
+    #include "thermoModel.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -229,14 +238,6 @@ typedef                                                                     \
 #define defineThermoTypes(Transport, EoSType, EoS, Specie)                  \
     defineThermoType(Transport, eConst, EoSType, EoS, Specie)               \
     defineThermoType(Transport, hConst, EoSType, EoS, Specie)
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "thermoModelI.H"
-
-#ifdef NoRepository
-    #include "thermoModel.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

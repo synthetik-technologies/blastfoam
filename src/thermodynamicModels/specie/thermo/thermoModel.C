@@ -50,7 +50,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
 {
     scalar Test = T0;
     scalar Tnew = T0;
-    scalar Ttol = T0*tolerance_;
+    scalar Ttol = tolerance_;
     int    iter = 0;
 
     if (rho < small)
@@ -65,7 +65,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
           - (ThermoType::Es(rho, e, Test) - e)/ThermoType::Cv(rho, e, Test);
         Tnew = max(Tnew, 0.0);
 
-    } while (mag(Tnew - Test) > Ttol && iter++ < maxIter_);
+    } while (mag(Tnew - Test)/max(Tnew, small) > Ttol && iter++ < maxIter_);
 
     return Tnew;
 }
@@ -87,32 +87,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     if (ThermoType::temperatureBased())
     {
-        if (mag(ThermoType::dpdT(rho, e, T)) < small)
-        {
-            return ThermoType::Es(rho, e, T);
-        }
-
-        scalar Test = T;
-        scalar Tnew = T;
-        scalar Ttol = Test*tolerance_;
-        int    iter = 0;
-        do
-        {
-            Test = Tnew;
-
-            Tnew -=
-                (ThermoType::p(rho, e, Test) - p)
-               /stabilise(ThermoType::dpdT(rho, e, Test), small);
-
-            if (iter++ > 100)
-            {
-                FatalErrorInFunction
-                    << "Maximum number of iterations exceeded: " << 100
-                    << abort(FatalError);
-            }
-
-        } while (mag(Tnew - Test)/Test > Ttol);
-        return ThermoType::Es(rho, e, Test);
+        return ThermoType::Es(rho, e, T);
     }
 
     if (mag(ThermoType::dpde(rho, e, T)) < small)
@@ -122,7 +97,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
     scalar Eest = 1000.0;
     scalar Enew = 1000.0;
-    scalar Etol = Eest*tolerance_;
+    scalar Etol = tolerance_;
     int    iter = 0;
     do
     {
@@ -139,7 +114,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
                 << abort(FatalError);
         }
 
-    } while (mag(Enew - Eest)/Eest > Etol);
+    } while (mag(Enew - Eest)/max(Eest, small) > Etol);
 
     return Enew;
 }
@@ -157,7 +132,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
     //  Should be modified to solve the 2D problem for density and internal energy
     scalar Rhoest = max(1e-4, rho);
     scalar Rhonew = Rhoest;
-    scalar Rhotol = Rhoest*tolerance_;
+    scalar Rhotol = tolerance_;
     scalar E = ThermoType::Cv(Rhoest, e, T)*T; //- Initial guess
 
     int    iter = 0;
@@ -170,17 +145,11 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
         scalar dpdRho(-ThermoType::dpdv(Rhoest, E, T)/sqr(max(Rhoest, 1e-10)));
         Rhonew = Rhoest - (ThermoType::p(Rhoest, E, T) - p)/stabilise(dpdRho, small);
 
-        if (iter++ > 100)
-        {
-            FatalErrorInFunction
-                << "Maximum number of iterations exceeded: " << 100
-                << abort(FatalError);
-        }
         if (Rhonew < 1e-10)
         {
             Rhonew = Rhoest/2.0;
         }
-    } while (mag(Rhonew - Rhoest) > Rhotol);
+    } while (mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol && iter < maxIter_);
 
     return Rhonew;
 }

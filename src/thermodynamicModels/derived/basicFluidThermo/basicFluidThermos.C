@@ -80,6 +80,20 @@ namespace Foam
     addFluidThermos
     (
         constTransport,
+        equationOfState,
+        perfectGas
+    );
+    addFluidThermo
+    (
+        constTransport,
+        janaf,
+        equationOfState,
+        perfectGas
+    );
+
+    addFluidThermos
+    (
+        constTransport,
         MGEquationOfState,
         stiffenedGas
     );

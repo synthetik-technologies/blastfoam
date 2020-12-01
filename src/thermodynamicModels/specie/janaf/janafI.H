@@ -291,23 +291,20 @@ inline void Foam::janaf<EquationOfState>::operator+=
         {
             FatalErrorInFunction
                 << "Tcommon " << Tcommon_ << " for "
-                << (this->name().size() ? this->name() : "others")
+                << (this->specieName().size() ? this->specieName() : "others")
                 << " != " << jt.Tcommon_ << " for "
-                << (jt.name().size() ? jt.name() : "others")
+                << (jt.specieName().size() ? jt.specieName() : "others")
                 << exit(FatalError);
         }
 
-        for
-        (
-            label coefLabel=0;
-            coefLabel<janaf<EquationOfState>::nCoeffs_;
-            coefLabel++
-        )
+        forAll(highCpCoeffs_, coefLabel)
         {
             highCpCoeffs_[coefLabel] =
                 Y1*highCpCoeffs_[coefLabel]
               + Y2*jt.highCpCoeffs_[coefLabel];
-
+        }
+        forAll(lowCpCoeffs_, coefLabel)
+        {
             lowCpCoeffs_[coefLabel] =
                 Y1*lowCpCoeffs_[coefLabel]
               + Y2*jt.lowCpCoeffs_[coefLabel];
