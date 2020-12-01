@@ -156,18 +156,17 @@ public:
             <                                                                   \
                 fluidThermoModel,                                               \
                 Transport##Thermo##uEoSType##uEoS##blastSpecie,                 \
-                Transport##Thermo##rEoSType##rEoS##rblastSpecie                 \
+                Transport##Thermo##rEoSType##rEoS##blastSpecie                 \
             >                                                                   \
-        >                                                                       \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS;          \
+        > detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS;        \
     defineTemplateTypeNameAndDebugWithName                                      \
     (                                                                           \
         detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS,          \
         (                                                                       \
             "detonating<"                                                       \
-          + word(Transport##Thermo##uEoSType##uEoS##blastSpecie::typeName())  \
+          + word(Transport##Thermo##uEoSType##uEoS##blastSpecie::typeName())    \
           + ','                                                                 \
-          + word(Transport##Thermo##rEoSType##rEoS##blastSpecie::typeName())  \
+          + word(Transport##Thermo##rEoSType##rEoS##blastSpecie::typeName())    \
           + '>'                                                                 \
         ).c_str(),                                                              \
         0                                                                       \
@@ -182,13 +181,15 @@ public:
 #define addDetonatingFluidThermos(Transport, uEoSType, uEoS, rEoSType, rEoS)    \
     addDetonatingFluidThermo                                                    \
     (                                                                           \
-        Transport, eConst, uEoSType, uEoS,                                      \
-        Transport, eConst, rEoSType, rEoS                                       \
+        Transport, eConst,                                                      \
+        uEoSType, uEoS,                                                         \
+        rEoSType, rEoS                                                          \
     );                                                                          \
     addDetonatingFluidThermo                                                    \
     (                                                                           \
-        Transport, hConst, uEoSType, uEoS,                                      \
-        Transport, hConst, rEoSType, rEoS                                       \
+        Transport, hConst,                                                      \
+        uEoSType, uEoS,                                                         \
+        rEoSType, rEoS                                                          \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
