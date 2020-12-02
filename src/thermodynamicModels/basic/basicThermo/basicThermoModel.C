@@ -306,6 +306,67 @@ Foam::word Foam::basicThermoModel::readThermoType(const dictionary& dict)
     );
 }
 
+Foam::wordList Foam::basicThermoModel::splitThermoName
+(
+    const word& thermoName,
+    const int nCmpt
+)
+{
+    wordList cmpts(nCmpt);
+
+    string::size_type beg=0, end=0, endb=0, endc=0;
+    int i = 0;
+
+    while
+    (
+        (endb = thermoName.find('<', beg)) != string::npos
+     || (endc = thermoName.find(',', beg)) != string::npos
+    )
+    {
+        if (endb == string::npos)
+        {
+            end = endc;
+        }
+        else if ((endc = thermoName.find(',', beg)) != string::npos)
+        {
+            end = min(endb, endc);
+        }
+        else
+        {
+            end = endb;
+        }
+
+        if (beg < end)
+        {
+            cmpts[i] = thermoName.substr(beg, end-beg);
+            cmpts[i++].replaceAll(">","");
+
+            // If the number of number of components in the name
+            // is greater than nCmpt return an empty list
+            if (i == nCmpt)
+            {
+                return wordList();
+            }
+        }
+        beg = end + 1;
+    }
+
+    // If the number of number of components in the name is not equal to nCmpt
+    // return an empty list
+    if (i + 1 != nCmpt)
+    {
+        return wordList();
+    }
+
+    if (beg < thermoName.size())
+    {
+        cmpts[i] = thermoName.substr(beg, string::npos);
+        cmpts[i].replaceAll(">","");
+    }
+
+    return cmpts;
+}
+
 
 Foam::wordList Foam::basicThermoModel::splitThermoName
 (

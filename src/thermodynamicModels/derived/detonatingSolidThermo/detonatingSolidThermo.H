@@ -146,47 +146,46 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define addDetonatingSolidThermo(Transport, Thermo, uEoSType, uEoS, rEoSType, rEoS) \
-    typedef detonatingSolidThermo                                               \
-        <                                                                       \
-            blendedThermoModel                                                  \
-            <                                                                   \
-                solidThermoModel,                                               \
-                Transport##Thermo##uEoSType##uEoS##blastSpecie,                 \
-                Transport##Thermo##rEoSType##rEoS##rBlastSpecie                 \
-            >                                                                   \
-        >                                                                       \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS; \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS, \
-        (                                                                       \
-            "detonating<"                                                       \
-          + word(Transport##Thermo##uEoSType##uEoS##blastSpecie::typeName())  \
-          + ','                                                                 \
-          + word(Transport##Thermo##rEoSType##rEoS##rBlastSpecie::typeName()) \
-          + '>'                                                                 \
-        ).c_str(),                                                              \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        solidThermoModel,                                                       \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS,          \
-        detonatingSolid                                                         \
+    typedef detonatingSolidThermo                                           \
+        <                                                                   \
+            blendedThermoModel                                              \
+            <                                                               \
+                solidThermoModel,                                           \
+                Transport##Thermo##uEoS##blastSpecie,                       \
+                Transport##Thermo##rEoS##rBlastSpecie                       \
+            >                                                               \
+        > detonating##Transport##Thermo##uEoS##rEoS;                        \
+    defineTemplateTypeNameAndDebugWithName                                  \
+    (                                                                       \
+        detonating##Transport##Thermo##uEoS##rEoS,                          \
+        (                                                                   \
+            "detonating<"                                                   \
+          + word(Transport##Thermo##uEoS##blastSpecie::typeName())          \
+          + ','                                                             \
+          + word(Transport##Thermo##rEoS##rBlastSpecie::typeName())         \
+          + '>'                                                             \
+        ).c_str(),                                                          \
+        0                                                                   \
+    );                                                                      \
+    addToRunTimeSelectionTable                                              \
+    (                                                                       \
+        solidThermoModel,                                                   \
+        detonating##Transport##Thermo##uEoS##rEoS,                          \
+        detonatingSolid                                                     \
     );
 
-#define addDetonatingSolidThermos(Transport) \
-    addDetonatingSolidThermo                                                    \
-    (                                                                           \
-        Transport, eConst,                                                      \
-        equationOfState, rhoConst,                                              \
-        equationOfState, rhoConst                                               \
-    );                                                                          \
-    addDetonatingSolidThermo                                                    \
-    (                                                                           \
-        Transport, hConst,                                                      \
-        equationOfState, rhoConst,                                              \
-        equationOfState, rhoConst                                               \
+#define addDetonatingSolidThermos(Transport)                                \
+    addDetonatingSolidThermo                                                \
+    (                                                                       \
+        Transport, eConst,                                                  \
+        equationOfState, rhoConst,                                          \
+        equationOfState, rhoConst                                           \
+    );                                                                      \
+    addDetonatingSolidThermo                                                \
+    (                                                                       \
+        Transport, hConst,                                                  \
+        equationOfState, rhoConst,                                          \
+        equationOfState, rhoConst                                           \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

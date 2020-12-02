@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "constTransport.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

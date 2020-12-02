@@ -40,8 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "fluidThermoModel.H"
-#include "hashedWordList.H"
+#include "mixtureThermoModels.H"
 
 namespace Foam
 {
@@ -53,18 +52,29 @@ namespace Foam
 template<class Thermo>
 class multicomponentFluidThermo
 :
-    public fluidThermoModel
+    public mixtureFluidThermoModel
 {
 //- Private data
 
-    //- Name of species
-    hashedWordList species_;
-
-    //- Mass fractions
-    PtrList<volScalarField> Ys_;
+    typedef multicomponentFluidThermo<Thermo> reactionThermo;
 
     //- Species data
     PtrList<Thermo> speciesData_;
+
+    //- Temporary storage for the cell/face mixture thermo data
+    mutable Thermo mixture_;
+
+    //- Chemistry reader
+    autoPtr<chemistryReader<Thermo>> chemReader_;
+
+    //- Reactions
+    PtrList<Reaction<Thermo>> reactions_;
+
+    //- Table of species composition
+    speciesCompositionTable speciesComposition_;
+
+    //- Chemisty solver
+    autoPtr<ode<StandardChemistryModel<reactionThermo, Thermo>>> chemistry_;
 
     //- Stored thermo state at cell centres
     PtrList<Thermo> volMixture_;
@@ -72,8 +82,6 @@ class multicomponentFluidThermo
     //- Stored thermo state at boundaries
     PtrList<PtrList<Thermo>> faceMixture_;
 
-    //- Temporary storage for the cell/face mixture thermo data
-    mutable Thermo mixture_;
 
     //- Constant pointer to flux
     const surfaceScalarField* alphaRhoPhiPtr_;
@@ -100,6 +108,16 @@ class multicomponentFluidThermo
         ) const;
 
         void updateMixture();
+
+        //- Return a volScalarField of the given property
+        template<class Method, class ... Args>
+        tmp<volScalarField> volScalarFieldProperty
+        (
+            const word& psiName,
+            const dimensionSet& psiDim,
+            Method psiMethod,
+            const Args& ... args
+        ) const;
 
 
 public:
@@ -131,8 +149,7 @@ public:
         virtual void initializeModels();
 
         //- Pre update
-        virtual void update()
-        {}
+        virtual void update();
 
         //- Solve sub-step stepi
         virtual void solve();
@@ -141,8 +158,7 @@ public:
         virtual void clearODEFields();
 
         //- Post update
-        virtual void postUpdate()
-        {}
+        virtual void postUpdate();
 
         //- Correct fields
         virtual void correct();
@@ -216,6 +232,7 @@ public:
             const labelList& faceCells
         ) const;
 
+
         //- Return molecular weight
         virtual tmp<volScalarField> W() const;
 
@@ -285,6 +302,63 @@ public:
             const scalarField& T,
             const label patchi
         ) const;
+
+
+    //- Return
+
+        //- Return the name of the thermo physics
+        virtual word thermoName() const
+        {
+            return Thermo::typeName();
+        }
+
+        //- Return the table of thermos
+        inline const PtrList<Thermo>& speciesData() const;
+
+        //- Table of species composition
+        const speciesCompositionTable& specieComposition() const
+        {
+            return speciesComposition_;
+        }
+
+        //- Return the table of thermos
+        inline const PtrList<Reaction<Thermo>>& reactions() const;
+
+        //- Return the table of species
+        inline const speciesTable& species() const;
+
+        //- Does the mixture include this specie?
+        inline bool contains(const word& specieName) const;
+
+        //- Return true for active species
+        inline bool active(label speciei) const;
+
+        //- Return the bool list of active species
+        inline const List<bool>& active() const;
+
+        //- Set speciei active
+        inline void setActive(label speciei);
+
+        //- Set speciei inactive
+        inline void setInactive(label speciei);
+
+        //- Return the mass-fraction fields
+        inline PtrList<volScalarField>& Y();
+
+        //- Return the const mass-fraction fields
+        inline const PtrList<volScalarField>& Y() const;
+
+        //- Return the mass-fraction field for a specie given by index
+        inline volScalarField& Y(const label i);
+
+        //- Return the const mass-fraction field for a specie given by index
+        inline const volScalarField& Y(const label i) const;
+
+        //- Return the mass-fraction field for a specie given by name
+        inline volScalarField& Y(const word& specieName);
+
+        //- Return the const mass-fraction field for a specie given by name
+        inline const volScalarField& Y(const word& specieName) const;
 };
 
 
@@ -294,27 +368,36 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addMulticomponentFluidThermo(Transport, Thermo, EoSType, EoS)           \
-    typedef multicomponentFluidThermo< Transport##Thermo##EoSType##EoS##blastSpecie> \
-        multicomponentFluid##Transport##Thermo##EoSType##EoS;                   \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        multicomponentFluid##Transport##Thermo##EoSType##EoS,                   \
-        (Transport##Thermo##EoSType##EoS##blastSpecie::typeName()).c_str(),     \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        fluidThermoModel,                                                       \
-        multicomponentFluid##Transport##Thermo##EoSType##EoS,                   \
-        multicomponent                                                          \
+#define defineMulticomponentFluidThermo(Transport, Thermo, EoSType, EoS)    \
+    typedef multicomponentFluidThermo< Transport##Thermo##EoS##blastSpecie> \
+        multicomponent##Transport##Thermo##EoS;
+
+#define defineMulticomponentFluidThermos(Transport, EoSType, EoS)           \
+    defineMulticomponentFluidThermo(Transport, eConst, EoSType, EoS);       \
+    defineMulticomponentFluidThermo(Transport, hConst, EoSType, EoS);
+
+
+#define addMulticomponentFluidThermo(Transport, Thermo, EoSType, EoS)       \
+    defineTemplateTypeNameAndDebugWithName                                  \
+    (                                                                       \
+        multicomponent##Transport##Thermo##EoS,                             \
+        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
+        0                                                                   \
+    );                                                                      \
+    addToRunTimeSelectionTable                                              \
+    (                                                                       \
+        fluidThermoModel,                                                   \
+        multicomponent##Transport##Thermo##EoS,                             \
+        multicomponent                                                      \
     );
 
-#define addMulticomponentFluidThermos(Transport, EoSType, EoS)                  \
-    addMulticomponentFluidThermo(Transport, eConst, EoSType, EoS);              \
+#define addMulticomponentFluidThermos(Transport, EoSType, EoS)              \
+    addMulticomponentFluidThermo(Transport, eConst, EoSType, EoS);          \
     addMulticomponentFluidThermo(Transport, hConst, EoSType, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "multicomponentFluidThermoI.H"
 
 #ifdef NoRepository
     #include "multicomponentFluidThermo.C"

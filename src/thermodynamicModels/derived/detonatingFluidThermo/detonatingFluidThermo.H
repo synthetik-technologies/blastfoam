@@ -150,46 +150,46 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define addDetonatingFluidThermo(Transport, Thermo, uEoSType, uEoS, rEoSType, rEoS) \
-    typedef detonatingFluidThermo                                               \
-        <                                                                       \
-            blendedThermoModel                                                  \
-            <                                                                   \
-                fluidThermoModel,                                               \
-                Transport##Thermo##uEoSType##uEoS##blastSpecie,                 \
-                Transport##Thermo##rEoSType##rEoS##blastSpecie                 \
-            >                                                                   \
-        > detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS;        \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS,          \
-        (                                                                       \
-            "detonating<"                                                       \
-          + word(Transport##Thermo##uEoSType##uEoS##blastSpecie::typeName())    \
-          + ','                                                                 \
-          + word(Transport##Thermo##rEoSType##rEoS##blastSpecie::typeName())    \
-          + '>'                                                                 \
-        ).c_str(),                                                              \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        fluidThermoModel,                                                       \
-        detonating##Transport##Thermo##uEoSType##uEoS##rEoSType##rEoS,          \
-        detonating                                                              \
+    typedef detonatingFluidThermo                                           \
+        <                                                                   \
+            blendedThermoModel                                              \
+            <                                                               \
+                fluidThermoModel,                                           \
+                Transport##Thermo##uEoS##blastSpecie,                       \
+                Transport##Thermo##rEoS##blastSpecie                        \
+            >                                                               \
+        > detonating##Transport##Thermo##uEoS##rEoS;                        \
+    defineTemplateTypeNameAndDebugWithName                                  \
+    (                                                                       \
+        detonating##Transport##Thermo##uEoS##rEoS,                          \
+        (                                                                   \
+            "detonating<"                                                   \
+          + word(Transport##Thermo##uEoS##blastSpecie::typeName())          \
+          + ','                                                             \
+          + word(Transport##Thermo##rEoS##blastSpecie::typeName())          \
+          + '>'                                                             \
+        ).c_str(),                                                          \
+        0                                                                   \
+    );                                                                      \
+    addToRunTimeSelectionTable                                              \
+    (                                                                       \
+        fluidThermoModel,                                                   \
+        detonating##Transport##Thermo##uEoS##rEoS,                          \
+        detonating                                                          \
     );
 
-#define addDetonatingFluidThermos(Transport, uEoSType, uEoS, rEoSType, rEoS)    \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        Transport, eConst,                                                      \
-        uEoSType, uEoS,                                                         \
-        rEoSType, rEoS                                                          \
-    );                                                                          \
-    addDetonatingFluidThermo                                                    \
-    (                                                                           \
-        Transport, hConst,                                                      \
-        uEoSType, uEoS,                                                         \
-        rEoSType, rEoS                                                          \
+#define addDetonatingFluidThermos(Transport, uEoSType, uEoS, rEoSType, rEoS) \
+    addDetonatingFluidThermo                                                \
+    (                                                                       \
+        Transport, eConst,                                                  \
+        uEoSType, uEoS,                                                     \
+        rEoSType, rEoS                                                      \
+    );                                                                      \
+    addDetonatingFluidThermo                                                \
+    (                                                                       \
+        Transport, hConst,                                                  \
+        uEoSType, uEoS,                                                     \
+        rEoSType, rEoS                                                      \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

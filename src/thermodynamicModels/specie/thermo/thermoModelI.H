@@ -92,6 +92,287 @@ Foam::scalar Foam::thermoModel<ThermoType>::CpByCv
 }
 
 
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::G
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    scalar e = this->Es(rho, 1000.0, T);
+    return this->Ha(rho, e, T) - T*this->S(p, rho, e, T);
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::A
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    scalar e = this->Es(rho, 1000.0, T);
+    return this->Ea(rho, e, T) - T*this->S(p, rho, e, T);
+}
+
+
+template<class ThermoType>
+inline Foam::scalar
+Foam::thermoModel<ThermoType>::K
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    scalar arg = -this->Y()*this->G(Pstd, rho, T)/(RR*T);
+
+    if (arg < 600)
+    {
+        return exp(arg);
+    }
+    else
+    {
+        return rootVGreat;
+    }
+}
+
+
+template<class ThermoType>
+inline Foam::scalar
+Foam::thermoModel<ThermoType>::Kp
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    return K(p, rho, T);
+}
+
+
+template<class ThermoType>
+inline Foam::scalar
+Foam::thermoModel<ThermoType>::Kc
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    const scalar nm = this->Y()/this->W();
+
+    if (equal(nm, small))
+    {
+        return Kp(p, rho, T);
+    }
+    else
+    {
+        return Kp(p, rho, T)*pow(Pstd/(RR*T), nm);
+    }
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::Kx
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    const scalar nm = this->Y()/this->W();
+
+    if (equal(nm, small))
+    {
+        return Kp(p, rho, T);
+    }
+    else
+    {
+        return Kp(p, rho, T)*pow(Pstd/p, nm);
+    }
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::Kn
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T,
+    const scalar n
+) const
+{
+    const scalar nm = this->Y()/this->W();
+
+    if (equal(nm, small))
+    {
+        return Kp(p, T);
+    }
+    else
+    {
+        return Kp(p, rho, T)*pow(n*Pstd/p, nm);
+    }
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Cp(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::ha
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Ha(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::hs
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Hs(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::hc() const
+{
+    return this->Hf()*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::s
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->S(p, rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::he
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->es(rho, e, T);
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Cv(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::es
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Es(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::ea
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return this->Ea(rho, e, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::g
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    return this->G(p, rho, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::a
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    return this->A(p, rho, T)*this->W();
+}
+
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::dKcdTbyKc
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    const scalar nm = this->Y()/this->W();
+
+    if (equal(nm, small))
+    {
+        return -this->dGdT(Pstd, T)*this->Y()/RR;
+    }
+    else
+    {
+        return -(nm/T + this->dGdT(Pstd, T)*this->Y()/RR);
+    }
+}
+
+template<class ThermoType>
+inline Foam::scalar
+Foam::thermoModel<ThermoType>::dcpdT(const scalar p, const scalar T) const
+{
+    return this->dCpdT(p, T)*this->W();
+}
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class ThermoType>

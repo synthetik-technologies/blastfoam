@@ -114,17 +114,14 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     const word type(dict.lookupType<word>("type"));
     if (type == "basic")
     {
-        Info<<"basic"<<endl;
         return NewBasic(phaseName, p, rho, e, T, dict, master, masterName);
     }
     else if (type == "detonating")
     {
-        Info<<"detonating"<<endl;
         return NewDetonating(phaseName, p, rho, e, T, dict, master, masterName);
     }
     else if (type == "multicomponent")
     {
-        Info<<"multicomponent"<<endl;
         return NewMulticomponent
         (
             phaseName, p, rho, e, T, dict, master, masterName

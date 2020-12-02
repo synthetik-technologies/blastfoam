@@ -123,27 +123,26 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addSolidThermo(Transport, Thermo, EoSType, EoS)                       \
-    typedef basicSolidThermoModel                                             \
-        <                                                                     \
-            eThermoModel                                                      \
-            <                                                                 \
-                solidThermoModel,                                             \
-                Transport##Thermo##EoSType##EoS##blastSpecie                  \
-            >                                                                 \
-        >                                                                     \
-        solidThermo##Transport##Thermo##EoSType##EoS;                         \
-    defineTemplateTypeNameAndDebugWithName                                    \
-    (                                                                         \
-        solidThermo##Transport##Thermo##EoSType##EoS,                         \
-        (Transport##Thermo##EoSType##EoS##blastSpecie::typeName()).c_str(),   \
-        0                                                                     \
-    );                                                                        \
-    addToRunTimeSelectionTable                                                \
-    (                                                                         \
-        solidThermoModel,                                                     \
-        solidThermo##Transport##Thermo##EoSType##EoS,                         \
-        basicSolid                                                            \
+#define addSolidThermo(Transport, Thermo, EoSType, EoS)                     \
+    typedef basicSolidThermoModel                                           \
+        <                                                                   \
+            eThermoModel                                                    \
+            <                                                               \
+                solidThermoModel,                                           \
+                Transport##Thermo##EoS##blastSpecie                         \
+            >                                                               \
+        > basic##Transport##Thermo##EoS;                                    \
+    defineTemplateTypeNameAndDebugWithName                                  \
+    (                                                                       \
+        basic##Transport##Thermo##EoS,                                      \
+        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
+        0                                                                   \
+    );                                                                      \
+    addToRunTimeSelectionTable                                              \
+    (                                                                       \
+        solidThermoModel,                                                   \
+        basic##Transport##Thermo##EoS,                                      \
+        basicSolid                                                          \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

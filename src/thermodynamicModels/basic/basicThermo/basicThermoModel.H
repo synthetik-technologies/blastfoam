@@ -165,6 +165,11 @@ public:
 
     // Static public functions
 
+        word phasePropertyName(const word& n) const
+        {
+            return IOobject::groupName(n, name_);
+        }
+
         //- Generic lookup for thermodynamics package thermoTypeName
         template<class Table>
         static typename Table::iterator lookupThermo
@@ -189,6 +194,13 @@ public:
         static wordList splitThermoName
         (
             const word& thermoName
+        );
+
+        //- Split name of thermo package into a list of the components names
+        static wordList splitThermoName
+        (
+            const word& thermoName,
+            const label nCmpts
         );
 
         //- Return the internal energy boundary types using an input

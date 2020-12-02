@@ -1,3 +1,4 @@
+specie/atomicWeights/atomicWeights.C
 specie/specie/blastSpecie.C
 specie/specie/rBlastSpecie.C
 
@@ -46,6 +47,28 @@ derivedFvPatchFields/gradientEnergy/blastGradientEnergyFvPatchScalarField.C
 derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
+
+
+/* Chemisty readers */
+chemistryReaders/chemkinReader/chemkinReader.C
+chemistryReaders/chemkinReader/chemkinLexer.L
+chemistryReaders/chemistryReader/makeChemistryReaders.C
+
+/* Reactions */
+specie/reaction/reactions/makeReactions.C
+/*reaction/reactions/makeLangmuirHinshelwoodReactions.C
+reaction/reactions/makeMichaelisMentenReactions.C*/
+
+/* Chemistry models */
+chemistryModel/chemistryModel/basicChemistryModel/basicChemistryModel.C
+chemistryModel/chemistryModel/BasicChemistryModel/BasicChemistryModels.C
+
+chemistryModel/chemistryModel/TDACChemistryModel/reduction/makeChemistryReductionMethods.C
+chemistryModel/chemistryModel/TDACChemistryModel/tabulation/makeChemistryTabulationMethods.C
+
+chemistryModel/chemistrySolver/chemistrySolver/makeChemistrySolvers.C
+
+/*chemistryModel/functionObjects/specieReactionRates/specieReactionRates.C*/
 
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

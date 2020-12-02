@@ -100,6 +100,9 @@ protected:
 
 public:
 
+    //- The thermodynamics of the individual species'
+    typedef thermoModel<ThermoType> thermoType;
+
     // Constructors
 
         //- Construct from components
@@ -172,6 +175,181 @@ public:
             const scalar& T
         ) const;
 
+        //- calculate energy and density
+        scalar TPRho
+        (
+            const scalar& T0,
+            const scalar& p,
+            const scalar& rho
+        ) const;
+
+    // Mass specific derived properties
+
+            //- Gibbs free energy [J/kg]
+            inline scalar G
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Helmholtz free energy [J/kg]
+            inline scalar A
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+
+    // Equilibrium reaction thermodynamics
+
+            //- Equilibrium constant [] i.t.o fugacities
+            //  = PIi(fi/Pstd)^nui
+            inline scalar K
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Equilibrium constant [] i.t.o. partial pressures
+            //  = PIi(pi/Pstd)^nui
+            //  For low pressures (where the gas mixture is near perfect) Kp = K
+            inline scalar Kp
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Equilibrium constant i.t.o. molar concentration
+            //  = PIi(ci/cstd)^nui
+            //  For low pressures (where the gas mixture is near perfect)
+            //  Kc = Kp(pstd/(RR*T))^nu
+            inline scalar Kc
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Equilibrium constant [] i.t.o. mole-fractions
+            //  For low pressures (where the gas mixture is near perfect)
+            //  Kx = Kp(pstd/p)^nui
+            inline scalar Kx
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Equilibrium constant [] i.t.o. number of moles
+            //  For low pressures (where the gas mixture is near perfect)
+            //  Kn = Kp(n*pstd/p)^nui where n = number of moles in mixture
+            inline scalar Kn
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T,
+                const scalar n
+            ) const;
+
+        // Mole specific derived properties
+
+            //- Heat capacity at constant pressure [J/kmol/K]
+            inline scalar cp
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Absolute Enthalpy [J/kmol]
+            inline scalar ha
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Sensible enthalpy [J/kmol]
+            inline scalar hs
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Chemical enthalpy [J/kmol]
+            inline scalar hc() const;
+
+            //- Entropy [J/kmol/K]
+            inline scalar s
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Enthalpy/Internal energy [J/kmol]
+            inline scalar he
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Heat capacity at constant volume [J/kmol/K]
+            inline scalar cv
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Sensible internal energy [J/kmol]
+            inline scalar es
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Absolute internal energy [J/kmol]
+            inline scalar ea
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Gibbs free energy [J/kmol]
+            inline scalar g
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+            //- Helmholtz free energy [J/kmol]
+            inline scalar a
+            (
+                const scalar p,
+                const scalar rho,
+                const scalar T
+            ) const;
+
+
+        // Derivative term used for Jacobian
+
+            //- Derivative of B (acooding to Niemeyer et al.) w.r.t. temperature
+            inline scalar dKcdTbyKc(const scalar p, const scalar T) const;
+
+            //- Derivative of cp w.r.t. temperature
+            inline scalar dcpdT(const scalar p, const scalar T) const;
+
 
     // Member Operators
 
@@ -233,7 +411,7 @@ typedef                                                                     \
                 >                                                           \
             >                                                               \
         >                                                                   \
-    > Transport##Thermo##EoSType##EoS##Specie;                              \
+    > Transport##Thermo##EoS##Specie;
 
 #define defineThermoTypes(Transport, EoSType, EoS, Specie)                  \
     defineThermoType(Transport, eConst, EoSType, EoS, Specie)               \

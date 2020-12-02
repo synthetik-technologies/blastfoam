@@ -285,6 +285,8 @@ void Foam::phaseCompressibleSystem::postUpdate()
 {
     this->decode();
 
+    this->thermo().postUpdate();
+
     if (radiation_.valid())
     {
         radiation_->correct();
@@ -349,8 +351,6 @@ void Foam::phaseCompressibleSystem::postUpdate()
     {
         turbulence_->correct();
     }
-
-    this->thermo().postUpdate();
 }
 
 

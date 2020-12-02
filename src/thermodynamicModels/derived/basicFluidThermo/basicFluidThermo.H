@@ -127,20 +127,27 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addFluidThermo(Transport, Thermo, EoSType, EoS)                         \
-    typedef basicFluidThermo<eThermoModel<fluidThermoModel, Transport##Thermo##EoSType##EoS##blastSpecie>>     \
-        basicFluidThermo##Transport##Thermo##EoSType##EoS;                      \
-    defineTemplateTypeNameAndDebugWithName                                      \
-    (                                                                           \
-        basicFluidThermo##Transport##Thermo##EoSType##EoS,                      \
-        (Transport##Thermo##EoSType##EoS##blastSpecie::typeName()).c_str(),     \
-        0                                                                       \
-    );                                                                          \
-    addToRunTimeSelectionTable                                                  \
-    (                                                                           \
-        fluidThermoModel,                                                       \
-        basicFluidThermo##Transport##Thermo##EoSType##EoS,                      \
-        basic                                                                   \
+#define addFluidThermo(Transport, Thermo, EoSType, EoS)                     \
+    typedef                                                                 \
+        basicFluidThermo                                                    \
+        <                                                                   \
+            eThermoModel                                                    \
+            <                                                               \
+                fluidThermoModel,                                           \
+                Transport##Thermo##EoS##blastSpecie                         \
+            >                                                               \
+        > basic##Transport##Thermo##EoS;                                    \
+    defineTemplateTypeNameAndDebugWithName                                  \
+    (                                                                       \
+        basic##Transport##Thermo##EoS,                                      \
+        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
+        0                                                                   \
+    );                                                                      \
+    addToRunTimeSelectionTable                                              \
+    (                                                                       \
+        fluidThermoModel,                                                   \
+        basic##Transport##Thermo##EoS,                                      \
+        basic                                                               \
     );
 
 #define addFluidThermos(Transport, EoSType, EoS)                            \
