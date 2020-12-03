@@ -81,14 +81,14 @@ Foam::eConst<EquationOfState>::New(const dictionary& dict)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// template<class EquationOfState>
-// inline Foam::scalar Foam::eConst<EquationOfState>::limit
-// (
-//     const scalar T
-// ) const
-// {
-//     return T;
-// }
+template<class EquationOfState>
+inline Foam::scalar Foam::eConst<EquationOfState>::limit
+(
+    const scalar T
+) const
+{
+    return T;
+}
 
 
 template<class EquationOfState>

@@ -98,6 +98,21 @@ protected:
         label maxIter_;
 
 
+        //- Return the temperature corresponding to the value of the
+        //  thermodynamic property f, given the function f = F(rho, T)
+        //  and dF(rho, T)/dT
+        inline scalar T
+        (
+            const scalar f,
+            const scalar e,
+            const scalar rho,
+            const scalar T0,
+            scalar (thermoModel::*F)(const scalar&, const scalar&, const scalar&) const,
+            scalar (thermoModel::*dFdT)(const scalar&, const scalar&, const scalar&) const,
+            scalar (thermoModel::*limit)(const scalar) const
+        ) const;
+
+
 public:
 
     //- The thermodynamics of the individual species'
@@ -149,14 +164,6 @@ public:
             const scalar& T
         ) const;
 
-        //- Return temperature
-        scalar TRhoE
-        (
-            const scalar& T0,
-            const scalar& rho,
-            const scalar& e
-        ) const;
-
         //- Initialize internal energy
         scalar initializeEnergy
         (
@@ -175,13 +182,6 @@ public:
             const scalar& T
         ) const;
 
-        //- calculate energy and density
-        scalar TPRho
-        (
-            const scalar& T0,
-            const scalar& p,
-            const scalar& rho
-        ) const;
 
     // Mass specific derived properties
 
@@ -349,6 +349,57 @@ public:
 
             //- Derivative of cp w.r.t. temperature
             inline scalar dcpdT(const scalar p, const scalar T) const;
+
+
+    // Energy->temperature  inversion functions
+
+            //- Temperature from enthalpy or internal energy
+            //  given an initial temperature T0
+            inline scalar TRhoE
+            (
+                const scalar T,
+                const scalar rho,
+                const scalar E
+            ) const;
+
+            //- Temperature from sensible enthalpy given an initial T0
+            inline scalar THs
+            (
+                const scalar Hs,
+                const scalar p,
+                const scalar rho,
+                const scalar T0
+            ) const;
+
+            //- Temperature from absolute enthalpy
+            //  given an initial temperature T0
+            inline scalar THa
+            (
+                const scalar Ha,
+                const scalar p,
+                const scalar rho,
+                const scalar T0
+            ) const;
+
+            //- Temperature from sensible internal energy
+            //  given an initial temperature T0
+            inline scalar TEs
+            (
+                const scalar Es,
+                const scalar p,
+                const scalar rho,
+                const scalar T0
+            ) const;
+
+            //- Temperature from absolute internal energy
+            //  given an initial temperature T0
+            inline scalar TEa
+            (
+                const scalar Ea,
+                const scalar p,
+                const scalar rho,
+                const scalar T0
+            ) const;
 
 
     // Member Operators

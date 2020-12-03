@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class ThermoType>
 inline Foam::thermoModel<ThermoType>::thermoModel
@@ -39,6 +39,57 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     maxIter_(100)
 {}
 
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::T
+(
+    const scalar f,
+    const scalar e,
+    const scalar rho,
+    const scalar T0,
+    scalar (thermoModel<ThermoType>::*F)(const scalar&, const scalar&, const scalar&) const,
+    scalar (thermoModel<ThermoType>::*dFdT)(const scalar&, const scalar&, const scalar&)
+        const,
+    scalar (thermoModel<ThermoType>::*limit)(const scalar) const
+) const
+{
+    if (rho < small)
+    {
+        return 0.0;
+    }
+    if (T0 < 0)
+    {
+        FatalErrorInFunction
+            << "Negative initial temperature T0: " << T0
+            << abort(FatalError);
+    }
+
+    scalar Test = T0;
+    scalar Tnew = T0;
+    scalar Ttol = T0*tolerance_;
+    int    iter = 0;
+
+    do
+    {
+        Test = Tnew;
+        Tnew =
+            (this->*limit)
+            (Test - ((this->*F)(rho, e, Test) - f)/(this->*dFdT)(rho, e, Test));
+
+        if (iter++ > maxIter_)
+        {
+            FatalErrorInFunction
+                << "Maximum number of iterations exceeded: " << maxIter_
+                << abort(FatalError);
+        }
+
+    } while (mag(Tnew - Test) > Ttol);
+
+    return Tnew;
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class ThermoType>
 inline Foam::thermoModel<ThermoType>::thermoModel
@@ -372,6 +423,116 @@ Foam::thermoModel<ThermoType>::dcpdT(const scalar p, const scalar T) const
 {
     return this->dCpdT(p, T)*this->W();
 }
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
+(
+    const scalar T0,
+    const scalar rho,
+    const scalar e
+) const
+{
+    return T
+    (
+        e,
+        e,
+        rho,
+        T0,
+        &thermoModel<ThermoType>::Es,
+        &thermoModel<ThermoType>::Cv,
+        &thermoModel<ThermoType>::limit
+    );
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::THs
+(
+    const scalar hs,
+    const scalar p,
+    const scalar rho,
+    const scalar T0
+) const
+{
+    return T
+    (
+        hs,
+        hs - p/rho,
+        rho,
+        T0,
+        &thermoModel<ThermoType>::Hs,
+        &thermoModel<ThermoType>::Cp,
+        &thermoModel<ThermoType>::limit
+    );
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::THa
+(
+    const scalar ha,
+    const scalar p,
+    const scalar rho,
+    const scalar T0
+) const
+{
+    return T
+    (
+        ha,
+        ha - p/rho - this->Hf(),
+        rho,
+        T0,
+        &thermoModel<ThermoType>::Ha,
+        &thermoModel<ThermoType>::Cp,
+        &thermoModel<ThermoType>::limit
+    );
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::TEs
+(
+    const scalar es,
+    const scalar p,
+    const scalar rho,
+    const scalar T0
+) const
+{
+    return T
+    (
+        es,
+        es,
+        rho,
+        T0,
+        &thermoModel<ThermoType>::Es,
+        &thermoModel<ThermoType>::Cv,
+        &thermoModel<ThermoType>::limit
+    );
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::TEa
+(
+    const scalar ea,
+    const scalar p,
+    const scalar rho,
+    const scalar T0
+) const
+{
+    return T
+    (
+        ea,
+        ea - this->Hf(),
+        rho,
+        T0,
+        &thermoModel<ThermoType>::Ea,
+        &thermoModel<ThermoType>::Cv,
+        &thermoModel<ThermoType>::limit
+    );
+}
+
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 

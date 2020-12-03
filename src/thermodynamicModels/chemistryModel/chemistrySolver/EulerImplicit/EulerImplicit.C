@@ -116,7 +116,8 @@ void Foam::EulerImplicit<ChemistryModel>::solve
     {
         mixture += (this->specieThermo_[i].W()*c[i])*this->specieThermo_[i];
     }
-    const scalar ha = mixture.Ha(p, this->rhoi_, T);
+    scalar es = 0;
+    const scalar ha = mixture.Ha(this->rhoi_, es, T);
     const scalar deltaTEst = min(deltaT, subDeltaT);
 
     forAll(this->reactions(), i)
@@ -191,8 +192,7 @@ void Foam::EulerImplicit<ChemistryModel>::solve
     {
         mixture += (this->specieThermo_[i].W()*c[i])*this->specieThermo_[i];
     }
-    scalar e = ha - p/this->rhoi_ - mixture.Hf();
-    T = mixture.TRhoE(T, this->rhoi_, e);
+    T = mixture.THa(ha, p, this->rhoi_, T);
 }
 
 

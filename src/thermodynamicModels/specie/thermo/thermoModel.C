@@ -40,36 +40,6 @@ Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::TRhoE
-(
-    const scalar& T0,
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    scalar Test = T0;
-    scalar Tnew = T0;
-    scalar Ttol = tolerance_;
-    int    iter = 0;
-
-    if (rho < small)
-    {
-        return 0.0;
-    }
-    do
-    {
-        Test = Tnew;
-        Tnew =
-            Test
-          - (ThermoType::Es(rho, e, Test) - e)/ThermoType::Cv(rho, e, Test);
-        Tnew = max(Tnew, 0.0);
-
-    } while (mag(Tnew - Test)/max(Tnew, small) > Ttol && iter++ < maxIter_);
-
-    return Tnew;
-}
-
 
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
@@ -117,44 +87,6 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
     } while (mag(Enew - Eest)/max(Eest, small) > Etol);
 
     return Enew;
-}
-
-
-template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::TPRho
-(
-    const scalar& T0,
-    const scalar& p,
-    const scalar& rho
-) const
-{
-    scalar Test = T0;
-    scalar Tnew = T0;
-    scalar Ttol = tolerance_;
-    int    iter = 0;
-    scalar dpdT, e;
-
-    do
-    {
-        Test = Tnew;
-        e = ThermoType::Es(rho, e, Test);
-
-        if (this->temperatureBased())
-        {
-            dpdT = ThermoType::dpdT(rho, e, Test);
-        }
-        else
-        {
-            dpdT = ThermoType::dpde(rho, e, Test)/ThermoType::Cv(rho, e, Test);
-        }
-        Tnew =
-            Test
-          - (ThermoType::p(rho, e, Test) - p)/stabilise(dpdT, small);
-        Tnew = max(Tnew, 0.0);
-
-    } while (mag(Tnew - Test)/max(Tnew, small) > Ttol && iter++ < maxIter_);
-
-    return Tnew;
 }
 
 

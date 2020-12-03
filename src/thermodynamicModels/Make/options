@@ -1,5 +1,4 @@
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -9,6 +8,7 @@ EXE_INC = \
 
 LIB_LIBS = \
     -lfiniteVolume \
+    -lODE \
     -L$(BLAST_LIBBIN) \
     -ltimeIntegrators \
     -ldiameterModels

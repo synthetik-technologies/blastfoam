@@ -105,27 +105,27 @@ inline Foam::janaf<EquationOfState>::janaf
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-// template<class EquationOfState>
-// inline Foam::scalar Foam::janaf<EquationOfState>::limit
-// (
-//     const scalar T
-// ) const
-// {
-//     if (T < Tlow_ || T > Thigh_)
-//     {
-//         WarningInFunction
-//             << "attempt to use janaf<EquationOfState>"
-//                " out of temperature range "
-//             << Tlow_ << " -> " << Thigh_ << ";  T = " << T
-//             << endl;
-//
-//         return min(max(T, Tlow_), Thigh_);
-//     }
-//     else
-//     {
-//         return T;
-//     }
-// }
+template<class EquationOfState>
+inline Foam::scalar Foam::janaf<EquationOfState>::limit
+(
+    const scalar T
+) const
+{
+    if (janaf<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))
+    {
+        WarningInFunction
+            << "attempt to use janaf<EquationOfState>"
+               " out of temperature range "
+            << Tlow_ << " -> " << Thigh_ << ";  T = " << T
+            << endl;
+
+        return min(max(T, Tlow_), Thigh_);
+    }
+    else
+    {
+        return T;
+    }
+}
 
 
 template<class EquationOfState>
