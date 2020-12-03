@@ -1,4 +1,3 @@
-specie/atomicWeights/atomicWeights.C
 specie/specie/blastSpecie.C
 specie/specie/rBlastSpecie.C
 
@@ -19,7 +18,6 @@ derived/detonatingSolidThermo/detonatingSolidThermos.C
 derived/twoPhaseFluidThermo/twoPhaseFluidThermo.C
 derived/multiphaseFluidThermo/multiphaseFluidThermo.C
 derived/multicomponentFluidThermo/multicomponentFluidThermos.C
-derived/reactingFluidThermo/reactingFluidThermos.C
 
 lookupTables/lookupTable2D/lookupTable2D.C
 lookupTables/lookupTable1D/lookupTable1D.C
@@ -48,28 +46,6 @@ derivedFvPatchFields/gradientEnergy/blastGradientEnergyFvPatchScalarField.C
 derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
 derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
-
-
-/* Chemisty readers */
-chemistryReaders/chemkinReader/chemkinReader.C
-chemistryReaders/chemkinReader/chemkinLexer.L
-chemistryReaders/chemistryReader/makeChemistryReaders.C
-
-/* Reactions */
-specie/reaction/reactions/makeReactions.C
-/*reaction/reactions/makeLangmuirHinshelwoodReactions.C
-reaction/reactions/makeMichaelisMentenReactions.C*/
-
-/* Chemistry models */
-chemistryModel/chemistryModel/basicChemistryModel/basicChemistryModel.C
-chemistryModel/chemistryModel/BasicChemistryModel/BasicChemistryModels.C
-
-chemistryModel/chemistryModel/TDACChemistryModel/reduction/makeChemistryReductionMethods.C
-chemistryModel/chemistryModel/TDACChemistryModel/tabulation/makeChemistryTabulationMethods.C
-
-chemistryModel/chemistrySolver/chemistrySolver/makeChemistrySolvers.C
-
-/*chemistryModel/functionObjects/specieReactionRates/specieReactionRates.C*/
 
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics
