@@ -66,7 +66,10 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
 
     scalar Test = T0;
     scalar Tnew = T0;
-    scalar Ttol = T0*tolerance_;
+
+    //- Limit tolerance if T is very small
+    scalar Ttol = max(T0, 1.0)*tolerance_;
+
     int    iter = 0;
 
     do
@@ -82,7 +85,6 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
                 << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
-
     } while (mag(Tnew - Test) > Ttol);
 
     return Tnew;

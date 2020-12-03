@@ -15,34 +15,31 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-mixture
+type            basic;
+thermoType
 {
-    type            basic;
-    thermoType
-    {
-        transport   const;
-        thermo      eConst;
-        equationOfState idealGas;
-    }
+    transport   const;
+    thermo      eConst;
+    equationOfState idealGas;
+}
 
-    specie
-    {
-        molWeight       28.97;
-    }
-    transport
-    {
-        mu              0;
-        Pr              1;
-    }
-    thermodynamics
-    {
-        Cv          1;
-        Hf          0.0;
-    }
-    equationOfState
-    {
-        gamma 1.4;
-    }
+specie
+{
+    molWeight       28.97;
+}
+transport
+{
+    mu              0;
+    Pr              1;
+}
+thermodynamics
+{
+    Cv          1;
+    Hf          0.0;
+}
+equationOfState
+{
+    gamma 1.4;
 }
 
 

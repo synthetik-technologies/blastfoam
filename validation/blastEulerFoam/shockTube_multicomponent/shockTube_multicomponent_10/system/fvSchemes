@@ -43,7 +43,7 @@ gradSchemes
 divSchemes
 {
     default         none;
-    div(Y)          Riemann;
+    div(Yi)         Riemann;
     div((((alpha.gas*rho.gas)*nuEff.gas)*dev2(T(grad(U.gas))))) Gauss linear;
     div(sigma.particles) Gauss linear;
 }

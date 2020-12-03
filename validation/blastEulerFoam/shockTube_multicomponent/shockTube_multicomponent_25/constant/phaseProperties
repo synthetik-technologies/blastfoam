@@ -63,26 +63,28 @@ particles
 
 gas
 {
-    phaseType            multicomponent;
-    components      (He N2);
-    diameterModel constant;
+    phaseType       fluid;
+    diameterModel   constant;
     constantDiameterCoeffs
     {
         d           0;
     }
 
+    type multicomponent;
+    species      (He N2);
+    calculateDensity yes;
+    thermoType
+    {
+        transport   const;
+        thermo      hConst;
+        equationOfState idealGas;
+    }
+
     He
     {
-        type basic;
-        thermoType
-        {
-            transport   const;
-            thermo      eConst;
-            equationOfState idealGas;
-        }
         equationOfState
         {
-            gamma           1.66;            // Heat capactiy ratio
+            gamma           1.667;            // Heat capactiy ratio
         }
         specie
         {
@@ -96,19 +98,11 @@ gas
         thermodynamics
         {
             Cp          5190;
-            Cv          3115.6;
             Hf          0;
         }
     }
     N2
     {
-        type basic;
-        thermoType
-        {
-            transport   const;
-            thermo      eConst;
-            equationOfState idealGas;
-        }
         equationOfState
         {
             gamma           1.4;            // Heat capactiy ratio
@@ -125,7 +119,6 @@ gas
         thermodynamics
         {
             Cp          1040;
-            Cv          743;
             Hf          0;
         }
     }

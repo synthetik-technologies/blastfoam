@@ -10,13 +10,13 @@ FoamFile
     version     2.0;
     format      ascii;
     class       volScalarField;
-    object      Y.He.orig;
+    object      N2.gas.orig;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [0 0 0 0 0 0 0];
 
-internalField   uniform 0;
+internalField   uniform 1;
 
 boundaryField
 {

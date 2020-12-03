@@ -15,54 +15,50 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-mixture
+type        basic;
+thermoType
 {
-    type        basic;
-    thermoType
-    {
-        transport const;
-        thermo      tabulated;
-        equationOfState tabulated;
-    }
-
-    specie
-    {
-        molWeight       28.97;
-    }
-    transport
-    {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
-    }
-    equationOfState
-    {
-        file        "p.csv";
-        nRho        7;
-        ne          40;
-        minRho      -3.0;
-        mine        11.8748;
-        dRho        1.0;
-        de          1.0;
-
-        mod         ln;
-        rhoMod      log10;
-        eMod        ln;
-    }
-    thermodynamics
-    {
-        file        "T.csv";
-        nRho        7;
-        ne          40;
-        minRho      -3.0;
-        mine        11.8748;
-        dRho        1.0;
-        de          1.0;
-
-        mod         ln;
-        rhoMod      log10;
-        eMod        ln;
-    }
+    transport const;
+    thermo      tabulated;
+    equationOfState tabulated;
 }
 
+specie
+{
+    molWeight       28.97;
+}
+transport
+{
+    mu              0;              // Viscosity
+    Pr              1;              // Prandtl number
+}
+equationOfState
+{
+    file        "p.csv";
+    nRho        7;
+    ne          40;
+    minRho      -3.0;
+    mine        11.8748;
+    dRho        1.0;
+    de          1.0;
+
+    mod         ln;
+    rhoMod      log10;
+    eMod        ln;
+}
+thermodynamics
+{
+    file        "T.csv";
+    nRho        7;
+    ne          40;
+    minRho      -3.0;
+    mine        11.8748;
+    dRho        1.0;
+    de          1.0;
+
+    mod         ln;
+    rhoMod      log10;
+    eMod        ln;
+}
 
 // ************************************************************************* //

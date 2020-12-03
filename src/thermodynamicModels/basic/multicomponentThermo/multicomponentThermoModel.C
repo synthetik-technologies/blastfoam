@@ -57,7 +57,12 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     ),
     species_(dict.lookup("species")),
     Ys_(species_.size()),
-    inertIndex_(species_[dict.lookupType<word>("inertSpecie")]),
+    inertIndex_
+    (
+        dict.found("inertSpecie")
+      ? species_[dict.lookupType<word>("inertSpecie")]
+      : species_.size() - 1
+    ),
     active_(species_.size(), true),
     YsOld_(species_.size()),
     deltaAlphaRhoYs_(species_.size())
@@ -384,6 +389,7 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
     (
         this->rho_.mesh().template lookupObject<volScalarField>(alphaRhoName_)
     );
+
     forAll(Ys_, i)
     {
         if (active(i) && i != inertIndex_)
@@ -393,18 +399,17 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
                 Ys_[i].storeOldTime();
             }
 
-            volScalarField YOld(Ys_[i]);
-            this->storeAndBlendOld(YOld, YsOld_[i]);
+            this->storeAndBlendOld(Ys_[i], YsOld_[i]);
 
             volScalarField deltaAlphaRhoY
             (
-                fvc::div(alphaRhoPhi, Ys_[i], "div(Y)")
+                fvc::div(alphaRhoPhi, Ys_[i], "div(Yi)")
             );
             this->storeAndBlendDelta(deltaAlphaRhoY, deltaAlphaRhoYs_[i]);
 
             Ys_[i] =
                 (
-                    alphaRho.prevIter()*YOld - dT*deltaAlphaRhoY
+                    alphaRho.prevIter()*Ys_[i] - dT*deltaAlphaRhoY
                 )/max(this->residualRho(), alphaRho);
             Ys_[i].max(0.0);
             Ys_[i].correctBoundaryConditions();

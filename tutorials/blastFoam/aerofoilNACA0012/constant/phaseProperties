@@ -15,33 +15,30 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-mixture // air at room temperature (293 K)
+type basic;
+thermoType
 {
-    type basic;
-    thermoType
-    {
-        transport       const;
-        thermo          hConst;
-        equationOfState idealGas;
-    }
-    specie
-    {
-        molWeight   28.9;
-    }
-    equationOfState
-    {
-        gamma 1.4;
-    }
-    thermodynamics
-    {
-        Cp          1005;
-        Hf          0;
-    }
-    transport
-    {
-        mu          1.82e-05;
-        Pr          0.71;
-    }
+    transport       const;
+    thermo          hConst;
+    equationOfState idealGas;
+}
+specie
+{
+    molWeight   28.9;
+}
+equationOfState
+{
+    gamma 1.4;
+}
+thermodynamics
+{
+    Cp          1005;
+    Hf          0;
+}
+transport
+{
+    mu          1.82e-05;
+    Pr          0.71;
 }
 
 // ************************************************************************* //

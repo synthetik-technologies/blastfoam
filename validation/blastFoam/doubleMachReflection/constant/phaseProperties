@@ -15,37 +15,31 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-mixture
+type basic;
+thermoType
 {
-    type basic;
-    thermoType
-    {
-        transport   const;
-        thermo      hConst;
-        equationOfState idealGas;
-    }
-    equationOfState
-    {
-        gamma           1.4;
-    }
-    specie
-    {
-        molWeight       11640.3; // Normalizes pressure
-    }
-    transport
-    {
-        mu              0;
-        Pr              1;
-    }
-    thermodynamics
-    {
-        Cp          2.5;
-        Cv          1.785714286;
-        Hf          0;
-    }
-
-    residualRho     1e-6;
-    residualAlpha   1e-10;
+    transport   const;
+    thermo      hConst;
+    equationOfState idealGas;
+}
+equationOfState
+{
+    gamma           1.4;
+}
+specie
+{
+    molWeight       11640.3; // Normalizes pressure
+}
+transport
+{
+    mu              0;
+    Pr              1;
+}
+thermodynamics
+{
+    Cp          2.5;
+    Cv          1.785714286;
+    Hf          0;
 }
 
 // ************************************************************************* //

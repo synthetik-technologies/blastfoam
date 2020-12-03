@@ -15,35 +15,32 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-mixture
+type basic;
+thermoType
 {
-    type basic;
-    thermoType
-    {
-        transport const;
-        thermo eConst;
-        equationOfState idealGas;
-    };
-    equationOfState
-    {
-        gamma       1.4;
-    }
+    transport const;
+    thermo eConst;
+    equationOfState idealGas;
+};
+equationOfState
+{
+    gamma       1.4;
+}
 
-    specie
-    {
-        molWeight    11640.3;
-    }
-    transport
-    {
-        mu              0;              // Viscosity
-        Pr              1;              // Prandtl number
-    }
-    thermodynamics
-    {
-        type        eConst;
-        Cv          1.78575;           // Heat capacity
-        Hf          0.0;
-    }
+specie
+{
+    molWeight    11640.3;
+}
+transport
+{
+    mu              0;              // Viscosity
+    Pr              1;              // Prandtl number
+}
+thermodynamics
+{
+    type        eConst;
+    Cv          1.78575;           // Heat capacity
+    Hf          0.0;
 }
 
 

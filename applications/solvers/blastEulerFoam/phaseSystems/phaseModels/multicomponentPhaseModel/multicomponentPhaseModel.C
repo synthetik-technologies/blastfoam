@@ -117,7 +117,7 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
             (
                 IOobject
                 (
-                    IOobject::groupName("Y", components_[i]),
+                    IOobject::groupName(components_[i], phaseName),
                     fluid.mesh().time().timeName(),
                     fluid.mesh(),
                     IOobject::READ_IF_PRESENT,

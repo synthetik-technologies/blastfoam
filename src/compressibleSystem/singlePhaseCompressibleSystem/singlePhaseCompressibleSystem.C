@@ -56,7 +56,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
             rho_,
             e_,
             T_,
-            this->subDict("mixture"),
+            *this,
             true
         )
     )
