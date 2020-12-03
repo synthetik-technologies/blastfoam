@@ -26,7 +26,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multicomponentFluidThermoTypes.H"
+#include "multicomponentFluidThermo.H"
+#include "fluidThermoModelTypes.H"
 #include "addToRunTimeSelectionTable.H"
 
 namespace Foam
@@ -40,20 +41,6 @@ namespace Foam
     addMulticomponentFluidThermos
     (
         sutherlandTransport,
-        MGEquationOfState,
-        idealGas
-    );
-    addMulticomponentFluidThermo
-    (
-        constTransport,
-        janaf,
-        MGEquationOfState,
-        idealGas
-    );
-    addMulticomponentFluidThermo
-    (
-        sutherlandTransport,
-        janaf,
         MGEquationOfState,
         idealGas
     );

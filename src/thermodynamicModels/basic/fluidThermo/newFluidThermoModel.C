@@ -99,6 +99,29 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewMulticomponent
 }
 
 
+Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewReacting
+(
+    const word& phaseName,
+    volScalarField& p,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const bool master,
+    const word& masterName
+)
+{
+    reactingConstructorTable::iterator cstrIter =
+        lookupThermo<multicomponentConstructorTable>
+        (
+            dict,
+            reactingConstructorTablePtr_
+        );
+
+    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+}
+
+
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
 (
     const word& phaseName,
@@ -127,6 +150,13 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
             phaseName, p, rho, e, T, dict, master, masterName
         );
     }
+    else if (type == "reacting")
+    {
+        return NewReacting
+        (
+            phaseName, p, rho, e, T, dict, master, masterName
+        );
+    }
     else
     {
         FatalErrorInFunction
@@ -135,6 +165,7 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
             << "basic" << nl
             << "detonating" << nl
             << "multicomponent" << nl
+            << "reacting" << nl
             << abort(FatalError);
     }
     return autoPtr<fluidThermoModel>();

@@ -26,6 +26,7 @@ License
 #include "TDACChemistryModel.H"
 #include "UniformField.H"
 #include "localEulerDdtScheme.H"
+#include "reactingFluidThermo.H"
 #include "clockTime.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -71,7 +72,7 @@ Foam::TDACChemistryModel<ReactionThermo, ThermoType>::TDACChemistryModel
     speciesTable speciesTab = this->thermo().species();
 
     const HashTable<List<specieElement>>& specComp =
-        this->thermo().specieComposition();
+        dynamic_cast<reactingFluidThermo<ThermoType>&>(thermo).specieComposition();
 
     forAll(specieComp_, i)
     {

@@ -28,14 +28,14 @@ License
 
 template<class BasicThermo>
 inline const Foam::speciesTable&
-Foam::MixtureThermoModel<BasicThermo>::species() const
+Foam::multicomponentThermoModel<BasicThermo>::species() const
 {
     return species_;
 }
 
 
 template<class BasicThermo>
-inline bool Foam::MixtureThermoModel<BasicThermo>::contains
+inline bool Foam::multicomponentThermoModel<BasicThermo>::contains
 (
     const word& specieName
 ) const
@@ -46,7 +46,7 @@ inline bool Foam::MixtureThermoModel<BasicThermo>::contains
 
 template<class BasicThermo>
 inline bool
-Foam::MixtureThermoModel<BasicThermo>::active(label speciei) const
+Foam::multicomponentThermoModel<BasicThermo>::active(label speciei) const
 {
     return active_[speciei];
 }
@@ -54,21 +54,21 @@ Foam::MixtureThermoModel<BasicThermo>::active(label speciei) const
 
 template<class BasicThermo>
 inline const Foam::List<bool>&
-Foam::MixtureThermoModel<BasicThermo>::active() const
+Foam::multicomponentThermoModel<BasicThermo>::active() const
 {
     return active_;
 }
 
 
 template<class BasicThermo>
-inline void Foam::MixtureThermoModel<BasicThermo>::setActive(label speciei)
+inline void Foam::multicomponentThermoModel<BasicThermo>::setActive(label speciei)
 {
     active_[speciei] = true;
 }
 
 
 template<class BasicThermo>
-inline void Foam::MixtureThermoModel<BasicThermo>::setInactive(label speciei)
+inline void Foam::multicomponentThermoModel<BasicThermo>::setInactive(label speciei)
 {
     active_[speciei] = false;
 }
@@ -76,7 +76,7 @@ inline void Foam::MixtureThermoModel<BasicThermo>::setInactive(label speciei)
 
 template<class BasicThermo>
 inline Foam::PtrList<Foam::volScalarField>&
-Foam::MixtureThermoModel<BasicThermo>::Y()
+Foam::multicomponentThermoModel<BasicThermo>::Y()
 {
     return Ys_;
 }
@@ -84,7 +84,7 @@ Foam::MixtureThermoModel<BasicThermo>::Y()
 
 template<class BasicThermo>
 inline const Foam::PtrList<Foam::volScalarField>&
-Foam::MixtureThermoModel<BasicThermo>::Y() const
+Foam::multicomponentThermoModel<BasicThermo>::Y() const
 {
     return Ys_;
 }
@@ -92,7 +92,7 @@ Foam::MixtureThermoModel<BasicThermo>::Y() const
 
 template<class BasicThermo>
 inline Foam::volScalarField&
-Foam::MixtureThermoModel<BasicThermo>::Y(const label i)
+Foam::multicomponentThermoModel<BasicThermo>::Y(const label i)
 {
     return Ys_[i];
 }
@@ -100,7 +100,7 @@ Foam::MixtureThermoModel<BasicThermo>::Y(const label i)
 
 template<class BasicThermo>
 inline const Foam::volScalarField&
-Foam::MixtureThermoModel<BasicThermo>::Y
+Foam::multicomponentThermoModel<BasicThermo>::Y
 (
     const label i
 ) const
@@ -111,7 +111,7 @@ Foam::MixtureThermoModel<BasicThermo>::Y
 
 template<class BasicThermo>
 inline Foam::volScalarField&
-Foam::MixtureThermoModel<BasicThermo>::Y
+Foam::multicomponentThermoModel<BasicThermo>::Y
 (
     const word& specieName
 )
@@ -122,7 +122,7 @@ Foam::MixtureThermoModel<BasicThermo>::Y
 
 template<class BasicThermo>
 inline const Foam::volScalarField&
-Foam::MixtureThermoModel<BasicThermo>::Y
+Foam::multicomponentThermoModel<BasicThermo>::Y
 (
     const word& specieName
 ) const

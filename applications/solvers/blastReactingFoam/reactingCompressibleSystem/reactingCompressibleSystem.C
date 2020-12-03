@@ -257,6 +257,11 @@ void Foam::reactingCompressibleSystem::solve()
         volScalarField Yt(0.0*Ys[0]);
         forAll(Ys, i)
         {
+            if (this->step() == 1)
+            {
+                Ys[i].storeOldTime();
+            }
+
             if (i != inertIndex_ && thermo_->composition().active(i))
             {
                 volScalarField YOld(Ys[i]);
@@ -274,9 +279,9 @@ void Foam::reactingCompressibleSystem::solve()
                 Ys[i].max(0.0);
                 Yt += Ys[i];
             }
-            Ys[inertIndex_] = scalar(1) - Yt;
-            Ys[inertIndex_].max(0.0);
         }
+        Ys[inertIndex_] = scalar(1) - Yt;
+        Ys[inertIndex_].max(0.0);
     }
 }
 
@@ -332,7 +337,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
                     reaction_->R(Yi)
                 );
                 YiEqn.solve("Yi");
-
 
                 Yi.max(0.0);
                 Yt += Yi;

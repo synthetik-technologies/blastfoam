@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "StandardChemistryModel.H"
+#include "reactingFluidThermo.H"
 #include "UniformField.H"
 #include "extrapolatedCalculatedFvPatchFields.H"
 
@@ -38,8 +39,14 @@ Foam::StandardChemistryModel<ReactionThermo, ThermoType>::StandardChemistryModel
     BasicChemistryModel<ReactionThermo>(thermo),
     ODESystem(),
     Y_(this->thermo().Y()),
-    reactions_(this->thermo().reactions()),
-    specieThermo_(this->thermo().speciesData()),
+    reactions_
+    (
+        dynamic_cast<const reactingFluidThermo<ThermoType>&>(thermo)
+    ),
+    specieThermo_
+    (
+        dynamic_cast<const reactingFluidThermo<ThermoType>&>(thermo).speciesData()
+    ),
     nSpecie_(Y_.size()),
     nReaction_(reactions_.size()),
     Treact_
@@ -153,28 +160,30 @@ void Foam::StandardChemistryModel<ReactionThermo, ThermoType>::derivatives
 
     // Constant pressure
     // dT/dt = ...
-    scalar rho = 0;
-    scalar cSum = 0;
-    for (label i = 0; i < nSpecie_; i++)
-    {
-        const scalar W = specieThermo_[i].W();
-        cSum += c_[i];
-        rho += W*c_[i];
-    }
+//     scalar rho = 0;
+//     scalar cSum = 0;
+//     for (label i = 0; i < nSpecie_; i++)
+//     {
+//         const scalar W = specieThermo_[i].W();
+//         cSum += c_[i];
+//         rho += W*c_[i];
+//     }
+
     scalar cp = 0;
+    scalar e = 0;
     for (label i=0; i<nSpecie_; i++)
     {
-        cp += c_[i]*specieThermo_[i].cp(p, rho, T);
+        cp += c_[i]*specieThermo_[i].cp(this->rhoi_, e, T);
     }
-    cp /= rho;
+    cp /= this->rhoi_;
 
     scalar dT = 0;
     for (label i = 0; i < nSpecie_; i++)
     {
-        const scalar hi = specieThermo_[i].ha(p, rho, T);
+        const scalar hi = specieThermo_[i].ha(this->rhoi_, e, T);
         dT += hi*dcdt[i];
     }
-    dT /= rho*cp;
+    dT /= this->rhoi_*cp;
 
     dcdt[nSpecie_] = -dT;
 
@@ -207,10 +216,11 @@ void Foam::StandardChemistryModel<ReactionThermo, ThermoType>::jacobian
     // the enthalpies of the individual species is needed
     scalarField hi(nSpecie_);
     scalarField cpi(nSpecie_);
+    scalar e = 0;
     for (label i = 0; i < nSpecie_; i++)
     {
-        hi[i] = specieThermo_[i].ha(p, this->rhoi_, T);
-        cpi[i] = specieThermo_[i].cp(p, this->rhoi_, T);
+        hi[i] = specieThermo_[i].ha(this->rhoi_, e, T);
+        cpi[i] = specieThermo_[i].cp(this->rhoi_, e, T);
     }
     scalar omegaI = 0;
     List<label> dummy;
@@ -472,18 +482,21 @@ Foam::scalar Foam::StandardChemistryModel<ReactionThermo, ThermoType>::solve
         return deltaTMin;
     }
 
+    tmp<volScalarField> trho(this->thermo().rho());
+    const scalarField& rho = trho();
+
     const scalarField& T = this->thermo().T();
     const scalarField& p = this->thermo().p();
 
     scalarField c0(nSpecie_);
 
-    forAll(this->thermo().rho(), celli)
+    forAll(rho, celli)
     {
         scalar Ti = T[celli];
 
         if (Ti > Treact_)
         {
-            this->rhoi_ = this->thermo().rho()[celli];
+            this->rhoi_ = rho[celli];
             scalar pi = p[celli];
 
             for (label i=0; i<nSpecie_; i++)

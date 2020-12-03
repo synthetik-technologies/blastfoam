@@ -31,7 +31,8 @@ Description
 
 #include "makeChemistryModel.H"
 
-#include "multicomponentFluidThermoTypes.H"
+#include "multicomponentThermoModels.H"
+#include "fluidThermoModelTypes.H"
 
 #include "StandardChemistryModel.H"
 #include "TDACChemistryModel.H"
@@ -40,59 +41,28 @@ Description
 
 namespace Foam
 {
-    // Make base types
-    makeChemistryModelFromTypes
-    (
-        constTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryModelFromTypes
-    (
-        constTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryModelFromTypes
-    (
-        constTransport,
-        janaf,
-        idealGas
-    );
+    makeChemistryModel(multicomponentFluidThermoModel);
 
     makeChemistryModelFromTypes
     (
-        sutherlandTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryModelFromTypes
-    (
-        sutherlandTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryModelFromTypes
-    (
-        sutherlandTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistryModelFromTypes
-    (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
         constTransport,
         eConst,
         perfectGas
     );
     makeChemistryModelFromTypes
     (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
         constTransport,
         hConst,
         perfectGas
     );
     makeChemistryModelFromTypes
     (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
         constTransport,
         janaf,
         perfectGas
@@ -100,18 +70,74 @@ namespace Foam
 
     makeChemistryModelFromTypes
     (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         eConst,
         perfectGas
     );
     makeChemistryModelFromTypes
     (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         hConst,
         perfectGas
     );
     makeChemistryModelFromTypes
     (
+        StandardChemistryModel,
+        multicomponentFluidThermoModel,
+        sutherlandTransport,
+        janaf,
+        perfectGas
+    );
+
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
+        constTransport,
+        eConst,
+        perfectGas
+    );
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
+        constTransport,
+        hConst,
+        perfectGas
+    );
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
+        constTransport,
+        janaf,
+        perfectGas
+    );
+
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
+        sutherlandTransport,
+        eConst,
+        perfectGas
+    );
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
+        sutherlandTransport,
+        hConst,
+        perfectGas
+    );
+    makeChemistryModelFromTypes
+    (
+        TDACChemistryModel,
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         janaf,
         perfectGas

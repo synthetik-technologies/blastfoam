@@ -16,9 +16,10 @@ derived/detonatingFluidThermo/detonatingFluidThermos.C
 derived/basicSolidThermo/basicSolidThermoModels.C
 derived/detonatingSolidThermo/detonatingSolidThermos.C
 
-derived/multicomponentFluidThermo/multicomponentFluidThermos.C
-derived/multiphaseFluidThermo/multiphaseFluidThermo.C
 derived/twoPhaseFluidThermo/twoPhaseFluidThermo.C
+derived/multiphaseFluidThermo/multiphaseFluidThermo.C
+derived/multicomponentFluidThermo/multicomponentFluidThermos.C
+derived/reactingFluidThermo/reactingFluidThermos.C
 
 lookupTables/lookupTable2D/lookupTable2D.C
 lookupTables/lookupTable1D/lookupTable1D.C

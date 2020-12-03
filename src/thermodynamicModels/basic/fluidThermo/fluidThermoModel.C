@@ -36,6 +36,7 @@ namespace Foam
     defineRunTimeSelectionTable(fluidThermoModel, basic);
     defineRunTimeSelectionTable(fluidThermoModel, detonating);
     defineRunTimeSelectionTable(fluidThermoModel, multicomponent);
+    defineRunTimeSelectionTable(fluidThermoModel, reacting);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

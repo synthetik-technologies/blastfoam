@@ -273,7 +273,6 @@ Foam::scalar Foam::Reaction<ReactionThermo>::omega
     label& rRef
 ) const
 {
-
     scalar clippedT = min(max(T, this->Tlow()), this->Thigh());
 
     const scalar kf = this->kf(p, rho, clippedT, c);

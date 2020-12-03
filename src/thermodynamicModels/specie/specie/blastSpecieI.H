@@ -94,7 +94,7 @@ inline scalar blastSpecie::R() const
 
 // inline void blastSpecie::operator=(const blastSpecie& st)
 // {
-//     nameName_ = st.name_;
+// //     specieName_ = st.specieName_;
 //     Y_ = st.Y_;
 //     molWeight_ = st.molWeight_;
 // }

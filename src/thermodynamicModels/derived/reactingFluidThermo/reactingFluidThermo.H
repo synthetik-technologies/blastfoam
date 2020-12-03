@@ -25,43 +25,57 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::multicomponentFluidThermo
+    Foam::reactingFluidThermo
 
 Description
     Template class to define a runtime selectable fluidThermo model
 
 SourceFiles
-    multicomponentFluidThermo.C
+    reactingFluidThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multicomponentFluidThermo_H
-#define multicomponentFluidThermo_H
+#ifndef reactingFluidThermo_H
+#define reactingFluidThermo_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "multicomponentThermoModels.H"
-#include "mixtureThermoModel.H"
+#include "multicomponentFluidThermo.H"
+#include "chemistryReader.H"
+#include "BasicChemistryModel.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class multicomponentFluidThermo Declaration
+                           Class reactingFluidThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class ThermoType>
-class multicomponentFluidThermo
+class reactingFluidThermo
 :
-    public mixtureThermoModel<multicomponentFluidThermoModel, ThermoType>
+    public speciesTable,
+    public autoPtr<chemistryReader<ThermoType>>,
+    public multicomponentFluidThermo<ThermoType>,
+    public PtrList<Reaction<ThermoType>>
 {
+// Private data
+
+    //- Table of species composition
+    speciesCompositionTable speciesComposition_;
+
+
+    //- Pointer to chemistry model
+    autoPtr<BasicChemistryModel<multicomponentFluidThermoModel>> chemistryPtr_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("multicomponentFluidThermo");
+    TypeName("reactingFluidThermo");
 
     // Constructor
-    multicomponentFluidThermo
+    reactingFluidThermo
     (
         const word& phaseName,
         volScalarField& p,
@@ -73,57 +87,31 @@ public:
         const word& masterName = word::null
     );
 
-    // Constructor
-    multicomponentFluidThermo
-    (
-        const HashPtrTable<ThermoType, word, string::hash>& thermoData,
-        const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
-        const dictionary& dict,
-        const bool master,
-        const word& masterName = word::null
-    );
 
     //- Destructor
-    virtual ~multicomponentFluidThermo();
+    virtual ~reactingFluidThermo();
 
 
     // Member Functions
 
-        //- Pre update
-        virtual void update()
-        {}
-
         //- Post update
-        virtual void postUpdate()
-        {}
+        virtual void postUpdate();
 
-        //- Correct fields
-        virtual void correct();
+        Reaction<ThermoType>& operator[](const label i)
+        {
+            return PtrList<Reaction<ThermoType>>::operator[](i);
+        }
 
-        //- Return energy source
-        virtual tmp<volScalarField> ESource() const;
+        const Reaction<ThermoType>& operator[](const label i) const
+        {
+            return PtrList<Reaction<ThermoType>>::operator[](i);
+        }
 
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-
-    //- Thermodynamic and transport functions
-
-        //- Calculate thermodynamic pressure for a patch
-        virtual tmp<scalarField> calcP(const label patchi) const;
-
-        //- Calculate thermodynamic pressure
-        virtual scalar calcPi(const label celli) const;
-
-        //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const;
+        //- Table of species composition
+        const speciesCompositionTable& specieComposition() const
+        {
+            return speciesComposition_;
+        }
 };
 
 
@@ -133,30 +121,30 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addMulticomponentFluidThermo(Transport, Thermo, EoSType, EoS)       \
-    typedef multicomponentFluidThermo<Transport##Thermo##EoS##blastSpecie>  \
-        multicomponent##Transport##Thermo##EoS;                             \
+#define addreactingFluidThermo(Transport, Thermo, EoSType, EoS)       \
+    typedef reactingFluidThermo<Transport##Thermo##EoS##blastSpecie>  \
+        reacting##Transport##Thermo##EoS;                             \
     defineTemplateTypeNameAndDebugWithName                                  \
     (                                                                       \
-        multicomponent##Transport##Thermo##EoS,                             \
+        reacting##Transport##Thermo##EoS,                             \
         (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
         0                                                                   \
     );                                                                      \
     addToRunTimeSelectionTable                                              \
     (                                                                       \
         fluidThermoModel,                                                   \
-        multicomponent##Transport##Thermo##EoS,                             \
-        multicomponent                                                      \
+        reacting##Transport##Thermo##EoS,                             \
+        reacting                                                      \
     );
 
-#define addMulticomponentFluidThermos(Transport, EoSType, EoS)              \
-    addMulticomponentFluidThermo(Transport, eConst, EoSType, EoS);          \
-    addMulticomponentFluidThermo(Transport, hConst, EoSType, EoS);
+#define addreactingFluidThermos(Transport, EoSType, EoS)              \
+    addreactingFluidThermo(Transport, eConst, EoSType, EoS);          \
+    addreactingFluidThermo(Transport, hConst, EoSType, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "multicomponentFluidThermo.C"
+    #include "reactingFluidThermo.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

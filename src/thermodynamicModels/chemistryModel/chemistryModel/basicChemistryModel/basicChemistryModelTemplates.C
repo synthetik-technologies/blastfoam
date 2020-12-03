@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "basicChemistryModel.H"
+#include "mixtureThermoModel.H"
 #include "basicThermoModel.H"
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
@@ -97,6 +98,8 @@ Foam::autoPtr<ChemistryModel> Foam::basicChemistryModel::New
         solverName + '<' + methodName + '<'
       + ChemistryModel::reactionThermo::typeName + ','
       + thermo.thermoName() + ">>";
+
+      Info<<chemSolverCompThermoName<<endl;
 
     typename cstrTableType::iterator cstrIter =
         cstrTable->find(chemSolverCompThermoName);

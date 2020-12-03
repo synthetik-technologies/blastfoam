@@ -25,65 +25,30 @@ License
 
 #include "makeChemistrySolverTypes.H"
 
-#include "multicomponentFluidThermoTypes.H"
+#include "multicomponentThermoModels.H"
+#include "fluidThermoModelTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    // Make base types
     makeChemistrySolverFromTypes
     (
-        constTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistrySolverFromTypes
-    (
-        constTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistrySolverFromTypes
-    (
-        constTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistrySolverFromTypes
-    (
-        sutherlandTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistrySolverFromTypes
-    (
-        sutherlandTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistrySolverFromTypes
-    (
-        sutherlandTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistrySolverFromTypes
-    (
+        multicomponentFluidThermoModel,
         constTransport,
         eConst,
         perfectGas
     );
     makeChemistrySolverFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         hConst,
         perfectGas
     );
     makeChemistrySolverFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         janaf,
         perfectGas
@@ -91,18 +56,21 @@ namespace Foam
 
     makeChemistrySolverFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         eConst,
         perfectGas
     );
     makeChemistrySolverFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         hConst,
         perfectGas
     );
     makeChemistrySolverFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         janaf,
         perfectGas

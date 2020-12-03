@@ -25,65 +25,30 @@ License
 
 #include "makeChemistryTabulationMethods.H"
 
-#include "multicomponentFluidThermoTypes.H"
+#include "multicomponentThermoModels.H"
+#include "fluidThermoModelTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    // Make base types
     makeChemistryTabulationMethodsFromTypes
     (
-        constTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryTabulationMethodsFromTypes
-    (
-        constTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryTabulationMethodsFromTypes
-    (
-        constTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistryTabulationMethodsFromTypes
-    (
-        sutherlandTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryTabulationMethodsFromTypes
-    (
-        sutherlandTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryTabulationMethodsFromTypes
-    (
-        sutherlandTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistryTabulationMethodsFromTypes
-    (
+        multicomponentFluidThermoModel,
         constTransport,
         eConst,
         perfectGas
     );
     makeChemistryTabulationMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         hConst,
         perfectGas
     );
     makeChemistryTabulationMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         janaf,
         perfectGas
@@ -91,18 +56,21 @@ namespace Foam
 
     makeChemistryTabulationMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         eConst,
         perfectGas
     );
     makeChemistryTabulationMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         hConst,
         perfectGas
     );
     makeChemistryTabulationMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         janaf,
         perfectGas

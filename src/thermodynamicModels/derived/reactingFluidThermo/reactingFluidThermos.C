@@ -26,58 +26,32 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multicomponentFluidThermo.H"
+#include "reactingFluidThermo.H"
 #include "fluidThermoModelTypes.H"
+#include "addToRunTimeSelectionTable.H"
 
 namespace Foam
 {
-    defineMulticomponentFluidThermos
-    (
-        constTransport,
-        MGEquationOfState,
-        idealGas
-    );
-    defineMulticomponentFluidThermos
-    (
-        sutherlandTransport,
-        MGEquationOfState,
-        idealGas
-    );
-    defineMulticomponentFluidThermo
-    (
-        constTransport,
-        janaf,
-        MGEquationOfState,
-        idealGas
-    );
-    defineMulticomponentFluidThermo
-    (
-        sutherlandTransport,
-        janaf,
-        MGEquationOfState,
-        idealGas
-    );
-
-    defineMulticomponentFluidThermos
+    addreactingFluidThermos
     (
         constTransport,
         equationOfState,
         perfectGas
     );
-    defineMulticomponentFluidThermos
+    addreactingFluidThermos
     (
         sutherlandTransport,
         equationOfState,
         perfectGas
     );
-    defineMulticomponentFluidThermo
+    addreactingFluidThermo
     (
         constTransport,
         janaf,
         equationOfState,
         perfectGas
     );
-    defineMulticomponentFluidThermo
+    addreactingFluidThermo
     (
         sutherlandTransport,
         janaf,
@@ -85,39 +59,11 @@ namespace Foam
         perfectGas
     );
 
-//     defineMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         stiffenedGas
-//     );
-//
-//     defineMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         Tait
-//     );
-//
-//     defineMulticomponentFluidThermos
+//     addreactingFluidThermos
 //     (
 //         constTransport,
 //         equationOfState,
 //         AbelNobel
-//     );
-//
-//     defineMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         vanderWaals
-//     );
-//
-//     defineMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         LSZK
 //     );
 }
 

@@ -2,11 +2,14 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
+                            class
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,27 +26,20 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fluidThermoModelTypes.H"
+#ifndef multicomponentThermoModels_H
+#define multicomponentThermoModels_H
 
-#include "chemistryReader.H"
-#include "foamChemistryReader.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "multicomponentThermoModel.H"
+#include "fluidThermoModel.H"
+#include "solidThermoModel.H"
 
 namespace Foam
 {
+    typedef multicomponentThermoModel<fluidThermoModel>
+        multicomponentFluidThermoModel;
+    typedef multicomponentThermoModel<solidThermoModel>
+        multicomponentSolidThermoModel;
+}
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-makeChemistryReaderFromTypes(constTransport, eConst, perfectGas);
-makeChemistryReaderFromTypes(constTransport, hConst, perfectGas);
-makeChemistryReaderFromTypes(constTransport, janaf, perfectGas);
-makeChemistryReaderFromTypes(sutherlandTransport, eConst, perfectGas);
-makeChemistryReaderFromTypes(sutherlandTransport, hConst, perfectGas);
-makeChemistryReaderFromTypes(sutherlandTransport, janaf, perfectGas);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-} // End namespace Foam
-
+#endif
 // ************************************************************************* //

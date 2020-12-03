@@ -56,18 +56,11 @@ namespace Foam
         thermo                                                                 \
     );
 
-#define makeChemistryModelFromTypes(Transport, Thermo, EOS)                    \
-    makeChemistryModel(multicomponent##Transport##Thermo##EOS)                 \
+#define makeChemistryModelFromTypes(SS, Comp, Transport, Thermo, EOS)          \
     makeChemistryModelType                                                     \
     (                                                                          \
-        StandardChemistryModel,                                                \
-        multicomponent##Transport##Thermo##EOS,                                \
-        Transport##Thermo##EOS##blastSpecie                                    \
-    )                                                                          \
-    makeChemistryModelType                                                     \
-    (                                                                          \
-        TDACChemistryModel,                                                    \
-        multicomponent##Transport##Thermo##EOS,                                \
+        SS,                                                                    \
+        Comp,                                                                  \
         Transport##Thermo##EOS##blastSpecie                                    \
     )
 

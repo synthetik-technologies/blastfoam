@@ -70,10 +70,10 @@ License
 ##Comp##Table_;
 
 
-#define makeChemistrySolverFromTypes(Transport, Thermo, EOS)                   \
+#define makeChemistrySolverFromTypes(Comp, Transport, Thermo, EOS)             \
     makeChemistrySolverTypes                                                   \
     (                                                                          \
-        multicomponent##Transport##Thermo##EOS,                                \
+        Comp,                                                                  \
         Transport##Thermo##EOS##blastSpecie                                    \
     )
 

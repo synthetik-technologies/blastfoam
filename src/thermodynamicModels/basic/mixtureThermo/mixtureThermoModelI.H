@@ -26,18 +26,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MixtureThermoModels_H
-#define MixtureThermoModels_H
 
-#include "MixtureThermoModel.H"
-#include "fluidThermoModel.H"
-#include "solidThermoModel.H"
-
-namespace Foam
+template<class BasicThermo, class ThermoType>
+inline const Foam::PtrList<ThermoType>&
+Foam::mixtureThermoModel<BasicThermo, ThermoType>::speciesData() const
 {
-    typedef MixtureThermoModel<fluidThermoModel> mixtureFluidThermoModel;
-    typedef MixtureThermoModel<solidThermoModel> mixtureSolidThermoModel;
+    return speciesData_;
 }
 
-#endif
 // ************************************************************************* //
+

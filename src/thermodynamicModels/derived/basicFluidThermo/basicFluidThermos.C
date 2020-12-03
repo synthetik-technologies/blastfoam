@@ -69,17 +69,23 @@ namespace Foam
         MGEquationOfState,
         idealGas
     );
-    addFluidThermo
-    (
-        constTransport,
-        janaf,
-        MGEquationOfState,
-        idealGas
-    );
 
     addFluidThermos
     (
         constTransport,
+        equationOfState,
+        perfectGas
+    );
+    addFluidThermos
+    (
+        sutherlandTransport,
+        equationOfState,
+        perfectGas
+    );
+    addFluidThermo
+    (
+        sutherlandTransport,
+        janaf,
         equationOfState,
         perfectGas
     );

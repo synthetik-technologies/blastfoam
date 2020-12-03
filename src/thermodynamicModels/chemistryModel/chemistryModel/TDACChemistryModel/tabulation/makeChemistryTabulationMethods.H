@@ -51,10 +51,10 @@ License
         add##chemistryTabulationMethods##SS##Comp##Thermo##ConstructorToTable_;
 
 
-#define makeChemistryTabulationMethodsFromTypes(Transport, Thermo, EOS)        \
+#define makeChemistryTabulationMethodsFromTypes(CompChemModel, Transport, Thermo, EOS)        \
         makeChemistryTabulationMethods                                         \
         (                                                                      \
-            multicomponent##Transport##Thermo##EOS,                            \
+            CompChemModel,                                                     \
             Transport##Thermo##EOS##blastSpecie                                \
         )
 

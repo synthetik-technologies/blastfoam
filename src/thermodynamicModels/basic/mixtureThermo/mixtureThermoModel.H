@@ -40,7 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "mixtureThermoModels.H"
+#include "basicThermoModel.H"
 
 namespace Foam
 {
@@ -58,27 +58,27 @@ protected:
 //- Protected data
 
     //- Species data
-    PtrList<Thermo> speciesData_;
+    PtrList<ThermoType> speciesData_;
 
     //- Temporary storage for the cell/face mixture thermo data
-    mutable Thermo mixture_;
+    mutable ThermoType mixture_;
 
     //- Stored thermo state at cell centres
-    PtrList<Thermo> cellMixtures_;
+    PtrList<ThermoType> cellMixtures_;
 
     //- Stored thermo state at boundaries
-    PtrList<PtrList<Thermo>> faceMixtures_;
+    PtrList<PtrList<ThermoType>> faceMixtures_;
 
 
     // Private Member Functions
 
         //- Construct the species data from the given dictionary and return the
         //  data for the first specie to initialise the mixture thermo data
-        const Thermo& constructSpeciesData(const dictionary& thermoDict);
+        const ThermoType& constructSpeciesData(const dictionary& thermoDict);
 
-        const Thermo& cellMixture(const label celli) const;
+        const ThermoType& cellMixture(const label celli) const;
 
-        const Thermo& patchFaceMixture
+        const ThermoType& patchFaceMixture
         (
             const label patchi,
             const label facei
@@ -117,12 +117,23 @@ protected:
 
 public:
 
-    //- Runtime type information
-    TypeName("mixtureThermoModel");
+    // Constructor
+    mixtureThermoModel
+    (
+        const word& phaseName,
+        volScalarField& p,
+        volScalarField& rho,
+        volScalarField& e,
+        volScalarField& T,
+        const dictionary& dict,
+        const bool master,
+        const word& masterName = word::null
+    );
 
     // Constructor
     mixtureThermoModel
     (
+        const HashPtrTable<ThermoType, word, string::hash>& thermoData,
         const word& phaseName,
         volScalarField& p,
         volScalarField& rho,
@@ -267,11 +278,11 @@ public:
         //- Return the name of the thermo physics
         virtual word thermoName() const
         {
-            return Thermo::typeName();
+            return ThermoType::typeName();
         }
 
         //- Return the table of thermos
-        inline const PtrList<Thermo>& speciesData() const;
+        inline const PtrList<ThermoType>& speciesData() const;
 };
 
 

@@ -25,65 +25,30 @@ License
 
 #include "makeChemistryReductionMethods.H"
 
-#include "multicomponentFluidThermoTypes.H"
+#include "multicomponentThermoModels.H"
+#include "fluidThermoModelTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    // Make base types
     makeChemistryReductionMethodsFromTypes
     (
-        constTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryReductionMethodsFromTypes
-    (
-        constTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryReductionMethodsFromTypes
-    (
-        constTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistryReductionMethodsFromTypes
-    (
-        sutherlandTransport,
-        eConst,
-        idealGas
-    );
-    makeChemistryReductionMethodsFromTypes
-    (
-        sutherlandTransport,
-        hConst,
-        idealGas
-    );
-    makeChemistryReductionMethodsFromTypes
-    (
-        sutherlandTransport,
-        janaf,
-        idealGas
-    );
-
-    makeChemistryReductionMethodsFromTypes
-    (
+        multicomponentFluidThermoModel,
         constTransport,
         eConst,
         perfectGas
     );
     makeChemistryReductionMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         hConst,
         perfectGas
     );
     makeChemistryReductionMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         constTransport,
         janaf,
         perfectGas
@@ -91,18 +56,21 @@ namespace Foam
 
     makeChemistryReductionMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         eConst,
         perfectGas
     );
     makeChemistryReductionMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         hConst,
         perfectGas
     );
     makeChemistryReductionMethodsFromTypes
     (
+        multicomponentFluidThermoModel,
         sutherlandTransport,
         janaf,
         perfectGas

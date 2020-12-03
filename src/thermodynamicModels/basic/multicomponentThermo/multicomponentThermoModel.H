@@ -25,18 +25,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::MixtureThermoModel
+    Foam::multicomponentThermoModel
 
 Description
     Template class to define a runtime selectable fluidThermo model
 
 SourceFiles
-    MixtureThermoModel.C
+    multicomponentThermoModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MixtureThermoModel_H
-#define MixtureThermoModel_H
+#ifndef multicomponentThermoModel_H
+#define multicomponentThermoModel_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,15 +47,16 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class MixtureThermoModel Declaration
+                           Class multicomponentThermoModel Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class BasicThermo>
-class MixtureThermoModel
+class multicomponentThermoModel
 :
     public BasicThermo
 {
-//- Private data
+protected:
+//- Protected data
 
     //- Name of species
     speciesTable species_;
@@ -63,18 +64,42 @@ class MixtureThermoModel
     //- Mass fractions
     PtrList<volScalarField> Ys_;
 
+    //- Index of inert specie
+    label inertIndex_;
+
     //- List of active species
     List<bool> active_;
+
+    //- Name of flux
+    word alphaRhoPhiName_;
+
+    //- Name of mass
+    word alphaRhoName_;
+
+    //- ODE fields
+    PtrList<PtrList<volScalarField>> YsOld_;
+    PtrList<PtrList<volScalarField>> deltaAlphaRhoYs_;
 
 
 public:
 
-    //- Runtime type information
-    TypeName("MixtureThermoModel");
+    // Constructor
+    multicomponentThermoModel
+    (
+        const word& phaseName,
+        volScalarField& p,
+        volScalarField& rho,
+        volScalarField& e,
+        volScalarField& T,
+        const dictionary& dict,
+        const bool master,
+        const word& masterName = word::null
+    );
 
     // Constructor
-    MixtureThermoModel
+    multicomponentThermoModel
     (
+        const speciesTable& species,
         const word& phaseName,
         volScalarField& p,
         volScalarField& rho,
@@ -87,7 +112,20 @@ public:
 
 
     //- Destructor
-    virtual ~MixtureThermoModel();
+    virtual ~multicomponentThermoModel();
+
+
+    //- ODE functions
+
+        //- Initialize models
+        virtual void initializeModels();
+
+        //- Solve sub-step stepi
+        virtual void solve();
+
+        //- Remove stored fields
+        virtual void clearODEFields();
+
 
     // Access
 
@@ -126,6 +164,9 @@ public:
 
         //- Return the const mass-fraction field for a specie given by name
         inline const volScalarField& Y(const word& specieName) const;
+
+        //- Return the name of the thermo physics
+        virtual word thermoName() const = 0;
 };
 
 
@@ -135,10 +176,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "MixtureThermoModelI.H"
+#include "multicomponentThermoModelI.H"
 
 #ifdef NoRepository
-    #include "MixtureThermoModel.C"
+    #include "multicomponentThermoModel.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -88,14 +88,6 @@ License
 
 namespace Foam
 {
-    // sensible enthalpy based reactions
-    makeReactionsFromTypes(constTransport, eConst, idealGas)
-    makeReactionsFromTypes(constTransport, hConst, idealGas)
-    makeReactionsFromTypes(constTransport, janaf, idealGas)
-    makeReactionsFromTypes(sutherlandTransport, eConst, idealGas)
-    makeReactionsFromTypes(sutherlandTransport, hConst, idealGas)
-    makeReactionsFromTypes(sutherlandTransport, janaf, idealGas)
-
     makeReactionsFromTypes(constTransport, eConst, perfectGas)
     makeReactionsFromTypes(constTransport, hConst, perfectGas)
     makeReactionsFromTypes(constTransport, janaf, perfectGas)

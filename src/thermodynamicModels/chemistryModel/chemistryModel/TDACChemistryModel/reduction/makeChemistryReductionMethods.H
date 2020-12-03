@@ -56,10 +56,10 @@ License
         add##chemistryReductionMethods##SS##Comp##Thermo##ConstructorToTable_;
 
 
-#define makeChemistryReductionMethodsFromTypes(Transport, Thermo, EOS)         \
+#define makeChemistryReductionMethodsFromTypes(CompChemModel, Transport, Thermo, EOS)         \
         makeChemistryReductionMethods                                          \
         (                                                                      \
-            multicomponent##Transport##Thermo##EOS,                            \
+            CompChemModel,                                                     \
             Transport##Thermo##EOS##blastSpecie                                \
         )
 
