@@ -57,15 +57,9 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     {
         return 0.0;
     }
-    if (T0 < 0)
-    {
-        FatalErrorInFunction
-            << "Negative initial temperature T0: " << T0
-            << abort(FatalError);
-    }
 
-    scalar Test = T0;
-    scalar Tnew = T0;
+    scalar Test = (this->*limit)(T0);
+    scalar Tnew = Test;
 
     //- Limit tolerance if T is very small
     scalar Ttol = max(T0, 1.0)*tolerance_;
@@ -121,7 +115,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::Gamma
 
 
 template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::speedOfSound
+Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -129,7 +123,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::speedOfSound
     const scalar& T
 ) const
 {
-    return ThermoType::speedOfSound(p, rho, e, T, ThermoType::Cv(rho, e, T));
+    return ThermoType::cSqr(p, rho, e, T, ThermoType::Cv(rho, e, T));
 }
 
 

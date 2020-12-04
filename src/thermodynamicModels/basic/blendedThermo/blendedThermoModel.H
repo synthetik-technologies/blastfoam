@@ -124,37 +124,6 @@ protected:
             const Args& ... args
         ) const;
 
-        //- Return a volScalarField of the given property
-        template<class Method1, class Method2, class ... Args>
-        tmp<volScalarField> blendedVolScalarFieldPropertySqr
-        (
-            const word& psiName,
-            const dimensionSet& psiDim,
-            Method1 psiMethod1,
-            Method2 psiMethod2,
-            const Args& ... args
-        ) const;
-
-        //- Return a scalarField of the given property on a patch
-        template<class Method1, class Method2, class ... Args>
-        tmp<scalarField> blendedPatchFieldPropertySqr
-        (
-            Method1 psiMethod1,
-            Method2 psiMethod2,
-            const label patchi,
-            const Args& ... args
-        ) const;
-
-        //- Return a scalarField of the given property on a cell set
-        template<class Method1, class Method2, class ... Args>
-        tmp<scalarField> blendedCellSetPropertySqr
-        (
-            Method1 psiMethod1,
-            Method2 psiMethod2,
-            const labelList& cells,
-            const Args& ... args
-        ) const;
-
         //- Return the blending field for celli
         virtual scalar xi(const label celli) const = 0;
 

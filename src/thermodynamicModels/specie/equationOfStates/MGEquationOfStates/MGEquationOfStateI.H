@@ -91,7 +91,7 @@ Foam::scalar Foam::MGEquationOfState<EoS>::p
 
 
 template<class EoS>
-Foam::scalar Foam::MGEquationOfState<EoS>::speedOfSound
+Foam::scalar Foam::MGEquationOfState<EoS>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -102,7 +102,7 @@ Foam::scalar Foam::MGEquationOfState<EoS>::speedOfSound
 {
     scalar gamma(EoS::Gamma(rho, e));
     scalar h((gamma*p + EoS::Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
-    return sqrt(max((h - EoS::delta(p, rho, e))*(gamma - 1.0), small));
+    return (h - EoS::delta(p, rho, e))*(gamma - 1.0);
 }
 
 

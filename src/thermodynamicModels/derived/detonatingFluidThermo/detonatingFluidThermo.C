@@ -224,16 +224,30 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidThermo<Thermo>::speedOfSound() const
 {
-    return Thermo::blendedVolScalarFieldPropertySqr
+    return tmp<volScalarField>
     (
-        "speedOfSound",
-        dimVelocity,
-        &Thermo::thermoType1::speedOfSound,
-        &Thermo::thermoType2::speedOfSound,
-        this->p_,
-        this->rho_,
-        this->e_,
-        this->T_
+        new volScalarField
+        (
+            IOobject::groupName("speedOfSound", this->group()),
+            sqrt
+            (
+                max
+                (
+                    Thermo::blendedVolScalarFieldProperty
+                    (
+                        "cSqr",
+                        sqr(dimVelocity),
+                        &Thermo::thermoType1::cSqr,
+                        &Thermo::thermoType2::cSqr,
+                        this->p_,
+                        this->rho_,
+                        this->e_,
+                        this->T_
+                    ),
+                    dimensionedScalar(sqr(dimVelocity), small)
+                )
+            )
+        )
     );
 }
 
@@ -242,15 +256,22 @@ template<class Thermo>
 Foam::tmp<Foam::scalarField>
 Foam::detonatingFluidThermo<Thermo>::speedOfSound(const label patchi) const
 {
-    return Thermo::blendedPatchFieldPropertySqr
+    return sqrt
     (
-        &Thermo::thermoType1::speedOfSound,
-        &Thermo::thermoType2::speedOfSound,
-        patchi,
-        this->p_.boundaryField()[patchi],
-        this->rho_.boundaryField()[patchi],
-        this->e_.boundaryField()[patchi],
-        this->T_.boundaryField()[patchi]
+        max
+        (
+            Thermo::blendedPatchFieldProperty
+            (
+                &Thermo::thermoType1::cSqr,
+                &Thermo::thermoType2::cSqr,
+                patchi,
+                this->p_.boundaryField()[patchi],
+                this->rho_.boundaryField()[patchi],
+                this->e_.boundaryField()[patchi],
+                this->T_.boundaryField()[patchi]
+            ),
+            small
+        )
     );
 }
 

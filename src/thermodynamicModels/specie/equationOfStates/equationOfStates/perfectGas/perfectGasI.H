@@ -102,7 +102,7 @@ Foam::scalar Foam::perfectGas<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::perfectGas<Specie>::speedOfSound
+Foam::scalar Foam::perfectGas<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -110,11 +110,7 @@ Foam::scalar Foam::perfectGas<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    return
-        sqrt
-        (
-            max(Gamma(rho, T, cv)*T*this->R(), small)
-        );
+    return Gamma(rho, T, cv)*T*this->R();
 }
 
 

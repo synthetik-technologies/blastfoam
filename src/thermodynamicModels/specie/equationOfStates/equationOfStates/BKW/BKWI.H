@@ -121,7 +121,7 @@ Foam::scalar Foam::BKW<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::BKW<Specie>::speedOfSound
+Foam::scalar Foam::BKW<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -129,11 +129,7 @@ Foam::scalar Foam::BKW<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    return
-        sqrt
-        (
-            max((sqr(dpdT(rho, T))*T/cv - dpdv(rho, T))/sqr(max(rho, 1e-10)), small)
-        );
+    return (sqr(dpdT(rho, T))*T/cv - dpdv(rho, T))/sqr(max(rho, 1e-10));
 }
 
 

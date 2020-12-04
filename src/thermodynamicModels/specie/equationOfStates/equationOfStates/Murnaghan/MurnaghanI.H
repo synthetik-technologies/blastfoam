@@ -123,7 +123,7 @@ Foam::scalar Foam::Murnaghan<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::Murnaghan<Specie>::speedOfSound
+Foam::scalar Foam::Murnaghan<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -131,7 +131,7 @@ Foam::scalar Foam::Murnaghan<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    return sqrt(pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_));
+    return pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_);
 }
 
 

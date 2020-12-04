@@ -260,17 +260,30 @@ template<class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidThermo<ThermoType>::speedOfSound() const
 {
-    return
-        this->volScalarFieldProperty
+    return tmp<volScalarField>
+    (
+        new volScalarField
         (
             IOobject::groupName("speedOfSound", this->group()),
-            dimVelocity,
-            &ThermoType::speedOfSound,
-            this->p_,
-            this->rho_,
-            this->e_,
-            this->T_
-        );
+            sqrt
+            (
+                max
+                (
+                    this->volScalarFieldProperty
+                    (
+                        "cSqr",
+                        sqr(dimVelocity),
+                        &ThermoType::thermoType::cSqr,
+                        this->p_,
+                        this->rho_,
+                        this->e_,
+                        this->T_
+                    ),
+                    dimensionedScalar(sqr(dimVelocity), small)
+                )
+            )
+        )
+    );
 }
 
 
@@ -278,16 +291,22 @@ template<class ThermoType>
 Foam::tmp<Foam::scalarField>
 Foam::multicomponentFluidThermo<ThermoType>::speedOfSound(const label patchi) const
 {
-    return
-        this->patchFieldProperty
+    return sqrt
+    (
+        max
         (
-            &ThermoType::speedOfSound,
-            patchi,
-            this->p_.boundaryField()[patchi],
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi]
-        );
+            this->patchFieldProperty
+            (
+                &ThermoType::thermoType::cSqr,
+                patchi,
+                this->p_.boundaryField()[patchi],
+                this->rho_.boundaryField()[patchi],
+                this->e_.boundaryField()[patchi],
+                this->T_.boundaryField()[patchi]
+            ),
+            small
+        )
+    );
 }
 
 

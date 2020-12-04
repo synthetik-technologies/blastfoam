@@ -184,7 +184,7 @@ Foam::scalar Foam::Tillotson<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::speedOfSound
+Foam::scalar Foam::Tillotson<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -207,8 +207,7 @@ Foam::scalar Foam::Tillotson<Specie>::speedOfSound
         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
         scalar cCavSqr(k_*pCav_/max(rho, 1e-10));
 
-        scalar cSqr
-        (
+        return
             1.0
            /(
                 max(rho, 1e-10)
@@ -216,11 +215,9 @@ Foam::scalar Foam::Tillotson<Specie>::speedOfSound
                     x/(max(rho, 1e-10)*cCavSqr)
                   + (1.0 - x)/(rho0_*cLSqr)
                 )
-            )
-        );
-        return sqrt(max(cSqr, small));
+            );
     }
-    return sqrt(cLSqr);
+    return cLSqr;
 }
 
 

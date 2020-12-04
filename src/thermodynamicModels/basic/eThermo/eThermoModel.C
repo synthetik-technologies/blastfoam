@@ -194,7 +194,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::calcT() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("T", basicThermoModel::masterName_),
+        "T",
         dimTemperature,
         &ThermoType::TRhoE,
         this->T_,
@@ -243,7 +243,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::E() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::masterName_),
+        "e",
         dimEnergy/dimMass,
         &ThermoType::Es,
         this->rho_,
@@ -264,7 +264,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::e
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("e", basicThermoModel::masterName_),
+        "e",
         dimEnergy/dimMass,
         &ThermoType::Es,
         rho,
@@ -322,7 +322,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::W() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("W", basicThermoModel::masterName_),
+        "W",
         dimMass/dimMoles,
         &ThermoType::W
     );
@@ -355,7 +355,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Gamma() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Gamma", basicThermoModel::masterName_),
+        "Gamma",
         dimless,
         &ThermoType::Gamma,
         this->rho_,
@@ -394,7 +394,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Cp() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cp", basicThermoModel::masterName_),
+        "Cp",
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cp,
         this->rho_,
@@ -454,7 +454,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Cv() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cv", basicThermoModel::masterName_),
+        "Cv",
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cv,
         this->rho_,
@@ -514,7 +514,7 @@ Foam::eThermoModel<BasicThermo, ThermoType>::CpByCv() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("CpByCv", basicThermoModel::masterName_),
+        "CpByCv",
         dimless,
         &ThermoType::CpByCv,
         this->rho_,

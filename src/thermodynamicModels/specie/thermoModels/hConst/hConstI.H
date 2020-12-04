@@ -87,7 +87,7 @@ inline Foam::scalar Foam::hConst<EquationOfState>::limit
     const scalar T
 ) const
 {
-    return T;
+    return max(T, 0.0);
 }
 
 

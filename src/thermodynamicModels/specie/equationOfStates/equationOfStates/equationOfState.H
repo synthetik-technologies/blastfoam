@@ -133,7 +133,7 @@ public:
         scalar p(const scalar& rho, const scalar& e, const scalar& T) const;
 
         //- Return the speed of sound
-        scalar speedOfSound
+        scalar cSqr
         (
             const scalar& p,
             const scalar& rho,

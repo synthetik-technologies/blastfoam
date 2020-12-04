@@ -40,7 +40,7 @@ Foam::scalar Foam::tabulatedThermo<EquationOfState>::Gamma
 }
 
 template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::speedOfSound
+Foam::scalar Foam::tabulatedThermo<EquationOfState>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -49,7 +49,7 @@ Foam::scalar Foam::tabulatedThermo<EquationOfState>::speedOfSound
 ) const
 {
     return
-        EquationOfState::speedOfSound
+        EquationOfState::cSqr
         (
             p,
             rho,
@@ -103,22 +103,7 @@ Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cp
     const scalar& T
 ) const
 {
-    scalar cv(Cv(rho, e, T));
-    scalar cSqr
-    (
-        sqr
-        (
-            EquationOfState::speedOfSound
-            (
-                EquationOfState::p(rho, e, T),
-                rho,
-                e,
-                T,
-                T
-            )
-        )
-    );
-    return cv/(1.0 - sqr(EquationOfState::Gamma(rho, e, T, e))*cv*T/cSqr);
+    return CpMCv(rho, e, T) + Cv(rho, e, T);
 }
 
 
@@ -130,7 +115,7 @@ Foam::scalar Foam::tabulatedThermo<EquationOfState>::CpMCv
     const scalar& T
 ) const
 {
-    return Cp(rho, e, T) - Cv(rho, e, T);
+    return EquationOfState::dpdT(rho, e, T)/max(rho, 1e-10);
 }
 
 template<class EquationOfState>

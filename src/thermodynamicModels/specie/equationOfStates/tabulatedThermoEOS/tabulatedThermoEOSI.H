@@ -153,7 +153,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::tabulatedThermoEOS<Specie>::speedOfSound
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -161,15 +161,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::speedOfSound
     const scalar& T
 ) const
 {
-    return
-        sqrt
-        (
-            max
-            (
-                pTable_.dFdX(rho, e) + Gamma(rho, e, T)*p/max(rho, 1e-10),
-                small
-            )
-        );
+    return pTable_.dFdX(rho, e) + Gamma(rho, e, T)*p/max(rho, 1e-10);
 }
 
 template<class Specie>

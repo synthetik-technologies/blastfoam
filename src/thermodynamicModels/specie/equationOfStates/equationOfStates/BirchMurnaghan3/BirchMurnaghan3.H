@@ -176,7 +176,7 @@ public:
         ) const;
 
         //- Speed of sound
-        scalar speedOfSound
+        scalar cSqr
         (
             const scalar& p,
             const scalar& rho,

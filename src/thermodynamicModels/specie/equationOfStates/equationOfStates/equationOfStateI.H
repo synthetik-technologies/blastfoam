@@ -90,7 +90,7 @@ Foam::scalar Foam::equationOfState<EoS>::p
 
 
 template<class EoS>
-Foam::scalar Foam::equationOfState<EoS>::speedOfSound
+Foam::scalar Foam::equationOfState<EoS>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -99,7 +99,7 @@ Foam::scalar Foam::equationOfState<EoS>::speedOfSound
     const scalar& cv
 ) const
 {
-    return EoS::speedOfSound(p, rho, T, cv);
+    return EoS::cSqr(p, rho, T, cv);
 }
 
 

@@ -117,7 +117,7 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::BirchMurnaghan2<Specie>::speedOfSound
+Foam::scalar Foam::BirchMurnaghan2<Specie>::cSqr
 (
     const scalar& p,
     const scalar& rho,
@@ -125,12 +125,11 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::speedOfSound
     const scalar& cv
 ) const
 {
-    scalar cSqr =
+    return
         K0_
        *pow(rho/rho0_, 5.0/3.0)
        *(7.0*pow(rho/rho0_, 2.0/3.0) - 5.0)
        /(2.0*max(rho, 1e-10));
-    return sqrt(max(cSqr, small));
 }
 
 
