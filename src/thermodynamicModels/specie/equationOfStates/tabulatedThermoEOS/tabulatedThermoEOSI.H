@@ -112,9 +112,19 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdT
     const scalar& T
 ) const
 {
-    return
-        pTable_.dFdX(rho, e)/TTable_.dFdX(rho, e)
-      + pTable_.dFdY(rho, e)/TTable_.dFdY(rho, e);
+    scalar dTdRho(TTable_.dFdX(rho, e));
+    scalar dTde(TTable_.dFdY(rho, e));
+    scalar dpdt = 0;
+
+    if (mag(dTdRho) > small)
+    {
+        dpdt += pTable_.dFdX(rho, e)/dTdRho;
+    }
+    if (mag(dTde) > small)
+    {
+        dpdt += pTable_.dFdY(rho, e)/dTde;
+    }
+    return dpdt;
 }
 
 
@@ -205,21 +215,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cp
     const scalar& T
 ) const
 {
-    scalar cv(Cv(rho, e, T));
-    scalar cSqr
-    (
-        sqr
-        (
-            speedOfSound
-            (
-                p(rho, e, T),
-                rho,
-                e,
-                T
-            )
-        )
-    );
-    return cv/(1.0 - sqr(Gamma(rho, e, T))*cv*T/cSqr);
+    return CpMCv(rho, e, T) + Cv(rho, e, T);
 }
 
 
@@ -231,7 +227,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpMCv
     const scalar& T
 ) const
 {
-    return Cp(rho, e, T) - Cv(rho, e, T);
+    return dpdT(rho, e, T)/max(rho, 1e-10);
 }
 
 template<class Specied>
