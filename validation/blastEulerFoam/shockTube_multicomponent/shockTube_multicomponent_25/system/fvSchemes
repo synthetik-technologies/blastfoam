@@ -32,7 +32,7 @@ fluxSchemes
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK4SSP;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
@@ -55,14 +55,14 @@ laplacianSchemes
 interpolationSchemes
 {
     default             cubic;
-    reconstruct(alpha)  linearMUSCL vanLeer;
-    reconstruct(rho)    linearMUSCL vanLeer;
-    reconstruct(U)      linearMUSCL vanLeer;
-    reconstruct(e)      linearMUSCL vanLeer;
-    reconstruct(p)      linearMUSCL vanLeer;
-    reconstruct(speedOfSound) linearMUSCL vanLeer;
-    "reconstruct\(Y.*\)" linearMUSCL vanLeer;
-    reconstruct(Theta)  linearMUSCL vanLeer;
+    reconstruct(alpha)  quadraticMUSCL Minmod;
+    reconstruct(rho)    quadraticMUSCL Minmod;
+    reconstruct(U)      quadraticMUSCL Minmod;
+    reconstruct(e)      quadraticMUSCL Minmod;
+    reconstruct(p)      quadraticMUSCL Minmod;
+    reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    "reconstruct\(Y.*\)" quadraticMUSCL Minmod;
+    reconstruct(Theta)  quadraticMUSCL Minmod;
 }
 
 snGradSchemes
