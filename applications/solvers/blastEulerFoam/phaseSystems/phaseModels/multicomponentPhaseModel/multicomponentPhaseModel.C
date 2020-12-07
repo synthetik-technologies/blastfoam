@@ -208,6 +208,11 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
             phi_,
             *this
         );
+    this->initializeModels();
+    forAll(thermos_, phasei)
+    {
+        thermos_[phasei].initializeModels();
+    }
 }
 
 
