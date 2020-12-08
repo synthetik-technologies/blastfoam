@@ -128,10 +128,12 @@ Foam::radiationModels::radiativeIntensityRay::radiativeIntensityRay
     (
         sinPhi
        *Foam::sin(0.5*deltaPhi)
-       *(deltaTheta - Foam::cos(2.0*theta)*Foam::sin(deltaTheta)),
+       *(deltaTheta - Foam::cos(2.0*theta)
+       *Foam::sin(deltaTheta)),
         cosPhi
        *Foam::sin(0.5*deltaPhi)
-       *(deltaTheta - Foam::cos(2.0*theta)*Foam::sin(deltaTheta)),
+       *(deltaTheta - Foam::cos(2.0*theta)
+       *Foam::sin(deltaTheta)),
         0.5*deltaPhi*Foam::sin(2.0*theta)*Foam::sin(deltaTheta)
     );
 
@@ -244,13 +246,7 @@ Foam::scalar Foam::radiationModels::radiativeIntensityRay::correct()
 
     scalar maxResidual = -great;
 
-    surfaceScalarField Ji(dAve_ & mesh_.Sf());
-//     Ji +=
-//         0.5
-//        *(
-//             pos(Ji)*(dom_.dirCorrection() & mesh_.Sf())
-//           - neg(Ji)*(dom_.dirCorrection() & mesh_.Sf())
-//         );
+    const surfaceScalarField Ji(dAve_ & mesh_.Sf());
 
     forAll(ILambda_, lambdaI)
     {

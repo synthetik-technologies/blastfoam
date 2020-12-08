@@ -29,7 +29,6 @@ License
 #include "constants.H"
 #include "fvm.H"
 #include "addToRunTimeSelectionTable.H"
-#include "wedgePolyPatch.H"
 
 using namespace Foam::constant;
 using namespace Foam::constant::mathematical;
@@ -50,36 +49,6 @@ namespace radiationModels
 
 void Foam::radiationModels::fvDOM::initialise()
 {
-    List<vector> axis(3, Zero);
-    label ai = 0;
-    vector geoD(T_.mesh().geometricD());
-    geoD = (geoD + vector::one)/2.0;
-    forAll(T_.boundaryField(), patchi)
-    {
-        if (isA<wedgePolyPatch>(T_.mesh().boundaryMesh()[patchi]))
-        {
-            const wedgePolyPatch& wedge =
-                refCast<const wedgePolyPatch>(T_.mesh().boundaryMesh()[patchi]);
-            bool exists = false;
-            vector a = cmptMag(cmptMultiply(wedge.n(), geoD));
-            a /= mag(a);
-
-            for (label i = 0; i < ai; i++)
-            {
-                if (mag(axis[i] - a) < small)
-                {
-                    exists = true;
-                }
-            }
-            if (!exists)
-            {
-                dirCorrection_ += wedge.cosAngle()*a;
-                axis[ai] = a;
-                ai++;
-            }
-        }
-    }
-
     // 3D
     if (mesh_.nGeometricD() == 3)
     {
@@ -243,8 +212,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimMass/pow3(dimTime), 0),
-        "zeroGradient"
+        dimensionedScalar(dimMass/pow3(dimTime), 0)
     ),
     qr_
     (
@@ -257,8 +225,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimMass/pow3(dimTime), 0),
-        "zeroGradient"
+        dimensionedScalar(dimMass/pow3(dimTime), 0)
     ),
     qem_
     (
@@ -271,8 +238,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimMass/pow3(dimTime), 0),
-        "zeroGradient"
+        dimensionedScalar(dimMass/pow3(dimTime), 0)
     ),
     qin_
     (
@@ -285,8 +251,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimMass/pow3(dimTime), 0),
-        "zeroGradient"
+        dimensionedScalar(dimMass/pow3(dimTime), 0)
     ),
     a_
     (
@@ -299,8 +264,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        dimensionedScalar(dimless/dimLength, 0),
-        "zeroGradient"
+        dimensionedScalar(dimless/dimLength, 0)
     ),
     nTheta_(readLabel(coeffs_.lookup("nTheta"))),
     nPhi_(readLabel(coeffs_.lookup("nPhi"))),
@@ -316,8 +280,7 @@ Foam::radiationModels::fvDOM::fvDOM(const volScalarField& T)
       : coeffs_.lookupOrDefault<scalar>("tolerance", 0)
     ),
     maxIter_(coeffs_.lookupOrDefault<label>("maxIter", 50)),
-    omegaMax_(0),
-    dirCorrection_(Zero)
+    omegaMax_(0)
 {
     initialise();
 }
@@ -409,8 +372,7 @@ Foam::radiationModels::fvDOM::fvDOM
       : coeffs_.lookupOrDefault<scalar>("tolerance", 0)
     ),
     maxIter_(coeffs_.lookupOrDefault<label>("maxIter", 50)),
-    omegaMax_(0),
-    dirCorrection_(Zero)
+    omegaMax_(0)
 {
     initialise();
 }
