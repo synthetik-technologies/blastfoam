@@ -14,7 +14,7 @@ blastFoam is a library for single and multiphase compressible flow with applicat
 
 ## How to use blastFoam
 
-Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](blastFoam_User_Guide.pdf).
+Several validation and tutorial cases are included in the repository, and are documented in the [blastFoam User Guide](BlastFoam_User_Guide.pdf).
 
 
 ### blastFoam workshop | Date: July 14, 2020 | Location: Virtual/Online | Cost: Free
