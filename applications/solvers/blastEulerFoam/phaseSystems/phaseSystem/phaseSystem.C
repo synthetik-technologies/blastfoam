@@ -543,6 +543,7 @@ void Foam::phaseSystem::calcMixtureVariables()
         rho_ = phase.alphaRho();
         alphaRhoU = phase.alphaRho()*phase.U();
         alphaRhoT = phase.alphaRho()*phase.T();
+        phi_ = phase.alphaPhi();
         if (!phase.granular())
         {
             palphaRho =
@@ -557,6 +558,7 @@ void Foam::phaseSystem::calcMixtureVariables()
         rho_ += alphaRho;
         alphaRhoU.ref() += alphaRho*phase.U();
         alphaRhoT.ref() += alphaRho*phase.T();
+        phi_ += phase.alphaPhi();
         if (!phase.granular())
         {
             if (alphaRhop.valid())
@@ -627,6 +629,19 @@ Foam::phaseSystem::phaseSystem
         ),
         mesh,
         dimensionedVector("0", dimVelocity, Zero)
+    ),
+
+    phi_
+    (
+        IOobject
+        (
+            "phi",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        fvc::flux(U_)
     ),
 
     p_

@@ -49,7 +49,7 @@ boundaryField
     }
     walls
     {
-        type            slip;
+        type            symmetry;
     }
     defaultFaces
     {

@@ -203,6 +203,9 @@ protected:
         //- Mixture velocity
         volVectorField U_;
 
+        //- Mixture flux
+        surfaceScalarField phi_;
+
         //- Mixture pressure
         volScalarField p_;
 

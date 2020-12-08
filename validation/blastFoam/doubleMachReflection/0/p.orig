@@ -40,7 +40,7 @@ boundaryField
     }
     walls
     {
-        type            zeroGradient;
+        type            symmetry;
     }
 
     defaultFaces
