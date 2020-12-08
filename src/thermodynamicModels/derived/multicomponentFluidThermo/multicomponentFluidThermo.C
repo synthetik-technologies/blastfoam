@@ -199,7 +199,7 @@ Foam::multicomponentFluidThermo<ThermoType>::~multicomponentFluidThermo()
 template<class ThermoType>
 void Foam::multicomponentFluidThermo<ThermoType>::correct()
 {
-    this->updateMixture();
+    this->updateMixtures();
 
     this->T_ = this->calcT();
     this->T_.correctBoundaryConditions();
@@ -329,6 +329,7 @@ Foam::multicomponentFluidThermo<ThermoType>::calcP(const label patchi) const
 template<class ThermoType>
 Foam::scalar Foam::multicomponentFluidThermo<ThermoType>::calcPi(const label celli) const
 {
+    this->checkNCells();
     return
         this->cellMixtures_[celli].p
         (

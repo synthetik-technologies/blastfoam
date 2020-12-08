@@ -64,10 +64,10 @@ protected:
     mutable ThermoType mixture_;
 
     //- Stored thermo state at cell centres
-    PtrList<ThermoType> cellMixtures_;
+    mutable PtrList<ThermoType> cellMixtures_;
 
     //- Stored thermo state at boundaries
-    PtrList<PtrList<ThermoType>> faceMixtures_;
+    mutable PtrList<PtrList<ThermoType>> faceMixtures_;
 
 
     // Private Member Functions
@@ -84,7 +84,25 @@ protected:
             const label facei
         ) const;
 
-        void updateMixture();
+
+        //- Ensure number of cells are consistent
+        void checkNCells() const;
+
+        //- Ensure number of patches are consistent
+        void checkNPatches() const;
+
+        //- Ensure number of faces are consistent
+        void checkNFaces(const label patchi) const;
+
+        //- Update cell mixtures
+        void updateCellMixtures() const;
+
+        //- Update face mixtures
+        void updateFaceMixtures(const label patchi) const;
+
+        //- Update all mixtures
+        void updateMixtures() const;
+
 
         //- Return a volScalarField of the given property
         template<class Method, class ... Args>
