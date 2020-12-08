@@ -116,4 +116,10 @@ inline Foam::scalar Foam::radiationModels::fvDOM::omegaMax() const
 }
 
 
+inline Foam::vector Foam::radiationModels::fvDOM::dirCorrection() const
+{
+    return dirCorrection_;
+}
+
+
 // ************************************************************************* //

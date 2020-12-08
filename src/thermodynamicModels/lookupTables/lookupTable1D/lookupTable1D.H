@@ -119,6 +119,71 @@ public:
 
     // Member Functions
 
+        // Access data
+
+            //- Modify by modType
+            scalar mod(const scalar& f) const
+            {
+                return modFunc_(f);
+            }
+
+            //- Modify by invModType
+            scalar invMod(const scalar& f) const
+            {
+                return invModFunc_(f);
+            }
+
+            //- Modify by modXType
+            scalar modX(const scalar& f) const
+            {
+                return modXFunc_(f);
+            }
+
+            //- Modify by invModXType
+            scalar invModX(const scalar& f) const
+            {
+                return modXFunc_(f);
+            }
+
+            //- Const access to real x values
+            const scalarField& x() const
+            {
+                return xValues_;
+            }
+
+            //- Non-const access to real x values
+            scalarField& x()
+            {
+                return xValues_;
+            }
+
+            //- Const access to modified x values
+            const scalarField& xMod() const
+            {
+                return xModValues_;
+            }
+
+            //- Non-const access to modified x values
+            scalarField& xMod()
+            {
+                return xModValues_;
+            }
+
+            //- Const access to modified data values
+            const scalarField& data() const
+            {
+                return data_;
+            }
+
+            //- Non-const access to modified data values
+            scalarField& data()
+            {
+                return data_;
+            }
+
+
+    // Public functions
+
         //- Lookup value
         scalar lookup(const scalar& x) const;
 

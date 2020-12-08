@@ -134,6 +134,9 @@ protected:
         //- Maximum omega weight
         scalar omegaMax_;
 
+        //- Scale factor for axisymmetric cases
+        vector dirCorrection_;
+
 
     // Private Member Functions
 
@@ -248,6 +251,9 @@ public:
 
             //- Return omegaMax
             inline scalar omegaMax() const;
+
+            //- Return direction vector correction
+            inline vector dirCorrection() const;
 
 
     // Member Operators

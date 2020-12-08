@@ -55,6 +55,7 @@ void Foam::lookupTable1D::readTable(const fileName& file)
         {
             continue;
         }
+        line.replaceAll(",", " ");
 
         IStringStream isLine(line);
 

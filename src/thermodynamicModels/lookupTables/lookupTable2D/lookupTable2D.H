@@ -127,28 +127,9 @@ class lookupTable2D
         scalar& f
     );
 
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline labelList boundi
-    (
-        const scalar& f,
-        const Field<scalarField>& data,
-        const label& j
-    ) const;
-
-    //- Find bottom of interpolation region, return index and weight between j and j+1
-    inline labelList boundj
-    (
-        const scalar& f,
-        const Field<scalarField>& data,
-        const label& i
-    ) const;
-
-    //- Return value from a given list from lower index and weight
-    scalar getValue(const label ij, const scalar& f, const scalarField& xy) const;
-
     //- Check if spacing in a list is uniform
     bool checkUniform(const scalarField& xy) const;
+
 
 public:
 
@@ -339,6 +320,25 @@ public:
 
         //- Return second derivative w.r.t. y
         scalar d2FdY2(const scalar& x, const scalar& y) const;
+
+        //- Find bottom of interpolation region, return index and weight between i and i+1
+        labelList boundi
+        (
+            const scalar& f,
+            const Field<scalarField>& data,
+            const label& j
+        ) const;
+
+        //- Find bottom of interpolation region, return index and weight between j and j+1
+        labelList boundj
+        (
+            const scalar& f,
+            const Field<scalarField>& data,
+            const label& i
+        ) const;
+
+        //- Return value from a given list from lower index and weight
+        scalar getValue(const label ij, const scalar& f, const scalarField& xy) const;
 };
 
 

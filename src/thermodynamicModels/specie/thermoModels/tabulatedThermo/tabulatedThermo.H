@@ -43,41 +43,41 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTable2D.H"
+#include "lookupTable1D.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class EquationOfState> class eConstThermo;
+template<class EquationOfState> class tabulatedThermo;
 
 template<class EquationOfState>
-inline eConstThermo<EquationOfState> operator+
+inline tabulatedThermo<EquationOfState> operator+
 (
-    const eConstThermo<EquationOfState>&,
-    const eConstThermo<EquationOfState>&
+    const tabulatedThermo<EquationOfState>&,
+    const tabulatedThermo<EquationOfState>&
 );
 
 template<class EquationOfState>
-inline eConstThermo<EquationOfState> operator*
+inline tabulatedThermo<EquationOfState> operator*
 (
     const scalar,
-    const eConstThermo<EquationOfState>&
+    const tabulatedThermo<EquationOfState>&
 );
 
 template<class EquationOfState>
-inline eConstThermo<EquationOfState> operator==
+inline tabulatedThermo<EquationOfState> operator==
 (
-    const eConstThermo<EquationOfState>&,
-    const eConstThermo<EquationOfState>&
+    const tabulatedThermo<EquationOfState>&,
+    const tabulatedThermo<EquationOfState>&
 );
 
 template<class EquationOfState>
 Ostream& operator<<
 (
     Ostream&,
-    const eConstThermo<EquationOfState>&
+    const tabulatedThermo<EquationOfState>&
 );
 
 
@@ -92,19 +92,12 @@ class tabulatedThermo
 {
 // Private data
 
-    //- Temperature lookup table
-    lookupTable2D TTable_;
+    //- Internal energy lookup table
+    lookupTable1D eTable_;
 
-
-protected:
-
-    // Protected data
-
-        //- Convergence criteria for temperature
-        scalar tolerance_;
-
-        //- Maximum number of iterations
-        label maxIter_;
+    //- Temperature bounds
+    scalar Tlow_;
+    scalar Thigh_;
 
 
 public:
@@ -121,132 +114,81 @@ public:
 
         tabulatedThermo(const dictionary& dict);
 
+        //- Limit the temperature to be in the range Tlow_ to Thigh_
+        inline scalar limit(const scalar T) const;
+
+
     // Member Functions
 
+        //- Heat capacity at constant volume of mixture [J/kg/K]
+        inline scalar Cv
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
+        ) const;
 
-        // Thermodynamic functions
+        //- Sensible internal energy [J/kg]
+        inline scalar Es
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
+        ) const;
 
-            //- Return Mie Gruniesen coefficient
-            scalar Gamma
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        //- Absolute internal energy [J/kg]
+        inline scalar Ea
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
+        ) const;
 
-            //- Return speed of sound
-            scalar cSqr
-            (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        #include "EtoHFuncs.H"
 
-            //- Heat capacity at constant volume [J/kg/K]
-            scalar Cv
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        //- Heat of formation [J/kg]
+        inline scalar Hf() const;
 
-            //- Heat capacity at constant pressure [J/kg/K]
-            scalar Cp
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        //- Entropy [J/kg/K]
+        inline scalar S
+        (
+            const scalar& p,
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
+        ) const;
 
-            //- Return specific heat ratio
-            scalar CpByCv
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        //- Derivative of Gibbs free energy w.r.t. temperature
+        inline scalar dGdT(const scalar p, const scalar T) const;
 
-            //- Difference in specific heat ratios
-            scalar CpMCv
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        //- Temperature derivative of heat capacity at constant pressure
+        inline scalar dCpdT(const scalar p, const scalar T) const;
 
-            //- Sensible internal energy [J/kg]
-            scalar Es
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
 
-            //- Absolute internal energy [J/kg]
-            scalar Ea
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+    // Member operators
 
-            //- Sensible enthalpy [J/kg]
-            scalar Hs
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const
-            {
-                return Cp(rho, e, T)*T + EquationOfState::H(rho, e, T);
-            }
+        inline void operator+=(const tabulatedThermo&);
 
-            //- Absolute enthalpy [J/kg]
-            scalar Ha
-            (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const
-            {
-                return Hs(rho, e, T);
-            }
 
-            //- Entropy [J/kg/K]
-            scalar S
-            (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+    // Friend operators
 
-            //- Return temperature
-            scalar TRhoE
-            (
-                const scalar& T0,
-                const scalar& rho,
-                const scalar& e
-            ) const;
+        friend tabulatedThermo operator+ <EquationOfState>
+        (
+            const tabulatedThermo&,
+            const tabulatedThermo&
+        );
 
-            //- Initialize internal energy
-            scalar initializeEnergy
-            (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        friend tabulatedThermo operator* <EquationOfState>
+        (
+            const scalar,
+            const tabulatedThermo&
+        );
 
-            //- Initialize internal energy
-            scalar initializeRho
-            (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
-            ) const;
+        friend tabulatedThermo operator== <EquationOfState>
+        (
+            const tabulatedThermo&,
+            const tabulatedThermo&
+        );
 };
 
 

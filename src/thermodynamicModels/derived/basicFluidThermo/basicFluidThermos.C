@@ -176,28 +176,21 @@ namespace Foam
         DoanNickel
     );
 
-    // Tabulated equation of state and thermo model
-    typedef basicFluidThermo
-        <
-            eThermoModel
-            <
-                fluidThermoModel,
-                constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie
-            >
-        >
-        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel;
-
-    defineTemplateTypeNameAndDebugWithName
+    // Doan-Nickel equation of state and tabulated thermo model
+    defineThermoType
     (
-        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel,
-        (constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie::typeName()).c_str(),
-        0
+        constTransport,
+        tabulatedThermo,
+        MGEquationOfState,
+        DoanNickel,
+        blastSpecie
     );
-    addToRunTimeSelectionTable
+    addFluidThermo
     (
-        fluidThermoModel,
-        basicFluidThermoconstTransporttabulatedMGEquationOfStateDoanNickel,
-        basic
+        constTransport,
+        tabulatedThermo,
+        MGEquationOfState,
+        DoanNickel
     );
 
     // Tabulated equation of state and thermo model

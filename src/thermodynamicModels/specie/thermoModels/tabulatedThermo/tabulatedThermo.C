@@ -37,21 +37,14 @@ Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
 )
 :
     EquationOfState(dict),
-    TTable_
+    eTable_
     (
         dict.subDict("thermodynamics").lookupType<fileName>("file"),
         dict.subDict("thermodynamics").lookupType<word>("mod"),
-        dict.subDict("thermodynamics").lookupType<word>("rhoMod"),
-        dict.subDict("thermodynamics").lookupType<word>("eMod"),
-        dict.subDict("thermodynamics").lookupType<label>("nRho"),
-        dict.subDict("thermodynamics").lookupType<label>("ne"),
-        dict.subDict("thermodynamics").lookupType<scalar>("minRho"),
-        dict.subDict("thermodynamics").lookupType<scalar>("dRho"),
-        dict.subDict("thermodynamics").lookupType<scalar>("mine"),
-        dict.subDict("thermodynamics").lookupType<scalar>("de")
+        dict.subDict("thermodynamics").lookupType<word>("TMod")
     ),
-    tolerance_(dict.lookupOrDefault("tolerance", 1e-6)),
-    maxIter_(dict.lookupOrDefault("maxIter", 100))
+    Tlow_(min(eTable_.x())),
+    Thigh_(max(eTable_.x()))
 {}
 
 // ************************************************************************* //

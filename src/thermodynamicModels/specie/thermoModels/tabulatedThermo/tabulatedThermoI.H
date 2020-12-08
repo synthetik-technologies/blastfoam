@@ -29,171 +29,218 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::Gamma
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::limit
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar T
 ) const
 {
-    return EquationOfState::Gamma(rho, e, T, T);
-}
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::cSqr
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return
-        EquationOfState::cSqr
-        (
-            p,
-            rho,
-            e,
-            T,
-            T // dummy variable, Must use MG
-        );
-}
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return TTable_.reverseLookupY(T, rho);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return TTable_.reverseLookupY(T, rho);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cv
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return 1.0/max(TTable_.dFdY(rho, e), small);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cp
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return CpMCv(rho, e, T) + Cv(rho, e, T);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::CpMCv
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return EquationOfState::dpdT(rho, e, T)/max(rho, 1e-10);
-}
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::CpByCv
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return Cp(rho, e, T)/Cv(rho, e, T);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::TRhoE
-(
-    const scalar& T0,
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return TTable_.lookup(rho, e);
-}
-
-
-template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::initializeEnergy
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    if (EquationOfState::temperatureBased())
+    if (tabulatedThermo<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))
     {
-        return TTable_.reverseLookupY(T, rho);
+        WarningInFunction
+            << "attempt to use tabulatedThermo<EquationOfState>"
+               " out of temperature range "
+            << Tlow_ << " -> " << Thigh_ << ";  T = " << T
+            << endl;
+
+        return min(max(T, Tlow_), Thigh_);
     }
-
-    if (rho < small)
+    else
     {
-        return 0.0;
+        return T;
     }
-    scalar Eest = 1000.0;
-    scalar Enew = 1000.0;
-    scalar Etol = Eest*tolerance_;
-    int    iter = 0;
-    do
-    {
-        Eest = Enew;
-
-        Enew -=
-            (EquationOfState::p(rho, Eest, T) - p)
-           /stabilise(EquationOfState::dpde(rho, Eest, T), small);
-
-        if (iter++ > 100)
-        {
-            FatalErrorInFunction
-                << "Maximum number of iterations exceeded: " << 100
-                << abort(FatalError);
-        }
-
-    } while (mag(Enew - Eest)/Eest > Etol);
-
-    return Enew;
 }
 
+
 template<class EquationOfState>
-Foam::scalar Foam::tabulatedThermo<EquationOfState>::initializeRho
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cv
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return eTable_.dFdX(T) + EquationOfState::Cv(rho, e, T);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return eTable_.lookup(T);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return Es(rho, e, T) + Hf();
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Hf() const
+{
+    return 0.0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::S
 (
     const scalar& p,
     const scalar& rho,
     const scalar& e,
     const scalar& T
+) const
+{
+    return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(p, rho, T);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dGdT
+(
+    const scalar p,
+    const scalar T
 ) const
 {
     NotImplemented;
-    return rho;
+    return 0;
 }
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dCpdT
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0;
+}
+
+// * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline void Foam::tabulatedThermo<EquationOfState>::operator+=
+(
+    const tabulatedThermo<EquationOfState>& ct
+)
+{
+    NotImplemented;
+    return ct;
+
+//     scalar Y1 = this->Y();
+//
+//     EquationOfState::operator+=(ct);
+//
+//     if (mag(this->Y()) > small)
+//     {
+//         Y1 /= this->Y();
+//         const scalar Y2 = ct.Y()/this->Y();
+//
+//         Cv_ = Y1*Cv_ + Y2*ct.Cv_;
+//         Hf_ = Y1*Hf_ + Y2*ct.Hf_;
+//     }
+}
+
+
+// * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline Foam::tabulatedThermo<EquationOfState> Foam::operator+
+(
+    const tabulatedThermo<EquationOfState>& ct1,
+    const tabulatedThermo<EquationOfState>& ct2
+)
+{
+    NotImplemented;
+    return ct1;
+
+//     EquationOfState eofs
+//     (
+//         static_cast<const EquationOfState&>(ct1)
+//       + static_cast<const EquationOfState&>(ct2)
+//     );
+//
+//     if (mag(eofs.Y()) < small)
+//     {
+//         return tabulatedThermo<EquationOfState>
+//         (
+//             eofs,
+//             ct1.Cv_,
+//             ct1.Hf_
+//         );
+//     }
+//     else
+//     {
+//         return tabulatedThermo<EquationOfState>
+//         (
+//             eofs,
+//             ct1.Y()/eofs.Y()*ct1.Cv_
+//           + ct2.Y()/eofs.Y()*ct2.Cv_,
+//             ct1.Y()/eofs.Y()*ct1.Hf_
+//           + ct2.Y()/eofs.Y()*ct2.Hf_
+//         );
+//     }
+}
+
+
+template<class EquationOfState>
+inline Foam::tabulatedThermo<EquationOfState> Foam::operator*
+(
+    const scalar s,
+    const tabulatedThermo<EquationOfState>& ct
+)
+{
+    NotImplemented;
+    return ct;
+
+//     return tabulatedThermo<EquationOfState>
+//     (
+//         s*static_cast<const EquationOfState&>(ct),
+//         ct.Cv_,
+//         ct.Hf_
+//     );
+}
+
+
+template<class EquationOfState>
+inline Foam::tabulatedThermo<EquationOfState> Foam::operator==
+(
+    const tabulatedThermo<EquationOfState>& ct1,
+    const tabulatedThermo<EquationOfState>& ct2
+)
+{
+    NotImplemented;
+    return ct1;
+
+//     EquationOfState eofs
+//     (
+//         static_cast<const EquationOfState&>(ct1)
+//      == static_cast<const EquationOfState&>(ct2)
+//     );
+//
+//     return tabulatedThermo<EquationOfState>
+//     (
+//         eofs,
+//         ct2.Y()/eofs.Y()*ct2.Cv_
+//       - ct1.Y()/eofs.Y()*ct1.Cv_,
+//         ct2.Y()/eofs.Y()*ct2.Hf_
+//       - ct1.Y()/eofs.Y()*ct1.Hf_
+//     );
+}
+
+
 // ************************************************************************* //
