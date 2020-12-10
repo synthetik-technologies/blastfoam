@@ -123,18 +123,11 @@ inline Foam::label Foam::mappedMovingPatchBase::sampleSize() const
 }
 
 
-inline Foam::tmp<Foam::pointField> Foam::mappedMovingPatchBase::offsets() const
+inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPatchBase::offsets() const
 {
     if (displacementPtr_)
     {
-        const pointField& points = patch_.boundaryMesh().mesh().points();
-        tmp<pointField> tmpxf(new pointField(patch_.size()));
-        pointField& xf = tmpxf.ref();
-        forAll(patch_, i)
-        {
-            xf[i] = patch_[i].average(points, *displacementPtr_);
-        }
-        return xf;
+        return displacementPtr_->boundaryField()[patch_.index()];
     }
 
     if (debug)
@@ -142,13 +135,13 @@ inline Foam::tmp<Foam::pointField> Foam::mappedMovingPatchBase::offsets() const
         Info<< "Offsets are not set for " << patch_.name() << endl;
     }
 
-    return tmp<pointField>(new pointField(patch_.size(), Zero));
+    return tmp<vectorField>(new vectorField(patch_.size(), Zero));
 }
 
 
 inline void Foam::mappedMovingPatchBase::setOffsets
 (
-    const pointVectorField& displacement
+    const volVectorField& displacement
 )
 {
     if (displacementPtr_)

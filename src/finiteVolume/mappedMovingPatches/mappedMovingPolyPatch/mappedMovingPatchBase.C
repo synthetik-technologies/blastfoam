@@ -1204,11 +1204,7 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPatchBase::samplePoints
 
     if (displacementPtr_)
     {
-        const pointField& points = patch_.boundaryMesh().mesh().points();
-        forAll(patch_, i)
-        {
-            fld[i] -= patch_[i].average(points, *displacementPtr_);
-        }
+        fld -= displacementPtr_->boundaryField()[patch_.index()];
     }
     else
     {

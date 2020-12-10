@@ -149,10 +149,10 @@ void Foam::clearMappedPatches(fvMesh& mesh)
 
 bool Foam::setMappedPatchDisplacement(fvMesh& mesh, const word& name)
 {
-    if (mesh.foundObject<pointVectorField>(name))
+    if (mesh.foundObject<volVectorField>(name))
     {
-        const pointVectorField& D =
-            mesh.lookupObject<pointVectorField>(name);
+        const volVectorField& D =
+            mesh.lookupObject<volVectorField>(name);
 
         forAll(mesh.boundaryMesh(), patchi)
         {

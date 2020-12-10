@@ -584,7 +584,7 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
 
                 // need to set point0 so that it represents the position that
                 // it would have had if it had existed for all time
-                points0_[pointi] -= displacement[pointi];
+                points0Ref()[pointi] -= displacement[pointi];
             }
         }
     }

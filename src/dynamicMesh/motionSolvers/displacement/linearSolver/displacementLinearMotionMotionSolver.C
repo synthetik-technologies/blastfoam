@@ -52,8 +52,8 @@ displacementLinearMotionMotionSolver
 :
     points0MotionSolver(mesh, dict, typeName),
     axis_(normalised(vector(coeffDict().lookup("axis")))),
-    xFixed_(coeffDict().lookup<scalar>("xFixed")),
-    xMoving_(coeffDict().lookup<scalar>("xMoving")),
+    xFixed_(readScalar(coeffDict().lookup("xFixed"))),
+    xMoving_(readScalar(coeffDict().lookup("xMoving"))),
     displacement_(Function1<scalar>::New("displacement", coeffDict()))
 {}
 
