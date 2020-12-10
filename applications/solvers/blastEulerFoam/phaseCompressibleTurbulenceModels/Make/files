@@ -1,3 +1,0 @@
-phaseCompressibleTurbulenceModels.C
-
-LIB = $(BLAST_LIBBIN)/libblastTurbulenceModels

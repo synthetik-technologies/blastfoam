@@ -5,7 +5,6 @@ phaseModels/newPhaseModel.C
 
 phaseModels/fluidPhaseModel/fluidPhaseModel.C
 phaseModels/multiPhaseModel/multiPhaseModel.C
-phaseModels/multicomponentPhaseModel/multicomponentPhaseModel.C
 phaseModels/granularPhaseModel/granularPhaseModel.C
 
 phaseModels/phasePair/phasePairKey/phasePairKey.C

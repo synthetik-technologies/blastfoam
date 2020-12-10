@@ -1,5 +1,5 @@
 thermalStresses[i] =
-    thermophysicalProperties[i].lookupType<Switch>("thermalStress");
+    thermophysicalProperties[i].lookup<Switch>("thermalStress");
 
 if (thermalStresses[i])
 {

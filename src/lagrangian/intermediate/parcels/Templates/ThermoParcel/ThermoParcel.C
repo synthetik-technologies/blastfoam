@@ -126,7 +126,7 @@ void Foam::ThermoParcel<ParcelType>::calcSurfaceValues
     mus = td.muInterp().interpolate(this->coordinates(), tetIs)/TRatio;
     kappas = td.kappaInterp().interpolate(this->coordinates(), tetIs)/TRatio;
 
-    Pr = td.Cpc()*mus/max(kappas, small);
+    Pr = td.Cpc()*mus/kappas;
     Pr = max(rootVSmall, Pr);
 }
 

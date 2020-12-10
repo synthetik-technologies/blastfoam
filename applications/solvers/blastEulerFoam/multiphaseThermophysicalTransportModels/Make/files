@@ -1,0 +1,3 @@
+multiphaseThermophysicalTransportModels.C
+
+LIB = $(FOAM_LIBBIN)/libblastMultiphaseThermophysicalTransportModels

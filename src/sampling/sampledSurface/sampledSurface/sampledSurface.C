@@ -120,7 +120,7 @@ Foam::autoPtr<Foam::sampledSurface> Foam::sampledSurface::New
     const dictionary& dict
 )
 {
-    const word sampleType(dict.lookupType<word>("type"));
+    const word sampleType(dict.lookup("type"));
 
     if (debug)
     {

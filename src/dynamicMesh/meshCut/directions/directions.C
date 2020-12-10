@@ -284,7 +284,7 @@ Foam::directions::directions
     List<vectorField>(wordList(dict.lookup("directions")).size())
 {
     const wordList wantedDirs(dict.lookup("directions"));
-    const word coordSystem(dict.lookupType<word>("coordinateSystem"));
+    const word coordSystem(dict.lookup("coordinateSystem"));
 
     bool wantNormal = false;
     bool wantTan1 = false;
@@ -349,7 +349,7 @@ Foam::directions::directions
     {
         const dictionary& patchDict = dict.subDict("patchLocalCoeffs");
 
-        const word patchName(patchDict.lookupType<word>("patch"));
+        const word patchName(patchDict.lookup("patch"));
 
         const label patchi = mesh.boundaryMesh().findPatchID(patchName);
 

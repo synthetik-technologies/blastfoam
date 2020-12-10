@@ -410,19 +410,19 @@ public:
 
     // Friend operators
 
-        inline friend thermoModel operator+ <ThermoType>
+        friend thermoModel operator+ <ThermoType>
         (
             const thermoModel&,
             const thermoModel&
         );
 
-        inline friend thermoModel operator* <ThermoType>
+        friend thermoModel operator* <ThermoType>
         (
             const scalar s,
             const thermoModel&
         );
 
-        inline friend thermoModel operator== <ThermoType>
+        friend thermoModel operator== <ThermoType>
         (
             const thermoModel&,
             const thermoModel&

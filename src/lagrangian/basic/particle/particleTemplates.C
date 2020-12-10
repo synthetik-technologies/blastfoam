@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -76,7 +76,6 @@ void Foam::particle::writeFields(const TrackCloudType& c)
     IOPosition<TrackCloudType> ioP(c);
     ioP.write(np > 0);
 
-    IOField<vector> points(c.fieldIOobject("points", IOobject::NO_READ), np);
     IOField<label> origProc
     (
         c.fieldIOobject("origProcId", IOobject::NO_READ),
@@ -91,13 +90,11 @@ void Foam::particle::writeFields(const TrackCloudType& c)
     label i = 0;
     forAllConstIter(typename TrackCloudType, c, iter)
     {
-        points[i] = iter().position();
         origProc[i] = iter().origProc_;
         origId[i] = iter().origId_;
         i++;
     }
 
-    points.write(np > 0);
     origProc.write(np > 0);
     origId.write(np > 0);
 }
@@ -259,7 +256,7 @@ template<class TrackCloudType>
 void Foam::particle::hitSymmetryPatch(TrackCloudType&, trackingData&)
 {
     const vector nf = normal();
-    transformProperties(I - 2.0*nf*nf);
+    transformProperties(transformer::rotation(I - 2.0*nf*nf));
 }
 
 
@@ -268,12 +265,12 @@ void Foam::particle::hitCyclicPatch(TrackCloudType&, trackingData&)
 {
     const cyclicPolyPatch& cpp =
         static_cast<const cyclicPolyPatch&>(mesh_.boundaryMesh()[patch()]);
-    const cyclicPolyPatch& receiveCpp = cpp.neighbPatch();
-    const label receiveFacei = receiveCpp.whichFace(facei_);
+    const cyclicPolyPatch& receiveCpp = cpp.nbrPatch();
 
     // Set the topology
     facei_ = tetFacei_ = cpp.transformGlobalFace(facei_);
     celli_ = mesh_.faceOwner()[facei_];
+
     // See note in correctAfterParallelTransfer for tetPti addressing ...
     tetPti_ = mesh_.faces()[tetFacei_].size() - 1 - tetPti_;
 
@@ -281,25 +278,9 @@ void Foam::particle::hitCyclicPatch(TrackCloudType&, trackingData&)
     reflect();
 
     // Transform the properties
-    if (!receiveCpp.parallel())
+    if (receiveCpp.transform().transformsPosition())
     {
-        const tensor& T =
-        (
-            receiveCpp.forwardT().size() == 1
-          ? receiveCpp.forwardT()[0]
-          : receiveCpp.forwardT()[receiveFacei]
-        );
-        transformProperties(T);
-    }
-    else if (receiveCpp.separated())
-    {
-        const vector& s =
-        (
-            (receiveCpp.separation().size() == 1)
-          ? receiveCpp.separation()[0]
-          : receiveCpp.separation()[receiveFacei]
-        );
-        transformProperties(-s);
+        transformProperties(receiveCpp.transform());
     }
 }
 
@@ -315,7 +296,7 @@ void Foam::particle::hitCyclicAMIPatch
 {
     const cyclicAMIPolyPatch& cpp =
         static_cast<const cyclicAMIPolyPatch&>(mesh_.boundaryMesh()[patch()]);
-    const cyclicAMIPolyPatch& receiveCpp = cpp.neighbPatch();
+    const cyclicAMIPolyPatch& receiveCpp = cpp.nbrPatch();
 
     if (debug)
     {
@@ -375,40 +356,21 @@ void Foam::particle::hitCyclicAMIPatch
     // Transform the properties
     vector displacementT = displacement;
 
-    const vectorTensorTransform AMITransform =
+    const transformer AMITransform =
         receiveCpp.owner()
       ? receiveCpp.AMITransforms()[receiveAMIi]
       : inv(cpp.AMITransforms()[receiveAMIi]);
-    if (AMITransform.hasR())
+
+    if (AMITransform.transformsPosition())
     {
-        transformProperties(AMITransform.R());
-        displacementT = transform(AMITransform.R(), displacementT);
-    }
-    else if (AMITransform.t() != vector::zero)
-    {
-        transformProperties(AMITransform.t());
+        transformProperties(AMITransform);
+        displacementT = AMITransform.transform(displacementT);
     }
 
-    if (!receiveCpp.parallel())
+    if (receiveCpp.transform().transformsPosition())
     {
-        const tensor& T =
-        (
-            receiveCpp.forwardT().size() == 1
-          ? receiveCpp.forwardT()[0]
-          : receiveCpp.forwardT()[facei_]
-        );
-        transformProperties(T);
-        displacementT = transform(T, displacementT);
-    }
-    else if (receiveCpp.separated())
-    {
-        const vector& s =
-        (
-            (receiveCpp.separation().size() == 1)
-          ? receiveCpp.separation()[0]
-          : receiveCpp.separation()[facei_]
-        );
-        transformProperties(-s);
+        transformProperties(receiveCpp.transform());
+        displacementT = receiveCpp.transform().transform(displacementT);
     }
 
     // If on a boundary and the displacement points into the receiving face

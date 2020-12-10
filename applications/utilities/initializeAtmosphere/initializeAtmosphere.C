@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
 
     if (multiphase)
     {
-        if (atmosphereProperties.lookupType<Switch>("equilibriumTemperature"))
+        if (atmosphereProperties.lookup<Switch>("equilibriumTemperature"))
         {
             forAll(phases, phasei)
             {

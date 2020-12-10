@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -54,6 +54,15 @@ namespace Foam
 
 class surfaceWriter
 {
+
+protected:
+
+    // Protected Data
+
+        //- Write format
+        IOstream::streamFormat writeFormat_;
+
+
 public:
 
     //- Runtime type information
@@ -66,8 +75,10 @@ public:
             autoPtr,
             surfaceWriter,
             word,
-            (),
-            ()
+            (
+                const IOstream::streamFormat writeFormat
+            ),
+            (writeFormat)
         );
 
         declareRunTimeSelectionTable
@@ -85,21 +96,28 @@ public:
     // Selectors
 
         //- Return a reference to the selected surfaceWriter
-        static autoPtr<surfaceWriter> New(const word& writeType);
+        static autoPtr<surfaceWriter> New
+        (
+            const word& writeType,
+            const IOstream::streamFormat writeFormat
+        );
 
         //- Return a reference to the selected surfaceWriter
         //  Select with extra write option
         static autoPtr<surfaceWriter> New
         (
             const word& writeType,
-            const dictionary& writeOptions
+            const dictionary& optDict
         );
 
 
     // Constructors
 
-        //- Construct null
-        surfaceWriter();
+        //- Construct given write format
+        surfaceWriter(const IOstream::streamFormat writeFormat);
+
+        //- Construct with output options
+        surfaceWriter(const dictionary& optDict);
 
 
     //- Destructor
@@ -118,87 +136,75 @@ public:
         //- Write single surface geometry to file.
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
-            const faceList& faces,
-            const bool verbose = false
+            const faceList& faces
         ) const = 0;
 
         //- Write scalarField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
             const word& fieldName,          // name of field
             const Field<scalar>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const = 0;
 
         //- Write vectorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
             const word& fieldName,          // name of field
             const Field<vector>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const = 0;
 
         //- Write sphericalTensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
             const word& fieldName,          // name of field
             const Field<sphericalTensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const = 0;
 
         //- Write symmTensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
             const word& fieldName,          // name of field
             const Field<symmTensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const = 0;
 
         //- Write tensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,      // <case>/surface/TIME
             const fileName& surfaceName,    // name of surface
             const pointField& points,
             const faceList& faces,
             const word& fieldName,          // name of field
             const Field<tensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const = 0;
 };
 

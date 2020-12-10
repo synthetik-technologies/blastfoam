@@ -39,9 +39,9 @@ Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
     EquationOfState(dict),
     eTable_
     (
-        dict.subDict("thermodynamics").lookupType<fileName>("file"),
-        dict.subDict("thermodynamics").lookupType<word>("mod"),
-        dict.subDict("thermodynamics").lookupType<word>("TMod")
+        dict.subDict("thermodynamics").lookup<fileName>("file"),
+        dict.subDict("thermodynamics").lookup<word>("mod"),
+        dict.subDict("thermodynamics").lookup<word>("TMod")
     ),
     Tlow_(min(eTable_.x())),
     Thigh_(max(eTable_.x()))

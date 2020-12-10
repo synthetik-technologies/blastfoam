@@ -1,0 +1,24 @@
+EXE_INC = \
+    -I../phaseSystems/lnInclude \
+    -I../interfacialModels/lnInclude\
+    -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/phaseCompressible/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
+    -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
+    -I$(BLAST_DIR)/src/diameterModels/lnInclude \
+    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
+    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
+    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
+    -I$(BLAST_DIR)/src/sampling/lnInclude \
+    -I$(BLAST_DIR)/src/functionObjects/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude
+
+LIB_LIBS = \
+    -L$(BLAST_LIBBIN) \
+    -lblastPhaseCompressibleMomentumTransportModels \
+    -lblastThermophysicalTransportModels

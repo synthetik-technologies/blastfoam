@@ -159,6 +159,21 @@ public:
             const label patchi
         ) const = 0;
 
+        //- Dynamic viscosity of mixture [kg/m/s]
+        virtual tmp<volScalarField> mu() const;
+
+        //- Dynamic viscosity of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> mu(const label patchi) const;
+
+        //- Kinematic viscosity of mixture [m^2/s]
+        virtual tmp<volScalarField> nu() const;
+
+        //- Kinematic viscosity of mixture for patch [m^2/s]
+        virtual tmp<scalarField> nu(const label patchi) const;
+
+        //- Kinematic viscosity of mixture for cell [m^2/s]
+        virtual scalar nui(const label celli) const;
+
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const = 0;
 };

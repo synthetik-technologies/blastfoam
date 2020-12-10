@@ -154,11 +154,19 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     {
         turbulence_.set
         (
-            compressible::turbulenceModel::New
+            compressible::momentumTransportModel::New
             (
                 rho_,
                 U_,
                 rhoPhi_,
+                thermo_()
+            ).ptr()
+        );
+        thermophysicalTransport_.set
+        (
+            rhoReactionThermophysicalTransportModel::New
+            (
+                turbulence_(),
                 thermo_()
             ).ptr()
         );
@@ -301,7 +309,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-      + turbulence_->divDevRhoReff(U_)
+      + turbulence_->divDevTau(U_)
     );
 
     UEqn.solve();
@@ -311,7 +319,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-      - fvm::laplacian(turbulence_->alphaEff(), e_)
+      - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
     );
 
     if (reaction_.valid())
@@ -332,7 +340,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 (
                     fvm::ddt(rho_, Yi)
                   - fvc::ddt(rho_, Yi)
-                  - fvm::laplacian(turbulence_->muEff(), Yi)
+                  + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
                 );

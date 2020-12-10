@@ -34,7 +34,7 @@ Foam::label Foam::dragODE::calcNEqns()
     return i;
 }
 
-void Foam::dragODE::setUs()
+void Foam::dragODE::setUs(const label li)
 {
     forAll(phaseModels_, phasei)
     {
@@ -44,23 +44,23 @@ void Foam::dragODE::setUs()
         {
             if (solutionD_[0] == 1)
             {
-                phase.U(nodei)[celli_].x() = q_[ui++];
+                phase.U(nodei)[li].x() = q_[ui++];
             }
             if (solutionD_[1] == 1)
             {
-                phase.U(nodei)[celli_].y() = q_[ui++];
+                phase.U(nodei)[li].y() = q_[ui++];
 
             }
             if (solutionD_[2] == 1)
             {
-                phase.U(nodei)[celli_].z() = q_[ui++];
+                phase.U(nodei)[li].z() = q_[ui++];
             }
         }
     }
 }
 
 
-void Foam::dragODE::setq()
+void Foam::dragODE::setq(const label li)
 {
     forAll(phaseModels_, phasei)
     {
@@ -68,7 +68,7 @@ void Foam::dragODE::setq()
         label ui = startI_[phasei];
         for (label nodei = 0; nodei < phase.nNodes(); nodei++)
         {
-            vector U = phase.U(nodei)[celli_];
+            vector U = phase.U(nodei)[li];
             if (solutionD_[0] == 1)
             {
                 q_[ui++] = U.x();
@@ -147,6 +147,7 @@ void Foam::dragODE::derivatives
 (
     const scalar time,
     const scalarField& q,
+    const label li,
     scalarField& dqdt
 ) const
 {
@@ -162,7 +163,7 @@ void Foam::dragODE::derivatives
             scalar alphaRho1 =
                 Foam::max
                 (
-                    phase1.alphaRho(nodei)[celli_],
+                    phase1.alphaRho(nodei)[li],
                     phase1.residualAlphaRho().value()
                 );
 
@@ -173,11 +174,11 @@ void Foam::dragODE::derivatives
                 scalar alphaRho2 =
                     Foam::max
                     (
-                        phase2.alphaRho(nodej)[celli_],
+                        phase2.alphaRho(nodej)[li],
                         phase2.residualAlphaRho().value()
                     );
 
-                scalar drag = dragModels_[pairi].K(celli_, nodei, nodej);
+                scalar drag = dragModels_[pairi].K(li, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 
@@ -214,6 +215,7 @@ void Foam::dragODE::jacobian
 (
     const scalar t,
     const scalarField& q,
+    const label li,
     scalarField& dqdt,
     scalarSquareMatrix& J
 ) const
@@ -231,7 +233,7 @@ void Foam::dragODE::jacobian
             scalar alphaRho1 =
                 Foam::max
                 (
-                    phase1.alphaRho(nodei)[celli_],
+                    phase1.alphaRho(nodei)[li],
                     phase1.residualAlphaRho().value()
                 );
             for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
@@ -241,11 +243,11 @@ void Foam::dragODE::jacobian
                 scalar alphaRho2 =
                     Foam::max
                     (
-                        phase2.alphaRho(nodej)[celli_],
+                        phase2.alphaRho(nodej)[li],
                         phase2.residualAlphaRho().value()
                     );
 
-                scalar drag = dragModels_[pairi].K(celli_, nodei, nodej);
+                scalar drag = dragModels_[pairi].K(li, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 
@@ -299,23 +301,23 @@ Foam::scalar Foam::dragODE::solve
     const scalar& deltaT
 )
 {
-    for(celli_ = 0; celli_ < phaseModels_[0].size(); celli_++)
+    forAll(phaseModels_[0], celli)
     {
         scalarList oldKs(phaseModels_.size());
         forAll(oldKs, phasei)
         {
-            oldKs[phasei] = magSqr(phaseModels_[phasei].U()[celli_]);
+            oldKs[phasei] = magSqr(phaseModels_[phasei].U()[celli]);
         }
-        setq();
+        setq(celli);
 
         scalar timeLeft = deltaT;
         while (timeLeft > small)
         {
             scalar dt = timeLeft;
-            odeSolver_->solve(0, dt, q_, deltaT_[celli_]);
-            setUs();
+            odeSolver_->solve(0, dt, q_, celli, deltaT_[celli]);
+            setUs(celli);
             timeLeft -= dt;
-            deltaT_[celli_] = dt;
+            deltaT_[celli] = dt;
         }
     }
     forAll(phaseModels_, phasei)

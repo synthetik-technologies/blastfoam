@@ -6,6 +6,7 @@ set -x
 
 wclean libso phaseSystems
 wclean libso interfacialModels
-wclean libso phaseCompressibleTurbulenceModels
+wclean libso phaseCompressibleMomentumTransportModels
+wclean $targetType multiphaseThermophysicalTransportModels
 wclean libso kineticTheoryModels
 wclean

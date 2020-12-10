@@ -462,6 +462,21 @@ public:
             const label patchi
         ) const;
 
+        //- Dynamic viscosity of mixture [kg/m/s]
+        virtual tmp<volScalarField> mu() const = 0;
+
+        //- Dynamic viscosity of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> mu(const label patchi) const = 0;
+
+        //- Kinematic viscosity of mixture [m^2/s]
+        virtual tmp<volScalarField> nu() const = 0;
+
+        //- Kinematic viscosity of mixture for patch [m^2/s]
+        virtual tmp<scalarField> nu(const label patchi) const = 0;
+
+        //- Kinematic viscosity of mixture for cell [m^2/s]
+        virtual scalar nui(const label celli) const = 0;
+
         //- Dummy write for regIOobject
         virtual bool writeData(Ostream& os) const
         {

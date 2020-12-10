@@ -39,29 +39,29 @@ Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
     Specie(dict),
     pTable_
     (
-        dict.subDict("equationOfState").lookupType<fileName>("file"),
-        dict.subDict("equationOfState").lookupType<word>("mod"),
-        dict.subDict("equationOfState").lookupType<word>("rhoMod"),
-        dict.subDict("equationOfState").lookupType<word>("eMod"),
-        dict.subDict("equationOfState").lookupType<label>("nRho"),
-        dict.subDict("equationOfState").lookupType<label>("ne"),
-        dict.subDict("equationOfState").lookupType<scalar>("minRho"),
-        dict.subDict("equationOfState").lookupType<scalar>("dRho"),
-        dict.subDict("equationOfState").lookupType<scalar>("mine"),
-        dict.subDict("equationOfState").lookupType<scalar>("de")
+        dict.subDict("equationOfState").lookup<fileName>("file"),
+        dict.subDict("equationOfState").lookup<word>("mod"),
+        dict.subDict("equationOfState").lookup<word>("rhoMod"),
+        dict.subDict("equationOfState").lookup<word>("eMod"),
+        dict.subDict("equationOfState").lookup<label>("nRho"),
+        dict.subDict("equationOfState").lookup<label>("ne"),
+        dict.subDict("equationOfState").lookup<scalar>("minRho"),
+        dict.subDict("equationOfState").lookup<scalar>("dRho"),
+        dict.subDict("equationOfState").lookup<scalar>("mine"),
+        dict.subDict("equationOfState").lookup<scalar>("de")
     ),
     TTable_
     (
-        dict.subDict("thermodynamics").lookupType<fileName>("file"),
-        dict.subDict("thermodynamics").lookupType<word>("mod"),
-        dict.subDict("thermodynamics").lookupType<word>("rhoMod"),
-        dict.subDict("thermodynamics").lookupType<word>("eMod"),
-        dict.subDict("thermodynamics").lookupType<label>("nRho"),
-        dict.subDict("thermodynamics").lookupType<label>("ne"),
-        dict.subDict("thermodynamics").lookupType<scalar>("minRho"),
-        dict.subDict("thermodynamics").lookupType<scalar>("dRho"),
-        dict.subDict("thermodynamics").lookupType<scalar>("mine"),
-        dict.subDict("thermodynamics").lookupType<scalar>("de")
+        dict.subDict("thermodynamics").lookup<fileName>("file"),
+        dict.subDict("thermodynamics").lookup<word>("mod"),
+        dict.subDict("thermodynamics").lookup<word>("rhoMod"),
+        dict.subDict("thermodynamics").lookup<word>("eMod"),
+        dict.subDict("thermodynamics").lookup<label>("nRho"),
+        dict.subDict("thermodynamics").lookup<label>("ne"),
+        dict.subDict("thermodynamics").lookup<scalar>("minRho"),
+        dict.subDict("thermodynamics").lookup<scalar>("dRho"),
+        dict.subDict("thermodynamics").lookup<scalar>("mine"),
+        dict.subDict("thermodynamics").lookup<scalar>("de")
     )
 {}
 

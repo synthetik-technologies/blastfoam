@@ -29,7 +29,7 @@ License
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
 #include "fvcGrad.H"
-#include "turbulentFluidThermoModel.H"
+#include "thermophysicalTransportModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -189,24 +189,26 @@ void Foam::maxwellSlipUFvPatchVectorField::updateCoeffs()
     {
         const volVectorField& vsfU =
             db().lookupObject<volVectorField>(internalField().name());
-        const compressible::turbulenceModel& turbulence =
-            db().lookupObject<compressible::turbulenceModel>
+        const thermophysicalTransportModel& ttm =
+            db().lookupObject<thermophysicalTransportModel>
             (
                 IOobject::groupName
                 (
-                    turbulenceModel::propertiesName,
+                    thermophysicalTransportModel::typeName,
                     internalField().group()
                 )
             );
+
+        const compressibleMomentumTransportModel& turbModel =
+            ttm.momentumTransport();
         tensorField ptauMC
         (
-            turbulence.muEff(patchi)
+            turbModel.muEff(patchi)
            *dev2
             (
                 Foam::T(fvc::grad(vsfU))().boundaryField()[patchi]
             )
         );
-
         vectorField n(patch().nf());
 
         refValue() -= C1/prho*transform(I - n*n, (n & ptauMC));

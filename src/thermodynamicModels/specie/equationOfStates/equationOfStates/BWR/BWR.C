@@ -37,14 +37,14 @@ Foam::BWR<Specie>::BWR
 )
 :
     Specie(dict),
-    A0_(dict.subDict("equationOfState").lookupType<scalar>("A0")),
-    B0_(dict.subDict("equationOfState").lookupType<scalar>("B0")),
-    C0_(dict.subDict("equationOfState").lookupType<scalar>("C0")),
-    a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
-    b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
-    c_(dict.subDict("equationOfState").lookupType<scalar>("c")),
-    alpha_(dict.subDict("equationOfState").lookupType<scalar>("alpha")),
-    gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
+    A0_(dict.subDict("equationOfState").lookup<scalar>("A0")),
+    B0_(dict.subDict("equationOfState").lookup<scalar>("B0")),
+    C0_(dict.subDict("equationOfState").lookup<scalar>("C0")),
+    a_(dict.subDict("equationOfState").lookup<scalar>("a")),
+    b_(dict.subDict("equationOfState").lookup<scalar>("b")),
+    c_(dict.subDict("equationOfState").lookup<scalar>("c")),
+    alpha_(dict.subDict("equationOfState").lookup<scalar>("alpha")),
+    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
 
 {}
 

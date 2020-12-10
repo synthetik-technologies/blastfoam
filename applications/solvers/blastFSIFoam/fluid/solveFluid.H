@@ -9,20 +9,13 @@ Info<< "max(T): " << max(fluids[i].T()).value()
     << ", min(T): " << min(fluids[i].T()).value() << endl;
 
 //- Only update if viscosity is present
-if
-(
-    solidRegions[i].foundObject<blast::turbulenceModel>
-    (
-        blast::turbulenceModel::propertiesName
-    )
-)
-{
+static word ttmName(thermophysicalTransportModel::typeName);
 
+if(fluidRegions[i].foundObject<thermophysicalTransportModel>(ttmName))
+{
     devRhoReffs[i] =
-        solidRegions[i].lookupObject<blast::turbulenceModel>
-        (
-            blast::turbulenceModel::propertiesName
-        ).devRhoReff();
+        fluidRegions[i].lookupObject<thermophysicalTransportModel>(ttmName)
+        .momentumTransport().devTau();
 }
 
 fluids[i].clearODEFields();

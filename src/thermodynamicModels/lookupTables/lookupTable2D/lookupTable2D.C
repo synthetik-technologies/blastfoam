@@ -328,8 +328,8 @@ Foam::lookupTable2D::lookupTable2D
     invModYFunc_(NULL),
     uniformX_(dict.lookupOrDefault(xName + "Uniform", true)),
     uniformY_(dict.lookupOrDefault(yName + "Uniform", true)),
-    nx_(dict.lookupType<label>("n" + xName)),
-    ny_(dict.lookupType<label>("n" + yName)),
+    nx_(dict.lookup<label>("n" + xName)),
+    ny_(dict.lookup<label>("n" + yName)),
     data_(nx_, scalarField(ny_, 0.0)),
     xMod_(nx_, 0.0),
     yMod_(ny_, 0.0),
@@ -342,13 +342,13 @@ Foam::lookupTable2D::lookupTable2D
     setMod(modXType_, modXFunc_, invModXFunc_);
     setMod(modYType_, modYFunc_, invModYFunc_);
 
-    fileName file(dict.lookupType<word>("file"));
+    fileName file(dict.lookup<word>("file"));
     readTable(file, data_);
 
     if (uniformX_)
     {
-        scalar dx(dict.lookupType<scalar>("d" + xName));
-        scalar minx(dict.lookupType<scalar>("min" + xName));
+        scalar dx(dict.lookup<scalar>("d" + xName));
+        scalar minx(dict.lookup<scalar>("min" + xName));
         forAll(xMod_, i)
         {
             xMod_[i] = minx + i*dx;
@@ -357,14 +357,14 @@ Foam::lookupTable2D::lookupTable2D
     }
     else
     {
-        xMod_ = dict.lookupType<scalarField>(xName);
+        xMod_ = dict.lookup<scalarField>(xName);
         findXIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
 
     if (uniformY_)
     {
-        scalar dy(dict.lookupType<scalar>("d" + yName));
-        scalar miny(dict.lookupType<scalar>("min" + yName));
+        scalar dy(dict.lookup<scalar>("d" + yName));
+        scalar miny(dict.lookup<scalar>("min" + yName));
         forAll(yMod_, j)
         {
             yMod_[j] = miny + dy*j;
@@ -373,7 +373,7 @@ Foam::lookupTable2D::lookupTable2D
     }
     else
     {
-        yMod_ = dict.lookupType<scalarField>(yName);
+        yMod_ = dict.lookup<scalarField>(yName);
         findYIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
 

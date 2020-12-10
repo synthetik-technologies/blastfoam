@@ -32,7 +32,7 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "phaseCompressibleTurbulenceModel.H"
+#include "phaseCompressibleMomentumTransportModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "SortableList.H"
 
@@ -206,7 +206,7 @@ Foam::multiPhaseModel::multiPhaseModel
     thermo_.setTotalVolumeFractionPtr(*this);
 
     this->turbulence_ =
-        phaseCompressibleTurbulenceModel::New
+        phaseCompressibleMomentumTransportModel::New
         (
             *this,
             rho_,
@@ -215,6 +215,13 @@ Foam::multiPhaseModel::multiPhaseModel
             phi_,
             *this
         );
+    this->thermophysicalTransport_ =
+        PhaseThermophysicalTransportModel
+        <
+            phaseCompressibleMomentumTransportModel,
+            basicThermoModel
+        >::New(turbulence_, thermo_);
+
     phaseModel::initializeModels();
     thermo_.initializeModels();
     correctThermo();

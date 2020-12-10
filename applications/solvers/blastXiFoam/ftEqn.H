@@ -6,7 +6,7 @@ if (composition.contains("ft"))
     (
         fvm::ddt(rho, ft)
       + fvm::div(phi, ft)
-      - fvm::laplacian(turbulence.alphaEff(), ft)
+      - fvm::laplacian(thermophysicalTransport.alphaEff(), ft)
     );
     ftEqn.solve();
 }

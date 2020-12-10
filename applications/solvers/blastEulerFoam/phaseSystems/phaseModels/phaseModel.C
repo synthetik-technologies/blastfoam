@@ -35,7 +35,7 @@ License
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "basicThermoModel.H"
-#include "phaseCompressibleTurbulenceModel.H"
+#include "phaseCompressibleMomentumTransportModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -330,7 +330,7 @@ void Foam::phaseModel::postUpdate()
         (
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
-          + turbulence_->divDevRhoReff(U_)
+          + turbulence_->divDevTau(U_)
         );
         UEqn.solve();
 
@@ -338,7 +338,7 @@ void Foam::phaseModel::postUpdate()
         (
             fvm::ddt(alphaRho_, e_) - fvc::ddt(alphaRho_, e_)
           + fvc::ddt(smallAlphaRho, e_) - fvm::ddt(smallAlphaRho, e_)
-          - fvm::laplacian(turbulence_->alphaEff(), e_)
+          - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
         );
         eEqn.solve();
 

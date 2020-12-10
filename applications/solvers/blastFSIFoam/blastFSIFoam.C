@@ -53,8 +53,7 @@ Description
 #include "regionProperties.H"
 #include "radiationModel.H"
 #include "fvOptions.H"
-#include "blastCompressibleTurbulenceModel.H"
-#include "ThermalDiffusivity.H"
+#include "blastFluidThermoMomentumTransportModel.H"
 #include "fvOptions.H"
 
 #include "mappedPatchSelector.H"

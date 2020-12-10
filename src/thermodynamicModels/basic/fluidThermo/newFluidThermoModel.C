@@ -134,7 +134,7 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     const word& masterName
 )
 {
-    const word type(dict.lookupType<word>("type"));
+    const word type(dict.lookup<word>("type"));
     if (type == "basic")
     {
         return NewBasic(phaseName, p, rho, e, T, dict, master, masterName);

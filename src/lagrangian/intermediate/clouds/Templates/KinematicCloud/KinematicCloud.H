@@ -443,11 +443,11 @@ public:
                 inline StochasticCollisionModel<KinematicCloud<CloudType>>&
                     stochasticCollision();
 
-//                 //- Return const-access to the surface film model
+                //- Return const-access to the surface film model
 //                 inline const SurfaceFilmModel<KinematicCloud<CloudType>>&
 //                     surfaceFilm() const;
-//
-//                 //- Return reference to the surface film model
+
+                //- Return reference to the surface film model
 //                 inline SurfaceFilmModel<KinematicCloud<CloudType>>&
 //                     surfaceFilm();
 

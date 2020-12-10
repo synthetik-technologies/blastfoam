@@ -36,10 +36,10 @@ Foam::vanderWaals<Specie>::vanderWaals
 )
 :
     Specie(dict),
-    a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
-    b_(dict.subDict("equationOfState").lookupType<scalar>("b")),
-    c_(dict.subDict("equationOfState").lookupType<scalar>("c")),
-    gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
+    a_(dict.subDict("equationOfState").lookup<scalar>("a")),
+    b_(dict.subDict("equationOfState").lookup<scalar>("b")),
+    c_(dict.subDict("equationOfState").lookup<scalar>("c")),
+    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
 {
     if (gamma_ <= 1.0)
     {

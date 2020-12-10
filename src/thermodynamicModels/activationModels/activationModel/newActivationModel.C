@@ -33,7 +33,7 @@ Foam::autoPtr<Foam::activationModel> Foam::activationModel::New
     const word& phaseName
 )
 {
-    const word activationModelType(dict.lookupType<word>("activationModel"));
+    const word activationModelType(dict.lookup<word>("activationModel"));
 
     Info<< "Selecting activationModel: " << activationModelType << endl;
 

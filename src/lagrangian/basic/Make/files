@@ -5,4 +5,4 @@ indexedParticle/indexedParticleCloud.C
 
 InteractionLists/referredWallFace/referredWallFace.C
 
-LIB = $(BLAST_LIBBIN)/libblastLagrangian
+LIB = $(FOAM_LIBBIN)/libblastLagrangian

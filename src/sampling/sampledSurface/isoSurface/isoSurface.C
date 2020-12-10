@@ -38,6 +38,15 @@ namespace Foam
     defineTypeNameAndDebug(isoSurface, 0);
 }
 
+namespace Foam
+{
+    template<>
+    const char* NamedEnum<isoSurface::filterType, 3>::names[] =
+        {"none", "partial", "full"};
+}
+
+const Foam::NamedEnum<Foam::isoSurface::filterType, 3>
+    Foam::isoSurface::filterTypeNames_;
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -75,11 +84,11 @@ Foam::isoSurface::cellCutType Foam::isoSurface::calcCutType
 
                 if (isTriCut(tri, pVals_))
                 {
-                    return CUT;
+                    return cellCutType::cut;
                 }
             }
         }
-        return NOTCUT;
+        return cellCutType::notCut;
     }
     else
     {
@@ -134,7 +143,7 @@ Foam::isoSurface::cellCutType Foam::isoSurface::calcCutType
         {
             // Count actual cuts (expensive since addressing needed)
             // Note: not needed if you don't want to preserve maxima/minima
-            // centred around cellcentre. In that case just always return CUT
+            // centred around cellcentre. In that case just always return cut
 
             const labelList& cPoints = mesh_.cellPoints(celli);
 
@@ -150,16 +159,16 @@ Foam::isoSurface::cellCutType Foam::isoSurface::calcCutType
 
             if (nPyrCuts == cPoints.size())
             {
-                return SPHERE;
+                return cellCutType::sphere;
             }
             else
             {
-                return CUT;
+                return cellCutType::cut;
             }
         }
         else
         {
-            return NOTCUT;
+            return cellCutType::notCut;
         }
     }
 }
@@ -179,7 +188,7 @@ Foam::label Foam::isoSurface::calcCutTypes
     {
         cellCutTypes[celli] = calcCutType(tet.isA(mesh_, celli), celli);
 
-        if (cellCutTypes[celli] == CUT)
+        if (cellCutTypes[celli] == cellCutType::cut)
         {
             nCutCells++;
         }
@@ -247,10 +256,10 @@ void Foam::isoSurface::fixTetBasePtIs()
     {
         if (tetBasePtIs_[facei] == -1)
         {
-            problemCells.set(faceOwner[facei], true);
+            problemCells[faceOwner[facei]] = true;
             if (mesh_.isInternalFace(facei))
             {
-                problemCells.set(faceNeighbour[facei], true);
+                problemCells[faceNeighbour[facei]] = true;
             }
         }
     }
@@ -261,7 +270,7 @@ void Foam::isoSurface::fixTetBasePtIs()
     PackedBoolList problemPoints(mesh_.points().size(), false);
     forAll(cells, celli)
     {
-        if (problemCells.get(celli))
+        if (problemCells[celli])
         {
             const cell& cFaces = cells[celli];
 
@@ -296,7 +305,7 @@ void Foam::isoSurface::fixTetBasePtIs()
                 }
                 if (iter() == 2)
                 {
-                    problemPoints.set(iter.key(), true);
+                    problemPoints[iter.key()] = true;
                 }
             }
         }
@@ -311,11 +320,8 @@ void Foam::isoSurface::fixTetBasePtIs()
     {
         if
         (
-            problemCells.get(faceOwner[facei])
-         || (
-                mesh_.isInternalFace(facei)
-             && problemCells.get(faceNeighbour[facei])
-            )
+            problemCells[faceOwner[facei]]
+         || (mesh_.isInternalFace(facei) && problemCells[faceNeighbour[facei]])
         )
         {
             const face& f = faces[facei];
@@ -324,10 +330,8 @@ void Foam::isoSurface::fixTetBasePtIs()
             // problem point. If not, the existing base point can be retained.
             const label fp0 = tetBasePtIs_[facei] < 0 ? 0 : tetBasePtIs_[facei];
 
-            const bool prevPointIsProblem =
-                problemPoints.get(f[f.rcIndex(fp0)]);
-            const bool nextPointIsProblem =
-                problemPoints.get(f[f.fcIndex(fp0)]);
+            const bool prevPointIsProblem = problemPoints[f[f.rcIndex(fp0)]];
+            const bool nextPointIsProblem = problemPoints[f[f.fcIndex(fp0)]];
 
             if (!prevPointIsProblem && !nextPointIsProblem)
             {
@@ -341,10 +345,8 @@ void Foam::isoSurface::fixTetBasePtIs()
             label maxFp = -1;
             forAll(f, fp)
             {
-                const bool prevPointIsProblem =
-                    problemPoints.get(f[f.rcIndex(fp)]);
-                const bool nextPointIsProblem =
-                    problemPoints.get(f[f.fcIndex(fp)]);
+                const bool prevPointIsProblem = problemPoints[f[f.rcIndex(fp)]];
+                const bool nextPointIsProblem = problemPoints[f[f.fcIndex(fp)]];
 
                 if (!prevPointIsProblem && !nextPointIsProblem)
                 {
@@ -1168,7 +1170,8 @@ Foam::isoSurface::isoSurface
 {
     if (debug)
     {
-        Pout<< "isoSurface : iso:" << iso_ << " filter:" << filter << endl;
+        Pout<< "isoSurface : iso:" << iso_
+            << " filter:" << filterTypeNames_[filter] << endl;
     }
 
     fixTetBasePtIs();
@@ -1202,7 +1205,7 @@ Foam::isoSurface::isoSurface
     for (label celli = 0; celli < mesh_.nCells(); celli++)
     {
         startTri[celli] = faceLabels.size();
-        if (cellCutTypes[celli] != NOTCUT)
+        if (cellCutTypes[celli] != cellCutType::notCut)
         {
             generateTriPoints
             (
@@ -1285,7 +1288,7 @@ Foam::isoSurface::isoSurface
     }
 
 
-    if (filter != NONE)
+    if (filter != filterType::none)
     {
         // Triangulate outside (filter edges to cell centres and optionally
         // face diagonals)
@@ -1295,7 +1298,7 @@ Foam::isoSurface::isoSurface
         (
             removeInsidePoints
             (
-                (filter == DIAGCELL ? true : false),
+                (filter == filterType::full ? true : false),
                 *this,
                 pointFromDiag,
                 pointToFace_,
@@ -1318,7 +1321,7 @@ Foam::isoSurface::isoSurface
         }
 
 
-        if (filter == DIAGCELL)
+        if (filter == filterType::full)
         {
             // We remove verts on face diagonals. This is in fact just
             // straightening the edges of the face through the cell. This can
@@ -1364,10 +1367,10 @@ Foam::isoSurface::isoSurface
                             const edge& verts1 = pointToVerts_[mp[e[1]]];
                             if
                             (
-                                isBoundaryPoint.get(verts0[0])
-                             && isBoundaryPoint.get(verts0[1])
-                             && isBoundaryPoint.get(verts1[0])
-                             && isBoundaryPoint.get(verts1[1])
+                                isBoundaryPoint[verts0[0]]
+                             && isBoundaryPoint[verts0[1]]
+                             && isBoundaryPoint[verts1[0]]
+                             && isBoundaryPoint[verts1[1]]
                             )
                             {
                                 // Open edge on boundary face. Keep
@@ -1400,7 +1403,7 @@ Foam::isoSurface::isoSurface
                 labelHashSet keepFaces(2*size());
                 forAll(removeFace, facei)
                 {
-                    if (!removeFace.get(facei))
+                    if (!removeFace[facei])
                     {
                         keepFaces.insert(facei);
                     }

@@ -69,10 +69,10 @@ class dragODE
     // Private Member Functions
 
         //- Update velocities in phase models
-        void setUs();
+        void setUs(const label li);
 
         //- Update q vector
-        void setq();
+        void setq(const label li);
 
         //- Disallow copy constructor
         dragODE(const dragODE&);
@@ -122,9 +122,6 @@ protected:
         //- Stored time step
         volScalarField::Internal deltaT_;
 
-        //- Current cell
-        label celli_ = 0;
-
         //- Ode solver
         autoPtr<ODESolver> odeSolver_;
 
@@ -169,6 +166,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt
             ) const;
 
@@ -176,6 +174,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt,
                 scalarSquareMatrix& J
             ) const;

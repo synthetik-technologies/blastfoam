@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -88,10 +88,8 @@ Foam::FreeStream<CloudType>::FreeStream
 
     forAll(molecules, i)
     {
-        numberDensities_[i] = readScalar
-        (
-            numberDensitiesDict.lookup(molecules[i])
-        );
+        numberDensities_[i] =
+            numberDensitiesDict.lookup<scalar>(molecules[i]);
 
         moleculeTypeIds_[i] = findIndex(cloud.typeIdList(), molecules[i]);
 
@@ -206,14 +204,14 @@ void Foam::FreeStream<CloudType>::inflow()
 
             scalarField sCosTheta
             (
-                (boundaryU[patchi] & -patch.faceAreas()/mag(patch.faceAreas()))
+                (boundaryU[patchi] & -patch.faceAreas()/patch.magFaceAreas())
               / mostProbableSpeed
             );
 
             // From Bird eqn 4.22
 
             pFA[i] +=
-                mag(patch.faceAreas())*numberDensities_[i]*deltaT
+                patch.magFaceAreas()*numberDensities_[i]*deltaT
                *mostProbableSpeed
                *(
                    exp(-sqr(sCosTheta)) + sqrtPi*sCosTheta*(1 + erf(sCosTheta))
@@ -234,7 +232,7 @@ void Foam::FreeStream<CloudType>::inflow()
 
             const vector& fC = patch.faceCentres()[pFI];
 
-            scalar fA = mag(patch.faceAreas()[pFI]);
+            scalar fA = patch.magFaceAreas()[pFI];
 
             List<tetIndices> faceTets = polyMeshTetDecomposition::faceTetIndices
             (
@@ -246,7 +244,7 @@ void Foam::FreeStream<CloudType>::inflow()
             // Cumulative triangle area fractions
             List<scalar> cTriAFracs(faceTets.size(), 0.0);
 
-            scalar previousCummulativeSum = 0.0;
+            scalar previousCumulativeSum = 0.0;
 
             forAll(faceTets, triI)
             {
@@ -254,9 +252,9 @@ void Foam::FreeStream<CloudType>::inflow()
 
                 cTriAFracs[triI] =
                     faceTetIs.faceTri(mesh).mag()/fA
-                  + previousCummulativeSum;
+                  + previousCumulativeSum;
 
-                previousCummulativeSum = cTriAFracs[triI];
+                previousCumulativeSum = cTriAFracs[triI];
             }
 
             // Force the last area fraction value to 1.0 to avoid any

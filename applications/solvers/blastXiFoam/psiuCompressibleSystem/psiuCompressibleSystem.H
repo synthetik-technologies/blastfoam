@@ -41,7 +41,8 @@ SourceFiles
 #include "integrationSystem.H"
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
-#include "turbulentFluidThermoModel.H"
+#include "fluidThermoMomentumTransportModel.H"
+#include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 
 namespace Foam
@@ -111,7 +112,10 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<compressible::turbulenceModel> turbulence_;
+        autoPtr<compressible::momentumTransportModel> turbulence_;
+
+        //- Thermo turbulence model
+        autoPtr<fluidThermophysicalTransportModel> thermophysicalTransport_;
 
 
     // ODE variables
@@ -187,15 +191,27 @@ public:
     // Member Access Functions
 
         //- Const access to turbulence model
-        const compressible::turbulenceModel& turbulence() const
+        const compressible::momentumTransportModel& turbulence() const
         {
             return turbulence_();
         }
 
         //- Non-const access to turbulence model
-        compressible::turbulenceModel& turbulence()
+        compressible::momentumTransportModel& turbulence()
         {
             return turbulence_();
+        }
+
+        //- Const access to fluidThermophysicalTransportModel model
+        const fluidThermophysicalTransportModel& thermophysicalTransport() const
+        {
+            return thermophysicalTransport_();
+        }
+
+        //- Non-const access to fluidThermophysicalTransportModel model
+        fluidThermophysicalTransportModel& thermophysicalTransport()
+        {
+            return thermophysicalTransport_();
         }
 
         //- Velocity

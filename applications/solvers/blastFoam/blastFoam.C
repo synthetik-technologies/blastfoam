@@ -35,7 +35,6 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "phaseCompressibleSystem.H"
-#include "blastCompressibleTurbulenceModel.H"
 #include "timeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

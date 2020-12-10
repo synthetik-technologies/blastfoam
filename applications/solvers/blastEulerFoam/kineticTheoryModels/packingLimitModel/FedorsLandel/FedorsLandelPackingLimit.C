@@ -56,7 +56,7 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::FedorsLandel
 )
 :
     packingLimitModel(dict, kt),
-    residualAlpha_(dict_.lookupType<scalar>("residualAlpha"))
+    residualAlpha_(dict_.lookup<scalar>("residualAlpha"))
 {}
 
 

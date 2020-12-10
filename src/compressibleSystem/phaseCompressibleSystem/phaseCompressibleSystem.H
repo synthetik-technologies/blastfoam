@@ -41,7 +41,8 @@ SourceFiles
 #include "fluxScheme.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "blastCompressibleTurbulenceModelFwd.H"
+#include "blastFluidThermoMomentumTransportModel.H"
+#include "blastFluidThermophysicalTransportModel.H"
 #include "radiationModel.H"
 #include "uniformDimensionedFields.H"
 
@@ -106,7 +107,11 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<blast::turbulenceModel> turbulence_;
+        autoPtr<blast::momentumTransportModel> turbulence_;
+
+        //- Thermophysical transport model
+        autoPtr<blastFluidThermophysicalTransportModel>
+            thermophysicalTransport_;
 
         //- Radiation model
         autoPtr<radiationModel> radiation_;
@@ -223,10 +228,10 @@ public:
     // Member Access Functions
 
         //- Return turbulence class
-        const blast::turbulenceModel& turbulence() const;
+        const blast::momentumTransportModel& turbulence() const;
 
         //- Return turbulence class
-        blast::turbulenceModel& turbulence();
+        blast::momentumTransportModel& turbulence();
 
         //- Const access to thermo model
         virtual const fluidThermoModel& thermo() const = 0;

@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "phaseCompressibleSystem.H"
-#include "blastCompressibleTurbulenceModel.H"
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
 #include "wedgeFvPatch.H"
@@ -44,7 +43,7 @@ void Foam::phaseCompressibleSystem::setModels()
     {
         turbulence_ =
         (
-            blast::turbulenceModel::New
+            blast::momentumTransportModel::New
             (
                 rho_,
                 U_,
@@ -53,6 +52,15 @@ void Foam::phaseCompressibleSystem::setModels()
             )
         );
         turbulence_->validate();
+
+        thermophysicalTransport_ =
+        (
+            blastFluidThermophysicalTransportModel::New
+            (
+                turbulence_,
+                this->thermo()
+            ).ptr()
+        );
     }
 
 
@@ -329,8 +337,8 @@ void Foam::phaseCompressibleSystem::postUpdate()
 
         if (turbulence_.valid())
         {
-            UEqn += turbulence_->divDevRhoReff(U_);
-            eEqn -= fvm::laplacian(turbulence_->alphaEff(), e_);
+            UEqn += turbulence_->divDevTau(U_);
+            eEqn += thermophysicalTransport_->divq(e_);
         }
 
         UEqn.solve();
@@ -421,14 +429,14 @@ void Foam::phaseCompressibleSystem::addUSource(const volVectorField::Internal& U
 }
 
 
-const Foam::blast::turbulenceModel&
+const Foam::blast::momentumTransportModel&
 Foam::phaseCompressibleSystem::turbulence() const
 {
     return turbulence_();
 }
 
 
-Foam::blast::turbulenceModel&
+Foam::blast::momentumTransportModel&
 Foam::phaseCompressibleSystem::turbulence()
 {
     return turbulence_();

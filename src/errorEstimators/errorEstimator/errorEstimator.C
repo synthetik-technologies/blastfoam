@@ -116,8 +116,8 @@ Foam::errorEstimator::~errorEstimator()
 
 void Foam::errorEstimator::read(const dictionary& dict)
 {
-    lowerRefine_ = dict.lookupType<scalar>("lowerRefineLevel");
-    lowerUnrefine_ = dict.lookupType<scalar>("unrefineLevel");
+    lowerRefine_ = dict.lookup<scalar>("lowerRefineLevel");
+    lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
     upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
     upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
 }

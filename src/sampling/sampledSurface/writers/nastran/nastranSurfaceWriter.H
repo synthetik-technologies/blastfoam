@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2012-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2012-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -27,18 +27,17 @@ Class
 Description
     A surface writer for the Nastran file format - both surface mesh and fields
 
-    formatOptions
+    nastranOptions
     {
-        nastran
-        {
-            // From OpenFOAM field name to Nastran field name
-            fields ((pMean PLOAD2));
-            // Optional scale
-            scale 2.0;
-            // Optional format
-            format free;    // short, long, free
-        }
-    };
+        // From OpenFOAM field name to Nastran field name
+        fields ((pMean PLOAD2));
+
+        // Optional scale
+        scale 2.0;
+
+        // Optional format
+        format free;    // short, long, free
+    }
 
 SourceFiles
     nastranSurfaceWriter.C
@@ -68,14 +67,14 @@ class nastranSurfaceWriter
 {
 public:
 
-    enum writeFormat
+    enum format
     {
         wfShort,
         wfLong,
         wfFree
     };
 
-    static const NamedEnum<writeFormat, 3> writeFormatNames_;
+    static const NamedEnum<format, 3> formatNames_;
 
 
 private:
@@ -83,7 +82,7 @@ private:
     // Private Data
 
         //- Write option
-        writeFormat writeFormat_;
+        format format_;
 
         //- Map of OpenFOAM field name vs nastran field name
         HashTable<word> fieldMap_;
@@ -135,17 +134,15 @@ private:
 
         //- Templated write operation
         template<class Type>
-        void writeTemplate
+        void Write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<Type>& values,
-            const bool isNodeValues,
-            const bool verbose
+            const bool isNodeValues
         ) const;
 
 
@@ -157,11 +154,11 @@ public:
 
     // Constructors
 
-        //- Construct null
-        nastranSurfaceWriter();
+        //- Construct given write format
+        nastranSurfaceWriter(const IOstream::streamFormat writeFormat);
 
         //- Construct with some output options
-        nastranSurfaceWriter(const dictionary& options);
+        nastranSurfaceWriter(const dictionary& optDict);
 
 
     //- Destructor
@@ -180,87 +177,75 @@ public:
         //- Write single surface geometry to file.
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
-            const faceList& faces,
-            const bool verbose = false
+            const faceList& faces
         ) const;
 
         //- Write scalarField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<scalar>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const;
 
         //- Write vectorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<vector>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const;
 
         //- Write sphericalTensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<sphericalTensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const;
 
         //- Write symmTensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<symmTensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const;
 
         //- Write tensorField for a single surface to file.
         //  One value per face or vertex (isNodeValues = true)
         virtual void write
         (
-            const scalar& time,
             const fileName& outputDir,
             const fileName& surfaceName,
             const pointField& points,
             const faceList& faces,
             const word& fieldName,
             const Field<tensor>& values,
-            const bool isNodeValues,
-            const bool verbose = false
+            const bool isNodeValues
         ) const;
 };
 

@@ -111,36 +111,6 @@ Foam::IOobject Foam::points0MotionSolver::points0IO
     }
 }
 
-const Foam::pointVectorField& Foam::points0MotionSolver::points0Init
-(
-    const polyMesh& mesh
-) const
-{
-    pointIOField pio(points0IO(mesh));
-
-    pointVectorField* p0Ptr
-    (
-        new pointVectorField
-        (
-            IOobject
-            (
-                "points0",
-                mesh.time().timeName(),
-                mesh,
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            pointMesh::New(mesh),
-            dimensionedVector(dimLength, Zero)
-        )
-    );
-    p0Ptr->primitiveFieldRef() = pio;
-
-    p0Ptr->store(p0Ptr);
-
-    return mesh.lookupObject<pointVectorField>("points0");
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -152,9 +122,8 @@ Foam::points0MotionSolver::points0MotionSolver
 )
 :
     motionSolver(mesh, dict, type),
-    points0_(points0Init(mesh))
+    points0_(points0IO(mesh))
 {
-
     if (points0_.size() != mesh.nPoints())
     {
         FatalErrorInFunction
@@ -190,11 +159,73 @@ Foam::points0MotionSolver::~points0MotionSolver()
 void Foam::points0MotionSolver::movePoints(const pointField&)
 {}
 
+
 void Foam::points0MotionSolver::updateMesh(const mapPolyMesh& mpm)
 {
     // pointMesh already updates pointFields
 
     motionSolver::updateMesh(mpm);
+
+    // Map points0_. Bit special since we somehow have to come up with
+    // a sensible points0 position for introduced points.
+    // Find out scaling between points0 and current points
+
+    // Get the new points either from the map or the mesh
+    const pointField& points =
+    (
+        mpm.hasMotionPoints()
+      ? mpm.preMotionPoints()
+      : mesh().points()
+    );
+
+    // Note: boundBox does reduce
+    const vector span0 = boundBox(points0_).span();
+    const vector span = boundBox(points).span();
+
+    vector scaleFactors(cmptDivide(span0, span));
+
+    pointField newPoints0(mpm.pointMap().size());
+
+    forAll(newPoints0, pointi)
+    {
+        label oldPointi = mpm.pointMap()[pointi];
+
+        if (oldPointi >= 0)
+        {
+            label masterPointi = mpm.reversePointMap()[oldPointi];
+
+            if (masterPointi == pointi)
+            {
+                newPoints0[pointi] = points0_[oldPointi];
+            }
+            else
+            {
+                // New point - assume motion is scaling
+                newPoints0[pointi] = points0_[oldPointi] + cmptMultiply
+                (
+                    scaleFactors,
+                    points[pointi] - points[masterPointi]
+                );
+            }
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Cannot determine co-ordinates of introduced vertices."
+                << " New vertex " << pointi << " at co-ordinate "
+                << points[pointi] << exit(FatalError);
+        }
+    }
+
+    twoDCorrectPoints(newPoints0);
+
+    points0_.transfer(newPoints0);
+
+    // points0 changed - set to write and check-in to database
+    points0_.rename("points0");
+    points0_.writeOpt() = IOobject::AUTO_WRITE;
+    points0_.instance() = mesh().time().timeName();
+    points0_.checkIn();
 }
 
 

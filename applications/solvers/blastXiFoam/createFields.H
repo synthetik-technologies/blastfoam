@@ -19,8 +19,10 @@ psiuCompressibleSystem fluid(mesh);
 integrator->addSystem(fluid);
 
 psiuReactionThermo& thermo = fluid.thermo();
-basicSpecieMixture& composition = thermo.composition();
-compressible::turbulenceModel& turbulence = fluid.turbulence();
+basicCombustionMixture& composition = thermo.composition();
+compressible::momentumTransportModel& turbulence = fluid.turbulence();
+fluidThermophysicalTransportModel& thermophysicalTransport =
+    fluid.thermophysicalTransport();
 
 const volScalarField& rho = fluid.rho();
 const volScalarField& p = thermo.p();

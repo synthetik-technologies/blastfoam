@@ -35,9 +35,9 @@ template<class EquationOfState>
 Foam::janaf<EquationOfState>::janaf(const dictionary& dict)
 :
     EquationOfState(dict),
-    Tlow_(dict.subDict("thermodynamics").lookupType<scalar>("Tlow")),
-    Thigh_(dict.subDict("thermodynamics").lookupType<scalar>("Thigh")),
-    Tcommon_(dict.subDict("thermodynamics").lookupType<scalar>("Tcommon")),
+    Tlow_(dict.subDict("thermodynamics").lookup<scalar>("Tlow")),
+    Thigh_(dict.subDict("thermodynamics").lookup<scalar>("Thigh")),
+    Tcommon_(dict.subDict("thermodynamics").lookup<scalar>("Tcommon")),
     highCpCoeffs_(dict.subDict("thermodynamics").lookup("highCpCoeffs")),
     lowCpCoeffs_(dict.subDict("thermodynamics").lookup("lowCpCoeffs"))
 {

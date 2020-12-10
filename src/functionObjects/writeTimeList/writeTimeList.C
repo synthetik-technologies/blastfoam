@@ -70,7 +70,7 @@ bool Foam::functionObjects::writeTimeList::read
     const dictionary& dict
 )
 {
-    writeTimes_ = dict.lookupType<scalarList>("times");
+    writeTimes_ = dict.lookup<scalarList>("times");
     writeTimes_.append(great);
 
     // Sort times from smallest to largest

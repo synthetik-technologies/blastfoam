@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "blastCompressibleTurbulenceModel.H"
 #include "fvm.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -185,11 +184,11 @@ void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
         if (turbulence_.valid())
         {
             //- Volume fraction is include in stress since we modify the density
-            UEqn += turbulence_->divDevRhoReff(U_);
+            UEqn += turbulence_->divDevTau(U_);
             eEqn -=
                 fvm::laplacian
                 (
-                    volumeFraction_*turbulence_->alphaEff(),
+                    volumeFraction_*thermophysicalTransport_->alphaEff(),
                     e()
                 );
         }

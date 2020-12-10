@@ -7,24 +7,31 @@
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
+
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
+
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 Class
     Foam::fvMeshDistribute
+
 Description
     Sends/receives parts of mesh+fvfields to neighbouring processors.
     Used in load balancing.
+
     Input is per local cell the processor it should move to. Moves meshes
     and volFields/surfaceFields and returns map which can be used to
     distribute other.
+
     Notes:
     - does not handle cyclics. Will probably handle separated proc patches.
     - if all cells move off processor also all its processor patches will
@@ -35,9 +42,11 @@ Description
     - faces are matched topologically but points on the faces are not. So
       expect problems -on separated patches (cyclics?) -on zero sized processor
       edges.
+
 SourceFiles
     fvMeshDistribute.C
     fvMeshDistributeTemplates.C
+
 \*---------------------------------------------------------------------------*/
 
 #ifndef fvMeshDistribute_H

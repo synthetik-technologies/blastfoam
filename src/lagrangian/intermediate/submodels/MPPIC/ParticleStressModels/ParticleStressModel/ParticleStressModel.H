@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -51,7 +51,7 @@ namespace Foam
 
 class ParticleStressModel
 {
-    // Private member functions
+    // Private Member Functions
 
         //- Disallow default bitwise assignment
         void operator=(const ParticleStressModel&) = delete;
@@ -117,7 +117,7 @@ public:
             const Field<scalar>& uRms
         ) const = 0;
 
-        //- Collision stress derivaive w.r.t. the volume fraction
+        //- Collision stress derivative w.r.t. the volume fraction
         virtual tmp<Field<scalar>> dTaudTheta
         (
             const Field<scalar>& alpha,

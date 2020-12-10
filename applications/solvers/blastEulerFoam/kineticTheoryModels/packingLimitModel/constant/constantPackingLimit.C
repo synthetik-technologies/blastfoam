@@ -89,7 +89,7 @@ Foam::kineticTheoryModels::packingLimitModels::constant::alphaMax
 
 bool Foam::kineticTheoryModels::packingLimitModels::constant::read()
 {
-    maxAlpha_ = dict_.lookupType<scalar>("alphaMax");
+    maxAlpha_ = dict_.lookup<scalar>("alphaMax");
 
     return true;
 }

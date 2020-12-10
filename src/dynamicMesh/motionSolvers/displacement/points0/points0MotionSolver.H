@@ -59,19 +59,11 @@ protected:
     // Protected data
 
         //- Starting points
-        const pointVectorField& points0_;
+        pointIOField points0_;
 
         //- Return IOobject for points0
         IOobject points0IO(const polyMesh& mesh) const;
 
-        //- Return points0
-        const pointVectorField& points0Init(const polyMesh& mesh) const;
-
-        //- Non-const reference to points0 through lookup
-        pointVectorField& points0Ref() const
-        {
-            return mesh().lookupObjectRef<pointVectorField>("points0");
-        }
 
 public:
 
@@ -100,7 +92,13 @@ public:
     // Member Functions
 
         //- Return reference to the reference field
-        const pointVectorField& points0() const
+        pointField& points0()
+        {
+            return points0_;
+        }
+
+        //- Return reference to the reference field
+        const pointField& points0() const
         {
             return points0_;
         }

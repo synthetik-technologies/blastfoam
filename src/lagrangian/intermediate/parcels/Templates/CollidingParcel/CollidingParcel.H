@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -119,8 +119,46 @@ public:
     };
 
 
-    //- Use base tracking data
-    typedef typename ParcelType::trackingData trackingData;
+    //- Class to hold temporary data during tracking
+    class trackingData
+    :
+        public ParcelType::trackingData
+    {
+    public:
+
+        enum trackPart
+        {
+            tpVelocityHalfStep,
+            tpLinearTrack,
+            tpRotationalTrack
+        };
+
+
+    private:
+
+        // Private Data
+
+            //- Which part of the integration algorithm is taking place
+            trackPart part_;
+
+
+    public:
+
+        // Constructors
+
+            //- Construct from components
+            template <class TrackCloudType>
+            inline trackingData(const TrackCloudType& cloud);
+
+
+        // Member Functions
+
+            //- Return the part of the tracking operation taking place
+            inline trackPart part() const;
+
+            //- Access to the part of the tracking operation taking place
+            inline trackPart& part();
+    };
 
 
 protected:
@@ -300,11 +338,7 @@ public:
 
             //- Transform the physical properties of the particle
             //  according to the given transformation tensor
-            virtual void transformProperties(const tensor& T);
-
-            //- Transform the physical properties of the particle
-            //  according to the given separation vector
-            virtual void transformProperties(const vector& separation);
+            virtual void transformProperties(const transformer&);
 
 
        // I-O
@@ -335,6 +369,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "CollidingParcelI.H"
+#include "CollidingParcelTrackingDataI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

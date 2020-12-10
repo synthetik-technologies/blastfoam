@@ -29,7 +29,7 @@ License
 #include "pointFields.H"
 #include "PointEdgeWave.H"
 #include "syncTools.H"
-#include "interpolationTable.H"
+#include "TableFile.H"
 #include "pointConstraints.H"
 #include "mapPolyMesh.H"
 
@@ -225,7 +225,7 @@ Foam::displacementLayeredMotionMotionSolver::faceZoneEvaluate
     tmp<vectorField> tfld(new vectorField(meshPoints.size()));
     vectorField& fld = tfld.ref();
 
-    const word type(dict.lookupType<word>("type"));
+    const word type(dict.lookup("type"));
 
     if (type == "fixedValue")
     {
@@ -233,9 +233,9 @@ Foam::displacementLayeredMotionMotionSolver::faceZoneEvaluate
     }
     else if (type == "timeVaryingUniformFixedValue")
     {
-        interpolationTable<vector> timeSeries(dict);
+        Function1s::TableFile<vector> timeSeries(word::null, dict);
 
-        fld = timeSeries(mesh().time().timeOutputValue());
+        fld = timeSeries.value(mesh().time().timeOutputValue());
     }
     else if (type == "slip")
     {
@@ -255,9 +255,9 @@ Foam::displacementLayeredMotionMotionSolver::faceZoneEvaluate
     }
     else if (type == "uniformFollow")
     {
-        // Reads name of name of patch. Then get average point dislacement on
+        // Reads name of name of patch. Then get average point displacement on
         // patch. That becomes the value of fld.
-        const word patchName(dict.lookupType<word>("patch"));
+        const word patchName(dict.lookup("patch"));
         label patchID = mesh().boundaryMesh().findPatchID(patchName);
         pointField pdf
         (
@@ -446,10 +446,7 @@ void Foam::displacementLayeredMotionMotionSolver::cellZoneSolve
     }
 
 
-    const word interpolationScheme
-    (
-        zoneDict.lookupType<word>("interpolationScheme")
-    );
+    const word interpolationScheme = zoneDict.lookup("interpolationScheme");
 
     if (interpolationScheme == "oneSided")
     {
@@ -572,7 +569,6 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
     displacementMotionSolver::updateMesh(mpm);
 
     const vectorField displacement(this->newPoints() - points0_);
-    pointVectorField& p0(points0Ref());
 
     forAll(points0_, pointi)
     {
@@ -588,7 +584,7 @@ void Foam::displacementLayeredMotionMotionSolver::updateMesh
 
                 // need to set point0 so that it represents the position that
                 // it would have had if it had existed for all time
-                p0[pointi] -= displacement[pointi];
+                points0_[pointi] -= displacement[pointi];
             }
         }
     }

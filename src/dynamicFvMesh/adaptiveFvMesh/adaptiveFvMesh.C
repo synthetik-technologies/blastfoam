@@ -522,7 +522,7 @@ Foam::adaptiveFvMesh::unrefine
         << endl;
 
     // Update fields
-    this->updateMesh(map);
+    fvMesh::updateMesh(map);
 
 
     // Move mesh
@@ -2060,6 +2060,9 @@ bool Foam::adaptiveFvMesh::balance()
             );
 
             scalar tolDim = globalMeshData::matchTol_*bounds().mag();
+
+            //- Clear geometry in mesh to remove V0
+            fvMesh::clearOut();
 
             Info<< "Distributing the mesh ..." << endl;
             fvMeshDistribute distributor(*this, tolDim);

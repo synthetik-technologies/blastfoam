@@ -33,7 +33,7 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
     const dictionary& dict
 )
 {
-    const word atmosphereModelType(dict.lookupType<word>("type"));
+    const word atmosphereModelType(dict.lookup<word>("type"));
 
     Info<< "Selecting atmosphereModel: " << atmosphereModelType << endl;
 

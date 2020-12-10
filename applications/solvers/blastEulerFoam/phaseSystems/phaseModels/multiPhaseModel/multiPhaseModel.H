@@ -178,6 +178,12 @@ public:
             return rho_;
         }
 
+        //- Return the thermo model
+        virtual const basicThermoModel& thermo() const
+        {
+            return thermo_;
+        }
+
         //- Return the thermophysical pressure
         virtual const volScalarField& p() const
         {

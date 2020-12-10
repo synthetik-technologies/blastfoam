@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::proxySurfaceWriter::proxySurfaceWriter(const word& ext)
 :
-    surfaceWriter(),
+    surfaceWriter(IOstream::ASCII),
     ext_(ext)
 {}
 
@@ -54,12 +54,10 @@ Foam::proxySurfaceWriter::~proxySurfaceWriter()
 
 void Foam::proxySurfaceWriter::write
 (
-    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
-    const faceList& faces,
-    const bool verbose
+    const faceList& faces
 ) const
 {
     // avoid bad values
@@ -75,7 +73,7 @@ void Foam::proxySurfaceWriter::write
 
     fileName outName(outputDir/surfaceName + "." + ext_);
 
-    if (verbose)
+    if (debug)
     {
         Info<< "Writing geometry to " << outName << endl;
     }

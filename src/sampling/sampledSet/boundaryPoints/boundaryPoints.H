@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -63,7 +63,7 @@ SourceFiles
 
 #include "sampledSet.H"
 #include "DynamicList.H"
-#include "HashSet.H"
+#include "wordReList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -86,7 +86,7 @@ class boundaryPoints
         const List<point> points_;
 
         //- Patches to sample
-        const labelHashSet patches_;
+        const wordReList patches_;
 
         //- Maximum distance to to search for a nearby patch
         const scalar maxDistance_;

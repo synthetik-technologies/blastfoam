@@ -42,7 +42,8 @@ SourceFiles
 #include "fluxScheme.H"
 #include "rhoReactionThermo.H"
 #include "CombustionModel.H"
-#include "turbulentFluidThermoModel.H"
+#include "fluidThermoMomentumTransportModel.H"
+#include "rhoReactionThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "radiationModel.H"
 
@@ -108,7 +109,10 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<compressible::turbulenceModel> turbulence_;
+        autoPtr<compressible::momentumTransportModel> turbulence_;
+
+        //- Thermo turbulence model
+        autoPtr<rhoReactionThermophysicalTransportModel> thermophysicalTransport_;
 
 
     //- Chemistry

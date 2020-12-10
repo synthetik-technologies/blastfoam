@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -44,7 +44,7 @@ Description
 #include "FixedList.H"
 #include "polyMeshTetDecomposition.H"
 #include "particleMacros.H"
-#include "vectorTensorTransform.H"
+#include "transformer.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -625,11 +625,7 @@ public:
 
         //- Transform the physical properties of the particle
         //  according to the given transformation tensor
-        virtual void transformProperties(const tensor& T);
-
-        //- Transform the physical properties of the particle
-        //  according to the given separation vector
-        virtual void transformProperties(const vector& separation);
+        virtual void transformProperties(const transformer&);
 
 
     // Parallel transfer
@@ -648,7 +644,7 @@ public:
         //  particle can be referred.
         void prepareForInteractionListReferral
         (
-            const vectorTensorTransform& transform
+            const transformer& transform
         );
 
         //- Correct the topology after referral. The particle may still be

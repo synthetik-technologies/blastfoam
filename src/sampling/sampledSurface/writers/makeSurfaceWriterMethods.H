@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -49,28 +49,24 @@ namespace Foam
 #define defineSurfaceWriterWriteField(ThisClass, FieldType)                    \
     void ThisClass::write                                                      \
     (                                                                          \
-        const scalar& time,                                                    \
         const fileName& outputDir,                                             \
         const fileName& surfaceName,                                           \
         const pointField& points,                                              \
         const faceList& faces,                                                 \
         const word& fieldName,                                                 \
         const Field<FieldType>& values,                                        \
-        const bool isNodeValues,                                               \
-        const bool verbose                                                     \
+        const bool isNodeValues                                                \
     ) const                                                                    \
     {                                                                          \
-        writeTemplate                                                          \
+        Write                                                                  \
         (                                                                      \
-            time,                                                              \
             outputDir,                                                         \
             surfaceName,                                                       \
             points,                                                            \
             faces,                                                             \
             fieldName,                                                         \
             values,                                                            \
-            isNodeValues,                                                      \
-            verbose                                                            \
+            isNodeValues                                                       \
         );                                                                     \
     }
 

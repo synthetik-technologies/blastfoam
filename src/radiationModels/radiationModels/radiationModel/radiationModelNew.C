@@ -79,7 +79,7 @@ Foam::autoPtr<Foam::radiationModel> Foam::radiationModel::New
     const volScalarField& T
 )
 {
-    const word modelType(dict.lookupType<word>("radiationModel"));
+    const word modelType(dict.lookup<word>("radiationModel"));
 
     Info<< "Selecting radiationModel " << modelType << endl;
 

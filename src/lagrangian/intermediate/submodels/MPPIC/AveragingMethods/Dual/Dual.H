@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -29,14 +29,14 @@ Description
 
     Point values are summed using the tetrahedral decomposition of the
     computational cells. Summation is done in the cells, and also in the
-    terahedrons surrounding each point. The latter forms a type of dual mesh.
+    tetrahedrons surrounding each point. The latter forms a type of dual mesh.
     The interpolation is weighted by proximity to the cell centre or point, as
-    calculated by the barycentric coordinate within the tethrahedron.
+    calculated by the barycentric coordinate within the tetrahedron.
 
-    Values are interpolated linearly across the tethrahedron. Gradients are
+    Values are interpolated linearly across the tetrahedron. Gradients are
     calculated directly from the point values using a first order finite
     element basis. The computed gradient is assumed constant over the
-    tethrahedron.
+    tetrahedron.
 
 SourceFiles
     Dual.C
@@ -97,7 +97,7 @@ private:
         static autoPtr<labelList> size(const fvMesh &mesh);
 
 
-    // Private member functions
+    // Private Member Functions
 
         //- Sync point data over processor boundaries
         void syncDualData();

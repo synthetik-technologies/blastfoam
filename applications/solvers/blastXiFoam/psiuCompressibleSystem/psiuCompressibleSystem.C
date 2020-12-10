@@ -169,11 +169,19 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     {
         turbulence_.set
         (
-            compressible::turbulenceModel::New
+            compressible::momentumTransportModel::New
             (
                 rho_,
                 U_,
                 rhoPhi_,
+                thermo_()
+            ).ptr()
+        );
+        thermophysicalTransport_.set
+        (
+            fluidThermophysicalTransportModel::New
+            (
+                turbulence_(),
                 thermo_()
             ).ptr()
         );
@@ -260,7 +268,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
     Foam::solve
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-      - fvm::laplacian(turbulence_->alphaEff(), e_)
+      - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
     );
 
     // Includes change to total energy from viscous term in momentum equation
@@ -269,7 +277,7 @@ void Foam::psiuCompressibleSystem::postUpdate()
     Foam::solve
     (
         fvm::ddt(rho_, eu_) - fvc::ddt(rho_, eu_)
-      - fvm::laplacian(turbulence_->alphaEff(), eu_)
+      - fvm::laplacian(thermophysicalTransport_->alphaEff(), eu_)
     );
 
     // Includes change to total energy from viscous term in momentum equation

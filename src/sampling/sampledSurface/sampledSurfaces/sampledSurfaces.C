@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -32,6 +32,8 @@ License
 
 namespace Foam
 {
+namespace functionObjects
+{
     defineTypeNameAndDebug(sampledSurfaces, 0);
 
     addToRunTimeSelectionTable
@@ -41,14 +43,15 @@ namespace Foam
         dictionary
     );
 }
+}
 
-bool Foam::sampledSurfaces::verbose_ = false;
-Foam::scalar Foam::sampledSurfaces::mergeTol_ = 1e-10;
+bool Foam::functionObjects::sampledSurfaces::verbose_ = false;
+Foam::scalar Foam::functionObjects::sampledSurfaces::mergeTol_ = 1e-10;
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::sampledSurfaces::writeGeometry() const
+void Foam::functionObjects::sampledSurfaces::writeGeometry() const
 {
     // Write to time directory under outputPath_
     // Skip surface without faces (eg, a failed cut-plane)
@@ -65,7 +68,6 @@ void Foam::sampledSurfaces::writeGeometry() const
             {
                 formatter_->write
                 (
-                    mesh_.time().value(),
                     outputDir,
                     s.name(),
                     mergeList_[surfI].points,
@@ -77,7 +79,6 @@ void Foam::sampledSurfaces::writeGeometry() const
         {
             formatter_->write
             (
-                mesh_.time().value(),
                 outputDir,
                 s.name(),
                 s.points(),
@@ -90,7 +91,7 @@ void Foam::sampledSurfaces::writeGeometry() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::sampledSurfaces::sampledSurfaces
+Foam::functionObjects::sampledSurfaces::sampledSurfaces
 (
     const word& name,
     const Time& t,
@@ -131,7 +132,7 @@ Foam::sampledSurfaces::sampledSurfaces
 }
 
 
-Foam::sampledSurfaces::sampledSurfaces
+Foam::functionObjects::sampledSurfaces::sampledSurfaces
 (
     const word& name,
     const objectRegistry& obr,
@@ -166,25 +167,25 @@ Foam::sampledSurfaces::sampledSurfaces
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::sampledSurfaces::~sampledSurfaces()
+Foam::functionObjects::sampledSurfaces::~sampledSurfaces()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::sampledSurfaces::verbose(const bool verbosity)
+void Foam::functionObjects::sampledSurfaces::verbose(const bool verbosity)
 {
     verbose_ = verbosity;
 }
 
 
-bool Foam::sampledSurfaces::execute()
+bool Foam::functionObjects::sampledSurfaces::execute()
 {
     return true;
 }
 
 
-bool Foam::sampledSurfaces::write()
+bool Foam::functionObjects::sampledSurfaces::write()
 {
     if (size())
     {
@@ -231,7 +232,7 @@ bool Foam::sampledSurfaces::write()
 }
 
 
-bool Foam::sampledSurfaces::read(const dictionary& dict)
+bool Foam::functionObjects::sampledSurfaces::read(const dictionary& dict)
 {
     bool surfacesFound = dict.found("surfaces");
 
@@ -240,15 +241,10 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
         dict.lookup("fields") >> fieldSelection_;
 
         dict.lookup("interpolationScheme") >> interpolationScheme_;
-        const word writeType(dict.lookupType<word>("surfaceFormat"));
+        const word writeType(dict.lookup("surfaceFormat"));
 
         // Define the surface formatter
-        // Optionally defined extra controls for the output formats
-        formatter_ = surfaceWriter::New
-        (
-            writeType,
-            dict.subOrEmptyDict("formatOptions").subOrEmptyDict(writeType)
-        );
+        formatter_ = surfaceWriter::New(writeType, dict);
 
         PtrList<sampledSurface> newList
         (
@@ -292,7 +288,7 @@ bool Foam::sampledSurfaces::read(const dictionary& dict)
 }
 
 
-void Foam::sampledSurfaces::updateMesh(const mapPolyMesh& mpm)
+void Foam::functionObjects::sampledSurfaces::updateMesh(const mapPolyMesh& mpm)
 {
     if (&mpm.mesh() == &mesh_)
     {
@@ -303,7 +299,7 @@ void Foam::sampledSurfaces::updateMesh(const mapPolyMesh& mpm)
 }
 
 
-void Foam::sampledSurfaces::movePoints(const polyMesh& mesh)
+void Foam::functionObjects::sampledSurfaces::movePoints(const polyMesh& mesh)
 {
     if (&mesh == &mesh_)
     {
@@ -312,7 +308,10 @@ void Foam::sampledSurfaces::movePoints(const polyMesh& mesh)
 }
 
 
-void Foam::sampledSurfaces::readUpdate(const polyMesh::readUpdateState state)
+void Foam::functionObjects::sampledSurfaces::readUpdate
+(
+    const polyMesh::readUpdateState state
+)
 {
     if (state != polyMesh::UNCHANGED)
     {
@@ -321,7 +320,7 @@ void Foam::sampledSurfaces::readUpdate(const polyMesh::readUpdateState state)
 }
 
 
-bool Foam::sampledSurfaces::needsUpdate() const
+bool Foam::functionObjects::sampledSurfaces::needsUpdate() const
 {
     forAll(*this, surfI)
     {
@@ -335,7 +334,7 @@ bool Foam::sampledSurfaces::needsUpdate() const
 }
 
 
-bool Foam::sampledSurfaces::expire()
+bool Foam::functionObjects::sampledSurfaces::expire()
 {
     bool justExpired = false;
 
@@ -358,7 +357,7 @@ bool Foam::sampledSurfaces::expire()
 }
 
 
-bool Foam::sampledSurfaces::update()
+bool Foam::functionObjects::sampledSurfaces::update()
 {
     bool updated = false;
 

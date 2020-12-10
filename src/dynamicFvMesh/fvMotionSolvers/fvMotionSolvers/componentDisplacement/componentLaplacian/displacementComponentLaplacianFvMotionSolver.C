@@ -135,10 +135,6 @@ Foam::displacementComponentLaplacianFvMotionSolver::
 Foam::tmp<Foam::pointField>
 Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
 {
-    //- Update points0 before updating pointDisplacement
-//     points0Ref().primitiveFieldRef() =
-//         fvMesh_.points() - pointDisplacement_.primitiveField();
-
     volPointInterpolation::New(fvMesh_).interpolate
     (
         cellDisplacement_,
@@ -162,7 +158,7 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
         pointLocation_().primitiveFieldRef().replace
         (
             cmpt_,
-            points0() + pointDisplacement_.primitiveField()
+            points0_ + pointDisplacement_.primitiveField()
         );
 
         pointLocation_().correctBoundaryConditions();
@@ -176,7 +172,7 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
             {
                 label pointi = pz[i];
 
-                pointLocation_()[pointi][cmpt_] = points0()[pointi];
+                pointLocation_()[pointi][cmpt_] = points0_[pointi];
             }
         }
 
@@ -192,7 +188,7 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
         curPoints.replace
         (
             cmpt_,
-            points0() + pointDisplacement_.primitiveField()
+            points0_ + pointDisplacement_.primitiveField()
         );
 
         // Implement frozen points
@@ -204,7 +200,7 @@ Foam::displacementComponentLaplacianFvMotionSolver::curPoints() const
             {
                 label pointi = pz[i];
 
-                curPoints[pointi][cmpt_] = points0()[pointi];
+                curPoints[pointi][cmpt_] = points0_[pointi];
             }
         }
 
@@ -222,6 +218,7 @@ void Foam::displacementComponentLaplacianFvMotionSolver::solve()
     movePoints(fvMesh_.points());
 
     diffusivityPtr_->correct();
+    pointDisplacement_.boundaryFieldRef().updateCoeffs();
 
     Foam::solve
     (

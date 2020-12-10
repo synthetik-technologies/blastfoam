@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2012-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2012-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -158,7 +158,7 @@ void Foam::ParticleCollector<CloudType>::initConcentricCircles()
     vector origin(this->coeffDict().lookup("origin"));
 
     this->coeffDict().lookup("radius") >> radius_;
-    nSector_ = readLabel(this->coeffDict().lookup("nSector"));
+    nSector_ = this->coeffDict().template lookup<label>("nSector");
 
     label nS = nSector_;
 
@@ -449,11 +449,13 @@ void Foam::ParticleCollector<CloudType>::write()
     {
         if (Pstream::master())
         {
-            autoPtr<surfaceWriter> writer(surfaceWriter::New(surfaceFormat_));
+            autoPtr<surfaceWriter> writer
+            (
+                surfaceWriter::New(surfaceFormat_, time.writeFormat())
+            );
 
             writer->write
             (
-                this->owner().mesh().time().value(),
                 this->writeTimeDir(),
                 "collector",
                 points_,
@@ -465,7 +467,6 @@ void Foam::ParticleCollector<CloudType>::write()
 
             writer->write
             (
-                this->owner().mesh().time().value(),
                 this->writeTimeDir(),
                 "collector",
                 points_,

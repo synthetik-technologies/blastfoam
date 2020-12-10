@@ -1,0 +1,3 @@
+phaseCompressibleMomentumTransportModels.C
+
+LIB = $(BLAST_LIBBIN)/libblastPhaseCompressibleMomentumTransportModels

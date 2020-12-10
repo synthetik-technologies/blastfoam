@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -382,13 +382,13 @@ bool Foam::KinematicParcel<ParcelType>::hitPatch
     // Invoke post-processing model
     cloud.functions().postPatch(p, pp, td.keepParticle);
 
-    // Invoke surface film model
-//     if (cloud.surfaceFilm().transferParcel(p, pp, td.keepParticle))
-//     {
-//         // All interactions done
-//         return true;
-//     }
-    /*else*/if (pp.coupled())
+    /*// Invoke surface film model
+    if (cloud.surfaceFilm().transferParcel(p, pp, td.keepParticle))
+    {
+        // All interactions done
+        return true;
+    }
+    else*/ if (pp.coupled())
     {
         // Don't apply the patchInteraction models to coupled boundaries
         return false;
@@ -426,21 +426,13 @@ void Foam::KinematicParcel<ParcelType>::hitWallPatch
 
 
 template<class ParcelType>
-void Foam::KinematicParcel<ParcelType>::transformProperties(const tensor& T)
-{
-    ParcelType::transformProperties(T);
-
-    U_ = transform(T, U_);
-}
-
-
-template<class ParcelType>
 void Foam::KinematicParcel<ParcelType>::transformProperties
 (
-    const vector& separation
+    const transformer& transform
 )
 {
-    ParcelType::transformProperties(separation);
+    ParcelType::transformProperties(transform);
+    U_ = transform.transform(U_);
 }
 
 

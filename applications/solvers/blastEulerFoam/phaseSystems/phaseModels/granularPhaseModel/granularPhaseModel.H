@@ -57,7 +57,6 @@ SourceFiles
 #include "phaseModel.H"
 #include "solidThermoModel.H"
 #include "kineticTheoryModel.H"
-#include "turbulentFluidThermoModel.H"
 #include "AUSMPlusUp.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -186,6 +185,12 @@ public:
 
 
         //- Return conserved quantities
+
+            //- Return the thermo model
+            virtual const basicThermoModel& thermo() const
+            {
+                return thermo_();
+            }
 
             //- Return the density
             virtual const volScalarField& rho() const

@@ -26,8 +26,6 @@ License
 #include "fvMotionSolver.H"
 #include "fixedValuePointPatchFields.H"
 #include "cellMotionFvPatchFields.H"
-#include "coupledCellMotionFvPatchFields.H"
-#include "mappedPatchSelector.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -45,18 +43,14 @@ Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
 
     forAll(cmUbf, patchi)
     {
-        if (isAMappedType(fvMesh_.boundary()[patchi]))
-        {
-            cmUbf[patchi] = coupledCellMotionFvPatchField<Type>::typeName;
-        }
-        else if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
+        if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
         {
             cmUbf[patchi] = cellMotionFvPatchField<Type>::typeName;
         }
 
         if (debug)
         {
-            Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name() <<nl
+            Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name()
                 << " pointType:" << pmUbf.types()[patchi]
                 << " cellType:" << cmUbf[patchi] << endl;
         }

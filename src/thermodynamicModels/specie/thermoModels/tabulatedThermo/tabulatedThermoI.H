@@ -139,7 +139,7 @@ inline void Foam::tabulatedThermo<EquationOfState>::operator+=
 )
 {
     NotImplemented;
-    return ct;
+    return;
 
 //     scalar Y1 = this->Y();
 //

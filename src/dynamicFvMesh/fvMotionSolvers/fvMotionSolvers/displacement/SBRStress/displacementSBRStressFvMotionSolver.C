@@ -97,10 +97,6 @@ Foam::displacementSBRStressFvMotionSolver::
 Foam::tmp<Foam::pointField>
 Foam::displacementSBRStressFvMotionSolver::curPoints() const
 {
-    //- Update points0 before updating pointDisplacement
-    points0Ref().primitiveFieldRef() =
-        fvMesh_.points() - pointDisplacement_.primitiveField();
-
     volPointInterpolation::New(fvMesh_).interpolate
     (
         cellDisplacement_,
@@ -125,7 +121,7 @@ void Foam::displacementSBRStressFvMotionSolver::solve()
     movePoints(fvMesh_.points());
 
     diffusivityPtr_->correct();
-//     pointDisplacement_.boundaryFieldRef().updateCoeffs();
+    pointDisplacement_.boundaryFieldRef().updateCoeffs();
 
     surfaceScalarField Df(diffusivityPtr_->operator()());
 

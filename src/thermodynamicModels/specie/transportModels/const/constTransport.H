@@ -157,13 +157,13 @@ public:
 
     // Friend operators
 
-        inline friend constTransport operator+ <Thermo>
+        friend constTransport operator+ <Thermo>
         (
             const constTransport&,
             const constTransport&
         );
 
-        inline friend constTransport operator* <Thermo>
+        friend constTransport operator* <Thermo>
         (
             const scalar,
             const constTransport&

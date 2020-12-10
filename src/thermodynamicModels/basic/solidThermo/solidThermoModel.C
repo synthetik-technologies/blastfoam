@@ -87,5 +87,73 @@ Foam::solidThermoModel::solidThermoModel
 Foam::solidThermoModel::~solidThermoModel()
 {}
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::volScalarField> Foam::solidThermoModel::mu() const
+{
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "mu",
+                this->rho_.mesh().time().timeName(),
+                this->rho_.mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            e_.mesh(),
+            dimensionedScalar("0", dimDynamicViscosity, 0.0)
+        )
+    );
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::solidThermoModel::mu(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField(this->rho_.boundaryField()[patchi].size(), 0.0)
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::solidThermoModel::nu() const
+{
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "nu",
+                this->rho_.mesh().time().timeName(),
+                this->rho_.mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            this->rho_.mesh(),
+            dimensionedScalar("0", dimViscosity, 0.0)
+        )
+    );
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::solidThermoModel::nu(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField(this->rho_.boundaryField()[patchi].size(), 0.0)
+    );
+}
+
+
+Foam::scalar Foam::solidThermoModel::nui(const label) const
+{
+    return 0.0;
+}
 
 // ************************************************************************* //

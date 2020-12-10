@@ -17,6 +17,8 @@ sampledSet/boundaryRandom/boundaryRandom.C
 sampledSet/points/points.C
 sampledSet/sphereRandom/sphereRandom.C
 sampledSet/triSurfaceMeshSampledSet/triSurfaceMeshSampledSet.C
+sampledSet/cellSetSampledSet/cellSetSampledSet.C
+sampledSet/faceSetSampledSet/faceSetSampledSet.C
 
 cuttingPlane/cuttingPlane.C
 
@@ -38,8 +40,8 @@ surfWriters = sampledSurface/writers
 
 $(surfWriters)/surfaceWriter.C
 $(surfWriters)/none/noSurfaceWriter.C
-$(surfWriters)/ensight/ensightSurfaceWriter.C
-$(surfWriters)/ensight/ensightPTraits.C
+/*$(surfWriters)/ensight/ensightSurfaceWriter.C*/
+/*$(surfWriters)/ensight/ensightPTraits.C*/
 $(surfWriters)/foam/foamSurfaceWriter.C
 $(surfWriters)/nastran/nastranSurfaceWriter.C
 $(surfWriters)/proxy/proxySurfaceWriter.C
@@ -64,6 +66,7 @@ $(meshToMeshMethods)/mapNearest/mapNearestMethod.C
 meshToMesh0/meshToMesh0.C
 meshToMesh0/calculateMeshToMesh0Addressing.C
 meshToMesh0/calculateMeshToMesh0Weights.C
+
 
 
 LIB = $(BLAST_LIBBIN)/libblastSampling

@@ -37,13 +37,13 @@ Foam::solidJWL<Specie>::solidJWL
 )
 :
     Specie(dict),
-    rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
-    omega_(dict.subDict("equationOfState").lookupType<scalar>("omega")),
-    A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
-    B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    R1_(dict.subDict("equationOfState").lookupType<scalar>("R1")),
-    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2")),
-    pRef_(dict.subDict("equationOfState").lookupType<scalar>("pRef"))
+    rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
+    A_(dict.subDict("equationOfState").lookup<scalar>("A")),
+    B_(dict.subDict("equationOfState").lookup<scalar>("B")),
+    R1_(dict.subDict("equationOfState").lookup<scalar>("R1")),
+    R2_(dict.subDict("equationOfState").lookup<scalar>("R2")),
+    pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef"))
 {
     e0_ =
         (

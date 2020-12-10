@@ -34,12 +34,12 @@ template<class Specie>
 Foam::CochranChan<Specie>::CochranChan(const dictionary& dict)
 :
     Specie(dict),
-    rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
-    Gamma0_(dict.subDict("equationOfState").lookupType<scalar>("Gamma0")),
-    A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
-    Epsilon1_(dict.subDict("equationOfState").lookupType<scalar>("Epsilon1")),
-    B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    Epsilon2_(dict.subDict("equationOfState").lookupType<scalar>("Epsilon2")),
+    rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    Gamma0_(dict.subDict("equationOfState").lookup<scalar>("Gamma0")),
+    A_(dict.subDict("equationOfState").lookup<scalar>("A")),
+    Epsilon1_(dict.subDict("equationOfState").lookup<scalar>("Epsilon1")),
+    B_(dict.subDict("equationOfState").lookup<scalar>("B")),
+    Epsilon2_(dict.subDict("equationOfState").lookup<scalar>("Epsilon2")),
     e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0))
 {}
 

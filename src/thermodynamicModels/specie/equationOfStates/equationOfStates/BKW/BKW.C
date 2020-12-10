@@ -37,12 +37,12 @@ Foam::BKW<Specie>::BKW
 )
 :
     Specie(dict),
-    k_(dict.subDict("equationOfState").lookupType<scalar>("k")),
-    kappa_(dict.subDict("equationOfState").lookupType<scalar>("kappa")),
-    Theta_(dict.subDict("equationOfState").lookupType<scalar>("Theta")),
-    a_(dict.subDict("equationOfState").lookupType<scalar>("a")),
-    beta_(dict.subDict("equationOfState").lookupType<scalar>("beta")),
-    gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
+    k_(dict.subDict("equationOfState").lookup<scalar>("k")),
+    kappa_(dict.subDict("equationOfState").lookup<scalar>("kappa")),
+    Theta_(dict.subDict("equationOfState").lookup<scalar>("Theta")),
+    a_(dict.subDict("equationOfState").lookup<scalar>("a")),
+    beta_(dict.subDict("equationOfState").lookup<scalar>("beta")),
+    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
 {}
 
 // ************************************************************************* //

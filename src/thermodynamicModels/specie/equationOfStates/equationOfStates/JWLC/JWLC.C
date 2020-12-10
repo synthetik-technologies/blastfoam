@@ -37,13 +37,13 @@ Foam::JWLC<Specie>::JWLC
 )
 :
     Specie(dict),
-    rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
-    omega_(dict.subDict("equationOfState").lookupType<scalar>("omega")),
-    A_(dict.subDict("equationOfState").lookupType<scalar>("A")),
-    B_(dict.subDict("equationOfState").lookupType<scalar>("B")),
-    C_(dict.subDict("equationOfState").lookupType<scalar>("C")),
-    R1_(dict.subDict("equationOfState").lookupType<scalar>("R1")),
-    R2_(dict.subDict("equationOfState").lookupType<scalar>("R2"))
+    rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
+    A_(dict.subDict("equationOfState").lookup<scalar>("A")),
+    B_(dict.subDict("equationOfState").lookup<scalar>("B")),
+    C_(dict.subDict("equationOfState").lookup<scalar>("C")),
+    R1_(dict.subDict("equationOfState").lookup<scalar>("R1")),
+    R2_(dict.subDict("equationOfState").lookup<scalar>("R2"))
 {}
 
 // ************************************************************************* //

@@ -156,7 +156,7 @@ forAll(solidRegions, i)
         solidRegions[i].solutionDict().subDict("stressAnalysis");
 
     compactNormalStresses[i] =
-        stressControl.lookupType<Switch>("compactNormalStress");
+        stressControl.lookup<Switch>("compactNormalStress");
 
     if (compactNormalStresses[i])
     {

@@ -50,7 +50,9 @@ SourceFiles
 #include "fvm.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "phaseCompressibleTurbulenceModelFwd.H"
+#include "phaseCompressibleMomentumTransportModelFwd.H"
+#include "PhaseThermophysicalTransportModel.H"
+#include "basicThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -146,7 +148,17 @@ protected:
         autoPtr<diameterModel> dPtr_;
 
         //- Turbulence model
-        autoPtr<phaseCompressibleTurbulenceModel> turbulence_;
+        autoPtr<phaseCompressibleMomentumTransportModel> turbulence_;
+
+        //- Thermophysical transport model
+        autoPtr
+        <
+            PhaseThermophysicalTransportModel
+            <
+                phaseCompressibleMomentumTransportModel,
+                basicThermoModel
+            >
+        > thermophysicalTransport_;
 
         //- Is the volume fraction transported
         bool solveAlpha_;
@@ -390,6 +402,9 @@ public:
             {
                 return dPtr_->d()[celli];
             }
+
+            //- Return the thermo model
+            virtual const basicThermoModel& thermo() const = 0;
 
             //- Return the thermophysical pressure
             virtual const volScalarField& p() const = 0;

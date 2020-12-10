@@ -1,0 +1,3 @@
+fluidThermoMomentumTransportModel/blastFluidThermoMomentumTransportModels.C
+
+LIB = $(BLAST_LIBBIN)/libblastMomentumTransportModels

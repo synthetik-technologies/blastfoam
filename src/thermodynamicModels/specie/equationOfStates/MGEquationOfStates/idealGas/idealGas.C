@@ -34,7 +34,7 @@ template<class Specie>
 Foam::idealGas<Specie>::idealGas(const dictionary& dict)
 :
     Specie(dict),
-    gamma_(dict.subDict("equationOfState").lookupType<scalar>("gamma"))
+    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
 {
     if (gamma_ <= 1.0)
     {

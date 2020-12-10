@@ -97,9 +97,6 @@ protected:
         //- Stored time step
         volScalarField::Internal deltaT_;
 
-        //- Current cell
-        label celli_ = 0;
-
         //- Ode solver
         autoPtr<ODESolver> odeSolver_;
 
@@ -148,6 +145,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt
             ) const;
 
@@ -155,6 +153,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt,
                 scalarSquareMatrix& J
             ) const;

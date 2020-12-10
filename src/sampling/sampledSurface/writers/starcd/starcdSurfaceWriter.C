@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -84,17 +84,15 @@ inline void Foam::starcdSurfaceWriter::writeData
 
 
 template<class Type>
-void Foam::starcdSurfaceWriter::writeTemplate
+void Foam::starcdSurfaceWriter::Write
 (
-    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
     const faceList& faces,
     const word& fieldName,
     const Field<Type>& values,
-    const bool isNodeValues,
-    const bool verbose
+    const bool isNodeValues
 ) const
 {
     if (!isDir(outputDir))
@@ -104,7 +102,7 @@ void Foam::starcdSurfaceWriter::writeTemplate
 
     OFstream os(outputDir/fieldName + '_' + surfaceName + ".usr");
 
-    if (verbose)
+    if (debug)
     {
         Info<< "Writing field " << fieldName << " to " << os.name() << endl;
     }
@@ -121,9 +119,12 @@ void Foam::starcdSurfaceWriter::writeTemplate
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::starcdSurfaceWriter::starcdSurfaceWriter()
+Foam::starcdSurfaceWriter::starcdSurfaceWriter
+(
+    const IOstream::streamFormat writeFormat
+)
 :
-    surfaceWriter()
+    surfaceWriter(writeFormat)
 {}
 
 
@@ -137,12 +138,10 @@ Foam::starcdSurfaceWriter::~starcdSurfaceWriter()
 
 void Foam::starcdSurfaceWriter::write
 (
-    const scalar& time,
     const fileName& outputDir,
     const fileName& surfaceName,
     const pointField& points,
-    const faceList& faces,
-    const bool verbose
+    const faceList& faces
 ) const
 {
     if (!isDir(outputDir))
@@ -152,7 +151,7 @@ void Foam::starcdSurfaceWriter::write
 
     fileName outName(outputDir/surfaceName + ".inp");
 
-    if (verbose)
+    if (debug)
     {
         Info<< "Writing geometry to " << outName << endl;
     }

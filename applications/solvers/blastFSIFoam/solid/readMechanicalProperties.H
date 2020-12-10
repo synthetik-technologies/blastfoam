@@ -127,7 +127,7 @@ const volScalarField& E = Es[i];
 mus.set(i, new volScalarField(E/(2.0*(1.0 + nu))));
 lambdas.set(i, new volScalarField(nu*E/((1.0 + nu)*(1.0 - 2.0*nu))));
 
-planeStresses[i] = mechanicalProperties[i].lookupType<Switch>("planeStress");
+planeStresses[i] = mechanicalProperties[i].lookup<Switch>("planeStress");
 
 if (planeStresses[i])
 {

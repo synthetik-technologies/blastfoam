@@ -239,7 +239,7 @@ Foam::activationModel::activationModel
       ? List<vector>(1, this->centerOfMass(mesh, alpha))
       : (
             this->needDetonationPoints()
-          ? dict.lookupType<List<vector>>("points")
+          ? dict.lookup<List<vector>>("points")
           : dict.lookupOrDefault("points", List<vector>(0))
         )
     );
@@ -255,10 +255,10 @@ Foam::activationModel::activationModel
     List<scalar> radii
     (
         dict.found("radii")
-      ? dict.lookupType<List<scalar>>("radii")
+      ? dict.lookup<List<scalar>>("radii")
       : (
             dict.found("radius")
-          ? List<scalar>(points.size(), dict.lookupType<scalar>("radius"))
+          ? List<scalar>(points.size(), dict.lookup<scalar>("radius"))
           : List<scalar>(points.size(), 0.0)
         )
     );

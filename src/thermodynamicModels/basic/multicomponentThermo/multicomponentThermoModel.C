@@ -60,7 +60,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     inertIndex_
     (
         dict.found("inertSpecie")
-      ? species_[dict.lookupType<word>("inertSpecie")]
+      ? species_[dict.lookup<word>("inertSpecie")]
       : species_.size() - 1
     ),
     active_(species_.size(), true),
@@ -199,7 +199,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     ),
     species_(species),
     Ys_(species_.size()),
-    inertIndex_(species_[dict.lookupType<word>("inertSpecie")]),
+    inertIndex_(species_[dict.lookup<word>("inertSpecie")]),
     active_(species_.size(), true),
     YsOld_(species_.size()),
     deltaAlphaRhoYs_(species_.size())

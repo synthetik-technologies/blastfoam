@@ -37,7 +37,7 @@ Foam::AbelNobel<Specie>::AbelNobel
 )
 :
     Specie(dict),
-    b_(dict.subDict("equationOfState").lookupType<scalar>("b"))
+    b_(dict.subDict("equationOfState").lookup<scalar>("b"))
 {}
 
 // ************************************************************************* //

@@ -40,7 +40,7 @@ Foam::rBlastSpecie::rBlastSpecie(const dictionary& dict)
 :
     specieName_(dict.dictName()),
     Y_(dict.subDict("specie").lookupOrDefault("massFraction", 1.0)),
-    molWeight_(dict.subDict("specie").lookupType<scalar>("molWeight"))
+    molWeight_(dict.subDict("specie").lookup<scalar>("molWeight"))
 {}
 
 // ************************************************************************* //

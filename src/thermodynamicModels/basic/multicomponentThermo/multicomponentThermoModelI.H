@@ -40,7 +40,7 @@ inline bool Foam::multicomponentThermoModel<BasicThermo>::contains
     const word& specieName
 ) const
 {
-    return species_.contains(specieName);
+    return species_[specieName];
 }
 
 

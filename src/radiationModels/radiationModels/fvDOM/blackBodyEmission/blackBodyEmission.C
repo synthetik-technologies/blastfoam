@@ -25,6 +25,8 @@ License
 
 #include "blackBodyEmission.H"
 #include "physicoChemicalConstants.H"
+#include "linearInterpolationWeights.H"
+
 
 using namespace Foam::constant;
 
@@ -148,9 +150,10 @@ Foam::radiationModels::blackBodyEmission::blackBodyEmission
 :
     table_
     (
-        emissivePowerTable,
-        interpolationTable<scalar>::CLAMP,
-        "blackBodyEmissivePower"
+        "blackBodyEmissivePower",
+        Function1s::tableBase::boundsHandling::clamp,
+        linearInterpolationWeights::typeName,
+        emissivePowerTable
     ),
     C1_("C1", dimensionSet(1, 4, 3, 0, 0, 0, 0), 3.7419e-16),
     C2_("C2", dimensionSet(0, 1, 0, 1, 0, 0, 0), 14.388e-6),
@@ -193,7 +196,7 @@ Foam::scalar Foam::radiationModels::blackBodyEmission::fLambdaT
     const scalar lambdaT
 ) const
 {
-    return table_(1e6*lambdaT);
+    return table_.value(1e6*lambdaT);
 }
 
 

@@ -140,7 +140,7 @@ Foam::autoPtr<Foam::sampledSet> Foam::sampledSet::New
     const dictionary& dict
 )
 {
-    const word sampleType(dict.lookupType<word>("type"));
+    const word sampleType(dict.lookup("type"));
 
     const HashTable<word> oldToNewType =
     {

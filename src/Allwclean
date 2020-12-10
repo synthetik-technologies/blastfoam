@@ -3,11 +3,13 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 # set -x
 
+wclean $targetType timeIntegrators
 wclean $targetType thermodynamicModels
+wclean $targetType MomentumTransportModels
+wclean $targetType ThermophysicalTransportModels
 wclean $targetType fluxSchemes
 wclean $targetType finiteVolume
 wclean $targetType compressibleSystem
-wclean $targetType timeIntegrators
 wclean $targetType radiationModels
 wclean $targetType dynamicMesh
 wclean $targetType decompositionMethods

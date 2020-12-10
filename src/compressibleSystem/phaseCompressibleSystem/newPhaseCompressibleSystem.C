@@ -52,7 +52,7 @@ Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
     if (phaseProperties.found("systemType"))
     {
         phaseCompressibleSystemType =
-            phaseProperties.lookupType<word>("systemType");
+            phaseProperties.lookup<word>("systemType");
     }
 
     if (phaseCompressibleSystemType == word::null)

@@ -34,10 +34,10 @@ Foam::BirchMurnaghan2<Specie>::BirchMurnaghan2
 )
 :
     Specie(dict),
-    rho0_(dict.subDict("equationOfState").lookupType<scalar>("rho0")),
-    pRef_(dict.subDict("equationOfState").lookupType<scalar>("pRef")),
-    K0_(dict.subDict("equationOfState").lookupType<scalar>("K0")),
-    Gamma_(dict.subDict("equationOfState").lookupType<scalar>("Gamma"))
+    rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    pRef_(dict.subDict("equationOfState").lookup<scalar>("pRef")),
+    K0_(dict.subDict("equationOfState").lookup<scalar>("K0")),
+    Gamma_(dict.subDict("equationOfState").lookup<scalar>("Gamma"))
 {}
 
 // ************************************************************************* //

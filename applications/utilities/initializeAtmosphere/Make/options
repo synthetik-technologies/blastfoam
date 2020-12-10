@@ -7,10 +7,9 @@ EXE_INC = \
 
 EXE_LIBS = \
     -lfiniteVolume \
-    -lturbulenceModels \
-    -lcompressibleTurbulenceModels \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -lphaseCompressibleSystems \
+    -lblastThermophysicalTransportModels \
+    -lblastMomentumTransportModels \
     -latmosphereModels

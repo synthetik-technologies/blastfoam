@@ -1,5 +1,5 @@
-label maxIter = solidRegions[i].solutionDict().lookupType<label>("maxIter");
-scalar tolerance = solidRegions[i].solutionDict().lookupType<scalar>("tolerance");
+label maxIter = solidRegions[i].solutionDict().lookup<label>("maxIter");
+scalar tolerance = solidRegions[i].solutionDict().lookup<scalar>("tolerance");
 
 label iter = 0;
 bool lastIter = false;

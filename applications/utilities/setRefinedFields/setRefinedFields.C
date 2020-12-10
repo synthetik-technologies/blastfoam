@@ -647,7 +647,7 @@ int main(int argc, char *argv[])
     (
         levels.size() && !setFieldsDict.found("maxLevel")
       ? max(levels)
-      : setFieldsDict.lookupType<scalar>("maxLevel")
+      : setFieldsDict.lookup<scalar>("maxLevel")
     );
 
     // Error fields is the same since it is looked up

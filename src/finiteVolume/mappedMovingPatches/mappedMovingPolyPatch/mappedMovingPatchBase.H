@@ -88,6 +88,7 @@ SourceFiles
 #include "AMIInterpolation.H"
 #include "coupleGroupIdentifier.H"
 #include "volFields.H"
+#include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -193,7 +194,7 @@ protected:
         const coupleGroupIdentifier coupleGroup_;
 
         //- Pointer to saved offset vector
-        const volVectorField* displacementPtr_;
+        const pointVectorField* displacementPtr_;
 
         //- Same region
         mutable bool sameRegion_;
@@ -364,10 +365,10 @@ public:
             inline label sampleSize() const;
 
             //- Set pointer to offset field
-            inline void setOffsets(const volVectorField& offsets);
+            inline void setOffsets(const pointVectorField& offsets);
 
             //- Offset vector (from patch faces to destination mesh objects)
-            inline tmp<vectorField> offsets() const;
+            inline tmp<pointField> offsets() const;
 
             //- Cached sampleRegion != mesh.name()
             inline bool sameRegion() const;

@@ -2,25 +2,21 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
-
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
-
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 \*---------------------------------------------------------------------------*/
 
 #include "fvMeshDistribute.H"
@@ -1244,8 +1240,7 @@ void Foam::fvMeshDistribute::addProcPatches
                         mesh_.boundaryMesh(),
                         Pstream::myProcNo(),
                         proci,
-                        pcPatch.name(),
-                        pcPatch.transform()
+                        pcPatch.name()
                     );
 
                     procPatchID[proci].insert
@@ -1625,9 +1620,6 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     }
 
 
-    const bool havePointMesh =
-        mesh_.foundObject<pointMesh>(pointMesh::typeName);
-
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
     // Check all processors have same non-proc patches in same order.
@@ -1750,7 +1742,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     // Remove meshPhi. Since this would otherwise disappear anyway
     // during topo changes and we have to guarantee that all the fields
     // can be sent.
-    mesh_.clearOut();
+    //mesh_.clearOut();
     mesh_.resetMotion();
 
     // Get data to send. Make sure is synchronised
@@ -1883,15 +1875,11 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         printFieldInfo<surfaceSphericalTensorField>(mesh_);
         printFieldInfo<surfaceSymmTensorField>(mesh_);
         printFieldInfo<surfaceTensorField>(mesh_);
-
-        if (havePointMesh)
-        {
-            printFieldInfo<pointScalarField>(mesh_);
-            printFieldInfo<pointVectorField>(mesh_);
-            printFieldInfo<pointSphericalTensorField>(mesh_);
-            printFieldInfo<pointSymmTensorField>(mesh_);
-            printFieldInfo<pointTensorField>(mesh_);
-        }
+        printFieldInfo<pointScalarField>(mesh_);
+        printFieldInfo<pointVectorField>(mesh_);
+        printFieldInfo<pointSphericalTensorField>(mesh_);
+        printFieldInfo<pointSymmTensorField>(mesh_);
+        printFieldInfo<pointTensorField>(mesh_);
         Pout<< nl << endl;
     }
 
@@ -2087,44 +2075,41 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             );
 
             // pointFields
-            if (havePointMesh)
-            {
-                sendFields<pointScalarField>
-                (
-                    recvProc,
-                    pointScalars,
-                    subsetter,
-                    str
-                );
-                sendFields<pointVectorField>
-                (
-                    recvProc,
-                    pointVectors,
-                    subsetter,
-                    str
-                );
-                sendFields<pointSphericalTensorField>
-                (
-                    recvProc,
-                    pointSphereTensors,
-                    subsetter,
-                    str
-                );
-                sendFields<pointSymmTensorField>
-                (
-                    recvProc,
-                    pointSymmTensors,
-                    subsetter,
-                    str
-                );
-                sendFields<pointTensorField>
-                (
-                    recvProc,
-                    pointTensors,
-                    subsetter,
-                    str
-                );
-            }
+            sendFields<pointScalarField>
+            (
+                recvProc,
+                pointScalars,
+                subsetter,
+                str
+            );
+            sendFields<pointVectorField>
+            (
+                recvProc,
+                pointVectors,
+                subsetter,
+                str
+            );
+            sendFields<pointSphericalTensorField>
+            (
+                recvProc,
+                pointSphereTensors,
+                subsetter,
+                str
+            );
+            sendFields<pointSymmTensorField>
+            (
+                recvProc,
+                pointSymmTensors,
+                subsetter,
+                str
+            );
+            sendFields<pointTensorField>
+            (
+                recvProc,
+                pointTensors,
+                subsetter,
+                str
+            );
 
             // dimensionedFields
             sendFields<volScalarField::Internal>
@@ -2276,15 +2261,11 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         printFieldInfo<surfaceSphericalTensorField>(mesh_);
         printFieldInfo<surfaceSymmTensorField>(mesh_);
         printFieldInfo<surfaceTensorField>(mesh_);
-        if (havePointMesh)
-        {
-            printFieldInfo<pointScalarField>(mesh_);
-            printFieldInfo<pointVectorField>(mesh_);
-            printFieldInfo<pointSphericalTensorField>(mesh_);
-            printFieldInfo<pointSymmTensorField>(mesh_);
-            printFieldInfo<pointTensorField>(mesh_);
-        }
-
+        printFieldInfo<pointScalarField>(mesh_);
+        printFieldInfo<pointVectorField>(mesh_);
+        printFieldInfo<pointSphericalTensorField>(mesh_);
+        printFieldInfo<pointSymmTensorField>(mesh_);
+        printFieldInfo<pointTensorField>(mesh_);
         Pout<< nl << endl;
     }
 
@@ -2372,7 +2353,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 );
                 fvMesh& domainMesh = domainMeshPtr();
                 // Force construction of various on mesh.
-//                 (void)domainMesh.globalData();
+                //(void)domainMesh.globalData();
 
 
                 // Receive fields. Read as single dictionary because
@@ -2464,51 +2445,48 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 );
 
                 // Point fields
-                if (havePointMesh)
-                {
-                    pointMesh& domainPointMesh =
-                        const_cast<pointMesh&>(pointMesh::New(domainMesh));
-                    receiveFields<pointScalarField>
-                    (
-                        sendProc,
-                        pointScalars,
-                        domainPointMesh,
-                        psf,
-                        fieldDicts.subDict(pointScalarField::typeName)
-                    );
-                    receiveFields<pointVectorField>
-                    (
-                        sendProc,
-                        pointVectors,
-                        domainPointMesh,
-                        pvf,
-                        fieldDicts.subDict(pointVectorField::typeName)
-                    );
-                    receiveFields<pointSphericalTensorField>
-                    (
-                        sendProc,
-                        pointSphereTensors,
-                        domainPointMesh,
-                        psptf,
-                        fieldDicts.subDict(pointSphericalTensorField::typeName)
-                    );
-                    receiveFields<pointSymmTensorField>
-                    (
-                        sendProc,
-                        pointSymmTensors,
-                        domainPointMesh,
-                        psytf,
-                        fieldDicts.subDict(pointSymmTensorField::typeName)
-                    );
-                    receiveFields<pointTensorField>
-                    (
-                        sendProc,
-                        pointTensors,
-                        domainPointMesh,
-                        ptf,
-                        fieldDicts.subDict(pointTensorField::typeName)
-                    );
-                }
+                pointMesh& domainPointMesh =
+                    const_cast<pointMesh&>(pointMesh::New(domainMesh));
+                receiveFields<pointScalarField>
+                (
+                    sendProc,
+                    pointScalars,
+                    domainPointMesh,
+                    psf,
+                    fieldDicts.subDict(pointScalarField::typeName)
+                );
+                receiveFields<pointVectorField>
+                (
+                    sendProc,
+                    pointVectors,
+                    domainPointMesh,
+                    pvf,
+                    fieldDicts.subDict(pointVectorField::typeName)
+                );
+                receiveFields<pointSphericalTensorField>
+                (
+                    sendProc,
+                    pointSphereTensors,
+                    domainPointMesh,
+                    psptf,
+                    fieldDicts.subDict(pointSphericalTensorField::typeName)
+                );
+                receiveFields<pointSymmTensorField>
+                (
+                    sendProc,
+                    pointSymmTensors,
+                    domainPointMesh,
+                    psytf,
+                    fieldDicts.subDict(pointSymmTensorField::typeName)
+                );
+                receiveFields<pointTensorField>
+                (
+                    sendProc,
+                    pointTensors,
+                    domainPointMesh,
+                    ptf,
+                    fieldDicts.subDict(pointTensorField::typeName)
+                );
 
                 // Dimensioned fields
                 receiveFields<volScalarField::Internal>
@@ -2593,14 +2571,11 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 printFieldInfo<surfaceSphericalTensorField>(domainMesh);
                 printFieldInfo<surfaceSymmTensorField>(domainMesh);
                 printFieldInfo<surfaceTensorField>(domainMesh);
-                if (havePointMesh)
-                {
-                    printFieldInfo<pointScalarField>(domainMesh);
-                    printFieldInfo<pointVectorField>(domainMesh);
-                    printFieldInfo<pointSphericalTensorField>(domainMesh);
-                    printFieldInfo<pointSymmTensorField>(domainMesh);
-                    printFieldInfo<pointTensorField>(domainMesh);
-                }
+                printFieldInfo<pointScalarField>(domainMesh);
+                printFieldInfo<pointVectorField>(domainMesh);
+                printFieldInfo<pointSphericalTensorField>(domainMesh);
+                printFieldInfo<pointSymmTensorField>(domainMesh);
+                printFieldInfo<pointTensorField>(domainMesh);
             }
 
 
@@ -2787,14 +2762,11 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 printFieldInfo<surfaceSphericalTensorField>(mesh_);
                 printFieldInfo<surfaceSymmTensorField>(mesh_);
                 printFieldInfo<surfaceTensorField>(mesh_);
-                if (havePointMesh)
-                {
-                    printFieldInfo<pointScalarField>(mesh_);
-                    printFieldInfo<pointVectorField>(mesh_);
-                    printFieldInfo<pointSphericalTensorField>(mesh_);
-                    printFieldInfo<pointSymmTensorField>(mesh_);
-                    printFieldInfo<pointTensorField>(mesh_);
-                }
+                printFieldInfo<pointScalarField>(mesh_);
+                printFieldInfo<pointVectorField>(mesh_);
+                printFieldInfo<pointSphericalTensorField>(mesh_);
+                printFieldInfo<pointSymmTensorField>(mesh_);
+                printFieldInfo<pointTensorField>(mesh_);
                 Pout<< nl << endl;
             }
         }
@@ -2817,16 +2789,14 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         printFieldInfo<surfaceSphericalTensorField>(mesh_);
         printFieldInfo<surfaceSymmTensorField>(mesh_);
         printFieldInfo<surfaceTensorField>(mesh_);
-        if (havePointMesh)
-        {
-            printFieldInfo<pointScalarField>(mesh_);
-            printFieldInfo<pointVectorField>(mesh_);
-            printFieldInfo<pointSphericalTensorField>(mesh_);
-            printFieldInfo<pointSymmTensorField>(mesh_);
-            printFieldInfo<pointTensorField>(mesh_);
-        }
+        printFieldInfo<pointScalarField>(mesh_);
+        printFieldInfo<pointVectorField>(mesh_);
+        printFieldInfo<pointSphericalTensorField>(mesh_);
+        printFieldInfo<pointSymmTensorField>(mesh_);
+        printFieldInfo<pointTensorField>(mesh_);
         Pout<< nl << endl;
     }
+
 
     // See if any originally shared points need to be merged. Note: does
     // parallel comms. After this points and edges should again be consistent.

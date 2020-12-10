@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -50,7 +50,7 @@ bool Foam::solidParticle::move
         {
             Info<< "Time = " << mesh().time().timeName()
                 << " trackTime = " << trackTime
-                << " steptFraction() = " << stepFraction() << endl;
+                << " stepFraction() = " << stepFraction() << endl;
         }
 
 
@@ -118,16 +118,10 @@ void Foam::solidParticle::hitWallPatch(solidParticleCloud& cloud, trackingData&)
 }
 
 
-void Foam::solidParticle::transformProperties(const tensor& T)
+void Foam::solidParticle::transformProperties(const transformer& transform)
 {
-    particle::transformProperties(T);
-    U_ = transform(T, U_);
-}
-
-
-void Foam::solidParticle::transformProperties(const vector& separation)
-{
-    particle::transformProperties(separation);
+    particle::transformProperties(transform);
+    U_ = transform.transform(U_);
 }
 
 

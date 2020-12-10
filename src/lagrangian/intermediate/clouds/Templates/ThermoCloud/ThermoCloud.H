@@ -95,7 +95,7 @@ protected:
 
         // References to the carrier gas fields
 
-            //- Thermodynamics package
+            //- SLG thermodynamics package
             const fluidThermoModel& thermo_;
 
             //- Temperature [K]
@@ -228,7 +228,7 @@ public:
             //- Return const access to the carrier temperature field
             inline const volScalarField& T() const;
 
-            //- Return const access to the carrier prressure field
+            //- Return const access to the carrier pressure field
             inline const volScalarField& p() const;
 
 

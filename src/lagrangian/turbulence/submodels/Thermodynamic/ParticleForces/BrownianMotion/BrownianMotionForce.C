@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -27,7 +27,7 @@ License
 #include "mathematicalConstants.H"
 #include "fundamentalConstants.H"
 #include "demandDrivenData.H"
-#include "turbulenceModel.H"
+#include "momentumTransportModel.H"
 
 using namespace Foam::constant;
 
@@ -60,14 +60,14 @@ Foam::BrownianMotionForce<CloudType>::kModel() const
     const word turbName =
         IOobject::groupName
         (
-            turbulenceModel::propertiesName,
+            momentumTransportModel::typeName,
             this->owner().U().group()
         );
 
-    if (obr.foundObject<turbulenceModel>(turbName))
+    if (obr.foundObject<momentumTransportModel>(turbName))
     {
-        const turbulenceModel& model =
-            obr.lookupObject<turbulenceModel>(turbName);
+        const momentumTransportModel& model =
+            obr.lookupObject<momentumTransportModel>(turbName);
         return model.k();
     }
     else
@@ -94,7 +94,7 @@ Foam::BrownianMotionForce<CloudType>::BrownianMotionForce
 :
     ParticleForce<CloudType>(owner, mesh, dict, typeName, true),
     rndGen_(owner.rndGen()),
-    lambda_(readScalar(this->coeffs().lookup("lambda"))),
+    lambda_(this->coeffs().template lookup<scalar>("lambda")),
     turbulence_(readBool(this->coeffs().lookup("turbulence"))),
     kPtr_(nullptr),
     ownK_(false)

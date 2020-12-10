@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -707,7 +707,7 @@ Foam::scalar Foam::motionSmootherAlgo::setErrorReduction
     const scalar errorReduction
 )
 {
-    scalar oldErrorReduction = readScalar(paramDict_.lookup("errorReduction"));
+    scalar oldErrorReduction = paramDict_.lookup<scalar>("errorReduction");
 
     paramDict_.remove("errorReduction");
     paramDict_.add("errorReduction", errorReduction);
@@ -861,18 +861,17 @@ bool Foam::motionSmootherAlgo::scaleMesh
                     refCast<const coupledPolyPatch>(patches[patchi]);
 
                 Pout<< '\t' << patchi << '\t' << pp.name()
-                    << " parallel:" << pp.parallel()
-                    << " separated:" << pp.separated()
-                    << " forwardT:" << pp.forwardT().size()
+                    << " transform:" << pp.transform()
                     << endl;
             }
         }
     }
 
     const scalar errorReduction =
-        readScalar(paramDict.lookup("errorReduction"));
+        paramDict.lookup<scalar>("errorReduction");
+
     const label nSmoothScale =
-        readLabel(paramDict.lookup("nSmoothScale"));
+        paramDict.lookup<label>("nSmoothScale");
 
 
     // Note: displacement_ should already be synced already from setDisplacement

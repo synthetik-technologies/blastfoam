@@ -290,7 +290,6 @@ public:
             interpolate
             (
                 const GeometricField<Type, pointPatchField, pointMesh>&,
-                const pointMesh& pMesh,
                 const pointMesh& sMesh,
                 const labelList& patchMap,
                 const labelList& pointMap

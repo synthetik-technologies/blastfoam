@@ -225,7 +225,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
         Theta_.mesh(),
         dimensionedScalar(dimensionSet(0, 2, -1, 0, 0), 0)
     ),
-    es_(dict.lookupType<scalar>("e"))
+    es_(dict.lookup<scalar>("e"))
 {
     kineticTheorySystem_.addPhase(*this);
 }

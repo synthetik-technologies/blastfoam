@@ -206,9 +206,9 @@ Foam::mappedMovingWallPolyPatch::~mappedMovingWallPolyPatch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::mappedMovingWallPolyPatch::initGeometry(PstreamBuffers& pBufs)
+void Foam::mappedMovingWallPolyPatch::initCalcGeometry(PstreamBuffers& pBufs)
 {
-    wallPolyPatch::initGeometry(pBufs);
+    wallPolyPatch::initCalcGeometry(pBufs);
 }
 
 

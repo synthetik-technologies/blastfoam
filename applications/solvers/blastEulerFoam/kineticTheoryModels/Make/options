@@ -3,10 +3,15 @@ EXE_INC = \
     -I../interfacialModels/lnInclude\
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/phaseCompressible/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
+    -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
-    -I../phaseCompressibleTurbulenceModels/lnInclude
+    -I../phaseCompressibleMomentumTransportModels/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \

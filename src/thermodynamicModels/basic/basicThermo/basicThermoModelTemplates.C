@@ -106,7 +106,7 @@ typename Table::iterator Foam::basicThermoModel::lookupThermo
 )
 {
     word thermoTypeName;
-    Switch detonating(thermoDict.lookupType<word>("type") == "detonating");
+    Switch detonating(thermoDict.lookup<word>("type") == "detonating");
     if (detonating)
     {
         const dictionary& uThermoTypeDict

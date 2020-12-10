@@ -32,7 +32,7 @@ Foam::autoPtr<Foam::fluxScheme> Foam::fluxScheme::New
     const fvMesh& mesh
 )
 {
-    word fluxSchemeType(mesh.schemesDict().lookupType<word>("fluxScheme"));
+    word fluxSchemeType(mesh.schemesDict().lookup<word>("fluxScheme"));
 
     Info<< "Selecting fluxScheme: " << fluxSchemeType << endl;
 

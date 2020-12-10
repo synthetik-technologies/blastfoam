@@ -34,15 +34,15 @@ Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
 
         const word dynamicFvMeshTypeName
         (
-            dict.lookupType<word>("dynamicFvMesh")
+            dict.lookup<word>("dynamicFvMesh")
         );
 
         Info<< "Selecting dynamicFvMesh " << dynamicFvMeshTypeName << endl;
 
-        const_cast<Time&>(io.time()).libs().open
+        libs.open
         (
             dict,
-            "dynamicFvMeshLibs",
+            "blastDynamicFvMeshLibs",
             IOobjectConstructorTablePtr_
         );
 

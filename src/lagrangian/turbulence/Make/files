@@ -10,14 +10,6 @@ $(KINEMATICCOLLIDINGPARCEL)/makeBasicKinematicCollidingParcelSubmodels.C
 THERMOPARCEL=$(DERIVEDPARCELS)/basicThermoParcel
 $(THERMOPARCEL)/makeBasicThermoParcelSubmodels.C
 
-/*
-REACTINGPARCEL=$(DERIVEDPARCELS)/basicReactingParcel
-$(REACTINGPARCEL)/makeBasicReactingParcelSubmodels.C
-
-REACTINGMPPARCEL=$(DERIVEDPARCELS)/basicReactingMultiphaseParcel
-$(REACTINGMPPARCEL)/makeBasicReactingMultiphaseParcelSubmodels.C
-*/
-
 KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/basicKinematicMPPICParcel
 $(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
 

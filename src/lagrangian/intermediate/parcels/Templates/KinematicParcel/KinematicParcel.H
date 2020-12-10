@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -49,8 +49,6 @@ SourceFiles
 #include "autoPtr.H"
 #include "interpolation.H"
 #include "demandDrivenEntry.H"
-
-// #include "ParticleForceList.H" // TODO
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -155,16 +153,6 @@ public:
     :
         public ParcelType::trackingData
     {
-    public:
-
-        enum trackPart
-        {
-            tpVelocityHalfStep,
-            tpLinearTrack,
-            tpRotationalTrack
-        };
-
-
     private:
 
         // Private Data
@@ -196,10 +184,6 @@ public:
             //- Local gravitational or other body-force acceleration
             const vector& g_;
 
-            // label specifying which part of the integration
-            // algorithm is taking place
-            trackPart part_;
-
 
     public:
 
@@ -207,24 +191,20 @@ public:
 
             //- Construct from components
             template <class TrackCloudType>
-            inline trackingData
-            (
-                const TrackCloudType& cloud,
-                trackPart part = tpLinearTrack
-            );
+            inline trackingData(const TrackCloudType& cloud);
 
 
         // Member Functions
 
-            //- Return conat access to the interpolator for continuous
+            //- Return const access to the interpolator for continuous
             //  phase density field
             inline const interpolation<scalar>& rhoInterp() const;
 
-            //- Return conat access to the interpolator for continuous
+            //- Return const access to the interpolator for continuous
             //  phase velocity field
             inline const interpolation<vector>& UInterp() const;
 
-            //- Return conat access to the interpolator for continuous
+            //- Return const access to the interpolator for continuous
             //  phase dynamic viscosity field
             inline const interpolation<scalar>& muInterp() const;
 
@@ -248,12 +228,6 @@ public:
 
             // Return const access to the gravitational acceleration vector
             inline const vector& g() const;
-
-            //- Return the part of the tracking operation taking place
-            inline trackPart part() const;
-
-            //- Return access to the part of the tracking operation taking place
-            inline trackPart& part();
     };
 
 
@@ -633,12 +607,8 @@ public:
             void hitWallPatch(TrackCloudType& cloud, trackingData& td);
 
             //- Transform the physical properties of the particle
-            //  according to the given transformation tensor
-            virtual void transformProperties(const tensor& T);
-
-            //- Transform the physical properties of the particle
-            //  according to the given separation vector
-            virtual void transformProperties(const vector& separation);
+            //  according to the given transformation
+            virtual void transformProperties(const transformer&);
 
 
         // I-O

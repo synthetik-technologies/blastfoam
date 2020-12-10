@@ -82,12 +82,13 @@ void Foam::radiationODE::derivatives
 (
     const scalar time,
     const scalarField& q,
+    const label li,
     scalarField& dqdt
 ) const
 {
-    scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
-    scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
+    scalar e = q[0]/max(thermo_.rho()[li], 1e-10);
+    scalar T = thermo_.TRhoEi(thermo_.T()[li], e, li);
+    dqdt = rad_.Ru(li) - rad_.Rp(li)*pow4(T);
 }
 
 
@@ -95,17 +96,18 @@ void Foam::radiationODE::jacobian
 (
     const scalar t,
     const scalarField& q,
+    const label li,
     scalarField& dqdt,
     scalarSquareMatrix& J
 ) const
 {
-    scalar e = q[0]/max(thermo_.rho()[celli_], 1e-10);
-    scalar T = thermo_.TRhoEi(thermo_.T()[celli_], e, celli_);
-    dqdt = rad_.Ru(celli_) - rad_.Rp(celli_)*pow4(T);
+    scalar e = q[0]/max(thermo_.rho()[li], 1e-10);
+    scalar T = thermo_.TRhoEi(thermo_.T()[li], e, li);
+    dqdt = rad_.Ru(li) - rad_.Rp(li)*pow4(T);
     J = scalarSquareMatrix
         (
             1,
-            -4.0*rad_.Rp(celli_)*pow3(T)/thermo_.Cvi(celli_)
+            -4.0*rad_.Rp(li)*pow3(T)/thermo_.Cvi(li)
         );
 }
 
@@ -121,19 +123,19 @@ Foam::scalar Foam::radiationODE::solve
         return min(deltaT_).value();
     }
 
-    for(celli_ = 0; celli_ < rhoE.size(); celli_++)
+    forAll(rhoE, celli)
     {
-        q_ = rhoE[celli_];
+        q_ = rhoE[celli];
 
         scalar timeLeft = deltaT;
         while (timeLeft > small)
         {
             scalar dt = timeLeft;
-            odeSolver_->solve(0, dt, q_, deltaT_[celli_]);
+            odeSolver_->solve(0, dt, q_, celli, deltaT_[celli]);
             timeLeft -= dt;
-            deltaT_[celli_] = dt;
+            deltaT_[celli] = dt;
         }
-        rhoE[celli_] = q_[0];
+        rhoE[celli] = q_[0];
     }
     return min(deltaT_).value();
 }

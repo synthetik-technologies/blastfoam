@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,7 +25,7 @@ License
 
 #include "DispersionRASModel.H"
 #include "demandDrivenData.H"
-#include "turbulenceModel.H"
+#include "momentumTransportModel.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -37,14 +37,14 @@ Foam::DispersionRASModel<CloudType>::kModel() const
     const word turbName =
         IOobject::groupName
         (
-            turbulenceModel::propertiesName,
+            momentumTransportModel::typeName,
             this->owner().U().group()
         );
 
-    if (obr.foundObject<turbulenceModel>(turbName))
+    if (obr.foundObject<momentumTransportModel>(turbName))
     {
-        const turbulenceModel& model =
-            obr.lookupObject<turbulenceModel>(turbName);
+        const momentumTransportModel& model =
+            obr.lookupObject<momentumTransportModel>(turbName);
         return model.k();
     }
     else
@@ -67,14 +67,14 @@ Foam::DispersionRASModel<CloudType>::epsilonModel() const
     const word turbName =
         IOobject::groupName
         (
-            turbulenceModel::propertiesName,
+            momentumTransportModel::typeName,
             this->owner().U().group()
         );
 
-    if (obr.foundObject<turbulenceModel>(turbName))
+    if (obr.foundObject<momentumTransportModel>(turbName))
     {
-        const turbulenceModel& model =
-            obr.lookupObject<turbulenceModel>(turbName);
+        const momentumTransportModel& model =
+            obr.lookupObject<momentumTransportModel>(turbName);
         return model.epsilon();
     }
     else

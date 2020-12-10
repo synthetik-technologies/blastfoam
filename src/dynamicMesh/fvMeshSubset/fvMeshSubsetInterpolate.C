@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -93,7 +93,8 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                 sMesh.time().timeName(),
                 sMesh,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             ),
             sMesh,
             vf.dimensions(),
@@ -230,7 +231,8 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
                 sMesh.time().timeName(),
                 sMesh,
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             ),
             sMesh,
             vf.dimensions(),
@@ -363,7 +365,6 @@ tmp<GeometricField<Type, pointPatchField, pointMesh>>
 fvMeshSubset::interpolate
 (
     const GeometricField<Type, pointPatchField, pointMesh>& vf,
-    const pointMesh& pMesh,
     const pointMesh& sMesh,
     const labelList& patchMap,
     const labelList& pointMap
@@ -415,7 +416,8 @@ fvMeshSubset::interpolate
                 sMesh.time().timeName(),
                 sMesh.thisDb(),
                 IOobject::NO_READ,
-                IOobject::NO_WRITE
+                IOobject::NO_WRITE,
+                false
             ),
             sMesh,
             vf.dimensions(),
@@ -441,7 +443,7 @@ fvMeshSubset::interpolate
         {
             // Construct addressing
             const pointPatch& basePatch =
-                pMesh.boundary()[patchMap[patchi]];
+                vf.mesh().boundary()[patchMap[patchi]];
 
             const labelList& meshPoints = basePatch.meshPoints();
 
@@ -499,7 +501,6 @@ tmp<GeometricField<Type, pointPatchField, pointMesh>> fvMeshSubset::interpolate
     return interpolate
     (
         sf,
-        pointMesh::New(baseMesh_),
         pointMesh::New(subMesh()),     // subsetted point mesh
         patchMap(),
         pointMap()
