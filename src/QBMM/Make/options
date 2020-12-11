@@ -1,11 +1,7 @@
 EXE_INC = \
-    -I$(LIB_SRC)/transportModels \
-    -I$(LIB_SRC)/transportModels/compressible/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
-    -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
-    -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
-    -I$(LIB_SRC)/TurbulenceModels/compressible/lnInclude \
-    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
+    -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     $(QBMM_INC) \
@@ -13,15 +9,6 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude
 
 LIB_LIBS = \
-    -lincompressibleTransportModels \
-    -lcompressibleTransportModels \
-    -lfluidThermophysicalModels \
-    -lspecie \
-    -lturbulenceModels \
-    -lincompressibleTurbulenceModels \
-    -lcompressibleTurbulenceModels \
-    -lfiniteVolume \
-    -lmeshTools \
     $(QBMM_LIBS) \
     -L$(BLAST_LIBBIN) \
     -ldiameterModels

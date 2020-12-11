@@ -21,8 +21,8 @@ nBufferLayers 1;
 //- Calc charge size
 rho     1601.0;
 mass    10.0; // pounds
-V       #calc "$mass/2.20462/$rho"; // convert to kg and get volume
-R       #calc "cbrt($V/4/3.141529*3)"; // Calculate radius from volume
+V       #calc "$mass /2.20462/$rho"; // convert to kg and get volume
+R       #calc "cbrt($V /4/3.141529*3)"; // Calculate radius from volume
 
 defaultFieldValues
 (

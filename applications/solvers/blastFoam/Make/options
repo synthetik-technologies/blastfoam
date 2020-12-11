@@ -33,4 +33,5 @@ EXE_LIBS = \
     -lerrorEstimate \
     -lblastSampling \
     -lblastFunctionObjects \
+    -lblastQBMM \
     $(BLAST_QBMM_LIBS)
