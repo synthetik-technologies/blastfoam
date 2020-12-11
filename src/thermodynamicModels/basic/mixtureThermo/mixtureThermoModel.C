@@ -31,7 +31,7 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class BasicThermo, class ThermoType>
-const ThermoType&
+const Foam::PtrList<ThermoType>&
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::constructSpeciesData
 (
     const dictionary& thermoDict
@@ -46,7 +46,7 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::constructSpeciesData
         );
     }
 
-    return speciesData_[0];
+    return speciesData_;
 }
 
 template<class BasicThermo, class ThermoType>
@@ -60,8 +60,6 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::volScalarFieldProperty
     const Args& ... args
 ) const
 {
-    checkNCells();
-    checkNPatches();
 
     tmp<volScalarField> tPsi
     (
@@ -77,21 +75,19 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::volScalarFieldProperty
 
     forAll(this->p_, celli)
     {
-        psi[celli] = (this->cellMixtures_[celli].*psiMethod)(args[celli] ...);
+        psi[celli] = (this->mixture_[celli].*psiMethod)(args[celli] ...);
     }
 
     volScalarField::Boundary& psiBf = psi.boundaryFieldRef();
 
     forAll(psiBf, patchi)
     {
-        checkNFaces(patchi);
-
         fvPatchScalarField& pPsi = psiBf[patchi];
 
         forAll(this->p_.boundaryField()[patchi], facei)
         {
             pPsi[facei] =
-                (this->faceMixtures_[patchi][facei].*psiMethod)
+                (this->mixture_.boundary()[patchi][facei].*psiMethod)
                 (
                     args.boundaryField()[patchi][facei] ...
                 );
@@ -112,8 +108,6 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::patchFieldProperty
     const Args& ... args
 ) const
 {
-    checkNFaces(patchi);
-
     tmp<scalarField> tPsi
     (
         new scalarField(this->p_.boundaryField()[patchi].size())
@@ -123,7 +117,7 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::patchFieldProperty
     forAll(psi, facei)
     {
         psi[facei] =
-            (this->faceMixtures_[patchi][facei].*psiMethod)
+            (this->mixture_.boundary()[patchi][facei].*psiMethod)
             (
                 args[facei] ...
             );
@@ -143,15 +137,13 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::cellSetProperty
     const Args& ... args
 ) const
 {
-    checkNCells();
-
     tmp<scalarField> tPsi(new scalarField(cells.size()));
 
     scalarField& psi = tPsi.ref();
     forAll(cells, celli)
     {
         psi[celli] =
-            (this->cellMixtures_[cells[celli]].*psiMethod)(args[celli] ...);
+            (this->mixture_[cells[celli]].*psiMethod)(args[celli] ...);
     }
 
     return tPsi;
@@ -185,35 +177,8 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_(constructSpeciesData(dict)),
-    cellMixtures_(rho.size()),
-    faceMixtures_(rho.boundaryField().size())
-{
-    forAll(cellMixtures_, celli)
-    {
-        cellMixtures_.set
-        (
-            celli,
-            new ThermoType(cellMixture(celli))
-        );
-    }
-    forAll(faceMixtures_, patchi)
-    {
-        faceMixtures_.set
-        (
-            patchi,
-            new PtrList<ThermoType>(rho.boundaryField()[patchi].size())
-        );
-        forAll(faceMixtures_[patchi], facei)
-        {
-            faceMixtures_[patchi].set
-            (
-                facei,
-                new ThermoType(patchFaceMixture(patchi, facei))
-            );
-        }
-    }
-}
+    mixture_(p.mesh(), this->Ys_, constructSpeciesData(dict), name)
+{}
 
 
 template<class BasicThermo, class ThermoType>
@@ -243,44 +208,8 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_("mixture", *thermoData[this->species_[0]]),
-    cellMixtures_(rho.size()),
-    faceMixtures_(rho.boundaryField().size())
-{
-    forAll(this->species_, i)
-    {
-        speciesData_.set
-        (
-            i,
-            new ThermoType(*thermoData[this->species_[i]])
-        );
-    }
-
-    forAll(cellMixtures_, celli)
-    {
-        cellMixtures_.set
-        (
-            celli,
-            new ThermoType(cellMixture(celli))
-        );
-    }
-    forAll(faceMixtures_, patchi)
-    {
-        faceMixtures_.set
-        (
-            patchi,
-            new PtrList<ThermoType>(rho.boundaryField()[patchi].size())
-        );
-        forAll(faceMixtures_[patchi], facei)
-        {
-            faceMixtures_[patchi].set
-            (
-                facei,
-                new ThermoType(patchFaceMixture(patchi, facei))
-            );
-        }
-    }
-}
+    mixture_(p.mesh(), this->Ys_, constructSpeciesData(dict), name)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -291,143 +220,6 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::~mixtureThermoModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::checkNCells() const
-{
-    const label nCells(this->rho_.size());
-    const label nCellsOld(cellMixtures_.size());
-    if (nCells == nCellsOld)
-    {
-        return;
-    }
-
-    cellMixtures_.resize(nCells);
-    for (label celli = nCellsOld; celli < nCells; celli++)
-    {
-        cellMixtures_.set(celli, new ThermoType(cellMixture(celli)));
-    }
-}
-
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::checkNPatches() const
-{
-    const label nPatches(this->rho_.boundaryField().size());
-    const label nPatchesOld(faceMixtures_.size());
-    if (nPatches == faceMixtures_.size())
-    {
-        return;
-    }
-    faceMixtures_.resize(nPatches);
-    for (label patchi = nPatchesOld; patchi < nPatches; patchi++)
-    {
-        faceMixtures_.set(patchi, new PtrList<ThermoType>());
-    }
-}
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::checkNFaces
-(
-    const label patchi
-) const
-{
-    const label nFaces(this->rho_.boundaryField()[patchi].size());
-    const label nFacesOld(faceMixtures_[patchi].size());
-    if (nFaces == nFacesOld)
-    {
-        return;
-    }
-
-    // Update size
-    faceMixtures_[patchi].resize(nFaces);
-    for (label facei = nFacesOld; facei < nFaces; facei++)
-    {
-        faceMixtures_[patchi].set
-        (
-            facei,
-            new ThermoType(patchFaceMixture(patchi, facei))
-        );
-    }
-}
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::updateCellMixtures() const
-{
-    checkNCells();
-
-    forAll(cellMixtures_, celli)
-    {
-        cellMixtures_[celli] = cellMixture(celli);
-    }
-}
-
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::updateFaceMixtures
-(
-    const label patchi
-) const
-{
-    forAll(faceMixtures_[patchi], facei)
-    {
-        faceMixtures_[patchi][facei] = patchFaceMixture(patchi, facei);
-    }
-}
-
-
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureThermoModel<BasicThermo, ThermoType>::updateMixtures() const
-{
-    checkNCells();
-    updateCellMixtures();
-
-    checkNPatches();
-    forAll(this->rho_.boundaryField(), patchi)
-    {
-        checkNFaces(patchi);
-        updateFaceMixtures(patchi);
-    }
-}
-
-
-template<class BasicThermo, class ThermoType>
-const ThermoType& Foam::mixtureThermoModel<BasicThermo, ThermoType>::cellMixture
-(
-    const label celli
-) const
-{
-    mixture_ = this->Ys_[0][celli]*speciesData_[0];
-
-    for (label n = 1; n < this->Ys_.size(); n++)
-    {
-        mixture_ += this->Ys_[n][celli]*speciesData_[n];
-    }
-
-    return mixture_;
-}
-
-
-template<class BasicThermo, class ThermoType>
-const ThermoType&
-Foam::mixtureThermoModel<BasicThermo, ThermoType>::patchFaceMixture
-(
-    const label patchi,
-    const label facei
-) const
-{
-    mixture_ = this->Ys_[0].boundaryField()[patchi][facei]*speciesData_[0];
-
-    for (label n = 1; n < this->Ys_.size(); n++)
-    {
-        mixture_ += this->Ys_[n].boundaryField()[patchi][facei]*speciesData_[n];
-    }
-
-    return mixture_;
-}
-
-
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
@@ -474,8 +266,7 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::TRhoEi
     const label celli
 ) const
 {
-    checkNCells();
-    return cellMixtures_[celli].TRhoE(T, this->rho_[celli], e);
+    return mixture_[celli].TRhoE(T, this->rho_[celli], e);
 }
 
 
@@ -587,8 +378,7 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::Wi(const label celli) const
 {
-    checkNCells();
-    return cellMixtures_[celli].W();
+    return mixture_[celli].W();
 }
 
 
@@ -627,8 +417,7 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::Gammai(const label celli) const
 {
-    checkNCells();
-    return cellMixtures_[celli].Gamma
+    return mixture_[celli].Gamma
     (
         this->rho_[celli],
         this->e_[celli],
@@ -693,8 +482,7 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::Cpi(const label celli) const
 {
-    checkNCells();
-    return cellMixtures_[celli].Cp
+    return mixture_[celli].Cp
     (
         this->rho_[celli],
         this->e_[celli],
@@ -759,8 +547,7 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::Cvi(const label celli) const
 {
-    checkNCells();
-    return cellMixtures_[celli].Cv
+    return mixture_[celli].Cv
     (
         this->rho_[celli],
         this->e_[celli],
@@ -819,5 +606,19 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::CpByCv
         T
     );
 }
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
+Foam::mixtureThermoModel<BasicThermo, ThermoType>::Hf() const
+{
+    return volScalarFieldProperty
+    (
+        "Hf",
+        dimEnergy/dimMass,
+        &ThermoType::Hf
+    );
+}
+
 
 // ************************************************************************* //

@@ -398,8 +398,8 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
             {
                 Ys_[i].storeOldTime();
             }
-
-            this->storeAndBlendOld(Ys_[i], YsOld_[i]);
+            volScalarField YOld(Ys_[i]);
+            this->storeAndBlendOld(YOld, YsOld_[i]);
 
             volScalarField deltaAlphaRhoY
             (
@@ -409,7 +409,7 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
 
             Ys_[i] =
                 (
-                    alphaRho.prevIter()*Ys_[i] - dT*deltaAlphaRhoY
+                    alphaRho.prevIter()*YOld - dT*deltaAlphaRhoY
                 )/max(this->residualRho(), alphaRho);
             Ys_[i].max(0.0);
             Ys_[i].correctBoundaryConditions();

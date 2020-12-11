@@ -559,4 +559,18 @@ Foam::eThermoModel<BasicThermo, ThermoType>::CpByCv
     );
 }
 
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
+Foam::eThermoModel<BasicThermo, ThermoType>::Hf() const
+{
+    return volScalarFieldProperty
+    (
+        "Hf",
+        dimEnergy/dimMass,
+        &ThermoType::Hf
+    );
+}
+
+
 // ************************************************************************* //

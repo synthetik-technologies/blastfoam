@@ -591,4 +591,13 @@ Foam::twoPhaseFluidThermo::CpByCv
        *thermo2_->CpByCv(rho, e, T, patchi);
 }
 
+
+Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::Hf() const
+{
+    return
+        volumeFraction_*thermo1_->Hf()
+      + (1.0 - volumeFraction_)*thermo2_->Hf();
+}
+
+
 // ************************************************************************* //

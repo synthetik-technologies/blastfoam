@@ -409,6 +409,9 @@ public:
             const label patchi
         ) const = 0;
 
+        //- Heat of formation
+        virtual tmp<volScalarField> Hf() const = 0;
+
     // Transport variables
 
         //- Thermal diffusivity for temperature of mixture [W/m/K]

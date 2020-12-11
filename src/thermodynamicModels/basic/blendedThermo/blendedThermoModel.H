@@ -288,6 +288,9 @@ public:
             const label patchi
         ) const;
 
+        //- Heat of formation
+        virtual tmp<volScalarField> Hf() const;
+
         //- Read residual values
         virtual void read(const dictionary& dict)
         {
