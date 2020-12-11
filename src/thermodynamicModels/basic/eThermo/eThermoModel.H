@@ -28,7 +28,7 @@ Class
     Foam::eThermoModel
 
 Description
-    General class for a fluid/solid
+    Templated class to handle a single thermodynamic model
 
 SourceFiles
     eThermoModel.C

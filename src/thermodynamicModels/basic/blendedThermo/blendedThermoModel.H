@@ -28,9 +28,7 @@ Class
     Foam::blendedThermoModel
 
 Description
-    Templated class to allow for a detonating material. Material will
-    transition from the unreacted state to reacted state using a activation
-    model and add the detonation energy.
+    Templated class to allow for blending of multiple equation of state.
 
 SourceFiles
     blendedThermoModel.C

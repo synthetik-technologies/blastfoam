@@ -5,8 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
+2020-12-11 Jeff Heylmun:    Added storage of mixture fields and derivation
+                            from UpdateableMeshObject
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -28,7 +28,9 @@ Class
     Foam::speciesMixtureField
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Basic species mixture class responsible for storing and updating mixtures.
+    Derived from UpdateableMeshObject so checking of sizes does not need to be
+    done, and the updating of sizes is done in updateMesh.
 
 SourceFiles
     speciesMixtureField.C
@@ -40,7 +42,6 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicThermoModel.H"
 #include "volFields.H"
 #include "MeshObject.H"
 #include "PtrList.H"
@@ -56,7 +57,7 @@ template<class ThermoType>
 class speciesMixtureField
 :
     public PtrList<ThermoType>,
-    public UpdateableMeshObject<polyMesh>
+    public UpdateableMeshObject<fvMesh>
 {
 // Private data
 

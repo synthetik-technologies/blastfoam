@@ -41,7 +41,7 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
 )
 :
     PtrList<ThermoType>(mesh.nCells()),
-    UpdateableMeshObject<polyMesh>
+    UpdateableMeshObject<fvMesh>
     (
         IOobject::groupName("speciesThermo", phaseName),
         mesh
@@ -52,6 +52,7 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
     mixture_(speciesData[0]),
     faceMixtures_(mesh.boundary().size())
 {
+    //- Allocate cell mixtures
     forAll(*this, celli)
     {
         this->set
@@ -60,6 +61,8 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
             new ThermoType(cellMixture(celli))
         );
     }
+
+    //- Allocate boundary mixtures
     forAll(faceMixtures_, patchi)
     {
         faceMixtures_.set
@@ -91,40 +94,60 @@ Foam::speciesMixtureField<ThermoType>::~speciesMixtureField()
 template<class ThermoType>
 void Foam::speciesMixtureField<ThermoType>::updateMesh(const mapPolyMesh& mpm)
 {
-    //- Only allocate list, updating is done later
-    label nOld = this->size();
-    label n = mesh_.nCells();
-    this->resize(n);
+    //- Resize and update cell mixtures
+    const label nCellsOld = this->size();
+    const label nCells = mesh_.nCells();
+    const label nC(min(nCells, nCellsOld));
+    this->resize(nCells);
 
-    for (label celli = nOld; celli < n; celli++)
+    for (label celli = 0; celli < nC; celli++)
+    {
+        this->operator[](celli) = cellMixture(celli);
+    }
+    for (label celli = nCellsOld; celli < nCells; celli++)
     {
         this->set
         (
             celli,
-            new ThermoType(mixture_)
+            new ThermoType(cellMixture(celli))
         );
     }
 
-    nOld = faceMixtures_.size();
-    n = mesh_.boundary().size();
-    faceMixtures_.resize(n);
-    for (label patchi = 0; patchi < min(nOld, n); patchi++)
+    //- Resize boundary
+    const label nPatchesOld = faceMixtures_.size();
+    const label nPatches = mesh_.boundary().size();
+    const label nP(min(nPatches, nPatchesOld));
+    faceMixtures_.resize(nPatches);
+
+    //- Update boundaries that were previously allocated
+    for (label patchi = 0; patchi < nP; patchi++)
     {
-        label nFaces = mesh_.boundary()[patchi].size();
-        label nFacesOld = faceMixtures_[patchi].size();
+        const label nFaces = mesh_.boundary()[patchi].size();
+        const label nFacesOld = faceMixtures_[patchi].size();
+        const label nF(min(nFaces, nFacesOld));
         faceMixtures_[patchi].resize(nFaces);
+
+        //- Update previously allocated faces
+        for (label facei = 0; facei < nF; facei++)
+        {
+            faceMixtures_[patchi][facei] = patchFaceMixture(patchi, facei);
+        }
+
+        //- Allocate new faces
         for (label facei = nFacesOld; facei < nFaces; facei++)
         {
             faceMixtures_[patchi].set
             (
                 facei,
-                new ThermoType(mixture_)
+                new ThermoType(patchFaceMixture(patchi, facei))
             );
         }
     }
-    for (label patchi = nOld; patchi < n; patchi++)
+
+    //- Allocated new patches and faces
+    for (label patchi = nPatchesOld; patchi < nPatches; patchi++)
     {
-        label nFaces = mesh_.boundary()[patchi].size();
+        const label nFaces = mesh_.boundary()[patchi].size();
         faceMixtures_.set
         (
             patchi,
@@ -135,7 +158,7 @@ void Foam::speciesMixtureField<ThermoType>::updateMesh(const mapPolyMesh& mpm)
             faceMixtures_[patchi].set
             (
                 facei,
-                new ThermoType(mixture_)
+                new ThermoType(patchFaceMixture(patchi, facei))
             );
         }
     }

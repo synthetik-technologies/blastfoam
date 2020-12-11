@@ -28,7 +28,7 @@ Class
     Foam::mixtureThermoModel
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Templated class to handle multicomponent mixtures
 
 SourceFiles
     mixtureThermoModel.C

@@ -28,7 +28,7 @@ Class
     Foam::basicThermoModel
 
 Description
-    General class for a fluid/solid
+    General thermodynamic class for a fluid/solid
 
 SourceFiles
     basicThermoModel.C
