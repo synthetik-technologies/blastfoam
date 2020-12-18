@@ -87,7 +87,7 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::volScalarFieldProperty
         forAll(this->p_.boundaryField()[patchi], facei)
         {
             pPsi[facei] =
-                (this->mixture_.boundary()[patchi][facei].*psiMethod)
+                (this->mixture_.boundary(patchi, facei).*psiMethod)
                 (
                     args.boundaryField()[patchi][facei] ...
                 );
@@ -117,7 +117,7 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::patchFieldProperty
     forAll(psi, facei)
     {
         psi[facei] =
-            (this->mixture_.boundary()[patchi][facei].*psiMethod)
+            (this->mixture_.boundary(patchi, facei).*psiMethod)
             (
                 args[facei] ...
             );

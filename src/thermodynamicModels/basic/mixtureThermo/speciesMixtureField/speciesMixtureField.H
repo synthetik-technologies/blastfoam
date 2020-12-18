@@ -74,7 +74,27 @@ class speciesMixtureField
     mutable ThermoType mixture_;
 
     //- Stored thermo state at boundaries
-    PtrList<PtrList<ThermoType>> faceMixtures_;
+    PtrList<ThermoType> faceMixtures_;
+
+    //- Start indexes of patches
+    labelList start_;
+
+    //- Return label index
+    label patchFaceIndex(const label patchi, const label facei) const
+    {
+        return start_[patchi] + facei;
+    }
+
+    //- Return the number of boundary faces
+    label nBoundaryFaces() const
+    {
+        label nf = 0;
+        forAll(Ys_[0].boundaryField(), patchi)
+        {
+            nf += Ys_[0].boundaryField()[patchi].size();
+        }
+        return nf;
+    }
 
 
 public:
@@ -104,12 +124,6 @@ public:
             const label facei
         ) const;
 
-        //- Update cell mixtures
-        void updateCellMixtures();
-
-        //- Update face mixtures for a given patch
-        void updateFaceMixtures(const label patchi);
-
         //- Update all mixtures
         void update();
 
@@ -126,15 +140,23 @@ public:
     // Access functions
 
         //- Return the boundary mixtures
-        const PtrList<PtrList<ThermoType>>& boundary() const
+        const ThermoType& boundary
+        (
+            const label patchi,
+            const label facei
+        ) const
         {
-            return faceMixtures_;
+            return faceMixtures_[patchFaceIndex(patchi, facei)];
         }
 
         //- Return the boundary mixtures
-        PtrList<PtrList<ThermoType>>& boundary()
+        ThermoType& boundary
+        (
+            const label patchi,
+            const label facei
+        )
         {
-            return faceMixtures_;
+            return faceMixtures_[patchFaceIndex(patchi, facei)];
         }
 
         //- List operators
