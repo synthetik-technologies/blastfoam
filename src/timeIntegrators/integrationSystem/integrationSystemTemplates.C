@@ -42,17 +42,25 @@ void Foam::integrationSystem::storeOld
     }
 
     // Store fields if needed later
-    if (oldIs_[step() - 1] != -1)
+    label i = oldIs_[step() - 1];
+    if (i != -1)
     {
-        fList.set
-        (
-            oldIs_[step() - 1],
-            new fieldType
+        if (fList.set(i))
+        {
+            fList[i] = f;
+        }
+        else
+        {
+            fList.set
             (
-                f.name() + "_old_" + Foam::name(step() - 1),
-                f
-            )
-        );
+                i,
+                new fieldType
+                (
+                    f.name() + "_old_" + Foam::name(step() - 1),
+                    f
+                )
+            );
+        }
     }
 }
 
@@ -65,17 +73,18 @@ void Foam::integrationSystem::storeDelta
 ) const
 {
     // Store fields if needed later
-    if (deltaIs_[step() - 1] != -1)
+    label i = deltaIs_[step() - 1];
+    if (i != -1)
     {
-        if (fList.set(step() - 1))
+        if (fList.set(i))
         {
-            fList[step() - 1] = f;
+            fList[i] = f;
         }
         else
         {
             fList.set
             (
-                deltaIs_[step() - 1],
+                i,
                 new fieldType
                 (
                     f.name() + "_delta_" + Foam::name(step() - 1),
