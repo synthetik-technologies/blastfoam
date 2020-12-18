@@ -454,8 +454,14 @@ void Foam::hexRef8::createInternalFaces
             }
 
             FatalErrorInFunction
-                << "nAnchors:" << nAnchors
+                << (
+                        mesh_.isInternalFace(facei)
+                      ? "Internal "
+                      : "Boundary"
+                    ) << "face, "
+                << " nAnchors:" << nAnchors
                 << " facei:" << facei
+                << " location: " << mesh_.faceCentres()[facei]
                 << abort(FatalError);
         }
 
