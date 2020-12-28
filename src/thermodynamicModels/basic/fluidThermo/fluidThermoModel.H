@@ -28,10 +28,12 @@ Class
     Foam::fluidThermoModel
 
 Description
-    General class for a fluid/solid
+    General fluid class that contains functions to return pressure and speed
+    of sound
 
 SourceFiles
     fluidThermoModel.C
+    newFluidThermoModel.C
 
 \*---------------------------------------------------------------------------*/
 

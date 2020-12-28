@@ -1049,4 +1049,27 @@ Foam::multiphaseFluidThermo::CpByCv
     return tmpF;
 }
 
+
+Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::Hf() const
+{
+    tmp<volScalarField> tmpF
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("Hf", basicThermoModel::name_),
+            volumeFractions_[0]*thermos_[0].Hf()
+        )
+    );
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].Hf();
+    }
+    if (sumVfPtr_ != nullptr)
+    {
+        tmpF.ref() /= max(*sumVfPtr_, residualAlpha());
+    }
+    return tmpF;
+}
+
+
 // ************************************************************************* //

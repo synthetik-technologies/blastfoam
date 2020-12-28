@@ -28,10 +28,12 @@ Class
     Foam::solidThermoModel
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Basic solid class for returning thermal conductivity (isotropic and
+    anisotropic)
 
 SourceFiles
     solidThermoModel.C
+    newSolidThermoModel.C
 
 \*---------------------------------------------------------------------------*/
 

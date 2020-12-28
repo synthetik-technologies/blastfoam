@@ -736,11 +736,22 @@ int main(int argc, char *argv[])
                     ) > 0
                 )
                 {
-                    cells = selectedCellSet.toc();
+
+                    // Print the volume of the cells set
+                    scalar V = 0;
+                    forAll(cells, celli)
+                    {
+                        V += mesh.V()[cells[celli]];
+                    }
+                    Info<< "    Set volume of cell: "
+                        << returnReduce(V, sumOp<scalar>()) << " m^3"
+                        << endl;
                 }
                 // Use the backup region to expand search area
                 else if (!end && backupSources.set(regionI))
                 {
+                    Info<< nl
+                        << "    Expanding refinement region" << endl;
                     cellSet backupCellSet
                     (
                         mesh,
@@ -764,6 +775,16 @@ int main(int argc, char *argv[])
                         regions[regionI].dict().lookup("fieldValues"),
                         setCellField::iNew(mesh, cells, end || debug)
                     );
+                }
+
+                if (!cells.size())
+                {
+                    WarningInFunction
+                        << "No cells were selected for using " << nl
+                        << regions[regionI].name()
+                        << regions[regionI].dict()
+                        << "To expand searchable region add backup " << nl
+                        << "Region or expand backup region." << endl;
                 }
 
                 // Save the number of cells in the set
@@ -970,6 +991,7 @@ int main(int argc, char *argv[])
             }
 
             // Update mesh (return if mesh changes)
+            Info<< nl << "Updating mesh" << endl;
             prepareToStop =
                !update
                 (

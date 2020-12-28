@@ -28,10 +28,11 @@ Class
     Foam::basicSolidThermoModel
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Non-reacting, single phase solid thermodynamic model
 
 SourceFiles
     basicSolidThermoModel.C
+    basicSolidThermoModels.C
 
 \*---------------------------------------------------------------------------*/
 

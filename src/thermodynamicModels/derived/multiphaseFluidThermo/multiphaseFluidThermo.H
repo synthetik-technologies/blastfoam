@@ -317,6 +317,9 @@ public:
             const scalarField& T,
             const label patchi
         ) const;
+
+        //- Heat of formation
+        virtual tmp<volScalarField> Hf() const;
 };
 
 

@@ -28,10 +28,11 @@ Class
     Foam::multicomponentFluidThermo
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Multicomponent fluid model with species transport
 
 SourceFiles
     multicomponentFluidThermo.C
+    multicomponentFluidThermos.C
 
 \*---------------------------------------------------------------------------*/
 

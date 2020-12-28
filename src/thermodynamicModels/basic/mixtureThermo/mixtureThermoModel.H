@@ -28,7 +28,7 @@ Class
     Foam::mixtureThermoModel
 
 Description
-    Template class to define a runtime selectable fluidThermo model
+    Templated class to handle multicomponent mixtures
 
 SourceFiles
     mixtureThermoModel.C
@@ -41,6 +41,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "basicThermoModel.H"
+#include "speciesMixtureField.H"
 
 namespace Foam
 {
@@ -60,48 +61,16 @@ protected:
     //- Species data
     PtrList<ThermoType> speciesData_;
 
-    //- Temporary storage for the cell/face mixture thermo data
-    mutable ThermoType mixture_;
+    //- Mixture
+    speciesMixtureField<ThermoType> mixture_;
 
-    //- Stored thermo state at cell centres
-    mutable PtrList<ThermoType> cellMixtures_;
-
-    //- Stored thermo state at boundaries
-    mutable PtrList<PtrList<ThermoType>> faceMixtures_;
 
 
     // Private Member Functions
 
         //- Construct the species data from the given dictionary and return the
         //  data for the first specie to initialise the mixture thermo data
-        const ThermoType& constructSpeciesData(const dictionary& thermoDict);
-
-        const ThermoType& cellMixture(const label celli) const;
-
-        const ThermoType& patchFaceMixture
-        (
-            const label patchi,
-            const label facei
-        ) const;
-
-
-        //- Ensure number of cells are consistent
-        void checkNCells() const;
-
-        //- Ensure number of patches are consistent
-        void checkNPatches() const;
-
-        //- Ensure number of faces are consistent
-        void checkNFaces(const label patchi) const;
-
-        //- Update cell mixtures
-        void updateCellMixtures() const;
-
-        //- Update face mixtures
-        void updateFaceMixtures(const label patchi) const;
-
-        //- Update all mixtures
-        void updateMixtures() const;
+        const PtrList<ThermoType>& constructSpeciesData(const dictionary&);
 
 
         //- Return a volScalarField of the given property
@@ -290,6 +259,8 @@ public:
                 const label patchi
             ) const;
 
+            //- Heat of formation
+            virtual tmp<volScalarField> Hf() const;
 
     //- Return
 

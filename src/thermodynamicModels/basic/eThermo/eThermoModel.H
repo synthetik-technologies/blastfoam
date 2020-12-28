@@ -28,7 +28,7 @@ Class
     Foam::eThermoModel
 
 Description
-    General class for a fluid/solid
+    Templated class to handle a single thermodynamic model
 
 SourceFiles
     eThermoModel.C
@@ -241,6 +241,10 @@ public:
             const scalarField& T,
             const label patchi
         ) const;
+
+        //- Heat of formation
+        virtual tmp<volScalarField> Hf() const;
+
 };
 
 

@@ -187,6 +187,14 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ea
     return TTable_.reverseLookupY(T, rho);
 }
 
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::Hf() const
+{
+    return 0.0;
+}
+
+
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cv
 (

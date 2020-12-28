@@ -55,7 +55,7 @@ Foam::timeIntegrators::RK1SSP::RK1SSP
     }
     else if (nSteps == 2)
     {
-        this->as_ = {{1.0}, {0.0, 0.5}};
+        this->as_ = {{1.0}, {0.0, 1.0}};
         this->bs_ = {{0.5}, {0.0, 0.5}};
     }
     else

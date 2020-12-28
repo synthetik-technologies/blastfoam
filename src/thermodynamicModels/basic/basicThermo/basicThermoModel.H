@@ -28,7 +28,7 @@ Class
     Foam::basicThermoModel
 
 Description
-    General class for a fluid/solid
+    General thermodynamic class for a fluid/solid
 
 SourceFiles
     basicThermoModel.C
@@ -408,6 +408,9 @@ public:
             const scalarField& T,
             const label patchi
         ) const = 0;
+
+        //- Heat of formation
+        virtual tmp<volScalarField> Hf() const = 0;
 
     // Transport variables
 

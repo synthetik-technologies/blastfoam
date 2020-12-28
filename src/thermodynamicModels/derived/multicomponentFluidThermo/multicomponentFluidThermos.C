@@ -72,39 +72,31 @@ namespace Foam
         perfectGas
     );
 
-//     addMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         stiffenedGas
-//     );
-//
-//     addMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         Tait
-//     );
-//
-//     addMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         equationOfState,
-//         AbelNobel
-//     );
-//
-//     addMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         vanderWaals
-//     );
-//
-//     addMulticomponentFluidThermos
-//     (
-//         constTransport,
-//         MGEquationOfState,
-//         LSZK
-//     );
+    addMulticomponentFluidThermos
+    (
+        constTransport,
+        equationOfState,
+        AbelNobel
+    );
+    addMulticomponentFluidThermos
+    (
+        sutherlandTransport,
+        equationOfState,
+        AbelNobel
+    );
+    addMulticomponentFluidThermo
+    (
+        constTransport,
+        janaf,
+        equationOfState,
+        AbelNobel
+    );
+    addMulticomponentFluidThermo
+    (
+        sutherlandTransport,
+        janaf,
+        equationOfState,
+        AbelNobel
+    );
 }
 

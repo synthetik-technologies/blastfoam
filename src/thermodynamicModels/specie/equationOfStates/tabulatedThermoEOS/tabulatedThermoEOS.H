@@ -255,6 +255,9 @@ public:
                 const scalar& T
             ) const;
 
+            //- Heat of formation [J/kg]
+            scalar Hf() const;
+
             //- Entropy [J/kg/K]
             scalar S
             (

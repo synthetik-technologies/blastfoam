@@ -863,4 +863,19 @@ Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::CpByCv
     );
 }
 
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::tmp<Foam::volScalarField>
+Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::Hf() const
+{
+    return blendedVolScalarFieldProperty
+    (
+        "Hf",
+        dimEnergy/dimMass,
+        &Thermo1::Hf,
+        &Thermo2::Hf
+    );
+}
+
+
 // ************************************************************************* //

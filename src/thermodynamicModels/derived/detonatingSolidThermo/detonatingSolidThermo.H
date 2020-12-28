@@ -28,12 +28,12 @@ Class
     Foam::detonatingSolidThermo
 
 Description
-    Templated class to allow for a detonating material. Material will
-    transition from the unreacted state to reacted state using a activation
-    model and add the detonation energy.
+    Detonating solid model with options to include activation and afterburn
+    models
 
 SourceFiles
     detonatingSolidThermo.C
+    detonatingSolidThermos.C
 
 \*---------------------------------------------------------------------------*/
 
