@@ -98,7 +98,6 @@ template<class ThermoType>
 void Foam::speciesMixtureField<ThermoType>::updateMesh(const mapPolyMesh& mpm)
 {
     label i = 0;
-    Info<<Ys_[0].boundaryField().size()<<endl;
     start_.resize(Ys_[0].boundaryField().size());
     forAll(start_, patchi)
     {
