@@ -49,7 +49,7 @@ Foam::activationModels::linearActivation::linearActivation
 :
     activationModel(mesh, dict, phaseName),
     vDet_("vDet", dimVelocity, dict),
-    advection_(dict.lookupOrDefault("advection", false)),
+    advection_(dict.lookupOrDefault("advection", true)),
     tIgn_
     (
         IOobject
