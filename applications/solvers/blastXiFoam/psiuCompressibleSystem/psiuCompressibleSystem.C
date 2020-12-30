@@ -242,37 +242,42 @@ void Foam::psiuCompressibleSystem::postUpdate()
 
     this->decode();
 
-    volScalarField muEff("muEff", turbulence_->muEff());
-    volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
-
+   // Solve momentum diffusion
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        ==
-        fvm::laplacian(muEff, U_)
-      + fvc::div(tauMC)
+      + turbulence_->divDevRhoReff(U_)
     );
+    volScalarField dTDivSigmaDotU
+    (
+        rho_.mesh().time().deltaT()
+       *fvc::div
+        (
+            fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devRhoReff())
+          & fluxScheme_->Uf()
+        )
+    );
+    rhoE_ += dTDivSigmaDotU;
+    rhoEu_ += dTDivSigmaDotU;
 
     UEqn.solve();
-
     rhoU_ = rho_*U_;
 
+    // Solve thermal energy diffusion
+    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+    eu_ = rhoEu_/rho_ - 0.5*magSqr(U_);
     Foam::solve
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
       - fvm::laplacian(turbulence_->alphaEff(), e_)
     );
-
-    // Includes change to total energy from viscous term in momentum equation
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-
     Foam::solve
     (
         fvm::ddt(rho_, eu_) - fvc::ddt(rho_, eu_)
       - fvm::laplacian(turbulence_->alphaEff(), eu_)
     );
 
-    // Includes change to total energy from viscous term in momentum equation
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
     rhoEu_ = rho_*(eu_ + 0.5*magSqr(U_));
 
     turbulence_->correct();

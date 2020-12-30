@@ -114,6 +114,12 @@ protected:
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
 
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
 
 public:
 

@@ -36,6 +36,7 @@ License
 #include "surfaceInterpolate.H"
 #include "basicThermoModel.H"
 #include "phaseCompressibleTurbulenceModel.H"
+#include "fluxScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -332,17 +333,27 @@ void Foam::phaseModel::postUpdate()
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
           + turbulence_->divDevRhoReff(U_)
         );
-        UEqn.solve();
 
+        alphaRhoE_ +=
+            rho().time().deltaT()
+           *fvc::div
+            (
+                fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devRhoReff())
+              & flux().Uf()
+            );
+
+        UEqn.solve();
+        alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
+
+        // Solve thermal energy diffusion
+        e_ = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
         fvScalarMatrix eEqn
         (
             fvm::ddt(alphaRho_, e_) - fvc::ddt(alphaRho_, e_)
-          + fvc::ddt(smallAlphaRho, e_) - fvm::ddt(smallAlphaRho, e_)
-          - fvm::laplacian(turbulence_->alphaEff(), e_)
+          + fvm::ddt(smallAlphaRho, e_) - fvc::ddt(smallAlphaRho, e_)
+          - fvm::laplacian((*this)*turbulence_->alphaEff(), e_)
         );
         eEqn.solve();
-
-        alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
         alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 
         turbulence_->correct();

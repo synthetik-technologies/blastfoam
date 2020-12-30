@@ -308,36 +308,48 @@ void Foam::phaseCompressibleSystem::postUpdate()
      || turbulence_.valid()
     )
     {
+        // Solve momentum
         fvVectorMatrix UEqn
         (
             fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        );
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
         );
 
         if (dragSource_.valid())
         {
             UEqn -= dragSource_();
         }
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_();
-        }
-
 
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevRhoReff(U_);
+            rhoE_ +=
+                rho_.mesh().time().deltaT()
+               *fvc::div
+                (
+                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devRhoReff())
+                  & fluxScheme_->Uf()
+                );
+        }
+        UEqn.solve();
+        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
+
+        // Solve thermal energy diffusion
+        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
+        );
+        if (extESource_.valid())
+        {
+            eEqn -= extESource_();
+        }
+        if (turbulence_.valid())
+        {
             eEqn -= fvm::laplacian(turbulence_->alphaEff(), e_);
         }
-
-        UEqn.solve();
         eEqn.solve();
 
-        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
-        rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+        rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
     }
 
     if (turbulence_.valid())

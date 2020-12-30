@@ -95,6 +95,11 @@ protected:
 
         virtual tmp<volScalarField> ESource() const;
 
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
 
 public:
 
