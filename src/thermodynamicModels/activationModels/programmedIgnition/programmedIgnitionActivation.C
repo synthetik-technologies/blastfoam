@@ -76,7 +76,7 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
         dict.parent().subDict("products").subDict("equationOfState")
     ),
     Vcj_("Vcj", 1.0/rho0_ - Pcj_/sqr(rho0_*vDet_)),
-    advection_(dict.lookupOrDefault("advection", false)),
+    advection_(dict.lookupOrDefault("advection", true)),
     model_(burnModelNames_.read(dict.lookup("burnModel"))),
     tIgn_
     (

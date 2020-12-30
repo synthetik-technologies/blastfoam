@@ -303,24 +303,33 @@ void Foam::reactingCompressibleSystem::postUpdate()
 
     this->decode();
 
-    volScalarField muEff("muEff", turbulence_->muEff());
-    volTensorField tauMC("tauMC", muEff*dev2(Foam::T(fvc::grad(U_))));
-
+    // Solve momentum diffusion
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
       + turbulence_->divDevTau(U_)
     );
+    rhoE_ +=
+        rho_.mesh().time().deltaT()
+       *fvc::div
+        (
+            fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
+          & fluxScheme_->Uf()
+        );
 
     UEqn.solve();
-
     rhoU_ = rho_*U_;
 
+    // Solve thermal energy diffusion
+    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
       - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
     );
+    eEqn.solve();
+
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     if (reaction_.valid())
     {

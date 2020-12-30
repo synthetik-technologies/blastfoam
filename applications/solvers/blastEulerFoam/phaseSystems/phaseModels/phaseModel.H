@@ -61,6 +61,7 @@ namespace Foam
 
 
 class phaseSystem;
+class fluxScheme;
 
 /*---------------------------------------------------------------------------*\
                            Class phaseModel Declaration
@@ -174,8 +175,8 @@ protected:
         //  and solve thermo before energy
         void solveAlphaRho();
 
-//         //- Set the turbulence model
-//         void setTurbulenceModel();
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const = 0;
 
 
 public:
