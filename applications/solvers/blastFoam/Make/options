@@ -22,7 +22,6 @@ EXE_LIBS = \
     -ldiameterModels \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -ltimeIntegrators \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \

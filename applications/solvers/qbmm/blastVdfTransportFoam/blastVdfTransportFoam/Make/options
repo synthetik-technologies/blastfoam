@@ -33,7 +33,6 @@ EXE_LIBS = \
     -ldiameterModels \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -ltimeIntegrators \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \

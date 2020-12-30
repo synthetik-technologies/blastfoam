@@ -1,7 +1,6 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
@@ -33,7 +32,6 @@ EXE_LIBS = \
     -lradiationModels \
     -L$(BLAST_LIBBIN) \
     -lfluxSchemes \
-    -ltimeIntegrators \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate

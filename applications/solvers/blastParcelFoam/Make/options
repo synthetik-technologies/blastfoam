@@ -3,7 +3,6 @@ EXE_INC= \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
@@ -24,7 +23,6 @@ EXE_LIBS = \
     -lblastThermodynamics \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -ltimeIntegrators \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
