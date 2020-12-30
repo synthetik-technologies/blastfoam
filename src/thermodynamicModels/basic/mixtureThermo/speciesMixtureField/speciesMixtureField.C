@@ -41,7 +41,7 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
 )
 :
     PtrList<ThermoType>(mesh.nCells()),
-    UpdateableMeshObject<fvMesh>
+    BalanceMeshObject
     (
         IOobject::groupName("speciesThermo", phaseName),
         mesh
@@ -95,7 +95,7 @@ Foam::speciesMixtureField<ThermoType>::~speciesMixtureField()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class ThermoType>
-void Foam::speciesMixtureField<ThermoType>::updateMesh(const mapPolyMesh& mpm)
+void Foam::speciesMixtureField<ThermoType>::updateObject()
 {
     label i = 0;
     start_.resize(Ys_[0].boundaryField().size());
