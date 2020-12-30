@@ -4,7 +4,6 @@ EXE_INC = \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/ODE/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
@@ -16,7 +15,6 @@ LIB_LIBS = \
     -lmomentumTransportModels \
     -lfluidThermoMomentumTransportModels \
     -L$(BLAST_LIBBIN) \
-    -ltimeIntegrators \
     -lblastThermodynamics \
     -lfluxSchemes \
     -lblastRadiationModels \

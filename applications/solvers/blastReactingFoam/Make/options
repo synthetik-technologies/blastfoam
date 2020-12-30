@@ -35,7 +35,6 @@ EXE_LIBS = \
     -lradiationModels \
     -L$(BLAST_LIBBIN) \
     -lfluxSchemes \
-    -ltimeIntegrators \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate

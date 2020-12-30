@@ -35,6 +35,7 @@ License
 #include "fvCFD.H"
 #include "volPointInterpolation.H"
 #include "pointMesh.H"
+#include "BalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -289,6 +290,11 @@ bool Foam::dynamicRefineBalancedFvMesh::refine(const bool)
         correctBoundaries<sphericalTensor>();
         correctBoundaries<symmTensor>();
         correctBoundaries<tensor>();
+    }
+
+    if (hasChanged)
+    {
+        BalanceMeshObject::updateObjects(*this);
     }
 
     return hasChanged;

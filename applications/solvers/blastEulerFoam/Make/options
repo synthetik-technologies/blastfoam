@@ -9,7 +9,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
@@ -28,7 +28,7 @@ EXE_LIBS = \
     -lblastThermodynamics \
     -lblastThermophysicalTransportModels \
     -lblastRadiationModels \
-    -ltimeIntegrators \
+    -lblastFiniteVolume \
     -lblastInterfacialModels\
     -lblastPhaseSystems \
     -lblastKineticTheoryModels \

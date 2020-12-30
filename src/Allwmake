@@ -4,13 +4,12 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
-wmake $targetType timeIntegrators
+wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType MomentumTransportModels
 wmake $targetType ThermophysicalTransportModels
 wmake $targetType radiationModels
-wmake $targetType finiteVolume
 wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh

@@ -10,8 +10,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
-    -I../phaseCompressibleMomentumTransportModels/lnInclude
+    -I../phaseCompressibleMomentumTransportModels/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \

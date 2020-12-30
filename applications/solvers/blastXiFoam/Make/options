@@ -33,5 +33,4 @@ EXE_LIBS = \
     -lsampling \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
-    -lfluxSchemes \
-    -ltimeIntegrators
+    -lfluxSchemes
