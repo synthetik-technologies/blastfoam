@@ -9,7 +9,7 @@ EXE_INC = \
     -I$(LIB_SRC)/TurbulenceModels/phaseCompressible/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I../phaseSystems/lnInclude \
     -I../phaseCompressibleTurbulenceModels/lnInclude
 

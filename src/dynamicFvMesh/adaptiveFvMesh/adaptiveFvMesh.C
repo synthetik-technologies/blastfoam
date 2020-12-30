@@ -40,6 +40,7 @@ License
 #include "pointMesh.H"
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
+#include "BalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -1862,6 +1863,8 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
             // move, if are using inflation any follow on movePoints will set
             // it.
             moving(false);
+
+            BalanceMeshObject::updateObjects(*this);
         }
 
         nRefinementIterations_++;

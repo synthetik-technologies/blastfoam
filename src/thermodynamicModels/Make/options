@@ -3,12 +3,12 @@ EXE_INC = \
     -I$(LIB_SRC)/OpenFOAM/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -I$(BLAST_DIR)/src/timeIntegrators/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
     -lODE \
     -L$(BLAST_LIBBIN) \
-    -ltimeIntegrators \
+    -lblastFiniteVolume \
     -ldiameterModels
