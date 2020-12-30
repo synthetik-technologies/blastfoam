@@ -34,7 +34,7 @@ EXE_LIBS = \
     -lblastThermophysicalTransportModels \
     -ldiameterModels \
     -lfluxSchemes \
-    -lcompressibleSystems \
+    -lphaseCompressibleSystems \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \

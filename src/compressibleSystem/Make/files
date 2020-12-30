@@ -6,4 +6,4 @@ twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
 multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
 coupledMultiphaseCompressibleSystem/coupledMultiphaseCompressibleSystem.C
 
-LIB = $(BLAST_LIBBIN)/libcompressibleSystems
+LIB = $(BLAST_LIBBIN)/libphaseCompressibleSystems

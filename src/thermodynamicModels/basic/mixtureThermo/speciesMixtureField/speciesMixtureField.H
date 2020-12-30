@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "volFields.H"
-#include "MeshObject.H"
+#include "BalanceMeshObject.H"
 #include "PtrList.H"
 
 namespace Foam
@@ -57,7 +57,7 @@ template<class ThermoType>
 class speciesMixtureField
 :
     public PtrList<ThermoType>,
-    public UpdateableMeshObject<fvMesh>
+    public BalanceMeshObject
 {
 // Private data
 
@@ -128,7 +128,7 @@ public:
         void update();
 
         //- Update size of fields
-        virtual void updateMesh(const mapPolyMesh& mpm);
+        virtual void updateObject();
 
         //- Update size of fields
         virtual bool movePoints()
