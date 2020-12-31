@@ -25,11 +25,19 @@ lagrangian/Allwmake $targetType $*
 wmake $targetType functionObjects
 wmake $targetType atmosphereModels
 
-if [ -z "$QBMM_INST_DIR" ]
+if [ ! -d "$QBMM_INST_DIR" ]
 then
+    echo "*******************************************"
+    echo "    $QBMM_INST_DIR is not a valid directory"
+    echo "    QBMM classes will not be compiled"
+    echo "*******************************************"
+elif [ -z "$QBMM_INST_DIR" ]
+then
+    echo "*******************************************"
     echo "No directory found for OpenQBMM"
     echo "QBMM classes will not be compiled"
     echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
+    echo "*******************************************"
 else
     wmake $targetType QBMM
 fi
