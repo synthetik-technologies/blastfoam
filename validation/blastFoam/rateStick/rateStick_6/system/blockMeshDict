@@ -15,15 +15,15 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 convertToMeters 1;
 
-theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
+theta   #calc "5.0 * Foam::constant::mathematical::pi/180.0";
 z       0.1;
-R       0.012;
-x       #calc "$R*cos($theta)";
-y       #calc "$R*sin($theta)";
-ny      #calc "-$R*sin($theta)";
-size    #calc "1.0/4.0/1000";
-nz      #calc "round($z/$size)";
-nR      #calc "round($R/$size)";
+R       0.020;
+x       #calc "$R * cos($theta)";
+y       #calc "$R * sin($theta)";
+ny      #calc "-$R * sin($theta)";
+size    #calc "1.0 / 4.0 / 1000";
+nz      #calc "round($z / $size)";
+nR      #calc "round($R / $size)";
 
 vertices
 (

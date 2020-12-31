@@ -7,8 +7,5 @@ cd ${0%/*} || exit 1    # run from this directory
 runApplication blockMesh
 runApplication setFields
 runApplication $(getApplication)
-runApplication postProcess -func sampleDict -latestTime
-
-(cd validation && ./createGraphs)
 
 # ----------------------------------------------------------------- end-of-file

@@ -22,7 +22,7 @@ FoamFile
 
 p2  67.0e3;
 T2  295;
-rho2 #calc "$p2/(718.0*$T2*0.4)";
+rho2 #calc "$p2 / (718.0 * $T2 * 0.4)";
 
 M2 1.4;
 M1 0.73970927;
@@ -31,14 +31,14 @@ p1byp20 2.11999999;
 rho2byrho1 1.68965517;
 T2byT1 1.25469387;
 
-p1 #calc "$p2*$p1byp20";
-rho1 #calc "$rho2*$rho2byrho1";
-T1 #calc "$T2*$T2byT1";
+p1 #calc "$p2 * $p1byp20";
+rho1 #calc "$rho2 * $rho2byrho1";
+T1 #calc "$T2 * $T2byT1";
 
-c1 #calc "sqrt(1.4*$p1/$rho1)";
-c2 #calc "sqrt(1.4*$p2/$rho2)";
+c1 #calc "sqrt(1.4 * $p1 / $rho1)";
+c2 #calc "sqrt(1.4 * $p2 / $rho2)";
 
-U1 #calc "$M2*$c2 - $M1*$c1";
+U1 #calc "$M2 * $c2 - $M1 * $c1";
 
 defaultFieldValues
 (

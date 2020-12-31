@@ -777,7 +777,7 @@ int main(int argc, char *argv[])
                     );
                 }
 
-                if (!cells.size())
+                if (!returnReduce(cells.size(), sumOp<label>()))
                 {
                     WarningInFunction
                         << "No cells were selected for using " << nl

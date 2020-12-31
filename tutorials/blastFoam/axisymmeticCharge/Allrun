@@ -7,7 +7,7 @@ cd ${0%/*} || exit 1    # run from this directory
 # Create base mesh
 runApplication blockMesh
 
-# Se the charge
+# Set the charge
 runApplication setRefinedFields
 
 #Run calculation

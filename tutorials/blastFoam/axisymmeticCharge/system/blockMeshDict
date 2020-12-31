@@ -21,12 +21,12 @@ R   20.0;
 
 cellSize 1;
 
-nx  #calc "round($R/$cellSize)";
-ny  #calc "round($H/$cellSize)";
+nx  #calc "round($R / $cellSize)";
+ny  #calc "round($H / $cellSize)";
 
-x #calc "$R*cos(5.0*Foam::constant::mathematical::pi/180)";
-z #calc "$R*sin(5.0*Foam::constant::mathematical::pi/180)";
-nz #calc "-$R*sin(5.0*Foam::constant::mathematical::pi/180)";
+x #calc "$R * cos(5.0 * Foam::constant::mathematical::pi/180)";
+z #calc "$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
+nz #calc "-$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
 vertices
 (
     (0 0 0)
