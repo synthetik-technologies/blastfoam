@@ -8,7 +8,21 @@ cd ${0%/*} || exit 1    # Run from this directory
 
 if [ -z "$QBMM_INST_DIR" ]
 then
-    echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
+    echo "**************************************************"
+    echo "    QBMM_INST_DIR has not been defined."
+    echo "    QBMM solvers will not be compiled."
+    echo "    Please add \"export QBMM_INST_DIR=QBMM_DIR\""
+    echo "    to you .bashrc file, before sourcing blastfoam"
+    echo "**************************************************"
+elif [ ! -d "$QBMM_INST_DIR" ]
+then
+    echo "**************************************************"
+    echo "    $QBMM_INST_DIR is not a valid directory."
+    echo "    QBMM solvers will not be compiled."
+    echo "**************************************************"
+else
+    wmake $targetType QBMM
+fi
 else
     wmake $targetType blastPbeTransportFoam
     wmake all blastVdfTransportFoam
