@@ -22,8 +22,6 @@ then
     echo "**************************************************"
 else
     wmake $targetType QBMM
-fi
-else
     wmake $targetType blastPbeTransportFoam
     wmake all blastVdfTransportFoam
 fi
