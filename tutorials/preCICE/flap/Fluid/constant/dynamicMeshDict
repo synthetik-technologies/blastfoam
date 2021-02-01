@@ -37,7 +37,6 @@ field           error;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
 lowerRefineLevel 0.1;
-upperRefineLevel 1e6;       // Should be very high for adaptiveFvMesh
 
 // If value < unrefineLevel unrefine
 unrefineLevel   0.1;
@@ -46,24 +45,10 @@ unrefineLevel   0.1;
 nBufferLayers   1;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   3;
+maxRefinement   1;
 
 // Stop refinement if maxCells reached
 maxCells        100000000;
-
-// Flux field and corresponding velocity field. Fluxes on changed
-// faces get recalculated by interpolating the velocity. Use 'none'
-// on surfaceScalarFields that do not need to be reinterpolated.
-correctFluxes
-(
-    (phi none)
-    (own none)
-    (nei none)
-    (rhoPhi none)
-    (rhoPhi none)
-    (rhoEPhi none)
-    (rhoUPhi none)
-);
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

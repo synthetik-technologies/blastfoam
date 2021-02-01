@@ -79,8 +79,9 @@ bool Foam::movingAdaptiveFvMesh::update()
     //- Move mesh
     fvMesh::movePoints(motionPtr_->newPoints());
     velocityMotionCorrection_.update();
+    Info<<"moving "<<moving()<<endl;
 
-    return moving();
+    return true;
 }
 
 
