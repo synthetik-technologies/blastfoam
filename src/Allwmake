@@ -28,9 +28,18 @@ wmake $targetType atmosphereModels
 
 if [ -z "$QBMM_INST_DIR" ]
 then
-    echo "No directory found for OpenQBMM"
-    echo "QBMM classes will not be compiled"
-    echo "Please add \"export QBMM_INST_DIR=QBMM_DIR\" to you .bashrc file"
+    echo "**************************************************"
+    echo "    QBMM_INST_DIR has not been defined."
+    echo "    QBMM classes will not be compiled."
+    echo "    Please add \"export QBMM_INST_DIR=QBMM_DIR\""
+    echo "    to you .bashrc file, before sourcing blastfoam"
+    echo "**************************************************"
+elif [ ! -d "$QBMM_INST_DIR" ]
+then
+    echo "**************************************************"
+    echo "    $QBMM_INST_DIR is not a valid directory."
+    echo "    QBMM classes will not be compiled."
+    echo "**************************************************"
 else
     wmake $targetType QBMM
 fi

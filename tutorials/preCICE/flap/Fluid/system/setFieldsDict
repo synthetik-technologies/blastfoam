@@ -36,8 +36,8 @@ regions
         backup
         {
             p1 (-1 -1 0.5);
-        p2 (-1 1 0.5);
-            radius 0.1;
+            p2 (-1 1 0.5);
+            radius 0.25;
         }
         refineInternal yes;
         level 4;
