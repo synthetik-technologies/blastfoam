@@ -26,6 +26,8 @@ The instructions to build the required preCICE libraries and adapters can be fou
 
 [Build Calculix adapter](https://github.com/precice/calculix-adapter/wiki/Building-the-Adapter)
 
+[(Optional) cgx GUI](http://www.dhondt.de)
+
 ## Disclaimer
 
 This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM® and OpenCFD® trade marks.
