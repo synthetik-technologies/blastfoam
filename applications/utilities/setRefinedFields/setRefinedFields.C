@@ -31,6 +31,7 @@ Description
 
 #include "argList.H"
 #include "Time.H"
+#include "timeSelector.H"
 #include "fvMesh.H"
 #include "topoSetSource.H"
 #include "cellSet.H"
@@ -499,6 +500,9 @@ void readAndAddAllFields(const fvMesh& mesh)
 
 int main(int argc, char *argv[])
 {
+    //- Add options
+    timeSelector::addOptions(true, false);
+
     argList::addBoolOption
     (
         "updateAll",
@@ -519,6 +523,11 @@ int main(int argc, char *argv[])
     #include "addRegionOption.H"
     #include "setRootCase.H"
     #include "createTime.H"
+
+    //- Select time
+    runTime.functionObjects().off();
+    instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
+
     #include "createNamedMesh.H"
 
     const word dictName("setFieldsDict");

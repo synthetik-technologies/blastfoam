@@ -33,6 +33,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "timeSelector.H"
 #include "labelVector.H"
 #include "wedgeFvPatch.H"
 #include "IOobjectList.H"
@@ -134,6 +135,7 @@ void mapVolFields<scalar>
                     fieldTarget[celli] = fieldSource[cellj];
                 }
             }
+            fieldTarget.correctBoundaryConditions();
             fieldTarget.write();
         }
     }
@@ -291,6 +293,9 @@ void calcMapAndR
 
 int main(int argc, char *argv[])
 {
+    //- Add options
+    timeSelector::addOptions(true, false);
+
     argList::addNote
     (
         "map volume fields from one mesh to another"
@@ -303,6 +308,7 @@ int main(int argc, char *argv[])
         "scalar|'latestTime'",
         "specify the source time"
     );
+
     argList::addOption
     (
         "sourceRegion",
@@ -320,11 +326,7 @@ int main(int argc, char *argv[])
 //         "parallelSource",
 //         "the source is decomposed"
 //     );
-    argList::addBoolOption
-    (
-        "subtract",
-        "subtract mapped source from target"
-    );
+
     argList::addBoolOption
     (
         "extend",
@@ -353,8 +355,13 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createNamedMesh.H"
 
+    //- Select time
+    runTime.functionObjects().off();
+    instantList timeDirs = timeSelector::selectIfPresent(runTime, args);
+
+
+    #include "createNamedMesh.H"
 
     fileName rootDirTarget(args.rootPath());
     fileName caseDirTarget(args.globalCaseName());

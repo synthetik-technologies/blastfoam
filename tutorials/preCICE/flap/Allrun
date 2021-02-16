@@ -62,11 +62,12 @@ Solver2="ccx_preCICE"
 
     # Prepare in silent mode
     echo "Preparing the ${Participant2} participant..."
-    cd ${Participant2}
-        # We use CalculiX CGX to setup the structural simulation
-        echo "  Executing cgx (provided by CalculiX, make sure this exists)..."
-        cgx -bg pre_flap.fbd > prepare_flap.log 2>&1
-    cd ..
+    # Create mesh using cgx (mesh is provided to reduce the number of compiles required)
+#     cd ${Participant2}
+#         # We use CalculiX CGX to setup the structural simulation
+#         echo "  Executing cgx (provided by CalculiX, make sure this exists)..."
+#         cgx -bg pre_flap.fbd > prepare_flap.log 2>&1
+#     cd ..
 
     # Run
     echo "  Starting the ${Participant2} participant..."

@@ -23,8 +23,8 @@ rm -fv ${Participant1}*.log
 Participant2="Solid"
 cd ${Participant2}
     # Clean the case
-	rm -fv *.nam
-	rm -fv *.msh
+# 	rm -fv *.nam
+# 	rm -fv *.msh
     rm -fv *.log
     rm -fv flap.cvg
     rm -fv flap.dat
