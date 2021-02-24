@@ -652,11 +652,19 @@ int main(int argc, char *argv[])
         levels[regionI] =
             regions[regionI].dict().lookupOrDefault("level", 0);
     }
-    label maxRefinement
+    label maxRefinement = 0;
+    if (!regions.size())
+    {
+        FatalErrorInFunction
+            << "No regions found."
+            << abort(FatalError);
+    }
+
+    maxRefinement =
     (
         levels.size() && !setFieldsDict.found("maxLevel")
-      ? max(levels)
-      : setFieldsDict.lookup<scalar>("maxLevel")
+        ? max(levels)
+        : setFieldsDict.lookup<scalar>("maxLevel")
     );
 
     // Error fields is the same since it is looked up
