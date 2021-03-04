@@ -73,7 +73,7 @@ An installation video for Windows 10 is available on our YouTube channel: https:
 
 
 ### How to Install OpenFOAM for macOS
-Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS. 
+Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS.
 
 
 ### How to install OpenQBMM
@@ -141,7 +141,7 @@ cd $HOME/OpenFOAM/blastfoam
 
 6. (Optional) Set the location of OpenQBMM in the etc/bashrc by setting QBMM_INST_DIR
 ```bash
-export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM-dev
+export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM
 ```
 
 7. Append the etc/bashrc to your .bashrc and/or .zshrc file
