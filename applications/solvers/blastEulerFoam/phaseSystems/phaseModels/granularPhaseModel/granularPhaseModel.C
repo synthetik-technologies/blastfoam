@@ -118,6 +118,13 @@ void Foam::granularPhaseModel::solve()
     (
         fvc::div(alphaRhoUPhi_) - alphaRho_*fluid_.g()
     );
+
+    //- Thermal energy transport
+    volScalarField deltaAlphaRhoE(fvc::div(alphaRhoEPhi_) + ESource());
+
+    //- Pseudo thermal energy transport
+    volScalarField deltaAlphaRhoPTE(fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_));
+
     forAll(fluid_.phases(), phasei)
     {
         const phaseModel& phase = fluid_.phases()[phasei];
@@ -125,13 +132,10 @@ void Foam::granularPhaseModel::solve()
         {
             deltaAlphaRhoU += (*this)*phase.gradP();
         }
+        deltaAlphaRhoU -= fluid_.mDotU(*this, phase);
+        deltaAlphaRhoE -= fluid_.mDotE(*this, phase);
+        deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, phase);
     }
-
-    //- Thermal energy transport
-    volScalarField deltaAlphaRhoE(fvc::div(alphaRhoEPhi_));
-
-    //- Pseudo thermal energy transport
-    volScalarField deltaAlphaRhoPTE(fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_));
 
     //- Solve phase mass transport
     phaseModel::solveAlphaRho();
@@ -162,9 +166,6 @@ void Foam::granularPhaseModel::solve()
     this->storeAndBlendOld(alphaRhoPTE_, alphaRhoPTEOld_);
     alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
     alphaRhoPTE_.correctBoundaryConditions();
-
-    //- Update diameterModel
-    this->dPtr_->solve();
 }
 
 
@@ -265,10 +266,17 @@ void Foam::granularPhaseModel::update()
 
 void Foam::granularPhaseModel::decode()
 {
+    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+
     volScalarField& alpha(*this);
 
     //- Update volume fraction since density is known
     alpha.ref() = alphaRho_()/rho();
+    if (options.optionList::appliesToField(this->name()))
+    {
+
+        options.correct(*this);
+    }
     alpha.correctBoundaryConditions();
 
     //- Correct phase mass at boundaries
@@ -280,6 +288,12 @@ void Foam::granularPhaseModel::decode()
 
     //- Calculate velocity from momentum
     U_.ref() = alphaRhoU_()/alphaRho();
+    if (options.optionList::appliesToField(U_.name()))
+    {
+
+        options.correct(U_);
+        alphaRhoU_.ref() = alphaRho_()*U_();
+    }
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
@@ -288,12 +302,24 @@ void Foam::granularPhaseModel::decode()
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.ref() = alphaRhoE_()/alphaRho();
+    if (options.optionList::appliesToField(e_.name()))
+    {
+
+        options.correct(e_);
+        alphaRhoE_.ref() = alphaRho_()*e_();
+    }
     e_.correctBoundaryConditions();
     alphaRhoE_.boundaryFieldRef() = alphaRho_.boundaryField()*e_.boundaryField();
 
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
     Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRho());
+    if (options.optionList::appliesToField(Theta_.name()))
+    {
+
+        options.correct(Theta_);
+        alphaRhoPTE_.ref() = 1.5*alphaRho_()*Theta_();
+    }
     Theta_.correctBoundaryConditions();
     alphaRhoPTE_.boundaryFieldRef() =
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();

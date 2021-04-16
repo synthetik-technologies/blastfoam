@@ -35,6 +35,7 @@ License
 #include "polyPatch.H"
 #include "SortableList.H"
 #include "IFstream.H"
+#include "vtkWriteOps.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -649,6 +650,46 @@ bool Foam::probes::read(const dictionary& dict)
         dict.lookupOrDefault("adjustLocations", false)
     );
     prepare();
+
+    Switch writeVTK(dict.lookupOrDefault("writeVTK", false));
+
+    if (writeVTK && Pstream::master)
+    {
+        IOstream::streamFormat writeFormat = IOstream::ASCII;
+        if (dict.found("writeFormat"))
+        {
+            writeFormat = IOstream::formatEnum
+            (
+                dict.lookup("writeFormat")
+            );
+        }
+        const Time& time(mesh_.time());
+        const fileName path = time.rootPath()/time.globalCaseName()/"VTK";
+        mkDir(path);
+
+        const fileName filePath = path/this->name() + ".vtk";
+
+        bool binary(writeFormat == IOstream::BINARY);
+        ofstream os(filePath, std::ios::binary);
+
+        vtkWriteOps::writeHeader(os, binary, "sampleSurface");
+        os << "DATASET POLYDATA" << nl;
+
+        // Write vertex coords
+        os  << "POINTS " << elementLocations_.size() << " float" << nl;
+
+        List<floatScalar> po(elementLocations_.size()*3);
+        label ind = 0;
+        forAll(elementLocations_, pointi)
+        {
+            const point& pt = elementLocations_[pointi];
+            forAll(pt, cmpt)
+            {
+                po[ind++] = float(pt[cmpt]);
+            }
+        }
+        vtkWriteOps::write(os, binary, po);
+    }
 
     return true;
 }

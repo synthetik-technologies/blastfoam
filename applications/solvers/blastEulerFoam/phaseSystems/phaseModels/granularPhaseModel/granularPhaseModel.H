@@ -192,12 +192,6 @@ public:
 
         //- Return conserved quantities
 
-            //- Return the thermo model
-            virtual const basicThermoModel& thermo() const
-            {
-                return thermo_();
-            }
-
             //- Return the density
             virtual const volScalarField& rho() const
             {
@@ -259,6 +253,18 @@ public:
 
 
         // Thermodynamic properties
+
+            //- Return thermodynamic model
+            virtual const basicThermoModel& thermo() const
+            {
+                return thermo_();
+            }
+
+            //- Access thermodynamic model
+            virtual basicThermoModel& thermo()
+            {
+                return thermo_();
+            }
 
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const

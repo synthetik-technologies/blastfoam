@@ -111,6 +111,9 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Calculate density
+        virtual void updateRho();
+
         //- Calculate thermodynamic pressure for a patch
         virtual tmp<scalarField> calcP(const label patchi) const;
 

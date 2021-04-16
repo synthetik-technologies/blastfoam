@@ -1,7 +1,16 @@
+reactionRates/reactionRate/reactionRate.C
+reactionRates/reactionRate/newReactionRate.C
+reactionRates/ArrheniusRate/ArrheniusReactionRate.C
+reactionRates/pressureBased/pressureBasedReactionRate.C
+reactionRates/tabulatedP/tabulatedPReactionRate.C
+reactionRates/tabulatedT/tabulatedTReactionRate.C
+reactionRates/pressureListBased/pressureListBasedReactionRate.C
+
 diameterModel/diameterModel.C
 diameterModel/newDiameterModel.C
 
 constant/constantDiameterModel.C
 constantMass/constantMassDiameterModel.C
+reacting/reactingDiameterModel.C
 
 LIB = $(BLAST_LIBBIN)/libdiameterModels

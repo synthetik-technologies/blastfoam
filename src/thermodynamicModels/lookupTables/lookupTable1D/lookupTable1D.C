@@ -74,41 +74,18 @@ void Foam::lookupTable1D::readTable(const fileName& file)
     data_ = fTmp;
 }
 
-void Foam::lookupTable1D::findIndex
-(
-    const scalar& x,
-    label& i,
-    scalar& f
-) const
-{
-    if (x < xModValues_[0])
-    {
-        i = 0;
-        f = x/xModValues_[0];
-    }
-    for (i = 1; i < xModValues_.size(); i++)
-    {
-        if (x < xModValues_[i])
-        {
-            i--;
-            f = (x - xModValues_[i])/(xModValues_[i+1] - xModValues_[i]);
-            return;
-        }
-    }
-    i = xModValues_.size() - 2;
-    f = 1.0;
-    return;
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::lookupTable1D::lookupTable1D()
 :
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXFunc_(NULL),
-    invModXFunc_(NULL)
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    interpFunc_(nullptr),
+    index_(0),
+    f_(0.0)
 {}
 
 
@@ -116,16 +93,21 @@ Foam::lookupTable1D::lookupTable1D
 (
     const fileName& file,
     const word& mod,
-    const word& xMod
+    const word& xMod,
+    const word& intepolationScheme
 )
 :
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXFunc_(NULL),
-    invModXFunc_(NULL)
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    interpFunc_(nullptr),
+    index_(0),
+    f_(0.0)
 {
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
+    setInterp(intepolationScheme, interpFunc_);
     readTable(file);
 }
 
@@ -136,20 +118,25 @@ Foam::lookupTable1D::lookupTable1D
     const scalarField& data,
     const word& mod,
     const word& xMod,
-    const bool inReal
+    const word& interpolationScheme,
+    const bool correct
 )
 :
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXFunc_(NULL),
-    invModXFunc_(NULL),
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    interpFunc_(nullptr),
     xValues_(x),
     xModValues_(x),
-    data_(data)
+    data_(data),
+    index_(0),
+    f_(0.0)
 {
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
-    if (inReal)
+    setInterp(interpolationScheme, interpFunc_);
+    if (!correct)
     {
         forAll(x, i)
         {
@@ -166,6 +153,45 @@ Foam::lookupTable1D::lookupTable1D
     }
 }
 
+
+Foam::lookupTable1D::lookupTable1D
+(
+    const scalarField& x,
+    const word& xMod,
+    const word& interpolationScheme,
+    const bool correct
+)
+:
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    interpFunc_(nullptr),
+    xValues_(x),
+    xModValues_(x),
+    data_(),
+    index_(0),
+    f_(0.0)
+{
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setInterp(interpolationScheme, interpFunc_);
+    if (!correct)
+    {
+        forAll(x, i)
+        {
+            xModValues_[i] = modXFunc_(x[i]);
+        }
+    }
+    else
+    {
+        forAll(x, i)
+        {
+            xValues_[i] = invModXFunc_(x[i]);
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::lookupTable1D::~lookupTable1D()
@@ -174,77 +200,139 @@ Foam::lookupTable1D::~lookupTable1D()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::lookupTable1D::update(const scalar& x) const
+{
+    if (x <= xValues_[0])
+    {
+        index_ = 0;
+        f_ = 0.0;
+        return;
+    }
+    else if (x >= xValues_.last())
+    {
+        index_ = xValues_.size() - 2;
+        f_ = 1.0;
+        return;
+    }
+
+    for (index_ = 0; index_ < xModValues_.size() - 2; index_++)
+    {
+        if (x <= xValues_[index_])
+        {
+            index_--;
+            break;
+        }
+    }
+    f_ = interpFunc_(modXFunc_(x), xModValues_[index_], xModValues_[index_ + 1]);
+    return;
+}
+
+
 Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
 {
-    scalar fx;
-    label i;
-    findIndex(modXFunc_(x), i, fx);
+#ifdef FULL_DEBUG
+    if (!invModFunc_)
+    {
+        FatalErrorInFunction
+            << "Try to interpolate data that has not been set."
+            << abort(FatalError);
+    }
+#endif
 
-    return invModFunc_(data_[i] + fx*(data_[i+1] - data_[i]));
+    update(x);
+    return invModFunc_(data_[index_] + f_*(data_[index_+1] - data_[index_]));
 }
 
 
 Foam::scalar
-Foam::lookupTable1D::reverseLookup(const scalar& fin) const
+Foam::lookupTable1D::reverseLookup(const scalar& yin) const
 {
-    scalar f(modFunc_(fin));
-    if (f < data_[0])
+#ifdef FULL_DEBUG
+    if (!modFunc_)
+    {
+        FatalErrorInFunction
+            << "Try to interpolate data that has not been set."
+            << abort(FatalError);
+    }
+#endif
+
+    scalar y(modFunc_(yin));
+    if (y < data_[0])
     {
         return xValues_[0];
     }
-    label i = 0;
-    for (i = 1; i < data_.size(); i++)
+    index_ = 0;
+    for (index_ = 1; index_ < data_.size(); index_++)
     {
-        if (f < data_[i])
+        if (y < data_[index_])
         {
-            i--;
+            index_--;
             break;
         }
     }
 
-    const scalar& fm(data_[i]);
-    const scalar& fp(data_[i+1]);
+    const scalar& ym(data_[index_]);
+    const scalar& yp(data_[index_+1]);
 
-    scalar fx = (f - fm)/(fp - fm);
+    f_ = interpFunc_(y, ym, yp);
 
-    return invModXFunc_(xModValues_[i] + fx*(xValues_[i+1] - xValues_[i]));
+    return invModXFunc_
+    (
+        xModValues_[index_]
+      + f_*(xValues_[index_+1] - xValues_[index_])
+    );
 }
 
 
 Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
 {
-    scalar fx;
-    label i;
-    findIndex(modXFunc_(x), i, fx);
+#ifdef FULL_DEBUG
+    if (!invModFunc_)
+    {
+        FatalErrorInFunction
+            << "Try to interpolate data that has not been set."
+            << abort(FatalError);
+    }
+#endif
 
-    scalar fm(data_[i]);
-    scalar fp(data_[i+1]);
+    update(x);
 
-    return (invModFunc_(fp) - invModFunc_(fm))/(xValues_[i+1] - xValues_[i]);
+    scalar fm(data_[index_]);
+    scalar fp(data_[index_ + 1]);
+
+    return
+        (invModFunc_(fp) - invModFunc_(fm))
+       /(xValues_[index_ + 1] - xValues_[index_]);
 }
 
 
 Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
 {
-    label i;
-    scalar fx;
-    findIndex(modXFunc_(x), i, fx);
-
-    if (i == 0)
+#ifdef FULL_DEBUG
+    if (!invModFunc_)
     {
-        i++;
+        FatalErrorInFunction
+            << "Try to interpolate data that has not been set."
+            << abort(FatalError);
+    }
+#endif
+
+    update(x);
+    if (index_ == 0)
+    {
+        index_++;
     }
 
-    scalar fm(invModFunc_(data_[i-1]));
-    scalar fi(invModFunc_(data_[i]));
-    scalar fp(invModFunc_(data_[i+1]));
+    scalar ym(invModFunc_(data_[index_-1]));
+    scalar yi(invModFunc_(data_[index_]));
+    scalar yp(invModFunc_(data_[index_+1]));
 
-    const scalar& xm(xValues_[i-1]);
-    const scalar& xi(xValues_[i]);
-    const scalar& xp(xValues_[i+1]);
+    const scalar& xm(xValues_[index_-1]);
+    const scalar& xi(xValues_[index_]);
+    const scalar& xp(xValues_[index_+1]);
 
     return
-        ((fp - fi)/(xp - xi) - (fi - fm)/(xi - xm))/(xp - xm);
+        ((yp - yi)/(xp - xi) - (yi - ym)/(xi - xm))/(xp - xm);
 }
 
 
@@ -277,9 +365,37 @@ void Foam::lookupTable1D::set
         forAll(x, i)
         {
             xValues_[i] = invModXFunc_(x[i]);
-            data_[i] = invModFunc_(x[i]);
+            data_[i] = invModFunc_(data[i]);
         }
     }
-    Info<<"done"<<endl;
 }
+
+void Foam::lookupTable1D::setX
+(
+    const scalarField& x,
+    const bool inReal
+)
+{
+    data_.clear();
+
+    if (inReal)
+    {
+        xValues_ = x;
+        xModValues_.resize(x.size());
+        forAll(x, i)
+        {
+            xModValues_[i] = modXFunc_(x[i]);
+        }
+    }
+    else
+    {
+        xModValues_ = x;
+        xValues_.resize(x.size());
+        forAll(x, i)
+        {
+            xValues_[i] = invModXFunc_(x[i]);
+        }
+    }
+}
+
 // ************************************************************************* //

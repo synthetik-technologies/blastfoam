@@ -43,6 +43,8 @@ SourceFiles
 #include "surfaceFields.H"
 #include "integrationSystem.H"
 #include "timeIntegrator.H"
+#include "HashPtrTable.H"
+#include "fvOptions.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,6 +56,7 @@ class heatTransferModel;
 class liftModel;
 class wallLubricationModel;
 class turbulentDispersionModel;
+class massTransferModel;
 class interfacialPressureModel;
 class interfacialVelocityModel;
 class dragModel;
@@ -128,6 +131,13 @@ public:
 
         typedef HashTable
         <
+            autoPtr<massTransferModel>,
+            phasePairKey,
+            phasePairKey::hash
+        > massTransferModelTable;
+
+        typedef HashTable
+        <
             autoPtr<interfacialPressureModel>,
             phasePairKey,
             phasePairKey::hash
@@ -154,6 +164,13 @@ public:
             phasePairKey,
             phasePairKey::hash
         > VmTable;
+
+        typedef HashPtrTable
+        <
+            volScalarField,
+            phasePairKey,
+            phasePairKey::hash
+        > mDotTable;
 
         typedef HashPtrTable
         <
@@ -259,11 +276,23 @@ protected:
             //- Heat transfer models
             heatTransferModelTable heatTransferModels_;
 
+            //- Mass transfer models
+            massTransferModelTable massTransferModels_;
+
             //- Interfacial pressure models
             interfacialPressureModelTable interfacialPressureModels_;
 
             //- Interfacial velocity models
             interfacialVelocityModelTable interfacialVelocityModels_;
+
+
+        //- Stored coefficients
+
+            //- Mass transfer rates
+            mDotTable mDots_;
+
+        //- fvOptions
+        fv::options* fvOptionsPtr_;
 
 
     // Private member functions
@@ -297,7 +326,8 @@ protected:
                 autoPtr<modelType>,
                 phasePairKey,
                 phasePairKey::hash
-            >& models
+            >& models,
+            const bool required
         );
 
         //- Generate pairs and blended sub-model tables
@@ -311,6 +341,7 @@ protected:
                 phasePairKey,
                 phasePairKey::hash
             >& models,
+            const bool required,
             const bool correctFixedFluxBCs = true
         );
 
@@ -325,6 +356,7 @@ protected:
                 phasePairKey,
                 phasePairKey::hash
             >& models,
+            const bool required,
             const bool correctFixedFluxBCs = true
         );
 
@@ -422,6 +454,35 @@ public:
         //- Return the aspect-ratio for a pair
         tmp<volScalarField> E(const phasePairKey& key) const;
 
+        //- Return the mass transfer for a pair
+        tmp<volScalarField> mDot
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the momentum change due to mass transfer for a pair
+        tmp<volVectorField> mDotU
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the energy change due to mass transfer for a pair
+        tmp<volScalarField> mDotE
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the pseudo thermal energy change due to
+        //  mass transfer for a pair
+        tmp<volScalarField> mDotPTE
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
         //- Read base phaseProperties dictionary
         bool read();
 
@@ -478,6 +539,12 @@ public:
 
             //- Return the phase pairs
             inline const phasePairTable& phasePairs() const;
+
+            //- Access fvOptions
+            inline const fv::options& fvOptions() const;
+
+            //- Return fvOptions
+            inline fv::options& fvOptions();
 };
 
 

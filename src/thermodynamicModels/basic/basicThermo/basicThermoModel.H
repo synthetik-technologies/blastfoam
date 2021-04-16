@@ -46,6 +46,7 @@ SourceFiles
 #include "wordIOList.H"
 #include "integrationSystem.H"
 #include "regIOobject.H"
+#include "speciesTable.H"
 
 namespace Foam
 {
@@ -276,6 +277,26 @@ public:
             return T_;
         }
 
+        //- Return mass fraction of a specie
+        virtual tmp<volScalarField> Y(const word& name) const;
+
+        //- Access mass fraction of a specie
+        virtual volScalarField& Y(const word& name)
+        {
+            NotImplemented;
+            return T_;
+        }
+
+        //- Return mass fraction of a specie
+        virtual tmp<volScalarField> Y(const label i) const;
+
+        //- Access mass fraction of a specie
+        virtual volScalarField& Y(const label i)
+        {
+            NotImplemented;
+            return T_;
+        }
+
 
     // Member Functions
 
@@ -288,8 +309,27 @@ public:
             return limit_;
         }
 
+        //- Names of species
+        virtual speciesTable species() const
+        {
+            return speciesTable();
+        }
+
+        //- Does the mixture include this specie?
+        virtual bool contains(const word& specieName) const
+        {
+            return false;
+        }
+
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, const volScalarField& delta);
 
     //- Thermodynamic and transport functions
+
+        //- Calculate density
+        virtual void updateRho() = 0;
 
         //- Calculate temperature
         virtual tmp<volScalarField> calcT() const = 0;
@@ -411,6 +451,10 @@ public:
 
         //- Heat of formation
         virtual tmp<volScalarField> Hf() const = 0;
+
+        //- Heat of formation
+        virtual tmp<volScalarField> flameT() const = 0;
+
 
     // Transport variables
 

@@ -57,11 +57,12 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     ),
     species_(dict.lookup("species")),
     Ys_(species_.size()),
+    massTransferRates_(species_.size()),
     inertIndex_
     (
         dict.found("inertSpecie")
       ? species_[dict.lookup<word>("inertSpecie")]
-      : species_.size() - 1
+      : -1
     ),
     active_(species_.size(), true),
     YsOld_(species_.size()),
@@ -154,6 +155,23 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
             );
         }
         YTot += Ys_[i];
+
+        massTransferRates_.set
+        (
+            i,
+            species_[i],
+            new volScalarField
+            (
+                IOobject
+                (
+                    "massTransfer:" + IOobject::groupName(species_[i], name),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimDensity/dimTime, 0.0)
+            )
+        );
     }
 
     //- Normalize species
@@ -199,6 +217,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     ),
     species_(species),
     Ys_(species_.size()),
+    massTransferRates_(species_.size()),
     inertIndex_(species_[dict.lookup<word>("inertSpecie")]),
     active_(species_.size(), true),
     YsOld_(species_.size()),
@@ -291,6 +310,22 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
             );
         }
         YTot += Ys_[i];
+        massTransferRates_.set
+        (
+            i,
+            species_[i],
+            new volScalarField
+            (
+                IOobject
+                (
+                    "massTransfer:" + IOobject::groupName(species_[i], name),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimDensity/dimTime, 0.0)
+            )
+        );
     }
 
     //- Normalize species
@@ -374,6 +409,24 @@ void Foam::multicomponentThermoModel<BasicThermo>::initializeModels()
 
 
 template<class BasicThermo>
+void Foam::multicomponentThermoModel<BasicThermo>::addDelta
+(
+    const word& name,
+    const volScalarField& delta
+)
+{
+    if (massTransferRates_.found(name))
+    {
+        massTransferRates_[name] += delta;
+        return;
+    }
+    if (this->debug)
+    {
+        WarningInFunction << name << " was not added to delta." << endl;
+    }
+}
+
+template<class BasicThermo>
 void Foam::multicomponentThermoModel<BasicThermo>::solve()
 {
     const dimensionedScalar& dT(this->rho_.mesh().time().deltaT());
@@ -398,12 +451,14 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
             {
                 Ys_[i].storeOldTime();
             }
+
             volScalarField YOld(Ys_[i]);
             this->storeAndBlendOld(YOld, YsOld_[i]);
 
             volScalarField deltaAlphaRhoY
             (
                 fvc::div(alphaRhoPhi, Ys_[i], "div(Yi)")
+              + massTransferRates_[species_[i]]
             );
             this->storeAndBlendDelta(deltaAlphaRhoY, deltaAlphaRhoYs_[i]);
 
@@ -415,10 +470,24 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
             Ys_[i].correctBoundaryConditions();
 
             YTot += Ys_[i];
+
+            // Clear mass transfer after adding
+            massTransferRates_[species_[i]] = Zero;
         }
     }
-    Ys_[inertIndex_] = max(1.0 - YTot, 0.0);
-    Ys_[inertIndex_].correctBoundaryConditions();
+
+    if (inertIndex_ >= 0)
+    {
+        Ys_[inertIndex_] = 1.0 - YTot;
+        Ys_[inertIndex_].max(0);
+    }
+    else
+    {
+        forAll(Ys_, i)
+        {
+            Ys_[i] /= YTot;
+        }
+    }
 }
 
 

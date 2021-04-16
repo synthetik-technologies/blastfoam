@@ -95,13 +95,17 @@ class eConst
         //- Heat of formation [J/kg]
         scalar Hf_;
 
+        //- Flame temperature [K]
+        scalar flameT_;
+
 
         //- Construct from components
         inline eConst
         (
             const EquationOfState& st,
             const scalar cv,
-            const scalar hf
+            const scalar hf,
+            const scalar ft
         );
 
 
@@ -164,6 +168,10 @@ public:
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
+
+        //- Flame temperature [K]
+        inline scalar flameT() const;
+
 
         //- Entropy [J/kg/K]
         inline scalar S

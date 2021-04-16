@@ -184,13 +184,8 @@ public:
 
     //- Thermodynamic and transport functions
 
-//         //- Calculate density
-//         virtual tmp<volScalarField> calcRho
-//         (
-//             const volScalarField& p,
-//             const volScalarField& e,
-//             const volScalarField& T
-//         ) const;
+        //- Calculate density
+        virtual void updateRho();
 
         //- Calculate thermodynamic pressure for a patch
         virtual tmp<scalarField> calcP(const label patchi) const;
@@ -320,6 +315,9 @@ public:
 
         //- Heat of formation
         virtual tmp<volScalarField> Hf() const;
+
+        //- Heat of formation
+        virtual tmp<volScalarField> flameT() const;
 };
 
 

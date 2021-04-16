@@ -206,18 +206,34 @@ void Foam::fluidPhaseModel::update()
 
 void Foam::fluidPhaseModel::decode()
 {
+    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+
     this->correctBoundaryConditions();
+    if (options.optionList::appliesToField(this->name()))
+    {
+        options.correct(*this);
+    }
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
-    rho_.ref() = alphaRho_()/alpha();
-    rho_.correctBoundaryConditions();
 
+    rho_.ref() = alphaRho_()/alpha();
+    if (options.optionList::appliesToField(rho_.name()))
+    {
+        options.correct(rho_);
+        alphaRho_.ref() = (*this)()*rho_;
+    }
+    rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField();
     volScalarField alphaRho(alpha*rho_);
     alphaRho.max(1e-10);
 
     U_.ref() = alphaRhoU_()/(alphaRho());
+    if (options.optionList::appliesToField(U_.name()))
+    {
+        options.correct(U_);
+        alphaRhoU_.ref() = alphaRho_()*U_();
+    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
@@ -225,12 +241,26 @@ void Foam::fluidPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-
-    //--- Hard limit, e
-    if(Foam::min(e_).value() < 0)
+    if (options.optionList::appliesToField(e_.name()))
     {
-        e_.max(small);
-        alphaRhoE_.ref() = (*this)()*rho_()*(e_() + 0.5*magSqr(U_()));
+        options.correct(e_);
+        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
+    }
+
+    //- Limit internal energy it there is a negative temperature
+    if (Foam::min(this->T_).value() < 0.0 && thermo_->limit())
+    {
+        if (debug)
+        {
+            WarningInFunction
+                << "Lower limit of temperature reached, min(T) = "
+                << Foam::min(T_).value()
+                << ", limiting internal energy." << endl;
+        }
+        volScalarField limit(pos(T_));
+        T_.max(small);
+        e_ = e_*limit + thermo_->E()*(1.0 - limit);
+        alphaRhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
 
@@ -242,6 +272,12 @@ void Foam::fluidPhaseModel::decode()
           + 0.5*magSqr(U_.boundaryField())
         );
     thermo_->correct();
+
+    if (options.optionList::appliesToField(p_.name()))
+    {
+        options.correct(p_);
+        p_.correctBoundaryConditions();
+    }
 }
 
 

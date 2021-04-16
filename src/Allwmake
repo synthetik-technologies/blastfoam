@@ -5,6 +5,7 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 
 wmake $targetType finiteVolume
+wmakeLnInclude thermodynamicModels
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType MomentumTransportModels

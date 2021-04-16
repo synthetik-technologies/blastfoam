@@ -13,7 +13,6 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I../interfacialModels/lnInclude \
     -I../kineticTheoryModels/lnInclude \
     -I../phaseCompressibleMomentumTransportModels/lnInclude

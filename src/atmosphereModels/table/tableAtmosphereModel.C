@@ -50,13 +50,13 @@ Foam::atmosphereModels::table::table
     atmosphereModel(mesh, dict),
     pTable_
     (
-        dict_.subDict("pTable").lookup("file"),
+        dict_.subDict("pTable").lookup<fileName>("file"),
         dict_.subDict("pTable").lookupOrDefault<word>("pMod", "none"),
         dict_.subDict("pTable").lookupOrDefault<word>("hMod", "none")
     ),
     TTable_
     (
-        dict_.subDict("TTable").lookup("file"),
+        dict_.subDict("TTable").lookup<fileName>("file"),
         dict_.subDict("TTable").lookupOrDefault<word>("TMod", "none"),
         dict_.subDict("TTable").lookupOrDefault<word>("hMod", "none")
     ),

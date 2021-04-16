@@ -573,4 +573,17 @@ Foam::eThermoModel<BasicThermo, ThermoType>::Hf() const
 }
 
 
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
+Foam::eThermoModel<BasicThermo, ThermoType>::flameT() const
+{
+    return volScalarFieldProperty
+    (
+        "flameT",
+        dimTemperature,
+        &ThermoType::flameT
+    );
+}
+
+
 // ************************************************************************* //

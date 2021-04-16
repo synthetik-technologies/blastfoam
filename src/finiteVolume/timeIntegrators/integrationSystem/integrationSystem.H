@@ -86,7 +86,7 @@ protected:
             (
                 fieldType& f,
                 PtrList<fieldType>& fList,
-                const bool moving = true
+                const bool conservative = true
             ) const;
 
             //- Store delta fields
@@ -103,7 +103,7 @@ protected:
             //- Store old fields
             //  moving keyword used for template function
             template<class Type>
-            void storeOld(Type& f, List<Type>& fList, bool moving = false) const;
+            void storeOld(Type& f, List<Type>& fList, bool conservative = true) const;
 
             //- Store delta fields
             template<class Type>
@@ -134,7 +134,7 @@ protected:
             (
                 Type& f,
                 ListType<Type>& fList,
-                const bool moving = true
+                const bool conservative = true
             ) const;
 
             //- Combine delta fields using time step coefficients

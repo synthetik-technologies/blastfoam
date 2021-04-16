@@ -72,11 +72,21 @@ protected:
         //  data for the first specie to initialise the mixture thermo data
         const PtrList<ThermoType>& constructSpeciesData(const dictionary&);
 
-
         //- Return a volScalarField of the given property
         template<class Method, class ... Args>
         tmp<volScalarField> volScalarFieldProperty
         (
+            const word& psiName,
+            const dimensionSet& psiDim,
+            Method psiMethod,
+            const Args& ... args
+        ) const;
+
+        //- Return a volScalarField of the given property for a specie
+        template<class Method, class ... Args>
+        tmp<volScalarField> volScalarFieldSpecieProperty
+        (
+            const word& s,
             const word& psiName,
             const dimensionSet& psiDim,
             Method psiMethod,
@@ -261,6 +271,46 @@ public:
 
             //- Heat of formation
             virtual tmp<volScalarField> Hf() const;
+
+            //- Heat of formation
+            virtual tmp<volScalarField> flameT() const;
+
+
+        //- Return species properties
+
+            //- Return molecular weight
+            virtual tmp<volScalarField> specieW(const word& s) const;
+
+            //- Return molecular weight
+            virtual scalar specieWi(const word& s, const label celli) const;
+
+            //- Mie Gruniesen coefficient
+            virtual tmp<volScalarField> specieGamma(const word& s) const;
+
+            //- Mie Gruniesen coefficient for a cell
+            virtual scalar specieGammai(const word& s, const label celli) const;
+
+            //- Heat capacity at constant pressure of mixture [J/kg/K]
+            virtual tmp<volScalarField> specieCp(const word& s) const;
+
+            //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
+            virtual scalar specieCpi(const word& s, const label celli) const;
+
+            //- Heat capacity at constant volume of mixture [J/kg/K]
+            virtual tmp<volScalarField> specieCv(const word& s) const;
+
+            //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
+            virtual scalar specieCvi(const word& s, const label celli) const;
+
+            //- Specific heat ratio
+            virtual tmp<volScalarField> specieCpByCv(const word& s) const;
+
+            //- Heat of formation
+            virtual tmp<volScalarField> specieHf(const word& s) const;
+
+            //- Heat of formation
+            virtual tmp<volScalarField> specieFlameT(const word& s) const;
+
 
     //- Return
 

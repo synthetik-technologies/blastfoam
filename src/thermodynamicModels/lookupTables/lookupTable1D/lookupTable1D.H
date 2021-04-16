@@ -66,6 +66,9 @@ class lookupTable1D
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
+    //- Interpolation type
+    interpFuncType interpFunc_;
+
     //- List of x values in real space
     scalarField xValues_;
 
@@ -75,11 +78,14 @@ class lookupTable1D
     //- Data
     scalarField data_;
 
+    //- Current index (used to access location in list after lookup)
+    mutable label index_;
+
+    //- Current interpolation weight
+    mutable scalar f_;
+
     //- Read the table
     void readTable(const fileName& file);
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline void findIndex(const scalar& x, label& I, scalar& f) const;
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
     inline label bound(const scalar& f) const;
@@ -98,7 +104,8 @@ public:
         (
             const fileName& file,
             const word& mod,
-            const word& xMod
+            const word& xMod,
+            const word& interpolationScheme = "linearClamp"
         );
 
         //- Construct from data given list of x and data
@@ -109,7 +116,17 @@ public:
             const scalarField& data,
             const word& mod,
             const word& xMod,
-            const bool inReal
+            const word& interpolationScheme,
+            const bool correct = false
+        );
+
+        //- Construct from interpolator from only x values, no data is stored
+        lookupTable1D
+        (
+            const scalarField& x,
+            const word& xMod,
+            const word& interpolationScheme,
+            const bool correct = false
         );
 
 
@@ -120,6 +137,18 @@ public:
     // Member Functions
 
         // Access data
+
+            //- Access current index
+            label index() const
+            {
+                return index_;
+            }
+
+            //- Access current interpolation weight
+            scalar f() const
+            {
+                return f_;
+            }
 
             //- Modify by modType
             scalar mod(const scalar& f) const
@@ -151,12 +180,6 @@ public:
                 return xValues_;
             }
 
-            //- Non-const access to real x values
-            scalarField& x()
-            {
-                return xValues_;
-            }
-
             //- Const access to modified x values
             const scalarField& xMod() const
             {
@@ -184,8 +207,20 @@ public:
 
     // Public functions
 
+        //- Update index and weight
+        void update(const scalar& x) const;
+
         //- Lookup value
         scalar lookup(const scalar& x) const;
+
+        //- Interpolate value using the current index and weight
+        template<class Type>
+        Type interpolate(const Type&, const Type&) const;
+
+        //- Interpolate value using the current index and weight
+        template<template<class> class ListType, class Type>
+        Type interpolate(const scalar, const ListType<Type>&) const;
+
 
         //- Lookup X given f and y
         scalar reverseLookup(const scalar& f) const;
@@ -205,12 +240,27 @@ public:
             const word& xMod,
             const bool inReal
         );
+
+        //- Set data
+        void setX
+        (
+            const scalarField& x,
+            const bool inReal = true
+        );
+
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "lookupTable1DTemplates.C"
+#endif
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

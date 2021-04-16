@@ -37,6 +37,7 @@ SourceFiles
 #define RanzMarshall_H
 
 #include "heatTransferModel.H"
+#include "NusseltNumberModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,6 +57,12 @@ class RanzMarshall
 :
     public heatTransferModel
 {
+// Private data
+
+    //- Nusselt number model
+    autoPtr<NusseltNumberModel> NuModel_;
+
+
 public:
 
     //- Runtime type information

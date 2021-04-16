@@ -69,6 +69,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::NewDetonating
     return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
+
 Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
 (
     const word& phaseName,

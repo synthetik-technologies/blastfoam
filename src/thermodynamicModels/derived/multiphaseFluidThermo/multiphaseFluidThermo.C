@@ -195,6 +195,22 @@ void Foam::multiphaseFluidThermo::clearODEFields()
 }
 
 
+void Foam::multiphaseFluidThermo::updateRho()
+{
+    thermos_[0].updateRho();
+    this->rho_ = volumeFractions_[0]*thermos_[0].rho();
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        thermos_[phasei].updateRho();
+        rho_ += volumeFractions_[phasei]*thermos_[phasei].rho();
+    }
+    if (sumVfPtr_ != nullptr)
+    {
+        this->rho_ /= max(*sumVfPtr_, residualAlpha());
+    }
+}
+
+
 void Foam::multiphaseFluidThermo::correct()
 {
     if (master_)
@@ -1063,6 +1079,28 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::Hf() const
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].Hf();
+    }
+    if (sumVfPtr_ != nullptr)
+    {
+        tmpF.ref() /= max(*sumVfPtr_, residualAlpha());
+    }
+    return tmpF;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidThermo::flameT() const
+{
+    tmp<volScalarField> tmpF
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("flameT", basicThermoModel::name_),
+            volumeFractions_[0]*thermos_[0].flameT()
+        )
+    );
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].flameT();
     }
     if (sumVfPtr_ != nullptr)
     {

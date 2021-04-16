@@ -265,7 +265,7 @@ inline Foam::rhoConst<Specie> Foam::operator*
     return rhoConst<Specie>
     (
         s*static_cast<const Specie&>(ico),
-        ico.rho_,
+        ico.rho0_,
         ico.pRef_
     );
 }

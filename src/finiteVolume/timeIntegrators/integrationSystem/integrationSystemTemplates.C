@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "integrationSystem.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -32,13 +33,13 @@ void Foam::integrationSystem::storeOld
 (
     fieldType& f,
     PtrList<fieldType>& fList,
-    const bool moving
+    const bool conservative
 ) const
 {
     // Correct old field for mesh motion before storage
-    if (f.mesh().moving() && step() == 1 && moving)
+    if (mesh_.moving() && step() == 1 && conservative)
     {
-        f.ref() *= f.mesh().V0()/f.mesh().V();
+        f.ref() *= mesh_.V0()/mesh_.V();
     }
 
     // Store fields if needed later
@@ -176,10 +177,10 @@ void Foam::integrationSystem::storeAndBlendOld
 (
     Type& f,
     ListType<Type>& fList,
-    const bool moving
+    const bool conservative
 ) const
 {
-    storeOld(f, fList, moving);
+    storeOld(f, fList, conservative);
     blendSteps(oldIs_, f, fList, a());
 }
 

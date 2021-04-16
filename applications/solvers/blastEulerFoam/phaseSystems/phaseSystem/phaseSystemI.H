@@ -50,4 +50,14 @@ Foam::phaseSystem::phasePairs() const
     return phasePairs_;
 }
 
+inline const Foam::fv::options& Foam::phaseSystem::fvOptions() const
+{
+    return *fvOptionsPtr_;
+}
+
+inline Foam::fv::options& Foam::phaseSystem::fvOptions()
+{
+    return *fvOptionsPtr_;
+}
+
 // ************************************************************************* //

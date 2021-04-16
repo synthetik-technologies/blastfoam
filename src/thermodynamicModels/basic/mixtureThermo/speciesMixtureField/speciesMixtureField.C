@@ -125,6 +125,7 @@ void Foam::speciesMixtureField<ThermoType>::updateObject()
     }
 
     //- Resize boundary
+
     faceMixtures_.resize(nBoundaryFaces());
 
     //- Update boundaries that were previously allocated

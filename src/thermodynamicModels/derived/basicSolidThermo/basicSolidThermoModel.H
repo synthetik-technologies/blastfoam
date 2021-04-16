@@ -98,6 +98,10 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Calculate density
+        virtual void updateRho()
+        {}
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 

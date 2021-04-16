@@ -194,6 +194,9 @@ public:
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
 
+        //- Flame temperature [K]
+        inline scalar flameT() const;
+
         //- Entropy [J/kg/K]
         inline scalar S
         (

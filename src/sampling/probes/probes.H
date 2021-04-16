@@ -59,6 +59,7 @@ Description
         );
         append yes;
         adjustLocations no;
+        writeVTK yes;
     }
     \endverbatim
 
@@ -69,6 +70,7 @@ Usage
         fields            | Name of  fields           | yes
         append            | Append to end of old probe files | no | yes
         adjustLocations   | Move probes inside mesh   | no        | no
+        writeVTK          | Write the locations a vtk file | no   | no
     \endtable
 
 SourceFiles

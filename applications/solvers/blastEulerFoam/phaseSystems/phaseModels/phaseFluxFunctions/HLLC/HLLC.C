@@ -64,6 +64,8 @@ void Foam::fluxSchemes::HLLC::clear()
     SOwn_.clear();
     SNei_.clear();
     SStar_.clear();
+    UvOwn_.clear();
+    UvNei_.clear();
 }
 
 void Foam::fluxSchemes::HLLC::createSavedFields()

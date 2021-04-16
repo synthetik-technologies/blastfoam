@@ -67,30 +67,7 @@ Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
         )
     )
     {
-
-        volScalarField rhoInit
-        (
-            this->volScalarFieldProperty
-            (
-                IOobject::groupName("rho", name),
-                dimDensity,
-                &ThermoType::initializeRho,
-                this->p_,
-                this->rho_,
-                this->e_,
-                this->T_
-            )
-        );
-        this->rho_.ref() = rhoInit();
-
-        forAll(this->rho_.boundaryField(), patchi)
-        {
-            forAll(this->rho_.boundaryField()[patchi], facei)
-            {
-                this->rho_.boundaryFieldRef()[patchi][facei] =
-                    rhoInit.boundaryField()[patchi][facei];
-            }
-        }
+        updateRho();
     }
 
     this->mu_ =
@@ -146,30 +123,7 @@ Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
         )
     )
     {
-
-        volScalarField rhoInit
-        (
-            this->volScalarFieldProperty
-            (
-                IOobject::groupName("rho", name),
-                dimDensity,
-                &ThermoType::initializeRho,
-                this->p_,
-                this->rho_,
-                this->e_,
-                this->T_
-            )
-        );
-        this->rho_.ref() = rhoInit();
-
-        forAll(this->rho_.boundaryField(), patchi)
-        {
-            forAll(this->rho_.boundaryField()[patchi], facei)
-            {
-                this->rho_.boundaryFieldRef()[patchi][facei] =
-                    rhoInit.boundaryField()[patchi][facei];
-            }
-        }
+        updateRho();
     }
 
     this->mu_ =
@@ -195,6 +149,34 @@ Foam::multicomponentFluidThermo<ThermoType>::~multicomponentFluidThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class ThermoType>
+void Foam::multicomponentFluidThermo<ThermoType>::updateRho()
+{
+    volScalarField rhoNew
+    (
+        this->volScalarFieldProperty
+        (
+            "rhoNew",
+            dimDensity,
+            &ThermoType::initializeRho,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    this->rho_.ref() = rhoNew();
+
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        forAll(this->rho_.boundaryField()[patchi], facei)
+        {
+            this->rho_.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
+    }
+}
 
 template<class ThermoType>
 void Foam::multicomponentFluidThermo<ThermoType>::correct()

@@ -112,29 +112,7 @@ void Foam::detonatingFluidThermo<Thermo>::initializeModels()
         )
     )
     {
-        volScalarField rhoInit
-        (
-            Thermo::blendedVolScalarFieldProperty
-            (
-                IOobject::groupName("rhoInit", basicThermoModel::name_),
-                dimDensity,
-                &Thermo::thermoType1::initializeRho,
-                &Thermo::thermoType2::initializeRho,
-                this->p_,
-                this->rho_,
-                this->e_,
-                this->T_
-            )
-        );
-        this->rho_ = rhoInit;
-        forAll(this->rho_.boundaryField(), patchi)
-        {
-            forAll(this->rho_.boundaryField()[patchi], facei)
-            {
-                this->rho_.boundaryFieldRef()[patchi][facei] =
-                    rhoInit.boundaryField()[patchi][facei];
-            }
-        }
+        updateRho();
     }
 
     this->initialize();
@@ -179,6 +157,35 @@ void Foam::detonatingFluidThermo<Thermo>::clearODEFields()
 {
     activation_->clearODEFields();
     afterburn_->clearODEFields();
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidThermo<Thermo>::updateRho()
+{
+    volScalarField rhoNew
+    (
+        Thermo::blendedVolScalarFieldProperty
+        (
+            IOobject::groupName("rhoNew", basicThermoModel::name_),
+            dimDensity,
+            &Thermo::thermoType1::initializeRho,
+            &Thermo::thermoType2::initializeRho,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    this->rho_ = rhoNew;
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        forAll(this->rho_.boundaryField()[patchi], facei)
+        {
+            this->rho_.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
+    }
 }
 
 

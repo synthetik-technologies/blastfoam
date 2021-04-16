@@ -124,7 +124,7 @@ Foam::scalar Foam::AbelNobel<Specie>::dpdv
     const scalar& T
 ) const
 {
-    return -this->R()*T*sqr(rho/(1.0 - b_*rho));
+    return -this->R()*T*sqr(rho/(b_*rho - 1.0));
 }
 
 
@@ -305,7 +305,7 @@ inline Foam::AbelNobel<Specie> Foam::operator==
     return AbelNobel<Specie>
     (
         sp,
-        Y2*pf2.b_    - Y1*pf1.b_
+        Y2*pf2.b_ - Y1*pf1.b_
     );
 }
 

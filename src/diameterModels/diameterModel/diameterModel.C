@@ -56,7 +56,11 @@ Foam::diameterModel::diameterModel
             IOobject::groupName("d", phaseName),
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            (
+                this->requireRead()
+              ? IOobject::MUST_READ
+              : IOobject::READ_IF_PRESENT
+            ),
             IOobject::AUTO_WRITE
         ),
         mesh,
@@ -88,16 +92,33 @@ Foam::tmp<Foam::volScalarField> Foam::diameterModel::V() const
 void Foam::diameterModel::update()
 {}
 
+
 void Foam::diameterModel::solve()
 {}
 
+
+void Foam::diameterModel::solve(const volScalarField& p, const volScalarField& T)
+{
+    solve();
+}
+
+
 void Foam::diameterModel::postUpdate()
 {}
+
 
 void Foam::diameterModel::clearODEFields()
 {}
 
 
-
+Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("dVdt", d_.group()),
+        d_.mesh(),
+        dimensionedScalar(dimMass/dimTime, 0.0)
+    );
+}
 
 // ************************************************************************* //

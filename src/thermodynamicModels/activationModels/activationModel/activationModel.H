@@ -97,6 +97,12 @@ protected:
                     return activated_;
                 }
 
+                //- Has the point been activated
+                bool& activated()
+                {
+                    return activated_;
+                }
+
                 //- Return delay
                 const scalar& delay() const
                 {

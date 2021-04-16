@@ -62,6 +62,12 @@ protected:
         //- Diameter
         volScalarField d_;
 
+        //- Does the diameter field need to be read
+        virtual bool requireRead()
+        {
+            return false;
+        }
+
 
 public:
 
@@ -115,24 +121,36 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
+        //- Solve sub-step stepi given pressure and temperature fields
+        virtual void solve(const volScalarField& p, const volScalarField& T);
+
         //- Post update
         virtual void postUpdate();
 
         //- Remove stored fields
         virtual void clearODEFields();
 
-        //- Return const reference to progress variable
+        //- Return if the model requires inputs
+        virtual bool requireInput() const
+        {
+            return false;
+        }
+
+        //- Return effective diameter
         const volScalarField& d() const
         {
             return d_;
         }
 
         //- Return surface area
-        tmp<volScalarField> A() const;
+        virtual tmp<volScalarField> A() const;
 
         //- Return volume
-        tmp<volScalarField> V() const;
+        virtual tmp<volScalarField> V() const;
 
+        //- Return change in radius per unit time
+        //  Only used in mass transfer
+        virtual tmp<volScalarField> dMdt() const;
 };
 
 

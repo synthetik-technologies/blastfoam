@@ -32,6 +32,7 @@ License
 #include "liftModel.H"
 #include "turbulentDispersionModel.H"
 #include "heatTransferModel.H"
+#include "massTransferModel.H"
 #include "interfacialPressureModel.H"
 #include "interfacialVelocityModel.H"
 #include "dragModel.H"
@@ -628,7 +629,8 @@ Foam::phaseSystem::phaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimVelocity, Zero)
+        dimensionedVector("0", dimVelocity, Zero),
+        "zeroGradient"
     ),
 
     phi_
@@ -694,22 +696,25 @@ Foam::phaseSystem::phaseSystem
     }
 
     // Sub-models
-    generatePairsAndSubModels("aspectRatio", aspectRatioModels_);
-    generatePairsAndSubModels("drag", dragModels_);
-    generatePairsAndSubModels("virtualMass", virtualMassModels_);
-    generatePairsAndSubModels("lift", liftModels_);
-    generatePairsAndSubModels("turbulentDispersion", turbulentDispersionModels_);
-    generatePairsAndSubModels("wallLubrication", wallLubricationModels_);
-    generatePairsAndSubModels("heatTransfer", heatTransferModels_);
+    generatePairsAndSubModels("aspectRatio", aspectRatioModels_, true);
+    generatePairsAndSubModels("drag", dragModels_, true);
+    generatePairsAndSubModels("virtualMass", virtualMassModels_, false);
+    generatePairsAndSubModels("lift", liftModels_, false);
+    generatePairsAndSubModels("turbulentDispersion", turbulentDispersionModels_, false);
+    generatePairsAndSubModels("wallLubrication", wallLubricationModels_, false);
+    generatePairsAndSubModels("heatTransfer", heatTransferModels_, true);
+    generatePairsAndSubModels("massTransfer", massTransferModels_, false);
     generatePairsAndSubModels
     (
         "interfacialPressure",
-        interfacialPressureModels_
+        interfacialPressureModels_,
+        true
     );
     generatePairsAndSubModels
     (
         "interfacialVelocity",
-        interfacialVelocityModels_
+        interfacialVelocityModels_,
+        true
     );
 
     if (lookupOrDefault<Switch>("solveDragODE", false))
@@ -796,7 +801,40 @@ Foam::phaseSystem::phaseSystem
         }
     }
 
+    forAllConstIter
+    (
+        massTransferModelTable,
+        massTransferModels_,
+        massTransferIter
+    )
+    {
+        const phasePair& pair(this->phasePairs_[massTransferIter.key()]);
+
+        mDots_.insert
+        (
+            pair,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("mDot", pair.name()),
+                    this->mesh().time().timeName(),
+                    this->mesh()
+                ),
+                this->mesh(),
+                dimensionedScalar(dimDensity/dimTime, 0)
+            )
+        );
+    }
+
     calcMixtureVariables();
+
+    fvOptionsPtr_ = &fv::options::New(mesh);
+
+    if (!fvOptionsPtr_->optionList::size())
+    {
+        Info << "No finite volume options present" << endl;
+    }
 }
 
 
@@ -901,6 +939,60 @@ void Foam::phaseSystem::update()
     forAll(phaseModels_, phasei)
     {
         phaseModels_[phasei].update();
+    }
+
+    //- Update mass transfer rates
+    forAllConstIter
+    (
+        massTransferModelTable,
+        massTransferModels_,
+        massTransferIter
+    )
+    {
+        *mDots_[massTransferIter.key()] = massTransferIter()->K();
+    }
+
+    forAllIter
+    (
+        massTransferModelTable,
+        massTransferModels_,
+        massTransferIter
+    )
+    {
+        phaseModel& dispersed
+        (
+            phaseModels_[massTransferIter()->pair().dispersed().name()]
+        );
+        phaseModel& continuous
+        (
+            phaseModels_[massTransferIter()->pair().continuous().name()]
+        );
+
+        tmp<volScalarField> mDot(*mDots_[massTransferIter.key()]);
+        List<word> species(massTransferIter()->dispersedSpecies());
+        species.append(massTransferIter()->continuousSpecies());
+
+        forAll(species, i)
+        {
+            const word& specieName(species[i]);
+            if (dispersed.thermo().contains(specieName))
+            {
+                dispersed.thermo().addDelta
+                (
+                    specieName,
+                    -massTransferIter()->dispersedYi(specieName)*mDot
+                );
+            }
+
+            if (continuous.thermo().contains(specieName))
+            {
+                continuous.thermo().addDelta
+                (
+                    specieName,
+                    massTransferIter()->continuousYi(specieName)*mDot
+                );
+            }
+        }
     }
 }
 
@@ -1017,6 +1109,162 @@ Foam::phaseSystem::cellE
     }
 }
 
+
+Foam::tmp<Foam::volScalarField>
+Foam::phaseSystem::mDot(const phaseModel& phase1, const phaseModel& phase2) const
+{
+    tmp<volScalarField> tmpmDoti
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("mDot", phase1.name()),
+            mesh_,
+            dimensionedScalar(dimDensity/dimTime, 0.0)
+        )
+    );
+    volScalarField& mDoti = tmpmDoti.ref();
+    phasePairKey key1(phase1.name(), phase2.name(), true);
+    phasePairKey key2(phase2.name(), phase1.name(), true);
+
+    if (mDots_.found(key1))
+    {
+        mDoti += *mDots_[key1];
+    }
+    if (mDots_.found(key2))
+    {
+        mDoti -= *mDots_[key2];
+    }
+    return tmpmDoti;
+}
+
+
+Foam::tmp<Foam::volVectorField>
+Foam::phaseSystem::mDotU(const phaseModel& phase1, const phaseModel& phase2) const
+{
+    tmp<volVectorField> tmpmDotUi
+    (
+        volVectorField::New
+        (
+            IOobject::groupName("mDotU", phase1.name()),
+            mesh_,
+            dimensionedVector(dimDensity*dimVelocity/dimTime, Zero)
+        )
+    );
+    volVectorField& mDotUi = tmpmDotUi.ref();
+    phasePairKey key1(phase1.name(), phase2.name(), true);
+    phasePairKey key2(phase2.name(), phase1.name(), true);
+    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
+
+    volScalarField mD
+    (
+        volScalarField::New
+        (
+            "mD" + phase1.name()+"."+phase2.name(),
+            mesh_,
+            dimensionedScalar("0", dimDensity/dimTime, 0.0)
+        )
+    );
+    if (mDots_.found(key1))
+    {
+        mD += *mDots_[key1];
+    }
+    if (mDots_.found(key2))
+    {
+        mD -= *mDots_[key2];
+    }
+    mDotUi += max(mD, zeroM)*phase2.U() + min(mD, zeroM)*phase1.U();
+    return tmpmDotUi;
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) const
+{
+    tmp<volScalarField> tmpmDotEi
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("mDotE", phase1.name()),
+            mesh_,
+            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
+        )
+    );
+    volScalarField& mDotEi = tmpmDotEi.ref();
+    phasePairKey key1(phase1.name(), phase2.name(), true);
+    phasePairKey key2(phase2.name(), phase1.name(), true);
+    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
+    volScalarField mD
+    (
+        volScalarField::New
+        (
+            "mD" + phase1.name()+"."+phase2.name(),
+            mesh_,
+            dimensionedScalar("0", dimDensity/dimTime, 0.0)
+        )
+    );
+
+    volScalarField Hf(phase1.thermo().Hf() - phase2.thermo().Hf());
+
+    if (mDots_.found(key1))
+    {
+        mD += *mDots_[key1];
+    }
+    if (mDots_.found(key2))
+    {
+        mD -= *mDots_[key2];
+    }
+    volScalarField mD21(max(mD, zeroM));
+    volScalarField mD12(min(mD, zeroM));
+    mDotEi += mD21*phase2.e() + mD12*phase1.e() + mD21*Hf;
+
+    if (!phase1.granular())
+    {
+        volScalarField K1(0.5*magSqr(phase1.U()));
+        volScalarField K2(0.5*magSqr(phase2.U()));
+
+        if (phase2.granular())
+        {
+            K2 += 1.5*phase2.Theta();
+        }
+
+        mDotEi += mD21*K2 + mD12*K1;
+    }
+
+    return tmpmDotEi;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotPTE
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    tmp<volScalarField> tmpmDotPTEi
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("mDotPTE", phase1.name()),
+            mesh_,
+            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
+        )
+    );
+    if (!phase1.granular())
+    {
+        return tmpmDotPTEi;
+    }
+
+    volScalarField& mDotPTEi = tmpmDotPTEi.ref();
+    phasePairKey key1(phase1.name(), phase2.name(), true);
+
+    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
+    if (mDots_.found(key1))
+    {
+        const volScalarField& mD(*mDots_[key1]);
+        mDotPTEi += min(mD, zeroM)*1.5*phase1.Theta();
+    }
+    return tmpmDotPTEi;
+}
 
 
 bool Foam::phaseSystem::read()

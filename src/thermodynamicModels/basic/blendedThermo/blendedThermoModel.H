@@ -289,6 +289,9 @@ public:
         //- Heat of formation
         virtual tmp<volScalarField> Hf() const;
 
+        //- Heat of formation
+        virtual tmp<volScalarField> flameT() const;
+
         //- Read residual values
         virtual void read(const dictionary& dict)
         {

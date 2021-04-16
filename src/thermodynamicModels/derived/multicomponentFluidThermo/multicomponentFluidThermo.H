@@ -94,6 +94,9 @@ public:
 
     // Member Functions
 
+        //- Calculate density
+        virtual void updateRho();
+
         //- Pre update
         virtual void update()
         {}

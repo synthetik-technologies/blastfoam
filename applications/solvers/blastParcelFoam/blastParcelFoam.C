@@ -77,10 +77,10 @@ int main(int argc, char *argv[])
 
     Info<< "\nStarting time loop\n" << endl;
 
-
-    parcels.storeGlobalPositions();
     while (runTime.run())
     {
+        parcels.storeGlobalPositions();
+
         //- Refine the mesh
         mesh.refine();
 

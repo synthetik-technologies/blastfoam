@@ -184,12 +184,6 @@ public:
             return rho_;
         }
 
-        //- Return the thermo model
-        virtual const basicThermoModel& thermo() const
-        {
-            return thermo_;
-        }
-
         //- Return the thermophysical pressure
         virtual const volScalarField& p() const
         {
@@ -212,6 +206,18 @@ public:
         virtual tmp<surfaceScalarField> alphaPhi() const
         {
             return alphaPhi_;
+        }
+
+        //- Return thermodynamic model
+        virtual const basicThermoModel& thermo() const
+        {
+            return thermo_;
+        }
+
+        //- Access thermodynamic model
+        virtual basicThermoModel& thermo()
+        {
+            return thermo_;
         }
 
         //- Return the laminar viscosity

@@ -34,6 +34,7 @@ Description
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
 #include "phaseSystem.H"
+#include "wedgeFvPatch.H"
 #include "timeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

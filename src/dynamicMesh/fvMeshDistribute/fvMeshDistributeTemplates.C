@@ -332,6 +332,7 @@ void Foam::fvMeshDistribute::sendFields
             << fieldNames[i] << token::NL << token::BEGIN_BLOCK
             << tsubfld
             << token::NL << token::END_BLOCK << token::NL;
+         returnReduce(true, orOp<scalar>());
     }
     toNbr << token::END_BLOCK << token::NL;
 }

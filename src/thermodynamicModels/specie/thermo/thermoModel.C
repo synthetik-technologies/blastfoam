@@ -120,7 +120,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
         {
             Rhonew = Rhoest/2.0;
         }
-    } while (mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol && iter < maxIter_);
+    } while (mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol && iter++ < maxIter_);
 
     return Rhonew;
 }

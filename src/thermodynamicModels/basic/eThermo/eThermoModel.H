@@ -245,6 +245,8 @@ public:
         //- Heat of formation
         virtual tmp<volScalarField> Hf() const;
 
+        //- Heat of formation
+        virtual tmp<volScalarField> flameT() const;
 };
 
 

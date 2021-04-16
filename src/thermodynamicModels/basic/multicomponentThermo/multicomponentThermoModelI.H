@@ -27,24 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 template<class BasicThermo>
-inline const Foam::speciesTable&
-Foam::multicomponentThermoModel<BasicThermo>::species() const
-{
-    return species_;
-}
-
-
-template<class BasicThermo>
-inline bool Foam::multicomponentThermoModel<BasicThermo>::contains
-(
-    const word& specieName
-) const
-{
-    return species_[specieName];
-}
-
-
-template<class BasicThermo>
 inline bool
 Foam::multicomponentThermoModel<BasicThermo>::active(label speciei) const
 {
@@ -99,7 +81,7 @@ Foam::multicomponentThermoModel<BasicThermo>::Y(const label i)
 
 
 template<class BasicThermo>
-inline const Foam::volScalarField&
+inline Foam::tmp<Foam::volScalarField>
 Foam::multicomponentThermoModel<BasicThermo>::Y
 (
     const label i
@@ -121,7 +103,7 @@ Foam::multicomponentThermoModel<BasicThermo>::Y
 
 
 template<class BasicThermo>
-inline const Foam::volScalarField&
+inline Foam::tmp<Foam::volScalarField>
 Foam::multicomponentThermoModel<BasicThermo>::Y
 (
     const word& specieName

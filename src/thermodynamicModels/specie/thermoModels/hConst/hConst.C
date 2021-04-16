@@ -34,8 +34,9 @@ template<class EquationOfState>
 Foam::hConst<EquationOfState>::hConst(const dictionary& dict)
 :
     EquationOfState(dict),
-    Cp_(readScalar(dict.subDict("thermodynamics").lookup("Cp"))),
-    Hf_(readScalar(dict.subDict("thermodynamics").lookup("Hf")))
+    Cp_(dict.subDict("thermodynamics").lookup<scalar>("Cp")),
+    Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
+    flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", 0.0))
 {}
 
 // ************************************************************************* //

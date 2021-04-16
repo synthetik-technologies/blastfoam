@@ -534,6 +534,36 @@ void Foam::basicThermoModel::eBoundaryCorrection()
 }
 
 
+Foam::tmp<Foam::volScalarField> Foam::basicThermoModel::Y(const word& name) const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName(name, this->name()),
+        e_.mesh(),
+        dimless
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::basicThermoModel::Y(const label i) const
+{
+    return volScalarField::New
+    (
+        IOobject::groupName("Yi" + Foam::name(i), this->name()),
+        e_.mesh(),
+        dimless
+    );
+}
+
+
+void Foam::basicThermoModel::addDelta
+(
+    const word& name,
+    const volScalarField& delta
+)
+{}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::basicThermoModel::kappa() const
 {

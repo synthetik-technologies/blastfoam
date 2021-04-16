@@ -47,7 +47,8 @@ Foam::heatTransferModels::RanzMarshall::RanzMarshall
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair)
+    heatTransferModel(dict, pair),
+    NuModel_(NusseltNumberModel::New(dict, pair))
 {}
 
 
@@ -66,24 +67,11 @@ Foam::heatTransferModels::RanzMarshall::K
     const label nodej
 ) const
 {
-    const volScalarField& alphag(pair_.continuous().volumeFraction(nodej));
-    volScalarField Pr(pair_.Pr(nodei, nodej));
-    volScalarField Re(pair_.Re(nodei, nodej));
-    volScalarField Nu
-    (
-        (7.0 - 10.0*alphag + 5.0*sqr(alphag))
-       *(1.0 + 0.7*pow(Re, 0.2)*pow(Pr, 1.0/3.0))
-      + (1.33 - 2.4*alphag + 1.2*sqr(alphag))
-       *pow(Re, 0.7)*pow(Pr, 1.0/3.0)
-//         scalar(2)
-//       + 0.6*sqrt(pair_.Re(nodei, nodej))*cbrt(pair_.Pr(nodei, nodej))
-    );
-
     return
         6.0
        *max(pair_.dispersed().volumeFraction(nodei), residualAlpha_)
        *pair_.continuous().kappa()
-       *Nu
+       *NuModel_->Nu(nodei, nodej)
        /sqr(pair_.dispersed().d(nodei));
 }
 

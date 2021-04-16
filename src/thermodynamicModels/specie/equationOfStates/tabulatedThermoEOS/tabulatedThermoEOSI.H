@@ -191,6 +191,15 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ea
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Hf() const
 {
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::flameT() const
+{
+    NotImplemented;
     return 0.0;
 }
 

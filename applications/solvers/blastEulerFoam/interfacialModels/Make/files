@@ -18,9 +18,15 @@ dragModels/dragODE/dragODE.C
 
 heatTransferModels/heatTransferModel/heatTransferModel.C
 heatTransferModels/heatTransferModel/newHeatTransferModel.C
-heatTransferModels/constantNu/constantNuHeatTransfer.C
 heatTransferModels/sphericalHeatTransfer/sphericalHeatTransfer.C
 heatTransferModels/RanzMarshall/RanzMarshall.C
+
+heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/NusseltNumberModel/newNusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/constant/constantNusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/Gunn/GunnNusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/duct/ductNusseltNumberModel.C
+heatTransferModels/NusseltNumberModels/GelperinEpstein/GelperinEpsteinNusseltNumberModel.C
 
 swarmCorrections/swarmCorrection/swarmCorrection.C
 swarmCorrections/swarmCorrection/newSwarmCorrection.C
@@ -54,6 +60,11 @@ turbulentDispersionModels/turbulentDispersionModel/newTurbulentDispersionModel.C
 turbulentDispersionModels/noTurbulentDispersion/noTurbulentDispersion.C
 turbulentDispersionModels/Davidson/Davidson.C
 turbulentDispersionModels/Panicker/Panicker.C
+
+massTransferModels/massTransferModel/massTransferModel.C
+massTransferModels/massTransferModel/newMassTransferModel.C
+massTransferModels/noMassTransfer/noMassTransfer.C
+massTransferModels/reactingParticleMassTransfer/reactingParticleMassTransfer.C
 
 aspectRatioModels/aspectRatioModel/aspectRatioModel.C
 aspectRatioModels/aspectRatioModel/newAspectRatioModel.C

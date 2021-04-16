@@ -67,29 +67,9 @@ void Foam::detonatingSolidThermo<Thermo>::initializeModels()
         this->thermoDict_,
         this->name_
     );
-    volScalarField& rhoRef(solidThermoModel::rho_);
-    volScalarField rhos
-    (
-        Thermo::blendedVolScalarFieldProperty
-        (
-            IOobject::groupName("rhos", basicThermoModel::name_),
-            dimDensity,
-            &Thermo::thermoType1::rho0,
-            &Thermo::thermoType2::rho0
-        )
-    );
-    forAll(rhoRef, celli)
-    {
-        rhoRef[celli] = rhos[celli];
-    }
-    forAll(rhoRef.boundaryField(), patchi)
-    {
-        forAll(rhoRef.boundaryField()[patchi], facei)
-        {
-            rhoRef.boundaryFieldRef()[patchi][facei] =
-                rhos.boundaryField()[patchi][facei];
-        }
-    }
+
+    updateRho();
+
     this->e_ = this->E();
 
     //- Add detonation energy
@@ -145,6 +125,35 @@ void Foam::detonatingSolidThermo<Thermo>::clearODEFields()
 {
     activation_->clearODEFields();
     afterburn_->clearODEFields();
+}
+
+
+template<class Thermo>
+void Foam::detonatingSolidThermo<Thermo>::updateRho()
+{
+    volScalarField& rhoRef(solidThermoModel::rho_);
+    volScalarField rhoNew
+    (
+        Thermo::blendedVolScalarFieldProperty
+        (
+            IOobject::groupName("rhoNew", basicThermoModel::name_),
+            dimDensity,
+            &Thermo::thermoType1::rho0,
+            &Thermo::thermoType2::rho0
+        )
+    );
+    forAll(rhoRef, celli)
+    {
+        rhoRef[celli] = rhoNew[celli];
+    }
+    forAll(rhoRef.boundaryField(), patchi)
+    {
+        forAll(rhoRef.boundaryField()[patchi], facei)
+        {
+            rhoRef.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
+    }
 }
 
 

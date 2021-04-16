@@ -187,6 +187,13 @@ namespace Foam
         AbelNobel,
         blastSpecie
     );
+    defineThermoTypes
+    (
+        propellantTransport,
+        equationOfState,
+        AbelNobel,
+        blastSpecie
+    );
     defineThermoType
     (
         constTransport,
@@ -198,6 +205,14 @@ namespace Foam
     defineThermoType
     (
         sutherlandTransport,
+        janaf,
+        equationOfState,
+        AbelNobel,
+        blastSpecie
+    );
+    defineThermoType
+    (
+        propellantTransport,
         janaf,
         equationOfState,
         AbelNobel,

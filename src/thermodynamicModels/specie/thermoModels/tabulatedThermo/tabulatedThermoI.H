@@ -90,6 +90,15 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Hf() const
 {
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::flameT() const
+{
+    NotImplemented;
     return 0.0;
 }
 

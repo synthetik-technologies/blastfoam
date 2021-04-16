@@ -37,6 +37,7 @@ License
 #include "basicThermoModel.H"
 #include "phaseCompressibleMomentumTransportModel.H"
 #include "fluxScheme.H"
+#include "interfacialPressureModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -141,7 +142,8 @@ Foam::phaseModel::phaseModel
             fluid.mesh()
         ),
         fluid.mesh(),
-        dimensionedVector("0", dimDensity*dimVelocity, Zero)
+        dimensionedVector("0", dimDensity*dimVelocity, Zero),
+        "zeroGradient"
     ),
     alphaRhoE_
     (
@@ -250,9 +252,73 @@ void Foam::phaseModel::solveAlpha(const bool s)
 }
 
 
+void Foam::phaseModel::solveD()
+{
+    if (!dPtr_->requireInput())
+    {
+        dPtr_->solve();
+        return;
+    }
+
+    //- Update diameterModel
+    volScalarField Pi
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("pi", name_),
+            fluid_.mesh(),
+            dimensionedScalar(dimPressure, 0.0)
+        )
+    );
+    tmp<volScalarField> sumAlpha
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("sumAlpha", name_),
+            fluid_.mesh(),
+            dimensionedScalar(dimless, 0.0)
+        )
+    );
+
+    forAll(fluid_.phases(), phasei)
+    {
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if
+        (
+            fluid_.foundSubModel<interfacialPressureModel>
+            (
+                *this,
+                otherPhase,
+                false
+            )
+        )
+        {
+            Pi +=
+                fluid_.lookupSubModel<interfacialPressureModel>
+                (
+                    *this,
+                    otherPhase,
+                    false
+                ).Pi()
+               *otherPhase;
+            sumAlpha.ref() += otherPhase;
+        }
+    }
+
+    Pi /= Foam::max(sumAlpha, this->residualAlpha());
+    dPtr_->solve(Pi, T_);
+}
+
+
 void Foam::phaseModel::solveAlphaRho()
 {
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
+    forAll(fluid_.phases(), phasei)
+    {
+        const phaseModel& phase = fluid_.phases()[phasei];
+        deltaAlphaRho -= fluid_.mDot(*this, phase);
+    }
+
     this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRho_);
 
     this->storeAndBlendOld(alphaRho_, alphaRhoOld_);
@@ -273,7 +339,6 @@ void Foam::phaseModel::solve()
       - p()*gradAlpha()
       - (*this)*rho()*fluid_.g() // alphaRho has already been updated
     );
-    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
 
     volScalarField deltaAlphaRhoE
     (
@@ -281,6 +346,7 @@ void Foam::phaseModel::solve()
       - ESource()
       - (alphaRhoU_ & fluid_.g())
     );
+
     forAll(fluid_.phases(), phasei)
     {
         const phaseModel& phase = fluid_.phases()[phasei];
@@ -288,7 +354,10 @@ void Foam::phaseModel::solve()
         {
             deltaAlphaRhoE += p()*fvc::div(phase.alphaPhi());
         }
+        deltaAlphaRhoU -= fluid_.mDotU(*this, phase);
+        deltaAlphaRhoE -= fluid_.mDotE(*this, phase);
     }
+    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
     this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
 
 
@@ -316,9 +385,6 @@ void Foam::phaseModel::solve()
         alpha.min(alphaMax_);
         alpha.correctBoundaryConditions();
     }
-
-    //- Update diameterModel
-    dPtr_->solve();
 }
 
 
@@ -385,6 +451,7 @@ void Foam::phaseModel::clearODEFields()
 void Foam::phaseModel::update()
 {
     dPtr_->update();
+    solveD();
 }
 
 

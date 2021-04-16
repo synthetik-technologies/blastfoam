@@ -4,16 +4,27 @@
     scalarField sumPhi(mesh.V().field().size(), 0.0);
     forAll(phases, phasei)
     {
-        scalarField phii
+        surfaceScalarField amaxSf
         (
-            fvc::surfaceSum
-            (
-                mag(phases[phasei].phi())
-              + fvc::interpolate(phases[phasei].speedOfSound())*mesh.magSf()
-            )().primitiveField()
+            fvc::interpolate(phases[phasei].speedOfSound())*mesh.magSf()
         );
-        sumPhi = max(sumPhi, phii);
-        scalar CoNumi(0.5*gMax(phii/mesh.V().field())*runTime.deltaTValue());
+        // Remove wave speed from wedge boundaries
+        forAll(amaxSf.boundaryField(), patchi)
+        {
+            if (isA<wedgeFvPatch>(mesh.boundary()[patchi]))
+            {
+                amaxSf.boundaryFieldRef() = Zero;
+            }
+        }
+        amaxSf += mag(fvc::flux(phases[phasei].U()));
+
+        scalarField sumAmaxSf
+        (
+            fvc::surfaceSum(amaxSf)().primitiveField()
+        );
+
+        sumPhi = max(sumPhi, sumAmaxSf);
+        scalar CoNumi(0.5*gMax(sumAmaxSf/mesh.V().field())*runTime.deltaTValue());
 
         Info<< "\t" << phases[phasei].name() << ": " << CoNumi << nl;
     }

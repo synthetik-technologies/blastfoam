@@ -718,7 +718,7 @@ bool update
     const scalar unrefineLevel = -small;
 
     const label nBufferLayers =
-        readLabel(refineDict.lookup("nBufferLayers"));
+        refineDict.lookupOrDefault<label>("nBufferLayers", 0);
 
     // Cells marked for refinement or otherwise protected from unrefinement.
     PackedBoolList refineCell(mesh.nCells());

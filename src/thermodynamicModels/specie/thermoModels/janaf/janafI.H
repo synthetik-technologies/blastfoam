@@ -225,6 +225,14 @@ inline Foam::scalar Foam::janaf<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
+inline Foam::scalar Foam::janaf<EquationOfState>::flameT() const
+{
+    NotImplemented;
+    return 0;
+}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::S
 (
     const scalar& p,

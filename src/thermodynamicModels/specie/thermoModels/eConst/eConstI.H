@@ -33,12 +33,14 @@ inline Foam::eConst<EquationOfState>::eConst
 (
     const EquationOfState& st,
     const scalar cv,
-    const scalar hf
+    const scalar hf,
+    const scalar ft
 )
 :
     EquationOfState(st),
     Cv_(cv),
-    Hf_(hf)
+    Hf_(hf),
+    flameT_(ft)
 {}
 
 
@@ -53,7 +55,8 @@ inline Foam::eConst<EquationOfState>::eConst
 :
     EquationOfState(name, ct),
     Cv_(ct.Cv_),
-    Hf_(ct.Hf_)
+    Hf_(ct.Hf_),
+    flameT_(ct.flameT_)
 {}
 
 
@@ -135,6 +138,13 @@ inline Foam::scalar Foam::eConst<EquationOfState>::Hf() const
 
 
 template<class EquationOfState>
+inline Foam::scalar Foam::eConst<EquationOfState>::flameT() const
+{
+    return flameT_;
+}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::S
 (
     const scalar& p,
@@ -187,6 +197,7 @@ inline void Foam::eConst<EquationOfState>::operator+=
 
         Cv_ = Y1*Cv_ + Y2*ct.Cv_;
         Hf_ = Y1*Hf_ + Y2*ct.Hf_;
+        flameT_ = Y1*flameT_ + Y2*ct.flameT_;
     }
 }
 
@@ -212,7 +223,8 @@ inline Foam::eConst<EquationOfState> Foam::operator+
         (
             eofs,
             ct1.Cv_,
-            ct1.Hf_
+            ct1.Hf_,
+            ct1.flameT_
         );
     }
     else
@@ -223,7 +235,9 @@ inline Foam::eConst<EquationOfState> Foam::operator+
             ct1.Y()/eofs.Y()*ct1.Cv_
           + ct2.Y()/eofs.Y()*ct2.Cv_,
             ct1.Y()/eofs.Y()*ct1.Hf_
-          + ct2.Y()/eofs.Y()*ct2.Hf_
+          + ct2.Y()/eofs.Y()*ct2.Hf_,
+            ct1.Y()/eofs.Y()*ct1.flameT_
+          + ct2.Y()/eofs.Y()*ct2.flameT_
         );
     }
 }
@@ -240,7 +254,8 @@ inline Foam::eConst<EquationOfState> Foam::operator*
     (
         s*static_cast<const EquationOfState&>(ct),
         ct.Cv_,
-        ct.Hf_
+        ct.Hf_,
+        ct.flameT_
     );
 }
 
@@ -264,7 +279,9 @@ inline Foam::eConst<EquationOfState> Foam::operator==
         ct2.Y()/eofs.Y()*ct2.Cv_
       - ct1.Y()/eofs.Y()*ct1.Cv_,
         ct2.Y()/eofs.Y()*ct2.Hf_
-      - ct1.Y()/eofs.Y()*ct1.Hf_
+      - ct1.Y()/eofs.Y()*ct1.Hf_,
+        ct2.Y()/eofs.Y()*ct2.flameT_
+      - ct1.Y()/eofs.Y()*ct1.flameT_
     );
 }
 

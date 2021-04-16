@@ -149,7 +149,7 @@ Foam::scalar Foam::stiffenedGas<Specie>::E
     const scalar& e
 ) const
 {
-    return 0.0;//gamma_*a_/max(rho, 1.0e-10);
+    return a_/max(rho, 1.0e-10);
 }
 
 
@@ -160,7 +160,6 @@ Foam::scalar Foam::stiffenedGas<Specie>::Cv
     const scalar& e
 ) const
 {
-    // Check
     return 0;
 }
 
@@ -172,7 +171,6 @@ Foam::scalar Foam::stiffenedGas<Specie>::Cp
     const scalar& e
 ) const
 {
-    // Check
     return 0;
 }
 
@@ -228,8 +226,16 @@ inline void Foam::stiffenedGas<Specie>::operator+=
         Y1 /= this->Y();
         const scalar Y2 = pf.Y()/this->Y();
 
-        a_ = Y1*a_ + Y2*pf.a_;
-        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+        //- Save the original gamma
+        scalar gamma1 = gamma_;
+
+        gamma_ = 1.0/(Y1/(gamma_ - 1.0) + Y2/(pf.gamma_ - 1.0)) + 1.0;
+        a_ =
+            (gamma_ - 1.0)/gamma_
+           *(
+                Y1*a_*gamma1/(gamma1 - 1.0)
+              + Y2*pf.a_*pf.gamma_/(pf.gamma_ - 1.0)
+            );
     }
 }
 
@@ -270,11 +276,18 @@ inline Foam::stiffenedGas<Specie> Foam::operator+
         const scalar Y1 = pf1.Y()/sp.Y();
         const scalar Y2 = pf2.Y()/sp.Y();
 
+        scalar gamma =
+            1.0/(Y1/(pf1.gamma_ - 1.0) + Y2/(pf2.gamma_ - 1.0)) + 1.0;
+
         return stiffenedGas<Specie>
         (
             sp,
-            Y1*pf1.a_ + Y2*pf2.a_,
-            Y1*pf1.gamma_ + Y2*pf2.gamma_
+            (gamma - 1.0)/gamma
+           *(
+                Y1*pf1.a_*pf1.gamma_/(pf1.gamma_ - 1.0)
+              + Y2*pf2.a_*pf2.gamma_/(pf2.gamma_ - 1.0)
+            ),
+            gamma
         );
     }
 }
@@ -312,11 +325,18 @@ inline Foam::stiffenedGas<Specie> Foam::operator==
     const scalar Y1 = pf1.Y()/sp.Y();
     const scalar Y2 = pf2.Y()/sp.Y();
 
+    // NEED TO CONFIRM
+    scalar gamma =
+            1.0/(Y2/(pf2.gamma_ - 1.0) - Y1/(pf1.gamma_ - 1.0)) + 1.0;
     return stiffenedGas<Specie>
     (
         sp,
-        Y2*pf2.a_    - Y1*pf1.a_,
-        Y2*pf2.gamma_ - Y1*pf1.gamma_
+        (gamma - 1.0)/gamma
+       *(
+            Y2*pf2.a_*pf2.gamma_/(pf2.gamma_ - 1.0)
+          - Y1*pf1.a_*pf1.gamma_/(pf1.gamma_ - 1.0)
+        ),
+        gamma
     );
 }
 

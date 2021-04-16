@@ -162,6 +162,7 @@ void Foam::timeIntegrator::integrate()
     }
 
     this->postUpdateAll();
+    stepi_ = 0;
 }
 
 

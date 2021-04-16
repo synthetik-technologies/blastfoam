@@ -178,6 +178,9 @@ protected:
         //- Return the flux scheme
         virtual const fluxScheme& flux() const = 0;
 
+        //- Solve the diameter model
+        void solveD();
+
 
 public:
 
@@ -392,6 +395,12 @@ public:
                 return alphaRho_;
             }
 
+            //- Return diameterModel
+            virtual const diameterModel& dModel() const
+            {
+                return dPtr_();
+            }
+
             //- Return diameter of nodei
             virtual tmp<volScalarField> d(const label nodei = -1) const
             {
@@ -403,9 +412,6 @@ public:
             {
                 return dPtr_->d()[celli];
             }
-
-            //- Return the thermo model
-            virtual const basicThermoModel& thermo() const = 0;
 
             //- Return the thermophysical pressure
             virtual const volScalarField& p() const = 0;
@@ -507,6 +513,12 @@ public:
 
 
         // Thermodynamic properties
+
+            //- Return thermodynamic model
+            virtual const basicThermoModel& thermo() const = 0;
+
+            //- Access thermodynamic model
+            virtual basicThermoModel& thermo() = 0;
 
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const = 0;

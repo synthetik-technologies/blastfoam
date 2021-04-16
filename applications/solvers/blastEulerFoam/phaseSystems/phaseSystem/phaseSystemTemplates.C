@@ -61,9 +61,15 @@ void Foam::phaseSystem::generatePairsAndSubModels
         autoPtr<modelType>,
         phasePairKey,
         phasePairKey::hash
-    >& models
+    >& models,
+    const bool required
 )
 {
+    if (!found(modelName))
+    {
+        return;
+    }
+
     dictTable modelDicts(lookup(modelName));
 
     generatePairs(modelDicts);
@@ -82,6 +88,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
         phasePairKey,
         phasePairKey::hash
     >& models,
+    const bool required,
     const bool correctFixedFluxBCs
 )
 {
@@ -90,7 +97,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
         modelTypeTable;
 
     modelTypeTable tempModels;
-    generatePairsAndSubModels(modelName, tempModels);
+    generatePairsAndSubModels(modelName, tempModels, false);
 
     const blendingMethod& blending
     (
@@ -161,6 +168,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
         phasePairKey,
         phasePairKey::hash
     >& models,
+    const bool require,
     const bool correctFixedFluxBCs
 )
 {
@@ -177,6 +185,7 @@ void Foam::phaseSystem::generatePairsAndSubModels
         (
             IOobject::groupName(modelName, phase.name()),
             tempModels,
+            require,
             correctFixedFluxBCs
         );
 

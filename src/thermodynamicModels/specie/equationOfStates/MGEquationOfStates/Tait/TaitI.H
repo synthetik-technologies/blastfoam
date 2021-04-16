@@ -152,7 +152,7 @@ Foam::scalar Foam::Tait<Specie>::E
     const scalar& e
 ) const
 {
-    return 0.0;//amma_*(b_ - a_)/max(rho, 1.0e-10);
+    return (b_ - a_)/max(rho, 1.0e-10);
 }
 
 
@@ -163,7 +163,6 @@ Foam::scalar Foam::Tait<Specie>::Cv
     const scalar& e
 ) const
 {
-    // Check
     return 0;
 }
 
@@ -175,7 +174,6 @@ Foam::scalar Foam::Tait<Specie>::Cp
     const scalar& e
 ) const
 {
-    // Check
     return 0;
 }
 
@@ -231,9 +229,15 @@ inline void Foam::Tait<Specie>::operator+=
         Y1 /= this->Y();
         const scalar Y2 = pf.Y()/this->Y();
 
-        a_ = Y1*a_ + Y2*pf.a_;
-        b_ = Y1*b_ + Y2*pf.b_;
-        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
+        scalar gamma1 = gamma_;
+        scalar w1 = Y1/(gamma_ - 1.0);
+        scalar w2 = Y2/(pf.gamma_ - 1.0);
+        gamma_ = 1.0/(w1 + w2) + 1.0;
+
+        w1 *= gamma1;
+        w2 *= pf.gamma_;
+        a_ = (gamma_ - 1.0)/gamma_*(a_*w1 + pf.a_*w2);
+        b_ = (gamma_ - 1.0)/gamma_*(b_*w1 + pf.b_*w2);
     }
 }
 
@@ -275,12 +279,17 @@ inline Foam::Tait<Specie> Foam::operator+
         const scalar Y1 = pf1.Y()/sp.Y();
         const scalar Y2 = pf2.Y()/sp.Y();
 
+        scalar w1 = Y1/(pf1.gamma_ - 1.0);
+        scalar w2 = Y2/(pf2.gamma_ - 1.0);
+        scalar gamma = 1.0/(w1 + w2) + 1.0;
+        scalar coeff((gamma - 1.0)/gamma);
+
         return Tait<Specie>
         (
             sp,
-            Y1*pf1.a_ + Y2*pf2.a_,
-            Y1*pf1.b_ + Y2*pf2.b_,
-            Y1*pf1.gamma_ + Y2*pf2.gamma_
+            coeff*(w1*pf1.a_ + w2*pf2.a_),
+            coeff*(w1*pf1.b_ + w2*pf2.b_),
+            gamma
         );
     }
 }
@@ -319,12 +328,17 @@ inline Foam::Tait<Specie> Foam::operator==
     const scalar Y1 = pf1.Y()/sp.Y();
     const scalar Y2 = pf2.Y()/sp.Y();
 
+    scalar w1 = Y1/(pf1.gamma_ - 1.0);
+    scalar w2 = Y2/(pf2.gamma_ - 1.0);
+    scalar gamma = 1.0/(w2 - w1) + 1.0;
+    scalar coeff((gamma - 1.0)/gamma);
+
     return Tait<Specie>
     (
         sp,
-        Y2*pf2.a_    - Y1*pf1.a_,
-        Y2*pf2.b_  - Y1*pf1.b_,
-        Y2*pf2.gamma_ - Y1*pf1.gamma_
+        coeff*(w2*pf2.a_ - w1*pf1.a_),
+        coeff*(w2*pf2.b_ - w1*pf1.b_),
+        gamma
     );
 }
 

@@ -322,7 +322,13 @@ void Foam::fluxSchemes::AUSMPlusUp::calculateFluxes
     this->save(facei, patchi, U, Uf_);
     this->save(facei, patchi, pf, pf_);
 
-    phi = save(facei, patchi, U & Sf, phi_);
+    phi = save
+    (
+        facei,
+        patchi,
+        (U & Sf) - vMesh*magSf,//alphaRhoPhi/max(alpha, 1e-6)/rho,
+        phi_
+    );
     alphaPhi = alphaRhoPhi/rho;
     alphaRhoUPhi = alphaRhoPhi*U + pf*Sf;
     alphaRhoEPhi = alphaRhoPhi*e;

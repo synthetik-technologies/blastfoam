@@ -45,6 +45,22 @@ SourceFiles
 namespace Foam
 {
 
+template<class Thermo> class constSolidAnIsoTransport;
+
+template<class Thermo>
+inline constSolidAnIsoTransport<Thermo> operator+
+(
+    const constSolidAnIsoTransport<Thermo>&,
+    const constSolidAnIsoTransport<Thermo>&
+);
+
+template<class Thermo>
+inline constSolidAnIsoTransport<Thermo> operator*
+(
+    const scalar,
+    const constSolidAnIsoTransport<Thermo>&
+);
+
 /*---------------------------------------------------------------------------*\
                            Class constSolidAnIsoTransport Declaration
 \*---------------------------------------------------------------------------*/
@@ -59,6 +75,11 @@ class constSolidAnIsoTransport
         //- Constant isotropic thermal conductivity
         vector kappa_;
 
+        // Private Member Functions
+
+        //- Construct from components
+        inline constSolidAnIsoTransport(const Thermo& t, const vector kappa);
+
 
 public:
 
@@ -70,8 +91,18 @@ public:
               + word(Thermo::typeName()) + '>';
         }
 
-    // Constructor
-    constSolidAnIsoTransport(const dictionary& dict);
+    // Constructors
+
+        //- Construct as named copy
+        inline constSolidAnIsoTransport
+        (
+            const word&,
+            const constSolidAnIsoTransport&
+        );
+
+        //- Construct from dictionary
+        constSolidAnIsoTransport(const dictionary& dict);
+
 
     // Member Functions
 
@@ -87,10 +118,7 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return 0.0;
-        }
+        ) const;
 
         //- Thermal conductivity [W/mK]
         scalar kappa
@@ -98,10 +126,7 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return mag(kappa_);
-        }
+        ) const;
 
         //- Thermal conductivity [W/mK]
         vector Kappa
@@ -109,10 +134,7 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return kappa_;
-        }
+        ) const;
 
         //- Thermal diffusivity of enthalpy [kg/ms]
         vector alphah
@@ -120,10 +142,28 @@ public:
             const scalar& rho,
             const scalar& e,
             const scalar& T
-        ) const
-        {
-            return Kappa(rho, e, T)/this->Cp(rho, e, T);
-        }
+        ) const;
+
+
+    // Member Operators
+
+        inline void operator+=(const constSolidAnIsoTransport&);
+        inline void operator*=(const scalar);
+
+
+    // Friend operators
+
+        friend constSolidAnIsoTransport operator+ <Thermo>
+        (
+            const constSolidAnIsoTransport&,
+            const constSolidAnIsoTransport&
+        );
+
+        friend constSolidAnIsoTransport operator* <Thermo>
+        (
+            const scalar,
+            const constSolidAnIsoTransport&
+        );
 };
 
 
@@ -132,6 +172,8 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "constSolidAnIsoTransportI.H"
 
 #ifdef NoRepository
     #include "constSolidAnIsoTransport.C"

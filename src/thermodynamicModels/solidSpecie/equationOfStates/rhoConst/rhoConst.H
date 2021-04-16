@@ -68,6 +68,28 @@ inline rhoConst<Specie> operator==
     const rhoConst<Specie>&,
     const rhoConst<Specie>&
 );
+template<class Specie> class rhoConst;
+
+template<class Specie>
+inline rhoConst<Specie> operator+
+(
+    const rhoConst<Specie>&,
+    const rhoConst<Specie>&
+);
+
+template<class Specie>
+inline rhoConst<Specie> operator*
+(
+    const scalar,
+    const rhoConst<Specie>&
+);
+
+template<class Specie>
+inline rhoConst<Specie> operator==
+(
+    const rhoConst<Specie>&,
+    const rhoConst<Specie>&
+);
 /*---------------------------------------------------------------------------*\
                            Class rhoConst Declaration
 \*---------------------------------------------------------------------------*/

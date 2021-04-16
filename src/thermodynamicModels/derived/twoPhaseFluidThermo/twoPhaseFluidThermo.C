@@ -111,9 +111,6 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
-    // Update total density
-    rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
-
     mu_ =
         volumeFraction_*thermo1_->mu()
       + (1.0 - volumeFraction_)*thermo2_->mu();
@@ -126,6 +123,9 @@ void Foam::twoPhaseFluidThermo::initializeModels()
 {
     thermo1_->initializeModels();
     thermo2_->initializeModels();
+
+    // Update total density
+    rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
     this->initialize();
 }
 
@@ -166,6 +166,16 @@ void Foam::twoPhaseFluidThermo::clearODEFields()
 }
 
 
+void Foam::twoPhaseFluidThermo::updateRho()
+{
+    thermo1_->updateRho();
+    thermo2_->updateRho();
+    this->rho_ =
+        volumeFraction_*thermo1_->rho()
+      + (1.0 - volumeFraction_)*thermo2_->rho();
+}
+
+
 void Foam::twoPhaseFluidThermo::correct()
 {
     if (master_)
@@ -183,7 +193,8 @@ void Foam::twoPhaseFluidThermo::correct()
     {
         // Update transport coefficients
         mu_ =
-            volumeFraction_*thermo1_->mu() + (1.0 - volumeFraction_)*thermo2_->mu();
+            volumeFraction_*thermo1_->mu()
+          + (1.0 - volumeFraction_)*thermo2_->mu();
         alpha_ =
             volumeFraction_*thermo1_->alpha()
           + (1.0 - volumeFraction_)*thermo2_->alpha();
@@ -597,6 +608,14 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::Hf() const
     return
         volumeFraction_*thermo1_->Hf()
       + (1.0 - volumeFraction_)*thermo2_->Hf();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidThermo::flameT() const
+{
+    return
+        volumeFraction_*thermo1_->flameT()
+      + (1.0 - volumeFraction_)*thermo2_->flameT();
 }
 
 

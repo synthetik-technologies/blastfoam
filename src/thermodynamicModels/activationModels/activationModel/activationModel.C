@@ -298,6 +298,10 @@ Foam::activationModel::activationModel
                 radii[i]
             )
         );
+        if (mesh.time().value() > delays[i])
+        {
+            detonationPoints_[i].activated() = true;
+        }
     }
 }
 
@@ -346,7 +350,7 @@ void Foam::activationModel::solve()
     this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
 
     dimensionedScalar dT(this->mesh_.time().deltaT());
-    dimensionedScalar smallRho("small", dimDensity, small);
+    dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
     // Calculate delta due to reaction with no advection
     if (!advection())

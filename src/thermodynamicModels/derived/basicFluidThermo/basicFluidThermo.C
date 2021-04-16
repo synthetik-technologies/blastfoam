@@ -66,28 +66,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
         )
     )
     {
-        volScalarField rhoInit
-        (
-            Thermo::volScalarFieldProperty
-            (
-                "rhoInit",
-                dimDensity,
-                &Thermo::initializeRho,
-                this->p_,
-                this->rho_,
-                this->e_,
-                this->T_
-            )
-        );
-        this->rho_ = rhoInit;
-        forAll(this->rho_.boundaryField(), patchi)
-        {
-            forAll(this->rho_.boundaryField()[patchi], facei)
-            {
-                this->rho_.boundaryFieldRef()[patchi][facei] =
-                    rhoInit.boundaryField()[patchi][facei];
-            }
-        }
+        updateRho();
     }
 
     this->fluidThermoModel::mu_ = Thermo::volScalarFieldProperty
@@ -112,6 +91,34 @@ Foam::basicFluidThermo<Thermo>::~basicFluidThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::basicFluidThermo<Thermo>::updateRho()
+{
+    volScalarField rhoNew
+    (
+        Thermo::volScalarFieldProperty
+        (
+            "rhoNew",
+            dimDensity,
+            &Thermo::initializeRho,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    this->rho_ = rhoNew;
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        forAll(this->rho_.boundaryField()[patchi], facei)
+        {
+            this->rho_.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
+    }
+}
+
 
 template<class Thermo>
 void Foam::basicFluidThermo<Thermo>::correct()

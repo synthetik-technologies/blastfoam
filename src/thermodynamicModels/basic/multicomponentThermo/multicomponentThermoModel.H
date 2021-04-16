@@ -41,7 +41,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "basicThermoModel.H"
-#include "speciesTable.H"
+#include "PtrListDictionary.H"
 
 namespace Foam
 {
@@ -64,6 +64,9 @@ protected:
     //- Mass fractions
     PtrList<volScalarField> Ys_;
 
+    //- Mass transfer rates passed from an external source
+    PtrListDictionary<volScalarField> massTransferRates_;
+
     //- Index of inert specie
     label inertIndex_;
 
@@ -78,6 +81,7 @@ protected:
 
     //- ODE fields
     PtrList<PtrList<volScalarField>> YsOld_;
+    PtrList<PtrList<volScalarField>> deltaYs_;
     PtrList<PtrList<volScalarField>> deltaAlphaRhoYs_;
 
 
@@ -126,14 +130,24 @@ public:
         //- Remove stored fields
         virtual void clearODEFields();
 
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addDelta(const word& name, const volScalarField& delta);
+
 
     // Access
 
         //- Return the table of species
-        inline const speciesTable& species() const;
+        virtual speciesTable species() const
+        {
+            return species_;
+        }
 
         //- Does the mixture include this specie?
-        inline bool contains(const word& specieName) const;
+        virtual bool contains(const word& specieName) const
+        {
+            return species_[specieName];
+        }
 
         //- Return true for active species
         inline bool active(label speciei) const;
@@ -157,16 +171,52 @@ public:
         inline volScalarField& Y(const label i);
 
         //- Return the const mass-fraction field for a specie given by index
-        inline const volScalarField& Y(const label i) const;
+        inline tmp<volScalarField> Y(const label i) const;
 
         //- Return the mass-fraction field for a specie given by name
         inline volScalarField& Y(const word& specieName);
 
         //- Return the const mass-fraction field for a specie given by name
-        inline const volScalarField& Y(const word& specieName) const;
+        inline tmp<volScalarField> Y(const word& specieName) const;
 
         //- Return the name of the thermo physics
         virtual word thermoName() const = 0;
+
+
+        //- Return species properties
+
+            //- Return molecular weight
+            virtual tmp<volScalarField> specieW(const word& s) const = 0;
+
+            //- Return molecular weight
+            virtual scalar specieWi(const word& s, const label celli) const = 0;
+
+            //- Mie Gruniesen coefficient
+            virtual tmp<volScalarField> specieGamma(const word& s) const = 0;
+
+            //- Mie Gruniesen coefficient for a cell
+            virtual scalar specieGammai(const word& s, const label celli) const = 0;
+
+            //- Heat capacity at constant pressure of mixture [J/kg/K]
+            virtual tmp<volScalarField> specieCp(const word& s) const = 0;
+
+            //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
+            virtual scalar specieCpi(const word& s, const label celli) const = 0;
+
+            //- Heat capacity at constant volume of mixture [J/kg/K]
+            virtual tmp<volScalarField> specieCv(const word& s) const = 0;
+
+            //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
+            virtual scalar specieCvi(const word& s, const label celli) const = 0;
+
+            //- Specific heat ratio
+            virtual tmp<volScalarField> specieCpByCv(const word& s) const = 0;
+
+            //- Heat of formation
+            virtual tmp<volScalarField> specieHf(const word& s) const = 0;
+
+            //- Heat of formation
+            virtual tmp<volScalarField> specieFlameT(const word& s) const = 0;
 };
 
 

@@ -324,6 +324,8 @@ void Foam::multiPhaseModel::update()
 
 void Foam::multiPhaseModel::calcAlphaAndRho()
 {
+    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+
     alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
 
     // find largest volume fraction and set to 1-sum
@@ -358,6 +360,10 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
 
     forAll(alphas_, phasei)
     {
+        if (options.optionList::appliesToField(alphas_[phasei].name()))
+        {
+            options.correct(alphas_[phasei]);
+        }
         alphas_[phasei].correctBoundaryConditions();
 
         alphaRhos_[phasei].max(0);
@@ -368,6 +374,10 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
                 alphas_[phasei],
                 thermo_.thermo(phasei).residualAlpha()
             );
+        if (options.optionList::appliesToField(rhos_[phasei].name()))
+        {
+            options.correct(rhos_[phasei]);
+        }
         rhos_[phasei].correctBoundaryConditions();
 
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
@@ -378,6 +388,8 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
 
 void Foam::multiPhaseModel::decode()
 {
+    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+
     calcAlphaAndRho();
     volScalarField& alpha(*this);
     this->correctBoundaryConditions();
@@ -387,6 +399,10 @@ void Foam::multiPhaseModel::decode()
     volScalarField alphaRho(alphaRho_);
     alphaRho.max(1e-10);
     U_.ref() = alphaRhoU_()/(alphaRho());
+    if (options.optionList::appliesToField(U_.name()))
+    {
+        options.correct(U_);
+    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
@@ -394,6 +410,12 @@ void Foam::multiPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
+    if (options.optionList::appliesToField(e_.name()))
+    {
+
+        options.correct(e_);
+        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
+    }
 
     //- Limit internal energy it there is a negative temperature
     if (Foam::min(this->T_).value() < 0.0 && thermo_.limit())

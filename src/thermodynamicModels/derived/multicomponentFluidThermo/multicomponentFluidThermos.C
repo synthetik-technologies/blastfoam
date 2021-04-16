@@ -84,19 +84,5 @@ namespace Foam
         equationOfState,
         AbelNobel
     );
-    addMulticomponentFluidThermo
-    (
-        constTransport,
-        janaf,
-        equationOfState,
-        AbelNobel
-    );
-    addMulticomponentFluidThermo
-    (
-        sutherlandTransport,
-        janaf,
-        equationOfState,
-        AbelNobel
-    );
 }
 
