@@ -231,10 +231,12 @@ heatTransfer
     (particles0 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles1 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
 );
 

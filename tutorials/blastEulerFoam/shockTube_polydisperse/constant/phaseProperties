@@ -486,26 +486,32 @@ heatTransfer
     (coal in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles0 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles1 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles2 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles3 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
     (particles4 in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
 );
 

@@ -236,6 +236,7 @@ heatTransfer
     (particles in gas)
     {
         type RanzMarshall;
+        NuModel Gunn;
     }
 );
 
