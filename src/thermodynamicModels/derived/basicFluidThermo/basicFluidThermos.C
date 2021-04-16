@@ -125,12 +125,6 @@ namespace Foam
         equationOfState,
         AbelNobel
     );
-    addFluidThermos
-    (
-        propellantTransport,
-        equationOfState,
-        AbelNobel
-    );
 
     addFluidThermos
     (
