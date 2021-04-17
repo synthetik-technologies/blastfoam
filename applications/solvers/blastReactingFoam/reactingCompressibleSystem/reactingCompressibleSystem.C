@@ -150,7 +150,13 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
 
-    if (min(thermo_->mu()).value() > small)
+    Switch useChemistry
+    (
+        word(thermo_->subDict("thermoType").lookup("mixture"))
+     == "reactingMixture"
+    );
+
+    if (min(thermo_->mu()).value() > small || useChemistry)
     {
         turbulence_.set
         (
@@ -172,11 +178,6 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         );
     }
 
-    Switch useChemistry
-    (
-        word(thermo_->subDict("thermoType").lookup("mixture"))
-     == "reactingMixture"
-    );
     if (useChemistry)
     {
         reaction_.set
