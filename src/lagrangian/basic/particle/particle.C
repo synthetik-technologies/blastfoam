@@ -26,18 +26,33 @@ License
 #include "particle.H"
 #include "transform.H"
 #include "treeDataCell.H"
+#include "registerSwitch.H"
 #include "cubicEqn.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-const Foam::label Foam::particle::maxNBehind_ = 10;
-
-Foam::label Foam::particle::particleCount_ = 0;
 
 namespace Foam
 {
     defineTypeNameAndDebug(particle, 0);
 }
+
+const Foam::label Foam::particle::maxNBehind_ = 10;
+
+Foam::label Foam::particle::particleCount_ = 0;
+
+bool Foam::particle::writeLagrangianCoordinates = true;
+
+bool Foam::particle::writeLagrangianPositions
+(
+    Foam::debug::infoSwitch("writeLagrangianPositions", 1)
+);
+
+registerInfoSwitch
+(
+    "writeLagrangianPositions",
+    bool,
+    Foam::particle::writeLagrangianPositions
+);
 
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

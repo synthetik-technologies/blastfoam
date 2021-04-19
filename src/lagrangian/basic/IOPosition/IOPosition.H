@@ -54,6 +54,9 @@ class IOPosition
 
     // Private Data
 
+        //- Write lagrangian positions
+        bool writeLagrangianPositions_;
+
         //- Reference to the cloud
         const CloudType& cloud_;
 
@@ -72,7 +75,7 @@ public:
     // Constructors
 
         //- Construct from cloud
-        IOPosition(const CloudType&);
+        IOPosition(const CloudType&, const bool w = false);
 
 
     // Member Functions

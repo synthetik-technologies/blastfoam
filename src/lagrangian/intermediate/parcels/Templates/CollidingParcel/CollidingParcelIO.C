@@ -48,10 +48,11 @@ Foam::CollidingParcel<ParcelType>::CollidingParcel
 (
     const polyMesh& mesh,
     Istream& is,
-    bool readFields
+    bool readFields,
+    bool newFormat
 )
 :
-    ParcelType(mesh, is, readFields),
+    ParcelType(mesh, is, readFields, newFormat),
     f_(Zero),
     angularMomentum_(Zero),
     torque_(Zero),

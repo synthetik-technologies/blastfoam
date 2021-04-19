@@ -47,10 +47,11 @@ Foam::MPPICParcel<ParcelType>::MPPICParcel
 (
     const polyMesh& mesh,
     Istream& is,
-    bool readFields
+    bool readFields,
+    bool newFormat
 )
 :
-    ParcelType(mesh, is, readFields),
+    ParcelType(mesh, is, readFields, newFormat),
     UCorrect_(Zero)
 {
     if (readFields)

@@ -23,12 +23,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "IOPosition.H"
+// #include "IOPosition.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class CloudType>
-Foam::IOPosition<CloudType>::IOPosition(const CloudType& c)
+Foam::IOPosition<CloudType>::IOPosition(const CloudType& c, const bool w)
 :
     regIOobject
     (
@@ -41,6 +41,7 @@ Foam::IOPosition<CloudType>::IOPosition(const CloudType& c)
             IOobject::NO_WRITE
         )
     ),
+    writeLagrangianPositions_(w),
     cloud_(c)
 {}
 
@@ -59,10 +60,21 @@ bool Foam::IOPosition<CloudType>::writeData(Ostream& os) const
 {
     os  << cloud_.size() << nl << token::BEGIN_LIST << nl;
 
-    forAllConstIter(typename CloudType, cloud_, iter)
+    if (writeLagrangianPositions_)
     {
-        iter().writePosition(os);
-        os  << nl;
+        forAllConstIter(typename CloudType, cloud_, iter)
+        {
+            iter().writePosition(os);
+            os  << nl;
+        }
+    }
+    else
+    {
+        forAllConstIter(typename CloudType, cloud_, iter)
+        {
+            iter().writeCoordinates(os);
+            os  << nl;
+        }
     }
 
     os  << token::END_LIST << endl;
@@ -78,6 +90,8 @@ void Foam::IOPosition<CloudType>::readData(Istream& is, CloudType& c)
 
     token firstToken(is);
 
+    const bool newFormat = writeLagrangianPositions_;
+
     if (firstToken.isLabel())
     {
         label s = firstToken.labelToken();
@@ -91,7 +105,16 @@ void Foam::IOPosition<CloudType>::readData(Istream& is, CloudType& c)
         for (label i=0; i<s; i++)
         {
             // Read position only
-            c.append(new typename CloudType::particleType(mesh, is, false));
+            c.append
+            (
+                new typename CloudType::particleType
+                (
+                    mesh,
+                    is,
+                    false,
+                    newFormat
+                )
+            );
         }
 
         // Read end of contents

@@ -47,10 +47,11 @@ Foam::ThermoParcel<ParcelType>::ThermoParcel
 (
     const polyMesh& mesh,
     Istream& is,
-    bool readFields
+    bool readFields,
+    bool newFormat
 )
 :
-    ParcelType(mesh, is, readFields),
+    ParcelType(mesh, is, readFields, newFormat),
     T_(0.0),
     Cp_(0.0)
 {

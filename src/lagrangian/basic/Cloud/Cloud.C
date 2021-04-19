@@ -74,7 +74,8 @@ Foam::Cloud<ParticleType>::Cloud
     cloud(pMesh, cloudName),
     IDLList<ParticleType>(),
     polyMesh_(pMesh),
-    globalPositionsPtr_()
+    globalPositionsPtr_(),
+    writeLagrangianPositions_(false)
 {
     checkPatches();
 

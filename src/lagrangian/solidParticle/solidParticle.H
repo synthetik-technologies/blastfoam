@@ -143,7 +143,8 @@ public:
         (
             const polyMesh& mesh,
             Istream& is,
-            bool readFields = true
+            bool readFields = true,
+            bool newFormat = true
         );
 
         //- Construct and return a clone

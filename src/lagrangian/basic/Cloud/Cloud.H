@@ -96,6 +96,11 @@ class Cloud
         //- Write cloud properties dictionary
         void writeCloudUniformProperties() const;
 
+protected:
+
+    //- Write lagrangian positions
+    bool writeLagrangianPositions_;
+
 
 public:
 

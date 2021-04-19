@@ -43,7 +43,13 @@ const std::size_t Foam::particle::sizeofFields_
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::particle::particle(const polyMesh& mesh, Istream& is, bool readFields)
+Foam::particle::particle
+(
+    const polyMesh& mesh,
+    Istream& is,
+    bool readFields,
+    bool newFormat
+)
 :
     mesh_(mesh),
     coordinates_(),
@@ -57,34 +63,95 @@ Foam::particle::particle(const polyMesh& mesh, Istream& is, bool readFields)
     origProc_(Pstream::myProcNo()),
     origId_(-1)
 {
-    if (is.format() == IOstream::ASCII)
+    if (newFormat)
     {
-        is  >> coordinates_ >> celli_ >> tetFacei_ >> tetPti_;
-
-        if (readFields)
+        if (is.format() == IOstream::ASCII)
         {
-            is  >> facei_ >> stepFraction_ >> behind_ >> nBehind_
-                >> origProc_ >> origId_;
+            is  >> coordinates_ >> celli_ >> tetFacei_ >> tetPti_;
+
+            if (readFields)
+            {
+                is  >> facei_ >> stepFraction_ >> behind_ >> nBehind_
+                    >> origProc_ >> origId_;
+            }
+        }
+        else
+        {
+            if (readFields)
+            {
+                is.read(reinterpret_cast<char*>(&coordinates_), sizeofFields_);
+            }
+            else
+            {
+                is.read(reinterpret_cast<char*>(&coordinates_), sizeofPosition_);
+            }
         }
     }
     else
     {
-        if (readFields)
+        compactPosition p;
+
+        if (is.format() == IOstream::ASCII)
         {
-            is.read(reinterpret_cast<char*>(&coordinates_), sizeofFields_);
+            is >> p.position >> p.celli;
+
+            if (readFields)
+            {
+                is  >> p.facei
+                    >> p.stepFraction
+                    >> p.tetFacei
+                    >> p.tetPti
+                    >> p.origProc
+                    >> p.origId;
+            }
         }
         else
         {
-            is.read(reinterpret_cast<char*>(&coordinates_), sizeofPosition_);
+            if (readFields)
+            {
+                // Read whole struct
+                const size_t s =
+                (
+                    sizeof(compactPosition)
+                  - offsetof(compactPosition, position)
+                );
+                is.read(reinterpret_cast<char*>(&p.position), s);
+            }
+            else
+            {
+                // Read only position and cell
+                const size_t s =
+                (
+                    offsetof(compactPosition, facei)
+                  - offsetof(compactPosition, position)
+                );
+                is.read(reinterpret_cast<char*>(&p.position), s);
+            }
         }
+
+        if (readFields)
+        {
+            // Note: other position-based properties are set using locate(...)
+            stepFraction_ = p.stepFraction;
+            origProc_ = p.origProc;
+            origId_ = p.origId;
+        }
+
+        locate
+        (
+            p.position,
+            p.celli,
+            false,
+            "Particle initialised with a location outside of the mesh."
+        );
     }
 
     // Check state of Istream
-    is.check("particle::particle(Istream&, bool)");
+    is.check("particle::particle(const polyMesh& Istream&, bool, bool)");
 }
 
 
-void Foam::particle::writePosition(Ostream& os) const
+void Foam::particle::writeCoordinates(Ostream& os) const
 {
     if (os.format() == IOstream::ASCII)
     {
@@ -96,6 +163,33 @@ void Foam::particle::writePosition(Ostream& os) const
     else
     {
         os.write(reinterpret_cast<const char*>(&coordinates_), sizeofPosition_);
+    }
+
+    // Check state of Ostream
+    os.check("particle::writeCoordinates(Ostream& os, bool) const");
+}
+
+
+void Foam::particle::writePosition(Ostream& os) const
+{
+    if (os.format() == IOstream::ASCII)
+    {
+        os  << position() << token::SPACE << celli_;
+    }
+    else
+    {
+        compactPosition p;
+
+        const size_t s =
+        (
+            offsetof(compactPosition, facei)
+          - offsetof(compactPosition, position)
+        );
+
+        p.position = position();
+        p.celli = celli_;
+
+        os.write(reinterpret_cast<const char*>(&p.position), s);
     }
 
     // Check state of Ostream

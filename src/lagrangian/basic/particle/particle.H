@@ -120,6 +120,20 @@ public:
         {}
     };
 
+    //- Old particle positions content for OpenFOAM-1706 and earlier
+    // Ported from openfoam.com, but renamed
+    struct compactPosition
+    {
+        vector position;
+        label celli;
+        label facei;
+        scalar stepFraction;
+        label tetFacei;
+        label tetPti;
+        label origProc;
+        label origId;
+    };
+
 
 private:
 
@@ -371,6 +385,15 @@ public:
         //- Cumulative particle counter - used to provide unique ID
         static label particleCount_;
 
+        //- Write particle coordinates file (v1712 and later)
+        //- Default is true
+        static bool writeLagrangianCoordinates;
+
+        //- Write particle positions file (v1706 format and earlier)
+        //- Default is true (disable in etc/controlDict)
+        static bool writeLagrangianPositions;
+
+
 
     // Constructors
 
@@ -394,7 +417,13 @@ public:
         );
 
         //- Construct from Istream
-        particle(const polyMesh& mesh, Istream&, bool readFields = true);
+        particle
+        (
+            const polyMesh& mesh,
+            Istream&,
+            bool readFields = true,
+            bool newFormat = true
+        );
 
         //- Construct as a copy
         particle(const particle& p);
@@ -680,8 +709,13 @@ public:
         template<class TrackCloudType>
         static void writeFields(const TrackCloudType& c);
 
-        //- Write the particle position and cell
-        void writePosition(Ostream&) const;
+        //- Write the particle barycentric coordinates and cell info
+        void writeCoordinates(Ostream& os) const;
+
+        //- Write the particle position and cell id
+        void writePosition(Ostream& os) const;
+
+
 
 
     // Friend Operators

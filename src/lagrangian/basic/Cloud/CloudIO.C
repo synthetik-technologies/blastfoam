@@ -54,6 +54,17 @@ void Foam::Cloud<ParticleType>::readCloudUniformProperties()
     {
         const IOdictionary uniformPropsDict(dictObj);
 
+        // Fall back to positions mode if the entry is not present for
+        // backwards compatibility
+        writeLagrangianPositions_ =
+            uniformPropsDict.lookupOrDefault<Switch>
+            (
+                "writeLagrangianPositions",
+                true
+            );
+
+
+
         const word procName("processor" + Foam::name(Pstream::myProcNo()));
         if (uniformPropsDict.found(procName))
         {
@@ -91,6 +102,13 @@ void Foam::Cloud<ParticleType>::writeCloudUniformProperties() const
     Pstream::listCombineGather(np, maxEqOp<label>());
     Pstream::listCombineScatter(np);
 
+    uniformPropsDict.add
+    (
+        "writeLagrangianPositions",
+        Switch(writeLagrangianPositions_)
+    );
+
+
     forAll(np, i)
     {
         word procName("processor" + Foam::name(i));
@@ -113,7 +131,7 @@ void Foam::Cloud<ParticleType>::initCloud(const bool checkClass)
 {
     readCloudUniformProperties();
 
-    IOPosition<Cloud<ParticleType>> ioP(*this);
+    IOPosition<Cloud<ParticleType>> ioP(*this, writeLagrangianPositions_);
 
     bool valid = ioP.headerOk();
     Istream& is = ioP.readStream(checkClass ? typeName : "", valid);
@@ -129,6 +147,8 @@ void Foam::Cloud<ParticleType>::initCloud(const bool checkClass)
             << "    " << ioP.objectPath() << nl
             << "Assuming the initial cloud contains 0 particles." << endl;
     }
+
+    writeLagrangianPositions_ = false;
 
     // Ask for the tetBasePtIs to trigger all processors to build
     // them, otherwise, if some processors have no particles then
@@ -149,7 +169,8 @@ Foam::Cloud<ParticleType>::Cloud
 :
     cloud(pMesh, cloudName),
     polyMesh_(pMesh),
-    globalPositionsPtr_()
+    globalPositionsPtr_(),
+    writeLagrangianPositions_(false)
 {
     checkPatches();
 

@@ -45,7 +45,7 @@ boundaryField
 
     obstacle
     {
-        type            compressible::alphatWallFunction;
+        type            blast::alphatWallFunction;
         value           uniform 1e-3;
     }
 

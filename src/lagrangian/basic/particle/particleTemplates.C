@@ -73,8 +73,25 @@ void Foam::particle::writeFields(const TrackCloudType& c)
 {
     label np = c.size();
 
-    IOPosition<TrackCloudType> ioP(c);
-    ioP.write(np > 0);
+    if (writeLagrangianCoordinates)
+    {
+        IOPosition<TrackCloudType> ioP(c);
+        ioP.write(np);
+    }
+
+    // Optionally write positions file in v1706 format and earlier
+    if (writeLagrangianPositions)
+    {
+        IOPosition<TrackCloudType> ioP(c, true);
+        ioP.write(np);
+    }
+
+    if (!writeLagrangianPositions && !writeLagrangianCoordinates)
+    {
+        FatalErrorInFunction
+            << "Must select coordinates and/or positions" << nl
+            << exit(FatalError);
+    }
 
     IOField<label> origProc
     (
