@@ -50,35 +50,33 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
     scalar T(273.0);
 
     label tableSize(100);
-    scalarField rhof(tableSize + 1, rho0_);
-    scalarField ecf(tableSize + 1, 0.0);
-    label I = 1;
+    scalarField rhof(tableSize + 2, rho0_);
+    scalarField ecf(tableSize + 2, 0.0);
+    label I = 2;
 
+    scalar e0 = e0_;
+    e0_ = 0;
     scalar x = rho0_;
     scalar y = 0.0;
     label nSteps = 10000;
-    scalar dx = 0.5*rho0_/scalar(nSteps);
+    scalar dx = 10.0*rho0_/scalar(nSteps);
 
 
     for (label i = 0; i < nSteps; i++)
     {
         scalar yOld = y;
 
-        scalar k1 =
-            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        scalar k1 = p(x, y, T)/sqr(x);
         y = yOld + dx*0.5*k1;
 
         x += 0.5*dx;
-        scalar k2 =
-            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        scalar k2 = p(x, y, T)/sqr(x);
         y = yOld + dx*0.5*k2;
-        scalar k3 =
-            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        scalar k3 = p(x, y, T)/sqr(x);
 
         y = yOld + dx*k3;
         x += 0.5*dx;
-        scalar k4 =
-            (((Gamma(x, y, T, T) - 1.0)*x*y) - Pi(x, y))/sqr(x);
+        scalar k4 = p(x, y, T)/sqr(x);
 
         y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
 
@@ -89,6 +87,7 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
             I++;
         }
     }
+    e0_ = e0;
 
     EcTable_.set
     (
@@ -96,6 +95,7 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
         ecf,
         "none",
         "none",
+        "linearExtrapolated",
         true
     );
 }

@@ -238,6 +238,7 @@ public:
             const scalarField& data,
             const word& mod,
             const word& xMod,
+            const word& interpolationScheme,
             const bool inReal
         );
 

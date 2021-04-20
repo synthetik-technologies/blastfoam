@@ -113,27 +113,24 @@ Foam::scalar Foam::Tillotson<Specie>::p
 (
     const scalar& rho,
     const scalar& e,
-    const scalar& T
+    const scalar& T,
+    const bool limit
 ) const
 {
-    if ((rho0_ - rho) > 1e-6)
+    if (rhoCav_ > rho)
     {
         return pCav_;
     }
 
-    scalar eTot = e;
-    if (rho > rhoCav_)
-    {
-        eTot += EcTable_.lookup(rho);
-    }
-
     scalar mu(rho/rho0_ - 1.0);
-    return
+    scalar res =
         p0_
-      + omega_*rho*(eTot - e0_)
+      + omega_*rho*(e - e0_)
       + A_*mu
       + B_*sqr(mu)
       + C_*pow3(mu);
+
+      return limit ? max(res, pCav_) : res;
 }
 
 
@@ -305,7 +302,7 @@ Foam::scalar Foam::Tillotson<Specie>::E
     const scalar& T
 ) const
 {
-    return 0.0;
+    return EcTable_.lookup(rho);
 }
 
 

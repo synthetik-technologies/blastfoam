@@ -74,7 +74,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
         Eest = Enew;
 
         Enew -=
-            (ThermoType::p(rho, Eest, T) - p)
+            (ThermoType::p(rho, Eest, T, false) - p) // Do not limit p
            /stabilise(ThermoType::dpde(rho, Eest, T), small);
 
         if (iter++ > 100)
@@ -100,7 +100,8 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
 ) const
 {
     //- Simple method to calculate initial density
-    //  Should be modified to solve the 2D problem for density and internal energy
+    //  Should be modified to solve the 2D problem for
+    //  density and internal energy
     scalar Rhoest = max(1e-4, rho);
     scalar Rhonew = Rhoest;
     scalar Rhotol = tolerance_;
@@ -114,13 +115,20 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
         E = ThermoType::Es(Rhoest, E, T);
 
         scalar dpdRho(-ThermoType::dpdv(Rhoest, E, T)/sqr(max(Rhoest, 1e-10)));
-        Rhonew = Rhoest - (ThermoType::p(Rhoest, E, T) - p)/stabilise(dpdRho, small);
+        Rhonew =
+            Rhoest
+          - (ThermoType::p(Rhoest, E, T, false) - p) // Do not limit p
+           /stabilise(dpdRho, small);
 
         if (Rhonew < 1e-10)
         {
             Rhonew = Rhoest/2.0;
         }
-    } while (mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol && iter++ < maxIter_);
+    } while
+    (
+        mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol
+     && iter++ < maxIter_
+    );
 
     return Rhonew;
 }

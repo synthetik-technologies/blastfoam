@@ -82,10 +82,11 @@ Foam::scalar Foam::equationOfState<EoS>::p
 (
     const scalar& rho,
     const scalar& e,
-    const scalar& T
+    const scalar& T,
+    const bool limit
 ) const
 {
-    return EoS::p(rho, T);
+    return limit ? max(EoS::p(rho, T), 0.0) : EoS::p(rho, T);
 }
 
 

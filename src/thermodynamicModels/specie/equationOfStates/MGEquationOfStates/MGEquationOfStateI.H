@@ -83,10 +83,14 @@ Foam::scalar Foam::MGEquationOfState<EoS>::p
 (
     const scalar& rho,
     const scalar& e,
-    const scalar& T
+    const scalar& T,
+    const bool limit
 ) const
 {
-    return (EoS::Gamma(rho, e) - 1.0)*rho*e - EoS::Pi(rho, e);
+    return
+        limit
+      ? max((EoS::Gamma(rho, e) - 1.0)*rho*e - EoS::Pi(rho, e), 0.0)
+      : (EoS::Gamma(rho, e) - 1.0)*rho*e - EoS::Pi(rho, e);
 }
 
 

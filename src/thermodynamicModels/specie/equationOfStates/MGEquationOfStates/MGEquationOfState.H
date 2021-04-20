@@ -134,7 +134,13 @@ public:
         }
 
         //- Return pressure
-        scalar p(const scalar& rho, const scalar& e, const scalar& T) const;
+        scalar p
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T,
+            const bool limit = true
+        ) const;
 
         //- Return the speed of sound
         scalar cSqr

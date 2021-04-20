@@ -342,11 +342,13 @@ void Foam::lookupTable1D::set
     const scalarField& data,
     const word& mod,
     const word& xMod,
+    const word& interpolationScheme,
     const bool inReal
 )
 {
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
+    setInterp(interpolationScheme, interpFunc_);
     if (inReal)
     {
         xValues_ = x;
