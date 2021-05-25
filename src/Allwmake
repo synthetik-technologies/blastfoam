@@ -15,12 +15,13 @@ wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
 wmake $targetType decompositionMethods
-wmake $targetType errorEstimators
-wmake $targetType dynamicFvMesh
 
 wmake $targetType lagrangian/basic
 
 wmake $targetType sampling
+
+wmake $targetType errorEstimators
+wmake $targetType dynamicFvMesh
 
 lagrangian/Allwmake $targetType $*
 
