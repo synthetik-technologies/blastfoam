@@ -46,6 +46,8 @@ SourceFiles
 namespace Foam
 {
 
+class probes;
+
 /*---------------------------------------------------------------------------*\
                            Class errorEstimator Declaration
 \*---------------------------------------------------------------------------*/
@@ -76,9 +78,25 @@ protected:
         //- Upper unrefine level
         scalar upperUnrefine_;
 
+        //- Are probes refined
+        Switch refineProbes_;
+
+        //- Tracked probe function objects
+        PtrList<tmp<probes>> probes_;
+
+
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
         volScalarField& lookupOrConstruct(const fvMesh& mesh) const;
+
+        template<class Base, class T>
+        inline bool instanceOf(const T&)
+        {
+            return std::is_base_of<Base, T>::value;
+        }
+
+        //- Construct list of probe function objects to add to list
+        void addProbes();
 
         //- Normalize error (-1 = unrefine, 0 = do nothing, 1 = refine)
         void normalize(volScalarField& error);

@@ -27,6 +27,8 @@ License
 #include "coupledMaxErrorFvPatchScalarField.H"
 #include "mappedWallFvPatch.H"
 #include "mappedMovingWallFvPatch.H"
+#include "timeControlFunctionObject.H"
+#include "probes.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -89,6 +91,62 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
     return mesh.lookupObjectRef<volScalarField>("error");
 }
 
+void Foam::errorEstimator::addProbes()
+{
+    if (probes_.size())
+    {
+        return;
+    }
+
+    const functionObjectList& funcs(mesh_.time().functionObjects());
+    labelList map;
+    forAll(funcs, i)
+    {
+        if (isA<probes>(funcs[i]))
+        {
+            map.append(i);
+        }
+        else if (isA<functionObjects::timeControl>(funcs[i]))
+        {
+            const functionObjects::timeControl& tc
+            (
+                dynamicCast<const functionObjects::timeControl>(funcs[i])
+            );
+            if (isA<probes>(tc.filter()))
+            {
+                map.append(i);
+            }
+        }
+    }
+
+    probes_.resize(map.size());
+    forAll(map, i)
+    {
+        const functionObject& f(funcs[map[i]]);
+
+        const functionObject* foPtr;
+        if (isA<functionObjects::timeControl>(f))
+        {
+            const functionObjects::timeControl& tc
+            (
+                dynamicCast<const functionObjects::timeControl&>(f)
+            );
+            foPtr = &tc.filter();
+        }
+        else
+        {
+            foPtr = &f;
+        }
+        const probes& p(refCast<const probes>(*foPtr));
+        probes_.set
+        (
+            i,
+            new tmp<probes>(p)
+        );
+    }
+}
+
+
 Foam::errorEstimator::errorEstimator
 (
     const fvMesh& mesh,
@@ -102,7 +160,9 @@ Foam::errorEstimator::errorEstimator
     lowerRefine_(0.0),
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
-    upperUnrefine_(0.0)
+    upperUnrefine_(0.0),
+    refineProbes_(dict.lookupOrDefault("refineProbes", true)),
+    probes_(0)
 {}
 
 
@@ -157,6 +217,24 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         else
         {
             error[celli] = 0.0;
+        }
+    }
+
+    if (refineProbes_)
+    {
+        addProbes();
+
+        forAll(probes_, i)
+        {
+            const labelList& cells(probes_[i]().elements());
+            forAll(cells, j)
+            {
+                label celli = cells[j];
+                if (celli >= 0)
+                {
+                    error[celli] = 1.0;
+                }
+            }
         }
     }
 }
