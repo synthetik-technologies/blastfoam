@@ -74,7 +74,7 @@ export QBMM_LIBBIN=$FOAM_USER_LIBBIN
 export QBMM_APPBIN=$FOAM_USER_APPBIN
 
 # Set OpenQBMM libraries to use in Make files
-export QBMM_LIBS="-L\$(QBMM_LIBBIN) -leigenSolver -lquadratureNode -lmomentSets -lmomentInversion -lfieldMomentInversion -lquadratureApproximation -lmomentAdvection -lPDFTransportModel -lmixing -lpopulationBalance"
+export QBMM_LIBS="-L\$(QBMM_LIBBIN) -leigenSolver -lvandermonde -lquadratureNode -lmomentSets -lmomentInversion -lfieldMomentInversion -lquadratureApproximation -lmomentAdvection -lPDFTransportModel -lmixing -lpopulationBalance"
 
 # Set blastFoam OpenQBMM libraries
 export BLAST_QBMM_LIBS="-L\$(BLAST_LIBBIN) -lblastQBMM $QBMM_LIBS"
