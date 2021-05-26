@@ -31,7 +31,11 @@ namespace Foam
 {
     defineTemplateTypeNameAndDebug
     (
+#ifdef OLD_globalIOList
+        IOList<kinematicParcelInjectionData>,
+#else
         GlobalIOList<kinematicParcelInjectionData>,
+#endif
         0
     );
 }

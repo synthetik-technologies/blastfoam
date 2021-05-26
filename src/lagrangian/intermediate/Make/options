@@ -1,4 +1,5 @@
 EXE_INC = \
+    $(OLD_globalIOList) \
     -I$(BLAST_DIR)/src/lagrangian/basic/lnInclude \
     -I$(BLAST_DIR)/src/lagrangian/distributionModels/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
