@@ -35,7 +35,7 @@ License
 #include "fvCFD.H"
 #include "volPointInterpolation.H"
 #include "pointMesh.H"
-#include "BalanceMeshObject.H"
+#include "RefineBalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -294,7 +294,28 @@ bool Foam::dynamicRefineBalancedFvMesh::refine(const bool)
 
     if (hasChanged)
     {
-        BalanceMeshObject::updateObjects(*this);
+        if (rebalance_)
+        {
+            //- Update objects stored on the mesh db
+            BalanceMeshObject::updateObjects(*this);
+
+            //- Update objects stores on the time db
+            BalanceMeshObject::updateObjects
+            (
+                const_cast<Time&>(this->time())
+            );
+        }
+        else
+        {
+            //- Update objects stored on the mesh db
+            RefineMeshObject::updateObjects(*this);
+
+            //- Update objects stores on the time db
+            RefineMeshObject::updateObjects
+            (
+                const_cast<Time&>(this->time())
+            );
+        }
     }
 
     return hasChanged;

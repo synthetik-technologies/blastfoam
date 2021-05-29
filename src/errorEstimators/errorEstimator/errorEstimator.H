@@ -64,7 +64,7 @@ protected:
         word name_;
 
         //- Reference to error field
-        volScalarField& error_;
+        volScalarField error_;
 
         //- Lower refine level
         scalar lowerRefine_;
@@ -78,6 +78,9 @@ protected:
         //- Upper unrefine level
         scalar upperUnrefine_;
 
+        //- Optional specification of max level for an error estimator
+        label maxLevel_;
+
         //- Are probes refined
         Switch refineProbes_;
 
@@ -87,7 +90,7 @@ protected:
 
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
-        volScalarField& lookupOrConstruct(const fvMesh& mesh) const;
+        tmp<volScalarField> constructError(const fvMesh& mesh) const;
 
         template<class Base, class T>
         inline bool instanceOf(const T&)
@@ -107,6 +110,7 @@ protected:
         //- Lookup and return the scalar value of the field
         template<class Type>
         void getFieldValueType(const word& name, volScalarField& f) const;
+
 
 public:
 
@@ -168,6 +172,14 @@ public:
         {
             return error_;
         }
+
+        label maxLevel() const
+        {
+            return maxLevel_;
+        }
+
+        //- Return non constant reference to error field
+        virtual labelList maxRefinement() const;
 
         //- Read level values
         virtual void read(const dictionary& dict);

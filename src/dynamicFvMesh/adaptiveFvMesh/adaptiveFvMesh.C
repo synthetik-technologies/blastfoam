@@ -40,7 +40,7 @@ License
 #include "pointMesh.H"
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
-#include "BalanceMeshObject.H"
+#include "RefineBalanceMeshObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -1857,16 +1857,34 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
         topoChanging(hasChanged);
         if (hasChanged)
         {
-            balance();
+            if (balance())
+            {
+                //- Update objects stored on the mesh db
+                BalanceMeshObject::updateObjects(*this);
+
+                //- Update objects stores on the time db
+                BalanceMeshObject::updateObjects
+                (
+                    const_cast<Time&>(this->time())
+                );
+            }
+            else
+            {
+                //- Update objects stored on the mesh db
+                RefineMeshObject::updateObjects(*this);
+
+                //- Update objects stores on the time db
+                RefineMeshObject::updateObjects
+                (
+                    const_cast<Time&>(this->time())
+                );
+            }
 
             // Reset moving flag (if any). If not using inflation we'll not
             // move, if are using inflation any follow on movePoints will set
             // it.
             moving(false);
-
-            BalanceMeshObject::updateObjects(*this);
         }
-
         nRefinementIterations_++;
     }
 

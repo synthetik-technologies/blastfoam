@@ -26,17 +26,19 @@ License
 
 Class
     Foam::BalanceMeshObject
+    Foam::RefineMeshObject
+    Foam::BalanceMeshObject
 
 Description
-    Object used to lookup after balancing and resize
+    Object used to lookup after refinement and balancing
 
 SourceFiles
-    BalanceMeshObject.C
+    RefineBalanceMeshObject.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef BalanceMeshObject_H
-#define BalanceMeshObject_H
+#ifndef RefineBalanceMeshObject_H
+#define RefineBalanceMeshObject_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,7 +49,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class BalanceMeshObject Declaration
+                           Class RefineMeshObject Declaration
 \*---------------------------------------------------------------------------*/
 
 class BalanceMeshObject
@@ -61,7 +63,13 @@ public:
     ClassName("BalanceMeshObject");
 
     // Constructor
-    BalanceMeshObject(const word& typeName, const objectRegistry& obr)
+    BalanceMeshObject
+    (
+        const word& typeName,
+        const objectRegistry& obr,
+        const IOobject::readOption read = IOobject::NO_READ,
+        const IOobject::writeOption write = IOobject::NO_WRITE
+    )
     :
         regIOobject
         (
@@ -69,7 +77,9 @@ public:
             (
                 typeName,
                 obr.instance(),
-                obr
+                obr,
+                read,
+                write
             )
         )
     {}
@@ -79,6 +89,39 @@ public:
     static void updateObjects(objectRegistry&);
 };
 
+
+class RefineMeshObject
+:
+    public BalanceMeshObject
+{
+
+public:
+
+    // Declare name of the class and its debug switch
+    ClassName("RefineMeshObject");
+
+    // Constructor
+    RefineMeshObject
+    (
+        const word& typeName,
+        const objectRegistry& obr,
+        const IOobject::readOption read = IOobject::NO_READ,
+        const IOobject::writeOption write = IOobject::NO_WRITE
+    )
+    :
+        BalanceMeshObject
+        (
+            typeName,
+            obr,
+            read,
+            write
+        )
+    {}
+
+    virtual void updateObject() = 0;
+
+    static void updateObjects(objectRegistry&);
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

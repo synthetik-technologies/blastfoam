@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2012-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,43 +23,43 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvMotionSolver.H"
-#include "fixedValuePointPatchFields.H"
-#include "cellMotionFvPatchFields.H"
-#include "coupledCellMotionFvPatchFields.H"
-#include "mappedPatchSelector.H"
+#include "extendedNLevelGlobalCellToCellStencil.H"
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
+void Foam::extendedNLevelGlobalCellToCellStencil::collectData
 (
-    const typename GeometricField<Type, pointPatchField, pointMesh>::
-    Boundary& pmUbf
+    const Field<Type>& fld,
+    List<List<Type>>& stencilFld
 ) const
 {
-    wordList cmUbf = pmUbf.types();
+    // 1. Construct cell data in compact addressing
+    List<Type> flatFld(mapPtr_->constructSize(), Zero);
 
-    // Remove global patches from the end of the list
-    cmUbf.setSize(fvMesh_.boundary().size());
-
-    forAll(cmUbf, patchi)
+    // Insert my internal values
+    forAll(fld, celli)
     {
-        if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
-        {
-            cmUbf[patchi] = cellMotionFvPatchField<Type>::typeName;
-        }
-
-        if (debug)
-        {
-            Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name() <<nl
-                << " pointType:" << pmUbf.types()[patchi]
-                << " cellType:" << cmUbf[patchi] << endl;
-        }
+        flatFld[celli] = fld[celli];
     }
 
-    return cmUbf;
-}
+    // Do all swapping
+    mapPtr_->distribute(flatFld);
 
+    // 2. Pull to stencil
+    stencilFld.setSize(cellCells_.size());
+
+    forAll(cellCells_, celli)
+    {
+        const labelList& compactCells = cellCells_[celli];
+
+        stencilFld[celli].setSize(compactCells.size());
+
+        forAll(compactCells, i)
+        {
+            stencilFld[celli][i] = flatFld[compactCells[i]];
+        }
+    }
+}
 
 // ************************************************************************* //

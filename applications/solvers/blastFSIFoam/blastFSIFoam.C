@@ -57,6 +57,7 @@ Description
 #include "fvOptions.H"
 
 #include "mappedPatchSelector.H"
+#include "mappedPointPatchSelector.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

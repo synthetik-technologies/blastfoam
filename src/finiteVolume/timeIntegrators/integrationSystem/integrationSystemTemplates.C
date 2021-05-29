@@ -228,6 +228,18 @@ Foam::tmp<Type> Foam::integrationSystem::calcDelta
 }
 
 
+template<template<class> class ListType, class Type>
+void Foam::integrationSystem::calcAndStoreDelta
+(
+    const Type& f,
+    ListType<Type>& fList
+) const
+{
+    tmp<Type> fN(calcDelta(f, fList));
+    storeDelta(fN(), fList);
+}
+
+
 template<class fieldType>
 void Foam::integrationSystem::clearOld(PtrList<fieldType>& fList) const
 {

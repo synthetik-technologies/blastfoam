@@ -41,54 +41,46 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::volScalarField& Foam::errorEstimator::lookupOrConstruct
+Foam::tmp<Foam::volScalarField> Foam::errorEstimator::constructError
 (
     const fvMesh& mesh
 ) const
 {
-    if (!mesh.foundObject<volScalarField>("error"))
+    wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
+    forAll(boundaryTypes, patchi)
     {
-        wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
-        forAll(boundaryTypes, patchi)
-        {
-            if
-            (
-                isA<mappedWallFvPatch>(mesh.boundary()[patchi])
-             || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
-            )
-            {
-                boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
-            }
-            if (debug)
-            {
-                Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
-                    << " cellType:" << boundaryTypes[patchi] << endl;
-            }
-        }
-
-        volScalarField* fPtr
+        if
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    IOobject::groupName("error", name_),
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh,
-                0.0,
-                boundaryTypes
-            )
-        );
-
-        // Transfer ownership of this object to the objectRegistry
-        fPtr->store(fPtr);
+            isA<mappedWallFvPatch>(mesh.boundary()[patchi])
+         || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
+        )
+        {
+            boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
+        }
+        if (debug)
+        {
+            Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
+                << " cellType:" << boundaryTypes[patchi] << endl;
+        }
     }
 
-    return mesh.lookupObjectRef<volScalarField>("error");
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                IOobject::groupName("error", name_),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::NO_READ,
+                debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+            ),
+            mesh,
+            0.0,
+            boundaryTypes
+        )
+    );
 }
 
 void Foam::errorEstimator::addProbes()
@@ -156,11 +148,12 @@ Foam::errorEstimator::errorEstimator
 :
     mesh_(mesh),
     name_(name),
-    error_(lookupOrConstruct(mesh)),
+    error_(constructError(mesh)),
     lowerRefine_(0.0),
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
     upperUnrefine_(0.0),
+    maxLevel_(10),
     refineProbes_(dict.lookupOrDefault("refineProbes", true)),
     probes_(0)
 {}
@@ -180,6 +173,7 @@ void Foam::errorEstimator::read(const dictionary& dict)
     lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
     upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
     upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
+    maxLevel_ = dict.lookup<label>("maxRefinement");
 }
 
 
@@ -238,5 +232,11 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         }
     }
 }
+
+Foam::labelList Foam::errorEstimator::maxRefinement() const
+{
+    return labelList(mesh_.nCells(), maxLevel_);
+}
+
 
 // ************************************************************************* //

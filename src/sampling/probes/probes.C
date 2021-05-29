@@ -653,7 +653,7 @@ bool Foam::probes::read(const dictionary& dict)
 
     Switch writeVTK(dict.lookupOrDefault("writeVTK", false));
 
-    if (writeVTK && Pstream::master)
+    if (writeVTK && Pstream::master())
     {
         IOstream::streamFormat writeFormat = IOstream::ASCII;
         if (dict.found("writeFormat"))

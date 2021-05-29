@@ -26,16 +26,49 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "BalanceMeshObject.H"
+#include "RefineBalanceMeshObject.H"
 
 /* * * * * * * * * * * * * * * Static Member Data  * * * * * * * * * * * * * */
 
 namespace Foam
 {
+    defineTypeNameAndDebug(RefineMeshObject, 0);
     defineTypeNameAndDebug(BalanceMeshObject, 0);
 }
 
 // * * * * * * * * * * * * * * * Static Functions  * * * * * * * * * * * * * //
+
+void Foam::RefineMeshObject::updateObjects(objectRegistry& obr)
+{
+    HashTable<RefineMeshObject*> meshObjects
+    (
+        obr.lookupClass<RefineMeshObject>()
+    );
+
+    if (debug)
+    {
+        Pout<< "RefineMeshObject::updateMesh(objectRegistry&): updating" << nl
+            << " meshObjects for region " << obr.name() << endl;
+    }
+
+    forAllIter
+    (
+        typename HashTable<RefineMeshObject*>,
+        meshObjects,
+        iter
+    )
+    {
+        if (isA<RefineMeshObject>(*iter()))
+        {
+            if (debug)
+            {
+                Pout<< "    Updating " << iter()->name() << endl;
+            }
+            dynamic_cast<RefineMeshObject*>(iter())->updateObject();
+        }
+    }
+}
+
 
 void Foam::BalanceMeshObject::updateObjects(objectRegistry& obr)
 {
@@ -67,6 +100,5 @@ void Foam::BalanceMeshObject::updateObjects(objectRegistry& obr)
         }
     }
 }
-
 
 // ************************************************************************* //

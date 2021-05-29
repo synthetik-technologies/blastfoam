@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::mappedPatchSelector
+    Foam::mappedPointPatchSelector
 
 Description
     Class used to return mapping functions using either a mappedPolyPatch
@@ -32,57 +32,49 @@ Description
 Note
 
 SourceFiles
-    mappedPatchSelector.C
+    mappedPointPatchSelector.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef mappedPatchSelector_H
-#define mappedPatchSelector_H
+#ifndef mappedPointPatchSelector_H
+#define mappedPointPatchSelector_H
 
-#include "fvPatch.H"
-#include "mappedPatchBase.H"
-#include "mappedMovingPatchBase.H"
+#include "pointPatch.H"
+#include "mappedMovingPointPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class polyPatch;
-class polyMesh;
-class mapDistribute;
-
 /*---------------------------------------------------------------------------*\
-                       Class mappedPatchSelector Declaration
+                       Class mappedPointPatchSelector Declaration
 \*---------------------------------------------------------------------------*/
 
-class mappedPatchSelector
+class mappedPointPatchSelector
 {
 protected:
 
     // Protected data
 
-        //- Pointer to mappedPatchBase
-        const mappedPatchBase* mappedPatchPtr_;
-
         //- Pointer to mappedMovingPatchBase
-        const mappedMovingPatchBase* mappedMovingPatchPtr_;
+        const mappedMovingPointPatchBase* mappedMovingPatchPtr_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("mappedPatchSelector");
+    TypeName("mappedPointPatchSelector");
 
 
     // Constructors
 
         //- Construct from patch
-        mappedPatchSelector(const fvPatch&);
+        mappedPointPatchSelector(const pointPatch&);
 
 
     //- Destructor
-    virtual ~mappedPatchSelector();
+    virtual ~mappedPointPatchSelector();
 
 
     // Member Functions
@@ -107,15 +99,6 @@ public:
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
 
-            //- Return reference to the AMI interpolator
-            inline const AMIInterpolation& AMI
-            (
-                const bool forceUpdate = false
-            ) const;
-
-            //- Return a pointer to the AMI projection surface
-            const autoPtr<Foam::searchableSurface>& surfPtr() const;
-
             //- Get the region mesh
             const polyMesh& sampleMesh() const;
 
@@ -127,19 +110,6 @@ public:
 
             //- Get the sample points
             tmp<pointField> samplePoints() const;
-
-            //- Get a point on the face given a face decomposition method:
-            //  face-centre-tet : face centre. Returns index of face.
-            //  face-planes     : face centre. Returns index of face.
-            //  face-diagonal   : intersection of ray from cellcentre to
-            //                    facecentre with any of the triangles.
-            //                    Returns index (0..size-2) of triangle.
-            pointIndexHit facePoint
-            (
-                const polyMesh&,
-                const label facei,
-                const polyMesh::cellDecomposition
-            );
 
 
         // Distribute
@@ -174,7 +144,7 @@ public:
         );
 
         //- Check if a patch is of a mapped type
-        static bool isAMappedType(const fvPatch& patch);
+        static bool isAMappedType(const pointPatch& patch);
 
         //- Replace mappedFvPatches with  mappedMovingPatches
         static void replaceMappedWithMappedMoving(fvMesh& mesh);
@@ -183,17 +153,16 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "mappedPatchSelectorI.H"
+#include "mappedPointPatchSelectorI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "mappedPatchSelectorTemplates.C"
+    #include "mappedPointPatchSelectorTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

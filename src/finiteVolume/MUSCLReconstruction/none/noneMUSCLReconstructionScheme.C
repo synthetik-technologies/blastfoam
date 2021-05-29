@@ -77,9 +77,27 @@ Foam::noneMUSCLReconstructionScheme<Type>::noneMUSCLReconstructionScheme
 :
     MUSCLReconstructionScheme<Type>(phi, is),
     name_(is),
-    own_(lookupOrConstruct("MUSCL::own", 1.0)),
-    nei_(lookupOrConstruct("MUSCL::nei", -1.0))
-{}
+    own_(lookupOrConstruct("MUSCL:own", 1.0)),
+    nei_(lookupOrConstruct("MUSCL:nei", -1.0))
+{
+    if (this->mesh_.template foundObject<IOdictionary>("surfaceFields"))
+    {
+        IOdictionary& surfaceFields
+        (
+            this->mesh_.template lookupObjectRef<IOdictionary>("surfaceFields")
+        );
+        surfaceFields.subDict(pTraits<scalar>::typeName).set
+        (
+            own_.name(),
+            Switch(false)
+        );
+        surfaceFields.subDict(pTraits<scalar>::typeName).set
+        (
+            nei_.name(),
+            Switch(false)
+        );
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

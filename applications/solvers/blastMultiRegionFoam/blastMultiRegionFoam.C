@@ -48,7 +48,9 @@ Description
 #include "radiationModel.H"
 #include "coordinateSystem.H"
 #include "dynamicFvMesh.H"
+
 #include "mappedPatchSelector.H"
+#include "mappedPointPatchSelector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

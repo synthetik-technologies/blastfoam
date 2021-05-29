@@ -12,18 +12,22 @@ timeIntegrators/RK4/RK4TimeIntegrator.C
 timeIntegrators/RK4SSP/RK4SSPTimeIntegrator.C
 timeIntegrators/RKF45/RKF45TimeIntegrator.C
 
+finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
+finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
+
 mappedMovingPatches/mappedMovingPolyPatch/mappedMovingPatchBase.C
 mappedMovingPatches/mappedMovingPolyPatch/mappedMovingPolyPatch.C
 mappedMovingPatches/mappedMovingPolyPatch/mappedMovingWallPolyPatch.C
 mappedMovingPatches/mappedMovingPolyPatch/mappedMovingVariableThicknessWallPolyPatch.C
 
+mappedMovingPatches/mappedMovingPointPatch/mappedMovingPointPatchBase.C
 mappedMovingPatches/mappedMovingPointPatch/mappedMovingPointPatch.C
-mappedMovingPatches/mappedMovingPointPatch/mappedMovingWallPointPatch.C
 
 mappedMovingFvPatches/mappedMovingFvPatch.C
 mappedMovingFvPatches/mappedMovingWallFvPatch.C
 
 mappedPatchSelector/mappedPatchSelector.C
+mappedPointPatchSelector/mappedPointPatchSelector.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C
@@ -31,6 +35,11 @@ MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
 MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
 MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
-BalanceMeshObject/BalanceMeshObject.C
+RefineBalanceMeshObject/RefineBalanceMeshObject.C
+
+lookupTables/lookupTable2D/lookupTable2D.C
+lookupTables/lookupTable1D/lookupTable1D.C
+
+extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

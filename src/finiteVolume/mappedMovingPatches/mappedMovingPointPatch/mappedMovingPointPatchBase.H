@@ -22,70 +22,155 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::mappedPatchSelector
+    Foam::mappedMovingPointPatchBase
 
 Description
-    Class used to return mapping functions using either a mappedPolyPatch
-    or a mappedMovingPolyPatch
+    Determines a mapping between patch face centres and mesh cell or face
+    centres and processors they're on.
+
+    If constructed from dictionary:
+    \verbatim
+        // Region to sample (default is region0)
+        sampleRegion region0;
+
+        // If sampleMode is nearestPatchFace : patch to find faces of
+        samplePatch movingWall;
+
+        // If sampleMode is nearestPatchFace : specify patchgroup to find
+        // samplePatch and sampleRegion (if not provided)
+        coupleGroup baffleGroup;
+
+        // How to supply offset (w.r.t. my patch face centres):
+        // - uniform : single offset vector
+        // - nonuniform : per-face offset vector
+        // - normal : using supplied distance and face normal
+        offsetMode uniform;
+
+        // According to offsetMode (see above) supply one of
+        // offset, offsets or distance
+        offset  (1 0 0);
+    \endverbatim
+
+    Note: if offsetMode is \c normal it uses outwards pointing normals. So
+    supply a negative distance if sampling inside the domain.
 
 
 Note
+    Storage is not optimal. It temporary collects all (patch)face centres
+    on all processors to keep the addressing calculation simple.
 
 SourceFiles
-    mappedPatchSelector.C
+    mappedMovingPointPatchBase.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef mappedPatchSelector_H
-#define mappedPatchSelector_H
+#ifndef mappedMovingPointPatchBase_H
+#define mappedMovingPointPatchBase_H
 
-#include "fvPatch.H"
-#include "mappedPatchBase.H"
+#include "pointFields.H"
+#include "pointMesh.H"
+#include "Tuple2.H"
+#include "pointIndexHit.H"
+#include "pointPatchField.H"
 #include "mappedMovingPatchBase.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class polyPatch;
-class polyMesh;
-class mapDistribute;
-
 /*---------------------------------------------------------------------------*\
-                       Class mappedPatchSelector Declaration
+                       Class mappedMovingPointPatchBase Declaration
 \*---------------------------------------------------------------------------*/
 
-class mappedPatchSelector
+class mappedMovingPointPatchBase
 {
 protected:
 
     // Protected data
 
-        //- Pointer to mappedPatchBase
-        const mappedPatchBase* mappedPatchPtr_;
+        //- mapped polyPatch to sample
+        const polyPatch& pp_;
 
-        //- Pointer to mappedMovingPatchBase
-        const mappedMovingPatchBase* mappedMovingPatchPtr_;
+        //- mapped polyPatch to sample
+        const mappedMovingPatchBase& mpp_;
+
+        //- PolyMesh to sample
+        const polyMesh& pMesh_;
+
+        //- Patch to sample
+        mutable const pointPatch* patchPtr_;
+
+        //- Pointer to saved offset vector
+        const pointVectorField* displacementPtr_;
+
+
+        // Derived information
+
+            //- Communication schedule:
+            //
+            //    - Cells/faces to sample per processor
+            //    - Patch faces to receive per processor
+            //    - schedule
+            mutable autoPtr<mapDistribute> mapPtr_;
+
+
+    // Protected Member Functions
+
+        //- Collect single list of samples and originating processor+face.
+        void collectSamples
+        (
+            const pointField& points,
+            pointField&,
+            labelList& patchPointProcs,
+            labelList& patchPoints,
+            pointField& patchP
+        ) const;
+
+        //- Find cells/faces containing samples
+        void findSamples
+        (
+            const pointField&,
+            labelList& sampleProcs,     // processor containing sample
+            labelList& sampleIndices,   // local index of cell/face
+            pointField& sampleLocations // actual representative location
+        ) const;
+
+        //- Get the sample points given the face points
+        tmp<pointField> samplePoints(const pointField&) const;
+
+        //- Calculate mapping
+        void calcMapping() const;
+
+        //- Helper to read field or non-uniform list from dictionary
+        static tmp<pointField> readListOrField
+        (
+            const word& keyword,
+            const dictionary& dict,
+            const label size
+        );
 
 
 public:
 
     //- Runtime type information
-    TypeName("mappedPatchSelector");
+    TypeName("mappedMovingPointPatchBase");
 
 
     // Constructors
 
         //- Construct from patch
-        mappedPatchSelector(const fvPatch&);
+        mappedMovingPointPatchBase(const polyPatch&);
 
 
     //- Destructor
-    virtual ~mappedPatchSelector();
+    virtual ~mappedMovingPointPatchBase();
 
 
     // Member Functions
+
+        void clearOut();
 
         // Access
 
@@ -101,20 +186,17 @@ public:
             //- Return size of mappedMoving mesh/patch/boundary
             inline label sampleSize() const;
 
+            //- Set pointer to offset field
+            inline void setOffsets(const pointVectorField& offsets);
+
+            //- Offset vector (from patch faces to destination mesh objects)
+            inline tmp<vectorField> offsets() const;
+
             //- Cached sampleRegion != mesh.name()
             inline bool sameRegion() const;
 
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
-
-            //- Return reference to the AMI interpolator
-            inline const AMIInterpolation& AMI
-            (
-                const bool forceUpdate = false
-            ) const;
-
-            //- Return a pointer to the AMI projection surface
-            const autoPtr<Foam::searchableSurface>& surfPtr() const;
 
             //- Get the region mesh
             const polyMesh& sampleMesh() const;
@@ -134,7 +216,7 @@ public:
             //  face-diagonal   : intersection of ray from cellcentre to
             //                    facecentre with any of the triangles.
             //                    Returns index (0..size-2) of triangle.
-            pointIndexHit facePoint
+            static pointIndexHit facePoint
             (
                 const polyMesh&,
                 const label facei,
@@ -161,39 +243,25 @@ public:
             void reverseDistribute(List<Type>& lst, const CombineOp& cop) const;
 
 
-    // Static functions
+        // I/O
 
-        // Function to clear patches if an update has occurred
-        static void clearMappedPatches(fvMesh& mesh);
-
-        // Set the displacement field given a field
-        static bool setMappedPatchDisplacement
-        (
-            fvMesh& ownMesh,
-            const fvMesh& neiMesh
-        );
-
-        //- Check if a patch is of a mapped type
-        static bool isAMappedType(const fvPatch& patch);
-
-        //- Replace mappedFvPatches with  mappedMovingPatches
-        static void replaceMappedWithMappedMoving(fvMesh& mesh);
+            //- Write as a dictionary
+            virtual void write(Ostream&) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "mappedPatchSelectorI.H"
+#include "mappedMovingPointPatchBaseI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "mappedPatchSelectorTemplates.C"
+    #include "mappedMovingPointPatchBaseTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -124,7 +124,7 @@ Foam::pointIndexHit Foam::mappedPatchSelector::facePoint
 
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
 // Function to clear patches if an update has occurred
-void Foam::clearMappedPatches(fvMesh& mesh)
+void Foam::mappedPatchSelector::clearMappedPatches(fvMesh& mesh)
 {
     forAll(mesh.boundaryMesh(), patchi)
     {
@@ -147,23 +147,34 @@ void Foam::clearMappedPatches(fvMesh& mesh)
 }
 
 
-bool Foam::setMappedPatchDisplacement(fvMesh& mesh, const word& name)
+bool Foam::mappedPatchSelector::setMappedPatchDisplacement
+(
+    fvMesh& ownMesh,
+    const fvMesh& neiMesh
+)
 {
-    if (mesh.foundObject<volVectorField>(name))
+    if (neiMesh.foundObject<volVectorField>("D"))
     {
-        const volVectorField& D =
-            mesh.lookupObject<volVectorField>(name);
+        const volVectorField& D = neiMesh.lookupObject<volVectorField>("D");
 
-        forAll(mesh.boundaryMesh(), patchi)
+        forAll(ownMesh.boundaryMesh(), patchi)
         {
-            if (isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi]))
+            if (isA<mappedMovingWallFvPatch>(ownMesh.boundary()[patchi]))
             {
                 polyBoundaryMesh& pbMesh =
                     const_cast<polyBoundaryMesh&>
                     (
-                        mesh.boundaryMesh()
+                        ownMesh.boundaryMesh()
                     );
-                refCast<mappedMovingPatchBase>(pbMesh[patchi]).setOffsets(D);
+                mappedMovingPatchBase& mmpb =
+                    refCast<mappedMovingPatchBase>
+                    (
+                        pbMesh[patchi]
+                    );
+                if (mmpb.sampleRegion() == neiMesh.name())
+                {
+                    mmpb.setOffsets(D);
+                }
             }
         }
         return true;
@@ -172,7 +183,7 @@ bool Foam::setMappedPatchDisplacement(fvMesh& mesh, const word& name)
 }
 
 
-bool Foam::isAMappedType(const fvPatch& patch)
+bool Foam::mappedPatchSelector::isAMappedType(const fvPatch& patch)
 {
     if (isA<mappedWallPolyPatch>(patch))
     {
@@ -186,7 +197,10 @@ bool Foam::isAMappedType(const fvPatch& patch)
 }
 
 
-void Foam::replaceMappedWithMappedMoving(fvMesh& mesh)
+void Foam::mappedPatchSelector::replaceMappedWithMappedMoving
+(
+    fvMesh& mesh
+)
 {
     List<polyPatch*> newPolyPatches(mesh.boundaryMesh().size());
     polyBoundaryMesh& bm = const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());

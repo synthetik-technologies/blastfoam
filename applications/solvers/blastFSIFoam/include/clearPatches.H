@@ -7,7 +7,8 @@ if (needRemap)
     {
         if (!remapped[j])
         {
-            clearMappedPatches(fluidRegions[i]);
+            mappedPatchSelector::clearMappedPatches(fluidRegions[i]);
+            mappedPointPatchSelector::clearMappedPatches(fluidRegions[i]);
         }
         j++;
     }
@@ -15,7 +16,8 @@ if (needRemap)
     {
         if (!remapped[j])
         {
-            clearMappedPatches(solidRegions[i]);
+            mappedPatchSelector::clearMappedPatches(solidRegions[i]);
+            mappedPointPatchSelector::clearMappedPatches(solidRegions[i]);
         }
         j++;
     }

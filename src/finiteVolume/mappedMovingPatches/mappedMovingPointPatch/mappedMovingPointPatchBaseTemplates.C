@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2012-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,42 +23,66 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fvMotionSolver.H"
-#include "fixedValuePointPatchFields.H"
-#include "cellMotionFvPatchFields.H"
-#include "coupledCellMotionFvPatchFields.H"
-#include "mappedPatchSelector.H"
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
 template<class Type>
-Foam::wordList Foam::fvMotionSolver::cellMotionBoundaryTypes
+void Foam::mappedMovingPointPatchBase::distribute(List<Type>& lst) const
+{
+    map().distribute(lst);
+}
+
+
+template<class Type, class CombineOp>
+void Foam::mappedMovingPointPatchBase::distribute
 (
-    const typename GeometricField<Type, pointPatchField, pointMesh>::
-    Boundary& pmUbf
+    List<Type>& lst,
+    const CombineOp& cop
 ) const
 {
-    wordList cmUbf = pmUbf.types();
+    mapDistributeBase::distribute
+    (
+        Pstream::defaultCommsType,
+        map().schedule(),
+        map().constructSize(),
+        map().subMap(),
+        false,
+        map().constructMap(),
+        false,
+        lst,
+        cop,
+        flipOp(),
+        Type(Zero)
+    );
+}
 
-    // Remove global patches from the end of the list
-    cmUbf.setSize(fvMesh_.boundary().size());
 
-    forAll(cmUbf, patchi)
-    {
-        if (isA<fixedValuePointPatchField<Type>>(pmUbf[patchi]))
-        {
-            cmUbf[patchi] = cellMotionFvPatchField<Type>::typeName;
-        }
+template<class Type>
+void Foam::mappedMovingPointPatchBase::reverseDistribute(List<Type>& lst) const
+{
+    map().reverseDistribute(sampleSize(), lst);
+}
 
-        if (debug)
-        {
-            Pout<< "Patch:" << fvMesh_.boundary()[patchi].patch().name() <<nl
-                << " pointType:" << pmUbf.types()[patchi]
-                << " cellType:" << cmUbf[patchi] << endl;
-        }
-    }
 
-    return cmUbf;
+template<class Type, class CombineOp>
+void Foam::mappedMovingPointPatchBase::reverseDistribute
+(
+    List<Type>& lst,
+    const CombineOp& cop
+) const
+{
+    label cSize = sampleSize();
+    mapDistributeBase::distribute
+    (
+        Pstream::defaultCommsType,
+        map().schedule(),
+        cSize,
+        map().constructMap(),
+        false,
+        map().subMap(),
+        false,
+        lst,
+        cop,
+        flipOp(),
+        Type(Zero)
+    );
 }
 
 

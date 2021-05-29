@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,7 +25,12 @@ Class
     Foam::mappedMovingPointPatch
 
 Description
-    mappedMovingPointPatch patch.
+    Determines a mapping between patch face centres and mesh cell or face
+    centres and processors they're on.
+
+Note
+    Storage is not optimal. It stores all face centres and cells on all
+    processors to keep the addressing calculation simple.
 
 SourceFiles
     mappedMovingPointPatch.C
@@ -36,40 +41,70 @@ SourceFiles
 #define mappedMovingPointPatch_H
 
 #include "facePointPatch.H"
-#include "mappedMovingPolyPatch.H"
-#include "addToRunTimeSelectionTable.H"
+#include "mappedMovingPointPatchBase.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
+class pointMesh;
+
 /*---------------------------------------------------------------------------*\
-                     Class mappedMovingPointPatch Declaration
+                      Class mappedMovingPointPatch Declaration
 \*---------------------------------------------------------------------------*/
 
 class mappedMovingPointPatch
 :
-    public facePointPatch
+    public facePointPatch,
+    public mappedMovingPointPatchBase
 {
+
+protected:
+
+        //- Initialise the calculation of the patch geometry
+        virtual void initCalcGeometry(PstreamBuffers&);
+
+        //- Calculate the patch geometry
+        virtual void calcGeometry(PstreamBuffers&);
+
+        //- Initialise the patches for moving points
+        virtual void initMovePoints(PstreamBuffers&, const pointField&);
+
+        //- Correct patches after moving points
+        virtual void movePoints(PstreamBuffers&, const pointField&);
+
+        //- Initialise the update of the patch topology
+        virtual void initUpdateMesh(PstreamBuffers&);
+
+        //- Update of the patch topology
+        virtual void updateMesh(PstreamBuffers&);
+
 
 public:
 
     //- Runtime type information
-    TypeName(mappedMovingPolyPatch::typeName_());
+    TypeName("mappedMovingWall");
 
 
     // Constructors
 
-        //- Construct from polyPatch
+        //- Construct from components
         mappedMovingPointPatch
         (
-            const polyPatch& patch,
+            const polyPatch& pp,
             const pointBoundaryMesh& bm
-        )
-        :
-            facePointPatch(patch, bm)
-        {}
+        );
+
+    //- Destructor
+    virtual ~mappedMovingPointPatch();
+
+
+    // Member Functions
+
+        //- Write the PointPatch data as a dictionary
+        virtual void write(Ostream&) const;
 };
 
 

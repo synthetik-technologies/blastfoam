@@ -30,22 +30,84 @@ License
 
 namespace Foam
 {
+    defineTypeNameAndDebug(mappedMovingPointPatch, 0);
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+    addToRunTimeSelectionTable(facePointPatch, mappedMovingPointPatch, polyPatch);
+}
 
-defineTypeNameAndDebug(mappedMovingPointPatch, 0);
 
-// Add the patch constructor functions to the hash tables
-addToRunTimeSelectionTable
+// * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
+
+Foam::mappedMovingPointPatch::mappedMovingPointPatch
 (
-    facePointPatch,
-    mappedMovingPointPatch,
-    polyPatch
-);
+    const polyPatch& pp,
+    const pointBoundaryMesh& bm
+)
+:
+    facePointPatch(pp, bm),
+    mappedMovingPointPatchBase(pp)
+{}
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-} // End namespace Foam
+Foam::mappedMovingPointPatch::~mappedMovingPointPatch()
+{
+    mappedMovingPointPatchBase::clearOut();
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::mappedMovingPointPatch::initCalcGeometry(PstreamBuffers& pBufs)
+{
+    facePointPatch::initCalcGeometry(pBufs);
+}
+
+
+void Foam::mappedMovingPointPatch::calcGeometry(PstreamBuffers& pBufs)
+{
+    facePointPatch::calcGeometry(pBufs);
+    mappedMovingPointPatchBase::clearOut();
+}
+
+
+void Foam::mappedMovingPointPatch::initMovePoints
+(
+    PstreamBuffers& pBufs,
+    const pointField& p
+)
+{
+    facePointPatch::initMovePoints(pBufs, p);
+}
+
+
+void Foam::mappedMovingPointPatch::movePoints
+(
+    PstreamBuffers& pBufs,
+    const pointField& p
+)
+{
+    facePointPatch::movePoints(pBufs, p);
+    mappedMovingPointPatchBase::clearOut();
+}
+
+
+void Foam::mappedMovingPointPatch::initUpdateMesh(PstreamBuffers& pBufs)
+{
+    facePointPatch::initUpdateMesh(pBufs);
+}
+
+
+void Foam::mappedMovingPointPatch::updateMesh(PstreamBuffers& pBufs)
+{
+    facePointPatch::updateMesh(pBufs);
+    mappedMovingPointPatchBase::clearOut();
+}
+
+
+void Foam::mappedMovingPointPatch::write(Ostream& os) const
+{}
+
 
 // ************************************************************************* //

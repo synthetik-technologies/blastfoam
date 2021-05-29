@@ -164,6 +164,14 @@ protected:
                 const ListType<Type>& fList
             ) const;
 
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
+            void calcAndStoreDelta
+            (
+                const Type& f,
+                ListType<Type>& fList
+            ) const;
+
             //- Clear and resize stored old fields
             template<class fieldType>
             void clearOld(PtrList<fieldType>& fList) const;
