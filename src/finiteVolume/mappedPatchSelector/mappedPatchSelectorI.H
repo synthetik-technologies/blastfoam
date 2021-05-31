@@ -67,17 +67,6 @@ inline Foam::label Foam::mappedPatchSelector::sampleSize() const
 }
 
 
-inline bool Foam::mappedPatchSelector::sameRegion() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sameRegion();
-    }
-
-    return mappedMovingPatchPtr_->sameRegion();
-}
-
-
 inline const Foam::mapDistribute& Foam::mappedPatchSelector::map() const
 {
     if (mappedPatchPtr_)
@@ -86,20 +75,6 @@ inline const Foam::mapDistribute& Foam::mappedPatchSelector::map() const
     }
 
     return mappedMovingPatchPtr_->map();
-}
-
-
-inline const Foam::AMIInterpolation& Foam::mappedPatchSelector::AMI
-(
-    bool forceUpdate
-) const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->AMI(forceUpdate);
-    }
-
-    return mappedMovingPatchPtr_->AMI(forceUpdate);
 }
 
 

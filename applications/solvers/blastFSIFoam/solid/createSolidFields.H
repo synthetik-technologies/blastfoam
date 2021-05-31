@@ -2,6 +2,7 @@
 
 // General fields
 PtrList<volVectorField> Ds(solidRegions.size());
+PtrList<pointVectorField> pointDs(solidRegions.size());
 PtrList<fv::options> solidSources(solidRegions.size());
 PtrList<volVectorField> divSigmaExps(solidRegions.size());
 PtrList<volSymmTensorField> sigmaDs(solidRegions.size());
@@ -81,6 +82,24 @@ forAll(solidRegions, i)
                 IOobject::AUTO_WRITE
             ),
             solidRegions[i]
+        )
+    );
+
+    pointDs.set
+    (
+        i,
+        new pointVectorField
+        (
+             IOobject
+            (
+                "pointD",
+                runTime.timeName(),
+                solidRegions[i],
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            pointMesh::New(solidRegions[i]),
+            dimensionedVector("0", dimLength, Zero)
         )
     );
 

@@ -28,6 +28,7 @@ License
 #include "motionSolver.H"
 #include "mappedMovingPatchBase.H"
 #include "mappedMovingWallFvPatch.H"
+#include "displacementMotionSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -73,13 +74,32 @@ const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
 }
 
 
+bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
+{
+    bool moving = adaptiveFvMesh::refine(correctError);
+    volScalarField::Internal V0(this->V0());
+    this->clearOut();
+    this->V0();
+    this->setV0() = V0;
+
+    if (isA<displacementMotionSolver>(motionPtr_()))
+    {
+        displacementMotionSolver& dispMS =
+            dynamicCast<displacementMotionSolver>(motionPtr_());
+        dispMS.points0() =
+            points() - dispMS.pointDisplacement().primitiveField();
+}
+
+    return moving;
+}
+
+
 bool Foam::movingAdaptiveFvMesh::update()
 {
 
     //- Move mesh
     fvMesh::movePoints(motionPtr_->newPoints());
     velocityMotionCorrection_.update();
-    Info<<"moving "<<moving()<<endl;
 
     return true;
 }

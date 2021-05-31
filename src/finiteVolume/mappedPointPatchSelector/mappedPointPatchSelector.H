@@ -93,9 +93,6 @@ public:
             //- Return size of mappedMoving mesh/patch/boundary
             inline label sampleSize() const;
 
-            //- Cached sampleRegion != mesh.name()
-            inline bool sameRegion() const;
-
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
 

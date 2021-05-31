@@ -97,10 +97,6 @@ Foam::displacementSBRStressFvMotionSolver::
 Foam::tmp<Foam::pointField>
 Foam::displacementSBRStressFvMotionSolver::curPoints() const
 {
-    //- Update points0 before updating pointDisplacement
-    points0Ref().primitiveFieldRef() =
-        fvMesh_.points() - pointDisplacement_.primitiveField();
-
     volPointInterpolation::New(fvMesh_).interpolate
     (
         cellDisplacement_,

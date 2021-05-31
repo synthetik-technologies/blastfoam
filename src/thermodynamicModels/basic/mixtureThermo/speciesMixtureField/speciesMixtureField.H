@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "volFields.H"
-#include "BalanceMeshObject.H"
+#include "RefineBalanceMeshObject.H"
 #include "PtrList.H"
 
 namespace Foam

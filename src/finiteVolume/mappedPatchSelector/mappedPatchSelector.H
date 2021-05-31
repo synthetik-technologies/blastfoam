@@ -101,20 +101,8 @@ public:
             //- Return size of mappedMoving mesh/patch/boundary
             inline label sampleSize() const;
 
-            //- Cached sampleRegion != mesh.name()
-            inline bool sameRegion() const;
-
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
-
-            //- Return reference to the AMI interpolator
-            inline const AMIInterpolation& AMI
-            (
-                const bool forceUpdate = false
-            ) const;
-
-            //- Return a pointer to the AMI projection surface
-            const autoPtr<Foam::searchableSurface>& surfPtr() const;
 
             //- Get the region mesh
             const polyMesh& sampleMesh() const;

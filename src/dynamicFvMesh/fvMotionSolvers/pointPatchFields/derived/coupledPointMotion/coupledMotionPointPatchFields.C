@@ -23,64 +23,40 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::word& Foam::mappedPointPatchSelector::sampleRegion() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleRegion();
-    }
+#include "coupledMotionPointPatchFields.H"
+#include "addToRunTimeSelectionTable.H"
+#include "volFields.H"
 
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleRegion();
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
+{
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+makeTemplatePointPatchTypeField(pointPatchScalarField, coupleMotionPointPatchScalarField);
+makeTemplatePointPatchTypeField(pointPatchVectorField, coupleMotionPointPatchVectorField);
+
+template<>
+Foam::tmp<Foam::scalarField> Foam::coupledMotionPointPatchField<scalar>::getCmpt
+(
+    const vectorField& f
+) const
+{
+    return f.component(cmpt_);
 }
 
-
-inline const Foam::word& Foam::mappedPointPatchSelector::samplePatch() const
+template<>
+Foam::tmp<Foam::vectorField> Foam::coupledMotionPointPatchField<vector>::getCmpt
+(
+    const vectorField& f
+) const
 {
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleRegion();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleRegion();
+    return f;
 }
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-inline const Foam::word& Foam::mappedPointPatchSelector::coupleGroup() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->coupleGroup();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->coupleGroup();
-}
-
-
-inline Foam::label Foam::mappedPointPatchSelector::sampleSize() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleSize();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleSize();
-}
-
-
-inline const Foam::mapDistribute& Foam::mappedPointPatchSelector::map() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->map();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->map();
-}
-
+} // End namespace Foam
 
 // ************************************************************************* //

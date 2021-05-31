@@ -251,9 +251,6 @@ void Foam::displacementLaplacianFvMotionSolver::updateMesh
     // Update diffusivity. Note two stage to make sure old one is de-registered
     // before creating/registering new one.
     diffusivityPtr_.clear();
-
-    points0Ref().primitiveFieldRef() =
-        fvMesh_.points() - pointDisplacement_.primitiveField();
 }
 
 

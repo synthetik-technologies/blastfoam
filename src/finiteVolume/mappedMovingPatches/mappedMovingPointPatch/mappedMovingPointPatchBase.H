@@ -137,9 +137,6 @@ protected:
             pointField& sampleLocations // actual representative location
         ) const;
 
-        //- Get the sample points given the face points
-        tmp<pointField> samplePoints(const pointField&) const;
-
         //- Calculate mapping
         void calcMapping() const;
 

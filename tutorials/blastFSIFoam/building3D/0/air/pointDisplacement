@@ -22,7 +22,7 @@ boundaryField
 {
     air_to_building
     {
-        type            calculated;
+        type            coupledPointMotion;
         value           uniform (0 0 0);
     }
     ground

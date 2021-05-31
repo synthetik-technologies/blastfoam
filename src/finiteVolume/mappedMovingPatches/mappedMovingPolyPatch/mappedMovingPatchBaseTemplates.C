@@ -26,18 +26,7 @@ License
 template<class Type>
 void Foam::mappedMovingPatchBase::distribute(List<Type>& lst) const
 {
-    switch (mode_)
-    {
-        case NEARESTPATCHFACEAMI:
-        {
-            lst = AMI().interpolateToSource(Field<Type>(move(lst)));
-            break;
-        }
-        default:
-        {
-            map().distribute(lst);
-        }
-    }
+    map().distribute(lst);
 }
 
 
@@ -48,54 +37,27 @@ void Foam::mappedMovingPatchBase::distribute
     const CombineOp& cop
 ) const
 {
-    switch (mode_)
-    {
-        case NEARESTPATCHFACEAMI:
-        {
-            lst = AMI().interpolateToSource
-                (
-                    Field<Type>(move(lst)),
-                    cop
-                );
-            break;
-        }
-        default:
-        {
-            mapDistributeBase::distribute
-            (
-                Pstream::defaultCommsType,
-                map().schedule(),
-                map().constructSize(),
-                map().subMap(),
-                false,
-                map().constructMap(),
-                false,
-                lst,
-                cop,
-                flipOp(),
-                Type(Zero)
-            );
-        }
-    }
+   mapDistributeBase::distribute
+    (
+        Pstream::defaultCommsType,
+        map().schedule(),
+        map().constructSize(),
+        map().subMap(),
+        false,
+        map().constructMap(),
+        false,
+        lst,
+        cop,
+        flipOp(),
+        Type(Zero)
+    );
 }
 
 
 template<class Type>
 void Foam::mappedMovingPatchBase::reverseDistribute(List<Type>& lst) const
 {
-    switch (mode_)
-    {
-        case NEARESTPATCHFACEAMI:
-        {
-            lst = AMI().interpolateToTarget(Field<Type>(move(lst)));
-            break;
-        }
-        default:
-        {
-            map().reverseDistribute(sampleSize(), lst);
-            break;
-        }
-    }
+    map().reverseDistribute(sampleSize(), lst);
 }
 
 
@@ -106,37 +68,21 @@ void Foam::mappedMovingPatchBase::reverseDistribute
     const CombineOp& cop
 ) const
 {
-    switch (mode_)
-    {
-        case NEARESTPATCHFACEAMI:
-        {
-            lst = AMI().interpolateToTarget
-                (
-                    Field<Type>(move(lst)),
-                    cop
-                );
-            break;
-        }
-        default:
-        {
-            label cSize = sampleSize();
-            mapDistributeBase::distribute
-            (
-                Pstream::defaultCommsType,
-                map().schedule(),
-                cSize,
-                map().constructMap(),
-                false,
-                map().subMap(),
-                false,
-                lst,
-                cop,
-                flipOp(),
-                Type(Zero)
-            );
-            break;
-        }
-    }
+    label cSize = sampleSize();
+    mapDistributeBase::distribute
+    (
+        Pstream::defaultCommsType,
+        map().schedule(),
+        cSize,
+        map().constructMap(),
+        false,
+        map().subMap(),
+        false,
+        lst,
+        cop,
+        flipOp(),
+        Type(Zero)
+    );
 }
 
 

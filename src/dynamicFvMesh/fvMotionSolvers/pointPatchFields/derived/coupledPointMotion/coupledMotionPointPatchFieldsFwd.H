@@ -23,64 +23,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::word& Foam::mappedPointPatchSelector::sampleRegion() const
+#ifndef coupledMotionPointPatchFieldsFwd_H
+#define coupledMotionPointPatchFieldsFwd_H
+
+#include "fieldTypes.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
 {
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleRegion();
-    }
 
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleRegion();
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+template<class Type> class coupledMotionPointPatchField;
 
-inline const Foam::word& Foam::mappedPointPatchSelector::samplePatch() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleRegion();
-    }
+makePointPatchTypeFieldTypedef(scalar, coupledMotion);
+makePointPatchTypeFieldTypedef(vector, coupledMotion);
 
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleRegion();
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace Foam
 
-inline const Foam::word& Foam::mappedPointPatchSelector::coupleGroup() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->coupleGroup();
-    }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    NotImplemented;
-    return mappedMovingPatchPtr_->coupleGroup();
-}
-
-
-inline Foam::label Foam::mappedPointPatchSelector::sampleSize() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->sampleSize();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->sampleSize();
-}
-
-
-inline const Foam::mapDistribute& Foam::mappedPointPatchSelector::map() const
-{
-    if (mappedMovingPatchPtr_)
-    {
-        return mappedMovingPatchPtr_->map();
-    }
-
-    NotImplemented;
-    return mappedMovingPatchPtr_->map();
-}
-
+#endif
 
 // ************************************************************************* //

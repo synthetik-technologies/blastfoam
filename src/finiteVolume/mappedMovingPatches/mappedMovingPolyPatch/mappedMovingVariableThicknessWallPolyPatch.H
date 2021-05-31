@@ -80,34 +80,6 @@ public:
             const word& patchType
         );
 
-        //- Construct from components
-        mappedMovingVariableThicknessWallPolyPatch
-        (
-            const word& name,
-            const label size,
-            const label start,
-            const label index,
-            const word& sampleRegion,
-            const mappedMovingPatchBase::sampleMode mode,
-            const word& samplePatch,
-            const vectorField& offset,
-            const polyBoundaryMesh& bm
-        );
-
-        //- Construct from components. Uniform offset.
-        mappedMovingVariableThicknessWallPolyPatch
-        (
-            const word& name,
-            const label size,
-            const label start,
-            const label index,
-            const word& sampleRegion,
-            const mappedMovingPatchBase::sampleMode mode,
-            const word& samplePatch,
-            const vector& offset,
-            const polyBoundaryMesh& bm
-        );
-
         //- Construct from components. Uniform offset.
         mappedMovingVariableThicknessWallPolyPatch
         (

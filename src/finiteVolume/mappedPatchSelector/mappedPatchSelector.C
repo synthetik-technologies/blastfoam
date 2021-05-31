@@ -153,6 +153,7 @@ bool Foam::mappedPatchSelector::setMappedPatchDisplacement
     const fvMesh& neiMesh
 )
 {
+    bool set = false;
     if (neiMesh.foundObject<volVectorField>("D"))
     {
         const volVectorField& D = neiMesh.lookupObject<volVectorField>("D");
@@ -177,9 +178,9 @@ bool Foam::mappedPatchSelector::setMappedPatchDisplacement
                 }
             }
         }
-        return true;
+        set = true;
     }
-    return false;
+    return set;
 }
 
 

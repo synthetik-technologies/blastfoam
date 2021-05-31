@@ -135,8 +135,6 @@ motionSolvers/displacement/solidBody/pointPatchFields/derived/solidBodyMotionDis
 
 createShellMesh/createShellMesh.C
 
-extrudePatchMesh/extrudePatchMesh.C
-
 polyMeshFilter/polyMeshFilterSettings.C
 polyMeshFilter/polyMeshFilter.C
 

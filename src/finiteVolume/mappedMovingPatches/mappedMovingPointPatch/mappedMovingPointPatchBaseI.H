@@ -99,12 +99,6 @@ inline void Foam::mappedMovingPointPatchBase::setOffsets
 }
 
 
-inline bool Foam::mappedMovingPointPatchBase::sameRegion() const
-{
-    return mpp_.sameRegion();
-}
-
-
 inline const Foam::mapDistribute& Foam::mappedMovingPointPatchBase::map() const
 {
     if (mapPtr_.empty())

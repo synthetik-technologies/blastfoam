@@ -110,6 +110,9 @@ public:
         //- Return the motionSolver
         const motionSolver& motion() const;
 
+        //- Refine the mesh
+        virtual bool refine(const bool correctError = true);
+
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();
 

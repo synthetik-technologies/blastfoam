@@ -113,34 +113,6 @@ public:
             const polyBoundaryMesh& bm
         );
 
-        //- Construct from components
-        mappedMovingPolyPatch
-        (
-            const word& name,
-            const label size,
-            const label start,
-            const label index,
-            const word& sampleRegion,
-            const mappedMovingPatchBase::sampleMode mode,
-            const word& samplePatch,
-            const vectorField& offset,
-            const polyBoundaryMesh& bm
-        );
-
-        //- Construct from components. Uniform offset.
-        mappedMovingPolyPatch
-        (
-            const word& name,
-            const label size,
-            const label start,
-            const label index,
-            const word& sampleRegion,
-            const mappedMovingPatchBase::sampleMode mode,
-            const word& samplePatch,
-            const vector& offset,
-            const polyBoundaryMesh& bm
-        );
-
         //- Construct from dictionary
         mappedMovingPolyPatch
         (

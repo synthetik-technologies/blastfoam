@@ -83,56 +83,6 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
 Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
 (
     const word& name,
-    const label size,
-    const label start,
-    const label index,
-    const word& sampleRegion,
-    const mappedMovingPatchBase::sampleMode mode,
-    const word& samplePatch,
-    const vectorField& offset,
-    const polyBoundaryMesh& bm
-)
-:
-    polyPatch(name, size, start, index, bm, typeName),
-    mappedMovingPatchBase
-    (
-        static_cast<const polyPatch&>(*this),
-        sampleRegion,
-        mode,
-        samplePatch,
-        offset
-    )
-{}
-
-
-Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
-(
-    const word& name,
-    const label size,
-    const label start,
-    const label index,
-    const word& sampleRegion,
-    const mappedMovingPatchBase::sampleMode mode,
-    const word& samplePatch,
-    const vector& offset,
-    const polyBoundaryMesh& bm
-)
-:
-    polyPatch(name, size, start, index, bm, typeName),
-    mappedMovingPatchBase
-    (
-        static_cast<const polyPatch&>(*this),
-        sampleRegion,
-        mode,
-        samplePatch,
-        offset
-    )
-{}
-
-
-Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
-(
-    const word& name,
     const dictionary& dict,
     const label index,
     const polyBoundaryMesh& bm,

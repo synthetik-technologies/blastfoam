@@ -2,34 +2,27 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2016-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2016-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
-
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
-
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 Class
     Foam::points0MotionSolver
-
 Description
     Virtual base class for displacement motion solvers.
-
 SourceFiles
     points0MotionSolver.C
-
 \*---------------------------------------------------------------------------*/
 
 #ifndef points0MotionSolver_H
@@ -47,7 +40,7 @@ namespace Foam
 class mapPolyMesh;
 
 /*---------------------------------------------------------------------------*\
-                   Class points0MotionSolver Declaration
+                     Class points0MotionSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class points0MotionSolver
@@ -59,19 +52,12 @@ protected:
     // Protected data
 
         //- Starting points
-        const pointVectorField& points0_;
+        pointIOField points0_;
 
         //- Return IOobject for points0
         IOobject points0IO(const polyMesh& mesh) const;
 
-        //- Return points0
-        const pointVectorField& points0Init(const polyMesh& mesh) const;
 
-        //- Non-const reference to points0 through lookup
-        pointVectorField& points0Ref() const
-        {
-            return mesh().lookupObjectRef<pointVectorField>("points0");
-        }
 
 public:
 
@@ -100,7 +86,13 @@ public:
     // Member Functions
 
         //- Return reference to the reference field
-        const pointVectorField& points0() const
+        pointField& points0()
+        {
+            return points0_;
+        }
+
+        //- Return reference to the reference field
+        const pointField& points0() const
         {
             return points0_;
         }

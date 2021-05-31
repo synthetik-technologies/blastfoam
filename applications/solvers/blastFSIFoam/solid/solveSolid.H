@@ -83,6 +83,12 @@ if (thermalStress)
 
 sigmaEqs[i] = sqrt((3.0/2.0)*magSqr(dev(sigmas[i])));
 
+volPointInterpolation::New(mesh).interpolate
+(
+    D,
+    pointD
+);
+
 Info<< "Max sigmaEq = " << max(sigmaEqs[i]).value()
     << endl;
 

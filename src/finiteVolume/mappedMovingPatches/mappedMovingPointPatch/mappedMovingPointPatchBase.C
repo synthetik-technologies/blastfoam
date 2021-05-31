@@ -78,7 +78,7 @@ void Foam::mappedMovingPointPatchBase::collectSamples
 
     {
         List<pointField> globalSamples(Pstream::nProcs());
-        globalSamples[Pstream::myProcNo()] = samplePoints(points);
+        globalSamples[Pstream::myProcNo()] = points;
         Pstream::gatherList(globalSamples);
         Pstream::scatterList(globalSamples);
         // Rework into straight list
@@ -133,13 +133,17 @@ void Foam::mappedMovingPointPatchBase::findSamples
     pointField& sampleLocations
 ) const
 {
-    // Lookup the correct region
-    const polyMesh& mesh = sampleMesh();
-
     // All the info for nearest. Construct to miss
     List<mappedMovingPatchBase::nearInfo> nearest(samples.size());
 
     const polyPatch& pp = samplePolyPatch();
+    pointField points(pp.localPoints());
+    if (displacementPtr_)
+    {
+        points +=
+            displacementPtr_->boundaryField()[pp.index()].patchInternalField();
+    }
+
 
     if (pp.empty())
     {
@@ -154,16 +158,12 @@ void Foam::mappedMovingPointPatchBase::findSamples
         // patch (local) points
         treeBoundBox patchBb
         (
-            treeBoundBox(pp.points(), pp.meshPoints()).extend(1e-4)
+            treeBoundBox(points).extend(1e-4)
         );
 
         indexedOctree<treeDataPoint> boundaryTree
         (
-            treeDataPoint   // all information needed to search faces
-            (
-                mesh.points(),
-                pp.meshPoints() // selection of points to search on
-            ),
+            treeDataPoint(points),
             patchBb,        // overall search domain
             8,              // maxLevel
             10,             // leafsize
@@ -269,12 +269,6 @@ void Foam::mappedMovingPointPatchBase::calcMapping() const
     // Get points on face (since cannot use face-centres - might be off
     // face-diagonal decomposed tets.
     tmp<pointField> points(patchPtr_->localPoints());
-
-    // Get offsetted points
-    const pointField offsettedPoints(samplePoints(points()));
-
-    // Check offset
-    vectorField d(offsettedPoints - points());
 
     // Get global list of all samples and the processor and face they come from.
     pointField samples;
@@ -547,38 +541,6 @@ const Foam::polyPatch& Foam::mappedMovingPointPatchBase::samplePolyPatch() const
 }
 
 
-Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints
-(
-    const pointField& p
-) const
-{
-    tmp<pointField> tfld(new pointField(p));
-    pointField& fld = tfld.ref();
-
-    if (!patchPtr_)
-    {
-        patchPtr_ =
-            &pMesh_.lookupObject<pointMesh>
-            (
-                "pointMesh"
-            ).boundary()[pp_.index()];
-    }
-    if (displacementPtr_)
-    {
-        fld -= displacementPtr_->boundaryField()[patchPtr_->index()].patchInternalField();
-    }
-    else
-    {
-        if (debug)
-        {
-            Info<< "Offsets are not set for " << patchPtr_->name() << endl;
-        }
-    }
-
-    return tfld;
-}
-
-
 Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints() const
 {
     if (!patchPtr_)
@@ -589,7 +551,7 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints() con
                 "pointMesh"
             ).boundary()[pp_.index()];
     }
-    return samplePoints(patchPtr_->localPoints());
+    return patchPtr_->localPoints();
 }
 
 

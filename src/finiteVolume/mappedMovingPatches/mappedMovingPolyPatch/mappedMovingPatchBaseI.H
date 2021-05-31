@@ -23,13 +23,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::mappedMovingPatchBase::sampleMode&
-Foam::mappedMovingPatchBase::mode() const
-{
-    return mode_;
-}
-
-
 inline const Foam::word& Foam::mappedMovingPatchBase::sampleRegion() const
 {
     if (sampleRegion_.empty())
@@ -90,61 +83,16 @@ inline const Foam::word& Foam::mappedMovingPatchBase::coupleGroup() const
 
 inline Foam::label Foam::mappedMovingPatchBase::sampleSize() const
 {
-    switch (mode_)
-    {
-        case NEARESTPATCHFACEAMI:
-        {
-            return samplePolyPatch().size();
-        }
-        case NEARESTCELL:
-        {
-            return sampleMesh().nCells();
-        }
-        case NEARESTPATCHFACE:
-        {
-            return samplePolyPatch().size();
-        }
-        case NEARESTPATCHPOINT:
-        {
-            return samplePolyPatch().nPoints();
-        }
-        case NEARESTFACE:
-        {
-            const polyMesh& mesh = sampleMesh();
-            return mesh.nFaces() - mesh.nInternalFaces();
-        }
-        default:
-        {
-            FatalErrorInFunction
-                << "problem." << abort(FatalError);
-            return -1;
-        }
-    }
-}
-
-
-inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPatchBase::offsets() const
-{
-    if (displacementPtr_)
-    {
-        return displacementPtr_->boundaryField()[patch_.index()];
-    }
-
-    if (debug)
-    {
-        Info<< "Offsets are not set for " << patch_.name() << endl;
-    }
-
-    return tmp<vectorField>(new vectorField(patch_.size(), Zero));
+    return samplePolyPatch().size();
 }
 
 
 inline void Foam::mappedMovingPatchBase::setOffsets
 (
-    const volVectorField& displacement
+    const volVectorField& D
 )
 {
-    if (displacementPtr_)
+    if (DPtr_)
     {
         return;
     }
@@ -153,13 +101,7 @@ inline void Foam::mappedMovingPatchBase::setOffsets
     {
         Info<< "Setting offsets for " << patch_.name() << endl;
     }
-    displacementPtr_ = &displacement;
-}
-
-
-inline bool Foam::mappedMovingPatchBase::sameRegion() const
-{
-    return sameRegion_;
+    DPtr_ = &D;
 }
 
 
@@ -171,20 +113,6 @@ inline const Foam::mapDistribute& Foam::mappedMovingPatchBase::map() const
     }
 
     return mapPtr_();
-}
-
-
-inline const Foam::AMIInterpolation& Foam::mappedMovingPatchBase::AMI
-(
-    bool forceUpdate
-) const
-{
-    if (forceUpdate || AMIPtr_.empty())
-    {
-        calcAMI();
-    }
-
-    return AMIPtr_();
 }
 
 

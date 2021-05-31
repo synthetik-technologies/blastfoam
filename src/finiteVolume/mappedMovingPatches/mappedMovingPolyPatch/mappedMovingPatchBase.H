@@ -87,7 +87,9 @@ SourceFiles
 #include "pointIndexHit.H"
 #include "AMIInterpolation.H"
 #include "coupleGroupIdentifier.H"
+#include "fvMesh.H"
 #include "volFields.H"
+#include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -106,22 +108,6 @@ class mappedMovingPatchBase
 {
 
 public:
-
-    // Type enumerations
-
-        //- Mesh items to sample
-        enum sampleMode
-        {
-            NEARESTCELL,         // nearest cell containing sample
-            NEARESTPATCHFACE,    // nearest face on selected patch
-            NEARESTPATCHFACEAMI, // nearest patch face + AMI interpolation
-            NEARESTPATCHPOINT,   // nearest point on selected patch
-            NEARESTFACE,         // nearest face
-            NEARESTONLYCELL      // nearest cell (even if not containing cell)
-        };
-
-        static const NamedEnum<sampleMode, 6> sampleModeNames_;
-
 
     //- Helper class for finding nearest
     //  Nearest:
@@ -183,8 +169,6 @@ protected:
         //- Region to sample
         mutable word sampleRegion_;
 
-        //- What to sample
-        const sampleMode mode_;
 
         //- Patch (if in sampleMode NEARESTPATCH*)
         mutable word samplePatch_;
@@ -193,10 +177,7 @@ protected:
         const coupleGroupIdentifier coupleGroup_;
 
         //- Pointer to saved offset vector
-        const volVectorField* displacementPtr_;
-
-        //- Same region
-        mutable bool sameRegion_;
+        const volVectorField* DPtr_;
 
 
         // Derived information
@@ -207,21 +188,6 @@ protected:
             //    - Patch faces to receive per processor
             //    - schedule
             mutable autoPtr<mapDistribute> mapPtr_;
-
-
-        // AMI interpolator (only for NEARESTPATCHFACEAMI)
-
-            //- Pointer to AMI interpolator
-            mutable autoPtr<AMIInterpolation> AMIPtr_;
-
-            //- Flag to indicate that slave patch should be reversed for AMI
-            const bool AMIReverse_;
-
-            //- Pointer to projection surface employed by AMI interpolator
-            mutable autoPtr<searchableSurface> surfPtr_;
-
-            //- Dictionary storing projection surface description
-            dictionary surfDict_;
 
 
     // Protected Member Functions
@@ -243,29 +209,14 @@ protected:
         //- Find cells/faces containing samples
         void findSamples
         (
-            const sampleMode mode,      // search mode
             const pointField&,
             labelList& sampleProcs,     // processor containing sample
             labelList& sampleIndices,   // local index of cell/face
             pointField& sampleLocations // actual representative location
         ) const;
 
-        //- Get the sample points given the face points
-        tmp<pointField> samplePoints(const pointField&) const;
-
         //- Calculate mapping
         void calcMapping() const;
-
-        //- Calculate AMI interpolator
-        void calcAMI() const;
-
-        //- Helper to read field or non-uniform list from dictionary
-        static tmp<pointField> readListOrField
-        (
-            const word& keyword,
-            const dictionary& dict,
-            const label size
-        );
 
 
 public:
@@ -279,25 +230,6 @@ public:
         //- Construct from patch
         mappedMovingPatchBase(const polyPatch&);
 
-        //- Construct with offsetMode=non-uniform
-        mappedMovingPatchBase
-        (
-            const polyPatch& pp,
-            const word& sampleRegion,
-            const sampleMode sampleMode,
-            const word& samplePatch,
-            const vectorField& offsets
-        );
-
-        //- Construct from offsetMode=uniform
-        mappedMovingPatchBase
-        (
-            const polyPatch& pp,
-            const word& sampleRegion,
-            const sampleMode sampleMode,
-            const word& samplePatch,
-            const vector& offset
-        );
 
         //- Construct from offsetMode=uniform
         mappedMovingPatchBase
@@ -307,24 +239,8 @@ public:
             const word& samplePatch
         );
 
-
-        //- Construct from offsetMode=normal and distance
-        mappedMovingPatchBase
-        (
-            const polyPatch& pp,
-            const word& sampleRegion,
-            const sampleMode sampleMode,
-            const word& samplePatch,
-            const scalar distance
-        );
-
         //- Construct from dictionary
         mappedMovingPatchBase(const polyPatch&, const dictionary&);
-
-        //- Construct from dictionary and (collocated) sample mode
-        //  (only for nearestPatchFace, nearestPatchFaceAMI, nearestPatchPoint)
-        //  Assumes zero offset.
-        mappedMovingPatchBase(const polyPatch&, const sampleMode, const dictionary&);
 
         //- Construct as copy, resetting patch
         mappedMovingPatchBase(const polyPatch&, const mappedMovingPatchBase&);
@@ -348,9 +264,6 @@ public:
 
         // Access
 
-            //- What to sample
-            inline const sampleMode& mode() const;
-
             //- Region to sample
             inline const word& sampleRegion() const;
 
@@ -364,25 +277,10 @@ public:
             inline label sampleSize() const;
 
             //- Set pointer to offset field
-            inline void setOffsets(const volVectorField& offsets);
-
-            //- Offset vector (from patch faces to destination mesh objects)
-            inline tmp<vectorField> offsets() const;
-
-            //- Cached sampleRegion != mesh.name()
-            inline bool sameRegion() const;
+            inline void setOffsets(const volVectorField& D);
 
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
-
-            //- Return reference to the AMI interpolator
-            inline const AMIInterpolation& AMI
-            (
-                const bool forceUpdate = false
-            ) const;
-
-            //- Return a pointer to the AMI projection surface
-            const autoPtr<Foam::searchableSurface>& surfPtr() const;
 
             //- Get the region mesh
             const polyMesh& sampleMesh() const;
