@@ -111,6 +111,12 @@ public:
     // Member Functions
 
         //- Return reference to the reference field
+        direction cmpt() const
+        {
+            return cmpt_;
+        }
+
+        //- Return reference to the reference field
         scalarField& points0()
         {
             return points0_;
@@ -120,6 +126,18 @@ public:
         const scalarField& points0() const
         {
             return points0_;
+        }
+
+        //- Return reference to the point motion displacement field
+        pointScalarField& pointDisplacement()
+        {
+            return pointDisplacement_;
+        }
+
+        //- Return const reference to the point motion displacement field
+        const pointScalarField& pointDisplacement() const
+        {
+            return pointDisplacement_;
         }
 
         //- Update local data for geometry changes

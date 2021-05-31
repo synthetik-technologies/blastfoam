@@ -29,6 +29,7 @@ License
 #include "mappedMovingPatchBase.H"
 #include "mappedMovingWallFvPatch.H"
 #include "displacementMotionSolver.H"
+#include "componentDisplacementMotionSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -76,21 +77,32 @@ const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
 
 bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
 {
-    bool moving = adaptiveFvMesh::refine(correctError);
-    volScalarField::Internal V0(this->V0());
-    this->clearOut();
-    this->V0();
-    this->setV0() = V0;
-
-    if (isA<displacementMotionSolver>(motionPtr_()))
+    if (adaptiveFvMesh::refine(correctError))
     {
-        displacementMotionSolver& dispMS =
-            dynamicCast<displacementMotionSolver>(motionPtr_());
-        dispMS.points0() =
-            points() - dispMS.pointDisplacement().primitiveField();
+        volScalarField::Internal V0(this->V0());
+        this->clearOut();
+        this->V0();
+        this->setV0() = V0;
+
+        if (isA<displacementMotionSolver>(motionPtr_()))
+        {
+            displacementMotionSolver& dispMS =
+                dynamicCast<displacementMotionSolver>(motionPtr_());
+            dispMS.points0() =
+                points() - dispMS.pointDisplacement().primitiveField();
+        }
+        else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
+        {
+            componentDisplacementMotionSolver& dispMS =
+                dynamicCast<componentDisplacementMotionSolver>(motionPtr_());
+            dispMS.points0() =
+                points().component(dispMS.cmpt())
+              - dispMS.pointDisplacement().primitiveField();
+        }
+        return true;
     }
 
-    return moving;
+    return false;
 }
 
 

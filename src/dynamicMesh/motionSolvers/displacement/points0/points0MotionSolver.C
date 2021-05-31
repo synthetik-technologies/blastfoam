@@ -34,7 +34,7 @@ namespace Foam
 Foam::IOobject Foam::points0MotionSolver::points0IO
 (
     const polyMesh& mesh
-) const
+)
 {
     const word instance0
     (

@@ -54,10 +54,6 @@ protected:
         //- Starting points
         pointIOField points0_;
 
-        //- Return IOobject for points0
-        IOobject points0IO(const polyMesh& mesh) const;
-
-
 
 public:
 
@@ -81,6 +77,12 @@ public:
 
     //- Destructor
     virtual ~points0MotionSolver();
+
+
+    // Static member functions
+
+        //- Return IOobject for points0
+        static IOobject points0IO(const polyMesh& mesh);
 
 
     // Member Functions

@@ -25,6 +25,7 @@ License
 
 #include "componentDisplacementMotionSolver.H"
 #include "mapPolyMesh.H"
+#include "points0MotionSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -78,19 +79,7 @@ Foam::componentDisplacementMotionSolver::componentDisplacementMotionSolver
     cmpt_(cmpt(cmptName_)),
     points0_
     (
-        pointIOField
-        (
-            IOobject
-            (
-                "points",
-                mesh.time().constant(),
-                polyMesh::meshSubDir,
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                false
-            )
-        ).component(cmpt_)
+        pointIOField(points0MotionSolver::points0IO(mesh)).component(cmpt_)
     ),
     pointDisplacement_
     (
@@ -148,6 +137,8 @@ void Foam::componentDisplacementMotionSolver::updateMesh(const mapPolyMesh& mpm)
     // pointMesh already updates pointFields.
 
     motionSolver::updateMesh(mpm);
+
+    return;
 
     // Map points0_. Bit special since we somehow have to come up with
     // a sensible points0 position for introduced points.
