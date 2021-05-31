@@ -175,19 +175,33 @@ void Foam::mappedMovingPatchBase::findSamples
     }
     else
     {
-        // patch faces
-        const labelList patchFaces(identity(pp.size()) + pp.start());
-
+        // Displace face centres by displacement field
         pointField points(pp.faceCentres());
         if (DPtr_)
         {
             points += DPtr_->boundaryField()[pp.index()];
         }
 
+        // Create bound box from
         treeBoundBox patchBb
         (
             treeBoundBox(points).extend(1e-4)
         );
+
+        // If the span is small, use the bounds of the undeformed mesh
+        // Happens when only a single face is on the patch
+        if (mag(patchBb.span()) < small)
+        {
+            vector span
+            (
+                treeBoundBox
+                (
+                    pp.points(), pp.meshPoints()
+                ).extend(1e-4).span()
+            );
+            patchBb.min() -= span/2.0;
+            patchBb.max() += span/2.0;
+        }
 
         indexedOctree<treeDataPoint> boundaryTree
         (
