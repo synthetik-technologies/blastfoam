@@ -29,7 +29,7 @@ solvers
 stressAnalysis
 {
     compactNormalStress yes;
-    nCorrectors     1;
+    nCorrectors     10;
     D               1e-06;
 }
 

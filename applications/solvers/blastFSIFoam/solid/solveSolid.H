@@ -1,73 +1,83 @@
+
+int iCorr = 0;
+scalar initialResidual = 0;
+
 tmp<volScalarField> threeKalphaTmp;
 
-if (thermalStress)
+do
 {
-    if (planeStress)
-    {
-        threeKalphaTmp = E/(1.0 - nu)*alphas[i];
-    }
-    else
-    {
-        threeKalphaTmp = E/(1.0 - 2.0*nu)*alphas[i];
-    }
-    volScalarField DT("DT", thermo.kappa()/thermo.Cp());
-
-    volScalarField& T = thermo.T();
-    fvScalarMatrix TEqn
-    (
-        fvm::ddt(T) == fvm::laplacian(DT, T) + fvOptions(T)
-    );
-
-    fvOptions.constrain(TEqn);
-
-    TEqn.solve();
-
-    fvOptions.correct(T);
-}
-
-{
-    fvVectorMatrix DEqn
-    (
-        fvm::d2dt2(D)
-     ==
-        fvm::laplacian(2*mu + lambda, D, "laplacian(DD,D)")
-      + divSigmaExp
-      + fvOptions.d2dt2(D)
-    );
-
     if (thermalStress)
     {
-        const volScalarField& T = thermo.T();
-        DEqn += fvc::grad(threeKalphaTmp()*T);
-    }
+        if (planeStress)
+        {
+            threeKalphaTmp = E/(1.0 - nu)*alphas[i];
+        }
+        else
+        {
+            threeKalphaTmp = E/(1.0 - 2.0*nu)*alphas[i];
+        }
+        volScalarField DT("DT", thermo.kappa()/thermo.Cp());
 
-    fvOptions.constrain(DEqn);
-
-    DEqn.solve();
-
-    if (!compactNormalStress)
-    {
-        divSigmaExp = fvc::div(DEqn.flux());
-    }
-}
-
-{
-    volTensorField gradD(fvc::grad(D));
-    sigmaD = mu*twoSymm(gradD) + (lambda*I)*tr(gradD);
-
-    if (compactNormalStress)
-    {
-        divSigmaExp = fvc::div
+        volScalarField& T = thermo.T();
+        fvScalarMatrix TEqn
         (
-            sigmaD - (2*mu + lambda)*gradD,
-            "div(sigmaD)"
+            fvm::ddt(T) == fvm::laplacian(DT, T) + fvOptions(T)
         );
+
+        fvOptions.constrain(TEqn);
+
+        TEqn.solve();
+
+        fvOptions.correct(T);
     }
-    else
+
     {
-        divSigmaExp += fvc::div(sigmaD);
+        fvVectorMatrix DEqn
+        (
+            fvm::d2dt2(D)
+        ==
+            fvm::laplacian(2*mu + lambda, D, "laplacian(DD,D)")
+        + divSigmaExp
+        + fvOptions.d2dt2(D)
+        );
+
+        if (thermalStress)
+        {
+            const volScalarField& T = thermo.T();
+            DEqn += fvc::grad(threeKalphaTmp()*T);
+        }
+
+        fvOptions.constrain(DEqn);
+
+        initialResidual = DEqn.solve().max().initialResidual();
+
+        if (!compactNormalStress)
+        {
+            divSigmaExp = fvc::div(DEqn.flux());
+        }
     }
-}
+
+    {
+        volTensorField gradD(fvc::grad(D));
+        sigmaD = mu*twoSymm(gradD) + (lambda*I)*tr(gradD);
+
+        if (compactNormalStress)
+        {
+            divSigmaExp = fvc::div
+            (
+                sigmaD - (2*mu + lambda)*gradD,
+                "div(sigmaD)"
+            );
+        }
+        else
+        {
+            divSigmaExp += fvc::div(sigmaD);
+        }
+    }
+
+    Info<< "Solid Iter " << iCorr << ": residual=" << initialResidual << endl;
+
+} while (initialResidual > convergenceTolerance && ++iCorr < nCorr);
 
 thermo.correct();
 
