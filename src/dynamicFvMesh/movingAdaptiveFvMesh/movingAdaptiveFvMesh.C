@@ -88,7 +88,7 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
             dynamicCast<displacementMotionSolver>(motionPtr_());
         dispMS.points0() =
             points() - dispMS.pointDisplacement().primitiveField();
-}
+    }
 
     return moving;
 }
@@ -96,9 +96,31 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
 
 bool Foam::movingAdaptiveFvMesh::update()
 {
+    // Get the new points solving for displacement
+    pointField pointsNew(motionPtr_->newPoints());
+
+    // Average point locations across processors so that processor patches are
+    // consistent
+    if (Pstream::parRun())
+    {
+        Field<scalar> nSharedPoints(pointsNew.size(), 1);
+        this->globalData().syncPointData
+        (
+            pointsNew,
+            plusEqOp<vector>(),
+            mapDistribute::transform()
+        );
+        this->globalData().syncPointData
+        (
+            nSharedPoints,
+            plusEqOp<scalar>(),
+            mapDistribute::transform()
+        );
+        pointsNew /= nSharedPoints;
+    }
 
     //- Move mesh
-    fvMesh::movePoints(motionPtr_->newPoints());
+    fvMesh::movePoints(pointsNew);
     velocityMotionCorrection_.update();
 
     return true;

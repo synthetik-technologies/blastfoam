@@ -162,6 +162,13 @@ void Foam::points0MotionSolver::updateMesh(const mapPolyMesh& mpm)
 
     motionSolver::updateMesh(mpm);
 
+    return;
+
+    if (!mpm.pointMap().size())
+    {
+        return;
+    }
+
     // Map points0_. Bit special since we somehow have to come up with
     // a sensible points0 position for introduced points.
     // Find out scaling between points0 and current points
