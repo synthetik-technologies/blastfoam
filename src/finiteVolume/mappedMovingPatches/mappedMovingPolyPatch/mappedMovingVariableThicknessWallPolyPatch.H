@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,9 +25,6 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::mappedMovingVariableThicknessWallPolyPatch
-
-Description
     Foam::mappedMovingVariableThicknessWallPolyPatch
 
 SourceFiles

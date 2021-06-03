@@ -30,10 +30,10 @@ Description
 
     EXPERIMENTAL
 
-    Solver for transient fluid flow and solid heat conduction, with
-    conjugate heat transfer between regions, buoyancy effects, turbulence,
-    and radiation modeling. Riemann fluxes are used to transport the fluid
-    phase.
+    Solver for transient, compressible fluid flow and solid heat
+    conduction, with conjugate heat transfer between regions, buoyancy
+    effects, turbulence, and radiation modeling. Riemann fluxes are
+    used to transport the fluid phase.
 
 \*---------------------------------------------------------------------------*/
 

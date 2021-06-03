@@ -1,12 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2013-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
+
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,10 +26,7 @@ Class
     Foam::extendedNLevelGlobalCellToCellStencil
 
 Description
-    6-DoF solid-body mesh motion solver for an fvMesh.
-
-    Applies SLERP interpolation of movement as function of distance to
-    the object surface.
+    Creates an n-level cell stencil using global indicies
 
 SourceFiles
     extendedNLevelGlobalCellToCellStencil.C

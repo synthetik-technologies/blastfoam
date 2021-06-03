@@ -1,12 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2020-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,8 +26,8 @@ Class
     Foam::mappedPatchSelector
 
 Description
-    Class used to return mapping functions using either a mappedPolyPatch
-    or a mappedMovingPolyPatch
+    Class used to return mapping functions using either a
+    mappedPolyPatch or a mappedMovingPolyPatch
 
 
 Note
@@ -158,14 +159,12 @@ public:
         static bool setMappedPatchDisplacement
         (
             fvMesh& ownMesh,
-            const fvMesh& neiMesh
+            const fvMesh& neiMesh,
+            const pointVectorField& pointD
         );
 
         //- Check if a patch is of a mapped type
         static bool isAMappedType(const fvPatch& patch);
-
-        //- Replace mappedFvPatches with  mappedMovingPatches
-        static void replaceMappedWithMappedMoving(fvMesh& mesh);
 };
 
 

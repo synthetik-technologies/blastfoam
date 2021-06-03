@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of point patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,15 +28,13 @@ Class
     Foam::mappedMovingPointPatch
 
 Description
-    Determines a mapping between patch face centres and mesh cell or face
-    centres and processors they're on.
-
-Note
-    Storage is not optimal. It stores all face centres and cells on all
-    processors to keep the addressing calculation simple.
+    Determines a mapping between patch points and processors they're
+    on.
 
 SourceFiles
     mappedMovingPointPatch.C
+    mappedMovingPointPatchBase.H
+    mappedMovingPointPatchBase.C
 
 \*---------------------------------------------------------------------------*/
 

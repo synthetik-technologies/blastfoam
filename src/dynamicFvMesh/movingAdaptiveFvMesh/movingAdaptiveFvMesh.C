@@ -135,7 +135,7 @@ bool Foam::movingAdaptiveFvMesh::update()
     fvMesh::movePoints(pointsNew);
     velocityMotionCorrection_.update();
 
-    return true;
+    return moving();
 }
 
 

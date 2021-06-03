@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of point patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,8 +28,9 @@ Class
     Foam::mappedMovingPointPatchBase
 
 Description
-    Determines a mapping between patch face centres and mesh cell or face
-    centres and processors they're on.
+    Determines a mapping between patch points and processors they're
+    on. Option displacement fields can be set is the neighbor mesh has
+    a displacement field
 
     If constructed from dictionary:
     \verbatim
@@ -36,28 +40,7 @@ Description
         // If sampleMode is nearestPatchFace : patch to find faces of
         samplePatch movingWall;
 
-        // If sampleMode is nearestPatchFace : specify patchgroup to find
-        // samplePatch and sampleRegion (if not provided)
-        coupleGroup baffleGroup;
-
-        // How to supply offset (w.r.t. my patch face centres):
-        // - uniform : single offset vector
-        // - nonuniform : per-face offset vector
-        // - normal : using supplied distance and face normal
-        offsetMode uniform;
-
-        // According to offsetMode (see above) supply one of
-        // offset, offsets or distance
-        offset  (1 0 0);
     \endverbatim
-
-    Note: if offsetMode is \c normal it uses outwards pointing normals. So
-    supply a negative distance if sampling inside the domain.
-
-
-Note
-    Storage is not optimal. It temporary collects all (patch)face centres
-    on all processors to keep the addressing calculation simple.
 
 SourceFiles
     mappedMovingPointPatchBase.C
@@ -73,6 +56,7 @@ SourceFiles
 #include "pointIndexHit.H"
 #include "pointPatchField.H"
 #include "mappedMovingPatchBase.H"
+#include "UautoPtr.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -100,10 +84,10 @@ protected:
         const polyMesh& pMesh_;
 
         //- Patch to sample
-        mutable const pointPatch* patchPtr_;
+        mutable UautoPtr<const pointPatch> patchPtr_;
 
         //- Pointer to saved offset vector
-        const pointVectorField* displacementPtr_;
+        UautoPtr<const pointVectorField> displacementPtr_;
 
 
         // Derived information
@@ -136,6 +120,7 @@ protected:
             labelList& sampleIndices,   // local index of cell/face
             pointField& sampleLocations // actual representative location
         ) const;
+
 
         //- Calculate mapping
         void calcMapping() const;

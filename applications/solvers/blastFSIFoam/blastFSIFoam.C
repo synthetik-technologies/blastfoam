@@ -36,10 +36,6 @@ Description
     this reason modified mapped boundaries use an offset of the solid
     displacement to correctly map the boundary information between regions.
 
-    This solver is currently under developments and is not stable.
-    Adaptive refinement does work, however it is not robust. Dynamic
-    load balancing should not be used.
-
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
@@ -95,6 +91,9 @@ int main(int argc, char *argv[])
         #include "updateMeshes.H"
 
         #include "clearPatches.H"
+
+        #include "setBoundaryDisplacementFields.H"
+
 
         // Solve
         forAll(fluidRegions, i)

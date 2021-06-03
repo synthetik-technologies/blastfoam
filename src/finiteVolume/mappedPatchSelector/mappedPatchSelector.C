@@ -150,35 +150,31 @@ void Foam::mappedPatchSelector::clearMappedPatches(fvMesh& mesh)
 bool Foam::mappedPatchSelector::setMappedPatchDisplacement
 (
     fvMesh& ownMesh,
-    const fvMesh& neiMesh
+    const fvMesh& neiMesh,
+    const pointVectorField& pointD
 )
 {
     bool set = false;
-    if (neiMesh.foundObject<volVectorField>("D"))
+    forAll(ownMesh.boundaryMesh(), patchi)
     {
-        const volVectorField& D = neiMesh.lookupObject<volVectorField>("D");
-
-        forAll(ownMesh.boundaryMesh(), patchi)
+        if (isA<mappedMovingWallFvPatch>(ownMesh.boundary()[patchi]))
         {
-            if (isA<mappedMovingWallFvPatch>(ownMesh.boundary()[patchi]))
+            polyBoundaryMesh& pbMesh =
+                const_cast<polyBoundaryMesh&>
+                (
+                    ownMesh.boundaryMesh()
+                );
+            mappedMovingPatchBase& mmpb =
+                refCast<mappedMovingPatchBase>
+                (
+                    pbMesh[patchi]
+                );
+            if (mmpb.sampleRegion() == neiMesh.name())
             {
-                polyBoundaryMesh& pbMesh =
-                    const_cast<polyBoundaryMesh&>
-                    (
-                        ownMesh.boundaryMesh()
-                    );
-                mappedMovingPatchBase& mmpb =
-                    refCast<mappedMovingPatchBase>
-                    (
-                        pbMesh[patchi]
-                    );
-                if (mmpb.sampleRegion() == neiMesh.name())
-                {
-                    mmpb.setOffsets(D);
-                }
+                mmpb.setOffsets(pointD);
+                set = true;
             }
         }
-        set = true;
     }
     return set;
 }
@@ -195,99 +191,6 @@ bool Foam::mappedPatchSelector::isAMappedType(const fvPatch& patch)
         return true;
     }
     return false;
-}
-
-
-void Foam::mappedPatchSelector::replaceMappedWithMappedMoving
-(
-    fvMesh& mesh
-)
-{
-    List<polyPatch*> newPolyPatches(mesh.boundaryMesh().size());
-    polyBoundaryMesh& bm = const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());
-    fvBoundaryMesh& fvBm = const_cast<fvBoundaryMesh&>(mesh.boundary());
-    forAll(bm, patchi)
-    {
-        bool set = false;
-        if (isA<mappedPolyPatch>(mesh.boundaryMesh()[patchi]))
-        {
-            const mappedPolyPatch& patch =
-                refCast<const mappedPolyPatch>(mesh.boundaryMesh()[patchi]);
-
-            bm.set(patchi,
-                new mappedMovingPolyPatch
-                (
-                    patch.name(),
-                    patch.size(),
-                    patch.start(),
-                    patch.index(),
-                    patch.sampleRegion(),
-                    patch.samplePatch(),
-                    mesh.boundaryMesh()
-                ));
-            set = true;
-        }
-        else if (isA<mappedWallPolyPatch>(mesh.boundaryMesh()[patchi]))
-        {
-            const mappedWallPolyPatch& patch =
-                refCast<const mappedWallPolyPatch>(mesh.boundaryMesh()[patchi]);
-
-            bm.set(patchi,
-                new mappedMovingWallPolyPatch
-                (
-                    patch.name(),
-                    patch.size(),
-                    patch.start(),
-                    patch.index(),
-                    patch.sampleRegion(),
-                    patch.samplePatch(),
-                    mesh.boundaryMesh()
-                ));
-            set = true;
-        }
-        else if
-        (
-            isA<mappedVariableThicknessWallPolyPatch>
-            (
-                mesh.boundaryMesh()[patchi]
-            )
-        )
-        {
-            const mappedVariableThicknessWallPolyPatch& patch =
-                refCast<const mappedVariableThicknessWallPolyPatch>
-                (
-                    mesh.boundaryMesh()[patchi]
-                );
-
-            bm.set(patchi,
-                new mappedMovingVariableThicknessWallPolyPatch
-                (
-                    patch.name(),
-                    patch.size(),
-                    patch.start(),
-                    patch.index(),
-                    patch.sampleRegion(),
-                    patch.samplePatch(),
-                    mesh.boundaryMesh()
-                ));
-            set = true;
-        }
-
-        if (set)
-        {
-            fvBm.set
-            (
-                patchi,
-                new mappedMovingWallFvPatch
-                (
-                    mesh.boundaryMesh()[patchi],
-                    mesh.boundary()
-                )
-            );
-        }
-    }
-
-    mesh.clearOut();
 }
 
 

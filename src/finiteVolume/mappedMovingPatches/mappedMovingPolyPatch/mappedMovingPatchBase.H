@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,54 +28,20 @@ Class
     Foam::mappedMovingPatchBase
 
 Description
-    Determines a mapping between patch face centres and mesh cell or face
-    centres and processors they're on.
+    Determines a mapping between patch face centres and processors
+    they're on.
 
     If constructed from dictionary:
     \verbatim
         // Region to sample (default is region0)
         sampleRegion region0;
 
-        // What to sample:
-        // - nearestCell         : sample cell containing point
-        // - nearestOnlyCell     : nearest sample cell (even if not containing
-        //                         point)
-        // - nearestPatchFace    : nearest face on selected patch
-        // - nearestPatchFaceAMI : nearest face on selected patch
-                                   - patches need not conform
-                                   - uses AMI interpolation
-        // - nearestFace         : nearest boundary face on any patch
-        // - nearestPatchPoint   : nearest patch point (for coupled points
-        //                         this might be any of the points so you have
-        //                         to guarantee the point data is synchronised
-        //                         beforehand)
-        sampleMode nearestCell;
-
-        // If sampleMode is nearestPatchFace : patch to find faces of
         samplePatch movingWall;
 
-        // If sampleMode is nearestPatchFace : specify patchgroup to find
-        // samplePatch and sampleRegion (if not provided)
-        coupleGroup baffleGroup;
-
-        // How to supply offset (w.r.t. my patch face centres):
-        // - uniform : single offset vector
-        // - nonuniform : per-face offset vector
-        // - normal : using supplied distance and face normal
-        offsetMode uniform;
-
-        // According to offsetMode (see above) supply one of
-        // offset, offsets or distance
-        offset  (1 0 0);
     \endverbatim
 
     Note: if offsetMode is \c normal it uses outwards pointing normals. So
     supply a negative distance if sampling inside the domain.
-
-
-Note
-    Storage is not optimal. It temporary collects all (patch)face centres
-    on all processors to keep the addressing calculation simple.
 
 SourceFiles
     mappedMovingPatchBase.C
@@ -90,6 +59,7 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -177,7 +147,7 @@ protected:
         const coupleGroupIdentifier coupleGroup_;
 
         //- Pointer to saved offset vector
-        const volVectorField* DPtr_;
+        UautoPtr<const pointVectorField> displacementPtr_;
 
 
         // Derived information
@@ -277,7 +247,7 @@ public:
             inline label sampleSize() const;
 
             //- Set pointer to offset field
-            inline void setOffsets(const volVectorField& D);
+            inline void setOffsets(const pointVectorField& pointD);
 
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;

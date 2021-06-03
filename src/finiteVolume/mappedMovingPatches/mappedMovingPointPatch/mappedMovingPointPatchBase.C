@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of point patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -137,13 +140,13 @@ void Foam::mappedMovingPointPatchBase::findSamples
     List<mappedMovingPatchBase::nearInfo> nearest(samples.size());
 
     const polyPatch& pp = samplePolyPatch();
+
     pointField points(pp.localPoints());
-    if (displacementPtr_)
+    if (displacementPtr_.valid())
     {
         points +=
             displacementPtr_->boundaryField()[pp.index()].patchInternalField();
     }
-
 
     if (pp.empty())
     {
@@ -251,13 +254,15 @@ void Foam::mappedMovingPointPatchBase::findSamples
 
 void Foam::mappedMovingPointPatchBase::calcMapping() const
 {
-    if (!patchPtr_)
+    if (!patchPtr_.valid())
     {
-        patchPtr_ =
+        patchPtr_.reset
+        (
             &pMesh_.lookupObject<pointMesh>
             (
                 "pointMesh"
-            ).boundary()[pp_.index()];
+            ).boundary()[pp_.index()]
+        );
     }
 
     if (mapPtr_.valid())
@@ -543,14 +548,17 @@ const Foam::polyPatch& Foam::mappedMovingPointPatchBase::samplePolyPatch() const
 
 Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints() const
 {
-    if (!patchPtr_)
+    if (!patchPtr_.valid())
     {
-        patchPtr_ =
+        patchPtr_.reset
+        (
             &pMesh_.lookupObject<pointMesh>
             (
                 "pointMesh"
-            ).boundary()[pp_.index()];
+            ).boundary()[pp_.index()]
+        );
     }
+
     return patchPtr_->localPoints();
 }
 

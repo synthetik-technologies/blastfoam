@@ -7,6 +7,7 @@
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
+
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -17,16 +18,21 @@ License
     for more details.
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 Class
     Foam::fluxSchemes::AUSMPlus
+
 Description
     Computes flux using AUSM+ scheme
+
     References:
+
     \verbatim
         Liou, Meng-Sing (1996).
         A Sequel to AUSM: AUSM+.
         Journal of Computational Physics, 129, 364-382.
     \endverbatim
+
 SourceFiles
     AUSMPlus.C
 \*---------------------------------------------------------------------------*/

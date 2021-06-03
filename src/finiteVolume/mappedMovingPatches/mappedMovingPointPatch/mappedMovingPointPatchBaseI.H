@@ -2,11 +2,14 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of point patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -50,15 +53,17 @@ inline Foam::label Foam::mappedMovingPointPatchBase::sampleSize() const
 
 inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPointPatchBase::offsets() const
 {
-    if (!patchPtr_)
+    if (!patchPtr_.valid())
     {
-        patchPtr_ =
+        patchPtr_.reset
+        (
             &pMesh_.lookupObject<pointMesh>
             (
                 "pointMesh"
-            ).boundary()[pp_.index()];
+            ).boundary()[pp_.index()]
+        );
     }
-    if (displacementPtr_)
+    if (displacementPtr_.valid())
     {
         return
             displacementPtr_->boundaryField()[patchPtr_->index()].patchInternalField();
@@ -78,7 +83,7 @@ inline void Foam::mappedMovingPointPatchBase::setOffsets
     const pointVectorField& displacement
 )
 {
-    if (!patchPtr_)
+    if (!patchPtr_.valid())
     {
         patchPtr_ =
             &pMesh_.lookupObject<pointMesh>
@@ -86,16 +91,12 @@ inline void Foam::mappedMovingPointPatchBase::setOffsets
                 "pointMesh"
             ).boundary()[pp_.index()];
     }
-    if (displacementPtr_)
-    {
-        return;
-    }
 
     if (debug)
     {
         Info<< "Setting offsets for " << patchPtr_->name() << endl;
     }
-    displacementPtr_ = &displacement;
+    displacementPtr_.reset(&displacement);
 }
 
 

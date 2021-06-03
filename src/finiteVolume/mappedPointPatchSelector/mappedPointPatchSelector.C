@@ -1,12 +1,13 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2020
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -121,34 +122,35 @@ void Foam::mappedPointPatchSelector::clearMappedPatches(fvMesh& mesh)
 bool Foam::mappedPointPatchSelector::setMappedPatchDisplacement
 (
     fvMesh& ownMesh,
-    const fvMesh& neiMesh
+    const fvMesh& neiMesh,
+    const pointVectorField& pointD
 )
 {
-    pointMesh& pMesh = ownMesh.lookupObjectRef<pointMesh>("pointMesh");
-    if (neiMesh.foundObject<pointVectorField>("pointD"))
+    const pointMesh& pMesh
+    (
+        ownMesh.lookupObjectRef<pointMesh>("pointMesh")
+    );
+
+    bool set = false;
+    forAll(pMesh.boundary(), patchi)
     {
-        const pointVectorField& pointD =
-            neiMesh.lookupObject<pointVectorField>("pointD");
-        forAll(pMesh.boundary(), patchi)
+        if (isA<mappedMovingPointPatch>(pMesh.boundary()[patchi]))
         {
-            if (isA<mappedMovingPointPatch>(pMesh.boundary()[patchi]))
+            pointBoundaryMesh& pbMesh =
+                const_cast<pointBoundaryMesh&>(pMesh.boundary());
+            mappedMovingPointPatchBase& mmppb =
+                refCast<mappedMovingPointPatchBase>
+                (
+                    pbMesh[patchi]
+                );
+            if (mmppb.sampleRegion() == neiMesh.name())
             {
-                pointBoundaryMesh& pbMesh =
-                    const_cast<pointBoundaryMesh&>(pMesh.boundary());
-                mappedMovingPointPatchBase& mmppb =
-                    refCast<mappedMovingPointPatchBase>
-                    (
-                        pbMesh[patchi]
-                    );
-                if (mmppb.sampleRegion() == neiMesh.name())
-                {
-                    mmppb.setOffsets(pointD);
-                }
+                mmppb.setOffsets(pointD);
+                set = true;
             }
         }
-        return true;
     }
-    return false;
+    return set;
 }
 
 
@@ -166,35 +168,6 @@ bool Foam::mappedPointPatchSelector::isAMappedType
         return true;
     }
     return false;
-}
-
-
-void Foam::mappedPointPatchSelector::replaceMappedWithMappedMoving
-(
-    fvMesh& mesh
-)
-{
-    pointMesh& pMesh = mesh.lookupObjectRef<pointMesh>("pointMesh");
-    pointBoundaryMesh& bm =
-        const_cast<pointBoundaryMesh&>(pMesh.boundary());
-
-    forAll(bm, patchi)
-    {
-        if (isA<mappedPointPatch>(bm[patchi]))
-        {
-            bm.set
-            (
-                patchi,
-                new mappedMovingPointPatch
-                (
-                    mesh.boundaryMesh()[patchi],
-                    bm
-                )
-            );
-        }
-    }
-
-    mesh.clearOut();
 }
 
 

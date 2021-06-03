@@ -5,8 +5,11 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+2020-08-21 Synthetik Applied Technology: Mapping of patches
+-------------------------------------------------------------------------------
+
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -176,36 +179,27 @@ void Foam::mappedMovingPatchBase::findSamples
     else
     {
         // Displace face centres by displacement field
-        pointField points(pp.faceCentres());
-        if (DPtr_)
-        {
-            points += DPtr_->boundaryField()[pp.index()];
-        }
+        pointField points(pp.localPoints());
 
-        // Create bound box from
+        if (displacementPtr_.valid())
+        {
+            points += displacementPtr_->boundaryField()[pp.index()].patchInternalField();
+        }
+        faceList faces(pp.localFaces());
+
         treeBoundBox patchBb
         (
             treeBoundBox(points).extend(1e-4)
         );
-
-        // If the span is small, use the bounds of the undeformed mesh
-        // Happens when only a single face is on the patch
-        if (mag(patchBb.span()) < small)
+        pointField faceCentres(faces.size(), Zero);
+        forAll(faceCentres, faceI)
         {
-            vector span
-            (
-                treeBoundBox
-                (
-                    pp.points(), pp.meshPoints()
-                ).extend(1e-4).span()
-            );
-            patchBb.min() -= span/2.0;
-            patchBb.max() += span/2.0;
+            faceCentres[faceI] = faces[faceI].centre(points);
         }
 
         indexedOctree<treeDataPoint> boundaryTree
         (
-            treeDataPoint(points),
+            treeDataPoint(faceCentres),
             patchBb,        // overall search domain
             8,              // maxLevel
             10,             // leafsize
@@ -231,7 +225,7 @@ void Foam::mappedMovingPatchBase::findSamples
             }
             else
             {
-                point fc(points[nearInfo.index()]);
+                point fc(faceCentres[nearInfo.index()]);
                 nearInfo.setPoint(fc);
                 nearest[sampleI].second().first() = magSqr(fc-sample);
                 nearest[sampleI].second().second() =
@@ -451,7 +445,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(patch_.boundaryMesh().mesh().name()),
     samplePatch_(""),
     coupleGroup_(),
-    DPtr_(nullptr),
+    displacementPtr_(nullptr),
     mapPtr_(nullptr)
 {}
 
@@ -467,7 +461,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(sampleRegion),
     samplePatch_(samplePatch),
     coupleGroup_(),
-    DPtr_(nullptr),
+    displacementPtr_(nullptr),
     mapPtr_(nullptr)
 {}
 
@@ -482,7 +476,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(dict.lookupOrDefault<word>("sampleRegion", "")),
     samplePatch_(dict.lookup<word>("samplePatch", "")),
     coupleGroup_(dict),
-    DPtr_(nullptr),
+    displacementPtr_(nullptr),
     mapPtr_(nullptr)
 {
     if (!coupleGroup_.valid())
@@ -506,7 +500,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(mpb.sampleRegion_),
     samplePatch_(mpb.samplePatch_),
     coupleGroup_(mpb.coupleGroup_),
-    DPtr_(nullptr),
+    displacementPtr_(mpb.displacementPtr_),
     mapPtr_(nullptr)
 {}
 
@@ -522,7 +516,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(mpb.sampleRegion_),
     samplePatch_(mpb.samplePatch_),
     coupleGroup_(mpb.coupleGroup_),
-    DPtr_(nullptr),
+    displacementPtr_(mpb.displacementPtr_),
     mapPtr_(nullptr)
 {}
 
