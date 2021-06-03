@@ -1,0 +1,6 @@
+FieldSetType/FieldSetTypes.C
+Uniform/UniformFieldSetTypes.C
+InitialValue/InitialValueFieldSetTypes.C
+Function/FunctionFieldSetTypes.C
+
+LIB = $(BLAST_LIBBIN)/libFieldSetTypes
