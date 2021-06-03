@@ -47,6 +47,7 @@ Description
 #include "errorEstimator.H"
 
 #include "IOobjectList.H"
+#include "FieldSetType.H"
 
 using namespace Foam;
 
@@ -62,125 +63,14 @@ bool setCellFieldType
     const bool write
 )
 {
-    typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
-
-    bool useOrig = false;
-    if (fieldTypeDesc == fieldType::typeName + "InitialValue")
-    {
-        useOrig = true;
-    }
-    else if (fieldTypeDesc != fieldType::typeName + "Value")
-    {
-        return false;
-    }
-
-    word fieldName(fieldValueStream);
-    word fieldOrigName(fieldName + "Orig");
-    fieldType* field = 0;
-    if (mesh.foundObject<fieldType>(fieldName))
-    {
-        field = &mesh.lookupObjectRef<fieldType>(fieldName);
-    }
-    else
-    {
-        // Check the current time directory
-        IOobject fieldHeader
-        (
-            fieldName,
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ
-        );
-
-        // Check the "constant" directory
-        if (!fieldHeader.typeHeaderOk<fieldType>(true))
-        {
-            fieldHeader = IOobject
-            (
-                fieldName,
-                mesh.time().constant(),
-                mesh,
-                IOobject::MUST_READ
-            );
-        }
-
-        // Check field exists
-        if (fieldHeader.typeHeaderOk<fieldType>(true))
-        {
-            field = new fieldType(fieldHeader, mesh);
-        }
-    }
-    if (field && useOrig)
-    {
-        Info<< "    Setting internal values of "
-            << field->headerClassName()
-            << " " << fieldName << " to initial values" << endl;
-    }
-    else if (field)
-    {
-        Info<< "    Setting internal values of "
-            << field->headerClassName()
-            << " " << fieldName << endl;
-    }
-    else // Field is not found, so exit
-    {
-        WarningInFunction
-            << "Field " << fieldName << " not found" << endl;
-
-        // Consume value
-        (void)pTraits<Type>(fieldValueStream);
-
-        return true;
-    }
-
-    if (useOrig)
-    {
-        fieldType* origFieldPtr = 0;
-        if (mesh.foundObject<fieldType>(fieldOrigName))
-        {
-            origFieldPtr = &mesh.lookupObjectRef<fieldType>(fieldOrigName);
-        }
-        else
-        {
-            origFieldPtr = new fieldType(fieldOrigName, *field);
-            origFieldPtr->store(origFieldPtr);
-        }
-        (*field) = (*origFieldPtr);
-        return true;
-    }
-
-    const Type& value = pTraits<Type>(fieldValueStream);
-
-    if (selectedCells.size() == field->size())
-    {
-        field->primitiveFieldRef() = value;
-    }
-    else
-    {
-        forAll(selectedCells, celli)
-        {
-            (*field)[selectedCells[celli]] = value;
-        }
-    }
-
-    typename GeometricField<Type, fvPatchField, volMesh>::
-        Boundary& fieldBf = field->boundaryFieldRef();
-
-    forAll(field->boundaryField(), patchi)
-    {
-        fieldBf[patchi] = fieldBf[patchi].patchInternalField();
-    }
-
-    if (field->name() != "error" && write)
-    {
-        if (!field->write())
-        {
-            FatalErrorInFunction
-                << "Failed writing field " << field->name() << exit(FatalError);
-        }
-    }
-
-    return true;
+    return FieldSetType<Type, fvPatchField, volMesh>::New
+    (
+        fieldTypeDesc,
+        mesh,
+        selectedCells,
+        fieldValueStream,
+        write
+    )->good();
 }
 
 
@@ -652,19 +542,12 @@ int main(int argc, char *argv[])
         levels[regionI] =
             regions[regionI].dict().lookupOrDefault("level", 0);
     }
-    label maxRefinement = 0;
-    if (!regions.size())
-    {
-        FatalErrorInFunction
-            << "No regions found."
-            << abort(FatalError);
-    }
 
-    maxRefinement =
+    label maxLevel =
     (
         levels.size() && !setFieldsDict.found("maxLevel")
         ? max(levels)
-        : setFieldsDict.lookup<scalar>("maxLevel")
+        : setFieldsDict.lookupOrDefault<label>("maxLevel", 0)
     );
 
     // Error fields is the same since it is looked up
@@ -682,7 +565,7 @@ int main(int argc, char *argv[])
             1,
             max
             (
-                setFieldsDict.lookupOrDefault("maxIter", 2*maxRefinement),
+                setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
                 gMax(meshCutter->cellLevel())*2
             )
         );
@@ -712,10 +595,15 @@ int main(int argc, char *argv[])
         if (setFieldsDict.found("defaultFieldValues"))
         {
             Info<< "Setting field default values" << endl;
+            labelList cells(mesh.nCells());
+            forAll(cells, i)
+            {
+                cells[i] = i;
+            }
             PtrList<setCellField> defaultFieldValues
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, labelList(mesh.nCells()), end)
+                setCellField::iNew(mesh, cells, end || debug)
             );
             Info<< endl;
         }
@@ -943,12 +831,18 @@ int main(int argc, char *argv[])
                 }
             }
 
+            labelList maxRefinement(mesh.nCells(), maxLevel);
+            if (EE.valid())
+            {
+                maxRefinement = EE->maxRefinement();
+            }
+
             // Set the maxCell level
             forAll(maxCellLevel, celli)
             {
                 if (maxCellLevel[celli] < 0)
                 {
-                    maxCellLevel[celli] = maxRefinement;
+                    maxCellLevel[celli] = maxRefinement[celli];
                 }
             }
 

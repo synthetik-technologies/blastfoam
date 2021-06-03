@@ -1,0 +1,94 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     setRefinedFields;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         0.001;
+
+deltaT          1e-7;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-5;
+
+cycleWrite      0;
+
+writeFormat     binary;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general; // fixed; // using precision below --- better for paraview
+
+timePrecision   12;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+maxCo           0.5;
+
+maxDeltaT       1;
+
+// ************************************************************************* //
+x1  0.6858;
+x2  1.3716;
+x3  2.0574;
+x4  2.7432;
+x5  4.1148;
+x6  5.4864;
+
+functions
+{
+    pressureProbes
+    {
+        type            probes;
+        functionObjectLibs ("libsampling.so");
+        writeControl    timeStep;
+        writeInterval   1;
+        interpolate     true;
+        interpolationScheme cellPointFace;
+        probeLocations
+        (
+            ($x1    0   0)
+            ($x2    0   0)
+            ($x3    0   0)
+            ($x4    0   0)
+            ($x5    0   0)
+            ($x6    0   0)
+            ($x1    $x1 0)
+            ($x2    $x1 0)
+            ($x3    $x1 0)
+            ($x4    $x1 0)
+            ($x5    $x1 0)
+            ($x6    $x2 0)
+        );
+        fields
+        (
+            p
+        );
+    }
+}
+}
+// ************************************************************************* //
