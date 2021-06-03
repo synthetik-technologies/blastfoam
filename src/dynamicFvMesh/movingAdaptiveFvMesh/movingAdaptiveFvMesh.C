@@ -79,11 +79,6 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
 {
     if (adaptiveFvMesh::refine(correctError))
     {
-        volScalarField::Internal V0(this->V0());
-        this->clearOut();
-        this->V0();
-        this->setV0() = V0;
-
         if (isA<displacementMotionSolver>(motionPtr_()))
         {
             displacementMotionSolver& dispMS =
