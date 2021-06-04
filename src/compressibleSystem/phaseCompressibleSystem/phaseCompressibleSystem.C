@@ -469,7 +469,7 @@ Foam::scalar Foam::phaseCompressibleSystem::maxCo() const
             amaxSf.boundaryFieldRef() = Zero;
         }
     }
-    amaxSf += mag(phi_);
+    amaxSf += mag(fvc::flux(U_));
 
     scalarField sumAmaxSf
     (
