@@ -80,6 +80,7 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                     DimensionedField<Type, volMesh>::null()
                 )
             );
+            patchFields[patchi] = Zero;
         }
     }
 
@@ -231,6 +232,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
                     DimensionedField<Type, surfaceMesh>::null()
                 )
             );
+            patchFields[patchi] = Zero;
         }
     }
 
@@ -445,6 +447,7 @@ fvMeshSubset::interpolate
                     DimensionedField<Type, pointMesh>::null()
                 )
             );
+            patchFields[patchi] = Zero;
         }
     }
 
