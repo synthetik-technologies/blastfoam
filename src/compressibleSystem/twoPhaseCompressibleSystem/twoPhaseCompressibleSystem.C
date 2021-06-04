@@ -59,8 +59,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
             mesh.time().timeName(),
             mesh
         ),
-        volumeFraction_*rho1_,
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
+        volumeFraction_*rho1_
     ),
     alphaRho2_
     (
@@ -70,8 +69,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
             mesh.time().timeName(),
             mesh
         ),
-        (1.0 - volumeFraction_)*rho2_,
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
+        (1.0 - volumeFraction_)*rho2_
     ),
     alphaPhi_
     (

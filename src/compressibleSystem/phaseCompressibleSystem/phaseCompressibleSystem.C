@@ -107,8 +107,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("rho", dimDensity, 0.0),
-        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+        dimensionedScalar("rho", dimDensity, 0.0)
     ),
     U_
     (
@@ -171,8 +170,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        rho_*U_,
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
+        rho_*U_
     ),
     rhoE_
     (
@@ -185,8 +183,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0),
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
+        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
     ),
     phi_
     (
