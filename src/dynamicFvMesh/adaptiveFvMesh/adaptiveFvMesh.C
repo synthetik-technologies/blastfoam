@@ -27,6 +27,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+// THIS IS BAD
+// The volumes need to be cleared when balancing, but there is no
+// public or protected way to do this without using clearOut() which
+// will the pointMesh if it exists, so pointFields become invalid.
+// This is a work around
+#define phiPtr_ phiPtr_; protected:
+#include "fvMesh.H"
+#undef phiPtr_
+
 #include "adaptiveFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceInterpolate.H"
@@ -2010,6 +2019,20 @@ bool Foam::adaptiveFvMesh::balance()
         // the number of processors.
         if (maxImbalance > allowableImbalance)
         {
+            //- Save the old volumes so it will be distributed and
+            //  resized
+            //  V00 is not handled because we are about to advance in
+            //  time
+            DimensionedField<scalar, volMesh> V0Old(this->V0());
+
+            //- Clear the geometry since V, V0, and V00 are not
+            //  registered, and therefor are not resized and the
+            //  normal mapping does not work.
+            //  Instead we save V0 and reset it.
+            //  THIS IS A PRIVATE FUNCTION OF fvMesh,
+            //  but we use a MACRO hack to make it accessible
+            this->clearGeom();
+
             const labelIOList& cellLevel = meshCutter().cellLevel();
             Map<label> coarseIDmap(100);
             labelList uniqueIndex(nCells(),0);
@@ -2089,6 +2112,13 @@ bool Foam::adaptiveFvMesh::balance()
 
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
+
+            //- The volume has been updated, so now we copy back
+            //  This also calls V() which will construct the volume
+            //  field.
+            this->V0();
+            this->setV0() = V0Old;
+
 
             if (returnReduce(nProtected_, sumOp<label>()) > 0)
             {
