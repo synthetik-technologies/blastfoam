@@ -32,9 +32,9 @@ License
 // public or protected way to do this without using clearOut() which
 // will the pointMesh if it exists, so pointFields become invalid.
 // This is a work around
-#define phiPtr_ phiPtr_; protected:
+#define curTimeIndex_ curTimeIndex_; protected:
 #include "fvMesh.H"
-#undef phiPtr_
+#undef curTimeIndex_
 
 #include "adaptiveFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
@@ -2021,9 +2021,30 @@ bool Foam::adaptiveFvMesh::balance()
         {
             //- Save the old volumes so it will be distributed and
             //  resized
-            //  V00 is not handled because we are about to advance in
-            //  time
-            DimensionedField<scalar, volMesh> V0Old(this->V0());
+            //  We cheat because so we can check which fields
+            //  actually need to be mapped
+            tmp<DimensionedField<scalar, volMesh>> V0OldTmp;
+            tmp<DimensionedField<scalar, volMesh>> V00OldTmp;
+            if (this->V0Ptr_)
+            {
+                V0OldTmp = tmp<DimensionedField<scalar, volMesh>>
+                (
+                    new DimensionedField<scalar, volMesh>
+                    (
+                        this->V0()
+                    )
+                );
+            }
+            if (this->V00Ptr_)
+            {
+                V00OldTmp = tmp<DimensionedField<scalar, volMesh>>
+                (
+                    new DimensionedField<scalar, volMesh>
+                    (
+                        this->V00()
+                    )
+                );
+            }
 
             //- Clear the geometry since V, V0, and V00 are not
             //  registered, and therefor are not resized and the
@@ -2116,8 +2137,20 @@ bool Foam::adaptiveFvMesh::balance()
             //- The volume has been updated, so now we copy back
             //  This also calls V() which will construct the volume
             //  field.
-            this->V0();
-            this->setV0() = V0Old;
+            //  Again, we cheat to access the volume field pointers
+            //  This is necessary because the V0 and V00 fields are
+            //  not created until the time has advanced and asking for
+            //  thermo though V0() or V00() results in a fatal error
+            if (V0OldTmp.valid())
+            {
+                this->V0Ptr_ =
+                    new DimensionedField<scalar, volMesh>(V0OldTmp);
+            }
+            if (V00OldTmp.valid())
+            {
+                this->V00Ptr_ =
+                    new DimensionedField<scalar, volMesh>(V00OldTmp);
+            }
 
 
             if (returnReduce(nProtected_, sumOp<label>()) > 0)
