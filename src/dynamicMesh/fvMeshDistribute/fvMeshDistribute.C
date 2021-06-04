@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -51,17 +51,25 @@ class lessProcPatches
 {
     const labelList& nbrProc_;
     const labelList& referPatchID_;
+    const labelList& referNbrPatchID_;
 
 public:
 
-    lessProcPatches( const labelList& nbrProc, const labelList& referPatchID)
+    lessProcPatches
+    (
+        const labelList& nbrProc,
+        const labelList& referPatchID,
+        const labelList& referNbrPatchID
+    )
     :
         nbrProc_(nbrProc),
-        referPatchID_(referPatchID)
+        referPatchID_(referPatchID),
+        referNbrPatchID_(referNbrPatchID)
     {}
 
     bool operator()(const label a, const label b)
     {
+        // Lower processor ID-s go first
         if (nbrProc_[a] < nbrProc_[b])
         {
             return true;
@@ -70,10 +78,27 @@ public:
         {
             return false;
         }
+
+        // Non-cyclics go next
+        else if (referPatchID_[a] == -1)
+        {
+            return true;
+        }
+        else if (referPatchID_[b] == -1)
+        {
+            return false;
+        }
+
+        // Cyclics should be ordered by refer patch ID if this is the owner
+        // (lower processor ID), and by the neighbour refer patch ID if this is
+        // the neighbour
+        else if (Pstream::myProcNo() < nbrProc_[a])
+        {
+            return referPatchID_[a] < referPatchID_[b];
+        }
         else
         {
-            // Equal neighbour processor
-            return referPatchID_[a] < referPatchID_[b];
+            return referNbrPatchID_[a] < referNbrPatchID_[b];
         }
     }
 };
@@ -627,10 +652,95 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::fvMeshDistribute::mergeSharedPoints
         return autoPtr<mapPolyMesh>(nullptr);
     }
 
-
+    // Create the mesh change engine to merge the points
     polyTopoChange meshMod(mesh_);
+    {
+        // Remove all non-master points.
+        forAll(mesh_.points(), pointi)
+        {
+            Map<label>::const_iterator iter = pointToMaster.find(pointi);
 
-    fvMeshAdder::mergePoints(mesh_, pointToMaster, meshMod);
+            if (iter != pointToMaster.end())
+            {
+                if (iter() != pointi)
+                {
+                    meshMod.removePoint(pointi, iter());
+                }
+            }
+        }
+
+        // Modify faces for points. Note: could use pointFaces here but want to
+        // avoid addressing calculation.
+        const faceList& faces = mesh_.faces();
+
+        forAll(faces, facei)
+        {
+            const face& f = faces[facei];
+
+            bool hasMerged = false;
+
+            forAll(f, fp)
+            {
+                label pointi = f[fp];
+
+                Map<label>::const_iterator iter = pointToMaster.find(pointi);
+
+                if (iter != pointToMaster.end())
+                {
+                    if (iter() != pointi)
+                    {
+                        hasMerged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (hasMerged)
+            {
+                face newF(f);
+
+                forAll(f, fp)
+                {
+                    label pointi = f[fp];
+
+                    Map<label>::const_iterator iter =
+                        pointToMaster.find(pointi);
+
+                    if (iter != pointToMaster.end())
+                    {
+                        newF[fp] = iter();
+                    }
+                }
+
+                label patchID = mesh_.boundaryMesh().whichPatch(facei);
+                label nei = (patchID == -1 ? mesh_.faceNeighbour()[facei] : -1);
+                label zoneID = mesh_.faceZones().whichZone(facei);
+                bool zoneFlip = false;
+
+                if (zoneID >= 0)
+                {
+                    const faceZone& fZone = mesh_.faceZones()[zoneID];
+                    zoneFlip = fZone.flipMap()[fZone.whichFace(facei)];
+                }
+
+                meshMod.setAction
+                (
+                    polyModifyFace
+                    (
+                        newF,                       // modified face
+                        facei,                      // label of face
+                        mesh_.faceOwner()[facei],   // owner
+                        nei,                        // neighbour
+                        false,                      // face flip
+                        patchID,                    // patch for face
+                        false,                      // remove from zone
+                        zoneID,                     // zone for face
+                        zoneFlip                    // face flip in zone
+                    )
+                );
+            }
+        }
+    }
 
     // Change the mesh (no inflation). Note: parallel comms allowed.
     autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh_, false, true);
@@ -675,6 +785,7 @@ void Foam::fvMeshDistribute::getCouplingData
     labelList& sourceFace,
     labelList& sourceProc,
     labelList& sourcePatch,
+    labelList& sourceNbrPatch,
     labelList& sourceNewNbrProc,
     labelList& sourcePointMaster
 ) const
@@ -686,6 +797,7 @@ void Foam::fvMeshDistribute::getCouplingData
     sourceFace.setSize(nBnd);
     sourceProc.setSize(nBnd);
     sourcePatch.setSize(nBnd);
+    sourceNbrPatch.setSize(nBnd);
     sourceNewNbrProc.setSize(nBnd);
 
     const polyBoundaryMesh& patches = mesh_.boundaryMesh();
@@ -757,19 +869,23 @@ void Foam::fvMeshDistribute::getCouplingData
             }
 
 
-            label patchi = -1;
+            label patchi = -1, nbrPatchi = -1;
             if (isA<processorCyclicPolyPatch>(pp))
             {
-                patchi = refCast<const processorCyclicPolyPatch>
-                (
-                    pp
-                ).referPatchID();
+                patchi =
+                    refCast<const processorCyclicPolyPatch>(pp)
+                   .referPatchID();
+                nbrPatchi =
+                    refCast<const cyclicPolyPatch>(patches[patchi])
+                   .nbrPatchID();
+
             }
 
             forAll(pp, i)
             {
                 label bndI = offset + i;
                 sourcePatch[bndI] = patchi;
+                sourceNbrPatch[bndI] = nbrPatchi;
             }
         }
         else if (isA<cyclicPolyPatch>(pp))
@@ -784,6 +900,7 @@ void Foam::fvMeshDistribute::getCouplingData
                     sourceFace[bndI] = pp.start()+i;
                     sourceProc[bndI] = Pstream::myProcNo();
                     sourcePatch[bndI] = patchi;
+                    sourceNbrPatch[bndI] = cpp.nbrPatchID();
                     sourceNewNbrProc[bndI] = nbrNewNbrProc[bndI];
                 }
             }
@@ -795,6 +912,7 @@ void Foam::fvMeshDistribute::getCouplingData
                     sourceFace[bndI] = nbrFaces[bndI];
                     sourceProc[bndI] = Pstream::myProcNo();
                     sourcePatch[bndI] = patchi;
+                    sourceNbrPatch[bndI] = cpp.nbrPatchID();
                     sourceNewNbrProc[bndI] = nbrNewNbrProc[bndI];
                 }
             }
@@ -808,6 +926,7 @@ void Foam::fvMeshDistribute::getCouplingData
                 sourceFace[bndI] = -1;
                 sourceProc[bndI] = -1;
                 sourcePatch[bndI] = patchi;
+                sourceNbrPatch[bndI] = -1;
                 sourceNewNbrProc[bndI] = -1;
             }
         }
@@ -879,12 +998,14 @@ void Foam::fvMeshDistribute::subsetCouplingData
     const labelList& sourceFace,
     const labelList& sourceProc,
     const labelList& sourcePatch,
+    const labelList& sourceNbrPatch,
     const labelList& sourceNewNbrProc,
     const labelList& sourcePointMaster,
 
     labelList& subFace,
     labelList& subProc,
     labelList& subPatch,
+    labelList& subNbrPatch,
     labelList& subNewNbrProc,
     labelList& subPointMaster
 )
@@ -892,6 +1013,7 @@ void Foam::fvMeshDistribute::subsetCouplingData
     subFace.setSize(mesh.nFaces() - mesh.nInternalFaces());
     subProc.setSize(mesh.nFaces() - mesh.nInternalFaces());
     subPatch.setSize(mesh.nFaces() - mesh.nInternalFaces());
+    subNbrPatch.setSize(mesh.nFaces() - mesh.nInternalFaces());
     subNewNbrProc.setSize(mesh.nFaces() - mesh.nInternalFaces());
 
     forAll(subFace, newBFacei)
@@ -929,6 +1051,7 @@ void Foam::fvMeshDistribute::subsetCouplingData
             subFace[newBFacei] = sourceFace[oldBFacei];
             subProc[newBFacei] = sourceProc[oldBFacei];
             subPatch[newBFacei] = sourcePatch[oldBFacei];
+            subNbrPatch[newBFacei] = sourceNbrPatch[oldBFacei];
             subNewNbrProc[newBFacei] = sourceNewNbrProc[oldBFacei];
         }
     }
@@ -1168,8 +1291,9 @@ Foam::autoPtr<Foam::mapPolyMesh> Foam::fvMeshDistribute::doRemoveCells
 // the processor patchID.
 void Foam::fvMeshDistribute::addProcPatches
 (
-    const labelList& nbrProc,       // processor that neighbour is now on
-    const labelList& referPatchID,  // patchID (or -1) I originated from
+    const labelList& nbrProc,         // Processor that neighbour is now on
+    const labelList& referPatchID,    // Original patch ID (or -1)
+    const labelList& referNbrPatchID, // Original neighbour patch ID (or -1)
     List<Map<label>>& procPatchID
 )
 {
@@ -1182,7 +1306,12 @@ void Foam::fvMeshDistribute::addProcPatches
     // processor (in case of processor cyclics) in order of increasing
     // 'refer' patch)
     labelList indices;
-    sortedOrder(nbrProc, indices, lessProcPatches(nbrProc, referPatchID));
+    sortedOrder
+    (
+        nbrProc,
+        indices,
+        lessProcPatches(nbrProc, referPatchID, referNbrPatchID)
+    );
 
     procPatchID.setSize(Pstream::nProcs());
 
@@ -1306,6 +1435,7 @@ void Foam::fvMeshDistribute::sendMesh
     const labelList& sourceFace,
     const labelList& sourceProc,
     const labelList& sourcePatch,
+    const labelList& sourceNbrPatch,
     const labelList& sourceNewNbrProc,
     const labelList& sourcePointMaster,
     Ostream& toDomain
@@ -1444,6 +1574,7 @@ void Foam::fvMeshDistribute::sendMesh
         << sourceFace
         << sourceProc
         << sourcePatch
+        << sourceNbrPatch
         << sourceNewNbrProc
         << sourcePointMaster;
 
@@ -1467,6 +1598,7 @@ Foam::autoPtr<Foam::fvMesh> Foam::fvMeshDistribute::receiveMesh
     labelList& domainSourceFace,
     labelList& domainSourceProc,
     labelList& domainSourcePatch,
+    labelList& domainSourceNbrPatch,
     labelList& domainSourceNewNbrProc,
     labelList& domainSourcePointMaster,
     Istream& fromNbr
@@ -1487,6 +1619,7 @@ Foam::autoPtr<Foam::fvMesh> Foam::fvMeshDistribute::receiveMesh
         >> domainSourceFace
         >> domainSourceProc
         >> domainSourcePatch
+        >> domainSourceNbrPatch
         >> domainSourceNewNbrProc
         >> domainSourcePointMaster;
 
@@ -1572,10 +1705,9 @@ Foam::autoPtr<Foam::fvMesh> Foam::fvMeshDistribute::receiveMesh
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from components
-Foam::fvMeshDistribute::fvMeshDistribute(fvMesh& mesh, const scalar mergeTol)
+Foam::fvMeshDistribute::fvMeshDistribute(fvMesh& mesh)
 :
-    mesh_(mesh),
-    mergeTol_(mergeTol)
+    mesh_(mesh)
 {}
 
 
@@ -1723,9 +1855,10 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     //     sourceFace = face (on owner side)
     //     sourcePatch = patchID
 
-    labelList sourcePatch;
     labelList sourceFace;
     labelList sourceProc;
+    labelList sourcePatch;
+    labelList sourceNbrPatch;
     labelList sourceNewNbrProc;
     labelList sourcePointMaster;
     getCouplingData
@@ -1734,6 +1867,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         sourceFace,
         sourceProc,
         sourcePatch,
+        sourceNbrPatch,
         sourceNewNbrProc,
         sourcePointMaster
     );
@@ -1855,6 +1989,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         inplaceReorder(bFaceMap, sourceFace);
         inplaceReorder(bFaceMap, sourceProc);
         inplaceReorder(bFaceMap, sourcePatch);
+        inplaceReorder(bFaceMap, sourceNbrPatch);
         inplaceReorder(bFaceMap, sourceNewNbrProc);
     }
 
@@ -1970,6 +2105,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             labelList procSourceFace;
             labelList procSourceProc;
             labelList procSourcePatch;
+            labelList procSourceNbrPatch;
             labelList procSourceNewNbrProc;
             labelList procSourcePointMaster;
 
@@ -1988,12 +2124,14 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 sourceFace,
                 sourceProc,
                 sourcePatch,
+                sourceNbrPatch,
                 sourceNewNbrProc,
                 sourcePointMaster,
 
                 procSourceFace,
                 procSourceProc,
                 procSourcePatch,
+                procSourceNbrPatch,
                 procSourceNewNbrProc,
                 procSourcePointMaster
             );
@@ -2012,6 +2150,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 procSourceFace,
                 procSourceProc,
                 procSourcePatch,
+                procSourceNbrPatch,
                 procSourceNewNbrProc,
                 procSourcePointMaster,
 
@@ -2210,6 +2349,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         labelList domainSourceFace;
         labelList domainSourceProc;
         labelList domainSourcePatch;
+        labelList domainSourceNbrPatch;
         labelList domainSourceNewNbrProc;
         labelList domainSourcePointMaster;
 
@@ -2228,12 +2368,14 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             sourceFace,
             sourceProc,
             sourcePatch,
+            sourceNbrPatch,
             sourceNewNbrProc,
             sourcePointMaster,
 
             domainSourceFace,
             domainSourceProc,
             domainSourcePatch,
+            domainSourceNbrPatch,
             domainSourceNewNbrProc,
             domainSourcePointMaster
         );
@@ -2241,6 +2383,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         sourceFace.transfer(domainSourceFace);
         sourceProc.transfer(domainSourceProc);
         sourcePatch.transfer(domainSourcePatch);
+        sourceNbrPatch.transfer(domainSourceNbrPatch);
         sourceNewNbrProc.transfer(domainSourceNewNbrProc);
         sourcePointMaster.transfer(domainSourcePointMaster);
     }
@@ -2304,6 +2447,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
             labelList domainSourceFace;
             labelList domainSourceProc;
             labelList domainSourcePatch;
+            labelList domainSourceNbrPatch;
             labelList domainSourceNewNbrProc;
             labelList domainSourcePointMaster;
 
@@ -2347,6 +2491,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                     domainSourceFace,
                     domainSourceProc,
                     domainSourcePatch,
+                    domainSourceNbrPatch,
                     domainSourceNewNbrProc,
                     domainSourcePointMaster,
                     str
@@ -2611,11 +2756,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 mesh_,
                 masterCoupledFaces,
                 domainMesh,
-                slaveCoupledFaces,
-                mergeTol_,              // merge tolerance
-                true,                   // faces align
-                true,                   // couples are ordered already
-                false
+                slaveCoupledFaces
             );
 
 
@@ -2656,6 +2797,14 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
                 sourcePatch,
                 domainMesh.nInternalFaces(),
                 domainSourcePatch
+            );
+            sourceNbrPatch = mapBoundaryData
+            (
+                mesh_,
+                map(),
+                sourceNbrPatch,
+                domainMesh.nInternalFaces(),
+                domainSourceNbrPatch
             );
             sourceNewNbrProc = mapBoundaryData
             (
@@ -2812,7 +2961,7 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     List<Map<label>> procPatchID;
 
     // Add processor and processorCyclic patches.
-    addProcPatches(sourceNewNbrProc, sourcePatch, procPatchID);
+    addProcPatches(sourceNewNbrProc, sourcePatch, sourceNbrPatch, procPatchID);
 
     // Put faces into correct patch. Note that we now have proper
     // processorPolyPatches again so repatching will take care of coupled face
@@ -2859,27 +3008,6 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
     (
         Zero
     );
-
-    //- Force fields used for
-    HashTable<surfaceScalarField*> surfScals
-    (
-        mesh_.objectRegistry::lookupClass<surfaceScalarField>()
-    );
-    forAllIter(typename HashTable<surfaceScalarField*>, surfScals, iter)
-    {
-        surfaceScalarField& fld = *iter();
-        if (fld.dimensions() == dimless)
-        {
-            if (label(fld.name().find("own")) >= 0)
-            {
-                fld = 1.0;
-            }
-            else if (label(fld.name().find("nei")) >= 0)
-            {
-                fld = -1.0;
-            }
-        }
-    }
 
 
     mesh_.setInstance(mesh_.time().timeName());
@@ -2936,5 +3064,6 @@ Foam::autoPtr<Foam::mapDistributePolyMesh> Foam::fvMeshDistribute::distribute
         )
     );
 }
+
 
 // ************************************************************************* //

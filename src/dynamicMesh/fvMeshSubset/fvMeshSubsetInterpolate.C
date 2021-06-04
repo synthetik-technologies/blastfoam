@@ -250,6 +250,17 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
     );
     GeometricField<Type, fvsPatchField, surfaceMesh>& resF = tresF.ref();
 
+    Switch flip(true);
+    if (vf.mesh().template foundObject<IOdictionary>("surfaceFields"))
+    {
+        const IOdictionary& surfaceFields =
+            vf.mesh().template lookupObject<IOdictionary>("surfaceFields");
+
+        flip = surfaceFields.subDict
+        (
+            pTraits<Type>::typeName
+        ).template lookupOrDefault<Switch>(vf.name(), true);
+    };
 
     // 2. Change the fvsPatchFields to the correct type using a mapper
     //  constructor (with reference to the now correct internal field)
@@ -312,7 +323,12 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
                 {
                     Type val = vf.internalField()[baseFacei];
 
-                    if (cellMap[fc[i]] == own[baseFacei] || !negateIfFlipped)
+                    if
+                    (
+                        cellMap[fc[i]] == own[baseFacei]
+                     || !negateIfFlipped
+                     || !flip
+                    )
                     {
                         pfld[i] = val;
                     }

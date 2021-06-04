@@ -39,10 +39,6 @@ void Foam::fvMeshDistribute::printFieldInfo(const fvMesh& mesh)
     {
         const GeoField& fld = *iter();
 
-        Pout<< "Field:" << iter.key() << " internalsize:" << fld.size()
-            //<< " value:" << fld
-            << endl;
-
         forAll(fld.boundaryField(), patchi)
         {
             Pout<< "    " << patchi
@@ -199,35 +195,50 @@ void Foam::fvMeshDistribute::mapExposedFaces
             << abort(FatalError);
     }
 
+    // Lookup fields that should not have their values flipped
+    dictionary typeDict;
+    if (mesh_.foundObject<IOdictionary>("surfaceFields"))
+    {
+        const IOdictionary& surfaceFields
+        (
+            mesh_.lookupObject<IOdictionary>("surfaceFields")
+        );
+        typeDict = surfaceFields.subDict(pTraits<T>::typeName);
+    }
 
     label fieldI = 0;
 
     forAllIter(typename HashTable<fldType*>, flds, iter)
     {
         fldType& fld = *iter();
-        typename fldType::Boundary& bfld = fld.boundaryFieldRef();
 
-        const Field<T>& oldInternal = oldFlds[fieldI++];
-
-        // Pull from old internal field into bfld.
-
-        forAll(bfld, patchi)
+        // Do not flip faces if it is specified
+        if (typeDict.lookupOrDefault<Switch>(fld.name(), true))
         {
-            fvsPatchField<T>& patchFld = bfld[patchi];
+            typename fldType::Boundary& bfld = fld.boundaryFieldRef();
 
-            forAll(patchFld, i)
+            const Field<T>& oldInternal = oldFlds[fieldI++];
+
+            // Pull from old internal field into bfld.
+
+            forAll(bfld, patchi)
             {
-                const label faceI = patchFld.patch().start()+i;
+                fvsPatchField<T>& patchFld = bfld[patchi];
 
-                label oldFaceI = faceMap[faceI];
-
-                if (oldFaceI < oldInternal.size())
+                forAll(patchFld, i)
                 {
-                    patchFld[i] = oldInternal[oldFaceI];
+                    const label faceI = patchFld.patch().start()+i;
 
-                    if (map.flipFaceFlux().found(faceI))
+                    label oldFaceI = faceMap[faceI];
+
+                    if (oldFaceI < oldInternal.size())
                     {
-                        patchFld[i] = flipOp()(patchFld[i]);
+                        patchFld[i] = oldInternal[oldFaceI];
+
+                        if (map.flipFaceFlux().found(faceI))
+                        {
+                            patchFld[i] = flipOp()(patchFld[i]);
+                        }
                     }
                 }
             }
@@ -327,12 +338,12 @@ void Foam::fvMeshDistribute::sendFields
             subsetter.baseMesh().lookupObject<GeoField>(fieldNames[i]);
 
         tmp<GeoField> tsubfld = subsetter.interpolate(fld);
-
+        const GeoField& subfld = tsubfld();
         toNbr
-            << fieldNames[i] << token::NL << token::BEGIN_BLOCK
-            << tsubfld
+            << fieldNames[i] << token::NL
+            << token::BEGIN_BLOCK << token::NL
+            << subfld
             << token::NL << token::END_BLOCK << token::NL;
-         returnReduce(true, orOp<scalar>());
     }
     toNbr << token::END_BLOCK << token::NL;
 }

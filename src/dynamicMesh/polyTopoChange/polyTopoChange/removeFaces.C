@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -815,7 +815,7 @@ void Foam::removeFaces::setRefinement
         const polyBoundaryMesh& patches = mesh_.boundaryMesh();
 
         // Usage of edges by non-removed faces.
-        // See below about initialization.
+        // See below about initialisation.
         labelList nFacesPerEdge(mesh_.nEdges(), -1);
 
         // Count usage of edges by non-removed faces.
@@ -1004,7 +1004,7 @@ void Foam::removeFaces::setRefinement
 
 
 
-        // Check locally (before synchronizing) for strangeness
+        // Check locally (before synchronising) for strangeness
         forAll(nFacesPerEdge, edgeI)
         {
             if (nFacesPerEdge[edgeI] == 1)
@@ -1024,7 +1024,7 @@ void Foam::removeFaces::setRefinement
         }
 
 
-        // Synchronize edge usage. This is to make sure that both sides remove
+        // Synchronise edge usage. This is to make sure that both sides remove
         // (or not remove) an edge on the boundary at the same time.
         //
         // Coupled edges (edge0, edge1 are opposite each other)
@@ -1271,7 +1271,7 @@ void Foam::removeFaces::setRefinement
             }
         }
 
-        // Check locally (before synchronizing) for strangeness
+        // Check locally (before synchronising) for strangeness
         forAll(nEdgesPerPoint, pointi)
         {
             if (nEdgesPerPoint[pointi] == 1)
@@ -1284,7 +1284,7 @@ void Foam::removeFaces::setRefinement
             }
         }
 
-        // Synchronize point usage. This is to make sure that both sides remove
+        // Synchronise point usage. This is to make sure that both sides remove
         // (or not remove) a point on the boundary at the same time.
         syncTools::syncPointList
         (

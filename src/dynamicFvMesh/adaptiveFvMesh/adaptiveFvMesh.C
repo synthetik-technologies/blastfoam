@@ -2080,13 +2080,8 @@ bool Foam::adaptiveFvMesh::balance()
                 coarseWeights
             );
 
-            scalar tolDim = globalMeshData::matchTol_*bounds().mag();
-
-            //- Clear geometry in mesh to remove V0
-            fvMesh::clearOut();
-
             Info<< "Distributing the mesh ..." << endl;
-            fvMeshDistribute distributor(*this, tolDim);
+            fvMeshDistribute distributor(*this);
 
             Info<< "Mapping the fields ..." << endl;
             autoPtr<mapDistributePolyMesh> map =

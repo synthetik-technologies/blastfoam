@@ -105,6 +105,9 @@ public:
         //-  Update local data for topology changes
         virtual void updateMesh(const mapPolyMesh&);
 
+        //- Optionally write motion state information for restart
+        virtual bool write() const;
+
 
     // Member Operators
 

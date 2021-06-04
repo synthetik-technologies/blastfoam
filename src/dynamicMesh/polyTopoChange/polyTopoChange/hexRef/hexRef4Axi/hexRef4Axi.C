@@ -1253,10 +1253,12 @@ Foam::labelListList Foam::hexRef4Axi::setRefinement
                     const labelList cPoints(mesh_.cellPoints(celli));
 
                     FatalErrorInFunction
-                        << "cell " << celli
+                        << "cell " << celli << " "
+                        << mesh_.cellCentres()[celli] << " "
                         << " of level " << cellLevel_[celli]
                         << " does not seem to have 8 points of equal or"
                         << " lower level" << endl
+                        << "nAnchorPoints: " << nAnchorPoints[celli] << nl
                         << "cellPoints:" << cPoints << endl
                         << "pointLevels:"
                         << IndirectList<label>(pointLevel_, cPoints)() << endl

@@ -3604,7 +3604,7 @@ bool Foam::hexRef::write() const
      && pointLevel_.write()
      && level0Edge_.write();
 
-    if (history_.active())
+    if (returnReduce(history_.active(), orOp<bool>()))
     {
         writeOk = writeOk && history_.write();
     }

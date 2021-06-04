@@ -64,4 +64,10 @@ Foam::displacementMotionSolver::~displacementMotionSolver()
 {}
 
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::displacementMotionSolver::updateMesh(const mapPolyMesh& mpm)
+{
+    points0MotionSolver::updateMesh(mpm);
+}
 // ************************************************************************* //
