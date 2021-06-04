@@ -455,7 +455,7 @@ Foam::phaseCompressibleSystem::turbulence()
 }
 
 
-Foam::scalar Foam::phaseCompressibleSystem::maxCo() const
+Foam::scalar Foam::phaseCompressibleSystem::CoNum() const
 {
     surfaceScalarField amaxSf
     (

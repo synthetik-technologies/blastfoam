@@ -31,7 +31,7 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-scalar CoNum = fluid->maxCo();
+scalar CoNum = fluid->CoNum();
 
 Info<< "Max Courant Number = " << CoNum << endl;
 
