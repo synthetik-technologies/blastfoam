@@ -29,6 +29,14 @@ boundaryField
     {
         type            slip;
     }
+    left
+    {
+        type            zeroGradient;
+    }
+    right
+    {
+        type            zeroGradient;
+    }
     outlet
     {
         type            zeroGradient;

@@ -22,16 +22,26 @@ boundaryField
 {
     air_to_plate
     {
-        type            pressureWaveTransmissive;
-        value           $internalField;
+        type            zeroGradient;
     }
     plateEnd
     {
         type            zeroGradient;
     }
+    left
+    {
+        type            pressureWaveTransmissive;
+        value           $internalField;
+    }
+    right
+    {
+        type            pressureWaveTransmissive;
+        value           $internalField;
+    }
     outlet
     {
-        type            zeroGradient;
+        type            pressureWaveTransmissive;
+        value           $internalField;
     }
     wedge
     {

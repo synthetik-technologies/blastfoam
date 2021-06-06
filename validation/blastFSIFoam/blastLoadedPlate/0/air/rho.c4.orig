@@ -28,6 +28,14 @@ boundaryField
     {
         type            zeroGradient;
     }
+    left
+    {
+        type            zeroGradient;
+    }
+    right
+    {
+        type            zeroGradient;
+    }
     outlet
     {
         type            zeroGradient;

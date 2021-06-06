@@ -18,11 +18,13 @@ dynamicFvMesh   movingAdaptiveFvMesh;
 errorEstimator scaledDelta;      // Model used to estimate error
 scaledDeltaField p;
 
-solver      displacementLaplacian;
+solver      displacementComponentLaplacian;
 
-displacementLaplacianCoeffs
+displacementComponentLaplacianCoeffs
 {
     diffusivity quadratic inverseDistance (air_to_plate);
+    component x;
+    applyPointLocation no;
 }
 
 // How often to refine

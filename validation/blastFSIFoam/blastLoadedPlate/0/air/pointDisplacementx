@@ -9,14 +9,14 @@ FoamFile
 {
     version     2.0;
     format      ascii;
-    class       pointVectorField;
-    object      pointDisplacement;
+    class       pointScalarField;
+    object      pointDisplacementx;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [0 1 0 0 0 0 0];
 
-internalField   uniform (0 0 0);
+internalField   uniform 0;
 
 boundaryField
 {
@@ -32,11 +32,13 @@ boundaryField
     }
     left
     {
-        type            slip;
+        type            uniformFixedValue;
+        uniformValue    0;
     }
     right
     {
-        type            slip;
+        type            uniformFixedValue;
+        uniformValue    0;
     }
     outlet
     {
