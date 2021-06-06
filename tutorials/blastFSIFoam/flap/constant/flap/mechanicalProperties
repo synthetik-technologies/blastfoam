@@ -19,7 +19,7 @@ planeStress off;
 E
 {
     type    uniform;
-    value   200e9;
+    value   20e9;
 }
 nu
 {

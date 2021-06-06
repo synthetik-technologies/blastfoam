@@ -98,6 +98,8 @@ volPointInterpolation::New(mesh).interpolate
     D,
     pointD
 );
+twoDPointCorrector twoDCorrector(mesh);
+twoDCorrector.correctPoints(pointD);
 
 Info<< "Max sigmaEq = " << max(sigmaEqs[i]).value()
     << endl;

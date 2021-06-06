@@ -52,6 +52,7 @@ Description
 #include "blastFluidThermoMomentumTransportModel.H"
 #include "fvOptions.H"
 #include "volPointInterpolation.H"
+#include "twoDPointCorrector.H"
 
 #include "mappedPatchSelector.H"
 #include "mappedPointPatchSelector.H"
