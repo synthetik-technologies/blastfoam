@@ -29,7 +29,11 @@ License
 
 namespace Foam
 {
+#ifdef OLD_globalIOList
+    defineTemplateTypeNameAndDebug(IOList<thermoParcelInjectionData>, 0);
+#else
     defineTemplateTypeNameAndDebug(GlobalIOList<thermoParcelInjectionData>, 0);
+#endif
 }
 
 

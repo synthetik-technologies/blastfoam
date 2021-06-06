@@ -4,11 +4,20 @@ cd ${0%/*} || exit 1    # Run from this directory
 # Parse arguments for library compilation
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
 
+# Check if old version of IOList needs to be used
+(wmakePrintBuild -check -version 7-1ff648926f77  2> /dev/null &)
+if [ $? -eq 0 ]
+then
+    export OLD_globalIOList=-DOLD_globalIOList
+fi
+
 wmake $targetType distributionModels
 wmake $targetType basic
 wmake $targetType solidParticle
 wmake $targetType intermediate
 wmake $targetType turbulence
 wmake $targetType DSMC
+
+unset OLD_globalIOList
 
 #------------------------------------------------------------------------------
