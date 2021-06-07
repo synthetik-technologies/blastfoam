@@ -96,30 +96,40 @@ class Tillotson
 {
 // Private data
 
-    //- Reference pressure
-    scalar p0_;
+    //-  Simplified Tillotson parameters
 
-    //- Cavitation pressure
-    scalar pCav_;
+        //- Reference pressure
+        scalar p0_;
 
-    //- Reference density
-    scalar rho0_;
+        //- Reference density
+        scalar rho0_;
 
-    //- Cavitation density
-    scalar rhoCav_;
+        //- Reference internal energy
+        scalar e0_;
 
-    //- Reference internal energy
-    scalar e0_;
+        //- Coefficients
+        scalar omega_;
+        scalar A_;
+        scalar B_;
+        scalar C_;
 
-    //- Tillotson parameters
-    scalar omega_;
-    scalar k_;
-    scalar A_;
-    scalar B_;
-    scalar C_;
 
-    //- Stored cavitation energies
-    lookupTable1D EcTable_;
+    // Cavitation parameters
+
+        //- Is cavitation used
+        Switch cavitation_;
+
+        //- Cavitation pressure
+        scalar pCav_;
+
+        //- Cavitation density
+        scalar rhoCav_;
+
+        //- Ideal gas constant for vapor
+        scalar k_;
+
+        //- Stored cavitation energies
+        lookupTable1D EcTable_;
 
 
 public:

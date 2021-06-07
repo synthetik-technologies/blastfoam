@@ -35,69 +35,85 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
 :
     Specie(dict),
     p0_(dict.subDict("equationOfState").lookup<scalar>("p0")),
-    pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav")),
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
-    rhoCav_(dict.subDict("equationOfState").lookup<scalar>("rhoCav")),
     e0_(dict.subDict("equationOfState").lookup<scalar>("e0")),
     omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
-    k_(dict.subDict("equationOfState").lookup<scalar>("k")),
     A_(dict.subDict("equationOfState").lookup<scalar>("A")),
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
     C_(dict.subDict("equationOfState").lookup<scalar>("C")),
+
+    cavitation_
+    (
+        dict.subDict("equationOfState").lookupOrDefault<Switch>
+        (
+            "cavitation",
+            false
+        )
+    ),
+    pCav_(),
+    rhoCav_(),
+    k_(),
     EcTable_()
 {
-    //- Dummy temperature
-    scalar T(273.0);
-
-    label tableSize(100);
-    scalarField rhof(tableSize + 2, rho0_);
-    scalarField ecf(tableSize + 2, 0.0);
-    label I = 2;
-
-    scalar e0 = e0_;
-    e0_ = 0;
-    scalar x = rho0_;
-    scalar y = 0.0;
-    label nSteps = 10000;
-    scalar dx = 10.0*rho0_/scalar(nSteps);
-
-
-    for (label i = 0; i < nSteps; i++)
+    if (cavitation_)
     {
-        scalar yOld = y;
+        pCav_ = dict.subDict("equationOfState").lookup<scalar>("pCav");
+        rhoCav_ = dict.subDict("equationOfState").lookup<scalar>("rhoCav");
+        k_ = dict.subDict("equationOfState").lookup<scalar>("k");
 
-        scalar k1 = p(x, y, T)/sqr(x);
-        y = yOld + dx*0.5*k1;
+        //- Dummy temperature
+        scalar T(273.0);
 
-        x += 0.5*dx;
-        scalar k2 = p(x, y, T)/sqr(x);
-        y = yOld + dx*0.5*k2;
-        scalar k3 = p(x, y, T)/sqr(x);
+        label tableSize(100);
+        scalarField rhof(tableSize + 2, rho0_);
+        scalarField ecf(tableSize + 2, 0.0);
+        label I = 2;
 
-        y = yOld + dx*k3;
-        x += 0.5*dx;
-        scalar k4 = p(x, y, T)/sqr(x);
+        scalar e0 = e0_;
+        e0_ = 0;
+        scalar x = rho0_;
+        scalar y = 0.0;
+        label nSteps = 10000;
+        scalar dx = 10.0*rho0_/scalar(nSteps);
 
-        y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
 
-        if (((i + 1) % (nSteps/tableSize)) == 0)
+        for (label i = 0; i < nSteps; i++)
         {
-            rhof[I] = x;
-            ecf[I] = y;
-            I++;
-        }
-    }
-    e0_ = e0;
+            scalar yOld = y;
 
-    EcTable_.set
-    (
-        rhof,
-        ecf,
-        "none",
-        "none",
-        "linearExtrapolated",
-        true
-    );
+            scalar k1 = p(x, y, T)/sqr(x);
+            y = yOld + dx*0.5*k1;
+
+            x += 0.5*dx;
+            scalar k2 = p(x, y, T)/sqr(x);
+            y = yOld + dx*0.5*k2;
+            scalar k3 = p(x, y, T)/sqr(x);
+
+            y = yOld + dx*k3;
+            x += 0.5*dx;
+            scalar k4 = p(x, y, T)/sqr(x);
+
+            y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
+
+            if (((i + 1) % (nSteps/tableSize)) == 0)
+            {
+                rhof[I] = x;
+                ecf[I] = y;
+                I++;
+            }
+        }
+        e0_ = e0;
+
+        EcTable_.set
+        (
+            rhof,
+            ecf,
+            "none",
+            "none",
+            "linearExtrapolated",
+            true
+        );
+    }
 }
 
 // ************************************************************************* //

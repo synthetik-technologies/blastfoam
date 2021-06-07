@@ -33,28 +33,30 @@ inline Foam::Tillotson<Specie>::Tillotson
 (
     const Specie& sp,
     const scalar p0,
-    const scalar pCav,
     const scalar rho0,
-    const scalar rhoCav,
     const scalar e0,
     const scalar omega,
-    const scalar k,
     const scalar A,
     const scalar B,
-    const scalar C
+    const scalar C,
+    const bool cavitation,
+    const scalar pCav,
+    const scalar rhoCav,
+    const scalar k
 )
 :
     Specie(sp),
     p0_(p0),
-    pCav_(pCav),
     rho0_(rho0),
-    rhoCav_(rhoCav),
     e0_(e0),
     omega_(omega),
-    k_(k),
     A_(A),
     B_(B),
-    C_(C)
+    C_(C),
+    cavitation_(cavitation),
+    pCav_(pCav),
+    rhoCav_(rhoCav),
+    k_(k)
 {}
 
 
@@ -69,15 +71,16 @@ inline Foam::Tillotson<Specie>::Tillotson
 :
     Specie(name, pf),
     p0_(pf.p0_),
-    pCav_(pf.pCav_),
     rho0_(pf.rho0_),
-    rhoCav_(pf.rhoCav_),
     e0_(pf.e0_),
     omega_(pf.omega_),
-    k_(pf.k_),
     A_(pf.A_),
     B_(pf.B_),
-    C_(pf.C_)
+    C_(pf.C_),
+    cavitation_(pf.cavitation_),
+    pCav_(pf.pCav_),
+    rhoCav_(pf.rhoCav_),
+    k_(pf.k_)
 {}
 
 
@@ -117,20 +120,20 @@ Foam::scalar Foam::Tillotson<Specie>::p
     const bool limit
 ) const
 {
-    if (rhoCav_ > rho)
+    if (cavitation_ && rhoCav_ > rho)
     {
         return pCav_;
     }
 
     scalar mu(rho/rho0_ - 1.0);
-    scalar res =
+    scalar pressure =
         p0_
       + omega_*rho*(e - e0_)
       + A_*mu
       + B_*sqr(mu)
       + C_*pow3(mu);
 
-      return limit ? max(res, pCav_) : res;
+      return (cavitation_ && limit) ? max(pressure, pCav_) : pressure;
 }
 
 
@@ -141,7 +144,7 @@ Foam::scalar Foam::Tillotson<Specie>::Pi
     const scalar& e
 ) const
 {
-    if (rho < rhoCav_)
+    if (cavitation_ && rho < rhoCav_)
     {
         return 0.0;
     }
@@ -164,7 +167,7 @@ Foam::scalar Foam::Tillotson<Specie>::delta
     const scalar& e
 ) const
 {
-    if (rho < rhoCav_)
+    if (cavitation_ && rho < rhoCav_)
     {
         return 0.0;
     }
@@ -176,7 +179,7 @@ Foam::scalar Foam::Tillotson<Specie>::delta
             A_
           + 2.0*B_*mu
           + 3.0*C_*sqr(mu)
-        )/rho0_/omega_;
+        )/(rho0_*omega_);
 }
 
 
@@ -190,7 +193,8 @@ Foam::scalar Foam::Tillotson<Specie>::cSqr
     const scalar& Cv
 ) const
 {
-    if (rho < rhoCav_)
+
+    if (cavitation_ && rho < rhoCav_)
     {
         return sqrt(k_*pCav_/max(rho, 1e-10));
     }
@@ -199,7 +203,7 @@ Foam::scalar Foam::Tillotson<Specie>::cSqr
     scalar h((gamma*p + Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
     scalar cLSqr((h - delta(p, rho, e))*(gamma - 1.0));
 
-    if (rho < rho0_)
+    if (cavitation_ && rho < rho0_)
     {
         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
         scalar cCavSqr(k_*pCav_/max(rho, 1e-10));
@@ -227,6 +231,11 @@ Foam::scalar Foam::Tillotson<Specie>::Gamma
     const scalar& Cv
 ) const
 {
+    if (!cavitation_)
+    {
+        return omega_ + 1.0;
+    }
+
     if (rho < rhoCav_)
     {
         return k_;
@@ -258,14 +267,9 @@ Foam::scalar Foam::Tillotson<Specie>::dpdv
     const scalar& T
 ) const
 {
-    return
-        sqr(rho)/pow3(rho0_)
-       *(
-            pow3(rho0_)*omega_*(e0_ - e)
-          - A_*sqr(rho0_)
-          - 2.0*B_*rho0_*(rho - rho0_)
-          - 3.0*C_*sqr(rho - rho0_)
-        );
+    scalar mu(rho/rho0_ - 1.0);
+    scalar dmudv(-sqr(rho)/rho0_);
+    return - sqr(rho)*omega_*(e0_ - e) + dmudv*(A_ + 2.0*B_*mu + 3.0*C_*sqr(mu));
 }
 
 
@@ -302,7 +306,21 @@ Foam::scalar Foam::Tillotson<Specie>::E
     const scalar& T
 ) const
 {
-    return EcTable_.lookup(rho);
+    scalar rhos(max(rho, 1e-10));
+    scalar rRho(1.0/rhos);
+    scalar lnRho(log(rhos));
+    return
+      - e0_*omega_*lnRho
+      - p0_*rRho
+      + A_*(rRho + lnRho/rho0_)
+      + B_*(-rRho + rho/sqr(rho0_) - 2.0*lnRho/rho0_)
+      + C_
+       *(
+            rRho
+          - 3.0*rho/sqr(rho0_)
+          + sqr(rho)/(2.0*pow3(rho0_))
+          + 3.0*lnRho/rho0_
+        );
 }
 
 
@@ -376,6 +394,7 @@ inline void Foam::Tillotson<Specie>::operator+=
     const Tillotson<Specie>& pf
 )
 {
+    NotImplemented;
     scalar Y1 = this->Y();
     Specie::operator+=(pf);
 
@@ -385,15 +404,15 @@ inline void Foam::Tillotson<Specie>::operator+=
         const scalar Y2 = pf.Y()/this->Y();
 
         p0_ = Y1*p0_ + Y2*pf.p0_;
-        pCav_ = Y1*pCav_ + Y2*pf.pCav_;
         rho0_ = Y1*rho0_ + Y2*pf.rho0_;
-        rhoCav_ = Y1*rhoCav_ + Y2*pf.rhoCav_;
         e0_ = Y1*e0_ + Y2*pf.e0_;
         omega_ = Y1*omega_ + Y2*pf.omega_;
-        k_ = Y1*k_ + Y2*pf.k_;
         A_ = Y1*A_ + Y2*pf.A_;
         B_ = Y1*B_ + Y2*pf.B_;
         C_ = Y1*C_ + Y2*pf.C_;
+        pCav_ = Y1*pCav_ + Y2*pf.pCav_;
+        rhoCav_ = Y1*rhoCav_ + Y2*pf.rhoCav_;
+        k_ = Y1*k_ + Y2*pf.k_;
     }
 }
 
@@ -414,6 +433,7 @@ inline Foam::Tillotson<Specie> Foam::operator+
     const Tillotson<Specie>& pf2
 )
 {
+    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -426,15 +446,16 @@ inline Foam::Tillotson<Specie> Foam::operator+
         (
             sp,
             pf1.p0_,
-            pf1.pCav_,
             pf1.rho0_,
-            pf1.rhoCav_,
             pf1.e0_,
             pf1.omega_,
-            pf1.k_,
             pf1.A_,
             pf1.B_,
-            pf1.C_
+            pf1.C_,
+            pf1.cavitation_,
+            pf1.pCav_,
+            pf1.rhoCav_,
+            pf1.k_
         );
     }
     else
@@ -446,15 +467,16 @@ inline Foam::Tillotson<Specie> Foam::operator+
         (
             sp,
             Y1*pf1.p0_ + Y2*pf2.p0_,
-            Y1*pf1.pCav_ + Y2*pf2.pCav_,
             Y1*pf1.rho0_ + Y2*pf2.rho0_,
-            Y1*pf1.rhoCav_ + Y2*pf2.rhoCav_,
             Y1*pf1.e0_ + Y2*pf2.e0_,
             Y1*pf1.omega_ + Y2*pf2.omega_,
-            Y1*pf1.k_ + Y2*pf2.k_,
             Y1*pf1.A_ + Y2*pf2.A_,
             Y1*pf1.B_ + Y2*pf2.B_,
-            Y1*pf1.C_ + Y2*pf2.C_
+            Y1*pf1.C_ + Y2*pf2.C_,
+            pf1.cavitation_ && pf2.cavitation_,
+            Y1*pf1.pCav_ + Y2*pf2.pCav_,
+            Y1*pf1.rhoCav_ + Y2*pf2.rhoCav_,
+            Y1*pf1.k_ + Y2*pf2.k_
         );
     }
 }
@@ -471,15 +493,16 @@ inline Foam::Tillotson<Specie> Foam::operator*
     (
         s*static_cast<const Specie&>(pf),
         pf.p0_,
-        pf.pCav_,
         pf.rho0_,
-        pf.rhoCav_,
         pf.e0_,
         pf.omega_,
-        pf.k_,
         pf.A_,
         pf.B_,
-        pf.C_
+        pf.C_,
+        pf.cavitation_,
+        pf.pCav_,
+        pf.rhoCav_,
+        pf.k_
     );
 }
 
@@ -491,6 +514,7 @@ inline Foam::Tillotson<Specie> Foam::operator==
     const Tillotson<Specie>& pf2
 )
 {
+    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -504,15 +528,16 @@ inline Foam::Tillotson<Specie> Foam::operator==
     (
         sp,
         Y2*pf2.p0_    - Y1*pf1.p0_,
-        Y2*pf2.pCav_  - Y1*pf1.pCav_,
         Y2*pf2.rho0_    - Y1*pf1.rho0_,
-        Y2*pf2.rhoCav_  - Y1*pf1.rhoCav_,
         Y2*pf2.e0_    - Y1*pf1.e0_,
         Y2*pf2.omega_  - Y1*pf1.omega_,
-        Y2*pf2.k_    - Y1*pf1.k_,
         Y2*pf2.A_  - Y1*pf1.A_,
         Y2*pf2.B_ - Y1*pf1.B_,
-        Y2*pf2.C_     - Y1*pf1.C_
+        Y2*pf2.C_     - Y1*pf1.C_,
+        pf2.cavitation_ && pf1.cavitation_,
+        Y2*pf2.pCav_  - Y1*pf1.pCav_,
+        Y2*pf2.rhoCav_  - Y1*pf1.rhoCav_,
+        Y2*pf2.k_    - Y1*pf1.k_
     );
 }
 
