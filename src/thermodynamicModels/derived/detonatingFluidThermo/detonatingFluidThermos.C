@@ -38,36 +38,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         idealGas,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         idealGas,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         idealGas,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         idealGas,
-        equationOfState,
         BKW
     );
 
@@ -75,36 +67,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         stiffenedGas,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         stiffenedGas,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         stiffenedGas,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         stiffenedGas,
-        equationOfState,
         BKW
     );
 
@@ -112,36 +96,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         Murnaghan,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         Murnaghan,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         Murnaghan,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         Murnaghan,
-        equationOfState,
         BKW
     );
 
@@ -149,36 +125,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan2,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan2,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan2,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan2,
-        equationOfState,
         BKW
     );
 
@@ -187,36 +155,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan3,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan3,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan3,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan3,
-        equationOfState,
         BKW
     );
 
@@ -224,36 +184,28 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         CochranChan,
-        MGEquationOfState,
         JWL
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         CochranChan,
-        equationOfState,
         JWLC
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         CochranChan,
-        MGEquationOfState,
         LSZK
     );
 
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         CochranChan,
-        equationOfState,
         BKW
     );
 
@@ -261,9 +213,7 @@ namespace Foam
     addDetonatingFluidThermos
     (
         constTransport,
-        MGEquationOfState,
         solidJWL,
-        MGEquationOfState,
         JWL
     );
 }

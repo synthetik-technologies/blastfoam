@@ -100,10 +100,10 @@ Foam::Murnaghan<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::Murnaghan<Specie>::p
+Foam::scalar Foam::Murnaghan<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return pRef_ + (pow(rho/rho0_, n_) - 1.0)/(kappa_*n_);
@@ -113,9 +113,10 @@ Foam::scalar Foam::Murnaghan<Specie>::p
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return Gamma_ + 1.0;
@@ -125,10 +126,11 @@ Foam::scalar Foam::Murnaghan<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return pow(rho/rho0_, n_ - 1.0)/(rho0_*n_*kappa_);
@@ -138,8 +140,9 @@ Foam::scalar Foam::Murnaghan<Specie>::cSqr
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -rho*pow(rho/rho0_, n_)/kappa_;
@@ -149,8 +152,9 @@ Foam::scalar Foam::Murnaghan<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -160,8 +164,9 @@ Foam::scalar Foam::Murnaghan<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -174,8 +179,9 @@ Foam::scalar Foam::Murnaghan<Specie>::E
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -185,8 +191,9 @@ Foam::scalar Foam::Murnaghan<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return pow(rho/rho0_, n_ - 1.0)/(rho0_*kappa_*(n_ - 1.0));
@@ -196,8 +203,9 @@ Foam::scalar Foam::Murnaghan<Specie>::H
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -207,8 +215,9 @@ Foam::scalar Foam::Murnaghan<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -218,9 +227,9 @@ Foam::scalar Foam::Murnaghan<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0;

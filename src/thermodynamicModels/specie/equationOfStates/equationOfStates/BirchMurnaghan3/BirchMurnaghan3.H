@@ -46,6 +46,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "equationOfState.H"
 
 namespace Foam
 {
@@ -89,7 +90,8 @@ Ostream& operator<<
 template<class Specie>
 class BirchMurnaghan3
 :
-    public Specie
+    public Specie,
+    public equationOfState
 {
 // Private data
 
@@ -161,84 +163,93 @@ public:
         }
 
         //- Return pressure
-        scalar p
+        virtual scalar pRhoT
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar T
         ) const;
 
         //- Gamma function
-        scalar Gamma
+        virtual scalar Gamma
         (
-            const scalar& rho,
-            const scalar& T,
-            const scalar& cv
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
         ) const;
 
         //- Speed of sound
-        scalar cSqr
+        virtual scalar cSqr
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& T,
-            const scalar& cv
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
         ) const;
 
         //- Return derivative of pressure w.r.t density
         scalar dpdv
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
         scalar dpdT
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Internal energy correction [J/kg]
         scalar E
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Enthalpy correction [J/kg]
         scalar H
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
         scalar Cv
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
         scalar Cp
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity difference [J/kg/K]
         scalar CpMCv
         (
-            const scalar& rho,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
         scalar S
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar T
         ) const;
 
 

@@ -212,18 +212,6 @@ Foam::scalar Foam::vanderWaals<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10);
-}
-
-
-template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::S
 (
     const scalar p,

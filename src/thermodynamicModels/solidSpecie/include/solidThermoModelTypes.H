@@ -37,7 +37,6 @@ License
 #include "eConst.H"
 #include "hConst.H"
 
-#include "equationOfState.H"
 #include "rhoConst.H"
 
 #include "blastSpecie.H"
@@ -48,7 +47,6 @@ namespace Foam
     defineThermoTypes
     (
         constSolidIsoTransport,
-        equationOfState,
         rhoConst,
         blastSpecie
     );
@@ -56,7 +54,6 @@ namespace Foam
     defineThermoTypes
     (
         constSolidAnIsoTransport,
-        equationOfState,
         rhoConst,
         blastSpecie
     );
@@ -64,7 +61,6 @@ namespace Foam
     defineThermoTypes
     (
         constSolidIsoTransport,
-        equationOfState,
         rhoConst,
         rBlastSpecie
     );
@@ -72,7 +68,6 @@ namespace Foam
     defineThermoTypes
     (
         constSolidAnIsoTransport,
-        equationOfState,
         rhoConst,
         rBlastSpecie
     );

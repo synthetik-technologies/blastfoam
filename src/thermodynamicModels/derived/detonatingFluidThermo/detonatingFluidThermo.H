@@ -152,7 +152,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addDetonatingFluidThermo(Transport, Thermo, uEoSType, uEoS, rEoSType, rEoS) \
+#define addDetonatingFluidThermo(Transport, Thermo, uEoS, rEoS)             \
     typedef detonatingFluidThermo                                           \
         <                                                                   \
             blendedThermoModel                                              \
@@ -181,19 +181,9 @@ public:
         detonating                                                          \
     );
 
-#define addDetonatingFluidThermos(Transport, uEoSType, uEoS, rEoSType, rEoS) \
-    addDetonatingFluidThermo                                                \
-    (                                                                       \
-        Transport, eConst,                                                  \
-        uEoSType, uEoS,                                                     \
-        rEoSType, rEoS                                                      \
-    );                                                                      \
-    addDetonatingFluidThermo                                                \
-    (                                                                       \
-        Transport, hConst,                                                  \
-        uEoSType, uEoS,                                                     \
-        rEoSType, rEoS                                                      \
-    );
+#define addDetonatingFluidThermos(Transport, uEoS, rEoS)                    \
+    addDetonatingFluidThermo(Transport, eConst, uEoS, rEoS);                \
+//     addDetonatingFluidThermo(Transport, hConst, uEoS, rEoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -38,7 +38,6 @@ License
 #include "eConst.H"
 #include "hConst.H"
 
-#include "equationOfState.H"
 #include "rhoConst.H"
 
 #include "blastSpecie.H"
@@ -51,7 +50,6 @@ namespace Foam
     (
         constSolidIsoTransport,
         eConst,
-        equationOfState,
         rhoConst
     );
 
@@ -59,7 +57,6 @@ namespace Foam
     (
         constSolidAnIsoTransport,
         eConst,
-        equationOfState,
         rhoConst
     );
 
@@ -67,7 +64,6 @@ namespace Foam
     (
         constSolidIsoTransport,
         hConst,
-        equationOfState,
         rhoConst
     );
 
@@ -75,7 +71,6 @@ namespace Foam
     (
         constSolidAnIsoTransport,
         hConst,
-        equationOfState,
         rhoConst
     );
 

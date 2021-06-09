@@ -165,18 +165,6 @@ Foam::scalar Foam::idealGas<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::S
 (
     const scalar p,

@@ -70,9 +70,10 @@ Foam::rhoConst<Specie>::clone() const
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return 1.0;
@@ -80,10 +81,10 @@ Foam::scalar Foam::rhoConst<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::rhoConst<Specie>::p
+Foam::scalar Foam::rhoConst<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return pRef_;
@@ -91,12 +92,13 @@ Foam::scalar Foam::rhoConst<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::rhoConst<Specie>::speedOfSound
+Foam::scalar Foam::rhoConst<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return great;
@@ -106,8 +108,9 @@ Foam::scalar Foam::rhoConst<Specie>::speedOfSound
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -117,8 +120,9 @@ Foam::scalar Foam::rhoConst<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -128,8 +132,9 @@ Foam::scalar Foam::rhoConst<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -139,8 +144,9 @@ Foam::scalar Foam::rhoConst<Specie>::E
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -150,8 +156,9 @@ Foam::scalar Foam::rhoConst<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -161,8 +168,9 @@ Foam::scalar Foam::rhoConst<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -172,8 +180,9 @@ Foam::scalar Foam::rhoConst<Specie>::H
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -183,9 +192,9 @@ Foam::scalar Foam::rhoConst<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0.0;

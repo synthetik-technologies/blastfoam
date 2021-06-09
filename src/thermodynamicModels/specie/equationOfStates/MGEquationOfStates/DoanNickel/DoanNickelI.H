@@ -195,19 +195,6 @@ Foam::scalar Foam::DoanNickel<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    // Need to calculate
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::S
 (
     const scalar p,

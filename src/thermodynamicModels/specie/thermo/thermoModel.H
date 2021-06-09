@@ -453,30 +453,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define defineThermoType(Transport, Thermo, EoSType, EoS, Specie)           \
-typedef                                                                     \
-    Transport                                                               \
-    <                                                                       \
-        thermoModel                                                         \
-        <                                                                   \
-            Thermo                                                          \
-            <                                                               \
-                EoSType                                                     \
-                <                                                           \
-                    EoS                                                     \
-                    <                                                       \
-                        Specie                                              \
-                    >                                                       \
-                >                                                           \
-            >                                                               \
-        >                                                                   \
-    > Transport##Thermo##EoS##Specie;
-
-#define defineThermoTypes(Transport, EoSType, EoS, Specie)                  \
-    defineThermoType(Transport, eConst, EoSType, EoS, Specie)               \
-    defineThermoType(Transport, hConst, EoSType, EoS, Specie)
-
-#define defineMGThermoType(Transport, Thermo, EoS, Specie)                  \
+#define defineThermoType(Transport, Thermo, EoS, Specie)                    \
 typedef                                                                     \
     Transport                                                               \
     <                                                                       \
@@ -492,8 +469,9 @@ typedef                                                                     \
         >                                                                   \
     > Transport##Thermo##EoS##Specie;
 
-#define defineMGThermoTypes(Transport, EoS, Specie)                         \
-    defineMGThermoType(Transport, eConst, EoS, Specie)
+#define defineThermoTypes(Transport, EoS, Specie)                           \
+    defineThermoType(Transport, eConst, EoS, Specie)                        \
+    defineThermoType(Transport, hConst, EoS, Specie)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

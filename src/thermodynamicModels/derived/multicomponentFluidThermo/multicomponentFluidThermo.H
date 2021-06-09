@@ -137,7 +137,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addMulticomponentFluidThermo(Transport, Thermo, EoSType, EoS)       \
+#define addMulticomponentFluidThermo(Transport, Thermo, EoS)                \
     typedef multicomponentFluidThermo<Transport##Thermo##EoS##blastSpecie>  \
         multicomponent##Transport##Thermo##EoS;                             \
     defineTemplateTypeNameAndDebugWithName                                  \
@@ -153,9 +153,9 @@ public:
         multicomponent                                                      \
     );
 
-#define addMulticomponentFluidThermos(Transport, EoSType, EoS)              \
-    addMulticomponentFluidThermo(Transport, eConst, EoSType, EoS);          \
-    addMulticomponentFluidThermo(Transport, hConst, EoSType, EoS);
+#define addMulticomponentFluidThermos(Transport, EoS)                       \
+    addMulticomponentFluidThermo(Transport, eConst, EoS);                   \
+    addMulticomponentFluidThermo(Transport, hConst, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

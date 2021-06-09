@@ -41,7 +41,9 @@ inline Foam::eConst<EquationOfState>::eConst
     Cv_(cv),
     Hf_(hf),
     flameT_(ft)
-{}
+{
+    EquationOfState::set(*this);
+}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -57,7 +59,9 @@ inline Foam::eConst<EquationOfState>::eConst
     Cv_(ct.Cv_),
     Hf_(ct.Hf_),
     flameT_(ct.flameT_)
-{}
+{
+    EquationOfState::set(*this);
+}
 
 
 template<class EquationOfState>
@@ -219,17 +223,19 @@ inline Foam::eConst<EquationOfState> Foam::operator+
 
     if (mag(eofs.Y()) < small)
     {
-        return eConst<EquationOfState>
+        eConst<EquationOfState> eThermo
         (
             eofs,
             ct1.Cv_,
             ct1.Hf_,
             ct1.flameT_
         );
+        eThermo.EquationOfState::set(eThermo);
+        return eThermo;
     }
     else
     {
-        return eConst<EquationOfState>
+        eConst<EquationOfState> eThermo
         (
             eofs,
             ct1.Y()/eofs.Y()*ct1.Cv_
@@ -239,6 +245,8 @@ inline Foam::eConst<EquationOfState> Foam::operator+
             ct1.Y()/eofs.Y()*ct1.flameT_
           + ct2.Y()/eofs.Y()*ct2.flameT_
         );
+        eThermo.EquationOfState::set(eThermo);
+        return eThermo;
     }
 }
 
@@ -250,13 +258,15 @@ inline Foam::eConst<EquationOfState> Foam::operator*
     const eConst<EquationOfState>& ct
 )
 {
-    return eConst<EquationOfState>
+    eConst<EquationOfState> eThermo
     (
         s*static_cast<const EquationOfState&>(ct),
         ct.Cv_,
         ct.Hf_,
         ct.flameT_
     );
+    eThermo.EquationOfState::set(eThermo);
+    return eThermo;
 }
 
 
@@ -273,7 +283,7 @@ inline Foam::eConst<EquationOfState> Foam::operator==
      == static_cast<const EquationOfState&>(ct2)
     );
 
-    return eConst<EquationOfState>
+    eConst<EquationOfState> eThermo
     (
         eofs,
         ct2.Y()/eofs.Y()*ct2.Cv_
@@ -283,6 +293,8 @@ inline Foam::eConst<EquationOfState> Foam::operator==
         ct2.Y()/eofs.Y()*ct2.flameT_
       - ct1.Y()/eofs.Y()*ct1.flameT_
     );
+    eThermo.EquationOfState::set(eThermo);
+    return eThermo;
 }
 
 

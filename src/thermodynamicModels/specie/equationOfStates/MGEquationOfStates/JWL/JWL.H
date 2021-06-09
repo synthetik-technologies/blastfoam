@@ -200,7 +200,8 @@ public:
         scalar dpdv
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
@@ -221,14 +222,6 @@ public:
 
         //- Enthalpy correction [J/kg]
         scalar H
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
-        //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
         (
             const scalar rho,
             const scalar e,

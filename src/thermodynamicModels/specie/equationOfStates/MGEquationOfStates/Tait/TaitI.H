@@ -172,18 +172,6 @@ Foam::scalar Foam::Tait<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::Tait<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::Tait<Specie>::S
 (
     const scalar p,

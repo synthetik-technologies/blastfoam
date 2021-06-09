@@ -34,47 +34,47 @@ License
 
 namespace Foam
 {
-//     addSimpleEoS
-//     (
-//         constTransport,
-//         eConst,
-//         equationOfState,
-//         perfectGas
-//     );
-//     addSimpleEoS
-//     (
-//         constTransport,
-//         eConst,
-//         equationOfState,
-//         AbelNobel
-//     );
     addSimpleEoS
     (
         constTransport,
         eConst,
-        MGEquationOfState,
+        perfectGas
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        AbelNobel
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
         stiffenedGas
     );
     addSimpleEoS
     (
         constTransport,
         eConst,
-        MGEquationOfState,
         Tait
     );
     addSimpleEoS
     (
         constTransport,
         eConst,
-        MGEquationOfState,
         Tillotson
     );
     addSimpleEoS
     (
         constTransport,
         eConst,
-        MGEquationOfState,
         linearTillotson
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        DoanNickel
     );
 }
 // ************************************************************************* //

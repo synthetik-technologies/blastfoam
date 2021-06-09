@@ -195,49 +195,32 @@ public:
         scalar dpdv
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
         scalar dpde
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Internal energy correction [J/kg]
         scalar E
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Enthalpy correction [J/kg]
         scalar H
         (
             const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
-        (
-            const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
-        (
-            const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]

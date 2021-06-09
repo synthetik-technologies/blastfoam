@@ -16,16 +16,16 @@ int main(int argc, char *argv[])
 
     //- Read state parameters
 
-    scalar T = 0.0;
+    scalar T = 300.0;
 
     autoPtr<simpleEOS> eosPtr(simpleEOS::New(dict));
     simpleEOS& eos = eosPtr();
 
     scalar p = 1e5;
-    scalar rho = 1000;
-    scalar e = 3.543e5;//eos.Es(rho, 0, T);
+    scalar rho = 1.0;
+    scalar e = eos.Es(rho, 0, T);
     scalar Cv = eos.Cv(rho, e, T);
-    T = (e - eos.E(rho, e, T))/Cv;
+//     T = (e - eos.E(rho, e, T))/Cv;
 
     label n = 1000;
     std::vector<scalar> rhos(n, 0.0);
@@ -44,6 +44,9 @@ int main(int argc, char *argv[])
     Info<<"p: "<<eos.p(rho, e, T)<<endl;
     Info<<"c: "<<Foam::sqrt(eos.cSqr(p, rho, e, T))<<endl;
     Info<<"T: "<<eos.TRhoE(T,rho, e)<<endl;
+    Info<<"CpMCv: "<<eos.CpMCv(rho, e, T)<<endl;
+    Info<<"Cp: "<<eos.Cp(rho, e, T)<<endl;
+    Info<<"Cv: "<<eos.Cv(rho, e, T)<<endl;
     Info<<"rho: "<<eos.initializeRho(p, rho, e, T)<<endl;
 
 //     plt::plot(rhos, Es, "g--");

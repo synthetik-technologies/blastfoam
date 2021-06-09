@@ -37,6 +37,8 @@ Foam::eConst<EquationOfState>::eConst(const dictionary& dict)
     Cv_(dict.subDict("thermodynamics").lookup<scalar>("Cv")),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
     flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", 0.0))
-{}
+{
+    EquationOfState::set(*this);
+}
 
 // ************************************************************************* //

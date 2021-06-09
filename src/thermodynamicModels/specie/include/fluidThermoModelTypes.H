@@ -70,9 +70,10 @@ License
 namespace Foam
 {
 // Solid materials
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         CochranChan,
         blastSpecie
     );
@@ -80,7 +81,6 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         Murnaghan,
         blastSpecie
     );
@@ -88,7 +88,6 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan2,
         blastSpecie
     );
@@ -96,35 +95,30 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         BirchMurnaghan3,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         solidJWL,
         blastSpecie
     );
 
 // Fluids
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         idealGas,
         blastSpecie
     );
-    defineMGThermoTypes
+    defineThermoType
     (
         sutherlandTransport,
-        idealGas,
-        blastSpecie
-    );
-    defineMGThermoType
-    (
-        constTransport,
-        janaf,
+        eConst,
         idealGas,
         blastSpecie
     );
@@ -132,14 +126,12 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         perfectGas,
         blastSpecie
     );
     defineThermoTypes
     (
         sutherlandTransport,
-        equationOfState,
         perfectGas,
         blastSpecie
     );
@@ -147,7 +139,6 @@ namespace Foam
     (
         constTransport,
         janaf,
-        equationOfState,
         perfectGas,
         blastSpecie
     );
@@ -155,7 +146,6 @@ namespace Foam
     (
         sutherlandTransport,
         janaf,
-        equationOfState,
         perfectGas,
         blastSpecie
     );
@@ -163,14 +153,12 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         AbelNobel,
         blastSpecie
     );
     defineThermoTypes
     (
         sutherlandTransport,
-        equationOfState,
         AbelNobel,
         blastSpecie
     );
@@ -178,7 +166,6 @@ namespace Foam
     (
         constTransport,
         janaf,
-        equationOfState,
         AbelNobel,
         blastSpecie
     );
@@ -186,7 +173,6 @@ namespace Foam
     (
         sutherlandTransport,
         janaf,
-        equationOfState,
         AbelNobel,
         blastSpecie
     );
@@ -195,7 +181,6 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         BKW,
         blastSpecie
     );
@@ -203,76 +188,83 @@ namespace Foam
     defineThermoTypes
     (
         constTransport,
-        equationOfState,
         BWR,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         stiffenedGas,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         Tait,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         Tillotson,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         linearTillotson,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         vanderWaals,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         JWL,
         blastSpecie
     );
 
-    defineThermoTypes
+    defineThermoType
     (
         constTransport,
-        equationOfState,
+        eConst,
         JWLC,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         LSZK,
         blastSpecie
     );
 
-    defineMGThermoTypes
+    defineThermoType
     (
         constTransport,
+        eConst,
         DoanNickel,
         blastSpecie
     );
 
-    defineMGThermoType
+    defineThermoType
     (
         constTransport,
         tabulatedThermo,

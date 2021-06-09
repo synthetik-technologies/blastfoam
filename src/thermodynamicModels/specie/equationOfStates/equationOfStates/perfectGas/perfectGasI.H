@@ -81,9 +81,10 @@ Foam::perfectGas<Specie>::New
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return this->R()/cv + 1.0;
@@ -91,10 +92,10 @@ Foam::scalar Foam::perfectGas<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::perfectGas<Specie>::p
+Foam::scalar Foam::perfectGas<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return rho*this->R()*T;
@@ -104,21 +105,23 @@ Foam::scalar Foam::perfectGas<Specie>::p
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
-    return Gamma(rho, T, cv)*T*this->R();
+    return Gamma(rho, e, T, cv)*T*this->R();
 }
 
 
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -this->R()*T*sqr(rho);
@@ -128,8 +131,9 @@ Foam::scalar Foam::perfectGas<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return rho*this->R();
@@ -139,8 +143,9 @@ Foam::scalar Foam::perfectGas<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -150,8 +155,9 @@ Foam::scalar Foam::perfectGas<Specie>::E
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -161,8 +167,9 @@ Foam::scalar Foam::perfectGas<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -172,8 +179,9 @@ Foam::scalar Foam::perfectGas<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -183,8 +191,9 @@ Foam::scalar Foam::perfectGas<Specie>::H
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -194,9 +203,9 @@ Foam::scalar Foam::perfectGas<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::perfectGas<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0.0;

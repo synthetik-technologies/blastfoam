@@ -103,22 +103,10 @@ Foam::BWR<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::BWR<Specie>::Gamma
+Foam::scalar Foam::BWR<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
-) const
-{
-    return dpdT(rho, T)/(cv*max(rho, 1e-10)) + 1.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::BWR<Specie>::p
-(
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return
@@ -133,23 +121,11 @@ Foam::scalar Foam::BWR<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::BWR<Specie>::cSqr
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
-) const
-{
-    return (sqr(dpdT(rho, T))*T/cv - dpdv(rho, T))/sqr(max(rho, 1e-10));
-}
-
-
-template<class Specie>
 Foam::scalar Foam::BWR<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -167,8 +143,9 @@ Foam::scalar Foam::BWR<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -186,8 +163,9 @@ Foam::scalar Foam::BWR<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -202,8 +180,9 @@ Foam::scalar Foam::BWR<Specie>::E
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -215,8 +194,9 @@ Foam::scalar Foam::BWR<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cv(rho, T) - T*sqr(dpdT(rho, T))/dpdv(rho, T) - this->R();
@@ -226,8 +206,9 @@ Foam::scalar Foam::BWR<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -244,8 +225,9 @@ Foam::scalar Foam::BWR<Specie>::H
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -258,9 +240,9 @@ Foam::scalar Foam::BWR<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::BWR<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0.0;

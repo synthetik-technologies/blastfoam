@@ -94,10 +94,10 @@ Foam::BirchMurnaghan2<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::BirchMurnaghan2<Specie>::p
+Foam::scalar Foam::BirchMurnaghan2<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return  pRef_ + 1.5*K0_*(pow(rho/rho0_, 7.0/3.0) - pow(rho/rho0_, 5.0/3.0));
@@ -107,9 +107,10 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::p
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return Gamma_ + 1.0;
@@ -119,10 +120,11 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return
@@ -136,8 +138,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::cSqr
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -150,8 +153,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0;
@@ -161,8 +165,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -176,8 +181,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::E
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0;
@@ -187,8 +193,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 3.0/8.0*K0_*pow(rho/rho0_, 2.0/3.0)*(7.0*pow(rho/rho0_, 2.0/3.0) - 10.0);
@@ -198,8 +205,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::H
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -209,8 +217,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -220,9 +229,9 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::BirchMurnaghan2<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0;

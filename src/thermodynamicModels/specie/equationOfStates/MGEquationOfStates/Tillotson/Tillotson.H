@@ -280,14 +280,6 @@ public:
             const scalar T
         ) const;
 
-        //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
         //- Heat capacity at constant volume of mixture [J/kg/K]
         scalar S
         (

@@ -43,6 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -53,6 +54,9 @@ namespace Foam
 class MGEquationOfState
 {
 protected:
+
+    //- Pointer to cpcv model
+    const CpCvModel* cpcvPtr_;
 
     //- Return the MieGruniesen coefficient
     virtual scalar GammaMG
@@ -90,6 +94,12 @@ public:
             return false;
         }
 
+        //- Set the pointer to the CpCvModel
+        void set(const CpCvModel& cpcv)
+        {
+            cpcvPtr_ = &cpcv;
+        }
+
         //- Return pressure
         virtual scalar p
         (
@@ -97,7 +107,13 @@ public:
             const scalar e,
             const scalar T,
             const bool limit = true
-        ) const;
+        ) const
+        {
+            return
+            limit
+          ? max((GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e), 0.0)
+          : (GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e);
+        }
 
         //- Return the speed of sound
         virtual scalar cSqr
@@ -107,24 +123,36 @@ public:
             const scalar e,
             const scalar T,
             const scalar Cv
-        ) const;
+        ) const
+        {
+            scalar G(GammaMG(rho, e));
+            scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
+            return (h - delta(p, rho, e))*(G - 1.0);
+        }
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpdT
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
             const scalar T
-        ) const;
+        ) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
 
         //- Return the MieGruniesen coefficient
-        scalar Gamma
+        inline scalar Gamma
         (
             const scalar rho,
             const scalar e,
             const scalar T,
             const scalar Cv
-        ) const;
+        ) const
+        {
+            return this->GammaMG(rho, e);
+        }
 
         //- Heat capacity at constant volume [J/kg/K]
         virtual scalar Cv
@@ -132,7 +160,10 @@ public:
             const scalar rho,
             const scalar e,
             const scalar T
-        ) const;
+        ) const
+        {
+            return 0.0;
+        }
 
         //- Heat capacity at constant pressure [J/kg/K]
         virtual scalar Cp
@@ -140,25 +171,27 @@ public:
             const scalar rho,
             const scalar e,
             const scalar T
-        ) const;
+        ) const
+        {
+            return 0.0;
+        }
 
         //- Heat capacity difference [J/kg/K]
-//         virtual scalar CpMCv
-//         (
-//             const scalar& rho,
-//             const scalar& e,
-//             const scalar& T
-//         ) const;
+        virtual scalar CpMCv
+        (
+            const scalar& rho,
+            const scalar& e,
+            const scalar& T
+        ) const
+        {
+            return (this->GammaMG(rho, e) - 1.0)*cpcvPtr_->Cv(rho, e, T);
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "MGEquationOfStateI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

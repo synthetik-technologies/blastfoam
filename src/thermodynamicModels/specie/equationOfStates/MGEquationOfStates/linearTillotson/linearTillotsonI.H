@@ -281,18 +281,6 @@ Foam::scalar Foam::linearTillotson<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::linearTillotson<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::linearTillotson<Specie>::S
 (
     const scalar p,

@@ -761,7 +761,7 @@ public:
 };
 
 
-#define addSimpleEoS(Transport, Thermo, EoSType, EoS)                      \
+#define addSimpleEoS(Transport, Thermo, EoS)                               \
     typedef SimpleEOS<Transport##Thermo##EoS##blastSpecie>                 \
         simple##Transport##Thermo##EoS;                                    \
                                                                            \

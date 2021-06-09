@@ -44,6 +44,7 @@ SourceFiles
 
 #include "scalar.H"
 #include "List.H"
+#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -81,7 +82,8 @@ inline janaf<EquationOfState> operator==
 template<class EquationOfState>
 class janaf
 :
-    public EquationOfState
+    public EquationOfState,
+    public CpCvModel
 {
 public:
 

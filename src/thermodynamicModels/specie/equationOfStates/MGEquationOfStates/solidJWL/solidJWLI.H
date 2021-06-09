@@ -155,7 +155,8 @@ template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::dpdv
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -174,7 +175,8 @@ template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::dpde
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     return omega_*rho;
@@ -185,7 +187,8 @@ template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::E
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos = max(rho, 1e-10);
@@ -195,32 +198,11 @@ Foam::scalar Foam::solidJWL<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::Cv
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::Cp
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::solidJWL<Specie>::H
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -228,16 +210,6 @@ Foam::scalar Foam::solidJWL<Specie>::H
         A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
       + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos)
       + e0_*omega_*log(rhos);
-}
-
-template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return this->R();
 }
 
 

@@ -41,6 +41,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "thermoModel.H"
+#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -85,7 +86,8 @@ Ostream& operator<<
 template<class EquationOfState>
 class hConst
 :
-    public EquationOfState
+    public EquationOfState,
+    public CpCvModel
 {
     // Private data
 

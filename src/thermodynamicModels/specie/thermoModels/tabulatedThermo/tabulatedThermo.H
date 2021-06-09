@@ -44,6 +44,7 @@ SourceFiles
 
 #include "autoPtr.H"
 #include "lookupTable1D.H"
+#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -88,7 +89,8 @@ Ostream& operator<<
 template<class EquationOfState>
 class tabulatedThermo
 :
-    public EquationOfState
+    public EquationOfState,
+    public CpCvModel
 {
 // Private data
 

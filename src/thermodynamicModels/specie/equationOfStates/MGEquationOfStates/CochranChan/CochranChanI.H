@@ -222,18 +222,6 @@ Foam::scalar Foam::CochranChan<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::S
 (
     const scalar p,

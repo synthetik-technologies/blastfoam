@@ -42,86 +42,32 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "CpCvModel.H"
 
 namespace Foam
 {
 
-// Forward declaration of friend functions and operators
-
-template<class EoS> class equationOfState;
-
-template<class EoS>
-inline equationOfState<EoS> operator+
-(
-    const equationOfState<EoS>&,
-    const equationOfState<EoS>&
-);
-
-template<class EoS>
-inline equationOfState<EoS> operator*
-(
-    const scalar,
-    const equationOfState<EoS>&
-);
-
-template<class EoS>
-inline equationOfState<EoS> operator==
-(
-    const equationOfState<EoS>&,
-    const equationOfState<EoS>&
-);
-
-template<class EoS>
-Ostream& operator<<
-(
-    Ostream&,
-    const equationOfState<EoS>&
-);
 
 /*---------------------------------------------------------------------------*\
                            Class equationOfState Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class EoS>
 class equationOfState
-:
-    public EoS
 {
+
+    //- Pointer to cpcv model
+    const CpCvModel* cpcvPtr_;
+
+    virtual scalar pRhoT(const scalar rho, const scalar T) const = 0;
+
 
 public:
 
-    // Constructors
-
-    //- Construct from components
-        inline equationOfState(const EoS& eos);
-
-        //- Construct from dictionary
-        equationOfState(const dictionary& dict);
-
-        //- Construct as named copy
-        inline equationOfState
-        (
-            const word& name,
-            const equationOfState&
-        );
-
-        //- Construct and return a clone
-        inline autoPtr<equationOfState> clone() const;
-
-        // Selector from dictionary
-        inline static autoPtr<equationOfState> New
-        (
-            const dictionary& dict
-        );
+    virtual ~equationOfState()
+    {}
 
 
     // Member Functions
-
-        //- Return the instantiated type name
-        static word typeName()
-        {
-            return word(EoS::typeName());
-        }
 
         //- Is temperature used
         bool temperatureBased() const
@@ -129,139 +75,84 @@ public:
             return true;
         }
 
+        //- Set the pointer to the CpCvModel
+        void set(const CpCvModel& cpcv)
+        {
+            cpcvPtr_ = &cpcv;
+        }
+
         //- Return pressure
-        scalar p
+        virtual scalar p
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
             const bool limit = true
-        ) const;
+        ) const
+        {
+            return limit ? max(this->pRhoT(rho, T), 0.0) : this->pRhoT(rho, T);
+        }
 
         //- Return the speed of sound
-        scalar cSqr
+        virtual scalar cSqr
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& cv
-        ) const;
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
+        ) const
+        {
+            return
+                (sqr(dpdT(rho, e, T))*T/cv - dpdv(rho, e, T))
+               /sqr(max(rho, 1e-10));
+        }
 
         //- Return the MieGruniesen coefficient
-        scalar Gamma
+        virtual scalar Gamma
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& Cv
-        ) const;
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
+        ) const
+        {
+            return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small) + 1.0;
+        }
 
         //- Return derivative of pressure w.r.t. specific volume
-        scalar dpdv
+        virtual scalar dpdv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpdT
+        virtual scalar dpdT
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
 
         //- Return derivative of pressure w.r.t. internal energy
         scalar dpde
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Internal energy correction [J/kg]
-        scalar E
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Enthalpy correction [J/kg]
-        scalar H
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-
-    // Member operators
-
-        inline void operator+=(const equationOfState&);
-        inline void operator*=(const scalar);
-
-
-    // Friend operators
-
-        friend equationOfState operator+ <EoS>
-        (
-            const equationOfState&,
-            const equationOfState&
-        );
-
-        friend equationOfState operator* <EoS>
-        (
-            const scalar s,
-            const equationOfState&
-        );
-
-        friend equationOfState operator== <EoS>
-        (
-            const equationOfState&,
-            const equationOfState&
-        );
-
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "equationOfStateI.H"
-
-#ifdef NoRepository
-    #include "equationOfState.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

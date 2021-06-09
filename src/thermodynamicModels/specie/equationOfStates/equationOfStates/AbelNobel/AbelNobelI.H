@@ -82,22 +82,10 @@ Foam::AbelNobel<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::AbelNobel<Specie>::Gamma
+Foam::scalar Foam::AbelNobel<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
-) const
-{
-    return max(dpdT(rho, T)/(cv*max(rho, 1e-10)), small) + 1.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::AbelNobel<Specie>::p
-(
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     return rho*this->R()*T/(1.0 - b_*rho);
@@ -105,23 +93,11 @@ Foam::scalar Foam::AbelNobel<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::AbelNobel<Specie>::cSqr
-(
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
-) const
-{
-    return (sqr(dpdT(rho, T))*T/cv - dpdv(rho, T))/sqr(max(rho, 1e-10));
-}
-
-
-template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -this->R()*T*sqr(rho/(b_*rho - 1.0));
@@ -131,8 +107,9 @@ Foam::scalar Foam::AbelNobel<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return rho*this->R()/(1.0 - b_*rho);
@@ -142,8 +119,9 @@ Foam::scalar Foam::AbelNobel<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -153,8 +131,9 @@ Foam::scalar Foam::AbelNobel<Specie>::E
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -164,8 +143,9 @@ Foam::scalar Foam::AbelNobel<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -175,8 +155,9 @@ Foam::scalar Foam::AbelNobel<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -186,8 +167,9 @@ Foam::scalar Foam::AbelNobel<Specie>::H
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -197,9 +179,9 @@ Foam::scalar Foam::AbelNobel<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::AbelNobel<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0.0;

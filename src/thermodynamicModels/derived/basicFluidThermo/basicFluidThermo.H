@@ -131,7 +131,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addFluidThermo(Transport, Thermo, EoSType, EoS)                     \
+#define addFluidThermo(Transport, Thermo, EoS)                              \
     typedef                                                                 \
         basicFluidThermo                                                    \
         <                                                                   \
@@ -154,9 +154,9 @@ public:
         basic                                                               \
     );
 
-#define addFluidThermos(Transport, EoSType, EoS)                            \
-    addFluidThermo(Transport, eConst, EoSType, EoS);                        \
-    addFluidThermo(Transport, hConst, EoSType, EoS);
+#define addFluidThermos(Transport, EoS)                                    \
+    addFluidThermo(Transport, eConst, EoS);                                \
+    addFluidThermo(Transport, hConst, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

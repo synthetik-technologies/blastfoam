@@ -125,7 +125,8 @@ template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::dpdv
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     return -sqr(rho)*(gamma_ - 1.0)*e - a_*b_*pow(rho, b_ + 1.0);
@@ -136,7 +137,8 @@ template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::dpde
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     return (gamma_ - 1.0)*rho;
@@ -147,7 +149,8 @@ template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::E
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     return a_*pow(rho, b_ - 1.0)/(b_ - 1.0);
@@ -155,48 +158,14 @@ Foam::scalar Foam::LSZK<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::Cv
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    // Check
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::Cp
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    // Check
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::H
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T
 ) const
 {
     return a_*log(rho);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return this->R();
 }
 
 

@@ -169,18 +169,6 @@ Foam::scalar Foam::stiffenedGas<Specie>::H
 
 
 template<class Specie>
-Foam::scalar Foam::stiffenedGas<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
-
-template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::S
 (
     const scalar p,

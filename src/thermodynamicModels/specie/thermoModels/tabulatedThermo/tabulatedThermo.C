@@ -45,6 +45,8 @@ Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
     ),
     Tlow_(min(eTable_.x())),
     Thigh_(max(eTable_.x()))
-{}
+{
+    EquationOfState::set(*this);
+}
 
 // ************************************************************************* //

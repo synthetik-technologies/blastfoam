@@ -35,53 +35,34 @@ namespace Foam
     addMulticomponentFluidThermos
     (
         constTransport,
-        MGEquationOfState,
-        idealGas
-    );
-    addMulticomponentFluidThermos
-    (
-        sutherlandTransport,
-        MGEquationOfState,
-        idealGas
-    );
-
-    addMulticomponentFluidThermos
-    (
-        constTransport,
-        equationOfState,
         perfectGas
     );
     addMulticomponentFluidThermos
     (
         sutherlandTransport,
-        equationOfState,
         perfectGas
     );
     addMulticomponentFluidThermo
     (
         constTransport,
         janaf,
-        equationOfState,
         perfectGas
     );
     addMulticomponentFluidThermo
     (
         sutherlandTransport,
         janaf,
-        equationOfState,
         perfectGas
     );
 
     addMulticomponentFluidThermos
     (
         constTransport,
-        equationOfState,
         AbelNobel
     );
     addMulticomponentFluidThermos
     (
         sutherlandTransport,
-        equationOfState,
         AbelNobel
     );
 }

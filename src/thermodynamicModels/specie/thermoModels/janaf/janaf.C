@@ -68,6 +68,7 @@ Foam::janaf<EquationOfState>::janaf(const dictionary& dict)
             << "Tcommon(" << Tcommon_ << ") > Thigh(" << Thigh_ << ')'
             << exit(FatalError);
     }
+    EquationOfState::set(*this);
 }
 
 // ************************************************************************* //

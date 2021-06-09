@@ -148,7 +148,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addDetonatingSolidThermo(Transport, Thermo, uEoSType, uEoS, rEoSType, rEoS) \
+#define addDetonatingSolidThermo(Transport, Thermo, uEoS, rEoS)             \
     typedef detonatingSolidThermo                                           \
         <                                                                   \
             blendedThermoModel                                              \
@@ -181,14 +181,14 @@ public:
     addDetonatingSolidThermo                                                \
     (                                                                       \
         Transport, eConst,                                                  \
-        equationOfState, rhoConst,                                          \
-        equationOfState, rhoConst                                           \
+        rhoConst,                                                           \
+        rhoConst                                                            \
     );                                                                      \
     addDetonatingSolidThermo                                                \
     (                                                                       \
         Transport, hConst,                                                  \
-        equationOfState, rhoConst,                                          \
-        equationOfState, rhoConst                                           \
+        rhoConst,                                                           \
+        rhoConst                                                            \
     );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

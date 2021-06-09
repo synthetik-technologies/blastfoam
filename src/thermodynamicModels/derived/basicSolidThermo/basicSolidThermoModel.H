@@ -128,7 +128,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addSolidThermo(Transport, Thermo, EoSType, EoS)                     \
+#define addSolidThermo(Transport, Thermo, EoS)                              \
     typedef basicSolidThermoModel                                           \
         <                                                                   \
             eThermoModel                                                    \

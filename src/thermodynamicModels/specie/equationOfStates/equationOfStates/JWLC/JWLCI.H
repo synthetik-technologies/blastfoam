@@ -102,9 +102,10 @@ Foam::JWLC<Specie>::New
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     return omega_ + 1.0;
@@ -112,10 +113,10 @@ Foam::scalar Foam::JWLC<Specie>::Gamma
 
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::p
+Foam::scalar Foam::JWLC<Specie>::pRhoT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -126,10 +127,11 @@ Foam::scalar Foam::JWLC<Specie>::p
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T,
-    const scalar& cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -146,8 +148,9 @@ Foam::scalar Foam::JWLC<Specie>::cSqr
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -164,8 +167,9 @@ Foam::scalar Foam::JWLC<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -175,8 +179,9 @@ Foam::scalar Foam::JWLC<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::E
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -192,8 +197,9 @@ Foam::scalar Foam::JWLC<Specie>::E
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0;
@@ -203,8 +209,9 @@ Foam::scalar Foam::JWLC<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -214,8 +221,9 @@ Foam::scalar Foam::JWLC<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::H
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -232,8 +240,9 @@ Foam::scalar Foam::JWLC<Specie>::H
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -243,9 +252,9 @@ Foam::scalar Foam::JWLC<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::JWLC<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return 0.0;

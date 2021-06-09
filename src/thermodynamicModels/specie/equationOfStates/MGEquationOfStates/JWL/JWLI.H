@@ -248,17 +248,6 @@ Foam::scalar Foam::JWL<Specie>::H
       + e0_*omega_*log(rhos);
 }
 
-template<class Specie>
-Foam::scalar Foam::JWL<Specie>::CpMCv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return this->R();
-}
-
 
 template<class Specie>
 Foam::scalar Foam::JWL<Specie>::S

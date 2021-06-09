@@ -12,7 +12,7 @@ specie
 
 thermodynamics
 {
-    Cv  2673;
+    Cv  4316;
     Hf  0;
 }
 
