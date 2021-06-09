@@ -28,7 +28,7 @@ boundaryField
 
     wall
     {
-        type            compressible::alphatWallFunction;
+        type            blast::alphatWallFunction;
         value           uniform 0;
     }
 
