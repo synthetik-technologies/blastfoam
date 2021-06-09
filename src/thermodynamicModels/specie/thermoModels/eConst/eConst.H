@@ -143,25 +143,25 @@ public:
         //- Heat capacity at constant volume of mixture [J/kg/K]
         inline scalar Cv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Sensible internal energy [J/kg]
         inline scalar Es
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Absolute internal energy [J/kg]
         inline scalar Ea
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         #include "EtoHFuncs.H"
@@ -176,10 +176,10 @@ public:
         //- Entropy [J/kg/K]
         inline scalar S
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Derivative of Gibbs free energy w.r.t. temperature

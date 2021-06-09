@@ -95,8 +95,8 @@ Foam::vanderWaals<Specie>::New
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return
@@ -108,9 +108,9 @@ Foam::scalar Foam::vanderWaals<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     scalar pi
@@ -126,10 +126,10 @@ Foam::scalar Foam::vanderWaals<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::Gamma
+Foam::scalar Foam::vanderWaals<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0;
@@ -139,8 +139,9 @@ Foam::scalar Foam::vanderWaals<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -157,19 +158,21 @@ Foam::scalar Foam::vanderWaals<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    return (Gamma(rho, e) - 1.0)*rho;
+    return (GammaMG(rho, e) - 1.0)*rho;
 }
 
 
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -185,34 +188,11 @@ Foam::scalar Foam::vanderWaals<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Check
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Check
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return
@@ -234,8 +214,9 @@ Foam::scalar Foam::vanderWaals<Specie>::H
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10);
@@ -245,9 +226,9 @@ Foam::scalar Foam::vanderWaals<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::vanderWaals<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     // Check

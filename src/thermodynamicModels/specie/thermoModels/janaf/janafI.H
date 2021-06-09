@@ -68,7 +68,7 @@ template<class EquationOfState>
 inline const typename Foam::janaf<EquationOfState>::coeffArray&
 Foam::janaf<EquationOfState>::coeffs
 (
-    const scalar& T
+    const scalar T
 ) const
 {
     if (T < Tcommon_)
@@ -168,9 +168,9 @@ Foam::janaf<EquationOfState>::lowCpCoeffs() const
 template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::Cp
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     const coeffArray& a = coeffs(T);
@@ -183,9 +183,9 @@ inline Foam::scalar Foam::janaf<EquationOfState>::Cp
 template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::Ha
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     const coeffArray& a = coeffs(T);
@@ -200,9 +200,9 @@ inline Foam::scalar Foam::janaf<EquationOfState>::Ha
 template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::Hs
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Ha(rho, e, T) - Hf();
@@ -235,10 +235,10 @@ inline Foam::scalar Foam::janaf<EquationOfState>::flameT() const
 template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     const coeffArray& a = coeffs(T);

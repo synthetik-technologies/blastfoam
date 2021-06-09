@@ -1,0 +1,64 @@
+thermoType
+{
+    transport const;
+    thermo  eConst;
+    equationOfState Tillotson;
+}
+
+specie
+{
+    molWeight 18.01;
+}
+
+thermodynamics
+{
+    Cv  2673;
+    Hf  0;
+}
+
+transport
+{
+    mu  0;
+    Pr  1.0;
+}
+
+equationOfState
+{
+//     b 0.001;
+// Shock
+//     rho0    1000;
+//     c       1480;
+//     Gamma0  0.5;
+//     a       0;
+//     S1      2.56;
+//     S2      1.986;
+//     S3      1.2268;
+
+// Tillotson
+    rho0    998.0;
+    a       0.7;
+    b       0.15;
+    A       21.1e8;
+    B       132.5e8;
+
+    e0      7e6;
+
+    pCav    5000;
+    rhoCav  995;
+    k       1.33;
+
+// linearTillotson
+//     p0      1e5;
+//     rho0    1000.0;
+//     e0      3.543e5;
+//     omega   0.28;
+//     A       2.2e10;
+//     B       9.94e10;
+//     C       14.57e10;
+//     pCav    5000;
+
+// Stiffened gas
+//     a 3309;
+//     b 0;
+//     gamma 7.15;
+}

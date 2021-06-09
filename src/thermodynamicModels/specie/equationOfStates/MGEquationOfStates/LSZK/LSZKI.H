@@ -90,8 +90,8 @@ Foam::LSZK<Specie>::New
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return -a_*pow(rho, b_);
@@ -101,9 +101,9 @@ Foam::scalar Foam::LSZK<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     return -a_*b_*pow(rho, b_ - 1.0)/(gamma_ - 1.0);
@@ -111,10 +111,10 @@ Foam::scalar Foam::LSZK<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::Gamma
+Foam::scalar Foam::LSZK<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_;
@@ -124,8 +124,8 @@ Foam::scalar Foam::LSZK<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return -sqr(rho)*(gamma_ - 1.0)*e - a_*b_*pow(rho, b_ + 1.0);
@@ -135,8 +135,8 @@ Foam::scalar Foam::LSZK<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return (gamma_ - 1.0)*rho;
@@ -146,8 +146,8 @@ Foam::scalar Foam::LSZK<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return a_*pow(rho, b_ - 1.0)/(b_ - 1.0);
@@ -157,8 +157,8 @@ Foam::scalar Foam::LSZK<Specie>::E
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     // Check
@@ -169,8 +169,8 @@ Foam::scalar Foam::LSZK<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     // Check
@@ -181,8 +181,8 @@ Foam::scalar Foam::LSZK<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return a_*log(rho);
@@ -192,8 +192,8 @@ Foam::scalar Foam::LSZK<Specie>::H
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return this->R();
@@ -203,9 +203,9 @@ Foam::scalar Foam::LSZK<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::LSZK<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     // check

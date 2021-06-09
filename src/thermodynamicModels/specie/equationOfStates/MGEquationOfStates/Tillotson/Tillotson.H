@@ -27,7 +27,7 @@ Class
     Foam::Tillotson
 
 Description
-    Tillotson equation of state
+    Four state Tillotson equation of state for metallic materials
 
     References:
     \verbatim
@@ -47,6 +47,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "MGEquationOfState.H"
 #include "lookupTable1D.H"
 
 namespace Foam
@@ -92,44 +93,34 @@ Ostream& operator<<
 template<class Specie>
 class Tillotson
 :
-    public Specie
+    public Specie,
+    public MGEquationOfState
 {
 // Private data
 
-    //-  Simplified Tillotson parameters
+    //- Reference density
+    scalar rho0_;
 
-        //- Reference pressure
-        scalar p0_;
+    //- Reference internal energy
+    scalar e0_;
 
-        //- Reference density
-        scalar rho0_;
+    //- Tillotson parameters
+    scalar a_;
+    scalar b_;
+    scalar A_;
+    scalar B_;
 
-        //- Reference internal energy
-        scalar e0_;
+    //- Cavitation pressure
+    scalar pCav_;
 
-        //- Coefficients
-        scalar omega_;
-        scalar A_;
-        scalar B_;
-        scalar C_;
+    //- Cavitation density
+    scalar rhoCav_;
 
+    scalar k_;
 
-    // Cavitation parameters
-
-        //- Is cavitation used
-        Switch cavitation_;
-
-        //- Cavitation pressure
-        scalar pCav_;
-
-        //- Cavitation density
-        scalar rhoCav_;
-
-        //- Ideal gas constant for vapor
-        scalar k_;
-
-        //- Stored cavitation energies
-        lookupTable1D EcTable_;
+    //- Cv value
+    //- Stored cavitation energies
+    lookupTable1D EcTable_;
 
 
 public:
@@ -138,16 +129,15 @@ public:
         inline Tillotson
         (
             const Specie& sp,
-            const scalar p0,
-            const scalar pCav,
             const scalar rho0,
-            const scalar rhoCav,
             const scalar e0,
-            const scalar omega,
-            const scalar k,
+            const scalar a,
+            const scalar b,
             const scalar A,
             const scalar B,
-            const scalar C
+            const scalar pCav,
+            const scalar rhoCav,
+            const scalar k
         );
 
         //- Construct from dictionary
@@ -193,119 +183,117 @@ public:
         }
 
         //- Return pressure
-        scalar p
+        virtual scalar p
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
             const bool limit = true
         ) const;
 
         //- Return the speed of sound
-        scalar cSqr
+        virtual scalar cSqr
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& Cv
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
 
         //- Return deviation from ideal gas pressure
-        scalar Pi
+        virtual scalar Pi
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Return non-ideal speed of sound
-        scalar delta
+        virtual scalar delta
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e
+            const scalar p,
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Gamma function
-        scalar Gamma
+        virtual scalar GammaMG
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& Cv
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Return derivative of pressure w.r.t density
         scalar dpdv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. internal energy
         scalar dpde
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
         scalar dpdT
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Internal energy correction [J/kg]
         scalar E
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Enthalpy correction [J/kg]
         scalar H
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
         scalar Cv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
         scalar Cp
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity difference [J/kg/K]
         scalar CpMCv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
         scalar S
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar T
         ) const;
 
 

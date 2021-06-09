@@ -106,7 +106,7 @@ private:
     // Private Member Functions
 
         //- Return the coefficients corresponding to the given temperature
-        const coeffArray& coeffs(const scalar& T) const;
+        const coeffArray& coeffs(const scalar T) const;
 
 
 
@@ -168,25 +168,25 @@ public:
         //- Heat capacity at constant pressure of mixture [J/kg/K]
         inline scalar Cp
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Sensible enthalpy [J/kg]
         inline scalar Hs
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Absolute enthalpy [J/kg]
         inline scalar Ha
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         #include "HtoEFuncs.H"
@@ -200,10 +200,10 @@ public:
         //- Entropy [J/kg/K]
         inline scalar S
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
 

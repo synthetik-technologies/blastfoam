@@ -44,10 +44,10 @@ Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     if (rho < small)
@@ -55,27 +55,27 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
         return 0.0;
     }
 
+    scalar Eest = ThermoType::Es(rho, e, T);
+
     if (ThermoType::temperatureBased())
     {
-        return ThermoType::Es(rho, e, T);
+        return Eest;
     }
 
     if (mag(ThermoType::dpde(rho, e, T)) < small)
     {
-        return ThermoType::Es(rho, e, T);
+        return Eest;
     }
 
-    scalar Eest = 1000.0;
-    scalar Enew = 1000.0;
-    scalar Etol = tolerance_;
+    scalar Enew = Eest;
+    scalar pNew;
     int    iter = 0;
     do
     {
         Eest = Enew;
-
+        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
         Enew -=
-            (ThermoType::p(rho, Eest, T, false) - p) // Do not limit p
-           /stabilise(ThermoType::dpde(rho, Eest, T), small);
+            (pNew - p)/stabilise(ThermoType::dpde(rho, Eest, T), small);
 
         if (iter++ > 100)
         {
@@ -84,8 +84,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
                 << abort(FatalError);
         }
 
-    } while (mag(Enew - Eest)/max(Eest, small) > Etol);
-
+    } while ((mag(pNew - p)/p > tolerance_) && (iter++ < maxIter_));
     return Enew;
 }
 
@@ -93,10 +92,10 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     //- Simple method to calculate initial density
@@ -104,31 +103,25 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
     //  density and internal energy
     scalar Rhoest = max(1e-4, rho);
     scalar Rhonew = Rhoest;
-    scalar Rhotol = tolerance_;
-    scalar E = ThermoType::Cv(Rhoest, e, T)*T; //- Initial guess
+    scalar pNew = p;
+    scalar E = ThermoType::Es(Rhoest, e, T); //- Initial guess
 
     int    iter = 0;
     do
     {
         Rhoest = Rhonew;
 
-        E = ThermoType::Es(Rhoest, E, T);
-
         scalar dpdRho(-ThermoType::dpdv(Rhoest, E, T)/sqr(max(Rhoest, 1e-10)));
+        pNew = ThermoType::p(Rhoest, E, T, false); // Do not limit p
         Rhonew =
-            Rhoest
-          - (ThermoType::p(Rhoest, E, T, false) - p) // Do not limit p
-           /stabilise(dpdRho, small);
+            Rhoest - (pNew - p)/stabilise(dpdRho, small);
+        E = ThermoType::Es(Rhoest, E, T);
 
         if (Rhonew < 1e-10)
         {
             Rhonew = Rhoest/2.0;
         }
-    } while
-    (
-        mag(Rhonew - Rhoest)/max(Rhonew, small) > Rhotol
-     && iter++ < maxIter_
-    );
+    } while ((mag(pNew - p)/p > tolerance_) && (iter++ < maxIter_));
 
     return Rhonew;
 }

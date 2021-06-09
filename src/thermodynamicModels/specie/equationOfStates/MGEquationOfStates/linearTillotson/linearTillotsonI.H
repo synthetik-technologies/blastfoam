@@ -29,227 +29,259 @@ License
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::JWL<Specie>::JWL
+inline Foam::linearTillotson<Specie>::linearTillotson
 (
     const Specie& sp,
+    const scalar p0,
     const scalar rho0,
-    const scalar rhoCutOff,
+    const scalar e0,
     const scalar omega,
-    const scalar gammaIdeal,
     const scalar A,
     const scalar B,
-    const scalar R1,
-    const scalar R2,
-    const scalar e0
+    const scalar C,
+    const scalar pCav
 )
 :
     Specie(sp),
+    p0_(p0),
     rho0_(rho0),
-    rhoCutOff_(rhoCutOff),
+    e0_(e0),
     omega_(omega),
-    gammaIdeal_(gammaIdeal),
     A_(A),
     B_(B),
-    R1_(R1),
-    R2_(R2),
-    e0_(e0)
+    C_(C),
+    pCav_(pCav)
 {}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::JWL<Specie>::JWL
+inline Foam::linearTillotson<Specie>::linearTillotson
 (
     const word& name,
-    const JWL<Specie>& pf
+    const linearTillotson<Specie>& pf
 )
 :
     Specie(name, pf),
+    p0_(pf.p0_),
     rho0_(pf.rho0_),
-    rhoCutOff_(pf.rhoCutOff_),
+    e0_(pf.e0_),
     omega_(pf.omega_),
-    gammaIdeal_(pf.gammaIdeal_),
     A_(pf.A_),
     B_(pf.B_),
-    R1_(pf.R1_),
-    R2_(pf.R2_),
-    e0_(pf.e0_)
+    C_(pf.C_),
+    pCav_(pf.pCav_)
 {}
 
 
 template<class Specie>
-inline Foam::autoPtr<Foam::JWL<Specie>>
-Foam::JWL<Specie>::clone() const
+inline Foam::autoPtr<Foam::linearTillotson<Specie>>
+Foam::linearTillotson<Specie>::clone() const
 {
-    return autoPtr<JWL<Specie>>
+    return autoPtr<linearTillotson<Specie>>
     (
-        new JWL<Specie>(*this)
+        new linearTillotson<Specie>(*this)
     );
 }
 
 
 template<class Specie>
-inline Foam::autoPtr<Foam::JWL<Specie>>
-Foam::JWL<Specie>::New
+inline Foam::autoPtr<Foam::linearTillotson<Specie>>
+Foam::linearTillotson<Specie>::New
 (
     const dictionary& dict
 )
 {
-    return autoPtr<JWL<Specie>>
+    return autoPtr<linearTillotson<Specie>>
     (
-        new JWL<Specie>(dict)
+        new linearTillotson<Specie>(dict)
     );
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::GammaMG
+Foam::scalar Foam::linearTillotson<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return gammaIdeal_;
-    }
+    scalar mu(rho/rho0_ - 1.0);
+    scalar pressure =
+        p0_
+      + omega_*rho*(e - e0_)
+      + A_*mu
+      + B_*sqr(mu)
+      + C_*pow3(mu);
 
-    return omega_ + 1.0;
+    return limit ? max(pressure, pCav_) : pressure;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::Pi
+Foam::scalar Foam::linearTillotson<Specie>::Pi
 (
     const scalar rho,
     const scalar e
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return 0.0;
-    }
-
-    scalar V(rho0_/max(rho, 1e-10));
+    scalar mu(rho/rho0_ - 1.0);
     return
-        A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
-      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
-      - omega_*rho*e0_;
-
+        omega_*rho*e0_
+      - p0_
+      - A_*mu
+      - B_*sqr(mu)
+      - C_*pow3(mu);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::delta
+Foam::scalar Foam::linearTillotson<Specie>::delta
 (
     const scalar p,
     const scalar rho,
     const scalar e
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return 0.0;
-    }
-
-    scalar rhos(max(rho, 1e-10));
+    scalar mu(rho/rho0_ - 1.0);
     return
-        (
-            A_*exp(-R1_*rho0_/rhos)
-           *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
-          + B_*exp(-R2_*rho0_/rhos)
-           *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
-          - omega_*e0_
-        )/omega_;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::JWL<Specie>::dpdv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (rho < rhoCutOff_)
-    {
-        return (gammaIdeal_ - 1.0)*e*sqr(rho);
-    }
-
-    scalar rhos(max(rho, 1e-10));
-    return
+        e0_
       - (
-            A_*exp(-R1_*rho0_/rhos)
-           *(R1_*rho0_ - omega_*rho*(1.0 + rho/R1_/rho0_))
-          + B_*exp(-R2_*rho0_/rhos)
-           *(R2_*rho0_ - omega_*rho*(1.0 + rho/R2_/rho0_))
-          + omega_*(e + e0_)*sqr(rhos)
-        );
+            A_
+          + 2.0*B_*mu
+          + 3.0*C_*sqr(mu)
+        )/(rho0_*omega_);
+}
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::GammaMG
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    return omega_ + 1.0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::dpde
+Foam::scalar Foam::linearTillotson<Specie>::dpdv
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return (gammaIdeal_ - 1.0)*rho;
-    }
+    scalar mu(rho/rho0_ - 1.0);
+    // dRho/dv*dp/dRho
+    return
+      - sqr(rho)*omega_*(e - e0_)
+      - sqr(rho)/rho0_*(A_ + 2.0*B_*mu + 3.0*C_*sqr(mu));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
     return omega_*rho;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::E
+Foam::scalar Foam::linearTillotson<Specie>::dpdT
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return 0.0;
-    }
-
-    scalar rhos = max(rho, 1e-10);
-    scalar V(rho0_/rhos);
-    return (A_/R1_*exp(-R1_*V) + B_/R2_*exp(-R2_*V))/rho0_ - e0_;
+    NotImplemented;
+    return this->R()*rho;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::H
+Foam::scalar Foam::linearTillotson<Specie>::E
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    if (rho < rhoCutOff_)
-    {
-        return 0.0;
-    }
-
     scalar rhos(max(rho, 1e-10));
+    scalar rRho(1.0/rhos);
+    scalar diffRho(rho - rho0_);
+    scalar diffrRho(rRho - 1.0/rho0_);
+    scalar lnRhoByRho0(log(rhos/rho0_));
+
     return
-        A_*(1.0/rhos + 1.0/(R1_*rho0_))*exp(-R1_*rho0_/rhos)
-      + B_*(1.0/rhos + 1.0/(R2_*rho0_))*exp(-R2_*rho0_/rhos)
-      + e0_*omega_*log(rhos);
+        (
+          - p0_*diffrRho
+          - A_*(-diffrRho - lnRhoByRho0/rho0_)
+          - B_*(diffrRho - diffRho/(sqr(rho0_)) + 2.0*lnRhoByRho0/rho0_)
+          - C_
+           *(
+              - diffrRho
+              + 3.0*lnRhoByRho0/rho0_
+              + 3.0*diffRho/sqr(rho0_)
+              - (sqr(rho) - sqr(rho0_))/(2.0*pow3(rho0_))
+            )
+          - lnRhoByRho0*e0_*omega_
+        )/(omega_ + 1.0);
+//       - intConst_*pow(rhos, omega_)/omega_;
 }
 
+
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::CpMCv
+Foam::scalar Foam::linearTillotson<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    // Check
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    // Check
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::H
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::linearTillotson<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
@@ -261,7 +293,7 @@ Foam::scalar Foam::JWL<Specie>::CpMCv
 
 
 template<class Specie>
-Foam::scalar Foam::JWL<Specie>::S
+Foam::scalar Foam::linearTillotson<Specie>::S
 (
     const scalar p,
     const scalar rho,
@@ -275,11 +307,12 @@ Foam::scalar Foam::JWL<Specie>::S
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class Specie>
-inline void Foam::JWL<Specie>::operator+=
+inline void Foam::linearTillotson<Specie>::operator+=
 (
-    const JWL<Specie>& pf
+    const linearTillotson<Specie>& pf
 )
 {
+    NotImplemented;
     scalar Y1 = this->Y();
     Specie::operator+=(pf);
 
@@ -288,21 +321,20 @@ inline void Foam::JWL<Specie>::operator+=
         Y1 /= this->Y();
         const scalar Y2 = pf.Y()/this->Y();
 
+        p0_ = Y1*p0_ + Y2*pf.p0_;
         rho0_ = Y1*rho0_ + Y2*pf.rho0_;
-        rhoCutOff_ = Y1*rhoCutOff_ + Y2*pf.rhoCutOff_;
+        e0_ = Y1*e0_ + Y2*pf.e0_;
         omega_ = Y1*omega_ + Y2*pf.omega_;
-        gammaIdeal_ = Y1*gammaIdeal_ + Y2*pf.gammaIdeal_;
         A_ = Y1*A_ + Y2*pf.A_;
         B_ = Y1*B_ + Y2*pf.B_;
-        R1_ = Y1*R1_ + Y2*pf.R1_;
-        R2_ = Y1*R2_ + Y2*pf.R2_;
-        e0_ = Y1*e0_ + Y2*pf.e0_;
+        C_ = Y1*C_ + Y2*pf.C_;
+        pCav_ = Y1*pCav_ + Y2*pf.pCav_;
     }
 }
 
 
 template<class Specie>
-inline void Foam::JWL<Specie>::operator*=(const scalar s)
+inline void Foam::linearTillotson<Specie>::operator*=(const scalar s)
 {
     Specie::operator*=(s);
 }
@@ -311,12 +343,13 @@ inline void Foam::JWL<Specie>::operator*=(const scalar s)
 // * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
 
 template<class Specie>
-inline Foam::JWL<Specie> Foam::operator+
+inline Foam::linearTillotson<Specie> Foam::operator+
 (
-    const JWL<Specie>& pf1,
-    const JWL<Specie>& pf2
+    const linearTillotson<Specie>& pf1,
+    const linearTillotson<Specie>& pf2
 )
 {
+    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -325,18 +358,17 @@ inline Foam::JWL<Specie> Foam::operator+
 
     if (mag(sp.Y()) < SMALL)
     {
-        return JWL<Specie>
+        return linearTillotson<Specie>
         (
             sp,
+            pf1.p0_,
             pf1.rho0_,
-            pf1.rhoCutOff_,
+            pf1.e0_,
             pf1.omega_,
-            pf1.gammaIdeal_,
             pf1.A_,
             pf1.B_,
-            pf1.R1_,
-            pf1.R2_,
-            pf1.e0_
+            pf1.C_,
+            pf1.pCav_
         );
     }
     else
@@ -344,53 +376,52 @@ inline Foam::JWL<Specie> Foam::operator+
         const scalar Y1 = pf1.Y()/sp.Y();
         const scalar Y2 = pf2.Y()/sp.Y();
 
-        return JWL<Specie>
+        return linearTillotson<Specie>
         (
             sp,
+            Y1*pf1.p0_ + Y2*pf2.p0_,
             Y1*pf1.rho0_ + Y2*pf2.rho0_,
-            Y1*pf1.rhoCutOff_ + Y2*pf2.rhoCutOff_,
+            Y1*pf1.e0_ + Y2*pf2.e0_,
             Y1*pf1.omega_ + Y2*pf2.omega_,
-            Y1*pf1.gammaIdeal_ + Y2*pf2.gammaIdeal_,
             Y1*pf1.A_ + Y2*pf2.A_,
             Y1*pf1.B_ + Y2*pf2.B_,
-            Y1*pf1.R1_ + Y2*pf2.R1_,
-            Y1*pf1.R2_ + Y2*pf2.R2_,
-            Y1*pf1.e0_ + Y2*pf2.e0_
+            Y1*pf1.C_ + Y2*pf2.C_,
+            Y1*pf1.pCav_ + Y2*pf2.pCav_
         );
     }
 }
 
 
 template<class Specie>
-inline Foam::JWL<Specie> Foam::operator*
+inline Foam::linearTillotson<Specie> Foam::operator*
 (
     const scalar s,
-    const JWL<Specie>& pf
+    const linearTillotson<Specie>& pf
 )
 {
-    return JWL<Specie>
+    return linearTillotson<Specie>
     (
         s*static_cast<const Specie&>(pf),
+        pf.p0_,
         pf.rho0_,
-        pf.rhoCutOff_,
+        pf.e0_,
         pf.omega_,
-        pf.gammaIdeal_,
         pf.A_,
         pf.B_,
-        pf.R1_,
-        pf.R2_,
-        pf.e0_
+        pf.C_,
+        pf.pCav_
     );
 }
 
 
 template<class Specie>
-inline Foam::JWL<Specie> Foam::operator==
+inline Foam::linearTillotson<Specie> Foam::operator==
 (
-    const JWL<Specie>& pf1,
-    const JWL<Specie>& pf2
+    const linearTillotson<Specie>& pf1,
+    const linearTillotson<Specie>& pf2
 )
 {
+    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -400,21 +431,19 @@ inline Foam::JWL<Specie> Foam::operator==
     const scalar Y1 = pf1.Y()/sp.Y();
     const scalar Y2 = pf2.Y()/sp.Y();
 
-    return JWL<Specie>
+    return linearTillotson<Specie>
     (
         sp,
-        Y2*pf2.rho0_ - Y1*pf1.rho0_,
-        Y2*pf2.rhoCutOff_ - Y1*pf1.rhoCutOff_,
-        Y2*pf2.omega_ - Y1*pf1.omega_,
-        Y2*pf2.gammaIdeal_ - Y1*pf1.gammaIdeal_,
-        Y2*pf2.A_ - Y1*pf1.A_,
+        Y2*pf2.p0_    - Y1*pf1.p0_,
+        Y2*pf2.rho0_    - Y1*pf1.rho0_,
+        Y2*pf2.e0_    - Y1*pf1.e0_,
+        Y2*pf2.omega_  - Y1*pf1.omega_,
+        Y2*pf2.A_  - Y1*pf1.A_,
         Y2*pf2.B_ - Y1*pf1.B_,
-        Y2*pf2.R1_ - Y1*pf1.R1_,
-        Y2*pf2.R2_ - Y1*pf1.R2_,
-        Y2*pf2.e0_ - Y1*pf1.e0_
+        Y2*pf2.C_     - Y1*pf1.C_,
+        Y2*pf2.pCav_  - Y1*pf1.pCav_
     );
 }
-
 
 
 // ************************************************************************* //

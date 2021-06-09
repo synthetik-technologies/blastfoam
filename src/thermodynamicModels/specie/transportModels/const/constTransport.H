@@ -127,25 +127,25 @@ public:
         //- Dynamic viscosity [kg/ms]
         scalar mu
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Thermal conductivity [W/mK]
         scalar kappa
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Thermal diffusivity of enthalpy [kg/ms]
         scalar alphah
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
 

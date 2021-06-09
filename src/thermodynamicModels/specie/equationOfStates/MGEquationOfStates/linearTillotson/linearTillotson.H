@@ -23,140 +23,140 @@ License
 
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 Class
-    Foam::JWL
+    Foam::linearTillotson
 
 Description
-    Equation of state for an energetic material
+    linearTillotson equation of state
 
     References:
     \verbatim
-        Zheng, H.W., Shu, C., Chew, Y.T., Qin, N.  (2011).
-        A solution adaptive simulation of compressible multi-fluid flows
-        with general equation of state.
-        International Journal for Numerical Methods in Fluids, 67, 616-637.
+        Wardlaw, A., Jr., McKnown, R., Luton, A.  (2011).
+        Coupled Hydrocode Prediction of Underwater Explosion Damage.
+        Warhead Performance and Lethality Division, Code 420
     \endverbatim
 
 SourceFiles
-    JWL.C
+    linearTillotson.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef JWLBlast_H
-#define JWLBlast_H
+#ifndef linearTillotson_H
+#define linearTillotson_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
 #include "MGEquationOfState.H"
+#include "lookupTable1D.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class Specie> class JWL;
+template<class Specie> class linearTillotson;
 
 template<class Specie>
-inline JWL<Specie> operator+
+inline linearTillotson<Specie> operator+
 (
-    const JWL<Specie>&,
-    const JWL<Specie>&
+    const linearTillotson<Specie>&,
+    const linearTillotson<Specie>&
 );
 
 template<class Specie>
-inline JWL<Specie> operator*
+inline linearTillotson<Specie> operator*
 (
     const scalar,
-    const JWL<Specie>&
+    const linearTillotson<Specie>&
 );
 
 template<class Specie>
-inline JWL<Specie> operator==
+inline linearTillotson<Specie> operator==
 (
-    const JWL<Specie>&,
-    const JWL<Specie>&
+    const linearTillotson<Specie>&,
+    const linearTillotson<Specie>&
 );
 
 template<class Specie>
 Ostream& operator<<
 (
     Ostream&,
-    const JWL<Specie>&
+    const linearTillotson<Specie>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                           Class JWL Declaration
+                           Class linearTillotson Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Specie>
-class JWL
+class linearTillotson
 :
     public Specie,
     public MGEquationOfState
 {
 // Private data
 
+    //-  Simplified Tillotson parameters
+
+        //- Reference pressure
+        scalar p0_;
+
         //- Reference density
         scalar rho0_;
 
-        //- Cut off density (exponents are no longer considered)
-        scalar rhoCutOff_;
-
-        //- Reference Gamma
-        scalar omega_;
-
-        //- Ideal gas specific heat ratio
-        scalar gammaIdeal_;
-
-        //- Model coefficients
-        scalar A_;
-        scalar B_;
-        scalar R1_;
-        scalar R2_;
-
-        //- Internal energy that gives 0 pressure at reference density
+        //- Reference internal energy
         scalar e0_;
 
+        //- Coefficients
+        scalar omega_;
+        scalar A_;
+        scalar B_;
+        scalar C_;
+
+        //- Integration constant
+        scalar intConst_;
+
+        //- Cavitation pressure
+        scalar pCav_;
 
 
 public:
 
     //- Construct from components
-        inline JWL
+        inline linearTillotson
         (
             const Specie& sp,
+            const scalar p0,
             const scalar rho0,
-            const scalar rhoCutOff,
+            const scalar e0,
             const scalar omega,
-            const scalar gammaIdeal,
             const scalar A,
             const scalar B,
-            const scalar R1,
-            const scalar R2,
-            const scalar e0
+            const scalar C,
+            const scalar pCav
         );
 
         //- Construct from dictionary
-        JWL(const dictionary& dict);
+        linearTillotson(const dictionary& dict);
 
         //- Construct as named copy
-        inline JWL
+        inline linearTillotson
         (
             const word& name,
-            const JWL&
+            const linearTillotson&
         );
 
         //- Construct and return a clone
-        inline autoPtr<JWL> clone() const;
+        inline autoPtr<linearTillotson> clone() const;
 
         // Selector from dictionary
-        inline static autoPtr<JWL> New
+        inline static autoPtr<linearTillotson> New
         (
             const dictionary& dict
         );
+
 
     // Member Functions
 
@@ -164,8 +164,8 @@ public:
         static word typeName()
         {
             return
-                "JWL<"
-            + word(Specie::typeName_()) + '>';
+                "linearTillotson<"
+              + word(Specie::typeName_()) + '>';
         }
 
         //- Is this a solid equation of state
@@ -174,15 +174,30 @@ public:
             return false;
         }
 
+        //- Is temperature used
+        bool temperatureBased() const
+        {
+            return false;
+        }
+
+        //- Return pressure
+        virtual scalar p
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const bool limit = true
+        ) const;
+
         //- Return deviation from ideal gas pressure
-        scalar Pi
+        virtual scalar Pi
         (
             const scalar rho,
             const scalar e
         ) const;
 
         //- Return non-ideal speed of sound
-        scalar delta
+        virtual scalar delta
         (
             const scalar p,
             const scalar rho,
@@ -190,7 +205,7 @@ public:
         ) const;
 
         //- Gamma function
-        scalar GammaMG
+        virtual scalar GammaMG
         (
             const scalar rho,
             const scalar e
@@ -200,11 +215,20 @@ public:
         scalar dpdv
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. internal energy
+        scalar dpde
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpde
+        scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -221,6 +245,22 @@ public:
 
         //- Enthalpy correction [J/kg]
         scalar H
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity at constant volume [J/kg/K]
+        scalar Cv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity at constant pressure [J/kg/K]
+        scalar Cp
         (
             const scalar rho,
             const scalar e,
@@ -246,31 +286,30 @@ public:
 
     // Member operators
 
-        inline void operator+=(const JWL&);
+        inline void operator+=(const linearTillotson&);
         inline void operator*=(const scalar);
 
 
     // Friend operators
 
-        friend JWL operator+ <Specie>
+        friend linearTillotson operator+ <Specie>
         (
-            const JWL&,
-            const JWL&
+            const linearTillotson&,
+            const linearTillotson&
         );
 
-        friend JWL operator* <Specie>
+        friend linearTillotson operator* <Specie>
         (
             const scalar s,
-            const JWL&
+            const linearTillotson&
         );
 
-        friend JWL operator== <Specie>
+        friend linearTillotson operator== <Specie>
         (
-            const JWL&,
-            const JWL&
+            const linearTillotson&,
+            const linearTillotson&
         );
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -278,10 +317,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "JWLI.H"
+#include "linearTillotsonI.H"
 
 #ifdef NoRepository
-    #include "JWL.C"
+    #include "linearTillotson.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

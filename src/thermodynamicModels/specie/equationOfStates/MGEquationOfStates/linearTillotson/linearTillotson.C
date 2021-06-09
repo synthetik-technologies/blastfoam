@@ -26,17 +26,36 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "MGEquationOfState.H"
+#include "linearTillotson.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EoS>
-Foam::MGEquationOfState<EoS>::MGEquationOfState
-(
-    const dictionary& dict
-)
+template<class Specie>
+Foam::linearTillotson<Specie>::linearTillotson(const dictionary& dict)
 :
-    EoS(dict)
-{}
+    Specie(dict),
+    p0_(dict.subDict("equationOfState").lookup<scalar>("p0")),
+    rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
+    e0_(0.0),
+    omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
+    A_(dict.subDict("equationOfState").lookup<scalar>("A")),
+    B_(dict.subDict("equationOfState").lookup<scalar>("B")),
+    C_(dict.subDict("equationOfState").lookup<scalar>("C")),
+    pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav"))
+{
+    scalar Cv = dict.subDict("thermodynamics").lookup<scalar>("Cv");
+    if (dict.subDict("equationOfState").found("T0"))
+    {
+        e0_ = dict.subDict("equationOfState").lookup<scalar>("T0")*Cv;
+    }
+    else
+    {
+        e0_ = dict.subDict("equationOfState").lookup<scalar>("e0");
+    }
+
+    intConst_ =
+        (p0_ - omega_*rho0_*e0_ + Pi(rho0_, e0_)/(omega_ + 1.0))
+       /pow(rho0_, omega_ + 1.0);
+}
 
 // ************************************************************************* //

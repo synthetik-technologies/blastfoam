@@ -54,9 +54,9 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::limit
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return eTable_.dFdX(T) + EquationOfState::Cv(rho, e, T);
@@ -66,9 +66,9 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Cv
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return eTable_.lookup(T);
@@ -78,9 +78,9 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Es(rho, e, T) + Hf();
@@ -106,10 +106,10 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::flameT() const
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(p, rho, T);

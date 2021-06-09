@@ -92,8 +92,8 @@ Foam::Tait<Specie>::New
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_*(b_ - a_);
@@ -103,9 +103,9 @@ Foam::scalar Foam::Tait<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     return 0.0;
@@ -113,10 +113,10 @@ Foam::scalar Foam::Tait<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::Tait<Specie>::Gamma
+Foam::scalar Foam::Tait<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_;
@@ -126,8 +126,9 @@ Foam::scalar Foam::Tait<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -sqr(rho)*(gamma_ - 1.0)*e;
@@ -137,8 +138,9 @@ Foam::scalar Foam::Tait<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return (gamma_ - 1.0)*rho;
@@ -148,8 +150,9 @@ Foam::scalar Foam::Tait<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return (b_ - a_)/max(rho, 1.0e-10);
@@ -157,32 +160,11 @@ Foam::scalar Foam::Tait<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::Tait<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Tait<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::Tait<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0;
@@ -192,8 +174,9 @@ Foam::scalar Foam::Tait<Specie>::H
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -203,9 +186,9 @@ Foam::scalar Foam::Tait<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::Tait<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     // Check

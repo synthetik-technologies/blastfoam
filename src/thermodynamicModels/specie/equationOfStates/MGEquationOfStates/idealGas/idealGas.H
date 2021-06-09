@@ -40,6 +40,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
+#include "MGEquationOfState.H"
 
 namespace Foam
 {
@@ -84,7 +85,8 @@ Ostream& operator<<
 template<class Specie>
 class idealGas
 :
-    public Specie
+    public Specie,
+    public MGEquationOfState
 {
 // Private data
 
@@ -140,80 +142,71 @@ public:
         //- Return deviation from ideal gas pressure
         scalar Pi
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Return non-ideal speed of sound
         scalar delta
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e
+            const scalar p,
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Gamma function
-        scalar Gamma
+        scalar GammaMG
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e
         ) const;
 
         //- Return derivative of pressure w.r.t density
         scalar dpdv
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
         scalar dpde
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Internal energy correction [J/kg]
         scalar E
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Enthalpy correction [J/kg]
         scalar H
         (
-            const scalar& rho,
-            const scalar& e
-        ) const;
-
-        //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
-        (
-            const scalar& rho,
-            const scalar& e
-        ) const;
-
-        //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
-        (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity difference [J/kg/K]
         scalar CpMCv
         (
-            const scalar& rho,
-            const scalar& e
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
         scalar S
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar T
         ) const;
 
 

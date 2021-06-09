@@ -26,93 +26,55 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+#include "simpleEOS.H"
+#include "fluidThermoModelTypes.H"
+#include "addToRunTimeSelectionTable.H"
 
-Foam::scalar Foam::MGEquationOfState::p
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T,
-    const bool limit
-) const
+/* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
+
+namespace Foam
 {
-    return
-        limit
-      ? max((GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e), 0.0)
-      : (GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e);
+//     addSimpleEoS
+//     (
+//         constTransport,
+//         eConst,
+//         equationOfState,
+//         perfectGas
+//     );
+//     addSimpleEoS
+//     (
+//         constTransport,
+//         eConst,
+//         equationOfState,
+//         AbelNobel
+//     );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        stiffenedGas
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        Tait
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        Tillotson
+    );
+    addSimpleEoS
+    (
+        constTransport,
+        eConst,
+        MGEquationOfState,
+        linearTillotson
+    );
 }
-
-
-Foam::scalar Foam::MGEquationOfState::cSqr
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T,
-    const scalar Cv
-) const
-{
-    scalar gamma(GammaMG(rho, e));
-    scalar h((gamma*p + Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(gamma - 1.0);
-}
-
-
-Foam::scalar Foam::MGEquationOfState::Gamma
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T,
-    const scalar Cv
-) const
-{
-    return this->GammaMG(rho, e);
-}
-
-
-Foam::scalar Foam::MGEquationOfState::dpdT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    NotImplemented;
-    return 0.0;
-}
-
-
-Foam::scalar Foam::MGEquationOfState::Cv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return 0.0;
-}
-
-
-Foam::scalar Foam::MGEquationOfState::Cp
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    // Check
-    return 0.0;
-}
-
-
-// Foam::scalar Foam::MGEquationOfState::CpMCv
-// (
-//     const scalar rho,
-//     const scalar e,
-//     const scalar T
-// ) const
-// {
-//     return (this->Gamma(rho, e) - 1.0)*Cv_;
-// }
-
 // ************************************************************************* //

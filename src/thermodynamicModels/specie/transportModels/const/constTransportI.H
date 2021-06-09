@@ -84,9 +84,9 @@ Foam::constTransport<Thermo>::New
 template<class Thermo>
 inline Foam::scalar Foam::constTransport<Thermo>::mu
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return mu_;
@@ -96,9 +96,9 @@ inline Foam::scalar Foam::constTransport<Thermo>::mu
 template<class Thermo>
 inline Foam::scalar Foam::constTransport<Thermo>::kappa
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->Cp(rho, e, T)*mu(rho, e, T)/Pr_;
@@ -108,9 +108,9 @@ inline Foam::scalar Foam::constTransport<Thermo>::kappa
 template<class Thermo>
 inline Foam::scalar Foam::constTransport<Thermo>::alphah
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return mu(rho, e, T)/Pr_;

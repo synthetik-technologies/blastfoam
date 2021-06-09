@@ -36,6 +36,7 @@ Foam::vanderWaals<Specie>::vanderWaals
 )
 :
     Specie(dict),
+    MGEquationOfState(dict),
     a_(dict.subDict("equationOfState").lookup<scalar>("a")),
     b_(dict.subDict("equationOfState").lookup<scalar>("b")),
     c_(dict.subDict("equationOfState").lookup<scalar>("c")),

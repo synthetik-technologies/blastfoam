@@ -97,9 +97,9 @@ inline Foam::scalar Foam::eConst<EquationOfState>::limit
 template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::Cv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cv_ + EquationOfState::Cv(rho, e, T);
@@ -109,9 +109,9 @@ inline Foam::scalar Foam::eConst<EquationOfState>::Cv
 template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::Es
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cv_*T + EquationOfState::E(rho, e, T);
@@ -121,9 +121,9 @@ inline Foam::scalar Foam::eConst<EquationOfState>::Es
 template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::Ea
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Es(rho, e, T) + Hf_;
@@ -147,10 +147,10 @@ inline Foam::scalar Foam::eConst<EquationOfState>::flameT() const
 template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cp(rho, e, T)*log(T/Tstd) + EquationOfState::S(p, rho, T);

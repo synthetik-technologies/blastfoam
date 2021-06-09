@@ -89,8 +89,8 @@ Foam::stiffenedGas<Specie>::New
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_*a_;
@@ -100,9 +100,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     return 0.0;
@@ -110,10 +110,10 @@ Foam::scalar Foam::stiffenedGas<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::stiffenedGas<Specie>::Gamma
+Foam::scalar Foam::stiffenedGas<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_;
@@ -123,8 +123,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -sqr(rho)*(gamma_ - 1.0)*e;
@@ -134,8 +135,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return (gamma_ - 1.0)*rho;
@@ -145,8 +147,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return a_/max(rho, 1.0e-10);
@@ -154,32 +157,11 @@ Foam::scalar Foam::stiffenedGas<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::stiffenedGas<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::stiffenedGas<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0;
@@ -189,8 +171,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::H
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -200,9 +183,9 @@ Foam::scalar Foam::stiffenedGas<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::stiffenedGas<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     scalar rho0((Pstd - gamma_*a_)/this->R()*Tstd);

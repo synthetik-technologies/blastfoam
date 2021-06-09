@@ -39,7 +39,6 @@ License
 #include "janaf.H"
 
 #include "equationOfState.H"
-#include "MGEquationOfState.H"
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
@@ -59,6 +58,7 @@ License
 #include "BWR.H"
 #include "BKW.H"
 #include "DoanNickel.H"
+#include "linearTillotson.H"
 #include "Tillotson.H"
 
 #include "tabulatedThermo.H"
@@ -70,10 +70,9 @@ License
 namespace Foam
 {
 // Solid materials
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         CochranChan,
         blastSpecie
     );
@@ -102,42 +101,30 @@ namespace Foam
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         solidJWL,
         blastSpecie
     );
 
 // Fluids
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         idealGas,
         blastSpecie
     );
-    defineThermoTypes
+    defineMGThermoTypes
     (
         sutherlandTransport,
-        MGEquationOfState,
         idealGas,
         blastSpecie
     );
-    defineThermoType
+    defineMGThermoType
     (
         constTransport,
         janaf,
-        MGEquationOfState,
-        idealGas,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        sutherlandTransport,
-        janaf,
-        MGEquationOfState,
         idealGas,
         blastSpecie
     );
@@ -221,46 +208,44 @@ namespace Foam
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         stiffenedGas,
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         Tait,
         blastSpecie
     );
 
-    typedef
-        constTransport
-        <
-            thermoModel
-            <
-                eConst
-                <
-                    Tillotson<blastSpecie>
-                >
-            >
-        > constTransporteConstTillotsonblastSpecie;
-
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
+        Tillotson,
+        blastSpecie
+    );
+
+    defineMGThermoTypes
+    (
+        constTransport,
+        linearTillotson,
+        blastSpecie
+    );
+
+    defineMGThermoTypes
+    (
+        constTransport,
         vanderWaals,
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         JWL,
         blastSpecie
     );
@@ -273,33 +258,27 @@ namespace Foam
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         LSZK,
         blastSpecie
     );
 
-    defineThermoTypes
+    defineMGThermoTypes
     (
         constTransport,
-        MGEquationOfState,
         DoanNickel,
         blastSpecie
     );
 
-    typedef
-        constTransport
-        <
-            tabulatedThermo
-            <
-                MGEquationOfState
-                <
-                    DoanNickel<blastSpecie>
-                >
-            >
-        > constTransporttabulatedMGEquationOfStateDoanNickelblastSpecie;
+    defineMGThermoType
+    (
+        constTransport,
+        tabulatedThermo,
+        DoanNickel,
+        blastSpecie
+    );
 
     typedef constTransport<tabulatedThermoEOS<blastSpecie>>
         constTransporttabulatedMGEquationOfStatetabulatedblastSpecie;

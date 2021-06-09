@@ -32,28 +32,24 @@ template<class Specie>
 inline Foam::Tillotson<Specie>::Tillotson
 (
     const Specie& sp,
-    const scalar p0,
     const scalar rho0,
     const scalar e0,
-    const scalar omega,
+    const scalar a,
+    const scalar b,
     const scalar A,
     const scalar B,
-    const scalar C,
-    const bool cavitation,
     const scalar pCav,
     const scalar rhoCav,
     const scalar k
 )
 :
     Specie(sp),
-    p0_(p0),
     rho0_(rho0),
     e0_(e0),
-    omega_(omega),
+    a_(a),
+    b_(b),
     A_(A),
     B_(B),
-    C_(C),
-    cavitation_(cavitation),
     pCav_(pCav),
     rhoCav_(rhoCav),
     k_(k)
@@ -70,14 +66,12 @@ inline Foam::Tillotson<Specie>::Tillotson
 )
 :
     Specie(name, pf),
-    p0_(pf.p0_),
     rho0_(pf.rho0_),
     e0_(pf.e0_),
-    omega_(pf.omega_),
+    a_(pf.a_),
+    b_(pf.b_),
     A_(pf.A_),
     B_(pf.B_),
-    C_(pf.C_),
-    cavitation_(pf.cavitation_),
     pCav_(pf.pCav_),
     rhoCav_(pf.rhoCav_),
     k_(pf.k_)
@@ -114,183 +108,188 @@ Foam::Tillotson<Specie>::New
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::p
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
     const bool limit
 ) const
 {
-    if (cavitation_ && rhoCav_ > rho)
-    {
-        return pCav_;
-    }
-
-    scalar mu(rho/rho0_ - 1.0);
-    scalar pressure =
-        p0_
-      + omega_*rho*(e - e0_)
+    scalar eta(rho/rho0_);
+    scalar mu(eta - 1.0);
+    scalar res =
+        (a_ + b_/(e/(e0_*sqr(eta)) + 1.0))*rho*e
       + A_*mu
-      + B_*sqr(mu)
-      + C_*pow3(mu);
+      + B_*sqr(mu);
 
-      return (cavitation_ && limit) ? max(pressure, pCav_) : pressure;
+      return limit ? max(res, pCav_) : res;
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
-    if (cavitation_ && rho < rhoCav_)
+    if (rho < rhoCav_)
     {
         return 0.0;
     }
 
     scalar mu(rho/rho0_ - 1.0);
     return
-        omega_*rho*e0_
-      - p0_
       - A_*mu
       - B_*sqr(mu)
-      - C_*pow3(mu);
+      - b_*sqr(e*rho*rho0_)*e0_*rho
+       /sqr(e*sqr(rho0_) + e0_*sqr(rho));
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
-    if (cavitation_ && rho < rhoCav_)
+    if (rho < rhoCav_)
     {
         return 0.0;
     }
 
-    scalar mu(rho/rho0_ - 1.0);
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    scalar G(GammaMG(rho, e));
+    scalar dGammadRho =
+        4.0*b_*e*sqr(e0_*rho0_)*pow3(rho)/pow3(x);
+
+    scalar dPidRho =
+      - A_/rho0_
+      - B_*2.0*(rho - rho0_)/sqr(rho0_)
+      + b_*e*e0_*sqr(rho*rho0_)/pow3(x)*(e0_*sqr(rho) - 3.0*e*sqr(rho0_));
     return
-        e0_
-      - (
-            A_
-          + 2.0*B_*mu
-          + 3.0*C_*sqr(mu)
-        )/(rho0_*omega_);
+      - (p + Pi(rho, e))*dGammadRho/sqr(G - 1.0)
+      + dPidRho/(G - 1.0);
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T,
-    const scalar& Cv
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
+//     if (rho < rhoCav_)
+//     {
+//         return sqrt(k_*pCav_/max(rho, 1e-10));
+//     }
 
-    if (cavitation_ && rho < rhoCav_)
-    {
-        return sqrt(k_*pCav_/max(rho, 1e-10));
-    }
-
-    scalar gamma(Gamma(rho, e, T, Cv));
+    scalar gamma(GammaMG(rho, e));
     scalar h((gamma*p + Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
     scalar cLSqr((h - delta(p, rho, e))*(gamma - 1.0));
 
-    if (cavitation_ && rho < rho0_)
-    {
-        scalar x((rho - rho0_)/(rhoCav_ - rho0_));
-        scalar cCavSqr(k_*pCav_/max(rho, 1e-10));
-
-        return
-            1.0
-           /(
-                max(rho, 1e-10)
-               *(
-                    x/(max(rho, 1e-10)*cCavSqr)
-                  + (1.0 - x)/(rho0_*cLSqr)
-                )
-            );
-    }
+//     if (rho < rho0_)
+//     {
+//         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
+//         scalar cCavSqr(k_*pCav_/max(rho, 1e-10));
+//
+//         return
+//             1.0
+//            /(
+//                 max(rho, 1e-10)
+//                *(
+//                     x/(max(rho, 1e-10)*cCavSqr)
+//                   + (1.0 - x)/(rho0_*cLSqr)
+//                 )
+//             );
+//     }
     return cLSqr;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::Gamma
+Foam::scalar Foam::Tillotson<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T,
-    const scalar& Cv
+    const scalar rho,
+    const scalar e
 ) const
 {
-    if (!cavitation_)
-    {
-        return omega_ + 1.0;
-    }
+//     if (rho < rhoCav_)
+//     {
+//         return k_;
+//     }
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    scalar w =
+        (a_*x + b_*e0_*sqr(rho))/x
+      - b_*e*e0_*sqr(rho*rho0_)/sqr(x);
+//     else if (rho < rho0_)
+//     {
+//         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
+//
+//         return
+//             1.0
+//            /(
+//                 max(rho, 1e-10)
+//                *(
+//                     x/(rhoCav_*k_)
+//                   + (1.0 - x)/(rho0_*(omega_ + 1.0))
+//                 )
+//             );
+//     }
 
-    if (rho < rhoCav_)
-    {
-        return k_;
-    }
-    else if (rho < rho0_)
-    {
-        scalar x((rho - rho0_)/(rhoCav_ - rho0_));
-
-        return
-            1.0
-           /(
-                max(rho, 1e-10)
-               *(
-                    x/(rhoCav_*k_)
-                  + (1.0 - x)/(rho0_*(omega_ + 1.0))
-                )
-            );
-    }
-
-    return omega_ + 1.0;
+    return w + 1.0;
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    scalar mu(rho/rho0_ - 1.0);
-    scalar dmudv(-sqr(rho)/rho0_);
-    return - sqr(rho)*omega_*(e0_ - e) + dmudv*(A_ + 2.0*B_*mu + 3.0*C_*sqr(mu));
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    return
+       -sqr(rho/rho0_*x)
+       *(
+            A_*rho0_*sqr(x)
+          + 2.0*B_*sqr(x)*(rho - rho0_)
+          + 2.0*b_*sqr(e*rho*sqr(rho0_))*e0_
+          + e*sqr(rho0_)*x*(a_*x + b_*e0_*sqr(rho))
+        );
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    return omega_*rho;
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    return
+        rho/sqr(x)
+       *(
+          - b_*e*e0_*sqr(rho*rho0_)
+          + x*(a_*x + b_*e0_*sqr(rho))
+        );
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     NotImplemented;
@@ -301,35 +300,21 @@ Foam::scalar Foam::Tillotson<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    scalar rhos(max(rho, 1e-10));
-    scalar rRho(1.0/rhos);
-    scalar lnRho(log(rhos));
-    return
-      - e0_*omega_*lnRho
-      - p0_*rRho
-      + A_*(rRho + lnRho/rho0_)
-      + B_*(-rRho + rho/sqr(rho0_) - 2.0*lnRho/rho0_)
-      + C_
-       *(
-            rRho
-          - 3.0*rho/sqr(rho0_)
-          + sqr(rho)/(2.0*pow3(rho0_))
-          + 3.0*lnRho/rho0_
-        );
+    return EcTable_.lookup(rho);
 }
 
 
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     // Check
@@ -340,9 +325,9 @@ Foam::scalar Foam::Tillotson<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     // Check
@@ -353,9 +338,9 @@ Foam::scalar Foam::Tillotson<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -365,9 +350,9 @@ Foam::scalar Foam::Tillotson<Specie>::H
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -377,9 +362,9 @@ Foam::scalar Foam::Tillotson<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::Tillotson<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
@@ -394,7 +379,6 @@ inline void Foam::Tillotson<Specie>::operator+=
     const Tillotson<Specie>& pf
 )
 {
-    NotImplemented;
     scalar Y1 = this->Y();
     Specie::operator+=(pf);
 
@@ -403,13 +387,12 @@ inline void Foam::Tillotson<Specie>::operator+=
         Y1 /= this->Y();
         const scalar Y2 = pf.Y()/this->Y();
 
-        p0_ = Y1*p0_ + Y2*pf.p0_;
         rho0_ = Y1*rho0_ + Y2*pf.rho0_;
         e0_ = Y1*e0_ + Y2*pf.e0_;
-        omega_ = Y1*omega_ + Y2*pf.omega_;
+        a_ = Y1*a_ + Y2*pf.a_;
+        b_ = Y1*b_ + Y2*pf.b_;
         A_ = Y1*A_ + Y2*pf.A_;
         B_ = Y1*B_ + Y2*pf.B_;
-        C_ = Y1*C_ + Y2*pf.C_;
         pCav_ = Y1*pCav_ + Y2*pf.pCav_;
         rhoCav_ = Y1*rhoCav_ + Y2*pf.rhoCav_;
         k_ = Y1*k_ + Y2*pf.k_;
@@ -433,7 +416,6 @@ inline Foam::Tillotson<Specie> Foam::operator+
     const Tillotson<Specie>& pf2
 )
 {
-    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -445,14 +427,12 @@ inline Foam::Tillotson<Specie> Foam::operator+
         return Tillotson<Specie>
         (
             sp,
-            pf1.p0_,
             pf1.rho0_,
             pf1.e0_,
-            pf1.omega_,
+            pf1.a_,
+            pf1.b_,
             pf1.A_,
             pf1.B_,
-            pf1.C_,
-            pf1.cavitation_,
             pf1.pCav_,
             pf1.rhoCav_,
             pf1.k_
@@ -466,14 +446,12 @@ inline Foam::Tillotson<Specie> Foam::operator+
         return Tillotson<Specie>
         (
             sp,
-            Y1*pf1.p0_ + Y2*pf2.p0_,
             Y1*pf1.rho0_ + Y2*pf2.rho0_,
             Y1*pf1.e0_ + Y2*pf2.e0_,
-            Y1*pf1.omega_ + Y2*pf2.omega_,
+            Y1*pf1.a_ + Y2*pf2.a_,
+            Y1*pf1.b_ + Y2*pf2.b_,
             Y1*pf1.A_ + Y2*pf2.A_,
             Y1*pf1.B_ + Y2*pf2.B_,
-            Y1*pf1.C_ + Y2*pf2.C_,
-            pf1.cavitation_ && pf2.cavitation_,
             Y1*pf1.pCav_ + Y2*pf2.pCav_,
             Y1*pf1.rhoCav_ + Y2*pf2.rhoCav_,
             Y1*pf1.k_ + Y2*pf2.k_
@@ -492,14 +470,12 @@ inline Foam::Tillotson<Specie> Foam::operator*
     return Tillotson<Specie>
     (
         s*static_cast<const Specie&>(pf),
-        pf.p0_,
         pf.rho0_,
         pf.e0_,
-        pf.omega_,
+        pf.a_,
+        pf.b_,
         pf.A_,
         pf.B_,
-        pf.C_,
-        pf.cavitation_,
         pf.pCav_,
         pf.rhoCav_,
         pf.k_
@@ -514,7 +490,6 @@ inline Foam::Tillotson<Specie> Foam::operator==
     const Tillotson<Specie>& pf2
 )
 {
-    NotImplemented;
     Specie sp
     (
         static_cast<const Specie&>(pf1)
@@ -527,14 +502,12 @@ inline Foam::Tillotson<Specie> Foam::operator==
     return Tillotson<Specie>
     (
         sp,
-        Y2*pf2.p0_    - Y1*pf1.p0_,
         Y2*pf2.rho0_    - Y1*pf1.rho0_,
         Y2*pf2.e0_    - Y1*pf1.e0_,
-        Y2*pf2.omega_  - Y1*pf1.omega_,
+        Y2*pf2.a_  - Y1*pf1.a_,
+        Y2*pf2.b_ - Y1*pf1.b_,
         Y2*pf2.A_  - Y1*pf1.A_,
         Y2*pf2.B_ - Y1*pf1.B_,
-        Y2*pf2.C_     - Y1*pf1.C_,
-        pf2.cavitation_ && pf1.cavitation_,
         Y2*pf2.pCav_  - Y1*pf1.pCav_,
         Y2*pf2.rhoCav_  - Y1*pf1.rhoCav_,
         Y2*pf2.k_    - Y1*pf1.k_

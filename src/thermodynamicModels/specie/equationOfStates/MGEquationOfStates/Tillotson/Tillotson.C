@@ -34,86 +34,110 @@ template<class Specie>
 Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
 :
     Specie(dict),
-    p0_(dict.subDict("equationOfState").lookup<scalar>("p0")),
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
     e0_(dict.subDict("equationOfState").lookup<scalar>("e0")),
-    omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
+    a_(dict.subDict("equationOfState").lookup<scalar>("a")),
+    b_(dict.subDict("equationOfState").lookup<scalar>("b")),
     A_(dict.subDict("equationOfState").lookup<scalar>("A")),
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
-    C_(dict.subDict("equationOfState").lookup<scalar>("C")),
-
-    cavitation_
-    (
-        dict.subDict("equationOfState").lookupOrDefault<Switch>
-        (
-            "cavitation",
-            false
-        )
-    ),
-    pCav_(),
-    rhoCav_(),
-    k_(),
+    pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav")),
+    rhoCav_(dict.subDict("equationOfState").lookup<scalar>("rhoCav")),
+    k_(dict.subDict("equationOfState").lookup<scalar>("k")),
     EcTable_()
 {
-    if (cavitation_)
+    label tableSize(100);
+    scalarField rhof(tableSize, rho0_);
+    scalarField ecf(tableSize, 0.0);
+
+    scalar T = 300;
+
+    scalar rhoMin = dict.subDict("equationOfState").lookupOrDefault<scalar>
+    (
+        "rhoMin",
+        0.5*rho0_
+    );
+    scalar rhoMax = dict.subDict("equationOfState").lookupOrDefault<scalar>
+    (
+        "rhoMax",
+        5.0*rho0_
+    );
+
+    label n = 2000;
+    scalar dRho = (rhoMax - rhoMin)/scalar(n);
+    scalar n1 = (rho0_ - rhoMin)/dRho;
+    scalar n2 = n - n1;
+
+    label stepsPerEntry(n/tableSize);
+
+    label I = n1/stepsPerEntry+1;
+    scalar rho = rho0_;
+    scalar ec = 0.0;
+    for (label i = 0; i < n2; i++)
     {
-        pCav_ = dict.subDict("equationOfState").lookup<scalar>("pCav");
-        rhoCav_ = dict.subDict("equationOfState").lookup<scalar>("rhoCav");
-        k_ = dict.subDict("equationOfState").lookup<scalar>("k");
+        scalar ecOld = ec;
 
-        //- Dummy temperature
-        scalar T(273.0);
+        scalar k1 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k1;
 
-        label tableSize(100);
-        scalarField rhof(tableSize + 2, rho0_);
-        scalarField ecf(tableSize + 2, 0.0);
-        label I = 2;
+        rho += 0.5*dRho;
+        scalar k2 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k2;
+        scalar k3 = p(rho, ec, T)/sqr(rho);
 
-        scalar e0 = e0_;
-        e0_ = 0;
-        scalar x = rho0_;
-        scalar y = 0.0;
-        label nSteps = 10000;
-        scalar dx = 10.0*rho0_/scalar(nSteps);
+        ec = ecOld + dRho*k3;
+        rho += 0.5*dRho;
+        scalar k4 = p(rho, ec, T)/sqr(rho);
 
+        ec = ecOld + dRho/6.0*(k1 + 2.0*(k2 + k3) + k4);
 
-        for (label i = 0; i < nSteps; i++)
+        if (((i + 1) % label(n/tableSize)) == 0)
         {
-            scalar yOld = y;
-
-            scalar k1 = p(x, y, T)/sqr(x);
-            y = yOld + dx*0.5*k1;
-
-            x += 0.5*dx;
-            scalar k2 = p(x, y, T)/sqr(x);
-            y = yOld + dx*0.5*k2;
-            scalar k3 = p(x, y, T)/sqr(x);
-
-            y = yOld + dx*k3;
-            x += 0.5*dx;
-            scalar k4 = p(x, y, T)/sqr(x);
-
-            y = yOld + dx/6.0*(k1 + 2.0*(k2 + k3) + k4);
-
-            if (((i + 1) % (nSteps/tableSize)) == 0)
-            {
-                rhof[I] = x;
-                ecf[I] = y;
-                I++;
-            }
+            Info<<I<<" rho: "<<rho<<", ec: "<<ec<<endl;
+            rhof[I] = rho;
+            ecf[I] = ec;
+            I++;
         }
-        e0_ = e0;
-
-        EcTable_.set
-        (
-            rhof,
-            ecf,
-            "none",
-            "none",
-            "linearExtrapolated",
-            true
-        );
     }
+
+    I = n1/stepsPerEntry;
+    rho = rho0_;
+    ec = 0.0;
+    dRho *= -1;
+    for (label i = 0; i < n1; i++)
+    {
+        scalar ecOld = ec;
+
+        scalar k1 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k1;
+
+        rho += 0.5*dRho;
+        scalar k2 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k2;
+        scalar k3 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho*k3;
+        rho += 0.5*dRho;
+        scalar k4 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho/6.0*(k1 + 2.0*(k2 + k3) + k4);
+
+        if (((i - 1) % (n/tableSize)) == 0)
+        {
+            rhof[I] = rho;
+            ecf[I] = ec;
+            I--;
+        }
+    }
+
+    EcTable_.set
+    (
+        rhof,
+        ecf,
+        "none",
+        "none",
+        "linearExtrapolated",
+        true
+    );
 }
 
 // ************************************************************************* //

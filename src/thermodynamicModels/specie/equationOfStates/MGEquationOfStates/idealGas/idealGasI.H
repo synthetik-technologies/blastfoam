@@ -85,8 +85,8 @@ Foam::idealGas<Specie>::New
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return 0.0;
@@ -96,9 +96,9 @@ Foam::scalar Foam::idealGas<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     return 0.0;
@@ -106,10 +106,10 @@ Foam::scalar Foam::idealGas<Specie>::delta
 
 
 template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::Gamma
+Foam::scalar Foam::idealGas<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return gamma_;
@@ -119,8 +119,9 @@ Foam::scalar Foam::idealGas<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -sqr(rho)*(gamma_ - 1.0)*e;
@@ -130,8 +131,9 @@ Foam::scalar Foam::idealGas<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return (gamma_ - 1.0)*rho;
@@ -141,34 +143,11 @@ Foam::scalar Foam::idealGas<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Check
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Check
     return 0.0;
 }
 
@@ -176,8 +155,9 @@ Foam::scalar Foam::idealGas<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 0.0;
@@ -187,8 +167,9 @@ Foam::scalar Foam::idealGas<Specie>::H
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -198,9 +179,9 @@ Foam::scalar Foam::idealGas<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::idealGas<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);

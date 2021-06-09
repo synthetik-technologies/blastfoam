@@ -107,8 +107,8 @@ protected:
             const scalar e,
             const scalar rho,
             const scalar T0,
-            scalar (thermoModel::*F)(const scalar&, const scalar&, const scalar&) const,
-            scalar (thermoModel::*dFdT)(const scalar&, const scalar&, const scalar&) const,
+            scalar (thermoModel::*F)(const scalar, const scalar, const scalar) const,
+            scalar (thermoModel::*dFdT)(const scalar, const scalar, const scalar) const,
             scalar (thermoModel::*limit)(const scalar) const
         ) const;
 
@@ -142,52 +142,52 @@ public:
         //- Return Mie Gruniesen coefficient
         scalar Gamma
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return pressure
         scalar p
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return speed of sound
         scalar cSqr
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return specific heat ratio
         scalar CpByCv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Initialize internal energy
         scalar initializeEnergy
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Initialize internal energy
         scalar initializeRho
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
 
@@ -475,6 +475,25 @@ typedef                                                                     \
 #define defineThermoTypes(Transport, EoSType, EoS, Specie)                  \
     defineThermoType(Transport, eConst, EoSType, EoS, Specie)               \
     defineThermoType(Transport, hConst, EoSType, EoS, Specie)
+
+#define defineMGThermoType(Transport, Thermo, EoS, Specie)                  \
+typedef                                                                     \
+    Transport                                                               \
+    <                                                                       \
+        thermoModel                                                         \
+        <                                                                   \
+            Thermo                                                          \
+            <                                                               \
+                EoS                                                         \
+                <                                                           \
+                    Specie                                                  \
+                >                                                           \
+            >                                                               \
+        >                                                                   \
+    > Transport##Thermo##EoS##Specie;
+
+#define defineMGThermoTypes(Transport, EoS, Specie)                         \
+    defineMGThermoType(Transport, eConst, EoS, Specie)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

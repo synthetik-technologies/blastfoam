@@ -100,10 +100,10 @@ Foam::CochranChan<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::Gamma
+Foam::scalar Foam::CochranChan<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return Gamma0_ + 1.0;
@@ -112,8 +112,8 @@ Foam::scalar Foam::CochranChan<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -131,9 +131,9 @@ Foam::scalar Foam::CochranChan<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
     scalar rhos(max(rho, 1e-10));
@@ -159,8 +159,9 @@ Foam::scalar Foam::CochranChan<Specie>::delta
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -174,8 +175,9 @@ Foam::scalar Foam::CochranChan<Specie>::dpdv
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Gamma0_*rho;
@@ -185,8 +187,9 @@ Foam::scalar Foam::CochranChan<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -198,32 +201,11 @@ Foam::scalar Foam::CochranChan<Specie>::E
 
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    return 0;
-}
-
-
-template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar V(rho0_/max(rho, 1e-10));
@@ -242,8 +224,9 @@ Foam::scalar Foam::CochranChan<Specie>::H
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return this->R();
@@ -253,9 +236,9 @@ Foam::scalar Foam::CochranChan<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::CochranChan<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);

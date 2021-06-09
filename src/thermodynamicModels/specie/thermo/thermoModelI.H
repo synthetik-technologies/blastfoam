@@ -47,8 +47,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     const scalar e,
     const scalar rho,
     const scalar T0,
-    scalar (thermoModel<ThermoType>::*F)(const scalar&, const scalar&, const scalar&) const,
-    scalar (thermoModel<ThermoType>::*dFdT)(const scalar&, const scalar&, const scalar&)
+    scalar (thermoModel<ThermoType>::*F)(const scalar, const scalar, const scalar) const,
+    scalar (thermoModel<ThermoType>::*dFdT)(const scalar, const scalar, const scalar)
         const,
     scalar (thermoModel<ThermoType>::*limit)(const scalar) const
 ) const
@@ -105,9 +105,9 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::Gamma
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return ThermoType::Gamma(rho, e, T, ThermoType::Cv(rho, e, T));
@@ -117,9 +117,9 @@ Foam::scalar Foam::thermoModel<ThermoType>::Gamma
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::p
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return ThermoType::p(rho, e, T, true);
@@ -129,10 +129,10 @@ Foam::scalar Foam::thermoModel<ThermoType>::p
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return ThermoType::cSqr(p, rho, e, T, ThermoType::Cv(rho, e, T));
@@ -142,9 +142,9 @@ Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::CpByCv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return ThermoType::Cp(rho, e, T)/ThermoType::Cv(rho, e, T);

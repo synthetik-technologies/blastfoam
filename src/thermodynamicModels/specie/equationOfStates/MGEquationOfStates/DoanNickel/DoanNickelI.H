@@ -81,8 +81,8 @@ Foam::DoanNickel<Specie>::New
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::Pi
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e
 ) const
 {
     return 0.0;
@@ -92,20 +92,20 @@ Foam::scalar Foam::DoanNickel<Specie>::Pi
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::delta
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e
+    const scalar p,
+    const scalar rho,
+    const scalar e
 ) const
 {
-    return -dGammadRho(rho, e)*e*rho/(Gamma(rho, e) - 1.0);
+    return -dGammadRho(rho, e)*e*rho/(GammaMG(rho, e) - 1.0);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::Gamma
+Foam::scalar Foam::DoanNickel<Specie>::GammaMG
 (
-    const scalar& rho,
-    const scalar& eIn
+    const scalar rho,
+    const scalar eIn
 ) const
 {
     //- Scale internal energy to 10^10 ergs/gram
@@ -146,55 +146,34 @@ Foam::scalar Foam::DoanNickel<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + (Gamma(rho, e) - 1.0)*e);
+    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*e);
 }
 
 
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     //- Unscale the change in internal energy
-    return 1e-6*dGammade(rho, e)*rho*e + (Gamma(rho, e) - 1.0)*rho;
+    return 1e-6*dGammade(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*rho;
 }
 
 
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::E
 (
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Need to calculate
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::Cv
-(
-    const scalar& rho,
-    const scalar& e
-) const
-{
-    // Need to calculate
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::Cp
-(
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     // Need to calculate
@@ -205,8 +184,9 @@ Foam::scalar Foam::DoanNickel<Specie>::Cp
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::H
 (
-    const scalar& rho,
-    const scalar& e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     // Need to calculate
@@ -217,8 +197,9 @@ Foam::scalar Foam::DoanNickel<Specie>::H
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar&e
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     // Need to calculate
@@ -229,9 +210,9 @@ Foam::scalar Foam::DoanNickel<Specie>::CpMCv
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::S
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar T
 ) const
 {
     // Need to calculate
@@ -242,8 +223,8 @@ Foam::scalar Foam::DoanNickel<Specie>::S
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dGammadRho
 (
-    const scalar& rho,
-    const scalar& eIn
+    const scalar rho,
+    const scalar eIn
 ) const
 {
     scalar e = eIn*1e-6;
@@ -327,8 +308,8 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammadRho
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::dGammade
 (
-    const scalar& rho,
-    const scalar& eIn
+    const scalar rho,
+    const scalar eIn
 ) const
 {
     scalar e = eIn*1e-6;

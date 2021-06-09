@@ -46,84 +46,41 @@ SourceFiles
 
 namespace Foam
 {
-
-// Forward declaration of friend functions and operators
-
-template<class EoS> class MGEquationOfState;
-
-template<class EoS>
-inline MGEquationOfState<EoS> operator+
-(
-    const MGEquationOfState<EoS>&,
-    const MGEquationOfState<EoS>&
-);
-
-template<class EoS>
-inline MGEquationOfState<EoS> operator*
-(
-    const scalar,
-    const MGEquationOfState<EoS>&
-);
-
-template<class EoS>
-inline MGEquationOfState<EoS> operator==
-(
-    const MGEquationOfState<EoS>&,
-    const MGEquationOfState<EoS>&
-);
-
-template<class EoS>
-Ostream& operator<<
-(
-    Ostream&,
-    const MGEquationOfState<EoS>&
-);
-
-
 /*---------------------------------------------------------------------------*\
                            Class MGEquationOfState Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class EoS>
 class MGEquationOfState
-:
-    public EoS
 {
+protected:
+
+    //- Return the MieGruniesen coefficient
+    virtual scalar GammaMG
+    (
+        const scalar rho,
+        const scalar e
+    ) const = 0;
+
+    //- Return the deviation from ideal pressure
+    virtual scalar Pi
+    (
+        const scalar rho,
+        const scalar e
+    ) const = 0;
+
+    //- Return the nonideal speed of sound contribution
+    virtual scalar delta
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e
+    ) const = 0;
+
 
 public:
 
-    //- Construct from components
-        inline MGEquationOfState
-        (
-            const EoS& sp
-        );
-
-        //- Construct from dictionary
-        MGEquationOfState(const dictionary& dict);
-
-        //- Construct as named copy
-        inline MGEquationOfState
-        (
-            const word& name,
-            const MGEquationOfState&
-        );
-
-        //- Construct and return a clone
-        inline autoPtr<MGEquationOfState> clone() const;
-
-        // Selector from dictionary
-        inline static autoPtr<MGEquationOfState> New
-        (
-            const dictionary& dict
-        );
-
-
-    //- Return the instantiated type name
-        static word typeName()
-        {
-            return word(EoS::typeName());
-        }
-
+        virtual ~MGEquationOfState()
+        {}
 
     // Member Functions
 
@@ -134,123 +91,64 @@ public:
         }
 
         //- Return pressure
-        scalar p
+        virtual scalar p
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
             const bool limit = true
         ) const;
 
         //- Return the speed of sound
-        scalar cSqr
+        virtual scalar cSqr
         (
-            const scalar& p,
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& Cv
-        ) const;
-
-        //- Return derivative of pressure w.r.t. specific volume
-        scalar dpdv
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
         scalar dpdT
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Return derivative of pressure w.r.t. internal energy
-        scalar dpde
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Return the MieGruniesen coefficient
         scalar Gamma
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T,
-            const scalar& Cv
-        ) const;
-
-        //- Internal energy correction [J/kg]
-        scalar E
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-        //- Enthalpy correction [J/kg]
-        scalar H
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
+        virtual scalar Cv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
+        virtual scalar Cp
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
         //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
-
-    // Member operators
-
-        inline void operator+=(const MGEquationOfState&);
-        inline void operator*=(const scalar);
-
-
-    // Friend operators
-
-        friend MGEquationOfState operator+ <EoS>
-        (
-            const MGEquationOfState&,
-            const MGEquationOfState&
-        );
-
-        friend MGEquationOfState operator* <EoS>
-        (
-            const scalar s,
-            const MGEquationOfState&
-        );
-
-        friend MGEquationOfState operator== <EoS>
-        (
-            const MGEquationOfState&,
-            const MGEquationOfState&
-        );
-
+//         virtual scalar CpMCv
+//         (
+//             const scalar& rho,
+//             const scalar& e,
+//             const scalar& T
+//         ) const;
 };
 
 
@@ -261,10 +159,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "MGEquationOfStateI.H"
-
-#ifdef NoRepository
-    #include "MGEquationOfState.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
