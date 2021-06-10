@@ -93,6 +93,9 @@ int main(int argc, char *argv[])
         //- Decode to get new values of non-conservative variables
         fluid->decode();
 
+        //- Clear the flux scheme
+        fluid->flux().clear();
+
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
         Info<< "max(T): " << max(T).value()
@@ -105,10 +108,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        fluid->clearODEFields();
-
-        //- Update conserved quantites
-        fluid->encode();
+        integrator->clearODEFields();
     }
 
     Info<< "End\n" << endl;

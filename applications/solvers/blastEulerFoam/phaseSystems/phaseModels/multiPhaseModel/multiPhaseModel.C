@@ -103,10 +103,6 @@ Foam::multiPhaseModel::multiPhaseModel
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size()),
-    alphasOld_(alphas_.size()),
-    alphaRhosOld_(alphas_.size()),
-    deltaAlphas_(alphas_.size()),
-    deltaAlphaRhos_(alphas_.size()),
     fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
 {
 
@@ -174,28 +170,6 @@ Foam::multiPhaseModel::multiPhaseModel
                 dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
             )
         );
-
-        alphasOld_.set
-        (
-            phasei,
-            new PtrList<volScalarField>()
-        );
-        alphaRhosOld_.set
-        (
-            phasei,
-            new PtrList<volScalarField>()
-        );
-
-        deltaAlphas_.set
-        (
-            phasei,
-            new PtrList<volScalarField>()
-        );
-        deltaAlphaRhos_.set
-        (
-            phasei,
-            new PtrList<volScalarField>()
-        );
     }
     // Reset density to correct value
     volScalarField& alpha = *this;
@@ -253,16 +227,16 @@ void Foam::multiPhaseModel::solve()
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
         );
-        this->storeAndBlendDelta(deltaAlpha, deltaAlphas_[phasei]);
+        this->storeAndBlendDelta(deltaAlpha);
 
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
-        this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRhos_[phasei]);
+        this->storeAndBlendDelta(deltaAlphaRho);
 
-        this->storeAndBlendOld(alphas_[phasei], alphasOld_[phasei]);
+        this->storeAndBlendOld(alphas_[phasei]);
         alphas_[phasei] -= dT*deltaAlpha;
         alphas_[phasei].correctBoundaryConditions();
 
-        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
+        this->storeAndBlendOld(alphaRhos_[phasei]);
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
@@ -277,23 +251,6 @@ void Foam::multiPhaseModel::postUpdate()
 {
     phaseModel::postUpdate();
     thermo_.postUpdate();
-}
-
-
-void Foam::multiPhaseModel::clearODEFields()
-{
-    phaseModel::clearODEFields();
-    fluxScheme_->clear();
-
-    forAll(alphasOld_, phasei)
-    {
-        this->clearOld(alphasOld_[phasei]);
-        this->clearOld(alphaRhosOld_[phasei]);
-
-        this->clearDelta(deltaAlphas_[phasei]);
-        this->clearDelta(deltaAlphaRhos_[phasei]);
-    }
-    thermo_.clearODEFields();
 }
 
 

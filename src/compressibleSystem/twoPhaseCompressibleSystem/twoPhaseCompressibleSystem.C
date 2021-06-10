@@ -108,7 +108,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     rho_ = alphaRho1_ + alphaRho2_;
     this->setModels();
     thermo_.initializeModels();
-    this->lookupAndInitialize();
+
     encode();
 }
 
@@ -138,18 +138,18 @@ void Foam::twoPhaseCompressibleSystem::solve()
     volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
 
-    this->storeAndBlendDelta(deltaAlpha, deltaAlpha_);
-    this->storeAndBlendDelta(deltaAlphaRho1, deltaAlphaRho1_);
-    this->storeAndBlendDelta(deltaAlphaRho2, deltaAlphaRho2_);
+    this->storeAndBlendDelta(deltaAlpha);
+    this->storeAndBlendDelta(deltaAlphaRho1);
+    this->storeAndBlendDelta(deltaAlphaRho2);
 
 
     dimensionedScalar dT = rho_.time().deltaT();
 
     // Volume fraction is not scaled by change in volume because it is not
     // conserved
-    this->storeAndBlendOld(volumeFraction_, alphaOld_, false);
-    this->storeAndBlendOld(alphaRho1_, alphaRho1Old_);
-    this->storeAndBlendOld(alphaRho2_, alphaRho2Old_);
+    this->storeAndBlendOld(volumeFraction_, false);
+    this->storeAndBlendOld(alphaRho1_);
+    this->storeAndBlendOld(alphaRho2_);
     rho_ = alphaRho1_ + alphaRho2_;
     rho_.storePrevIter();
 
@@ -168,22 +168,6 @@ void Foam::twoPhaseCompressibleSystem::solve()
 
     thermo_.solve();
     phaseCompressibleSystem::solve();
-}
-
-
-void Foam::twoPhaseCompressibleSystem::clearODEFields()
-{
-    phaseCompressibleSystem::clearODEFields();
-
-    this->clearOld(alphaOld_);
-    this->clearOld(alphaRho1Old_);
-    this->clearOld(alphaRho2Old_);
-
-    this->clearDelta(deltaAlpha_);
-    this->clearDelta(deltaAlphaRho1_);
-    this->clearDelta(deltaAlphaRho2_);
-
-    thermo_.clearODEFields();
 }
 
 

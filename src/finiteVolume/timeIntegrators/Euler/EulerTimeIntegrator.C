@@ -50,6 +50,7 @@ Foam::timeIntegrators::Euler::Euler
 {
     this->as_ = {{1.0}};
     this->bs_ = {{1.0}};
+    initialize();
 }
 
 

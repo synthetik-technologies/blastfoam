@@ -62,6 +62,7 @@ Foam::timeIntegrators::RK4SSP::RK4SSP
         {b30, b31, b32},
         {b40, b41, b42, b43}
     };
+    initialize();
 }
 
 

@@ -36,8 +36,12 @@ Foam::integrationSystem::integrationSystem
 :
     mesh_(mesh),
     name_(name),
-    nSteps_(0),
-    timeInt_(nullptr)
+    timeInt_(mesh_.lookupObjectRef<timeIntegrator>("globalTimeIntegrator")),
+    nSteps_(timeInt_.nSteps()),
+    oldIs_(timeInt_.oldIs()),
+    nOld_(timeInt_.nOld()),
+    deltaIs_(timeInt_.deltaIs()),
+    nDelta_(timeInt_.nDelta())
 {}
 
 
@@ -49,89 +53,39 @@ Foam::integrationSystem::~integrationSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::integrationSystem::lookupAndInitialize(const word& name)
-{
-    timeInt_ = &mesh_.lookupObject<timeIntegrator>(name);
-    nSteps_ = timeInt_->nSteps();
-    timeInt_->setODEFields(*this);
-}
-
-
-void Foam::integrationSystem::setODEFields
-(
-    const boolList& storeFields,
-    const boolList& storeDeltas
-)
-{
-    oldIs_.resize(nSteps_);
-    deltaIs_.resize(nSteps_);
-    label fi = 0;
-    for (label i = 0; i < nSteps_; i++)
-    {
-        if (storeFields[i])
-        {
-            oldIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            oldIs_[i] = -1;
-        }
-    }
-    nOld_ = fi;
-
-    fi = 0;
-    for (label i = 0; i < nSteps_; i++)
-    {
-        if (storeDeltas[i])
-        {
-            deltaIs_[i] = fi;
-            fi++;
-        }
-        else
-        {
-            deltaIs_[i] = -1;
-        }
-    }
-    nDelta_ = fi;
-
-    this->clearODEFields();
-}
-
-
 Foam::label Foam::integrationSystem::step() const
 {
-    return timeInt_->step();
+    return timeInt_.step();
 }
 
 
 Foam::scalarList Foam::integrationSystem::a() const
 {
-    return timeInt_->a();
+    return timeInt_.a();
 }
 
 
 Foam::scalarList Foam::integrationSystem::b() const
 {
-    return timeInt_->b();
+    return timeInt_.b();
 }
 
 
 Foam::scalar Foam::integrationSystem::f() const
 {
-    return timeInt_->f();
+    return timeInt_.f();
 }
 
 
 Foam::scalar Foam::integrationSystem::f0() const
 {
-    return timeInt_->f0();
+    return timeInt_.f0();
 }
 
 
 bool Foam::integrationSystem::finalStep() const
 {
-    return timeInt_->finalStep();
+    return timeInt_.finalStep();
 }
 
 
@@ -151,5 +105,6 @@ bool Foam::integrationSystem::writeData(Ostream& os) const
 {
     return os.good();
 }
+
 
 // ************************************************************************* //

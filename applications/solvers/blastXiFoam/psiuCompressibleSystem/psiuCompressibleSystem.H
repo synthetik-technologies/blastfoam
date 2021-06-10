@@ -118,28 +118,6 @@ protected:
         autoPtr<fluidThermophysicalTransportModel> thermophysicalTransport_;
 
 
-    // ODE variables
-
-        //- Stored old field indexes
-        labelList oldIs_;
-        label nOld_;
-
-        //- Stored delta indexes
-        labelList deltaIs_;
-        label nDelta_;
-
-        //- Old values for ode solver
-        PtrList<volScalarField> rhoOld_;
-        PtrList<volVectorField> rhoUOld_;
-        PtrList<volScalarField> rhoEOld_;
-        PtrList<volScalarField> rhoEuOld_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaRho_;
-        PtrList<volVectorField> deltaRhoU_;
-        PtrList<volScalarField> deltaRhoE_;
-        PtrList<volScalarField> deltaRhoEu_;
-
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
@@ -184,11 +162,20 @@ public:
         //- Set old lists and fluxes (initialization of fields)
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
-
 
     // Member Access Functions
+
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
         //- Const access to turbulence model
         const compressible::momentumTransportModel& turbulence() const

@@ -125,22 +125,8 @@ protected:
     autoPtr<radiationModel> radiation_;
 
 
-    // ODE variables
-
-        //- Old values for ode solver
-        PtrList<volScalarField> rhoOld_;
-        PtrList<volVectorField> rhoUOld_;
-        PtrList<volScalarField> rhoEOld_;
-        PtrList<PtrList<volScalarField>> YsOld_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaRho_;
-        PtrList<volVectorField> deltaRhoU_;
-        PtrList<volScalarField> deltaRhoE_;
-        PtrList<PtrList<volScalarField>> deltaRhoYs_;
-
-        //- Gravitational acceleration
-        const uniformDimensionedVectorField& g_;
+    //- Gravitational acceleration
+    const uniformDimensionedVectorField& g_;
 
 
 public:
@@ -171,11 +157,20 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
-
 
     // Member Access Functions
+
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
         //- Return speed of sound
         tmp<volScalarField> speedOfSound() const;
@@ -192,6 +187,12 @@ public:
             return p_;
         }
 
+        //- Return thermodynamic pressure
+        const volVectorField& U() const
+        {
+            return U_;
+        }
+
         //- Return temperature
         const volScalarField& T() const
         {
@@ -200,7 +201,7 @@ public:
 
     //- Return functions for transport model
 
-        //- Heat capacit at contant volume of mixture [J/kg/K]
+        //- Heat capacity at constant volume of mixture [J/kg/K]
         virtual tmp<volScalarField> Cv() const;
 
         //- Dynamic viscosity of mixture [kg/m/s]

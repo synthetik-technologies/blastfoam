@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "timeIntegrator.H"
+#include "integrationSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -84,14 +85,51 @@ Foam::timeIntegrator::~timeIntegrator()
 
 // * * * * * * * * * * * * * * * Public Functions  * * * * * * * * * * * * * //
 
-void Foam::timeIntegrator::addSystem(integrationSystem& system)
+void Foam::timeIntegrator::initialize()
 {
+    //- Determine if what fields need to be saved
+    boolList saveOlds(as_.size(), false);
+    boolList saveDeltas(bs_.size(), false);
+    nSteps_ = as_.size();
 
-    label oldSize = systems_.size();
+    forAll(as_, i)
+    {
+        for (label j = 0; j < as_[i].size() - 1; j++)
+        {
+            saveOlds[j] = saveOlds[j] || mag(as_[i][j]) > small;
+            saveDeltas[j] = saveDeltas[j] || mag(bs_[i][j]) > small;
+        }
+    }
 
-    setODEFields(system);
-    systems_.resize(oldSize + 1);
-    systems_.set(oldSize, &system);
+    oldIs_.resize(nSteps_);
+    deltaIs_.resize(nSteps_);
+    label fi = 0;
+    for (label i = 0; i < nSteps_; i++)
+    {
+        if (saveOlds[i])
+        {
+            oldIs_[i] = fi++;
+        }
+        else
+        {
+            oldIs_[i] = -1;
+        }
+    }
+    nOld_ = fi;
+
+    fi = 0;
+    for (label i = 0; i < nSteps_; i++)
+    {
+        if (saveDeltas[i])
+        {
+            deltaIs_[i] = fi++;
+        }
+        else
+        {
+            deltaIs_[i] = -1;
+        }
+    }
+    nDelta_ = fi;
 
     if (f_.size() == 0)
     {
@@ -123,27 +161,11 @@ void Foam::timeIntegrator::addSystem(integrationSystem& system)
     }
 }
 
-
-void Foam::timeIntegrator::setODEFields(integrationSystem& system) const
+void Foam::timeIntegrator::addSystem(integrationSystem& system)
 {
-    //- Determine if what fields need to be saved
-    boolList saveOlds(as_.size(), false);
-    boolList saveDeltas(bs_.size(), false);
-
-    forAll(as_, i)
-    {
-        for (label j = 0; j < as_[i].size() - 1; j++)
-        {
-            saveOlds[j] = saveOlds[j] || mag(as_[i][j]) > small;
-            saveDeltas[j] = saveDeltas[j] || mag(bs_[i][j]) > small;
-        }
-    }
-
-    system.setODEFields
-    (
-        saveOlds,
-        saveDeltas
-    );
+    label oldSize = systems_.size();
+    systems_.resize(oldSize + 1);
+    systems_.set(oldSize, &system);
 }
 
 
@@ -163,6 +185,21 @@ void Foam::timeIntegrator::integrate()
 
     this->postUpdateAll();
     stepi_ = 0;
+}
+
+
+void Foam::timeIntegrator::clearODEFields()
+{
+    clearFields(oldScalarFields_);
+    clearFields(oldVectorFields_);
+    clearFields(oldSphTensorFields_);
+    clearFields(oldSymmTensorFields_);
+    clearFields(oldTensorFields_);
+    clearFields(deltaScalarFields_);
+    clearFields(deltaVectorFields_);
+    clearFields(deltaSphTensorFields_);
+    clearFields(deltaSymmTensorFields_);
+    clearFields(deltaTensorFields_);
 }
 
 

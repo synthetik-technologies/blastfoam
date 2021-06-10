@@ -64,9 +64,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
       ? species_[dict.lookup<word>("inertSpecie")]
       : -1
     ),
-    active_(species_.size(), true),
-    YsOld_(species_.size()),
-    deltaAlphaRhoYs_(species_.size())
+    active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
     volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
@@ -180,13 +178,6 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
         Ys_[i] /= YTot;
         Ys_[i].correctBoundaryConditions();
     }
-
-    forAll(YsOld_, i)
-    {
-        YsOld_.set(i, new PtrList<volScalarField>());
-        deltaAlphaRhoYs_.set(i, new PtrList<volScalarField>());
-    }
-    this->lookupAndInitialize();
 }
 
 
@@ -219,9 +210,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     Ys_(species_.size()),
     massTransferRates_(species_.size()),
     inertIndex_(species_[dict.lookup<word>("inertSpecie")]),
-    active_(species_.size(), true),
-    YsOld_(species_.size()),
-    deltaAlphaRhoYs_(species_.size())
+    active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
     volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
@@ -334,13 +323,6 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
         Ys_[i] /= YTot;
         Ys_[i].correctBoundaryConditions();
     }
-
-    forAll(YsOld_, i)
-    {
-        YsOld_.set(i, new PtrList<volScalarField>());
-        deltaAlphaRhoYs_.set(i, new PtrList<volScalarField>());
-    }
-    this->lookupAndInitialize();
 }
 
 
@@ -453,14 +435,14 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
             }
 
             volScalarField YOld(Ys_[i]);
-            this->storeAndBlendOld(YOld, YsOld_[i]);
+            this->storeAndBlendOld(YOld);
 
             volScalarField deltaAlphaRhoY
             (
                 fvc::div(alphaRhoPhi, Ys_[i], "div(Yi)")
               + massTransferRates_[species_[i]]
             );
-            this->storeAndBlendDelta(deltaAlphaRhoY, deltaAlphaRhoYs_[i]);
+            this->storeAndBlendDelta(deltaAlphaRhoY);
 
             Ys_[i] =
                 (
@@ -490,15 +472,5 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
     }
 }
 
-
-template<class BasicThermo>
-void Foam::multicomponentThermoModel<BasicThermo>::clearODEFields()
-{
-    forAll(YsOld_, i)
-    {
-        this->clearOld(YsOld_[i]);
-        this->clearDelta(deltaAlphaRhoYs_[i]);
-    }
-}
 
 // ************************************************************************* //

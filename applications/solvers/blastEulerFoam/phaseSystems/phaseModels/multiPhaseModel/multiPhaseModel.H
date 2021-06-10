@@ -101,16 +101,6 @@ protected:
             PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
-        // ODE variables
-
-            //- Old values for ode solver
-            PtrList<PtrList<volScalarField>> alphasOld_;
-            PtrList<PtrList<volScalarField>> alphaRhosOld_;
-
-            //- Stored delta fields
-            PtrList<PtrList<volScalarField>> deltaAlphas_;
-            PtrList<PtrList<volScalarField>> deltaAlphaRhos_;
-
         //- Calculate new alpha and rho fields
         virtual void calcAlphaAndRho();
 
@@ -118,12 +108,6 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         virtual tmp<volScalarField> ESource() const;
-
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
 
 
 public:
@@ -174,8 +158,17 @@ public:
             //- Update viscous terms
             virtual void postUpdate();
 
-            //- Remove stored fields
-            virtual void clearODEFields();
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
 
         //- Return the density

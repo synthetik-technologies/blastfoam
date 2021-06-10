@@ -261,23 +261,25 @@ void Foam::phaseCompressibleSystem::solve()
     //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU
     (
+        "deltaRhoU",
         fvc::div(rhoUPhi_) - g_*rho_
     );
 
     volScalarField deltaRhoE
     (
+        "deltaRhoE",
         fvc::div(rhoEPhi_)
       - ESource()
       - (rhoU_ & g_)
     );
 
     //- Store old values
-    this->storeAndBlendOld(rhoU_, rhoUOld_);
-    this->storeAndBlendOld(rhoE_, rhoEOld_);
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
 
     //- Store changed in momentum and energy
-    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
-    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
+    this->storeAndBlendDelta(deltaRhoU);
+    this->storeAndBlendDelta(deltaRhoE);
 
     //- Solve for momentum and energy
     dimensionedScalar dT = rho_.time().deltaT();
@@ -321,7 +323,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
 
         if (dragSource_.valid())
         {
-            UEqn -= dragSource_();
+            UEqn -= dragSource_;
         }
 
         if (turbulence_.valid())
@@ -346,7 +348,7 @@ void Foam::phaseCompressibleSystem::postUpdate()
         );
         if (extESource_.valid())
         {
-            eEqn -= extESource_();
+            eEqn -= extESource_;
         }
         if (turbulence_.valid())
         {
@@ -363,21 +365,6 @@ void Foam::phaseCompressibleSystem::postUpdate()
     }
 
     this->thermo().correct();
-}
-
-
-void Foam::phaseCompressibleSystem::clearODEFields()
-{
-    fluxScheme_->clear();
-
-    this->clearOld(rhoUOld_);
-    this->clearOld(rhoEOld_);
-
-    this->clearDelta(deltaRhoU_);
-    this->clearDelta(deltaRhoE_);
-
-    extESource_.clear();
-    dragSource_.clear();
 }
 
 

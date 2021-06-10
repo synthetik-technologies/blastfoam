@@ -84,22 +84,11 @@ protected:
         //- Mass fluxes
         PtrList<surfaceScalarField> alphaRhoYPhis_;
 
-        //- Old values for ode solver
-        PtrList<PtrList<volScalarField>> YsOld_;
-
-        //- Stored delta fields
-        PtrList<PtrList<volScalarField>> deltaAlphaRhoYs_;
-
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
 
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
 
 public:
 
@@ -147,8 +136,18 @@ public:
             //- Update viscous terms
             virtual void postUpdate();
 
-            //- Remove stored fields
-            virtual void clearODEFields();
+
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
         //- Return the density
         virtual const volScalarField& rho() const

@@ -39,6 +39,7 @@ License
 #include "dragODE.H"
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
+#include "fluxScheme.H"
 
 #include "SortableList.H"
 
@@ -1020,13 +1021,13 @@ void Foam::phaseSystem::postUpdate()
 }
 
 
-void Foam::phaseSystem::clearODEFields()
+void Foam::phaseSystem::printInfo()
 {
     Info<< "Phase statistics:"<<endl;
     forAll(phaseModels_, phasei)
     {
         Info<< phaseModels_[phasei].name() << ":" << endl;
-        phaseModels_[phasei].clearODEFields();
+        phaseModels_[phasei].flux().clear();
 
         const volScalarField& alpha(phaseModels_[phasei]);
         const volScalarField& T(phaseModels_[phasei].T());

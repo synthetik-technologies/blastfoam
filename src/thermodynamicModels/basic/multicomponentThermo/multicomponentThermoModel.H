@@ -79,11 +79,6 @@ protected:
     //- Name of mass
     word alphaRhoName_;
 
-    //- ODE fields
-    PtrList<PtrList<volScalarField>> YsOld_;
-    PtrList<PtrList<volScalarField>> deltaYs_;
-    PtrList<PtrList<volScalarField>> deltaAlphaRhoYs_;
-
 
 public:
 
@@ -126,9 +121,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer

@@ -22,7 +22,6 @@ integrator->addSystem(fluid());
 
 volScalarField& p = fluid->p();
 const volVectorField& U = fluid->U();
-const volScalarField& rho = fluid->rho();
 const surfaceScalarField& phi = fluid->phi();
 fluid->update();
 

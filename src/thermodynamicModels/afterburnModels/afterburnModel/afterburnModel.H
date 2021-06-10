@@ -125,10 +125,6 @@ public:
         virtual void postUpdate()
         {}
 
-        //- Remove stored fields
-        virtual void clearODEFields()
-        {}
-
         //- Return pressure
         virtual tmp<volScalarField> ESource() const = 0;
 };

@@ -47,10 +47,7 @@ velocityPDFODETransportModel
             support
         )
     )
-{
-    this->initializeODEFields();
-    this->lookupAndInitialize();
-}
+{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -77,7 +74,7 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve()
         (
             mi, new volScalarField(quadrature_.moments()[mi])
         );
-        this->storeAndBlendOld(momentsOld[mi], momentsOld_[mi]);
+        this->storeAndBlendOld(momentsOld[mi]);
     }
 
     //- Calculate true deltas for stepi
@@ -89,7 +86,7 @@ void Foam::PDFTransportModels::velocityPDFODETransportModel::solve()
             mi,
             new volScalarField(momentAdvection_->divMoments()[mi])
         );
-        this->storeAndBlendDelta(deltaMoments[mi], deltaMoments_[mi]);
+        this->storeAndBlendDelta(deltaMoments[mi]);
     }
 
     dimensionedScalar dT = mesh_.time().deltaT();

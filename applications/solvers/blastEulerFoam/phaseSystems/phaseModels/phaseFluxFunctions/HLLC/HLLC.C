@@ -185,8 +185,8 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     vector UTilde(UOwn*wOwn + UNei*wNei);
     scalar UvTilde(UTilde & normal);
 
-    scalar SOwn(min(UvOwn - cOwn, UvTilde - cTilde));
-    scalar SNei(max(UvNei + cNei, UvTilde + cTilde));
+    scalar SOwn(stabilise(min(UvOwn - cOwn, UvTilde - cTilde), small));
+    scalar SNei(stabilise(max(UvNei + cNei, UvTilde + cTilde), small));
 
     scalar SStar
     (

@@ -82,6 +82,7 @@ Foam::timeIntegrators::RK2SSP::RK2SSP
             {0.0, 0.0, 0.0, 0.25}
         };
     }
+    initialize();
 }
 
 

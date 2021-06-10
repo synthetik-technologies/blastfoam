@@ -90,18 +90,6 @@ class twoPhaseCompressibleSystem
         surfaceScalarField alphaRhoPhi2_;
 
 
-    // Stored ODE fields
-
-        //- Stored old fields
-        PtrList<volScalarField> alphaOld_;
-        PtrList<volScalarField> alphaRho1Old_;
-        PtrList<volScalarField> alphaRho2Old_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaAlpha_;
-        PtrList<volScalarField> deltaAlphaRho1_;
-        PtrList<volScalarField> deltaAlphaRho2_;
-
         //- Calculate new alpha and rho fields
         virtual void calcAlphaAndRho();
 
@@ -134,9 +122,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
 
     // Member Access Functions

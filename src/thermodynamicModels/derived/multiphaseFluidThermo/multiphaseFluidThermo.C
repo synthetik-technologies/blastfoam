@@ -186,15 +186,6 @@ void Foam::multiphaseFluidThermo::postUpdate()
 }
 
 
-void Foam::multiphaseFluidThermo::clearODEFields()
-{
-    forAll(phases_, phasei)
-    {
-        thermos_[phasei].clearODEFields();
-    }
-}
-
-
 void Foam::multiphaseFluidThermo::updateRho()
 {
     thermos_[0].updateRho();

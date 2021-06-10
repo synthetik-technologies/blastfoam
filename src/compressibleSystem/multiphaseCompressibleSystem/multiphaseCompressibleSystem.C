@@ -53,11 +53,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
-    alphaRhoPhis_(alphas_.size()),
-    alphasOld_(alphas_.size()),
-    alphaRhosOld_(alphas_.size()),
-    deltaAlphas_(alphas_.size()),
-    deltaAlphaRhos_(alphas_.size())
+    alphaRhoPhis_(alphas_.size())
 {
     forAll(alphas_, phasei)
     {
@@ -107,16 +103,11 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
                 dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
             )
         );
-
-        alphasOld_.set(phasei, new PtrList<volScalarField>());
-        alphaRhosOld_.set(phasei, new PtrList<volScalarField>());
-        deltaAlphas_.set(phasei, new PtrList<volScalarField>());
-        deltaAlphaRhos_.set(phasei, new PtrList<volScalarField>());
     }
 
     this->setModels();
     thermo_.initializeModels();
-    this->lookupAndInitialize();
+
     encode();
 }
 
@@ -131,48 +122,39 @@ Foam::multiphaseCompressibleSystem::~multiphaseCompressibleSystem()
 
 void Foam::multiphaseCompressibleSystem::solve()
 {
-    PtrList<volScalarField> deltaAlphas(alphas_.size());
-    PtrList<volScalarField> deltaAlphaRhos(alphas_.size());
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
-    forAll(alphas_, phasei)
-    {
-        deltaAlphas.set
-        (
-            phasei,
-            new volScalarField
-            (
-                fvc::div(alphaPhis_[phasei])
-              - alphas_[phasei]*fvc::div(phi_)
-            )
-        );
-        this->storeAndBlendDelta(deltaAlphas[phasei], deltaAlphas_[phasei]);
-        this->storeAndBlendOld(alphas_[phasei], alphasOld_[phasei]);
-
-        deltaAlphaRhos.set
-        (
-            phasei, new volScalarField(fvc::div(alphaRhoPhis_[phasei]))
-        );
-        this->storeAndBlendDelta
-        (
-            deltaAlphaRhos[phasei],
-            deltaAlphaRhos_[phasei]
-        );
-        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
-        rho_ += alphaRhos_[phasei];
-    }
-    rho_.storePrevIter();
-
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = dimensionedScalar("0", dimDensity, 0.0);
     forAll(alphas_, phasei)
     {
-        alphas_[phasei] -= dT*deltaAlphas[phasei];
+        volScalarField deltaAlpha
+        (
+            fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
+        );
+        this->storeAndBlendDelta(deltaAlpha);
+        this->storeAndBlendOld(alphas_[phasei], false);
+
+        volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
+        this->storeAndBlendDelta(deltaAlphaRho);
+        this->storeAndBlendOld(alphaRhos_[phasei]);
+        rho_ += alphaRhos_[phasei];
+
+        //- Solve volume fraction
+        alphas_[phasei] -= dT*deltaAlpha;
         alphas_[phasei].correctBoundaryConditions();
 
+        //- Solve phasic mass transport
         alphaRhos_[phasei].storePrevIter();
-        alphaRhos_[phasei] -= dT*deltaAlphaRhos[phasei];
+        alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
+    }
 
+    //- Store "old" total density
+    rho_.storePrevIter();
+
+    //- Compute new density
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    forAll(alphas_, phasei)
+    {
         rho_ += alphaRhos_[phasei];
     }
 
@@ -180,20 +162,6 @@ void Foam::multiphaseCompressibleSystem::solve()
     phaseCompressibleSystem::solve();
 }
 
-
-void Foam::multiphaseCompressibleSystem::clearODEFields()
-{
-    phaseCompressibleSystem::clearODEFields();
-
-    forAll(alphasOld_, phasei)
-    {
-        this->clearOld(alphasOld_[phasei]);
-        this->clearOld(alphaRhosOld_[phasei]);
-        this->clearDelta(deltaAlphas_[phasei]);
-        this->clearDelta(deltaAlphaRhos_[phasei]);
-    }
-    thermo_.clearODEFields();
-}
 
 void Foam::multiphaseCompressibleSystem::update()
 {

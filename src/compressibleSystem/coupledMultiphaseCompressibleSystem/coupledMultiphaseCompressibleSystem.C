@@ -70,8 +70,6 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
         volumeFraction_*rho_
     )
 {
-    this->lookupAndInitialize();
-
     forAll(alphas_, phasei)
     {
         volumeFraction_ += alphas_[phasei];
@@ -99,47 +97,68 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
     volVectorField deltaRhoU
     (
+        "deltaRhoU",
         fvc::div(rhoUPhi_) // alphaRhoUPhi_
       - p_*fvc::grad(alphaf)
       - g_*alphaRho_
     );
     volScalarField deltaRhoE
     (
+        "deltaRhoE",
         fvc::div(rhoEPhi_) // alphaRhoEPhi
       - volumeFraction_*(rhoU_ & g_)
     );
 
+    this->storeAndBlendOld(volumeFraction_);
+    volumeFraction_.storePrevIter();
+
+    volumeFraction_ = 0;
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
     forAll(alphas_, phasei)
     {
         volScalarField deltaAlpha
         (
             fvc::div(alphaPhis_[phasei]) - alphas_[phasei]*fvc::div(phi_)
         );
-        this->storeAndBlendDelta(deltaAlpha, deltaAlphas_[phasei]);
+        this->storeAndBlendDelta(deltaAlpha);
 
         volScalarField deltaAlphaRho(fvc::div(alphaRhoPhis_[phasei]));
-        this->storeAndBlendDelta(deltaAlphaRho, deltaAlphaRhos_[phasei]);
+        this->storeAndBlendDelta(deltaAlphaRho);
 
-        this->storeAndBlendOld(alphas_[phasei], alphasOld_[phasei]);
+        this->storeAndBlendOld(alphas_[phasei]);
         alphas_[phasei] -= dT*deltaAlpha;
         alphas_[phasei].correctBoundaryConditions();
+        volumeFraction_ += alphas_[phasei];
 
-        this->storeAndBlendOld(alphaRhos_[phasei], alphaRhosOld_[phasei]);
+        this->storeAndBlendOld(alphaRhos_[phasei]);
+        rho_ += alphaRhos_[phasei];
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
     }
+
+    //- Store "old" total density
+    rho_ /= max(volumeFraction_.prevIter(), 1e-6);
+    rho_.storePrevIter();
+
+    //- Compute new density
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+    forAll(alphas_, phasei)
+    {
+        rho_ += alphaRhos_[phasei];
+    }
+    rho_ /= max(volumeFraction_, 1e-6);
 
     thermo_.solve();
 
     deltaRhoE -= ESource();
 
-    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
-    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
+    this->storeAndBlendDelta(deltaRhoU);
+    this->storeAndBlendDelta(deltaRhoE);
 
-    this->storeAndBlendOld(rhoU_, rhoUOld_);
+    this->storeAndBlendOld(rhoU_);
     rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs_);
 
-    this->storeAndBlendOld(rhoE_, rhoEOld_);
+    this->storeAndBlendOld(rhoE_);
     rhoE_ -= dT*deltaRhoE;
 }
 

@@ -127,9 +127,6 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
-
         //- Return if the model requires inputs
         virtual bool requireInput() const
         {

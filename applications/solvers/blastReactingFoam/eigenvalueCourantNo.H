@@ -33,12 +33,12 @@ Description
 
 scalar CoNum = 0.0;
 scalar meanCoNum = 0.0;
-volScalarField speedOfSound("speedOfSound", fluid->speedOfSound());
+volScalarField speedOfSound("speedOfSound", fluid.speedOfSound());
 
 {
     surfaceScalarField amaxSf
     (
-        mag(phi) + fvc::interpolate(speedOfSound)*mesh.magSf()
+        mag(fvc::flux(fluid.U())) + fvc::interpolate(speedOfSound)*mesh.magSf()
     );
 
     scalarField sumAmaxSf

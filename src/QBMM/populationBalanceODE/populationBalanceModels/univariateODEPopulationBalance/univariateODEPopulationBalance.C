@@ -267,14 +267,6 @@ Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalanc
 }
 
 
-void
-Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
-::clearODEFields()
-{
-    univariatePDFODETransportModel::clearODEFields();
-}
-
-
 bool
 Foam::PDFTransportModels::populationBalanceModels::univariateODEPopulationBalance
 ::readIfModified()

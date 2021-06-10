@@ -86,17 +86,8 @@ class MillerAfterburn
         dimensionedScalar a_;
         dimensionedScalar pMin_;
 
-        //- Stored old values
-        PtrList<volScalarField> cOld_;
-
         //- Stored rate of change in c (used for energy source)
         tmp<volScalarField> ddtC_;
-
-        //- Stored changes in lambda
-        PtrList<volScalarField> deltaC_;
-
-        //- Stored changes in lambda due to advection
-        PtrList<volScalarField> deltaAlphaRhoC_;
 
 
 public:
@@ -121,9 +112,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
         //- Return energy
         virtual tmp<volScalarField> ESource() const;

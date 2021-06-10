@@ -39,10 +39,15 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "runTimeSelectionTables.H"
-#include "integrationSystem.H"
+#include "PtrList.H"
+#include "HashPtrTable.H"
+#include "volFields.H"
+
 
 namespace Foam
 {
+
+class integrationSystem;
 
 /*---------------------------------------------------------------------------*\
                            Class timeIntegrator Declaration
@@ -76,11 +81,97 @@ protected:
     //- Starting time step fractions
     scalarList f0_;
 
+    //- Number of steps
+    label nSteps_;
+
+    //- Stored old field indexes
+    labelList oldIs_;
+
+    //- Number of stored fields
+    label nOld_;
+
+    //- Stored delta indexes
+    labelList deltaIs_;
+
+    //- Number of stored deltas
+    label nDelta_;
+
+    //- Stored old fields
+    mutable HashPtrTable<PtrList<volScalarField>> oldScalarFields_;
+    mutable HashPtrTable<PtrList<volVectorField>> oldVectorFields_;
+    mutable HashPtrTable<PtrList<volSphericalTensorField>>
+        oldSphTensorFields_;
+    mutable HashPtrTable<PtrList<volSymmTensorField>> oldSymmTensorFields_;
+    mutable HashPtrTable<PtrList<volTensorField>> oldTensorFields_;
+
+    //- Stored delta fields
+    mutable HashPtrTable<PtrList<volScalarField>> deltaScalarFields_;
+    mutable HashPtrTable<PtrList<volVectorField>> deltaVectorFields_;
+    mutable HashPtrTable<PtrList<volSphericalTensorField>>
+        deltaSphTensorFields_;
+    mutable HashPtrTable<PtrList<volSymmTensorField>> deltaSymmTensorFields_;
+    mutable HashPtrTable<PtrList<volTensorField>> deltaTensorFields_;
+
     //- Update all stored systems
     void updateAll();
 
     //- Post update of all stored systems
     void postUpdateAll();
+
+    //- Initialize ODE sizes
+    void initialize();
+
+            //- Insert a list of old fields into the given hash table
+            template<class FieldType>
+            void insertOldList
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            ) const;
+
+            //- Insert a list of delta fields into the given hash table
+            template<class FieldType>
+            void insertDeltaList
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            ) const;
+
+            //- Return the List of old fields
+            template<class FieldType>
+            const PtrList<FieldType>& lookupOld
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            ) const;
+
+            //- Return the List of old fields
+            template<class FieldType>
+            PtrList<FieldType>& lookupOld
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            );
+
+            //- Return the List of delta fields
+            template<class FieldType>
+            const PtrList<FieldType>& lookupDelta
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            ) const;
+
+            //- Return the List of delta fields
+            template<class FieldType>
+            PtrList<FieldType>& lookupDelta
+            (
+                HashPtrTable<PtrList<FieldType>>& table,
+                const FieldType& f
+            );
+
+            //- Clear and resize stored old fields
+            template<class FieldType>
+            void clearFields(HashPtrTable<PtrList<FieldType>>& table);
 
 
 public:
@@ -114,12 +205,14 @@ public:
 
     // Member Functions
 
+        //- Add a system to the
         void addSystem(integrationSystem& system);
-
-        virtual void setODEFields(integrationSystem& system) const;
 
         //- Integrate fluxes in time
         virtual void integrate();
+
+        //- Clear all ODE fields (old/delta)
+        void clearODEFields();
 
         //- Return old coefficients for the current step
         scalarList a() const
@@ -140,6 +233,30 @@ public:
             return as_.size();
         }
 
+        //- Return old field indexes
+        const labelList& oldIs() const
+        {
+            return oldIs_;
+        }
+
+        //- Return number of stored fields
+        label nOld() const
+        {
+            return nOld_;
+        }
+
+        //- Return stored delta indexes
+        const labelList& deltaIs() const
+        {
+            return deltaIs_;
+        }
+
+        //- Return number of stored deltas
+        label nDelta() const
+        {
+            return nDelta_;
+        }
+
         //- Return current step
         label step() const
         {
@@ -155,6 +272,91 @@ public:
         //- Is the current step the last
         bool finalStep() const;
 
+        //- Add old field to saved fields
+        inline void addOldField(const volScalarField& f) const;
+        inline void addOldField(const volVectorField& f) const;
+        inline void addOldField(const volSphericalTensorField& f) const;
+        inline void addOldField(const volSymmTensorField& f) const;
+        inline void addOldField(const volTensorField& f) const;
+
+        //- Add old field to saved fields
+        inline void addDeltaField(const volScalarField& f) const;
+        inline void addDeltaField(const volVectorField& f) const;
+        inline void addDeltaField(const volSphericalTensorField& f) const;
+        inline void addDeltaField(const volSymmTensorField& f) const;
+        inline void addDeltaField(const volTensorField& f) const;
+
+        //- Lookup old fields (const)
+        inline const PtrList<volScalarField>& oldFields
+        (
+            const volScalarField& f
+        ) const;
+        inline const PtrList<volVectorField>& oldFields
+        (
+            const volVectorField& f
+        ) const;
+        inline const PtrList<volSphericalTensorField>& oldFields
+        (
+            const volSphericalTensorField& f
+        ) const;
+        inline const PtrList<volSymmTensorField>& oldFields
+        (
+            const volSymmTensorField& f
+        ) const;
+        inline const PtrList<volTensorField>& oldFields
+        (
+            const volTensorField& f
+        ) const;
+
+        //- Lookup old fields (non-const)
+        inline PtrList<volScalarField>& oldFields(const volScalarField& f);
+        inline PtrList<volVectorField>& oldFields(const volVectorField& f);
+        inline PtrList<volSphericalTensorField>& oldFields
+        (
+            const volSphericalTensorField& f
+        );
+        inline PtrList<volSymmTensorField>& oldFields
+        (
+            const volSymmTensorField& f
+        );
+        inline PtrList<volTensorField>& oldFields(const volTensorField& f);
+
+        //- Lookup delta fields (const)
+        inline const PtrList<volScalarField>& deltaFields
+        (
+            const volScalarField& f
+        ) const;
+        inline const PtrList<volVectorField>& deltaFields
+        (
+            const volVectorField& f
+        ) const;
+        inline const PtrList<volSphericalTensorField>& deltaFields
+        (
+            const volSphericalTensorField& f
+        ) const;
+        inline const PtrList<volSymmTensorField>& deltaFields
+        (
+            const volSymmTensorField& f
+        ) const;
+        inline const PtrList<volTensorField>& deltaFields
+        (
+            const volTensorField& f
+        ) const;
+
+        //- Lookup delta fields (non-const)
+        inline PtrList<volScalarField>& deltaFields(const volScalarField& f);
+        inline PtrList<volVectorField>& deltaFields(const volVectorField& f);
+        inline PtrList<volSphericalTensorField>& deltaFields
+        (
+            const volSphericalTensorField& f
+        );
+        inline PtrList<volSymmTensorField>& deltaFields
+        (
+            const volSymmTensorField& f
+        );
+        inline PtrList<volTensorField>& deltaFields(const volTensorField& f);
+
+
         //- Dummy IO operations
         virtual bool writeData(Ostream& os) const
         {
@@ -167,6 +369,14 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "timeIntegratorI.H"
+
+#ifdef NoRepository
+#include "timeIntegratorTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

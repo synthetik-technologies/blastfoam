@@ -145,8 +145,6 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
-    this->lookupAndInitialize();
-
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
 
@@ -190,14 +188,6 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         );
         word inertSpecie(thermo_->lookup("inertSpecie"));
         inertIndex_ = thermo_->composition().species()[inertSpecie];
-
-        YsOld_.setSize(thermo_->composition().species().size());
-        deltaRhoYs_.setSize(thermo_->composition().species().size());
-        forAll(YsOld_, i)
-        {
-            YsOld_.set(i, new PtrList<volScalarField>());
-            deltaRhoYs_.set(i, new PtrList<volScalarField>());
-        }
     }
 
     IOobject radIO
@@ -234,9 +224,9 @@ void Foam::reactingCompressibleSystem::solve()
     volScalarField rhoEOld(rhoE_);
 
     //- Store old values
-    this->storeAndBlendOld(rhoOld, rhoOld_);
-    this->storeAndBlendOld(rhoUOld, rhoUOld_);
-    this->storeAndBlendOld(rhoEOld, rhoEOld_);
+    this->storeAndBlendOld(rhoOld);
+    this->storeAndBlendOld(rhoUOld);
+    this->storeAndBlendOld(rhoEOld);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -247,9 +237,9 @@ void Foam::reactingCompressibleSystem::solve()
     );
 
     //- Store changed in mass, momentum and energy
-    this->storeAndBlendDelta(deltaRho, deltaRho_);
-    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
-    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
+    this->storeAndBlendDelta(deltaRho);
+    this->storeAndBlendDelta(deltaRhoU);
+    this->storeAndBlendDelta(deltaRhoE);
 
 
     dimensionedScalar dT = rho_.time().deltaT();
@@ -274,13 +264,13 @@ void Foam::reactingCompressibleSystem::solve()
             if (i != inertIndex_ && thermo_->composition().active(i))
             {
                 volScalarField YOld(Ys[i]);
-                this->storeAndBlendOld(YOld, YsOld_[i]);
+                this->storeAndBlendOld(YOld);
 
                 volScalarField deltaRhoY
                 (
                     fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
                 );
-                this->storeAndBlendDelta(deltaRhoY, deltaRhoYs_[i]);
+                this->storeAndBlendDelta(deltaRhoY);
 
                 Ys[i] = (YOld*rhoOld - dT*deltaRhoY)/rho_;
                 Ys[i].correctBoundaryConditions();
@@ -374,28 +364,6 @@ void Foam::reactingCompressibleSystem::postUpdate()
         thermo_->psi().boundaryField()*p_.boundaryField();
 
     turbulence_->correct();
-}
-
-
-void Foam::reactingCompressibleSystem::clearODEFields()
-{
-    fluxScheme_->clear();
-    this->clearOld(rhoOld_);
-    this->clearOld(rhoUOld_);
-    this->clearOld(rhoEOld_);
-
-    this->clearDelta(deltaRho_);
-    this->clearDelta(deltaRhoU_);
-    this->clearDelta(deltaRhoE_);
-
-    if (reaction_.valid())
-    {
-        forAll(YsOld_, i)
-        {
-            this->clearOld(YsOld_[i]);
-            this->clearDelta(deltaRhoYs_[i]);
-        }
-    }
 }
 
 

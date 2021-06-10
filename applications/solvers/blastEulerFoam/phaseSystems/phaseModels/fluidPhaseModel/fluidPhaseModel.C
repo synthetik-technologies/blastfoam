@@ -154,14 +154,6 @@ void Foam::fluidPhaseModel::postUpdate()
 }
 
 
-void Foam::fluidPhaseModel::clearODEFields()
-{
-    phaseModel::clearODEFields();
-    thermo_->clearODEFields();
-    fluxScheme_->clear();
-}
-
-
 void Foam::fluidPhaseModel::update()
 {
     const volScalarField& alpha = *this;

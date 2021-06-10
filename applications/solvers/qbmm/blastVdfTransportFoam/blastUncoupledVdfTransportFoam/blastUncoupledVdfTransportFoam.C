@@ -86,8 +86,10 @@ int main(int argc, char *argv[])
         Info<< "Calculating mean quantities"<< endl;
         #include "computeParticleFields.H"
 
-        fluid->clearODEFields();
-        populationBalance->clearODEFields();
+        integrator->clearODEFields();
+
+        //- Clear the flux scheme
+        fluid->flux().clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

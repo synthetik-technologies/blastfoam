@@ -58,21 +58,12 @@ protected:
     //- Equation of state
     autoPtr<fluidThermoModel> thermo_;
 
+    //- Calculate new alpha and rho fields
+    virtual void calcAlphaAndRho()
+    {
+        return;
+    }
 
-
-    // ODE variables
-
-        //- Old values for ode solver
-        PtrList<volScalarField> rhoOld_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaRho_;
-
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho()
-        {
-            return;
-        }
 
 public:
 
@@ -101,9 +92,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
 
     // Member Access Functions

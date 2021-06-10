@@ -116,14 +116,23 @@ void Foam::granularPhaseModel::solve()
     //- Momentum transport
     volVectorField deltaAlphaRhoU
     (
+        IOobject::groupName("deltaAlphaRhoU", name_),
         fvc::div(alphaRhoUPhi_) - alphaRho_*fluid_.g()
     );
 
     //- Thermal energy transport
-    volScalarField deltaAlphaRhoE(fvc::div(alphaRhoEPhi_) + ESource());
+    volScalarField deltaAlphaRhoE
+    (
+        IOobject::groupName("deltaAlphaRhoE", name_),
+        fvc::div(alphaRhoEPhi_)
+    );
 
     //- Pseudo thermal energy transport
-    volScalarField deltaAlphaRhoPTE(fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_));
+    volScalarField deltaAlphaRhoPTE
+    (
+        IOobject::groupName("deltaAlphaRhoPTE", name_),
+        fvc::div(alphaRhoPTEPhi_) + Ps_*fvc::div(phi_)
+    );
 
     forAll(fluid_.phases(), phasei)
     {
@@ -144,26 +153,26 @@ void Foam::granularPhaseModel::solve()
     thermo_->solve();
 
     //- Blend deltas
-    this->storeAndBlendDelta(deltaAlphaRhoU, deltaAlphaRhoU_);
+    this->storeAndBlendDelta(deltaAlphaRhoU);
 
     //- Add energy from thermodynaics
     deltaAlphaRhoE -= ESource();
-    this->storeAndBlendDelta(deltaAlphaRhoE, deltaAlphaRhoE_);
+    this->storeAndBlendDelta(deltaAlphaRhoE);
 
-    this->storeAndBlendDelta(deltaAlphaRhoPTE, deltaAlphaRhoPTE_);
+    this->storeAndBlendDelta(deltaAlphaRhoPTE);
 
     //- Solve momentum transport
-    this->storeAndBlendOld(alphaRhoU_, alphaRhoUOld_);
+    this->storeAndBlendOld(alphaRhoU_);
     alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
     alphaRhoU_.correctBoundaryConditions();
 
     // Solve thermal energy transport
-    this->storeAndBlendOld(alphaRhoE_, alphaRhoEOld_);
+    this->storeAndBlendOld(alphaRhoE_);
     alphaRhoE_ -= dT*deltaAlphaRhoE;
     alphaRhoE_.correctBoundaryConditions();
 
     //- Solve pseudo thermal energy transport
-    this->storeAndBlendOld(alphaRhoPTE_, alphaRhoPTEOld_);
+    this->storeAndBlendOld(alphaRhoPTE_);
     alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
     alphaRhoPTE_.correctBoundaryConditions();
 }
@@ -223,18 +232,6 @@ void Foam::granularPhaseModel::postUpdate()
 
     dPtr_->postUpdate();
     thermo_->postUpdate();
-}
-
-
-void Foam::granularPhaseModel::clearODEFields()
-{
-    phaseModel::clearODEFields();
-    fluxScheme_->clear();
-
-    this->clearOld(alphaRhoPTEOld_);
-    this->clearDelta(deltaAlphaRhoPTE_);
-
-    thermo_->clearODEFields();
 }
 
 

@@ -63,9 +63,7 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         mesh,
         dimensionedScalar("0", dimVolume/dimTime, 0.0)
     )
-{
-    this->lookupAndInitialize();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -97,13 +95,13 @@ void Foam::diameterModels::reactingDiameterModel::solve
 )
 {
     volScalarField VOld(this->V());
-    this->storeAndBlendOld(VOld, VOld_);
+    this->storeAndBlendOld(VOld);
 
     volScalarField dOld(this->d_);
-    this->storeAndBlendOld(dOld, dOld_);
+    this->storeAndBlendOld(dOld);
 
     volScalarField dDdt(-2.0*rate_->k(pi, T));
-    this->storeAndBlendDelta(dDdt, deltad_);
+    this->storeAndBlendDelta(dDdt);
 
     const dimensionedScalar& dT(this->d_.time().deltaT());
 
@@ -112,14 +110,13 @@ void Foam::diameterModels::reactingDiameterModel::solve
     this->d_.max(1e-10);
 
     dVdt_ = (this->V() - VOld)/dT;
-    volScalarField dDdtLimited((this->d_ - dOld)/dT);
+    dDdt = (this->d_ - dOld)/dT;
 
     //- Compute actual delta for the time step knowing the blended
-    dDdt = this->calcDelta(dDdtLimited, deltad_);
-    this->storeDelta(dDdt, deltad_);
+    dDdt = this->calcAndStoreDelta(dDdt);
 
-    dVdt_ = this->calcDelta(dVdt_, deltaV_);
-    this->storeDelta(dVdt_, deltaV_);
+    dVdt_ = this->calcDelta(dVdt_);
+    this->storeDelta(dVdt_);
 
     const surfaceScalarField& phi
     (
@@ -130,19 +127,9 @@ void Foam::diameterModels::reactingDiameterModel::solve
     );
 
     volScalarField deltaPhid(fvc::div(phi, d_) - d_*fvc::div(phi));
-    this->storeAndBlendDelta(deltaPhid, deltaPhid_);
+    this->storeAndBlendDelta(deltaPhid);
     this->d_ = dOld - dT*(deltaPhid - dDdt);
     this->d_.max(1e-10);
-}
-
-
-void Foam::diameterModels::reactingDiameterModel::clearODEFields()
-{
-    this->clearOld(dOld_);
-    this->clearOld(VOld_);
-    this->clearDelta(deltad_);
-    this->clearDelta(deltaPhid_);
-    this->clearDelta(deltaV_);
 }
 
 

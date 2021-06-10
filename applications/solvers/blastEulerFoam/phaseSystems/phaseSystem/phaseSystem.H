@@ -404,8 +404,8 @@ public:
         //- Solve viscous terms
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
+        //- Print statistics
+        virtual void printInfo();
 
         //- Return the mixture density
         const volScalarField& rho() const
