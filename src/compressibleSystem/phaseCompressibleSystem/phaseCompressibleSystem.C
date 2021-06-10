@@ -170,7 +170,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        rho_*U_
+        rho_*U_,
+        "zeroGradient"
     ),
     rhoE_
     (
