@@ -15,7 +15,6 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-writeLagrangianPositions a;
 solution
 {
     active          true;

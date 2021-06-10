@@ -151,7 +151,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     Switch useChemistry
     (
         word(thermo_->subDict("thermoType").lookup("mixture"))
-     == "reactingMixture"
+     == "multiComponentMixture"
     );
 
     if (min(thermo_->mu()).value() > small || useChemistry)
