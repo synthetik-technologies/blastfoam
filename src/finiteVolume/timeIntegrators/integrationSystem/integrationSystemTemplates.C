@@ -36,10 +36,13 @@ void Foam::integrationSystem::storeOld
     const bool conservative
 )
 {
-    // Correct old field for mesh motion before storage
-    if (mesh_.moving() && step() == 1 && conservative)
+    if (step() == 1)
     {
-        f.ref() *= mesh_.V0()/mesh_.V();
+        // Correct old field for mesh motion before storage
+        if (mesh_.moving() && conservative)
+        {
+            f.ref() *= mesh_.V0()/mesh_.V();
+        }
     }
 
     // Store fields if needed later
