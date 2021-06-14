@@ -88,6 +88,13 @@ Foam::coupledMultiphaseCompressibleSystem::~coupledMultiphaseCompressibleSystem(
 
 void Foam::coupledMultiphaseCompressibleSystem::solve()
 {
+    if (this->step() == 1)
+    {
+        rho_.oldTime();
+        U_.oldTime();
+        e_.oldTime();
+    }
+
     dimensionedScalar dT = rho_.time().deltaT();
 
     surfaceScalarField alphaf

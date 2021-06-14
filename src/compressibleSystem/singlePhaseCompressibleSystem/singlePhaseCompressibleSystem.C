@@ -76,10 +76,6 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 void Foam::singlePhaseCompressibleSystem::solve()
 {
-    if (this->step() == 1)
-    {
-        rho_.storeOldTime();
-    }
     volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
     this->storeAndBlendDelta(deltaRho);
 

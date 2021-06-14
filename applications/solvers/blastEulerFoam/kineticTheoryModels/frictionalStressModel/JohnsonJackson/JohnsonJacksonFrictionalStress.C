@@ -105,12 +105,14 @@ frictionalPressurePrime
     const volScalarField& alphaMax
 ) const
 {
-    return Fr_*
-    (
-        eta_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_ - 1.0)
-       *(alphaMax - alphap)
-      + p_*pow(max(alphap - alphaMinFriction_, scalar(0)), eta_)
-    )/pow(max(alphaMax - alphap, alphaDeltaMin_), p_ + 1.0);
+    volScalarField alphapMin(max(alphap - alphaMinFriction_, scalar(0)));
+    volScalarField alphapMax(max(alphaMax - alphap, alphaDeltaMin_));
+    return
+        Fr_/pow(alphapMax, p_ + 1)
+       *(
+            eta_*pow(alphapMin, eta_ - 1.0)*alphapMax
+          + p_*pow(alphapMin, eta_)
+        );
 }
 
 

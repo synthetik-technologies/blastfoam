@@ -1018,6 +1018,7 @@ void Foam::phaseSystem::postUpdate()
     const dimensionedScalar& deltaT(mesh_.time().deltaT());
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
+    decode();
 }
 
 
@@ -1027,27 +1028,29 @@ void Foam::phaseSystem::printInfo()
     forAll(phaseModels_, phasei)
     {
         Info<< phaseModels_[phasei].name() << ":" << endl;
+
+        // Clear flux schemes
         phaseModels_[phasei].flux().clear();
 
         const volScalarField& alpha(phaseModels_[phasei]);
         const volScalarField& T(phaseModels_[phasei].T());
         Info<< "\t"
-            << alpha.name() << " fraction, min, max = "
+            << alpha.name() << " fraction, max, min = "
             << alpha.weightedAverage(mesh_.V()).value()
-            << ' ' << min(alpha).value()
-            << ' ' << max(alpha).value() << nl
+            << ' ' << max(alpha).value()
+            << ' ' << min(alpha).value() << nl
             << "\t"
-            << T.name() << " min, max = "
-            << ' ' << min(T).value()
+            << T.name() << " max, min = "
             << ' ' << max(T).value()
+            << ' ' << min(T).value()
             << endl;
         if (!phaseModels_[phasei].granular())
         {
             const volScalarField& p(phaseModels_[phasei].p());
             Info<< "\t"
-                << p.name() << " min, max = "
-                << ' ' << min(p).value()
-                << ' ' << max(p).value() << endl;
+                << p.name() << " max, min = "
+                << ' ' << max(p).value()
+                << ' ' << min(p).value() << endl;
         }
         Info<< endl;
 
@@ -1057,10 +1060,10 @@ void Foam::phaseSystem::printInfo()
         if (kineticTheoryPtr_->polydisperse())
         {
             const volScalarField& alpha(kineticTheoryPtr_->alphap());
-            Info<< alpha.name() << " fraction, min, max = "
+            Info<< alpha.name() << " fraction, max, min = "
                 << alpha.weightedAverage(mesh_.V()).value()
-                << ' ' << min(alpha).value()
                 << ' ' << max(alpha).value()
+                << ' ' << min(alpha).value()
                 << endl;
         }
     }

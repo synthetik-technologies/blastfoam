@@ -394,7 +394,7 @@ void Foam::phaseModel::postUpdate()
 {
     if (turbulence_.valid())
     {
-        dimensionedScalar smallAlphaRho(dimDensity, 1e-10);
+        dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
         fvVectorMatrix UEqn
         (
             fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
@@ -419,7 +419,7 @@ void Foam::phaseModel::postUpdate()
         (
             fvm::ddt(alphaRho_, e_) - fvc::ddt(alphaRho_, e_)
           + fvc::ddt(smallAlphaRho, e_) - fvm::ddt(smallAlphaRho, e_)
-          - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
+          + thermophysicalTransport_->divq(e_)
         );
         eEqn.solve();
         alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));

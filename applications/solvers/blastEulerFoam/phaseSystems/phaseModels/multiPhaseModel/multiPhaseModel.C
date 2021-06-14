@@ -297,7 +297,7 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
                     Foam::min
                     (
                         alphas_[phasei][celli],
-                        1.0
+                        this->alphaMax()
                     ),
                     0.0
                 );
@@ -312,6 +312,7 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
         {
             sumAlpha += alphas[phasei];
         }
+        sumAlpha = Foam::min(sumAlpha, (*this)[celli]);
         alphas_[fixedPhase][celli] = (*this)[celli] - sumAlpha;
     }
 

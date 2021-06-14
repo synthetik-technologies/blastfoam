@@ -164,7 +164,7 @@ void Foam::dragODE::derivatives
                 Foam::max
                 (
                     phase1.alphaRho(nodei)[li],
-                    phase1.residualAlphaRho().value()
+                    1e-6
                 );
 
             for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
@@ -175,7 +175,7 @@ void Foam::dragODE::derivatives
                     Foam::max
                     (
                         phase2.alphaRho(nodej)[li],
-                        phase2.residualAlphaRho().value()
+                        1e-6
                     );
 
                 scalar drag = dragModels_[pairi].K(li, nodei, nodej);
@@ -234,7 +234,7 @@ void Foam::dragODE::jacobian
                 Foam::max
                 (
                     phase1.alphaRho(nodei)[li],
-                    phase1.residualAlphaRho().value()
+                    1e-6
                 );
             for (label nodej = 0; nodej < phase2.nNodes(); nodej++)
             {
@@ -244,7 +244,7 @@ void Foam::dragODE::jacobian
                     Foam::max
                     (
                         phase2.alphaRho(nodej)[li],
-                        phase2.residualAlphaRho().value()
+                        1e-6
                     );
 
                 scalar drag = dragModels_[pairi].K(li, nodei, nodej);

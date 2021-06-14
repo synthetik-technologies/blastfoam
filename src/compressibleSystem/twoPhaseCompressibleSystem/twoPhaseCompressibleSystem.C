@@ -123,12 +123,6 @@ Foam::twoPhaseCompressibleSystem::~twoPhaseCompressibleSystem()
 
 void Foam::twoPhaseCompressibleSystem::solve()
 {
-    if (this->step() == 1)
-    {
-        alphaRho1_.storeOldTime();
-        alphaRho2_.storeOldTime();
-        rho_.storeOldTime();
-    }
     //- Update changes in volume fraction and phase mass
     volScalarField deltaAlpha
     (

@@ -153,18 +153,17 @@ void Foam::granularPhaseModel::solve()
     thermo_->solve();
 
     //- Blend deltas
+    deltaAlphaRhoU = cmptMultiply(deltaAlphaRhoU, solutionDs_);
     this->storeAndBlendDelta(deltaAlphaRhoU);
+
+    //- Solve momentum transport
+    this->storeAndBlendOld(alphaRhoU_);
+    alphaRhoU_ -= dT*deltaAlphaRhoU;
+    alphaRhoU_.correctBoundaryConditions();
 
     //- Add energy from thermodynaics
     deltaAlphaRhoE -= ESource();
     this->storeAndBlendDelta(deltaAlphaRhoE);
-
-    this->storeAndBlendDelta(deltaAlphaRhoPTE);
-
-    //- Solve momentum transport
-    this->storeAndBlendOld(alphaRhoU_);
-    alphaRhoU_ -= cmptMultiply(dT*deltaAlphaRhoU, solutionDs_);
-    alphaRhoU_.correctBoundaryConditions();
 
     // Solve thermal energy transport
     this->storeAndBlendOld(alphaRhoE_);
@@ -173,6 +172,7 @@ void Foam::granularPhaseModel::solve()
 
     //- Solve pseudo thermal energy transport
     this->storeAndBlendOld(alphaRhoPTE_);
+    this->storeAndBlendDelta(deltaAlphaRhoPTE);
     alphaRhoPTE_ -= dT*(deltaAlphaRhoPTE);
     alphaRhoPTE_.correctBoundaryConditions();
 }
@@ -198,7 +198,7 @@ void Foam::granularPhaseModel::postUpdate()
               + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
             )
         );
-        dimensionedScalar smallAlphaRho(dimDensity, 1e-10);
+        dimensionedScalar smallAlphaRho(residualAlphaRho());
 
         //- Solve momentum equation (implicit stresses)
         fvVectorMatrix UEqn
@@ -225,7 +225,7 @@ void Foam::granularPhaseModel::postUpdate()
         ThetaEqn.solve();
 
         //- Update conservative variables
-        alphaRhoU_ =  cmptMultiply(alphaRho_*U_, solutionDs_);
+        alphaRhoU_ =  alphaRho_*U_;
         alphaRhoPTE_ =  alphaRho_*1.5*Theta_;
 
     }
@@ -268,17 +268,17 @@ void Foam::granularPhaseModel::decode()
     volScalarField& alpha(*this);
 
     //- Update volume fraction since density is known
-    alpha.ref() = alphaRho_()/rho();
-    if (options.optionList::appliesToField(this->name()))
+    alpha.ref() = alphaRho_()/rho_();
+    if (options.optionList::appliesToField(alpha.name()))
     {
-
-        options.correct(*this);
+        options.correct(alpha);
+        alphaRho_.ref() = alpha()*rho_();
     }
     alpha.correctBoundaryConditions();
 
     //- Correct phase mass at boundaries
     alphaRho_.boundaryFieldRef() =
-        (*this).boundaryField()*rho_.boundaryField();
+        alpha.boundaryField()*rho_.boundaryField();
 
     //- Store limited phase mass (only used for division)
     volScalarField alphaRho(Foam::max(alpha, residualAlpha_)*rho_);
@@ -287,7 +287,6 @@ void Foam::granularPhaseModel::decode()
     U_.ref() = alphaRhoU_()/alphaRho();
     if (options.optionList::appliesToField(U_.name()))
     {
-
         options.correct(U_);
         alphaRhoU_.ref() = alphaRho_()*U_();
     }
@@ -301,7 +300,6 @@ void Foam::granularPhaseModel::decode()
     e_.ref() = alphaRhoE_()/alphaRho();
     if (options.optionList::appliesToField(e_.name()))
     {
-
         options.correct(e_);
         alphaRhoE_.ref() = alphaRho_()*e_();
     }
