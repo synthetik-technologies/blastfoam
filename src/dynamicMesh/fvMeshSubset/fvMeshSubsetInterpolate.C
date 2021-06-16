@@ -80,8 +80,8 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                     DimensionedField<Type, volMesh>::null()
                 )
             );
-            patchFields[patchi] = Zero;
         }
+        patchFields[patchi] = Zero;
     }
 
     tmp<GeometricField<Type, fvPatchField, volMesh>> tresF

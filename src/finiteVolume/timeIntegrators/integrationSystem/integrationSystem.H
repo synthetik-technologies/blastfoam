@@ -61,19 +61,19 @@ protected:
         const word name_;
 
         //- Stored reference to time integrator
-        timeIntegrator& timeInt_;
+        timeIntegrator* timeInt_;
 
         //- Number of steps
         label nSteps_;
 
         //- Stored old field indexes
-        const labelList& oldIs_;
+        labelList oldIs_;
 
         //- Number of stored fields
         label nOld_;
 
         //- Stored delta indexes
-        const labelList& deltaIs_;
+        labelList deltaIs_;
 
         //- Number of stored deltas
         label nDelta_;

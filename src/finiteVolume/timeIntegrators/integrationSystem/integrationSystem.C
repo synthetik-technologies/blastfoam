@@ -36,12 +36,17 @@ Foam::integrationSystem::integrationSystem
 :
     mesh_(mesh),
     name_(name),
-    timeInt_(mesh_.lookupObjectRef<timeIntegrator>("globalTimeIntegrator")),
-    nSteps_(timeInt_.nSteps()),
-    oldIs_(timeInt_.oldIs()),
-    nOld_(timeInt_.nOld()),
-    deltaIs_(timeInt_.deltaIs()),
-    nDelta_(timeInt_.nDelta())
+    timeInt_
+    (
+        mesh_.foundObject<timeIntegrator>("globalTimeIntegrator")
+      ? &mesh_.lookupObjectRef<timeIntegrator>("globalTimeIntegrator")
+      : nullptr
+    ),
+    nSteps_(timeInt_ ? timeInt_->nSteps() : 0),
+    oldIs_(timeInt_ ? timeInt_->oldIs() : labelList()),
+    nOld_(timeInt_ ? timeInt_->nOld() : 0),
+    deltaIs_(timeInt_ ? timeInt_->deltaIs() : labelList()),
+    nDelta_(timeInt_ ? timeInt_->nDelta() : 0)
 {}
 
 
@@ -55,37 +60,37 @@ Foam::integrationSystem::~integrationSystem()
 
 Foam::label Foam::integrationSystem::step() const
 {
-    return timeInt_.step();
+    return timeInt_ ? timeInt_->step() : 1;
 }
 
 
 Foam::scalarList Foam::integrationSystem::a() const
 {
-    return timeInt_.a();
+    return timeInt_ ? timeInt_->a() : scalarList(1, 1.0);
 }
 
 
 Foam::scalarList Foam::integrationSystem::b() const
 {
-    return timeInt_.b();
+    return timeInt_ ? timeInt_->b() : scalarList(1, 1.0);
 }
 
 
 Foam::scalar Foam::integrationSystem::f() const
 {
-    return timeInt_.f();
+    return timeInt_ ? timeInt_->f() : 1.0;
 }
 
 
 Foam::scalar Foam::integrationSystem::f0() const
 {
-    return timeInt_.f0();
+    return timeInt_ ? timeInt_->f0() : 0.0;
 }
 
 
 bool Foam::integrationSystem::finalStep() const
 {
-    return timeInt_.finalStep();
+    return timeInt_ ? timeInt_->finalStep() : true;
 }
 
 

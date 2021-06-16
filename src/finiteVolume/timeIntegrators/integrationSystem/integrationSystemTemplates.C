@@ -72,7 +72,11 @@ void Foam::integrationSystem::storeOld
 template<class FieldType>
 void Foam::integrationSystem::storeOld(FieldType& f, const bool conservative)
 {
-    storeOld(f, timeInt_.oldFields(f), conservative);
+    if (!timeInt_)
+    {
+        return;
+    }
+    storeOld(f, timeInt_->oldFields(f), conservative);
 }
 
 
@@ -110,7 +114,11 @@ void Foam::integrationSystem::storeDelta
 template<class FieldType>
 void Foam::integrationSystem::storeDelta(const FieldType& f)
 {
-    storeDelta(f, timeInt_.deltaFields(f));
+    if (!timeInt_)
+    {
+        return;
+    }
+    storeDelta(f, timeInt_->deltaFields(f));
 }
 
 
@@ -159,7 +167,11 @@ void Foam::integrationSystem::blendOld
 template<class FieldType>
 void Foam::integrationSystem::blendOld(FieldType& f) const
 {
-    blendSteps(oldIs_, f, timeInt_.oldFields(f), a());
+    if (!timeInt_)
+    {
+        return;
+    }
+    blendSteps(oldIs_, f, timeInt_->oldFields(f), a());
 }
 
 
@@ -177,7 +189,11 @@ void Foam::integrationSystem::blendDelta
 template<class FieldType>
 void Foam::integrationSystem::blendDelta(FieldType& f) const
 {
-    blendSteps(oldIs_, f, timeInt_.deltaFields(f), b());
+    if (!timeInt_)
+    {
+        return;
+    }
+    blendSteps(oldIs_, f, timeInt_->deltaFields(f), b());
 }
 
 
@@ -201,7 +217,11 @@ void Foam::integrationSystem::storeAndBlendOld
     const bool conservative
 )
 {
-    storeAndBlendOld(f, timeInt_.oldFields(f), conservative);
+    if (!timeInt_)
+    {
+        return;
+    }
+    storeAndBlendOld(f, timeInt_->oldFields(f), conservative);
 }
 
 
@@ -219,7 +239,11 @@ void Foam::integrationSystem::storeAndBlendDelta
 template<class FieldType>
 void Foam::integrationSystem::storeAndBlendDelta(FieldType& f)
 {
-    storeAndBlendDelta(f, timeInt_.deltaFields(f));
+    if (!timeInt_)
+    {
+        return;
+    }
+    storeAndBlendDelta(f, timeInt_->deltaFields(f));
 }
 
 template<template<class> class ListType, class Type>
@@ -255,7 +279,11 @@ Foam::tmp<Type> Foam::integrationSystem::calcDelta
 template<class FieldType>
 Foam::tmp<FieldType> Foam::integrationSystem::calcDelta(const FieldType& f) const
 {
-    return calcDelta(f, timeInt_.deltaFields(f));
+    if (!timeInt_)
+    {
+        return tmp<FieldType>(new FieldType(f));
+    }
+    return calcDelta(f, timeInt_->deltaFields(f));
 }
 
 
@@ -275,7 +303,11 @@ Foam::tmp<Type> Foam::integrationSystem::calcAndStoreDelta
 template<class FieldType>
 Foam::tmp<FieldType> Foam::integrationSystem::calcAndStoreDelta(const FieldType& f)
 {
-   return calcAndStoreDelta(f, timeInt_.deltaFields(f));
+    if (!timeInt_)
+    {
+        return tmp<FieldType>(new FieldType(f));
+    }
+   return calcAndStoreDelta(f, timeInt_->deltaFields(f));
 }
 
 
@@ -304,22 +336,34 @@ void Foam::integrationSystem::blendSteps
 template<class FieldType>
 void Foam::integrationSystem::addOldField(const FieldType& f)
 {
-    timeInt_.addOldField(f);
+    if (!timeInt_)
+    {
+        return;
+    }
+    timeInt_->addOldField(f);
 }
 
 
 template<class FieldType>
 void Foam::integrationSystem::addDeltaField(const FieldType& f)
 {
-    timeInt_.addDeltaField(f);
+    if (!timeInt_)
+    {
+        return;
+    }
+    timeInt_->addDeltaField(f);
 }
 
 
 template<class FieldType>
 void Foam::integrationSystem::addOldDeltaField(const FieldType& f)
 {
-    timeInt_.addOldField(f);
-    timeInt_.addDeltaField(f);
+    if (!timeInt_)
+    {
+        return;
+    }
+    timeInt_->addOldField(f);
+    timeInt_->addDeltaField(f);
 }
 
 // ************************************************************************* //
