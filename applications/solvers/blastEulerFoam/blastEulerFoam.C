@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
 
         fluid.printInfo();
 
+        integrator->clearODEFields();
+
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;

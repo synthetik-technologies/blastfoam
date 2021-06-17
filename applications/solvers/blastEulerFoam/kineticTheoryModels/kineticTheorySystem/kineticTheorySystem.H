@@ -49,7 +49,7 @@ SourceFiles
 #include "phaseModel.H"
 #include "phasePair.H"
 #include "HashPtrTable.H"
-#include "PtrList.H"
+#include "UPtrList.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -94,21 +94,20 @@ class kineticTheorySystem
         // Total granualr fields
 
             //- Total granular phase-fraction
-            volScalarField alphap_;
+            autoPtr<volScalarField> alphapPtr_;
 
             //- Phase averaged velocity
-            volVectorField Up_;
+            autoPtr<volVectorField> UpPtr_;
 
             //- Phase averaged granular temperature
-            volScalarField Thetap_;
+            autoPtr<volScalarField> ThetapPtr_;
 
 
         //- PtrList of kinetic theory models
-        PtrListDictionary<tmp<kineticTheoryModel>>
-            kineticTheoryModels_;
+        UPtrList<kineticTheoryModel> kineticTheoryModels_;
 
         //- PtrList of granular temperatures
-        PtrListDictionary<tmp<volScalarField>> Thetas_;
+        UPtrList<volScalarField> Thetas_;
 
         //- List of granular phase indexes
         labelList phaseIndexes_;
@@ -248,16 +247,10 @@ public:
         }
 
         //- Return total granular phase volume fraction
-        const volScalarField& alphap() const
-        {
-            return alphap_;
-        }
+        const volScalarField& alphap() const;
 
         //- Return phase averaged velocity
-        const volVectorField& Up() const
-        {
-            return Up_;
-        }
+        const volVectorField& Up() const;
 
         //- Return maximum volume fraction
         const volScalarField& alphaMax() const
@@ -279,7 +272,7 @@ public:
         scalar Cf(const phasePairKey& pair) const;
 
         //- Return the list of granular temperatures
-        const PtrList<tmp<volScalarField>>& Thetas() const
+        const UPtrList<volScalarField>& Thetas() const
         {
             return Thetas_;
         }
