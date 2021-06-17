@@ -630,8 +630,7 @@ Foam::phaseSystem::phaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimVelocity, Zero),
-        "zeroGradient"
+        dimensionedVector("0", dimVelocity, Zero)
     ),
 
     phi_

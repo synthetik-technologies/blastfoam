@@ -142,8 +142,7 @@ Foam::phaseModel::phaseModel
             fluid.mesh()
         ),
         fluid.mesh(),
-        dimensionedVector("0", dimDensity*dimVelocity, Zero),
-        "zeroGradient"
+        dimensionedVector("0", dimDensity*dimVelocity, Zero)
     ),
     alphaRhoE_
     (
