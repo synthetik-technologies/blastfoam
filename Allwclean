@@ -6,4 +6,7 @@ src/Allwclean
 
 wclean all applications
 
+wcleanLnIncludeAll src
+wcleanLnIncludeAll applications
+
 #------------------------------------------------------------------------------
