@@ -209,14 +209,6 @@ Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
 }
 
 
-void
-Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
-::clearODEFields()
-{
-    velocityPDFODETransportModel::clearODEFields();
-}
-
-
 bool
 Foam::PDFTransportModels::populationBalanceModels::velocityODEPopulationBalance
 ::readIfModified()

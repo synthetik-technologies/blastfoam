@@ -73,8 +73,9 @@ int main(int argc, char *argv[])
         //- Integrate the hyperbolic fluxes
         integrator->integrate();
 
-        //- Clear temporary fields
-        fluid.clearODEFields();
+        fluid.printInfo();
+
+        integrator->clearODEFields();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

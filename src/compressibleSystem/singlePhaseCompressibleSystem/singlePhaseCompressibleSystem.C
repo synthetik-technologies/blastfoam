@@ -63,7 +63,6 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 {
     this->setModels();
     thermo_->initializeModels();
-    this->lookupAndInitialize();
     encode();
 }
 
@@ -77,15 +76,11 @@ Foam::singlePhaseCompressibleSystem::~singlePhaseCompressibleSystem()
 
 void Foam::singlePhaseCompressibleSystem::solve()
 {
-    if (this->step() == 1)
-    {
-        rho_.storeOldTime();
-    }
-    volScalarField deltaRho(fvc::div(rhoPhi_));
-    this->storeAndBlendDelta(deltaRho, deltaRho_);
+    volScalarField deltaRho("deltaRho", fvc::div(rhoPhi_));
+    this->storeAndBlendDelta(deltaRho);
 
     dimensionedScalar dT = rho_.time().deltaT();
-    this->storeAndBlendOld(rho_, rhoOld_);
+    this->storeAndBlendOld(rho_);
     rho_.storePrevIter();
 
     rho_ -= dT*deltaRho;
@@ -94,17 +89,6 @@ void Foam::singlePhaseCompressibleSystem::solve()
     thermo_->solve();
 
     phaseCompressibleSystem::solve();
-}
-
-
-void Foam::singlePhaseCompressibleSystem::clearODEFields()
-{
-    phaseCompressibleSystem::clearODEFields();
-
-    this->clearOld(rhoOld_);
-    this->clearDelta(deltaRho_);
-
-    thermo_->clearODEFields();
 }
 
 

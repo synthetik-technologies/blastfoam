@@ -80,7 +80,6 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                     DimensionedField<Type, volMesh>::null()
                 )
             );
-            patchFields[patchi] = Zero;
         }
     }
 
@@ -123,7 +122,6 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
             const label baseSize = basePatch.size();
 
             labelList directAddressing(subPatch.size());
-            labelList unmappedFaces;
 
             forAll(directAddressing, i)
             {
@@ -138,7 +136,6 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                     // Mapped from internal face. Do what? Leave up to
                     // fvPatchField
                     directAddressing[i] = -1;
-                    unmappedFaces.append(i);
                 }
             }
 
@@ -154,16 +151,11 @@ tmp<GeometricField<Type, fvPatchField, volMesh>> fvMeshSubset::interpolate
                 )
             );
 
-            // Set unmapped values to Zero
-            // This is done so bad values do not cause a failure when
-            // writing
-            if (directAddressing.size() && min(directAddressing) < 0)
+            // Set calculated patchFields to the internal values since mapping
+            // can result in bad values
+            if (isA<calculatedFvPatchField<Type>>(bf[patchi]))
             {
-                forAll(unmappedFaces, fi)
-                {
-                    label facei = unmappedFaces[fi];
-                    bf[patchi][facei] = pTraits<Type>::zero;
-                }
+                bf[patchi] = bf[patchi].patchInternalField();
             }
         }
     }
@@ -295,7 +287,6 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
             const label baseSize = basePatch.size();
 
             labelList directAddressing(subPatch.size());
-            labelList unmappedFaces;
 
             forAll(directAddressing, i)
             {
@@ -311,7 +302,6 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
                     // patchField. This would require also to pass in
                     // original internal field so for now do as postprocessing
                     directAddressing[i] = -1;
-                    unmappedFaces.append(i);
                 }
             }
 
@@ -326,18 +316,6 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fvMeshSubset::interpolate
                     directFvPatchFieldMapper(directAddressing)
                 )
             );
-
-            // Set unmapped values to Zero
-            // This is done so bad values do not cause a failure when
-            // writing
-            if (directAddressing.size() && min(directAddressing) < 0)
-            {
-                forAll(unmappedFaces, fi)
-                {
-                    label facei = unmappedFaces[fi];
-                    bf[patchi][facei] = pTraits<Type>::zero;
-                }
-            }
 
             // Postprocess patch field for exposed faces
 
@@ -447,7 +425,6 @@ fvMeshSubset::interpolate
                     DimensionedField<Type, pointMesh>::null()
                 )
             );
-            patchFields[patchi] = Zero;
         }
     }
 

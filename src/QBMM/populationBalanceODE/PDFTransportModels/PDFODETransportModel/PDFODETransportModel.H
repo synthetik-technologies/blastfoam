@@ -67,21 +67,11 @@ protected:
         //- Constant reference to the mesh
         const fvMesh& mesh_;
 
-        // ODE variables
-
-            //- Old values for ode solver
-            PtrList<PtrList<volScalarField>> momentsOld_;
-
-            //- Stored delta fields
-            PtrList<PtrList<volScalarField>> deltaMoments_;
 
     // Protected member functions
 
         //- Return number of moments
         virtual label nMoments() const = 0;
-
-        //- Initialize ODE fields
-        void initializeODEFields();
 
 
 public:
@@ -105,9 +95,6 @@ public:
 
 
     // Member Functions
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
 
     // Member Operators

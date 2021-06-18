@@ -17,7 +17,7 @@ volScalarField speedOfSound("speedOfSound", fluid.speedOfSound());
     (
         fvc::surfaceSum
         (
-            mag(phi) + fvc::interpolate(speedOfSound)*mesh.magSf()
+            mag(fvc::flux(fluid.U())) + fvc::interpolate(speedOfSound)*mesh.magSf()
         )().primitiveField()
     );
     CoNum = 0.5*gMax(sumAmaxSf/mesh.V().field())*runTime.deltaTValue();

@@ -81,16 +81,6 @@ protected:
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
-    // ODE variables
-
-        //- Old values for ode solver
-        PtrList<PtrList<volScalarField>> alphasOld_;
-        PtrList<PtrList<volScalarField>> alphaRhosOld_;
-
-        //- Stored delta fields
-        PtrList<PtrList<volScalarField>> deltaAlphas_;
-        PtrList<PtrList<volScalarField>> deltaAlphaRhos_;
-
         //- Calculate new alpha and rho fields
         virtual void calcAlphaAndRho();
 
@@ -123,9 +113,6 @@ public:
 
         //- Solve a sub-step
         virtual void solve();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
 
     // Member Access Functions

@@ -55,7 +55,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
 {
     if (rho < small)
     {
-        return 0.0;
+        return T0;
     }
 
     scalar Test = (this->*limit)(T0);

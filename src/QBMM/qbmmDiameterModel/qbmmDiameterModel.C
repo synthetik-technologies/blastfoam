@@ -104,7 +104,6 @@ Foam::diameterModels::qbmmDiameterModel::qbmmDiameterModel
         )
     )
 {
-    this->lookupAndInitialize();
     if (vfD_.dimensions() != dimLength)
     {
         FatalErrorInFunction
@@ -130,12 +129,6 @@ void Foam::diameterModels::qbmmDiameterModel::update()
 }
 
 
-void Foam::diameterModels::qbmmDiameterModel::clearODEFields()
-{
-    pbe_.clearODEFields();
-}
-
-
 void Foam::diameterModels::qbmmDiameterModel::solve()
 {
     pbe_.solve();
@@ -147,4 +140,6 @@ void Foam::diameterModels::qbmmDiameterModel::postUpdate()
 {
     pbe_.postUpdate();
 }
+
+
 // ************************************************************************* //

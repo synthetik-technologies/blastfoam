@@ -76,7 +76,7 @@ Foam::timeIntegrators::RK3SSP::RK3SSP
             {0.0, 0.0, 0.0, 0.5}
         };
     }
-
+    initialize();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

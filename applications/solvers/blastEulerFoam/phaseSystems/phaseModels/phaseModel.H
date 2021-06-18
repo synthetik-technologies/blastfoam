@@ -133,17 +133,6 @@ protected:
             //- Phasic total energy flux
             surfaceScalarField alphaRhoEPhi_;
 
-        //- Old values for ode solver
-        PtrList<volScalarField> alphaOld_;
-        PtrList<volScalarField> alphaRhoOld_;
-        PtrList<volVectorField> alphaRhoUOld_;
-        PtrList<volScalarField> alphaRhoEOld_;
-
-        //- Stored delta fields
-        PtrList<volScalarField> deltaAlpha_;
-        PtrList<volScalarField> deltaAlphaRho_;
-        PtrList<volVectorField> deltaAlphaRhoU_;
-        PtrList<volScalarField> deltaAlphaRhoE_;
 
         //- Diameter model
         autoPtr<diameterModel> dPtr_;
@@ -174,9 +163,6 @@ protected:
         //  Seperated to allow solving before thermodynamics,
         //  and solve thermo before energy
         void solveAlphaRho();
-
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const = 0;
 
         //- Solve the diameter model
         void solveD();
@@ -320,6 +306,11 @@ public:
             return solutionDs_;
         }
 
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const = 0;
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux() = 0;
 
         //- Return the residual phase-fraction for given phase
         virtual dimensionedScalar residualAlpha() const = 0;
@@ -347,9 +338,6 @@ public:
 
             //- Solve viscous terms
             virtual void postUpdate();
-
-            //- Remove stored fields
-            virtual void clearODEFields();
 
 
         //- Return conserved quantities

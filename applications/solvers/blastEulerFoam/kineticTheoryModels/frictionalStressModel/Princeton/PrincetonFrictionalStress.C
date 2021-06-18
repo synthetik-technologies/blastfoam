@@ -144,7 +144,6 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
 {
     volScalarField alphaMinFriction(alphaMinFrictionByAlphap_*alphaMax);
     tmp<volScalarField> da = phase.d();
-    const volVectorField& U = phase.U();
     const volScalarField& Theta =
         phase.mesh().lookupObject<volScalarField>
         (
@@ -169,7 +168,7 @@ Foam::kineticTheoryModels::frictionalStressModels::Princeton::nu
         )
     );
     volScalarField& nuf = tnu.ref();
-    volScalarField divU(fvc::div(U));
+    volScalarField divU(fvc::div(phase.phi()));
     tmp<volTensorField> S(D - 1.0/3.0*divU*tensor::I);
     tmp<volScalarField> Sdd(S && S);
     volScalarField n

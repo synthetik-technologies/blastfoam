@@ -50,6 +50,7 @@ Foam::timeIntegrators::RK2::RK2
 {
     this->as_ = {{1.0}, {1.0, 0.0}};
     this->bs_ = {{0.5}, {0.5, 0.5}};
+    initialize();
 }
 
 

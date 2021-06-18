@@ -150,17 +150,8 @@ protected:
             return true;
         }
 
-        //- Stored old values
-        PtrList<volScalarField> lambdaOld_;
-
         //- Stored changes in lambda
         tmp<volScalarField> ddtLambda_;
-
-        //- Stored changes in lambda
-        PtrList<volScalarField> deltaLambda_;
-
-        //- Stored changes in lambda due to advection
-        PtrList<volScalarField> deltaAlphaRhoLambda_;
 
 
     // Protected functions
@@ -243,9 +234,6 @@ public:
         //- Post update
         virtual void postUpdate()
         {}
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
         //- Return the specific detonation energy
         const dimensionedScalar& e0() const

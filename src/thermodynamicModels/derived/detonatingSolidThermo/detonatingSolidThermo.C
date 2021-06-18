@@ -121,14 +121,6 @@ void Foam::detonatingSolidThermo<Thermo>::postUpdate()
 
 
 template<class Thermo>
-void Foam::detonatingSolidThermo<Thermo>::clearODEFields()
-{
-    activation_->clearODEFields();
-    afterburn_->clearODEFields();
-}
-
-
-template<class Thermo>
 void Foam::detonatingSolidThermo<Thermo>::updateRho()
 {
     volScalarField& rhoRef(solidThermoModel::rho_);

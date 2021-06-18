@@ -141,7 +141,7 @@ Foam::activationModels::pressureBasedActivation::delta() const
         (
             IOobject
             (
-                "R",
+                IOobject::groupName("pressureBased:R", lambda_.group()),
                 p_.mesh().time().timeName(),
                 p_.mesh(),
                 IOobject::NO_READ,

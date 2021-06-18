@@ -107,10 +107,6 @@ void Foam::diameterModel::postUpdate()
 {}
 
 
-void Foam::diameterModel::clearODEFields()
-{}
-
-
 Foam::tmp<Foam::volScalarField> Foam::diameterModel::dMdt() const
 {
     return volScalarField::New

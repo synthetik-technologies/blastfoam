@@ -53,8 +53,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("rho", dimDensity, 0.0),
-        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+        dimensionedScalar("rho", dimDensity, 0.0)
     ),
     U_
     (
@@ -96,8 +95,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0),
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
+        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
     ),
     rhoEu_
     (
@@ -107,8 +105,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             mesh.time().timeName(),
             mesh
         ),
-        eu_*rho_,
-        eu_.boundaryField().types()
+        eu_*rho_
     ),
     phi_
     (
@@ -159,8 +156,6 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
-    this->lookupAndInitialize();
-
     rho_ = thermo_->rho();
 
     thermo_->validate("psiuCompressibleSystem", "ea");
@@ -206,10 +201,10 @@ void Foam::psiuCompressibleSystem::solve()
     volScalarField rhoEuOld(rhoEu_);
 
     //- Store old values
-    this->storeAndBlendOld(rhoOld, rhoOld_);
-    this->storeAndBlendOld(rhoUOld, rhoUOld_);
-    this->storeAndBlendOld(rhoEOld, rhoEOld_);
-    this->storeAndBlendOld(rhoEuOld, rhoEuOld_);
+    this->storeAndBlendOld(rhoOld);
+    this->storeAndBlendOld(rhoUOld);
+    this->storeAndBlendOld(rhoEOld);
+    this->storeAndBlendOld(rhoEuOld);
 
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
@@ -225,10 +220,10 @@ void Foam::psiuCompressibleSystem::solve()
     );
 
     //- Store changed in mass, momentum and energy
-    this->storeAndBlendDelta(deltaRho, deltaRho_);
-    this->storeAndBlendDelta(deltaRhoU, deltaRhoU_);
-    this->storeAndBlendDelta(deltaRhoE, deltaRhoE_);
-    this->storeAndBlendDelta(deltaRhoEu, deltaRhoEu_);
+    this->storeAndBlendDelta(deltaRho);
+    this->storeAndBlendDelta(deltaRhoU);
+    this->storeAndBlendDelta(deltaRhoE);
+    this->storeAndBlendDelta(deltaRhoEu);
 
     dimensionedScalar dT = rho_.time().deltaT();
     rho_ = rhoOld - dT*deltaRho;
@@ -305,20 +300,6 @@ void Foam::psiuCompressibleSystem::postUpdate()
     p_.correctBoundaryConditions();
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
-}
-
-void Foam::psiuCompressibleSystem::clearODEFields()
-{
-    fluxScheme_->clear();
-    this->clearOld(rhoOld_);
-    this->clearOld(rhoUOld_);
-    this->clearOld(rhoEOld_);
-    this->clearOld(rhoEuOld_);
-
-    this->clearDelta(deltaRho_);
-    this->clearDelta(deltaRhoU_);
-    this->clearDelta(deltaRhoE_);
-    this->clearDelta(deltaRhoEu_);
 }
 
 

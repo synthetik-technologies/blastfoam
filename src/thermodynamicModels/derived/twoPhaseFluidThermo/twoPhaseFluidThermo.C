@@ -159,13 +159,6 @@ void Foam::twoPhaseFluidThermo::update()
 }
 
 
-void Foam::twoPhaseFluidThermo::clearODEFields()
-{
-    thermo1_->clearODEFields();
-    thermo2_->clearODEFields();
-}
-
-
 void Foam::twoPhaseFluidThermo::updateRho()
 {
     thermo1_->updateRho();

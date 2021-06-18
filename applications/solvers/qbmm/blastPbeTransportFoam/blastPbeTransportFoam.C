@@ -70,12 +70,12 @@ int main(int argc, char *argv[])
 
         mesh.update();
 
-        fluid->encode();
-
         integrator->integrate();
 
-        populationBalance->clearODEFields();
-        fluid->clearODEFields();
+        integrator->clearODEFields();
+
+        //- Clear the flux scheme
+        fluid->flux().clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

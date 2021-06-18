@@ -260,11 +260,12 @@ kineticTheory
     viscosityModel Syamlal;
     conductivityModel Syamlal;
     granularPressureModel Lun;
-    frictionalStressModel JohnsonJackson;
+    frictionalStressModel Princeton;
 
-    JohnsonJacksonCoeffs
+    PrincetonCoeffs
     {
         alphaMinFriction        0.5;
+        alphaMinFrictionByAlphap 0.9;
         Fr                      0.05;
         eta                     2;
         p                       5;

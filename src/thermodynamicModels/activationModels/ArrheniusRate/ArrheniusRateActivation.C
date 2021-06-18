@@ -97,7 +97,7 @@ Foam::activationModels::ArrheniusRateActivation::delta() const
     (
         IOobject
         (
-            "R",
+            IOobject::groupName("Arrhenius:R", lambda_.group()),
             lambda_.time().timeName(),
             lambda_.mesh(),
             IOobject::NO_READ,
@@ -139,16 +139,6 @@ void Foam::activationModels::ArrheniusRateActivation::update()
     if (dModel_.valid())
     {
         dModel_->update();
-    }
-}
-
-
-void Foam::activationModels::ArrheniusRateActivation::clearODEFields()
-{
-    activationModel::clearODEFields();
-    if (dModel_.valid())
-    {
-        dModel_->clearODEFields();
     }
 }
 

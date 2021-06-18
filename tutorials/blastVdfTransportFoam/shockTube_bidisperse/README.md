@@ -2,7 +2,9 @@
 
 ## Notes
 
-This case uses two particle phases within a continuous air phase. This a dilute simulation where packing of particles does no occur. The continuous gas phase is represented by air, and the both particle phases have a density of 1300 kg/m^3 with a coefficient of restitution of 0.9. The diameters are 80e-6 m and 11e-6 m. The original case uses a small particle diamter of 10e-6, but this does not give correct results while 11e-6 m does, therefore this is assumed to be a typo in the original paper. Rather than the typical representation of particles using the two-fluid method, the transport of the size-velocity moments are used. We assume that each particle size has is own unique velocity and any velocity variance for a given size is negligible (mono-kinetic).
+The OpenQBMM library is required to run this case.
+
+This case uses two particle phases within a continuous air phase. This is a dilute simulation where packing of particles does not occur. The continuous gas phase is represented by air, and both particle phases have a density of 1300 kg/m^3 with a coefficient of restitution of 0.9. The diameters are 80e-6 m and 11e-6 m. The original case uses a small particle diamter of 10e-6, but this does not give correct results while 11e-6 m does, therefore this is assumed to be a typo in the original paper. Rather than the typical representation of particles using the two-fluid method, the transport of the size-velocity moments is used. We assume that each particle size has is own unique velocity and any velocity variance for a given size is negligible (mono-kinetic).
 
 This method is not ideal for the given case, but it is meant to illustrate how to use the blastVdfTransportFoam solver.
 

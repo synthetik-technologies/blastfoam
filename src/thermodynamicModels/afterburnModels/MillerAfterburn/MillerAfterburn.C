@@ -91,9 +91,7 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
     n_(readScalar(dict.lookup("n"))),
     a_("a", pow(dimPressure, -n_)/dimTime, dict_),
     pMin_("pMin", dimPressure, dict_)
-{
-    this->lookupAndInitialize();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -103,14 +101,6 @@ Foam::afterburnModels::MillerAfterburn::~MillerAfterburn()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::afterburnModels::MillerAfterburn::clearODEFields()
-{
-    this->clearOld(cOld_);
-    this->clearDelta(deltaC_);
-    this->clearDelta(deltaAlphaRhoC_);
-}
-
 
 void Foam::afterburnModels::MillerAfterburn::solve()
 {
@@ -126,7 +116,7 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     volScalarField cOld(c_);
 
     // Do not include volume changes
-    this->storeAndBlendOld(c_, cOld_, false);
+    this->storeAndBlendOld(c_, false);
 
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
@@ -140,7 +130,7 @@ void Foam::afterburnModels::MillerAfterburn::solve()
         a_*pow(max(1.0 - c_, 0.0), m_)*pow(p, n_)
     );
     deltaC.max(0.0);
-    this->storeAndBlendDelta(deltaC, deltaC_);
+    this->storeAndBlendDelta(deltaC);
 
     dimensionedScalar dT = alphaRho.time().deltaT();
     c_ = cOld + dT*deltaC;
@@ -148,17 +138,18 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     c_.correctBoundaryConditions();
 
     // Compute the limited change in c
-    volScalarField ddtC(Foam::max(c_ - cOld, 0.0)/dT);
+    ddtC_ = (Foam::max(c_ - cOld, 0.0)/dT);
+    volScalarField& ddtC = ddtC_.ref();
 
     //- Compute actual delta for the time step knowing the blended value
     //  Not limited to 0 since the delta coefficients can be negative
-    ddtC_ = this->calcDelta(ddtC, deltaC_);
+    ddtC = this->calcDelta(ddtC);
 
     //- Store the actual sub-step delta
-    this->storeDelta(ddtC_(), deltaC_);
+    this->storeDelta(ddtC);
 
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeAndBlendDelta(deltaAlphaRhoC, deltaAlphaRhoC_);
+    this->storeAndBlendDelta(deltaAlphaRhoC);
 
     c_ =
         (

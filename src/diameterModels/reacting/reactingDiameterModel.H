@@ -67,14 +67,6 @@ class reactingDiameterModel
     //- Stored change in volume per unit time
     volScalarField dVdt_;
 
-    // ODE fields
-    PtrList<volScalarField> dOld_;
-    PtrList<volScalarField> VOld_;
-
-    PtrList<volScalarField> deltad_;
-    PtrList<volScalarField> deltaPhid_;
-    PtrList<volScalarField> deltaV_;
-
     //- Does the diameter field need to be read
     virtual bool requireRead()
     {
@@ -111,9 +103,6 @@ public:
 
         //- Solve sub-step stepi given pressure and temperature fields
         virtual void solve(const volScalarField& p, const volScalarField& T);
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 
         //- Return change in radius per unit time
         //  Only used in mass transfer

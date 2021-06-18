@@ -142,9 +142,6 @@ public:
         //- Set old lists and fluxes (initialization of fields)
         virtual void postUpdate() = 0;
 
-        //- Remove stored fields
-        virtual void clearODEFields() = 0;
-
 
     // regIOobject functions
 

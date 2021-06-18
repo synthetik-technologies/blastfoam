@@ -6,7 +6,7 @@ The presented set of cases are compared to Guilkey et al. (2007) and Souers et a
 
 Original plots were digitized using WebPlotDigitizer: https://github.com/ankitrohatgi/WebPlotDigitizer/releases The quality of the plots in the original publication (below) was not ideal for reproduction, but we have made an effort to reproduce them as faithfully as possible, and the points are found in the "validation/validationData" directory.
 
-All cases used a cell size of 0.25 mm. The run times on a four core desktop and number of cells for the cases were:
+All cases used a cell size of 0.25 mm. The run times on a four core desktop (1D case was run in serial) and number of cells for the cases were:
 
 1D (400 cells): 17 s
 6 mm (1920 cells): 90 s

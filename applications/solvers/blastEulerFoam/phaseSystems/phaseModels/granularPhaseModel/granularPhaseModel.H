@@ -101,23 +101,8 @@ protected:
         //- Residual phase fraction
         const dimensionedScalar& residualAlpha_;
 
-
-        // ODE fields
-
-            //- Stored Pseduo thermal energies
-            PtrList<volScalarField> alphaRhoPTEOld_;
-
-            //- Stored changes in pseduo thermal energy
-            PtrList<volScalarField> deltaAlphaRhoPTE_;
-
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
-
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
 
 
 public:
@@ -186,9 +171,18 @@ public:
             //- Update viscous terms
             virtual void postUpdate();
 
-            //- Remove stored fields
-            virtual void clearODEFields();
 
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
         //- Return conserved quantities
 

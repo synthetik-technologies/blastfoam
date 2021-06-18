@@ -62,6 +62,7 @@ Foam::timeIntegrators::RKF45::RKF45
         {b50, b51, b52, b53, b54},
         {b60, b61, b62, b63, b64, b65}
     };
+    initialize();
 }
 
 

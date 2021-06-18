@@ -52,25 +52,5 @@ Foam::PDFODETransportModel::~PDFODETransportModel()
 
 // * * * * * * * * * * * * Public Member functions * * * * * * * * * * * * * //
 
-void Foam::PDFODETransportModel::initializeODEFields()
-{
-    momentsOld_ = PtrList<PtrList<volScalarField>>(nMoments());
-    deltaMoments_ = PtrList<PtrList<volScalarField>>(nMoments());
-    forAll(momentsOld_, mi)
-    {
-        momentsOld_.set(mi, new PtrList<volScalarField>());
-        deltaMoments_.set(mi, new PtrList<volScalarField>());
-    }
-}
-
-
-void Foam::PDFODETransportModel::clearODEFields()
-{
-    forAll(momentsOld_, mi)
-    {
-        this->clearOld(momentsOld_[mi]);
-        this->clearDelta(deltaMoments_[mi]);
-    }
-}
 
 // ************************************************************************* //

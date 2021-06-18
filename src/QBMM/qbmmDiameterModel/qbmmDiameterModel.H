@@ -99,9 +99,6 @@ public:
 
         //- Post update
         virtual void postUpdate();
-
-        //- Remove stored fields
-        virtual void clearODEFields();
 };
 
 

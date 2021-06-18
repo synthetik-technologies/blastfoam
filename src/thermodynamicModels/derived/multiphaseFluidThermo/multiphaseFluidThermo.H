@@ -122,9 +122,6 @@ public:
         //- Solve sub-step stepi
         virtual void solve();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
-
         //- Post update
         virtual void postUpdate();
 

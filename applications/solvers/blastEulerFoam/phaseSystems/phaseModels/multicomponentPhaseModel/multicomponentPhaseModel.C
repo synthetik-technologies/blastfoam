@@ -90,8 +90,6 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
     Ys_(components_.size()),
     residualAlpha_("residualAlpha", dimless, phaseDict_),
     alphaRhoYPhis_(components_.size()),
-    YsOld_(components_.size()),
-    deltaAlphaRhoYs_(components_.size()),
     fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
 {
     //- Temporarily Store read density
@@ -159,9 +157,6 @@ Foam::multicomponentPhaseModel::multicomponentPhaseModel
                 phaseName
             ).ptr()
         );
-
-        YsOld_.set(i, new PtrList<volScalarField>());
-        deltaAlphaRhoYs_.set(i, new PtrList<volScalarField>());
     }
     // Reset density to correct value
     rho_ = rhoOld;
@@ -234,8 +229,8 @@ void Foam::multicomponentPhaseModel::solve()
     forAll(Ys_, i)
     {
         volScalarField deltaAlphaRhoY(fvc::div(alphaRhoYPhis_[i]));
-        this->storeAndBlendDelta(deltaAlphaRhoY, deltaAlphaRhoYs_[i]);
-        this->storeAndBlendOld(Ys_[i], YsOld_[i]);
+        this->storeAndBlendDelta(deltaAlphaRhoY);
+        this->storeAndBlendOld(Ys_[i]);
         Ys_[i] =
             (
                 this->alphaRho_.prevIter()*Ys_[i]   // Old time
@@ -254,20 +249,6 @@ void Foam::multicomponentPhaseModel::postUpdate()
     forAll(thermos_, i)
     {
         thermos_[i].postUpdate();
-    }
-}
-
-
-void Foam::multicomponentPhaseModel::clearODEFields()
-{
-    phaseModel::clearODEFields();
-    fluxScheme_->clear();
-
-    forAll(YsOld_, i)
-    {
-        this->clearOld(YsOld_[i]);
-        this->clearDelta(deltaAlphaRhoYs_[i]);
-        thermos_[i].clearODEFields();
     }
 }
 

@@ -39,6 +39,7 @@ License
 #include "dragODE.H"
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
+#include "fluxScheme.H"
 
 #include "SortableList.H"
 
@@ -629,8 +630,7 @@ Foam::phaseSystem::phaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimVelocity, Zero),
-        "zeroGradient"
+        dimensionedVector("0", dimVelocity, Zero)
     ),
 
     phi_
@@ -1017,36 +1017,39 @@ void Foam::phaseSystem::postUpdate()
     const dimensionedScalar& deltaT(mesh_.time().deltaT());
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
+    decode();
 }
 
 
-void Foam::phaseSystem::clearODEFields()
+void Foam::phaseSystem::printInfo()
 {
     Info<< "Phase statistics:"<<endl;
     forAll(phaseModels_, phasei)
     {
         Info<< phaseModels_[phasei].name() << ":" << endl;
-        phaseModels_[phasei].clearODEFields();
+
+        // Clear flux schemes
+        phaseModels_[phasei].flux().clear();
 
         const volScalarField& alpha(phaseModels_[phasei]);
         const volScalarField& T(phaseModels_[phasei].T());
         Info<< "\t"
-            << alpha.name() << " fraction, min, max = "
+            << alpha.name() << " fraction, max, min = "
             << alpha.weightedAverage(mesh_.V()).value()
-            << ' ' << min(alpha).value()
-            << ' ' << max(alpha).value() << nl
+            << ' ' << max(alpha).value()
+            << ' ' << min(alpha).value() << nl
             << "\t"
-            << T.name() << " min, max = "
-            << ' ' << min(T).value()
+            << T.name() << " max, min = "
             << ' ' << max(T).value()
+            << ' ' << min(T).value()
             << endl;
         if (!phaseModels_[phasei].granular())
         {
             const volScalarField& p(phaseModels_[phasei].p());
             Info<< "\t"
-                << p.name() << " min, max = "
-                << ' ' << min(p).value()
-                << ' ' << max(p).value() << endl;
+                << p.name() << " max, min = "
+                << ' ' << max(p).value()
+                << ' ' << min(p).value() << endl;
         }
         Info<< endl;
 
@@ -1056,10 +1059,10 @@ void Foam::phaseSystem::clearODEFields()
         if (kineticTheoryPtr_->polydisperse())
         {
             const volScalarField& alpha(kineticTheoryPtr_->alphap());
-            Info<< alpha.name() << " fraction, min, max = "
+            Info<< alpha.name() << " fraction, max, min = "
                 << alpha.weightedAverage(mesh_.V()).value()
-                << ' ' << min(alpha).value()
                 << ' ' << max(alpha).value()
+                << ' ' << min(alpha).value()
                 << endl;
         }
     }

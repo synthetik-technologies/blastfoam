@@ -50,9 +50,7 @@ Foam::afterburnModel::afterburnModel
     ),
     mesh_(mesh),
     dict_(dict)
-{
-    this->lookupAndInitialize();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

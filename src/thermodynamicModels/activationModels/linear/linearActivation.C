@@ -102,7 +102,7 @@ Foam::activationModels::linearActivation::delta() const
         (
             IOobject
             (
-                "linearActivation:delta",
+                IOobject::groupName("linear:R", lambda_.group()),
                 lambda_.time().timeName(),
                 lambda_.mesh(),
                 IOobject::NO_READ,

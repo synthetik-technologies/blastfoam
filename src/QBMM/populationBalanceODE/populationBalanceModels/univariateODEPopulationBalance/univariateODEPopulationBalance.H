@@ -177,9 +177,6 @@ public:
         //- Solve implicit terms and ode
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
-
         //- Read
         virtual bool readIfModified();
 };

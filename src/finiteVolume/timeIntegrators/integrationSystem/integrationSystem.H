@@ -40,12 +40,10 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "Time.H"
-
+#include "timeIntegrator.H"
 
 namespace Foam
 {
-
-class timeIntegrator;
 
 /*---------------------------------------------------------------------------*\
                            Class integrationSystem Declaration
@@ -62,6 +60,9 @@ protected:
         //- Name of system
         const word name_;
 
+        //- Stored reference to time integrator
+        timeIntegrator* timeInt_;
+
         //- Number of steps
         label nSteps_;
 
@@ -77,25 +78,36 @@ protected:
         //- Number of stored deltas
         label nDelta_;
 
-
         // Storage for fields
 
             //- Store old fields
-            template<class fieldType>
+            template<class FieldType>
             void storeOld
             (
-                fieldType& f,
-                PtrList<fieldType>& fList,
+                FieldType& f,
+                PtrList<FieldType>& fList,
                 const bool conservative = true
-            ) const;
+            );
 
             //- Store delta fields
-            template<class fieldType>
+            template<class FieldType>
             void storeDelta
             (
-                const fieldType& f,
-                PtrList<fieldType>& fList
-            ) const;
+                const FieldType& f,
+                PtrList<FieldType>& fList
+            );
+
+            //- Store old fields
+            template<class FieldType>
+            void storeOld
+            (
+                FieldType& f,
+                const bool conservative = true
+            );
+
+            //- Store delta fields
+            template<class FieldType>
+            void storeDelta(const FieldType& f);
 
 
         // storage for single quantities
@@ -103,11 +115,11 @@ protected:
             //- Store old fields
             //  moving keyword used for template function
             template<class Type>
-            void storeOld(Type& f, List<Type>& fList, bool conservative = true) const;
+            void storeOld(Type& f, List<Type>& fList, bool conservative = true);
 
             //- Store delta fields
             template<class Type>
-            void storeDelta(const Type& f, List<Type>& fList) const;
+            void storeDelta(const Type& f, List<Type>& fList);
 
 
         // General functions
@@ -120,6 +132,11 @@ protected:
                 const ListType<Type>& fList
             ) const;
 
+            //- Combine old fields using time step coefficients, looking up
+            //  the saved fields
+            template<class FieldType>
+            void blendOld(FieldType& f) const;
+
             //- Combine delta fields using time step coefficients
             template<template<class> class ListType, class Type>
             void blendDelta
@@ -128,6 +145,11 @@ protected:
                 const ListType<Type>& fList
             ) const;
 
+            //- Combine delta fields using time step coefficients, looking up
+            //  the saved fields
+            template<class FieldType>
+            void blendDelta(FieldType& f) const;
+
             //- Combine old fields using time step coefficients
             template<template<class> class ListType, class Type>
             void storeAndBlendOld
@@ -135,7 +157,12 @@ protected:
                 Type& f,
                 ListType<Type>& fList,
                 const bool conservative = true
-            ) const;
+            );
+
+            //- Combine old fields using time step coefficients, looking up
+            //  the saved fields
+            template<class FieldType>
+            void storeAndBlendOld(FieldType& f, const bool conservative = true);
 
             //- Combine delta fields using time step coefficients
             template<template<class> class ListType, class Type>
@@ -143,7 +170,38 @@ protected:
             (
                 Type& f,
                 ListType<Type>& fList
+            );
+
+            //- Combine delta fields using time step coefficients, looking up
+            //  the saved fields
+            template<class FieldType>
+            void storeAndBlendDelta(FieldType& f);
+
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
+            tmp<Type> calcDelta
+            (
+                const Type& f,
+                const ListType<Type>& fList
             ) const;
+
+            //- Calculate the sub delta given the actual change, looking up
+            //  the saved fields
+            template<class FieldType>
+            tmp<FieldType> calcDelta(const FieldType& f) const;
+
+            //- Calculate the sub delta given the actual change
+            template<template<class> class ListType, class Type>
+            tmp<Type> calcAndStoreDelta
+            (
+                const Type& f,
+                ListType<Type>& fList
+            );
+
+            //- Calculate the sub delta given the actual change, looking up
+            //  the saved fields
+            template<class FieldType>
+            tmp<FieldType> calcAndStoreDelta(const FieldType& f);
 
             //- Combine fields using time step coefficients
             //  f must be the most recent value of the field
@@ -156,39 +214,17 @@ protected:
                 const scalarList& scales
             ) const;
 
-            //- Calculate the sub delta given the actual change
-            template<template<class> class ListType, class Type>
-            Foam::tmp<Type> calcDelta
-            (
-                const Type& f,
-                const ListType<Type>& fList
-            ) const;
+            //- Add old fields for a given variable
+            template<class FieldType>
+            void addOldField(const FieldType& f);
 
-            //- Calculate the sub delta given the actual change
-            template<template<class> class ListType, class Type>
-            void calcAndStoreDelta
-            (
-                const Type& f,
-                ListType<Type>& fList
-            ) const;
+            //- Add delta fields for a given variable
+            template<class FieldType>
+            void addDeltaField(const FieldType& f);
 
-            //- Clear and resize stored old fields
-            template<class fieldType>
-            void clearOld(PtrList<fieldType>& fList) const;
-
-            //- Clear and resize stored delta fields
-            template<class fieldType>
-            void clearDelta(PtrList<fieldType>& fList) const;
-
-
-        //- Lookup global integrator and initialize
-        void lookupAndInitialize(const word& name = "globalTimeIntegrator");
-
-
-private:
-
-    //- Stored reference to time integrator
-    const timeIntegrator* timeInt_;
+            //- Add old and delta fields for a given variable
+            template<class FieldType>
+            void addOldDeltaField(const FieldType& f);
 
 
 public:
@@ -214,13 +250,6 @@ public:
             return name_;
         }
 
-        //- Set old lists and fluxes (initialization of fields)
-        void setODEFields
-        (
-            const boolList& storeFields,
-            const boolList& storeDeltas
-        );
-
         //- Update before each ode step
         virtual void update() = 0;
 
@@ -229,9 +258,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve() = 0;
-
-        //- Remove stored fields
-        virtual void clearODEFields() = 0;
 
         //- Return the current step
         label step() const;

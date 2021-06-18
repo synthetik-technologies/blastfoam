@@ -201,8 +201,6 @@ Foam::activationModel::activationModel
     alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName_)),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
-    this->lookupAndInitialize();
-
     const volScalarField& alpha
     (
         mesh.lookupObject<volScalarField>
@@ -333,21 +331,13 @@ Foam::vector Foam::activationModel::centerOfMass
 }
 
 
-void Foam::activationModel::clearODEFields()
-{
-    this->clearOld(lambdaOld_);
-    this->clearDelta(deltaLambda_);
-    this->clearDelta(deltaAlphaRhoLambda_);
-}
-
-
 void Foam::activationModel::solve()
 {
 
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system
     volScalarField lambdaOld(lambda_);
-    this->storeAndBlendOld(lambdaOld, lambdaOld_, false);
+    this->storeAndBlendOld(lambdaOld, false);
 
     dimensionedScalar dT(this->mesh_.time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
@@ -371,12 +361,10 @@ void Foam::activationModel::solve()
 
         // Compute the limited change in lambda
         ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
+        volScalarField& ddtLambda = ddtLambda_.ref();
 
         //- Compute actual delta for the time step knowing the blended
-        ddtLambda_.ref() = this->calcDelta(ddtLambda_(), deltaLambda_);
-
-        //- Store the actual sub-step delta
-        this->storeDelta(ddtLambda_(), deltaLambda_);
+        ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
         return;
     }
@@ -385,7 +373,7 @@ void Foam::activationModel::solve()
     {
         volScalarField deltaLambda(this->delta());
         deltaLambda.max(0.0);
-        this->storeAndBlendDelta(deltaLambda, deltaLambda_);
+        this->storeAndBlendDelta(deltaLambda);
 
         lambda_ = lambdaOld + deltaLambda*dT;
 
@@ -404,24 +392,22 @@ void Foam::activationModel::solve()
         lambda_.correctBoundaryConditions();
 
         // Compute the limited change in lambda
-        volScalarField ddtLambda(Foam::max(lambda_ - lambdaOld, 0.0)/dT);
+        ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
+        volScalarField& ddtLambda = ddtLambda_.ref();
+        volScalarField ddtLambdaLimited(ddtLambda);
 
-        //- Compute actual delta for the time step knowing the blended value
-        //  Not limited to 0 since the delta coefficients can be negative
-        ddtLambda_ = this->calcDelta(ddtLambda, deltaLambda_);
-
-        //- Store the actual sub-step delta
-        this->storeDelta(ddtLambda_(), deltaLambda_);
+        //- Compute actual delta for the time step knowing the blended
+        ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
         volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi_, lambda_));
-        this->storeAndBlendDelta(deltaAlphaRhoLambda, deltaAlphaRhoLambda_);
+        this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
         //- Solve advection
         lambda_ =
             (
                 lambdaOld*alphaRho_.prevIter() - dT*deltaAlphaRhoLambda
             )/max(alphaRho_, smallRho)
-          + dT*ddtLambda;
+          + dT*ddtLambdaLimited;
 
         //- Correct the lambda field since zero mass will cause "unactivation"
         //  which is not correct for some models

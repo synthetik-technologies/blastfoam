@@ -105,6 +105,9 @@ int main(int argc, char *argv[])
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();
 
+        //- Clear the flux scheme
+        fluid.flux().clear();
+
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
         Info<< "max(T): " << max(T).value()
@@ -117,9 +120,7 @@ int main(int argc, char *argv[])
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"
             << nl << endl;
 
-        fluid.clearODEFields();
-
-        parcels.storeGlobalPositions();
+        integrator->clearODEFields();
     }
 
     Info<< "End\n" << endl;

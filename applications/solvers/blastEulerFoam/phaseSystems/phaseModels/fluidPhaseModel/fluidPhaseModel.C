@@ -154,14 +154,6 @@ void Foam::fluidPhaseModel::postUpdate()
 }
 
 
-void Foam::fluidPhaseModel::clearODEFields()
-{
-    phaseModel::clearODEFields();
-    thermo_->clearODEFields();
-    fluxScheme_->clear();
-}
-
-
 void Foam::fluidPhaseModel::update()
 {
     const volScalarField& alpha = *this;
@@ -260,7 +252,7 @@ void Foam::fluidPhaseModel::decode()
         volScalarField limit(pos(T_));
         T_.max(small);
         e_ = e_*limit + thermo_->E()*(1.0 - limit);
-        alphaRhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
+        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
 

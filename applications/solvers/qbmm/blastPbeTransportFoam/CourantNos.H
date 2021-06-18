@@ -7,7 +7,7 @@ volScalarField speedOfSound("speedOfSound", fluid->speedOfSound());
 {
     surfaceScalarField amaxSf
     (
-        mag(phi) + fvc::interpolate(speedOfSound)*mesh.magSf()
+        mag(fvc::flux(U)) + fvc::interpolate(speedOfSound)*mesh.magSf()
     );
 
     scalarField sumAmaxSf

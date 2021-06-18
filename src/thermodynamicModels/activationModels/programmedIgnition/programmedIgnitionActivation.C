@@ -130,7 +130,7 @@ Foam::activationModels::programmedIgnitionActivation::delta() const
         (
             IOobject
             (
-                "programmedIgnition:delta",
+                IOobject::groupName("programmedIgnition:R", lambda_.group()),
                 lambda_.time().timeName(),
                 lambda_.mesh(),
                 IOobject::NO_READ,

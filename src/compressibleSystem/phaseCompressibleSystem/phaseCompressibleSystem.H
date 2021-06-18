@@ -117,16 +117,6 @@ protected:
         autoPtr<radiationModel> radiation_;
 
 
-    // ODE variables
-
-        //- Old values for ode solver
-        PtrList<volVectorField> rhoUOld_;
-        PtrList<volScalarField> rhoEOld_;
-
-        //- Stored delta fields
-        PtrList<volVectorField> deltaRhoU_;
-        PtrList<volScalarField> deltaRhoE_;
-
         //- External energy source matrix
         tmp<fvScalarMatrix> extESource_;
 
@@ -197,8 +187,17 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Remove stored fields
-        virtual void clearODEFields();
+        //- Return the flux scheme
+        virtual const fluxScheme& flux() const
+        {
+            return fluxScheme_();
+        }
+
+        //- Access the flux scheme
+        virtual fluxScheme& flux()
+        {
+            return fluxScheme_();
+        }
 
         //- Add external energy source
         tmp<fvScalarMatrix>& eSource()

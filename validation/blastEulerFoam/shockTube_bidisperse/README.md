@@ -2,7 +2,7 @@
 
 ## Notes
 
-This case uses two granular phases within a continuous air phase. This a dilute simulation where packing of particles does no occur. The continuous gas phase is represented by air, and the both particle phases have a density of 1300 kg/m^3 with a coefficient of restitution of 0.9. The diameters are 80e-6 m and 11e-6 m. The original case uses a small particle diamter of 10e-6, but this does not give correct results while 11e-6 m does, therefore this is assumed to be a typo in the original paper.
+This case uses two granular phases within a continuous air phase. This a dilute simulation where packing of particles does not occur. The continuous gas phase is represented by air, and both particle phases have a density of 1300 kg/m^3 with a coefficient of restitution of 0.9. The diameters are 80e-6 m and 11e-6 m. The original case uses a small particle diamter of 10e-6, but this does not give correct results while 11e-6 m does, therefore this is assumed to be a typo in the original paper.
 
 Original plots were digitized using WebPlotDigitizer: https://github.com/ankitrohatgi/WebPlotDigitizer/releases The quality of the plots in the original publication (below) was not ideal for reproduction, but we have made an effort to reproduce them as faithfully as possible, and the points are found in the "validation/validationData" directory.
 
