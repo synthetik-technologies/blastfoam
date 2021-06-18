@@ -41,8 +41,6 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
     A_(dict.subDict("equationOfState").lookup<scalar>("A")),
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
     pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav")),
-    rhoCav_(dict.subDict("equationOfState").lookup<scalar>("rhoCav")),
-    k_(dict.subDict("equationOfState").lookup<scalar>("k")),
     EcTable_()
 {
     label tableSize(100);
@@ -92,7 +90,6 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
 
         if (((i + 1) % label(n/tableSize)) == 0)
         {
-            Info<<I<<" rho: "<<rho<<", ec: "<<ec<<endl;
             rhof[I] = rho;
             ecf[I] = ec;
             I++;

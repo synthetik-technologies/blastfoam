@@ -182,7 +182,7 @@ Foam::scalar Foam::BKW<Specie>::Cp
     const scalar T
 ) const
 {
-    return Cv(rho, T) - T*sqr(dpdT(rho, T))/dpdv(rho, T) - this->R();
+    return Cv(rho, e, T) - T*sqr(dpdT(rho, e, T))/dpdv(rho, e, T) - this->R();
 }
 
 

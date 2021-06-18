@@ -12,7 +12,7 @@ specie
 
 thermodynamics
 {
-    Cv  4316;
+    Cv  2400;
     Hf  0;
 }
 
@@ -35,13 +35,13 @@ equationOfState
 //     S3      1.2268;
 
 // Tillotson
-    rho0    998.0;
+    rho0    1000.0;
     a       0.7;
     b       0.15;
     A       21.1e8;
     B       132.5e8;
 
-    e0      7e6;
+    e0      7e5;
 
     pCav    5000;
     rhoCav  995;
@@ -52,9 +52,9 @@ equationOfState
 //     rho0    1000.0;
 //     e0      3.543e5;
 //     omega   0.28;
-//     A       2.2e10;
-//     B       9.94e10;
-//     C       14.57e10;
+//     A       2.2e9;
+//     B       9.54e9;
+//     C       14.57e9;
 //     pCav    5000;
 
 // Stiffened gas

@@ -76,6 +76,18 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
 
 
 template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ets
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return eTable_.lookup(T);
+}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
 (
     const scalar rho,
@@ -84,6 +96,18 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Ea
 ) const
 {
     return Es(rho, e, T) + Hf();
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Eta
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Ets(rho, e, T) + Hf();
 }
 
 

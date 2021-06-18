@@ -153,7 +153,7 @@ Foam::scalar Foam::LSZK<Specie>::E
     const scalar T
 ) const
 {
-    return a_*pow(rho, b_ - 1.0)/(b_ - 1.0);
+    return a_*pow(rho, b_ - 1.0)/(gamma_*(b_ - 1.0));
 }
 
 

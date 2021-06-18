@@ -1,13 +1,8 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I/usr/include/python3.8 \
-    -I/usr/lib64/python3.8/site-packages/numpy/core/include \
-    -I$(HOME)/Documents/Programing/C++/matplotlib-cpp
-
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude
 
 EXE_LIBS = \
     -lfiniteVolume \
     -L$(FOAM_USER_LIBBIN) \
-    -lblastThermodynamics \
-    -lpython3.8
+    -lblastThermodynamics

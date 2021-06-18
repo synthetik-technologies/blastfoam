@@ -1,0 +1,113 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1; // feet to meters
+
+theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
+
+Ri       0.04445;
+xip      #calc "$Ri*cos($theta)";
+xin      #calc "-$Ri*cos($theta)";
+
+Ro       0.0508;
+xop      #calc "$Ro*cos($theta)";
+xon      #calc "-$Ro*cos($theta)";
+
+
+Y       0.2286;
+
+zip     #calc "$Ri*sin($theta)";
+zin     #calc "-$Ri*sin($theta)";
+zop     #calc "$Ro*sin($theta)";
+zon     #calc "-$Ro*sin($theta)";
+
+vertices
+(
+    ($xip 0 $zin)
+    ($xop 0 $zon)
+    ($xop $Y $zon)
+    ($xip $Y $zin)
+
+    ($xip 0 $zip)
+    ($xop 0 $zop)
+    ($xop $Y $zop)
+    ($xip $Y $zip)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) walls (8 288 1) simpleGrading (1 1 1)
+ );
+
+edges
+(
+);
+
+boundary
+(
+    fixedWalls
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+            (3 2 6 7)
+        );
+    }
+    freeWall
+    {
+        type patch;
+        faces
+        (
+            (1 2 6 5)
+        );
+    };
+
+    walls_to_fluid
+    {
+        type mappedMovingWall;
+        sampleMode nearestPatchFace;
+        sampleRegion fluid;
+        samplePatch fluid_to_walls;
+        faces
+        (
+            (0 3 7 4)
+        );
+    };
+
+    front
+    {
+        type wedge;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+    back
+    {
+        type wedge;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+ );
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

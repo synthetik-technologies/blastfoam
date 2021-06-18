@@ -183,8 +183,24 @@ public:
             const scalar T
         ) const;
 
+        //- Sensible thermal enthalpy [J/kg]
+        inline scalar Hts
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
         //- Absolute enthalpy [J/kg]
         inline scalar Ha
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Absolute thermal enthalpy [J/kg]
+        inline scalar Hta
         (
             const scalar rho,
             const scalar e,

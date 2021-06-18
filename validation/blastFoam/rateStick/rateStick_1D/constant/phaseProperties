@@ -85,7 +85,7 @@ ANFO
         }
     }
 
-    activationModel pressureBased;
+    activationModel a;
     initiation
     {
         E0              4.0e9;
@@ -129,7 +129,6 @@ gas
     }
     thermodynamics
     {
-        type        eConst;
         Cv          718;
         Hf          0;
     }

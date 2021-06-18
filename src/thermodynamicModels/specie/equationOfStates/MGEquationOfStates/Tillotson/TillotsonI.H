@@ -38,9 +38,7 @@ inline Foam::Tillotson<Specie>::Tillotson
     const scalar b,
     const scalar A,
     const scalar B,
-    const scalar pCav,
-    const scalar rhoCav,
-    const scalar k
+    const scalar pCav
 )
 :
     Specie(sp),
@@ -50,9 +48,7 @@ inline Foam::Tillotson<Specie>::Tillotson
     b_(b),
     A_(A),
     B_(B),
-    pCav_(pCav),
-    rhoCav_(rhoCav),
-    k_(k)
+    pCav_(pCav)
 {}
 
 
@@ -72,9 +68,7 @@ inline Foam::Tillotson<Specie>::Tillotson
     b_(pf.b_),
     A_(pf.A_),
     B_(pf.B_),
-    pCav_(pf.pCav_),
-    rhoCav_(pf.rhoCav_),
-    k_(pf.k_)
+    pCav_(pf.pCav_)
 {}
 
 
@@ -132,11 +126,6 @@ Foam::scalar Foam::Tillotson<Specie>::Pi
     const scalar e
 ) const
 {
-    if (rho < rhoCav_)
-    {
-        return 0.0;
-    }
-
     scalar mu(rho/rho0_ - 1.0);
     return
       - A_*mu
@@ -154,11 +143,6 @@ Foam::scalar Foam::Tillotson<Specie>::delta
     const scalar e
 ) const
 {
-    if (rho < rhoCav_)
-    {
-        return 0.0;
-    }
-
     scalar x(e*sqr(rho0_) + e0_*sqr(rho));
     scalar G(GammaMG(rho, e));
     scalar dGammadRho =
@@ -167,7 +151,7 @@ Foam::scalar Foam::Tillotson<Specie>::delta
     scalar dPidRho =
       - A_/rho0_
       - B_*2.0*(rho - rho0_)/sqr(rho0_)
-      + b_*e*e0_*sqr(rho*rho0_)/pow3(x)*(e0_*sqr(rho) - 3.0*e*sqr(rho0_));
+      + b_*sqr(e)*e0_*sqr(rho*rho0_)/pow3(x)*(e0_*sqr(rho) - 3.0*e*sqr(rho0_));
     return
       - (p + Pi(rho, e))*dGammadRho/sqr(G - 1.0)
       + dPidRho/(G - 1.0);
@@ -184,31 +168,9 @@ Foam::scalar Foam::Tillotson<Specie>::cSqr
     const scalar Cv
 ) const
 {
-//     if (rho < rhoCav_)
-//     {
-//         return sqrt(k_*pCav_/max(rho, 1e-10));
-//     }
-
     scalar gamma(GammaMG(rho, e));
     scalar h((gamma*p + Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
-    scalar cLSqr((h - delta(p, rho, e))*(gamma - 1.0));
-
-//     if (rho < rho0_)
-//     {
-//         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
-//         scalar cCavSqr(k_*pCav_/max(rho, 1e-10));
-//
-//         return
-//             1.0
-//            /(
-//                 max(rho, 1e-10)
-//                *(
-//                     x/(max(rho, 1e-10)*cCavSqr)
-//                   + (1.0 - x)/(rho0_*cLSqr)
-//                 )
-//             );
-//     }
-    return cLSqr;
+    return (h - delta(p, rho, e))*(gamma - 1.0);
 }
 
 
@@ -219,30 +181,11 @@ Foam::scalar Foam::Tillotson<Specie>::GammaMG
     const scalar e
 ) const
 {
-//     if (rho < rhoCav_)
-//     {
-//         return k_;
-//     }
     scalar x(e*sqr(rho0_) + e0_*sqr(rho));
-    scalar w =
+    return
         (a_*x + b_*e0_*sqr(rho))/x
-      - b_*e*e0_*sqr(rho*rho0_)/sqr(x);
-//     else if (rho < rho0_)
-//     {
-//         scalar x((rho - rho0_)/(rhoCav_ - rho0_));
-//
-//         return
-//             1.0
-//            /(
-//                 max(rho, 1e-10)
-//                *(
-//                     x/(rhoCav_*k_)
-//                   + (1.0 - x)/(rho0_*(omega_ + 1.0))
-//                 )
-//             );
-//     }
-
-    return w + 1.0;
+      - b_*e*e0_*sqr(rho*rho0_)/sqr(x)
+      + 1.0;
 }
 
 
@@ -256,7 +199,7 @@ Foam::scalar Foam::Tillotson<Specie>::dpdv
 {
     scalar x(e*sqr(rho0_) + e0_*sqr(rho));
     return
-       -sqr(rho/rho0_*x)
+       -sqr(rho/rho0_/x)
        *(
             A_*rho0_*sqr(x)
           + 2.0*B_*sqr(x)*(rho - rho0_)
@@ -305,7 +248,7 @@ Foam::scalar Foam::Tillotson<Specie>::E
     const scalar T
 ) const
 {
-    return EcTable_.lookup(rho);
+    return EcTable_.lookup(rho) - e0_;
 }
 
 
@@ -317,7 +260,6 @@ Foam::scalar Foam::Tillotson<Specie>::Cv
     const scalar T
 ) const
 {
-    // Check
     return 0.0;
 }
 
@@ -330,7 +272,6 @@ Foam::scalar Foam::Tillotson<Specie>::Cp
     const scalar T
 ) const
 {
-    // Check
     return 0.0;
 }
 
@@ -382,8 +323,6 @@ inline void Foam::Tillotson<Specie>::operator+=
         A_ = Y1*A_ + Y2*pf.A_;
         B_ = Y1*B_ + Y2*pf.B_;
         pCav_ = Y1*pCav_ + Y2*pf.pCav_;
-        rhoCav_ = Y1*rhoCav_ + Y2*pf.rhoCav_;
-        k_ = Y1*k_ + Y2*pf.k_;
     }
 }
 
@@ -421,9 +360,7 @@ inline Foam::Tillotson<Specie> Foam::operator+
             pf1.b_,
             pf1.A_,
             pf1.B_,
-            pf1.pCav_,
-            pf1.rhoCav_,
-            pf1.k_
+            pf1.pCav_
         );
     }
     else
@@ -440,9 +377,7 @@ inline Foam::Tillotson<Specie> Foam::operator+
             Y1*pf1.b_ + Y2*pf2.b_,
             Y1*pf1.A_ + Y2*pf2.A_,
             Y1*pf1.B_ + Y2*pf2.B_,
-            Y1*pf1.pCav_ + Y2*pf2.pCav_,
-            Y1*pf1.rhoCav_ + Y2*pf2.rhoCav_,
-            Y1*pf1.k_ + Y2*pf2.k_
+            Y1*pf1.pCav_ + Y2*pf2.pCav_
         );
     }
 }
@@ -464,9 +399,7 @@ inline Foam::Tillotson<Specie> Foam::operator*
         pf.b_,
         pf.A_,
         pf.B_,
-        pf.pCav_,
-        pf.rhoCav_,
-        pf.k_
+        pf.pCav_
     );
 }
 
@@ -496,9 +429,7 @@ inline Foam::Tillotson<Specie> Foam::operator==
         Y2*pf2.b_ - Y1*pf1.b_,
         Y2*pf2.A_  - Y1*pf1.A_,
         Y2*pf2.B_ - Y1*pf1.B_,
-        Y2*pf2.pCav_  - Y1*pf1.pCav_,
-        Y2*pf2.rhoCav_  - Y1*pf1.rhoCav_,
-        Y2*pf2.k_    - Y1*pf1.k_
+        Y2*pf2.pCav_  - Y1*pf1.pCav_
     );
 }
 

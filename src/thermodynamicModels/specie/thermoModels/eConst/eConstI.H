@@ -123,6 +123,18 @@ inline Foam::scalar Foam::eConst<EquationOfState>::Es
 
 
 template<class EquationOfState>
+inline Foam::scalar Foam::eConst<EquationOfState>::Ets
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Cv_*T;
+}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::eConst<EquationOfState>::Ea
 (
     const scalar rho,
@@ -131,6 +143,18 @@ inline Foam::scalar Foam::eConst<EquationOfState>::Ea
 ) const
 {
     return Es(rho, e, T) + Hf_;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eConst<EquationOfState>::Eta
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Ets(rho, e, T) + Hf_;
 }
 
 

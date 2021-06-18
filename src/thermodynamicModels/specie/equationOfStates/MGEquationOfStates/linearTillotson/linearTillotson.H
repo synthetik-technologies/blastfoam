@@ -115,11 +115,11 @@ class linearTillotson
         scalar B_;
         scalar C_;
 
-        //- Integration constant
-        scalar intConst_;
-
         //- Cavitation pressure
         scalar pCav_;
+
+        //- Stored cavitation energies
+        lookupTable1D EcTable_;
 
 
 public:

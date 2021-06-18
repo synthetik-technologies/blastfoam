@@ -200,6 +200,23 @@ inline Foam::scalar Foam::janaf<EquationOfState>::Ha
 
 
 template<class EquationOfState>
+inline Foam::scalar Foam::janaf<EquationOfState>::Hta
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    const coeffArray& a = coeffs(T);
+    return
+    (
+        ((((a[4]/5.0*T + a[3]/4.0)*T + a[2]/3.0)*T + a[1]/2.0)*T + a[0])*T
+      + a[5]
+    );
+}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::janaf<EquationOfState>::Hs
 (
     const scalar rho,
@@ -208,6 +225,18 @@ inline Foam::scalar Foam::janaf<EquationOfState>::Hs
 ) const
 {
     return Ha(rho, e, T) - Hf();
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janaf<EquationOfState>::Hts
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Hta(rho, e, T) - Hf();
 }
 
 

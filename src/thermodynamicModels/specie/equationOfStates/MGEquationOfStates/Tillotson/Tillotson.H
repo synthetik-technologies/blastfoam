@@ -113,12 +113,6 @@ class Tillotson
     //- Cavitation pressure
     scalar pCav_;
 
-    //- Cavitation density
-    scalar rhoCav_;
-
-    scalar k_;
-
-    //- Cv value
     //- Stored cavitation energies
     lookupTable1D EcTable_;
 
@@ -135,9 +129,7 @@ public:
             const scalar b,
             const scalar A,
             const scalar B,
-            const scalar pCav,
-            const scalar rhoCav,
-            const scalar k
+            const scalar pCav
         );
 
         //- Construct from dictionary

@@ -54,8 +54,40 @@ public:
 
     // Member Functions
 
+        //- Sensible thermal internal energy [J/kg]
+        virtual scalar Ets
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
+
+        //- Absolute thermal internal energy [J/kg]
+        virtual scalar Eta
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
+
         //- Heat capacity at constant volume [J/kg/K]
         virtual scalar Cv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
+
+        //- Sensible thermal enthalpy [J/kg]
+        virtual scalar Hts
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const = 0;
+
+        //- Absolute thermal enthalpy [J/kg]
+        virtual scalar Hta
         (
             const scalar rho,
             const scalar e,

@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "linearTillotson.H"
+#include "lookupTable1D.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -36,7 +37,7 @@ Foam::linearTillotson<Specie>::linearTillotson(const dictionary& dict)
     Specie(dict),
     p0_(dict.subDict("equationOfState").lookup<scalar>("p0")),
     rho0_(dict.subDict("equationOfState").lookup<scalar>("rho0")),
-    e0_(0.0),
+    e0_(dict.subDict("equationOfState").lookup<scalar>("e0")),
     omega_(dict.subDict("equationOfState").lookup<scalar>("omega")),
     A_(dict.subDict("equationOfState").lookup<scalar>("A")),
     B_(dict.subDict("equationOfState").lookup<scalar>("B")),
@@ -44,18 +45,101 @@ Foam::linearTillotson<Specie>::linearTillotson(const dictionary& dict)
     pCav_(dict.subDict("equationOfState").lookup<scalar>("pCav"))
 {
     scalar Cv = dict.subDict("thermodynamics").lookup<scalar>("Cv");
-    if (dict.subDict("equationOfState").found("T0"))
+    scalar T = e0_/Cv;
+
+    label tableSize(100);
+    scalarField rhof(tableSize, rho0_);
+    scalarField ecf(tableSize, 0.0);
+
+    scalar rhoMin = dict.subDict("equationOfState").lookupOrDefault<scalar>
+    (
+        "rhoMin",
+        0.5*rho0_
+    );
+    scalar rhoMax = dict.subDict("equationOfState").lookupOrDefault<scalar>
+    (
+        "rhoMax",
+        5.0*rho0_
+    );
+
+    label n = 10000;
+    scalar dRho = (rhoMax - rhoMin)/scalar(n);
+    label n1 = (rho0_ - rhoMin)/dRho;
+    label n2 = n - n1;
+
+    label stepsPerEntry(n/tableSize);
+
+    label I = n1/stepsPerEntry+1;
+    scalar rho = rho0_;
+    scalar ec = 0.0;
+    for (label i = 0; i < n2; i++)
     {
-        e0_ = dict.subDict("equationOfState").lookup<scalar>("T0")*Cv;
-    }
-    else
-    {
-        e0_ = dict.subDict("equationOfState").lookup<scalar>("e0");
+        scalar ecOld = ec;
+
+        scalar k1 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k1;
+
+        rho += 0.5*dRho;
+        scalar k2 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k2;
+        scalar k3 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho*k3;
+        rho += 0.5*dRho;
+        scalar k4 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho/6.0*(k1 + 2.0*(k2 + k3) + k4);
+
+        if (((i + 1) % label(n/tableSize)) == 0)
+        {
+            rhof[I] = rho;
+            ecf[I] = ec;
+            I++;
+        }
     }
 
-    intConst_ =
-        (p0_ - omega_*rho0_*e0_ + Pi(rho0_, e0_)/(omega_ + 1.0))
-       /pow(rho0_, omega_ + 1.0);
+    I = n1/stepsPerEntry;
+    rho = rho0_;
+    ec = 0.0;
+    dRho *= -1;
+    for (label i = 0; i < n1; i++)
+    {
+        scalar ecOld = ec;
+
+        scalar k1 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k1;
+
+        rho += 0.5*dRho;
+        scalar k2 = p(rho, ec, T)/sqr(rho);
+        ec = ecOld + dRho*0.5*k2;
+        scalar k3 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho*k3;
+        rho += 0.5*dRho;
+        scalar k4 = p(rho, ec, T)/sqr(rho);
+
+        ec = ecOld + dRho/6.0*(k1 + 2.0*(k2 + k3) + k4);
+
+        if (((i - 1) % (n/tableSize)) == 0)
+        {
+            rhof[I] = rho;
+            ecf[I] = ec;
+            I--;
+        }
+    }
+forAll(rhof, i)
+{
+    Info<<rhof[i]<<" "<<ecf[i]<<endl;
+}
+    EcTable_.set
+    (
+        rhof,
+        ecf,
+        "none",
+        "none",
+        "linearExtrapolated",
+        false
+    );
 }
 
 // ************************************************************************* //

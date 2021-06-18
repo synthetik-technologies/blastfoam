@@ -18,6 +18,16 @@ inline scalar Hs
     return Es(rho, e, T) + EquationOfState::p(rho, e, T)/max(rho, 1e-10);
 }
 
+inline scalar Hts
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Ets(rho, e, T) + EquationOfState::p(rho, e, T)/max(rho, 1e-10);
+}
+
 inline scalar Ha
 (
     const scalar rho,
@@ -26,4 +36,14 @@ inline scalar Ha
 ) const
 {
     return Ea(rho, e, T) + EquationOfState::p(rho, e, T)/max(rho, 1e-10);
+}
+
+inline scalar Hta
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Eta(rho, e, T) + EquationOfState::p(rho, e, T)/max(rho, 1e-10);
 }

@@ -218,27 +218,7 @@ Foam::scalar Foam::linearTillotson<Specie>::E
     const scalar T
 ) const
 {
-    scalar rhos(max(rho, 1e-10));
-    scalar rRho(1.0/rhos);
-    scalar diffRho(rho - rho0_);
-    scalar diffrRho(rRho - 1.0/rho0_);
-    scalar lnRhoByRho0(log(rhos/rho0_));
-
-    return
-        (
-          - p0_*diffrRho
-          - A_*(-diffrRho - lnRhoByRho0/rho0_)
-          - B_*(diffrRho - diffRho/(sqr(rho0_)) + 2.0*lnRhoByRho0/rho0_)
-          - C_
-           *(
-              - diffrRho
-              + 3.0*lnRhoByRho0/rho0_
-              + 3.0*diffRho/sqr(rho0_)
-              - (sqr(rho) - sqr(rho0_))/(2.0*pow3(rho0_))
-            )
-          - lnRhoByRho0*e0_*omega_
-        )/(omega_ + 1.0);
-//       - intConst_*pow(rhos, omega_)/omega_;
+    return EcTable_.lookup(rho) - e0_;
 }
 
 
