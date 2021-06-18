@@ -56,16 +56,11 @@ Foam::diameterModel::diameterModel
             IOobject::groupName("d", phaseName),
             mesh.time().timeName(),
             mesh,
-            (
-                this->requireRead()
-              ? IOobject::MUST_READ
-              : IOobject::READ_IF_PRESENT
-            ),
+            IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimLength, 0.0),
-        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+        dimensionedScalar("0", dimLength, 0.0)
     )
 {}
 
@@ -76,6 +71,24 @@ Foam::diameterModel::~diameterModel()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::diameterModel::requireD() const
+{
+    IOobject dHeader
+    (
+        d_.name(),
+        d_.time().timeName(),
+        d_.mesh(),
+        IOobject::MUST_READ
+    );
+    if (!dHeader.typeHeaderOk<volScalarField>(true))
+    {
+        FatalErrorInFunction
+            << this->type() << " diameter model requires the " << d_.name()
+            << "field to be specified"
+            << abort(FatalError);
+    }
+}
 
 Foam::tmp<Foam::volScalarField> Foam::diameterModel::A() const
 {

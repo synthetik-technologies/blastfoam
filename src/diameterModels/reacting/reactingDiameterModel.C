@@ -63,7 +63,9 @@ Foam::diameterModels::reactingDiameterModel::reactingDiameterModel
         mesh,
         dimensionedScalar("0", dimVolume/dimTime, 0.0)
     )
-{}
+{
+    this->requireD();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -94,14 +96,19 @@ void Foam::diameterModels::reactingDiameterModel::solve
     const volScalarField& T
 )
 {
-    volScalarField VOld(this->V());
+    volScalarField VOld
+    (
+        IOobject::groupName("V", this->d_.group()),
+        this->V()
+    );
     this->storeAndBlendOld(VOld);
 
     volScalarField dOld(this->d_);
     this->storeAndBlendOld(dOld);
 
     volScalarField dDdt(-2.0*rate_->k(pi, T));
-    this->storeAndBlendDelta(dDdt);
+    this->blendDelta(dDdt);
+    Info<<max(mag(dDdt)).value()<<endl;
 
     const dimensionedScalar& dT(this->d_.time().deltaT());
 
@@ -114,9 +121,7 @@ void Foam::diameterModels::reactingDiameterModel::solve
 
     //- Compute actual delta for the time step knowing the blended
     dDdt = this->calcAndStoreDelta(dDdt);
-
-    dVdt_ = this->calcDelta(dVdt_);
-    this->storeDelta(dVdt_);
+    dVdt_ = this->calcAndStoreDelta(dVdt_);
 
     const surfaceScalarField& phi
     (

@@ -62,17 +62,13 @@ protected:
         //- Diameter
         volScalarField d_;
 
-        //- Does the diameter field need to be read
-        virtual bool requireRead()
-        {
-            return false;
-        }
-
+    //- Make sure the diameter field has been read
+    void requireD() const;
 
 public:
 
     //- Runtime type information
-    ClassName("diameterModel");
+    TypeName("diameterModel");
 
 
     // Declare runtime construction

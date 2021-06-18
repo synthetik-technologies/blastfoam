@@ -61,13 +61,13 @@ class reactingParticleMassTransfer
 // Private data
 
     //- Name of species to transfer mass from
-    const hashedWordList reactingSpecies_;
+    hashedWordList reactingSpecies_;
 
     //- Fraction of the reacting species produced
     HashTable<scalar, word> reactingYi_;
 
     //- Name of product species
-    const hashedWordList productSpecies_;
+    hashedWordList productSpecies_;
 
     //- Fraction of the product species produced
     HashTable<scalar, word> productYi_;

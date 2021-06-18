@@ -50,28 +50,25 @@ reactingParticleMassTransfer
     const phasePair& pair
 )
 :
-    massTransferModel(dict, pair),
-    reactingSpecies_(dict.lookupOrDefault("reactingSpecies", wordList())),
-    productSpecies_(dict.lookupOrDefault("productSpecies", wordList()))
+    massTransferModel(dict, pair)
 {
-    scalarList rY;
-    scalarList pY;
-    if (reactingSpecies_.size())
+    if (dict.found("reactingSpecies"))
     {
-        rY = scalarList(dict.lookup("reactingYi"));
+        List<Tuple2<word, scalar>> table(dict.lookup("reactingSpecies"));
+        forAll(table, i)
+        {
+            reactingYi_.insert(table[i].first(), table[i].second());
+            reactingSpecies_.append(table[i].first());
+        }
     }
-    if (productSpecies_.size())
+    if (dict.found("productSpecies"))
     {
-        pY = scalarList(dict.lookup("productYi"));
-    }
-
-    forAll(reactingSpecies_, i)
-    {
-        reactingYi_.insert(reactingSpecies_[i], rY[i]);
-    }
-    forAll(productSpecies_, i)
-    {
-        productYi_.insert(productSpecies_[i], pY[i]);
+        List<Tuple2<word, scalar>> table(dict.lookup("productSpecies"));
+        forAll(table, i)
+        {
+            productYi_.insert(table[i].first(), table[i].second());
+            productSpecies_.append(table[i].first());
+        }
     }
 }
 

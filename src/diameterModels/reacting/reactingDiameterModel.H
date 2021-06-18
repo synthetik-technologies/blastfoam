@@ -67,12 +67,6 @@ class reactingDiameterModel
     //- Stored change in volume per unit time
     volScalarField dVdt_;
 
-    //- Does the diameter field need to be read
-    virtual bool requireRead()
-    {
-        return true;
-    }
-
 public:
 
     //- Runtime type information
@@ -89,12 +83,6 @@ public:
 
     //- Destructor
     virtual ~reactingDiameterModel();
-
-    //- Return if the pressure model requires inputs
-    virtual bool requireInput() const
-    {
-        return true;
-    }
 
     // ODE functions
 

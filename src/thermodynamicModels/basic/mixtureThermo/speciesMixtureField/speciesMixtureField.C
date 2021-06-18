@@ -41,7 +41,7 @@ Foam::speciesMixtureField<ThermoType>::speciesMixtureField
 )
 :
     PtrList<ThermoType>(mesh.nCells()),
-    BalanceMeshObject
+    RefineMeshObject
     (
         IOobject::groupName("speciesThermo", phaseName),
         mesh

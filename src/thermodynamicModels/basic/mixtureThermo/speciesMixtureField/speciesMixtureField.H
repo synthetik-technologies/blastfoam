@@ -57,7 +57,7 @@ template<class ThermoType>
 class speciesMixtureField
 :
     public PtrList<ThermoType>,
-    public BalanceMeshObject
+    public RefineMeshObject
 {
 // Private data
 
