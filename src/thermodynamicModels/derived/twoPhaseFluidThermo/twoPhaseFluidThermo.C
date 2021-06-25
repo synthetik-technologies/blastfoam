@@ -448,11 +448,9 @@ Foam::tmp<Foam::scalarField>
 Foam::twoPhaseFluidThermo::W(const label patchi) const
 {
     return
-        1.0
-       /(
-            volumeFraction_.boundaryField()[patchi]*thermo1_->W(patchi)
-          + (1.0 - volumeFraction_.boundaryField()[patchi])*thermo2_->W(patchi)
-        );
+        volumeFraction_.boundaryField()[patchi]*thermo1_->W(patchi)
+      + (1.0 - volumeFraction_.boundaryField()[patchi])
+       *thermo2_->W(patchi);
 }
 
 
@@ -478,11 +476,9 @@ Foam::tmp<Foam::scalarField>
 Foam::twoPhaseFluidThermo::Cp(const label patchi) const
 {
     return
-        1.0
-       /(
-            volumeFraction_.boundaryField()[patchi]*thermo1_->Cp(patchi)
-          + (1.0 - volumeFraction_.boundaryField()[patchi])*thermo2_->Cp(patchi)
-        );
+        volumeFraction_.boundaryField()[patchi]*thermo1_->Cp(patchi)
+      + (1.0 - volumeFraction_.boundaryField()[patchi])
+       *thermo2_->Cp(patchi);
 }
 
 
@@ -525,11 +521,9 @@ Foam::tmp<Foam::scalarField>
 Foam::twoPhaseFluidThermo::Cv(const label patchi) const
 {
     return
-        1.0
-       /(
-            volumeFraction_.boundaryField()[patchi]*thermo1_->Cv(patchi)
-          + (1.0 - volumeFraction_.boundaryField()[patchi])*thermo2_->Cv(patchi)
-        );
+        volumeFraction_.boundaryField()[patchi]*thermo1_->Cv(patchi)
+      + (1.0 - volumeFraction_.boundaryField()[patchi])
+       *thermo2_->Cv(patchi);
 }
 
 
@@ -570,11 +564,9 @@ Foam::tmp<Foam::scalarField>
 Foam::twoPhaseFluidThermo::CpByCv(const label patchi) const
 {
     return
-        1.0
-       /(
-            volumeFraction_.boundaryField()[patchi]*thermo1_->CpByCv(patchi)
-          + (1.0 - volumeFraction_.boundaryField()[patchi])*thermo2_->CpByCv(patchi)
-        );
+        volumeFraction_.boundaryField()[patchi]*thermo1_->CpByCv(patchi)
+      + (1.0 - volumeFraction_.boundaryField()[patchi])
+       *thermo2_->CpByCv(patchi);
 
 }
 

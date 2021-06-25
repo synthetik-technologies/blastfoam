@@ -32,6 +32,19 @@ License
 
 namespace Foam
 {
+    addMulticomponentFluidThermo
+    (
+        constTransport,
+        eConst,
+        idealGas
+    );
+    addMulticomponentFluidThermo
+    (
+        sutherlandTransport,
+        eConst,
+        idealGas
+    );
+
     addMulticomponentFluidThermos
     (
         constTransport,

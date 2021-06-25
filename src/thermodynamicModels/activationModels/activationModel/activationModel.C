@@ -373,7 +373,7 @@ void Foam::activationModel::solve()
     {
         volScalarField deltaLambda(this->delta());
         deltaLambda.max(0.0);
-        this->storeAndBlendDelta(deltaLambda);
+        this->storeDelta(deltaLambda);
 
         lambda_ = lambdaOld + deltaLambda*dT;
 

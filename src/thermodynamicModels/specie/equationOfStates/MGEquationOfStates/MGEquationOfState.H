@@ -53,10 +53,10 @@ namespace Foam
 
 class MGEquationOfState
 {
-protected:
-
     //- Pointer to cpcv model
     const CpCvModel* cpcvPtr_;
+
+protected:
 
     //- Return the MieGruniesen coefficient
     virtual scalar GammaMG
@@ -80,8 +80,25 @@ protected:
         const scalar e
     ) const = 0;
 
+    //- Return the thermodynamic model
+    const CpCvModel& cpcv() const
+    {
+        if (!cpcvPtr_)
+        {
+            FatalErrorInFunction
+                << "CpCv model has not been set"
+                << abort(FatalError);
+        }
+        return *cpcvPtr_;
+    }
+
 
 public:
+
+        MGEquationOfState()
+        :
+            cpcvPtr_(nullptr)
+        {}
 
         virtual ~MGEquationOfState()
         {}
@@ -184,7 +201,7 @@ public:
             const scalar& T
         ) const
         {
-            return (this->GammaMG(rho, e) - 1.0)*cpcvPtr_->Cv(rho, e, T);
+            return (this->GammaMG(rho, e) - 1.0)*cpcv().Cv(rho, e, T);
         }
 };
 

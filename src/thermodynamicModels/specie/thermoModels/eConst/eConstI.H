@@ -254,7 +254,6 @@ inline Foam::eConst<EquationOfState> Foam::operator+
             ct1.Hf_,
             ct1.flameT_
         );
-        eThermo.EquationOfState::set(eThermo);
         return eThermo;
     }
     else
@@ -269,7 +268,6 @@ inline Foam::eConst<EquationOfState> Foam::operator+
             ct1.Y()/eofs.Y()*ct1.flameT_
           + ct2.Y()/eofs.Y()*ct2.flameT_
         );
-        eThermo.EquationOfState::set(eThermo);
         return eThermo;
     }
 }
@@ -289,7 +287,6 @@ inline Foam::eConst<EquationOfState> Foam::operator*
         ct.Hf_,
         ct.flameT_
     );
-    eThermo.EquationOfState::set(eThermo);
     return eThermo;
 }
 
@@ -317,7 +314,6 @@ inline Foam::eConst<EquationOfState> Foam::operator==
         ct2.Y()/eofs.Y()*ct2.flameT_
       - ct1.Y()/eofs.Y()*ct1.flameT_
     );
-    eThermo.EquationOfState::set(eThermo);
     return eThermo;
 }
 
