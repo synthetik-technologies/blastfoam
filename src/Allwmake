@@ -26,6 +26,7 @@ lagrangian/Allwmake $targetType $*
 
 wmake $targetType functionObjects
 wmake $targetType atmosphereModels
+wmake $targetType solidModels
 
 if [ -z "$QBMM_INST_DIR" ]
 then

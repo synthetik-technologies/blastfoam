@@ -49,15 +49,23 @@ Foam::errorEstimators::multicomponent::multicomponent
 )
 :
     errorEstimator(mesh, dict, name),
-    names_(dict.lookup("estimators")),
-    errors_(names_.size())
+    names_(),
+    errors_()
 {
-    forAll(names_, i)
+    PtrList<entry> errorEntries(dict.lookup("errorEstimators"));
+    errors_.resize(errorEntries.size());
+    forAll(errorEntries, i)
     {
+        names_.append(errorEntries[i].keyword());
         errors_.set
         (
             i,
-            errorEstimator::New(mesh, dict.subDict(names_[i]), names_[i]).ptr()
+            errorEstimator::New
+            (
+                mesh,
+                errorEntries[i].dict(),
+                errorEntries[i].keyword()
+            ).ptr()
         );
     }
 }
@@ -74,9 +82,15 @@ Foam::errorEstimators::multicomponent::~multicomponent()
 
 void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
 {
+    PtrList<entry> errorEntries(dict.lookup("errorEstimators"));
     forAll(errors_, i)
     {
-        errors_[i].read(dict.subDict(names_[i]));
+        errors_[i].read(errorEntries[i].dict());
+    }
+    maxLevel_ = 0;
+    forAll(names_, i)
+    {
+        maxLevel_ = max(maxLevel_, errors_[i].maxLevel());
     }
 }
 
@@ -104,6 +118,32 @@ void Foam::errorEstimators::multicomponent::update(const bool scale)
         error = max(error,  errors_[i].error());
     }
     error_ = error;
+}
+
+
+Foam::labelList Foam::errorEstimators::multicomponent::maxRefinement() const
+{
+    maxRefinement_.resize(mesh_.nCells());
+    maxRefinement_ = 0;
+    forAll(errors_, i)
+    {
+        const volScalarField& errori(errors_[i].error());
+        forAll(maxRefinement_, celli)
+        {
+            if (errori[celli] > 0.5 && maxRefinement_[celli] < errors_[i].maxLevel())
+            {
+                maxRefinement_[celli] = errors_[i].maxLevel();
+                const labelList& cellCells(mesh_.cellCells()[celli]);
+                forAll(cellCells, j)
+                {
+                    label cellj = cellCells[j];
+                    maxRefinement_[cellj] = errors_[i].maxLevel();
+                }
+
+            }
+        };
+    }
+    return maxRefinement_;
 }
 
 // ************************************************************************* //

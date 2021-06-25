@@ -19,6 +19,7 @@ wclean $targetType sampling
 wclean all lagrangian
 wclean $targetType atmosphereModels
 wclean $targetType diameterModels
+wclean $targetType solidModels
 
 wclean $targetType QBMM
 #------------------------------------------------------------------------------

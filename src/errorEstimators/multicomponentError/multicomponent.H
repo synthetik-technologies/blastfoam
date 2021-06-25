@@ -67,6 +67,9 @@ class multicomponent
     //- List of error estimators
     PtrList<errorEstimator> errors_;
 
+    //- Maximum refinement level for the estimator
+    mutable labelList maxRefinement_;
+
 
 public:
 
@@ -88,8 +91,11 @@ public:
 
     // Member Functions
 
-        //- Gamma function
+        //- Update error
         virtual void update(const bool scale = true);
+
+        //- Return non constant reference to error field
+        virtual labelList maxRefinement() const;
 
         //- Read level values
         virtual void read(const dictionary& dict);

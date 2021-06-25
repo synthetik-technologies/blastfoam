@@ -80,7 +80,7 @@ public:
 
     // Member Functions
 
-        //- Gamma function
+        //- Update error
         virtual void update(const bool scale = true);
 };
 
