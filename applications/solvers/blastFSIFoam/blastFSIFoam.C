@@ -42,17 +42,10 @@ Description
 #include "dynamicFvMesh.H"
 #include "timeIntegrator.H"
 #include "phaseCompressibleSystem.H"
-#include "compressibleCourantNo.H"
-#include "fluidThermoModel.H"
-#include "solidThermoModel.H"
-#include "fixedGradientFvPatchFields.H"
+#include "solidModel.H"
 #include "regionProperties.H"
-#include "radiationModel.H"
+// #include "blastFluidThermoMomentumTransportModel.H"
 #include "fvOptions.H"
-#include "blastFluidThermoMomentumTransportModel.H"
-#include "fvOptions.H"
-#include "volPointInterpolation.H"
-#include "twoDPointCorrector.H"
 
 #include "mappedPatchSelector.H"
 #include "mappedPointPatchSelector.H"
@@ -74,8 +67,6 @@ int main(int argc, char *argv[])
     #include "compressibleMultiRegionCourantNo.H"
     #include "setInitialMultiRegionDeltaT.H"
 
-    #include "setBoundaryDisplacementFields.H"
-
     while (runTime.run())
     {
         #include "refineMeshes.H"
@@ -93,9 +84,6 @@ int main(int argc, char *argv[])
 
         #include "clearPatches.H"
 
-        #include "setBoundaryDisplacementFields.H"
-
-
         // Solve
         forAll(fluidRegions, i)
         {
@@ -108,8 +96,6 @@ int main(int argc, char *argv[])
         {
             Info<< "\nSolving for solid region "
                 << solidRegions[i].name() << endl;
-            #include "setRegionSolidFields.H"
-            #include "readSolidTimeControls.H"
 
             #include "solveSolid.H"
         }

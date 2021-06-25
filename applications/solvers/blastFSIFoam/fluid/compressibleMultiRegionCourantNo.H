@@ -4,12 +4,7 @@
     {
         CoNum = max
         (
-            compressibleCourantNo
-            (
-                fluidRegions[regionI],
-                runTime,
-                fluids[regionI]
-            ),
+            fluids[regionI].CoNum(),
             CoNum
         );
     }

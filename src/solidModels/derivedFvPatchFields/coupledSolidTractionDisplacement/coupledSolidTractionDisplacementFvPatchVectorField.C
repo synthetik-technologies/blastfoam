@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "FSIForceDisplacementFvPatchVectorField.H"
+#include "coupledSolidTractionDisplacementFvPatchVectorField.H"
 #include "uniformDimensionedFields.H"
 #include "mappedPatchBase.H"
 #include "volFields.H"
@@ -31,8 +31,8 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::FSIForceDisplacementFvPatchVectorField::
-FSIForceDisplacementFvPatchVectorField
+Foam::coupledSolidTractionDisplacementFvPatchVectorField::
+coupledSolidTractionDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF
@@ -41,12 +41,12 @@ FSIForceDisplacementFvPatchVectorField
     tractionDisplacementFvPatchVectorField(p, iF),
     mpp_(p),
     pName_("p"),
-    pRef_(this->size(), 0.0)
+    pRef_(0.0)
 {}
 
 
-Foam::FSIForceDisplacementFvPatchVectorField::
-FSIForceDisplacementFvPatchVectorField
+Foam::coupledSolidTractionDisplacementFvPatchVectorField::
+coupledSolidTractionDisplacementFvPatchVectorField
 (
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
@@ -56,14 +56,14 @@ FSIForceDisplacementFvPatchVectorField
     tractionDisplacementFvPatchVectorField(p, iF),
     mpp_(p),
     pName_(dict.lookupOrDefault("pName", word("p"))),
-    pRef_("pRef", dict, p.size())
+    pRef_(dict.lookupOrDefault("pRef", 0.0))
 {}
 
 
-Foam::FSIForceDisplacementFvPatchVectorField::
-FSIForceDisplacementFvPatchVectorField
+Foam::coupledSolidTractionDisplacementFvPatchVectorField::
+coupledSolidTractionDisplacementFvPatchVectorField
 (
-    const FSIForceDisplacementFvPatchVectorField& tdpvf,
+    const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf,
     const fvPatch& p,
     const DimensionedField<vector, volMesh>& iF,
     const fvPatchFieldMapper& mapper
@@ -72,14 +72,14 @@ FSIForceDisplacementFvPatchVectorField
     tractionDisplacementFvPatchVectorField(tdpvf, p, iF, mapper),
     mpp_(p),
     pName_(tdpvf.pName_),
-    pRef_(mapper(tdpvf.pRef_))
+    pRef_(tdpvf.pRef_)
 {}
 
 
-Foam::FSIForceDisplacementFvPatchVectorField::
-FSIForceDisplacementFvPatchVectorField
+Foam::coupledSolidTractionDisplacementFvPatchVectorField::
+coupledSolidTractionDisplacementFvPatchVectorField
 (
-    const FSIForceDisplacementFvPatchVectorField& tdpvf
+    const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf
 )
 :
     tractionDisplacementFvPatchVectorField(tdpvf),
@@ -89,10 +89,10 @@ FSIForceDisplacementFvPatchVectorField
 {}
 
 
-Foam::FSIForceDisplacementFvPatchVectorField::
-FSIForceDisplacementFvPatchVectorField
+Foam::coupledSolidTractionDisplacementFvPatchVectorField::
+coupledSolidTractionDisplacementFvPatchVectorField
 (
-    const FSIForceDisplacementFvPatchVectorField& tdpvf,
+    const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf,
     const DimensionedField<vector, volMesh>& iF
 )
 :
@@ -105,31 +105,25 @@ FSIForceDisplacementFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::FSIForceDisplacementFvPatchVectorField::autoMap
+void Foam::coupledSolidTractionDisplacementFvPatchVectorField::autoMap
 (
     const fvPatchFieldMapper& m
 )
 {
     tractionDisplacementFvPatchVectorField::autoMap(m);
-    m(pRef_, pRef_);
 }
 
 
-void Foam::FSIForceDisplacementFvPatchVectorField::rmap
+void Foam::coupledSolidTractionDisplacementFvPatchVectorField::rmap
 (
     const fvPatchVectorField& ptf,
     const labelList& addr
 )
 {
     tractionDisplacementFvPatchVectorField::rmap(ptf, addr);
-
-    const FSIForceDisplacementFvPatchVectorField& dmptf =
-        refCast<const FSIForceDisplacementFvPatchVectorField>(ptf);
-
-    pRef_.rmap(dmptf.pRef_, addr);
 }
 
-void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
+void Foam::coupledSolidTractionDisplacementFvPatchVectorField::updateCoeffs()
 {
     if (updated())
     {
@@ -148,7 +142,6 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];
 
     //- Lookup viscous stress and pressure fields
-    vectorField normal(nbrPatch.Sf()/nbrPatch.magSf());
     symmTensorField nbrDevRhoReff
     (
         nbrPatch.lookupPatchField<volSymmTensorField, symmTensor>("devRhoReff")
@@ -158,18 +151,17 @@ void Foam::FSIForceDisplacementFvPatchVectorField::updateCoeffs()
         nbrPatch.lookupPatchField<volScalarField, scalar>(pName_)
     );
 
-    mpp_.distribute(normal);
     mpp_.distribute(nbrDevRhoReff);
     mpp_.distribute(nbrP);
 
     this->pressure() = nbrP - pRef_;
-    this->traction() = nbrDevRhoReff & normal;
+    this->traction() = nbrDevRhoReff & patch().nf();
 
     tractionDisplacementFvPatchVectorField::updateCoeffs();
 }
 
 
-void Foam::FSIForceDisplacementFvPatchVectorField::write(Ostream& os) const
+void Foam::coupledSolidTractionDisplacementFvPatchVectorField::write(Ostream& os) const
 {
     tractionDisplacementFvPatchVectorField::write(os);
     writeEntry(os, "pName", pName_);
@@ -184,7 +176,7 @@ namespace Foam
     makePatchTypeField
     (
         fvPatchVectorField,
-        FSIForceDisplacementFvPatchVectorField
+        coupledSolidTractionDisplacementFvPatchVectorField
     );
 }
 

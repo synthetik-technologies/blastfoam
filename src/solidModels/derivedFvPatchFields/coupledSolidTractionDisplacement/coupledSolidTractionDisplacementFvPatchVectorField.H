@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FSIForceDisplacementFvPatchVectorField
+    Foam::coupledSolidTractionDisplacementFvPatchVectorField
 
 Description
     Fixed traction boundary condition for the standard linear elastic, fixed
     coefficient displacement equation in which the traction is caused by
-    the FSIForce pressure of an external liquid reservoir.
+    the coupledSolidTraction pressure of an external liquid reservoir.
 
 SourceFiles
-    FSIForceDisplacementFvPatchVectorField.C
+    coupledSolidTractionDisplacementFvPatchVectorField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FSIForceDisplacementFvPatchVectorField_H
-#define FSIForceDisplacementFvPatchVectorField_H
+#ifndef coupledSolidTractionDisplacementFvPatchVectorField_H
+#define coupledSolidTractionDisplacementFvPatchVectorField_H
 
 #include "tractionDisplacementFvPatchVectorField.H"
 #include "mappedPatchSelector.H"
@@ -46,10 +46,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                   Class FSIForceDisplacementFvPatch Declaration
+                   Class coupledSolidTractionDisplacementFvPatch Declaration
 \*---------------------------------------------------------------------------*/
 
-class FSIForceDisplacementFvPatchVectorField
+class coupledSolidTractionDisplacementFvPatchVectorField
 :
     public tractionDisplacementFvPatchVectorField
 {
@@ -62,26 +62,26 @@ class FSIForceDisplacementFvPatchVectorField
         const word pName_;
 
         //- Reference pressure
-        scalarField pRef_;
+        scalar pRef_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("FSIForceDisplacement");
+    TypeName("coupledSolidTraction");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        FSIForceDisplacementFvPatchVectorField
+        coupledSolidTractionDisplacementFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        FSIForceDisplacementFvPatchVectorField
+        coupledSolidTractionDisplacementFvPatchVectorField
         (
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
@@ -89,19 +89,19 @@ public:
         );
 
         //- Construct by mapping given
-        //  FSIForceDisplacementFvPatchVectorField onto a new patch
-        FSIForceDisplacementFvPatchVectorField
+        //  coupledSolidTractionDisplacementFvPatchVectorField onto a new patch
+        coupledSolidTractionDisplacementFvPatchVectorField
         (
-            const FSIForceDisplacementFvPatchVectorField&,
+            const coupledSolidTractionDisplacementFvPatchVectorField&,
             const fvPatch&,
             const DimensionedField<vector, volMesh>&,
             const fvPatchFieldMapper&
         );
 
         //- Copy constructor
-        FSIForceDisplacementFvPatchVectorField
+        coupledSolidTractionDisplacementFvPatchVectorField
         (
-            const FSIForceDisplacementFvPatchVectorField&
+            const coupledSolidTractionDisplacementFvPatchVectorField&
         );
 
         //- Construct and return a clone
@@ -109,14 +109,14 @@ public:
         {
             return tmp<fvPatchVectorField>
             (
-                new FSIForceDisplacementFvPatchVectorField(*this)
+                new coupledSolidTractionDisplacementFvPatchVectorField(*this)
             );
         }
 
         //- Copy constructor setting internal field reference
-        FSIForceDisplacementFvPatchVectorField
+        coupledSolidTractionDisplacementFvPatchVectorField
         (
-            const FSIForceDisplacementFvPatchVectorField&,
+            const coupledSolidTractionDisplacementFvPatchVectorField&,
             const DimensionedField<vector, volMesh>&
         );
 
@@ -128,7 +128,7 @@ public:
         {
             return tmp<fvPatchVectorField>
             (
-                new FSIForceDisplacementFvPatchVectorField(*this, iF)
+                new coupledSolidTractionDisplacementFvPatchVectorField(*this, iF)
             );
         }
 

@@ -141,10 +141,6 @@ void Foam::tractionDisplacementFvPatchVectorField::updateCoeffs()
     const dictionary& mechanicalProperties =
         db().lookupObject<IOdictionary>("mechanicalProperties");
 
-    const dictionary& thermalProperties =
-        db().lookupObject<IOdictionary>("thermophysicalProperties");
-
-
     const fvPatchField<scalar>& rho =
         patch().lookupPatchField<volScalarField, scalar>("rho");
 
@@ -179,7 +175,7 @@ void Foam::tractionDisplacementFvPatchVectorField::updateCoeffs()
       + twoMuLambda*fvPatchField<vector>::snGrad() - (n & sigmaD)
     )/twoMuLambda;
 
-    Switch thermalStress(thermalProperties.lookup("thermalStress"));
+    Switch thermalStress(mechanicalProperties.lookup("thermalStress"));
 
     if (thermalStress)
     {
