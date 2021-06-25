@@ -11,24 +11,16 @@ FoamFile
     format      ascii;
     class       dictionary;
     location    "constant";
-    object      solidMechanicProperties;
+    object      solidProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-planeStress off;
-thermalStress off;
-compactNormalStress off;
+solidModel linearElastic;
 
-E
+linearElasticCoeffs
 {
-    type    uniform;
-    value   200e9;
+    nCorrectors         10;
+    solutionTolerance   1e-06;
 }
-nu
-{
-    type    uniform;
-    value   0.3;
-}
-
 
 // ************************************************************************* //

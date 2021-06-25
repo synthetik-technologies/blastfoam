@@ -22,9 +22,9 @@ boundaryField
 {
     flap_to_air
     {
-        type            FSIForceDisplacement;
+        type            coupledSolidTraction;
         pName           p;
-        pRef            uniform 0.90530979e5;
+        pRef            0.90530979e5;
         traction        uniform (0 0 0);
         value           uniform (0 0 0);
         pressure        uniform 0;

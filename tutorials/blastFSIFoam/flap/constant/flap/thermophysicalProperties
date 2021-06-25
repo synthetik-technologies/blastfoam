@@ -42,26 +42,5 @@ thermodynamics
     Cv              800;
 }
 
-C
-{
-    type        uniform;
-    value       434;
-}
-
-k
-{
-    type        uniform;
-    value       60.5;
-}
-
-alpha
-{
-    type        uniform;
-    value       1.1e-05;
-}
-
-thermalStress   no;
-
-
 
 // ************************************************************************* //
