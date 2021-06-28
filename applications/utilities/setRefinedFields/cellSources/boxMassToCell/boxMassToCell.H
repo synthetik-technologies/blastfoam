@@ -22,21 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sphereListToCell
+    Foam::boxMassToCell
 
 Description
-    A topoSetSource to select cells based on cell centres inside sphere,
-    defined by a mass.
+    A topoSetSource to select cells based on cell centres inside a list
+    of cylinders.
 
 SourceFiles
-    sphereListToCell.C
+    boxMassToCell.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sphereListToCell_H
-#define sphereListToCell_H
+#ifndef boxMassToCell_H
+#define boxMassToCell_H
 
-#include "topoSetSource.H"
+#include "boxToCell.H"
+#include "massToCell.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,85 +45,62 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class sphereListToCell Declaration
+                       Class boxMassToCell Declaration
 \*---------------------------------------------------------------------------*/
 
-class sphereListToCell
+class boxMassToCell
 :
-    public topoSetSource
+    public massToCell,
+    public boxToCell
 {
 
-    // Private Data
+    //- Return the bound box
+    treeBoundBoxList bounds(const dictionary& dict) const
+    {
+        vector p1, p2;
+        if (mustRead() || volume() > small)
+        {
+            vector aspectRatio(dict.lookup<vector>("aspectRatio"));
+            scalar x =
+                cbrt
+                (
+                    volume()
+                   /(aspectRatio.x()*aspectRatio.y()*aspectRatio.z())
+                );
 
-        //- Add usage string
-        static addToUsageTable usage_;
+            vector span(x*aspectRatio);
+            p1 = centre() - span/2.0;
+            p2 = centre() + span/2.0;
+            scalar v = span.x()*span.y()*span.z();
+        }
+        else
+        {
+            vector span(dict.lookup<vector>("span"));
+            p1 = centre() - span/2.0;
+            p2 = centre() - span/2.0;
+        }
 
-        //- Centres
-        List<vector> centres_;
-
-        //- Radii
-        List<scalar> radii_;
-
-
-    // Private Member Functions
-
-        void combine
-        (
-            topoSet& set,
-            const vector& centre,
-            const scalar& radius,
-            const bool add
-        ) const;
+        return treeBoundBoxList({treeBoundBox(p1, p2)});
+    }
 
 
 public:
 
     //- Runtime type information
-    TypeName("sphereListToCell");
+    TypeName("boxMassToCell");
 
 
     // Constructors
 
-        //- Construct from components
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            const List<vector>& centre,
-            const List<scalar>& radius
-        );
-
         //- Construct from dictionary
-        sphereListToCell
+        boxMassToCell
         (
             const polyMesh& mesh,
             const dictionary& dict
         );
 
-        //- Construct from Istream
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
-        );
-
-
     //- Destructor
-    virtual ~sphereListToCell();
-
-
-    // Member Functions
-
-        virtual sourceType setType() const
-        {
-            return CELLSETSOURCE;
-        }
-
-        virtual void applyToSet
-        (
-            const topoSetSource::setAction action,
-            topoSet&
-        ) const;
-
+    virtual ~boxMassToCell();
 };
 
 

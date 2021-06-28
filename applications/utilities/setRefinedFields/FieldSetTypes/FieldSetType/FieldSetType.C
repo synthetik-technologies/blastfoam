@@ -41,7 +41,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     fieldPtr_(lookupOrRead(fieldName)),
     selectedCells_(selectedCells),
     write_(write),
-    good_(fieldPtr_ != nullptr)
+    good_(fieldPtr_.valid())
 {}
 
 

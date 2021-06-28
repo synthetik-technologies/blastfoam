@@ -22,21 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sphereListToCell
+    Foam::massToCell
 
 Description
-    A topoSetSource to select cells based on cell centres inside sphere,
-    defined by a mass.
+    Basic class used for mass based cell sets
 
 SourceFiles
-    sphereListToCell.C
+    massToCell.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sphereListToCell_H
-#define sphereListToCell_H
+#ifndef massToCell_H
+#define massToCell_H
 
-#include "topoSetSource.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,85 +43,75 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class sphereListToCell Declaration
+                       Class massToCell Declaration
 \*---------------------------------------------------------------------------*/
 
-class sphereListToCell
-:
-    public topoSetSource
+class massToCell
 {
 
     // Private Data
 
-        //- Add usage string
-        static addToUsageTable usage_;
+        //- Reference to the mesh
+        const polyMesh& mesh_;
 
-        //- Centres
-        List<vector> centres_;
+        //- Should the dictionary be read
+        bool mustRead_;
 
-        //- Radii
-        List<scalar> radii_;
+        //- Density field
+        scalar rho_;
 
+        //- Mass to set
+        scalar mass_;
 
-    // Private Member Functions
+        //- Centre of mass
+        vector centre_;
 
-        void combine
-        (
-            topoSet& set,
-            const vector& centre,
-            const scalar& radius,
-            const bool add
-        ) const;
+        //- Volume to set
+        scalar volume_;
 
+protected:
+
+    // has the dictionary been read
+    mutable bool read_;
 
 public:
 
-    //- Runtime type information
-    TypeName("sphereListToCell");
-
-
     // Constructors
 
-        //- Construct from components
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            const List<vector>& centre,
-            const List<scalar>& radius
-        );
-
         //- Construct from dictionary
-        sphereListToCell
+        massToCell
         (
             const polyMesh& mesh,
             const dictionary& dict
         );
 
-        //- Construct from Istream
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
-        );
-
 
     //- Destructor
-    virtual ~sphereListToCell();
+    virtual ~massToCell();
 
+    //- Do values need to be read
+    bool mustRead() const
+    {
+        return mustRead_;
+    }
 
-    // Member Functions
+    //- Return the volume needed
+    scalar volume() const
+    {
+        return volume_;
+    }
 
-        virtual sourceType setType() const
-        {
-            return CELLSETSOURCE;
-        }
+    //- Return the center of mass
+    vector centre() const
+    {
+        return centre_;
+    }
 
-        virtual void applyToSet
-        (
-            const topoSetSource::setAction action,
-            topoSet&
-        ) const;
-
+    //- Return the center of mass
+    vector& centre()
+    {
+        return centre_;
+    }
 };
 
 

@@ -56,7 +56,7 @@ class InitialValue
     public FieldSetType<Type, Patch, Mesh>
 {
     //- Value to set
-    const GeometricField<Type, Patch, Mesh>* origFieldPtr_;
+    UautoPtr<GeometricField<Type, Patch, Mesh>> origFieldPtr_;
 
     //- Set the selected cells
     virtual void setField();

@@ -22,21 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sphereListToCell
+    Foam::sphericalMassToCell
 
 Description
-    A topoSetSource to select cells based on cell centres inside sphere,
-    defined by a mass.
+    A topoSetSource to select cells based on cell centres inside sphere.
 
 SourceFiles
-    sphereListToCell.C
+    sphericalMassToCell.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sphereListToCell_H
-#define sphereListToCell_H
+#ifndef sphericalMassToCell_H
+#define sphericalMassToCell_H
 
-#include "topoSetSource.H"
+#include "sphereToCell.H"
+#include "massToCell.H"
+#include "mathematicalConstants.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,85 +45,50 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class sphereListToCell Declaration
+                       Class sphericalMassToCell Declaration
 \*---------------------------------------------------------------------------*/
 
-class sphereListToCell
+class sphericalMassToCell
 :
-    public topoSetSource
+    public massToCell,
+    public sphereToCell
 {
-
-    // Private Data
-
-        //- Add usage string
-        static addToUsageTable usage_;
-
-        //- Centres
-        List<vector> centres_;
-
-        //- Radii
-        List<scalar> radii_;
-
 
     // Private Member Functions
 
-        void combine
-        (
-            topoSet& set,
-            const vector& centre,
-            const scalar& radius,
-            const bool add
-        ) const;
+        //- Return the radius
+        scalar R(const dictionary& dict) const
+        {
+            if (mustRead() || volume() > small)
+            {
+                return
+                    cbrt
+                    (
+                        volume()*3.0/4.0*Foam::constant::mathematical::pi
+                    );
+            }
+            return dict.lookup<scalar>("radius");
+        }
 
 
 public:
 
     //- Runtime type information
-    TypeName("sphereListToCell");
+    TypeName("sphericalMassToCell");
 
 
     // Constructors
 
-        //- Construct from components
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            const List<vector>& centre,
-            const List<scalar>& radius
-        );
-
         //- Construct from dictionary
-        sphereListToCell
+        sphericalMassToCell
         (
             const polyMesh& mesh,
             const dictionary& dict
         );
 
-        //- Construct from Istream
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
-        );
-
 
     //- Destructor
-    virtual ~sphereListToCell();
-
-
-    // Member Functions
-
-        virtual sourceType setType() const
-        {
-            return CELLSETSOURCE;
-        }
-
-        virtual void applyToSet
-        (
-            const topoSetSource::setAction action,
-            topoSet&
-        ) const;
-
+    virtual ~sphericalMassToCell();
 };
 
 

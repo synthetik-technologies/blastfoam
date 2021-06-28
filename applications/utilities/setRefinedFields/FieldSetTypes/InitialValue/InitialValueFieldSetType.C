@@ -38,15 +38,28 @@ Foam::FieldSetTypes::InitialValue<Type, Patch, Mesh>::InitialValue
 )
 :
     FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
-    origFieldPtr_(this->lookupOrRead(IOobject::groupName(fieldName, "orig")))
+    origFieldPtr_
+    (
+        this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+    )
 {
-    if (origFieldPtr_ == nullptr)
+    if (!origFieldPtr_.valid())
     {
         typedef GeometricField<Type, Patch, Mesh> FieldType;
-        FieldType* origFieldPtr(new FieldType(*(this->fieldPtr_)));
+        FieldType* origFieldPtr
+        (
+            new FieldType
+            (
+                IOobject::groupName(fieldName, "orig"),
+                *(this->fieldPtr_)
+            )
+         );
         origFieldPtr->store(origFieldPtr);
 
-        origFieldPtr_ = this->lookupOrRead(IOobject::groupName(fieldName, "orig"));
+        origFieldPtr_.set
+        (
+            this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+        );
     }
     if (this->good_)
     {

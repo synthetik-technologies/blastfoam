@@ -40,6 +40,7 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "Time.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,7 +62,7 @@ protected:
     const fvMesh& mesh_;
 
     //- Pointer to the field to be set
-    FieldType* fieldPtr_;
+    UautoPtr<FieldType> fieldPtr_;
 
     //- Cells to set
     const labelList& selectedCells_;

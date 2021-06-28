@@ -27,16 +27,40 @@ defaultFieldValues
 
 regions
 (
-    cylinderToCell // Use cylinder for 3D
+    cylindericalMassToCell // Use cylinder for 3D
     {
-        p1 (0 0 0.25);
-        p2 (0 0 0.75);
-        radius 0.1;
+        rho 1601;
+        mass 25;
+        centre (0 0 0.5);
+        direction (0 0 1);
+        LbyD    2.5;
+
         backup
         {
-            p1 (0 0 0.0);
-            p2 (0 0 1.0);
+            centre (0 0 0.5);
+            L (0 0 0.5);
             radius 0.75;
+        }
+        refineInternal yes;
+        level 5;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.c4    1
+        );
+    }
+
+    boxMassToCell // Use cylinder for 3D
+    {
+        rho 1601;
+        mass 100;
+        centre (0 0 0.5);
+        aspectRatio (2.0 1.0 1.0);
+
+        backup
+        {
+            centre (0 0 0.5);
+            span (1 1 1);
         }
         refineInternal yes;
         level 5;

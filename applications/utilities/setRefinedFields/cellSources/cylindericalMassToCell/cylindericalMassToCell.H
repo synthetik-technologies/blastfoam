@@ -22,21 +22,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::sphereListToCell
+    Foam::cylindericalMassToCell
 
 Description
-    A topoSetSource to select cells based on cell centres inside sphere,
-    defined by a mass.
+    A topoSetSource to select cells based on cell centres inside a
+    cylinder defined by a mass and an length to diameter ratio.
 
 SourceFiles
-    sphereListToCell.C
+    cylindericalMassToCell.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef sphereListToCell_H
-#define sphereListToCell_H
+#ifndef cylindericalMassToCell_H
+#define cylindericalMassToCell_H
 
-#include "topoSetSource.H"
+#include "cylinderToCell.H"
+#include "massToCell.H"
+#include "mathematicalConstants.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,85 +46,88 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                       Class sphereListToCell Declaration
+                       Class cylindericalMassToCell Declaration
 \*---------------------------------------------------------------------------*/
 
-class sphereListToCell
+class cylindericalMassToCell
 :
-    public topoSetSource
+    public massToCell,
+    public cylinderToCell
 {
-
-    // Private Data
-
-        //- Add usage string
-        static addToUsageTable usage_;
-
-        //- Centres
-        List<vector> centres_;
-
-        //- Radii
-        List<scalar> radii_;
-
+    // Private data
+    scalar r_;
+    scalar L_;
+    vector dir_;
 
     // Private Member Functions
 
-        void combine
-        (
-            topoSet& set,
-            const vector& centre,
-            const scalar& radius,
-            const bool add
-        ) const;
+        void read(const dictionary& dict)
+        {
+            if (read_)
+            {
+                return;
+            }
 
+            if (mustRead() || volume() > small)
+            {
+                scalar LbyD(dict.lookup<scalar>("LbyD"));
+                vector dir(dict.lookup<vector>("direction"));
+                r_ =
+                    cbrt
+                    (
+                        volume()/(2.0*LbyD*Foam::constant::mathematical::pi)
+                    );
+                L_ = 2.0*r_*LbyD;
+                dir_ = dir;
+            }
+            else
+            {
+                r_ = dict.lookup<scalar>("radius");
+                vector L(dict.lookup<vector>("L"));
+                L_ = mag(L);
+                dir_ = cmptMag(L)/L_;
+            }
+        }
+
+        //- Return the radius
+        vector p1(const dictionary& dict)
+        {
+            read(dict);
+
+            return centre() - dir_*L_/2.0;
+        }
+
+        vector p2(const dictionary& dict)
+        {
+            read(dict);
+
+            return centre() + dir_*L_/2.0;
+        }
+
+        scalar R(const dictionary& dict)
+        {
+            read(dict);
+            return r_;
+        }
 
 public:
 
     //- Runtime type information
-    TypeName("sphereListToCell");
+    TypeName("cylindericalMassToCell");
 
 
     // Constructors
 
-        //- Construct from components
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            const List<vector>& centre,
-            const List<scalar>& radius
-        );
-
         //- Construct from dictionary
-        sphereListToCell
+        cylindericalMassToCell
         (
             const polyMesh& mesh,
             const dictionary& dict
         );
 
-        //- Construct from Istream
-        sphereListToCell
-        (
-            const polyMesh& mesh,
-            Istream&
-        );
-
 
     //- Destructor
-    virtual ~sphereListToCell();
-
-
-    // Member Functions
-
-        virtual sourceType setType() const
-        {
-            return CELLSETSOURCE;
-        }
-
-        virtual void applyToSet
-        (
-            const topoSetSource::setAction action,
-            topoSet&
-        ) const;
-
+    virtual ~cylindericalMassToCell();
 };
 
 
