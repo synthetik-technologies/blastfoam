@@ -17,6 +17,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+planeStress   no;
+thermalStress off;
+compactNormalStress off;
+
 nu
 {
     type        uniform;
@@ -28,8 +32,5 @@ E
     type        uniform;
     value       28.9e9;
 }
-
-planeStress     yes;
-
 
 // ************************************************************************* //

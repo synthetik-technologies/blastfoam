@@ -29,15 +29,15 @@ boundaryField
     {
         type            tractionDisplacement;
         traction        uniform (0 0 0);
-        pressure        uniform 0;
+        pressure        uniform 1e5;
         value           uniform (0 0 0);
     }
     walls_to_fluid
     {
-        type            FSIForceDisplacement;
+        type            coupledSolidTraction;
         traction        uniform (0 0 0);
         pressure        uniform 0;
-        pRef            uniform 1e5;
+        pRef            1e5;
         value           uniform (0 0 0);
     }
     front
