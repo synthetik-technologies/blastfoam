@@ -42,4 +42,6 @@ lookupTables/lookupTable1D/lookupTable1D.C
 
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 
+calcAngleFraction/calcAngleFraction.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

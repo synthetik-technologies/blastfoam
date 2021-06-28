@@ -49,27 +49,6 @@ regions
             volScalarFieldValue alpha.c4    1
         );
     }
-
-    boxMassToCell // Use cylinder for 3D
-    {
-        rho 1601;
-        mass 100;
-        centre (0 0 0.5);
-        aspectRatio (2.0 1.0 1.0);
-
-        backup
-        {
-            centre (0 0 0.5);
-            span (1 1 1);
-        }
-        refineInternal yes;
-        level 5;
-
-        fieldValues
-        (
-            volScalarFieldValue alpha.c4    1
-        );
-    }
 );
 
 

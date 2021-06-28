@@ -432,20 +432,31 @@ int main(int argc, char *argv[])
     IOdictionary setFieldsDict(dictIO);
 
     autoPtr<hexRef> meshCutter;
+    bool refine = true;
     if (args.optionFound("force3D"))
     {
         meshCutter.set(new hexRef8(mesh));
     }
-    else
+    else if (mesh.nGeometricD() > 1)
     {
         meshCutter = hexRef::New(mesh);
     }
+    else
+    {
+        // 1D so do not refine
+        refine = false;
+    }
+
     Switch debug(args.optionFound("debug"));
 
     label nBufferLayers(setFieldsDict.lookupOrDefault("nBufferLayers", 0));
 
     PackedBoolList protectedCell(mesh.nCells(), 0);
-    initialize(mesh, protectedCell, meshCutter());
+    if (refine)
+    {
+        initialize(mesh, protectedCell, meshCutter());
+    }
+
     volScalarField error
     (
         IOobject
@@ -559,22 +570,26 @@ int main(int argc, char *argv[])
 
     // Maximum number of iterations
     label iter = 0;
-    label maxIter =
-        max
-        (
-            1,
+    label maxIter = 1;
+    if (refine)
+    {
+        maxIter =
             max
             (
-                setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
-                gMax(meshCutter->cellLevel())*2
-            )
-        );
+                1,
+                max
+                (
+                    setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
+                    gMax(meshCutter->cellLevel())*2
+                )
+            );
+    }
 
     // Flag for final iteration
     bool end = false;
 
     // Flag to initiate end
-    bool prepareToStop = false;
+    bool prepareToStop = (maxIter == 1);
 
     while(!end)
     {
@@ -748,7 +763,7 @@ int main(int argc, char *argv[])
         }
 
         // Update error and mesh if not the final iteration
-        if (!end)
+        if (!end && refine)
         {
             // Use error estimator to calculate error
             if (EE.valid())
@@ -925,42 +940,45 @@ int main(int argc, char *argv[])
         runTime.write();
     }
 
-    // Handle cell level (as volScalarField) explicitly
-    // Important when using mapFields or rotateFields
-    const labelIOList& cellLevel = meshCutter->cellLevel();
-    if (mesh.foundObject<volScalarField>("cellLevel"))
+    if (refine)
     {
-        volScalarField& scalarCellLevel =
-            mesh.lookupObjectRef<volScalarField>("cellLevel");
-        forAll(cellLevel, celli)
+        // Handle cell level (as volScalarField) explicitly
+        // Important when using mapFields or rotateFields
+        const labelIOList& cellLevel = meshCutter->cellLevel();
+        if (mesh.foundObject<volScalarField>("cellLevel"))
         {
-            scalarCellLevel[celli] = cellLevel[celli];
+            volScalarField& scalarCellLevel =
+                mesh.lookupObjectRef<volScalarField>("cellLevel");
+            forAll(cellLevel, celli)
+            {
+                scalarCellLevel[celli] = cellLevel[celli];
+            }
+            scalarCellLevel.write();
         }
-        scalarCellLevel.write();
-    }
-    else
-    {
-        volScalarField scalarCellLevel
-        (
-            IOobject
+        else
+        {
+            volScalarField scalarCellLevel
             (
-                "cellLevel",
-                runTime.timeName(),
-                mesh
-            ),
-            mesh,
-            dimensionedScalar(dimless, 0)
-        );
-        forAll(cellLevel, celli)
-        {
-            scalarCellLevel[celli] = cellLevel[celli];
+                IOobject
+                (
+                    "cellLevel",
+                    runTime.timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar(dimless, 0)
+            );
+            forAll(cellLevel, celli)
+            {
+                scalarCellLevel[celli] = cellLevel[celli];
+            }
+            scalarCellLevel.write();
         }
-        scalarCellLevel.write();
-    }
 
-    // Write mesh and cell levels
-    mesh.write();
-    meshCutter->write();
+        // Write mesh and cell levels
+        meshCutter->write();
+        mesh.write();
+    }
 
     Info<< "\nEnd\n" << endl;
 
