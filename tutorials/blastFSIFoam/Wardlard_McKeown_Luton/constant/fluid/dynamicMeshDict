@@ -18,7 +18,6 @@ dynamicFvMesh   movingAdaptiveFvMesh;
 
 errorEstimator scaledDelta;      // Model used to estimate error
 scaledDeltaField p;               // Field used to estimate error
-epsilon 0.5;
 
 solver      displacementLaplacian;
 
@@ -34,10 +33,10 @@ beginUnrefine 1e-6;         // At what time does unrefinement start (default is 
 refineInterval  5;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
-lowerRefineLevel 0.01;
+lowerRefineLevel 0.1;
 
 // If value < unrefineLevel unrefine
-unrefineLevel   0.01;
+unrefineLevel   0.1;
 
 // Number of cells refined around high error cells
 nBufferLayers   3;
