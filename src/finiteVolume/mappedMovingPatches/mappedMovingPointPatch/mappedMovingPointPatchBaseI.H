@@ -51,18 +51,24 @@ inline Foam::label Foam::mappedMovingPointPatchBase::sampleSize() const
 }
 
 
+inline const Foam::word& Foam::mappedMovingPointPatchBase::displacementFieldName() const
+{
+    return mpp_.displacementFieldName();
+}
+
+
 inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPointPatchBase::offsets() const
 {
     const polyMesh& sMesh(sampleMesh());
     const polyPatch sPatch(samplePolyPatch());
 
-    if (sMesh.foundObject<pointVectorField>(displacementFieldName_))
+    if (sMesh.foundObject<pointVectorField>(displacementFieldName()))
     {
         tmp<vectorField> disp
         (
             sMesh.lookupObject<pointVectorField>
             (
-                displacementFieldName_
+                displacementFieldName()
             ).boundaryField()[sPatch.index()].patchInternalField()
         );
         return disp;

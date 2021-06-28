@@ -86,9 +86,6 @@ protected:
         //- Patch to sample
         mutable UautoPtr<const pointPatch> patchPtr_;
 
-        //- Name of displacementField
-        word displacementFieldName_;
-
 
         // Derived information
 
@@ -143,7 +140,7 @@ public:
     // Constructors
 
         //- Construct from patch
-        mappedMovingPointPatchBase(const polyPatch&, const word&);
+        mappedMovingPointPatchBase(const polyPatch&);
 
 
     //- Destructor
@@ -176,6 +173,9 @@ public:
 
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
+
+            //- PatchGroup (only if NEARESTPATCHFACE)
+            inline const word& displacementFieldName() const;
 
             //- Get the region mesh
             const polyMesh& sampleMesh() const;

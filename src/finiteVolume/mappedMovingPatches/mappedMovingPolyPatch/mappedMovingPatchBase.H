@@ -255,6 +255,9 @@ public:
             //- Get the patch on the region
             const polyPatch& samplePolyPatch() const;
 
+            //- Return the name of the displacement field
+            inline const word& displacementFieldName() const;
+
 
         // Helpers
 

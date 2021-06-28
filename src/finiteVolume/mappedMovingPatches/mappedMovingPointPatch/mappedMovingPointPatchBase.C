@@ -484,15 +484,13 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::readListOrField
 
 Foam::mappedMovingPointPatchBase::mappedMovingPointPatchBase
 (
-    const polyPatch& pp,
-    const word& displacementFieldName
+    const polyPatch& pp
 )
 :
     pp_(pp),
     mpp_(dynamic_cast<const mappedMovingPatchBase&>(pp)),
     pMesh_(pp.boundaryMesh().mesh()),
     patchPtr_(nullptr),
-    displacementFieldName_(displacementFieldName),
     mapPtr_(nullptr)
 {}
 
@@ -553,13 +551,13 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints() con
             ).boundary()[pp_.index()]
         );
     }
-    if (pMesh_.foundObject<pointVectorField>(displacementFieldName_))
+    if (pMesh_.foundObject<pointVectorField>(displacementFieldName()))
     {
         return
             patchPtr_->localPoints()
           + pMesh_.lookupObject<pointVectorField>
             (
-                displacementFieldName_
+                displacementFieldName()
             ).boundaryField()[pp_.index()].patchInternalField();
     }
 

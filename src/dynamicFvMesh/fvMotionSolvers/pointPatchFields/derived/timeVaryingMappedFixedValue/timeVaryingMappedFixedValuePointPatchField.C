@@ -405,7 +405,7 @@ void Foam::timeVaryingMappedFixedValuePointPatchField<Type>::checkTable()
             }
             else
             {
-                IFstream(valsFile)() >> vals;
+                (IFstream(valsFile)()) >> vals;
             }
 
             if (vals.size() != mapperPtr_().sourceSize())
@@ -465,7 +465,7 @@ void Foam::timeVaryingMappedFixedValuePointPatchField<Type>::checkTable()
             }
             else
             {
-                IFstream(valsFile)() >> vals;
+                (IFstream(valsFile)()) >> vals;
             }
 
             if (vals.size() != mapperPtr_().sourceSize())

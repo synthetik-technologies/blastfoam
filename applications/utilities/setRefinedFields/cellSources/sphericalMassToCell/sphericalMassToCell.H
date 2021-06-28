@@ -64,7 +64,7 @@ class sphericalMassToCell
                 return
                     cbrt
                     (
-                        volume()*3.0/4.0*Foam::constant::mathematical::pi
+                        volume()*3.0/4.0/Foam::constant::mathematical::pi
                     );
             }
             return dict.lookup<scalar>("radius");

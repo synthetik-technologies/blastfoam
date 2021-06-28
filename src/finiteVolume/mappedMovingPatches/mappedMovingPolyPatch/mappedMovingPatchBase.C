@@ -567,11 +567,14 @@ const Foam::polyPatch& Foam::mappedMovingPatchBase::samplePolyPatch() const
 Foam::tmp<Foam::pointField> Foam::mappedMovingPatchBase::samplePoints() const
 {
     const polyMesh& pMesh = patch_.boundaryMesh().mesh();
-    if (pMesh.foundObject<volVectorField>("D"))
+    if (pMesh.foundObject<pointVectorField>(displacementFieldName_))
     {
+        word DName(displacementFieldName_);
+        DName.replace("point", word::null);
+
         return
             facePoints(patch_)
-          + pMesh.lookupObject<volVectorField>("D").boundaryField()
+          + pMesh.lookupObject<volVectorField>(DName).boundaryField()
             [patch_.index()];
     }
     return facePoints(patch_);

@@ -112,6 +112,12 @@ inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPatchBase::offsets() const
 }
 
 
+inline const Foam::word& Foam::mappedMovingPatchBase::displacementFieldName() const
+{
+    return displacementFieldName_;
+}
+
+
 inline const Foam::mapDistribute& Foam::mappedMovingPatchBase::map() const
 {
     if (mapPtr_.empty())
