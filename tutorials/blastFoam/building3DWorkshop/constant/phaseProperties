@@ -89,7 +89,7 @@ c4
         E0              9.0e9;   // detonation energy in units of pressure
         points     ((0 0 0.5));     // Detonation points
         vDet       7850;            // Detonation velocity [m/s]
-        useCOM yes;
+        useCOM yes;                 // Overridden by the detonation points
     }
 
     residualRho     1e-6;           // Minimum density of the phase

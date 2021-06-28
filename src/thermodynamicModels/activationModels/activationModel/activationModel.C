@@ -75,15 +75,17 @@ Foam::activationModel::detonationPoint::detonationPoint
     }
     if (returnReduce(nCells, sumOp<label>()) == 0)
     {
-        WarningInFunction
+        FatalErrorInFunction
             << "No cells will be activated using the "
-            << "detonation point " << pt << endl;
+            << "detonation point " << pt
+            << abort(FatalError);
     }
     if (returnReduce(sumAlpha, sumOp<scalar>()) < small)
     {
-        WarningInFunction
-            << "No mass was found in the region specified for activation "
-            << " for detonation point " << pt << endl;
+        FatalErrorInFunction
+            << "No mass was found in the region specified for "
+            << "activation of detonation point " << pt
+            << abort(FatalError);
     }
 }
 
@@ -98,8 +100,8 @@ void Foam::activationModel::detonationPoint::setActivated
     {
         return;
     }
-    Info<<"activating point " << *this << endl;
 
+    Info<<"activating point " << *this << endl;
     const fvMesh& mesh = lambda.mesh();
     label nCells = 0;
     if (radius_ > small)
@@ -122,11 +124,15 @@ void Foam::activationModel::detonationPoint::setActivated
             nCells++;
         }
     }
+
+    // This is checked again because cells may have been refined or
+    // unrefined
     if (returnReduce(nCells, sumOp<label>()) == 0)
     {
-        WarningInFunction
+        FatalErrorInFunction
             << "No cells were activated using the "
-            << "detonation point " << *this << endl;
+            << "detonation point " << *this
+            << abort(FatalError);
     }
     if (update)
     {
@@ -214,18 +220,19 @@ Foam::activationModel::activationModel
         label celli = mesh.findCell(detonationPoints_[pti]);
         if (returnReduce(celli, maxOp<label>()) < 0)
         {
-            WarningInFunction
+            FatalErrorInFunction
                 << "Detonation point at " << detonationPoints_[pti]
                 << " is was not found in the mesh. "
-                << endl;
+                << abort(FatalError);
         }
         else if (celli >= 0)
         {
             if (alpha[celli] < small)
             {
-                WarningInFunction
+                FatalErrorInFunction
                     << "There is no mass for phase " << phaseName
-                    << " at " << detonationPoints_[pti] << endl;
+                    << " at " << detonationPoints_[pti]
+                    << abort(FatalError);
             }
         }
     }
@@ -233,13 +240,13 @@ Foam::activationModel::activationModel
     Switch useCOM(dict.lookupOrDefault("useCOM", false));
     List<vector> points
     (
-        useCOM
-      ? List<vector>(1, this->centerOfMass(mesh, alpha))
-      : (
+        (!useCOM || dict.found("points"))
+      ? (
             this->needDetonationPoints()
           ? dict.lookup<List<vector>>("points")
           : dict.lookupOrDefault("points", List<vector>(0))
         )
+      : List<vector>(1, this->centerOfMass(mesh, alpha))
     );
 
     scalarList delays
@@ -323,8 +330,8 @@ Foam::vector Foam::activationModel::centerOfMass
     if (V < small)
     {
         FatalErrorInFunction
-            << "No mass was found at the center of mass" << endl
-            <<abort(FatalError);
+            << "No mass was found in the domain"
+            << abort(FatalError);
     }
 
     return gSum(m1)/V;
