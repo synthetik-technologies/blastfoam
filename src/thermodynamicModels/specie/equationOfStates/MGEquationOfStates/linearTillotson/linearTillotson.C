@@ -127,10 +127,7 @@ Foam::linearTillotson<Specie>::linearTillotson(const dictionary& dict)
             I--;
         }
     }
-forAll(rhof, i)
-{
-    Info<<rhof[i]<<" "<<ecf[i]<<endl;
-}
+
     EcTable_.set
     (
         rhof,

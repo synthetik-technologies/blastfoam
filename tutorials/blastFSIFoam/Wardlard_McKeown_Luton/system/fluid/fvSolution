@@ -22,13 +22,21 @@ solvers
         solver diagonal;
     }
 
-    "(U|cellDisplacement|e)"
+    "(U|e)"
     {
         solver          PBiCGStab;
         preconditioner  DIC ;
         tolerance       1e-6;
         relTol          0;
         minIter         1;
+    }
+
+    "cellDisplacement.*"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0;
     }
 }
 

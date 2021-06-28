@@ -155,14 +155,6 @@ public:
         // Function to clear patches if an update has occurred
         static void clearMappedPatches(fvMesh& mesh);
 
-        // Set the displacement field given a field
-        static bool setMappedPatchDisplacement
-        (
-            fvMesh& ownMesh,
-            const fvMesh& neiMesh,
-            const pointVectorField& pointD
-        );
-
         //- Check if a patch is of a mapped type
         static bool isAMappedType(const fvPatch& patch);
 };

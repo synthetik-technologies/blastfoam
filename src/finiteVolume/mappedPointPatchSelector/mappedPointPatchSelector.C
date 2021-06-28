@@ -119,41 +119,6 @@ void Foam::mappedPointPatchSelector::clearMappedPatches(fvMesh& mesh)
 }
 
 
-bool Foam::mappedPointPatchSelector::setMappedPatchDisplacement
-(
-    fvMesh& ownMesh,
-    const fvMesh& neiMesh,
-    const pointVectorField& pointD
-)
-{
-    const pointMesh& pMesh
-    (
-        ownMesh.lookupObjectRef<pointMesh>("pointMesh")
-    );
-
-    bool set = false;
-    forAll(pMesh.boundary(), patchi)
-    {
-        if (isA<mappedMovingPointPatch>(pMesh.boundary()[patchi]))
-        {
-            pointBoundaryMesh& pbMesh =
-                const_cast<pointBoundaryMesh&>(pMesh.boundary());
-            mappedMovingPointPatchBase& mmppb =
-                refCast<mappedMovingPointPatchBase>
-                (
-                    pbMesh[patchi]
-                );
-            if (mmppb.sampleRegion() == neiMesh.name())
-            {
-                mmppb.setOffsets(pointD);
-                set = true;
-            }
-        }
-    }
-    return set;
-}
-
-
 bool Foam::mappedPointPatchSelector::isAMappedType
 (
     const pointPatch& patch

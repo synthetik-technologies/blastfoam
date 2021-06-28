@@ -146,40 +146,6 @@ void Foam::mappedPatchSelector::clearMappedPatches(fvMesh& mesh)
     }
 }
 
-
-bool Foam::mappedPatchSelector::setMappedPatchDisplacement
-(
-    fvMesh& ownMesh,
-    const fvMesh& neiMesh,
-    const pointVectorField& pointD
-)
-{
-    bool set = false;
-    forAll(ownMesh.boundaryMesh(), patchi)
-    {
-        if (isA<mappedMovingWallFvPatch>(ownMesh.boundary()[patchi]))
-        {
-            polyBoundaryMesh& pbMesh =
-                const_cast<polyBoundaryMesh&>
-                (
-                    ownMesh.boundaryMesh()
-                );
-            mappedMovingPatchBase& mmpb =
-                refCast<mappedMovingPatchBase>
-                (
-                    pbMesh[patchi]
-                );
-            if (mmpb.sampleRegion() == neiMesh.name())
-            {
-                mmpb.setOffsets(pointD);
-                set = true;
-            }
-        }
-    }
-    return set;
-}
-
-
 bool Foam::mappedPatchSelector::isAMappedType(const fvPatch& patch)
 {
     if (isA<mappedWallPolyPatch>(patch))

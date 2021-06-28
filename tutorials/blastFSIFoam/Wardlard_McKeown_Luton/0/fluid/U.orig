@@ -26,7 +26,8 @@ boundaryField
     }
     fluid_to_walls
     {
-        type            slip;
+        type            movingWallVelocity;
+        value           $internalField;
     }
     front
     {

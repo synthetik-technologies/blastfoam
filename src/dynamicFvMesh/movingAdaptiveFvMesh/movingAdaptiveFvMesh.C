@@ -83,6 +83,7 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
         {
             displacementMotionSolver& dispMS =
                 dynamicCast<displacementMotionSolver>(motionPtr_());
+            dispMS.pointDisplacement().boundaryFieldRef().updateCoeffs();
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
         }
@@ -90,6 +91,8 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
         {
             componentDisplacementMotionSolver& dispMS =
                 dynamicCast<componentDisplacementMotionSolver>(motionPtr_());
+            dispMS.pointDisplacement().boundaryFieldRef().updateCoeffs();
+
             dispMS.points0() =
                 points().component(dispMS.cmpt())
               - dispMS.pointDisplacement().primitiveField();

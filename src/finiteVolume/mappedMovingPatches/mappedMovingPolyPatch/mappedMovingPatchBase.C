@@ -179,12 +179,8 @@ void Foam::mappedMovingPatchBase::findSamples
     else
     {
         // Displace face centres by displacement field
-        pointField points(pp.localPoints());
+        pointField points(pp.localPoints() + offsets());
 
-        if (displacementPtr_.valid())
-        {
-            points += displacementPtr_->boundaryField()[pp.index()].patchInternalField();
-        }
         faceList faces(pp.localFaces());
 
         treeBoundBox patchBb
@@ -290,7 +286,7 @@ void Foam::mappedMovingPatchBase::calcMapping() const
 
     // Get points on face (since cannot use face-centres - might be off
     // face-diagonal decomposed tets.
-    tmp<pointField> patchPoints(facePoints(patch_));
+    tmp<pointField> patchPoints(samplePoints());
 
 
     // Get global list of all samples and the processor and face they come from.
@@ -445,7 +441,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(patch_.boundaryMesh().mesh().name()),
     samplePatch_(""),
     coupleGroup_(),
-    displacementPtr_(nullptr),
+    displacementFieldName_("pointD"),
     mapPtr_(nullptr)
 {}
 
@@ -461,7 +457,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(sampleRegion),
     samplePatch_(samplePatch),
     coupleGroup_(),
-    displacementPtr_(nullptr),
+    displacementFieldName_("pointD"),
     mapPtr_(nullptr)
 {}
 
@@ -476,7 +472,10 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(dict.lookupOrDefault<word>("sampleRegion", "")),
     samplePatch_(dict.lookup<word>("samplePatch", "")),
     coupleGroup_(dict),
-    displacementPtr_(nullptr),
+    displacementFieldName_
+    (
+        dict.lookupOrDefault<word>("displacementField", "pointD")
+    ),
     mapPtr_(nullptr)
 {
     if (!coupleGroup_.valid())
@@ -500,7 +499,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(mpb.sampleRegion_),
     samplePatch_(mpb.samplePatch_),
     coupleGroup_(mpb.coupleGroup_),
-    displacementPtr_(mpb.displacementPtr_),
+    displacementFieldName_(mpb.displacementFieldName_),
     mapPtr_(nullptr)
 {}
 
@@ -516,7 +515,7 @@ Foam::mappedMovingPatchBase::mappedMovingPatchBase
     sampleRegion_(mpb.sampleRegion_),
     samplePatch_(mpb.samplePatch_),
     coupleGroup_(mpb.coupleGroup_),
-    displacementPtr_(mpb.displacementPtr_),
+    displacementFieldName_(mpb.displacementFieldName_),
     mapPtr_(nullptr)
 {}
 
@@ -567,6 +566,14 @@ const Foam::polyPatch& Foam::mappedMovingPatchBase::samplePolyPatch() const
 
 Foam::tmp<Foam::pointField> Foam::mappedMovingPatchBase::samplePoints() const
 {
+    const polyMesh& pMesh = patch_.boundaryMesh().mesh();
+    if (pMesh.foundObject<volVectorField>("D"))
+    {
+        return
+            facePoints(patch_)
+          + pMesh.lookupObject<volVectorField>("D").boundaryField()
+            [patch_.index()];
+    }
     return facePoints(patch_);
 }
 

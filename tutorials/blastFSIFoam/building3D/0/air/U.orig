@@ -22,7 +22,8 @@ boundaryField
 {
     air_to_building
     {
-        type            slip;
+        type            movingWallVelocity;
+        value           $internalField;
     }
     ground
     {

@@ -86,8 +86,8 @@ protected:
         //- Patch to sample
         mutable UautoPtr<const pointPatch> patchPtr_;
 
-        //- Pointer to saved offset vector
-        UautoPtr<const pointVectorField> displacementPtr_;
+        //- Name of displacementField
+        word displacementFieldName_;
 
 
         // Derived information
@@ -143,7 +143,7 @@ public:
     // Constructors
 
         //- Construct from patch
-        mappedMovingPointPatchBase(const polyPatch&);
+        mappedMovingPointPatchBase(const polyPatch&, const word&);
 
 
     //- Destructor
@@ -167,9 +167,6 @@ public:
 
             //- Return size of mappedMoving mesh/patch/boundary
             inline label sampleSize() const;
-
-            //- Set pointer to offset field
-            inline void setOffsets(const pointVectorField& offsets);
 
             //- Offset vector (from patch faces to destination mesh objects)
             inline tmp<vectorField> offsets() const;

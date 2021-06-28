@@ -141,13 +141,7 @@ void Foam::mappedMovingPointPatchBase::findSamples
 
     const polyPatch& pp = samplePolyPatch();
 
-    pointField points(pp.localPoints());
-    if (displacementPtr_.valid())
-    {
-        points +=
-            displacementPtr_->boundaryField()[pp.index()].patchInternalField();
-    }
-
+    pointField points(pp.localPoints() + offsets());
     if (pp.empty())
     {
         forAll(samples, sampleI)
@@ -273,7 +267,7 @@ void Foam::mappedMovingPointPatchBase::calcMapping() const
 
     // Get points on face (since cannot use face-centres - might be off
     // face-diagonal decomposed tets.
-    tmp<pointField> points(patchPtr_->localPoints());
+    tmp<pointField> points(samplePoints());
 
     // Get global list of all samples and the processor and face they come from.
     pointField samples;
@@ -490,14 +484,15 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::readListOrField
 
 Foam::mappedMovingPointPatchBase::mappedMovingPointPatchBase
 (
-    const polyPatch& pp
+    const polyPatch& pp,
+    const word& displacementFieldName
 )
 :
     pp_(pp),
     mpp_(dynamic_cast<const mappedMovingPatchBase&>(pp)),
     pMesh_(pp.boundaryMesh().mesh()),
     patchPtr_(nullptr),
-    displacementPtr_(nullptr),
+    displacementFieldName_(displacementFieldName),
     mapPtr_(nullptr)
 {}
 
@@ -557,6 +552,15 @@ Foam::tmp<Foam::pointField> Foam::mappedMovingPointPatchBase::samplePoints() con
                 "pointMesh"
             ).boundary()[pp_.index()]
         );
+    }
+    if (pMesh_.foundObject<pointVectorField>(displacementFieldName_))
+    {
+        return
+            patchPtr_->localPoints()
+          + pMesh_.lookupObject<pointVectorField>
+            (
+                displacementFieldName_
+            ).boundaryField()[pp_.index()].patchInternalField();
     }
 
     return patchPtr_->localPoints();

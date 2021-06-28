@@ -82,8 +82,6 @@ int main(int argc, char *argv[])
 
         #include "updateMeshes.H"
 
-        #include "clearPatches.H"
-
         // Solve
         forAll(fluidRegions, i)
         {

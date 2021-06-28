@@ -56,7 +56,18 @@ maxDeltaT       1;
 
 
 functions
-{}
+{
+    solidProbes
+    {
+        type probes;
+        region walls;
+        probeLocations
+        (
+            (0.045 0.115 0)
+        );
+        fields (D U);
+    }
+}
 
 
 

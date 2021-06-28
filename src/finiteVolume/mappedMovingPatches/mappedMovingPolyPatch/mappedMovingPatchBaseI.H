@@ -90,18 +90,25 @@ inline Foam::label Foam::mappedMovingPatchBase::sampleSize() const
 }
 
 
-inline void Foam::mappedMovingPatchBase::setOffsets
-(
-    const pointVectorField& pointD
-)
+inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPatchBase::offsets() const
 {
+    const polyMesh& sMesh(sampleMesh());
+    const polyPatch& sPatch(samplePolyPatch());
+    if (sMesh.foundObject<pointVectorField>(displacementFieldName_))
+    {
+        return
+            sMesh.lookupObject<pointVectorField>
+            (
+                displacementFieldName_
+            ).boundaryField()[sPatch.index()].patchInternalField();
+    }
+
     if (debug)
     {
-        Info<< "Setting offsets for " << patch_.name() << endl;
+        Info<< "Offsets are not set for " << samplePatch() << endl;
     }
-    displacementPtr_.reset(&pointD);
-    clearOut();
-    calcMapping();
+
+    return tmp<vectorField>(new vectorField(sPatch.localPoints().size(), Zero));
 }
 
 

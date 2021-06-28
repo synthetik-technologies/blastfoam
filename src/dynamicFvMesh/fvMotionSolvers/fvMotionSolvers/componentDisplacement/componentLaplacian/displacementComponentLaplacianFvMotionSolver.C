@@ -109,7 +109,7 @@ displacementComponentLaplacianFvMotionSolver
             )
         );
 
-        // if (debug)
+        if (debug)
         {
             Info<< "displacementComponentLaplacianFvMotionSolver :"
                 << " Read pointVectorField "

@@ -16,10 +16,8 @@ FoamFile
 
 dynamicFvMesh   movingAdaptiveFvMesh;
 
-balance no;
-
-errorEstimator densityGradient;      // Model used to estimate error
-deltaField p;               // Field used to estimate error
+errorEstimator scaledDelta;      // Model used to estimate error
+scaledDeltaField p;               // Field used to estimate error
 epsilon 0.5;
 
 solver      displacementLaplacian;

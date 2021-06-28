@@ -53,50 +53,27 @@ inline Foam::label Foam::mappedMovingPointPatchBase::sampleSize() const
 
 inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPointPatchBase::offsets() const
 {
-    if (!patchPtr_.valid())
+    const polyMesh& sMesh(sampleMesh());
+    const polyPatch sPatch(samplePolyPatch());
+
+    if (sMesh.foundObject<pointVectorField>(displacementFieldName_))
     {
-        patchPtr_.reset
+        tmp<vectorField> disp
         (
-            &pMesh_.lookupObject<pointMesh>
+            sMesh.lookupObject<pointVectorField>
             (
-                "pointMesh"
-            ).boundary()[pp_.index()]
+                displacementFieldName_
+            ).boundaryField()[sPatch.index()].patchInternalField()
         );
-    }
-    if (displacementPtr_.valid())
-    {
-        return
-            displacementPtr_->boundaryField()[patchPtr_->index()].patchInternalField();
+        return disp;
     }
 
     if (debug)
     {
-        Info<< "Offsets are not set for " << patchPtr_->name() << endl;
+        Info<< "Offsets are not set for " << sPatch.name() << endl;
     }
 
-    return tmp<vectorField>(new vectorField(patchPtr_->size(), Zero));
-}
-
-
-inline void Foam::mappedMovingPointPatchBase::setOffsets
-(
-    const pointVectorField& displacement
-)
-{
-    if (!patchPtr_.valid())
-    {
-        patchPtr_ =
-            &pMesh_.lookupObject<pointMesh>
-            (
-                "pointMesh"
-            ).boundary()[pp_.index()];
-    }
-
-    if (debug)
-    {
-        Info<< "Setting offsets for " << patchPtr_->name() << endl;
-    }
-    displacementPtr_.reset(&displacement);
+    return tmp<vectorField>(new vectorField(sPatch.size(), Zero));
 }
 
 

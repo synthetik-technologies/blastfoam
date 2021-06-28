@@ -48,7 +48,7 @@ Foam::mappedMovingPointPatch::mappedMovingPointPatch
 )
 :
     facePointPatch(pp, bm),
-    mappedMovingPointPatchBase(pp)
+    mappedMovingPointPatchBase(pp, "pointD")
 {}
 
 

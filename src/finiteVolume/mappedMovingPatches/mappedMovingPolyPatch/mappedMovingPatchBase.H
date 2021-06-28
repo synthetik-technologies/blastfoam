@@ -146,8 +146,8 @@ protected:
         //- PatchGroup (if in sampleMode NEARESTPATCH*)
         const coupleGroupIdentifier coupleGroup_;
 
-        //- Pointer to saved offset vector
-        UautoPtr<const pointVectorField> displacementPtr_;
+        //- Displacement field name
+        word displacementFieldName_;
 
 
         // Derived information
@@ -246,9 +246,6 @@ public:
             //- Return size of mappedMoving mesh/patch/boundary
             inline label sampleSize() const;
 
-            //- Set pointer to offset field
-            inline void setOffsets(const pointVectorField& pointD);
-
             //- Return reference to the parallel distribution map
             inline const mapDistribute& map() const;
 
@@ -277,6 +274,8 @@ public:
                 const polyMesh::cellDecomposition
             );
 
+            //- Offset vector (from patch faces to destination mesh objects)
+            inline tmp<vectorField> offsets() const;
 
         // Distribute
 
