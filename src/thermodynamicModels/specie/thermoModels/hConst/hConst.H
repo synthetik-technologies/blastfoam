@@ -118,6 +118,9 @@ public:
         //- Construct from dictionary
         hConst(const dictionary& dict);
 
+        //- Construct as copy
+        inline hConst(const hConst&);
+
         //- Construct as named copy
         inline hConst(const word&, const hConst&);
 
@@ -208,6 +211,7 @@ public:
 
     // Member operators
 
+        inline void operator=(const hConst&);
         inline void operator+=(const hConst&);
 
 

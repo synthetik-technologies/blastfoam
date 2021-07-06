@@ -132,6 +132,9 @@ public:
         janaf(const dictionary& dict);
 
         //- Construct as a named copy
+        inline janaf(const janaf&);
+
+        //- Construct as a named copy
         inline janaf(const word&, const janaf&);
 
 
@@ -236,6 +239,7 @@ public:
 
     // Member operators
 
+        inline void operator=(const janaf&);
         inline void operator+=(const janaf&);
 
 

@@ -87,6 +87,26 @@ Foam::janaf<EquationOfState>::coeffs
 template<class EquationOfState>
 inline Foam::janaf<EquationOfState>::janaf
 (
+    const janaf& jt
+)
+:
+    EquationOfState(jt),
+    Tlow_(jt.Tlow_),
+    Thigh_(jt.Thigh_),
+    Tcommon_(jt.Tcommon_)
+{
+    for (label coefLabel=0; coefLabel<nCoeffs_; coefLabel++)
+    {
+        highCpCoeffs_[coefLabel] = jt.highCpCoeffs_[coefLabel];
+        lowCpCoeffs_[coefLabel] = jt.lowCpCoeffs_[coefLabel];
+    }
+    EquationOfState::set(*this);
+}
+
+
+template<class EquationOfState>
+inline Foam::janaf<EquationOfState>::janaf
+(
     const word& name,
     const janaf& jt
 )
@@ -307,6 +327,22 @@ inline Foam::scalar Foam::janaf<EquationOfState>::dCpdT
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline void Foam::janaf<EquationOfState>::operator=
+(
+    const janaf<EquationOfState>& jt
+)
+{
+    EquationOfState::operator=(jt);
+
+    Tlow_ = jt.Tlow_;
+    Thigh_ = jt.Thigh_;
+    Tcommon_ = jt.Tcommon_;
+    highCpCoeffs_ = jt.highCpCoeffs_;
+    lowCpCoeffs_ = jt.lowCpCoeffs_;
+}
+
 
 template<class EquationOfState>
 inline void Foam::janaf<EquationOfState>::operator+=

@@ -51,6 +51,21 @@ inline Foam::hConst<EquationOfState>::hConst
 template<class EquationOfState>
 inline Foam::hConst<EquationOfState>::hConst
 (
+    const hConst& ct
+)
+:
+    EquationOfState(ct),
+    Cp_(ct.Cp_),
+    Hf_(ct.Hf_),
+    flameT_(ct.flameT_)
+{
+    EquationOfState::set(*this);
+}
+
+
+template<class EquationOfState>
+inline Foam::hConst<EquationOfState>::hConst
+(
     const word& name,
     const hConst& ct
 )
@@ -208,6 +223,20 @@ inline Foam::scalar Foam::hConst<EquationOfState>::dCpdT
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline void Foam::hConst<EquationOfState>::operator=
+(
+    const hConst<EquationOfState>& ct
+)
+{
+    EquationOfState::operator=(ct);
+    Cp_ = ct.Cp_;
+    Hf_ = ct.Hf_;
+    flameT_ = ct.flameT_;
+    this->set(*this);
+}
+
 
 template<class EquationOfState>
 inline void Foam::hConst<EquationOfState>::operator+=

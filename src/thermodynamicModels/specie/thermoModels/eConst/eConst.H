@@ -121,6 +121,9 @@ public:
         //- Construct as named copy
         inline eConst(const word&, const eConst&);
 
+        //- Construct as copy
+        inline eConst(const eConst&);
+
         //- Construct and return a clone
         inline autoPtr<eConst> clone() const;
 
@@ -209,6 +212,7 @@ public:
 
     // Member operators
 
+        inline void operator=(const eConst&);
         inline void operator+=(const eConst&);
 
 

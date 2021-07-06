@@ -771,7 +771,6 @@ Foam::phaseSystem::phaseSystem
      && min(sumAlpha()).value() - 1 > small
     )
     {
-        Info<<max(sumAlpha()).value()<<' '<<min(sumAlpha()).value()<<endl;
         FatalErrorInFunction
             << "Initial volume fractions do not sum to one." << nl
             << "min(sum(alphas)) = " << min(sumAlpha).value()

@@ -108,7 +108,6 @@ void Foam::diameterModels::reactingDiameterModel::solve
 
     volScalarField dDdt(-2.0*rate_->k(pi, T));
     this->blendDelta(dDdt);
-    Info<<max(mag(dDdt)).value()<<endl;
 
     const dimensionedScalar& dT(this->d_.time().deltaT());
 

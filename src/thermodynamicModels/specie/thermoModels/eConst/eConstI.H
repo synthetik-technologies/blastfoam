@@ -51,6 +51,21 @@ inline Foam::eConst<EquationOfState>::eConst
 template<class EquationOfState>
 inline Foam::eConst<EquationOfState>::eConst
 (
+    const eConst<EquationOfState>& ct
+)
+:
+    EquationOfState(ct),
+    Cv_(ct.Cv_),
+    Hf_(ct.Hf_),
+    flameT_(ct.flameT_)
+{
+    EquationOfState::set(*this);
+}
+
+
+template<class EquationOfState>
+inline Foam::eConst<EquationOfState>::eConst
+(
     const word& name,
     const eConst<EquationOfState>& ct
 )
@@ -207,6 +222,21 @@ inline Foam::scalar Foam::eConst<EquationOfState>::dCpdT
 }
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline void Foam::eConst<EquationOfState>::operator=
+(
+    const eConst<EquationOfState>& ct
+)
+{
+
+    EquationOfState::operator=(ct);
+    Cv_ = ct.Cv_;
+    Hf_ = ct.Hf_;
+    flameT_ = ct.flameT_;
+    this->set(*this);
+}
+
 
 template<class EquationOfState>
 inline void Foam::eConst<EquationOfState>::operator+=
