@@ -29,6 +29,7 @@ License
 #include "mappedMovingWallFvPatch.H"
 #include "timeControlFunctionObject.H"
 #include "probes.H"
+#include "blastProbes.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -83,61 +84,6 @@ Foam::tmp<Foam::volScalarField> Foam::errorEstimator::constructError
     );
 }
 
-void Foam::errorEstimator::addProbes()
-{
-    if (probes_.size())
-    {
-        return;
-    }
-
-    const functionObjectList& funcs(mesh_.time().functionObjects());
-    labelList map;
-    forAll(funcs, i)
-    {
-        if (isA<probes>(funcs[i]))
-        {
-            map.append(i);
-        }
-        else if (isA<functionObjects::timeControl>(funcs[i]))
-        {
-            const functionObjects::timeControl& tc
-            (
-                dynamicCast<const functionObjects::timeControl>(funcs[i])
-            );
-            if (isA<probes>(tc.filter()))
-            {
-                map.append(i);
-            }
-        }
-    }
-
-    probes_.resize(map.size());
-    forAll(map, i)
-    {
-        const functionObject& f(funcs[map[i]]);
-
-        const functionObject* foPtr;
-        if (isA<functionObjects::timeControl>(f))
-        {
-            const functionObjects::timeControl& tc
-            (
-                dynamicCast<const functionObjects::timeControl&>(f)
-            );
-            foPtr = &tc.filter();
-        }
-        else
-        {
-            foPtr = &f;
-        }
-        const probes& p(refCast<const probes>(*foPtr));
-        probes_.set
-        (
-            i,
-            new tmp<probes>(p)
-        );
-    }
-}
-
 
 Foam::errorEstimator::errorEstimator
 (
@@ -154,8 +100,7 @@ Foam::errorEstimator::errorEstimator
     upperRefine_(0.0),
     upperUnrefine_(0.0),
     maxLevel_(10),
-    refineProbes_(dict.lookupOrDefault("refineProbes", true)),
-    probes_(0)
+    refineProbes_(dict.lookupOrDefault("refineProbes", true))
 {}
 
 
@@ -214,19 +159,53 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         }
     }
 
-    if (refineProbes_)
+    if (!refineProbes_)
     {
-        addProbes();
+        return;
+    }
 
-        forAll(probes_, i)
+    const functionObjectList& funcs(mesh_.time().functionObjects());
+    labelList map;
+    forAll(funcs, i)
+    {
+        if (isA<functionObjects::timeControl>(funcs[i]))
         {
-            const labelList& cells(probes_[i]().elements());
-            forAll(cells, j)
+            const functionObjects::timeControl& tc
+            (
+                dynamicCast<const functionObjects::timeControl>(funcs[i])
+            );
+            bool sameRegion = true;
+            const dictionary& dict = tc.dict();
+            if (dict.found("region"))
             {
-                label celli = cells[j];
-                if (celli >= 0)
+                word regionName = dict.lookup<word>("region");
+                sameRegion = regionName == error_.mesh().name();
+            }
+
+            if (isA<probes>(tc.filter()) && sameRegion)
+            {
+                const probes& p(refCast<const probes>(tc.filter()));
+                const labelList& cells(p.elements());
+                forAll(cells, j)
                 {
-                    error[celli] = 1.0;
+                    label celli = cells[j];
+                    if (celli >= 0)
+                    {
+                        error[celli] = 1.0;
+                    }
+                }
+            }
+            if (isA<blastProbes>(tc.filter()) && sameRegion)
+            {
+                const blastProbes& p(refCast<const blastProbes>(tc.filter()));
+                const labelList& cells(p.elements());
+                forAll(cells, j)
+                {
+                    label celli = cells[j];
+                    if (celli >= 0)
+                    {
+                        error[celli] = 1.0;
+                    }
                 }
             }
         }

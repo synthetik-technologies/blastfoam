@@ -39,7 +39,7 @@ Description
 #include "volFields.H"
 
 #include "hexRef.H"
-#include "hexRef8.H"
+#include "hexRef3D.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
     bool refine = true;
     if (args.optionFound("force3D"))
     {
-        meshCutter.set(new hexRef8(mesh));
+        meshCutter.set(new hexRef3D(mesh));
     }
     else if (mesh.nGeometricD() > 1)
     {
@@ -978,6 +978,21 @@ int main(int argc, char *argv[])
         // Write mesh and cell levels
         meshCutter->write();
         mesh.write();
+
+        //- Write points0 field to time directory
+        pointIOField points0
+        (
+            IOobject
+            (
+                "points0",
+                runTime.timeName(),
+                polyMesh::meshSubDir,
+                mesh
+            ),
+            mesh.points()
+        );
+        points0.write();
+
     }
 
     Info<< "\nEnd\n" << endl;

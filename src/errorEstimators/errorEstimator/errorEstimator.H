@@ -84,9 +84,6 @@ protected:
         //- Are probes refined
         Switch refineProbes_;
 
-        //- Tracked probe function objects
-        PtrList<tmp<probes>> probes_;
-
 
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
@@ -97,9 +94,6 @@ protected:
         {
             return std::is_base_of<Base, T>::value;
         }
-
-        //- Construct list of probe function objects to add to list
-        void addProbes();
 
         //- Normalize error (-1 = unrefine, 0 = do nothing, 1 = refine)
         void normalize(volScalarField& error);

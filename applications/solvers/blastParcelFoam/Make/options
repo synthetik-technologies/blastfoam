@@ -9,18 +9,19 @@ EXE_INC= \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
+    -I$(BLAST_DIR)/src/lagrangian/intermediate/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/ODE/lnInclude \
-    -I$(BLAST_DIR)/src/lagrangian/basic/lnInclude \
-    -I$(BLAST_DIR)/src/lagrangian/distributionModels/lnInclude \
-    -I$(BLAST_DIR)/src/lagrangian/intermediate/lnInclude \
+    -I$(LIB_SRC)/lagrangian/basic/lnInclude \
+    -I$(LIB_SRC)/lagrangian/distributionModels/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude
 
 EXE_LIBS = \
     -lmomentumTransportModels \
     -lfluidThermoMomentumTransportModels \
+    -llagrangian \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
     -lblastMomentumTransportModels \
@@ -30,6 +31,5 @@ EXE_LIBS = \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lblastLagrangian \
     -lblastLagrangianIntermediate \
     -lerrorEstimate

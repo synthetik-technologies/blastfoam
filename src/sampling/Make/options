@@ -1,18 +1,10 @@
 EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
-    -I$(LIB_SRC)/surfMesh/lnInclude \
-    -I$(LIB_SRC)/fileFormats/lnInclude \
-    -I$(LIB_SRC)/triSurface/lnInclude \
-    -I$(BLAST_DIR)/src/lagrangian/basic/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude
+    -I$(LIB_SRC)/sampling/lnInclude \
+    -I$(LIB_SRC)/fileFormats/lnInclude
 
 LIB_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
-    -lsurfMesh \
-    -lfileFormats \
-    -ltriSurface \
-    -L$(BLAST_LIBBIN) \
-    -lblastLagrangian \
-    -lblastDynamicMesh
+    -lfileFormats

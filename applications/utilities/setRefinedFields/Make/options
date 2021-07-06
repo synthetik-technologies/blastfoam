@@ -1,6 +1,7 @@
 EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -IFieldSetTypes/lnInclude \
@@ -10,6 +11,8 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lgenericPatchFields \
     -lmeshTools \
+    -ldynamicMesh \
+    -lsampling \
     -L$(BLAST_LIBBIN) \
     -lblastDynamicMesh \
     -lerrorEstimate \

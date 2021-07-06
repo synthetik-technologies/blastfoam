@@ -1,5 +1,0 @@
-solidParticle.C
-solidParticleIO.C
-solidParticleCloud.C
-
-LIB = $(BLAST_LIBBIN)/libblastSolidParticle

@@ -103,6 +103,11 @@ Foam::tmp<Foam::pointField> Foam::mappedPointPatchSelector::samplePoints() const
 // Function to clear patches if an update has occurred
 void Foam::mappedPointPatchSelector::clearMappedPatches(fvMesh& mesh)
 {
+    if (!mesh.foundObject<pointMesh>("pointMesh"))
+    {
+        return;
+    }
+
     pointMesh& pMesh = mesh.lookupObjectRef<pointMesh>("pointMesh");
     forAll(pMesh.boundary(), patchi)
     {

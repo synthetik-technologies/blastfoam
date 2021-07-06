@@ -22,7 +22,10 @@ particles
     phaseType        granular;
 
     diameterModel constant;
-    d           50e-6;
+    constantDiameterCoeffs
+    {
+        d           50e-6;
+    }
 
     alphaMax    0.65;
     alphaMinFriction 0.5;
@@ -65,7 +68,10 @@ gas
 {
     phaseType       multiphase;
     diameterModel   constant;
-    d               1;
+    constantDiameterCoeffs
+    {
+        d           1;
+    }
 
     phases (c4 air);
 

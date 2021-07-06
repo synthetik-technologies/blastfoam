@@ -13,9 +13,6 @@ wmake $targetType radiationModels
 wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
-wmake $targetType decompositionMethods
-
-wmake $targetType lagrangian/basic
 
 wmake $targetType sampling
 

@@ -29,7 +29,7 @@ License
 #include "mappedMovingPatchBase.H"
 #include "mappedMovingWallFvPatch.H"
 #include "displacementMotionSolver.H"
-#include "componentDisplacementMotionSolver.H"
+#include "displacementComponentLaplacianFvMotionSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -66,7 +66,10 @@ Foam::movingAdaptiveFvMesh::~movingAdaptiveFvMesh()
 void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
     fvMesh::updateMesh(mpm);
-    motionPtr_->updateMesh(mpm);
+
+    // Only the points0 fields is updated, but this is handled after
+    // refinement/balancing so we skip
+//     motionPtr_->updateMesh(mpm);
 }
 
 const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
@@ -86,10 +89,13 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
         }
-        else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
+        else if (isA<displacementComponentLaplacianFvMotionSolver>(motionPtr_()))
         {
-            componentDisplacementMotionSolver& dispMS =
-                dynamicCast<componentDisplacementMotionSolver>(motionPtr_());
+            displacementComponentLaplacianFvMotionSolver& dispMS =
+                dynamicCast<displacementComponentLaplacianFvMotionSolver>
+                (
+                    motionPtr_()
+                );
             dispMS.points0() =
                 points().component(dispMS.cmpt())
               - dispMS.pointDisplacement().primitiveField();

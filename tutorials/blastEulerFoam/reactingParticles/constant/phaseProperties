@@ -85,15 +85,14 @@ gas
     thermoType
     {
         transport   const;
-        thermo      hConst;
-        equationOfState idealGas;
+        thermo      eConst;
+        equationOfState AbelNobel;
     }
 
     ignitor
     {
         equationOfState
         {
-            gamma   1.4;
             b               0.99e-3;
         }
         specie
@@ -107,7 +106,7 @@ gas
         }
         thermodynamics
         {
-            Cp          1450;
+            Cv          1450;
             Hf          0;
         }
     }
@@ -115,7 +114,6 @@ gas
     {
         equationOfState
         {
-            gamma   1.4;
             b           0.99e-3;            // Heat capactiy ratio
         }
         specie
@@ -129,7 +127,7 @@ gas
         }
         thermodynamics
         {
-            Cp          2100;
+            Cv          2100;
             Hf          1.5e6;
         }
     }
@@ -137,7 +135,6 @@ gas
     {
         equationOfState
         {
-            gamma   1.4;
             b           1.02e-3;            // Heat capactiy ratio
         }
         specie
@@ -151,7 +148,7 @@ gas
         }
         thermodynamics
         {
-            Cp          1450;
+            Cv          1450;
             Hf          0;
         }
     }

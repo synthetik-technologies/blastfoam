@@ -8,5 +8,4 @@ runApplication blockMesh
 runApplication decomposePar
 runParallel $(getApplication)
 
-runApplication reconstructParMesh -constant -mergeTol 1e-6
-runApplication reconstructPar
+runParallel convertLagrangianPositions

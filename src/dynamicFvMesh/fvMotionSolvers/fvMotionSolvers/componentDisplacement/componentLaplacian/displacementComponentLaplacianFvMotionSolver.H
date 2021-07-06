@@ -123,6 +123,24 @@ public:
         //- Update topology
         virtual void updateMesh(const mapPolyMesh&);
 
+        //- Return component
+        const direction& cmpt() const
+        {
+            return cmpt_;
+        }
+
+        //- Return pointDisplacement
+        const pointScalarField& pointDisplacement() const
+        {
+            return pointDisplacement_;
+        }
+
+        //- Access pointDisplacement
+        pointScalarField& pointDisplacement()
+        {
+            return pointDisplacement_;
+        }
+
 
     // Member Operators
 

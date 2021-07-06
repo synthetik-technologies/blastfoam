@@ -51,7 +51,7 @@ Foam::blast::temperatureCoupledBase::temperatureCoupledBase
 )
 :
     patch_(patch),
-    alphaAniName_(dict.lookupOrDefault<word>("alphaAni","Anialpha"))
+    alphaAniName_(dict.lookupOrDefault<word>("alphaAni",word::null))
 {}
 
 

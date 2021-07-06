@@ -74,7 +74,7 @@ Description
 #include "PackedBoolList.H"
 #include "Switch.H"
 #include "decompositionMethod.H"
-#include "fvMeshDistribute.H"
+#include "blastFvMeshDistribute.H"
 #include "mapDistributePolyMesh.H"
 #include "PtrDictionary.H"
 #include "dictionaryEntry.H"
