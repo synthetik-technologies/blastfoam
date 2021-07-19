@@ -80,7 +80,8 @@ Foam::afterburnModels::linearAfterburn::ESource() const
             ),
             mesh_,
             Q0_/(tEnd_ - tStart_)
-           *pos(this->time() - tStart_)*pos(tEnd_ - tStart_)
+           *pos(this->time() - tStart_)
+           *pos(tEnd_ - this->time())
         )
     );
 }
