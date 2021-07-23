@@ -2,7 +2,9 @@
 fieldMax/fieldMax.C
 writeTimeList/writeTimeList.C
 conservedQuantities/conservedQuantities.C
-
+blastProbes/blastProbes.C
+blastProbes/blastPatchProbes.C
+blastProbes/blastProbesGrouping.C
 
 /* Blast specific */
 impulse/impulse.C
@@ -11,10 +13,5 @@ blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C
-
-
-/* Lagrangian */
-tracerParticles/tracerParticles.C
-
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

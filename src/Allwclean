@@ -14,7 +14,6 @@ wclean $targetType dynamicMesh
 wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
-wclean $targetType sampling
 wclean all lagrangian
 wclean $targetType atmosphereModels
 wclean $targetType diameterModels

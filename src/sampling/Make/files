@@ -1,5 +1,0 @@
-probes/blastProbes.C
-probes/blastPatchProbes.C
-probes/blastProbesGrouping.C
-
-LIB = $(BLAST_LIBBIN)/libblastSampling

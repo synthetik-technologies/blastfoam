@@ -30,6 +30,5 @@ EXE_LIBS = \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
-    -lblastSampling \
     -lblastFunctionObjects \
     $(BLAST_QBMM_LIBS)

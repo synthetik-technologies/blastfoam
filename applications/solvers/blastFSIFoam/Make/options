@@ -44,7 +44,6 @@ EXE_LIBS = \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
-    -lblastSampling \
     -lblastFunctionObjects \
     -lblastSolidModels \
     $(BLAST_QBMM_LIBS)

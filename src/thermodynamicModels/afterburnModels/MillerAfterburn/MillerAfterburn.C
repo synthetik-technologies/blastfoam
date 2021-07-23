@@ -104,20 +104,9 @@ Foam::afterburnModels::MillerAfterburn::~MillerAfterburn()
 
 void Foam::afterburnModels::MillerAfterburn::solve()
 {
-    const volScalarField& alphaRho
-    (
-        c_.mesh().lookupObject<volScalarField>(alphaRhoName_)
-    );
-    const surfaceScalarField& alphaRhoPhi
-    (
-        c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
-    );
-
-    volScalarField cOld(c_);
-
     // Do not include volume changes
-    this->storeAndBlendOld(c_, false);
-
+    volScalarField cOld(c_);
+    this->storeAndBlendOld(cOld, false);
 
     tmp<volScalarField> p(p_*pos(p_ - pMin_));
     if (pScale_ != 1.0)
@@ -132,6 +121,19 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     deltaC.max(0.0);
     this->storeAndBlendDelta(deltaC);
 
+    //- Calculate advection
+    const volScalarField& alphaRho
+    (
+        c_.mesh().lookupObject<volScalarField>(alphaRhoName_)
+    );
+    const surfaceScalarField& alphaRhoPhi
+    (
+        c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
+    );
+    volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
+    this->storeAndBlendDelta(deltaAlphaRhoC);
+
+
     dimensionedScalar dT = alphaRho.time().deltaT();
     c_ = cOld + dT*deltaC;
     c_.maxMin(0.0, 1.0);
@@ -143,14 +145,10 @@ void Foam::afterburnModels::MillerAfterburn::solve()
 
     //- Compute actual delta for the time step knowing the blended value
     //  Not limited to 0 since the delta coefficients can be negative
-    ddtC = this->calcDelta(ddtC);
+    //  and store
+    ddtC = this->calcAndStoreDelta(ddtC);
 
-    //- Store the actual sub-step delta
-    this->storeDelta(ddtC);
-
-    volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
-    this->storeAndBlendDelta(deltaAlphaRhoC);
-
+    //- Final update of c
     c_ =
         (
             cOld*alphaRho.prevIter() - dT*deltaAlphaRhoC

@@ -17,7 +17,6 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/sampling/lnInclude \
     -I$(BLAST_DIR)/src/functionObjects/lnInclude \
     $(BLAST_QBMM_INC)
 
@@ -38,6 +37,5 @@ EXE_LIBS = \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
     -lerrorEstimate \
-    -lblastSampling \
     -lblastFunctionObjects \
     $(BLAST_QBMM_LIBS)
