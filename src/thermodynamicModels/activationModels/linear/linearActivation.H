@@ -64,12 +64,6 @@ class linearActivation
         //- Ignition time
         volScalarField::Internal tIgn_;
 
-        //- Is advection used
-        virtual bool advection() const
-        {
-            return advection_;
-        }
-
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const;
 

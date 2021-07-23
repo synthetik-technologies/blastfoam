@@ -144,12 +144,6 @@ protected:
         //- Is the change in lambda limited
         bool limit_;
 
-        //- Is advection used
-        virtual bool advection() const
-        {
-            return true;
-        }
-
         //- Stored changes in lambda
         tmp<volScalarField> ddtLambda_;
 

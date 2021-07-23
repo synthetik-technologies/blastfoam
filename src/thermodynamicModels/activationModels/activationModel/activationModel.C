@@ -349,82 +349,52 @@ void Foam::activationModel::solve()
     dimensionedScalar dT(this->mesh_.time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
-    // Calculate delta due to reaction with no advection
-    if (!advection())
+    volScalarField deltaLambda(this->delta());
+    deltaLambda.max(0.0);
+    this->storeDelta(deltaLambda);
+
+    lambda_ = lambdaOld + deltaLambda*dT;
+
+    // Activate points that are delayed
+    forAll(detonationPoints_, pointi)
     {
-        lambda_ = lambdaOld;
-
-        //- Correct the lambda field since zero mass will cause "unactivation"
-        //  which is not correct for some models
-        forAll(this->detonationPoints_, pointi)
-        {
-            this->detonationPoints_[pointi].setActivated
-            (
-                lambda_,
-                this->finalStep()
-            );
-        }
-        this->correct();
-
-        // Compute the limited change in lambda
-        ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
-        volScalarField& ddtLambda = ddtLambda_.ref();
-
-        //- Compute actual delta for the time step knowing the blended
-        ddtLambda = this->calcAndStoreDelta(ddtLambda);
-
-        return;
+        detonationPoints_[pointi].setActivated
+        (
+            lambda_,
+            this->finalStep()
+        );
     }
-    // Compute change in lambda with advection included
-    else
-    {
-        volScalarField deltaLambda(this->delta());
-        deltaLambda.max(0.0);
-        this->storeDelta(deltaLambda);
+    this->correct();
+    lambda_.min(1);
+    lambda_.max(0);
+    lambda_.correctBoundaryConditions();
 
-        lambda_ = lambdaOld + deltaLambda*dT;
+    // Compute the limited change in lambda
+    ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
+    volScalarField& ddtLambda = ddtLambda_.ref();
+    volScalarField ddtLambdaLimited(ddtLambda);
 
-        // Activate points that are delayed
-        forAll(detonationPoints_, pointi)
-        {
-            detonationPoints_[pointi].setActivated
-            (
-                lambda_,
-                this->finalStep()
-            );
-        }
-        this->correct();
-        lambda_.min(1);
-        lambda_.max(0);
-        lambda_.correctBoundaryConditions();
+    //- Compute actual delta for the time step knowing the blended
+    ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
-        // Compute the limited change in lambda
-        ddtLambda_ = max(lambda_ - lambdaOld, 0.0)/dT;
-        volScalarField& ddtLambda = ddtLambda_.ref();
-        volScalarField ddtLambdaLimited(ddtLambda);
+    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi_, lambda_));
+    this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
-        //- Compute actual delta for the time step knowing the blended
-        ddtLambda = this->calcAndStoreDelta(ddtLambda);
+    //- Solve advection
+    lambda_ =
+        (
+            lambdaOld*alphaRho_.prevIter() - dT*deltaAlphaRhoLambda
+        )/max(alphaRho_, smallRho)
+      + dT*ddtLambdaLimited;
 
-        volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi_, lambda_));
-        this->storeAndBlendDelta(deltaAlphaRhoLambda);
+    //- Correct the lambda field since zero mass will cause "unactivation"
+    //  which is not correct for some models
+    //  Detonation points are not corrected since they should have mass at
+    //  the detonation points
+    this->correct();
 
-        //- Solve advection
-        lambda_ =
-            (
-                lambdaOld*alphaRho_.prevIter() - dT*deltaAlphaRhoLambda
-            )/max(alphaRho_, smallRho)
-          + dT*ddtLambdaLimited;
-
-        //- Correct the lambda field since zero mass will cause "unactivation"
-        //  which is not correct for some models
-        //  Detonation points are not corrected since they should have mass at
-        //  the detonation points
-        this->correct();
-
-        lambda_.maxMin(0.0, 1.0);
-        lambda_.correctBoundaryConditions();
-    }
+    lambda_.maxMin(0.0, 1.0);
+    lambda_.correctBoundaryConditions();
 }
 
 
