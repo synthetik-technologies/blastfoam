@@ -1,4 +1,4 @@
-/* Radiation model */
+# Radiation model
 radiationModels/radiationModel/radiationModel.C
 radiationModels/radiationModel/radiationModelNew.C
 radiationModels/noRadiation/noRadiation.C
@@ -12,29 +12,30 @@ radiationModels/opaqueSolid/opaqueSolid.C
 
 radiationODE/radiationODE.C
 
-/* Scatter model */
+# Scatter model
 scatterModels/scatterModel/scatterModel.C
 scatterModels/scatterModel/scatterModelNew.C
 scatterModels/noScatter/noScatter.C
 scatterModels/constantScatter/constantScatter.C
 
-/* Absorption/Emission model */
+# Absorption/Emission model
+absorptionEmissionModels/interpolationLookUpTable/interpolationLookUpTable.C
 absorptionEmissionModels/absorptionEmissionModel/absorptionEmissionModel.C
 absorptionEmissionModels/absorptionEmissionModel/absorptionEmissionModelNew.C
 absorptionEmissionModels/noAbsorptionEmission/noAbsorptionEmission.C
 absorptionEmissionModels/constantAbsorptionEmission/constantAbsorptionEmission.C
 absorptionEmissionModels/binary/binary.C
 absorptionEmissionModels/greyMean/greyMean.C
-/* absorptionEmissionModels/wideBand/wideBand.C */
-/* absorptionEmissionModels/greyMeanSolid/greyMeanSolid.C */
+# absorptionEmissionModels/wideBand/wideBand.C
+# absorptionEmissionModels/greyMeanSolid/greyMeanSolid.C
 
-/* Soot model */
+# Soot model
 sootModels/sootModel/sootModel.C
 sootModels/sootModel/sootModelNew.C
-/* sootModels/mixtureFraction/mixtureFractions.C */
+# sootModels/mixtureFraction/mixtureFractions.C
 sootModels/noSoot/noSoot.C
 
-/* Boundary conditions */
+# Boundary conditions
 derivedFvPatchFields/MarshakRadiation/MarshakRadiationFvPatchScalarField.C
 derivedFvPatchFields/MarshakRadiationFixedTemperature/MarshakRadiationFixedTemperatureFvPatchScalarField.C
 derivedFvPatchFields/greyDiffusiveRadiation/greyDiffusiveRadiationMixedFvPatchScalarField.C

@@ -104,16 +104,7 @@ public:
         blastMixedEnergyCalculatedTemperatureFvPatchScalarField
         (
             const blastMixedEnergyCalculatedTemperatureFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new blastMixedEnergyCalculatedTemperatureFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         blastMixedEnergyCalculatedTemperatureFvPatchScalarField

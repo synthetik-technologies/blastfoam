@@ -9,7 +9,9 @@ EXE_INC = \
 
 LIB_LIBS = \
     -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -L$(BLAST_LIBBIN) \
+    -lblastFiniteVolume \
+    -ldiameterModels \
     -lblastThermodynamics \
     -lblastMomentumTransportModels

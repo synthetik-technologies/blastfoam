@@ -191,16 +191,7 @@ public:
         thermalBaffle1DFvPatchScalarField
         (
             const thermalBaffle1DFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new thermalBaffle1DFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         thermalBaffle1DFvPatchScalarField

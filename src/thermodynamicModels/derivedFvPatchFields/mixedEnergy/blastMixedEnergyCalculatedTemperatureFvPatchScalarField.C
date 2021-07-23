@@ -91,19 +91,6 @@ blastMixedEnergyCalculatedTemperatureFvPatchScalarField
 Foam::blastMixedEnergyCalculatedTemperatureFvPatchScalarField::
 blastMixedEnergyCalculatedTemperatureFvPatchScalarField
 (
-    const blastMixedEnergyCalculatedTemperatureFvPatchScalarField& ptf
-)
-:
-    calculatedFvPatchScalarField(ptf),
-    heRefValue_(ptf.heRefValue_),
-    heRefGrad_(ptf.heRefGrad_),
-    heValueFraction_(ptf.heValueFraction_)
-{}
-
-
-Foam::blastMixedEnergyCalculatedTemperatureFvPatchScalarField::
-blastMixedEnergyCalculatedTemperatureFvPatchScalarField
-(
     const blastMixedEnergyCalculatedTemperatureFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

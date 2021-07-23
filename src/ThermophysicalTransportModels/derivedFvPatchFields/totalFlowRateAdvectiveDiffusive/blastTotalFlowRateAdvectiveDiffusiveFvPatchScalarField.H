@@ -105,17 +105,7 @@ public:
         totalFlowRateAdvectiveDiffusiveFvPatchScalarField
         (
             const totalFlowRateAdvectiveDiffusiveFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new
-                totalFlowRateAdvectiveDiffusiveFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         totalFlowRateAdvectiveDiffusiveFvPatchScalarField

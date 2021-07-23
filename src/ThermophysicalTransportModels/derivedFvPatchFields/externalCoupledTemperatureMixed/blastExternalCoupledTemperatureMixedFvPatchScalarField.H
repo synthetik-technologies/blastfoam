@@ -179,16 +179,7 @@ public:
         externalCoupledTemperatureMixedFvPatchScalarField
         (
             const externalCoupledTemperatureMixedFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new externalCoupledTemperatureMixedFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         externalCoupledTemperatureMixedFvPatchScalarField

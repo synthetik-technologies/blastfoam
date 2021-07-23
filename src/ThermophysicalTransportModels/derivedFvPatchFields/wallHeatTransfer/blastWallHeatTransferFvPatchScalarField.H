@@ -116,16 +116,7 @@ public:
         wallHeatTransferFvPatchScalarField
         (
             const wallHeatTransferFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new wallHeatTransferFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         wallHeatTransferFvPatchScalarField

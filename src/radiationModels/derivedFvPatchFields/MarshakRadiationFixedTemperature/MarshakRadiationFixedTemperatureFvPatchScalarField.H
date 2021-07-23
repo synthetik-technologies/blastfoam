@@ -120,16 +120,7 @@ public:
         MarshakRadiationFixedTemperatureFvPatchScalarField
         (
             const MarshakRadiationFixedTemperatureFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new MarshakRadiationFixedTemperatureFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         MarshakRadiationFixedTemperatureFvPatchScalarField

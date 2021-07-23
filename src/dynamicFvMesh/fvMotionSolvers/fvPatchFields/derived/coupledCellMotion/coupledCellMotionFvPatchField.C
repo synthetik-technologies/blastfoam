@@ -118,20 +118,6 @@ Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 template<class Type>
 Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
 (
-    const coupledCellMotionFvPatchField<Type>& ptf
-)
-:
-    fixedValueFvPatchField<Type>(ptf),
-    mpp_(ptf.mpp_),
-    DnbrName_(ptf.DnbrName_),
-    cmpt_(ptf.cmpt_),
-    velocity_(ptf.velocity_)
-{}
-
-
-template<class Type>
-Foam::coupledCellMotionFvPatchField<Type>::coupledCellMotionFvPatchField
-(
     const coupledCellMotionFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )

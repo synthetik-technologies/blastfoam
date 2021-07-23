@@ -1,4 +1,4 @@
-/* General */
+# General
 fieldMax/fieldMax.C
 writeTimeList/writeTimeList.C
 conservedQuantities/conservedQuantities.C
@@ -6,7 +6,7 @@ blastProbes/blastProbes.C
 blastProbes/blastPatchProbes.C
 blastProbes/blastProbesGrouping.C
 
-/* Blast specific */
+# Blast specific
 impulse/impulse.C
 speedOfSound/speedOfSound.C
 blastMachNo/blastMachNo.C

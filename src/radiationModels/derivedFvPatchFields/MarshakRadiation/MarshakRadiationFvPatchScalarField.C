@@ -99,22 +99,6 @@ Foam::MarshakRadiationFvPatchScalarField::MarshakRadiationFvPatchScalarField
 
 Foam::MarshakRadiationFvPatchScalarField::MarshakRadiationFvPatchScalarField
 (
-    const MarshakRadiationFvPatchScalarField& ptf
-)
-:
-    mixedFvPatchScalarField(ptf),
-    radiationCoupledBase
-    (
-        ptf.patch(),
-        ptf.emissivityMethod(),
-        ptf.emissivity_
-    ),
-    TName_(ptf.TName_)
-{}
-
-
-Foam::MarshakRadiationFvPatchScalarField::MarshakRadiationFvPatchScalarField
-(
     const MarshakRadiationFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

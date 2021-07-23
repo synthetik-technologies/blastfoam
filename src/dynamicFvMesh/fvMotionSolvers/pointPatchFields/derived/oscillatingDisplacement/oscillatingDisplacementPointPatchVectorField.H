@@ -88,17 +88,11 @@ public:
             const pointPatchFieldMapper&
         );
 
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<vector>> clone() const
-        {
-            return autoPtr<pointPatchField<vector>>
-            (
-                new oscillatingDisplacementPointPatchVectorField
-                (
-                    *this
-                )
-            );
-        }
+        //- Construct as copy setting internal field reference
+        oscillatingDisplacementPointPatchVectorField
+        (
+            const oscillatingDisplacementPointPatchVectorField&
+        ) = delete;
 
         //- Construct as copy setting internal field reference
         oscillatingDisplacementPointPatchVectorField

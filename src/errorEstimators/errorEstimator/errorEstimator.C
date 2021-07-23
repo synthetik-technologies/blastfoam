@@ -175,12 +175,12 @@ void Foam::errorEstimator::normalize(volScalarField& error)
                 dynamicCast<const functionObjects::timeControl>(funcs[i])
             );
             bool sameRegion = true;
-            const dictionary& dict = tc.dict();
-            if (dict.found("region"))
-            {
-                word regionName = dict.lookup<word>("region");
-                sameRegion = regionName == error_.mesh().name();
-            }
+//             const dictionary& dict = tc.dict();
+//             if (dict.found("region"))
+//             {
+//                 word regionName = dict.lookup<word>("region");
+//                 sameRegion = regionName == error_.mesh().name();
+//             }
 
             if (isA<probes>(tc.filter()) && sameRegion)
             {

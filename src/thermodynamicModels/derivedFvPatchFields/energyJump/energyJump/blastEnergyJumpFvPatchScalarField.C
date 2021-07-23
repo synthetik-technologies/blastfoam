@@ -80,15 +80,6 @@ Foam::blastEnergyJumpFvPatchScalarField::blastEnergyJumpFvPatchScalarField
 
 Foam::blastEnergyJumpFvPatchScalarField::blastEnergyJumpFvPatchScalarField
 (
-    const blastEnergyJumpFvPatchScalarField& ptf
-)
-:
-    fixedJumpFvPatchField<scalar>(ptf)
-{}
-
-
-Foam::blastEnergyJumpFvPatchScalarField::blastEnergyJumpFvPatchScalarField
-(
     const blastEnergyJumpFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

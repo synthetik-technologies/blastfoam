@@ -109,7 +109,7 @@ Foam::radiationModels::absorptionEmissionModels::wideBand::wideBand
         {
             lookUpTablePtr_.set
             (
-                new interpolationLookUpTable<scalar>
+                new interpolationLookUpTable
                 (
                     fileName(coeffsDict_.lookup("lookUpTableFileName")),
                     mesh.time().constant(),

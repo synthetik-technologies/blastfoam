@@ -73,16 +73,6 @@ blastFixedEnergyFvPatchScalarField
 Foam::blastFixedEnergyFvPatchScalarField::
 blastFixedEnergyFvPatchScalarField
 (
-    const blastFixedEnergyFvPatchScalarField& tppsf
-)
-:
-    fixedValueFvPatchScalarField(tppsf)
-{}
-
-
-Foam::blastFixedEnergyFvPatchScalarField::
-blastFixedEnergyFvPatchScalarField
-(
     const blastFixedEnergyFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )

@@ -97,23 +97,6 @@ MarshakRadiationFixedTemperatureFvPatchScalarField
 Foam::MarshakRadiationFixedTemperatureFvPatchScalarField::
 MarshakRadiationFixedTemperatureFvPatchScalarField
 (
-    const MarshakRadiationFixedTemperatureFvPatchScalarField& ptf
-)
-:
-    mixedFvPatchScalarField(ptf),
-    radiationCoupledBase
-    (
-        ptf.patch(),
-        ptf.emissivityMethod(),
-        ptf.emissivity_
-    ),
-    Trad_(ptf.Trad_)
-{}
-
-
-Foam::MarshakRadiationFixedTemperatureFvPatchScalarField::
-MarshakRadiationFixedTemperatureFvPatchScalarField
-(
     const MarshakRadiationFixedTemperatureFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

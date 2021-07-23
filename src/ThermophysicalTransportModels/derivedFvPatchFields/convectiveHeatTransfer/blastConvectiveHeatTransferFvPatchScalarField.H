@@ -136,16 +136,7 @@ public:
         convectiveHeatTransferFvPatchScalarField
         (
             const convectiveHeatTransferFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new convectiveHeatTransferFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         convectiveHeatTransferFvPatchScalarField

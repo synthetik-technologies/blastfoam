@@ -77,16 +77,6 @@ Foam::cellMotionFvPatchField<Type>::cellMotionFvPatchField
 template<class Type>
 Foam::cellMotionFvPatchField<Type>::cellMotionFvPatchField
 (
-    const cellMotionFvPatchField<Type>& ptf
-)
-:
-    fixedValueFvPatchField<Type>(ptf)
-{}
-
-
-template<class Type>
-Foam::cellMotionFvPatchField<Type>::cellMotionFvPatchField
-(
     const cellMotionFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )

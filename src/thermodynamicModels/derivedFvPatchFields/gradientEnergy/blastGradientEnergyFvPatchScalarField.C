@@ -73,16 +73,6 @@ blastGradientEnergyFvPatchScalarField
 Foam::blastGradientEnergyFvPatchScalarField::
 blastGradientEnergyFvPatchScalarField
 (
-    const blastGradientEnergyFvPatchScalarField& tppsf
-)
-:
-    fixedGradientFvPatchScalarField(tppsf)
-{}
-
-
-Foam::blastGradientEnergyFvPatchScalarField::
-blastGradientEnergyFvPatchScalarField
-(
     const blastGradientEnergyFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )

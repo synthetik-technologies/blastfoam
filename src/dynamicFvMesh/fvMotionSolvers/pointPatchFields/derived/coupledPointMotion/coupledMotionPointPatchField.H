@@ -130,16 +130,7 @@ public:
         coupledMotionPointPatchField
         (
             const coupledMotionPointPatchField<Type>&
-        );
-
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchField<Type>> clone() const
-        {
-            return autoPtr<pointPatchField<Type>>
-            (
-                new coupledMotionPointPatchField<Type>(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         coupledMotionPointPatchField

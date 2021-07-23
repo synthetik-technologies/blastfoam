@@ -91,17 +91,6 @@ Foam::blast::wallHeatTransferFvPatchScalarField::wallHeatTransferFvPatchScalarFi
 
 Foam::blast::wallHeatTransferFvPatchScalarField::wallHeatTransferFvPatchScalarField
 (
-    const wallHeatTransferFvPatchScalarField& tppsf
-)
-:
-    mixedFvPatchScalarField(tppsf),
-    Tinf_(tppsf.Tinf_),
-    alphaWall_(tppsf.alphaWall_)
-{}
-
-
-Foam::blast::wallHeatTransferFvPatchScalarField::wallHeatTransferFvPatchScalarField
-(
     const wallHeatTransferFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )

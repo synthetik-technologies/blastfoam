@@ -21,7 +21,7 @@ calculateDensity yes;
 thermoType
 {
     transport       const;
-    thermo          hConst;
+    thermo          eConst;
     equationOfState idealGas;
 }
 equationOfState
@@ -36,6 +36,7 @@ specie
 thermodynamics
 {
     Cp          1007;
+    Cv          714;
     Hf          2.544e+06;
 }
 transport

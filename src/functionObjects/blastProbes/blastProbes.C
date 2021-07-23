@@ -36,6 +36,7 @@ License
 #include "SortableList.H"
 #include "IFstream.H"
 #include "vtkWriteOps.H"
+#include "OSspecific.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

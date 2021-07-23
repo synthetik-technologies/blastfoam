@@ -7,34 +7,34 @@ BASECLOUDS=$(CLOUDS)/baseClasses
 DERIVEDCLOUDS=$(CLOUDS)/derived
 
 
-/* Cloud base classes */
+#* Cloud base classes
 $(BASECLOUDS)/kinematicCloud/kinematicCloud.C
 $(BASECLOUDS)/thermoCloud/thermoCloud.C
 
-/* kinematic parcel sub-models */
+# kinematic parcel sub-models
 KINEMATICPARCEL=$(DERIVEDPARCELS)/basicKinematicParcel
 $(KINEMATICPARCEL)/defineBasicKinematicParcel.C
 $(KINEMATICPARCEL)/makeBasicKinematicParcelSubmodels.C
 
 
-/* kinematic colliding parcel sub-models */
+# kinematic colliding parcel sub-models
 KINEMATICCOLLIDINGPARCEL=$(DERIVEDPARCELS)/basicKinematicCollidingParcel
 $(KINEMATICCOLLIDINGPARCEL)/defineBasicKinematicCollidingParcel.C
 $(KINEMATICCOLLIDINGPARCEL)/makeBasicKinematicCollidingParcelSubmodels.C
 
 
-/* thermo parcel sub-models */
+# thermo parcel sub-models
 THERMOPARCEL=$(DERIVEDPARCELS)/basicThermoParcel
 $(THERMOPARCEL)/defineBasicThermoParcel.C
 $(THERMOPARCEL)/makeBasicThermoParcelSubmodels.C
 
 
-/* kinematic MPPIC parcel sub-models */
+# kinematic MPPIC parcel sub-models
 KINEMATICMPPICPARCEL=$(DERIVEDPARCELS)/basicKinematicMPPICParcel
 $(KINEMATICMPPICPARCEL)/defineBasicKinematicMPPICParcel.C
 $(KINEMATICMPPICPARCEL)/makeBasicKinematicMPPICParcelSubmodels.C
 
-/* bolt-on models */
+ #bolt-on models
 RADIATION=submodels/addOns/radiation
 $(RADIATION)/absorptionEmission/cloudAbsorptionEmission/cloudAbsorptionEmission.C
 $(RADIATION)/scatter/cloudScatter/cloudScatter.C
@@ -74,17 +74,18 @@ $(MPPICTIMESCALE)/nonEquilibrium/nonEquilibrium.C
 $(MPPICTIMESCALE)/isotropic/isotropic.C
 
 
-/* integration schemes */
+# integration schemes
 integrationScheme/integrationScheme/integrationScheme.C
 integrationScheme/integrationScheme/integrationSchemeNew.C
 integrationScheme/Euler/Euler.C
 integrationScheme/analytical/analytical.C
 
-/* additional helper classes */
+
+# additional helper classes
 clouds/Templates/KinematicCloud/cloudSolution/cloudSolution.C
 
 
-/* averaging methods */
+# averaging methods
 submodels/MPPIC/AveragingMethods/makeAveragingMethods.C
 
 

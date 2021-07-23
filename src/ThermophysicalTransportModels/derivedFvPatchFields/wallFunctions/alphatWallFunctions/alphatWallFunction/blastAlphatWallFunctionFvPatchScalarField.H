@@ -133,16 +133,7 @@ public:
         alphatWallFunctionFvPatchScalarField
         (
             const alphatWallFunctionFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new alphatWallFunctionFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         alphatWallFunctionFvPatchScalarField

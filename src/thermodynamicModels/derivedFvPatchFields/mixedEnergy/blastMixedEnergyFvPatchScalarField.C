@@ -78,16 +78,6 @@ blastMixedEnergyFvPatchScalarField
 Foam::blastMixedEnergyFvPatchScalarField::
 blastMixedEnergyFvPatchScalarField
 (
-    const blastMixedEnergyFvPatchScalarField& tppsf
-)
-:
-    mixedFvPatchScalarField(tppsf)
-{}
-
-
-Foam::blastMixedEnergyFvPatchScalarField::
-blastMixedEnergyFvPatchScalarField
-(
     const blastMixedEnergyFvPatchScalarField& tppsf,
     const DimensionedField<scalar, volMesh>& iF
 )

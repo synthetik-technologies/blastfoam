@@ -95,16 +95,7 @@ public:
         blastEnergyJumpFvPatchScalarField
         (
             const blastEnergyJumpFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new blastEnergyJumpFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         blastEnergyJumpFvPatchScalarField

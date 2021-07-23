@@ -86,17 +86,6 @@ blastGradientEnergyCalculatedTemperatureFvPatchScalarField
 Foam::blastGradientEnergyCalculatedTemperatureFvPatchScalarField::
 blastGradientEnergyCalculatedTemperatureFvPatchScalarField
 (
-    const blastGradientEnergyCalculatedTemperatureFvPatchScalarField& ptf
-)
-:
-    calculatedFvPatchScalarField(ptf),
-    heGradient_(ptf.heGradient_)
-{}
-
-
-Foam::blastGradientEnergyCalculatedTemperatureFvPatchScalarField::
-blastGradientEnergyCalculatedTemperatureFvPatchScalarField
-(
     const blastGradientEnergyCalculatedTemperatureFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

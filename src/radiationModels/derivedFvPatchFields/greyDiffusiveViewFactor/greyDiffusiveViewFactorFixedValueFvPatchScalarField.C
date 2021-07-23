@@ -95,23 +95,6 @@ greyDiffusiveViewFactorFixedValueFvPatchScalarField
 Foam::greyDiffusiveViewFactorFixedValueFvPatchScalarField::
 greyDiffusiveViewFactorFixedValueFvPatchScalarField
 (
-    const greyDiffusiveViewFactorFixedValueFvPatchScalarField& ptf
-)
-:
-    fixedValueFvPatchScalarField(ptf),
-    radiationCoupledBase
-    (
-        ptf.patch(),
-        ptf.emissivityMethod(),
-        ptf.emissivity_
-    ),
-    qro_(ptf.qro_)
-{}
-
-
-Foam::greyDiffusiveViewFactorFixedValueFvPatchScalarField::
-greyDiffusiveViewFactorFixedValueFvPatchScalarField
-(
     const greyDiffusiveViewFactorFixedValueFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

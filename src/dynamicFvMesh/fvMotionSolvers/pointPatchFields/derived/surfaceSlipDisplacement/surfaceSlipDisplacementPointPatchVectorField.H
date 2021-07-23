@@ -148,19 +148,7 @@ public:
         surfaceSlipDisplacementPointPatchVectorField
         (
             const surfaceSlipDisplacementPointPatchVectorField&
-        );
-
-        //- Construct and return a clone
-        virtual autoPtr<pointPatchVectorField> clone() const
-        {
-            return autoPtr<pointPatchVectorField>
-            (
-                new surfaceSlipDisplacementPointPatchVectorField
-                (
-                    *this
-                )
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         surfaceSlipDisplacementPointPatchVectorField

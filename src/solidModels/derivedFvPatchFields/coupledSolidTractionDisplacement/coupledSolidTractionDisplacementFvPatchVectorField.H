@@ -102,16 +102,7 @@ public:
         coupledSolidTractionDisplacementFvPatchVectorField
         (
             const coupledSolidTractionDisplacementFvPatchVectorField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new coupledSolidTractionDisplacementFvPatchVectorField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         coupledSolidTractionDisplacementFvPatchVectorField

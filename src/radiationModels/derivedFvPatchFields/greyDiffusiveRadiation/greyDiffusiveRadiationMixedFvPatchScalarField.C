@@ -110,23 +110,6 @@ greyDiffusiveRadiationMixedFvPatchScalarField
 Foam::greyDiffusiveRadiationMixedFvPatchScalarField::
 greyDiffusiveRadiationMixedFvPatchScalarField
 (
-    const greyDiffusiveRadiationMixedFvPatchScalarField& ptf
-)
-:
-    mixedFvPatchScalarField(ptf),
-    radiationCoupledBase
-    (
-        ptf.patch(),
-        ptf.emissivityMethod(),
-        ptf.emissivity_
-    ),
-    TName_(ptf.TName_)
-{}
-
-
-Foam::greyDiffusiveRadiationMixedFvPatchScalarField::
-greyDiffusiveRadiationMixedFvPatchScalarField
-(
     const greyDiffusiveRadiationMixedFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

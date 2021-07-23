@@ -154,30 +154,6 @@ template<class Type>
 Foam::timeVaryingMappedFixedValuePointPatchField<Type>::
 timeVaryingMappedFixedValuePointPatchField
 (
-    const timeVaryingMappedFixedValuePointPatchField<Type>& ptf
-)
-:
-    fixedValuePointPatchField<Type>(ptf),
-    fieldTableName_(ptf.fieldTableName_),
-    setAverage_(ptf.setAverage_),
-    perturb_(ptf.perturb_),
-    mapMethod_(ptf.mapMethod_),
-    mapperPtr_(ptf.mapperPtr_),
-    sampleTimes_(ptf.sampleTimes_),
-    startSampleTime_(ptf.startSampleTime_),
-    startSampledValues_(ptf.startSampledValues_),
-    startAverage_(ptf.startAverage_),
-    endSampleTime_(ptf.endSampleTime_),
-    endSampledValues_(ptf.endSampledValues_),
-    endAverage_(ptf.endAverage_),
-    offset_(ptf.offset_, false)
-{}
-
-
-template<class Type>
-Foam::timeVaryingMappedFixedValuePointPatchField<Type>::
-timeVaryingMappedFixedValuePointPatchField
-(
     const timeVaryingMappedFixedValuePointPatchField<Type>& ptf,
     const DimensionedField<Type, pointMesh>& iF
 )

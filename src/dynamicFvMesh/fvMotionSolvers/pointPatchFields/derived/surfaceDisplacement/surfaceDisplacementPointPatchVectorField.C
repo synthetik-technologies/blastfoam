@@ -85,7 +85,7 @@ void surfaceDisplacementPointPatchVectorField::calcProjection
 
     if (frozenPointsZone_.size() > 0)
     {
-        const pointZoneMesh& pZones = mesh.pointZones();
+        const meshPointZones& pZones = mesh.pointZones();
 
         zonePtr = &pZones[frozenPointsZone_];
 
@@ -353,22 +353,6 @@ surfaceDisplacementPointPatchVectorField
 )
 :
     fixedValuePointPatchVectorField(ppf, p, iF, mapper),
-    velocity_(ppf.velocity_),
-    surfacesDict_(ppf.surfacesDict_),
-    projectMode_(ppf.projectMode_),
-    projectDir_(ppf.projectDir_),
-    wedgePlane_(ppf.wedgePlane_),
-    frozenPointsZone_(ppf.frozenPointsZone_)
-{}
-
-
-surfaceDisplacementPointPatchVectorField::
-surfaceDisplacementPointPatchVectorField
-(
-    const surfaceDisplacementPointPatchVectorField& ppf
-)
-:
-    fixedValuePointPatchVectorField(ppf),
     velocity_(ppf.velocity_),
     surfacesDict_(ppf.surfacesDict_),
     projectMode_(ppf.projectMode_),

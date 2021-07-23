@@ -114,23 +114,6 @@ wideBandDiffusiveRadiationMixedFvPatchScalarField
 Foam::wideBandDiffusiveRadiationMixedFvPatchScalarField::
 wideBandDiffusiveRadiationMixedFvPatchScalarField
 (
-    const wideBandDiffusiveRadiationMixedFvPatchScalarField& ptf
-)
-:
-    mixedFvPatchScalarField(ptf),
-    radiationCoupledBase
-    (
-        ptf.patch(),
-        ptf.emissivityMethod(),
-        ptf.emissivity_
-    ),
-    TName_(ptf.TName_)
-{}
-
-
-Foam::wideBandDiffusiveRadiationMixedFvPatchScalarField::
-wideBandDiffusiveRadiationMixedFvPatchScalarField
-(
     const wideBandDiffusiveRadiationMixedFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

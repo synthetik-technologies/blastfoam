@@ -143,16 +143,7 @@ public:
         alphatJayatillekeWallFunctionFvPatchScalarField
         (
             const alphatJayatillekeWallFunctionFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new alphatJayatillekeWallFunctionFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         alphatJayatillekeWallFunctionFvPatchScalarField

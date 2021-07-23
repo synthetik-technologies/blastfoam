@@ -79,17 +79,6 @@ convectiveHeatTransferFvPatchScalarField
 convectiveHeatTransferFvPatchScalarField::
 convectiveHeatTransferFvPatchScalarField
 (
-    const convectiveHeatTransferFvPatchScalarField& htcpsf
-)
-:
-    fixedValueFvPatchScalarField(htcpsf),
-    L_(htcpsf.L_)
-{}
-
-
-convectiveHeatTransferFvPatchScalarField::
-convectiveHeatTransferFvPatchScalarField
-(
     const convectiveHeatTransferFvPatchScalarField& htcpsf,
     const DimensionedField<scalar, volMesh>& iF
 )

@@ -80,18 +80,6 @@ template<class Type>
 Foam::pressureWaveTransmissiveFvPatchField<Type>::
 pressureWaveTransmissiveFvPatchField
 (
-    const pressureWaveTransmissiveFvPatchField& ptpsf
-)
-:
-    advectiveFvPatchField<Type>(ptpsf),
-    phaseName_(ptpsf.phaseName_)
-{}
-
-
-template<class Type>
-Foam::pressureWaveTransmissiveFvPatchField<Type>::
-pressureWaveTransmissiveFvPatchField
-(
     const pressureWaveTransmissiveFvPatchField& ptpsf,
     const DimensionedField<Type, volMesh>& iF
 )
@@ -110,9 +98,11 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
     const surfaceScalarField& phi =
         this->db().template lookupObject<surfaceScalarField>(this->phiName_);
 
-    fvsPatchField<scalar> phip =
+    Field<scalar> phip
+    (
         this->patch().template
-            lookupPatchField<surfaceScalarField, scalar>(this->phiName_);
+            lookupPatchField<surfaceScalarField, scalar>(this->phiName_)
+    );
 
     if (phi.dimensions() == dimDensity*dimVelocity*dimArea)
     {

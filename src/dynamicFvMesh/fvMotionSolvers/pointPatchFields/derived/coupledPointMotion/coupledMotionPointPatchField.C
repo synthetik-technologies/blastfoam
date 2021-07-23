@@ -117,20 +117,6 @@ Foam::coupledMotionPointPatchField<Type>::coupledMotionPointPatchField
 template<class Type>
 Foam::coupledMotionPointPatchField<Type>::coupledMotionPointPatchField
 (
-    const coupledMotionPointPatchField<Type>& ptf
-)
-:
-    fixedValuePointPatchField<Type>(ptf),
-    mpp_(ptf.mpp_),
-    DnbrName_(ptf.DnbrName_),
-    cmpt_(ptf.cmpt_),
-    velocity_(ptf.velocity_)
-{}
-
-
-template<class Type>
-Foam::coupledMotionPointPatchField<Type>::coupledMotionPointPatchField
-(
     const coupledMotionPointPatchField<Type>& ptf,
     const DimensionedField<Type, pointMesh>& iF
 )
