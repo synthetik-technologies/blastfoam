@@ -215,7 +215,7 @@ void Foam::lookupTable1D::update(const scalar& x) const
         return;
     }
 
-    for (index_ = 0; index_ < xModValues_.size() - 2; index_++)
+    for (index_ = 0; index_ < xModValues_.size(); index_++)
     {
         if (x <= xValues_[index_])
         {
