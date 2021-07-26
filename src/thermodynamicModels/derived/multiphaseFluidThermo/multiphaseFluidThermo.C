@@ -33,16 +33,13 @@ License
 Foam::multiphaseFluidThermo::multiphaseFluidThermo
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
 )
 :
-    fluidThermoModel(name, p, rho, e, T, dict, master, masterName),
+    fluidThermoModel(name, mesh, dict, master, masterName),
     phases_(dict.lookup("phases")),
     volumeFractions_(phases_.size()),
     rhos_(phases_.size()),
@@ -57,10 +54,10 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
         IOobject
         (
             "sumAlpha",
-            e.mesh().time().timeName(),
-            e.mesh()
+            mesh.time().timeName(),
+            mesh
         ),
-        e.mesh(),
+        mesh,
         0.0
     );
     forAll(phases_, phasei)
@@ -74,12 +71,12 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
                 IOobject
                 (
                     IOobject::groupName("alpha", phases_[phasei]),
-                    rho.mesh().time().timeName(),
-                    rho.mesh(),
+                    mesh.time().timeName(),
+                    mesh,
                     IOobject::MUST_READ,
                     IOobject::AUTO_WRITE
                 ),
-                rho_.mesh()
+                mesh
             )
         );
         rhos_.set
@@ -90,12 +87,12 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
                 IOobject
                 (
                     IOobject::groupName("rho", phases_[phasei]),
-                    rho.mesh().time().timeName(),
-                    rho.mesh(),
+                    mesh.time().timeName(),
+                    mesh,
                     IOobject::MUST_READ,
                     IOobject::AUTO_WRITE
                 ),
-                rho_.mesh()
+                mesh
             )
         );
         thermos_.set
@@ -104,10 +101,7 @@ Foam::multiphaseFluidThermo::multiphaseFluidThermo
             fluidThermoModel::New
             (
                 phaseName,
-                p_,
-                rhos_[phasei],
-                e_,
-                T_,
+                mesh,
                 dict.subDict(phaseName),
                 false
             ).ptr()

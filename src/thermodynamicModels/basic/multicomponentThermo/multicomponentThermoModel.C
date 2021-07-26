@@ -35,10 +35,7 @@ template<class BasicThermo>
 Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -47,10 +44,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     BasicThermo
     (
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         master,
         masterName
@@ -67,9 +61,8 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", mesh, 0.0));
 
-    const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
     {
         IOobject header
@@ -172,6 +165,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
         );
     }
 
+
     //- Normalize species
     forAll(Ys_, i)
     {
@@ -186,10 +180,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
 (
     const speciesTable& species,
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -198,10 +189,7 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     BasicThermo
     (
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         master,
         masterName
@@ -213,9 +201,8 @@ Foam::multicomponentThermoModel<BasicThermo>::multicomponentThermoModel
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", mesh, 0.0));
 
-    const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
     {
         IOobject header
@@ -439,7 +426,15 @@ void Foam::multicomponentThermoModel<BasicThermo>::solve()
 
             volScalarField deltaAlphaRhoY
             (
-                fvc::div(alphaRhoPhi, Ys_[i], "div(Yi)")
+                fvc::div
+                (
+                    alphaRhoPhi,
+                    Ys_[i],
+                    "div("
+                  + alphaRhoPhi.name() + ","
+                  + IOobject::groupName("Yi", alphaRhoPhi.group())
+                  + ")"
+                )
               + massTransferRates_[species_[i]]
             );
             this->storeAndBlendDelta(deltaAlphaRhoY);

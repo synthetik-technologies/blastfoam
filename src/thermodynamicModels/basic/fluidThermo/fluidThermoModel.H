@@ -87,16 +87,13 @@ public:
             fluidThermoModel,
             basic,
             (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const word& phaseName,
+                const fvMesh& mesh,
                 const dictionary& dict,
                 const bool master,
                 const word& masterName
             ),
-            (name, p, rho, e, T, dict, master, masterName)
+            (phaseName, mesh, dict, master, masterName)
         );
 
         declareRunTimeSelectionTable
@@ -105,16 +102,13 @@ public:
             fluidThermoModel,
             detonating,
             (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const word& phaseName,
+                const fvMesh& mesh,
                 const dictionary& dict,
                 const bool master,
                 const word& masterName
             ),
-            (name, p, rho, e, T, dict, master, masterName)
+            (phaseName, mesh, dict, master, masterName)
         );
 
         declareRunTimeSelectionTable
@@ -123,16 +117,13 @@ public:
             fluidThermoModel,
             multicomponent,
             (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const word& phaseName,
+                const fvMesh& mesh,
                 const dictionary& dict,
                 const bool master,
                 const word& masterName
             ),
-            (name, p, rho, e, T, dict, master, masterName)
+            (phaseName, mesh, dict, master, masterName)
         );
 
         declareRunTimeSelectionTable
@@ -141,32 +132,16 @@ public:
             fluidThermoModel,
             reacting,
             (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const word& phaseName,
+                const fvMesh& mesh,
                 const dictionary& dict,
                 const bool master,
                 const word& masterName
             ),
-            (name, p, rho, e, T, dict, master, masterName)
+            (phaseName, mesh, dict, master, masterName)
         );
 
     // Constructor
-
-        //- Construct with input field
-        fluidThermoModel
-        (
-            const word& phaseName,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
 
         //- Construct and add fields to db
         fluidThermoModel
@@ -183,11 +158,8 @@ public:
 
         static autoPtr<fluidThermoModel> NewBasic
         (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const word& phaseName,
+            const fvMesh& mesh,
             const dictionary& dict,
             const bool master = true,
             const word& masterName = word::null
@@ -195,11 +167,8 @@ public:
 
         static autoPtr<fluidThermoModel> NewDetonating
         (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const word& phaseName,
+            const fvMesh& mesh,
             const dictionary& dict,
             const bool master = true,
             const word& masterName = word::null
@@ -207,11 +176,8 @@ public:
 
         static autoPtr<fluidThermoModel> NewMulticomponent
         (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const word& phaseName,
+            const fvMesh& mesh,
             const dictionary& dict,
             const bool master = true,
             const word& masterName = word::null
@@ -219,11 +185,8 @@ public:
 
         static autoPtr<fluidThermoModel> NewReacting
         (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const word& phaseName,
+            const fvMesh& mesh,
             const dictionary& dict,
             const bool master = true,
             const word& masterName = word::null
@@ -231,11 +194,8 @@ public:
 
         static autoPtr<fluidThermoModel> New
         (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const word& phaseName,
+            const fvMesh& mesh,
             const dictionary& dict,
             const bool master = true,
             const word& masterName = word::null

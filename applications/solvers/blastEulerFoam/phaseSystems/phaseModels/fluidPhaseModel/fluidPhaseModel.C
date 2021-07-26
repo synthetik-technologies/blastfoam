@@ -84,10 +84,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
         fluidThermoModel::New
         (
             phaseName,
-            p_,
-            rho_,
-            e_,
-            T_,
+            fluid.mesh(),
             phaseDict_,
             true,
             phaseName

@@ -35,10 +35,7 @@ template<class ThermoType>
 Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -47,10 +44,7 @@ Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
     mixtureThermoModel<multicomponentFluidThermoModel, ThermoType>
     (
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         master,
         masterName
@@ -90,10 +84,7 @@ Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
 (
     const HashPtrTable<ThermoType, word, string::hash>& thermoData,
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -103,10 +94,7 @@ Foam::multicomponentFluidThermo<ThermoType>::multicomponentFluidThermo
     (
         thermoData,
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         master,
         masterName

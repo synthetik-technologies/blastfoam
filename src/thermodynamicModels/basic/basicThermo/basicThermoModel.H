@@ -132,19 +132,6 @@ public:
 
     // Constructor
 
-        //- Construct with input field
-        basicThermoModel
-        (
-            const word& phaseName,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
         //- Construct and add fields to db
         basicThermoModel
         (

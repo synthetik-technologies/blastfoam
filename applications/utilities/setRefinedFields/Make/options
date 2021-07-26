@@ -17,5 +17,4 @@ EXE_LIBS = \
     -lblastDynamicMesh \
     -lerrorEstimate \
     -lFieldSetTypes \
-    -lcellSources \
-    -lblastSampling
+    -lcellSources

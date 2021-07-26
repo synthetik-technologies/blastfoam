@@ -96,6 +96,7 @@ Foam::autoPtr<Foam::solidThermoModel> Foam::solidThermoModel::New
             << "Valid " << solidThermoModel::typeName << " types are:" << nl
             << "basic" << nl
             << "detonating" << nl
+            << "propellant" << nl
             << abort(FatalError);
     }
     return autoPtr<solidThermoModel>();

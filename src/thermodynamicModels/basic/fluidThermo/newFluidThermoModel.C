@@ -33,10 +33,7 @@ License
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewBasic
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -49,17 +46,14 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewBasic
             basicConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -72,17 +66,14 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewDetonating
             detonatingConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewMulticomponent
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -95,17 +86,14 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewMulticomponent
             multicomponentConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewReacting
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -118,17 +106,14 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::NewReacting
             reactingConstructorTablePtr_
         );
 
-    return cstrIter()(phaseName, p, rho, e, T, dict, master, masterName);
+    return cstrIter()(phaseName, mesh, dict, master, masterName);
 }
 
 
 Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -137,24 +122,24 @@ Foam::autoPtr<Foam::fluidThermoModel> Foam::fluidThermoModel::New
     const word type(dict.lookup<word>("type"));
     if (type == "basic")
     {
-        return NewBasic(phaseName, p, rho, e, T, dict, master, masterName);
+        return NewBasic(phaseName, mesh, dict, master, masterName);
     }
     else if (type == "detonating")
     {
-        return NewDetonating(phaseName, p, rho, e, T, dict, master, masterName);
+        return NewDetonating(phaseName, mesh, dict, master, masterName);
     }
     else if (type == "multicomponent")
     {
         return NewMulticomponent
         (
-            phaseName, p, rho, e, T, dict, master, masterName
+            phaseName, mesh, dict, master, masterName
         );
     }
 //     else if (type == "reacting")
 //     {
 //         return NewReacting
 //         (
-//             phaseName, p, rho, e, T, dict, master, masterName
+//             phaseName, mesh, dict, master, masterName
 //         );
 //     }
     else

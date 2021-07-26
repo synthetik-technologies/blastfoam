@@ -47,7 +47,7 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
 )
 :
     phaseCompressibleSystem(mesh),
-    thermo_(word::null, p_, rho_, e_, T_, *this, true),
+    thermo_(word::null, mesh, *this, true),
     volumeFraction_(thermo_.volumeFraction()),
     rho1_(thermo_.thermo1().rho()),
     rho2_(thermo_.thermo2().rho()),

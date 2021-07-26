@@ -52,10 +52,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
         fluidThermoModel::New
         (
             word::null,
-            p_,
-            rho_,
-            e_,
-            T_,
+            mesh,
             this->optionalSubDict("mixture"),
             true
         )

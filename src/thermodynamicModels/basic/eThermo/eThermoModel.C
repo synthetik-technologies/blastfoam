@@ -134,34 +134,6 @@ template<class BasicThermo, class ThermoType>
 Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    BasicThermo
-    (
-        phaseName,
-        p,
-        rho,
-        e,
-        T,
-        dict,
-        master,
-        masterName
-    ),
-    ThermoType(dict)
-{}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::eThermoModel<BasicThermo, ThermoType>::eThermoModel
-(
-    const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
     const bool master,

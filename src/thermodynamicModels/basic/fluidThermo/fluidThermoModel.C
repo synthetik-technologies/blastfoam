@@ -44,44 +44,6 @@ namespace Foam
 Foam::fluidThermoModel::fluidThermoModel
 (
     const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    basicThermoModel
-    (
-        phaseName,
-        p,
-        rho,
-        e,
-        T,
-        dict,
-        master,
-        masterName
-    ),
-    mu_
-    (
-        IOobject
-        (
-            IOobject::groupName("thermo:mu", phaseName),
-            p_.mesh().time().timeName(),
-            p_.mesh()
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimDynamicViscosity, 0.0)
-    ),
-    viscous_(true)
-{}
-
-
-Foam::fluidThermoModel::fluidThermoModel
-(
-    const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
@@ -124,7 +86,8 @@ void Foam::fluidThermoModel::initialize()
     {
         return;
     }
-    if (max(e_).value() <= 0.0)
+
+    if (!e_.typeHeaderOk<volScalarField>(true))
     {
         volScalarField e(calce());
         e_ = e;

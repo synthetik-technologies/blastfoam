@@ -295,37 +295,6 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const dictionary& dict1,
-    const dictionary& dict2,
-    const bool master,
-    const word& masterName
-)
-:
-    BasicThermo
-    (
-        name,
-        p,
-        rho,
-        e,
-        T,
-        dict,
-        master,
-        masterName
-    ),
-    Thermo1(dict1),
-    Thermo2(dict2)
-{}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::blendedThermoModel<BasicThermo, Thermo1, Thermo2>::blendedThermoModel
-(
-    const word& name,
     const fvMesh& mesh,
     const dictionary& dict,
     const dictionary& dict1,

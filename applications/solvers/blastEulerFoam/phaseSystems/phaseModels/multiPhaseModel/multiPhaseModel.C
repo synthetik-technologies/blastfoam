@@ -97,7 +97,7 @@ Foam::multiPhaseModel::multiPhaseModel
         this->mesh(),
         dimensionedScalar("0", phi_.dimensions(), 0.0)
     ),
-    thermo_(phaseName, p_, rho_, e_, T_, phaseDict_, true, phaseName),
+    thermo_(phaseName, fluid.mesh(), phaseDict_, true, phaseName),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),

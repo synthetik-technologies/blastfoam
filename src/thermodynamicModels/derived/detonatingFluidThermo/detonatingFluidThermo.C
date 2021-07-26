@@ -33,10 +33,7 @@ template<class Thermo>
 Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -45,10 +42,7 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
     Thermo
     (
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         dict.subDict("reactants"),
         dict.subDict("products"),

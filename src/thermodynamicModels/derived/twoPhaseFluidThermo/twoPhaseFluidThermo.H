@@ -89,10 +89,7 @@ public:
     twoPhaseFluidThermo
     (
         const word& name,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
-        volScalarField& p,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master,
         const word& masterName = word::null

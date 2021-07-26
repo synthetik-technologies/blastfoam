@@ -206,11 +206,8 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::cellSetProperty
 template<class BasicThermo, class ThermoType>
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
 (
-    const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const word& phaseName,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -218,17 +215,14 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
 :
     BasicThermo
     (
-        name,
-        p,
-        rho,
-        e,
-        T,
+        phaseName,
+        mesh,
         dict,
         master,
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_(p.mesh(), this->Ys_, constructSpeciesData(dict), name)
+    mixture_(mesh, this->Ys_, constructSpeciesData(dict), phaseName)
 {}
 
 
@@ -236,11 +230,8 @@ template<class BasicThermo, class ThermoType>
 Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
 (
     const HashPtrTable<ThermoType, word, string::hash>& thermoData,
-    const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const word& phaseName,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -249,17 +240,14 @@ Foam::mixtureThermoModel<BasicThermo, ThermoType>::mixtureThermoModel
     BasicThermo
     (
         thermoData.toc(),
-        name,
-        p,
-        rho,
-        e,
-        T,
+        phaseName,
+        mesh,
         dict,
         master,
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_(p.mesh(), this->Ys_, constructSpeciesData(dict), name)
+    mixture_(mesh, this->Ys_, constructSpeciesData(dict), phaseName)
 {}
 
 

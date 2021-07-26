@@ -34,10 +34,7 @@ template<class Thermo>
 Foam::basicFluidThermo<Thermo>::basicFluidThermo
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
@@ -46,10 +43,7 @@ Foam::basicFluidThermo<Thermo>::basicFluidThermo
     Thermo
     (
         name,
-        p,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
         master,
         masterName

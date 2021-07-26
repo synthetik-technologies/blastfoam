@@ -137,59 +137,6 @@ Foam::volScalarField& Foam::basicThermoModel::lookupOrConstructE
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::basicThermoModel::basicThermoModel
-(
-    const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName("basicThermo", phaseName),
-            p.mesh().time().timeName(),
-            p.mesh()
-        )
-    ),
-    integrationSystem
-    (
-        IOobject::groupName("basicThermo", phaseName),
-        p.mesh()
-    ),
-    thermoDict_(dict),
-    master_(master),
-    masterName_(masterName),
-    name_(phaseName),
-    p_(p),
-    rho_(rho),
-    T_(T),
-    e_(e),
-    alpha_
-    (
-        IOobject
-        (
-            IOobject::groupName("thermo:alpha", name_),
-            p_.mesh().time().timeName(),
-            p_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
-    ),
-    limit_(dict.lookupOrDefault("limit", true)),
-    residualAlpha_("residualAlpha", dimless, 0.0),
-    residualRho_("residualRho", dimDensity, 0.0)
-{}
-
 
 Foam::basicThermoModel::basicThermoModel
 (

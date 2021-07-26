@@ -78,5 +78,17 @@ namespace Foam
         sutherlandTransport,
         AbelNobel
     );
+
+    /* --- ADDED ETC ---*/
+    addMulticomponentFluidThermos
+    (
+        constTransport,
+        ETC
+    );
+    addMulticomponentFluidThermos
+    (
+        sutherlandTransport,
+        ETC
+    );
 }
 

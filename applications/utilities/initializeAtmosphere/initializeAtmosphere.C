@@ -199,10 +199,7 @@ int main(int argc, char *argv[])
                 fluidThermoModel::New
                 (
                     word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
+                    mesh,
                     phaseProperties.subDict("mixture"),
                     true
                 ).ptr()
@@ -218,10 +215,7 @@ int main(int argc, char *argv[])
                 twoPhaseFluidThermo::New
                 (
                     word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
+                    mesh,
                     phaseProperties,
                     true
                 ).ptr()
@@ -240,10 +234,7 @@ int main(int argc, char *argv[])
                 multiphaseFluidThermo::New
                 (
                     word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
+                    mesh,
                     phaseProperties,
                     true
                 ).ptr()
@@ -269,10 +260,7 @@ int main(int argc, char *argv[])
                 fluidThermoModel::New
                 (
                     phaseName,
-                    p,
-                    rho,
-                    e,
-                    T,
+                    mesh,
                     phaseProperties.subDict(phases[phasei]).subDict("thermoCoeffs"),
                     true
                 ).ptr()

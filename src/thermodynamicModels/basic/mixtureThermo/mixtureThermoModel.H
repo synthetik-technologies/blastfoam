@@ -118,10 +118,7 @@ public:
     mixtureThermoModel
     (
         const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master,
         const word& masterName = word::null
@@ -132,10 +129,7 @@ public:
     (
         const HashPtrTable<ThermoType, word, string::hash>& thermoData,
         const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master,
         const word& masterName = word::null

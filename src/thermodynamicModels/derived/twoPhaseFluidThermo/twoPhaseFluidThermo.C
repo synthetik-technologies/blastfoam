@@ -33,50 +33,44 @@ License
 Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
 (
     const word& name,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const bool master,
     const word& masterName
 )
 :
-    fluidThermoModel(name, p, rho, e, T, dict, master, masterName),
+    fluidThermoModel(name, mesh, dict, master, masterName),
     phases_(dict.lookup("phases")),
     volumeFraction_
     (
         IOobject
         (
             IOobject::groupName("alpha", phases_[0]),
-            rho.time().timeName(),
-            rho.mesh(),
+            mesh.time().timeName(),
+            mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        rho.mesh()
+        mesh
     ),
     rho1_
     (
         IOobject
         (
             IOobject::groupName("rho", phases_[0]),
-            rho.time().timeName(),
-            rho.mesh(),
+            mesh.time().timeName(),
+            mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        rho.mesh()
+        mesh
     ),
     thermo1_
     (
         fluidThermoModel::New
         (
             phases_[0],
-            p_,
-            rho1_,
-            e_,
-            T_,
+            mesh,
             dict.subDict(phases_[0]),
             false
         )
@@ -86,22 +80,19 @@ Foam::twoPhaseFluidThermo::twoPhaseFluidThermo
         IOobject
         (
             IOobject::groupName("rho", phases_[1]),
-            rho.time().timeName(),
-            rho.mesh(),
+            mesh.time().timeName(),
+            mesh,
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        rho.mesh()
+        mesh
     ),
     thermo2_
     (
         fluidThermoModel::New
         (
             phases_[1],
-            p_,
-            rho2_,
-            e_,
-            T_,
+            mesh,
             dict.subDict(phases_[1]),
             false
         )

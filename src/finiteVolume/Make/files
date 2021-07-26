@@ -44,4 +44,7 @@ extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 
 calcAngleFraction/calcAngleFraction.C
 
+fvPatchFields/burstSlip/burstSlipFvPatchFields.C
+fvPatchFields/burstZeroGradient/burstZeroGradientFvPatchFields.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

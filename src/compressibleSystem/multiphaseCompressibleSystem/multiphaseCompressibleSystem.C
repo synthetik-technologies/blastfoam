@@ -48,7 +48,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 )
 :
     phaseCompressibleSystem(mesh),
-    thermo_(word::null, p_, rho_, e_, T_, *this, true),
+    thermo_(word::null, mesh, *this, true),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),

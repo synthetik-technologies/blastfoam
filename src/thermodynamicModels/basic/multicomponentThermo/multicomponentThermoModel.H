@@ -86,10 +86,7 @@ public:
     multicomponentThermoModel
     (
         const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master,
         const word& masterName = word::null
@@ -100,10 +97,7 @@ public:
     (
         const speciesTable& species,
         const word& phaseName,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
         const bool master,
         const word& masterName = word::null

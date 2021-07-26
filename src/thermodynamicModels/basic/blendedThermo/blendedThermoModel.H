@@ -133,21 +133,6 @@ public:
 
     // Constructor
 
-        //- Construct with input field
-        blendedThermoModel
-        (
-            const word& phaseName,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const dictionary& dict1,
-            const dictionary& dict2,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
         //- Construct and add fields to db
         blendedThermoModel
         (
