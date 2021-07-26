@@ -339,7 +339,11 @@ public:
 
 //- Read and add fields to the database
 template<class FieldType>
-void readAndAddFields(const fvMesh& mesh, const IOobjectList& objects)
+void readAndAddFields
+(
+    const fvMesh& mesh,
+    const IOobjectList& objects
+)
 {
 
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
@@ -408,6 +412,11 @@ int main(int argc, char *argv[])
         "force3D",
         "Force 3-D refinement"
     );
+    argList::addBoolOption
+    (
+        "noWrite",
+        "Do not write fields"
+    );
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -426,6 +435,10 @@ int main(int argc, char *argv[])
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
     bool updateAll(args.optionFound("updateAll"));
+
+    // Do not write fields
+    // Usefull if a refined mesh is needed before mesh manipulation
+    bool noWrite(args.optionFound("noWrite"));
 
     Info<< "Reading " << dictName << "\n" << endl;
 
@@ -606,6 +619,8 @@ int main(int argc, char *argv[])
             end = true;
         }
 
+        bool write = !noWrite && (end || debug);
+
         // Read default values and set fields
         if (setFieldsDict.found("defaultFieldValues"))
         {
@@ -618,7 +633,7 @@ int main(int argc, char *argv[])
             PtrList<setCellField> defaultFieldValues
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, cells, end || debug)
+                setCellField::iNew(mesh, cells, write)
             );
             Info<< endl;
         }
@@ -693,7 +708,7 @@ int main(int argc, char *argv[])
                     PtrList<setCellField> fieldValues
                     (
                         regions[regionI].dict().lookup("fieldValues"),
-                        setCellField::iNew(mesh, cells, end || debug)
+                        setCellField::iNew(mesh, cells, write)
                     );
                 }
 
@@ -733,7 +748,7 @@ int main(int argc, char *argv[])
                     PtrList<setFaceField> fieldValues
                     (
                         regions[regionI].dict().lookup("fieldValues"),
-                        setFaceField::iNew(mesh, selectedFaces, end || debug)
+                        setFaceField::iNew(mesh, selectedFaces, write)
                     );
                 }
 
@@ -977,7 +992,7 @@ int main(int argc, char *argv[])
 
         // Write mesh and cell levels
         meshCutter->write();
-        mesh.write();
+//         mesh.write();
 
         //- Write points0 field to time directory
         pointIOField points0

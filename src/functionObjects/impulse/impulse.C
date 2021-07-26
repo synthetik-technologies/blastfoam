@@ -137,8 +137,12 @@ bool Foam::functionObjects::impulse::execute()
 
 bool Foam::functionObjects::impulse::write()
 {
-    impulse_.write();
-    return true;
+    if (obr_.time().timeIndex() != 0)
+    {
+        impulse_.write();
+        return true;
+    }
+    return false;
 }
 
 

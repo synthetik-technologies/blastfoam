@@ -249,7 +249,11 @@ void Foam::burstSlipFvPatchField<Type>::updateCoeffs()
     fixedValueFvPatchField<Type>::updateCoeffs();
 
     // Execute the change to the openFraction only once per time-step
-    if (curTimeIndex_ != this->db().time().timeIndex())
+    if
+    (
+        curTimeIndex_ != this->db().time().timeIndex()
+     && this->db().template foundObject<volScalarField>(pName_)
+    )
     {
         const volScalarField& p = this->db().template lookupObject<volScalarField>
         (
