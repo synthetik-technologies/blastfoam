@@ -51,7 +51,6 @@ License
 #include "stiffenedGas.H"
 #include "Tait.H"
 #include "AbelNobel.H"
-#include "ETC.H" //ETC EOS
 #include "vanderWaals.H"
 #include "JWL.H"
 #include "JWLC.H"
@@ -177,34 +176,6 @@ namespace Foam
         AbelNobel,
         blastSpecie
     );
-    /* --- ADDED ETC ---*/
-    defineThermoTypes
-    (
-        constTransport,
-        ETC,
-        blastSpecie
-    );
-    defineThermoTypes
-    (
-        sutherlandTransport,
-        ETC,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        constTransport,
-        janaf,
-        ETC,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        sutherlandTransport,
-        janaf,
-        ETC,
-        blastSpecie
-    );
-    /* --- ADDED ETC ---*/
     defineThermoTypes
     (
         constTransport,

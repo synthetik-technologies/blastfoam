@@ -3,5 +3,6 @@ Uniform/UniformFieldSetTypes.C
 InitialValue/InitialValueFieldSetTypes.C
 CalculatedDensity/CalculatedDensityFieldSetTypes.C
 Function/FunctionFieldSetTypes.C
+Sum/SumFieldSetTypes.C
 
 LIB = $(BLAST_LIBBIN)/libFieldSetTypes

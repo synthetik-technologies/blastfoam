@@ -92,12 +92,7 @@ Foam::burstSlipFvPatchField<Type>::burstSlipFvPatchField
     pBurst_(dict.lookup<scalar>("burstP")),
     burstImpulse_(dict.lookupOrDefault<scalar>("burstImpulse", -1)),
     useImpulse_(burstImpulse_ > 0),
-    impulse_
-    (
-        useImpulse_
-      ? scalarField("impulse", dict, p.size())
-      : scalarField(0)
-    ),
+    impulse_(p.size(), 0.0),
     partialBurst_(dict.lookupOrDefault("partialBurst", false)),
     intact_
     (
@@ -107,6 +102,10 @@ Foam::burstSlipFvPatchField<Type>::burstSlipFvPatchField
     ),
     curTimeIndex_(-1)
 {
+    if (useImpulse_ && dict.found("impulse"))
+    {
+        impulse_ = scalarField("impulse", dict, p.size());
+    }
     fvPatchField<Type>::operator=(this->patchInternalField());
 }
 
@@ -333,7 +332,7 @@ void Foam::burstSlipFvPatchField<Type>::updateCoeffs()
 template<class Type>
 void Foam::burstSlipFvPatchField<Type>::write(Ostream& os) const
 {
-    fixedValueFvPatchField<Type>::write(os);
+    fvPatchField<Type>::write(os);
     writeEntryIfDifferent<word>(os, "p", "p", pName_);
     writeEntry(os, "burstP", pBurst_);
     writeEntry(os, "cyclicPatch", cyclicPatchName_);
@@ -346,6 +345,7 @@ void Foam::burstSlipFvPatchField<Type>::write(Ostream& os) const
 
     writeEntry(os, "partialBurst", partialBurst_);
     writeEntry(os, "intact", intact_);
+    writeEntry(os, "value", *this);
 }
 
 

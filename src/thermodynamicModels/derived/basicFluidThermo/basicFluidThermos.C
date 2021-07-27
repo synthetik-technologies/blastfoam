@@ -124,14 +124,6 @@ namespace Foam
         AbelNobel
     );
 
-    /* --- ADDED ETC ---*/
-    addFluidThermos
-    (
-        constTransport,
-        ETC
-    );
-    /* --- ADDED ETC ---*/
-    
     addFluidThermos
     (
         constTransport,
