@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "multiphaseFluidThermo.H"
+#include "multiphaseFluidBlastThermo.H"
 
 namespace Foam
 {
@@ -57,7 +57,7 @@ protected:
     //- Primitative variables
 
         //- Equation of states
-        multiphaseFluidThermo thermo_;
+        multiphaseFluidBlastThermo thermo_;
 
         //- Volume fractions
         PtrList<volScalarField>& alphas_;
@@ -118,13 +118,13 @@ public:
     // Member Access Functions
 
         //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const
+        virtual const fluidBlastThermo& thermo() const
         {
             return thermo_;
         }
 
         //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo()
+        virtual fluidBlastThermo& thermo()
         {
             return thermo_;
         }

@@ -29,7 +29,7 @@ License
 #include "pressureWaveTransmissiveFvPatchField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -113,8 +113,8 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
         phip /= rhop;
     }
 
-   const fluidThermoModel& thermo =
-        this->db().template lookupObject<fluidThermoModel>
+   const fluidBlastThermo& thermo =
+        this->db().template lookupObject<fluidBlastThermo>
         (
             IOobject::groupName("basicThermo", phaseName_)
         );

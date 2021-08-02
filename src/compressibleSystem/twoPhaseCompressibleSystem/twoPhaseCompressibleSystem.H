@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "twoPhaseFluidThermo.H"
+#include "twoPhaseFluidBlastThermo.H"
 #include "fluxScheme.H"
 
 namespace Foam
@@ -57,7 +57,7 @@ class twoPhaseCompressibleSystem
     //- Primitative variables
 
         //- Equation of state
-        twoPhaseFluidThermo thermo_;
+        twoPhaseFluidBlastThermo thermo_;
 
         //- Volume fraction of phase 1
         volScalarField& volumeFraction_;
@@ -127,13 +127,13 @@ public:
     // Member Access Functions
 
         //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const
+        virtual const fluidBlastThermo& thermo() const
         {
             return thermo_;
         }
 
         //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo()
+        virtual fluidBlastThermo& thermo()
         {
             return thermo_;
         }

@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 namespace Foam
 {
@@ -56,7 +56,7 @@ protected:
 // Protected data
 
     //- Equation of state
-    autoPtr<fluidThermoModel> thermo_;
+    autoPtr<fluidBlastThermo> thermo_;
 
     //- Calculate new alpha and rho fields
     virtual void calcAlphaAndRho()
@@ -97,13 +97,13 @@ public:
     // Member Access Functions
 
         //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const
+        virtual const fluidBlastThermo& thermo() const
         {
             return thermo_();
         }
 
         //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo()
+        virtual fluidBlastThermo& thermo()
         {
             return thermo_();
         }

@@ -53,7 +53,7 @@ Foam::granularPhaseModel::granularPhaseModel
     ),
     thermo_
     (
-        solidThermoModel::New
+        solidBlastThermo::New
         (
             phaseName,
             fluid.mesh(),
@@ -263,15 +263,15 @@ void Foam::granularPhaseModel::update()
 
 void Foam::granularPhaseModel::decode()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+    const fvConstraints& constraints(this->fluid_.constraints());
 
     volScalarField& alpha(*this);
 
     //- Update volume fraction since density is known
     alpha.ref() = alphaRho_()/rho_();
-    if (options.optionList::appliesToField(alpha.name()))
+    if (constraints.constrainsField(alpha.name()))
     {
-        options.correct(alpha);
+        constraints.constrain(alpha);
         alphaRho_.ref() = alpha()*rho_();
     }
     alpha.correctBoundaryConditions();
@@ -285,9 +285,9 @@ void Foam::granularPhaseModel::decode()
 
     //- Calculate velocity from momentum
     U_.ref() = alphaRhoU_()/alphaRho();
-    if (options.optionList::appliesToField(U_.name()))
+    if (constraints.constrainsField(U_.name()))
     {
-        options.correct(U_);
+        constraints.constrain(U_);
         alphaRhoU_.ref() = alphaRho_()*U_();
     }
     U_.correctBoundaryConditions();
@@ -298,9 +298,9 @@ void Foam::granularPhaseModel::decode()
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.ref() = alphaRhoE_()/alphaRho();
-    if (options.optionList::appliesToField(e_.name()))
+    if (constraints.constrainsField(e_.name()))
     {
-        options.correct(e_);
+        constraints.constrain(e_);
         alphaRhoE_.ref() = alphaRho_()*e_();
     }
     e_.correctBoundaryConditions();
@@ -309,10 +309,10 @@ void Foam::granularPhaseModel::decode()
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
     Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRho());
-    if (options.optionList::appliesToField(Theta_.name()))
+    if (constraints.constrainsField(Theta_.name()))
     {
 
-        options.correct(Theta_);
+        constraints.constrain(Theta_);
         alphaRhoPTE_.ref() = 1.5*alphaRho_()*Theta_();
     }
     Theta_.correctBoundaryConditions();

@@ -29,7 +29,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "blastEnergyJumpFvPatchScalarField.H"
 #include "fixedJumpFvPatchFields.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -99,8 +99,8 @@ void Foam::blastEnergyJumpFvPatchScalarField::updateCoeffs()
 
     if (this->cyclicPatch().owner())
     {
-        fluidThermoModel& thermo =
-            db().lookupObjectRef<fluidThermoModel>
+        basicBlastThermo& thermo =
+            db().lookupObjectRef<basicBlastThermo>
             (
                 IOobject::groupName("basicThermo", internalField().group())
             );

@@ -30,7 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
-#include "basicThermoModel.H"
+#include "basicBlastThermo.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -95,9 +95,9 @@ void Foam::blastMixedEnergyFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    basicThermoModel& thermo
+    basicBlastThermo& thermo
     (
-        db().lookupObjectRef<basicThermoModel>
+        db().lookupObjectRef<basicBlastThermo>
         (
             IOobject::groupName("basicThermo", internalField().group())
         )

@@ -79,19 +79,6 @@ coupledSolidTractionDisplacementFvPatchVectorField
 Foam::coupledSolidTractionDisplacementFvPatchVectorField::
 coupledSolidTractionDisplacementFvPatchVectorField
 (
-    const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf
-)
-:
-    tractionDisplacementFvPatchVectorField(tdpvf),
-    mpp_(tdpvf.mpp_),
-    pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
-{}
-
-
-Foam::coupledSolidTractionDisplacementFvPatchVectorField::
-coupledSolidTractionDisplacementFvPatchVectorField
-(
     const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf,
     const DimensionedField<vector, volMesh>& iF
 )

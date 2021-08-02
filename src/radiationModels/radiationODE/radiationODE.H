@@ -38,7 +38,7 @@ SourceFiles
 #include "ODESolver.H"
 #include "volFields.H"
 #include "simpleMatrix.H"
-#include "basicThermoModel.H"
+#include "basicBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,7 +61,7 @@ class radiationODE
         const radiationModel& rad_;
 
         //- Reference to thermodynamic model
-        const basicThermoModel& thermo_;
+        const basicBlastThermo& thermo_;
 
 
     // Private Member Functions

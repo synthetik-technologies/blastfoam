@@ -1,5 +1,6 @@
 EXE_INC = \
     -I$(LIB_SRC)/engine/lnInclude \
+    -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
     -I$(LIB_SRC)/transportModels/compressible/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
@@ -20,7 +21,7 @@ EXE_INC = \
 EXE_LIBS = \
     -lengine \
     -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -lthermophysicalTransportModels \
     -lfluidThermophysicalModels \
     -lreactionThermophysicalModels \
@@ -28,7 +29,8 @@ EXE_LIBS = \
     -lcombustionModels \
     -llaminarFlameSpeedModels \
     -lfiniteVolume \
-    -lfvOptions \
+    -lfvModels \
+    -lfvConstraints \
     -lsampling \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \

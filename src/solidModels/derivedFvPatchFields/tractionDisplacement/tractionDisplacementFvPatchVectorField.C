@@ -80,18 +80,6 @@ tractionDisplacementFvPatchVectorField
 Foam::tractionDisplacementFvPatchVectorField::
 tractionDisplacementFvPatchVectorField
 (
-    const tractionDisplacementFvPatchVectorField& tdpvf
-)
-:
-    fixedGradientFvPatchVectorField(tdpvf),
-    traction_(tdpvf.traction_),
-    pressure_(tdpvf.pressure_)
-{}
-
-
-Foam::tractionDisplacementFvPatchVectorField::
-tractionDisplacementFvPatchVectorField
-(
     const tractionDisplacementFvPatchVectorField& tdpvf,
     const DimensionedField<vector, volMesh>& iF
 )

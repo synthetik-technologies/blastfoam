@@ -26,8 +26,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "fluidThermoModel.H"
-#include "blendedThermoModel.H"
+#include "fluidBlastThermo.H"
+#include "blendedBlastThermo.H"
 #include "detonatingFluidThermo.H"
 #include "fluidThermoModelTypes.H"
 #include "addToRunTimeSelectionTable.H"

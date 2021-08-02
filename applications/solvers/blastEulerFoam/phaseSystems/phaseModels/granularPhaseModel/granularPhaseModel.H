@@ -55,7 +55,7 @@ SourceFiles
 #define granularPhaseModel_H
 
 #include "phaseModel.H"
-#include "solidThermoModel.H"
+#include "solidBlastThermo.H"
 #include "kineticTheoryModel.H"
 #include "AUSMPlusUp.H"
 
@@ -84,7 +84,7 @@ protected:
     // Protected data
 
         //- Thermophysical properties
-        autoPtr<solidThermoModel> thermo_;
+        autoPtr<solidBlastThermo> thermo_;
 
         //- Phase density
         volScalarField& rho_;
@@ -249,13 +249,13 @@ public:
         // Thermodynamic properties
 
             //- Return thermodynamic model
-            virtual const basicThermoModel& thermo() const
+            virtual const basicBlastThermo& thermo() const
             {
                 return thermo_();
             }
 
             //- Access thermodynamic model
-            virtual basicThermoModel& thermo()
+            virtual basicBlastThermo& thermo()
             {
                 return thermo_();
             }

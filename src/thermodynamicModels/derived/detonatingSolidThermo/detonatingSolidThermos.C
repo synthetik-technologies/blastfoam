@@ -26,8 +26,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "solidThermoModel.H"
-#include "blendedThermoModel.H"
+#include "solidBlastThermo.H"
+#include "blendedBlastThermo.H"
 #include "detonatingSolidThermo.H"
 #include "solidThermoModelTypes.H"
 

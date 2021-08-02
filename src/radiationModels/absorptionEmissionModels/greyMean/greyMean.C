@@ -92,7 +92,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::greyMean
         eos_.set
         (
             i,
-            &mesh.lookupObjectRef<fluidThermoModel>
+            &mesh.lookupObjectRef<fluidBlastThermo>
             (
                 IOobject::groupName("basicThermo", specieName)
             )

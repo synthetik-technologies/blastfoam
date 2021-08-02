@@ -27,7 +27,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
 #include "volFields.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "mathematicalConstants.H"
 #include "thermodynamicConstants.H"
 
@@ -162,8 +162,8 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::updateCoeffs()
         return;
     }
 
-    const fluidThermoModel& thermo =
-        db().lookupObject<fluidThermoModel>
+    const fluidBlastThermo& thermo =
+        db().lookupObject<fluidBlastThermo>
         (
             IOobject::groupName("basicThermo", internalField().group())
         );

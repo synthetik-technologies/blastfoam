@@ -45,7 +45,8 @@ Description
 #include "solidModel.H"
 #include "regionProperties.H"
 // #include "blastFluidThermoMomentumTransportModel.H"
-#include "fvOptions.H"
+#include "fvConstraints.H"
+#include "fvModels.H"
 
 #include "mappedPatchSelector.H"
 #include "mappedPointPatchSelector.H"

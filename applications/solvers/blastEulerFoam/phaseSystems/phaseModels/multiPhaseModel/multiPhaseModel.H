@@ -39,9 +39,8 @@ SourceFiles
 #define multiPhaseModel_H
 
 #include "phaseModel.H"
-#include "fluidThermoModel.H"
 #include "fluxScheme.H"
-#include "multiphaseFluidThermo.H"
+#include "multiphaseFluidBlastThermo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -77,7 +76,7 @@ protected:
         //- Primitative variables
 
             //- Equation of states
-            multiphaseFluidThermo thermo_;
+            multiphaseFluidBlastThermo thermo_;
 
             //- Volume fractions
             PtrList<volScalarField>& alphas_;
@@ -202,13 +201,13 @@ public:
         }
 
         //- Return thermodynamic model
-        virtual const basicThermoModel& thermo() const
+        virtual const basicBlastThermo& thermo() const
         {
             return thermo_;
         }
 
         //- Access thermodynamic model
-        virtual basicThermoModel& thermo()
+        virtual basicBlastThermo& thermo()
         {
             return thermo_;
         }

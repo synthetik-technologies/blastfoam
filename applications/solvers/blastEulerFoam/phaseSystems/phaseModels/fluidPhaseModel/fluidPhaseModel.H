@@ -41,7 +41,7 @@ SourceFiles
 #define fluidPhaseModel_H
 
 #include "phaseModel.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "fluxScheme.H"
 #include "runTimeSelectionTables.H"
 
@@ -70,7 +70,7 @@ protected:
         volScalarField rho_;
 
         //- Thermophysical properties
-        autoPtr<fluidThermoModel> thermo_;
+        autoPtr<fluidBlastThermo> thermo_;
 
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
@@ -168,13 +168,13 @@ public:
         }
 
         //- Return thermodynamic model
-        virtual const basicThermoModel& thermo() const
+        virtual const basicBlastThermo& thermo() const
         {
             return thermo_();
         }
 
         //- Access thermodynamic model
-        virtual basicThermoModel& thermo()
+        virtual basicBlastThermo& thermo()
         {
             return thermo_();
         }

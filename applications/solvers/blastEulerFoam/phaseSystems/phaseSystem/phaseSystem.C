@@ -678,7 +678,9 @@ Foam::phaseSystem::phaseSystem
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
     kineticTheoryPtr_(NULL),
-    polydisperseKineticTheory_(false)
+    polydisperseKineticTheory_(false),
+    fvModels_(fvModels::New(mesh)),
+    fvConstraints_(fvConstraints::New(mesh))
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -827,13 +829,6 @@ Foam::phaseSystem::phaseSystem
     }
 
     calcMixtureVariables();
-
-    fvOptionsPtr_ = &fv::options::New(mesh);
-
-    if (!fvOptionsPtr_->optionList::size())
-    {
-        Info << "No finite volume options present" << endl;
-    }
 }
 
 

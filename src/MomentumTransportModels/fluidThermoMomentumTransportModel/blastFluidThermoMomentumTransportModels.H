@@ -24,7 +24,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "CompressibleMomentumTransportModel.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 #include "makeBlastMomentumTransportModel.H"
 
@@ -40,20 +40,20 @@ makeMomentumTransportModelTypes
     volScalarField,
     compressibleMomentumTransportModel,
     CompressibleMomentumTransportModel,
-    fluidThermoModel
+    fluidBlastThermo
 );
 
 
 #define makeLaminarModel(Type)                                                 \
-    makeTemplatedLaminarModel (fluidThermoModelCompressibleMomentumTransportModel, laminar, Type)
+    makeTemplatedLaminarModel (fluidBlastThermoCompressibleMomentumTransportModel, laminar, Type)
 
 #define makeRASModel(Type)                                                     \
     makeTemplatedMomentumTransportModel                                        \
-    (fluidThermoModelCompressibleMomentumTransportModel, RAS, Type)
+    (fluidBlastThermoCompressibleMomentumTransportModel, RAS, Type)
 
 #define makeLESModel(Type)                                                     \
     makeTemplatedMomentumTransportModel                                        \
-    (fluidThermoModelCompressibleMomentumTransportModel, LES, Type)
+    (fluidBlastThermoCompressibleMomentumTransportModel, LES, Type)
 
 
 // ************************************************************************* //

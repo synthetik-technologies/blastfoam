@@ -40,10 +40,10 @@ SourceFiles
 
 #include "integrationSystem.H"
 #include "fluxScheme.H"
-#include "rhoReactionThermo.H"
-#include "CombustionModel.H"
-#include "fluidThermoMomentumTransportModel.H"
-#include "rhoReactionThermophysicalTransportModel.H"
+#include "fluidReactionThermo.H"
+#include "combustionModel.H"
+#include "dynamicMomentumTransportModel.H"
+#include "fluidReactionThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "radiationModel.H"
 
@@ -62,7 +62,7 @@ protected:
 // Protected data
 
     //- Thermo
-    autoPtr<rhoReactionThermo> thermo_;
+    autoPtr<fluidReactionThermo> thermo_;
 
     //- Primitative variables
 
@@ -112,14 +112,11 @@ protected:
         autoPtr<compressible::momentumTransportModel> turbulence_;
 
         //- Thermo turbulence model
-        autoPtr<rhoReactionThermophysicalTransportModel> thermophysicalTransport_;
+        autoPtr<fluidReactionThermophysicalTransportModel> thermophysicalTransport_;
 
 
     //- Chemistry
-    autoPtr<CombustionModel<rhoReactionThermo>> reaction_;
-
-    //- Index of inert specie
-    label inertIndex_;
+    autoPtr<combustionModel> reaction_;
 
     //- Radiation model
     autoPtr<radiationModel> radiation_;

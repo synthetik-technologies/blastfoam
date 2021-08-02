@@ -34,8 +34,6 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "basicThermoModel.H"
-#include "phaseCompressibleMomentumTransportModel.H"
 #include "fluxScheme.H"
 #include "interfacialPressureModel.H"
 
@@ -119,8 +117,8 @@ Foam::phaseModel::phaseModel
         ),
         fluid_.mesh(),
         dimensionedScalar(sqr(dimVelocity), -1.0),
-        basicThermoModel::eBoundaryTypes(T_),
-        basicThermoModel::eBoundaryBaseTypes(T_)
+        basicBlastThermo::eBoundaryTypes(T_),
+        basicBlastThermo::eBoundaryBaseTypes(T_)
     ),
     alphaRho_
     (

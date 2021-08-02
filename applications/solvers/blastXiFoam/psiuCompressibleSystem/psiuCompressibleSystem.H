@@ -41,7 +41,7 @@ SourceFiles
 #include "integrationSystem.H"
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
-#include "fluidThermoMomentumTransportModel.H"
+#include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 

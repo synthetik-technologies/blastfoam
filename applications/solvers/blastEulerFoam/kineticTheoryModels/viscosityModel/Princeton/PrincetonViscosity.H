@@ -41,7 +41,7 @@ SourceFiles
 #ifndef PrincetonViscosity_H
 #define PrincetonViscosity_H
 
-#include "viscosityModel.H"
+#include "kineticTheoryViscosityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

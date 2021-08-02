@@ -170,7 +170,7 @@ Foam::solidModel::solidModel
     ),
     thermoPtr_
     (
-        solidThermoModel::NewBasic
+        solidBlastThermo::NewBasic
         (
             word::null,
             mesh,
@@ -225,7 +225,8 @@ Foam::solidModel::solidModel
         )
     ),
     nCorr_(subDict(type + "Coeffs").lookupOrDefault<label>("nCorrectors", 10000)),
-    fvOptions_(fv::options::New(mesh))
+    fvModels_(fvModels::New(mesh)),
+    fvConstraints_(fvConstraints::New(mesh))
 {}
 
 

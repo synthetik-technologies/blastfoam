@@ -42,7 +42,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 )
 :
     integrationSystem("phaseCompressibleSystem", mesh),
-    thermo_(rhoReactionThermo::New(mesh)),
+    thermo_(fluidReactionThermo::New(mesh)),
     rho_
     (
         IOobject
@@ -150,8 +150,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 
     Switch useChemistry
     (
-        word(thermo_->subDict("thermoType").lookup("mixture"))
-     == "multiComponentMixture"
+        thermo_->composition().Y().size() > 1
     );
 
     if (min(thermo_->mu()).value() > small || useChemistry)
@@ -168,7 +167,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         );
         thermophysicalTransport_.set
         (
-            rhoReactionThermophysicalTransportModel::New
+            fluidReactionThermophysicalTransportModel::New
             (
                 turbulence_(),
                 thermo_()
@@ -180,14 +179,12 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     {
         reaction_.set
         (
-            CombustionModel<rhoReactionThermo>::New
+            combustionModel::New
             (
-                refCast<rhoReactionThermo>(thermo_()),
+                thermo_(),
                 turbulence_()
             ).ptr()
         );
-        word inertSpecie(thermo_->lookup("inertSpecie"));
-        inertIndex_ = thermo_->composition().species()[inertSpecie];
     }
 
     IOobject radIO
@@ -252,7 +249,8 @@ void Foam::reactingCompressibleSystem::solve()
 
     if (reaction_.valid())
     {
-        PtrList<volScalarField>& Ys = thermo_->composition().Y();
+        basicSpecieMixture& composition = thermo_->composition();
+        PtrList<volScalarField>& Ys = composition.Y();
         volScalarField Yt(0.0*Ys[0]);
         forAll(Ys, i)
         {
@@ -261,7 +259,7 @@ void Foam::reactingCompressibleSystem::solve()
                 Ys[i].storeOldTime();
             }
 
-            if (i != inertIndex_ && thermo_->composition().active(i))
+            if (composition.solve(i))
             {
                 volScalarField YOld(Ys[i]);
                 this->storeAndBlendOld(YOld);
@@ -279,8 +277,7 @@ void Foam::reactingCompressibleSystem::solve()
                 Yt += Ys[i];
             }
         }
-        Ys[inertIndex_] = scalar(1) - Yt;
-        Ys[inertIndex_].max(0.0);
+        composition.normalise();
     }
 }
 
@@ -322,18 +319,21 @@ void Foam::reactingCompressibleSystem::postUpdate()
 
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
+
     if (reaction_.valid())
     {
         Info<< "Solving reactions" << endl;
         reaction_->correct();
 
+        basicSpecieMixture& composition = thermo_->composition();
+
         eEqn -= reaction_->Qdot();
 
-        PtrList<volScalarField>& Y = thermo_->composition().Y();
+        PtrList<volScalarField>& Y = composition.Y();
         volScalarField Yt(0.0*Y[0]);
         forAll(Y, i)
         {
-            if (i != inertIndex_ && thermo_->composition().active(i))
+            if (composition.solve(i))
             {
                 volScalarField& Yi = Y[i];
                 fvScalarMatrix YiEqn
@@ -350,8 +350,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 Yt += Yi;
             }
         }
-        Y[inertIndex_] = scalar(1) - Yt;
-        Y[inertIndex_].max(0.0);
+        composition.normalise();
     }
 
     eEqn.solve();

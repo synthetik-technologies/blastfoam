@@ -1,4 +1,4 @@
-solidThermoModel& thermo = thermos[i];
+solidBlastThermo& thermo = thermos[i];
 
 tmp<volScalarField> trho = thermo.rho();
 const volScalarField& rho = trho();

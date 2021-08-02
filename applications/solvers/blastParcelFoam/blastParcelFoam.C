@@ -37,7 +37,6 @@ Description
 #include "coupledMultiphaseCompressibleSystem.H"
 #include "blastFluidThermoMomentumTransportModel.H"
 #include "timeIntegrator.H"
-#include "fluidThermoModel.H"
 
 #include "basicThermoCloud.H"
 

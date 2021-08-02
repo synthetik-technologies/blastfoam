@@ -39,7 +39,7 @@ SourceFiles
 #include "phaseModel.H"
 #include "runTimeSelectionTables.H"
 #include "phasePair.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 namespace Foam
 {

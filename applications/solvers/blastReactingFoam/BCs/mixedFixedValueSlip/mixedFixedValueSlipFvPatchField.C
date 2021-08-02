@@ -73,18 +73,6 @@ Foam::mixedFixedValueSlipFvPatchField<Type>::mixedFixedValueSlipFvPatchField
 template<class Type>
 Foam::mixedFixedValueSlipFvPatchField<Type>::mixedFixedValueSlipFvPatchField
 (
-    const mixedFixedValueSlipFvPatchField<Type>& ptf
-)
-:
-    transformFvPatchField<Type>(ptf),
-    refValue_(ptf.refValue_),
-    valueFraction_(ptf.valueFraction_)
-{}
-
-
-template<class Type>
-Foam::mixedFixedValueSlipFvPatchField<Type>::mixedFixedValueSlipFvPatchField
-(
     const mixedFixedValueSlipFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )

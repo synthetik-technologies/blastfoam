@@ -32,7 +32,6 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "phaseCompressibleMomentumTransportModel.H"
 #include "addToRunTimeSelectionTable.H"
 #include "SortableList.H"
 
@@ -180,7 +179,7 @@ Foam::multiPhaseModel::multiPhaseModel
     thermo_.setTotalVolumeFractionPtr(*this);
 
     this->turbulence_ =
-        phaseCompressibleMomentumTransportModel::New
+        phaseCompressible::momentumTransportModel::New
         (
             *this,
             rho_,
@@ -192,8 +191,8 @@ Foam::multiPhaseModel::multiPhaseModel
     this->thermophysicalTransport_ =
         PhaseThermophysicalTransportModel
         <
-            phaseCompressibleMomentumTransportModel,
-            basicThermoModel
+            phaseCompressible::momentumTransportModel,
+            basicBlastThermo
         >::New(turbulence_, thermo_);
 
     phaseModel::initializeModels();
@@ -281,7 +280,7 @@ void Foam::multiPhaseModel::update()
 
 void Foam::multiPhaseModel::calcAlphaAndRho()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+    const fvConstraints& constraints(fluid_.constraints());
 
     alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
 
@@ -318,9 +317,9 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
 
     forAll(alphas_, phasei)
     {
-        if (options.optionList::appliesToField(alphas_[phasei].name()))
+        if (constraints.constrainsField(alphas_[phasei].name()))
         {
-            options.correct(alphas_[phasei]);
+            constraints.constrain(alphas_[phasei]);
         }
         alphas_[phasei].correctBoundaryConditions();
 
@@ -332,9 +331,9 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
                 alphas_[phasei],
                 thermo_.thermo(phasei).residualAlpha()
             );
-        if (options.optionList::appliesToField(rhos_[phasei].name()))
+        if (constraints.constrainsField(rhos_[phasei].name()))
         {
-            options.correct(rhos_[phasei]);
+            constraints.constrain(rhos_[phasei]);
         }
         rhos_[phasei].correctBoundaryConditions();
 
@@ -346,7 +345,7 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
 
 void Foam::multiPhaseModel::decode()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+    const fvConstraints& constraints(this->fluid_.constraints());
 
     calcAlphaAndRho();
     volScalarField& alpha(*this);
@@ -357,9 +356,9 @@ void Foam::multiPhaseModel::decode()
     volScalarField alphaRho(alphaRho_);
     alphaRho.max(1e-10);
     U_.ref() = alphaRhoU_()/(alphaRho());
-    if (options.optionList::appliesToField(U_.name()))
+    if (constraints.constrainsField(U_.name()))
     {
-        options.correct(U_);
+        constraints.constrain(U_);
     }
     U_.correctBoundaryConditions();
 
@@ -368,10 +367,10 @@ void Foam::multiPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-    if (options.optionList::appliesToField(e_.name()))
+    if (constraints.constrainsField(e_.name()))
     {
 
-        options.correct(e_);
+        constraints.constrain(e_);
         alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
     }
 

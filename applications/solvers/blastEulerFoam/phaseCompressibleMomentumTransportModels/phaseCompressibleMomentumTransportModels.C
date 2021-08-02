@@ -23,52 +23,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseCompressibleMomentumTransportModel.H"
-#include "addToRunTimeSelectionTable.H"
-#include "makeMomentumTransportModel.H"
-
-#include "laminarModel.H"
-#include "RASModel.H"
-#include "LESModel.H"
+#include "phaseDynamicMomentumTransportModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-makeMomentumTransportModelTypes
-(
-    volScalarField,
-    volScalarField,
-    compressibleMomentumTransportModel,
-    PhaseCompressibleMomentumTransportModel,
-    phaseModel
-);
-
-makeBaseMomentumTransportModel
-(
-    volScalarField,
-    volScalarField,
-    compressibleMomentumTransportModel,
-    PhaseCompressibleMomentumTransportModel,
-    phaseModel
-);
-
-#define makeLaminarModel(Type)                                                 \
-    makeTemplatedLaminarModel                                                  \
-    (phaseModelPhaseCompressibleMomentumTransportModel, laminar, Type)
-
-#define makeRASModel(Type)                                                     \
-    makeTemplatedMomentumTransportModel                                        \
-    (phaseModelPhaseCompressibleMomentumTransportModel, RAS, Type)
-
-#define makeLESModel(Type)                                                     \
-    makeTemplatedMomentumTransportModel                                        \
-    (phaseModelPhaseCompressibleMomentumTransportModel, LES, Type)
-
 
 #include "Stokes.H"
 makeLaminarModel(Stokes);
 
-#include "generalizedNewtonian.H"
-makeLaminarModel(generalizedNewtonian);
+#include "generalisedNewtonian.H"
+makeLaminarModel(generalisedNewtonian);
 
 #include "kEpsilon.H"
 makeRASModel(kEpsilon);

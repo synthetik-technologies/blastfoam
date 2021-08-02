@@ -50,9 +50,12 @@ SourceFiles
 #include "fvm.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "phaseCompressibleMomentumTransportModelFwd.H"
+// #include "phaseCompressibleMomentumTransportModelFwd.H"
+#include "dynamicTransportModel.H"
 #include "PhaseThermophysicalTransportModel.H"
-#include "basicThermoModel.H"
+#include "phaseDynamicMomentumTransportModel.H"
+#include "fluidBlastThermo.H"
+#include "solidBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -63,6 +66,31 @@ namespace Foam
 class phaseSystem;
 class fluxScheme;
 
+// Trait for converting the ThermoModel's thermo type to the thermo type needed
+// for the thermophysical transport model type; i.e., from rho-type thermo to
+// fluid-type thermo.
+
+template<class ThermoModel>
+struct PhaseModelTransportThermoModel;
+
+template<>
+struct PhaseModelTransportThermoModel<basicBlastThermo>
+{
+    typedef basicBlastThermo type;
+};
+
+template<>
+struct PhaseModelTransportThermoModel<fluidBlastThermo>
+{
+    typedef fluidBlastThermo type;
+};
+
+template<>
+struct PhaseModelTransportThermoModel<solidBlastThermo>
+{
+    typedef solidBlastThermo type;
+};
+
 /*---------------------------------------------------------------------------*\
                            Class phaseModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -71,9 +99,21 @@ class fluxScheme;
 class phaseModel
 :
     public volScalarField,
-    public integrationSystem
+    public integrationSystem,
+    public dynamicTransportModel
 {
 protected:
+    // Protected typedefs
+
+        //- Thermo type for the thermophysical transport model
+        typedef
+            typename PhaseModelTransportThermoModel
+            <
+                basicBlastThermo
+            >::type
+            transportThermoModel;
+
+
     // Protected data
 
         //- Reference to phase system
@@ -138,15 +178,15 @@ protected:
         autoPtr<diameterModel> dPtr_;
 
         //- Turbulence model
-        autoPtr<phaseCompressibleMomentumTransportModel> turbulence_;
+        autoPtr<phaseCompressible::momentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
         autoPtr
         <
             PhaseThermophysicalTransportModel
             <
-                phaseCompressibleMomentumTransportModel,
-                basicThermoModel
+                phaseCompressible::momentumTransportModel,
+                basicBlastThermo
             >
         > thermophysicalTransport_;
 
@@ -171,7 +211,7 @@ protected:
 public:
 
     //- Runtime type information
-    ClassName("phaseModel");
+    TypeName("phaseModel");
 
 
     // Declare runtime construction
@@ -503,10 +543,10 @@ public:
         // Thermodynamic properties
 
             //- Return thermodynamic model
-            virtual const basicThermoModel& thermo() const = 0;
+            virtual const basicBlastThermo& thermo() const = 0;
 
             //- Access thermodynamic model
-            virtual basicThermoModel& thermo() = 0;
+            virtual basicBlastThermo& thermo() = 0;
 
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const = 0;

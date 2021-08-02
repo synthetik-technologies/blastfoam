@@ -233,10 +233,10 @@ public:
         blast::momentumTransportModel& turbulence();
 
         //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const = 0;
+        virtual const fluidBlastThermo& thermo() const = 0;
 
         //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo() = 0;
+        virtual fluidBlastThermo& thermo() = 0;
 
         //- Const access to total mass
         const volScalarField& rho() const

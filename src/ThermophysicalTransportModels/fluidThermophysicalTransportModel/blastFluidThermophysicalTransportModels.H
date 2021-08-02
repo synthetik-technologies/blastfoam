@@ -33,8 +33,8 @@ License
 makeThermophysicalTransportModelTypes
 (
     ThermophysicalTransportModel,
-    fluidThermoModelCompressibleMomentumTransportModel,
-    fluidThermoModel
+    fluidBlastThermoCompressibleMomentumTransportModel,
+    fluidBlastThermo
 );
 
 
@@ -42,8 +42,8 @@ makeThermophysicalTransportModelTypes
     makeThermophysicalTransportModel                                           \
     (                                                                          \
         ThermophysicalTransportModel,                                          \
-        fluidThermoModelCompressibleMomentumTransportModel,                    \
-        fluidThermoModel,                                                      \
+        fluidBlastThermoCompressibleMomentumTransportModel,                    \
+        fluidBlastThermo,                                                      \
         laminar,                                                               \
         Type                                                                   \
     )
@@ -52,8 +52,8 @@ makeThermophysicalTransportModelTypes
     makeTurbulenceThermophysicalTransportModel                                 \
     (                                                                          \
         ThermophysicalTransportModel,                                          \
-        fluidThermoModelCompressibleMomentumTransportModel,                    \
-        fluidThermoModel,                                                      \
+        fluidBlastThermoCompressibleMomentumTransportModel,                    \
+        fluidBlastThermo,                                                      \
         SType,                                                                 \
         Type                                                                   \
     )
@@ -62,8 +62,8 @@ makeThermophysicalTransportModelTypes
     makeThermophysicalTransportModel                                           \
     (                                                                          \
         ThermophysicalTransportModel,                                          \
-        fluidThermoModelCompressibleMomentumTransportModel,                    \
-        fluidThermoModel,                                                      \
+        fluidBlastThermoCompressibleMomentumTransportModel,                    \
+        fluidBlastThermo,                                                      \
         RAS,                                                                   \
         Type                                                                   \
     )
@@ -72,8 +72,8 @@ makeThermophysicalTransportModelTypes
     makeThermophysicalTransportModel                                           \
     (                                                                          \
         ThermophysicalTransportModel,                                          \
-        fluidThermoModelCompressibleMomentumTransportModel,                    \
-        fluidThermoModel,                                                      \
+        fluidBlastThermoCompressibleMomentumTransportModel,                    \
+        fluidBlastThermo,                                                      \
         LES,                                                                   \
         Type                                                                   \
     )

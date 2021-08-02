@@ -30,8 +30,8 @@ License
 makeThermophysicalTransportModels
 (
     ThermophysicalTransportModel,
-    fluidThermoModelCompressibleMomentumTransportModel,
-    fluidThermoModel
+    fluidBlastThermoCompressibleMomentumTransportModel,
+    fluidBlastThermo
 );
 
 

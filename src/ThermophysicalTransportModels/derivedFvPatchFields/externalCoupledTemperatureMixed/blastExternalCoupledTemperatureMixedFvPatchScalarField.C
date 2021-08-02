@@ -135,16 +135,16 @@ void Foam::blast::externalCoupledTemperatureMixedFvPatchScalarField::transferDat
         const thermophysicalTransportModel& ttm =
             db().lookupObject<thermophysicalTransportModel>(ttmName);
 
-        const basicThermoModel& thermo = ttm.thermo();
+        const basicBlastThermo& thermo = ttm.thermo();
 
         const fvPatchScalarField& ep = thermo.e().boundaryField()[patchi];
 
         qDot = ttm.alphaEff(patchi)*ep.snGrad();
     }
-    else if (db().foundObject<basicThermoModel>(thermoName))
+    else if (db().foundObject<basicBlastThermo>(thermoName))
     {
-        const basicThermoModel& thermo =
-            db().lookupObject<basicThermoModel>(thermoName);
+        const basicBlastThermo& thermo =
+            db().lookupObject<basicBlastThermo>(thermoName);
 
         const fvPatchScalarField& ep = thermo.e().boundaryField()[patchi];
 

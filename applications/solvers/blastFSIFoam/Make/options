@@ -28,7 +28,7 @@ EXE_INC = \
 EXE_LIBS = \
     -lODE \
     -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -lmeshTools \
     -lfiniteVolume \
     -lregionModels \

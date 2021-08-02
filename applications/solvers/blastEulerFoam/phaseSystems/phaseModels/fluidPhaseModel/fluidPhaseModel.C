@@ -32,7 +32,6 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "phaseCompressibleMomentumTransportModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 
@@ -81,7 +80,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     ),
     thermo_
     (
-        fluidThermoModel::New
+        fluidBlastThermo::New
         (
             phaseName,
             p_,
@@ -99,7 +98,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     thermo_->correct();
 
     this->turbulence_ =
-        phaseCompressibleMomentumTransportModel::New
+        phaseCompressible::momentumTransportModel::New
         (
             *this,
             rho_,
@@ -111,8 +110,8 @@ Foam::fluidPhaseModel::fluidPhaseModel
     this->thermophysicalTransport_ =
         PhaseThermophysicalTransportModel
         <
-            phaseCompressibleMomentumTransportModel,
-            basicThermoModel
+            phaseCompressible::momentumTransportModel,
+            basicBlastThermo
         >::New(turbulence_, thermo_());
 
     phaseModel::initializeModels();
@@ -198,20 +197,20 @@ void Foam::fluidPhaseModel::update()
 
 void Foam::fluidPhaseModel::decode()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
+    const fvConstraints& constraints(this->fluid_.constraints());
 
     this->correctBoundaryConditions();
-    if (options.optionList::appliesToField(this->name()))
+    if (constraints.constrainsField(this->name()))
     {
-        options.correct(*this);
+        constraints.constrain(*this);
     }
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
 
     rho_.ref() = alphaRho_()/alpha();
-    if (options.optionList::appliesToField(rho_.name()))
+    if (constraints.constrainsField(rho_.name()))
     {
-        options.correct(rho_);
+        constraints.constrain(rho_);
         alphaRho_.ref() = (*this)()*rho_;
     }
     rho_.correctBoundaryConditions();
@@ -221,9 +220,9 @@ void Foam::fluidPhaseModel::decode()
     alphaRho.max(1e-10);
 
     U_.ref() = alphaRhoU_()/(alphaRho());
-    if (options.optionList::appliesToField(U_.name()))
+    if (constraints.constrainsField(U_.name()))
     {
-        options.correct(U_);
+        constraints.constrain(U_);
         alphaRhoU_.ref() = alphaRho_()*U_();
     }
     U_.correctBoundaryConditions();
@@ -233,9 +232,9 @@ void Foam::fluidPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-    if (options.optionList::appliesToField(e_.name()))
+    if (constraints.constrainsField(e_.name()))
     {
-        options.correct(e_);
+        constraints.constrain(e_);
         alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
     }
 
@@ -265,9 +264,9 @@ void Foam::fluidPhaseModel::decode()
         );
     thermo_->correct();
 
-    if (options.optionList::appliesToField(p_.name()))
+    if (constraints.constrainsField(p_.name()))
     {
-        options.correct(p_);
+        constraints.constrain(p_);
         p_.correctBoundaryConditions();
     }
 }

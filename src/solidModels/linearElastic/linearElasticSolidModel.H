@@ -42,7 +42,6 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"
-#include "solidThermoModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

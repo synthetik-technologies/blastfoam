@@ -31,7 +31,7 @@ Description
 #include "laminarModel.H"
 #include "RASModel.H"
 #include "LESModel.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -39,7 +39,7 @@ namespace Foam
 {
     namespace blast
     {
-        typedef CompressibleMomentumTransportModel<fluidThermoModel>
+        typedef CompressibleMomentumTransportModel<fluidBlastThermo>
             momentumTransportModel;
 
 

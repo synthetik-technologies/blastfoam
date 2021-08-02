@@ -1,6 +1,6 @@
 // Initialise solid field pointer lists
 PtrList<coordinateSystem> coordinates(solidRegions.size());
-PtrList<solidThermoModel> thermos(solidRegions.size());
+PtrList<solidBlastThermo> thermos(solidRegions.size());
 PtrList<radiationModel> radiations(solidRegions.size());
 // PtrList<fv::options> solidHeatSources(solidRegions.size());
 PtrList<volScalarField> betavSolid(solidRegions.size());
@@ -29,7 +29,7 @@ forAll(solidRegions, i)
     thermos.set
     (
         i,
-        solidThermoModel::New
+        solidBlastThermo::New
         (
             word::null,
             solidRegions[i],

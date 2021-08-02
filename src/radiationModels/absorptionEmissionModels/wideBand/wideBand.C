@@ -25,7 +25,7 @@ License
 
 #include "wideBand.H"
 #include "addToRunTimeSelectionTable.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "unitConversion.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

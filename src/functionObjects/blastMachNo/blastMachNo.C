@@ -26,7 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastMachNo.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -78,12 +78,12 @@ bool Foam::functionObjects::blastMachNo::execute()
     if
     (
         foundObject<volVectorField>(UName_)
-     && foundObject<fluidThermoModel>(systemName_)
+     && foundObject<fluidBlastThermo>(systemName_)
     )
     {
         tmp<volScalarField> speedOfSound
         (
-            lookupObject<fluidThermoModel>(systemName_).speedOfSound()
+            lookupObject<fluidBlastThermo>(systemName_).speedOfSound()
         );
         speedOfSound.ref().max(small);
 

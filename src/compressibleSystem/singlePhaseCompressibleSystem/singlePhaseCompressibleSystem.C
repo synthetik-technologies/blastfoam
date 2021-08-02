@@ -49,7 +49,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
     phaseCompressibleSystem(mesh),
     thermo_
     (
-        fluidThermoModel::New
+        fluidBlastThermo::New
         (
             word::null,
             p_,

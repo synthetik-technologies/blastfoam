@@ -25,8 +25,8 @@ License
 
 #include "blastTemperatureCoupledBase.H"
 #include "volFields.H"
-#include "fluidThermoModel.H"
-#include "solidThermoModel.H"
+#include "fluidBlastThermo.H"
+#include "solidBlastThermo.H"
 #include "thermophysicalTransportModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -80,10 +80,10 @@ Foam::tmp<Foam::scalarField> Foam::blast::temperatureCoupledBase::kappa
 
     const word thermoName
     (
-        IOobject::groupName(basicThermoModel::typeName, phase)
+        IOobject::groupName(basicBlastThermo::typeName, phase)
     );
 
-    if (mesh.foundObject<fluidThermoModel>(thermoName))
+    if (mesh.foundObject<fluidBlastThermo>(thermoName))
     {
         static word ttmName
         (
@@ -103,16 +103,16 @@ Foam::tmp<Foam::scalarField> Foam::blast::temperatureCoupledBase::kappa
         }
         else
         {
-            const fluidThermoModel& thermo =
-                mesh.lookupObject<fluidThermoModel>(thermoName);
+            const fluidBlastThermo& thermo =
+                mesh.lookupObject<fluidBlastThermo>(thermoName);
 
             return thermo.kappa(patchi);
         }
     }
-    else if (mesh.foundObject<solidThermoModel>(thermoName))
+    else if (mesh.foundObject<solidBlastThermo>(thermoName))
     {
-        const solidThermoModel& thermo =
-            mesh.lookupObject<solidThermoModel>(thermoName);
+        const solidBlastThermo& thermo =
+            mesh.lookupObject<solidBlastThermo>(thermoName);
 
         if (alphaAniName_ != word::null)
         {

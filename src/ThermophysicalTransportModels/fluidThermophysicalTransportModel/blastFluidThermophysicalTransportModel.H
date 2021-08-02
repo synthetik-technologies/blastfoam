@@ -54,7 +54,7 @@ namespace Foam
     typedef ThermophysicalTransportModel
     <
         blast::momentumTransportModel,
-        fluidThermoModel
+        fluidBlastThermo
     > blastFluidThermophysicalTransportModel;
 
     typedef laminarThermophysicalTransportModel

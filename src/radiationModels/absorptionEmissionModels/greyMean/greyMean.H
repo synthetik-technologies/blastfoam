@@ -91,7 +91,7 @@ SourceFiles
 
 #include "interpolationLookUpTable.H"
 #include "absorptionEmissionModel.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "absorptionCoeffs.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -125,7 +125,7 @@ protected:
         List<absorptionCoeffs> coeffs_;
 
         //- SLG thermo package
-        UPtrList<fluidThermoModel> eos_;
+        UPtrList<fluidBlastThermo> eos_;
 
         //- Pointer list of species in the registry involved in the absorption
         UPtrList<volScalarField> Yj_;

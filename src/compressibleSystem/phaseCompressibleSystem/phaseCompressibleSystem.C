@@ -157,8 +157,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
         ),
         mesh,
         dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidThermoModel::eBoundaryTypes(T_),
-        fluidThermoModel::eBoundaryBaseTypes(T_)
+        fluidBlastThermo::eBoundaryTypes(T_),
+        fluidBlastThermo::eBoundaryBaseTypes(T_)
     ),
     rhoU_
     (

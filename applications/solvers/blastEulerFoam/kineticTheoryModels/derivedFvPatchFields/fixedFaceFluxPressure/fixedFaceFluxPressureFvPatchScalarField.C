@@ -74,17 +74,6 @@ Foam::fixedFaceFluxPressureFvPatchScalarField::fixedFaceFluxPressureFvPatchScala
 
 Foam::fixedFaceFluxPressureFvPatchScalarField::fixedFaceFluxPressureFvPatchScalarField
 (
-    const fixedFaceFluxPressureFvPatchScalarField& wbppsf
-)
-:
-    zeroGradientFvPatchScalarField(wbppsf),
-    refFace_(wbppsf.refFace_),
-    refP_(wbppsf.refP_)
-{}
-
-
-Foam::fixedFaceFluxPressureFvPatchScalarField::fixedFaceFluxPressureFvPatchScalarField
-(
     const fixedFaceFluxPressureFvPatchScalarField& wbppsf,
     const DimensionedField<scalar, volMesh>& iF
 )

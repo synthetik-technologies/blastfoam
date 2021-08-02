@@ -123,12 +123,12 @@ void Foam::detonatingSolidThermo<Thermo>::postUpdate()
 template<class Thermo>
 void Foam::detonatingSolidThermo<Thermo>::updateRho()
 {
-    volScalarField& rhoRef(solidThermoModel::rho_);
+    volScalarField& rhoRef(solidBlastThermo::rho_);
     volScalarField rhoNew
     (
         Thermo::blendedVolScalarFieldProperty
         (
-            IOobject::groupName("rhoNew", basicThermoModel::name_),
+            IOobject::groupName("rhoNew", basicBlastThermo::name_),
             dimDensity,
             &Thermo::thermoType1::rho0,
             &Thermo::thermoType2::rho0
@@ -169,11 +169,11 @@ void Foam::detonatingSolidThermo<Thermo>::correct()
     )/this->Cv();
 
     // Update density
-    volScalarField& rhoRef(solidThermoModel::rho_);
+    volScalarField& rhoRef(solidBlastThermo::rho_);
     rhoRef =
         Thermo::blendedVolScalarFieldProperty
         (
-            IOobject::groupName("rhos", basicThermoModel::name_),
+            IOobject::groupName("rhos", basicBlastThermo::name_),
             dimDensity,
             &Thermo::thermoType1::rho0,
             &Thermo::thermoType2::rho0
@@ -221,7 +221,7 @@ Foam::detonatingSolidThermo<Thermo>::Kappa() const
 
     volVectorField& Kappa = tKappa.ref();
     vectorField& KappaCells = Kappa.primitiveFieldRef();
-    const scalarField& rhoCells = solidThermoModel::rho_;
+    const scalarField& rhoCells = solidBlastThermo::rho_;
     const scalarField& eCells = this->e_;
     const scalarField& TCells = this->T_;
 
@@ -271,7 +271,7 @@ Foam::detonatingSolidThermo<Thermo>::Kappa() const
     forAll(KappaBf, patchi)
     {
         vectorField& Kappap = KappaBf[patchi];
-        const scalarField& pRho = solidThermoModel::rho_.boundaryField()[patchi];
+        const scalarField& pRho = solidBlastThermo::rho_.boundaryField()[patchi];
         const scalarField& pe = this->e_.boundaryField()[patchi];
         const scalarField& pT = this->T_.boundaryField()[patchi];
         tmp<scalarField> xp(this->x(patchi));
@@ -326,7 +326,7 @@ template<class Thermo>
 Foam::tmp<Foam::vectorField>
 Foam::detonatingSolidThermo<Thermo>::Kappa(const label patchi) const
 {
-    const scalarField& pRho = solidThermoModel::rho_.boundaryField()[patchi];
+    const scalarField& pRho = solidBlastThermo::rho_.boundaryField()[patchi];
     const scalarField& pe = this->e_.boundaryField()[patchi];
     const scalarField& pT = this->T_.boundaryField()[patchi];
     tmp<vectorField> tKappa(new vectorField(pe.size()));

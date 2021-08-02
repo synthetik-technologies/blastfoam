@@ -42,8 +42,9 @@ SourceFiles
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"
-#include "solidThermoModel.H"
-#include "fvOptions.H"
+#include "solidBlastThermo.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -71,7 +72,7 @@ protected:
         IOdictionary thermophysicalProperties_;
 
         //- Thermodynamic model
-        autoPtr<solidThermoModel> thermoPtr_;
+        autoPtr<solidBlastThermo> thermoPtr_;
 
         //- Total displacement field
         volVectorField D_;
@@ -91,8 +92,12 @@ protected:
         //- Maximum number of momentum correctors
         const int nCorr_;
 
-        //- fvOptions
-        fv::options& fvOptions_;
+        //- fvModels
+        fvModels& fvModels_;
+
+        //- fvConstraints
+        fvConstraints& fvConstraints_;
+
 
         //- This function will check that the D field was read from disk
         virtual void DisRequired();
@@ -175,7 +180,7 @@ public:
             }
 
             //- Return const-reference to the density
-            const solidThermoModel& thermo() const;
+            const solidBlastThermo& thermo() const;
 
             //- Return non-const reference to D
             virtual volVectorField& D()

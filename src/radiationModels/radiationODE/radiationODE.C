@@ -27,7 +27,6 @@ License
 
 #include "radiationODE.H"
 #include "radiationModel.H"
-#include "basicThermoModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -39,7 +38,7 @@ Foam::radiationODE::radiationODE
 :
     ODESystem(),
     rad_(rad),
-    thermo_(mesh.lookupObject<basicThermoModel>("basicThermo")),
+    thermo_(mesh.lookupObject<basicBlastThermo>("basicThermo")),
     solve_(rad_.lookupOrDefault("solveODE", false)),
     dict_
     (

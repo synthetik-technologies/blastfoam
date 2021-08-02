@@ -22,17 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::viscosityModel
+    Foam::kineticTheoryModels::viscosityModel
 
 Description
 
 SourceFiles
-    viscosityModel.C
+    kineticTheoryViscosityModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef viscosityModel_H
-#define viscosityModel_H
+#ifndef kineticTheoryViscosityModel_H
+#define kineticTheoryViscosityModel_H
 
 #include "dictionary.H"
 #include "volFields.H"

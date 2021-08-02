@@ -108,16 +108,8 @@ public:
         JohnsonJacksonParticleSlipFvPatchVectorField
         (
             const JohnsonJacksonParticleSlipFvPatchVectorField&
-        );
+        ) = delete;
 
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new JohnsonJacksonParticleSlipFvPatchVectorField(*this)
-            );
-        }
 
         //- Copy constructor setting internal field reference
         JohnsonJacksonParticleSlipFvPatchVectorField

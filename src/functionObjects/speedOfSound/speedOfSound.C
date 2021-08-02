@@ -26,7 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "speedOfSound.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -132,14 +132,14 @@ bool Foam::functionObjects::speedOfSound::execute()
 {
     if
     (
-        foundObject<fluidThermoModel>
+        foundObject<fluidBlastThermo>
         (
             IOobject::groupName("basicThermo", phaseName_)
         )
     )
     {
         tmp<volScalarField> c =
-            lookupObject<fluidThermoModel>
+            lookupObject<fluidBlastThermo>
             (
                 IOobject::groupName
                 (

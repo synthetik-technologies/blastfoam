@@ -53,7 +53,7 @@ Description
 
 #include "fvCFD.H"
 #include "psiuCompressibleSystem.H"
-#include "fluidThermoMomentumTransportModel.H"
+#include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "fluxScheme.H"
 #include "timeIntegrator.H"

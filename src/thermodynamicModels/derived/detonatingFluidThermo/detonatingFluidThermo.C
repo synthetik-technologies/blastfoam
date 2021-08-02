@@ -56,7 +56,7 @@ Foam::detonatingFluidThermo<Thermo>::detonatingFluidThermo
         masterName
     )
 {
-    this->fluidThermoModel::mu_ =
+    this->fluidBlastThermo::mu_ =
         max
         (
             Thermo::volScalarFieldProperty
@@ -159,7 +159,7 @@ void Foam::detonatingFluidThermo<Thermo>::updateRho()
     (
         Thermo::blendedVolScalarFieldProperty
         (
-            IOobject::groupName("rhoNew", basicThermoModel::name_),
+            IOobject::groupName("rhoNew", basicBlastThermo::name_),
             dimDensity,
             &Thermo::thermoType1::initializeRho,
             &Thermo::thermoType2::initializeRho,
@@ -188,13 +188,13 @@ void Foam::detonatingFluidThermo<Thermo>::correct()
     {
         this->T_ = this->calcT();
         this->T_.correctBoundaryConditions();
-        this->p_ = fluidThermoModel::calcP();
+        this->p_ = fluidBlastThermo::calcP();
         this->p_.correctBoundaryConditions();
     }
 
     if (this->viscous_)
     {
-        this->fluidThermoModel::mu_ = Thermo::blendedVolScalarFieldProperty
+        this->fluidBlastThermo::mu_ = Thermo::blendedVolScalarFieldProperty
             (
                 "mu",
                 dimDynamicViscosity,
@@ -205,7 +205,7 @@ void Foam::detonatingFluidThermo<Thermo>::correct()
                 this->T_
             );
 
-        this->fluidThermoModel::alpha_ = Thermo::blendedVolScalarFieldProperty
+        this->fluidBlastThermo::alpha_ = Thermo::blendedVolScalarFieldProperty
             (
                 "alpha",
                 dimensionSet(1, -1, -1, 0, 0),

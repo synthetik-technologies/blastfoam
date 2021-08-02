@@ -148,9 +148,9 @@ public:
 #define addDetonatingSolidThermo(Transport, Thermo, uEoS, rEoS)             \
     typedef detonatingSolidThermo                                           \
         <                                                                   \
-            blendedThermoModel                                              \
+            blendedBlastThermo                                              \
             <                                                               \
-                solidThermoModel,                                           \
+                solidBlastThermo,                                           \
                 Transport##Thermo##uEoS##blastSpecie,                       \
                 Transport##Thermo##rEoS##rBlastSpecie                       \
             >                                                               \
@@ -169,7 +169,7 @@ public:
     );                                                                      \
     addToRunTimeSelectionTable                                              \
     (                                                                       \
-        solidThermoModel,                                                   \
+        solidBlastThermo,                                                   \
         detonating##Transport##Thermo##uEoS##rEoS,                          \
         detonatingSolid                                                     \
     );

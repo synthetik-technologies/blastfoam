@@ -7,8 +7,8 @@ packingLimitModel/constant/constantPackingLimit.C
 packingLimitModel/FedorsLandel/FedorsLandelPackingLimit.C
 packingLimitModel/YuStandish/YuStandishPackingLimit.C
 
-viscosityModel/viscosityModel/viscosityModel.C
-viscosityModel/viscosityModel/newViscosityModel.C
+viscosityModel/viscosityModel/kineticTheoryViscosityModel.C
+viscosityModel/viscosityModel/newKineticTheoryViscosityModel.C
 viscosityModel/Gidaspow/GidaspowViscosity.C
 viscosityModel/Syamlal/SyamlalViscosity.C
 viscosityModel/HrenyaSinclair/HrenyaSinclairViscosity.C

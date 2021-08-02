@@ -33,7 +33,7 @@ makeBaseMomentumTransportModel
     volScalarField,
     compressibleMomentumTransportModel,
     CompressibleMomentumTransportModel,
-    fluidThermoModel
+    fluidBlastThermo
 );
 
 // -------------------------------------------------------------------------- //

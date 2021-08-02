@@ -44,7 +44,8 @@ SourceFiles
 #include "integrationSystem.H"
 #include "timeIntegrator.H"
 #include "HashPtrTable.H"
-#include "fvOptions.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -291,8 +292,11 @@ protected:
             //- Mass transfer rates
             mDotTable mDots_;
 
-        //- fvOptions
-        fv::options* fvOptionsPtr_;
+        //- fvModels
+        const fvModels& fvModels_;
+
+        //- fvConstraints
+        const fvConstraints& fvConstraints_;
 
 
     // Private member functions
@@ -541,10 +545,10 @@ public:
             inline const phasePairTable& phasePairs() const;
 
             //- Access fvOptions
-            inline const fv::options& fvOptions() const;
+            inline const fvModels& models() const;
 
             //- Return fvOptions
-            inline fv::options& fvOptions();
+            inline const fvConstraints& constraints() const;
 };
 
 

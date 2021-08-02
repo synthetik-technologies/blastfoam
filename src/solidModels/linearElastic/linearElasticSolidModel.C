@@ -186,10 +186,12 @@ bool Foam::solidModels::linearElastic::evolve()
     scalar initialResidual = 0;
 
     tmp<volScalarField> threeKalphaTmp;
+    const volScalarField& rho(thermoPtr_->rho());
     do
     {
         if (thermalStress_)
         {
+            volScalarField Cp(thermoPtr_->Cp());
             volScalarField& alpha = alphaPtr_();
             if (planeStress_)
             {
@@ -199,29 +201,31 @@ bool Foam::solidModels::linearElastic::evolve()
             {
                 threeKalphaTmp = E_/(1.0 - 2.0*nu_)*alpha;
             }
-            volScalarField DT("DT", thermoPtr_->kappa()/thermoPtr_->Cp());
 
             volScalarField& T = thermoPtr_->T();
             fvScalarMatrix TEqn
             (
-                fvm::ddt(T) == fvm::laplacian(DT, T) + fvOptions_(T)
+                fvm::ddt(rho, Cp, T)
+             ==
+                fvm::laplacian(thermoPtr_->kappa()/thermoPtr_->Cv(), T)
+              + fvModels_.source(rho*Cp, T)
             );
 
-            fvOptions_.constrain(TEqn);
+            fvConstraints_.constrain(TEqn);
 
             TEqn.solve();
 
-            fvOptions_.correct(T);
+            fvConstraints_.constrain(T);
         }
 
         {
             fvVectorMatrix DEqn
             (
-                fvm::d2dt2(D_)
+                fvm::d2dt2(rho, D_)
             ==
                 fvm::laplacian(2.0*mu_ + lambda_, D_, "laplacian(DD,D)")
               + divSigmaExp_
-              + fvOptions_.d2dt2(D_)
+              + fvModels_.d2dt2(D_)
             );
 
             if (thermalStress_)
@@ -229,7 +233,7 @@ bool Foam::solidModels::linearElastic::evolve()
                 DEqn += fvc::grad(threeKalphaTmp()*thermoPtr_->T());
             }
 
-            fvOptions_.constrain(DEqn);
+            fvConstraints_.constrain(DEqn);
 
             initialResidual = DEqn.solve().max().initialResidual();
 
@@ -266,11 +270,11 @@ bool Foam::solidModels::linearElastic::evolve()
     Info<< "max(T): " << max(thermoPtr_->T()).value()
         << ", min(T): " << min(thermoPtr_->T()).value() << endl;
 
-    sigma_ = thermoPtr_->rho()*sigmaD_;
+    sigma_ = sigmaD_;
 
     if (thermalStress_)
     {
-        sigma_ = sigma_ - I*(thermoPtr_->rho()*threeKalphaTmp*thermoPtr_->T());
+        sigma_ = sigma_ - I*(threeKalphaTmp*thermoPtr_->T());
     }
 
     sigmaEq_ = sqrt((3.0/2.0)*magSqr(dev(sigma_)));
