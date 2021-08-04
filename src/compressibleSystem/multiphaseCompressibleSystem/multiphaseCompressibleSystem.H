@@ -57,7 +57,7 @@ protected:
     //- Primitative variables
 
         //- Equation of states
-        multiphaseFluidBlastThermo thermo_;
+//         multiphaseFluidBlastThermo& thermo_;
 
         //- Volume fractions
         PtrList<volScalarField>& alphas_;
@@ -113,27 +113,6 @@ public:
 
         //- Solve a sub-step
         virtual void solve();
-
-
-    // Member Access Functions
-
-        //- Const access to thermo model
-        virtual const fluidBlastThermo& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Non-const access to thermo model
-        virtual fluidBlastThermo& thermo()
-        {
-            return thermo_;
-        }
-
-        //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const
-        {
-            return thermo_.speedOfSound();
-        }
 };
 
 

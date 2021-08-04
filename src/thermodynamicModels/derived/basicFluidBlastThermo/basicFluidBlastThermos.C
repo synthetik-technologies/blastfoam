@@ -26,180 +26,204 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "phaseFluidBlastThermo.H"
 #include "basicFluidBlastThermo.H"
 #include "eBlastThermo.H"
-#include "fluidThermoModelTypes.H"
+#include "forBlastGases.H"
+#include "makeBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 namespace Foam
 {
+//     typedefThermo(constTransport, eConst, perfectGas, blastSpecie);
+//     typedef
+//         basicFluidBlastThermo
+//         <
+//             eBlastThermo
+//             <
+//                 phaseFluidBlastThermo, constTransporteConstperfectGasblastSpecie
+//             >
+//         > basicFluidBlastThermoconstTransporteConstperfectGasblastSpecie;
+    forGases
+    (
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+// BaseThermo = phaseFluidBlastThermo, etc
+// DerivThermo = basicFluidBlastThermo, etc
+// CThermo = eThermo or blendedThermo
+// ThermoPhys = Transport##Thermo##Eos##Specie
 // Solids
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        CochranChan
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        Murnaghan
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        BirchMurnaghan2
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        BirchMurnaghan3
-    );
-
-// Fluids
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        idealGas
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        perfectGas
-    );
-    addFluidThermos
-    (
-        sutherlandTransport,
-        perfectGas
-    );
-    addFluidThermo
-    (
-        sutherlandTransport,
-        janaf,
-        perfectGas
-    );
-    addFluidThermo
-    (
-        constTransport,
-        janaf,
-        perfectGas
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        stiffenedGas
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        Tait
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        linearTillotson
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        Tillotson
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        AbelNobel
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        BKW
-    );
-
-    addFluidThermos
-    (
-        constTransport,
-        BWR
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        vanderWaals
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        JWL
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        JWLC
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        LSZK
-    );
-
-    addFluidThermo
-    (
-        constTransport,
-        eConst,
-        DoanNickel
-    );
-    addFluidThermo
-    (
-        constTransport,
-        tabulatedThermo,
-        DoanNickel
-    );
-
-
-    // Tabulated equation of state and thermo model
-    typedef basicFluidBlastThermo
-        <
-            eBlastThermo
-            <
-                fluidBlastThermo,
-                constTransporttabulatedMGEquationOfStatetabulatedblastSpecie
-            >
-        >
-        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated;
-
-    defineTemplateTypeNameAndDebugWithName
-    (
-        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
-        (constTransporttabulatedMGEquationOfStatetabulatedblastSpecie::typeName()).c_str(),
-        0
-    );
-    addToRunTimeSelectionTable
-    (
-        fluidBlastThermo,
-        basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
-        basic
-    );
+//     addFluidThermo
+//     (
+//         phaseFluidBlastThermo,
+//         basicFluidBlastThermo,
+//         constTransport,
+//         eConst,
+//         CochranChan
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         Murnaghan
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         BirchMurnaghan2
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         BirchMurnaghan3
+//     );
+//
+// // Fluids
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         idealGas
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         perfectGas
+//     );
+//     addFluidThermos
+//     (
+//         sutherlandTransport,
+//         perfectGas
+//     );
+//     addFluidThermo
+//     (
+//         sutherlandTransport,
+//         janaf,
+//         perfectGas
+//     );
+//     addFluidThermo
+//     (
+//         constTransport,
+//         janaf,
+//         perfectGas
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         stiffenedGas
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         Tait
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         linearTillotson
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         Tillotson
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         AbelNobel
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         BKW
+//     );
+//
+//     addFluidThermos
+//     (
+//         constTransport,
+//         BWR
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         vanderWaals
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         JWL
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         JWLC
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         LSZK
+//     );
+//
+//     addFluidThermo
+//     (
+//         constTransport,
+//         eConst,
+//         DoanNickel
+//     );
+//     addFluidThermo
+//     (
+//         constTransport,
+//         tabulatedThermo,
+//         DoanNickel
+//     );
+//
+//
+//     // Tabulated equation of state and thermo model
+//     typedef basicFluidBlastThermo
+//         <
+//             eBlastThermo
+//             <
+//                 fluidBlastThermo,
+//                 constTransporttabulatedMGEquationOfStatetabulatedblastSpecie
+//             >
+//         >
+//         basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated;
+//
+//     defineTemplateTypeNameAndDebugWithName
+//     (
+//         basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
+//         (constTransporttabulatedMGEquationOfStatetabulatedblastSpecie::typeName()).c_str(),
+//         0
+//     );
+//     addToRunTimeSelectionTable
+//     (
+//         fluidBlastThermo,
+//         basicFluidThermoconstTransporttabulatedMGEquationOfStatetabulated,
+//         basic
+//     );
 }
 // ************************************************************************* //

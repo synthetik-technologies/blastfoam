@@ -173,7 +173,7 @@ Foam::radiationModels::absorptionEmissionModels::greyMean::aCont
             scalar Xk;
             if (vf)
             {
-                Xk = Yj_[s][celli]*eos_[s].rho()[celli]/invWt()[celli];
+                Xk = Yj_[s][celli]*eos_[s].rhoi(celli)/invWt()[celli];
             }
             else
             {

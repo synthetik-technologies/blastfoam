@@ -43,7 +43,7 @@ void Foam::phaseCompressibleSystem::setModels()
     {
         turbulence_ =
         (
-            blast::momentumTransportModel::New
+            compressible::momentumTransportModel::New
             (
                 rho_,
                 U_,
@@ -55,7 +55,7 @@ void Foam::phaseCompressibleSystem::setModels()
 
         thermophysicalTransport_ =
         (
-            blastFluidThermophysicalTransportModel::New
+            fluidThermophysicalTransportModel::New
             (
                 turbulence_,
                 this->thermo()
@@ -82,7 +82,11 @@ void Foam::phaseCompressibleSystem::setModels()
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
+Foam::phaseCompressibleSystem::phaseCompressibleSystem
+(
+    const label nPhases,
+    const fvMesh& mesh
+)
 :
     IOdictionary
     (
@@ -96,19 +100,11 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
         )
     ),
     integrationSystem("phaseCompressibleSystem", mesh),
-    rho_
+    thermoPtr_
     (
-        IOobject
-        (
-            "rho",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("rho", dimDensity, 0.0)
+        fluidBlastThermo::New(nPhases, mesh, *this)
     ),
+    rho_(thermoPtr_->rho()),
     U_
     (
         IOobject
@@ -121,45 +117,9 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
         ),
         mesh
     ),
-    p_
-    (
-        IOobject
-        (
-            "p",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
-    T_
-    (
-        IOobject
-        (
-            "T",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
-    e_
-    (
-        IOobject
-        (
-            "e",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidBlastThermo::eBoundaryTypes(T_),
-        fluidBlastThermo::eBoundaryBaseTypes(T_)
-    ),
+    p_(thermoPtr_->p()),
+    T_(thermoPtr_->T()),
+    e_(thermoPtr_->he()),
     rhoU_
     (
         IOobject
@@ -235,6 +195,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem(const fvMesh& mesh)
     TLow_("TLow", dimTemperature, 0.0),
     solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
+    thermoPtr_->validate("phaseCompressibleSystem", "e");
+
     scalar emptyDirV
     (
         Foam::max(mag(U_ & (vector::one - solutionDs_))).value()
@@ -426,14 +388,14 @@ void Foam::phaseCompressibleSystem::addUSource(const volVectorField::Internal& U
 }
 
 
-const Foam::blast::momentumTransportModel&
+const Foam::momentumTransportModel&
 Foam::phaseCompressibleSystem::turbulence() const
 {
     return turbulence_();
 }
 
 
-Foam::blast::momentumTransportModel&
+Foam::momentumTransportModel&
 Foam::phaseCompressibleSystem::turbulence()
 {
     return turbulence_();
@@ -444,12 +406,12 @@ Foam::scalar Foam::phaseCompressibleSystem::CoNum() const
 {
     surfaceScalarField amaxSf
     (
-        fvc::interpolate(speedOfSound())*mesh_.magSf()
+        fvc::interpolate(speedOfSound())*mesh().magSf()
     );
     // Remove wave speed from wedge boundaries
     forAll(amaxSf.boundaryField(), patchi)
     {
-        if (isA<wedgeFvPatch>(mesh_.boundary()[patchi]))
+        if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
         {
             amaxSf.boundaryFieldRef() = Zero;
         }
@@ -461,7 +423,7 @@ Foam::scalar Foam::phaseCompressibleSystem::CoNum() const
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-    return 0.5*gMax(sumAmaxSf/mesh_.V().field())*mesh_.time().deltaTValue();
+    return 0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
 }
 
 

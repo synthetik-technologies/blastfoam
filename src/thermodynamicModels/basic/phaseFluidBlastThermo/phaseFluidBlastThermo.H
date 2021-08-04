@@ -42,11 +42,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicThermoModel.H"
-#include "volFields.H"
-#include "surfaceFields.H"
-#include "dictionary.H"
-#include "wordIOList.H"
+#include "basicBlastThermo.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -58,17 +54,14 @@ namespace Foam
 
 class phaseFluidBlastThermo
 :
-    public basicThermoModel
+    public basicBlastThermo
 {
 protected:
 
     // Protected data
 
         //- Saved viscosity field
-        volScalarField mu_;
-
-        //- Is there viscosity
-        bool viscous_;
+        volScalarField& mu_;
 
         //- Initialize internal energy
         void initialize();
@@ -76,8 +69,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("fluidThermo");
-
+    TypeName("fluidBlastThermo");
 
     // Declare runtime construction
 
@@ -85,73 +77,18 @@ public:
         (
             autoPtr,
             phaseFluidBlastThermo,
-            basic,
+            dictionary,
             (
-                const word& name,
-                volScalarField& p,
+                const word& phaseName,
                 volScalarField& rho,
                 volScalarField& e,
                 volScalarField& T,
                 const dictionary& dict,
-                const bool master,
                 const word& masterName
             ),
-            (name, p, rho, e, T, dict, master, masterName)
+            (phaseName, rho, e, T, dict, masterName)
         );
 
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            phaseFluidBlastThermo,
-            detonating,
-            (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
-                const dictionary& dict,
-                const bool master,
-                const word& masterName
-            ),
-            (name, p, rho, e, T, dict, master, masterName)
-        );
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            phaseFluidBlastThermo,
-            multicomponent,
-            (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
-                const dictionary& dict,
-                const bool master,
-                const word& masterName
-            ),
-            (name, p, rho, e, T, dict, master, masterName)
-        );
-
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            phaseFluidBlastThermo,
-            reacting,
-            (
-                const word& name,
-                volScalarField& p,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
-                const dictionary& dict,
-                const bool master,
-                const word& masterName
-            ),
-            (name, p, rho, e, T, dict, master, masterName)
-        );
 
     // Constructor
 
@@ -159,149 +96,109 @@ public:
         phaseFluidBlastThermo
         (
             const word& phaseName,
-            volScalarField& p,
             volScalarField& rho,
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        //- Construct and add fields to db
-        phaseFluidBlastThermo
-        (
-            const word& phaseName,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master = true,
             const word& masterName = word::null
         );
 
 
     // Selectors
 
-        static autoPtr<phaseFluidBlastThermo> NewBasic
-        (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        static autoPtr<phaseFluidBlastThermo> NewDetonating
-        (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        static autoPtr<phaseFluidBlastThermo> NewMulticomponent
-        (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        static autoPtr<phaseFluidBlastThermo> NewReacting
-        (
-            const word& name,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
         static autoPtr<phaseFluidBlastThermo> New
         (
             const word& name,
-            volScalarField& p,
             volScalarField& rho,
             volScalarField& e,
             volScalarField& T,
             const dictionary& dict,
-            const bool master = true,
             const word& masterName = word::null
         );
 
     //- Destructor
     virtual ~phaseFluidBlastThermo();
 
-    // Access functions
-
-        //- Return energy source
-        virtual tmp<volScalarField> ESource() const = 0;
-
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const = 0;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
-
-        //- Non-const access to thermo model phasei
-        virtual phaseFluidBlastThermo& thermo(const label)
-        {
-            return *this;
-        }
-
-        //- Const access to thermo model phasei
-        virtual const phaseFluidBlastThermo& thermo(const label) const
-        {
-            return *this;
-        }
-
 
     //- Thermodynamic and transport functions
 
-        //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> calcP() const;
+        // Access to derived thermodynamic variables
 
-        //- Calculate thermodynamic pressure for a patch
-        virtual tmp<scalarField> calcP(const label patchi) const = 0;
+            //- Return the speed of sound
+            virtual tmp<volScalarField> pRhoT() const = 0;
 
-        //- Calculate thermodynamic pressure
-        virtual scalar calcPi(const label celli) const = 0;
+            //- Return the speed of sound
+            virtual tmp<volScalarField> speedOfSound() const = 0;
 
-        //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const = 0;
+            //- Return the speed of sound for patchi
+            virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
 
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
 
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
+        // Fields derived from thermodynamic state variables
 
-        //- Kinematic viscosity of mixture [m^2/s]
-        virtual tmp<volScalarField> nu() const;
+            //- Gamma = dpde []
+            virtual tmp<volScalarField> Gamma() const = 0;
 
-        //- Kinematic viscosity of mixture for patch [m^2/s]
-        virtual tmp<scalarField> nu(const label patchi) const;
+            //- Gamma = dpde for patch []
+            virtual tmp<scalarField> Gamma(const label patchi) const = 0;
 
-        //- Kinematic viscosity of mixture for cell [m^2/s]
-        virtual scalar nui(const label celli) const;
+            //- Gamma = dpde for cell []
+            virtual scalar Gammai(const label celli) const = 0;
+
+        // Access to transport state variables
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> mu() const = 0;
+
+            //- Dynamic viscosity of mixture for patch [kg/m/s]
+            virtual tmp<scalarField> mu(const label patchi) const = 0;
+
+            //- Kinematic viscosity of mixture [m^2/s]
+            virtual tmp<volScalarField> nu() const;
+
+            //- Kinematic viscosity of mixture for patch [m^2/s]
+            virtual tmp<scalarField> nu(const label patchi) const;
+
+            //- Kinematic viscosity of mixture for cell [m^2/s]
+            virtual scalar nui(const label celli) const;
+
+
+        // Fields derived from transport state variables
+
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture [W/m/K]
+            virtual tmp<volScalarField> kappaEff
+            (
+                const volScalarField&
+            ) const = 0;
+
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture for patch [W/m/K]
+            virtual tmp<scalarField> kappaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const = 0;
+
+            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
+            virtual tmp<volScalarField> alphaEff
+            (
+                const volScalarField& alphat
+            ) const = 0;
+
+            //- Effective thermal turbulent diffusivity of mixture
+            //  for patch [kg/m/s]
+            virtual tmp<scalarField> alphaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const = 0;
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

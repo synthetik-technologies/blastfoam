@@ -33,10 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(phaseFluidBlastThermo, 0);
-    defineRunTimeSelectionTable(phaseFluidBlastThermo, basic);
-    defineRunTimeSelectionTable(phaseFluidBlastThermo, detonating);
-    defineRunTimeSelectionTable(phaseFluidBlastThermo, multicomponent);
-    defineRunTimeSelectionTable(phaseFluidBlastThermo, reacting);
+    defineRunTimeSelectionTable(phaseFluidBlastThermo, dictionary);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -44,70 +41,33 @@ namespace Foam
 Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
 (
     const word& phaseName,
-    volScalarField& p,
     volScalarField& rho,
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
-    basicThermoModel
+    basicBlastThermo
     (
         phaseName,
-        p,
         rho,
         e,
         T,
         dict,
-        master,
         masterName
     ),
     mu_
     (
-        IOobject
+        lookupOrConstruct
         (
+            rho.mesh(),
             IOobject::groupName("thermo:mu", phaseName),
-            p_.mesh().time().timeName(),
-            p_.mesh()
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimDynamicViscosity, 0.0)
-    ),
-    viscous_(true)
-{}
-
-
-Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
-(
-    const word& phaseName,
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    basicThermoModel
-    (
-        phaseName,
-        mesh,
-        dict,
-        master,
-        masterName
-    ),
-    mu_
-    (
-        IOobject
-        (
-            IOobject::groupName("thermo:mu", phaseName),
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar(dimDynamicViscosity, 0.0)
-    ),
-    viscous_(true)
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
+            dimDynamicViscosity
+        )
+    )
 {}
 
 
@@ -116,72 +76,31 @@ Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
 Foam::phaseFluidBlastThermo::~phaseFluidBlastThermo()
 {}
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::phaseFluidBlastThermo::initialize()
+// * * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
+(
+    const word& phaseName,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const word& masterName
+)
 {
-    if (!master_)
-    {
-        return;
-    }
-    if (max(e_).value() <= 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-    this->correct();
-
-    if (max(mu_).value() < small)
-    {
-        viscous_ = false;
-    }
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::phaseFluidBlastThermo::calcP() const
-{
-    tmp<volScalarField> pTmp
+    Info<<dictionaryConstructorTablePtr_->toc()<<endl;
+    return basicBlastThermo::New<phaseFluidBlastThermo>
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "P",
-                e_.mesh().time().timeName(),
-                e_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            e_.mesh(),
-            dimensionedScalar("0", dimPressure, 0.0)
-        )
+        phaseName,
+        rho,
+        e,
+        T,
+        dict,
+        masterName
     );
-    volScalarField& p = pTmp.ref();
-
-    forAll(p, celli)
-    {
-        p[celli] = this->calcPi(celli);
-    }
-    forAll(p.boundaryField(), patchi)
-    {
-        p.boundaryFieldRef()[patchi] = this->calcP(patchi);
-    }
-    p.max(small);
-    return pTmp;
 }
-
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField> Foam::phaseFluidBlastThermo::mu() const
 {

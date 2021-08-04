@@ -30,7 +30,6 @@ License
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 template<class Table>
 typename Table::iterator Foam::basicBlastThermo::lookupThermo
 (
@@ -105,9 +104,10 @@ typename Table::iterator Foam::basicBlastThermo::lookupThermo
     Table* tablePtr
 )
 {
+    word type(thermoDict.lookup<word>("type"));
+    word typeName(type + "<");
     word thermoTypeName;
-    Switch detonating(thermoDict.lookup<word>("type") == "detonating");
-    if (detonating)
+    if (type == "detonating")
     {
         const dictionary& uThermoTypeDict
         (
@@ -120,12 +120,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupThermo
 
         const word uthermoTypeName(readThermoType(uThermoTypeDict));
         const word rthermoTypeName(readThermoType(rThermoTypeDict));
-        thermoTypeName =
-            word("detonating<")
-          + uthermoTypeName
-          + ','
-          + rthermoTypeName
-          + '>';
+        thermoTypeName = uthermoTypeName + ',' + rthermoTypeName;
     }
     else
     {
@@ -133,12 +128,15 @@ typename Table::iterator Foam::basicBlastThermo::lookupThermo
         const dictionary& thermoTypeDict(thermoDict.subDict("thermoType"));
         thermoTypeName = readThermoType(thermoTypeDict);
     }
+
+    typeName += thermoTypeName + ">";
     Info<< "Selecting thermodynamics package " << thermoTypeName << endl;
 
-    const int nCmpt = 5;
+    const int nCmpt = 6;
     const char* cmptNames[nCmpt] =
     {
-        "detonating",
+        "state",
+        "type",
         "transport",
         "thermo",
         "equationOfState",
@@ -149,7 +147,40 @@ typename Table::iterator Foam::basicBlastThermo::lookupThermo
     (
         tablePtr,
         cmptNames,
-        thermoTypeName
+        typeName
+    );
+}
+
+
+template<class Thermo>
+Foam::autoPtr<Thermo> Foam::basicBlastThermo::New
+(
+    const word& phaseName,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const word& masterName
+)
+{
+    typename Thermo::dictionaryConstructorTable::iterator cstrIter =
+        lookupThermo<typename Thermo::dictionaryConstructorTable>
+        (
+            dict,
+            Thermo::dictionaryConstructorTablePtr_
+        );
+
+    return autoPtr<Thermo>
+    (
+        cstrIter()
+        (
+            phaseName,
+            rho,
+            e,
+            T,
+            dict,
+            masterName
+        )
     );
 }
 // ************************************************************************* //

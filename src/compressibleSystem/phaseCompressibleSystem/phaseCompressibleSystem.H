@@ -41,8 +41,9 @@ SourceFiles
 #include "fluxScheme.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "blastFluidThermoMomentumTransportModel.H"
-#include "blastFluidThermophysicalTransportModel.H"
+#include "fluidBlastThermo.H"
+#include "dynamicMomentumTransportModel.H"
+#include "fluidThermophysicalTransportModel.H"
 #include "radiationModel.H"
 #include "uniformDimensionedFields.H"
 
@@ -64,20 +65,23 @@ protected:
 
     //- Primitative variables
 
+        //- ThermodynamicModel
+        autoPtr<fluidBlastThermo> thermoPtr_;
+
         //- Total mass
-        volScalarField rho_;
+        volScalarField& rho_;
 
         //- Velocity
         volVectorField U_;
 
         //- Pressure
-        volScalarField p_;
+        volScalarField& p_;
 
         //- Temperature
-        volScalarField T_;
+        volScalarField& T_;
 
         //- Internal energy
-        volScalarField e_;
+        volScalarField& e_;
 
 
     //- Conserved variables
@@ -107,10 +111,10 @@ protected:
         autoPtr<fluxScheme> fluxScheme_;
 
         //- Turbulence model
-        autoPtr<blast::momentumTransportModel> turbulence_;
+        autoPtr<compressible::momentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
-        autoPtr<blastFluidThermophysicalTransportModel>
+        autoPtr<fluidThermophysicalTransportModel>
             thermophysicalTransport_;
 
         //- Radiation model
@@ -157,7 +161,7 @@ public:
         );
 
     // Constructor
-    phaseCompressibleSystem(const fvMesh& mesh);
+    phaseCompressibleSystem(const label, const fvMesh& mesh);
 
 
     // Selector
@@ -227,16 +231,22 @@ public:
     // Member Access Functions
 
         //- Return turbulence class
-        const blast::momentumTransportModel& turbulence() const;
+        const momentumTransportModel& turbulence() const;
 
         //- Return turbulence class
-        blast::momentumTransportModel& turbulence();
+        momentumTransportModel& turbulence();
 
         //- Const access to thermo model
-        virtual const fluidBlastThermo& thermo() const = 0;
+        virtual const fluidBlastThermo& thermo() const
+        {
+            return thermoPtr_();
+        }
 
         //- Non-const access to thermo model
-        virtual fluidBlastThermo& thermo() = 0;
+        virtual fluidBlastThermo& thermo()
+        {
+            return thermoPtr_();
+        }
 
         //- Const access to total mass
         const volScalarField& rho() const
@@ -293,7 +303,14 @@ public:
         }
 
         //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const = 0;
+        virtual tmp<volScalarField> speedOfSound() const
+        {
+            return volScalarField::New
+            (
+                "speedOfSound",
+                thermoPtr_->speedOfSound()
+            );
+        }
 
         //- Const access to momentum
         const volVectorField& rhoU() const

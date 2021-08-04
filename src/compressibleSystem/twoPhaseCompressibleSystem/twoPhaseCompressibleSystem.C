@@ -46,11 +46,14 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh),
-    thermo_(word::null, p_, rho_, e_, T_, *this, true),
+    phaseCompressibleSystem(2, mesh),
+    thermo_
+    (
+        refCast<twoPhaseFluidBlastThermo>(thermoPtr_())
+    ),
     volumeFraction_(thermo_.volumeFraction()),
-    rho1_(thermo_.thermo1().rho()),
-    rho2_(thermo_.thermo2().rho()),
+    rho1_(thermo_.thermo(0).rho()),
+    rho2_(thermo_.thermo(1).rho()),
     alphaRho1_
     (
         IOobject
@@ -201,8 +204,8 @@ void Foam::twoPhaseCompressibleSystem::calcAlphaAndRho()
     volumeFraction_.min(1);
     volumeFraction_.correctBoundaryConditions();
 
-    volScalarField alpha1(max(volumeFraction_, thermo_.thermo1().residualAlpha()));
-    volScalarField alpha2(max(1.0 - volumeFraction_, thermo_.thermo2().residualAlpha()));
+    volScalarField alpha1(max(volumeFraction_, thermo_.thermo(0).residualAlpha()));
+    volScalarField alpha2(max(1.0 - volumeFraction_, thermo_.thermo(1).residualAlpha()));
 
     alphaRho1_.max(0);
     rho1_.ref() = alphaRho1_()/alpha1();
@@ -244,7 +247,7 @@ void Foam::twoPhaseCompressibleSystem::decode()
         }
         volScalarField limit(pos(T_ - TLow_));
         T_.max(TLow_);
-        e_ = e_*limit + thermo_.E()*(1.0 - limit);
+        e_ = e_*limit + thermo_.he(p_, T_)*(1.0 - limit);
         rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();

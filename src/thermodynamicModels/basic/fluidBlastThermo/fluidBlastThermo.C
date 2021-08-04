@@ -33,82 +33,70 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fluidBlastThermo, 0);
-    defineRunTimeSelectionTable(fluidBlastThermo, basic);
-    defineRunTimeSelectionTable(fluidBlastThermo, detonating);
-    defineRunTimeSelectionTable(fluidBlastThermo, multicomponent);
-    defineRunTimeSelectionTable(fluidBlastThermo, reacting);
+    defineRunTimeSelectionTable(fluidBlastThermo, dictionary);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::fluidBlastThermo::fluidBlastThermo
 (
-    const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    basicBlastThermo
-    (
-        phaseName,
-        p,
-        rho,
-        e,
-        T,
-        dict,
-        master,
-        masterName
-    ),
-    mu_
-    (
-        IOobject
-        (
-            IOobject::groupName("thermo:mu", phaseName),
-            p_.mesh().time().timeName(),
-            p_.mesh()
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimDynamicViscosity, 0.0)
-    ),
-    viscous_(true)
-{}
-
-
-Foam::fluidBlastThermo::fluidBlastThermo
-(
-    const word& phaseName,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master,
-    const word& masterName
+    const word& phaseName
 )
 :
-    basicBlastThermo
-    (
-        phaseName,
-        mesh,
-        dict,
-        master,
-        masterName
-    ),
+    basicThermo::implementation(mesh, dict, phaseName),
+    fluidThermo::implementation(mesh, dict, phaseName),
+    blastThermo(mesh, dict, phaseName),
     mu_
     (
         IOobject
         (
-            IOobject::groupName("thermo:mu", phaseName),
+            phasePropertyName("thermo:mu", phaseName),
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
         ),
         mesh,
-        dimensionedScalar(dimDynamicViscosity, 0.0)
-    ),
-    viscous_(true)
+        dimensionSet(1, -1, -1, 0, 0)
+    )
 {}
+
+
+// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
+(
+    const label nPhases,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& phaseName
+)
+{
+    word fluidType("singlePhaseFluid");
+    if (nPhases == 2)
+    {
+        fluidType = "twoPhaseFluid";
+    }
+    else if (nPhases > 2)
+    {
+        fluidType = "multiphaseFluid";
+    }
+
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(fluidType);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown number of fluids " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(mesh, dict, phaseName);
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -116,102 +104,29 @@ Foam::fluidBlastThermo::fluidBlastThermo
 Foam::fluidBlastThermo::~fluidBlastThermo()
 {}
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::fluidBlastThermo::initialize()
-{
-    if (!master_)
-    {
-        return;
-    }
-    if (max(e_).value() <= 0.0)
-    {
-        volScalarField e(calce());
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        eBoundaryCorrection();
-    }
-    this->correct();
-
-    if (max(mu_).value() < small)
-    {
-        viscous_ = false;
-    }
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::calcP() const
-{
-    tmp<volScalarField> pTmp
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "P",
-                e_.mesh().time().timeName(),
-                e_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            e_.mesh(),
-            dimensionedScalar("0", dimPressure, 0.0)
-        )
-    );
-    volScalarField& p = pTmp.ref();
-
-    forAll(p, celli)
-    {
-        p[celli] = this->calcPi(celli);
-    }
-    forAll(p.boundaryField(), patchi)
-    {
-        p.boundaryFieldRef()[patchi] = this->calcP(patchi);
-    }
-    p.max(small);
-    return pTmp;
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::mu() const
+Foam::tmp<Foam::volScalarField>
+Foam::fluidBlastThermo::mu() const
 {
     return mu_;
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::fluidBlastThermo::mu(const label patchi) const
+Foam::tmp<Foam::scalarField> Foam::fluidBlastThermo::mu
+(
+    const label patchi
+) const
 {
     return mu_.boundaryField()[patchi];
 }
 
-
-Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::nu() const
+Foam::scalar Foam::fluidBlastThermo::nui
+(
+    const label celli
+) const
 {
-    return mu_/max(rho_, dimensionedScalar(dimDensity, 1e-10));
+    return mu_[celli]/rhoi(celli);
 }
-
-
-Foam::tmp<Foam::scalarField>
-Foam::fluidBlastThermo::nu(const label patchi) const
-{
-    return mu(patchi)/max(rho_.boundaryField()[patchi], 1e-10);
-}
-
-
-Foam::scalar Foam::fluidBlastThermo::nui(const label celli) const
-{
-    return mu_[celli]/max(rho_[celli], 1e-10);
-}
-
 // ************************************************************************* //

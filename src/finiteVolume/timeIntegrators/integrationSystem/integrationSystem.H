@@ -38,6 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "UautoPtr.H"
 #include "fvMesh.H"
 #include "Time.H"
 #include "timeIntegrator.H"
@@ -55,13 +56,13 @@ protected:
 // Protected data
 
         //- Constant reference to mesh
-        const fvMesh& mesh_;
+        UautoPtr<const fvMesh> meshPtr_;
 
         //- Name of system
-        const word name_;
+        word name_;
 
         //- Stored reference to time integrator
-        timeIntegrator* timeInt_;
+        UautoPtr<timeIntegrator> timeInt_;
 
         //- Number of steps
         label nSteps_;
@@ -231,11 +232,13 @@ public:
 
 
     // Constructor
+    integrationSystem();
     integrationSystem
     (
         const word& name,
         const fvMesh& mesh
     );
+    void set(const word& name, const fvMesh& mesh);
 
 
     //- Destructor
@@ -248,6 +251,12 @@ public:
         const word& name() const
         {
             return name_;
+        }
+
+        //- Return the mesh
+        const fvMesh& mesh() const
+        {
+            return meshPtr_();
         }
 
         //- Update before each ode step

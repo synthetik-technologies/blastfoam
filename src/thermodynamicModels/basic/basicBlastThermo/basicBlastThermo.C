@@ -27,253 +27,50 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "basicBlastThermo.H"
-#include "zeroGradientFvPatchFields.H"
-#include "blastFixedEnergyFvPatchScalarField.H"
-#include "blastGradientEnergyFvPatchScalarField.H"
-#include "blastGradientEnergyCalculatedTemperatureFvPatchScalarField.H"
-#include "blastMixedEnergyFvPatchScalarField.H"
-#include "blastMixedEnergyCalculatedTemperatureFvPatchScalarField.H"
-#include "fixedJumpFvPatchFields.H"
-#include "fixedJumpAMIFvPatchFields.H"
-#include "blastEnergyJumpFvPatchScalarField.H"
-#include "blastEnergyJumpAMIFvPatchScalarField.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
 namespace Foam
 {
     defineTypeNameAndDebug(basicBlastThermo, 0);
+    defineRunTimeSelectionTable(basicBlastThermo, dictionary);
 }
 
-// * * * * * * * * * * * * * * Protected Functions  * * * * * * * * * * * * * //
-
-Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
-(
-    const fvMesh& mesh,
-    const word& name,
-    const IOobject::readOption rOpt,
-    const IOobject::writeOption wOpt,
-    const dimensionSet& dims
-) const
-{
-    if (!mesh.objectRegistry::foundObject<volScalarField>(name))
-    {
-        volScalarField* fPtr;
-
-        if (rOpt == IOobject::MUST_READ)
-        {
-            fPtr =
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        name,
-                        mesh.time().timeName(),
-                        mesh,
-                        rOpt,
-                        wOpt
-                    ),
-                    mesh
-                );
-        }
-        else
-        {
-            fPtr =
-                new volScalarField
-                (
-                    IOobject
-                    (
-                        name,
-                        mesh.time().timeName(),
-                        mesh,
-                        rOpt,
-                        wOpt
-                    ),
-                    mesh,
-                    dimensionedScalar("0", dims, Zero)
-                );
-        }
-
-        // Transfer ownership of this object to the objectRegistry
-        fPtr->store(fPtr);
-    }
-
-    return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
-}
-
-
-Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstructE
-(
-    const fvMesh& mesh,
-    const word& name
-) const
-{
-    if (!mesh.objectRegistry::foundObject<volScalarField>(name))
-    {
-        volScalarField* fPtr
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    name,
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar(dimEnergy/dimMass, -1.0),
-                eBoundaryTypes(T_),
-                eBoundaryBaseTypes(T_)
-            )
-        );
-        // Transfer ownership of this object to the objectRegistry
-        fPtr->store(fPtr);
-    }
-
-    return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
-}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::basicBlastThermo::basicBlastThermo
 (
     const word& phaseName,
-    volScalarField& p,
     volScalarField& rho,
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName("basicThermo", phaseName),
-            p.mesh().time().timeName(),
-            p.mesh()
-        )
-    ),
     integrationSystem
     (
-        IOobject::groupName("basicThermo", phaseName),
-        p.mesh()
+        IOobject::groupName("basicBlastThermo", phaseName),
+        rho.mesh()
     ),
     thermoDict_(dict),
-    master_(master),
     masterName_(masterName),
     name_(phaseName),
-    p_(p),
     rho_(rho),
     T_(T),
     e_(e),
     alpha_
     (
-        IOobject
-        (
-            IOobject::groupName("thermo:alpha", name_),
-            p_.mesh().time().timeName(),
-            p_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
-    ),
-    limit_(dict.lookupOrDefault("limit", true)),
-    residualAlpha_("residualAlpha", dimless, 0.0),
-    residualRho_("residualRho", dimDensity, 0.0)
-{}
-
-
-Foam::basicBlastThermo::basicBlastThermo
-(
-    const word& phaseName,
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const bool master,
-    const word& masterName
-)
-:
-    regIOobject
-    (
-        IOobject
-        (
-            IOobject::groupName("basicThermo", phaseName),
-            mesh.time().timeName(),
-            mesh
-        )
-    ),
-    integrationSystem
-    (
-        IOobject::groupName("basicThermo", phaseName),
-        mesh
-    ),
-    thermoDict_(dict),
-    master_(master),
-    masterName_(masterName),
-    name_(phaseName),
-    p_
-    (
         lookupOrConstruct
         (
-            mesh,
-            IOobject::groupName("p", masterName),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE,
+            rho.mesh(),
+            IOobject::groupName("thermo:alpha", phaseName),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE,
             dimPressure
         )
     ),
-    rho_
-    (
-        lookupOrConstruct
-        (
-            mesh,
-            IOobject::groupName("rho", phaseName),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE,
-            dimDensity
-        )
-    ),
-    T_
-    (
-        lookupOrConstruct
-        (
-            mesh,
-            IOobject::groupName("T", masterName),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE,
-            dimTemperature
-        )
-    ),
-    e_
-    (
-        lookupOrConstructE
-        (
-            mesh,
-            IOobject::groupName("e", masterName)
-        )
-    ),
-    alpha_
-    (
-        IOobject
-        (
-            IOobject::groupName("thermo:alpha", name_),
-            p_.mesh().time().timeName(),
-            p_.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        p_.mesh(),
-        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), Zero),
-        wordList(p_.boundaryField().types().size(), "zeroGradient")
-    ),
-    limit_(dict.lookupOrDefault("limit", true)),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}
@@ -284,16 +81,37 @@ Foam::basicBlastThermo::basicBlastThermo
 Foam::basicBlastThermo::~basicBlastThermo()
 {}
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-void Foam::basicBlastThermo::correct()
+Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
+(
+    const word& phaseName,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
+    const dictionary& dict,
+    const word& masterName
+)
 {
-    if (master_)
-    {
-        this->T_ = this->calcT();
-        this->T_.correctBoundaryConditions();
-    }
+    dictionaryConstructorTable::iterator cstrIter =
+        lookupThermo<dictionaryConstructorTable>
+        (
+            dict,
+            dictionaryConstructorTablePtr_
+        );
+
+    return cstrIter()
+    (
+        phaseName,
+        rho,
+        e,
+        T,
+        dict,
+        masterName
+    );
 }
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::word Foam::basicBlastThermo::readThermoType(const dictionary& dict)
 {
@@ -413,7 +231,7 @@ Foam::wordList Foam::basicBlastThermo::splitThermoName
     wordList cmptsFinal(5);
     if (cmpts[0] == "detonating")
     {
-        cmptsFinal[0] = "y";
+        cmptsFinal[0] = cmpts[0];
         cmptsFinal[1] = cmpts[1] + '/' + cmpts[5];
         cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
         cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
@@ -421,116 +239,69 @@ Foam::wordList Foam::basicBlastThermo::splitThermoName
     }
     else
     {
-        cmptsFinal[0] = "n";
-        cmptsFinal[1] = cmpts[0];
-        cmptsFinal[2] = cmpts[1];
-        cmptsFinal[3] = cmpts[2];
-        cmptsFinal[4] = cmpts[3];
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2];
+        cmptsFinal[3] = cmpts[3];
+        cmptsFinal[4] = cmpts[4];
     }
 
     return cmptsFinal;
 }
 
-Foam::wordList
-Foam::basicBlastThermo::eBoundaryTypes(const volScalarField& T)
+
+Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
+(
+    const fvMesh& mesh,
+    const word& name,
+    const IOobject::readOption rOpt,
+    const IOobject::writeOption wOpt,
+    const dimensionSet& dims
+)
 {
-    wordList ebf = T.boundaryField().types();
-
-    forAll(ebf, patchi)
+    if (!mesh.objectRegistry::foundObject<volScalarField>(name))
     {
-        if (isA<fixedValueFvPatchScalarField>(T.boundaryField()[patchi]))
-        {
-            ebf[patchi] = blastFixedEnergyFvPatchScalarField::typeName;
-        }
-        else if
-        (
-            isA<fixedGradientFvPatchScalarField>(T.boundaryField()[patchi])
-         || isA<blastGradientEnergyCalculatedTemperatureFvPatchScalarField>
-            (
-                T.boundaryField()[patchi]
-            )
-        )
-        {
-            ebf[patchi] = blastGradientEnergyFvPatchScalarField::typeName;
-        }
-        else if
-        (
-            isA<mixedFvPatchScalarField>(T.boundaryField()[patchi])
-         || isA<blastMixedEnergyCalculatedTemperatureFvPatchScalarField>
-            (
-                T.boundaryField()[patchi]
-            )
-        )
-        {
-            ebf[patchi] = blastMixedEnergyFvPatchScalarField::typeName;
-        }
-        else if (isA<fixedJumpFvPatchScalarField>(T.boundaryField()[patchi]))
-        {
-            ebf[patchi] = blastEnergyJumpFvPatchScalarField::typeName;
-        }
-        else if
-        (
-            isA<fixedJumpAMIFvPatchScalarField>(T.boundaryField()[patchi])
-        )
-        {
-            ebf[patchi] = blastEnergyJumpAMIFvPatchScalarField::typeName;
-        }
-    }
+        volScalarField* fPtr;
 
-    return ebf;
-}
-
-
-Foam::wordList
-Foam::basicBlastThermo::eBoundaryBaseTypes(const volScalarField& T)
-{
-    const volScalarField::Boundary& tbf = T.boundaryField();
-
-    wordList ebt(tbf.size(), word::null);
-
-    forAll(tbf, patchi)
-    {
-        if (isA<fixedJumpFvPatchScalarField>(tbf[patchi]))
+        if (rOpt == IOobject::MUST_READ)
         {
-            const fixedJumpFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpFvPatchScalarField&>(tbf[patchi]);
-
-            ebt[patchi] = pf.interfaceFieldType();
-        }
-        else if (isA<fixedJumpAMIFvPatchScalarField>(tbf[patchi]))
-        {
-            const fixedJumpAMIFvPatchScalarField& pf =
-                dynamic_cast<const fixedJumpAMIFvPatchScalarField&>
+            fPtr =
+                new volScalarField
                 (
-                    tbf[patchi]
+                    IOobject
+                    (
+                        name,
+                        mesh.time().timeName(),
+                        mesh,
+                        rOpt,
+                        wOpt
+                    ),
+                    mesh
                 );
-
-            ebt[patchi] = pf.interfaceFieldType();
         }
+        else
+        {
+            fPtr =
+                new volScalarField
+                (
+                    IOobject
+                    (
+                        name,
+                        mesh.time().timeName(),
+                        mesh,
+                        rOpt,
+                        wOpt
+                    ),
+                    mesh,
+                    dimensionedScalar("0", dims, Zero)
+                );
+        }
+
+        // Transfer ownership of this object to the objectRegistry
+        fPtr->store(fPtr);
     }
 
-    return ebt;
-}
-
-
-
-void Foam::basicBlastThermo::eBoundaryCorrection()
-{
-    volScalarField::Boundary& eBf = e_.boundaryFieldRef();
-
-    forAll(eBf, patchi)
-    {
-        if (isA<blastGradientEnergyFvPatchScalarField>(eBf[patchi]))
-        {
-            refCast<blastGradientEnergyFvPatchScalarField>(eBf[patchi]).gradient()
-                = eBf[patchi].fvPatchField::snGrad();
-        }
-        else if (isA<blastMixedEnergyFvPatchScalarField>(eBf[patchi]))
-        {
-            refCast<blastMixedEnergyFvPatchScalarField>(eBf[patchi]).refGrad()
-                = eBf[patchi].fvPatchField::snGrad();
-        }
-    }
+    return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
 }
 
 
@@ -564,128 +335,16 @@ void Foam::basicBlastThermo::addDelta
 {}
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::basicBlastThermo::kappa() const
+const Foam::volScalarField& Foam::basicBlastThermo::alpha() const
 {
-    tmp<Foam::volScalarField> kappa(Cp()*this->alpha_);
-    kappa.ref().rename("kappa");
-    return kappa;
+    return alpha_;
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::basicBlastThermo::kappa
-(
-    const label patchi
-) const
+const Foam::scalarField& Foam::basicBlastThermo::alpha(const label patchi) const
 {
-    return
-        Cp
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )*this->alpha_.boundaryField()[patchi];
+    return alpha_.boundaryField()[patchi];
 }
 
-
-Foam::scalar Foam::basicBlastThermo::kappai
-(
-    const label celli
-) const
-{
-    return this->Cpi(celli)*this->alpha_[celli];
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::basicBlastThermo::alphahe() const
-{
-    tmp<Foam::volScalarField> alphaEff(this->CpByCv()*this->alpha_);
-    alphaEff.ref().rename("alphahe");
-    return alphaEff;
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::basicBlastThermo::alphahe(const label patchi) const
-{
-    return
-        this->CpByCv
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )*this->alpha_.boundaryField()[patchi];
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::basicBlastThermo::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    tmp<Foam::volScalarField> kappaEff(Cp()*(this->alpha_ + alphat));
-    kappaEff.ref().rename("kappaEff");
-    return kappaEff;
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::basicBlastThermo::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->Cp
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )
-       *(
-           this->alpha_.boundaryField()[patchi]
-         + alphat
-        );
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::basicBlastThermo::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    tmp<Foam::volScalarField> alphaEff(this->CpByCv()*(this->alpha_ + alphat));
-    alphaEff.ref().rename("alphaEff");
-    return alphaEff;
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::basicBlastThermo::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        this->CpByCv
-        (
-            this->rho_.boundaryField()[patchi],
-            this->e_.boundaryField()[patchi],
-            this->T_.boundaryField()[patchi],
-            patchi
-        )
-       *(
-            this->alpha_.boundaryField()[patchi]
-          + alphat
-        );
-}
 
 // ************************************************************************* //

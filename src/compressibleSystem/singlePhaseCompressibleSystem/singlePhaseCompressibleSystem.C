@@ -46,23 +46,10 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh),
-    thermo_
-    (
-        fluidBlastThermo::New
-        (
-            word::null,
-            p_,
-            rho_,
-            e_,
-            T_,
-            this->optionalSubDict("mixture"),
-            true
-        )
-    )
+    phaseCompressibleSystem(1, mesh)
 {
     this->setModels();
-    thermo_->initializeModels();
+    thermoPtr_->initializeModels();
     encode();
 }
 
@@ -86,7 +73,7 @@ void Foam::singlePhaseCompressibleSystem::solve()
     rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    thermo_->solve();
+    thermoPtr_->solve();
 
     phaseCompressibleSystem::solve();
 }
@@ -107,14 +94,14 @@ void Foam::singlePhaseCompressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
-    thermo_->update();
+    thermoPtr_->update();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::singlePhaseCompressibleSystem::ESource() const
 {
-    return thermo_->ESource();
+    return thermoPtr_->ESource();
 }
 
 
@@ -128,7 +115,7 @@ void Foam::singlePhaseCompressibleSystem::decode()
     e_.ref() = rhoE_()/rho_() - 0.5*magSqr(U_());
 
     //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermo_->limit())
+    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
     {
         if (debug)
         {
@@ -139,7 +126,7 @@ void Foam::singlePhaseCompressibleSystem::decode()
         }
         volScalarField limit(pos(T_ - TLow_));
         T_.max(TLow_);
-        e_ = e_*limit + thermo_->E()*(1.0 - limit);
+        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
         rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
@@ -151,7 +138,7 @@ void Foam::singlePhaseCompressibleSystem::decode()
           + 0.5*magSqr(U_.boundaryField())
         );
 
-    thermo_->correct();
+    thermoPtr_->correct();
 }
 
 
@@ -159,16 +146,6 @@ void Foam::singlePhaseCompressibleSystem::encode()
 {
     rhoU_ = rho_*U_;
     rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseCompressibleSystem::speedOfSound() const
-{
-    return tmp<volScalarField>
-    (
-        new volScalarField("speedOfSound", thermo_->speedOfSound())
-    );
 }
 
 // ************************************************************************* //

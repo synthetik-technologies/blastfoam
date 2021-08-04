@@ -57,7 +57,7 @@ class twoPhaseCompressibleSystem
     //- Primitative variables
 
         //- Equation of state
-        twoPhaseFluidBlastThermo thermo_;
+        twoPhaseFluidBlastThermo& thermo_;
 
         //- Volume fraction of phase 1
         volScalarField& volumeFraction_;

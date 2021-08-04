@@ -58,18 +58,19 @@ class basicFluidBlastThermo
 public:
 
     //- Runtime type information
-    TypeName("basicFluidBlastThermo");
+    TypeName
+    (
+        word("basic<fluid<" + Thermo::thermoType::typeName() + ">>").c_str()
+    );
 
     // Constructor
     basicFluidBlastThermo
     (
         const word& phaseName,
-        volScalarField& p,
         volScalarField& rho,
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
@@ -78,6 +79,7 @@ public:
     virtual ~basicFluidBlastThermo();
 
 
+    virtual word thermoName() const ;
     // Member Functions
 
         //- Pre update
@@ -108,20 +110,32 @@ public:
         //- Return the speed of sound for patchi
         virtual tmp<scalarField> speedOfSound(const label patchi) const;
 
+        //- Gamma = dpde []
+        virtual tmp<volScalarField> Gamma() const;
+
+        //- Gamma = dpde for patch []
+        virtual tmp<scalarField> Gamma(const label patchi) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar Gammai(const label celli) const;
+
 
     //- Thermodynamic and transport functions
 
-        //- Calculate density
-        virtual void updateRho();
+        //- Dynamic viscosity of mixture [kg/m/s]
+        virtual tmp<volScalarField> mu() const;
 
-        //- Calculate thermodynamic pressure for a patch
-        virtual tmp<scalarField> calcP(const label patchi) const;
+        //- Dynamic viscosity of mixture for patch [kg/m/s]
+        virtual tmp<scalarField> mu(const label patchi) const;
+
+        //- Calculate density
+        virtual void updateRho(const volScalarField& p);
 
         //- Calculate thermodynamic pressure
-        virtual scalar calcPi(const label celli) const;
+        virtual tmp<volScalarField> pRhoT() const;
 
         //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const;
+        virtual tmp<volScalarField> calce(const volScalarField& p) const;
 };
 
 
@@ -129,34 +143,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define addFluidThermo(Transport, Thermo, EoS)                              \
-    typedef                                                                 \
-        basicFluidBlastThermo                                                    \
-        <                                                                   \
-            eBlastThermo                                                    \
-            <                                                               \
-                fluidBlastThermo,                                           \
-                Transport##Thermo##EoS##blastSpecie                         \
-            >                                                               \
-        > basic##Transport##Thermo##EoS;                                    \
-    defineTemplateTypeNameAndDebugWithName                                  \
-    (                                                                       \
-        basic##Transport##Thermo##EoS,                                      \
-        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
-        0                                                                   \
-    );                                                                      \
-    addToRunTimeSelectionTable                                              \
-    (                                                                       \
-        fluidBlastThermo,                                                   \
-        basic##Transport##Thermo##EoS,                                      \
-        basic                                                               \
-    );
-
-#define addFluidThermos(Transport, EoS)                                    \
-    addFluidThermo(Transport, eConst, EoS);                                \
-    addFluidThermo(Transport, hConst, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -67,15 +67,14 @@ class multiphaseFluidBlastThermo
         //- Names of phases
         wordList phases_;
 
+        //- Equation of state for phases
+        PtrList<fluidBlastThermo> thermos_;
 
         //- Volume fraction of phases
         PtrList<volScalarField> volumeFractions_;
 
         //- Volume weighted density of phases
         PtrList<volScalarField> rhos_;
-
-        //- Equation of state for phases
-        PtrList<fluidBlastThermo> thermos_;
 
         //- Volume weighted density of phases
         PtrList<volScalarField> alphaRhos_;
@@ -194,10 +193,10 @@ public:
         virtual tmp<volScalarField> calce() const;
 
         //- Calculate temperature
-        virtual tmp<volScalarField> calcT() const;
+        virtual tmp<volScalarField> THE() const;
 
         //- Calculate internal energy for patchi
-        virtual tmp<scalarField> TRhoE
+        virtual tmp<scalarField> THE
         (
             const scalarField& T,
             const scalarField& e,

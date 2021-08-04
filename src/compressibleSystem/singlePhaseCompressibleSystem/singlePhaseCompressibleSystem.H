@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "fluidBlastThermo.H"
+#include "singlePhaseFluidBlastThermo.H"
 
 namespace Foam
 {
@@ -56,7 +56,7 @@ protected:
 // Protected data
 
     //- Equation of state
-    autoPtr<fluidBlastThermo> thermo_;
+//     singlePhaseFluidBlastThermo& thermo_;
 
     //- Calculate new alpha and rho fields
     virtual void calcAlphaAndRho()
@@ -92,24 +92,6 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve();
-
-
-    // Member Access Functions
-
-        //- Const access to thermo model
-        virtual const fluidBlastThermo& thermo() const
-        {
-            return thermo_();
-        }
-
-        //- Non-const access to thermo model
-        virtual fluidBlastThermo& thermo()
-        {
-            return thermo_();
-        }
-
-        //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
 
 
 };
