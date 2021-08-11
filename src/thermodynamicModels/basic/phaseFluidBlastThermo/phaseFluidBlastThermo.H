@@ -66,7 +66,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("FluidBlast");
+    TypeName("fluidBlastThermo");
 
     // Declare runtime construction
 

@@ -135,7 +135,7 @@ public:
         static word typeName()
         {
             return
-                "hConstThermo<"
+                "hConst<"
               + word(EquationOfState::typeName()) + '>';
         }
 

@@ -25,19 +25,17 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fluidThermoModelTypes_H
-#define fluidThermoModelTypes_H
+#ifndef forBlastSolidFluids_H
+#define forBlastSolidFluids_H
 
 #include "constTransport.H"
-#include "sutherlandTransport.H"
 
 #include "thermoModel.H"
 
-#include "hConst.H"
-#include "eConst.H"
-#include "janaf.H"
-
-#include "equationOfState.H"
+#include "hConstBlastThermo.H"
+#include "eConstBlastThermo.H"
+#include "janafBlastThermo.H"
+#include "tabulatedBlastThermo.H"
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
@@ -45,237 +43,33 @@ License
 #include "BirchMurnaghan3.H"
 #include "solidJWL.H"
 
-#include "idealGas.H"
-#include "perfectGas.H"
-#include "stiffenedGas.H"
-#include "Tait.H"
-#include "AbelNobel.H"
-#include "vanderWaals.H"
-#include "JWL.H"
-#include "JWLC.H"
-#include "LSZK.H"
-#include "BWR.H"
-#include "BKW.H"
-#include "DoanNickel.H"
-#include "linearTillotson.H"
-#include "Tillotson.H"
-
-#include "tabulatedThermo.H"
-#include "tabulatedThermoEOS.H"
-
-#include "blastSpecie.H"
-#include "rBlastSpecie.H"
+#include "specieBlast.H"
+#include "rspecieBlast.H"
 
 #include "forBlastThermo.H"
 
-namespace Foam
-{
-// Solid materials
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        CochranChan,
-        blastSpecie
-    );
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    defineThermoTypes
-    (
-        constTransport,
-        Murnaghan,
-        blastSpecie
-    );
+#define forSolidFluidEqns(Mu, Cp, Macro, Args...)                           \
+    forThermo(Mu, Cp, CochranChan, specieBlast, Macro, Args);               \
+    forThermo(Mu, Cp, Murnaghan, specieBlast, Macro, Args);                 \
+    forThermo(Mu, Cp, BirchMurnaghan2, specieBlast, Macro, Args);           \
+    forThermo(Mu, Cp, BirchMurnaghan3, specieBlast, Macro, Args);           \
+    forThermo(Mu, Cp, solidJWL, specieBlast, Macro, Args)
 
-    defineThermoTypes
-    (
-        constTransport,
-        BirchMurnaghan2,
-        blastSpecie
-    );
+#define forSolidFluidThermos(Mu, Macro, Args...)                            \
+    forSolidFluidEqns(Mu, eConstThermo, Macro, Args);                       \
+    forSolidFluidEqns(Mu, janafThermo, Macro, Args);                        \
+    forSolidFluidEqns(Mu, hConstThermo, Macro, Args)
 
-    defineThermoTypes
-    (
-        constTransport,
-        BirchMurnaghan3,
-        blastSpecie
-    );
+#define forSolidFluidTransports(Macro, Args...)                             \
+    forSolidFluidThermos(constTransport, Macro, Args);
 
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        solidJWL,
-        blastSpecie
-    );
-
-// Fluids
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        idealGas,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        sutherlandTransport,
-        eConst,
-        idealGas,
-        blastSpecie
-    );
-
-    defineThermoTypes
-    (
-        constTransport,
-        perfectGas,
-        blastSpecie
-    );
-    defineThermoTypes
-    (
-        sutherlandTransport,
-        perfectGas,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        constTransport,
-        janaf,
-        perfectGas,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        sutherlandTransport,
-        janaf,
-        perfectGas,
-        blastSpecie
-    );
-
-    defineThermoTypes
-    (
-        constTransport,
-        AbelNobel,
-        blastSpecie
-    );
-    defineThermoTypes
-    (
-        sutherlandTransport,
-        AbelNobel,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        constTransport,
-        janaf,
-        AbelNobel,
-        blastSpecie
-    );
-    defineThermoType
-    (
-        sutherlandTransport,
-        janaf,
-        AbelNobel,
-        blastSpecie
-    );
+#define forSolidFluids(Macro, Args...)                                      \
+    forSolidFluidTransports(Macro, Args)
 
 
-    defineThermoTypes
-    (
-        constTransport,
-        BKW,
-        blastSpecie
-    );
-
-    defineThermoTypes
-    (
-        constTransport,
-        BWR,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        stiffenedGas,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        Tait,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        Tillotson,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        linearTillotson,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        vanderWaals,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        JWL,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        JWLC,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        LSZK,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        eConst,
-        DoanNickel,
-        blastSpecie
-    );
-
-    defineThermoType
-    (
-        constTransport,
-        tabulatedThermo,
-        DoanNickel,
-        blastSpecie
-    );
-
-    typedef constTransport<tabulatedThermoEOS<blastSpecie>>
-        constTransporttabulatedMGEquationOfStatetabulatedblastSpecie;
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif
 // ************************************************************************* //

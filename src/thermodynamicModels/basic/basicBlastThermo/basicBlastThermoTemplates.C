@@ -29,6 +29,7 @@ License
 #include "basicBlastThermo.H"
 #include "wordIOList.H"
 #include "compileTemplate.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -49,11 +50,16 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
     if (cstrIter == tablePtr->end())
     {
         const word type(thermoDict.lookup("type"));
-        Info<<type<<endl;
+        const word compileType
+        (
+            type == "detonating"
+          ? "detonatingBlastThermo"
+          : "blastThermo"
+        );
         if
         (
             dynamicCode::allowSystemOperations
-         && !dynamicCode::resolveTemplate(type + "BlastThermo").empty()
+         && !dynamicCode::resolveTemplate(compileType).empty()
         )
         {
             List<Pair<word>> entries;
@@ -68,7 +74,6 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                     {
                         {"state", Thermo::typeName},
                         {"type", type},
-                        {"eType", "blended"},
                         {"transport", uDict.lookup("transport")},
                         {"thermo", uDict.lookup("thermo")},
                         {"uEquationOfState", uDict.lookup("equationOfState")},
@@ -86,9 +91,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                     {
                         {"state", Thermo::typeName},
                         {"type", type},
-                        {"eType", type == "basic" ? "e" : "multicomponent"},
                         {"transport", thermoTypeDict.lookup("transport")},
-                        {"thermo", thermoTypeDict.lookup("thermo")},
                         {"thermo", thermoTypeDict.lookup("thermo")},
                         {"equationOfState", thermoTypeDict.lookup("equationOfState")},
                         {"specie", "specieBlast"}
@@ -96,25 +99,26 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
             }
             compileTemplate thermo
             (
-                Thermo::typeName,
+                compileType,
                 thermoTypeName,
                 entries
             );
-            Info<<"here"<<endl;
+
             cstrIter = tablePtr->find(thermoTypeName);
 
             if (cstrIter == tablePtr->end())
             {
                 FatalErrorInFunction
                     << "Compilation and linkage of "
-                    << Thermo::typeName << " type " << nl
+                    << compileType << " type " << nl
                     << "thermoType" << thermoDict << nl << nl
                     << "failed." << nl << nl
                     << "Valid " << Thermo::typeName << " types are:"
                     << nl << nl;
             }
         }
-        else
+
+        if (cstrIter == tablePtr->end())
         {
             FatalError
                 << "Unknown " << Thermo::typeName << " type " << nl

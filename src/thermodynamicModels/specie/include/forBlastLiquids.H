@@ -55,21 +55,17 @@ License
     forThermo(Mu, Cp, linearTillotson, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, Tillotson, specieBlast, Macro, Args);                 \
 
+#define forLiquidThermos(Mu, Macro, Args...)                                \
+    forLiquidEqns(Mu, eConstThermo, Macro, Args);                           \
+    forLiquidEqns(Mu, janafThermo, Macro, Args);                            \
+    forLiquidEqns(Mu, hConstThermo, Macro, Args)
 
 #define forLiquidTransports(Macro, Args...)                                 \
-    forLiquidEnergiesAndThermos(constTransport, Macro, Args);
+    forLiquidThermos(constTransport, Macro, Args);
 
 #define forLiquids(Macro, Args...)                                          \
     forLiquidTransports(Macro, Args)
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define forCoeffLiquidEqns(Mu, Cp, Macro, Args...)
-
-#define forCoeffLiquidTransports(Macro, Args...)
-
-#define forCoeffLiquids(Macro, Args...)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

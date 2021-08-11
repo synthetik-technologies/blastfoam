@@ -39,7 +39,7 @@ namespace Foam
 
 void Foam::phaseCompressibleSystem::setModels()
 {
-    if (Foam::max(this->thermo().mu()).value() > 0)
+    if (Foam::max(this->thermo().mu()).value() > small)
     {
         turbulence_ =
         (

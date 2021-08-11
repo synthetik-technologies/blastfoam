@@ -18,7 +18,7 @@ thermoType
 {
     transport const;
     thermo eConst;
-    equationOfState Tillotson;
+    equationOfState idealGas;
 };
 equationOfState
 {

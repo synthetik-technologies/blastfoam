@@ -142,7 +142,7 @@ public:
         static word typeName()
         {
             return
-                "janafThermo<"
+                "janaf<"
               + word(EquationOfState::typeName()) + '>';
         }
 

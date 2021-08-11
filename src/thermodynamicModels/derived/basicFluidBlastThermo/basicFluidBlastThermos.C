@@ -30,6 +30,8 @@ License
 #include "basicFluidBlastThermo.H"
 #include "eBlastThermo.H"
 #include "forBlastGases.H"
+#include "forBlastLiquids.H"
+#include "forBlastSolidFluids.H"
 #include "makeBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 #include "tabulatedThermoEOS.H"
@@ -37,6 +39,22 @@ License
 namespace Foam
 {
     forGases
+    (
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+
+    forSolidFluids
+    (
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+
+    forLiquids
     (
         makeThermo,
         phaseFluidBlastThermo,

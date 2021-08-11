@@ -87,5 +87,6 @@ export QBMM_INC="-I\$(QBMM_INST_DIR)/src/eigenSolver/lnInclude -I\$(QBMM_INST_DI
 export BLAST_QBMM_INC="-I\$(BLAST_DIR)/src/QBMM/lnInclude $QBMM_INC"
 fi
 
+export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
 
 #------------------------------------------------------------------------------
