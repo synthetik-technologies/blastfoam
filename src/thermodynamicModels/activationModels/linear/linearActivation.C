@@ -77,7 +77,7 @@ Foam::activationModels::linearActivation::linearActivation
                 (
                     tIgn_[celli],
                     (useDelay ? dp.delay() : 0.0)
-                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                  + mag(this->mesh().C()[celli] - dp)/vDet_.value()
                 );
         }
     }

@@ -85,7 +85,7 @@ ANFO
         }
     }
 
-    activationModel a;
+    activationModel pressureBased;
     initiation
     {
         E0              4.0e9;

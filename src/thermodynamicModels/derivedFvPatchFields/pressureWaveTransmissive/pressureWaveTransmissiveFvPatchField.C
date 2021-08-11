@@ -116,7 +116,7 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
    const fluidBlastThermo& thermo =
         this->db().template lookupObject<fluidBlastThermo>
         (
-            IOobject::groupName("basicThermo", phaseName_)
+            IOobject::groupName(basicThermo::dictName, phaseName_)
         );
     // Lookup the velocity and compressibility of the patch
     tmp<scalarField> cp

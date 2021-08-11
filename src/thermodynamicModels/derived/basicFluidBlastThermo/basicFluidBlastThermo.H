@@ -58,10 +58,7 @@ class basicFluidBlastThermo
 public:
 
     //- Runtime type information
-    TypeName
-    (
-        word("basic<fluid<" + Thermo::thermoType::typeName() + ">>").c_str()
-    );
+    TypeName("basic");
 
     // Constructor
     basicFluidBlastThermo
@@ -79,7 +76,6 @@ public:
     virtual ~basicFluidBlastThermo();
 
 
-    virtual word thermoName() const ;
     // Member Functions
 
         //- Pre update
@@ -122,12 +118,6 @@ public:
 
     //- Thermodynamic and transport functions
 
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
-
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
-
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 
@@ -136,6 +126,11 @@ public:
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
+
+    // Access to transport state variables
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> mu() const;
 };
 
 

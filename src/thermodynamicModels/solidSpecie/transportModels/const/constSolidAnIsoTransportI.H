@@ -83,14 +83,14 @@ inline Foam::scalar Foam::constSolidAnIsoTransport<Thermo>::mu
 
 
 template<class Thermo>
-inline Foam::vector Foam::constSolidAnIsoTransport<Thermo>::alphah
+inline Foam::scalar Foam::constSolidAnIsoTransport<Thermo>::alphah
 (
     const scalar& rho,
     const scalar& e,
     const scalar& T
 ) const
 {
-    return kappa_/this->Cp(rho, e, T);
+    return mag(kappa_)/this->Cp(rho, e, T);
 }
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //

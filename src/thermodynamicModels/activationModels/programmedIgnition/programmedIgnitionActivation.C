@@ -105,7 +105,7 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
                 (
                     tIgn_[celli],
                     (useDelay ? dp.delay() : 0.0)
-                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                  + mag(this->mesh().C()[celli] - dp)/vDet_.value()
                 );
         }
     }
@@ -149,8 +149,8 @@ Foam::activationModels::programmedIgnitionActivation::delta() const
 
 void Foam::activationModels::programmedIgnitionActivation::correct()
 {
-    const cellList& cells = mesh_.cells();
-    const scalarField magSf(mag(mesh_.faceAreas()));
+    const cellList& cells = this->mesh().cells();
+    const scalarField magSf(mag(this->mesh().faceAreas()));
 
     dimensionedScalar t(this->time());
 
@@ -175,7 +175,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
             {
                 A += magSf[c[facei]];
             }
-            scalar edgeLength = mesh_.V()[celli]/A;
+            scalar edgeLength = this->mesh().V()[celli]/A;
             lambdaProgram =
                 max(t.value() - tIgn_[celli], 0.0)
                 *vDet_.value()/(1.5*edgeLength);

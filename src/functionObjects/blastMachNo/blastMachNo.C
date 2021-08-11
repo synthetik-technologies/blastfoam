@@ -50,7 +50,7 @@ Foam::functionObjects::blastMachNo::blastMachNo
 :
     fvMeshFunctionObject(name, runTime, dict),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
-    systemName_(IOobject::groupName("basicThermo", phaseName_)),
+    systemName_(IOobject::groupName(basicThermo::dictName, phaseName_)),
     resultName_(IOobject::groupName("Ma", phaseName_)),
     UName_(IOobject::groupName("U", phaseName_))
 {}

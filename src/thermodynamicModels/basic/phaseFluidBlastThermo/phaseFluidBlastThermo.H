@@ -33,7 +33,6 @@ Description
 
 SourceFiles
     phaseFluidBlastThermo.C
-    newphaseFluidBlastThermo.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -60,16 +59,14 @@ protected:
 
     // Protected data
 
-        //- Saved viscosity field
-        volScalarField& mu_;
+        //- Pressure [Pa]
+        const volScalarField& p_;
 
-        //- Initialize internal energy
-        void initialize();
 
 public:
 
     //- Runtime type information
-    TypeName("fluidBlastThermo");
+    TypeName("FluidBlast");
 
     // Declare runtime construction
 
@@ -124,6 +121,15 @@ public:
 
         // Access to derived thermodynamic variables
 
+            //- Calculate density
+            virtual void updateRho(const volScalarField&) = 0;
+
+            //- Calculate internal energy given a pressure
+            virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
+
+            //- Pressure [Pa]
+            const volScalarField& p() const;
+
             //- Return the speed of sound
             virtual tmp<volScalarField> pRhoT() const = 0;
 
@@ -145,54 +151,11 @@ public:
             //- Gamma = dpde for cell []
             virtual scalar Gammai(const label celli) const = 0;
 
+
         // Access to transport state variables
 
             //- Dynamic viscosity of mixture [kg/m/s]
             virtual tmp<volScalarField> mu() const = 0;
-
-            //- Dynamic viscosity of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> mu(const label patchi) const = 0;
-
-            //- Kinematic viscosity of mixture [m^2/s]
-            virtual tmp<volScalarField> nu() const;
-
-            //- Kinematic viscosity of mixture for patch [m^2/s]
-            virtual tmp<scalarField> nu(const label patchi) const;
-
-            //- Kinematic viscosity of mixture for cell [m^2/s]
-            virtual scalar nui(const label celli) const;
-
-
-        // Fields derived from transport state variables
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField&
-            ) const = 0;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const = 0;
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const = 0;
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

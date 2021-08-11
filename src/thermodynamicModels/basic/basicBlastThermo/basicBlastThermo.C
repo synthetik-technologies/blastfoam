@@ -60,17 +60,6 @@ Foam::basicBlastThermo::basicBlastThermo
     rho_(rho),
     T_(T),
     e_(e),
-    alpha_
-    (
-        lookupOrConstruct
-        (
-            rho.mesh(),
-            IOobject::groupName("thermo:alpha", phaseName),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            dimPressure
-        )
-    ),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}
@@ -94,7 +83,7 @@ Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
 )
 {
     dictionaryConstructorTable::iterator cstrIter =
-        lookupThermo<dictionaryConstructorTable>
+        lookupCstrIter<dictionaryConstructorTable>
         (
             dict,
             dictionaryConstructorTablePtr_
@@ -112,6 +101,16 @@ Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::UIndirectList<Foam::scalar> Foam::basicBlastThermo::cellSetScalarList
+(
+    const volScalarField& psi,
+    const labelList& cells
+) const
+{
+    return UIndirectList<scalar>(psi, cells);
+}
+
 
 Foam::word Foam::basicBlastThermo::readThermoType(const dictionary& dict)
 {
@@ -228,14 +227,15 @@ Foam::wordList Foam::basicBlastThermo::splitThermoName
         cmpts.append(newStr);
     }
 
-    wordList cmptsFinal(5);
+    wordList cmptsFinal(6);
     if (cmpts[0] == "detonating")
     {
         cmptsFinal[0] = cmpts[0];
-        cmptsFinal[1] = cmpts[1] + '/' + cmpts[5];
+        cmptsFinal[1] = cmpts[1];
         cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
         cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
         cmptsFinal[4] = cmpts[4] + '/' + cmpts[8];
+        cmptsFinal[5] = cmpts[5] + '/' + cmpts[9];
     }
     else
     {
@@ -244,6 +244,7 @@ Foam::wordList Foam::basicBlastThermo::splitThermoName
         cmptsFinal[2] = cmpts[2];
         cmptsFinal[3] = cmpts[3];
         cmptsFinal[4] = cmpts[4];
+        cmptsFinal[5] = cmpts[5];
     }
 
     return cmptsFinal;
@@ -309,7 +310,7 @@ Foam::tmp<Foam::volScalarField> Foam::basicBlastThermo::Y(const word& name) cons
 {
     return volScalarField::New
     (
-        IOobject::groupName(name, this->name()),
+        IOobject::groupName(name, name_),
         e_.mesh(),
         dimless
     );
@@ -320,7 +321,7 @@ Foam::tmp<Foam::volScalarField> Foam::basicBlastThermo::Y(const label i) const
 {
     return volScalarField::New
     (
-        IOobject::groupName("Yi" + Foam::name(i), this->name()),
+        IOobject::groupName("Yi" + Foam::name(i), name_),
         e_.mesh(),
         dimless
     );
@@ -333,18 +334,6 @@ void Foam::basicBlastThermo::addDelta
     const volScalarField& delta
 )
 {}
-
-
-const Foam::volScalarField& Foam::basicBlastThermo::alpha() const
-{
-    return alpha_;
-}
-
-
-const Foam::scalarField& Foam::basicBlastThermo::alpha(const label patchi) const
-{
-    return alpha_.boundaryField()[patchi];
-}
 
 
 // ************************************************************************* //

@@ -28,12 +28,10 @@ Class
     Foam::solidBlastThermo
 
 Description
-    Basic solid class for returning thermal conductivity (isotropic and
-    anisotropic)
+    General solid class
 
 SourceFiles
     solidBlastThermo.C
-    newSolidBlastThermo.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -42,142 +40,179 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastThermo.H"
+#include "solidThermo.H"
+#include "blastThermo.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class basicFluidThermo Declaration
+                        Class solidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 class solidBlastThermo
 :
-    public basicBlastThermo
+    virtual public blastThermo,
+    virtual public solidThermo
 {
+
+    //- Return the anisotropic Kappa in the local coordinate system
+    tmp<volSymmTensorField> KappaLocal() const;
 
 public:
 
     //- Runtime type information
     TypeName("solidBlastThermo");
 
+    //- Construct from mesh, dictionary and phase name
+    solidBlastThermo
+    (
+        const fvMesh&,
+        const dictionary& dict,
+        const word& phaseName
+    );
+
+
+    //- Declare run-time constructor selection table
     declareRunTimeSelectionTable
     (
         autoPtr,
         solidBlastThermo,
-        basicSolid,
+        dictionary,
         (
-            const word& name,
             const fvMesh& mesh,
             const dictionary& dict,
-            const bool master,
-            const word& masterName
+            const word& phaseName
         ),
-        (name, mesh, dict, master, masterName)
+        (mesh, dict, phaseName)
     );
 
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        solidBlastThermo,
-        detonatingSolid,
-        (
-            const word& name,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master,
-            const word& masterName
-        ),
-        (name, mesh, dict, master, masterName)
-    );
 
-    // Constructor
+    // Selectors
 
-        //- Construct with input field
-        solidBlastThermo
-        (
-            const word& phaseName,
-            volScalarField& p,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        //- Construct and add fields to db
-        solidBlastThermo
-        (
-            const word& phaseName,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-    //- Selector
+        //- Standard selection based on fvMesh
         static autoPtr<solidBlastThermo> New
         (
-            const word& name,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        static autoPtr<solidBlastThermo> NewBasic
-        (
-            const word& name,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
-        );
-
-        static autoPtr<solidBlastThermo> NewDetonating
-        (
-            const word& name,
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const bool master = true,
-            const word& masterName = word::null
+            const fvMesh&,
+            const dictionary&,
+            const label nPhases = 1,
+            const word& phaseName=word::null
         );
 
     //- Destructor
     virtual ~solidBlastThermo();
 
+    // Member Functions
 
-        //- Return energy source
-        virtual tmp<volScalarField> ESource() const = 0;
+    // Access functions
 
-        //- Thermal conductivity [W/m/K]
-        virtual tmp<volVectorField> Kappa() const = 0;
+        // Fields derived from thermodynamic state variables
 
-        //- Anisotropic thermal conductivity [W/m/K]
-        virtual tmp<vectorField> Kappa
-        (
-            const label patchi
-        ) const = 0;
+            //- Return non-const access to the local density field [kg/m^3]
+            virtual volScalarField& rho()
+            {
+                return blastThermo::rho();
+            }
 
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> rho() const
+            {
+                return blastThermo::rho();
+            }
 
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
+            //- Density for a patch [kg/m^3]
+            virtual tmp<scalarField> rho(const label patchi) const
+            {
+                return blastThermo::rho(patchi);
+            }
 
-        //- Kinematic viscosity of mixture [m^2/s]
-        virtual tmp<volScalarField> nu() const;
+            //- Old-time density [kg/m^3]
+            virtual tmp<volScalarField> rho0() const
+            {
+                return blastThermo::rho0();
+            }
 
-        //- Kinematic viscosity of mixture for patch [m^2/s]
-        virtual tmp<scalarField> nu(const label patchi) const;
+            using blastThermo::rho;
 
-        //- Kinematic viscosity of mixture for cell [m^2/s]
-        virtual scalar nui(const label celli) const;
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture [W/m/K]
+            virtual tmp<volScalarField> kappaEff
+            (
+                const volScalarField& alphat
+            ) const
+            {
+                return blastThermo::kappaEff(alphat);
+            }
 
-        //- Return true if thermal conductivity is isotropic
-        virtual bool isotropic() const = 0;
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture for patch [W/m/K]
+            virtual tmp<scalarField> kappaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const
+            {
+                return blastThermo::kappaEff(alphat, patchi);
+            }
+
+            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
+            virtual tmp<volScalarField> alphaEff
+            (
+                const volScalarField& alphat
+            ) const
+            {
+                return blastThermo::alphaEff(alphat);
+            }
+
+            //- Effective thermal turbulent diffusivity of mixture
+            //  for patch [kg/m/s]
+            virtual tmp<scalarField> alphaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const
+            {
+                return blastThermo::alphaEff(alphat, patchi);
+            }
+
+            using blastThermo::gamma;
+            using blastThermo::he;
+
+            //- Enthalpy/Internal energy
+            //  for given pressure and temperature [J/kg]
+            virtual tmp<volScalarField> he
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
+
+            //- Enthalpy/Internal energy for cell-set [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const labelList& cells
+            ) const = 0;
+
+            //- Enthalpy/Internal energy for patch [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const label patchi
+            ) const = 0;
+
+
+        // Access to transport state variables
+
+            //- Anisotropic thermal conductivity for patch
+            //  in the local coordinate system [W/m/K]
+            virtual tmp<symmTensorField> KappaLocal(const label patchi) const;
+
+            //- Return the heat flux [W]
+            virtual tmp<surfaceScalarField> q() const;
+
+            //- Return the source term for the energy equation
+            virtual tmp<fvScalarMatrix> divq(volScalarField& he) const;
 };
 
 

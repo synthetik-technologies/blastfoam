@@ -30,15 +30,15 @@ License
 #define multicomponentBlastThermos_H
 
 #include "multicomponentBlastThermo.H"
-#include "fluidBlastThermo.H"
-#include "solidBlastThermo.H"
+#include "phaseFluidBlastThermo.H"
+#include "phaseSolidBlastThermo.H"
 
 namespace Foam
 {
-    typedef multicomponentBlastThermo<fluidBlastThermo>
-        MulticomponentFluidBlastThermo;
-    typedef multicomponentBlastThermo<solidBlastThermo>
-        MulticomponentSolidBlastThermo;
+    typedef multicomponentBlastThermo<phaseFluidBlastThermo>
+        multicomponentPhaseFluidBlastThermo;
+    typedef multicomponentBlastThermo<phaseSolidBlastThermo>
+        multicomponentPhaseSolidBlastThermo;
 }
 
 #endif

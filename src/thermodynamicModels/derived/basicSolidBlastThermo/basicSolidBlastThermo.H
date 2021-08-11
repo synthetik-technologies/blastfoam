@@ -25,19 +25,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::basicSolidBlastThermoModel
+    Foam::basicSolidBlastThermo
 
 Description
-    Non-reacting, single phase solid thermodynamic model
+    Non-reacting, single phase solid thermodynamic
 
 SourceFiles
-    basicSolidBlastThermoModel.C
-    basicSolidBlastThermoModels.C
+    basicSolidBlastThermo.C
+    basicSolidBlastThermos.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicSolidBlastThermoModel_H
-#define basicSolidBlastThermoModel_H
+#ifndef basicSolidBlastThermo_H
+#define basicSolidBlastThermo_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,11 +47,11 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class basicSolidBlastThermoModel Declaration
+                           Class basicSolidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
-class basicSolidBlastThermoModel
+class basicSolidBlastThermo
 :
     public Thermo
 {
@@ -61,17 +61,18 @@ public:
     TypeName("basicSolidBlastThermo");
 
     // Constructor
-    basicSolidBlastThermoModel
+    basicSolidBlastThermo
     (
         const word& phaseName,
-        const fvMesh& mesh,
+        volScalarField& rho,
+        volScalarField& e,
+        volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
     //- Destructor
-    virtual ~basicSolidBlastThermoModel();
+    virtual ~basicSolidBlastThermo();
 
 
     // Member Functions
@@ -98,12 +99,17 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Calculate internal energy
+        virtual tmp<volScalarField> calce(const volScalarField&) const;
+
         //- Calculate density
-        virtual void updateRho()
-        {}
+        virtual void updateRho();
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
+
+        //- Thermal conductivity [W/m/K]
+        virtual tmp<volScalarField> kappa() const;
 
         //- Thermal conductivity [W/m/K]
         virtual tmp<volVectorField> Kappa() const;
@@ -126,29 +132,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define addSolidThermo(Transport, Thermo, EoS)                              \
-    typedef basicSolidBlastThermoModel                                           \
-        <                                                                   \
-            eBlastThermo                                                    \
-            <                                                               \
-                solidBlastThermo,                                           \
-                Transport##Thermo##EoS##blastSpecie                         \
-            >                                                               \
-        > basic##Transport##Thermo##EoS;                                    \
-    defineTemplateTypeNameAndDebugWithName                                  \
-    (                                                                       \
-        basic##Transport##Thermo##EoS,                                      \
-        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
-        0                                                                   \
-    );                                                                      \
-    addToRunTimeSelectionTable                                              \
-    (                                                                       \
-        solidBlastThermo,                                                   \
-        basic##Transport##Thermo##EoS,                                      \
-        basicSolid                                                          \
-    );
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

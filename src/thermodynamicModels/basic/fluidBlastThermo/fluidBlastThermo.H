@@ -55,13 +55,15 @@ namespace Foam
 
 class fluidBlastThermo
 :
-    public basicThermo::implementation,
-    public fluidThermo::implementation,
-    public blastThermo
+    public blastThermo,
+    public fluidThermo
 {
 protected:
 
     // Protected data
+
+        //- Pressure [Pa]
+        volScalarField& p_;
 
         //- Dynamic viscosity [kg/m/s]
         volScalarField mu_;
@@ -112,27 +114,17 @@ public:
 
     // Member Functions
 
-        //- Return the name of the thermo physics
-        virtual word thermoName() const
-        {
-            return blastThermo::thermoName();
-        }
-
-        //- Return true if the equation of state is incompressible
-        //  i.e. rho != f(p)
-        virtual bool incompressible() const
-        {
-            return false;
-        }
-
-        //- Return true if the equation of state is isochoric
-        //  i.e. rho = const
-        virtual bool isochoric() const
-        {
-            return false;
-        }
-
     // Access functions
+
+        // Access to thermodynamic state variables
+
+            //- Pressure [Pa]
+            //  Non-const access allowed for transport equations
+            virtual volScalarField& p();
+
+            //- Pressure [Pa]
+            virtual const volScalarField& p() const;
+
 
         // Fields derived from thermodynamic state variables
 
@@ -144,22 +136,69 @@ public:
             //- Compressibility [s^2/m^2]
             virtual const volScalarField& psi() const
             {
-                return blastThermo::psi();
+                NotImplemented;
+                return rho();
             }
 
-
-            //- Enthalpy/Internal energy [J/kg]
-            //  Non-const access allowed for transport equations
-            virtual const volScalarField& he() const
+            //- Gamma = Cp/Cv []
+            virtual tmp<volScalarField> gamma() const
             {
-                return blastThermo::he();
+                return blastThermo::gamma();
             }
 
-            //- Enthalpy/Internal energy [J/kg]
-            virtual volScalarField& he()
+            //- Gamma = Cp/Cv for patch []
+            virtual tmp<scalarField> gamma
+            (
+                const scalarField& T,
+                const label patchi
+            ) const
             {
-                return blastThermo::he();
+                return blastThermo::gamma(T, patchi);
             }
+
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture [W/m/K]
+            virtual tmp<volScalarField> kappaEff
+            (
+                const volScalarField& alphat
+            ) const
+            {
+                return blastThermo::kappaEff(alphat);
+            }
+
+            //- Effective thermal turbulent diffusivity for temperature
+            //  of mixture for patch [W/m/K]
+            virtual tmp<scalarField> kappaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const
+            {
+                return blastThermo::kappaEff(alphat, patchi);
+            }
+
+            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
+            virtual tmp<volScalarField> alphaEff
+            (
+                const volScalarField& alphat
+            ) const
+            {
+                return blastThermo::alphaEff(alphat);
+            }
+
+            //- Effective thermal turbulent diffusivity of mixture
+            //  for patch [kg/m/s]
+            virtual tmp<scalarField> alphaEff
+            (
+                const scalarField& alphat,
+                const label patchi
+            ) const
+            {
+                return blastThermo::alphaEff(alphat, patchi);
+            }
+
+            using blastThermo::gamma;
+            using blastThermo::he;
 
             //- Enthalpy/Internal energy
             //  for given pressure and temperature [J/kg]

@@ -35,24 +35,20 @@ template<class BasicThermo>
 Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
 (
     const word& name,
-    volScalarField& p,
     volScalarField& rho,
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
     BasicThermo
     (
         name,
-        p,
         rho,
         e,
         T,
         dict,
-        master,
         masterName
     ),
     species_(dict.lookup("species")),
@@ -67,7 +63,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", rho.mesh(), 0.0));
 
     const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
@@ -186,24 +182,20 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
 (
     const speciesTable& species,
     const word& name,
-    volScalarField& p,
     volScalarField& rho,
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
     BasicThermo
     (
         name,
-        p,
         rho,
         e,
         T,
         dict,
-        master,
         masterName
     ),
     species_(species),
@@ -213,7 +205,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", p.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", rho.mesh(), 0.0));
 
     const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
@@ -346,7 +338,13 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
         )
     )
     {
-        alphaRhoPhiName_ = IOobject::groupName("alphaRhoPhi", this->name_);
+        alphaRhoPhiPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            (
+                IOobject::groupName("alphaRhoPhi", this->name_)
+            )
+        );
     }
     else if
     (
@@ -356,11 +354,23 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
         )
     )
     {
-        alphaRhoPhiName_ = IOobject::groupName("alphaRhoPhi", this->masterName_);
+        alphaRhoPhiPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            (
+                IOobject::groupName("alphaRhoPhi", this->masterName_)
+            )
+        );
     }
     else
     {
-        alphaRhoPhiName_ = IOobject::groupName("rhoPhi", this->masterName_);
+        alphaRhoPhiPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            (
+                IOobject::groupName("rhoPhi", this->masterName_)
+            )
+        );
     }
 
     if
@@ -371,7 +381,13 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
         )
     )
     {
-        alphaRhoName_ = IOobject::groupName("alphaRho", this->name_);
+        alphaRhoPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<volScalarField>
+            (
+                IOobject::groupName("alphaRho", this->name_)
+            )
+        );
     }
     else if
     (
@@ -381,11 +397,23 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
         )
     )
     {
-        alphaRhoName_ = IOobject::groupName("alphaRho", this->masterName_);
+        alphaRhoPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<volScalarField>
+            (
+                IOobject::groupName("alphaRho", this->masterName_)
+            )
+        );
     }
     else
     {
-        alphaRhoName_ = IOobject::groupName("rho", this->masterName_);
+        alphaRhoPtr_.set
+        (
+            &this->rho_.mesh().template lookupObject<volScalarField>
+            (
+                IOobject::groupName("rho", this->masterName_)
+            )
+        );
     }
 }
 
@@ -409,21 +437,16 @@ void Foam::multicomponentBlastThermo<BasicThermo>::addDelta
 }
 
 template<class BasicThermo>
+void Foam::multicomponentBlastThermo<BasicThermo>::update()
+{}
+
+template<class BasicThermo>
 void Foam::multicomponentBlastThermo<BasicThermo>::solve()
 {
     const dimensionedScalar& dT(this->rho_.mesh().time().deltaT());
     volScalarField YTot(volScalarField::New("YTot", this->rho_.mesh(), 0.0));
-    const surfaceScalarField& alphaRhoPhi
-    (
-        this->rho_.mesh().template lookupObject<surfaceScalarField>
-        (
-            alphaRhoPhiName_
-        )
-    );
-    const volScalarField& alphaRho
-    (
-        this->rho_.mesh().template lookupObject<volScalarField>(alphaRhoName_)
-    );
+    const surfaceScalarField& alphaRhoPhi(alphaRhoPhiPtr_());
+    const volScalarField& alphaRho(alphaRhoPtr_());
 
     forAll(Ys_, i)
     {
@@ -471,6 +494,11 @@ void Foam::multicomponentBlastThermo<BasicThermo>::solve()
         }
     }
 }
+
+
+template<class BasicThermo>
+void Foam::multicomponentBlastThermo<BasicThermo>::postUpdate()
+{}
 
 
 // ************************************************************************* //

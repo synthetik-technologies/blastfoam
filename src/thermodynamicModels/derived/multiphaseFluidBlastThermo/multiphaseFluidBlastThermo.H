@@ -49,6 +49,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "phaseFluidBlastThermo.H"
 #include "fluidBlastThermo.H"
 
 namespace Foam
@@ -67,14 +68,14 @@ class multiphaseFluidBlastThermo
         //- Names of phases
         wordList phases_;
 
-        //- Equation of state for phases
-        PtrList<fluidBlastThermo> thermos_;
-
         //- Volume fraction of phases
         PtrList<volScalarField> volumeFractions_;
 
         //- Volume weighted density of phases
         PtrList<volScalarField> rhos_;
+
+        //- Equation of state for phases
+        PtrList<phaseFluidBlastThermo> thermos_;
 
         //- Volume weighted density of phases
         PtrList<volScalarField> alphaRhos_;
@@ -85,8 +86,65 @@ class multiphaseFluidBlastThermo
         //- Mass fluxes
         PtrList<surfaceScalarField> alphaRhoPhis_;
 
+        //- Residual volume fraction
+        dimensionedScalar residualAlpha_;
+
         //- Pointer to total volume fraction field
-        const volScalarField* sumVfPtr_;
+        UautoPtr<const volScalarField> sumVfPtr_;
+
+        //- Return the field normalized by the sumVfPtr field if it is set
+        tmp<volScalarField> normalise(tmp<volScalarField>& tf) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf/max(sumVfPtr_(), residualAlpha_)
+              : tf;
+        }
+
+        //- Return the field normalized by the sumVfPtr field if it is set
+        tmp<scalarField> normalise(tmp<scalarField>& tf, const label patchi) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf/max(sumVfPtr_->boundaryField()[patchi], residualAlpha_.value())
+              : tf;
+        }
+
+        //- Return the field normalized by the sumVfPtr field if it is set
+        tmp<scalarField> normalise
+        (
+            tmp<scalarField>& tf,
+            const labelList& cells
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? tf
+                /max
+                (
+                    UIndirectList<scalar>(sumVfPtr_(), cells)(),
+                    residualAlpha_.value()
+                )
+              : tf;
+        }
+
+        //- Return a cell normalized by the sumVfPtr field if it is set
+        scalar normalise(const scalar f, const label celli) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? f/max(sumVfPtr_()[celli], residualAlpha_.value())
+              : f;
+        }
+
+        //- Return the field normalized by the sumVfPtr field if it is set
+        void normalise(volScalarField& f) const
+        {
+            if (sumVfPtr_.valid())
+            {
+                f /= max(sumVfPtr_(), residualAlpha_);
+            }
+        }
 
 
 public:
@@ -95,14 +153,9 @@ public:
     // Constructor
     multiphaseFluidBlastThermo
     (
-        const word& name,
-        volScalarField& p,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
-        const bool master,
-        const word& masterName = word::null
+        const word& phaseName
     );
 
     //- Initialize models
@@ -130,11 +183,6 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
 
     // Access functions
 
@@ -166,154 +214,202 @@ public:
         }
 
         //- Non-const access to thermo model phasei
-        virtual fluidBlastThermo& thermo(const label phasei)
+        virtual basicBlastThermo& thermo(const label phasei)
         {
             return thermos_[phasei];
         }
 
         //- Const access to thermo model phasei
-        virtual const fluidBlastThermo& thermo(const label phasei) const
+        virtual const basicBlastThermo& thermo(const label phasei) const
         {
             return thermos_[phasei];
         }
 
 
-    //- Thermodynamic and transport functions
+    // Member functions
 
-        //- Calculate density
-        virtual void updateRho();
+        // Fields derived from thermodynamic state variables
 
-        //- Calculate thermodynamic pressure for a patch
-        virtual tmp<scalarField> calcP(const label patchi) const;
+            //- Recompute the density
+            virtual void updateRho(const volScalarField&);
 
-        //- Calculate thermodynamic pressure
-        virtual scalar calcPi(const label celli) const;
+            //- Return the speed of sound
+            virtual tmp<volScalarField> speedOfSound() const;
 
-        //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const;
+            //- Return the speed of sound for patchi
+            virtual tmp<scalarField> speedOfSound(const label patchi) const;
 
-        //- Calculate temperature
-        virtual tmp<volScalarField> THE() const;
+            //- Gamma = dpde []
+            virtual tmp<volScalarField> Gamma() const;
 
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> THE
-        (
-            const scalarField& T,
-            const scalarField& e,
-            const label patchi
-        ) const;
+            //- Gamma = dpde for patch []
+            virtual tmp<scalarField> Gamma(const label patchi) const;
 
-        //- Calculate internal energy for celli
-        virtual scalar TRhoEi
-        (
-            const scalar& T,
-            const scalar& e,
-            const label celli
-        ) const;
+            //- Gamma = dpde for cell []
+            virtual scalar Gammai(const label celli) const;
 
-        //- Calculate internal energy
-        virtual tmp<volScalarField> E() const;
 
-        //- Calculate internal energy
-        virtual tmp<volScalarField> e
-        (
-            const volScalarField& rho,
-            const volScalarField& e,
-            const volScalarField& T
-        ) const;
+        //- Thermodynamic and transport functions
 
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> e
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
+            using fluidBlastThermo::he;
 
-        //- Calculate internal energy for patchi
-        virtual tmp<scalarField> e
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const labelList& faceCells
-        ) const;
+            //- Enthalpy/Internal energy
+            //  for given pressure and temperature [J/kg]
+            virtual tmp<volScalarField> he
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
-        //- Return molecular weight
-        virtual tmp<volScalarField> W() const;
+            //- Enthalpy/Internal energy for cell-set [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const labelList& cells
+            ) const;
 
-        //- Return molecular weight
-        virtual tmp<scalarField> W(const label patchi) const;
+            //- Enthalpy/Internal energy for patch [J/kg]
+            virtual tmp<scalarField> he
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
 
-        //- Return molecular weight
-        virtual scalar Wi(const label celli) const;
+            //- Sensible enthalpy [J/kg/K]
+            virtual tmp<volScalarField> hs() const;
 
-        //- Mie Gruniesen coefficient
-        virtual tmp<volScalarField> Gamma() const;
+            //- Sensible enthalpy
+            //  for given pressure and temperature [J/kg]
+            virtual tmp<volScalarField> hs
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
-        //- Mie Gruniesen coefficient for a patch
-        virtual tmp<scalarField> Gamma(const label patchi) const;
+            //- Sensible enthalpy for patch [J/kg/K]
+            virtual tmp<scalarField> hs
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
 
-        //- Mie Gruniesen coefficient for a cell
-        virtual scalar Gammai(const label celli) const;
+            //- Sensible enthalpy for cell-set [J/kg]
+            virtual tmp<scalarField> hs
+            (
+                const scalarField& T,
+                const labelList& cells
+            ) const;
 
-        //- Heat capacity at constant pressure of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cp() const;
+            //- Absolute enthalpy [J/kg/K]
+            virtual tmp<volScalarField> ha() const;
 
-        //- Heat capacity at constant pressure of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cp(const label patchi) const;
+            //- Absolute enthalpy
+            //  for given pressure and temperature [J/kg]
+            virtual tmp<volScalarField> ha
+            (
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
-        //- Heat capacity at constant pressure of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cp
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
+            //- Absolute enthalpy for patch [J/kg/K]
+            virtual tmp<scalarField> ha
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
 
-        //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-        virtual scalar Cpi(const label celli) const;
+            //- Absolute enthalpy for cell-set [J/kg]
+            virtual tmp<scalarField> ha
+            (
+                const scalarField& T,
+                const labelList& cells
+            ) const;
 
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const;
+            //- Enthalpy of formation [J/kg]
+            virtual tmp<volScalarField> hc() const;
 
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv(const label patchi) const;
+            //- Flame temperature [K]
+            virtual tmp<volScalarField> flameT() const;
 
-        //- Heat capacity at constant volume of mixture for a patch [J/kg/K]
-        virtual tmp<scalarField> Cv
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
+            //- Temperature from enthalpy/internal energy
+            virtual tmp<volScalarField> THE() const;
 
-        //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-        virtual scalar Cvi(const label celli) const;
+            //- Temperature from enthalpy/internal energy
+            virtual tmp<volScalarField> THE
+            (
+                const volScalarField& h,
+                const volScalarField& p,
+                const volScalarField& T0    // starting temperature
+            ) const;
 
-        //- Specific heat ratio
-        virtual tmp<volScalarField> CpByCv() const;
+            //- Temperature from enthalpy/internal energy for cell-set
+            virtual tmp<scalarField> THE
+            (
+                const scalarField& he,
+                const scalarField& T0,      // starting temperature
+                const labelList& cells
+            ) const;
 
-        //- Specific heat ratio for a patch
-        virtual tmp<scalarField> CpByCv(const label patchi) const;
+            //- Temperature from enthalpy/internal energy for patch
+            virtual tmp<scalarField> THE
+            (
+                const scalarField& he,
+                const scalarField& T0,      // starting temperature
+                const label patchi
+            ) const;
 
-        //- Specific heat ratio for patchi
-        virtual tmp<scalarField> CpByCv
-        (
-            const scalarField& rho,
-            const scalarField& e,
-            const scalarField& T,
-            const label patchi
-        ) const;
+            //- Temperature from enthalpy/internal energy for celli
+            virtual scalar THEi
+            (
+                const scalar he,
+                const scalar T0,
+                const label celli
+            ) const;
 
-        //- Heat of formation
-        virtual tmp<volScalarField> Hf() const;
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual tmp<volScalarField> Cp() const;
 
-        //- Heat of formation
-        virtual tmp<volScalarField> flameT() const;
+            //- Heat capacity at constant pressure for patch [J/kg/K]
+            virtual tmp<scalarField> Cp
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
+
+            //- Heat capacity at constant pressure for a cell [J/kg/K]
+            virtual scalar Cpi(const label celli) const;
+
+            //- Heat capacity at constant volume [J/kg/K]
+            virtual tmp<volScalarField> Cv() const;
+
+            //- Heat capacity at constant volume for patch [J/kg/K]
+            virtual tmp<scalarField> Cv
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
+
+            //- Heat capacity at constant volume for a cell [J/kg/K]
+            virtual scalar Cvi(const label celli) const;
+
+            //- Heat capacity at constant pressure/volume [J/kg/K]
+            virtual tmp<volScalarField> Cpv() const;
+
+            //- Heat capacity at constant pressure/volume for patch [J/kg/K]
+            virtual tmp<scalarField> Cpv
+            (
+                const scalarField& T,
+                const label patchi
+            ) const;
+
+             //- Molecular weight [kg/kmol]
+            virtual tmp<volScalarField> W() const;
+
+            //- Molecular weight for patch [kg/kmol]
+            virtual tmp<scalarField> W(const label patchi) const;
+
+            //- Molecular weight for cell [kg/kmol]
+            virtual scalar Wi(const label celli) const;
 };
 
 

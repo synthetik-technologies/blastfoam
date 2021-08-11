@@ -133,7 +133,30 @@ void Foam::twoPhaseFluidBlastThermo::initializeModels()
 
     // Update total density
     this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
-//     this->initialize();
+
+    if (!e_.typeHeaderOk<volScalarField>(true))
+    {
+        volScalarField e
+        (
+            thermo1_->calce(this->p())*volumeFraction_
+          + thermo2_->calce(this->p())*(1.0 - volumeFraction_)
+        );
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+        e_.correctBoundaryConditions();
+    }
+    this->correct();
+
+
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -166,10 +189,10 @@ void Foam::twoPhaseFluidBlastThermo::update()
 }
 
 
-void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
+void Foam::twoPhaseFluidBlastThermo::updateRho()
 {
-    thermo1_->updateRho(p);
-    thermo2_->updateRho(p);
+    thermo1_->updateRho(this->p());
+    thermo2_->updateRho(this->p());
     this->rho_ =
         volumeFraction_*thermo1_->rho()
       + (1.0 - volumeFraction_)*thermo2_->rho();
@@ -563,27 +586,6 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::Cvi(const label celli) const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::gamma() const
-{
-    return
-        volumeFraction_*thermo1_->gamma()
-      + (1.0 - volumeFraction_)*thermo2_->gamma();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::gamma
-(
-    const scalarField& T,
-    const label patchi
-) const
-{
-    const scalarField& vf(volumeFraction_.boundaryField()[patchi]);
-    return
-        vf*thermo1_->gamma(T, patchi)
-      + (1.0 - vf)*thermo2_->gamma(T, patchi);
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::Cpv() const
 {
     return
@@ -631,102 +633,5 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::Wi(const label celli) const
         volumeFraction_[celli]*thermo1_->Wi(celli)
       + (1.0 - volumeFraction_[celli])*thermo2_->Wi(celli);
 }
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::kappa() const
-{
-    return
-        volumeFraction_*thermo1_->kappa()
-      + (1.0 - volumeFraction_)*thermo2_->kappa();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::kappa
-(
-    const label patchi
-) const
-{
-    const scalarField& vf(volumeFraction_.boundaryField()[patchi]);
-    return
-        vf*thermo1_->kappa(patchi)
-      + (1.0 - vf)*thermo2_->kappa(patchi);
-}
-
-
-Foam::scalar Foam::twoPhaseFluidBlastThermo::kappai(const label celli) const
-{
-    return
-        volumeFraction_[celli]*thermo1_->kappai(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->kappai(celli);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::alphahe() const
-{
-    return
-        volumeFraction_*thermo1_->alphahe()
-      + (1.0 - volumeFraction_)*thermo2_->alphahe();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::alphahe
-(
-    const label patchi
-) const
-{
-    const scalarField& vf(volumeFraction_.boundaryField()[patchi]);
-    return
-        vf*thermo1_->alphahe(patchi)
-      + (1.0 - vf)*thermo2_->alphahe(patchi);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return
-        volumeFraction_*thermo1_->kappaEff(alphat)
-      + (1.0 - volumeFraction_)*thermo2_->kappaEff(alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    const scalarField& vf(volumeFraction_.boundaryField()[patchi]);
-    return
-        vf*thermo1_->kappaEff(alphat, patchi)
-      + (1.0 - vf)*thermo2_->kappaEff(alphat, patchi);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return
-        volumeFraction_*thermo1_->alphaEff(alphat)
-      + (1.0 - volumeFraction_)*thermo2_->alphaEff(alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    const scalarField& vf(volumeFraction_.boundaryField()[patchi]);
-    return
-        vf*thermo1_->alphaEff(alphat, patchi)
-      + (1.0 - vf)*thermo2_->alphaEff(alphat, patchi);
-}
-
 
 // ************************************************************************* //

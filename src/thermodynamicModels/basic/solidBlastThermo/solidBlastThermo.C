@@ -27,133 +27,159 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "solidBlastThermo.H"
+#include "basicBlastThermo.H"
+#include "fvmLaplacian.H"
+#include "fvcLaplacian.H"
+#include "coordinateSystem.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+/* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
+
 namespace Foam
 {
     defineTypeNameAndDebug(solidBlastThermo, 0);
-    defineRunTimeSelectionTable(solidBlastThermo, basicSolid);
-    defineRunTimeSelectionTable(solidBlastThermo, detonatingSolid);
+    defineRunTimeSelectionTable(solidBlastThermo, dictionary);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::solidBlastThermo::solidBlastThermo
 (
-    const word& name,
     const fvMesh& mesh,
     const dictionary& dict,
-    const bool master,
-    const word& masterName
+    const word& phaseName
 )
 :
-    basicBlastThermo
-    (
-        name,
-        mesh,
-        dict,
-        master,
-        masterName
-    )
+    blastThermo(mesh, dict, phaseName)
 {}
 
 
-Foam::solidBlastThermo::solidBlastThermo
+// * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
 (
-    const word& phaseName,
-    volScalarField& p,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
-    const bool master,
-    const word& masterName
+    const label nPhases,
+    const word& phaseName
 )
-:
-    basicBlastThermo
-    (
-        phaseName,
-        p,
-        rho,
-        e,
-        T,
-        dict,
-        master,
-        masterName
-    )
-{}
+{
+    word solidType("singlePhaseSolid");
+
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(solidType);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown number of solids " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return cstrIter()(mesh, dict, phaseName);
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::solidBlastThermo::~solidBlastThermo()
 {}
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::mu() const
+
+Foam::tmp<Foam::volSymmTensorField> Foam::solidBlastThermo::KappaLocal() const
 {
-    return tmp<volScalarField>
+    const fvMesh& mesh = this->T_.mesh();
+
+    const coordinateSystem coordinates
     (
-        new volScalarField
+        coordinateSystem::New(mesh, this->properties())
+    );
+
+    const tmp<volVectorField> tKappa(Kappa());
+    const volVectorField& Kappa = tKappa();
+
+    tmp<volSymmTensorField> tKappaLocal
+    (
+        volSymmTensorField::New
         (
-            IOobject
-            (
-                "mu",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            e_.mesh(),
-            dimensionedScalar("0", dimDynamicViscosity, 0.0)
+            "KappaLocal",
+            mesh,
+            dimensionedSymmTensor(Kappa.dimensions(), Zero)
         )
     );
+    volSymmTensorField& KappaLocal = tKappaLocal.ref();
+
+    KappaLocal.primitiveFieldRef() =
+        coordinates.R(mesh.C()).transformVector(Kappa);
+
+    forAll(KappaLocal.boundaryField(), patchi)
+    {
+        KappaLocal.boundaryFieldRef()[patchi] =
+            coordinates.R(mesh.boundary()[patchi].Cf())
+           .transformVector(Kappa.boundaryField()[patchi]);
+    }
+
+    return tKappaLocal;
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::solidBlastThermo::mu(const label patchi) const
+Foam::tmp<Foam::symmTensorField> Foam::solidBlastThermo::KappaLocal
+(
+    const label patchi
+) const
 {
-    return tmp<scalarField>
+    const fvMesh& mesh = this->T_.mesh();
+
+    const coordinateSystem coordinates
     (
-        new scalarField(this->rho_.boundaryField()[patchi].size(), 0.0)
+        coordinateSystem::New(mesh, this->properties())
     );
+
+    return
+        coordinates.R(mesh.boundary()[patchi].Cf())
+       .transformVector(Kappa(patchi));
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
+Foam::tmp<Foam::surfaceScalarField> Foam::solidBlastThermo::q() const
 {
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "nu",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            this->rho_.mesh(),
-            dimensionedScalar("0", dimViscosity, 0.0)
-        )
-    );
+    const fvMesh& mesh = this->T_.mesh();
+    mesh.setFluxRequired(this->T_.name());
+
+    return
+      - (
+            isotropic()
+          ? fvm::laplacian(this->kappa(), this->T_)().flux()
+          : fvm::laplacian(KappaLocal(), this->T_)().flux()
+        )/mesh.magSf();
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::solidBlastThermo::nu(const label patchi) const
+Foam::tmp<Foam::fvScalarMatrix> Foam::solidBlastThermo::divq
+(
+    volScalarField& e
+) const
 {
-    return tmp<scalarField>
-    (
-        new scalarField(this->rho_.boundaryField()[patchi].size(), 0.0)
-    );
+    return
+      - (
+            isotropic()
+          ?   fvc::laplacian(this->kappa(), this->T_)
+            + correction(fvm::laplacian(this->alpha(), e))
+          :   fvc::laplacian(KappaLocal(), this->T_)
+            + correction
+              (
+                  fvm::laplacian
+                  (
+                      KappaLocal()/this->Cv(),
+                      e,
+                      "laplacian(" + this->alpha().name() + ",e)"
+                  )
+              )
+        );
 }
 
-
-Foam::scalar Foam::solidBlastThermo::nui(const label) const
-{
-    return 0.0;
-}
 
 // ************************************************************************* //

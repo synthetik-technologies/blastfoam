@@ -152,7 +152,7 @@ public:
         // Fields derived from thermodynamic state variables
 
             //- Recompute the density
-            virtual void updateRho(const volScalarField&);
+            virtual void updateRho();
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const;
@@ -318,16 +318,6 @@ public:
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar Cvi(const label celli) const;
 
-            //- Gamma = Cp/Cv []
-            virtual tmp<volScalarField> gamma() const;
-
-            //- Gamma = Cp/Cv for patch []
-            virtual tmp<scalarField> gamma
-            (
-                const scalarField& T,
-                const label patchi
-            ) const;
-
             //- Heat capacity at constant pressure/volume [J/kg/K]
             virtual tmp<volScalarField> Cpv() const;
 
@@ -346,53 +336,6 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar Wi(const label celli) const;
-
-
-    // Fields derived from transport state variables
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> kappa() const;
-
-            //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappa(const label patchi) const;
-
-            //- Thermal diffusivity for temperature of mixture for cell [W/m/K]
-            virtual scalar kappai(const label cell) const;
-
-            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphahe() const;
-
-            //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-            virtual tmp<scalarField> alphahe(const label patchi) const;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture [W/m/K]
-            virtual tmp<volScalarField> kappaEff
-            (
-                const volScalarField&
-            ) const;
-
-            //- Effective thermal turbulent diffusivity for temperature
-            //  of mixture for patch [W/m/K]
-            virtual tmp<scalarField> kappaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const;
-
-            //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-            virtual tmp<volScalarField> alphaEff
-            (
-                const volScalarField& alphat
-            ) const;
-
-            //- Effective thermal turbulent diffusivity of mixture
-            //  for patch [kg/m/s]
-            virtual tmp<scalarField> alphaEff
-            (
-                const scalarField& alphat,
-                const label patchi
-            ) const;
 };
 
 

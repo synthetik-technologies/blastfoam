@@ -26,57 +26,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "phaseFluidBlastThermo.H"
 #include "multicomponentFluidBlastThermo.H"
-#include "fluidThermoModelTypes.H"
+#include "mixtureBlastThermo.H"
+#include "forBlastGases.H"
+#include "makeBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
+#include "tabulatedThermoEOS.H"
 
 namespace Foam
 {
-    addMulticomponentFluidThermo
+    forCoeffGases
     (
-        constTransport,
-        eConst,
-        idealGas
-    );
-    addMulticomponentFluidThermo
-    (
-        sutherlandTransport,
-        eConst,
-        idealGas
-    );
-
-    addMulticomponentFluidThermos
-    (
-        constTransport,
-        perfectGas
-    );
-    addMulticomponentFluidThermos
-    (
-        sutherlandTransport,
-        perfectGas
-    );
-    addMulticomponentFluidThermo
-    (
-        constTransport,
-        janaf,
-        perfectGas
-    );
-    addMulticomponentFluidThermo
-    (
-        sutherlandTransport,
-        janaf,
-        perfectGas
-    );
-
-    addMulticomponentFluidThermos
-    (
-        constTransport,
-        AbelNobel
-    );
-    addMulticomponentFluidThermos
-    (
-        sutherlandTransport,
-        AbelNobel
+        makeThermo,
+        phaseFluidBlastThermo,
+        multicomponentFluidBlastThermo,
+        mixtureBlastThermo
     );
 }
-
+// ************************************************************************* //

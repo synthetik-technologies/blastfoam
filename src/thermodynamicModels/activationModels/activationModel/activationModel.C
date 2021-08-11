@@ -204,7 +204,7 @@ Foam::activationModel::activationModel
           : IOobject::groupName("alphaRhoPhi", phaseName)
         )
     ),
-    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName_)),
+    alphaRhoPhi_(mesh.lookupObject<surfaceScalarField>(alphaRhoPhiName_)),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
     const volScalarField& alpha
@@ -346,7 +346,7 @@ void Foam::activationModel::solve()
     volScalarField lambdaOld(lambda_);
     this->storeAndBlendOld(lambdaOld, false);
 
-    dimensionedScalar dT(this->mesh_.time().deltaT());
+    dimensionedScalar dT(this->mesh().time().deltaT());
     dimensionedScalar smallRho("small", dimDensity, 1e-10);
 
     volScalarField deltaLambda(this->delta());

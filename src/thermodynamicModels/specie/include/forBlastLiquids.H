@@ -33,27 +33,27 @@ License
 
 #include "thermoModel.H"
 
-#include "hConst.H"
-#include "eConst.H"
-#include "janaf.H"
+#include "hConstBlastThermo.H"
+#include "eConstBlastThermo.H"
+#include "janafBlastThermo.H"
 
 #include "Tait.H"
 #include "BWR.H"
 #include "linearTillotson.H"
 #include "Tillotson.H"
 
-#include "blastSpecie.H"
-#include "rBlastSpecie.H"
+#include "specieBlast.H"
+#include "rspecieBlast.H"
 
 #include "forBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define forLiquidEqns(Mu, Cp, Macro, Args...)                               \
-    forThermo(Mu, Cp, Tait, blastSpecie, Macro, Args);                      \
-    forThermo(Mu, Cp, BWR, blastSpecie, Macro, Args);                       \
-    forThermo(Mu, Cp, linearTillotson, blastSpecie, Macro, Args);                      \
-    forThermo(Mu, Cp, Tillotson, blastSpecie, Macro, Args);                 \
+    forThermo(Mu, Cp, Tait, specieBlast, Macro, Args);                      \
+    forThermo(Mu, Cp, BWR, specieBlast, Macro, Args);                       \
+    forThermo(Mu, Cp, linearTillotson, specieBlast, Macro, Args);                      \
+    forThermo(Mu, Cp, Tillotson, specieBlast, Macro, Args);                 \
 
 
 #define forLiquidTransports(Macro, Args...)                                 \

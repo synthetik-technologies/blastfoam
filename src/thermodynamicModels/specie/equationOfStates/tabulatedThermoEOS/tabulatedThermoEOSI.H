@@ -189,6 +189,30 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ea
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::Hs
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return Es(rho, e, T) + pTable_.lookup(rho, e)/max(rho, 1e-10);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ha
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return Ea(rho, e, T) + pTable_.lookup(rho, e)/max(rho, 1e-10);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Hf() const
 {
     NotImplemented;

@@ -81,9 +81,6 @@ protected:
         //- Reference to internal energy
         volScalarField& e_;
 
-        //- Thermal diffusivity [kg/m/s]
-        volScalarField& alpha_;
-
         //- Residual volume fraction
         dimensionedScalar residualAlpha_;
 
@@ -91,21 +88,39 @@ protected:
         dimensionedScalar residualRho_;
 
         //- Generic lookup for thermodynamics package thermoTypeName
-        template<class Table>
-        static typename Table::iterator lookupThermo
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
         (
+            const dictionary& thermoTypeDict,
             Table* tablePtr,
+            const int nCmpts,
             const char* cmptNames[],
             const word& thermoTypeName
         );
 
         //- Generic lookup for each of the related thermodynamics packages
-        template<class Table>
-        static typename Table::iterator lookupThermo
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
         (
             const dictionary& thermoDict,
             Table* tablePtr
         );
+
+        //- Generic lookup for each of the related thermodynamics packages
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoDict,
+            Table* tablePtr,
+            const word& state
+        );
+
+        //- Return a subList
+        UIndirectList<scalar> cellSetScalarList
+        (
+            const volScalarField& psi,
+            const labelList& cells
+        ) const;
 
 public:
 
@@ -290,9 +305,6 @@ public:
         //- Correct thermodynamic fields
         virtual void correct() = 0;
 
-        //- Calculate density
-        virtual void updateRho(const volScalarField&) = 0;
-
         //- Names of species
         virtual speciesTable species() const
         {
@@ -454,16 +466,6 @@ public:
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar Cvi(const label celli) const = 0;
 
-            //- Gamma = Cp/Cv []
-            virtual tmp<volScalarField> gamma() const = 0;
-
-            //- Gamma = Cp/Cv for patch []
-            virtual tmp<scalarField> gamma
-            (
-                const scalarField& T,
-                const label patchi
-            ) const = 0;
-
             //- Heat capacity at constant pressure/volume [J/kg/K]
             virtual tmp<volScalarField> Cpv() const = 0;
 
@@ -487,26 +489,7 @@ public:
     // Transport variables
 
         //- Return the thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual const volScalarField& alpha() const;
-
-        //- Return the thermal diffusivity for enthalpy of mixture for
-        //  patch [kg/m/s]
-        virtual const scalarField& alpha(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture [W/m/K]
-        virtual tmp<volScalarField> kappa() const = 0;
-
-        //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappa(const label patchi) const = 0;
-
-        //- Thermal diffusivity for temperature of mixture for cell [W/m/K]
-        virtual scalar kappai(const label cell) const = 0;
-
-        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphahe() const = 0;
-
-        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alphahe(const label patchi) const = 0;
+        virtual tmp<volScalarField> alpha() const = 0;
 
         //- Read residual values
         virtual void read(const dictionary& dict)

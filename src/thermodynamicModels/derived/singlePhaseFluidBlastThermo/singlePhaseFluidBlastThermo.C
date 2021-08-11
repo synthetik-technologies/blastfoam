@@ -64,11 +64,52 @@ Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
             phaseName
         )
     )
-{}
+{
+    if (!rho().typeHeaderOk<volScalarField>(true))
+    {
+        FatalErrorInFunction
+            << rho().name() << " must be read." << nl
+            << abort(FatalError);
+    }
+
+    if (!e_.typeHeaderOk<volScalarField>(true))
+    {
+        volScalarField e(thermoPtr_->calce(this->p()));
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+        e_.correctBoundaryConditions();
+    }
+    correct();
+}
 
 void Foam::singlePhaseFluidBlastThermo::initializeModels()
 {
     thermoPtr_->initializeModels();
+    if (!e_.typeHeaderOk<volScalarField>(true))
+    {
+        volScalarField e(thermoPtr_->calce(this->p()));
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+        e_.correctBoundaryConditions();
+    }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -98,9 +139,9 @@ void Foam::singlePhaseFluidBlastThermo::update()
 }
 
 
-void Foam::singlePhaseFluidBlastThermo::updateRho(const volScalarField& p)
+void Foam::singlePhaseFluidBlastThermo::updateRho()
 {
-    thermoPtr_->updateRho(p);
+    thermoPtr_->updateRho(this->p());
 }
 
 
@@ -366,22 +407,6 @@ Foam::scalar Foam::singlePhaseFluidBlastThermo::Cvi(const label celli) const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::gamma() const
-{
-    return thermoPtr_->gamma();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::gamma
-(
-    const scalarField& T,
-    const label patchi
-) const
-{
-    return thermoPtr_->gamma(T, patchi);
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::Cpv() const
 {
     return thermoPtr_->Cpv();
@@ -417,80 +442,5 @@ Foam::scalar Foam::singlePhaseFluidBlastThermo::Wi(const label celli) const
 {
     return thermoPtr_->Wi(celli);
 }
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::kappa() const
-{
-    return thermoPtr_->kappa();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::kappa
-(
-    const label patchi
-) const
-{
-    return thermoPtr_->kappa(patchi);
-}
-
-
-Foam::scalar Foam::singlePhaseFluidBlastThermo::kappai(const label celli) const
-{
-    return thermoPtr_->kappai(celli);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::alphahe() const
-{
-    return thermoPtr_->alphahe();
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::alphahe
-(
-    const label patchi
-) const
-{
-    return thermoPtr_->alphahe(patchi);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermoPtr_->kappaEff(alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermoPtr_->kappaEff(alphat, patchi);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermoPtr_->alphaEff(alphat);
-}
-
-
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermoPtr_->alphaEff(alphat, patchi);
-}
-
 
 // ************************************************************************* //

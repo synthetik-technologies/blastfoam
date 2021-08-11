@@ -134,7 +134,7 @@ bool Foam::functionObjects::speedOfSound::execute()
     (
         foundObject<fluidBlastThermo>
         (
-            IOobject::groupName("basicThermo", phaseName_)
+            IOobject::groupName(basicThermo::dictName, phaseName_)
         )
     )
     {
@@ -143,7 +143,7 @@ bool Foam::functionObjects::speedOfSound::execute()
             (
                 IOobject::groupName
                 (
-                    "basicThermo",
+                    basicThermo::dictName,
                     phaseName_
                 )
             ).speedOfSound();

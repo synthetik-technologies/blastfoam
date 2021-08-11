@@ -28,66 +28,97 @@ License
 
 #include "basicSolidBlastThermo.H"
 
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::basicSolidBlastThermoModel<Thermo>::basicSolidBlastThermoModel
+Foam::basicSolidBlastThermo<Thermo>::basicSolidBlastThermo
 (
     const word& name,
-    const fvMesh& mesh,
+    volScalarField& rho,
+    volScalarField& e,
+    volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
     Thermo
     (
         name,
-        mesh,
+        rho,
+        e,
+        T,
         dict,
-        master,
         masterName
     )
 {
-    volScalarField& rhoRef(solidBlastThermo::rho_);
-    forAll(rhoRef, celli)
-    {
-        rhoRef[celli] = Thermo::thermoType::rho0();
-    }
-    forAll(rhoRef.boundaryField(), patchi)
-    {
-        forAll(rhoRef.boundaryField()[patchi], facei)
-        {
-            rhoRef.boundaryFieldRef()[patchi][facei] =
-                Thermo::thermoType::rho0();
-        }
-    }
-    this->e_ = this->E();
-    this->T_ = this->calcT();
-    correct();
+    updateRho();
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::basicSolidBlastThermoModel<Thermo>::~basicSolidBlastThermoModel()
+Foam::basicSolidBlastThermo<Thermo>::~basicSolidBlastThermo()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
-void Foam::basicSolidBlastThermoModel<Thermo>::correct()
+void Foam::basicSolidBlastThermo<Thermo>::updateRho()
 {
-    if (this->master_)
+    volScalarField rhoNew
+    (
+        Thermo::volScalarFieldProperty
+        (
+            "rho",
+            dimDensity,
+            &Thermo::rho0
+        )
+    );
+    this->rho_ = rhoNew;
+    forAll(this->rho_.boundaryField(), patchi)
     {
-        this->T_ = this->calcT();
-        this->T_.correctBoundaryConditions();
+        forAll(this->rho_.boundaryField()[patchi], facei)
+        {
+            this->rho_.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
     }
+}
 
-    this->Thermo::alpha_ = Thermo::volScalarFieldProperty
+
+template<class Thermo>
+void Foam::basicSolidBlastThermo<Thermo>::correct()
+{}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicSolidBlastThermo<Thermo>::ESource() const
+{
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "ESource",
+                this->rho_.mesh().time().timeName(),
+                this->rho_.mesh()
+            ),
+            this->rho_.mesh(),
+            dimensionedScalar("0", dimEnergy/dimTime/dimVolume, 0.0)
+        )
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicSolidBlastThermo<Thermo>::kappa() const
+{
+    return Thermo::volScalarFieldProperty
     (
         "kappa",
         dimEnergy/dimTime/dimLength/dimTemperature,
@@ -95,29 +126,12 @@ void Foam::basicSolidBlastThermoModel<Thermo>::correct()
         this->rho_,
         this->e_,
         this->T_
-    )/this->Cv();
+    );
 }
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicSolidBlastThermoModel<Thermo>::ESource() const
-{
-    const fvMesh& mesh = this->T_.mesh();
-
-    return
-        volScalarField::New
-        (
-            "ESource",
-            mesh,
-            dimensionedScalar(dimEnergy/dimTime/dimVolume, 0.0)
-        );
-}
-
 
 template<class Thermo>
 Foam::tmp<Foam::volVectorField>
-Foam::basicSolidBlastThermoModel<Thermo>::Kappa() const
+Foam::basicSolidBlastThermo<Thermo>::Kappa() const
 {
     const fvMesh& mesh = this->T_.mesh();
 
@@ -131,31 +145,28 @@ Foam::basicSolidBlastThermoModel<Thermo>::Kappa() const
         )
     );
 
-    volVectorField& Kappa = tKappa.ref();
-    vectorField& KappaCells = Kappa.primitiveFieldRef();
-    const scalarField& rhoCells = solidBlastThermo::rho_;
+    const scalarField& rhoCells = this->rho_;
     const scalarField& eCells = this->e_;
     const scalarField& TCells = this->T_;
+
+    volVectorField& Kappa = tKappa.ref();
+    vectorField& KappaCells = Kappa.primitiveFieldRef();
 
     forAll(KappaCells, celli)
     {
         Kappa[celli] =
-            Thermo::thermoType::Kappa
-            (
-                rhoCells[celli],
-                eCells[celli],
-                TCells[celli]
-            );
+            Thermo::thermoType::Kappa(rhoCells[celli], eCells[celli], TCells[celli]);
     }
 
     volVectorField::Boundary& KappaBf = Kappa.boundaryFieldRef();
 
     forAll(KappaBf, patchi)
     {
-        vectorField& Kappap = KappaBf[patchi];
-        const scalarField& pRho = solidBlastThermo::rho_.boundaryField()[patchi];
+        const scalarField& pRho = this->rho_.boundaryField()[patchi];
         const scalarField& pe = this->e_.boundaryField()[patchi];
         const scalarField& pT = this->T_.boundaryField()[patchi];
+
+        vectorField& Kappap = KappaBf[patchi];
 
         forAll(Kappap, facei)
         {
@@ -170,22 +181,41 @@ Foam::basicSolidBlastThermoModel<Thermo>::Kappa() const
 
 template<class Thermo>
 Foam::tmp<Foam::vectorField>
-Foam::basicSolidBlastThermoModel<Thermo>::Kappa(const label patchi) const
+Foam::basicSolidBlastThermo<Thermo>::Kappa
+(
+    const label patchi
+) const
 {
-    const scalarField& pRho = solidBlastThermo::rho_.boundaryField()[patchi];
+    const scalarField& pRho = this->rho_.boundaryField()[patchi];
     const scalarField& pe = this->e_.boundaryField()[patchi];
     const scalarField& pT = this->T_.boundaryField()[patchi];
-    tmp<vectorField> tKappa(new vectorField(pe.size()));
 
+    tmp<vectorField> tKappa(new vectorField(pT.size()));
     vectorField& Kappap = tKappa.ref();
 
-    forAll(pe, facei)
+    forAll(pT, facei)
     {
         Kappap[facei] =
             Thermo::thermoType::Kappa(pRho[facei], pe[facei], pT[facei]);
     }
 
     return tKappa;
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicSolidBlastThermo<Thermo>::calce(const volScalarField& p) const
+{
+    return Thermo::volScalarFieldProperty
+    (
+        "e",
+        dimEnergy/dimMass,
+        &Thermo::Es,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
 }
 
 // ************************************************************************* //

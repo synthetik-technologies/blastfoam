@@ -130,8 +130,7 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        rho_*U_,
-        "zeroGradient"
+        rho_*U_
     ),
     rhoE_
     (

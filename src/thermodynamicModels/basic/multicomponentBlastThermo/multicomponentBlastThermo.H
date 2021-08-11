@@ -42,6 +42,7 @@ SourceFiles
 
 #include "basicBlastThermo.H"
 #include "PtrListDictionary.H"
+#include "speciesTable.H"
 
 namespace Foam
 {
@@ -74,10 +75,10 @@ protected:
     List<bool> active_;
 
     //- Name of flux
-    word alphaRhoPhiName_;
+    UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
     //- Name of mass
-    word alphaRhoName_;
+    UautoPtr<const volScalarField> alphaRhoPtr_;
 
 
 public:
@@ -86,12 +87,10 @@ public:
     multicomponentBlastThermo
     (
         const word& phaseName,
-        volScalarField& p,
         volScalarField& rho,
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
@@ -100,12 +99,10 @@ public:
     (
         const speciesTable& species,
         const word& phaseName,
-        volScalarField& p,
         volScalarField& rho,
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
@@ -119,8 +116,14 @@ public:
         //- Initialize models
         virtual void initializeModels();
 
+        //- Pre update step
+        virtual void update();
+
         //- Solve sub-step stepi
         virtual void solve();
+
+        //- Post update
+        virtual void postUpdate();
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer

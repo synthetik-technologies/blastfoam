@@ -26,54 +26,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "solidBlastThermo.H"
-#include "solidThermoModelTypes.H"
+#include "phaseSolidBlastThermo.H"
 #include "basicSolidBlastThermo.H"
 #include "eBlastThermo.H"
-
-#include "constSolidIsoTransport.H"
-#include "constSolidAnIsoTransport.H"
-
-#include "thermoModel.H"
-#include "eConst.H"
-#include "hConst.H"
-
-#include "rhoConst.H"
-
-#include "blastSpecie.H"
-
+#include "forBlastSolids.H"
+#include "makeBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 namespace Foam
 {
-    addSolidThermo
+    forSolids
     (
-        constSolidIsoTransport,
-        eConst,
-        rhoConst
+        makeThermo,
+        phaseSolidBlastThermo,
+        basicSolidBlastThermo,
+        eBlastThermo
     );
-
-    addSolidThermo
-    (
-        constSolidAnIsoTransport,
-        eConst,
-        rhoConst
-    );
-
-    addSolidThermo
-    (
-        constSolidIsoTransport,
-        hConst,
-        rhoConst
-    );
-
-    addSolidThermo
-    (
-        constSolidAnIsoTransport,
-        hConst,
-        rhoConst
-    );
-
-
 }
 // ************************************************************************* //

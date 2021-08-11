@@ -23,8 +23,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "blastSpecie.H"
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Thermo>

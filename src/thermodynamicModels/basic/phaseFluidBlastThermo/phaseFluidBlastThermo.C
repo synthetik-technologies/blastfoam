@@ -57,15 +57,11 @@ Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
         dict,
         masterName
     ),
-    mu_
+    p_
     (
-        lookupOrConstruct
+        rho.mesh().lookupObject<volScalarField>
         (
-            rho.mesh(),
-            IOobject::groupName("thermo:mu", phaseName),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE,
-            dimDynamicViscosity
+            IOobject::groupName("p", masterName)
         )
     )
 {}
@@ -89,7 +85,6 @@ Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
     const word& masterName
 )
 {
-    Info<<dictionaryConstructorTablePtr_->toc()<<endl;
     return basicBlastThermo::New<phaseFluidBlastThermo>
     (
         phaseName,
@@ -102,35 +97,9 @@ Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
 }
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::phaseFluidBlastThermo::mu() const
+const Foam::volScalarField& Foam::phaseFluidBlastThermo::p() const
 {
-    return mu_;
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::phaseFluidBlastThermo::mu(const label patchi) const
-{
-    return mu_.boundaryField()[patchi];
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::phaseFluidBlastThermo::nu() const
-{
-    return mu_/max(rho_, dimensionedScalar(dimDensity, 1e-10));
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::phaseFluidBlastThermo::nu(const label patchi) const
-{
-    return mu(patchi)/max(rho_.boundaryField()[patchi], 1e-10);
-}
-
-
-Foam::scalar Foam::phaseFluidBlastThermo::nui(const label celli) const
-{
-    return mu_[celli]/max(rho_[celli], 1e-10);
+    return p_;
 }
 
 // ************************************************************************* //

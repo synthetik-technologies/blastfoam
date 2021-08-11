@@ -44,15 +44,15 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::volScalarFieldProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->group()),
-            this->p_.mesh(),
+            IOobject::groupName(psiName, this->name()),
+            this->rho_.mesh(),
             psiDim
         )
     );
 
     volScalarField& psi = tPsi.ref();
 
-    forAll(this->p_, celli)
+    forAll(psi, celli)
     {
         psi[celli] = (this->*psiMethod)(args[celli] ...);
     }
@@ -63,7 +63,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::volScalarFieldProperty
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
 
-        forAll(this->p_.boundaryField()[patchi], facei)
+        forAll(pPsi, facei)
         {
             pPsi[facei] =
                 (this->*psiMethod)
@@ -115,11 +115,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::patchFieldProperty
 {
     tmp<scalarField> tPsi
     (
-        new scalarField(this->p_.boundaryField()[patchi].size())
+        new scalarField(this->rho_.boundaryField()[patchi].size())
     );
     scalarField& psi = tPsi.ref();
 
-    forAll(this->p_.boundaryField()[patchi], facei)
+    forAll(psi, facei)
     {
         psi[facei] =
             (this->*psiMethod)(args[facei] ...);
@@ -145,15 +145,15 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->group()),
-            this->p_.mesh(),
+            psiName,
+            this->rho_.mesh(),
             psiDim
         )
     );
 
     volScalarField& psi = tPsi.ref();
 
-    forAll(this->p_, celli)
+    forAll(psi, celli)
     {
         scalar x = this->xi(celli);
         if (x < small)
@@ -179,7 +179,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
         fvPatchScalarField& pPsi = psiBf[patchi];
         tmp<scalarField> xp(this->x(patchi));
 
-        forAll(this->p_.boundaryField()[patchi], facei)
+        forAll(pPsi, facei)
         {
             const scalar& x = xp()[facei];
             if (x < small)
@@ -261,13 +261,13 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
 {
     tmp<scalarField> tPsi
     (
-        new scalarField(this->p_.boundaryField()[patchi].size())
+        new scalarField(this->rho_.boundaryField()[patchi].size())
     );
     scalarField& psi = tPsi.ref();
     tmp<scalarField> xtmp(this->x(patchi));
     const scalarField& x(xtmp());
 
-    forAll(this->p_.boundaryField()[patchi], facei)
+    forAll(psi, facei)
     {
         if (x[facei] < small)
         {
@@ -301,7 +301,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedBlastThermo
     const dictionary& dict,
     const dictionary& dict1,
     const dictionary& dict2,
-    const bool master,
     const word& masterName
 )
 :
@@ -312,7 +311,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedBlastThermo
         e,
         T,
         dict,
-        master,
         masterName
     ),
     Thermo1(dict1),
@@ -330,16 +328,24 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::~blendedBlastThermo()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::word
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::thermoName() const
+{
+    return Thermo1::typeName() + "/" + Thermo2::typeName();
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
 (
     const volScalarField& p,
-    const volScalarField& T,
+    const volScalarField& T
 ) const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("he", basicBlastThermo::masterName_),
+        IOobject::groupName("he", this->masterName_),
         dimEnergy/dimMass,
         &Thermo1::Es,
         &Thermo2::Es,
@@ -355,16 +361,16 @@ Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return blendedCellSetProperty
     (
         &Thermo1::Es,
         &Thermo2::Es,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -392,11 +398,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
-(
-    const volScalarField& p,
-    const volScalarField& T,
-) const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs() const
 {
     return blendedVolScalarFieldProperty
     (
@@ -406,6 +408,27 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
         &Thermo2::Hs,
         this->rho_,
         this->e_,
+        this->T_
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::tmp<Foam::volScalarField>
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
+(
+    const volScalarField& p,
+    const volScalarField& T
+) const
+{
+    return blendedVolScalarFieldProperty
+    (
+        IOobject::groupName("hs", this->masterName_),
+        dimEnergy/dimMass,
+        &Thermo1::Hs,
+        &Thermo2::Hs,
+        this->rho_,
+        this->e_,
         T
     );
 }
@@ -416,16 +439,16 @@ Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return blendedCellSetProperty
     (
         &Thermo1::Hs,
         &Thermo2::Hs,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -453,10 +476,27 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha() const
+{
+    return blendedVolScalarFieldProperty
+    (
+        IOobject::groupName("ha", basicBlastThermo::masterName_),
+        dimEnergy/dimMass,
+        &Thermo1::Ha,
+        &Thermo2::Ha,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::tmp<Foam::volScalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha
 (
     const volScalarField& p,
-    const volScalarField& T,
+    const volScalarField& T
 ) const
 {
     return blendedVolScalarFieldProperty
@@ -477,16 +517,16 @@ Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return blendedCellSetProperty
     (
         &Thermo1::Ha,
         &Thermo2::Ha,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -518,13 +558,10 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hc() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("hc", basicBlastThermo::masterName_),
+        IOobject::groupName("hc", this->masterName_),
         dimEnergy/dimMass,
         &Thermo1::Hf,
-        &Thermo2::Hf,
-        this->rho_,
-        this->e_,
-        T
+        &Thermo2::Hf
     );
 }
 
@@ -532,15 +569,13 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hc() const
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::flameT() const
+{
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("flameT", basicBlastThermo::masterName_),
+        IOobject::groupName("flameT", this->masterName_),
         dimTemperature,
         &Thermo1::flameT,
-        &Thermo2::flameT,
-        this->rho_,
-        this->e_,
-        T
+        &Thermo2::flameT
     );
 }
 
@@ -548,15 +583,14 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::flameT() const
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE() const
-) const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("THE", basicBlastThermo::masterName_),
+        IOobject::groupName("THE", this->masterName_),
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
-        T,
+        this->T_,
         this->rho_,
         this->e_
     );
@@ -574,7 +608,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("THE", basicBlastThermo::masterName_),
+        IOobject::groupName("THE", this->masterName_),
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -589,18 +623,19 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 (
+    const scalarField& he,
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return blendedCellSetProperty
     (
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
-        faceCells,
+        cells,
         T,
-        this->rho_,
-        this->e_
+        this->cellSetScalarList(this->rho_, cells),
+        he
     );
 }
 
@@ -609,6 +644,7 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 (
+    const scalarField& he,
     const scalarField& T,
     const label patchi
 ) const
@@ -620,27 +656,28 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
         patchi,
         T,
         this->rho_.boundaryField()[patchi],
-        this->e_.boundaryField()[patchi]
+        he
     );
 }
 
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::TRhoEi
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THEi
 (
-    const scalar& T,
+    const scalar he,
+    const scalar T,
     const label celli
 ) const
 {
     const scalar& x = this->xi(celli);
     if (x < small)
     {
-        return Thermo1::TRhoE(T, this->rho_[celli], this->e_[celli]);
+        return Thermo1::TRhoE(T, this->rho_[celli], he);
     }
     else if ((1.0 - x) < small)
     {
-        return Thermo2::TRhoE(T, this->rho_[celli], this->e_[celli]);
+        return Thermo2::TRhoE(T, this->rho_[celli], he);
     }
 
     return
@@ -690,23 +727,22 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cpi
 (
-    const scalar& T,
     const label celli
 ) const
 {
     const scalar& x = this->xi(celli);
     if (x < small)
     {
-        return Thermo1::Cp(this->rho_[celli], this->e_[celli], T);
+        return Thermo1::Cp(this->rho_[celli], this->e_[celli], this->T_[celli]);
     }
     else if ((1.0 - x) < small)
     {
-        return Thermo2::Cp(this->rho_[celli], this->e_[celli], T);
+        return Thermo2::Cp(this->rho_[celli], this->e_[celli], this->T_[celli]);
     }
 
     return
-        Thermo2::Cp(this->rho_[celli], this->e_[celli], T)*x
-      + Thermo1::Cp(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
+        Thermo2::Cp(this->rho_[celli], this->e_[celli], this->T_[celli])*x
+      + Thermo1::Cp(this->rho_[celli], this->e_[celli], this->T_[celli])*(1.0 - x);
 }
 
 
@@ -751,44 +787,22 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cvi
 (
-    const scalar& T,
     const label celli
 ) const
 {
     const scalar& x = this->xi(celli);
     if (x < small)
     {
-        return Thermo1::Cv(this->rho_[celli], this->e_[celli], T);
+        return Thermo1::Cv(this->rho_[celli], this->e_[celli], this->T_[celli]);
     }
     else if ((1.0 - x) < small)
     {
-        return Thermo2::Cv(this->rho_[celli], this->e_[celli], T);
+        return Thermo2::Cv(this->rho_[celli], this->e_[celli], this->T_[celli]);
     }
 
     return
-        Thermo2::Cv(this->rho_[celli], this->e_[celli], T)*x
-      + Thermo1::Cv(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
-}
-
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::gamma() const
-{
-    return volScalarField::New("gamma", Cp()/Cv());
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::gamma
-(
-    const scalarField& T,
-    const label patchi
-) const
-{
-    return Cp(T, patch)/Cv(T, patchi);
+        Thermo2::Cv(this->rho_[celli], this->e_[celli], this->T_[celli])*x
+      + Thermo1::Cv(this->rho_[celli], this->e_[celli], this->T_[celli])*(1.0 - x);
 }
 
 
@@ -851,109 +865,18 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Wi(const label celli) c
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappa() const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::alpha() const
 {
-    return volScalarField::New
+    return blendedVolScalarFieldProperty
     (
-        "kappa",
-        Cp()*this->alpha_
+        IOobject::groupName("alpha", basicBlastThermo::name_),
+        dimensionSet(1, -1, -1, 0, 0),
+        &Thermo1::alphah,
+        &Thermo2::alphah,
+        this->rho_,
+        this->e_,
+        this->T_
     );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappa
-(
-    const label patchi
-) const
-{
-    return
-        Cp(gamma(this->T_[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::alphahe() const
-{
-    return volScalarField::New
-    (
-        "alphahe",
-        gamma()*this->alpha_
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::alphahe
-(
-    const label patchi
-) const
-{
-    return
-        gamma(this->T_[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return volScalarField::New
-    (
-        "kappaEff",
-        Cp()*(this->alpha_ + alphat)
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        Cp(gamma(this->T_[patchi], patchi), patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return volScalarField::New
-    (
-        "alphaEff",
-        gamma()*(this->alpha_ + alphat)
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::scalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        gamma(gamma(this->T_[patchi], patchi), patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
 }
 
 

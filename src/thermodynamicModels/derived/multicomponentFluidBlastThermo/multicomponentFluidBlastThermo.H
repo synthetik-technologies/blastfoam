@@ -41,7 +41,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "multicomponentBlastThermos.H"
+#include "multicomponentBlastThermo.H"
 #include "mixtureBlastThermo.H"
 
 namespace Foam
@@ -51,40 +51,36 @@ namespace Foam
                            Class multicomponentFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class ThermoType>
+template<class Thermo>
 class multicomponentFluidBlastThermo
 :
-    public mixtureBlastThermo<MulticomponentFluidBlastThermo, ThermoType>
+    public Thermo
 {
 public:
 
     //- Runtime type information
-    TypeName("multicomponentFluidBlastThermo");
+    TypeName("multicomponent");
 
     // Constructor
     multicomponentFluidBlastThermo
     (
         const word& phaseName,
-        volScalarField& p,
         volScalarField& rho,
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
     // Constructor
     multicomponentFluidBlastThermo
     (
-        const HashPtrTable<ThermoType, word, string::hash>& thermoData,
+        const HashPtrTable<Thermo, word, string::hash>& thermoData,
         const word& phaseName,
-        volScalarField& p,
         volScalarField& rho,
         volScalarField& e,
         volScalarField& T,
         const dictionary& dict,
-        const bool master,
         const word& masterName = word::null
     );
 
@@ -93,20 +89,6 @@ public:
 
 
     // Member Functions
-
-        //- Calculate density
-        virtual void updateRho();
-
-        //- Pre update
-        virtual void update()
-        {}
-
-        //- Post update
-        virtual void postUpdate()
-        {}
-
-        //- Correct fields
-        virtual void correct();
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
@@ -117,17 +99,31 @@ public:
         //- Return the speed of sound for patchi
         virtual tmp<scalarField> speedOfSound(const label patchi) const;
 
+        //- Gamma = dpde []
+        virtual tmp<volScalarField> Gamma() const;
+
+        //- Gamma = dpde for patch []
+        virtual tmp<scalarField> Gamma(const label patchi) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar Gammai(const label celli) const;
+
 
     //- Thermodynamic and transport functions
 
-        //- Calculate thermodynamic pressure for a patch
-        virtual tmp<scalarField> calcP(const label patchi) const;
+        //- Calculate density
+        virtual void updateRho(const volScalarField& p);
 
         //- Calculate thermodynamic pressure
-        virtual scalar calcPi(const label celli) const;
+        virtual tmp<volScalarField> pRhoT() const;
 
         //- Calculate internal energy from pressure and density
-        virtual tmp<volScalarField> calce() const;
+        virtual tmp<volScalarField> calce(const volScalarField& p) const;
+
+    // Access to transport state variables
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> mu() const;
 };
 
 

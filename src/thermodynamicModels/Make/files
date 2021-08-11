@@ -1,56 +1,45 @@
-specie/specie/blastSpecie.C
-specie/specie/rBlastSpecie.C
-
-basic/blastThermo/blastThermo.C
-basic/fluidBlastThermo/fluidBlastThermo.C
+specie/specie/specieBlast.C
+specie/specie/rspecieBlast.C
 
 basic/basicBlastThermo/basicBlastThermo.C
 basic/phaseFluidBlastThermo/phaseFluidBlastThermo.C
-#basic/phaseSolidBlastThermo/phaseSolidBlastThermo.C
-
-
+basic/phaseSolidBlastThermo/phaseSolidBlastThermo.C
 
 derived/singlePhaseFluidBlastThermo/singlePhaseFluidBlastThermo.C
 derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
-# derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
+derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
 
 
-# basic/solidBlastThermo/solidBlastThermo.C
-# basic/solidBlastThermo/newSolidBlastThermo.C
-#
- derived/basicFluidBlastThermo/basicFluidBlastThermos.C
-# derived/detonatingFluidThermo/detonatingFluidThermos.C
-#
-# derived/basicSolidBlastThermo/basicSolidBlastThermos.C
-# derived/detonatingSolidThermo/detonatingSolidThermos.C
-#
+basic/blastThermo/blastThermo.C
+basic/fluidBlastThermo/fluidBlastThermo.C
+basic/solidBlastThermo/solidBlastThermo.C
 
-# derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
-#
-# activationModels/activationModel/activationModel.C
-# activationModels/activationModel/newActivationModel.C
-# activationModels/none/noneActivation.C
-# activationModels/linear/linearActivation.C
-# activationModels/programmedIgnition/programmedIgnitionActivation.C
-# activationModels/ArrheniusRate/ArrheniusRateActivation.C
-# activationModels/pressureBased/pressureBasedActivation.C
-# activationModels/reactionRate/reactionRateActivation.C
-#
-# afterburnModels/afterburnModel/afterburnModel.C
-# afterburnModels/afterburnModel/newAfterburnModel.C
-# afterburnModels/constantAfterburn/constantAfterburn.C
-# afterburnModels/linearAfterburn/linearAfterburn.C
-# afterburnModels/MillerAfterburn/MillerAfterburn.C
-# afterburnModels/noAfterburn/noAfterburn.C
-#
-# derivedFvPatchFields/pressureWaveTransmissive/pressureWaveTransmissiveFvPatchFields.C
-# derivedFvPatchFields/energyJump/energyJump/blastEnergyJumpFvPatchScalarField.C
-# derivedFvPatchFields/energyJump/energyJumpAMI/blastEnergyJumpAMIFvPatchScalarField.C
-# derivedFvPatchFields/fixedEnergy/blastFixedEnergyFvPatchScalarField.C
-# derivedFvPatchFields/gradientEnergy/blastGradientEnergyFvPatchScalarField.C
-# derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPatchScalarField.C
-# derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
-# derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
+derived/basicFluidBlastThermo/basicFluidBlastThermos.C
+derived/basicSolidBlastThermo/basicSolidBlastThermos.C
+
+#derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+#derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
+
+#derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
+
+
+activationModels/activationModel/activationModel.C
+activationModels/activationModel/newActivationModel.C
+activationModels/none/noneActivation.C
+activationModels/linear/linearActivation.C
+activationModels/programmedIgnition/programmedIgnitionActivation.C
+activationModels/ArrheniusRate/ArrheniusRateActivation.C
+activationModels/pressureBased/pressureBasedActivation.C
+activationModels/reactionRate/reactionRateActivation.C
+
+afterburnModels/afterburnModel/afterburnModel.C
+afterburnModels/afterburnModel/newAfterburnModel.C
+afterburnModels/constantAfterburn/constantAfterburn.C
+afterburnModels/linearAfterburn/linearAfterburn.C
+afterburnModels/MillerAfterburn/MillerAfterburn.C
+afterburnModels/noAfterburn/noAfterburn.C
+
+derivedFvPatchFields/pressureWaveTransmissive/pressureWaveTransmissiveFvPatchFields.C
 
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

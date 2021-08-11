@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluidBlastThermo.H"
+#include "basicBlastThermo.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
@@ -45,9 +46,18 @@ Foam::fluidBlastThermo::fluidBlastThermo
     const word& phaseName
 )
 :
-    basicThermo::implementation(mesh, dict, phaseName),
-    fluidThermo::implementation(mesh, dict, phaseName),
     blastThermo(mesh, dict, phaseName),
+    p_
+    (
+        basicBlastThermo::lookupOrConstruct
+        (
+            mesh,
+            phasePropertyName("p", phaseName),
+            IOobject::MUST_READ,
+            IOobject::AUTO_WRITE,
+            dimPressure
+        )
+    ),
     mu_
     (
         IOobject
@@ -107,8 +117,19 @@ Foam::fluidBlastThermo::~fluidBlastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField>
-Foam::fluidBlastThermo::mu() const
+Foam::volScalarField& Foam::fluidBlastThermo::p()
+{
+    return p_;
+}
+
+
+const Foam::volScalarField& Foam::fluidBlastThermo::p() const
+{
+    return p_;
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::mu() const
 {
     return mu_;
 }

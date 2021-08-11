@@ -37,6 +37,7 @@ Description
 #include "cellSet.H"
 #include "faceSet.H"
 #include "volFields.H"
+#include "systemDict.H"
 
 #include "hexRef.H"
 #include "hexRef3D.H"
@@ -420,16 +421,11 @@ int main(int argc, char *argv[])
 
     #include "createNamedMesh.H"
 
-    const word dictName("setFieldsDict");
-    #include "setSystemMeshDictionaryIO.H"
+    const dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
 
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
     bool updateAll(args.optionFound("updateAll"));
-
-    Info<< "Reading " << dictName << "\n" << endl;
-
-    IOdictionary setFieldsDict(dictIO);
 
     autoPtr<hexRef> meshCutter;
     bool refine = true;

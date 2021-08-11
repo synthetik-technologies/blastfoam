@@ -42,7 +42,7 @@ Description
 int main(int argc, char *argv[])
 {
     #include "postProcess.H"
-Info<<"here"<<endl;
+
     #include "setRootCase.H"
     #include "createTime.H"
     #include "createDynamicFvMesh.H"

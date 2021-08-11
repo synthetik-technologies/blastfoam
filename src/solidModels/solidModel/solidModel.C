@@ -168,16 +168,7 @@ Foam::solidModel::solidModel
             IOobject::NO_WRITE
         )
     ),
-    thermoPtr_
-    (
-        solidBlastThermo::NewBasic
-        (
-            word::null,
-            mesh,
-            thermophysicalProperties_,
-            true
-        )
-    ),
+    thermoPtr_(solidBlastThermo::New(mesh, thermophysicalProperties_)),
     D_
     (
         IOobject

@@ -137,7 +137,7 @@ public:
         ) const;
 
         //- Thermal diffusivity of enthalpy [kg/ms]
-        vector alphah
+        scalar alphah
         (
             const scalar& rho,
             const scalar& e,

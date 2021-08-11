@@ -65,15 +65,15 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->group()),
-            this->p_.mesh(),
+            IOobject::groupName(psiName, this->name()),
+            this->rho_.mesh(),
             psiDim
         )
     );
 
     volScalarField& psi = tPsi.ref();
 
-    forAll(this->p_, celli)
+    forAll(psi, celli)
     {
         psi[celli] = (this->mixture_[celli].*psiMethod)(args[celli] ...);
     }
@@ -84,7 +84,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldProperty
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
 
-        forAll(this->p_.boundaryField()[patchi], facei)
+        forAll(pPsi, facei)
         {
             pPsi[facei] =
                 (this->mixture_.boundary(patchi, facei).*psiMethod)
@@ -115,8 +115,8 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->group()),
-            this->p_.mesh(),
+            IOobject::groupName(psiName, this->name()),
+            this->rho_.mesh(),
             psiDim
         )
     );
@@ -125,7 +125,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
 
     volScalarField& psi = tPsi.ref();
 
-    forAll(this->p_, celli)
+    forAll(psi, celli)
     {
         psi[celli] = (thermo.*psiMethod)(args[celli] ...);
     }
@@ -136,7 +136,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
     {
         fvPatchScalarField& pPsi = psiBf[patchi];
 
-        forAll(this->p_.boundaryField()[patchi], facei)
+        forAll(pPsi, facei)
         {
             pPsi[facei] =
                 (thermo.*psiMethod)
@@ -162,7 +162,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::patchFieldProperty
 {
     tmp<scalarField> tPsi
     (
-        new scalarField(this->p_.boundaryField()[patchi].size())
+        new scalarField(this->rho_.boundaryField()[patchi].size())
     );
 
     scalarField& psi = tPsi.ref();
@@ -211,18 +211,16 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mixtureBlastThermo
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
-    BasicThermo
+    multicomponentBlastThermo<BasicThermo>
     (
         name,
         rho,
         e,
         T,
         dict,
-        master,
         masterName
     ),
     speciesData_(this->species_.size()),
@@ -239,11 +237,10 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mixtureBlastThermo
     volScalarField& e,
     volScalarField& T,
     const dictionary& dict,
-    const bool master,
     const word& masterName
 )
 :
-    BasicThermo
+    multicomponentBlastThermo<BasicThermo>
     (
         thermoData.toc(),
         name,
@@ -251,7 +248,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mixtureBlastThermo
         e,
         T,
         dict,
-        master,
         masterName
     ),
     speciesData_(this->species_.size()),
@@ -269,16 +265,52 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::~mixtureBlastThermo()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class BasicThermo, class ThermoType>
+void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::correct()
+{
+    this->mixture_.update();
+}
+
+
+template<class BasicThermo, class ThermoType>
+void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::updateRho()
+{
+    volScalarField rhoNew
+    (
+        this->volScalarFieldProperty
+        (
+            "rhoNew",
+            dimDensity,
+            &ThermoType::initializeRho,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    this->rho_.ref() = rhoNew();
+
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        forAll(this->rho_.boundaryField()[patchi], facei)
+        {
+            this->rho_.boundaryFieldRef()[patchi][facei] =
+                rhoNew.boundaryField()[patchi][facei];
+        }
+    }
+}
+
+
+template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
 (
     const volScalarField& p,
-    const volScalarField& T,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("he", basicBlastThermo::masterName_),
+        IOobject::groupName("he", basicBlastThermo::name_),
         dimEnergy/dimMass,
         &ThermoType::Es,
         this->rho_,
@@ -293,15 +325,15 @@ Foam::tmp<Foam::scalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return cellSetProperty
     (
         &ThermoType::Es,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -328,15 +360,31 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hs() const
+{
+    return volScalarFieldProperty
+    (
+        IOobject::groupName("hs", this->name_),
+        dimEnergy/dimMass,
+        &ThermoType::Hs,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hs
 (
     const volScalarField& p,
-    const volScalarField& T,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("hs", basicBlastThermo::masterName_),
+        IOobject::groupName("hs", this->name_),
         dimEnergy/dimMass,
         &ThermoType::Hs,
         this->rho_,
@@ -351,15 +399,15 @@ Foam::tmp<Foam::scalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hs
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return cellSetProperty
     (
         &ThermoType::Hs,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -386,15 +434,31 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hs
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::ha() const
+{
+    return volScalarFieldProperty
+    (
+        IOobject::groupName("ha", this->name_),
+        dimEnergy/dimMass,
+        &ThermoType::Ha,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::ha
 (
     const volScalarField& p,
-    const volScalarField& T,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("ha", basicBlastThermo::masterName_),
+        IOobject::groupName("ha", basicBlastThermo::name_),
         dimEnergy/dimMass,
         &ThermoType::Ha,
         this->rho_,
@@ -409,15 +473,15 @@ Foam::tmp<Foam::scalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::ha
 (
     const scalarField& T,
-    const labelList& faceCells
+    const labelList& cells
 ) const
 {
     return cellSetProperty
     (
         &ThermoType::Ha,
-        faceCells,
-        this->rho_,
-        this->e_,
+        cells,
+        this->cellSetScalarList(this->rho_, cells),
+        this->cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -448,12 +512,9 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hc() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("hc", basicBlastThermo::masterName_),
+        IOobject::groupName("hc", basicBlastThermo::name_),
         dimEnergy/dimMass,
-        &ThermoType::Hf,
-        this->rho_,
-        this->e_,
-        T
+        &ThermoType::Hf
     );
 }
 
@@ -461,14 +522,12 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hc() const
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::flameT() const
+{
     return volScalarFieldProperty
     (
-        IOobject::groupName("flameT", basicBlastThermo::masterName_),
+        IOobject::groupName("flameT", basicBlastThermo::name_),
         dimTemperature,
-        &ThermoType::flameT,
-        this->rho_,
-        this->e_,
-        T
+        &ThermoType::flameT
     );
 }
 
@@ -476,14 +535,13 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::flameT() const
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE() const
-) const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("THE", basicBlastThermo::masterName_),
+        IOobject::groupName("THE", basicBlastThermo::name_),
         dimTemperature,
         &ThermoType::TRhoE,
-        T,
+        this->T_,
         this->rho_,
         this->e_
     );
@@ -515,6 +573,7 @@ template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE
 (
+    const scalarField& he,
     const scalarField& T,
     const labelList& faceCells
 ) const
@@ -525,7 +584,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE
         faceCells,
         T,
         this->rho_,
-        this->e_
+        he
     );
 }
 
@@ -534,6 +593,7 @@ template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE
 (
+    const scalarField& he,
     const scalarField& T,
     const label patchi
 ) const
@@ -544,21 +604,21 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE
         patchi,
         T,
         this->rho_.boundaryField()[patchi],
-        this->e_.boundaryField()[patchi]
+        he
     );
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::TRhoEi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THEi
 (
-    const scalar& T,
+    const scalar he,
+    const scalar T,
     const label celli
 ) const
 {
-    return
-      + ThermoType::TRhoE(T, this->rho_[celli], this->e_[celli]);
+    return this->mixture_[celli].ThermoType::TRhoE(T, this->rho_[celli], he);
 }
 
 
@@ -568,7 +628,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cp() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cp", basicBlastThermo::masterName_),
+        IOobject::groupName("Cp", this->name_),
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cp,
         this->rho_,
@@ -601,12 +661,15 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cpi
 (
-    const scalar& T,
     const label celli
 ) const
 {
-    return
-      + ThermoType::Cp(this->rho_[celli], this->e_[celli], T);
+    return this->mixture_[celli].Cp
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
 }
 
 
@@ -616,7 +679,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cv() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("Cv", basicBlastThermo::masterName_),
+        IOobject::groupName("Cv", this->name_),
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cv,
         this->rho_,
@@ -649,33 +712,16 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cvi
 (
-    const scalar& T,
     const label celli
 ) const
 {
     return
-      + ThermoType::Cv(this->rho_[celli], this->e_[celli], T);
-}
-
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::gamma() const
-{
-    return volScalarField::New("gamma", Cp()/Cv());
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::scalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::gamma
-(
-    const scalarField& T,
-    const label patchi
-) const
-{
-    return Cp(T, patch)/Cv(T, patchi);
+        this->mixture_[celli].Cv
+        (
+            this->rho_[celli],
+            this->e_[celli],
+            this->T_[celli]
+        );
 }
 
 
@@ -705,9 +751,9 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::W() const
 {
     return volScalarFieldProperty
     (
-        IOobject::groupName("W", basicBlastThermo::masterName_),
+        IOobject::groupName("W", basicBlastThermo::name_),
         dimMass/dimMoles,
-        &ThermoType::W,
+        &ThermoType::W
     );
 }
 
@@ -728,115 +774,23 @@ template<class BasicThermo, class ThermoType>
 Foam::scalar
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Wi(const label celli) const
 {
-    return ThermoType::W();
+    return this->mixture_[celli].W();
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappa() const
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::alpha() const
 {
-    return volScalarField::New
+    return volScalarFieldProperty
     (
-        "kappa",
-        Cp()*this->alpha_
+        IOobject::groupName("alpha", basicBlastThermo::name_),
+        dimensionSet(1, -1, -1, 0, 0),
+        &ThermoType::alphah,
+        this->rho_,
+        this->e_,
+        this->T_
     );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::scalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappa
-(
-    const label patchi
-) const
-{
-    return
-        Cp(gamma(this->T_[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::alphahe() const
-{
-    return volScalarField::New
-    (
-        "alphahe",
-        gamma()*this->alpha_
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::scalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::alphahe
-(
-    const label patchi
-) const
-{
-    return
-        gamma(this->T_[patchi], patchi)
-       *this->alpha_.boundaryField()[patchi];
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return volScalarField::New
-    (
-        "kappaEff",
-        Cp()*(this->alpha_ + alphat)
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::scalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        Cp(gamma(this->T_[patchi], patchi), patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return volScalarField::New
-    (
-        "alphaEff",
-        gamma()*(this->alpha_ + alphat)
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::scalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return
-        gamma(gamma(this->T_[patchi], patchi), patchi)
-       *(this->alpha_.boundaryField()[patchi] + alphat);
 }
 
 
@@ -962,7 +916,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCvi
     const label celli
 ) const
 {
-    return speciesData_[this->species_[s]].Cv
+    return this->speciesData_[this->species_[s]].Cv
     (
         this->rho_[celli],
         this->e_[celli],
