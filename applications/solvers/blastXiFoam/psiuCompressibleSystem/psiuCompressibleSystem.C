@@ -52,8 +52,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        mesh,
-        dimensionedScalar("rho", dimDensity, 0.0)
+        thermo_->rho()
     ),
     U_
     (
@@ -156,8 +155,6 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
-    rho_ = thermo_->rho();
-
     thermo_->validate("psiuCompressibleSystem", "ea");
 
     if (min(thermo_->mu()).value() > small)
