@@ -2,8 +2,6 @@ EXE_INC = \
     -I. \
     -I./fluid \
     -I./solid \
-    -IderivedFvPatchFields/tractionDisplacement \
-    -IderivedFvPatchFields/hydrostaticDisplacement \
     -I./include \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -16,9 +14,7 @@ EXE_INC = \
     -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
-    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/solidModels/lnInclude
 
@@ -26,16 +22,13 @@ EXE_INC = \
 EXE_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
-    -lsampling \
     -lmomentumTransportModels \
     -lcompressibleMomentumTransportModels \
     -lregionModels \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
-    -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -lblastRadiationModels \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
     -lblastSolidModels \

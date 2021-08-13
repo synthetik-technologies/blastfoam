@@ -272,35 +272,6 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::correct()
 
 
 template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::updateRho()
-{
-    volScalarField rhoNew
-    (
-        this->volScalarFieldProperty
-        (
-            "rhoNew",
-            dimDensity,
-            &ThermoType::initializeRho,
-            this->p_,
-            this->rho_,
-            this->e_,
-            this->T_
-        )
-    );
-    this->rho_.ref() = rhoNew();
-
-    forAll(this->rho_.boundaryField(), patchi)
-    {
-        forAll(this->rho_.boundaryField()[patchi], facei)
-        {
-            this->rho_.boundaryFieldRef()[patchi][facei] =
-                rhoNew.boundaryField()[patchi][facei];
-        }
-    }
-}
-
-
-template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
 (

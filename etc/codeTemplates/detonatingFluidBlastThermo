@@ -13,35 +13,27 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-state
-(
-    fluidBlastThermo
-    solidBlastThermo
-);
-
-stateBase
-(
-    fluidBlastThermo FluidBlastThermo
-    solidBlastThermo SolidBlastThermo
-);
-
-type
-(
-    detonating
-);
-
-typeBase
-(
-    detonating blendedBlastThermo
-);
-
-transport
+uTransport
 (
     const
     sutherland
 );
 
-thermo
+rTransport
+(
+    const
+    sutherland
+);
+
+uThermo
+(
+    eConst
+    hConst
+    tabulated
+    janaf
+);
+
+rThermo
 (
     eConst
     hConst

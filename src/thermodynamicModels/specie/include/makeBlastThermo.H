@@ -70,45 +70,6 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define defineDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys) \
-    typedef                                                                 \
-        DerivThermo                                                         \
-        <                                                                   \
-            CThermo                                                         \
-            <                                                               \
-                BaseThermo, uThermoPhys, rThermoPhys                        \
-            >                                                               \
-        > DerivThermo##uThermoPhys##rThermoPhys;                            \
-                                                                            \
-    defineTemplateTypeNameAndDebugWithName                                  \
-    (                                                                       \
-        DerivThermo##uThermoPhys##rThermoPhys,                              \
-        (                                                                   \
-            word(BaseThermo::typeName_()) + "<"                             \
-          + word(DerivThermo::typeName_()) + "<"                            \
-          + uThermoPhys::typeName() + ","                                   \
-          + rThermoPhys::typeName() + ">>"                                  \
-        ).c_str(),                                                          \
-        0                                                                   \
-    );
-
-#define addDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys) \
-    addToRunTimeSelectionTable                                              \
-    (                                                                       \
-        BaseThermo,                                                         \
-        DerivThermo##uThermoPhys##rThermoPhys,                              \
-        dictionary                                                          \
-    );
-
-#define makeDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys) \
-                                                                            \
-    defineDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys); \
-                                                                            \
-    addDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys); \
-    addDetThermo(basicBlastThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys)
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #endif
 
 // ************************************************************************* //

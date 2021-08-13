@@ -45,6 +45,13 @@ Foam::phaseSystem::phases()
 }
 
 
+inline const Foam::phaseSystem::phaseModelList&
+Foam::phaseSystem::movingPhases() const
+{
+    return phaseModels_;
+}
+
+
 inline const Foam::phaseSystem::phasePairTable&
 Foam::phaseSystem::phasePairs() const
 {

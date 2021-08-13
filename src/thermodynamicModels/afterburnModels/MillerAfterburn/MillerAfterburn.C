@@ -65,27 +65,8 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
     pScale_(dict.lookupOrDefault("pScale", 1.0)),
     pName_(dict_.lookupOrDefault("pName", word("p"))),
     p_(mesh_.lookupObject<volScalarField>(pName_)),
-    alphaRhoName_
-    (
-        dict.lookupOrDefault
-        (
-            "rhoName",
-            phaseName == word::null
-          ? "rho"
-          : IOobject::groupName("alphaRho", phaseName)
-        )
-    ),
-    alphaRhoPhiName_
-    (
-        dict.lookupOrDefault
-        (
-            "rhoPhiName",
-            phaseName == word::null
-          ? "rhoPhi"
-          : IOobject::groupName("alphaRhoPhi", phaseName)
-        )
-    ),
-
+    alphaRhoPtr_(nullptr),
+    alphaRhoPhiPtr_(nullptr),
     Q0_("Q0", sqr(dimVelocity), dict_),
     m_(readScalar(dict.lookup("m"))),
     n_(readScalar(dict.lookup("n"))),
@@ -101,6 +82,25 @@ Foam::afterburnModels::MillerAfterburn::~MillerAfterburn()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::afterburnModels::MillerAfterburn::initializeModels()
+{
+    word alphaRhoName =
+        phaseName_ == word::null
+      ? "rho"
+      : IOobject::groupName("alphaRho", phaseName_);
+    word alphaRhoPhiName =
+        phaseName_ == word::null
+      ? "rhoPhi"
+      : IOobject::groupName("alphaRhoPhi", phaseName_);
+
+    alphaRhoPtr_.set(&c_.mesh().lookupObject<volScalarField>(alphaRhoName));
+    alphaRhoPhiPtr_.set
+    (
+        &c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
+    );
+}
+
 
 void Foam::afterburnModels::MillerAfterburn::solve()
 {
@@ -122,14 +122,9 @@ void Foam::afterburnModels::MillerAfterburn::solve()
     this->storeAndBlendDelta(deltaC);
 
     //- Calculate advection
-    const volScalarField& alphaRho
-    (
-        c_.mesh().lookupObject<volScalarField>(alphaRhoName_)
-    );
-    const surfaceScalarField& alphaRhoPhi
-    (
-        c_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName_)
-    );
+    const volScalarField& alphaRho = alphaRhoPtr_();
+    const surfaceScalarField& alphaRhoPhi = alphaRhoPhiPtr_();
+
     volScalarField deltaAlphaRhoC(fvc::div(alphaRhoPhi, c_));
     this->storeAndBlendDelta(deltaAlphaRhoC);
 

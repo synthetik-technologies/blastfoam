@@ -13,72 +13,46 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-state
+uTransport
 (
-    solidBlastThermo
+    constIso
+    constAnIso
 );
 
-stateBase
+rTransport
 (
-    solidBlastThermo SolidBlastThermo
+    constIso
+    constAnIso
 );
 
-type
-(
-    detonating
-);
-
-typeBase
-(
-    detonating blendedBlastThermo
-);
-
-transport
-(
-    const
-    sutherland
-);
-
-thermo
+uThermo
 (
     eConst
     hConst
     tabulated
-    janaf
+);
+
+rThermo
+(
+    eConst
+    hConst
+    tabulated
 );
 
 uEquationOfState
 (
-    CochranChan
-    Murnaghan
-    BirchMurnaghan2
-    BirchMurnaghan3
-    solidJWL
+    rhoConst
 );
 
 rEquationOfState
 (
-    perfectGas
-    AbelNobel
-    JWLC
-    idealGas
-    stiffenedGas
-    vanderWaals
-    JWL
-    LSZK
-    BKW
-    DoanNickel
-    Tait
-    BWR
-    linearTillotson
-    Tillotson
+    rhoConst
 );
 
 specie
 (
     specieBlast
 );
-
 codeOptions
 #{
 EXE_INC = \

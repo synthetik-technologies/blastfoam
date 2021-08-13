@@ -40,21 +40,13 @@ License
 
 #include "perfectGas.H"
 #include "AbelNobel.H"
-#include "JWLC.H"
 
 #include "idealGas.H"
 #include "stiffenedGas.H"
 #include "vanderWaals.H"
-#include "JWL.H"
 #include "LSZK.H"
 #include "BKW.H"
 #include "DoanNickel.H"
-
-#include "CochranChan.H"
-#include "Murnaghan.H"
-#include "BirchMurnaghan2.H"
-#include "BirchMurnaghan3.H"
-#include "solidJWL.H"
 
 #include "specieBlast.H"
 #include "rspecieBlast.H"
@@ -66,11 +58,9 @@ License
 #define forGasEqns(Mu, Cp, Macro, Args...)                                  \
     forThermo(Mu, Cp, perfectGas, specieBlast, Macro, Args);                \
     forThermo(Mu, Cp, AbelNobel, specieBlast, Macro, Args);                 \
-    forThermo(Mu, Cp, JWLC, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, idealGas, specieBlast, Macro, Args);                  \
     forThermo(Mu, Cp, stiffenedGas, specieBlast, Macro, Args);              \
     forThermo(Mu, Cp, vanderWaals, specieBlast, Macro, Args);               \
-    forThermo(Mu, Cp, JWL, specieBlast, Macro, Args);                       \
     forThermo(Mu, Cp, LSZK, specieBlast, Macro, Args);                      \
     forThermo(Mu, Cp, BKW, specieBlast, Macro, Args);                       \
     forThermo(Mu, Cp, DoanNickel, specieBlast, Macro, Args)
@@ -87,33 +77,6 @@ License
 #define forGases(Macro, Args...)                                            \
     forGasTransports(Macro, Args)
 
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define forDetrGasEqns(Mu, Cp, uEos, Macro, Args...)                        \
-    forDetThermo(Mu, Cp, uEos, JWLC, specieBlast, Macro, Args);             \
-    forDetThermo(Mu, Cp, uEos, JWL, specieBlast, Macro, Args);              \
-    forDetThermo(Mu, Cp, uEos, LSZK, specieBlast, Macro, Args);             \
-    forDetThermo(Mu, Cp, uEos, BKW, specieBlast, Macro, Args);
-
-#define forDetuGasEqns(Mu, Cp, Macro, Args...)                              \
-    forDetrGasEqns(Mu, Cp, CochranChan, Macro, Args);                       \
-    forDetrGasEqns(Mu, Cp, Murnaghan, Macro, Args);                         \
-    forDetrGasEqns(Mu, Cp, BirchMurnaghan2, Macro, Args);                   \
-    forDetrGasEqns(Mu, Cp, BirchMurnaghan3, Macro, Args);                   \
-    forDetrGasEqns(Mu, Cp, solidJWL, Macro, Args);
-
-#define forDetGasThermos(Mu, Macro, Args...)                                \
-    forDetuGasEqns(Mu, eConstThermo, Macro, Args);                          \
-    forDetuGasEqns(Mu, hConstThermo, Macro, Args)
-
-#define forDetGasTransports(Macro, Args...)                                 \
-    forDetGasThermos(constTransport, Macro, Args);                          \
-    forDetGasThermos(sutherlandTransport, Macro, Args)
-
-#define forDetGases(Macro, Args...)                                         \
-    forDetGasTransports(Macro, Args)
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

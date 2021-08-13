@@ -79,8 +79,7 @@ public:
     (
         const fvMesh&,
         const dictionary& dict,
-        const word& phaseName,
-        const bool allowNoGroup = false
+        const word& phaseName
     );
 
 
@@ -93,10 +92,9 @@ public:
         (
             const fvMesh& mesh,
             const dictionary& dict,
-            const word& phaseName,
-            const bool allowNoGroup
+            const word& phaseName
         ),
-        (mesh, dict, phaseName, allowNoGroup)
+        (mesh, dict, phaseName)
     );
 
 
@@ -108,8 +106,7 @@ public:
             const label,
             const fvMesh&,
             const dictionary&,
-            const word& phaseName = word::null,
-            const bool allowNoGroup = false
+            const word& phaseName = word::null
         );
 
     //- Destructor

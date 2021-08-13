@@ -8,11 +8,8 @@ wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
 wmake $targetType radiationModels
-wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
-
-# lagrangian/Allwmake $targetType $*
 
 wmake $targetType functionObjects
 

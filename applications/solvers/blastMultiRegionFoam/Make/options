@@ -2,8 +2,6 @@ EXE_INC = \
     -I. \
     -I./fluid \
     -I./solid \
-    -I./porousFluid \
-    -I./porousSolid \
     -I./include \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
@@ -17,7 +15,6 @@ EXE_INC = \
     -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude
 
@@ -30,13 +27,10 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lregionModels \
     -lradiationModels \
+    -lsampling \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -lblastRadiationModels \
-    -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lerrorEstimate \
     -lblastFunctionObjects \
     $(BLAST_QBMM_LIBS)

@@ -48,11 +48,10 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const bool allowNoGroup
+    const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName, allowNoGroup),
+    fluidBlastThermo(mesh, dict, phaseName),
     phases_(dict.lookup("phases")),
     volumeFraction_
     (
@@ -119,6 +118,9 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
+    // Update total density
+    this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
+
     mu_ =
         volumeFraction_*thermo1_->mu()
       + (1.0 - volumeFraction_)*thermo2_->mu();
@@ -131,9 +133,6 @@ void Foam::twoPhaseFluidBlastThermo::initializeModels()
 {
     thermo1_->initializeModels();
     thermo2_->initializeModels();
-
-    // Update total density
-    this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
@@ -154,7 +153,7 @@ void Foam::twoPhaseFluidBlastThermo::initializeModels()
             }
         }
     }
-    this->correct();
+    correct();
 
 
 }

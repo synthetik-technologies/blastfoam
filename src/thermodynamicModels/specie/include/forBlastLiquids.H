@@ -25,8 +25,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fluidThermoModelTypes_H
-#define fluidThermoModelTypes_H
+#ifndef forBlastLiquids_H
+#define forBlastLiquids_H
 
 #include "constTransport.H"
 #include "sutherlandTransport.H"

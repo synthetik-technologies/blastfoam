@@ -48,11 +48,10 @@ Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const bool allowNoGroup
+    const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName, allowNoGroup),
+    fluidBlastThermo(mesh, dict, phaseName),
     thermoPtr_
     (
         phaseFluidBlastThermo::New
@@ -92,6 +91,7 @@ void Foam::singlePhaseFluidBlastThermo::initializeModels()
             }
         }
     }
+    correct();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

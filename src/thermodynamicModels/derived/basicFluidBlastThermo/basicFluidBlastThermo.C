@@ -55,10 +55,10 @@ Foam::basicFluidBlastThermo<Thermo>::basicFluidBlastThermo
     //  This is only done at the first time step (Not on restart)
     if
     (
-        max(this->rho_).value() == 0
+        max(this->rho_).value() <= 0
      || (
             dict.lookupOrDefault<Switch>("calculateDensity", false)
-         && this->rho_.time().timeIndex() == 0
+         && !this->rho_.time().restart()
         )
     )
     {

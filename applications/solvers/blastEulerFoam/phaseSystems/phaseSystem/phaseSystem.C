@@ -39,7 +39,7 @@ License
 #include "dragODE.H"
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
-#include "fluxScheme.H"
+#include "phaseFluxScheme.H"
 
 #include "SortableList.H"
 
@@ -682,6 +682,12 @@ Foam::phaseSystem::phaseSystem
     fvModels_(fvModels::New(mesh)),
     fvConstraints_(fvConstraints::New(mesh))
 {
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].initializeModels();
+    }
+    encode();
+
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
     {

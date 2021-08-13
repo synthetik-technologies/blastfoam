@@ -84,7 +84,7 @@ gas
             {
                 transport   const;
                 thermo      eConst;
-                equationOfState idealGas;
+                equationOfState Murnaghan;
             }
 
             equationOfState

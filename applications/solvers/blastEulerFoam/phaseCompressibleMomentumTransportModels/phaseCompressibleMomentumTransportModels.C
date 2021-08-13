@@ -27,44 +27,26 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "Stokes.H"
-makeLaminarModel(Stokes);
-
-#include "generalisedNewtonian.H"
-makeLaminarModel(generalisedNewtonian);
-
-#include "kEpsilon.H"
-makeRASModel(kEpsilon);
-
 #include "LaheyKEpsilon.H"
 makeRASModel(LaheyKEpsilon);
 
-// #include "kOmegaSST.H"
-// makeRASModel(kOmegaSST);
+#include "kOmegaSSTSato.H"
+makeRASModel(kOmegaSSTSato);
 
-// #include "kOmegaSSTSato.H"
-// makeRASModel(kOmegaSSTSato);
+#include "continuousGasKEpsilon.H"
+makeRASModel(continuousGasKEpsilon);
 
-// #include "continuousGasKEpsilon.H"
-// makeRASModel(continuousGasKEpsilon);
+#include "mixtureKEpsilon.H"
+makeRASModel(mixtureKEpsilon);
 
-// #include "mixtureKEpsilon.H"
-// makeRASModel(mixtureKEpsilon);
+#include "SmagorinskyZhang.H"
+makeLESModel(SmagorinskyZhang);
 
-#include "Smagorinsky.H"
-makeLESModel(Smagorinsky);
+#include "NicenoKEqn.H"
+makeLESModel(NicenoKEqn);
 
-#include "kEqn.H"
-makeLESModel(kEqn);
-
-// #include "SmagorinskyZhang.H"
-// makeLESModel(SmagorinskyZhang);
-
-// #include "NicenoKEqn.H"
-// makeLESModel(NicenoKEqn);
-
-// #include "continuousGasKEqn.H"
-// makeLESModel(continuousGasKEqn);
+#include "continuousGasKEqn.H"
+makeLESModel(continuousGasKEqn);
 
 
 // ************************************************************************* //

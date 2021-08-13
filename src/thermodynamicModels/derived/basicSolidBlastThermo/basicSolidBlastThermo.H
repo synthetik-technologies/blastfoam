@@ -123,7 +123,7 @@ public:
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const
         {
-            return Thermo::thermoType::isotropic();
+            return Thermo::thermoType::isotropic;
         }
 };
 

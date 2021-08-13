@@ -11,7 +11,6 @@ EXE_INC = \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/radiationModels/lnInclude \
 
 LIB_LIBS = \
@@ -21,6 +20,6 @@ LIB_LIBS = \
     -lthermophysicalTransportModels \
     -lradiationModels \
     -L$(BLAST_LIBBIN) \
+    -lblastFiniteVolume \
     -lblastThermodynamics \
-    -lfluxSchemes \
     -lblastRadiationModels

@@ -12,6 +12,26 @@ timeIntegrators/RK4/RK4TimeIntegrator.C
 timeIntegrators/RK4SSP/RK4SSPTimeIntegrator.C
 timeIntegrators/RKF45/RKF45TimeIntegrator.C
 
+
+fluxSchemes/fluxSchemeBase/fluxSchemeBase.C
+fluxSchemes/RiemannConvectionScheme/RiemannConvectionSchemes.C
+
+fluxSchemes/fluxSchemes/fluxScheme/fluxScheme.C
+fluxSchemes/fluxSchemes/fluxScheme/fluxSchemeNew.C
+fluxSchemes/fluxSchemes/AUSMPlus/AUSMPlusFluxScheme.C
+fluxSchemes/fluxSchemes/AUSMPlusUp/AUSMPlusUpFluxScheme.C
+fluxSchemes/fluxSchemes/HLL/HLLFluxScheme.C
+fluxSchemes/fluxSchemes/HLLC/HLLCFluxScheme.C
+fluxSchemes/fluxSchemes/HLLCP/HLLCPFluxScheme.C
+fluxSchemes/fluxSchemes/Kurganov/KurganovFluxScheme.C
+fluxSchemes/fluxSchemes/Tadmor/TadmorFluxScheme.C
+
+fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxScheme.C
+fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxSchemeNew.C
+fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
+fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
+fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
+
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
 

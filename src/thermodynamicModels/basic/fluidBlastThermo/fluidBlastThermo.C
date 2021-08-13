@@ -43,8 +43,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const bool allowNoGroup
+    const word& phaseName
 )
 :
     blastThermo(mesh, dict, phaseName),
@@ -57,7 +56,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
             dimPressure,
-            allowNoGroup
+            true // pressure is always allowed to read from mixture field
         )
     ),
     mu_
@@ -83,8 +82,7 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
     const label nPhases,
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const bool allowNoGroup
+    const word& phaseName
 )
 {
     word fluidType("singlePhaseFluid");
@@ -108,7 +106,7 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict, phaseName, allowNoGroup);
+    return cstrIter()(mesh, dict, phaseName);
 }
 
 

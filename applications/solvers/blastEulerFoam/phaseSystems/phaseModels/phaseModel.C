@@ -34,7 +34,7 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "fluxScheme.H"
+#include "phaseFluxScheme.H"
 #include "interfacialPressureModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -178,6 +178,9 @@ Foam::phaseModel::phaseModel
 void Foam::phaseModel::initializeModels()
 {
     dPtr_ = diameterModel::New(fluid_.mesh(), phaseDict_, name_);
+
+    thermo().initializeModels();
+    thermo().correct();
 }
 
 

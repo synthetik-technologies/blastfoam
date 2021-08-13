@@ -56,10 +56,10 @@ Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
     //  This is only done at the first time step (Not on restart)
     if
     (
-        max(this->rho_).value() == 0
+        max(this->rho_).value() <= 0
      || (
             dict.lookupOrDefault<Switch>("calculateDensity", false)
-         && this->rho_.time().timeIndex() == 0
+         && !this->rho_.time().restart()
         )
     )
     {
@@ -95,28 +95,15 @@ Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
     //  This is only done at the first time step (Not on restart)
     if
     (
-        max(this->rho_).value() == 0
+        max(this->rho_).value() <= 0
      || (
             dict.lookupOrDefault<Switch>("calculateDensity", false)
-         && this->rho_.time().timeIndex() == 0
+         && !this->rho_.time().restart()
         )
     )
     {
-        updateRho();
+        updateRho(phaseFluidBlastThermo::p());
     }
-
-    this->mu_ =
-        this->volScalarFieldProperty
-        (
-            IOobject::groupName("mu", name),
-            dimDynamicViscosity,
-            &Thermo::thermoType::mu,
-            this->rho_,
-            this->e_,
-            this->T_
-        );
-
-    this->initialize();
 }
 
 

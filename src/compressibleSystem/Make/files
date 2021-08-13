@@ -6,4 +6,8 @@ twoPhaseCompressibleSystem/twoPhaseCompressibleSystem.C
 multiphaseCompressibleSystem/multiphaseCompressibleSystem.C
 coupledMultiphaseCompressibleSystem/coupledMultiphaseCompressibleSystem.C
 
+derivedFvPatchFields/maxwellSlipU/maxwellSlipUFvPatchVectorField.C
+derivedFvPatchFields/smoluchowskiJumpT/smoluchowskiJumpTFvPatchScalarField.C
+derivedFvPatchFields/mixedFixedValueSlip/mixedFixedValueSlipFvPatchFields.C
+
 LIB = $(BLAST_LIBBIN)/libphaseCompressibleSystems

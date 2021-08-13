@@ -22,7 +22,7 @@ derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
 derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
-
+derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
 
 activationModels/activationModel/activationModel.C
 activationModels/activationModel/newActivationModel.C

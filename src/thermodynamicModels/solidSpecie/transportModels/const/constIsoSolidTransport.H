@@ -106,10 +106,7 @@ public:
     // Member Functions
 
         //- Is the thermal conductivity isotropic
-        bool isotropic() const
-        {
-            return true;
-        }
+        static const bool isotropic = true;
 
         //- Dynamic viscosity [kg/ms]
         scalar mu

@@ -19,6 +19,5 @@ LIB_LIBS = \
     -L$(FOAM_LIBBIN)/dummy -lptscotchDecomp -lscotchDecomp \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
-    -lblastFunctionObjects \
     -lblastDynamicMesh \
     -lerrorEstimate

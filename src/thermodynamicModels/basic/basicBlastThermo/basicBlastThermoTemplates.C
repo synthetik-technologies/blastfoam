@@ -54,17 +54,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
         setEnv("FOAM_CODE_TEMPLATES", BLAST_DIR/"etc/codeTemplates", true);
 
         const word type(thermoDict.lookup("type"));
-        word compileType;
-        if (type != "detonating")
-        {
-            compileType = Thermo::typeName + "BlastThermo";
-        }
-        else
-        {
-            compileType =
-                "detonating" + Thermo::typeName.capitalise() + "BlastThermo";
-        }
-        Info<<compileType<<endl;
+        word compileType = type + Thermo::typeName.capitalise() + "BlastThermo";
 
         if
         (
@@ -82,10 +72,10 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
                 entries =
                     {
-                        {"state", Thermo::typeName},
-                        {"type", type},
-                        {"transport", uDict.lookup("transport")},
-                        {"thermo", uDict.lookup("thermo")},
+                        {"uTransport", uDict.lookup("transport")},
+                        {"rTransport", rDict.lookup("transport")},
+                        {"uThermo", uDict.lookup("thermo")},
+                        {"rThermo", rDict.lookup("thermo")},
                         {"uEquationOfState", uDict.lookup("equationOfState")},
                         {"rEquationOfState", rDict.lookup("equationOfState")},
                         {"specie", "specieBlast"}
@@ -98,15 +88,12 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
                 entries =
                     {
-                        {"state", Thermo::typeName},
-                        {"type", type},
                         {"transport", thermoTypeDict.lookup("transport")},
                         {"thermo", thermoTypeDict.lookup("thermo")},
                         {"equationOfState", thermoTypeDict.lookup("equationOfState")},
                         {"specie", "specieBlast"}
                     };
             }
-            Info<<entries<<endl;
             compileTemplate thermo
             (
                 compileType,

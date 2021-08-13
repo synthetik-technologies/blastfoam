@@ -57,7 +57,7 @@ SourceFiles
 #include "phaseModel.H"
 #include "solidBlastThermo.H"
 #include "kineticTheoryModel.H"
-#include "AUSMPlusUp.H"
+#include "phaseFluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -102,7 +102,7 @@ protected:
         surfaceScalarField alphaRhoPTEPhi_;
 
         //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
+        autoPtr<phaseFluxScheme> fluxScheme_;
 
 
 public:
@@ -111,8 +111,17 @@ public:
     ClassName("granular");
 
     // Constructors
+
         granularPhaseModel
         (
+            const phaseSystem& fluid,
+            const word& phaseName,
+            const label index
+        );
+
+        granularPhaseModel
+        (
+            const word& thermoType,
             const phaseSystem& fluid,
             const word& phaseName,
             const label index
@@ -167,13 +176,13 @@ public:
 
 
         //- Return the flux scheme
-        virtual const fluxScheme& flux() const
+        virtual const phaseFluxScheme& flux() const
         {
             return fluxScheme_();
         }
 
         //- Access the flux scheme
-        virtual fluxScheme& flux()
+        virtual phaseFluxScheme& flux()
         {
             return fluxScheme_();
         }

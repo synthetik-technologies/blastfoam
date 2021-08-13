@@ -262,9 +262,10 @@ Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
 )
 {
     const word baseName(IOobject::member(name));
+    Info<<name<<" "<<baseName<<endl;
     if (!mesh.foundObject<volScalarField>(name))
     {
-        volScalarField* fPtr;
+        volScalarField* fPtr = nullptr;
         IOobject io
         (
             name,

@@ -1,11 +1,7 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
-    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
-    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
@@ -13,7 +9,6 @@ EXE_INC= \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
-    -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/lagrangian/basic/lnInclude \
     -I$(LIB_SRC)/lagrangian/parcel/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude
@@ -27,9 +22,5 @@ EXE_LIBS = \
     -lfluidThermophysicalModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -lblastRadiationModels \
-    -lblastDynamicMesh \
-    -lblastDynamicFvMesh \
-    -lerrorEstimate
+    -lblastDynamicFvMesh

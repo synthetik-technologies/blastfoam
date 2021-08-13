@@ -72,7 +72,6 @@ Foam::multiPhaseModel::multiPhaseModel
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
-
     //- Temporarily Store read density
     volScalarField sumAlpha
     (
@@ -149,13 +148,7 @@ Foam::multiPhaseModel::multiPhaseModel
         thermoPtr_()
     ).setTotalVolumeFractionPtr(*this);
 
-    phaseModel::initializeModels();
-    thermoPtr_->initializeModels();
-    correctThermo();
-
     solveAlpha(true);
-
-    encode();
 }
 
 

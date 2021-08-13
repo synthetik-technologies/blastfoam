@@ -108,8 +108,7 @@ int main(int argc, char *argv[])
                 1,
                 mesh,
                 phaseProperties,
-                phaseName,
-                true
+                phaseName
             ).ptr()
         );
     }

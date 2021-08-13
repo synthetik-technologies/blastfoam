@@ -44,31 +44,6 @@ License
                                                                             \
     Macro(Args, Transport##Thermo##Equation##Specie)
 
-#define forDetThermo(Transport, Thermo, uEquation, rEquation, Specie, Macro, Args...) \
-                                                                            \
-    typedefThermo                                                           \
-    (                                                                       \
-        Transport,                                                          \
-        Thermo,                                                             \
-        uEquation,                                                          \
-        Specie                                                              \
-    );                                                                      \
-    typedefThermo                                                           \
-    (                                                                       \
-        Transport,                                                          \
-        Thermo,                                                             \
-        rEquation,                                                          \
-        r##Specie                                                           \
-    );                                                                      \
-                                                                            \
-    Macro                                                                   \
-    (                                                                       \
-        Args,                                                               \
-        Transport##Thermo##uEquation##Specie,                               \
-        Transport##Thermo##rEquation##r##Specie                             \
-    );
-
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif

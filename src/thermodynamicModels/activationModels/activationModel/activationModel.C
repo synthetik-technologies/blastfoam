@@ -166,8 +166,7 @@ Foam::activationModel::activationModel
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimless, 0.0),
-        wordList(mesh.boundaryMesh().size(), "zeroGradient")
+        dimensionedScalar("0", dimless, 0.0)
     ),
     detonationPoints_(0),
     e0_
@@ -183,28 +182,8 @@ Foam::activationModel::activationModel
       : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
     lambdaExp_(dict.lookupOrDefault("lambdaExp", 1.0)),
-    alphaRhoName_
-    (
-        dict.lookupOrDefault
-        (
-            "rhoName",
-            phaseName == word::null
-          ? "rho"
-          : IOobject::groupName("alphaRho", phaseName)
-        )
-    ),
-    alphaRho_(mesh.lookupObject<volScalarField>(alphaRhoName_)),
-    alphaRhoPhiName_
-    (
-        dict.lookupOrDefault
-        (
-            "rhoPhiName",
-            phaseName == word::null
-          ? "rhoPhi"
-          : IOobject::groupName("alphaRhoPhi", phaseName)
-        )
-    ),
-    alphaRhoPhi_(mesh.lookupObject<surfaceScalarField>(alphaRhoPhiName_)),
+    alphaRhoPtr_(nullptr),
+    alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
     const volScalarField& alpha
@@ -318,6 +297,25 @@ Foam::activationModel::~activationModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::activationModel::initializeModels()
+{
+    word phaseName = lambda_.group();
+    word alphaRhoName =
+        phaseName == word::null
+      ? "rho"
+      : IOobject::groupName("alphaRho", phaseName);
+    word alphaRhoPhiName =
+        phaseName == word::null
+      ? "rhoPhi"
+      : IOobject::groupName("alphaRhoPhi", phaseName);
+
+    alphaRhoPtr_.set(&lambda_.mesh().lookupObject<volScalarField>(alphaRhoName));
+    alphaRhoPhiPtr_.set
+    (
+        &lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
+    );
+}
+
 Foam::vector Foam::activationModel::centerOfMass
 (
     const fvMesh& mesh,
@@ -377,14 +375,14 @@ void Foam::activationModel::solve()
     //- Compute actual delta for the time step knowing the blended
     ddtLambda = this->calcAndStoreDelta(ddtLambda);
 
-    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhi_, lambda_));
+    volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhiPtr_(), lambda_));
     this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
     //- Solve advection
     lambda_ =
         (
-            lambdaOld*alphaRho_.prevIter() - dT*deltaAlphaRhoLambda
-        )/max(alphaRho_, smallRho)
+            lambdaOld*alphaRhoPtr_().prevIter() - dT*deltaAlphaRhoLambda
+        )/max(alphaRhoPtr_(), smallRho)
       + dT*ddtLambdaLimited;
 
     //- Correct the lambda field since zero mass will cause "unactivation"

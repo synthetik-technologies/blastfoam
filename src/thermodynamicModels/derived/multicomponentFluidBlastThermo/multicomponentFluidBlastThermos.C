@@ -32,7 +32,6 @@ License
 #include "forBlastGases.H"
 #include "makeBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
-#include "tabulatedThermoEOS.H"
 
 namespace Foam
 {

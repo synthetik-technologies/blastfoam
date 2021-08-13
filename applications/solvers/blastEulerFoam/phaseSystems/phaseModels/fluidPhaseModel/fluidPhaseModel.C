@@ -60,15 +60,14 @@ Foam::fluidPhaseModel::fluidPhaseModel
             1,
             fluid.mesh(),
             phaseDict_,
-            phaseName,
-            true
+            phaseName
         )
     ),
     rho_(thermoPtr_->rho()),
     e_(thermoPtr_->he()),
     T_(thermoPtr_->T()),
     p_(thermoPtr_->p()),
-    fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
+    fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
     thermoPtr_->read(phaseDict_);
 
@@ -118,7 +117,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     e_(thermoPtr_->he()),
     T_(thermoPtr_->T()),
     p_(thermoPtr_->p()),
-    fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
+    fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
     thermoPtr_->read(phaseDict_);
 
@@ -138,12 +137,6 @@ Foam::fluidPhaseModel::fluidPhaseModel
             phaseCompressible::momentumTransportModel,
             transportThermoModel
         >::New(turbulence_, thermoPtr_());
-
-
-    phaseModel::initializeModels();
-    thermoPtr_->initializeModels();
-    thermoPtr_->correct();
-
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

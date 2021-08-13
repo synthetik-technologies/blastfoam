@@ -57,7 +57,6 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             fluid.mesh(),
             phaseDict_,
-            1,
             phaseName
         )
     ),
@@ -88,7 +87,64 @@ Foam::granularPhaseModel::granularPhaseModel
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    fluxScheme_(new fluxSchemes::AUSMPlusUp(fluid.mesh(), phaseName))
+    fluxScheme_(phaseFluxScheme::NewSolid(fluid.mesh(), phaseName))
+{
+    thermoPtr_->read(phaseDict_);
+}
+
+
+Foam::granularPhaseModel::granularPhaseModel
+(
+    const word& thermoType,
+    const phaseSystem& fluid,
+    const word& phaseName,
+    const label index
+)
+:
+    phaseModel(fluid, phaseName, index),
+    kineticTheoryModel
+    (
+        *this,
+        phaseDict_.subDict("kineticTheoryCoeffs")
+    ),
+    thermoPtr_
+    (
+        solidBlastThermo::New
+        (
+            thermoType,
+            fluid.mesh(),
+            phaseDict_,
+            phaseName
+        )
+    ),
+    rho_(thermoPtr_->rho()),
+    e_(thermoPtr_->he()),
+    T_(thermoPtr_->T()),
+    alphaRhoPTE_
+    (
+        IOobject
+        (
+            IOobject::groupName("alphaRhoPTE", name_),
+            fluid.mesh().time().timeName(),
+            fluid.mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        1.5*(*this)*rho_*this->Theta_
+    ),
+    alphaRhoPTEPhi_
+    (
+        IOobject
+        (
+            IOobject::groupName("alphaRhoPTEPhi", name_),
+            fluid.mesh().time().timeName(),
+            fluid.mesh(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
+    ),
+    fluxScheme_(phaseFluxScheme::NewSolid(fluid.mesh(), phaseName))
 {
     thermoPtr_->read(phaseDict_);
     phaseModel::initializeModels();

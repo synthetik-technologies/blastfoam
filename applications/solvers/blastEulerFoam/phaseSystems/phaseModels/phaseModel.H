@@ -63,7 +63,7 @@ namespace Foam
 
 
 class phaseSystem;
-class fluxScheme;
+class phaseFluxScheme;
 
 // Trait for converting the ThermoModel's thermo type to the thermo type needed
 // for the thermophysical transport model type; i.e., from rho-type thermo to
@@ -331,10 +331,10 @@ public:
         }
 
         //- Return the flux scheme
-        virtual const fluxScheme& flux() const = 0;
+        virtual const phaseFluxScheme& flux() const = 0;
 
         //- Access the flux scheme
-        virtual fluxScheme& flux() = 0;
+        virtual phaseFluxScheme& flux() = 0;
 
         //- Return the residual phase-fraction for given phase
         virtual dimensionedScalar residualAlpha() const

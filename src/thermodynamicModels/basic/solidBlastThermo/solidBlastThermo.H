@@ -96,9 +96,20 @@ public:
         (
             const fvMesh&,
             const dictionary&,
-            const label nPhases = 1,
-            const word& phaseName=word::null
+            const word& phaseName=word::null,
+            const label nPhases = 1
         );
+
+        //- Standard selection based on fvMesh with a forced thermo type
+        static autoPtr<solidBlastThermo> New
+        (
+            const word&,
+            const fvMesh&,
+            const dictionary&,
+            const word& phaseName=word::null,
+            const label nPhases = 1
+        );
+
 
     //- Destructor
     virtual ~solidBlastThermo();

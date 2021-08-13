@@ -126,17 +126,12 @@ protected:
         //- Exponent used to blend reacted and unreacted states (\lambda^m)
         scalar lambdaExp_;
 
-        //- Density name
-        word alphaRhoName_;
 
         //- Reference to phase mass
-        const volScalarField& alphaRho_;
-
-        //- Name of flux
-        word alphaRhoPhiName_;
+        UautoPtr<const volScalarField> alphaRhoPtr_;
 
         //- Reference to phase mass flux
-        const surfaceScalarField& alphaRhoPhi_;
+        UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
         //- Maximum change in lambda per time step
         scalar maxDLambda_;
@@ -217,6 +212,9 @@ public:
 
 
     // Member Functions
+
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels();
 
         //- Update
         virtual void update()

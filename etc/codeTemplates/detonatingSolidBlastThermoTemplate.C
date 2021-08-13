@@ -41,10 +41,9 @@ License
 // Transport
 #include "${transport}Transport.H"
 
-// basic/detonating/multicomponent
-#include "phase${stateBase}.H"
-#include "${type}${stateBase}.H"
-#include "${typeBase}.H"
+#include "phaseSolidBlastThermo.H"
+#include "detonatingSolidBlastThermo.H"
+#include "blendedBlastThermo.H"
 
 #include "addToRunTimeSelectionTable.H"
 
@@ -78,15 +77,17 @@ namespace Foam
 {
     forDetThermo
     (
-        ${transport}Transport,
-        ${thermo}Thermo,
+        ${uTransport}SolidTransport,
+        ${rTransport}SolidTransport,
+        ${uThermo}Thermo,
+        ${rThermo}Thermo,
         ${uEquationOfState},
         ${rEquationOfState},
         ${specie},
         makeDetThermo,
-        phase${stateBase},
-        ${type}${stateBase},
-        ${typeBase}
+        phaseSolidBlastThermo,
+        detonatingSolidBlastThermo,
+        blendedBlastThermo
     );
 }
 

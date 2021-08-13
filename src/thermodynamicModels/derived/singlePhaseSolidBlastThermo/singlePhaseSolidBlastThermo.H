@@ -80,6 +80,15 @@ public:
         const word& phaseName
     );
 
+    // Constructor
+    singlePhaseSolidBlastThermo
+    (
+        const word& thermoType,
+        const fvMesh& mesh,
+        const dictionary& dict,
+        const word& phaseName
+    );
+
     //- Initialize models
     virtual void initializeModels();
 

@@ -1,8 +1,5 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
-    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
@@ -29,11 +26,8 @@ EXE_LIBS = \
     -lspecie \
     -lfluidThermophysicalModels \
     -lchemistryModel \
-    -lODE \
     -lcombustionModels \
     -lradiationModels \
     -L$(BLAST_LIBBIN) \
-    -lfluxSchemes \
-    -lblastDynamicMesh \
-    -lblastDynamicFvMesh \
-    -lerrorEstimate
+    -lblastFiniteVolume \
+    -lblastDynamicFvMesh

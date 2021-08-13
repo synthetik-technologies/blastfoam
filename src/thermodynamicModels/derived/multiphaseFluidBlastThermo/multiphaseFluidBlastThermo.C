@@ -48,11 +48,10 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const bool allowNoGroup
+    const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName, allowNoGroup),
+    fluidBlastThermo(mesh, dict, phaseName),
     phases_(dict.lookup("phases")),
     volumeFractions_(phases_.size()),
     rhos_(phases_.size()),

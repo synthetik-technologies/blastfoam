@@ -147,9 +147,6 @@ public:
 
     // Member functions
 
-        //- Calculate density
-        virtual void updateRho();
-
         //- Correct fields
         virtual void correct();
 

@@ -59,8 +59,8 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const label nPhases,
-    const word& phaseName
+    const word& phaseName,
+    const label nPhases
 )
 {
     word solidType("singlePhaseSolid");
@@ -77,6 +77,41 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
     }
 
     return cstrIter()(mesh, dict, phaseName);
+}
+
+Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
+(
+    const word& thermoType,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const word& phaseName,
+    const label nPhases
+)
+{
+    word solidType("singlePhaseSolid");
+
+    dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(solidType);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown number of solids " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    dictionary tmpDict(dict);
+    if (tmpDict.found("mixture"))
+    {
+        tmpDict.subDict("mixture").set("type", thermoType);
+    }
+    else
+    {
+        tmpDict.set("type", thermoType);
+    }
+
+    return cstrIter()(mesh, tmpDict, phaseName);
 }
 
 

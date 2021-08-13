@@ -11,15 +11,6 @@ phaseModels/phasePair/phasePairKey/phasePairKey.C
 phaseModels/phasePair/phasePair/phasePair.C
 phaseModels/phasePair/orderedPhasePair/orderedPhasePair.C
 
-phaseModels/phaseFluxFunctions/fluxScheme/newFluxScheme.C
-phaseModels/phaseFluxFunctions/fluxScheme/fluxScheme.C
-phaseModels/phaseFluxFunctions/AUSMPlusUp/KimLimitedScheme/KimLimitedScheme.C
-phaseModels/phaseFluxFunctions/RiemannConvectionScheme/RiemannConvectionSchemes.C
-phaseModels/phaseFluxFunctions/HLLC/HLLC.C
-phaseModels/phaseFluxFunctions/AUSMPlusUp/AUSMPlusUp.C
-phaseModels/phaseFluxFunctions/Tadmor/Tadmor.C
-phaseModels/phaseFluxFunctions/Kurganov/Kurganov.C
-
 BlendedInterfacialModel/blendingMethods/blendingMethod/blendingMethod.C
 BlendedInterfacialModel/blendingMethods/blendingMethod/newBlendingMethod.C
 BlendedInterfacialModel/blendingMethods/noBlending/noBlending.C

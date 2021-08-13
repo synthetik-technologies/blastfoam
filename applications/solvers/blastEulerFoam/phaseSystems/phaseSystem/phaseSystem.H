@@ -541,6 +541,9 @@ public:
             //- Return non-const access to phase models
             inline phaseModelList& phases();
 
+            //- Return moving phase models
+            inline const phaseModelList& movingPhases() const;
+
             //- Return the phase pairs
             inline const phasePairTable& phasePairs() const;
 

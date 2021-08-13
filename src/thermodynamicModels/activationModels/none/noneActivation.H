@@ -83,6 +83,10 @@ public:
 
     // Member Functions
 
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels()
+        {}
+
         //- Solve sub-step stepi
         virtual void solve()
         {}

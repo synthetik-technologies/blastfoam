@@ -61,27 +61,6 @@ License
     forSolidTransports(Macro, Args)
 
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define forDetrSolidEqns(Mu, Cp, uEos, Macro, Args...)                      \
-    forDetThermo(Mu, Cp, uEos, rhoConst, specieBlast, Macro, Args);
-
-#define forDetuSolidEqns(Mu, Cp, Macro, Args...)                            \
-    forDetrSolidEqns(Mu, Cp, rhoConst, Macro, Args);
-
-#define forDetSolidThermos(Mu, Macro, Args...)                              \
-    forDetuSolidEqns(Mu, eConstThermo, Macro, Args);                        \
-    forDetuSolidEqns(Mu, tabulatedThermo, Macro, Args);                     \
-    forDetuSolidEqns(Mu, hConstThermo, Macro, Args)
-
-#define forDetSolidTransports(Macro, Args...)                               \
-    forDetSolidThermos(constIsoSolidTransport, Macro, Args);                \
-    forDetSolidThermos(constAnIsoSolidTransport, Macro, Args)
-
-#define forDetSolids(Macro, Args...)                                         \
-    forDetSolidTransports(Macro, Args)
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif

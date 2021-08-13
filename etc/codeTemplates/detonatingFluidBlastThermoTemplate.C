@@ -23,8 +23,8 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "forBlastThermo.H"
-#include "makeBlastThermo.H"
+#include "forDetBlastThermo.H"
+#include "makeDetBlastThermo.H"
 
 #include "${specie}.H"
 #include "r${specie}.H"
@@ -36,15 +36,16 @@ License
 #include "${rEquationOfState}.H"
 
 // Thermo
-#include "${thermo}BlastThermo.H"
+#include "${uThermo}BlastThermo.H"
+#include "${rThermo}BlastThermo.H"
 
 // Transport
-#include "${transport}Transport.H"
+#include "${uTransport}Transport.H"
+#include "${rTransport}Transport.H"
 
-// basic/detonating/multicomponent
-#include "phase${stateBase}.H"
-#include "${type}${stateBase}.H"
-#include "${typeBase}.H"
+#include "phaseFluidBlastThermo.H"
+#include "detonatingFluidBlastThermo.H"
+#include "blendedBlastThermo.H"
 
 #include "addToRunTimeSelectionTable.H"
 
@@ -78,15 +79,17 @@ namespace Foam
 {
     forDetThermo
     (
-        ${transport}Transport,
-        ${thermo}Thermo,
+        ${uTransport}Transport,
+        ${rTransport}Transport,
+        ${uThermo}Thermo,
+        ${rThermo}Thermo,
         ${uEquationOfState},
         ${rEquationOfState},
         ${specie},
         makeDetThermo,
-        phase${stateBase},
-        ${type}${stateBase},
-        ${typeBase}
+        phaseFluidBlastThermo,
+        detonatingFluidBlastThermo,
+        blendedBlastThermo
     );
 }
 

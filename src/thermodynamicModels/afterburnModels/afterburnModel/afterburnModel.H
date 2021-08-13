@@ -66,6 +66,9 @@ protected:
         //- Dictionary containing coefficients
         const dictionary& dict_;
 
+        //- name of the phase
+        const word phaseName_;
+
 
 public:
 
@@ -112,6 +115,10 @@ public:
 
 
     // Member Functions
+
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels()
+        {}
 
         //- Update
         virtual void update()

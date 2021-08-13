@@ -42,7 +42,7 @@ SourceFiles
 
 #include "phaseModel.H"
 #include "fluidBlastThermo.H"
-#include "fluxScheme.H"
+#include "phaseFluxScheme.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -79,7 +79,7 @@ protected:
         volScalarField& p_;
 
         //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
+        autoPtr<phaseFluxScheme> fluxScheme_;
 
         virtual tmp<volScalarField> ESource() const;
 
@@ -132,13 +132,13 @@ public:
             virtual void postUpdate();
 
         //- Return the flux scheme
-        virtual const fluxScheme& flux() const
+        virtual const phaseFluxScheme& flux() const
         {
             return fluxScheme_();
         }
 
         //- Access the flux scheme
-        virtual fluxScheme& flux()
+        virtual phaseFluxScheme& flux()
         {
             return fluxScheme_();
         }

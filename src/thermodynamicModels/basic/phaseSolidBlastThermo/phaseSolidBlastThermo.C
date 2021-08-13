@@ -88,6 +88,7 @@ Foam::autoPtr<Foam::phaseSolidBlastThermo> Foam::phaseSolidBlastThermo::New
         masterName
     );
 }
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 

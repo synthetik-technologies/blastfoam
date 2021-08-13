@@ -49,7 +49,8 @@ Foam::afterburnModel::afterburnModel
         mesh
     ),
     mesh_(mesh),
-    dict_(dict)
+    dict_(dict),
+    phaseName_(phaseName)
 {}
 
 

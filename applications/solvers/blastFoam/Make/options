@@ -1,6 +1,5 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
@@ -19,12 +18,7 @@ EXE_LIBS = \
     -lcompressibleMomentumTransportModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -ldiameterModels \
-    -lfluxSchemes \
     -lphaseCompressibleSystems \
-    -lblastRadiationModels \
-    -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lerrorEstimate \
     -lblastFunctionObjects \
     $(BLAST_QBMM_LIBS)
