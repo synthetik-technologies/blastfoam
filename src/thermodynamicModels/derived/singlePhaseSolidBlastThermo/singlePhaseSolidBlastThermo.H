@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::singlePhaseFluidBlastThermo
+    Foam::singlePhaseSolidBlastThermo
 
 Description
     Class to calculate mixture properties of two equation of states
@@ -33,47 +33,47 @@ Description
     References:
     \verbatim
         Zheng, H.W., Shu, C., Chew, Y.T., Qin, N.  (2011).
-        A solution adaptive simulation of compressible multi-fluid flows
+        A solution adaptive simulation of compressible multi-Solid flows
         with general equation of state.
-        International Journal for Numerical Methods in Fluids, 67, 616-637.
+        International Journal for Numerical Methods in Solids, 67, 616-637.
     \endverbatim
 
 SourceFiles
-    singlePhaseFluidBlastThermo.C
+    singlePhaseSolidBlastThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef singlePhaseFluidBlastThermo_H
-#define singlePhaseFluidBlastThermo_H
+#ifndef singlePhaseSolidBlastThermo_H
+#define singlePhaseSolidBlastThermo_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "fluidBlastThermo.H"
-#include "phaseFluidBlastThermo.H"
+#include "solidBlastThermo.H"
+#include "phaseSolidBlastThermo.H"
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class singlePhaseFluidBlastThermo Declaration
+                Class singlePhaseSolidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
-class singlePhaseFluidBlastThermo
+class singlePhaseSolidBlastThermo
 :
-    public fluidBlastThermo
+    public solidBlastThermo
 {
 // Private data
 
         //- Equation of state for phase 1
-        autoPtr<phaseFluidBlastThermo> thermoPtr_;
+        autoPtr<phaseSolidBlastThermo> thermoPtr_;
 
 
 public:
 
-    TypeName("singlePhaseFluid");
+    TypeName("singlePhaseSolid");
 
     // Constructor
-    singlePhaseFluidBlastThermo
+    singlePhaseSolidBlastThermo
     (
         const fvMesh& mesh,
         const dictionary& dict,
@@ -85,7 +85,7 @@ public:
 
 
     //- Destructor
-    virtual ~singlePhaseFluidBlastThermo();
+    virtual ~singlePhaseSolidBlastThermo();
 
 
     // Member Functions
@@ -105,8 +105,23 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
+        //- Return residual values
+        virtual dimensionedScalar residualAlpha() const
+        {
+            return thermoPtr_->residualAlpha();
+        }
+        virtual dimensionedScalar residualRho() const
+        {
+            return thermoPtr_->residualRho();
+        }
+
     // Access functions
 
+        //- Return true if thermal conductivity is isotropic
+        virtual bool isotropic() const
+        {
+            return thermoPtr_->isotropic();
+        }
 
         //- Const reference to first equation of state
         const basicBlastThermo& thermo(const label i) const
@@ -126,22 +141,13 @@ public:
         // Fields derived from thermodynamic state variables
 
             //- Recompute the density
-            virtual void updateRho(const volScalarField&);
+            virtual void updateRho();
 
-            //- Return the speed of sound
-            virtual tmp<volScalarField> speedOfSound() const;
+            //- Anisotropic thermal conductivity [W/m/K]
+            virtual tmp<volVectorField> Kappa() const;
 
-            //- Return the speed of sound for patchi
-            virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-            //- Gamma = dpde []
-            virtual tmp<volScalarField> Gamma() const;
-
-            //- Gamma = dpde for patch []
-            virtual tmp<scalarField> Gamma(const label patchi) const;
-
-            //- Gamma = dpde for cell []
-            virtual scalar Gammai(const label celli) const;
+            //- Anisotropic thermal conductivity for patch [W/m/K]
+            virtual tmp<vectorField> Kappa(const label) const;
 
 
         //- Thermodynamic and transport functions
@@ -304,6 +310,11 @@ public:
             //- Molecular weight for cell [kg/kmol]
             virtual scalar Wi(const label celli) const;
 
+        //- Read residual values
+        virtual void read(const dictionary& dict)
+        {
+            thermoPtr_->read(dict);
+        }
 };
 
 

@@ -187,45 +187,84 @@ public:
         scalar sign(const phaseModel& phase) const;
 
         //- Return the blended force coefficient
-        tmp<volScalarField> K(const label, const label) const;
+        tmp<volScalarField> K
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Return the blended force coefficient
-        scalar K(const label, const label, const label) const;
+        scalar Ki
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Return the face blended force coefficient
-        tmp<surfaceScalarField> Kf(const label, const label) const;
+        tmp<surfaceScalarField> Kf
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Return the blended force
         template<class Type>
         tmp<GeometricField<Type, fvPatchField, volMesh>> F
         (
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return the blended force for a cell
         template<class Type>
-        Type F
+        Type Fi
         (
             const label,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return the face blended force
-        tmp<surfaceScalarField> Ff(const label, const label) const;
+        tmp<surfaceScalarField> Ff
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Return the blended diffusivity
-        tmp<volScalarField> D(const label, const label) const;
+        tmp<volScalarField> D
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
 
         //- Return the blended diffusivity for a cell
-        scalar D(const label, const label, const label) const;
+        scalar Di
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
 
         //- Return the blended mass transfer rate
-        tmp<volScalarField> dmdt(const label, const label) const;
+        tmp<volScalarField> dmdt
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
 
         //- Return the blended mass transfer rate for a cell
-        scalar dmdt(const label, const label, const label) const;
+        scalar dmdti
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const;

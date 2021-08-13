@@ -38,7 +38,7 @@ SourceFiles
 #ifndef multiPhaseModel_H
 #define multiPhaseModel_H
 
-#include "phaseModel.H"
+#include "fluidPhaseModel.H"
 #include "fluxScheme.H"
 #include "multiphaseFluidBlastThermo.H"
 #include "runTimeSelectionTables.H"
@@ -56,7 +56,7 @@ namespace Foam
 
 class multiPhaseModel
 :
-    public phaseModel
+    public fluidPhaseModel
 {
 protected:
     // Protected data
@@ -64,25 +64,13 @@ protected:
         //- Names of components
         wordList phases_;
 
-        //- Phase pressure
-        volScalarField p_;
-
-        //- Density field
-        volScalarField rho_;
-
-        //- Volume fraction flux
-        surfaceScalarField alphaPhi_;
-
         //- Primitative variables
-
-            //- Equation of states
-            multiphaseFluidBlastThermo thermo_;
 
             //- Volume fractions
             PtrList<volScalarField>& alphas_;
 
             //- Phase densities
-            UPtrList<volScalarField>& rhos_;
+            PtrList<volScalarField>& rhos_;
 
 
         //- Conserved variables
@@ -102,11 +90,6 @@ protected:
 
         //- Calculate new alpha and rho fields
         virtual void calcAlphaAndRho();
-
-        //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
-
-        virtual tmp<volScalarField> ESource() const;
 
 
 public:
@@ -130,17 +113,7 @@ public:
 
     // Member Functions
 
-        //- Return the residual phase-fraction for given phase
-        //  Used to stabilize the phase momentum as the phase-fraction -> 0
-        dimensionedScalar residualAlpha() const
-        {
-            return thermo_.residualAlpha();
-        }
-
-
         // integrationSystem functions
-
-             virtual void solveAlpha(const bool s);
 
             //- Decode primative variables
             virtual void decode();
@@ -157,60 +130,9 @@ public:
             //- Update viscous terms
             virtual void postUpdate();
 
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
+            //- Return the energy source
+            virtual tmp<volScalarField> ESource() const;
 
-        //- Access the flux scheme
-        virtual fluxScheme& flux()
-        {
-            return fluxScheme_();
-        }
-
-
-        //- Return the density
-        virtual const volScalarField& rho() const
-        {
-            return rho_;
-        }
-
-        //- Return the thermophysical pressure
-        virtual const volScalarField& p() const
-        {
-            return p_;
-        }
-
-        //- Return non-const access to the thermodynamic pressure
-        virtual volScalarField& p()
-        {
-            return p_;
-        }
-
-        //- Return non-const access to the pressure gradient
-        virtual tmp<volVectorField> gradP() const;
-
-        //- Return non-const access to the volume fraction gradient
-        virtual tmp<volVectorField> gradAlpha() const;
-
-        //- Constant access to the volume fraction flux
-        virtual tmp<surfaceScalarField> alphaPhi() const
-        {
-            return alphaPhi_;
-        }
-
-        //- Return thermodynamic model
-        virtual const basicBlastThermo& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Access thermodynamic model
-        virtual basicBlastThermo& thermo()
-        {
-            return thermo_;
-        }
 
         //- Return the laminar viscosity
         virtual tmp<volScalarField> nu() const;
@@ -290,9 +212,6 @@ public:
 
         //- Return the speed of sound
         virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Correct thermodynamic quantities
-        virtual void correctThermo();
 };
 
 

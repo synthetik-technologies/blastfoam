@@ -84,7 +84,11 @@ public:
     // Member Functions
 
         //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> Nu(const label nodei, const label nodej) const;
+        tmp<volScalarField> Nu
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

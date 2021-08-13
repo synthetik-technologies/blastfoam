@@ -51,19 +51,19 @@ Foam::granularPhaseModel::granularPhaseModel
         *this,
         phaseDict_.subDict("kineticTheoryCoeffs")
     ),
-    thermo_
+    thermoPtr_
     (
         solidBlastThermo::New
         (
-            phaseName,
             fluid.mesh(),
             phaseDict_,
-            true,
+            1,
             phaseName
         )
     ),
-    rho_(thermo_->rho()),
-    p_(fluid.p()),
+    rho_(thermoPtr_->rho()),
+    e_(thermoPtr_->he()),
+    T_(thermoPtr_->T()),
     alphaRhoPTE_
     (
         IOobject
@@ -88,15 +88,11 @@ Foam::granularPhaseModel::granularPhaseModel
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    residualAlpha_
-    (
-        thermo_->residualAlpha()
-    ),
     fluxScheme_(new fluxSchemes::AUSMPlusUp(fluid.mesh(), phaseName))
 {
-    thermo_->read(phaseDict_);
+    thermoPtr_->read(phaseDict_);
     phaseModel::initializeModels();
-    thermo_->initializeModels();
+    thermoPtr_->initializeModels();
     encode();
 }
 
@@ -150,7 +146,7 @@ void Foam::granularPhaseModel::solve()
     phaseModel::solveAlphaRho();
 
     //- Solve thermodynamics to get energy production
-    thermo_->solve();
+    thermoPtr_->solve();
 
     //- Blend deltas
     deltaAlphaRhoU = cmptMultiply(deltaAlphaRhoU, solutionDs_);
@@ -231,7 +227,7 @@ void Foam::granularPhaseModel::postUpdate()
     }
 
     dPtr_->postUpdate();
-    thermo_->postUpdate();
+    thermoPtr_->postUpdate();
 }
 
 
@@ -256,7 +252,7 @@ void Foam::granularPhaseModel::update()
     alphaRhoPTEPhi_ =
         1.5*alphaRhoPhi_*fluxScheme_->interpolate(Theta_, "Theta");
 
-    thermo_->update();
+    thermoPtr_->update();
     phaseModel::update();
 }
 
@@ -281,7 +277,7 @@ void Foam::granularPhaseModel::decode()
         alpha.boundaryField()*rho_.boundaryField();
 
     //- Store limited phase mass (only used for division)
-    volScalarField alphaRho(Foam::max(alpha, residualAlpha_)*rho_);
+    volScalarField alphaRho(Foam::max(alpha, residualAlpha())*rho_);
 
     //- Calculate velocity from momentum
     U_.ref() = alphaRhoU_()/alphaRho();
@@ -319,7 +315,7 @@ void Foam::granularPhaseModel::decode()
     alphaRhoPTE_.boundaryFieldRef() =
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
-    thermo_->correct();
+    thermoPtr_->correct();
     kineticTheoryModel::correct();
 }
 
@@ -419,7 +415,7 @@ Foam::granularPhaseModel::speedOfSound() const
 
 void Foam::granularPhaseModel::correctThermo()
 {
-    T_ = thermo_->calcT();
+    thermoPtr_->correct();
     kineticTheoryModel::correct();
 }
 
@@ -427,49 +423,49 @@ void Foam::granularPhaseModel::correctThermo()
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::ESource() const
 {
-    return (*this)*thermo_->ESource();
+    return (*this)*thermoPtr_->ESource();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::alpha() const
 {
-    return thermo_->alpha();
+    return thermoPtr_->alpha();
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::granularPhaseModel::alpha(const label patchi) const
 {
-    return thermo_->alpha(patchi);
+    return thermoPtr_->alpha(patchi);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::alphahe() const
 {
-    return thermo_->alphahe();
+    return thermoPtr_->alphahe();
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::granularPhaseModel::alphahe(const label patchi) const
 {
-    return thermo_->alphahe(patchi);
+    return thermoPtr_->alphahe(patchi);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::Cp() const
 {
-    return thermo_->Cp();
+    return thermoPtr_->Cp();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::Cv() const
 {
-    return thermo_->Cv();
+    return thermoPtr_->Cv();
 }
 
 // ************************************************************************* //

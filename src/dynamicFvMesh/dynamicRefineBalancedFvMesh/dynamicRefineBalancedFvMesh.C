@@ -42,7 +42,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dynamicRefineBalancedFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineBalancedFvMesh, IOobject);
+    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineBalancedFvMesh, dictionary);
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //

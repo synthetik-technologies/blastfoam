@@ -42,7 +42,7 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::EoH
        /sigma();
 }
 
-Foam::scalar Foam::phasePair::EoH
+Foam::scalar Foam::phasePair::EoHi
 (
     const label celli,
     const scalar& d
@@ -52,7 +52,7 @@ Foam::scalar Foam::phasePair::EoH
         mag(dispersed().rho()[celli] - continuous().rho()[celli])
        *mag(g().value())
        *sqr(d)
-       /sigma(celli);
+       /sigmai(celli);
 }
 
 
@@ -253,7 +253,7 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::E
 }
 
 
-Foam::scalar Foam::phasePair::rho(const label celli) const
+Foam::scalar Foam::phasePair::rhoi(const label celli) const
 {
     return
         phase1()[celli]*phase1().rho()[celli]
@@ -261,7 +261,7 @@ Foam::scalar Foam::phasePair::rho(const label celli) const
 }
 
 
-Foam::scalar Foam::phasePair::magUr
+Foam::scalar Foam::phasePair::magUri
 (
     const label celli,
     const label nodei,
@@ -272,7 +272,7 @@ Foam::scalar Foam::phasePair::magUr
 }
 
 
-Foam::vector Foam::phasePair::Ur
+Foam::vector Foam::phasePair::Uri
 (
     const label celli,
     const label nodei,
@@ -283,7 +283,7 @@ Foam::vector Foam::phasePair::Ur
 }
 
 
-Foam::scalar Foam::phasePair::Re
+Foam::scalar Foam::phasePair::Rei
 (
     const label celli,
     const label nodei,
@@ -291,13 +291,13 @@ Foam::scalar Foam::phasePair::Re
 ) const
 {
     return
-        magUr(celli, nodei, nodej)
+        magUri(celli, nodei, nodej)
        *dispersed().di(celli, nodei)
        /continuous().nui(celli);
 }
 
 
-Foam::scalar Foam::phasePair::Pr
+Foam::scalar Foam::phasePair::Pri
 (
     const label celli,
     const label nodei,
@@ -311,7 +311,7 @@ Foam::scalar Foam::phasePair::Pr
         /continuous().kappai(celli);
 }
 
-Foam::scalar Foam::phasePair::We
+Foam::scalar Foam::phasePair::Wei
 (
     const label celli,
     const label nodei,
@@ -319,23 +319,23 @@ Foam::scalar Foam::phasePair::We
 ) const
 {
     return
-        sqr(magUr(celli, nodei, nodej))*dispersed().di(celli, nodei)
+        sqr(magUri(celli, nodei, nodej))*dispersed().di(celli, nodei)
         *continuous().rho()[celli]/sigma_.value();
 }
 
 
-Foam::scalar Foam::phasePair::Eo
+Foam::scalar Foam::phasePair::Eoi
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return EoH(celli, dispersed().di(celli, nodei));
+    return EoHi(celli, dispersed().di(celli, nodei));
 }
 
 
-Foam::scalar Foam::phasePair::EoH1
+Foam::scalar Foam::phasePair::EoH1i
 (
     const label celli,
     const label nodei,
@@ -343,16 +343,16 @@ Foam::scalar Foam::phasePair::EoH1
 ) const
 {
     return
-        EoH
+        EoHi
         (
             celli,
             dispersed().di(celli, nodei)
-           *cbrt(1.0 + 0.163*pow(Eo(celli, nodei, nodej), 0.757))
+           *cbrt(1.0 + 0.163*pow(Eoi(celli, nodei, nodej), 0.757))
         );
 }
 
 
-Foam::scalar Foam::phasePair::EoH2
+Foam::scalar Foam::phasePair::EoH2i
 (
     const label celli,
     const label nodei,
@@ -360,15 +360,15 @@ Foam::scalar Foam::phasePair::EoH2
 ) const
 {
     return
-        EoH
+        EoHi
         (
             celli,
-            dispersed().di(celli, nodei)/cbrt(E(celli, nodei, nodej))
+            dispersed().di(celli, nodei)/cbrt(Ei(celli, nodei, nodej))
         );
 }
 
 
-Foam::scalar Foam::phasePair::sigma(const label celli) const
+Foam::scalar Foam::phasePair::sigmai(const label celli) const
 {
     NotImplemented;
     return phase1()[celli];
@@ -379,7 +379,7 @@ Foam::scalar Foam::phasePair::sigma(const label celli) const
 }
 
 
-Foam::scalar Foam::phasePair::Mo(const label celli) const
+Foam::scalar Foam::phasePair::Moi(const label celli) const
 {
     return
         mag(g().value())
@@ -388,22 +388,22 @@ Foam::scalar Foam::phasePair::Mo(const label celli) const
         (
             continuous().nui(celli)
            *continuous().rho()[celli]
-           /sigma(celli)
+           /sigmai(celli)
         );
 }
 
 
-Foam::scalar Foam::phasePair::Ta
+Foam::scalar Foam::phasePair::Tai
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return Re(celli, nodei, nodej)*pow(Mo(celli), 0.23);
+    return Rei(celli, nodei, nodej)*pow(Moi(celli), 0.23);
 }
 
-Foam::scalar Foam::phasePair::E
+Foam::scalar Foam::phasePair::Ei
 (
     const label celli,
     const label nodei,

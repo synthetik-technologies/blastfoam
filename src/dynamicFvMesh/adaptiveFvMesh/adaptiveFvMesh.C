@@ -32,9 +32,9 @@ License
 // public or protected way to do this without using clearOut() which
 // will the pointMesh if it exists, so pointFields become invalid.
 // This is a work around
-// #define curTimeIndex_ curTimeIndex_; protected:
-// #include "fvMesh.H"
-// #undef curTimeIndex_
+#define curTimeIndex_ curTimeIndex_; protected:
+#include "fvMesh.H"
+#undef curTimeIndex_
 
 #include "adaptiveFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
@@ -56,7 +56,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(adaptiveFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, adaptiveFvMesh, IOobject);
+    addToRunTimeSelectionTable(dynamicFvMesh, adaptiveFvMesh, dictionary);
 
     // Helper class for accessing max cell level of faces accross processor patches
     template<class Type>
@@ -2019,6 +2019,36 @@ bool Foam::adaptiveFvMesh::balance()
         // the number of processors.
         if (maxImbalance > allowableImbalance)
         {
+            //- Save the old volumes so it will be distributed and
+            //  resized
+            //  We cheat because so we can check which fields
+            //  actually need to be mapped
+            tmp<DimensionedField<scalar, volMesh>> V0OldTmp;
+            tmp<DimensionedField<scalar, volMesh>> V00OldTmp;
+            if (this->V0Ptr_)
+            {
+                V0OldTmp = tmp<DimensionedField<scalar, volMesh>>
+                (
+                    DimensionedField<scalar, volMesh>::New
+                    (
+                        "V0_Old",
+                        this->V0()
+                    )
+                );
+            }
+            if (this->V00Ptr_)
+            {
+                V00OldTmp = tmp<DimensionedField<scalar, volMesh>>
+                (
+                    DimensionedField<scalar, volMesh>::New
+                    (
+                        "V00_Old",
+                        this->V00()
+                    )
+                );
+            }
+
+
             const labelIOList& cellLevel = meshCutter().cellLevel();
             Map<label> coarseIDmap(100);
             labelList uniqueIndex(nCells(),0);
@@ -2092,12 +2122,38 @@ bool Foam::adaptiveFvMesh::balance()
             Info<< "Distributing the mesh ..." << endl;
             fvMeshDistribute distributor(*this);
 
+            //- Clear the geometry since V, V0, and V00 are not
+            //  registered, and therefor are not resized and the
+            //  normal mapping does not work.
+            //  Instead we save V0 and reset it.
+            //  THIS IS A PRIVATE FUNCTION OF fvMesh,
+            //  but we use a MACRO hack to make it accessible
+            this->clearGeom();
+
             Info<< "Mapping the fields ..." << endl;
             autoPtr<mapDistributePolyMesh> map =
                 distributor.distribute(finalDecomp);
 
             Info<< "Distribute the map ..." << endl;
             meshCutter_->distribute(map);
+
+            //- The volume has been updated, so now we copy back
+            //  This also calls V() which will construct the volume
+            //  field.
+            //  Again, we cheat to access the volume field pointers
+            //  This is necessary because the V0 and V00 fields are
+            //  not created until the time has advanced and asking for
+            //  thermo though V0() or V00() results in a fatal error
+            if (V0OldTmp.valid())
+            {
+                this->V0Ptr_ =
+                    new DimensionedField<scalar, volMesh>(V0OldTmp);
+            }
+            if (V00OldTmp.valid())
+            {
+                this->V00Ptr_ =
+                    new DimensionedField<scalar, volMesh>(V00OldTmp);
+            }
 
             if (returnReduce(nProtected_, sumOp<label>()) > 0)
             {

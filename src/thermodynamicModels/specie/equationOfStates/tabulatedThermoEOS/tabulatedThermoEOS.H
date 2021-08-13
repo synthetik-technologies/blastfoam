@@ -156,6 +156,14 @@ public:
                 const scalar& T
             ) const;
 
+            //- Return derivative of pressure w.r.t. specific density
+            scalar dpdRho
+            (
+                const scalar& rho,
+                const scalar& e,
+                const scalar& T
+            ) const;
+
             //- Return derivative of pressure w.r.t. Temperature
             scalar dpdT
             (

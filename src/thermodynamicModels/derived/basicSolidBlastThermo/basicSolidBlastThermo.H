@@ -58,7 +58,7 @@ class basicSolidBlastThermo
 public:
 
     //- Runtime type information
-    TypeName("basicSolidBlastThermo");
+    TypeName("basic");
 
     // Constructor
     basicSolidBlastThermo
@@ -100,7 +100,7 @@ public:
     //- Thermodynamic and transport functions
 
         //- Calculate internal energy
-        virtual tmp<volScalarField> calce(const volScalarField&) const;
+        virtual tmp<volScalarField> calce() const;
 
         //- Calculate density
         virtual void updateRho();

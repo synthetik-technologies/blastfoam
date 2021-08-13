@@ -67,14 +67,14 @@ Foam::interfacialPressureModels::single::~single()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::single::Pi() const
+Foam::interfacialPressureModels::single::PI() const
 {
     return p_;
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::single::Pi(const label celli) const
+Foam::interfacialPressureModels::single::PIi(const label celli) const
 {
     return p_[celli];
 }

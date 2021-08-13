@@ -38,14 +38,14 @@ SourceFiles
 #include "ODESolver.H"
 #include "volFields.H"
 #include "simpleMatrix.H"
-#include "basicBlastThermo.H"
+#include "blastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class radiationModel;
+class blastRadiationModel;
 
 /*---------------------------------------------------------------------------*\
                       Class radiationODE Declaration
@@ -58,10 +58,10 @@ class radiationODE
     // Private data
 
         //- Reference to radiation model
-        const radiationModel& rad_;
+        const blastRadiationModel& rad_;
 
         //- Reference to thermodynamic model
-        const basicBlastThermo& thermo_;
+        const blastThermo& thermo_;
 
 
     // Private Member Functions
@@ -109,7 +109,7 @@ public:
         //- Construct from thermo
         radiationODE
         (
-            const radiationModel& rad,
+            const blastRadiationModel& rad,
             const fvMesh& mesh
         );
 

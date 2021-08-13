@@ -44,12 +44,12 @@ SourceFiles
 #include "fluidBlastThermo.H"
 #include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
-#include "radiationModel.H"
 #include "uniformDimensionedFields.H"
 
 
 namespace Foam
 {
+class blastRadiationModel;
 
 /*---------------------------------------------------------------------------*\
                            Class phaseCompressibleSystem Declaration
@@ -118,7 +118,7 @@ protected:
             thermophysicalTransport_;
 
         //- Radiation model
-        autoPtr<radiationModel> radiation_;
+        autoPtr<blastRadiationModel> radiation_;
 
 
         //- External energy source matrix

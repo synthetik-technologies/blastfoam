@@ -7,8 +7,6 @@ cd "${0%/*}" || exit                                # Run from this directory
 wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
-# wmake $targetType MomentumTransportModels
-# wmake $targetType ThermophysicalTransportModels
 wmake $targetType radiationModels
 wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem

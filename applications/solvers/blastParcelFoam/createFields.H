@@ -17,15 +17,25 @@ autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
 coupledMultiphaseCompressibleSystem fluid(mesh);
 integrator->addSystem(fluid);
 
-basicThermoCloud parcels
+parcelCloudList clouds
 (
-    "reactingCloud1",
     fluid.rho(),
     fluid.U(),
-    g,
-    fluid.thermo()
+    fluid.thermo().mu(),
+    g
 );
-volScalarField theta("theta.reactingCloud1", parcels.theta());
+volScalarField theta
+(
+    IOobject
+    (
+        "theta",
+        runTime.timeName(),
+        mesh,
+        IOobject::NO_READ,
+        IOobject::AUTO_WRITE
+    ),
+    clouds.theta()
+);
 fluid.setDispersedVolumeFraction(theta);
 
 

@@ -205,7 +205,7 @@ Foam::basicSolidBlastThermo<Thermo>::Kappa
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::basicSolidBlastThermo<Thermo>::calce(const volScalarField& p) const
+Foam::basicSolidBlastThermo<Thermo>::calce() const
 {
     return Thermo::volScalarFieldProperty
     (

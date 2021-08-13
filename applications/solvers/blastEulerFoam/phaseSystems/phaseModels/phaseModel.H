@@ -50,7 +50,6 @@ SourceFiles
 #include "fvm.H"
 #include "integrationSystem.H"
 #include "runTimeSelectionTables.H"
-// #include "phaseCompressibleMomentumTransportModelFwd.H"
 #include "dynamicTransportModel.H"
 #include "PhaseThermophysicalTransportModel.H"
 #include "phaseDynamicMomentumTransportModel.H"
@@ -74,22 +73,11 @@ template<class ThermoModel>
 struct PhaseModelTransportThermoModel;
 
 template<>
-struct PhaseModelTransportThermoModel<basicBlastThermo>
-{
-    typedef basicBlastThermo type;
-};
-
-template<>
 struct PhaseModelTransportThermoModel<fluidBlastThermo>
 {
-    typedef fluidBlastThermo type;
+    typedef fluidThermo type;
 };
 
-template<>
-struct PhaseModelTransportThermoModel<solidBlastThermo>
-{
-    typedef solidBlastThermo type;
-};
 
 /*---------------------------------------------------------------------------*\
                            Class phaseModel Declaration
@@ -109,7 +97,7 @@ protected:
         typedef
             typename PhaseModelTransportThermoModel
             <
-                basicBlastThermo
+                fluidBlastThermo
             >::type
             transportThermoModel;
 
@@ -136,12 +124,6 @@ protected:
 
             //- Mean velocity
             volVectorField U_;
-
-            //- Temperature
-            volScalarField T_;
-
-            //- Internal energy
-            volScalarField e_;
 
 
         // Conseritative variables
@@ -186,7 +168,7 @@ protected:
             PhaseThermophysicalTransportModel
             <
                 phaseCompressible::momentumTransportModel,
-                basicBlastThermo
+                transportThermoModel
             >
         > thermophysicalTransport_;
 
@@ -211,7 +193,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("phaseModel");
+    ClassName("phaseModel");
 
 
     // Declare runtime construction
@@ -288,6 +270,8 @@ public:
 
     // Member Functions
 
+        using integrationSystem::mesh;
+
         //- Return that the phase uses a slave pressure
         virtual bool slavePressure() const
         {
@@ -353,7 +337,10 @@ public:
         virtual fluxScheme& flux() = 0;
 
         //- Return the residual phase-fraction for given phase
-        virtual dimensionedScalar residualAlpha() const = 0;
+        virtual dimensionedScalar residualAlpha() const
+        {
+            return thermo().residualAlpha();
+        }
 
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
@@ -454,21 +441,21 @@ public:
             virtual tmp<volVectorField> gradAlpha() const = 0;
 
             //- Return the internal energy
-            virtual const volScalarField& e() const
+            virtual const volScalarField& he() const
             {
-                return e_;
+                return thermo().he();
             }
 
             //- Return non-const access to the internal energy
-            virtual volScalarField& e()
+            virtual volScalarField& he()
             {
-                return e_;
+                return thermo().he();
             }
 
             //- Return temperature
-            virtual tmp<volScalarField> T() const
+            virtual const volScalarField& T() const
             {
-                return T_;
+                return thermo().T();
             }
 
             //- Constant access to phasic density
@@ -543,10 +530,10 @@ public:
         // Thermodynamic properties
 
             //- Return thermodynamic model
-            virtual const basicBlastThermo& thermo() const = 0;
+            virtual const blastThermo& thermo() const = 0;
 
             //- Access thermodynamic model
-            virtual basicBlastThermo& thermo() = 0;
+            virtual blastThermo& thermo() = 0;
 
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const = 0;

@@ -72,14 +72,15 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("fluidBlastThermo");
+    TypeName("fluid");
 
     //- Construct from mesh, dictionary and phase name
     fluidBlastThermo
     (
         const fvMesh&,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const bool allowNoGroup = false
     );
 
 
@@ -92,9 +93,10 @@ public:
         (
             const fvMesh& mesh,
             const dictionary& dict,
-            const word& phaseName
+            const word& phaseName,
+            const bool allowNoGroup
         ),
-        (mesh, dict, phaseName)
+        (mesh, dict, phaseName, allowNoGroup)
     );
 
 
@@ -106,7 +108,8 @@ public:
             const label,
             const fvMesh&,
             const dictionary&,
-            const word& phaseName=word::null
+            const word& phaseName = word::null,
+            const bool allowNoGroup = false
         );
 
     //- Destructor
@@ -237,6 +240,15 @@ public:
             //- Gamma = dpde for cell []
             virtual scalar Gammai(const label celli) const = 0;
 
+            //- Calculate pressure for cell [Pa]
+            virtual scalar pRhoTi(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t density for cel
+            virtual scalar dpdRhoi(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t internal energy for cell
+            virtual scalar dpdei(const label celli) const = 0;
+
 
         // Access to transport state variables
 
@@ -245,6 +257,14 @@ public:
 
             //- Dynamic viscosity of mixture for patch [kg/m/s]
             virtual tmp<scalarField> mu(const label patchi) const;
+
+            using fluidThermo::nu;
+
+            //- Kinematic viscosity of [m^2/s]
+            virtual tmp<volScalarField> nu() const
+            {
+                return fluidThermo::nu();
+            }
 
             //- Kinematic viscosity of mixture for cell [m^2/s]
             virtual scalar nui(const label celli) const;

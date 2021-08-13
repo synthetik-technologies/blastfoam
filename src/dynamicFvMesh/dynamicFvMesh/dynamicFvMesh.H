@@ -75,7 +75,7 @@ public:
         (
             autoPtr,
             dynamicFvMesh,
-            IOobject,
+            dictionary,
             (const IOobject& io),
             (io)
         );

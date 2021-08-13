@@ -294,6 +294,45 @@ Foam::multicomponentFluidBlastThermo<Thermo>::pRhoT() const
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
+{
+    return this->mixture_[celli].p
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
+{
+    return this->mixture_[celli].dpdRho
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::dpdei(const label celli) const
+{
+    return this->mixture_[celli].dpde
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::calce
 (

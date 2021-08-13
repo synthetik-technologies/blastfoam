@@ -155,6 +155,22 @@ public:
             const scalar T
         ) const;
 
+        //- Return derivative of pressure w.r.t density
+        scalar dpdRho
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t internal energy
+        scalar dpde
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
         //- Return speed of sound
         scalar cSqr
         (

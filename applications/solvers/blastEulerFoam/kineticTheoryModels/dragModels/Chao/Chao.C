@@ -136,7 +136,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Chao::Kf
 }
 
 
-Foam::scalar Foam::dragModels::Chao::CdRe
+Foam::scalar Foam::dragModels::Chao::CdRei
 (
     const label celli,
     const label nodei,
@@ -152,7 +152,7 @@ Foam::scalar Foam::dragModels::Chao::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Chao::K
+Foam::scalar Foam::dragModels::Chao::Ki
 (
     const label celli,
     const label nodei,
@@ -182,7 +182,7 @@ Foam::scalar Foam::dragModels::Chao::K
           + rho2*pow3(phase2.di(celli, nodej))
         )
     );
-    scalar magUr(pair_.magUr(celli, nodei, nodej));
+    scalar magUr(pair_.magUri(celli, nodei, nodej));
 
     return
         phase1[celli]*phase2[celli]

@@ -124,6 +124,15 @@ public:
         //- Calculate thermodynamic pressure
         virtual tmp<volScalarField> pRhoT() const;
 
+        //- Calculate pressure for cell [Pa]
+        virtual scalar pRhoTi(const label celli) const;
+
+        //- Derivative of pressure w.r.t density for cell
+        virtual scalar dpdRhoi(const label celli) const;
+
+        //- Derivative of pressure w.r.t internal energy for cell
+        virtual scalar dpdei(const label celli) const;
+
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 

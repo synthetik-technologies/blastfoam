@@ -37,10 +37,7 @@ Description
 #include "volFields.H"
 #include "atmosphereModel.H"
 #include "fvc.H"
-#include "fluidThermoModel.H"
-#include "twoPhaseFluidThermo.H"
-#include "multiphaseFluidThermo.H"
-#include "PtrListDictionary.H"
+#include "fluidBlastThermo.H"
 
 
 using namespace Foam;
@@ -99,216 +96,42 @@ int main(int argc, char *argv[])
         atmosphereProperties.lookupOrDefault("sharedTemperature", true)
     );
 
-    //- Field names
-    word rhoName(IOobject::groupName("rho", phaseName));
-    word pName
-    (
-        sharedPressure
-      ? "p"
-      : IOobject::groupName("p", phaseName)
-    );
-    word TName
-    (
-        sharedTemperature
-      ? "T"
-      : IOobject::groupName("T", phaseName)
-    );
-    word eName
-    (
-        sharedTemperature
-      ? "e"
-      : IOobject::groupName("e", phaseName)
-    );
-
-    //- Density field
-    volScalarField rho
-    (
-        IOobject
-        (
-            rhoName,
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
-
-    volScalarField p
-    (
-        IOobject
-        (
-            pName,
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
-
-    volScalarField T
-    (
-        IOobject
-        (
-            TName,
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
-    volScalarField e
-    (
-        IOobject
-        (
-            eName,
-            runTime.timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidThermoModel::eBoundaryTypes(T),
-        fluidThermoModel::eBoundaryBaseTypes(T)
-    );
-
     wordList phases(phaseProperties.lookupOrDefault("phases", wordList()));
-    bool multiphase(false);
-    if (phases.size() > 0)
+    PtrList<fluidBlastThermo> thermos(phases.size());
+    forAll(phases, phasei)
     {
-        multiphase = phaseProperties.subDict(phases[0]).found("thermoCoeffs");
+        thermos.set
+        (
+            phasei,
+            fluidBlastThermo::New
+            (
+                1,
+                mesh,
+                phaseProperties,
+                phaseName,
+                true
+            ).ptr()
+        );
     }
-    PtrListDictionary<fluidThermoModel> thermos
-    (
-        multiphase
-      ? phases.size()
-      : 1
-    );
-    fluidThermoModel* thermoPtr = nullptr;
-    if (!multiphase)
-    {
-        if (phases.size() <= 1)
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                fluidThermoModel::New
-                (
-                    word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
-                    phaseProperties.subDict("mixture"),
-                    true
-                ).ptr()
-            );
-            thermoPtr = &thermos[0];
-        }
-        else if (phases.size() == 2)
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                twoPhaseFluidThermo::New
-                (
-                    word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
-                    phaseProperties,
-                    true
-                ).ptr()
-            );
-            thermoPtr =
-                thermos[0].thermo(0).rho().group() == phaseName
-              ? &thermos[0].thermo(0)
-              : &thermos[0].thermo(1);
-        }
-        else
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                multiphaseFluidThermo::New
-                (
-                    word::null,
-                    p,
-                    rho,
-                    e,
-                    T,
-                    phaseProperties,
-                    true
-                ).ptr()
-            );
-            forAll(phases, phasei)
-            {
-                if (thermos[0].thermo(phasei).rho().group() == phaseName)
-                {
-                    thermoPtr = &thermos[0].thermo(phasei);
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        forAll(phases, phasei)
-        {
-            thermos.set
-            (
-                phasei,
-                phases[phasei],
-                fluidThermoModel::New
-                (
-                    phaseName,
-                    p,
-                    rho,
-                    e,
-                    T,
-                    phaseProperties.subDict(phases[phasei]).subDict("thermoCoeffs"),
-                    true
-                ).ptr()
-            );
-            if (phases[phasei] == phaseName)
-            {
-                thermoPtr = &thermos[phasei];
-            }
-        }
-    }
+
+    volScalarField& p(thermos[0].p());
+    volScalarField T("rhoTotal", thermos[0].T());
 
     Info<< "Initializing atmosphere." << endl;
-    atmosphere->createAtmosphere(p, rho);
+    atmosphere->createAtmosphere(p, T);
 
-    if (thermoPtr)
+    forAll(thermos, i)
     {
-        e = thermoPtr->calce();
-        T = thermoPtr->calcT();
-    }
+        thermos[i].T() = T;
 
-    if (multiphase)
-    {
-        if (atmosphereProperties.lookup<Switch>("equilibriumTemperature"))
-        {
-            forAll(phases, phasei)
-            {
-                Info<< "Setting " << thermos[phasei].T().name() << endl;
-                thermos[phasei].T() = T;
-                thermos[phasei].T().write();
-            }
-        }
+        thermos[i].updateRho();
+        thermos[i].he() = thermos[i].he(p, T);
+
+        thermos[i].T().write();
+        thermos[i].rho().write();
     }
 
     p.write();
-    rho.write();
-    T.write();
 
     Info<< "Done" << nl << endl;
 }

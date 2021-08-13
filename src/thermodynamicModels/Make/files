@@ -9,6 +9,7 @@ derived/singlePhaseFluidBlastThermo/singlePhaseFluidBlastThermo.C
 derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
 derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
 
+derived/singlePhaseSolidBlastThermo/singlePhaseSolidBlastThermo.C
 
 basic/blastThermo/blastThermo.C
 basic/fluidBlastThermo/fluidBlastThermo.C
@@ -17,10 +18,10 @@ basic/solidBlastThermo/solidBlastThermo.C
 derived/basicFluidBlastThermo/basicFluidBlastThermos.C
 derived/basicSolidBlastThermo/basicSolidBlastThermos.C
 
-#derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
-#derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
+derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
-#derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
+derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
 
 
 activationModels/activationModel/activationModel.C

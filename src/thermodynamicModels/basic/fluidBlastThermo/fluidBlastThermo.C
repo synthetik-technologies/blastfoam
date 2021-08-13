@@ -43,7 +43,8 @@ Foam::fluidBlastThermo::fluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const bool allowNoGroup
 )
 :
     blastThermo(mesh, dict, phaseName),
@@ -55,7 +56,8 @@ Foam::fluidBlastThermo::fluidBlastThermo
             phasePropertyName("p", phaseName),
             IOobject::MUST_READ,
             IOobject::AUTO_WRITE,
-            dimPressure
+            dimPressure,
+            allowNoGroup
         )
     ),
     mu_
@@ -69,7 +71,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
             IOobject::NO_WRITE
         ),
         mesh,
-        dimensionSet(1, -1, -1, 0, 0)
+        dimensionedScalar(dimensionSet(1, -1, -1, 0, 0), 0.0)
     )
 {}
 
@@ -81,7 +83,8 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
     const label nPhases,
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const bool allowNoGroup
 )
 {
     word fluidType("singlePhaseFluid");
@@ -105,7 +108,7 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict, phaseName);
+    return cstrIter()(mesh, dict, phaseName, allowNoGroup);
 }
 
 

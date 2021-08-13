@@ -81,7 +81,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::Y(const label i)
 
 
 template<class BasicThermo>
-inline Foam::tmp<Foam::volScalarField>
+inline const Foam::volScalarField&
 Foam::multicomponentBlastThermo<BasicThermo>::Y
 (
     const label i
@@ -103,7 +103,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::Y
 
 
 template<class BasicThermo>
-inline Foam::tmp<Foam::volScalarField>
+inline const Foam::volScalarField&
 Foam::multicomponentBlastThermo<BasicThermo>::Y
 (
     const word& specieName

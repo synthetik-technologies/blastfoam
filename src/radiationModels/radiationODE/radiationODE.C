@@ -26,19 +26,19 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "radiationODE.H"
-#include "radiationModel.H"
+#include "blastRadiationModel.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::radiationODE::radiationODE
 (
-    const radiationModel& rad,
+    const blastRadiationModel& rad,
     const fvMesh& mesh
 )
 :
     ODESystem(),
     rad_(rad),
-    thermo_(mesh.lookupObject<basicBlastThermo>("basicThermo")),
+    thermo_(mesh.lookupObject<blastThermo>(basicThermo::dictName)),
     solve_(rad_.lookupOrDefault("solveODE", false)),
     dict_
     (
@@ -85,9 +85,9 @@ void Foam::radiationODE::derivatives
     scalarField& dqdt
 ) const
 {
-    scalar e = q[0]/max(thermo_.rho()[li], 1e-10);
+    scalar e = q[0]/max(thermo_.rhoi(li), 1e-10);
     scalar T = thermo_.THEi(e, thermo_.T()[li], li);
-    dqdt = rad_.Ru(li) - rad_.Rp(li)*pow4(T);
+    dqdt = rad_.Rui(li) - rad_.Rpi(li)*pow4(T);
 }
 
 
@@ -100,13 +100,13 @@ void Foam::radiationODE::jacobian
     scalarSquareMatrix& J
 ) const
 {
-    scalar e = q[0]/max(thermo_.rho()[li], 1e-10);
+    scalar e = q[0]/max(thermo_.rhoi(li), 1e-10);
     scalar T = thermo_.THEi(e, thermo_.T()[li], li);
-    dqdt = rad_.Ru(li) - rad_.Rp(li)*pow4(T);
+    dqdt = rad_.Rui(li) - rad_.Rpi(li)*pow4(T);
     J = scalarSquareMatrix
         (
             1,
-            -4.0*rad_.Rp(li)*pow3(T)/thermo_.Cvi(li)
+            -4.0*rad_.Rpi(li)*pow3(T)/thermo_.Cvi(li)
         );
 }
 

@@ -43,26 +43,26 @@ Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
         (
             dict,
             "blastDynamicFvMeshLibs",
-            IOobjectConstructorTablePtr_
+            dictionaryConstructorTablePtr_
         );
 
-        if (!IOobjectConstructorTablePtr_)
+        if (!dictionaryConstructorTablePtr_)
         {
             FatalErrorInFunction
                 << "dynamicFvMesh table is empty"
                 << exit(FatalError);
         }
 
-        IOobjectConstructorTable::iterator cstrIter =
-            IOobjectConstructorTablePtr_->find(dynamicFvMeshTypeName);
+        dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(dynamicFvMeshTypeName);
 
-        if (cstrIter == IOobjectConstructorTablePtr_->end())
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
         {
             FatalErrorInFunction
                 << "Unknown dynamicFvMesh type "
                 << dynamicFvMeshTypeName << nl << nl
                 << "Valid dynamicFvMesh types are :" << endl
-                << IOobjectConstructorTablePtr_->sortedToc()
+                << dictionaryConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
 

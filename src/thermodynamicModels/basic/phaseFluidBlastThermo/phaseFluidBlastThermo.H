@@ -66,7 +66,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("fluidBlastThermo");
+    TypeName("fluid");
 
     // Declare runtime construction
 
@@ -132,6 +132,15 @@ public:
 
             //- Return the speed of sound
             virtual tmp<volScalarField> pRhoT() const = 0;
+
+            //- Calculate pressure for cell [Pa]
+            virtual scalar pRhoTi(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t density for cell
+            virtual scalar dpdRhoi(const label celli) const = 0;
+
+            //- Derivative of pressure w.r.t internal energy for cell
+            virtual scalar dpdei(const label celli) const = 0;
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;

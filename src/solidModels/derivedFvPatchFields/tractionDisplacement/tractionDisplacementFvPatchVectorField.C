@@ -129,9 +129,6 @@ void Foam::tractionDisplacementFvPatchVectorField::updateCoeffs()
     const dictionary& mechanicalProperties =
         db().lookupObject<IOdictionary>("mechanicalProperties");
 
-    const fvPatchField<scalar>& rho =
-        patch().lookupPatchField<volScalarField, scalar>("rho");
-
     const fvPatchField<scalar>& E =
         patch().lookupPatchField<volScalarField, scalar>("E");
 
@@ -159,7 +156,7 @@ void Foam::tractionDisplacementFvPatchVectorField::updateCoeffs()
 
     gradient() =
     (
-        (traction_ - pressure_*n)/rho
+        (traction_ - pressure_*n)
       + twoMuLambda*fvPatchField<vector>::snGrad() - (n & sigmaD)
     )/twoMuLambda;
 

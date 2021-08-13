@@ -69,7 +69,7 @@ Foam::wallLubricationModels::Frank::~Frank()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Frank::Fi
+Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Frank::FI
 (
     const label nodei,
     const label nodej

@@ -75,16 +75,27 @@ Foam::solidModels::linearElastic::linearElastic(fvMesh& mesh)
     planeStress_(mechanicalProperties_.lookup("planeStress")),
     E_
     (
-        "E",
+        IOobject
+        (
+            "E",
+            mesh.time().timeName(),
+            mesh
+        ),
         uniformOrRead
         (
             mesh,
             mechanicalProperties_,
             dimensionedScalar("E", dimPressure, 0.0)
-        )/thermoPtr_->rho()
+        )
     ),
     nu_
     (
+        IOobject
+        (
+            "nu",
+            mesh.time().timeName(),
+            mesh
+        ),
         uniformOrRead
         (
             mesh,
@@ -110,12 +121,21 @@ Foam::solidModels::linearElastic::linearElastic(fvMesh& mesh)
     alphaPtr_
     (
         thermalStress_
-      ? uniformOrRead
+      ? new volScalarField
         (
-            mesh,
-            mechanicalProperties_,
-            dimensionedScalar("alpha", dimensionSet(0, 0, 0, -1, 0), 0.0)
-        ).ptr()
+            IOobject
+            (
+                "alpha",
+                mesh.time().timeName(),
+                mesh
+            ),
+            uniformOrRead
+            (
+                mesh,
+                mechanicalProperties_,
+                dimensionedScalar("alpha", dimensionSet(0, 0, 0, -1, 0), 0.0)
+            )
+        )
       : nullptr
     ),
 
@@ -225,7 +245,7 @@ bool Foam::solidModels::linearElastic::evolve()
             ==
                 fvm::laplacian(2.0*mu_ + lambda_, D_, "laplacian(DD,D)")
               + divSigmaExp_
-              + fvModels_.d2dt2(D_)
+              + rho*fvModels_.d2dt2(D_)
             );
 
             if (thermalStress_)

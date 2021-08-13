@@ -94,7 +94,7 @@ Foam::aspectRatioModels::constantAspectRatio::E
 }
 
 
-Foam::scalar Foam::aspectRatioModels::constantAspectRatio::E
+Foam::scalar Foam::aspectRatioModels::constantAspectRatio::Ei
 (
     const label celli,
     const label nodei,

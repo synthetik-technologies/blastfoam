@@ -40,7 +40,7 @@ namespace Foam
     (
         dynamicFvMesh,
         movingAdaptiveFvMesh,
-        IOobject
+        dictionary
     );
 }
 

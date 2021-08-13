@@ -108,10 +108,10 @@ public:
     // Member Functions
 
         //- Return the interfacial pressure
-        virtual tmp<volScalarField> Pi() const = 0;
+        virtual tmp<volScalarField> PI() const = 0;
 
         //- Return the interfacial pressure for a cell
-        virtual scalar Pi(const label celli) const = 0;
+        virtual scalar PIi(const label celli) const = 0;
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const

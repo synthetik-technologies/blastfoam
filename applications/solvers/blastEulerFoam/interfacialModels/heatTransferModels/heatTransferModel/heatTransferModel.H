@@ -120,8 +120,8 @@ public:
         //  with a specified residual volume fraction
         virtual tmp<volScalarField> K
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 };
 

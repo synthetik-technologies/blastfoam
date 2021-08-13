@@ -63,14 +63,20 @@ class fluidPhaseModel
 protected:
     // Protected data
 
-        //- Phase pressure
-        volScalarField p_;
+        //- Thermophysical properties
+        autoPtr<fluidBlastThermo> thermoPtr_;
 
         //- Density
-        volScalarField rho_;
+        volScalarField& rho_;
 
-        //- Thermophysical properties
-        autoPtr<fluidBlastThermo> thermo_;
+        //- Internal energy
+        volScalarField& e_;
+
+        //- Temperature
+        volScalarField& T_;
+
+        //- Pressure
+        volScalarField& p_;
 
         //- Flux scheme
         autoPtr<fluxScheme> fluxScheme_;
@@ -92,20 +98,21 @@ public:
         const label index
     );
 
+    // Constructor
+    fluidPhaseModel
+    (
+        const label nPhases,
+        const phaseSystem& fluid,
+        const word& phaseName,
+        const label index
+    );
+
 
     //- Destructor
     virtual ~fluidPhaseModel();
 
 
     // Member Functions
-
-        //- Return the residual phase-fraction for given phase
-        //  Used to stabilize the phase momentum as the phase-fraction -> 0
-        dimensionedScalar residualAlpha() const
-        {
-            return thermo_->residualAlpha();
-        }
-
 
         // integrationSystem functions
 
@@ -164,87 +171,87 @@ public:
         //- Return the laminar viscosity
         virtual tmp<volScalarField> nu() const
         {
-            return thermo_->nu();
+            return thermoPtr_->nu();
         }
 
         //- Return thermodynamic model
-        virtual const basicBlastThermo& thermo() const
+        virtual const blastThermo& thermo() const
         {
-            return thermo_();
+            return thermoPtr_();
         }
 
         //- Access thermodynamic model
-        virtual basicBlastThermo& thermo()
+        virtual blastThermo& thermo()
         {
-            return thermo_();
+            return thermoPtr_();
         }
 
         //- Return the laminar viscosity for patch
         virtual tmp<scalarField> nu(const label patchi) const
         {
-            return thermo_->nu(patchi);
+            return thermoPtr_->nu(patchi);
         }
 
         //- Return the laminar viscosity for patch
         virtual scalar nui(const label celli) const
         {
-            return thermo_->nui(celli);
+            return thermoPtr_->nui(celli);
         }
 
         //- Return the laminar dynamic viscosity
         virtual tmp<volScalarField> mu() const
         {
-            return thermo_->mu();
+            return thermoPtr_->mu();
         }
 
         //- Return the laminar dynamic viscosity for patch
         virtual tmp<scalarField> mu(const label patchi) const
         {
-            return thermo_->mu(patchi);
+            return thermoPtr_->mu(patchi);
         }
 
         //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
         virtual tmp<volScalarField> alpha() const
         {
-            return thermo_->alpha();
+            return thermoPtr_->alpha();
         }
 
         //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
         virtual tmp<scalarField> alpha(const label patchi) const
         {
-            return thermo_->alpha(patchi);
+            return thermoPtr_->alpha(patchi);
         }
 
         //- Thermal diffusivity for temperature of mixture [J/m/s/K]
         virtual tmp<volScalarField> kappa() const
         {
-            return thermo_->kappa();
+            return thermoPtr_->kappa();
         }
 
         //- Thermal diffusivity for temperature of mixture
         //  for patch [J/m/s/K]
         virtual tmp<scalarField> kappa(const label patchi) const
         {
-            return thermo_->kappa(patchi);
+            return thermoPtr_->kappa(patchi);
         }
 
         //- Thermal diffusivity for temperature of mixture
         //  for cell [J/m/s/K]
         virtual scalar kappai(const label celli) const
         {
-            return thermo_->kappai(celli);
+            return thermoPtr_->kappai(celli);
         }
 
         //- Thermal diffusivity for energy of mixture [kg/m/s]
         virtual tmp<volScalarField> alphahe() const
         {
-            return thermo_->alphahe();
+            return thermoPtr_->alphahe();
         }
 
         //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
         virtual tmp<scalarField> alphahe(const label patchi) const
         {
-            return thermo_->alphahe(patchi);
+            return thermoPtr_->alphahe(patchi);
         }
 
         //- Effective thermal turbulent diffusivity for temperature
@@ -254,7 +261,7 @@ public:
             const volScalarField& alphat
         ) const
         {
-            return thermo_->kappaEff(alphat);
+            return thermoPtr_->kappaEff(alphat);
         }
 
         //- Effective thermal turbulent diffusivity for temperature
@@ -265,7 +272,7 @@ public:
             const label patchi
         ) const
         {
-            return thermo_->kappaEff(alphat, patchi);
+            return thermoPtr_->kappaEff(alphat, patchi);
         }
 
         //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
@@ -274,7 +281,7 @@ public:
             const volScalarField& alphat
         ) const
         {
-            return thermo_->alphaEff(alphat);
+            return thermoPtr_->alphaEff(alphat);
         }
 
         //- Effective thermal turbulent diffusivity of mixture
@@ -285,31 +292,31 @@ public:
             const label patchi
         ) const
         {
-            return thermo_->alphaEff(alphat, patchi);
+            return thermoPtr_->alphaEff(alphat, patchi);
         }
 
         //- Return the specific heat capacity at constant pressure
         virtual tmp<volScalarField> Cp() const
         {
-            return thermo_->Cp();
+            return thermoPtr_->Cp();
         }
 
         //- Return the specific heat capacity at constant volume
         virtual tmp<volScalarField> Cv() const
         {
-            return thermo_->Cv();
+            return thermoPtr_->Cv();
         }
 
         //- Return the specific heat capacity at constant volume
         virtual scalar Cvi(const label celli) const
         {
-            return thermo_->Cvi(celli);
+            return thermoPtr_->Cvi(celli);
         }
 
         //- Return the speed of sound
         virtual tmp<volScalarField> speedOfSound() const
         {
-            return thermo_->speedOfSound();
+            return thermoPtr_->speedOfSound();
         }
 
         //- Correct thermodynamic quantities

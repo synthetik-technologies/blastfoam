@@ -58,51 +58,19 @@ Foam::multiPhaseModel::multiPhaseModel
     const label index
 )
 :
-    phaseModel(fluid, phaseName, index),
+    fluidPhaseModel(3, fluid, phaseName, index),
     phases_(phaseDict_.lookup("phases")),
-    p_
+    alphas_
     (
-        IOobject
-        (
-            IOobject::groupName("p", phaseName),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        fluid_.p(),
-        fluid_.p().boundaryField()
+        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).volumeFractions()
     ),
-    rho_
+    rhos_
     (
-        IOobject
-        (
-            IOobject::groupName("rho", phaseName),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        fluid.mesh()
+        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).rhos()
     ),
-    alphaPhi_
-    (
-        IOobject
-        (
-            IOobject::groupName("alphaPhi", name_),
-            this->mesh().time().timeName(),
-            this->mesh()
-        ),
-        this->mesh(),
-        dimensionedScalar("0", phi_.dimensions(), 0.0)
-    ),
-    thermo_(phaseName, p_, rho_, e_, T_, phaseDict_, true, phaseName),
-    alphas_(thermo_.volumeFractions()),
-    rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
-    alphaRhoPhis_(alphas_.size()),
-    fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
+    alphaRhoPhis_(alphas_.size())
 {
 
     //- Temporarily Store read density
@@ -176,28 +144,16 @@ Foam::multiPhaseModel::multiPhaseModel
     alpha.correctBoundaryConditions();
 
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
-    thermo_.setTotalVolumeFractionPtr(*this);
-
-    this->turbulence_ =
-        phaseCompressible::momentumTransportModel::New
-        (
-            *this,
-            rho_,
-            U_,
-            alphaRhoPhi_,
-            phi_,
-            *this
-        );
-    this->thermophysicalTransport_ =
-        PhaseThermophysicalTransportModel
-        <
-            phaseCompressible::momentumTransportModel,
-            basicBlastThermo
-        >::New(turbulence_, thermo_);
+    dynamicCast<multiphaseFluidBlastThermo>
+    (
+        thermoPtr_()
+    ).setTotalVolumeFractionPtr(*this);
 
     phaseModel::initializeModels();
-    thermo_.initializeModels();
+    thermoPtr_->initializeModels();
     correctThermo();
+
+    solveAlpha(true);
 
     encode();
 }
@@ -210,12 +166,6 @@ Foam::multiPhaseModel::~multiPhaseModel()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::multiPhaseModel::solveAlpha(const bool s)
-{
-    phaseModel::solveAlpha(s);
-}
-
 
 void Foam::multiPhaseModel::solve()
 {
@@ -241,7 +191,7 @@ void Foam::multiPhaseModel::solve()
         alphaRhos_[phasei].correctBoundaryConditions();
     }
 
-    thermo_.solve();
+    thermoPtr_->solve();
     phaseModel::solve();
 }
 
@@ -249,7 +199,7 @@ void Foam::multiPhaseModel::solve()
 void Foam::multiPhaseModel::postUpdate()
 {
     phaseModel::postUpdate();
-    thermo_.postUpdate();
+    thermoPtr_->postUpdate();
 }
 
 
@@ -265,7 +215,7 @@ void Foam::multiPhaseModel::update()
         p_,
         c(),
         phi_,
-        alphaPhi_,
+        alphaPhiPtr_(),
         alphaRhoPhi_,
         alphaPhis_,
         alphaRhoPhis_,
@@ -274,7 +224,7 @@ void Foam::multiPhaseModel::update()
     );
 
     phaseModel::update();
-    thermo_.update();
+    thermoPtr_->update();
 }
 
 
@@ -329,7 +279,7 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
            /Foam::max
             (
                 alphas_[phasei],
-                thermo_.thermo(phasei).residualAlpha()
+                thermoPtr_->thermo(phasei).residualAlpha()
             );
         if (constraints.constrainsField(rhos_[phasei].name()))
         {
@@ -375,7 +325,7 @@ void Foam::multiPhaseModel::decode()
     }
 
     //- Limit internal energy it there is a negative temperature
-    if (Foam::min(this->T_).value() < 0.0 && thermo_.limit())
+    if (Foam::min(this->T_).value() < 0.0 && thermoPtr_->limit())
     {
         if (debug)
         {
@@ -386,7 +336,7 @@ void Foam::multiPhaseModel::decode()
         }
         volScalarField limit(pos(T_));
         T_.max(small);
-        e_ = e_*limit + thermo_.E()*(1.0 - limit);
+        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
         alphaRhoE_.ref() = alphaRho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
@@ -398,7 +348,7 @@ void Foam::multiPhaseModel::decode()
           + 0.5*magSqr(U_.boundaryField())
         );
 
-    thermo_.correct();
+    thermoPtr_->correct();
 }
 
 
@@ -421,61 +371,43 @@ void Foam::multiPhaseModel::encode()
 }
 
 
-Foam::tmp<Foam::volVectorField>
-Foam::multiPhaseModel::gradP() const
-{
-    return fvc::grad(fluxScheme_->pf());
-}
-
-
-Foam::tmp<Foam::volVectorField>
-Foam::multiPhaseModel::gradAlpha() const
-{
-    return fvc::grad(fluxScheme_->alphaf());
-}
-
-
-
-void Foam::multiPhaseModel::correctThermo()
-{
-    thermo_.correct();
-}
-
-
 Foam::tmp<Foam::volScalarField>
 Foam::multiPhaseModel::speedOfSound() const
 {
-    return thermo_.speedOfSound();
+    return thermoPtr_->speedOfSound();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::multiPhaseModel::ESource() const
 {
-    return thermo_.ESource();
+    return thermoPtr_->ESource();
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::Cv() const
 {
-    return thermo_.Cv()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->Cv()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::Cp() const
 {
-    return thermo_.Cp()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->Cp()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::scalar Foam::multiPhaseModel::Cvi(const label celli) const
 {
     return
-        thermo_.Cvi(celli)
+        thermoPtr_->Cvi(celli)
        /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::mu() const
 {
-    return thermo_.mu()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->mu()/Foam::max(alpha, residualAlpha());
 }
 
 
@@ -483,20 +415,21 @@ Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::mu(const label patchi) const
 {
     return
-        thermo_.mu(patchi)
+        thermoPtr_->mu(patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::nu() const
 {
-    return thermo_.nu()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->nu()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::nu(const label patchi) const
 {
     return
-        thermo_.nu(patchi)
+        thermoPtr_->nu(patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
@@ -504,20 +437,21 @@ Foam::scalar
 Foam::multiPhaseModel::nui(const label celli) const
 {
     return
-        thermo_.nui(celli)
+        thermoPtr_->nui(celli)
        /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alpha() const
 {
-    return thermo_.alpha()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->alpha()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::alpha(const label patchi) const
 {
     return
-        thermo_.alpha(patchi)
+        thermoPtr_->alpha(patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
@@ -526,7 +460,8 @@ Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alphaEff
     const volScalarField& alphat
 ) const
 {
-    return thermo_.alphaEff(alphat)/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->alphaEff(alphat)/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField> Foam::multiPhaseModel::alphaEff
@@ -536,33 +471,35 @@ Foam::tmp<Foam::scalarField> Foam::multiPhaseModel::alphaEff
 ) const
 {
     return
-        thermo_.alphaEff(alphat, patchi)
+        thermoPtr_->alphaEff(alphat, patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::alphahe() const
 {
-    return thermo_.alphahe()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->alphahe()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::alphahe(const label patchi) const
 {
     return
-        thermo_.alphahe(patchi)
+        thermoPtr_->alphahe(patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
 Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::kappa() const
 {
-    return thermo_.kappa()/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->kappa()/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
 Foam::multiPhaseModel::kappa(const label patchi) const
 {
     return
-        thermo_.kappa(patchi)
+        thermoPtr_->kappa(patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 
@@ -570,7 +507,7 @@ Foam::scalar
 Foam::multiPhaseModel::kappai(const label celli) const
 {
     return
-        thermo_.kappai(celli)
+        thermoPtr_->kappai(celli)
        /Foam::max(this->operator[](celli), residualAlpha().value());
 }
 
@@ -579,7 +516,8 @@ Foam::tmp<Foam::volScalarField> Foam::multiPhaseModel::kappaEff
     const volScalarField& alphat
 ) const
 {
-    return thermo_.kappaEff(alphat)/Foam::max(*this, residualAlpha());
+    const volScalarField& alpha(*this);
+    return thermoPtr_->kappaEff(alphat)/Foam::max(alpha, residualAlpha());
 }
 
 Foam::tmp<Foam::scalarField>
@@ -590,7 +528,7 @@ Foam::multiPhaseModel::kappaEff
 ) const
 {
     return
-        thermo_.kappaEff(alphat, patchi)
+        thermoPtr_->kappaEff(alphat, patchi)
        /Foam::max(this->boundaryField()[patchi], residualAlpha().value());
 }
 

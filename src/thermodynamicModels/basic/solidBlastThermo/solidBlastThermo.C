@@ -88,6 +88,16 @@ Foam::solidBlastThermo::~solidBlastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
+{
+    return volScalarField::New
+    (
+        "nu",
+        this->T_.mesh(),
+        dimViscosity
+    );
+}
+
 
 Foam::tmp<Foam::volSymmTensorField> Foam::solidBlastThermo::KappaLocal() const
 {

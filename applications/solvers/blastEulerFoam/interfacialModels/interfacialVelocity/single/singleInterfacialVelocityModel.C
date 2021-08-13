@@ -68,14 +68,14 @@ Foam::interfacialVelocityModels::single::~single()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volVectorField>
-Foam::interfacialVelocityModels::single::Ui() const
+Foam::interfacialVelocityModels::single::UI() const
 {
     return U_;
 }
 
 
 Foam::tmp<Foam::surfaceScalarField>
-Foam::interfacialVelocityModels::single::phi() const
+Foam::interfacialVelocityModels::single::phiI() const
 {
     return phi_;
 }

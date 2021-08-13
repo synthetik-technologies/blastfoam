@@ -79,10 +79,18 @@ public:
     // Member Functions
 
         //- Return phase-intensive wall lubrication force
-        tmp<volVectorField> Fi(const label, const label) const;
+        virtual tmp<volVectorField> FI
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Wall lubrication force
-        tmp<volVectorField> F(const label, const label) const;
+        virtual tmp<volVectorField> F
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

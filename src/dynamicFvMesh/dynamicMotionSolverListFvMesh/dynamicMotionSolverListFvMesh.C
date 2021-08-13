@@ -38,7 +38,7 @@ namespace Foam
     (
         dynamicFvMesh,
         dynamicMotionSolverListFvMesh,
-        IOobject
+        dictionary
     );
 }
 

@@ -27,6 +27,14 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastThermo.H"
+#include "basicBlastThermo.H"
+
+/* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
+
+namespace Foam
+{
+    defineTypeNameAndDebug(blastThermo, 0);
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -166,7 +174,7 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::gamma
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::Y(const word& name) const
+const Foam::volScalarField& Foam::blastThermo::Y(const word& name) const
 {
     NotImplemented;
     return volScalarField::New
@@ -185,15 +193,10 @@ Foam::volScalarField& Foam::blastThermo::Y(const word& name)
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::blastThermo::Y(const label i) const
+const Foam::volScalarField& Foam::blastThermo::Y(const label i) const
 {
     NotImplemented;
-    return volScalarField::New
-    (
-        phasePropertyName("Yi" + Foam::name(i)),
-        rho_.mesh(),
-        dimless
-    );
+    return rho_;
 }
 
 

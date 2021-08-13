@@ -105,6 +105,18 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdv
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdRho
+(
+    const scalar& rho,
+    const scalar& e,
+    const scalar& T
+) const
+{
+    return pTable_.dFdX(rho, e);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdT
 (
     const scalar& rho,

@@ -47,10 +47,15 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(mesh),
-    thermo_(word::null, p_, rho_, e_, T_, *this, true),
-    alphas_(thermo_.volumeFractions()),
-    rhos_(thermo_.rhos()),
+    phaseCompressibleSystem(3, mesh),
+    alphas_
+    (
+        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).volumeFractions()
+    ),
+    rhos_
+    (
+        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).rhos()
+    ),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
@@ -106,7 +111,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     }
 
     this->setModels();
-    thermo_.initializeModels();
+    thermoPtr_->initializeModels();
 
     encode();
 }
@@ -158,7 +163,7 @@ void Foam::multiphaseCompressibleSystem::solve()
         rho_ += alphaRhos_[phasei];
     }
 
-    thermo_.solve();
+    thermoPtr_->solve();
     phaseCompressibleSystem::solve();
 }
 
@@ -181,14 +186,14 @@ void Foam::multiphaseCompressibleSystem::update()
         rhoUPhi_,
         rhoEPhi_
     );
-    thermo_.update();
+    thermoPtr_->update();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseCompressibleSystem::ESource() const
 {
-    return thermo_.ESource();
+    return thermoPtr_->ESource();
 }
 
 
@@ -224,7 +229,7 @@ void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]
-           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
+           /max(alphas_[phasei], thermoPtr_->thermo(phasei).residualAlpha());
 
         rhos_[phasei].correctBoundaryConditions();
 
@@ -247,7 +252,7 @@ void Foam::multiphaseCompressibleSystem::decode()
     e_.ref() = E() - 0.5*magSqr(U_());
 
     //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermo_.limit())
+    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
     {
         if (debug)
         {
@@ -258,7 +263,7 @@ void Foam::multiphaseCompressibleSystem::decode()
         }
         volScalarField limit(pos(T_ - TLow_));
         T_.max(TLow_);
-        e_ = e_*limit + thermo_.E()*(1.0 - limit);
+        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
         rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
     }
     e_.correctBoundaryConditions();
@@ -270,7 +275,7 @@ void Foam::multiphaseCompressibleSystem::decode()
           + 0.5*magSqr(U_.boundaryField())
         );
 
-    thermo_.correct();
+    thermoPtr_->correct();
 }
 
 

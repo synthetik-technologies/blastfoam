@@ -166,13 +166,13 @@ public:
         inline volScalarField& Y(const label i);
 
         //- Return the const mass-fraction field for a specie given by index
-        inline tmp<volScalarField> Y(const label i) const;
+        inline const volScalarField& Y(const label i) const;
 
         //- Return the mass-fraction field for a specie given by name
         inline volScalarField& Y(const word& specieName);
 
         //- Return the const mass-fraction field for a specie given by name
-        inline tmp<volScalarField> Y(const word& specieName) const;
+        inline const volScalarField& Y(const word& specieName) const;
 
         //- Return the name of the thermo physics
         virtual word thermoName() const = 0;

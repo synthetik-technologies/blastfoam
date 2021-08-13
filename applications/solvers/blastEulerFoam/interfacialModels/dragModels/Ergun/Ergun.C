@@ -83,7 +83,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Ergun::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Ergun::CdRe
+Foam::scalar Foam::dragModels::Ergun::CdRei
 (
     const label celli,
     const label nodei,
@@ -104,7 +104,7 @@ Foam::scalar Foam::dragModels::Ergun::CdRe
                 pair_.continuous()[celli],
                 pair_.continuous().residualAlpha().value()
             )
-          + 1.75*pair_.Re(celli, nodei, nodej)
+          + 1.75*pair_.Rei(celli, nodei, nodej)
         );
 }
 

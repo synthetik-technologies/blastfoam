@@ -53,8 +53,8 @@ namespace Foam
 
 class solidBlastThermo
 :
-    virtual public blastThermo,
-    virtual public solidThermo
+    public blastThermo,
+    public solidThermo
 {
 
     //- Return the anisotropic Kappa in the local coordinate system
@@ -63,7 +63,7 @@ class solidBlastThermo
 public:
 
     //- Runtime type information
-    TypeName("solidBlastThermo");
+    TypeName("solid");
 
     //- Construct from mesh, dictionary and phase name
     solidBlastThermo
@@ -134,6 +134,9 @@ public:
             }
 
             using blastThermo::rho;
+
+            //- Kinematic viscosity [m^2/s]
+            virtual tmp<volScalarField> nu() const;
 
             //- Effective thermal turbulent diffusivity for temperature
             //  of mixture [W/m/K]

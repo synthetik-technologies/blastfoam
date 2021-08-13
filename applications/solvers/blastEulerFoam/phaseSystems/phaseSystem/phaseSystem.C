@@ -125,7 +125,7 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
             new volVectorField
             (
                 IOobject::groupName("Ui", pair.name()),
-                interfacialVelocityIter()->Ui()
+                interfacialVelocityIter()->UI()
             )
         );
     }
@@ -765,7 +765,7 @@ Foam::phaseSystem::phaseSystem
      && min(phaseModels_.last()).value() == 0
     )
     {
-        refCast<volScalarField>(phaseModels_.last()) = 1.0 - sumAlpha;
+        dynamicCast<volScalarField>(phaseModels_.last()) = 1.0 - sumAlpha;
     }
     else if
     (
@@ -1088,7 +1088,7 @@ Foam::phaseSystem::E
 
 
 Foam::scalar
-Foam::phaseSystem::cellE
+Foam::phaseSystem::Ei
 (
     const label celli,
     const phasePairKey& key,
@@ -1098,7 +1098,7 @@ Foam::phaseSystem::cellE
 {
     if (aspectRatioModels_.found(key))
     {
-        return aspectRatioModels_[key]->E(celli, nodei, nodej);
+        return aspectRatioModels_[key]->Ei(celli, nodei, nodej);
     }
     else
     {
@@ -1200,7 +1200,7 @@ Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) con
         )
     );
 
-    volScalarField Hf(phase1.thermo().Hf() - phase2.thermo().Hf());
+    volScalarField hc(phase1.thermo().hc() - phase2.thermo().hc());
 
     if (mDots_.found(key1))
     {
@@ -1212,7 +1212,7 @@ Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) con
     }
     volScalarField mD21(max(mD, zeroM));
     volScalarField mD12(min(mD, zeroM));
-    mDotEi += mD21*phase2.e() + mD12*phase1.e() + mD21*Hf;
+    mDotEi += mD21*phase2.he() + mD12*phase1.he() + mD21*hc;
 
     if (!phase1.granular())
     {

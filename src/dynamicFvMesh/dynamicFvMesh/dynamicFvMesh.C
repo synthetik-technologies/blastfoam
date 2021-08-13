@@ -33,7 +33,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dynamicFvMesh, 0);
-    defineRunTimeSelectionTable(dynamicFvMesh, IOobject);
+    defineRunTimeSelectionTable(dynamicFvMesh, dictionary);
 }
 
 

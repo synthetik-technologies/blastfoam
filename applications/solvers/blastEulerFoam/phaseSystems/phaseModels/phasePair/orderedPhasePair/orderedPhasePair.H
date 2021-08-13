@@ -95,11 +95,11 @@ public:
         ) const;
 
         //- Aspect ratio
-        virtual scalar E
+        virtual scalar Ei
         (
             const label celli,
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 };
 

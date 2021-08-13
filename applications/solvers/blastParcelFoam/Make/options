@@ -1,7 +1,5 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
-    -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
@@ -9,27 +7,29 @@ EXE_INC= \
     -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    -I$(BLAST_DIR)/src/lagrangian/intermediate/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/transportModels/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/lagrangian/basic/lnInclude \
-    -I$(LIB_SRC)/lagrangian/distributionModels/lnInclude \
+    -I$(LIB_SRC)/lagrangian/parcel/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude
 
 EXE_LIBS = \
     -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -llagrangian \
+    -llagrangianParcel \
+    -llagrangianParcelTurbulence \
+    -lfluidThermophysicalModels \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -lblastMomentumTransportModels \
-    -lblastThermophysicalTransportModels \
     -lfluxSchemes \
     -lphaseCompressibleSystems \
     -lblastRadiationModels \
     -lblastDynamicMesh \
     -lblastDynamicFvMesh \
-    -lblastLagrangianIntermediate \
     -lerrorEstimate

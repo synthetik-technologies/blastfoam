@@ -269,8 +269,8 @@ Foam::BlendedInterfacialModel<ModelType>::BlendedInterfacialModel
         IOobject
         (
             IOobject::groupName(typeName, phasePair(phase1, phase2).name()),
-            phase1.mesh().time().timeName(),
-            phase1.mesh()
+            phase1.volScalarField::time().timeName(),
+            phase1.volScalarField::mesh()
         )
     ),
     phase1_(phase1),
@@ -386,26 +386,20 @@ Foam::BlendedInterfacialModel<ModelType>::K
     const label nodej
 ) const
 {
-    tmp<volScalarField> (ModelType::*k)(const label, const label) const =
-        &ModelType::K;
-
-    return evaluate(k, "K", ModelType::dimK, false, nodei, nodej);
+    return evaluate(&ModelType::K, "K", ModelType::dimK, false, nodei, nodej);
 }
 
 
 template<class ModelType>
 Foam::scalar
-Foam::BlendedInterfacialModel<ModelType>::K
+Foam::BlendedInterfacialModel<ModelType>::Ki
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar (ModelType::*k)(const label, const label, const label) const =
-        &ModelType::K;
-
-    return evaluate(k, "K", false, celli, nodei, nodej);
+    return evaluate(&ModelType::Ki, "Ki", false, celli, nodei, nodej);
 }
 
 
@@ -437,14 +431,14 @@ Foam::BlendedInterfacialModel<ModelType>::F
 template<class ModelType>
 template<class Type>
 Type
-Foam::BlendedInterfacialModel<ModelType>::F
+Foam::BlendedInterfacialModel<ModelType>::Fi
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::F, "F", true, celli, nodei, nodej);
+    return evaluate(&ModelType::Fi, "Fi", true, celli, nodei, nodej);
 }
 
 
@@ -473,14 +467,14 @@ Foam::BlendedInterfacialModel<ModelType>::D
 
 
 template<class ModelType>
-Foam::scalar Foam::BlendedInterfacialModel<ModelType>::D
+Foam::scalar Foam::BlendedInterfacialModel<ModelType>::Di
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::D, "D", false, celli, nodei, nodej);
+    return evaluate(&ModelType::Di, "Di", false, celli, nodei, nodej);
 }
 
 
@@ -498,14 +492,14 @@ Foam::BlendedInterfacialModel<ModelType>::dmdt
 
 template<class ModelType>
 Foam::scalar
-Foam::BlendedInterfacialModel<ModelType>::dmdt
+Foam::BlendedInterfacialModel<ModelType>::dmdti
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::dmdt, "dmdt", false, celli, nodei, nodej);
+    return evaluate(&ModelType::dmdti, "dmdti", false, celli, nodei, nodej);
 }
 
 

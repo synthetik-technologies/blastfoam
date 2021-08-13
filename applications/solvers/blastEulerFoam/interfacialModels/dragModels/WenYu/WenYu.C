@@ -91,7 +91,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::WenYu::CdRe
+Foam::scalar Foam::dragModels::WenYu::CdRei
 (
     const label celli,
     const label nodei,
@@ -107,7 +107,7 @@ Foam::scalar Foam::dragModels::WenYu::CdRe
         )
     );
 
-    scalar Res(alpha2*pair_.Re(celli, nodei, nodej));
+    scalar Res(alpha2*pair_.Rei(celli, nodei, nodej));
     scalar CdsRes
     (
         neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))

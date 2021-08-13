@@ -77,7 +77,8 @@ public:
     (
         const fvMesh& mesh,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const bool allowNoGroup = false
     );
 
     //- Initialize models
@@ -105,6 +106,16 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
+        //- Return residual values
+        virtual dimensionedScalar residualAlpha() const
+        {
+            return thermoPtr_->residualAlpha();
+        }
+        virtual dimensionedScalar residualRho() const
+        {
+            return thermoPtr_->residualRho();
+        }
+
     // Access functions
 
 
@@ -127,6 +138,15 @@ public:
 
             //- Recompute the density
             virtual void updateRho();
+
+            //- Calculate pressure for cell [Pa]
+            virtual scalar pRhoTi(const label celli) const;
+
+            //- Derivative of pressure w.r.t density for cel
+            virtual scalar dpdRhoi(const label celli) const;
+
+            //- Derivative of pressure w.r.t internal energy for cell
+            virtual scalar dpdei(const label celli) const;
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const;
@@ -304,6 +324,11 @@ public:
             //- Molecular weight for cell [kg/kmol]
             virtual scalar Wi(const label celli) const;
 
+        //- Read residual values
+        virtual void read(const dictionary& dict)
+        {
+            thermoPtr_->read(dict);
+        }
 };
 
 

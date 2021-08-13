@@ -41,7 +41,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dynamicRefineFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineFvMesh, IOobject);
+    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineFvMesh, dictionary);
 
 
     // Helper class for accessing max cell level of faces accross processor patches

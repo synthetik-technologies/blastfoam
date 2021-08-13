@@ -79,10 +79,19 @@ public:
     // Member Functions
 
         //- Swarm correction coefficient
-        tmp<volScalarField> Cs(const label, const label) const;
+        tmp<volScalarField> Cs
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Swarm correction coefficient
-        virtual scalar Cs(const label, const label, const label) const;
+        virtual scalar Csi
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

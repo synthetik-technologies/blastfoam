@@ -78,7 +78,7 @@ Foam::aspectRatioModels::Wellek::E
 
 
 
-Foam::scalar Foam::aspectRatioModels::Wellek::E
+Foam::scalar Foam::aspectRatioModels::Wellek::Ei
 (
     const label celli,
     const label nodei,
@@ -86,7 +86,7 @@ Foam::scalar Foam::aspectRatioModels::Wellek::E
 ) const
 {
     return
-        scalar(1)/(scalar(1) + 0.163*pow(pair_.Eo(celli, nodei,nodej), 0.757));
+        scalar(1)/(scalar(1) + 0.163*pow(pair_.Eoi(celli, nodei,nodej), 0.757));
 }
 
 

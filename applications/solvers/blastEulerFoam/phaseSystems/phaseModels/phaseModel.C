@@ -93,33 +93,6 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedVector("0", dimVelocity, Zero)
     ),
-    T_
-    (
-        IOobject
-        (
-            IOobject::groupName("T", name_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        fluid.mesh()
-    ),
-    e_
-    (
-        IOobject
-        (
-            IOobject::groupName("e", name_),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        fluid_.mesh(),
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        basicBlastThermo::eBoundaryTypes(T_),
-        basicBlastThermo::eBoundaryBaseTypes(T_)
-    ),
     alphaRho_
     (
         IOobject
@@ -257,11 +230,11 @@ void Foam::phaseModel::solveD()
     }
 
     //- Update diameterModel
-    volScalarField Pi
+    volScalarField PI
     (
         volScalarField::New
         (
-            IOobject::groupName("pi", name_),
+            IOobject::groupName("PI", name_),
             fluid_.mesh(),
             dimensionedScalar(dimPressure, 0.0)
         )
@@ -289,20 +262,20 @@ void Foam::phaseModel::solveD()
             )
         )
         {
-            Pi +=
+            PI +=
                 fluid_.lookupSubModel<interfacialPressureModel>
                 (
                     *this,
                     otherPhase,
                     false
-                ).Pi()
+                ).PI()
                *otherPhase;
             sumAlpha.ref() += otherPhase;
         }
     }
 
-    Pi /= Foam::max(sumAlpha, this->residualAlpha());
-    dPtr_->solve(Pi, T_);
+    PI /= Foam::max(sumAlpha, this->residualAlpha());
+    dPtr_->solve(PI, T());
 }
 
 
@@ -411,15 +384,15 @@ void Foam::phaseModel::postUpdate()
         alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
 
         // Solve thermal energy diffusion
-        e_ = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
+        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho_, e_) - fvc::ddt(alphaRho_, e_)
-          + fvc::ddt(smallAlphaRho, e_) - fvm::ddt(smallAlphaRho, e_)
-          + thermophysicalTransport_->divq(e_)
+            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRho_, he())
+          + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
+          + thermophysicalTransport_->divq(he())
         );
         eEqn.solve();
-        alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
+        alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
 
         turbulence_->correct();
     }

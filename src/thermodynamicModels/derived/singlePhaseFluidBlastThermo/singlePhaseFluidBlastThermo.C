@@ -48,10 +48,11 @@ Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const bool allowNoGroup
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    fluidBlastThermo(mesh, dict, phaseName, allowNoGroup),
     thermoPtr_
     (
         phaseFluidBlastThermo::New
@@ -71,24 +72,6 @@ Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
             << rho().name() << " must be read." << nl
             << abort(FatalError);
     }
-
-    if (!e_.typeHeaderOk<volScalarField>(true))
-    {
-        volScalarField e(thermoPtr_->calce(this->p()));
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        e_.correctBoundaryConditions();
-    }
-    correct();
 }
 
 void Foam::singlePhaseFluidBlastThermo::initializeModels()
@@ -108,7 +91,6 @@ void Foam::singlePhaseFluidBlastThermo::initializeModels()
                     e.boundaryField()[patchi][facei];
             }
         }
-        e_.correctBoundaryConditions();
     }
 }
 
@@ -147,6 +129,7 @@ void Foam::singlePhaseFluidBlastThermo::updateRho()
 
 void Foam::singlePhaseFluidBlastThermo::correct()
 {
+    thermoPtr_->correct();
 
     this->T_ = thermoPtr_->THE();
     this->T_.correctBoundaryConditions();
@@ -154,7 +137,8 @@ void Foam::singlePhaseFluidBlastThermo::correct()
     this->p() = thermoPtr_->pRhoT();
     this->p().correctBoundaryConditions();
 
-    thermoPtr_->correct();
+    this->mu_ = thermoPtr_->mu();
+    this->alpha_ = thermoPtr_->alpha();
 }
 
 
@@ -162,6 +146,24 @@ Foam::tmp<Foam::volScalarField>
 Foam::singlePhaseFluidBlastThermo::ESource() const
 {
     return thermoPtr_->ESource();
+}
+
+
+Foam::scalar Foam::singlePhaseFluidBlastThermo::pRhoTi(const label celli) const
+{
+    return thermoPtr_->pRhoTi(celli);
+}
+
+
+Foam::scalar Foam::singlePhaseFluidBlastThermo::dpdRhoi(const label celli) const
+{
+    return thermoPtr_->dpdRhoi(celli);
+}
+
+
+Foam::scalar Foam::singlePhaseFluidBlastThermo::dpdei(const label celli) const
+{
+    return thermoPtr_->dpdei(celli);
 }
 
 

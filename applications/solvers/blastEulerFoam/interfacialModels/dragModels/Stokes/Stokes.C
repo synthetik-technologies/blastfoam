@@ -81,7 +81,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::CdRe
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::Ki
+Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::KI
 (
     const label nodei,
     const label nodej
@@ -91,7 +91,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Stokes::Ki
 }
 
 
-Foam::scalar Foam::dragModels::Stokes::CdRe
+Foam::scalar Foam::dragModels::Stokes::CdRei
 (
     const label celli,
     const label nodei,
@@ -107,7 +107,7 @@ Foam::scalar Foam::dragModels::Stokes::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Stokes::Ki
+Foam::scalar Foam::dragModels::Stokes::KIi
 (
     const label celli,
     const label nodei,

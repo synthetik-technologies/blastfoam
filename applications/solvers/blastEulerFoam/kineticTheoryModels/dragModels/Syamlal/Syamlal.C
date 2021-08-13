@@ -136,7 +136,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Syamlal::Kf
 }
 
 
-Foam::scalar Foam::dragModels::Syamlal::CdRe
+Foam::scalar Foam::dragModels::Syamlal::CdRei
 (
     const label,
     const label,
@@ -152,7 +152,7 @@ Foam::scalar Foam::dragModels::Syamlal::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Syamlal::K
+Foam::scalar Foam::dragModels::Syamlal::Ki
 (
     const label celli,
     const label nodei,
@@ -172,7 +172,7 @@ Foam::scalar Foam::dragModels::Syamlal::K
            *phase1[celli]*phase1.rho()[celli]
            *phase2[celli]*phase2.rho()[celli]
            *sqr(phase1.di(celli, nodei) + phase2.di(celli, nodej))
-           *g0*pair_.magUr(celli, nodei, nodej)
+           *g0*pair_.magUri(celli, nodei, nodej)
         )
        /(
             2.0*pi

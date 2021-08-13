@@ -49,13 +49,23 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
     // Print error message if package not found in the table
     if (cstrIter == tablePtr->end())
     {
+        const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
+        const fileName BLAST_DIR(getEnv("BLAST_DIR"));
+        setEnv("FOAM_CODE_TEMPLATES", BLAST_DIR/"etc/codeTemplates", true);
+
         const word type(thermoDict.lookup("type"));
-        const word compileType
-        (
-            type == "detonating"
-          ? "detonatingBlastThermo"
-          : "blastThermo"
-        );
+        word compileType;
+        if (type != "detonating")
+        {
+            compileType = Thermo::typeName + "BlastThermo";
+        }
+        else
+        {
+            compileType =
+                "detonating" + Thermo::typeName.capitalise() + "BlastThermo";
+        }
+        Info<<compileType<<endl;
+
         if
         (
             dynamicCode::allowSystemOperations
@@ -77,7 +87,6 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                         {"transport", uDict.lookup("transport")},
                         {"thermo", uDict.lookup("thermo")},
                         {"uEquationOfState", uDict.lookup("equationOfState")},
-                        {"thermo", uDict.lookup("thermo")},
                         {"rEquationOfState", rDict.lookup("equationOfState")},
                         {"specie", "specieBlast"}
                     };
@@ -97,6 +106,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                         {"specie", "specieBlast"}
                     };
             }
+            Info<<entries<<endl;
             compileTemplate thermo
             (
                 compileType,
@@ -116,6 +126,17 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                     << "Valid " << Thermo::typeName << " types are:"
                     << nl << nl;
             }
+        }
+
+        if (!origCODE_TEMPLATE_DIR.empty())
+        {
+            system
+            (
+                word
+                (
+                    "export FOAM_CODE_TEMPLATES=" + origCODE_TEMPLATE_DIR
+                ).c_str()
+            );
         }
 
         if (cstrIter == tablePtr->end())

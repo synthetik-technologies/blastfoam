@@ -48,6 +48,9 @@ Description
 #include "coordinateSystem.H"
 #include "dynamicFvMesh.H"
 
+#include "fvModels.H"
+#include "fvConstraints.H"
+
 #include "mappedPatchSelector.H"
 #include "mappedPointPatchSelector.H"
 

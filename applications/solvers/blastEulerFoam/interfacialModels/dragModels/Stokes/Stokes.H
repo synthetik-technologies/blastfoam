@@ -94,21 +94,34 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe(const label, const label) const;
-
-        //- The drag function used in the momentum equation
-        virtual tmp<volScalarField> Ki(const label, const label) const;
-
-        //- Drag coefficient
-        virtual scalar CdRe
+        virtual tmp<volScalarField> CdRe
         (
-            const label celli,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- The drag function used in the momentum equation
-        virtual scalar Ki(const label, const label, const label) const;
+        virtual tmp<volScalarField> KI
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
+        //- Drag coefficient
+        virtual scalar CdRei
+        (
+            const label celli,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
+        //- The drag function used in the momentum equation
+        virtual scalar KIi
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

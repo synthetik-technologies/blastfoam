@@ -43,12 +43,12 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "integrationSystem.H"
-#include "basicBlastThermo.H"
 #include "basicThermo.H"
 #include "speciesTable.H"
 
 namespace Foam
 {
+class basicBlastThermo;
 
 /*---------------------------------------------------------------------------*\
                            Class blastThermo Declaration
@@ -75,6 +75,8 @@ protected:
 
 public:
 
+    TypeName("blastThermo");
+
     // Public Classes
     blastThermo
     (
@@ -99,6 +101,10 @@ public:
 
         //- Access individual thermo models
         virtual basicBlastThermo& thermo(const label) = 0;
+
+        //- Return residual values
+        virtual dimensionedScalar residualAlpha() const = 0;
+        virtual dimensionedScalar residualRho() const = 0;
 
         // Access functions
 
@@ -128,6 +134,14 @@ public:
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
+
+            //- Temperature from enthalpy/internal energy for celli
+            virtual scalar THEi
+            (
+                const scalar he,
+                const scalar T0,
+                const label celli
+            ) const = 0;
 
             //- Density [kg/m^3]
             virtual tmp<volScalarField> rho() const;
@@ -167,6 +181,9 @@ public:
             virtual scalar Cvi(const label celli) const = 0;
 
         // Fields derived from transport state variables
+
+            //- Kinematic viscosity [m^2/s]
+            virtual tmp<volScalarField> nu() const = 0;
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
             virtual tmp<volScalarField> kappa() const;
@@ -222,13 +239,13 @@ public:
             virtual bool contains(const word& specieName) const;
 
             //- Return mass fraction of a specie
-            virtual tmp<volScalarField> Y(const word& name) const;
+            virtual const volScalarField& Y(const word& name) const;
 
             //- Access mass fraction of a specie
             virtual volScalarField& Y(const word& name);
 
             //- Return mass fraction of a specie
-            virtual tmp<volScalarField> Y(const label i) const;
+            virtual const volScalarField& Y(const label i) const;
 
             //- Access mass fraction of a specie
             virtual volScalarField& Y(const label i);
@@ -236,6 +253,9 @@ public:
             //- Add an external change to a thermodynamic field if present
             //  i.e. mass transfer
             virtual void addDelta(const word&, const volScalarField&);
+
+            //- Read residual values
+            virtual void read(const dictionary&) = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

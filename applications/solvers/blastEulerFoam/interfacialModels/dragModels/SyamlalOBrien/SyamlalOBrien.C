@@ -104,7 +104,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SyamlalOBrien::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::SyamlalOBrien::CdRe
+Foam::scalar Foam::dragModels::SyamlalOBrien::CdRei
 (
     const label celli,
     const label nodei,
@@ -126,7 +126,7 @@ Foam::scalar Foam::dragModels::SyamlalOBrien::CdRe
         neg(alpha2 - 0.85)*(0.8*pow(alpha2, 1.28))
       + pos0(alpha2 - 0.85)*(pow(alpha2, 2.65))
     );
-    scalar Re(pair_.Re(celli, nodei, nodej));
+    scalar Re(pair_.Rei(celli, nodei, nodej));
     scalar Vr
     (
         0.5

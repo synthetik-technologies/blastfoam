@@ -64,7 +64,7 @@ Foam::interfacialPressureModels::massAveraged::~massAveraged()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::massAveraged::Pi() const
+Foam::interfacialPressureModels::massAveraged::PI() const
 {
     volScalarField alphaRho
     (
@@ -81,7 +81,7 @@ Foam::interfacialPressureModels::massAveraged::Pi() const
 
 
 Foam::scalar
-Foam::interfacialPressureModels::massAveraged::Pi(const label celli) const
+Foam::interfacialPressureModels::massAveraged::PIi(const label celli) const
 {
     const phaseModel& phase1 = this->pair_.phase1();
     const phaseModel& phase2 = this->pair_.phase2();

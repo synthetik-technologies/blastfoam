@@ -39,7 +39,7 @@ Description
 
 namespace Foam
 {
-    defineTemplateTypeNameAndDebug(Cloud<particle>, 0);
+//     defineTemplateTypeNameAndDebug(Cloud<particle>, 0);
 }
 
 

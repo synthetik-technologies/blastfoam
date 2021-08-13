@@ -115,15 +115,15 @@ Foam::dragModels::IshiiZuber::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::IshiiZuber::CdRe
+Foam::scalar Foam::dragModels::IshiiZuber::CdRei
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Re(celli, nodei, nodej));
-    scalar Eo(pair_.Eo(celli, nodei, nodej));
+    scalar Re(pair_.Rei(celli, nodei, nodej));
+    scalar Eo(pair_.Eoi(celli, nodei, nodej));
 
     scalar mud(pair_.dispersed().nui(celli)*pair_.dispersed().rho()[celli]);
     scalar muc(pair_.continuous().nui(celli)*pair_.continuous().rho()[celli]);

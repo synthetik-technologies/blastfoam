@@ -76,10 +76,10 @@ public:
     // Member Functions
 
         //- The heat transfer function K used in the enthalpy equation
-        virtual tmp<volScalarField> Pi() const;
+        virtual tmp<volScalarField> PI() const;
 
         //- Return the interfacial pressure for a cell
-        virtual scalar Pi(const label celli) const;
+        virtual scalar PIi(const label celli) const;
 };
 
 

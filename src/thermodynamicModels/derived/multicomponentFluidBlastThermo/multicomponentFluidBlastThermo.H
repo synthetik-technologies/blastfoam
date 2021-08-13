@@ -117,6 +117,15 @@ public:
         //- Calculate thermodynamic pressure
         virtual tmp<volScalarField> pRhoT() const;
 
+        //- Calculate pressure for cell [Pa]
+        virtual scalar pRhoTi(const label celli) const;
+
+        //- Derivative of pressure w.r.t density for cell
+        virtual scalar dpdRhoi(const label celli) const;
+
+        //- Derivative of pressure w.r.t internal energy for cell
+        virtual scalar dpdei(const label celli) const;
+
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 
@@ -130,28 +139,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#define addMulticomponentFluidThermo(Transport, Thermo, EoS)                \
-    typedef multicomponentFluidBlastThermo<Transport##Thermo##EoS##blastSpecie>  \
-        multicomponent##Transport##Thermo##EoS;                             \
-    defineTemplateTypeNameAndDebugWithName                                  \
-    (                                                                       \
-        multicomponent##Transport##Thermo##EoS,                             \
-        (Transport##Thermo##EoS##blastSpecie::typeName()).c_str(),          \
-        0                                                                   \
-    );                                                                      \
-    addToRunTimeSelectionTable                                              \
-    (                                                                       \
-        fluidBlastThermo,                                                   \
-        multicomponent##Transport##Thermo##EoS,                             \
-        multicomponent                                                      \
-    );
-
-#define addMulticomponentFluidThermos(Transport, EoS)                       \
-    addMulticomponentFluidThermo(Transport, eConst, EoS);                   \
-    addMulticomponentFluidThermo(Transport, hConst, EoS);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

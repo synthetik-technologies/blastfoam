@@ -41,7 +41,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "volFields.H"
-#include "surfaceFields.H"
 #include "dictionary.H"
 #include "wordIOList.H"
 #include "integrationSystem.H"
@@ -222,7 +221,8 @@ public:
             const word& name,
             const IOobject::readOption rOpt,
             const IOobject::writeOption wOpt,
-            const dimensionSet& dims
+            const dimensionSet& dims,
+            const bool allowNoGroup = false
         );
 
         virtual word thermoName() const = 0;
@@ -280,7 +280,11 @@ public:
         }
 
         //- Return mass fraction of a specie
-        virtual tmp<volScalarField> Y(const word& name) const;
+        virtual const volScalarField& Y(const word& name) const
+        {
+            NotImplemented;
+            return T_;
+        }
 
         //- Access mass fraction of a specie
         virtual volScalarField& Y(const word& name)
@@ -290,7 +294,11 @@ public:
         }
 
         //- Return mass fraction of a specie
-        virtual tmp<volScalarField> Y(const label i) const;
+        virtual const volScalarField& Y(const label i) const
+        {
+            NotImplemented;
+            return rho_;
+        }
 
         //- Access mass fraction of a specie
         virtual volScalarField& Y(const label i)

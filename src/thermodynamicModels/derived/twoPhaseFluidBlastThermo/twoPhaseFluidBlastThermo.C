@@ -48,10 +48,11 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const bool allowNoGroup
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    fluidBlastThermo(mesh, dict, phaseName, allowNoGroup),
     phases_(dict.lookup("phases")),
     volumeFraction_
     (
@@ -152,7 +153,6 @@ void Foam::twoPhaseFluidBlastThermo::initializeModels()
                     e.boundaryField()[patchi][facei];
             }
         }
-        e_.correctBoundaryConditions();
     }
     this->correct();
 
@@ -166,6 +166,13 @@ Foam::twoPhaseFluidBlastThermo::~twoPhaseFluidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::twoPhaseFluidBlastThermo::read(const dictionary& dict)
+{
+    thermo1_->read(dict.subDict(thermo1_->name()));
+    thermo2_->read(dict.subDict(thermo2_->name()));
+}
+
 
 void Foam::twoPhaseFluidBlastThermo::postUpdate()
 {
@@ -243,6 +250,63 @@ Foam::twoPhaseFluidBlastThermo::ESource() const
     return
         volumeFraction_*thermo1_->ESource()
       + (1.0 - volumeFraction_)*thermo2_->ESource();
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::pRhoTi(const label celli) const
+{
+    scalar alphaXi1
+    (
+        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+    );
+    scalar alphaXi2
+    (
+        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+    );
+
+    return
+        (
+            alphaXi1*thermo1_->pRhoTi(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->pRhoTi(celli)*pos(alphaXi2 - small)
+        )/(alphaXi1 + alphaXi2);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::dpdRhoi(const label celli) const
+{
+    scalar alphaXi1
+    (
+        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+    );
+    scalar alphaXi2
+    (
+        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+    );
+
+    return
+        (
+            alphaXi1*thermo1_->dpdRhoi(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->dpdRhoi(celli)*pos(alphaXi2 - small)
+        )/(alphaXi1 + alphaXi2);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::dpdei(const label celli) const
+{
+    scalar alphaXi1
+    (
+        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+    );
+    scalar alphaXi2
+    (
+        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+    );
+
+    return
+        (
+            alphaXi1*thermo1_->dpdei(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->dpdei(celli)*pos(alphaXi2 - small)
+        )/(alphaXi1 + alphaXi2);
 }
 
 

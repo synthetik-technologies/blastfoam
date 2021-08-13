@@ -97,27 +97,44 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe(const label, const label) const;
+        virtual tmp<volScalarField> CdRe
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- The drag function used in the momentum equation
-        virtual tmp<volScalarField> K(const label, const label) const;
+        virtual tmp<volScalarField> K
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- The drag function Kf used in the face-momentum equations
-        virtual tmp<surfaceScalarField> Kf(const label, const label) const;
+        virtual tmp<surfaceScalarField> Kf
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Drag coefficient
-        virtual scalar CdRe
+        virtual scalar CdRei
         (
             const label,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return the drag coefficient K
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
-        virtual scalar K(const label, const label, const label) const;
+        virtual scalar Ki
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

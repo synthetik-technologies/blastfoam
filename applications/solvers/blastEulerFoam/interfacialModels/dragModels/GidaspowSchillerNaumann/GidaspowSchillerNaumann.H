@@ -101,14 +101,18 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe(const label, const label) const;
+        virtual tmp<volScalarField> CdRe
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Drag coefficient
-        virtual scalar CdRe
+        virtual scalar CdRei
         (
             const label,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 };
 

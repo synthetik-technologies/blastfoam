@@ -73,24 +73,24 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Lain::CdRe
     return
         neg(Re - 1.5)*16.0
       + pos0(Re - 1.5)*neg(Re - 80.0)*14.9*pow(Re, 0.22)
-      + pos0(Re - 80.0)*neg(Re - 1500.0)*48*(1.0 - 2.21/sqrt(max(Re, SMALL)))
+      + pos0(Re - 80.0)*neg(Re - 1500.0)*48*(1.0 - 2.21/sqrt(max(Re, small)))
       + pos0(Re - 1500.0)*2.61*Re;
 }
 
 
-Foam::scalar Foam::dragModels::Lain::CdRe
+Foam::scalar Foam::dragModels::Lain::CdRei
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Re(celli, nodei, nodej));
+    scalar Re(pair_.Rei(celli, nodei, nodej));
 
     return
         neg(Re - 1.5)*16.0
       + pos0(Re - 1.5)*neg(Re - 80.0)*14.9*pow(Re, 0.22)
-      + pos0(Re - 80.0)*neg(Re - 1500.0)*48*(1.0 - 2.21/sqrt(max(Re, SMALL)))
+      + pos0(Re - 80.0)*neg(Re - 1500.0)*48*(1.0 - 2.21/sqrt(max(Re, small)))
       + pos0(Re - 1500.0)*2.61*Re;
 }
 

@@ -95,7 +95,7 @@ Foam::dragModels::GidaspowErgunWenYu::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::GidaspowErgunWenYu::CdRe
+Foam::scalar Foam::dragModels::GidaspowErgunWenYu::CdRei
 (
     const label celli,
     const label nodei,
@@ -104,9 +104,9 @@ Foam::scalar Foam::dragModels::GidaspowErgunWenYu::CdRe
 {
     return
         pos0(pair_.continuous()[celli] - 0.8)
-       *WenYu_->CdRe(celli, nodei, nodej)
+       *WenYu_->CdRei(celli, nodei, nodej)
       + neg(pair_.continuous()[celli] - 0.8)
-       *Ergun_->CdRe(celli, nodei, nodej);
+       *Ergun_->CdRei(celli, nodei, nodej);
 }
 
 // ************************************************************************* //

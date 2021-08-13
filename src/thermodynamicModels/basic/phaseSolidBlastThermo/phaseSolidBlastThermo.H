@@ -58,7 +58,7 @@ class phaseSolidBlastThermo
 public:
 
     //- Runtime type information
-    TypeName("solidBlastThermo");
+    TypeName("solid");
 
     // Declare runtime construction
 

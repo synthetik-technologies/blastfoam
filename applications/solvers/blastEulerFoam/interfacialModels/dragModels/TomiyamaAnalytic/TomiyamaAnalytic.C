@@ -92,15 +92,15 @@ Foam::dragModels::TomiyamaAnalytic::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::TomiyamaAnalytic::CdRe
+Foam::scalar Foam::dragModels::TomiyamaAnalytic::CdRei
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Eo(max(pair_.Eo(celli, nodei, nodej), residualEo_.value()));
-    scalar E(max(pair_.E(celli, nodei, nodej), residualE_.value()));
+    scalar Eo(max(pair_.Eoi(celli, nodei, nodej), residualEo_.value()));
+    scalar E(max(pair_.Ei(celli, nodei, nodej), residualE_.value()));
 
     scalar OmEsq(max(scalar(1) - sqr(E), sqr(residualE_.value())));
     scalar rtOmEsq(sqrt(OmEsq));
@@ -115,7 +115,7 @@ Foam::scalar Foam::dragModels::TomiyamaAnalytic::CdRe
           + 16*pow(E, 4.0/3.0)
         )
        /sqr(F)
-       *max(pair_.Re(celli, nodei, nodej), residualRe_.value());
+       *max(pair_.Rei(celli, nodei, nodej), residualRe_.value());
 }
 
 // ************************************************************************* //

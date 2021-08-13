@@ -257,74 +257,94 @@ Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
     const word& name,
     const IOobject::readOption rOpt,
     const IOobject::writeOption wOpt,
-    const dimensionSet& dims
+    const dimensionSet& dims,
+    const bool allowNoGroup
 )
 {
-    if (!mesh.objectRegistry::foundObject<volScalarField>(name))
+    const word baseName(IOobject::member(name));
+    if (!mesh.foundObject<volScalarField>(name))
     {
         volScalarField* fPtr;
+        IOobject io
+        (
+            name,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            wOpt
+        );
+        IOobject baseIo
+        (
+            baseName,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            wOpt
+        );
 
-        if (rOpt == IOobject::MUST_READ)
+        if (io.typeHeaderOk<volScalarField>(true))
         {
+            io.readOpt() = IOobject::MUST_READ;
             fPtr =
                 new volScalarField
                 (
-                    IOobject
-                    (
-                        name,
-                        mesh.time().timeName(),
-                        mesh,
-                        rOpt,
-                        wOpt
-                    ),
+                    io,
                     mesh
                 );
         }
-        else
+        else if (mesh.foundObject<volScalarField>(baseName) && allowNoGroup)
+        {
+            const volScalarField& baseField =
+                mesh.lookupObjectRef<volScalarField>(baseName);
+            fPtr =
+                new volScalarField
+                (
+                    io,
+                    baseField,
+                    baseField.boundaryField()
+                );
+        }
+        else if (baseIo.typeHeaderOk<volScalarField>(true) && allowNoGroup)
+        {
+            baseIo.readOpt() = IOobject::MUST_READ;
+            fPtr =
+                new volScalarField
+                (
+                    baseIo,
+                    mesh
+                );
+
+            // Rename to the desired name
+            fPtr->rename(name);
+        }
+        else if (rOpt != IOobject::MUST_READ)
         {
             fPtr =
                 new volScalarField
                 (
-                    IOobject
-                    (
-                        name,
-                        mesh.time().timeName(),
-                        mesh,
-                        rOpt,
-                        wOpt
-                    ),
+                    io,
                     mesh,
                     dimensionedScalar("0", dims, Zero)
                 );
+        }
+        else if (allowNoGroup)
+        {
+            FatalErrorInFunction
+                << name << " or " << baseName << " is required" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << name << " is required" << endl
+                << abort(FatalError);
         }
 
         // Transfer ownership of this object to the objectRegistry
         fPtr->store(fPtr);
     }
 
-    return mesh.objectRegistry::lookupObjectRef<volScalarField>(name);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::basicBlastThermo::Y(const word& name) const
-{
-    return volScalarField::New
-    (
-        IOobject::groupName(name, name_),
-        e_.mesh(),
-        dimless
-    );
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::basicBlastThermo::Y(const label i) const
-{
-    return volScalarField::New
-    (
-        IOobject::groupName("Yi" + Foam::name(i), name_),
-        e_.mesh(),
-        dimless
-    );
+    return mesh.lookupObjectRef<volScalarField>(name);
 }
 
 

@@ -64,7 +64,7 @@ Foam::liftModel::~liftModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::liftModel::Fi
+Foam::tmp<Foam::volVectorField> Foam::liftModel::FI
 (
     const label nodei,
     const label nodej
@@ -85,7 +85,7 @@ Foam::tmp<Foam::volVectorField> Foam::liftModel::F
     const label nodej
 ) const
 {
-    return pair_.dispersed().volumeFraction(nodei)*Fi(nodei, nodej);
+    return pair_.dispersed().volumeFraction(nodei)*FI(nodei, nodej);
 }
 
 
@@ -97,7 +97,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::liftModel::Ff
 {
     return
         fvc::interpolate(pair_.dispersed().volumeFraction(nodei))
-       *fvc::flux(Fi(nodei, nodej));
+       *fvc::flux(FI(nodei, nodej));
 }
 
 

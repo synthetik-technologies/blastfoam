@@ -447,7 +447,7 @@ public:
         ) const;
 
         //- Return the aspect-ratio for a pair
-        scalar cellE
+        scalar Ei
         (
             const label celli,
             const phasePairKey& key,
@@ -543,6 +543,10 @@ public:
 
             //- Return the phase pairs
             inline const phasePairTable& phasePairs() const;
+
+            //- Return the phase not given as an argument in a two-phase system
+            //  An error is generated if the system is not two-phase
+            inline const phaseModel& otherPhase(const phaseModel& phase) const;
 
             //- Access fvOptions
             inline const fvModels& models() const;

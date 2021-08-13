@@ -27,6 +27,7 @@ License
 #include "uniformDimensionedFields.H"
 #include "fvm.H"
 #include "wedgeFvPatch.H"
+#include "blastRadiationModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -76,7 +77,7 @@ void Foam::phaseCompressibleSystem::setModels()
 
     if (radPropertiesIO.typeHeaderOk<IOdictionary>(true))
     {
-        radiation_.set(radiationModel::New(this->T()).ptr());
+        radiation_.set(blastRadiationModel::New(this->T()).ptr());
     }
 }
 
@@ -130,7 +131,8 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
             IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        rho_*U_
+        rho_*U_,
+        "zeroGradient"
     ),
     rhoE_
     (

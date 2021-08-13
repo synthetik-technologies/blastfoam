@@ -85,7 +85,7 @@ public:
         virtual void createAtmosphere
         (
             volScalarField& p,
-            volScalarField& rho
+            volScalarField& T
         ) const;
 };
 

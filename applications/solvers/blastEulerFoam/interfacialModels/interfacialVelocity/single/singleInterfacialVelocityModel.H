@@ -91,10 +91,10 @@ public:
     // Member Functions
 
         //- Return the interfacial velocity
-        virtual tmp<volVectorField> Ui() const;
+        virtual tmp<volVectorField> UI() const;
 
         //- Return the interfacial volumetric flux
-        virtual tmp<surfaceScalarField> phi() const;
+        virtual tmp<surfaceScalarField> phiI() const;
 };
 
 

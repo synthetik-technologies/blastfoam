@@ -1,0 +1,4 @@
+simpleBlastThermo.C
+simpleBlastThermos.C
+
+LIB = $(BLAST_LIBBIN)/libsimpleBlastThermo

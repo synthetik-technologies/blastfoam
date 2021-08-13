@@ -26,35 +26,35 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "singlePhaseFluidBlastThermo.H"
+#include "singlePhaseSolidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(singlePhaseFluidBlastThermo, 0);
+    defineTypeNameAndDebug(singlePhaseSolidBlastThermo, 0);
     addToRunTimeSelectionTable
     (
-        fluidBlastThermo,
-        singlePhaseFluidBlastThermo,
+        solidBlastThermo,
+        singlePhaseSolidBlastThermo,
         dictionary
     );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
+Foam::singlePhaseSolidBlastThermo::singlePhaseSolidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
     const word& phaseName
 )
 :
-    fluidBlastThermo(mesh, dict, phaseName),
+    solidBlastThermo(mesh, dict, phaseName),
     thermoPtr_
     (
-        phaseFluidBlastThermo::New
+        phaseSolidBlastThermo::New
         (
             phaseName,
             blastThermo::rho(),
@@ -65,38 +65,15 @@ Foam::singlePhaseFluidBlastThermo::singlePhaseFluidBlastThermo
         )
     )
 {
-    if (!rho().typeHeaderOk<volScalarField>(true))
-    {
-        FatalErrorInFunction
-            << rho().name() << " must be read." << nl
-            << abort(FatalError);
-    }
-
-    if (!e_.typeHeaderOk<volScalarField>(true))
-    {
-        volScalarField e(thermoPtr_->calce(this->p()));
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-        e_.correctBoundaryConditions();
-    }
-    correct();
+    initializeModels();
 }
 
-void Foam::singlePhaseFluidBlastThermo::initializeModels()
+void Foam::singlePhaseSolidBlastThermo::initializeModels()
 {
     thermoPtr_->initializeModels();
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
-        volScalarField e(thermoPtr_->calce(this->p()));
+        volScalarField e(thermoPtr_->calce());
         e_ = e;
 
         //- Force fixed boundaries to be updates
@@ -108,97 +85,76 @@ void Foam::singlePhaseFluidBlastThermo::initializeModels()
                     e.boundaryField()[patchi][facei];
             }
         }
-        e_.correctBoundaryConditions();
     }
+    correct();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::singlePhaseFluidBlastThermo::~singlePhaseFluidBlastThermo()
+Foam::singlePhaseSolidBlastThermo::~singlePhaseSolidBlastThermo()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::singlePhaseFluidBlastThermo::postUpdate()
+void Foam::singlePhaseSolidBlastThermo::postUpdate()
 {
     thermoPtr_->postUpdate();
 }
 
 
-void Foam::singlePhaseFluidBlastThermo::solve()
+void Foam::singlePhaseSolidBlastThermo::solve()
 {
     thermoPtr_->solve();
 }
 
 
-void Foam::singlePhaseFluidBlastThermo::update()
+void Foam::singlePhaseSolidBlastThermo::update()
 {
 
     thermoPtr_->update();
 }
 
 
-void Foam::singlePhaseFluidBlastThermo::updateRho(const volScalarField& p)
+void Foam::singlePhaseSolidBlastThermo::updateRho()
 {
-    thermoPtr_->updateRho(p);
+    thermoPtr_->updateRho();
 }
 
 
-void Foam::singlePhaseFluidBlastThermo::correct()
+void Foam::singlePhaseSolidBlastThermo::correct()
 {
+    thermoPtr_->correct();
+
+    updateRho();
 
     this->T_ = thermoPtr_->THE();
     this->T_.correctBoundaryConditions();
-
-    this->p() = thermoPtr_->pRhoT();
-    this->p().correctBoundaryConditions();
-
-    thermoPtr_->correct();
 }
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseFluidBlastThermo::ESource() const
+Foam::singlePhaseSolidBlastThermo::ESource() const
 {
     return thermoPtr_->ESource();
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseFluidBlastThermo::speedOfSound() const
+Foam::tmp<Foam::volVectorField>
+Foam::singlePhaseSolidBlastThermo::Kappa() const
 {
-    return thermoPtr_->speedOfSound();
+    return thermoPtr_->Kappa();
 }
 
 
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseFluidBlastThermo::speedOfSound(const label patchi) const
+Foam::tmp<Foam::vectorField>
+Foam::singlePhaseSolidBlastThermo::Kappa(const label patchi) const
 {
-    return thermoPtr_->speedOfSound(patchi);
+    return thermoPtr_->Kappa(patchi);
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::Gamma() const
-{
-    return thermoPtr_->Gamma();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::singlePhaseFluidBlastThermo::Gamma(const label patchi) const
-{
-    return thermoPtr_->Gamma(patchi);
-}
-
-
-Foam::scalar Foam::singlePhaseFluidBlastThermo::Gammai(const label celli) const
-{
-    return thermoPtr_->Gammai(celli);
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::he
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::he
 (
     const volScalarField& p,
     const volScalarField& T
@@ -208,7 +164,7 @@ Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::he
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::he
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::he
 (
     const scalarField& T,
     const labelList& cells
@@ -218,7 +174,7 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::he
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::he
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::he
 (
     const scalarField& T,
     const label patchi
@@ -228,13 +184,13 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::he
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::hs() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::hs() const
 {
     return thermoPtr_->hs();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::hs
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::hs
 (
     const volScalarField& p,
     const volScalarField& T
@@ -244,7 +200,7 @@ Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::hs
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::hs
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::hs
 (
     const scalarField& T,
     const labelList& cells
@@ -254,7 +210,7 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::hs
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::hs
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::hs
 (
     const scalarField& T,
     const label patchi
@@ -264,13 +220,13 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::hs
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::ha() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::ha() const
 {
     return thermoPtr_->ha();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::ha
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::ha
 (
     const volScalarField& p,
     const volScalarField& T
@@ -280,7 +236,7 @@ Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::ha
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::ha
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::ha
 (
     const scalarField& T,
     const labelList& cells
@@ -290,7 +246,7 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::ha
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::ha
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::ha
 (
     const scalarField& T,
     const label patchi
@@ -300,25 +256,25 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::ha
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::hc() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::hc() const
 {
     return thermoPtr_->hc();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::flameT() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::flameT() const
 {
     return thermoPtr_->flameT();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::THE() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::THE() const
 {
     return thermoPtr_->THE();
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::THE
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::THE
 (
     const volScalarField& he,
     const volScalarField& p,
@@ -330,7 +286,7 @@ Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::THE
 
 
 Foam::tmp<Foam::scalarField>
-Foam::singlePhaseFluidBlastThermo::THE
+Foam::singlePhaseSolidBlastThermo::THE
 (
     const scalarField& he,
     const scalarField& T,
@@ -342,7 +298,7 @@ Foam::singlePhaseFluidBlastThermo::THE
 
 
 Foam::tmp<Foam::scalarField>
-Foam::singlePhaseFluidBlastThermo::THE
+Foam::singlePhaseSolidBlastThermo::THE
 (
     const scalarField& he,
     const scalarField& T,
@@ -353,7 +309,7 @@ Foam::singlePhaseFluidBlastThermo::THE
 }
 
 
-Foam::scalar Foam::singlePhaseFluidBlastThermo::THEi
+Foam::scalar Foam::singlePhaseSolidBlastThermo::THEi
 (
     const scalar he,
     const scalar T,
@@ -363,13 +319,13 @@ Foam::scalar Foam::singlePhaseFluidBlastThermo::THEi
     return thermoPtr_->THEi(he, T, celli);
 }
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::Cp() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::Cp() const
 {
     return thermoPtr_->Cp();
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cp
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::Cp
 (
     const scalarField& T,
     const label patchi
@@ -379,19 +335,19 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cp
 }
 
 
-Foam::scalar Foam::singlePhaseFluidBlastThermo::Cpi(const label celli) const
+Foam::scalar Foam::singlePhaseSolidBlastThermo::Cpi(const label celli) const
 {
     return thermoPtr_->Cpi(celli);
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::Cv() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::Cv() const
 {
     return thermoPtr_->Cv();
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cv
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::Cv
 (
     const scalarField& T,
     const label patchi
@@ -401,19 +357,19 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cv
 }
 
 
-Foam::scalar Foam::singlePhaseFluidBlastThermo::Cvi(const label celli) const
+Foam::scalar Foam::singlePhaseSolidBlastThermo::Cvi(const label celli) const
 {
     return thermoPtr_->Cvi(celli);
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::Cpv() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::Cpv() const
 {
     return thermoPtr_->Cpv();
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cpv
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::Cpv
 (
     const scalarField& T,
     const label patchi
@@ -423,13 +379,13 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::Cpv
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::singlePhaseFluidBlastThermo::W() const
+Foam::tmp<Foam::volScalarField> Foam::singlePhaseSolidBlastThermo::W() const
 {
     return thermoPtr_->W();
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::W
+Foam::tmp<Foam::scalarField> Foam::singlePhaseSolidBlastThermo::W
 (
     const label patchi
 ) const
@@ -438,7 +394,7 @@ Foam::tmp<Foam::scalarField> Foam::singlePhaseFluidBlastThermo::W
 }
 
 
-Foam::scalar Foam::singlePhaseFluidBlastThermo::Wi(const label celli) const
+Foam::scalar Foam::singlePhaseSolidBlastThermo::Wi(const label celli) const
 {
     return thermoPtr_->Wi(celli);
 }

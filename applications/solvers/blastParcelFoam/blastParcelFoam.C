@@ -35,36 +35,15 @@ Description
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "coupledMultiphaseCompressibleSystem.H"
-#include "blastFluidThermoMomentumTransportModel.H"
 #include "timeIntegrator.H"
 
-#include "basicThermoCloud.H"
+#include "parcelCloudList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
-    argList::addBoolOption
-    (
-        "listTurbulenceModels",
-        "List turbulenceModels"
-    );
-    #include "setRootCase.H"
-    if (args.optionFound("listTurbulenceModels"))
-    {
-        Info<< "Turbulence models"
-            << blast::laminarModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-
-        Info<< "RAS models"
-            << blast::RASModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-
-        Info<< "LES models"
-            << blast::LESModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-        exit(1);
-    }
+    #include "setRootCaseLists.H"
 
     #include "createTime.H"
     #include "createDynamicFvMesh.H"
@@ -78,7 +57,7 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        parcels.storeGlobalPositions();
+        clouds.storeGlobalPositions();
 
         //- Refine the mesh
         mesh.refine();
@@ -94,12 +73,11 @@ int main(int argc, char *argv[])
         mesh.update();
 
         fluid.decode();
-        parcels.evolve();
-        theta = parcels.theta();
-        fluid.encode();
+        clouds.evolve();
+        theta = clouds.theta();
 
-        fluid.eSource() = parcels.Sh(fluid.e());
-        fluid.dragSource() = parcels.SU(fluid.U());
+        fluid.eSource() = clouds.Sh(fluid.e());
+        fluid.dragSource() = clouds.SU(fluid.U());
 
         Info<< "Calculating Fluxes" << endl;
         integrator->integrate();

@@ -110,16 +110,16 @@ public:
         //- Aspect ratio
         virtual tmp<volScalarField> E
         (
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 
         //- Aspect ratio
-        virtual scalar E
+        virtual scalar Ei
         (
             const label,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 };
 

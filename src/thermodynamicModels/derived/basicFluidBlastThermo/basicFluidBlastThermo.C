@@ -245,6 +245,44 @@ Foam::basicFluidBlastThermo<Thermo>::pRhoT() const
 }
 
 
+template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
+{
+    return Thermo::thermoType::p
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
+{
+    return Thermo::thermoType::dpdRho
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
+Foam::scalar
+Foam::basicFluidBlastThermo<Thermo>::dpdei(const label celli) const
+{
+    return Thermo::thermoType::dpde
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>

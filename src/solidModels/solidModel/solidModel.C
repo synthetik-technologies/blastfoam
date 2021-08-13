@@ -53,7 +53,8 @@ Foam::tmp<Foam::volScalarField> Foam::solidModel::uniformOrRead
         mesh.time().timeName(),
         mesh,
         IOobject::NO_READ,
-        IOobject::NO_WRITE
+        IOobject::NO_WRITE,
+        false
     );
 
     if (type == "uniform")

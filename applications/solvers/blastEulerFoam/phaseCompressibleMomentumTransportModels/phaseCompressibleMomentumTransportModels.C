@@ -36,8 +36,8 @@ makeLaminarModel(generalisedNewtonian);
 #include "kEpsilon.H"
 makeRASModel(kEpsilon);
 
-// #include "LaheyKEpsilon.H"
-// makeRASModel(LaheyKEpsilon);
+#include "LaheyKEpsilon.H"
+makeRASModel(LaheyKEpsilon);
 
 // #include "kOmegaSST.H"
 // makeRASModel(kOmegaSST);

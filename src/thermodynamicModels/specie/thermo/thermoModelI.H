@@ -127,6 +127,34 @@ Foam::scalar Foam::thermoModel<ThermoType>::p
 
 
 template<class ThermoType>
+Foam::scalar Foam::thermoModel<ThermoType>::dpdRho
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return -ThermoType::dpdv(rho, e, T)/sqr(max(rho, 1e-10));
+}
+
+
+template<class ThermoType>
+Foam::scalar Foam::thermoModel<ThermoType>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (ThermoType::temperatureBased())
+    {
+        return ThermoType::dpdT(rho, e, T)/ThermoType::Cv(rho, e, T);
+    }
+    return ThermoType::dpde(rho, e, T);
+}
+
+
+template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::cSqr
 (
     const scalar p,

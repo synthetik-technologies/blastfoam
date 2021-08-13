@@ -114,8 +114,8 @@ public:
         //- Nusselt number
         virtual tmp<volScalarField> Nu
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 };
 
