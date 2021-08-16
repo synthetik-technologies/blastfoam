@@ -70,8 +70,12 @@ public:
     (
         const fvMesh&,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const word& masterName = word::null
     );
+
+    //- Initialize models
+    virtual void initializeModels();
 
 
     //- Declare run-time constructor selection table
@@ -83,9 +87,10 @@ public:
         (
             const fvMesh& mesh,
             const dictionary& dict,
-            const word& phaseName
+            const word& phaseName,
+            const word& masterName
         ),
-        (mesh, dict, phaseName)
+        (mesh, dict, phaseName, masterName)
     );
 
 
@@ -96,18 +101,7 @@ public:
         (
             const fvMesh&,
             const dictionary&,
-            const word& phaseName=word::null,
-            const label nPhases = 1
-        );
-
-        //- Standard selection based on fvMesh with a forced thermo type
-        static autoPtr<solidBlastThermo> New
-        (
-            const word&,
-            const fvMesh&,
-            const dictionary&,
-            const word& phaseName=word::null,
-            const label nPhases = 1
+            const word& phaseName = word::null
         );
 
 
@@ -118,7 +112,13 @@ public:
 
     // Access functions
 
+        //- Correct thermodynamic fields
+        virtual void correct();
+
         // Fields derived from thermodynamic state variables
+
+            //- Calculate internal energy given a pressure
+            virtual tmp<volScalarField> calce() const = 0;
 
             //- Return non-const access to the local density field [kg/m^3]
             virtual volScalarField& rho()
@@ -227,6 +227,12 @@ public:
 
             //- Return the source term for the energy equation
             virtual tmp<fvScalarMatrix> divq(volScalarField& he) const;
+
+        //- Read residual values
+        virtual void read(const dictionary& dict)
+        {
+            this->residualAlpha_.read(dict);
+        }
 };
 
 

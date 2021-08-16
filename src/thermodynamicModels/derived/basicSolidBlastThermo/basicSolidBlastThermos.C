@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseSolidBlastThermo.H"
+#include "solidBlastThermo.H"
 #include "basicSolidBlastThermo.H"
 #include "eBlastThermo.H"
 #include "forBlastSolids.H"
@@ -38,7 +38,7 @@ namespace Foam
     forSolids
     (
         makeThermo,
-        phaseSolidBlastThermo,
+        solidBlastThermo,
         basicSolidBlastThermo,
         eBlastThermo
     );

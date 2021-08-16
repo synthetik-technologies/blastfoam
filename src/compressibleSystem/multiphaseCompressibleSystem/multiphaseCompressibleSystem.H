@@ -57,7 +57,7 @@ protected:
     //- Primitative variables
 
         //- Equation of states
-//         multiphaseFluidBlastThermo& thermo_;
+        multiphaseFluidBlastThermo& thermo_;
 
         //- Volume fractions
         PtrList<volScalarField>& alphas_;

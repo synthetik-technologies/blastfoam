@@ -288,7 +288,7 @@ void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]
-           /max(alphas_[phasei], thermoPtr_->thermo(phasei).residualAlpha());
+           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
         rhos_[phasei].correctBoundaryConditions();
 
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
@@ -301,7 +301,7 @@ void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
 
     alphaRhos_[phasei].max(0.0);
     rhos_[phasei] = alphaRhos_[phasei]
-           /max(alphas_[phasei], thermoPtr_->thermo(phasei).residualAlpha());
+           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
     rhos_[phasei].correctBoundaryConditions();
     alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
     alphaRho_ += alphaRhos_[phasei];

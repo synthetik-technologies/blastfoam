@@ -34,21 +34,17 @@ License
 template<class Thermo>
 Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
 (
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
     Thermo
     (
-        name,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     )
 {
@@ -60,22 +56,18 @@ template<class Thermo>
 Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
 (
     const HashPtrTable<Thermo, word, string::hash>& thermoData,
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
     Thermo
     (
         thermoData,
-        name,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     )
 {
@@ -100,7 +92,7 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::updateRho()
     (
         this->volScalarFieldProperty
         (
-            IOobject::groupName("rhoNew", this->name()),
+            "rho",
             dimDensity,
             &Thermo::thermoType::rho0
         )

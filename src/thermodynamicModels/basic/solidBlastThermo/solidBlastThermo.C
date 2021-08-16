@@ -46,11 +46,33 @@ Foam::solidBlastThermo::solidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const word& masterName
 )
 :
     blastThermo(mesh, dict, phaseName)
 {}
+
+
+void Foam::solidBlastThermo::initializeModels()
+{
+    if (!e_.typeHeaderOk<volScalarField>(true))
+    {
+        volScalarField e(this->calce());
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+    }
+    correct();
+}
 
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
@@ -59,59 +81,16 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName,
-    const label nPhases
+    const word& phaseName
 )
 {
-    word solidType("singlePhaseSolid");
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(solidType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown number of solids " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    return cstrIter()(mesh, dict, phaseName);
-}
-
-Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
-(
-    const word& thermoType,
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const word& phaseName,
-    const label nPhases
-)
-{
-    word solidType("singlePhaseSolid");
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(solidType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
-    {
-        FatalErrorInFunction
-            << "Unknown number of solids " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
-    }
-
-    dictionary tmpDict(dict);
-    if (tmpDict.found("mixture"))
-    {
-        tmpDict.subDict("mixture").set("type", thermoType);
-    }
-    else
-    {
-        tmpDict.set("type", thermoType);
-    }
-
-    return cstrIter()(mesh, tmpDict, phaseName);
+    return basicBlastThermo::New<solidBlastThermo>
+    (
+        mesh,
+        dict,
+        phaseName,
+        phaseName
+    );
 }
 
 
@@ -122,6 +101,15 @@ Foam::solidBlastThermo::~solidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::solidBlastThermo::correct()
+{
+    this->T_ = this->THE();
+    this->T_.correctBoundaryConditions();
+
+    this->alpha_ = this->kappa()/this->Cv();
+}
+
 
 Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const
 {

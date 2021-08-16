@@ -26,70 +26,50 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseSolidBlastThermo.H"
-
-/* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
+#include "phaseFluidBlastThermo.H"
+#include "basicFluidBlastThermo.H"
+#include "eBlastThermo.H"
+#include "forBlastGases.H"
+#include "forBlastLiquids.H"
+#include "forBlastSolidFluids.H"
+#include "makeBlastThermo.H"
+#include "addToRunTimeSelectionTable.H"
+#include "tabulatedThermoEOS.H"
 
 namespace Foam
 {
-    defineTypeNameAndDebug(phaseSolidBlastThermo, 0);
-    defineRunTimeSelectionTable(phaseSolidBlastThermo, dictionary);
-}
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::phaseSolidBlastThermo::phaseSolidBlastThermo
-(
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const word& masterName
-)
-:
-    basicBlastThermo
+    forGases
     (
-        phaseName,
-        rho,
-        e,
-        T,
-        dict,
-        masterName
-    )
-{}
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
 
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::phaseSolidBlastThermo::~phaseSolidBlastThermo()
-{}
-
-
-// * * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * //
-
-Foam::autoPtr<Foam::phaseSolidBlastThermo> Foam::phaseSolidBlastThermo::New
-(
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
-    const dictionary& dict,
-    const word& masterName
-)
-{
-    return basicBlastThermo::New<phaseSolidBlastThermo>
+    forSolidFluids
     (
-        phaseName,
-        rho,
-        e,
-        T,
-        dict,
-        masterName
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+
+    forLiquids
+    (
+        makeThermo,
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
+    );
+
+     typedef constTransport<tabulatedThermoEOS<specieBlast>>
+        constTransporttabulatedtabulatedspecieBlast;
+    makeThermo
+    (
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo,
+        constTransporttabulatedtabulatedspecieBlast
     );
 }
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-
 // ************************************************************************* //

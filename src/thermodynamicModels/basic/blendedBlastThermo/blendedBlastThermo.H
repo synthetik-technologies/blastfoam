@@ -58,6 +58,7 @@ class blendedBlastThermo
 {
 protected:
 
+    typedef BasicThermo baseThermo;
     typedef Thermo1 thermoType1;
     typedef Thermo2 thermoType2;
 
@@ -136,13 +137,11 @@ public:
         //- Construct with input field
         blendedBlastThermo
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
             const dictionary& dict1,
             const dictionary& dict2,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
@@ -320,9 +319,8 @@ public:
 
         // Fields derived from transport state variables
 
-            //- Return the thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alpha() const;
-
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> kappa() const;
 };
 
 

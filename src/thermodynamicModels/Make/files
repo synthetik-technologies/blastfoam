@@ -3,25 +3,25 @@ specie/specie/rspecieBlast.C
 
 basic/basicBlastThermo/basicBlastThermo.C
 basic/phaseFluidBlastThermo/phaseFluidBlastThermo.C
-basic/phaseSolidBlastThermo/phaseSolidBlastThermo.C
-
-derived/singlePhaseFluidBlastThermo/singlePhaseFluidBlastThermo.C
-derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
-derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
-
-derived/singlePhaseSolidBlastThermo/singlePhaseSolidBlastThermo.C
 
 basic/blastThermo/blastThermo.C
 basic/fluidBlastThermo/fluidBlastThermo.C
 basic/solidBlastThermo/solidBlastThermo.C
 
+basic/multicomponentBlastThermo/multicomponentBlastThermo.C
+
+derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
+derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
+
 derived/basicFluidBlastThermo/basicFluidBlastThermos.C
+derived/basicFluidBlastThermo/basicPhaseFluidBlastThermos.C
 derived/basicSolidBlastThermo/basicSolidBlastThermos.C
 
 derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
 derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
 
 derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
+derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
 derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
 
 activationModels/activationModel/activationModel.C

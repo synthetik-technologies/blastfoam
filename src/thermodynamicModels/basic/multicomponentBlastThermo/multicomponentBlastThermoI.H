@@ -26,63 +26,54 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-template<class BasicThermo>
 inline bool
-Foam::multicomponentBlastThermo<BasicThermo>::active(label speciei) const
+Foam::multicomponentBlastThermo::active(label speciei) const
 {
     return active_[speciei];
 }
 
 
-template<class BasicThermo>
 inline const Foam::List<bool>&
-Foam::multicomponentBlastThermo<BasicThermo>::active() const
+Foam::multicomponentBlastThermo::active() const
 {
     return active_;
 }
 
 
-template<class BasicThermo>
-inline void Foam::multicomponentBlastThermo<BasicThermo>::setActive(label speciei)
+inline void Foam::multicomponentBlastThermo::setActive(label speciei)
 {
     active_[speciei] = true;
 }
 
 
-template<class BasicThermo>
-inline void Foam::multicomponentBlastThermo<BasicThermo>::setInactive(label speciei)
+inline void Foam::multicomponentBlastThermo::setInactive(label speciei)
 {
     active_[speciei] = false;
 }
 
 
-template<class BasicThermo>
 inline Foam::PtrList<Foam::volScalarField>&
-Foam::multicomponentBlastThermo<BasicThermo>::Y()
+Foam::multicomponentBlastThermo::Ys()
 {
     return Ys_;
 }
 
 
-template<class BasicThermo>
 inline const Foam::PtrList<Foam::volScalarField>&
-Foam::multicomponentBlastThermo<BasicThermo>::Y() const
+Foam::multicomponentBlastThermo::Ys() const
 {
     return Ys_;
 }
 
 
-template<class BasicThermo>
 inline Foam::volScalarField&
-Foam::multicomponentBlastThermo<BasicThermo>::Y(const label i)
+Foam::multicomponentBlastThermo::Y(const label i)
 {
     return Ys_[i];
 }
 
 
-template<class BasicThermo>
-inline const Foam::volScalarField&
-Foam::multicomponentBlastThermo<BasicThermo>::Y
+inline const Foam::volScalarField& Foam::multicomponentBlastThermo::Y
 (
     const label i
 ) const
@@ -91,9 +82,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::Y
 }
 
 
-template<class BasicThermo>
-inline Foam::volScalarField&
-Foam::multicomponentBlastThermo<BasicThermo>::Y
+inline Foam::volScalarField& Foam::multicomponentBlastThermo::Y
 (
     const word& specieName
 )
@@ -102,9 +91,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::Y
 }
 
 
-template<class BasicThermo>
-inline const Foam::volScalarField&
-Foam::multicomponentBlastThermo<BasicThermo>::Y
+inline const Foam::volScalarField& Foam::multicomponentBlastThermo::Y
 (
     const word& specieName
 ) const

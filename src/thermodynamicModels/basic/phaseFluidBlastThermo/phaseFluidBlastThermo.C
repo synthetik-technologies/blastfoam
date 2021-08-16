@@ -40,26 +40,22 @@ namespace Foam
 
 Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
 (
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
     basicBlastThermo
     (
-        phaseName,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     ),
     p_
     (
-        rho.mesh().lookupObject<volScalarField>
+        mesh.lookupObject<volScalarField>
         (
             IOobject::groupName("p", masterName)
         )
@@ -77,25 +73,25 @@ Foam::phaseFluidBlastThermo::~phaseFluidBlastThermo()
 
 Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
 (
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 {
     return basicBlastThermo::New<phaseFluidBlastThermo>
     (
-        phaseName,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     );
 }
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::phaseFluidBlastThermo::correct()
+{}
+
 
 const Foam::volScalarField& Foam::phaseFluidBlastThermo::p() const
 {

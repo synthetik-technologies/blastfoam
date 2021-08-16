@@ -66,8 +66,7 @@ License
                                                                             \
     defineDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys); \
                                                                             \
-    addDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys); \
-    addDetThermo(basicBlastThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys)
+    addDetThermo(BaseThermo, DerivThermo, CThermo, uThermoPhys, rThermoPhys);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

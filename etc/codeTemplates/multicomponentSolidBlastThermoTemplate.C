@@ -40,9 +40,9 @@ License
 #include "${transport}Transport.H"
 
 // basic/multicomponent
-#include "phase${stateBase}.H"
-#include "${type}${stateBase}.H"
-#include "${typeBase}.H"
+#include "solidBlastThermo.H"
+#include "multicomponentSolidBlastThermo.H"
+#include "mixtureBlastThermo.H"
 
 #include "addToRunTimeSelectionTable.H"
 
@@ -80,9 +80,9 @@ namespace Foam
         ${equationOfState},
         ${specie},
         makeThermo,
-        phase${stateBase},
-        ${type}${stateBase},
-        ${typeBase}
+        solidBlastThermo,
+        multicomponentSolidBlastThermo,
+        mixtureBlastThermo
     );
 }
 

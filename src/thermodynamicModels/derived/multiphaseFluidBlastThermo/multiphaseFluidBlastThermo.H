@@ -179,10 +179,14 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return residual values
-        virtual dimensionedScalar residualAlpha() const;
-        virtual dimensionedScalar residualRho() const;
+        //- Calculate internal energy
+        virtual tmp<volScalarField> calce(const volScalarField&) const;
 
+        //- Return the thermo name
+        virtual word thermoName() const
+        {
+            return "multiphase";
+        }
 
     // Access functions
 
@@ -231,7 +235,10 @@ public:
         // Fields derived from thermodynamic state variables
 
             //- Recompute the density
-            virtual void updateRho();
+            virtual void updateRho(const volScalarField&);
+
+            //- Calculate pressure [Pa]
+            virtual tmp<volScalarField> pRhoT() const;
 
             //- Calculate pressure for cell [Pa]
             virtual scalar pRhoTi(const label celli) const;

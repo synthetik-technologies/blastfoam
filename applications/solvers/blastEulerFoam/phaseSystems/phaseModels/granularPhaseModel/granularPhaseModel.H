@@ -119,14 +119,6 @@ public:
             const label index
         );
 
-        granularPhaseModel
-        (
-            const word& thermoType,
-            const phaseSystem& fluid,
-            const word& phaseName,
-            const label index
-        );
-
 
     //- Destructor
     virtual ~granularPhaseModel();

@@ -64,11 +64,9 @@ public:
     // Constructor
     multicomponentFluidBlastThermo
     (
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -76,11 +74,9 @@ public:
     multicomponentFluidBlastThermo
     (
         const HashPtrTable<Thermo, word, string::hash>& thermoData,
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -89,6 +85,20 @@ public:
 
 
     // Member Functions
+
+        //- Pre update step
+        virtual void update()
+        {}
+
+        //- Solve sub-step stepi
+        virtual void solve()
+        {
+            multicomponentBlastThermo::solve();
+        }
+
+        //- Post update
+        virtual void postUpdate()
+        {}
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;

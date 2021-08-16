@@ -35,6 +35,7 @@ namespace Foam
 {
     defineTypeNameAndDebug(fluidBlastThermo, 0);
     defineRunTimeSelectionTable(fluidBlastThermo, dictionary);
+    defineRunTimeSelectionTable(fluidBlastThermo, phase);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -43,7 +44,8 @@ Foam::fluidBlastThermo::fluidBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const word&
 )
 :
     blastThermo(mesh, dict, phaseName),
@@ -75,6 +77,27 @@ Foam::fluidBlastThermo::fluidBlastThermo
 {}
 
 
+void Foam::fluidBlastThermo::initializeModels()
+{
+    if (!e_.typeHeaderOk<volScalarField>(true))
+    {
+        volScalarField e(this->calce(p_));
+        e_ = e;
+
+        //- Force fixed boundaries to be updates
+        forAll(e_.boundaryField(), patchi)
+        {
+            forAll(e_.boundaryField()[patchi], facei)
+            {
+                e_.boundaryFieldRef()[patchi][facei] =
+                    e.boundaryField()[patchi][facei];
+            }
+        }
+    }
+    correct();
+}
+
+
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
@@ -85,24 +108,31 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
     const word& phaseName
 )
 {
-    word fluidType("singlePhaseFluid");
-    if (nPhases == 2)
+    if (nPhases == 1)
     {
-        fluidType = "twoPhaseFluid";
+        return basicBlastThermo::New<fluidBlastThermo>
+        (
+            mesh,
+            dict,
+            phaseName,
+            phaseName
+        );
     }
-    else if (nPhases > 2)
+
+    word fluidType("twoPhaseFluid");
+    if (nPhases > 2)
     {
         fluidType = "multiphaseFluid";
     }
 
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(fluidType);
+    phaseConstructorTable::iterator cstrIter =
+        phaseConstructorTablePtr_->find(fluidType);
 
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (cstrIter == phaseConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown number of fluids " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
+            << phaseConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
@@ -117,6 +147,25 @@ Foam::fluidBlastThermo::~fluidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::fluidBlastThermo::updateRho()
+{
+    updateRho(p_);
+}
+
+
+void Foam::fluidBlastThermo::correct()
+{
+    this->T_ = this->THE();
+    this->T_.correctBoundaryConditions();
+
+    this->p() = this->pRhoT();
+    this->p().correctBoundaryConditions();
+
+    this->mu_ = this->mu();
+    this->alpha_ = this->kappa()/this->Cp();
+}
+
 
 Foam::volScalarField& Foam::fluidBlastThermo::p()
 {

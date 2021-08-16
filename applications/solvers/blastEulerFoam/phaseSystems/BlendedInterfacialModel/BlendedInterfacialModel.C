@@ -200,7 +200,8 @@ Foam::BlendedInterfacialModel<ModelType>::evaluate
     Args ... args
 ) const
 {
-    scalar f1, f2;
+    scalar f1 = 0.0;
+    scalar f2 = 0.0;
 
     if (model_.valid() || model1In2_.valid())
     {

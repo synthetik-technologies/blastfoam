@@ -64,11 +64,9 @@ public:
     // Constructor
     multicomponentSolidBlastThermo
     (
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -76,11 +74,9 @@ public:
     multicomponentSolidBlastThermo
     (
         const HashPtrTable<Thermo, word, string::hash>& thermoData,
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -96,6 +92,19 @@ public:
         //- Calculate internal energy
         virtual tmp<volScalarField> calce() const;
 
+        //- Pre update step
+        virtual void update()
+        {}
+
+        //- Solve sub-step stepi
+        virtual void solve()
+        {
+            multicomponentBlastThermo::solve();
+        }
+
+        //- Post update
+        virtual void postUpdate()
+        {}
 
     //- Thermodynamic and transport functions
 

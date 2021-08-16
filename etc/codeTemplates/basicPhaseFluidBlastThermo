@@ -9,23 +9,17 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    object      detonatingFluidBlastThermo;
+    object      basicPhaseFluidBlastThermo;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-uTransport
+transport
 (
     const
     sutherland
 );
 
-rTransport
-(
-    const
-    sutherland
-);
-
-uThermo
+thermo
 (
     eConst
     hConst
@@ -33,24 +27,7 @@ uThermo
     janaf
 );
 
-rThermo
-(
-    eConst
-    hConst
-    tabulated
-    janaf
-);
-
-uEquationOfState
-(
-    CochranChan
-    Murnaghan
-    BirchMurnaghan2
-    BirchMurnaghan3
-    solidJWL
-);
-
-rEquationOfState
+equationOfState
 (
     perfectGas
     AbelNobel
@@ -62,6 +39,11 @@ rEquationOfState
     LSZK
     BKW
     DoanNickel
+    CochranChan
+    Murnaghan
+    BirchMurnaghan2
+    BirchMurnaghan3
+    solidJWL
     Tait
     BWR
     linearTillotson

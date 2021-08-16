@@ -31,26 +31,22 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class BasicThermo>
-Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
+Foam::multicomponentBlastThermo::multicomponentBlastThermo
 (
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
-    BasicThermo
+    integrationSystem
     (
-        name,
-        rho,
-        e,
-        T,
-        dict,
-        masterName
+        IOobject::groupName("multicomponentBlastThermo", phaseName),
+        mesh
     ),
+    mesh_(mesh),
+    phaseName_(phaseName),
+    masterName_(masterName),
     species_(dict.lookup("species")),
     Ys_(species_.size()),
     massTransferRates_(species_.size()),
@@ -63,14 +59,13 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", rho.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", mesh, 0.0));
 
-    const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
     {
         IOobject header
         (
-            IOobject::groupName(species_[i], name),
+            IOobject::groupName(species_[i], phaseName),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ
@@ -86,7 +81,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
                 (
                     IOobject
                     (
-                        IOobject::groupName(species_[i], name),
+                        IOobject::groupName(species_[i], phaseName),
                         mesh.time().timeName(),
                         mesh,
                         IOobject::MUST_READ,
@@ -101,7 +96,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
             // Read Ydefault if not already read
             if (!tYdefault.valid())
             {
-                word YdefaultName(IOobject::groupName("Ydefault", name));
+                word YdefaultName(IOobject::groupName("Ydefault", phaseName));
 
                 IOobject timeIO
                 (
@@ -138,7 +133,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
                 (
                     IOobject
                     (
-                        IOobject::groupName(species_[i], name),
+                        IOobject::groupName(species_[i], phaseName),
                         mesh.time().timeName(),
                         mesh,
                         IOobject::NO_READ,
@@ -158,7 +153,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
             (
                 IOobject
                 (
-                    "massTransfer:" + IOobject::groupName(species_[i], name),
+                    "massTransfer:" + IOobject::groupName(species_[i], phaseName),
                     mesh.time().timeName(),
                     mesh
                 ),
@@ -177,27 +172,23 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
 }
 
 
-template<class BasicThermo>
-Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
+Foam::multicomponentBlastThermo::multicomponentBlastThermo
 (
     const speciesTable& species,
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
-    BasicThermo
+    integrationSystem
     (
-        name,
-        rho,
-        e,
-        T,
-        dict,
-        masterName
+        IOobject::groupName("multicomponentBlastThermo", phaseName),
+        mesh
     ),
+    mesh_(mesh),
+    phaseName_(phaseName),
+    masterName_(masterName),
     species_(species),
     Ys_(species_.size()),
     massTransferRates_(species_.size()),
@@ -205,14 +196,13 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
     active_(species_.size(), true)
 {
     tmp<volScalarField> tYdefault;
-    volScalarField YTot(volScalarField::New("YTot", rho.mesh(), 0.0));
+    volScalarField YTot(volScalarField::New("YTot", mesh, 0.0));
 
-    const fvMesh& mesh = rho.mesh();
     forAll(species_, i)
     {
         IOobject header
         (
-            IOobject::groupName(species_[i], name),
+            IOobject::groupName(species_[i], phaseName),
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ
@@ -228,7 +218,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
                 (
                     IOobject
                     (
-                        IOobject::groupName(species_[i], name),
+                        IOobject::groupName(species_[i], phaseName),
                         mesh.time().timeName(),
                         mesh,
                         IOobject::MUST_READ,
@@ -243,7 +233,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
             // Read Ydefault if not already read
             if (!tYdefault.valid())
             {
-                word YdefaultName(IOobject::groupName("Ydefault", name));
+                word YdefaultName(IOobject::groupName("Ydefault", phaseName));
 
                 IOobject timeIO
                 (
@@ -280,7 +270,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
                 (
                     IOobject
                     (
-                        IOobject::groupName(species_[i], name),
+                        IOobject::groupName(species_[i], phaseName),
                         mesh.time().timeName(),
                         mesh,
                         IOobject::NO_READ,
@@ -299,7 +289,7 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
             (
                 IOobject
                 (
-                    "massTransfer:" + IOobject::groupName(species_[i], name),
+                    "massTransfer:" + IOobject::groupName(species_[i], phaseName),
                     mesh.time().timeName(),
                     mesh
                 ),
@@ -320,45 +310,43 @@ Foam::multicomponentBlastThermo<BasicThermo>::multicomponentBlastThermo
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class BasicThermo>
-Foam::multicomponentBlastThermo<BasicThermo>::~multicomponentBlastThermo()
+Foam::multicomponentBlastThermo::~multicomponentBlastThermo()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class BasicThermo>
-void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
+void Foam::multicomponentBlastThermo::initializeModels()
 {
     if
     (
-        this->rho_.mesh().template foundObject<surfaceScalarField>
+        mesh_.template foundObject<surfaceScalarField>
         (
-            IOobject::groupName("alphaRhoPhi", this->name_)
+            IOobject::groupName("alphaRhoPhi", phaseName_)
         )
     )
     {
         alphaRhoPhiPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            &mesh_.template lookupObject<surfaceScalarField>
             (
-                IOobject::groupName("alphaRhoPhi", this->name_)
+                IOobject::groupName("alphaRhoPhi", phaseName_)
             )
         );
     }
     else if
     (
-        this->rho_.mesh().template foundObject<surfaceScalarField>
+        mesh_.template foundObject<surfaceScalarField>
         (
-            IOobject::groupName("alphaRhoPhi", this->masterName_)
+            IOobject::groupName("alphaRhoPhi", masterName_)
         )
     )
     {
         alphaRhoPhiPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            &mesh_.template lookupObject<surfaceScalarField>
             (
-                IOobject::groupName("alphaRhoPhi", this->masterName_)
+                IOobject::groupName("alphaRhoPhi", masterName_)
             )
         );
     }
@@ -366,42 +354,42 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
     {
         alphaRhoPhiPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<surfaceScalarField>
+            &mesh_.template lookupObject<surfaceScalarField>
             (
-                IOobject::groupName("rhoPhi", this->masterName_)
+                IOobject::groupName("rhoPhi", masterName_)
             )
         );
     }
 
     if
     (
-        this->rho_.mesh().template foundObject<volScalarField>
+        mesh_.template foundObject<volScalarField>
         (
-            IOobject::groupName("alphaRho", this->name_)
+            IOobject::groupName("alphaRho", phaseName_)
         )
     )
     {
         alphaRhoPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<volScalarField>
+            &mesh_.template lookupObject<volScalarField>
             (
-                IOobject::groupName("alphaRho", this->name_)
+                IOobject::groupName("alphaRho", phaseName_)
             )
         );
     }
     else if
     (
-        this->rho_.mesh().template foundObject<volScalarField>
+        mesh_.template foundObject<volScalarField>
         (
-            IOobject::groupName("alphaRho", this->masterName_)
+            IOobject::groupName("alphaRho", masterName_)
         )
     )
     {
         alphaRhoPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<volScalarField>
+            &mesh_.template lookupObject<volScalarField>
             (
-                IOobject::groupName("alphaRho", this->masterName_)
+                IOobject::groupName("alphaRho", masterName_)
             )
         );
     }
@@ -409,54 +397,27 @@ void Foam::multicomponentBlastThermo<BasicThermo>::initializeModels()
     {
         alphaRhoPtr_.set
         (
-            &this->rho_.mesh().template lookupObject<volScalarField>
+            &mesh_.template lookupObject<volScalarField>
             (
-                IOobject::groupName("rho", this->masterName_)
+                IOobject::groupName("rho", masterName_)
             )
         );
     }
 }
 
 
-template<class BasicThermo>
-void Foam::multicomponentBlastThermo<BasicThermo>::addDelta
-(
-    const word& name,
-    const volScalarField& delta
-)
+void Foam::multicomponentBlastThermo::solve()
 {
-    if (massTransferRates_.found(name))
-    {
-        massTransferRates_[name] += delta;
-        return;
-    }
-    if (this->debug)
-    {
-        WarningInFunction << name << " was not added to delta." << endl;
-    }
-}
-
-template<class BasicThermo>
-void Foam::multicomponentBlastThermo<BasicThermo>::update()
-{}
-
-template<class BasicThermo>
-void Foam::multicomponentBlastThermo<BasicThermo>::solve()
-{
-    const dimensionedScalar& dT(this->rho_.mesh().time().deltaT());
-    volScalarField YTot(volScalarField::New("YTot", this->rho_.mesh(), 0.0));
+    const dimensionedScalar& dT(mesh_.time().deltaT());
+    volScalarField YTot(volScalarField::New("YTot", mesh_, 0.0));
     const surfaceScalarField& alphaRhoPhi(alphaRhoPhiPtr_());
     const volScalarField& alphaRho(alphaRhoPtr_());
+    dimensionedScalar residualRho(dimDensity, 1e-10);
 
     forAll(Ys_, i)
     {
         if (active(i) && i != inertIndex_)
         {
-            if (this->step() == 1)
-            {
-                Ys_[i].storeOldTime();
-            }
-
             volScalarField YOld(Ys_[i]);
             this->storeAndBlendOld(YOld);
 
@@ -470,7 +431,7 @@ void Foam::multicomponentBlastThermo<BasicThermo>::solve()
             Ys_[i] =
                 (
                     alphaRho.prevIter()*YOld - dT*deltaAlphaRhoY
-                )/max(this->residualRho(), alphaRho);
+                )/max(residualRho, alphaRho);
             Ys_[i].max(0.0);
             Ys_[i].correctBoundaryConditions();
 
@@ -496,9 +457,17 @@ void Foam::multicomponentBlastThermo<BasicThermo>::solve()
 }
 
 
-template<class BasicThermo>
-void Foam::multicomponentBlastThermo<BasicThermo>::postUpdate()
-{}
-
+void Foam::multicomponentBlastThermo::addDelta
+(
+    const word& name,
+    const volScalarField& delta
+)
+{
+    if (massTransferRates_.found(name))
+    {
+        massTransferRates_[name] += delta;
+        return;
+    }
+}
 
 // ************************************************************************* //

@@ -63,6 +63,9 @@ protected:
 
     // Protected data
 
+        //- Name of the phase
+        const word phaseName_;
+
         //- Internal energy
         volScalarField e_;
 
@@ -72,6 +75,13 @@ protected:
         //- Is temperature limited
         Switch limit_;
 
+        //- Residual volume fraction
+        dimensionedScalar residualAlpha_;
+
+        //- Residual density
+        dimensionedScalar residualRho_;
+
+
 
 public:
 
@@ -80,7 +90,7 @@ public:
     // Public Classes
     blastThermo
     (
-        const fvMesh&,
+        const fvMesh& mesh,
         const dictionary& dict,
         const word& phaseName
     );
@@ -96,17 +106,28 @@ public:
         //- Energy Source
         virtual tmp<volScalarField> ESource() const = 0;
 
-        //- Return individual thermo models
-        virtual const basicBlastThermo& thermo(const label) const = 0;
-
-        //- Access individual thermo models
-        virtual basicBlastThermo& thermo(const label) = 0;
-
         //- Return residual values
-        virtual dimensionedScalar residualAlpha() const = 0;
-        virtual dimensionedScalar residualRho() const = 0;
+        virtual dimensionedScalar residualAlpha() const
+        {
+            return residualAlpha_;
+        }
+
+        virtual dimensionedScalar residualRho() const
+        {
+            return residualRho_;
+        }
 
         // Access functions
+
+            const word& phaseName() const
+            {
+                return phaseName_;
+            }
+
+            const word& masterName() const
+            {
+                return phaseName();
+            }
 
             //- Is energy limited
             virtual bool limit() const;
@@ -123,9 +144,6 @@ public:
                 return false;
             }
 
-            //- Return the thermo name
-            virtual word thermoName() const;
-
 
         // Fields derived from thermodynamic state variables
 
@@ -134,6 +152,11 @@ public:
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
+
+            using basicThermo::THE;
+
+            //- Temperature from enthalpy/internal energy for celli
+            virtual tmp<volScalarField> THE() const = 0;
 
             //- Temperature from enthalpy/internal energy for celli
             virtual scalar THEi
@@ -229,33 +252,9 @@ public:
                 const label patchi
             ) const;
 
-
-        // Multi-specie fields
-
-            //- Names of species
-            virtual speciesTable species() const;
-
-            //- Does the mixture include this specie?
-            virtual bool contains(const word& specieName) const;
-
-            //- Return mass fraction of a specie
-            virtual const volScalarField& Y(const word& name) const;
-
-            //- Access mass fraction of a specie
-            virtual volScalarField& Y(const word& name);
-
-            //- Return mass fraction of a specie
-            virtual const volScalarField& Y(const label i) const;
-
-            //- Access mass fraction of a specie
-            virtual volScalarField& Y(const label i);
-
-            //- Add an external change to a thermodynamic field if present
-            //  i.e. mass transfer
-            virtual void addDelta(const word&, const volScalarField&);
-
-            //- Read residual values
-            virtual void read(const dictionary&) = 0;
+        //- Read residual values
+        virtual void read(const dictionary&)
+        {}
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

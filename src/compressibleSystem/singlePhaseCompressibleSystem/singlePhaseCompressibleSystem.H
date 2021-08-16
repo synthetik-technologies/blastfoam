@@ -39,7 +39,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "phaseCompressibleSystem.H"
-#include "singlePhaseFluidBlastThermo.H"
 
 namespace Foam
 {
@@ -54,9 +53,6 @@ class singlePhaseCompressibleSystem
 {
 protected:
 // Protected data
-
-    //- Equation of state
-//     singlePhaseFluidBlastThermo& thermo_;
 
     //- Calculate new alpha and rho fields
     virtual void calcAlphaAndRho()

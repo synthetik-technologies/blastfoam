@@ -59,15 +59,9 @@ Foam::multiPhaseModel::multiPhaseModel
 )
 :
     fluidPhaseModel(3, fluid, phaseName, index),
-    phases_(phaseDict_.lookup("phases")),
-    alphas_
-    (
-        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).volumeFractions()
-    ),
-    rhos_
-    (
-        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).rhos()
-    ),
+    thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
+    alphas_(thermo_.volumeFractions()),
+    rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
@@ -272,7 +266,7 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
            /Foam::max
             (
                 alphas_[phasei],
-                thermoPtr_->thermo(phasei).residualAlpha()
+                thermo_.thermo(phasei).residualAlpha()
             );
         if (constraints.constrainsField(rhos_[phasei].name()))
         {

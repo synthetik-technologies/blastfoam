@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseFluidBlastThermo.H"
+#include "fluidBlastThermo.H"
 #include "basicFluidBlastThermo.H"
 #include "eBlastThermo.H"
 #include "forBlastGases.H"
@@ -41,15 +41,7 @@ namespace Foam
     forGases
     (
         makeThermo,
-        phaseFluidBlastThermo,
-        basicFluidBlastThermo,
-        eBlastThermo
-    );
-
-    forSolidFluids
-    (
-        makeThermo,
-        phaseFluidBlastThermo,
+        fluidBlastThermo,
         basicFluidBlastThermo,
         eBlastThermo
     );
@@ -57,7 +49,7 @@ namespace Foam
     forLiquids
     (
         makeThermo,
-        phaseFluidBlastThermo,
+        fluidBlastThermo,
         basicFluidBlastThermo,
         eBlastThermo
     );
@@ -66,7 +58,7 @@ namespace Foam
         constTransporttabulatedtabulatedspecieBlast;
     makeThermo
     (
-        phaseFluidBlastThermo,
+        fluidBlastThermo,
         basicFluidBlastThermo,
         eBlastThermo,
         constTransporttabulatedtabulatedspecieBlast

@@ -79,8 +79,12 @@ public:
     (
         const fvMesh&,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const word& masterName = word::null
     );
+
+    //- Initialize models
+    virtual void initializeModels();
 
 
     //- Declare run-time constructor selection table
@@ -89,6 +93,21 @@ public:
         autoPtr,
         fluidBlastThermo,
         dictionary,
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const word& phaseName,
+            const word& masterName
+        ),
+        (mesh, dict, phaseName, masterName)
+    );
+
+    //- Declare run-time constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        fluidBlastThermo,
+        phase,
         (
             const fvMesh& mesh,
             const dictionary& dict,
@@ -127,6 +146,18 @@ public:
 
 
         // Fields derived from thermodynamic state variables
+
+            //- Correct thermodynamic fields
+            virtual void correct();
+
+            //- Calclate internal energy [J/kg]
+            virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
+
+            //- Recompute the density
+            virtual void updateRho();
+
+            //- Recompute the density
+            virtual void updateRho(const volScalarField&) = 0;
 
             //- Add the given density correction to the density field.
             //  Used to update the density field following pressure solution
@@ -221,6 +252,9 @@ public:
                 const scalarField& T,
                 const label patchi
             ) const = 0;
+
+            //- Calculate pressure [Pa]
+            virtual tmp<volScalarField> pRhoT() const = 0;
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;

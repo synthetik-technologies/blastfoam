@@ -33,23 +33,13 @@ License
 template<class Thermo>
 Foam::basicSolidBlastThermo<Thermo>::basicSolidBlastThermo
 (
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
-    Thermo
-    (
-        name,
-        rho,
-        e,
-        T,
-        dict,
-        masterName
-    )
+    Thermo(mesh, dict, phaseName, masterName)
 {
     updateRho();
 }
@@ -73,7 +63,7 @@ void Foam::basicSolidBlastThermo<Thermo>::updateRho()
         (
             "rho",
             dimDensity,
-            &Thermo::rho0
+            &Thermo::thermoType::rho0
         )
     );
     this->rho_ = rhoNew;
@@ -86,11 +76,6 @@ void Foam::basicSolidBlastThermo<Thermo>::updateRho()
         }
     }
 }
-
-
-template<class Thermo>
-void Foam::basicSolidBlastThermo<Thermo>::correct()
-{}
 
 
 template<class Thermo>

@@ -120,14 +120,13 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return residual values
-        virtual dimensionedScalar residualAlpha() const
+        //- Calculate internal energy
+        virtual tmp<volScalarField> calce(const volScalarField&) const;
+
+        //- Return the thermo name
+        virtual word thermoName() const
         {
-            return max(thermo1_->residualAlpha(), thermo2_->residualAlpha());
-        }
-        virtual dimensionedScalar residualRho() const
-        {
-            return max(thermo1_->residualRho(), thermo2_->residualRho());
+            return "twoPhase";
         }
 
     // Access functions
@@ -161,6 +160,9 @@ public:
 
         // Fields derived from thermodynamic state variables
 
+            //- Calculate pressure [Pa]
+            virtual tmp<volScalarField> pRhoT() const;
+
             //- Calculate pressure for cell [Pa]
             virtual scalar pRhoTi(const label celli) const;
 
@@ -171,7 +173,7 @@ public:
             virtual scalar dpdei(const label celli) const;
 
             //- Recompute the density
-            virtual void updateRho();
+            virtual void updateRho(const volScalarField&);
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const;
@@ -355,6 +357,7 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar Wi(const label celli) const;
+
 
         //- Read residual values
         virtual void read(const dictionary& dict);

@@ -87,10 +87,6 @@ Foam::fluidPhaseModel::fluidPhaseModel
             phaseCompressible::momentumTransportModel,
             transportThermoModel
         >::New(turbulence_, thermoPtr_());
-
-    phaseModel::initializeModels();
-    thermoPtr_->initializeModels();
-    thermoPtr_->correct();
 }
 
 

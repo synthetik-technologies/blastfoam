@@ -63,14 +63,11 @@ public:
     // Constructor
     basicFluidBlastThermo
     (
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
-
 
     //- Destructor
     virtual ~basicFluidBlastThermo();
@@ -93,9 +90,6 @@ public:
         //- Post update
         virtual void postUpdate()
         {}
-
-        //- Correct fields
-        virtual void correct();
 
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;

@@ -41,25 +41,28 @@ namespace Foam
 
 Foam::basicBlastThermo::basicBlastThermo
 (
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 :
     integrationSystem
     (
         IOobject::groupName("basicBlastThermo", phaseName),
-        rho.mesh()
+        mesh
     ),
-    thermoDict_(dict),
     masterName_(masterName),
-    name_(phaseName),
-    rho_(rho),
-    T_(T),
-    e_(e),
+    phaseName_(phaseName),
+    rho_
+    (
+        mesh.lookupObjectRef<volScalarField>
+        (
+            IOobject::groupName("rho", phaseName)
+        )
+    ),
+    T_(mesh.lookupObject<volScalarField>(IOobject::groupName("T", masterName_))),
+    e_(mesh.lookupObject<volScalarField>(IOobject::groupName("e", masterName_))),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}
@@ -74,11 +77,9 @@ Foam::basicBlastThermo::~basicBlastThermo()
 
 Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
 (
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 {
@@ -91,11 +92,9 @@ Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
 
     return cstrIter()
     (
-        phaseName,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     );
 }
@@ -106,7 +105,7 @@ Foam::UIndirectList<Foam::scalar> Foam::basicBlastThermo::cellSetScalarList
 (
     const volScalarField& psi,
     const labelList& cells
-) const
+)
 {
     return UIndirectList<scalar>(psi, cells);
 }
@@ -262,7 +261,6 @@ Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
 )
 {
     const word baseName(IOobject::member(name));
-    Info<<name<<" "<<baseName<<endl;
     if (!mesh.foundObject<volScalarField>(name))
     {
         volScalarField* fPtr = nullptr;
@@ -347,14 +345,6 @@ Foam::volScalarField& Foam::basicBlastThermo::lookupOrConstruct
 
     return mesh.lookupObjectRef<volScalarField>(name);
 }
-
-
-void Foam::basicBlastThermo::addDelta
-(
-    const word& name,
-    const volScalarField& delta
-)
-{}
 
 
 // ************************************************************************* //

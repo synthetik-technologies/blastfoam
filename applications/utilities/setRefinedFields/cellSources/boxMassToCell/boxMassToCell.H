@@ -71,7 +71,6 @@ class boxMassToCell
             vector span(x*aspectRatio);
             p1 = centre() - span/2.0;
             p2 = centre() + span/2.0;
-            scalar v = span.x()*span.y()*span.z();
         }
         else
         {

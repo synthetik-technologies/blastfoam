@@ -51,6 +51,7 @@ Foam::blastThermo::blastThermo
         mesh
     ),
     basicThermo::implementation(mesh, dict, phaseName),
+    phaseName_(phaseName),
     e_
     (
         IOobject
@@ -82,8 +83,11 @@ Foam::blastThermo::blastThermo
         mesh,
         dimDensity
     ),
-    limit_(dict.lookupOrDefault("limit", true))
+    limit_(dict.lookupOrDefault("limit", true)),
+    residualAlpha_("residualAlpha", dimless, 0.0),
+    residualRho_("residualRho", dimDensity, 0.0)
 {}
+
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -91,12 +95,6 @@ Foam::blastThermo::~blastThermo()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::word Foam::blastThermo::thermoName() const
-{
-    return thermo(0).thermoName();
-}
-
 
 const Foam::volScalarField& Foam::blastThermo::he() const
 {
@@ -146,18 +144,6 @@ bool Foam::blastThermo::limit() const
 }
 
 
-Foam::speciesTable Foam::blastThermo::species() const
-{
-    return speciesTable();
-}
-
-
-bool Foam::blastThermo::contains(const word&) const
-{
-    return false;
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::gamma() const
 {
     return this->Cp()/this->Cv();
@@ -172,48 +158,6 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::gamma
 {
     return this->Cp(T, patchi)/this->Cv(T, patchi);
 }
-
-
-const Foam::volScalarField& Foam::blastThermo::Y(const word& name) const
-{
-    NotImplemented;
-    return volScalarField::New
-    (
-        phasePropertyName(name),
-        rho_.mesh(),
-        dimless
-    );
-}
-
-
-Foam::volScalarField& Foam::blastThermo::Y(const word& name)
-{
-    NotImplemented;
-    return rho_;
-}
-
-
-const Foam::volScalarField& Foam::blastThermo::Y(const label i) const
-{
-    NotImplemented;
-    return rho_;
-}
-
-
-Foam::volScalarField& Foam::blastThermo::Y(const label i)
-{
-    NotImplemented;
-    return rho_;
-}
-
-
-void Foam::blastThermo::addDelta
-(
-    const word&,
-    const volScalarField&
-)
-{}
-
 
 
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappa() const

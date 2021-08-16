@@ -171,7 +171,7 @@ lookupOrConstructThermo
         return mesh.lookupObject<blastThermo>(thermoName);
     }
 
-    blastThermo* thermoPtr;
+    blastThermo* thermoPtr = nullptr;
     dictionary dict(thermoDict(mesh, phaseName));
     word stateType(dict.lookup<word>("stateType"));
 

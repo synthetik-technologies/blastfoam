@@ -41,7 +41,7 @@ License
 // Transport
 #include "${transport}Transport.H"
 
-#include "phaseSolidBlastThermo.H"
+#include "solidBlastThermo.H"
 #include "detonatingSolidBlastThermo.H"
 #include "blendedBlastThermo.H"
 
@@ -85,7 +85,7 @@ namespace Foam
         ${rEquationOfState},
         ${specie},
         makeDetThermo,
-        phaseSolidBlastThermo,
+        solidBlastThermo,
         detonatingSolidBlastThermo,
         blendedBlastThermo
     );

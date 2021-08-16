@@ -48,14 +48,9 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 )
 :
     phaseCompressibleSystem(3, mesh),
-    alphas_
-    (
-        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).volumeFractions()
-    ),
-    rhos_
-    (
-        dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).rhos()
-    ),
+    thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
+    alphas_(thermo_.volumeFractions()),
+    rhos_(thermo_.rhos()),
     alphaRhos_(alphas_.size()),
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
@@ -229,7 +224,7 @@ void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]
-           /max(alphas_[phasei], thermoPtr_->thermo(phasei).residualAlpha());
+           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
 
         rhos_[phasei].correctBoundaryConditions();
 

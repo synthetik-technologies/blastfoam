@@ -40,6 +40,7 @@ License
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
 #include "phaseFluxScheme.H"
+#include "multicomponentBlastThermo.H"
 
 #include "SortableList.H"
 
@@ -959,13 +960,13 @@ void Foam::phaseSystem::update()
         massTransferIter
     )
     {
-        phaseModel& dispersed
+        blastThermo& dispersedThermo
         (
-            phaseModels_[massTransferIter()->pair().dispersed().name()]
+            phaseModels_[massTransferIter()->pair().dispersed().name()].thermo()
         );
-        phaseModel& continuous
+        blastThermo& continuousThermo
         (
-            phaseModels_[massTransferIter()->pair().continuous().name()]
+            phaseModels_[massTransferIter()->pair().continuous().name()].thermo()
         );
 
         tmp<volScalarField> mDot(*mDots_[massTransferIter.key()]);
@@ -975,22 +976,31 @@ void Foam::phaseSystem::update()
         forAll(species, i)
         {
             const word& specieName(species[i]);
-            if (dispersed.thermo().contains(specieName))
+            if (isA<multicomponentBlastThermo>(dispersedThermo))
             {
-                dispersed.thermo().addDelta
-                (
-                    specieName,
-                    -massTransferIter()->dispersedYi(specieName)*mDot
-                );
+                multicomponentBlastThermo& thermo =
+                    dynamicCast<multicomponentBlastThermo>(dispersedThermo);
+                if (thermo.contains(specieName))
+                {
+                    thermo.addDelta
+                    (
+                        specieName,
+                        -massTransferIter()->dispersedYi(specieName)*mDot
+                    );
+                }
             }
-
-            if (continuous.thermo().contains(specieName))
+            if (isA<multicomponentBlastThermo>(continuousThermo))
             {
-                continuous.thermo().addDelta
-                (
-                    specieName,
-                    massTransferIter()->continuousYi(specieName)*mDot
-                );
+                multicomponentBlastThermo& thermo =
+                    dynamicCast<multicomponentBlastThermo>(continuousThermo);
+                if (thermo.contains(specieName))
+                {
+                    thermo.addDelta
+                    (
+                        specieName,
+                        massTransferIter()->continuousYi(specieName)*mDot
+                    );
+                }
             }
         }
     }

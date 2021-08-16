@@ -57,8 +57,7 @@ License
                                                                             \
     defineThermo(BaseThermo, DerivThermo, CThermo, ThermoPhys);             \
                                                                             \
-    addThermo(BaseThermo, DerivThermo, CThermo, ThermoPhys);                \
-    addThermo(basicBlastThermo, DerivThermo, CThermo, ThermoPhys)
+    addThermo(BaseThermo, DerivThermo, CThermo, ThermoPhys);
 
 #define addThermo(BaseThermo, DerivThermo, CThermo, ThermoPhys)             \
     addToRunTimeSelectionTable                                              \

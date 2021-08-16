@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) YEAR OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -26,21 +23,66 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "solidBlastThermo.H"
-#include "multicomponentSolidBlastThermo.H"
-#include "mixtureBlastThermo.H"
-#include "forBlastSolids.H"
+#include "forBlastThermo.H"
 #include "makeBlastThermo.H"
+
+#include "${specie}.H"
+
+#include "thermoModel.H"
+
+// EoS
+#include "${equationOfState}.H"
+
+// Thermo
+#include "${thermo}BlastThermo.H"
+
+// Transport
+#include "${transport}Transport.H"
+
+#include "phaseFluidBlastThermo.H"
+#include "basicFluidBlastThermo.H"
+#include "eBlastThermo.H"
+
 #include "addToRunTimeSelectionTable.H"
+
+// * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
+
+extern "C"
+{
+    // dynamicCode:
+    // SHA1 = ${SHA1sum}
+    //
+    // Unique function name that can be checked if the correct library version
+    // has been loaded
+    void ${typeName}_${SHA1sum}(bool load)
+    {
+        if (load)
+        {
+            // code that can be explicitly executed after loading
+        }
+        else
+        {
+            // code that can be explicitly executed before unloading
+        }
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    forSolids
+    forThermo
     (
+        ${transport}Transport,
+        ${thermo}Thermo,
+        ${equationOfState},
+        ${specie},
         makeThermo,
-        solidBlastThermo,
-        multicomponentSolidBlastThermo,
-        mixtureBlastThermo
+        phaseFluidBlastThermo,
+        basicFluidBlastThermo,
+        eBlastThermo
     );
 }
+
 // ************************************************************************* //

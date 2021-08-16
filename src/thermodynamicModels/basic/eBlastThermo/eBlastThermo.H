@@ -57,6 +57,7 @@ class eBlastThermo
 {
 protected:
 
+    typedef BasicThermo baseThermo;
     typedef ThermoType thermoType;
 
     //- Protected functions
@@ -97,11 +98,9 @@ public:
         //- Construct with input field
         eBlastThermo
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh&,
             const dictionary& dict,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
@@ -283,10 +282,10 @@ public:
             virtual scalar Wi(const label celli) const;
 
 
-    // Fields derived from transport state variables
+        // Fields derived from transport state variables
 
-            //- Return the thermal diffusivity for enthalpy of mixture [kg/m/s]
-            virtual tmp<volScalarField> alpha() const;
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> kappa() const;
 };
 
 

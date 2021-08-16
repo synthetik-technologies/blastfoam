@@ -54,11 +54,13 @@ namespace Foam
 template<class BasicThermo, class ThermoType>
 class mixtureBlastThermo
 :
-    public multicomponentBlastThermo<BasicThermo>
+    public multicomponentBlastThermo,
+    public BasicThermo
 {
 protected:
 //- Protected data
 
+    typedef BasicThermo baseThermo;
     typedef ThermoType thermoType;
 
     //- Species data
@@ -120,11 +122,9 @@ public:
     // Constructor
     mixtureBlastThermo
     (
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -132,14 +132,14 @@ public:
     mixtureBlastThermo
     (
         const HashPtrTable<ThermoType, word, string::hash>& thermoData,
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
+    //- Initialize models
+    virtual void initializeModels();
 
     //- Destructor
     virtual ~mixtureBlastThermo();
@@ -149,6 +149,15 @@ public:
 
         //- Correct fields
         virtual void correct();
+
+        //- Pre update step
+        virtual void update();
+
+        //- Solve sub-step stepi
+        virtual void solve();
+
+        //- Post update
+        virtual void postUpdate();
 
         //- Thermodynamic and transport functions
 
@@ -311,10 +320,10 @@ public:
             virtual scalar Wi(const label celli) const;
 
 
-    // Fields derived from transport state variables
+        // Fields derived from transport state variables
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> alpha() const;
+            virtual tmp<volScalarField> kappa() const;
 
 
         // Species properties

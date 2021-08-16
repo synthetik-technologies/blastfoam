@@ -44,7 +44,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::volScalarFieldProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->name()),
+            IOobject::groupName(psiName, this->phaseName()),
             this->rho_.mesh(),
             psiDim
         )
@@ -145,7 +145,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
     (
         volScalarField::New
         (
-            psiName,
+            IOobject::groupName(psiName, this->phaseName()),
             this->rho_.mesh(),
             psiDim
         )
@@ -294,23 +294,19 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedBlastThermo
 (
-    const word& name,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
     const dictionary& dict1,
     const dictionary& dict2,
+    const word& phaseName,
     const word& masterName
 )
 :
     BasicThermo
     (
-        name,
-        rho,
-        e,
-        T,
+        mesh,
         dict,
+        phaseName,
         masterName
     ),
     Thermo1(dict1),
@@ -345,7 +341,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("he", this->masterName_),
+        "he",
         dimEnergy/dimMass,
         &Thermo1::Es,
         &Thermo2::Es,
@@ -369,8 +365,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
         &Thermo1::Es,
         &Thermo2::Es,
         cells,
-        this->cellSetScalarList(this->rho_, cells),
-        this->cellSetScalarList(this->e_, cells),
+        basicBlastThermo::cellSetScalarList(this->rho_, cells),
+        basicBlastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -402,7 +398,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("hs", basicBlastThermo::masterName_),
+        "hs",
         dimEnergy/dimMass,
         &Thermo1::Hs,
         &Thermo2::Hs,
@@ -423,7 +419,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("hs", this->masterName_),
+        "hs",
         dimEnergy/dimMass,
         &Thermo1::Hs,
         &Thermo2::Hs,
@@ -447,8 +443,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
         &Thermo1::Hs,
         &Thermo2::Hs,
         cells,
-        this->cellSetScalarList(this->rho_, cells),
-        this->cellSetScalarList(this->e_, cells),
+        basicBlastThermo::cellSetScalarList(this->rho_, cells),
+        basicBlastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -480,7 +476,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("ha", basicBlastThermo::masterName_),
+        "ha",
         dimEnergy/dimMass,
         &Thermo1::Ha,
         &Thermo2::Ha,
@@ -501,7 +497,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("ha", basicBlastThermo::masterName_),
+        "ha",
         dimEnergy/dimMass,
         &Thermo1::Ha,
         &Thermo2::Ha,
@@ -525,8 +521,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha
         &Thermo1::Ha,
         &Thermo2::Ha,
         cells,
-        this->cellSetScalarList(this->rho_, cells),
-        this->cellSetScalarList(this->e_, cells),
+        basicBlastThermo::cellSetScalarList(this->rho_, cells),
+        basicBlastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -558,7 +554,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hc() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("hc", this->masterName_),
+        "hc",
         dimEnergy/dimMass,
         &Thermo1::Hf,
         &Thermo2::Hf
@@ -572,7 +568,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::flameT() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("flameT", this->masterName_),
+        "flameT",
         dimTemperature,
         &Thermo1::flameT,
         &Thermo2::flameT
@@ -586,7 +582,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("THE", this->masterName_),
+        "THE",
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -608,7 +604,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("THE", this->masterName_),
+        "THE",
         dimTemperature,
         &Thermo1::TRhoE,
         &Thermo2::TRhoE,
@@ -634,7 +630,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
         &Thermo2::TRhoE,
         cells,
         T,
-        this->cellSetScalarList(this->rho_, cells),
+        basicBlastThermo::cellSetScalarList(this->rho_, cells),
         he
     );
 }
@@ -692,7 +688,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cp() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("Cp", basicBlastThermo::masterName_),
+        "Cp",
         dimEnergy/dimMass/dimTemperature,
         &Thermo1::Cp,
         &Thermo2::Cp,
@@ -752,7 +748,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cv() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("Cv", basicBlastThermo::masterName_),
+        "Cv",
         dimEnergy/dimMass/dimTemperature,
         &Thermo1::Cv,
         &Thermo2::Cv,
@@ -832,7 +828,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::W() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("W", basicBlastThermo::masterName_),
+        "W",
         dimMass/dimMoles,
         &Thermo1::W,
         &Thermo2::W
@@ -865,14 +861,14 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Wi(const label celli) c
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::alpha() const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappa() const
 {
     return blendedVolScalarFieldProperty
     (
-        IOobject::groupName("alpha", basicBlastThermo::name_),
-        dimensionSet(1, -1, -1, 0, 0),
-        &Thermo1::alphah,
-        &Thermo2::alphah,
+        "kappa",
+        dimEnergy/dimTime/dimLength/dimTemperature,
+        &Thermo1::kappa,
+        &Thermo2::kappa,
         this->rho_,
         this->e_,
         this->T_

@@ -66,7 +66,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("fluid");
+    TypeName("phaseFluid");
 
     // Declare runtime construction
 
@@ -76,14 +76,12 @@ public:
             phaseFluidBlastThermo,
             dictionary,
             (
-                const word& phaseName,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const fvMesh& mesh,
                 const dictionary& dict,
+                const word& phaseName,
                 const word& masterName
             ),
-            (phaseName, rho, e, T, dict, masterName)
+            (mesh, dict, phaseName, masterName)
         );
 
 
@@ -92,24 +90,23 @@ public:
         //- Construct with input field
         phaseFluidBlastThermo
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
+    //- Initialize models
+    virtual void initializeModels()
+    {}
 
     // Selectors
 
         static autoPtr<phaseFluidBlastThermo> New
         (
-            const word& name,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
@@ -120,6 +117,9 @@ public:
     //- Thermodynamic and transport functions
 
         // Access to derived thermodynamic variables
+
+            //- Calculate density
+            virtual void correct();
 
             //- Calculate density
             virtual void updateRho(const volScalarField&) = 0;

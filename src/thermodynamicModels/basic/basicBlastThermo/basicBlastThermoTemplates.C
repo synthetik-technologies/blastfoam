@@ -55,6 +55,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
         const word type(thermoDict.lookup("type"));
         word compileType = type + Thermo::typeName.capitalise() + "BlastThermo";
+        Info<<compileType<<endl;
 
         if
         (
@@ -62,6 +63,8 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
          && !dynamicCode::resolveTemplate(compileType).empty()
         )
         {
+            dictionary thermoTypeDict;
+
             List<Pair<word>> entries;
             if (type == "detonating")
             {
@@ -69,6 +72,8 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                     thermoDict.subDict("reactants").subDict("thermoType");
                 const dictionary& rDict =
                     thermoDict.subDict("products").subDict("thermoType");
+                thermoTypeDict.add("reactants", uDict);
+                thermoTypeDict.add("reactants", rDict);
 
                 entries =
                     {
@@ -83,8 +88,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
             }
             else
             {
-                const dictionary& thermoTypeDict =
-                    thermoDict.subDict("thermoType");
+                thermoTypeDict = thermoDict.subDict("thermoType");
 
                 entries =
                     {
@@ -108,11 +112,20 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
                 FatalErrorInFunction
                     << "Compilation and linkage of "
                     << compileType << " type " << nl
-                    << "thermoType" << thermoDict << nl << nl
+                    << "thermoType" << thermoTypeDict << nl << nl
                     << "failed." << nl << nl
                     << "Valid " << Thermo::typeName << " types are:"
                     << nl << nl;
             }
+        }
+        else
+        {
+            // Print error message if package not found in the table
+            FatalErrorInFunction
+                << "Unknown " << Thermo::typeName << " type " << nl
+                << "thermoType " << thermoTypeName << nl << nl
+                << "Valid " << Thermo::typeName << " types are:"
+                << nl << nl;
         }
 
         if (!origCODE_TEMPLATE_DIR.empty())
@@ -128,12 +141,6 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
         if (cstrIter == tablePtr->end())
         {
-            FatalError
-                << "Unknown " << Thermo::typeName << " type " << nl
-                << "thermoType " << thermoTypeName << nl << nl
-                << "Valid " << Thermo::typeName << " types are:"
-                << nl << nl;
-
             // Get the list of all the suitable thermo packages available
             wordList validThermoTypeNames
             (
@@ -259,11 +266,9 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 template<class Thermo>
 Foam::autoPtr<Thermo> Foam::basicBlastThermo::New
 (
-    const word& phaseName,
-    volScalarField& rho,
-    volScalarField& e,
-    volScalarField& T,
+    const fvMesh& mesh,
     const dictionary& dict,
+    const word& phaseName,
     const word& masterName
 )
 {
@@ -275,17 +280,7 @@ Foam::autoPtr<Thermo> Foam::basicBlastThermo::New
             Thermo::typeName
         );
 
-    return autoPtr<Thermo>
-    (
-        cstrIter()
-        (
-            phaseName,
-            rho,
-            e,
-            T,
-            dict,
-            masterName
-        )
-    );
+    return autoPtr<Thermo>(cstrIter()(mesh, dict, phaseName, masterName));
 }
+
 // ************************************************************************* //

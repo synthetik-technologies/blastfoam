@@ -38,7 +38,7 @@ namespace Foam
     (
         fluidBlastThermo,
         twoPhaseFluidBlastThermo,
-        dictionary
+        phase
     );
 }
 
@@ -81,11 +81,9 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     (
         phaseFluidBlastThermo::New
         (
-            phases_[0],
-            rho1_,
-            blastThermo::he(),
-            T(),
+            mesh,
             dict.subDict(phases_[0]),
+            phases_[0],
             phaseName
         )
     ),
@@ -105,11 +103,9 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     (
         phaseFluidBlastThermo::New
         (
-            phases_[1],
-            rho2_,
-            blastThermo::he(),
-            T(),
+            mesh,
             dict.subDict(phases_[1]),
+            phases_[1],
             phaseName
         )
     )
@@ -118,15 +114,16 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     thermo1_->read(dict.subDict(phases_[0]));
     thermo2_->read(dict.subDict(phases_[1]));
 
+    this->residualAlpha_ =
+        max(thermo1_->residualAlpha(), thermo2_->residualAlpha());
+    this->residualRho_ = max(thermo1_->residualRho(), thermo2_->residualRho());
+
     // Update total density
     this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
     mu_ =
         volumeFraction_*thermo1_->mu()
       + (1.0 - volumeFraction_)*thermo2_->mu();
-    this->alpha_ =
-        volumeFraction_*thermo1_->alpha()
-        + (1.0 - volumeFraction_)*thermo2_->alpha();
 }
 
 void Foam::twoPhaseFluidBlastThermo::initializeModels()
@@ -154,8 +151,6 @@ void Foam::twoPhaseFluidBlastThermo::initializeModels()
         }
     }
     correct();
-
-
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -195,10 +190,10 @@ void Foam::twoPhaseFluidBlastThermo::update()
 }
 
 
-void Foam::twoPhaseFluidBlastThermo::updateRho()
+void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
 {
-    thermo1_->updateRho(this->p());
-    thermo2_->updateRho(this->p());
+    thermo1_->updateRho(p);
+    thermo2_->updateRho(p);
     this->rho_ =
         volumeFraction_*thermo1_->rho()
       + (1.0 - volumeFraction_)*thermo2_->rho();
@@ -230,16 +225,11 @@ void Foam::twoPhaseFluidBlastThermo::correct()
         this->p().correctBoundaryConditions();
     }
 
-    thermo1_->correct();
-    thermo2_->correct();
-
     // Update transport coefficients
     mu_ =
         volumeFraction_*thermo1_->mu()
       + (1.0 - volumeFraction_)*thermo2_->mu();
-    this->alpha_ =
-        volumeFraction_*thermo1_->alpha()
-      + (1.0 - volumeFraction_)*thermo2_->alpha();
+    this->alpha_ = this->kappa()/this->Cp();
 }
 
 
@@ -249,6 +239,35 @@ Foam::twoPhaseFluidBlastThermo::ESource() const
     return
         volumeFraction_*thermo1_->ESource()
       + (1.0 - volumeFraction_)*thermo2_->ESource();
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
+{
+    return
+        volumeFraction_*thermo1_->calce(p)
+      + (1.0 - volumeFraction_)*thermo2_->calce(p);
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::pRhoT() const
+{
+
+    volScalarField alphaXi1
+    (
+        volumeFraction_/(thermo1_->Gamma() - 1.0)
+    );
+    volScalarField alphaXi2
+    (
+        (1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0)
+    );
+
+    return
+        (
+            alphaXi1*thermo1_->pRhoT()*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->pRhoT()*pos(alphaXi2 - small)
+        )/(alphaXi1 + alphaXi2);
 }
 
 
@@ -696,5 +715,6 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::Wi(const label celli) const
         volumeFraction_[celli]*thermo1_->Wi(celli)
       + (1.0 - volumeFraction_[celli])*thermo2_->Wi(celli);
 }
+
 
 // ************************************************************************* //

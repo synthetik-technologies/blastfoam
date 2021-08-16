@@ -62,23 +62,20 @@ protected:
 
     // Protected data
 
-        // Thermo dictionary
-        dictionary thermoDict_;
-
         //- Name of master thermo class
         word masterName_;
 
         //- Names of phase
-        word name_;
+        word phaseName_;
 
         //- Phase density
         volScalarField& rho_;
 
         //- Reference to temperature
-        volScalarField& T_;
+        const volScalarField& T_;
 
         //- Reference to internal energy
-        volScalarField& e_;
+        const volScalarField& e_;
 
         //- Residual volume fraction
         dimensionedScalar residualAlpha_;
@@ -86,40 +83,6 @@ protected:
         //- Residual density
         dimensionedScalar residualRho_;
 
-        //- Generic lookup for thermodynamics package thermoTypeName
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoTypeDict,
-            Table* tablePtr,
-            const int nCmpts,
-            const char* cmptNames[],
-            const word& thermoTypeName
-        );
-
-        //- Generic lookup for each of the related thermodynamics packages
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoDict,
-            Table* tablePtr
-        );
-
-        //- Generic lookup for each of the related thermodynamics packages
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoDict,
-            Table* tablePtr,
-            const word& state
-        );
-
-        //- Return a subList
-        UIndirectList<scalar> cellSetScalarList
-        (
-            const volScalarField& psi,
-            const labelList& cells
-        ) const;
 
 public:
 
@@ -131,14 +94,12 @@ public:
             basicBlastThermo,
             dictionary,
             (
-                const word& phaseName,
-                volScalarField& rho,
-                volScalarField& e,
-                volScalarField& T,
+                const fvMesh& mesh,
                 const dictionary& dict,
+                const word& phaseName,
                 const word& masterName
             ),
-            (phaseName, rho, e, T, dict, masterName)
+            (mesh, dict, phaseName, masterName)
         );
 
 
@@ -151,17 +112,14 @@ public:
         //- Construct with input field
         basicBlastThermo
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
         //- Initialize models
-        virtual void initializeModels()
-        {}
+        virtual void initializeModels() = 0;
 
 
     //- Destructor
@@ -172,21 +130,17 @@ public:
         template<class Thermo>
         static autoPtr<Thermo> New
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
-            const word& masterName = word::null
+            const word& phaseName,
+            const word& masterName
         );
 
         static autoPtr<basicBlastThermo> New
         (
-            const word& phaseName,
-            volScalarField& rho,
-            volScalarField& e,
-            volScalarField& T,
+            const fvMesh& mesh,
             const dictionary& dict,
+            const word& phaseName,
             const word& masterName = word::null
         );
 
@@ -225,12 +179,51 @@ public:
             const bool allowNoGroup = false
         );
 
+        //- Generic lookup for thermodynamics package thermoTypeName
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoTypeDict,
+            Table* tablePtr,
+            const int nCmpts,
+            const char* cmptNames[],
+            const word& thermoTypeName
+        );
+
+        //- Generic lookup for each of the related thermodynamics packages
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoDict,
+            Table* tablePtr
+        );
+
+        //- Generic lookup for each of the related thermodynamics packages
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoDict,
+            Table* tablePtr,
+            const word& state
+        );
+
+        //- Return a subList
+        static UIndirectList<scalar> cellSetScalarList
+        (
+            const volScalarField& psi,
+            const labelList& cells
+        );
+
         virtual word thermoName() const = 0;
 
     // Access functions
-        const word& name() const
+        const word& phaseName() const
         {
-            return name_;
+            return phaseName_;
+        }
+        const word& masterName() const
+        {
+            return masterName_;
         }
 
         const dimensionedScalar& residualAlpha() const
@@ -261,77 +254,17 @@ public:
             return e_;
         }
 
-        //- Return non-constant reference to density field
-        volScalarField& he()
-        {
-            return e_;
-        }
-
         //- Return constant reference to density field
         const volScalarField& T() const
         {
             return T_;
         }
 
-        //- Return non-constant reference to density field
-        volScalarField& T()
-        {
-            return T_;
-        }
-
-        //- Return mass fraction of a specie
-        virtual const volScalarField& Y(const word& name) const
-        {
-            NotImplemented;
-            return T_;
-        }
-
-        //- Access mass fraction of a specie
-        virtual volScalarField& Y(const word& name)
-        {
-            NotImplemented;
-            return T_;
-        }
-
-        //- Return mass fraction of a specie
-        virtual const volScalarField& Y(const label i) const
-        {
-            NotImplemented;
-            return rho_;
-        }
-
-        //- Access mass fraction of a specie
-        virtual volScalarField& Y(const label i)
-        {
-            NotImplemented;
-            return T_;
-        }
-
 
     // Member Functions
 
-        //- Correct thermodynamic fields
-        virtual void correct() = 0;
-
-        //- Names of species
-        virtual speciesTable species() const
-        {
-            return speciesTable();
-        }
-
-        //- Does the mixture include this specie?
-        virtual bool contains(const word& specieName) const
-        {
-            return false;
-        }
-
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
-
-        //- Add an external change to a thermodynamic field if present
-        //  i.e. mass transfer
-        virtual void addDelta(const word& name, const volScalarField& delta);
-
 
         //- Thermodynamic and transport functions
 
@@ -493,11 +426,6 @@ public:
             //- Molecular weight for cell [kg/kmol]
             virtual scalar Wi(const label celli) const = 0;
 
-
-    // Transport variables
-
-        //- Return the thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alpha() const = 0;
 
         //- Read residual values
         virtual void read(const dictionary& dict)

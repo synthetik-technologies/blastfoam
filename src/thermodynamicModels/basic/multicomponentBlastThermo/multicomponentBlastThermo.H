@@ -51,11 +51,21 @@ namespace Foam
                            Class multicomponentBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class BasicThermo>
 class multicomponentBlastThermo
 :
-    public BasicThermo
+    private integrationSystem
 {
+//- Private data
+
+    // Const reference to the mesh
+    const fvMesh& mesh_;
+
+    //- Names of phase
+    word phaseName_;
+
+    //- Name of master thermo class
+    word masterName_;
+
 protected:
 //- Protected data
 
@@ -86,11 +96,9 @@ public:
     // Constructor
     multicomponentBlastThermo
     (
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -98,11 +106,9 @@ public:
     multicomponentBlastThermo
     (
         const speciesTable& species,
-        const word& phaseName,
-        volScalarField& rho,
-        volScalarField& e,
-        volScalarField& T,
+        const fvMesh& mesh,
         const dictionary& dict,
+        const word& phaseName,
         const word& masterName = word::null
     );
 
@@ -116,14 +122,8 @@ public:
         //- Initialize models
         virtual void initializeModels();
 
-        //- Pre update step
-        virtual void update();
-
         //- Solve sub-step stepi
         virtual void solve();
-
-        //- Post update
-        virtual void postUpdate();
 
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
@@ -157,10 +157,10 @@ public:
         inline void setInactive(label speciei);
 
         //- Return the mass-fraction fields
-        inline PtrList<volScalarField>& Y();
+        inline PtrList<volScalarField>& Ys();
 
         //- Return the const mass-fraction fields
-        inline const PtrList<volScalarField>& Y() const;
+        inline const PtrList<volScalarField>& Ys() const;
 
         //- Return the mass-fraction field for a specie given by index
         inline volScalarField& Y(const label i);
@@ -222,10 +222,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "multicomponentBlastThermoI.H"
-
-#ifdef NoRepository
-    #include "multicomponentBlastThermo.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
