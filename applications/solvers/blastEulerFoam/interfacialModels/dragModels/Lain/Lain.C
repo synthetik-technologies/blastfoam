@@ -78,14 +78,14 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Lain::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Lain::CdRei
+Foam::scalar Foam::dragModels::Lain::cellCdRe
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Rei(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
 
     return
         neg(Re - 1.5)*16.0

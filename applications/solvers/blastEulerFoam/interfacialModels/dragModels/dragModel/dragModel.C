@@ -108,7 +108,7 @@ Foam::dragModel::~dragModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::dragModel::KI
+Foam::tmp<Foam::volScalarField> Foam::dragModel::Ki
 (
     const label nodei,
     const label nodej
@@ -135,7 +135,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModel::K
         (
             pair_.dispersed().volumeFraction(nodei),
             pair_.dispersed().residualAlpha()
-        )*KI(nodei, nodej);
+        )*Ki(nodei, nodej);
 }
 
 
@@ -150,11 +150,11 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModel::Kf
         (
             fvc::interpolate(pair_.dispersed().volumeFraction(nodei)),
             pair_.dispersed().residualAlpha()
-        )*fvc::interpolate(KI(nodei, nodej));
+        )*fvc::interpolate(Ki(nodei, nodej));
 }
 
 
-Foam::scalar Foam::dragModel::KIi
+Foam::scalar Foam::dragModel::cellKi
 (
     const label celli,
     const label nodei,
@@ -163,15 +163,15 @@ Foam::scalar Foam::dragModel::KIi
 {
     return
         0.75
-       *CdRei(celli, nodei, nodej)
-       *swarmCorrection_->Csi(celli, nodei, nodej)
+       *cellCdRe(celli, nodei, nodej)
+       *swarmCorrection_->cellCs(celli, nodei, nodej)
        *pair_.continuous().rho()[celli]
-       *pair_.continuous().nui(celli)
-       /sqr(pair_.dispersed().di(celli, nodei));
+       *pair_.continuous().cellnu(celli)
+       /sqr(pair_.dispersed().celld(celli, nodei));
 }
 
 
-Foam::scalar Foam::dragModel::Ki
+Foam::scalar Foam::dragModel::cellK
 (
     const label celli,
     const label nodei,
@@ -181,9 +181,9 @@ Foam::scalar Foam::dragModel::Ki
     return
         max
         (
-            pair_.dispersed().volumeFractioni(celli, nodei),
+            pair_.dispersed().cellvolumeFraction(celli, nodei),
             pair_.dispersed().residualAlpha().value()
-        )*KIi(celli, nodei, nodej);
+        )*cellKi(celli, nodei, nodej);
 }
 
 

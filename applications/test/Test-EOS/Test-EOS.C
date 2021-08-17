@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     Info<<"CpMCv: "<< eos.CpMCv(rho, e, T) <<endl;
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;
     Info<<"Cv: "<< eos.Cv(rho, e, T) <<endl;
-    Info<<"rho: "<< eos.initializeRho(p, rho, e, T) <<endl;
+    Info<<"rho: "<< eos.rhoPT(p, T) <<endl;
 
     return 0;
 }

@@ -447,7 +447,7 @@ public:
         ) const;
 
         //- Return the aspect-ratio for a pair
-        scalar Ei
+        scalar cellE
         (
             const label celli,
             const phasePairKey& key,

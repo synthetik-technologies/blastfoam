@@ -178,7 +178,7 @@ void Foam::dragODE::derivatives
                         1e-6
                     );
 
-                scalar drag = dragModels_[pairi].Ki(li, nodei, nodej);
+                scalar drag = dragModels_[pairi].cellK(li, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 
@@ -247,7 +247,7 @@ void Foam::dragODE::jacobian
                         1e-6
                     );
 
-                scalar drag = dragModels_[pairi].Ki(li, nodei, nodej);
+                scalar drag = dragModels_[pairi].cellK(li, nodei, nodej);
                 scalar drag1 = drag/alphaRho1;
                 scalar drag2 = drag/alphaRho2;
 

@@ -79,14 +79,14 @@ Foam::tmp<Foam::volScalarField> Foam::orderedPhasePair::E
 }
 
 
-Foam::scalar Foam::orderedPhasePair::Ei
+Foam::scalar Foam::orderedPhasePair::cellE
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return phase1().fluid().Ei(celli, *this, nodei, nodej);
+    return phase1().fluid().cellE(celli, *this, nodei, nodej);
 }
 
 

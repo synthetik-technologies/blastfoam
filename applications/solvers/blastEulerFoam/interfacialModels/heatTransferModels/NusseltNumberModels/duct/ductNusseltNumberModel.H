@@ -83,6 +83,14 @@ public:
             const label nodei = -1,
             const label nodej = -1
         ) const;
+
+        //- Nusselt number for cell
+        scalar cellNu
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

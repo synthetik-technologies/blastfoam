@@ -83,14 +83,14 @@ Foam::aspectRatioModels::VakhrushevEfremov::E
 }
 
 
-Foam::scalar Foam::aspectRatioModels::VakhrushevEfremov::Ei
+Foam::scalar Foam::aspectRatioModels::VakhrushevEfremov::cellE
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Ta(pair_.Tai(celli, nodei, nodej));
+    scalar Ta(pair_.cellTa(celli, nodei, nodej));
 
     return
         neg(Ta - scalar(1))*scalar(1)

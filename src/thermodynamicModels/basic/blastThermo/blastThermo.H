@@ -159,7 +159,7 @@ public:
             virtual tmp<volScalarField> THE() const = 0;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar THEi
+            virtual scalar cellTHE
             (
                 const scalar he,
                 const scalar T0,
@@ -173,7 +173,7 @@ public:
             virtual tmp<scalarField> rho(const label patchi) const;
 
             //- Density for cell [kg/m^3]
-            virtual scalar rhoi(const label celli) const;
+            virtual scalar cellrho(const label celli) const;
 
             //- Return non-const access to the local density field [kg/m^3]
             virtual volScalarField& rho();
@@ -195,13 +195,13 @@ public:
             ) const;
 
             //- Return molecular weight
-            virtual scalar Wi(const label celli) const = 0;
+            virtual scalar cellW(const label) const = 0;
 
             //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-            virtual scalar Cpi(const label celli) const = 0;
+            virtual scalar cellCp(const scalar, const label) const = 0;
 
             //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-            virtual scalar Cvi(const label celli) const = 0;
+            virtual scalar cellCv(const scalar, const label) const = 0;
 
         // Fields derived from transport state variables
 
@@ -215,7 +215,7 @@ public:
             virtual tmp<scalarField> kappa(const label patchi) const;
 
             //- Thermal diffusivity for temperature of mixture for cell [W/m/K]
-            virtual scalar kappai(const label cell) const;
+            virtual scalar cellkappa(const label cell) const;
 
             //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
             virtual tmp<volScalarField> alphahe() const;

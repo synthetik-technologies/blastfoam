@@ -659,7 +659,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THEi
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellTHE
 (
     const scalar he,
     const scalar T,
@@ -677,8 +677,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THEi
     }
 
     return
-        Thermo2::TRhoE(T, this->rho_[celli], this->e_[celli])*x
-      + Thermo1::TRhoE(T, this->rho_[celli], this->e_[celli])*(1.0 - x);
+        Thermo2::TRhoE(T, this->rho_[celli], he)*x
+      + Thermo1::TRhoE(T, this->rho_[celli], he)*(1.0 - x);
 }
 
 
@@ -721,24 +721,25 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cp
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cpi
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCp
 (
+    const scalar T,
     const label celli
 ) const
 {
     const scalar& x = this->xi(celli);
     if (x < small)
     {
-        return Thermo1::Cp(this->rho_[celli], this->e_[celli], this->T_[celli]);
+        return Thermo1::Cp(this->rho_[celli], this->e_[celli], T);
     }
     else if ((1.0 - x) < small)
     {
-        return Thermo2::Cp(this->rho_[celli], this->e_[celli], this->T_[celli]);
+        return Thermo2::Cp(this->rho_[celli], this->e_[celli], T);
     }
 
     return
-        Thermo2::Cp(this->rho_[celli], this->e_[celli], this->T_[celli])*x
-      + Thermo1::Cp(this->rho_[celli], this->e_[celli], this->T_[celli])*(1.0 - x);
+        Thermo2::Cp(this->rho_[celli], this->e_[celli], T)*x
+      + Thermo1::Cp(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
 }
 
 
@@ -781,24 +782,25 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cv
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cvi
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCv
 (
+    const scalar T,
     const label celli
 ) const
 {
     const scalar& x = this->xi(celli);
     if (x < small)
     {
-        return Thermo1::Cv(this->rho_[celli], this->e_[celli], this->T_[celli]);
+        return Thermo1::Cv(this->rho_[celli], this->e_[celli], T);
     }
     else if ((1.0 - x) < small)
     {
-        return Thermo2::Cv(this->rho_[celli], this->e_[celli], this->T_[celli]);
+        return Thermo2::Cv(this->rho_[celli], this->e_[celli], T);
     }
 
     return
-        Thermo2::Cv(this->rho_[celli], this->e_[celli], this->T_[celli])*x
-      + Thermo1::Cv(this->rho_[celli], this->e_[celli], this->T_[celli])*(1.0 - x);
+        Thermo2::Cv(this->rho_[celli], this->e_[celli], T)*x
+      + Thermo1::Cv(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
 }
 
 
@@ -851,7 +853,10 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::W(const label patchi) c
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::scalar
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Wi(const label celli) const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellW
+(
+    const label celli
+) const
 {
     return
         this->xi(celli)*Thermo2::W()

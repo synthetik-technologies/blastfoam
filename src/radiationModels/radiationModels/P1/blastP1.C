@@ -268,9 +268,10 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::blastP1::Rp() const
 }
 
 
-Foam::scalar Foam::radiationModels::blastP1::Rpi(const label celli) const
+Foam::scalar Foam::radiationModels::blastP1::cellRp(const label celli) const
 {
-    return 4.0*bAbsorptionEmission_->eConti(celli)*physicoChemical::sigma.value();
+    return
+        4.0*bAbsorptionEmission_->celleCont(celli)*physicoChemical::sigma.value();
 }
 
 
@@ -289,11 +290,11 @@ Foam::radiationModels::blastP1::Ru() const
 
 
 Foam::scalar
-Foam::radiationModels::blastP1::Rui(const label celli) const
+Foam::radiationModels::blastP1::cellRu(const label celli) const
 {
     return
-        bAbsorptionEmission_->aConti(celli)*G_[celli]
-      - bAbsorptionEmission_->EConti(celli);
+        bAbsorptionEmission_->cellaCont(celli)*G_[celli]
+      - bAbsorptionEmission_->cellECont(celli);
 }
 
 

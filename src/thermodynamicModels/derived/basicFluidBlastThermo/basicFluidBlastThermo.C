@@ -81,10 +81,8 @@ void Foam::basicFluidBlastThermo<Thermo>::updateRho(const volScalarField& p)
         (
             "rho",
             dimDensity,
-            &Thermo::initializeRho,
+            &Thermo::thermoType::rhoPT,
             p,
-            this->rho_,
-            this->e_,
             this->T_
         )
     );
@@ -202,7 +200,7 @@ Foam::basicFluidBlastThermo<Thermo>::Gamma(const label patchi) const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidBlastThermo<Thermo>::Gammai(const label celli) const
+Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 {
     return Thermo::thermoType::Gamma
     (
@@ -232,7 +230,7 @@ Foam::basicFluidBlastThermo<Thermo>::pRhoT() const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
+Foam::basicFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
 {
     return Thermo::thermoType::p
     (
@@ -245,7 +243,7 @@ Foam::basicFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
+Foam::basicFluidBlastThermo<Thermo>::celldpdRho(const label celli) const
 {
     return Thermo::thermoType::dpdRho
     (
@@ -258,7 +256,7 @@ Foam::basicFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
 
 template<class Thermo>
 Foam::scalar
-Foam::basicFluidBlastThermo<Thermo>::dpdei(const label celli) const
+Foam::basicFluidBlastThermo<Thermo>::celldpde(const label celli) const
 {
     return Thermo::thermoType::dpde
     (
@@ -287,7 +285,8 @@ Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField> Foam::basicFluidBlastThermo<Thermo>::mu() const
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::calcMu() const
 {
     return Thermo::volScalarFieldProperty
     (

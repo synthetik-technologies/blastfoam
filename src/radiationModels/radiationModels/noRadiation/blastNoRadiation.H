@@ -92,13 +92,13 @@ public:
             virtual tmp<volScalarField> Rp() const;
 
             //- Source term component (for power of T^4)
-            virtual scalar Rpi(const label celli) const;
+            virtual scalar cellRp(const label celli) const;
 
             //- Source term component (constant)
             virtual tmp<volScalarField::Internal> Ru() const;
 
             //- Source term component (constant)
-            virtual scalar Rui(const label celli) const;
+            virtual scalar cellRu(const label celli) const;
 
 
     // Member Operators

@@ -269,19 +269,22 @@ public:
             virtual tmp<scalarField> Gamma(const label patchi) const = 0;
 
             //- Gamma = dpde for cell []
-            virtual scalar Gammai(const label celli) const = 0;
+            virtual scalar cellGamma(const label celli) const = 0;
 
             //- Calculate pressure for cell [Pa]
-            virtual scalar pRhoTi(const label celli) const = 0;
+            virtual scalar cellpRhoT(const label celli) const = 0;
 
             //- Derivative of pressure w.r.t density for cel
-            virtual scalar dpdRhoi(const label celli) const = 0;
+            virtual scalar celldpdRho(const label celli) const = 0;
 
             //- Derivative of pressure w.r.t internal energy for cell
-            virtual scalar dpdei(const label celli) const = 0;
+            virtual scalar celldpde(const label celli) const = 0;
 
 
         // Access to transport state variables
+
+            //- Calculate dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> calcMu() const = 0;
 
             //- Dynamic viscosity of mixture [kg/m/s]
             virtual tmp<volScalarField> mu() const;
@@ -298,7 +301,7 @@ public:
             }
 
             //- Kinematic viscosity of mixture for cell [m^2/s]
-            virtual scalar nui(const label celli) const;
+            virtual scalar cellnu(const label celli) const;
 };
 
 

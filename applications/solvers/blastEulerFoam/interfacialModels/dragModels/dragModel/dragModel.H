@@ -144,7 +144,7 @@ public:
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual tmp<volScalarField> KI
+        virtual tmp<volScalarField> Ki
         (
             const label nodei = -1,
             const label nodej = -1
@@ -170,7 +170,7 @@ public:
 
 
         //- Drag coefficient
-        virtual scalar CdRei
+        virtual scalar cellCdRe
         (
             const label,
             const label nodei = -1,
@@ -181,7 +181,7 @@ public:
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual scalar KIi
+        virtual scalar cellKi
         (
             const label,
             const label nodei = -1,
@@ -192,7 +192,7 @@ public:
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... K*(U2-U1)
-        virtual scalar Ki
+        virtual scalar cellK
         (
             const label,
             const label nodei = -1,

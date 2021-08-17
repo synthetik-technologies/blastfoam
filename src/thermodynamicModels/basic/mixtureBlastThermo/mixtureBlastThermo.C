@@ -103,7 +103,7 @@ template<class Method, class ... Args>
 Foam::tmp<Foam::volScalarField>
 Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
 (
-    const word& s,
+    const label speciei,
     const word& psiName,
     const dimensionSet& psiDim,
     Method psiMethod,
@@ -121,7 +121,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
         )
     );
 
-    const ThermoType& thermo = speciesData_[this->species_[s]];
+    const ThermoType& thermo = speciesData_[speciei];
 
     volScalarField& psi = tPsi.ref();
 
@@ -227,7 +227,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mixtureBlastThermo
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_(mesh, this->Ys_, constructSpeciesData(dict), phaseName)
+    mixture_(mesh, this->Y_, constructSpeciesData(dict), phaseName)
 {}
 
 
@@ -258,7 +258,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mixtureBlastThermo
         masterName
     ),
     speciesData_(this->species_.size()),
-    mixture_(mesh, this->Ys_, constructSpeciesData(dict), phaseName)
+    mixture_(mesh, this->Y_, constructSpeciesData(dict), phaseName)
 {}
 
 
@@ -618,7 +618,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THE
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::THEi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellTHE
 (
     const scalar he,
     const scalar T,
@@ -666,8 +666,9 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cp
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cpi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellCp
 (
+    const scalar T,
     const label celli
 ) const
 {
@@ -675,7 +676,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cpi
     (
         this->rho_[celli],
         this->e_[celli],
-        this->T_[celli]
+        T
     );
 }
 
@@ -717,8 +718,9 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cv
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cvi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellCv
 (
+    const scalar T,
     const label celli
 ) const
 {
@@ -727,7 +729,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cvi
         (
             this->rho_[celli],
             this->e_[celli],
-            this->T_[celli]
+            T
         );
 }
 
@@ -779,7 +781,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::W(const label patchi) const
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Wi(const label celli) const
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellW(const label celli) const
 {
     return this->mixture_[celli].W();
 }
@@ -802,75 +804,91 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappa() const
 
 
 template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Wi
+(
+    const label speciei
+) const
+{
+    return speciesData_[speciei].W();
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Hf
+(
+    const label speciei
+) const
+{
+    return speciesData_[speciei].Hf();
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::rho
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    return speciesData_[speciei].rhoPT
+    (
+        p,
+        T
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieW(const word& s) const
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::rho
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
+) const
 {
     return volScalarFieldSpecieProperty
     (
-        s,
-        "W",
-        dimMass/dimMoles,
-        &ThermoType::W
+        speciei,
+        "rho",
+        dimDensity,
+        &ThermoType::rhoPT,
+        p,
+        T
     );
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieWi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cp
 (
-    const word& s,
-    const label celli
+    const label speciei,
+    const scalar p,
+    const scalar T
 ) const
 {
-    return speciesData_[this->species_[s]].W();
+    NotImplemented;
+    return p;
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieGamma
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cp
 (
-    const word& s
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldSpecieProperty
     (
-        s,
-        "Gamma",
-        dimless,
-        &ThermoType::Gamma,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieGammai
-(
-    const word& s,
-    const label celli
-) const
-{
-    return speciesData_[this->species_[s]].Gamma
-    (
-        this->rho_[celli],
-        this->e_[celli],
-        this->T_[celli]
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCp(const word& s) const
-{
-    return volScalarFieldSpecieProperty
-    (
-        s,
+        speciei,
         "Cp",
         dimEnergy/dimMass/dimTemperature,
         &ThermoType::Cp,
@@ -883,101 +901,200 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCp(const word& s) const
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCpi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::HE
 (
-    const word& s,
-    const label celli
+    const label speciei,
+    const scalar p,
+    const scalar T
 ) const
 {
-    return speciesData_[this->species_[s]].Cp
-    (
-        this->rho_[celli],
-        this->e_[celli],
-        this->T_[celli]
-    );
+    NotImplemented;
+    return p;
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::scalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::HE
+(
+    const label speciei,
+    const scalarField& p,
+    const scalarField& T
+) const
+{
+    NotImplemented;
+    return p;
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCv(const word& s) const
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::HE
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
+) const
 {
     return volScalarFieldSpecieProperty
     (
-        s,
-        "Cv",
-        dimEnergy/dimMass/dimTemperature,
-        &ThermoType::Cv,
+        speciei,
+        "HE",
+        dimEnergy/dimMass,
+        &ThermoType::Es,
         this->rho_,
         this->e_,
-        this->T_
+        T
     );
 }
 
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCvi
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Hs
 (
-    const word& s,
-    const label celli
+    const label speciei,
+    const scalar p,
+    const scalar T
 ) const
 {
-    return this->speciesData_[this->species_[s]].Cv
-    (
-        this->rho_[celli],
-        this->e_[celli],
-        this->T_[celli]
-    );
+    NotImplemented;
+    return p;
 }
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::scalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Hs
+(
+    const label speciei,
+    const scalarField& p,
+    const scalarField& T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieCpByCv
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Hs
 (
-    const word& s
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldSpecieProperty
     (
-        s,
-        "CpByCv",
-        dimless,
-        &ThermoType::CpByCv,
+        speciei,
+        "Hs",
+        dimEnergy/dimMass,
+        &ThermoType::Hs,
         this->rho_,
         this->e_,
-        this->T_
+        T
     );
 }
 
 
 template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieHf(const word& s) const
-{
-    return volScalarFieldSpecieProperty
-    (
-        s,
-        "Hf",
-        dimEnergy/dimMass,
-        &ThermoType::Hf
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::mixtureBlastThermo<BasicThermo, ThermoType>::specieFlameT
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Ha
 (
-    const word& s
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::scalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Ha
+(
+    const label speciei,
+    const scalarField& p,
+    const scalarField& T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Ha
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
 ) const
 {
     return volScalarFieldSpecieProperty
     (
-        s,
-        "flameT",
-        dimTemperature,
-        &ThermoType::flameT
+        speciei,
+        "Ha",
+        dimEnergy/dimMass,
+        &ThermoType::Ha,
+        this->rho_,
+        this->e_,
+        T
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::mu
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappa
+(
+    const label speciei,
+    const scalar p,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return p;
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::tmp<Foam::volScalarField>
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::kappa
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
+) const
+{
+    return volScalarFieldSpecieProperty
+    (
+        speciei,
+        "kappa",
+        dimEnergy/dimTime/dimLength/dimTemperature,
+        &ThermoType::kappa,
+        this->rho_,
+        this->e_,
+        T
     );
 }
 

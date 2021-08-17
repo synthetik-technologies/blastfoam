@@ -107,7 +107,7 @@ public:
         virtual tmp<scalarField> Gamma(const label patchi) const;
 
         //- Gamma = dpde for cell []
-        virtual scalar Gammai(const label celli) const;
+        virtual scalar cellGamma(const label celli) const;
 
 
     //- Thermodynamic and transport functions
@@ -119,13 +119,13 @@ public:
         virtual tmp<volScalarField> pRhoT() const;
 
         //- Calculate pressure for cell [Pa]
-        virtual scalar pRhoTi(const label celli) const;
+        virtual scalar cellpRhoT(const label celli) const;
 
         //- Derivative of pressure w.r.t density for cell
-        virtual scalar dpdRhoi(const label celli) const;
+        virtual scalar celldpdRho(const label celli) const;
 
         //- Derivative of pressure w.r.t internal energy for cell
-        virtual scalar dpdei(const label celli) const;
+        virtual scalar celldpde(const label celli) const;
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
@@ -133,7 +133,7 @@ public:
     // Access to transport state variables
 
             //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> mu() const;
+            virtual tmp<volScalarField> calcMu() const;
 };
 
 

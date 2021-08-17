@@ -122,8 +122,8 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
     mu_ =
-        volumeFraction_*thermo1_->mu()
-      + (1.0 - volumeFraction_)*thermo2_->mu();
+        volumeFraction_*thermo1_->calcMu()
+      + (1.0 - volumeFraction_)*thermo2_->calcMu();
 }
 
 void Foam::twoPhaseFluidBlastThermo::initializeModels()
@@ -227,8 +227,8 @@ void Foam::twoPhaseFluidBlastThermo::correct()
 
     // Update transport coefficients
     mu_ =
-        volumeFraction_*thermo1_->mu()
-      + (1.0 - volumeFraction_)*thermo2_->mu();
+        volumeFraction_*thermo1_->calcMu()
+      + (1.0 - volumeFraction_)*thermo2_->calcMu();
     this->alpha_ = this->kappa()/this->Cp();
 }
 
@@ -271,59 +271,59 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::pRhoT() const
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::pRhoTi(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT(const label celli) const
 {
     scalar alphaXi1
     (
-        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+        volumeFraction_[celli]/(thermo1_->cellGamma(celli) - 1.0)
     );
     scalar alphaXi2
     (
-        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+        (1.0 - volumeFraction_[celli])/(thermo2_->cellGamma(celli) - 1.0)
     );
 
     return
         (
-            alphaXi1*thermo1_->pRhoTi(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->pRhoTi(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->cellpRhoT(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->cellpRhoT(celli)*pos(alphaXi2 - small)
         )/(alphaXi1 + alphaXi2);
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::dpdRhoi(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdRho(const label celli) const
 {
     scalar alphaXi1
     (
-        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+        volumeFraction_[celli]/(thermo1_->cellGamma(celli) - 1.0)
     );
     scalar alphaXi2
     (
-        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+        (1.0 - volumeFraction_[celli])/(thermo2_->cellGamma(celli) - 1.0)
     );
 
     return
         (
-            alphaXi1*thermo1_->dpdRhoi(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->dpdRhoi(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->celldpdRho(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->celldpdRho(celli)*pos(alphaXi2 - small)
         )/(alphaXi1 + alphaXi2);
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::dpdei(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpde(const label celli) const
 {
     scalar alphaXi1
     (
-        volumeFraction_[celli]/(thermo1_->Gammai(celli) - 1.0)
+        volumeFraction_[celli]/(thermo1_->cellGamma(celli) - 1.0)
     );
     scalar alphaXi2
     (
-        (1.0 - volumeFraction_[celli])/(thermo2_->Gammai(celli) - 1.0)
+        (1.0 - volumeFraction_[celli])/(thermo2_->cellGamma(celli) - 1.0)
     );
 
     return
         (
-            alphaXi1*thermo1_->dpdei(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->dpdei(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->celldpde(celli)*pos(alphaXi1 - small)
+          + alphaXi2*thermo2_->celldpde(celli)*pos(alphaXi2 - small)
         )/(alphaXi1 + alphaXi2);
 }
 
@@ -392,11 +392,11 @@ Foam::twoPhaseFluidBlastThermo::Gamma(const label patchi) const
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::Gammai(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellGamma(const label celli) const
 {
     return
-        volumeFraction_[celli]*thermo1_->Gammai(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->Gammai(celli);
+        volumeFraction_[celli]*thermo1_->cellGamma(celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->cellGamma(celli);
 }
 
 
@@ -598,7 +598,7 @@ Foam::twoPhaseFluidBlastThermo::THE
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::THEi
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellTHE
 (
     const scalar he,
     const scalar T,
@@ -606,8 +606,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::THEi
 ) const
 {
     return
-        volumeFraction_[celli]*thermo1_->THEi(he, T, celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->THEi(he, T, celli);
+        volumeFraction_[celli]*thermo1_->cellTHE(he, T, celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->cellTHE(he, T, celli);
 }
 
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::Cp() const
@@ -631,11 +631,15 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::Cp
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::Cpi(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellCp
+(
+    const scalar T,
+    const label celli
+) const
 {
     return
-        volumeFraction_[celli]*thermo1_->Cpi(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->Cpi(celli);
+        volumeFraction_[celli]*thermo1_->cellCp(T, celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->cellCp(T, celli);
 }
 
 
@@ -660,11 +664,15 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::Cv
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::Cvi(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellCv
+(
+    const scalar T,
+    const label celli
+) const
 {
     return
-        volumeFraction_[celli]*thermo1_->Cvi(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->Cvi(celli);
+        volumeFraction_[celli]*thermo1_->cellCv(T, celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->cellCv(T, celli);
 }
 
 
@@ -709,12 +717,19 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::W
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::Wi(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellW(const label celli) const
 {
     return
-        volumeFraction_[celli]*thermo1_->Wi(celli)
-      + (1.0 - volumeFraction_[celli])*thermo2_->Wi(celli);
+        volumeFraction_[celli]*thermo1_->cellW(celli)
+      + (1.0 - volumeFraction_[celli])*thermo2_->cellW(celli);
 }
 
+
+Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::calcMu() const
+{
+    return
+        volumeFraction_*thermo1_->calcMu()
+      + (1.0 - volumeFraction_)*thermo2_->calcMu();
+}
 
 // ************************************************************************* //

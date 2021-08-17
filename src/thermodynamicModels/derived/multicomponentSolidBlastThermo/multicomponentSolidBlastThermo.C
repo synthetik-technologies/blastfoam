@@ -248,4 +248,31 @@ Foam::multicomponentSolidBlastThermo<Thermo>::Kappa(const label patchi) const
     return tKappa;
 }
 
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentSolidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
+) const
+{
+    return tmp<volScalarField>
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "mu",
+                this->rho_.mesh().time().timeName(),
+                this->rho_.mesh()
+            ),
+            this->rho_.mesh(),
+            dimensionedScalar("0", dimensionSet(1, -1, -1, 0, 0), 0.0)
+        )
+    );
+}
+
+
 // ************************************************************************* //

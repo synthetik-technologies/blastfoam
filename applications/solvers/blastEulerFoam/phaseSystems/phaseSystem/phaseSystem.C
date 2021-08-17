@@ -982,10 +982,14 @@ void Foam::phaseSystem::update()
                     dynamicCast<multicomponentBlastThermo>(dispersedThermo);
                 if (thermo.contains(specieName))
                 {
+                    tmp<volScalarField> YmDot
+                    (
+                        -massTransferIter()->dispersedYi(specieName)*mDot
+                    );
                     thermo.addDelta
                     (
                         specieName,
-                        -massTransferIter()->dispersedYi(specieName)*mDot
+                        YmDot
                     );
                 }
             }
@@ -995,10 +999,14 @@ void Foam::phaseSystem::update()
                     dynamicCast<multicomponentBlastThermo>(continuousThermo);
                 if (thermo.contains(specieName))
                 {
+                    tmp<volScalarField> YmDot
+                    (
+                        massTransferIter()->continuousYi(specieName)*mDot
+                    );
                     thermo.addDelta
                     (
                         specieName,
-                        massTransferIter()->continuousYi(specieName)*mDot
+                        YmDot
                     );
                 }
             }
@@ -1104,7 +1112,7 @@ Foam::phaseSystem::E
 
 
 Foam::scalar
-Foam::phaseSystem::Ei
+Foam::phaseSystem::cellE
 (
     const label celli,
     const phasePairKey& key,
@@ -1114,7 +1122,7 @@ Foam::phaseSystem::Ei
 {
     if (aspectRatioModels_.found(key))
     {
-        return aspectRatioModels_[key]->Ei(celli, nodei, nodej);
+        return aspectRatioModels_[key]->cellE(celli, nodei, nodej);
     }
     else
     {

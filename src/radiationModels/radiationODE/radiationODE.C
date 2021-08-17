@@ -85,9 +85,9 @@ void Foam::radiationODE::derivatives
     scalarField& dqdt
 ) const
 {
-    scalar e = q[0]/max(thermo_.rhoi(li), 1e-10);
-    scalar T = thermo_.THEi(e, thermo_.T()[li], li);
-    dqdt = rad_.Rui(li) - rad_.Rpi(li)*pow4(T);
+    scalar e = q[0]/max(thermo_.cellrho(li), 1e-10);
+    scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+    dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
 }
 
 
@@ -100,13 +100,13 @@ void Foam::radiationODE::jacobian
     scalarSquareMatrix& J
 ) const
 {
-    scalar e = q[0]/max(thermo_.rhoi(li), 1e-10);
-    scalar T = thermo_.THEi(e, thermo_.T()[li], li);
-    dqdt = rad_.Rui(li) - rad_.Rpi(li)*pow4(T);
+    scalar e = q[0]/max(thermo_.cellrho(li), 1e-10);
+    scalar T = thermo_.cellTHE(e, thermo_.T()[li], li);
+    dqdt = rad_.cellRu(li) - rad_.cellRp(li)*pow4(T);
     J = scalarSquareMatrix
         (
             1,
-            -4.0*rad_.Rpi(li)*pow3(T)/thermo_.Cvi(li)
+            -4.0*rad_.cellRp(li)*pow3(T)/thermo_.cellCv(T, li)
         );
 }
 

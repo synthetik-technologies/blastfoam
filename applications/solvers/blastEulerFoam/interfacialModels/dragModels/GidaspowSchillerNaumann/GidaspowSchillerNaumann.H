@@ -108,7 +108,7 @@ public:
         ) const;
 
         //- Drag coefficient
-        virtual scalar CdRei
+        virtual scalar cellCdRe
         (
             const label,
             const label nodei = -1,

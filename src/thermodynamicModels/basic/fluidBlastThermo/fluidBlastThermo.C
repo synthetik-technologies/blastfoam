@@ -162,7 +162,7 @@ void Foam::fluidBlastThermo::correct()
     this->p() = this->pRhoT();
     this->p().correctBoundaryConditions();
 
-    this->mu_ = this->mu();
+    this->mu_ = this->calcMu();
     this->alpha_ = this->kappa()/this->Cp();
 }
 
@@ -193,11 +193,11 @@ Foam::tmp<Foam::scalarField> Foam::fluidBlastThermo::mu
     return mu_.boundaryField()[patchi];
 }
 
-Foam::scalar Foam::fluidBlastThermo::nui
+Foam::scalar Foam::fluidBlastThermo::cellnu
 (
     const label celli
 ) const
 {
-    return mu_[celli]/rhoi(celli);
+    return mu_[celli]/cellrho(celli);
 }
 // ************************************************************************* //

@@ -81,7 +81,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::CdRe
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::KI
+Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::Ki
 (
     const label nodei,
     const label nodej
@@ -95,7 +95,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::KI
 }
 
 
-Foam::scalar Foam::dragModels::lengthBased::CdRei
+Foam::scalar Foam::dragModels::lengthBased::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -111,7 +111,7 @@ Foam::scalar Foam::dragModels::lengthBased::CdRei
 }
 
 
-Foam::scalar Foam::dragModels::lengthBased::KIi
+Foam::scalar Foam::dragModels::lengthBased::cellKi
 (
     const label celli,
     const label nodei,
@@ -122,7 +122,7 @@ Foam::scalar Foam::dragModels::lengthBased::KIi
         C_.value()
        *pair_.dispersed().rho()[celli]
        *4.0
-       /sqr(pair_.dispersed().di(celli, nodei));
+       /sqr(pair_.dispersed().celld(celli, nodei));
 }
 
 // ************************************************************************* //

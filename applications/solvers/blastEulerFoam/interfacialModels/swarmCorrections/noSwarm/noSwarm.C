@@ -87,7 +87,7 @@ Foam::tmp<Foam::volScalarField> Foam::swarmCorrections::noSwarm::Cs
 }
 
 
-Foam::scalar Foam::swarmCorrections::noSwarm::Csi
+Foam::scalar Foam::swarmCorrections::noSwarm::cellCs
 (
     const label celli,
     const label nodei,

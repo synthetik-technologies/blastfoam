@@ -120,7 +120,7 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::rho(const label patchi) const
 }
 
 
-Foam::scalar Foam::blastThermo::rhoi(const label celli) const
+Foam::scalar Foam::blastThermo::cellrho(const label celli) const
 {
     return rho_[celli];
 }
@@ -177,9 +177,9 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::kappa
 }
 
 
-Foam::scalar Foam::blastThermo::kappai(const label celli) const
+Foam::scalar Foam::blastThermo::cellkappa(const label celli) const
 {
-    return this->Cpi(celli)*this->alpha_[celli];
+    return this->cellCp(this->T_[celli], celli)*this->alpha_[celli];
 }
 
 

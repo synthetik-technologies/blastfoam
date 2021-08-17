@@ -76,6 +76,7 @@ gas
 
     type multicomponent;
     species      (He N2);
+    defaultSpecie He;
     calculateDensity yes;
     thermoType
     {

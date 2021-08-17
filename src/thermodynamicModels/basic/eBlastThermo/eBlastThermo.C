@@ -511,7 +511,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::THEi
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellTHE
 (
     const scalar he,
     const scalar T,
@@ -559,8 +559,9 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::Cp
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::Cpi
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellCp
 (
+    const scalar T,
     const label celli
 ) const
 {
@@ -569,7 +570,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::Cpi
         (
             this->rho_[celli],
             this->e_[celli],
-            this->T_[celli]
+            T
         );
 }
 
@@ -611,8 +612,9 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::Cv
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::Cvi
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellCv
 (
+    const scalar T,
     const label celli
 ) const
 {
@@ -621,7 +623,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::Cvi
         (
             this->rho_[celli],
             this->e_[celli],
-            this->T_[celli]
+            T
         );
 }
 
@@ -673,7 +675,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::W(const label patchi) const
 
 template<class BasicThermo, class ThermoType>
 Foam::scalar
-Foam::eBlastThermo<BasicThermo, ThermoType>::Wi(const label celli) const
+Foam::eBlastThermo<BasicThermo, ThermoType>::cellW(const label celli) const
 {
     return ThermoType::W();
 }

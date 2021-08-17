@@ -193,9 +193,9 @@ public:
         }
 
         //- Return the laminar viscosity for patch
-        virtual scalar nui(const label celli) const
+        virtual scalar cellnu(const label celli) const
         {
-            return thermoPtr_->nui(celli);
+            return thermoPtr_->cellnu(celli);
         }
 
         //- Return the laminar dynamic viscosity
@@ -237,9 +237,9 @@ public:
 
         //- Thermal diffusivity for temperature of mixture
         //  for cell [J/m/s/K]
-        virtual scalar kappai(const label celli) const
+        virtual scalar cellkappa(const label celli) const
         {
-            return thermoPtr_->kappai(celli);
+            return thermoPtr_->cellkappa(celli);
         }
 
         //- Thermal diffusivity for energy of mixture [kg/m/s]
@@ -308,9 +308,9 @@ public:
         }
 
         //- Return the specific heat capacity at constant volume
-        virtual scalar Cvi(const label celli) const
+        virtual scalar cellCv(const label celli) const
         {
-            return thermoPtr_->Cvi(celli);
+            return thermoPtr_->cellCv(T_[celli], celli);
         }
 
         //- Return the speed of sound

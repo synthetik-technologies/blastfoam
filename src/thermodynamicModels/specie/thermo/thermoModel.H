@@ -198,11 +198,9 @@ public:
         ) const;
 
         //- Initialize internal energy
-        scalar initializeRho
+        scalar rhoPT
         (
             const scalar p,
-            const scalar rho,
-            const scalar e,
             const scalar T
         ) const;
 

@@ -393,14 +393,14 @@ Foam::BlendedInterfacialModel<ModelType>::K
 
 template<class ModelType>
 Foam::scalar
-Foam::BlendedInterfacialModel<ModelType>::Ki
+Foam::BlendedInterfacialModel<ModelType>::cellK
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::Ki, "Ki", false, celli, nodei, nodej);
+    return evaluate(&ModelType::cellK, "cellK", false, celli, nodei, nodej);
 }
 
 
@@ -432,14 +432,14 @@ Foam::BlendedInterfacialModel<ModelType>::F
 template<class ModelType>
 template<class Type>
 Type
-Foam::BlendedInterfacialModel<ModelType>::Fi
+Foam::BlendedInterfacialModel<ModelType>::cellF
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::Fi, "Fi", true, celli, nodei, nodej);
+    return evaluate(&ModelType::cellF, "cellF", true, celli, nodei, nodej);
 }
 
 
@@ -468,14 +468,14 @@ Foam::BlendedInterfacialModel<ModelType>::D
 
 
 template<class ModelType>
-Foam::scalar Foam::BlendedInterfacialModel<ModelType>::Di
+Foam::scalar Foam::BlendedInterfacialModel<ModelType>::cellD
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::Di, "Di", false, celli, nodei, nodej);
+    return evaluate(&ModelType::cellD, "cellD", false, celli, nodei, nodej);
 }
 
 
@@ -493,14 +493,14 @@ Foam::BlendedInterfacialModel<ModelType>::dmdt
 
 template<class ModelType>
 Foam::scalar
-Foam::BlendedInterfacialModel<ModelType>::dmdti
+Foam::BlendedInterfacialModel<ModelType>::celldmdt
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    return evaluate(&ModelType::dmdti, "dmdti", false, celli, nodei, nodej);
+    return evaluate(&ModelType::celldmdt, "celldmdt", false, celli, nodei, nodej);
 }
 
 

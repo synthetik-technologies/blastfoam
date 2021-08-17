@@ -115,7 +115,7 @@ public:
         ) const = 0;
 
         //- Swarm correction coefficient
-        virtual scalar Csi
+        virtual scalar cellCs
         (
             const label,
             const label nodei = -1,

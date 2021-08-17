@@ -98,7 +98,7 @@ Foam::dragModels::GidaspowSchillerNaumann::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::GidaspowSchillerNaumann::CdRei
+Foam::scalar Foam::dragModels::GidaspowSchillerNaumann::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -114,7 +114,7 @@ Foam::scalar Foam::dragModels::GidaspowSchillerNaumann::CdRei
         )
     );
 
-    scalar Re(alpha2*pair_.Rei(celli, nodei, nodej));
+    scalar Re(alpha2*pair_.cellRe(celli, nodei, nodej));
 
     scalar CdsRe
     (

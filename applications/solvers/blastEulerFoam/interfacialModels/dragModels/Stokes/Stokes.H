@@ -101,14 +101,14 @@ public:
         ) const;
 
         //- The drag function used in the momentum equation
-        virtual tmp<volScalarField> KI
+        virtual tmp<volScalarField> Ki
         (
             const label nodei = -1,
             const label nodej = -1
         ) const;
 
         //- Drag coefficient
-        virtual scalar CdRei
+        virtual scalar cellCdRe
         (
             const label celli,
             const label nodei = -1,
@@ -116,7 +116,7 @@ public:
         ) const;
 
         //- The drag function used in the momentum equation
-        virtual scalar KIi
+        virtual scalar cellKi
         (
             const label,
             const label nodei = -1,

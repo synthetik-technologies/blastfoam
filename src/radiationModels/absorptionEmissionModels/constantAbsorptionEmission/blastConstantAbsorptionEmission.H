@@ -94,7 +94,7 @@ public:
             virtual tmp<volScalarField> aCont(const label bandI = 0) const;
 
             //- Absorption coefficient for continuous phase
-            virtual scalar aConti
+            virtual scalar cellaCont
             (
                 const label celli,
                 const label bandI = 0
@@ -104,7 +104,7 @@ public:
             virtual tmp<volScalarField> eCont(const label bandI = 0) const;
 
             //- Emission coefficient for continuous phase
-            virtual scalar eConti
+            virtual scalar celleCont
             (
                 const label celli,
                 const label bandI = 0
@@ -114,7 +114,7 @@ public:
             virtual tmp<volScalarField> ECont(const label bandI = 0) const;
 
             //- Emission contribution for continuous phase
-            virtual scalar EConti
+            virtual scalar cellECont
             (
                 const label celli,
                 const label bandI = 0

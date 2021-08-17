@@ -376,7 +376,11 @@ public:
             }
 
             //- Constant access to alpha field for nodei
-            virtual scalar volumeFractioni(const label celli, const label nodei = -1) const
+            virtual scalar cellvolumeFraction
+            (
+                const label celli,
+                const label nodei = -1
+            ) const
             {
                 return (*this)[celli];
             }
@@ -423,7 +427,7 @@ public:
             }
 
             //- Return diameter of nodei for celli
-            virtual scalar di(const label celli, const label nodei = -1) const
+            virtual scalar celld(const label celli, const label nodei = -1) const
             {
                 return dPtr_->d()[celli];
             }
@@ -542,7 +546,7 @@ public:
             virtual tmp<scalarField> nu(const label patchi) const = 0;
 
             //- Return the laminar viscosity for patch
-            virtual scalar nui(const label celli) const = 0;
+            virtual scalar cellnu(const label celli) const = 0;
 
             //- Return the laminar dynamic viscosity
             virtual tmp<volScalarField> mu() const = 0;
@@ -565,7 +569,7 @@ public:
 
             //- Thermal diffusivity for temperature of mixture
             //  for cell [J/m/s/K]
-            virtual scalar kappai(const label celli) const = 0;
+            virtual scalar cellkappa(const label celli) const = 0;
 
             //- Thermal diffusivity for energy of mixture [kg/m/s]
             virtual tmp<volScalarField> alphahe() const = 0;
@@ -609,7 +613,7 @@ public:
             virtual tmp<volScalarField> Cv() const = 0;
 
             //- Return the specific heat capacity at constant volume
-            virtual scalar Cvi(const label celli) const = 0;
+            virtual scalar cellCv(const label celli) const = 0;
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;

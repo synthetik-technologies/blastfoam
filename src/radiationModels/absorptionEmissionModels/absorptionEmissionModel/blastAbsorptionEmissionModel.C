@@ -57,29 +57,18 @@ Foam::radiationModels::blastAbsorptionEmissionModel::~blastAbsorptionEmissionMod
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::ai
+Foam::radiationModels::blastAbsorptionEmissionModel::cella
 (
     const label celli,
     const label bandI
 ) const
 {
-    return aDispi(celli, bandI) + aConti(celli, bandI);
+    return cellaDisp(celli, bandI) + cellaCont(celli, bandI);
 }
 
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::aConti
-(
-    const label celli,
-    const label bandI
-) const
-{
-    return 0.0;
-}
-
-
-Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::aDispi
+Foam::radiationModels::blastAbsorptionEmissionModel::cellaCont
 (
     const label celli,
     const label bandI
@@ -90,18 +79,7 @@ Foam::radiationModels::blastAbsorptionEmissionModel::aDispi
 
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::ei
-(
-    const label celli,
-    const label bandI
-) const
-{
-    return eDispi(celli, bandI) + eConti(celli, bandI);
-}
-
-
-Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::eConti
+Foam::radiationModels::blastAbsorptionEmissionModel::cellaDisp
 (
     const label celli,
     const label bandI
@@ -112,7 +90,18 @@ Foam::radiationModels::blastAbsorptionEmissionModel::eConti
 
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::eDispi
+Foam::radiationModels::blastAbsorptionEmissionModel::celle
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return celleDisp(celli, bandI) + celleCont(celli, bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::blastAbsorptionEmissionModel::celleCont
 (
     const label celli,
     const label bandI
@@ -123,18 +112,7 @@ Foam::radiationModels::blastAbsorptionEmissionModel::eDispi
 
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::Ei
-(
-    const label celli,
-    const label bandI
-) const
-{
-    return EDispi(celli, bandI) + EConti(celli, bandI);
-}
-
-
-Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::EConti
+Foam::radiationModels::blastAbsorptionEmissionModel::celleDisp
 (
     const label celli,
     const label bandI
@@ -145,7 +123,29 @@ Foam::radiationModels::blastAbsorptionEmissionModel::EConti
 
 
 Foam::scalar
-Foam::radiationModels::blastAbsorptionEmissionModel::EDispi
+Foam::radiationModels::blastAbsorptionEmissionModel::cellE
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return cellEDisp(celli, bandI) + cellECont(celli, bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::blastAbsorptionEmissionModel::cellECont
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return 0.0;
+}
+
+
+Foam::scalar
+Foam::radiationModels::blastAbsorptionEmissionModel::cellEDisp
 (
     const label celli,
     const label bandI

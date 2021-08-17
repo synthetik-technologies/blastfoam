@@ -96,7 +96,7 @@ Foam::swarmCorrections::TomiyamaSwarm::Cs
 }
 
 
-Foam::scalar Foam::swarmCorrections::TomiyamaSwarm::Csi
+Foam::scalar Foam::swarmCorrections::TomiyamaSwarm::cellCs
 (
     const label celli,
     const label nodei,

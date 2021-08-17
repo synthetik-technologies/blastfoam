@@ -86,6 +86,19 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::aCont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::cellaCont
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->cellaCont(celli, bandI)
+      + model2_->cellaCont(celli, bandI);
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::blastBinary::aDisp
 (
@@ -93,6 +106,20 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::aDisp
 ) const
 {
     return model1_->aDisp(bandI) + model2_->aDisp(bandI);
+}
+
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::cellaDisp
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->cellaDisp(celli, bandI)
+      + model2_->cellaDisp(celli, bandI);
 }
 
 
@@ -106,6 +133,19 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::eCont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::celleCont
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->celleCont(celli, bandI)
+      + model2_->celleCont(celli, bandI);
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::blastBinary::eDisp
 (
@@ -113,6 +153,19 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::eDisp
 ) const
 {
     return model1_->eDisp(bandI) + model2_->eDisp(bandI);
+}
+
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::celleDisp
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->celleDisp(celli, bandI)
+      + model2_->celleDisp(celli, bandI);
 }
 
 
@@ -126,6 +179,19 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::ECont
 }
 
 
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::cellECont
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->cellECont(celli, bandI)
+      + model2_->celleCont(celli, bandI);
+}
+
+
 Foam::tmp<Foam::volScalarField>
 Foam::radiationModels::absorptionEmissionModels::blastBinary::EDisp
 (
@@ -135,5 +201,17 @@ Foam::radiationModels::absorptionEmissionModels::blastBinary::EDisp
     return model1_->EDisp(bandI) + model2_->EDisp(bandI);
 }
 
+
+Foam::scalar
+Foam::radiationModels::absorptionEmissionModels::blastBinary::cellEDisp
+(
+    const label celli,
+    const label bandI
+) const
+{
+    return
+        model1_->cellEDisp(celli, bandI)
+      + model2_->cellEDisp(celli, bandI);
+}
 
 // ************************************************************************* //

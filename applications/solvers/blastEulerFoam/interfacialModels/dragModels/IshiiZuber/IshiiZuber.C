@@ -115,18 +115,18 @@ Foam::dragModels::IshiiZuber::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::IshiiZuber::CdRei
+Foam::scalar Foam::dragModels::IshiiZuber::cellCdRe
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Rei(celli, nodei, nodej));
-    scalar Eo(pair_.Eoi(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Eo(pair_.cellEo(celli, nodei, nodej));
 
-    scalar mud(pair_.dispersed().nui(celli)*pair_.dispersed().rho()[celli]);
-    scalar muc(pair_.continuous().nui(celli)*pair_.continuous().rho()[celli]);
+    scalar mud(pair_.dispersed().cellnu(celli)*pair_.dispersed().rho()[celli]);
+    scalar muc(pair_.continuous().cellnu(celli)*pair_.continuous().rho()[celli]);
 
     scalar muStar((mud + 0.4*muc)/(mud + muc));
 
@@ -135,7 +135,7 @@ Foam::scalar Foam::dragModels::IshiiZuber::CdRei
         muc
        *pow
         (
-            max(1 - pair_.dispersed().volumeFractioni(celli, nodei),
+            max(1 - pair_.dispersed().cellvolumeFraction(celli, nodei),
             scalar(1e-3)), -2.5*muStar
         )
     );
@@ -149,7 +149,7 @@ Foam::scalar Foam::dragModels::IshiiZuber::CdRei
 
     scalar F
     (
-        (muc/muMix)*sqrt(1 - pair_.dispersed().volumeFractioni(celli, nodei))
+        (muc/muMix)*sqrt(1 - pair_.dispersed().cellvolumeFraction(celli, nodei))
     );
     F = max(F, 1e-3);
 
@@ -162,7 +162,11 @@ Foam::scalar Foam::dragModels::IshiiZuber::CdRei
        *min
         (
             CdReEllipse,
-            Re*sqr(1 - pair_.dispersed().volumeFractioni(celli, nodej))*2.66667
+            Re
+           *sqr
+            (
+                1 - pair_.dispersed().cellvolumeFraction(celli, nodej)
+            )*2.66667
         )
       + neg(CdReEllipse - CdRe)*CdRe;
 }

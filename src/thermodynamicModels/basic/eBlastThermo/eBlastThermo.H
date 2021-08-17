@@ -229,7 +229,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar THEi
+            virtual scalar cellTHE
             (
                 const scalar he,
                 const scalar T0,
@@ -247,7 +247,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure for a cell [J/kg/K]
-            virtual scalar Cpi(const label celli) const;
+            virtual scalar cellCp(const scalar, const label) const;
 
             //- Heat capacity at constant volume [J/kg/K]
             virtual tmp<volScalarField> Cv() const;
@@ -260,7 +260,7 @@ public:
             ) const;
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
-            virtual scalar Cvi(const label celli) const;
+            virtual scalar cellCv(const scalar, const label) const;
 
             //- Heat capacity at constant pressure/volume [J/kg/K]
             virtual tmp<volScalarField> Cpv() const;
@@ -279,7 +279,7 @@ public:
             virtual tmp<scalarField> W(const label patchi) const;
 
             //- Molecular weight for cell [kg/kmol]
-            virtual scalar Wi(const label celli) const;
+            virtual scalar cellW(const label celli) const;
 
 
         // Fields derived from transport state variables

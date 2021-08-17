@@ -232,7 +232,7 @@ Foam::radiationModels::blastBlackBodyEmission::deltaLambdaT
 
 
 Foam::scalar
-Foam::radiationModels::blastBlackBodyEmission::deltaLambdaTi
+Foam::radiationModels::blastBlackBodyEmission::deltaLambdaT
 (
     const scalar& T,
     const Vector2D<scalar>& band
@@ -251,7 +251,7 @@ Foam::radiationModels::blastBlackBodyEmission::deltaLambdaTi
 
 
 Foam::scalar
-Foam::radiationModels::blastBlackBodyEmission::EbDeltaLambdaTi
+Foam::radiationModels::blastBlackBodyEmission::EbDeltaLambdaT
 (
     const scalar& T,
     const Vector2D<scalar>& band

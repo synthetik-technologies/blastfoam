@@ -97,7 +97,8 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::blastNoRadiation::Rp() co
 }
 
 
-Foam::scalar Foam::radiationModels::blastNoRadiation::Rpi(const label celli) const
+Foam::scalar
+Foam::radiationModels::blastNoRadiation::cellRp(const label celli) const
 {
     return 0.0;
 }
@@ -116,7 +117,7 @@ Foam::radiationModels::blastNoRadiation::Ru() const
 
 
 Foam::scalar
-Foam::radiationModels::blastNoRadiation::Rui(const label celli) const
+Foam::radiationModels::blastNoRadiation::cellRu(const label celli) const
 {
     return 0.0;
 }

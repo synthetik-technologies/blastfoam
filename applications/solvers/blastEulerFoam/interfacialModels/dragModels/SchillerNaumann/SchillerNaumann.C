@@ -77,14 +77,14 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::SchillerNaumann::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::SchillerNaumann::CdRei
+Foam::scalar Foam::dragModels::SchillerNaumann::cellCdRe
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Rei(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
 
     return
         neg(Re - 1000)*24.0*(1.0 + 0.15*pow(Re, 0.687))

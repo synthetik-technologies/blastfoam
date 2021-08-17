@@ -477,15 +477,15 @@ Foam::tmp<Foam::volScalarField> Foam::radiationModels::blastFvDOM::Rp() const
 
 
 Foam::scalar
-Foam::radiationModels::blastFvDOM::Rpi(const label celli) const
+Foam::radiationModels::blastFvDOM::cellRp(const label celli) const
 {
     // Construct using contribution from first frequency band
     scalar Rp
     (
         4.0
        *physicoChemical::sigma.value()
-       *(aLambda_[0][celli] - bAbsorptionEmission_->aDispi(celli, 0))
-       *blackBody_.deltaLambdaTi(T_[celli], bAbsorptionEmission_->bands(0))
+       *(aLambda_[0][celli] - bAbsorptionEmission_->cellaDisp(celli, 0))
+       *blackBody_.deltaLambdaT(T_[celli], bAbsorptionEmission_->bands(0))
     );
 
 
@@ -496,8 +496,8 @@ Foam::radiationModels::blastFvDOM::Rpi(const label celli) const
         (
             4.0
            *physicoChemical::sigma.value()
-           *(aLambda_[j][celli] - bAbsorptionEmission_->aDispi(celli, j))
-           *blackBody_.deltaLambdaTi(T_[celli], bAbsorptionEmission_->bands(j))
+           *(aLambda_[j][celli] - bAbsorptionEmission_->cellaDisp(celli, j))
+           *blackBody_.deltaLambdaT(T_[celli], bAbsorptionEmission_->bands(j))
         );
     }
 
@@ -551,7 +551,7 @@ Foam::radiationModels::blastFvDOM::Ru() const
 
 
 Foam::scalar
-Foam::radiationModels::blastFvDOM::Rui(const label celli) const
+Foam::radiationModels::blastFvDOM::cellRu(const label celli) const
 {
     scalar Ru = 0.0;
 
@@ -569,8 +569,8 @@ Foam::radiationModels::blastFvDOM::Rui(const label celli) const
             Gj += IRay_[rayI].ILambda(j)[celli]*IRay_[rayI].omega();
         }
 
-        Ru += (aLambda_[j][celli] - bAbsorptionEmission_->aDispi(celli, j))*Gj
-             - bAbsorptionEmission_->EConti(celli, j);
+        Ru += (aLambda_[j][celli] - bAbsorptionEmission_->cellaDisp(celli, j))*Gj
+             - bAbsorptionEmission_->cellECont(celli, j);
     }
 
     return Ru;

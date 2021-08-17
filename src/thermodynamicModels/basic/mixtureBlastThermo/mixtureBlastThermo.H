@@ -91,7 +91,7 @@ protected:
         template<class Method, class ... Args>
         tmp<volScalarField> volScalarFieldSpecieProperty
         (
-            const word& s,
+            const label speciei,
             const word& psiName,
             const dimensionSet& psiDim,
             Method psiMethod,
@@ -158,6 +158,18 @@ public:
 
         //- Post update
         virtual void postUpdate();
+
+        //- Return the composition of the multi-component mixture
+        virtual basicSpecieMixture& composition()
+        {
+            return *this;
+        }
+
+        //- Return the composition of the multi-component mixture
+        virtual const basicSpecieMixture& composition() const
+        {
+            return *this;
+        }
 
         //- Thermodynamic and transport functions
 
@@ -267,7 +279,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar THEi
+            virtual scalar cellTHE
             (
                 const scalar he,
                 const scalar T0,
@@ -285,7 +297,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure for a cell [J/kg/K]
-            virtual scalar Cpi(const label celli) const;
+            virtual scalar cellCp(const scalar, const label) const;
 
             //- Heat capacity at constant volume [J/kg/K]
             virtual tmp<volScalarField> Cv() const;
@@ -298,7 +310,7 @@ public:
             ) const;
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
-            virtual scalar Cvi(const label celli) const;
+            virtual scalar cellCv(const scalar, const label) const;
 
             //- Heat capacity at constant pressure/volume [J/kg/K]
             virtual tmp<volScalarField> Cpv() const;
@@ -317,7 +329,7 @@ public:
             virtual tmp<scalarField> W(const label patchi) const;
 
             //- Molecular weight for cell [kg/kmol]
-            virtual scalar Wi(const label celli) const;
+            virtual scalar cellW(const label celli) const;
 
 
         // Fields derived from transport state variables
@@ -326,40 +338,147 @@ public:
             virtual tmp<volScalarField> kappa() const;
 
 
-        // Species properties
+        // Specie properties
 
-            //- Return molecular weight
-            virtual tmp<volScalarField> specieW(const word& s) const;
+            //- Molecular weight of the given specie [kg/kmol]
+            virtual scalar Wi(const label speciei) const;
 
-            //- Return molecular weight
-            virtual scalar specieWi(const word& s, const label celli) const;
+            //- Enthalpy of formation [J/kg]
+            virtual scalar Hf(const label speciei) const;
 
-            //- Mie Gruniesen coefficient
-            virtual tmp<volScalarField> specieGamma(const word& s) const;
 
-            //- Mie Gruniesen coefficient for a cell
-            virtual scalar specieGammai(const word& s, const label celli) const;
+        // Specie thermo properties
 
-            //- Heat capacity at constant pressure of mixture [J/kg/K]
-            virtual tmp<volScalarField> specieCp(const word& s) const;
+            //- Density [kg/m^3]
+            virtual scalar rho
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
 
-            //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-            virtual scalar specieCpi(const word& s, const label celli) const;
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> rho
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
-            //- Heat capacity at constant volume of mixture [J/kg/K]
-            virtual tmp<volScalarField> specieCv(const word& s) const;
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual scalar Cp
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
 
-            //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-            virtual scalar specieCvi(const word& s, const label celli) const;
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual tmp<volScalarField> Cp
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
-            //- Specific heat ratio
-            virtual tmp<volScalarField> specieCpByCv(const word& s) const;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual scalar HE
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
 
-            //- Heat of formation
-            virtual tmp<volScalarField> specieHf(const word& s) const;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> HE
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const;
 
-            //- Heat of formation
-            virtual tmp<volScalarField> specieFlameT(const word& s) const;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<volScalarField> HE
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Sensible enthalpy [J/kg]
+            virtual scalar Hs
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<scalarField> Hs
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const;
+
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<volScalarField> Hs
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+            //- Absolute enthalpy [J/kg]
+            virtual scalar Ha
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> Ha
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const;
+
+            //- Absolute enthalpy [J/kg]
+            virtual tmp<volScalarField> Ha
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
+
+
+        // Specie transport properties
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Thermal conductivity [W/m/K]
+            virtual scalar kappa
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const;
+
+            //- Thermal conductivity [W/m/K]
+            virtual tmp<volScalarField> kappa
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const;
 
 
     //- Return

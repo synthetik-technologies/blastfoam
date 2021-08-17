@@ -123,6 +123,14 @@ public:
             const label patchi
         ) const;
 
+        //- Dynamic viscosity [kg/m/s]
+        virtual tmp<volScalarField> mu
+        (
+            const label speciei,
+            const volScalarField& p,
+            const volScalarField& T
+        ) const;
+
         //- Return true if thermal conductivity is isotropic
         virtual bool isotropic() const
         {

@@ -87,7 +87,7 @@ Foam::radiationModels::absorptionEmissionModels::blastConstant::aCont
 
 
 Foam::scalar
-Foam::radiationModels::absorptionEmissionModels::blastConstant::aConti
+Foam::radiationModels::absorptionEmissionModels::blastConstant::cellaCont
 (
     const label celli,
     const label bandI
@@ -114,7 +114,7 @@ Foam::radiationModels::absorptionEmissionModels::blastConstant::eCont
 
 
 Foam::scalar
-Foam::radiationModels::absorptionEmissionModels::blastConstant::eConti
+Foam::radiationModels::absorptionEmissionModels::blastConstant::celleCont
 (
     const label celli,
     const label bandI
@@ -139,9 +139,8 @@ Foam::radiationModels::absorptionEmissionModels::blastConstant::ECont
 }
 
 
-
 Foam::scalar
-Foam::radiationModels::absorptionEmissionModels::blastConstant::EConti
+Foam::radiationModels::absorptionEmissionModels::blastConstant::cellECont
 (
     const label celli,
     const label bandI

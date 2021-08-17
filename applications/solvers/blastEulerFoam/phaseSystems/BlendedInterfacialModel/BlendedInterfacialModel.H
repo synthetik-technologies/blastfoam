@@ -194,7 +194,7 @@ public:
         ) const;
 
         //- Return the blended force coefficient
-        scalar Ki
+        scalar cellK
         (
             const label,
             const label nodei = -1,
@@ -218,7 +218,7 @@ public:
 
         //- Return the blended force for a cell
         template<class Type>
-        Type Fi
+        Type cellF
         (
             const label,
             const label nodei = -1,
@@ -241,7 +241,7 @@ public:
 
 
         //- Return the blended diffusivity for a cell
-        scalar Di
+        scalar cellD
         (
             const label,
             const label nodei = -1,
@@ -258,7 +258,7 @@ public:
 
 
         //- Return the blended mass transfer rate for a cell
-        scalar dmdti
+        scalar celldmdt
         (
             const label,
             const label nodei = -1,

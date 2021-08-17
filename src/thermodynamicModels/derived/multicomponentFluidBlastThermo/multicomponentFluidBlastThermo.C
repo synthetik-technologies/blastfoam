@@ -120,10 +120,8 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::updateRho
         (
             "rhoNew",
             dimDensity,
-            &Thermo::thermoType::initializeRho,
+            &Thermo::thermoType::rhoPT,
             p,
-            this->rho_,
-            this->e_,
             this->T_
         )
     );
@@ -241,7 +239,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::Gamma(const label patchi) const
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentFluidBlastThermo<Thermo>::Gammai(const label celli) const
+Foam::multicomponentFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 {
     return this->mixture_[celli].Gamma
     (
@@ -271,7 +269,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::pRhoT() const
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
+Foam::multicomponentFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
 {
     return this->mixture_[celli].p
     (
@@ -284,7 +282,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::pRhoTi(const label celli) const
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
+Foam::multicomponentFluidBlastThermo<Thermo>::celldpdRho(const label celli) const
 {
     return this->mixture_[celli].dpdRho
     (
@@ -297,7 +295,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::dpdRhoi(const label celli) const
 
 template<class Thermo>
 Foam::scalar
-Foam::multicomponentFluidBlastThermo<Thermo>::dpdei(const label celli) const
+Foam::multicomponentFluidBlastThermo<Thermo>::celldpde(const label celli) const
 {
     return this->mixture_[celli].dpde
     (
@@ -330,7 +328,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::calce
 
 template<class Thermo>
 Foam::tmp<Foam::volScalarField>
-Foam::multicomponentFluidBlastThermo<Thermo>::mu() const
+Foam::multicomponentFluidBlastThermo<Thermo>::calcMu() const
 {
     return this->volScalarFieldProperty
     (
@@ -342,5 +340,28 @@ Foam::multicomponentFluidBlastThermo<Thermo>::mu() const
         this->T_
     );
 }
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::mu
+(
+    const label speciei,
+    const volScalarField& p,
+    const volScalarField& T
+) const
+{
+    return this->volScalarFieldSpecieProperty
+    (
+        speciei,
+        "mu",
+        dimensionSet(1, -1, -1, 0, 0),
+        &Thermo::thermoType::mu,
+        this->rho_,
+        this->e_,
+        T
+    );
+}
+
 
 // ************************************************************************* //

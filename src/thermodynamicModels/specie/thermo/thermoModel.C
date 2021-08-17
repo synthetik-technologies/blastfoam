@@ -90,21 +90,19 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
 
 
 template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::initializeRho
+Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
 (
     const scalar p,
-    const scalar rho,
-    const scalar e,
     const scalar T
 ) const
 {
     //- Simple method to calculate initial density
     //  Should be modified to solve the 2D problem for
     //  density and internal energy
-    scalar Rhoest = max(1e-4, rho);
+    scalar Rhoest = 1.0;
     scalar Rhonew = Rhoest;
     scalar pNew = p;
-    scalar E = ThermoType::Es(Rhoest, e, T); //- Initial guess
+    scalar E = ThermoType::Es(Rhoest, 0.0, T); //- Initial guess
 
     int    iter = 0;
     do

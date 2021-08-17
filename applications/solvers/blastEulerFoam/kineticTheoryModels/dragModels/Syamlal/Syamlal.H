@@ -126,7 +126,7 @@ public:
         ) const;
 
         //- Drag coefficient
-        virtual scalar CdRei
+        virtual scalar cellCdRe
         (
             const label,
             const label nodei = -1,
@@ -134,7 +134,7 @@ public:
         ) const;
 
         //- The drag function used in the momentum equation
-        virtual scalar Ki
+        virtual scalar cellK
         (
             const label,
             const label nodei = -1,

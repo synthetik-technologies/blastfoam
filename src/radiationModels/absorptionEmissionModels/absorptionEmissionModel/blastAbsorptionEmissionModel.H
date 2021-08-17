@@ -113,21 +113,21 @@ public:
             // Absorption coefficient
 
                 //- Absorption coefficient (net) for celli
-                virtual scalar ai
+                virtual scalar cella
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Absorption coefficient for continuous phase
-                virtual scalar aConti
+                virtual scalar cellaCont
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Absorption coefficient for dispersed phase
-                virtual scalar aDispi
+                virtual scalar cellaDisp
                 (
                     const label celli,
                     const label bandI = 0
@@ -137,21 +137,21 @@ public:
             // Emission coefficient
 
                 //- Emission coefficient (net)
-                virtual scalar ei
+                virtual scalar celle
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Return emission coefficient for continuous phase
-                virtual scalar eConti
+                virtual scalar celleCont
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Return emission coefficient for dispersed phase
-                virtual scalar eDispi
+                virtual scalar celleDisp
                 (
                     const label celli,
                     const label bandI = 0
@@ -161,21 +161,21 @@ public:
             // Emission contribution
 
                 //- Emission contribution (net)
-                virtual scalar Ei
+                virtual scalar cellE
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Emission contribution for continuous phase
-                virtual scalar EConti
+                virtual scalar cellECont
                 (
                     const label celli,
                     const label bandI = 0
                 ) const;
 
                 //- Emission contribution for dispersed phase
-                virtual scalar EDispi
+                virtual scalar cellEDisp
                 (
                     const label celli,
                     const label bandI = 0

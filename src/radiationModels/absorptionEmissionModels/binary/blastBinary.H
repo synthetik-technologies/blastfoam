@@ -91,8 +91,23 @@ public:
                 //- Absorption coefficient for continuous phase
                 virtual tmp<volScalarField> aCont(const label bandI = 0) const;
 
+                //- Absorption coefficient for continuous phase
+                virtual scalar cellaCont
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
                 //- Absorption coefficient for dispersed phase
                 virtual tmp<volScalarField> aDisp(const label bandI = 0) const;
+
+                //- Absorption coefficient for dispersed phase
+                virtual scalar cellaDisp
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
 
 
             // Emission coefficient
@@ -100,8 +115,24 @@ public:
                 //- Emission coefficient for continuous phase
                 virtual tmp<volScalarField> eCont(const label bandI = 0) const;
 
+                //- Emission coefficient for continuous phase
+                virtual scalar celleCont
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+
                 //- Emission coefficient for dispersed phase
                 virtual tmp<volScalarField> eDisp(const label bandI = 0) const;
+
+                //- Emission coefficient for dispersed phase
+                virtual scalar celleDisp
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
 
 
             // Emission contribution
@@ -110,7 +141,23 @@ public:
                 virtual tmp<volScalarField> ECont(const label bandI = 0) const;
 
                 //- Emission contribution for continuous phase
+                virtual scalar cellECont
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
+
+                //- Emission contribution for dispersed phase
                 virtual tmp<volScalarField> EDisp(const label bandI = 0) const;
+
+                //- Emission contribution for continuous phase
+                virtual scalar cellEDisp
+                (
+                    const label celli,
+                    const label bandI = 0
+                ) const;
+
 };
 
 

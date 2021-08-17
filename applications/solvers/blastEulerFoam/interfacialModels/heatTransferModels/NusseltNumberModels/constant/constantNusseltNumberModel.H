@@ -83,9 +83,17 @@ public:
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
+        //- Nusselt number
         tmp<volScalarField> Nu
         (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
+        //- Nusselt number for cell
+        scalar cellNu
+        (
+            const label,
             const label nodei = -1,
             const label nodej = -1
         ) const;

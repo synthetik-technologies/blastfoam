@@ -76,4 +76,14 @@ Foam::NusseltNumberModels::constant::Nu
 }
 
 
+Foam::scalar Foam::NusseltNumberModels::constant::cellNu
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    return Nu_.value();
+}
+
 // ************************************************************************* //

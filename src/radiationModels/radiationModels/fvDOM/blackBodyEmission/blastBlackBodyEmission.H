@@ -131,7 +131,7 @@ public:
             ) const;
 
             //- Proportion of total energy at T from lambda1 to lambda2
-            scalar deltaLambdaTi
+            scalar deltaLambdaT
             (
                 const scalar& T,
                 const Vector2D<scalar>& band
@@ -145,7 +145,7 @@ public:
             ) const;
 
             //- Integral energy at T from lambda1 to lambda2
-            scalar EbDeltaLambdaTi
+            scalar EbDeltaLambdaT
             (
                 const scalar& T,
                 const Vector2D<scalar>& band

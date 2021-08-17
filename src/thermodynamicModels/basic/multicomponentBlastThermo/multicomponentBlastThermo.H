@@ -42,6 +42,8 @@ SourceFiles
 
 #include "basicBlastThermo.H"
 #include "PtrListDictionary.H"
+#include "basicSpecieMixture.H"
+#include "fvScalarMatrix.H"
 #include "speciesTable.H"
 
 namespace Foam
@@ -53,42 +55,66 @@ namespace Foam
 
 class multicomponentBlastThermo
 :
-    private integrationSystem
+    public basicSpecieMixture
 {
 //- Private data
 
-    // Const reference to the mesh
-    const fvMesh& mesh_;
-
-    //- Names of phase
+    //- Name of the phase
     word phaseName_;
 
     //- Name of master thermo class
     word masterName_;
 
+
 protected:
 //- Protected data
-
-    //- Name of species
-    speciesTable species_;
-
-    //- Mass fractions
-    PtrList<volScalarField> Ys_;
 
     //- Mass transfer rates passed from an external source
     PtrListDictionary<volScalarField> massTransferRates_;
 
-    //- Index of inert specie
-    label inertIndex_;
-
-    //- List of active species
-    List<bool> active_;
+    //- Sources to solve implicitly
+    PtrListDictionary<fvScalarMatrix> implicitSources_;
 
     //- Name of flux
     UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
     //- Name of mass
     UautoPtr<const volScalarField> alphaRhoPtr_;
+
+    class integrator
+    :
+        public integrationSystem
+    {
+    // Private data
+        const fvMesh& mesh_;
+        PtrList<volScalarField>& Y_;
+        PtrListDictionary<volScalarField>& massTransferRates_;
+        PtrListDictionary<fvScalarMatrix>& implicitSources_;
+        const List<bool>& active_;
+        const volScalarField& alphaRho_;
+        const surfaceScalarField& alphaRhoPhi_;
+
+    public:
+        integrator
+        (
+            const fvMesh& mesh,
+            PtrList<volScalarField>& Y,
+            PtrListDictionary<volScalarField>& massTransferRates,
+            PtrListDictionary<fvScalarMatrix>& implicitSources,
+            const List<bool>& active,
+            const word& alphaRhoName,
+            const word& alphaRhoPhiName
+        );
+
+        virtual ~integrator();
+
+        virtual void update();
+        virtual void solve();
+        virtual void postUpdate();
+    };
+
+    autoPtr<integrator> integratorPtr_;
+
 
 
 public:
@@ -117,101 +143,185 @@ public:
     virtual ~multicomponentBlastThermo();
 
 
+    virtual const word& phaseName() const
+    {
+        return phaseName_;
+    }
+
     //- ODE functions
 
         //- Initialize models
         virtual void initializeModels();
 
+        //- Pre update step
+        virtual void update();
+
         //- Solve sub-step stepi
         virtual void solve();
 
+        //- Post update
+        virtual void postUpdate();
+
         //- Add an external change to a thermodynamic field if present
         //  i.e. mass transfer
-        virtual void addDelta(const word& name, const volScalarField& delta);
+        virtual void addDelta(const word& name, tmp<volScalarField>& delta);
+
+        //- Add an external change to a thermodynamic field if present
+        //  i.e. mass transfer
+        virtual void addSource(const word& name, tmp<fvScalarMatrix>& source);
 
 
     // Access
 
-        //- Return the table of species
-        virtual speciesTable species() const
-        {
-            return species_;
-        }
+        // Specie properties
 
-        //- Does the mixture include this specie?
-        virtual bool contains(const word& specieName) const
-        {
-            return species_[specieName];
-        }
+            //- Molecular weight of the given specie [kg/kmol]
+            virtual scalar Wi(const label speciei) const = 0;
 
-        //- Return true for active species
-        inline bool active(label speciei) const;
-
-        //- Return the bool list of active species
-        inline const List<bool>& active() const;
-
-        //- Set speciei active
-        inline void setActive(label speciei);
-
-        //- Set speciei inactive
-        inline void setInactive(label speciei);
-
-        //- Return the mass-fraction fields
-        inline PtrList<volScalarField>& Ys();
-
-        //- Return the const mass-fraction fields
-        inline const PtrList<volScalarField>& Ys() const;
-
-        //- Return the mass-fraction field for a specie given by index
-        inline volScalarField& Y(const label i);
-
-        //- Return the const mass-fraction field for a specie given by index
-        inline const volScalarField& Y(const label i) const;
-
-        //- Return the mass-fraction field for a specie given by name
-        inline volScalarField& Y(const word& specieName);
-
-        //- Return the const mass-fraction field for a specie given by name
-        inline const volScalarField& Y(const word& specieName) const;
-
-        //- Return the name of the thermo physics
-        virtual word thermoName() const = 0;
+            //- Enthalpy of formation [J/kg]
+            virtual scalar Hf(const label speciei) const = 0;
 
 
-        //- Return species properties
+        // Specie thermo properties
 
-            //- Return molecular weight
-            virtual tmp<volScalarField> specieW(const word& s) const = 0;
+            //- Density [kg/m^3]
+            virtual scalar rho
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
 
-            //- Return molecular weight
-            virtual scalar specieWi(const word& s, const label celli) const = 0;
+            //- Density [kg/m^3]
+            virtual tmp<volScalarField> rho
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
 
-            //- Mie Gruniesen coefficient
-            virtual tmp<volScalarField> specieGamma(const word& s) const = 0;
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual scalar Cp
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
 
-            //- Mie Gruniesen coefficient for a cell
-            virtual scalar specieGammai(const word& s, const label celli) const = 0;
+            //- Heat capacity at constant pressure [J/kg/K]
+            virtual tmp<volScalarField> Cp
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
 
-            //- Heat capacity at constant pressure of mixture [J/kg/K]
-            virtual tmp<volScalarField> specieCp(const word& s) const = 0;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual scalar HE
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
 
-            //- Heat capacity at constant pressure of mixture for a cell [J/kg/K]
-            virtual scalar specieCpi(const word& s, const label celli) const = 0;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> HE
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const = 0;
 
-            //- Heat capacity at constant volume of mixture [J/kg/K]
-            virtual tmp<volScalarField> specieCv(const word& s) const = 0;
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<volScalarField> HE
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
 
-            //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
-            virtual scalar specieCvi(const word& s, const label celli) const = 0;
+            //- Sensible enthalpy [J/kg]
+            virtual scalar Hs
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
 
-            //- Specific heat ratio
-            virtual tmp<volScalarField> specieCpByCv(const word& s) const = 0;
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<scalarField> Hs
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const = 0;
 
-            //- Heat of formation
-            virtual tmp<volScalarField> specieHf(const word& s) const = 0;
+            //- Sensible enthalpy [J/kg]
+            virtual tmp<volScalarField> Hs
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
 
-            //- Heat of formation
-            virtual tmp<volScalarField> specieFlameT(const word& s) const = 0;
+            //- Absolute enthalpy [J/kg]
+            virtual scalar Ha
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
+
+            //- Enthalpy/Internal energy [J/kg]
+            virtual tmp<scalarField> Ha
+            (
+                const label speciei,
+                const scalarField& p,
+                const scalarField& T
+            ) const = 0;
+
+            //- Absolute enthalpy [J/kg]
+            virtual tmp<volScalarField> Ha
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
+
+
+        // Specie transport properties
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual scalar mu
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
+
+            //- Dynamic viscosity [kg/m/s]
+            virtual tmp<volScalarField> mu
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
+
+            //- Thermal conductivity [W/m/K]
+            virtual scalar kappa
+            (
+                const label speciei,
+                const scalar p,
+                const scalar T
+            ) const = 0;
+
+            //- Thermal conductivity [W/m/K]
+            virtual tmp<volScalarField> kappa
+            (
+                const label speciei,
+                const volScalarField& p,
+                const volScalarField& T
+            ) const = 0;
 };
 
 

@@ -72,4 +72,16 @@ Foam::NusseltNumberModels::GelperinEpstein::Nu
 }
 
 
+Foam::scalar Foam::NusseltNumberModels::GelperinEpstein::cellNu
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    scalar Pr(pair_.cellPr(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    return 0.4*pow(Re, 2.0/3.0)*pow(Pr, 1.0/3.0);
+}
+
 // ************************************************************************* //

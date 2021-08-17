@@ -164,13 +164,13 @@ public:
             virtual tmp<volScalarField> pRhoT() const;
 
             //- Calculate pressure for cell [Pa]
-            virtual scalar pRhoTi(const label celli) const;
+            virtual scalar cellpRhoT(const label celli) const;
 
             //- Derivative of pressure w.r.t density for cel
-            virtual scalar dpdRhoi(const label celli) const;
+            virtual scalar celldpdRho(const label celli) const;
 
             //- Derivative of pressure w.r.t internal energy for cell
-            virtual scalar dpdei(const label celli) const;
+            virtual scalar celldpde(const label celli) const;
 
             //- Recompute the density
             virtual void updateRho(const volScalarField&);
@@ -188,7 +188,7 @@ public:
             virtual tmp<scalarField> Gamma(const label patchi) const;
 
             //- Gamma = dpde for cell []
-            virtual scalar Gammai(const label celli) const;
+            virtual scalar cellGamma(const label celli) const;
 
 
         //- Thermodynamic and transport functions
@@ -306,7 +306,7 @@ public:
             ) const;
 
             //- Temperature from enthalpy/internal energy for celli
-            virtual scalar THEi
+            virtual scalar cellTHE
             (
                 const scalar he,
                 const scalar T0,
@@ -324,7 +324,7 @@ public:
             ) const;
 
             //- Heat capacity at constant pressure for a cell [J/kg/K]
-            virtual scalar Cpi(const label celli) const;
+            virtual scalar cellCp(const scalar, const label) const;
 
             //- Heat capacity at constant volume [J/kg/K]
             virtual tmp<volScalarField> Cv() const;
@@ -337,7 +337,7 @@ public:
             ) const;
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
-            virtual scalar Cvi(const label celli) const;
+            virtual scalar cellCv(const scalar, const label) const;
 
             //- Heat capacity at constant pressure/volume [J/kg/K]
             virtual tmp<volScalarField> Cpv() const;
@@ -356,7 +356,13 @@ public:
             virtual tmp<scalarField> W(const label patchi) const;
 
             //- Molecular weight for cell [kg/kmol]
-            virtual scalar Wi(const label celli) const;
+            virtual scalar cellW(const label celli) const;
+
+
+        // Access to transport state variables
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            virtual tmp<volScalarField> calcMu() const;
 
 
         //- Read residual values
