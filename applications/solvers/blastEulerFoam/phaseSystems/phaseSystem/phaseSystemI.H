@@ -86,7 +86,19 @@ inline const Foam::fvModels& Foam::phaseSystem::models() const
 }
 
 
+inline Foam::fvModels& Foam::phaseSystem::models()
+{
+    return fvModels_;
+}
+
+
 inline const Foam::fvConstraints& Foam::phaseSystem::constraints() const
+{
+    return fvConstraints_;
+}
+
+
+inline Foam::fvConstraints& Foam::phaseSystem::constraints()
 {
     return fvConstraints_;
 }

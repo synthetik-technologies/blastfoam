@@ -680,8 +680,8 @@ Foam::phaseSystem::phaseSystem
 
     kineticTheoryPtr_(NULL),
     polydisperseKineticTheory_(false),
-    fvModels_(fvModels::New(mesh)),
-    fvConstraints_(fvConstraints::New(mesh))
+    fvModels_(fvModels::New(const_cast<fvMesh&>(mesh))),
+    fvConstraints_(fvConstraints::New(const_cast<fvMesh&>(mesh)))
 {
     forAll(phaseModels_, phasei)
     {

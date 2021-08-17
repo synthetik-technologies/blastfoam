@@ -293,10 +293,10 @@ protected:
             mDotTable mDots_;
 
         //- fvModels
-        const fvModels& fvModels_;
+        fvModels& fvModels_;
 
         //- fvConstraints
-        const fvConstraints& fvConstraints_;
+        fvConstraints& fvConstraints_;
 
 
     // Private member functions
@@ -551,11 +551,17 @@ public:
             //  An error is generated if the system is not two-phase
             inline const phaseModel& otherPhase(const phaseModel& phase) const;
 
-            //- Access fvOptions
+            //- Return fvOptions
             inline const fvModels& models() const;
+
+            //- Access fvOptions
+            inline fvModels& models();
 
             //- Return fvOptions
             inline const fvConstraints& constraints() const;
+
+            //- Access fvOptions
+            inline fvConstraints& constraints();
 };
 
 
