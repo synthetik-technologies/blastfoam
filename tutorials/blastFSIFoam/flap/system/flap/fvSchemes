@@ -30,7 +30,7 @@ divSchemes
     default none;
     div(sigma)     Gauss linear;
     div(sigmaD)     Gauss linear;
-    div((impK*grad(DD))) Gauss linear;
+    div((impK*grad(D))) Gauss linear;
 }
 
 gradSchemes

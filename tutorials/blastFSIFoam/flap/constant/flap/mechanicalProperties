@@ -19,16 +19,15 @@ planeStress off;
 thermalStress off;
 compactNormalStress off;
 
-E
-{
-    type    uniform;
-    value   200e9;
-}
-nu
-{
-    type    uniform;
-    value   0.3;
-}
+mechanical
+(
+    wall
+    {
+        type linearElastic;
+        E   200e9;
+        nu  0.3;
+    }
+);
 
 
 // ************************************************************************* //

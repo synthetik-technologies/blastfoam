@@ -168,45 +168,24 @@ void Foam::errorEstimator::normalize(volScalarField& error)
     labelList map;
     forAll(funcs, i)
     {
-        if (isA<functionObjects::timeControl>(funcs[i]))
+        vectorField pts;
+        if (isA<probes>(funcs[i]))
         {
-            const functionObjects::timeControl& tc
-            (
-                dynamicCast<const functionObjects::timeControl>(funcs[i])
-            );
-            bool sameRegion = true;
-//             const dictionary& dict = tc.dict();
-//             if (dict.found("region"))
-//             {
-//                 word regionName = dict.lookup<word>("region");
-//                 sameRegion = regionName == error_.mesh().name();
-//             }
+            const probes& p(refCast<const probes>(funcs[i]));
+            pts = p;
 
-            if (isA<probes>(tc.filter()) && sameRegion)
+        }
+        if (isA<blastProbes>(funcs[i]))
+        {
+            const blastProbes& p(refCast<const blastProbes>(funcs[i]));
+            pts = p;
+        }
+        forAll(pts, j)
+        {
+            label celli = mesh_.findCell(pts[j]);
+            if (celli >= 0)
             {
-                const probes& p(refCast<const probes>(tc.filter()));
-                const labelList& cells(p.elements());
-                forAll(cells, j)
-                {
-                    label celli = cells[j];
-                    if (celli >= 0)
-                    {
-                        error[celli] = 1.0;
-                    }
-                }
-            }
-            if (isA<blastProbes>(tc.filter()) && sameRegion)
-            {
-                const blastProbes& p(refCast<const blastProbes>(tc.filter()));
-                const labelList& cells(p.elements());
-                forAll(cells, j)
-                {
-                    label celli = cells[j];
-                    if (celli >= 0)
-                    {
-                        error[celli] = 1.0;
-                    }
-                }
+                error[celli] = 1.0;
             }
         }
     }

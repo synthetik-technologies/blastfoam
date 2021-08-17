@@ -15,9 +15,9 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel linearElastic;
+solidModel linearGeometryTotalDisplacement;
 
-linearElasticCoeffs
+linearGeometryTotalDisplacementCoeffs
 {
     nCorrectors         100;
     solutionTolerance   1e-06;
