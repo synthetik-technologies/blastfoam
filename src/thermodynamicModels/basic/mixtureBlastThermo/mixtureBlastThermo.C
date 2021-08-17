@@ -65,7 +65,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->phaseName()),
+            IOobject::groupName(psiName, BasicThermo::phaseName()),
             this->rho_.mesh(),
             psiDim
         )
@@ -115,7 +115,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::volScalarFieldSpecieProperty
     (
         volScalarField::New
         (
-            IOobject::groupName(psiName, this->phaseName()),
+            IOobject::groupName(psiName, BasicThermo::phaseName()),
             this->rho_.mesh(),
             psiDim
         )
