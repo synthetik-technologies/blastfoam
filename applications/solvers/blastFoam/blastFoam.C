@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        models.preUpdateMesh();
+
         //- Refine the mesh
         mesh.refine();
 
@@ -73,6 +75,8 @@ int main(int argc, char *argv[])
 
         //- Decode to get new values of non-conservative variables
         fluid->decode();
+
+        models.correct();
 
         //- Clear the flux scheme
         fluid->flux().clear();

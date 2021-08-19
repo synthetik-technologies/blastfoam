@@ -25,3 +25,4 @@ const volScalarField& T = fluid->T();
 const surfaceScalarField& phi = fluid->phi();
 fluid->update();
 
+fvModels& models(fvModels::New(mesh));

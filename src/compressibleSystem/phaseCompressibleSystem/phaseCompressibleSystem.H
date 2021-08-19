@@ -45,6 +45,8 @@ SourceFiles
 #include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 
 namespace Foam
@@ -136,6 +138,8 @@ protected:
         //- Solution directions
         vector solutionDs_;
 
+        const fvModels& models_;
+        const fvConstraints& constraints_;
 
         //- Allocate models
         virtual void setModels();

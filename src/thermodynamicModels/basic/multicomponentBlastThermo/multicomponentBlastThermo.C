@@ -137,7 +137,9 @@ Foam::multicomponentBlastThermo::integrator::integrator
     implicitSources_(implicitSources),
     active_(active),
     alphaRho_(mesh_.lookupObject<volScalarField>(alphaRhoName)),
-    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName))
+    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName)),
+    models_(fvModels::New(mesh)),
+    constraints_(fvConstraints::New(mesh))
 {}
 
 
@@ -334,11 +336,17 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
               - fvm::ddt(residualAlphaRho, Yi)
              ==
                 implicitSources_[i]
+              + models_.source(alphaRho_, Yi)
             );
 
             YEqn.relax();
+
+            constraints_.constrain(YEqn);
+
             YEqn.solve("Yi");
             implicitSources_[i].negate();
+
+            constraints_.constrain(Yi);
         }
     }
 }

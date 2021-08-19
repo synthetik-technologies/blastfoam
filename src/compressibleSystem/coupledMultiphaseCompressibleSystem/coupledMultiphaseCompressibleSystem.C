@@ -177,75 +177,11 @@ void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
     //- Store value of density so volume fraction can be included
     volScalarField rho(rho_);
 
-    // Modify for turbulence
-    rho_ = alphaRho_;
-    rho_.oldTime() = alphaRho_.oldTime();
 
-    if
-    (
-        dragSource_.valid()
-     || extESource_.valid()
-     || turbulence_.valid()
-    )
-    {
-        // Solve momentum
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        );
-
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_();
-        }
-
-        if (turbulence_.valid())
-        {
-            //- Volume fraction is include in stress since we modify the density
-            UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rho_.mesh().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
-        }
-        UEqn.solve();
-        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
-
-        // Solve thermal energy diffusion
-        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-        );
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_();
-        }
-        if (turbulence_.valid())
-        {
-            eEqn -= fvm::laplacian
-                (
-                    volumeFraction_*thermophysicalTransport_->alphaEff(),
-                    e()
-                );
-        }
-        eEqn.solve();
-
-        rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-    }
-
-    if (turbulence_.valid())
-    {
-        turbulence_->correct();
-    }
+    phaseCompressibleSystem::postUpdate();
 
     //- Reset density to the correct field
     rho_ = rho;
-
-    this->thermo().postUpdate();
 }
 
 

@@ -193,7 +193,9 @@ Foam::phaseCompressibleSystem::phaseCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
     TLow_("TLow", dimTemperature, 0.0),
-    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
+    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0),
+    models_(fvModels::New(mesh)),
+    constraints_(fvConstraints::New(mesh))
 {
     thermoPtr_->validate("phaseCompressibleSystem", "e");
 
@@ -271,56 +273,75 @@ void Foam::phaseCompressibleSystem::postUpdate()
             );
     }
 
-    if
+    // Solve mass
+    fvScalarMatrix rhoEqn
     (
-        dragSource_.valid()
-     || extESource_.valid()
-     || turbulence_.valid()
-    )
+        fvm::ddt(rho_) - fvc::ddt(rho_)
+     ==
+        models_.source(rho_)
+    );
+
+    constraints_.constrain(rhoEqn);
+
+    rhoEqn.solve();
+
+    constraints_.constrain(rho_);
+
+
+
+    // Solve momentum
+    fvVectorMatrix UEqn
+    (
+        fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+     ==
+        models_.source(rho_, U_)
+    );
+
+    if (dragSource_.valid())
     {
-        // Solve momentum
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        );
-
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_;
-        }
-
-        if (turbulence_.valid())
-        {
-            UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rho_.mesh().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
-        }
-        UEqn.solve();
-        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
-
-        // Solve thermal energy diffusion
-        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-        );
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_;
-        }
-        if (turbulence_.valid())
-        {
-            eEqn += thermophysicalTransport_->divq(e_);
-        }
-        eEqn.solve();
-
-        rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
+        UEqn -= dragSource_;
     }
+
+    if (turbulence_.valid())
+    {
+        UEqn += turbulence_->divDevTau(U_);
+        rhoE_ +=
+            rho_.mesh().time().deltaT()
+            *fvc::div
+            (
+                fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
+                & fluxScheme_->Uf()
+            );
+    }
+    constraints_.constrain(UEqn);
+    UEqn.solve();
+
+    constraints_.constrain(U_);
+
+    // Solve thermal energy diffusion
+    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+    fvScalarMatrix eEqn
+    (
+        fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
+     ==
+        models_.source(rho_, e_)
+    );
+    if (extESource_.valid())
+    {
+        eEqn -= extESource_;
+    }
+    if (turbulence_.valid())
+    {
+        eEqn += thermophysicalTransport_->divq(e_);
+    }
+    constraints_.constrain(eEqn);
+
+    eEqn.solve();
+
+    constraints_.constrain(e_);
+
+    rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     if (turbulence_.valid())
     {

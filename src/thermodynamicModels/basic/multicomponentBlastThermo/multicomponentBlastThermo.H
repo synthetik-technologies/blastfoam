@@ -45,6 +45,8 @@ SourceFiles
 #include "basicSpecieMixture.H"
 #include "fvScalarMatrix.H"
 #include "speciesTable.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 namespace Foam
 {
@@ -93,6 +95,8 @@ protected:
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;
+        const fvModels& models_;
+        const fvConstraints& constraints_;
 
     public:
         integrator

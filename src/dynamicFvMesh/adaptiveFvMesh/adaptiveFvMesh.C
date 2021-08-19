@@ -50,6 +50,7 @@ License
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 #include "RefineBalanceMeshObject.H"
+#include "parcelCloud.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -1687,6 +1688,12 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
      && time().timeIndex() % refineInterval == 0
     )
     {
+        HashTable<parcelCloud*> clouds(this->objectRegistry::lookupClass<parcelCloud>());
+        forAllIter(HashTable<parcelCloud*>, clouds, iter)
+        {
+            iter()->storeGlobalPositions();
+        }
+
         label maxCells
         (
             refineDict.lookupOrDefault("maxCells", labelMax)
