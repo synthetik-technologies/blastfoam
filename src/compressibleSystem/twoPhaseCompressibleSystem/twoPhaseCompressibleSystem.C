@@ -109,8 +109,9 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     )
 {
     rho_ = alphaRho1_ + alphaRho2_;
-    this->setModels();
+
     thermo_.initializeModels();
+    this->setModels();
 
     encode();
 }

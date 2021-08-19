@@ -15,5 +15,4 @@ wclean $targetType functionObjects
 wclean $targetType atmosphereModels
 wclean $targetType solidModels
 
-wclean $targetType QBMM
 #------------------------------------------------------------------------------

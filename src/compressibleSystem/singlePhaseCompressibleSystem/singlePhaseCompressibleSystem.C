@@ -48,8 +48,8 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 :
     phaseCompressibleSystem(1, mesh)
 {
-    this->setModels();
     thermoPtr_->initializeModels();
+    this->setModels();
     encode();
 }
 

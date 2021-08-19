@@ -105,8 +105,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
         );
     }
 
-    this->setModels();
     thermoPtr_->initializeModels();
+    this->setModels();
 
     encode();
 }

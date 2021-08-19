@@ -165,7 +165,7 @@ void Foam::smoluchowskiJumpTFvPatchScalarField::updateCoeffs()
     const fluidThermo& thermo =
         db().lookupObject<fluidThermo>
         (
-            IOobject::groupName("basicThermo", internalField().group())
+            IOobject::groupName(basicThermo::dictName, internalField().group())
         );
     const label patchi = patch().index();
     const scalarField& pmu = thermo.mu(patchi);

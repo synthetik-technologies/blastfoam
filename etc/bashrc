@@ -51,42 +51,6 @@ export BLAST_APPBIN="$FOAM_USER_APPBIN"
 #export BLAST_LIBBIN="$FOAM_SITE_LIBBIN"
 #export BLAST_APPBIN="$FOAM_SITE_APPBIN"
 
-# OpenQBMM install directory (needs to be defined before here)
-if [ ! -n "$QBMM_INST_DIR" ] # not defined
-then
-# Set libraries and include paths to null
-export QBMM_LIBS=
-export BLAST_QBMM_LIBS=
-export QBMM_INC=
-export BLAST_QBMM_INC=
-
-elif [ ! -d $QBMM_INST_DIR ] # invalid directory
-then
-# Set libraries and include paths to null
-export QBMM_LIBS=
-export BLAST_QBMM_LIBS=
-export QBMM_INC=
-export BLAST_QBMM_INC=
-
-else
-# Set location of libraries and apps for OpenQBMM
-export QBMM_LIBBIN=$FOAM_USER_LIBBIN
-export QBMM_APPBIN=$FOAM_USER_APPBIN
-
-# Set OpenQBMM libraries to use in Make files
-export QBMM_LIBS="-L\$(QBMM_LIBBIN) -leigenSolver -lvandermonde -lquadratureNode -lmomentSets -lmomentInversion -lfieldMomentInversion -lquadratureApproximation -lmomentAdvection -lPDFTransportModel -lmixing -lpopulationBalance"
-
-# Set blastFoam OpenQBMM libraries
-export BLAST_QBMM_LIBS="-L\$(BLAST_LIBBIN) -lblastQBMM $QBMM_LIBS"
-
-
-# Set OpenQBMM include directories for use in Make files
-export QBMM_INC="-I\$(QBMM_INST_DIR)/src/eigenSolver/lnInclude -I\$(QBMM_INST_DIR)/src/mappedList -I\$(QBMM_INST_DIR)/src/mappedPtrList -I\$(QBMM_INST_DIR)/src/Vandermonde/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentSets/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentInversion/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/quadratureNode/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/moments -I\$(QBMM_INST_DIR)/src/quadratureMethods/fieldMomentInversion/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/quadratureApproximations/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/momentAdvection/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/PDFTransportModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/populationBalanceModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/mixingModels/lnInclude -I\$(QBMM_INST_DIR)/src/quadratureMethods/realizableOdeSolver"
-
-# Set blastFoam OpenQBMM include path
-export BLAST_QBMM_INC="-I\$(BLAST_DIR)/src/QBMM/lnInclude $QBMM_INC"
-fi
-
 export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
 
 #------------------------------------------------------------------------------

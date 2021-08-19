@@ -31,5 +31,4 @@ EXE_LIBS = \
     -lphaseCompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
-    -lblastSolidModels \
-    $(BLAST_QBMM_LIBS)
+    -lblastSolidModels

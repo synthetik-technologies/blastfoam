@@ -64,7 +64,6 @@ void Foam::phaseCompressibleSystem::setModels()
         );
     }
 
-
     IOobject radPropertiesIO
     (
         "radiationProperties",

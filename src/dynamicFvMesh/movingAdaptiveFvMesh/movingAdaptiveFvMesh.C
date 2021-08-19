@@ -29,7 +29,7 @@ License
 #include "mappedMovingPatchBase.H"
 #include "mappedMovingWallFvPatch.H"
 #include "displacementMotionSolver.H"
-#include "displacementComponentLaplacianFvMotionSolver.H"
+#include "componentDisplacementMotionSolver.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -89,16 +89,17 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
         }
-        else if (isA<displacementComponentLaplacianFvMotionSolver>(motionPtr_()))
+        else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
         {
-            displacementComponentLaplacianFvMotionSolver& dispMS =
-                dynamicCast<displacementComponentLaplacianFvMotionSolver>
-                (
-                    motionPtr_()
-                );
-            dispMS.points0() =
-                points().component(dispMS.cmpt())
-              - dispMS.pointDisplacement().primitiveField();
+            NotImplemented;
+//             componentDisplacementMotionSolver& dispMS =
+//                 dynamicCast<componentDisplacementMotionSolver>
+//                 (
+//                     motionPtr_()
+//                 );
+//             dispMS.points0() =
+//                 points().component(dispMS.cmpt())
+//               - dispMS.pointDisplacement().primitiveField();
         }
         return true;
     }
