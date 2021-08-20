@@ -285,7 +285,7 @@ public:
         // Fields derived from transport state variables
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> kappa() const;
+            virtual tmp<volScalarField> calcKappa() const;
 };
 
 

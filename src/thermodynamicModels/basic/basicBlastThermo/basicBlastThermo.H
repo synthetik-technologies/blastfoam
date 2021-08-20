@@ -45,7 +45,7 @@ SourceFiles
 #include "wordIOList.H"
 #include "integrationSystem.H"
 #include "regIOobject.H"
-#include "speciesTable.H"
+#include "OSspecific.H"
 
 namespace Foam
 {
@@ -150,6 +150,11 @@ public:
         word phasePropertyName(const word& n) const
         {
             return IOobject::groupName(n, name_);
+        }
+
+        static fileName templateDir()
+        {
+            return getEnv("BLAST_DIR")/"etc/codeTemplates";
         }
 
         //- Return the thermo type name given a dictionary
@@ -425,6 +430,10 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar cellW(const label) const = 0;
+
+
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> calcKappa() const = 0;
 
 
         //- Read residual values

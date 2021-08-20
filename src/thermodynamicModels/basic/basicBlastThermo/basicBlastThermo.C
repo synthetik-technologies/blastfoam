@@ -84,7 +84,7 @@ Foam::autoPtr<Foam::basicBlastThermo> Foam::basicBlastThermo::New
 )
 {
     dictionaryConstructorTable::iterator cstrIter =
-        lookupCstrIter<dictionaryConstructorTable>
+        lookupCstrIter<basicBlastThermo, dictionaryConstructorTable>
         (
             dict,
             dictionaryConstructorTablePtr_

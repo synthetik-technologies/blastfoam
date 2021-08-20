@@ -335,7 +335,7 @@ public:
         // Fields derived from transport state variables
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> kappa() const;
+            virtual tmp<volScalarField> calcKappa() const;
 
 
         // Specie properties
@@ -345,6 +345,9 @@ public:
 
             //- Enthalpy of formation [J/kg]
             virtual scalar Hf(const label speciei) const;
+
+            //- Flame temperature [K]
+            virtual scalar flameT(const label speciei) const;
 
 
         // Specie thermo properties

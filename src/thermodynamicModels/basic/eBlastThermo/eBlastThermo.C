@@ -683,7 +683,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::cellW(const label celli) const
 
 template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::kappa() const
+Foam::eBlastThermo<BasicThermo, ThermoType>::calcKappa() const
 {
     return volScalarFieldProperty
     (

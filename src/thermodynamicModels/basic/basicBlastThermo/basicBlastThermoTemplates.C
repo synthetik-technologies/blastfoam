@@ -50,12 +50,15 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
     if (cstrIter == tablePtr->end())
     {
         const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
-        const fileName BLAST_DIR(getEnv("BLAST_DIR"));
-        setEnv("FOAM_CODE_TEMPLATES", BLAST_DIR/"etc/codeTemplates", true);
+        fileName tempDir(Thermo::templateDir());
+        setEnv("FOAM_CODE_TEMPLATES", tempDir, true);
 
         const word type(thermoDict.lookup("type"));
         word compileType = type + Thermo::typeName.capitalise() + "BlastThermo";
-        Info<<compileType<<endl;
+
+        Info<< "Trying to compile based on "
+            << tempDir/compileType
+            << endl;
 
         if
         (
@@ -196,23 +199,10 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
     Table* tablePtr
 )
 {
-    return lookupCstrIter<Thermo, Table>
+    word state
     (
-        thermoDict,
-        tablePtr,
-        thermoDict.lookup<word>("state")
+        thermoDict.lookupOrDefault<word>("state", Thermo::typeName)
     );
-}
-
-
-template<class Thermo, class Table>
-typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
-(
-    const dictionary& thermoDict,
-    Table* tablePtr,
-    const word& state
-)
-{
     word type(thermoDict.lookup<word>("type"));
     word typeName(state + "<" + type + "<");
     word thermoTypeName;
@@ -276,8 +266,7 @@ Foam::autoPtr<Thermo> Foam::basicBlastThermo::New
         lookupCstrIter<Thermo, typename Thermo::dictionaryConstructorTable>
         (
             dict,
-            Thermo::dictionaryConstructorTablePtr_,
-            Thermo::typeName
+            Thermo::dictionaryConstructorTablePtr_
         );
 
     return autoPtr<Thermo>(cstrIter()(mesh, dict, phaseName, masterName));

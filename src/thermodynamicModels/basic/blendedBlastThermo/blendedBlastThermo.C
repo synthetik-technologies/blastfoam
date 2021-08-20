@@ -866,7 +866,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellW
 
 template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::kappa() const
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calcKappa() const
 {
     return blendedVolScalarFieldProperty
     (

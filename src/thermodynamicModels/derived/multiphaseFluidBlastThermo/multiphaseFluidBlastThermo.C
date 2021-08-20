@@ -117,9 +117,6 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
                 phaseName
             ).ptr()
         );
-        thermos_[phasei].read(dict.subDict(phaseIName));
-
-        residualAlpha_ = max(residualAlpha_, thermos_[phasei].residualAlpha());
 
         mu_ += volumeFractions_[phasei]*thermos_[phasei].calcMu();
 
@@ -174,7 +171,8 @@ void Foam::multiphaseFluidBlastThermo::read(const dictionary& dict)
 {
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].read(dict.subDict(thermos_[phasei].name()));
+        thermos_[phasei].read(dict.subDict(thermos_[phasei].phaseName()));
+        residualAlpha_ = max(residualAlpha_, thermos_[phasei].residualAlpha());
     }
 }
 
@@ -256,7 +254,7 @@ void Foam::multiphaseFluidBlastThermo::correct()
     T_.correctBoundaryConditions();
 
     normalise(mu_);
-    this->alpha_ = this->kappa()/this->Cp();
+    this->alpha_ = calcKappa()/Cp();
 }
 
 
@@ -953,6 +951,18 @@ Foam::multiphaseFluidBlastThermo::calcMu() const
     for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].calcMu();
+    }
+    return normalise(tmpF);
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::multiphaseFluidBlastThermo::calcKappa() const
+{
+    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].calcKappa());
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    {
+        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].calcKappa();
     }
     return normalise(tmpF);
 }

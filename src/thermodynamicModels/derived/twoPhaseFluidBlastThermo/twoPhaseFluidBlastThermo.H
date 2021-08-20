@@ -364,6 +364,9 @@ public:
             //- Dynamic viscosity of mixture [kg/m/s]
             virtual tmp<volScalarField> calcMu() const;
 
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> calcKappa() const;
+
 
         //- Read residual values
         virtual void read(const dictionary& dict);

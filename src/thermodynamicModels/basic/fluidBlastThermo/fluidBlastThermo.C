@@ -163,7 +163,7 @@ void Foam::fluidBlastThermo::correct()
     this->p().correctBoundaryConditions();
 
     this->mu_ = this->calcMu();
-    this->alpha_ = this->kappa()/this->Cp();
+    this->alpha_ = this->calcKappa()/this->Cp();
 }
 
 
@@ -192,6 +192,7 @@ Foam::tmp<Foam::scalarField> Foam::fluidBlastThermo::mu
 {
     return mu_.boundaryField()[patchi];
 }
+
 
 Foam::scalar Foam::fluidBlastThermo::cellnu
 (

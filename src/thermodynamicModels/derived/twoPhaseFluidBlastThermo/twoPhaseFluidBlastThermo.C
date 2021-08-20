@@ -229,7 +229,7 @@ void Foam::twoPhaseFluidBlastThermo::correct()
     mu_ =
         volumeFraction_*thermo1_->calcMu()
       + (1.0 - volumeFraction_)*thermo2_->calcMu();
-    this->alpha_ = this->kappa()/this->Cp();
+    this->alpha_ = this->calcKappa()/this->Cp();
 }
 
 
@@ -731,5 +731,14 @@ Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::calcMu() const
         volumeFraction_*thermo1_->calcMu()
       + (1.0 - volumeFraction_)*thermo2_->calcMu();
 }
+
+
+Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::calcKappa() const
+{
+    return
+        volumeFraction_*thermo1_->calcKappa()
+      + (1.0 - volumeFraction_)*thermo2_->calcKappa();
+}
+
 
 // ************************************************************************* //

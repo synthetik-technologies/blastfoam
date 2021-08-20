@@ -44,7 +44,7 @@ SourceFiles
 
 #include "integrationSystem.H"
 #include "basicThermo.H"
-#include "speciesTable.H"
+#include "OSspecific.H"
 
 namespace Foam
 {
@@ -101,6 +101,11 @@ public:
     //- Initialize models
     virtual void initializeModels() = 0;
 
+    static fileName templateDir()
+    {
+        return getEnv("BLAST_DIR")/"etc/codeTemplates";
+    }
+
     // Access functions
 
         //- Energy Source
@@ -146,6 +151,8 @@ public:
 
 
         // Fields derived from thermodynamic state variables
+
+            using basicThermo::implementation::he;
 
             //- Return enthalpy/Internal energy [J/kg]
             virtual const volScalarField& he() const;
@@ -194,6 +201,9 @@ public:
                 const label patchi
             ) const;
 
+            //- Flame temperature [k]
+            virtual tmp<volScalarField> flameT() const = 0;
+
             //- Return molecular weight
             virtual scalar cellW(const label) const = 0;
 
@@ -207,6 +217,9 @@ public:
 
             //- Kinematic viscosity [m^2/s]
             virtual tmp<volScalarField> nu() const = 0;
+
+            //- Thermal diffusivity for temperature of mixture [W/m/K]
+            virtual tmp<volScalarField> calcKappa() const = 0;
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
             virtual tmp<volScalarField> kappa() const;

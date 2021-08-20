@@ -185,6 +185,9 @@ public:
             //- Enthalpy of formation [J/kg]
             virtual scalar Hf(const label speciei) const = 0;
 
+            //- Flame temperature [K]
+            virtual scalar flameT(const label speciei) const = 0;
+
 
         // Specie thermo properties
 
