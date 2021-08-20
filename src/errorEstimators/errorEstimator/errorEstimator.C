@@ -30,6 +30,7 @@ License
 #include "timeControlFunctionObject.H"
 #include "probes.H"
 #include "blastProbes.H"
+#include "meshSizeObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -99,7 +100,8 @@ Foam::errorEstimator::errorEstimator
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
     upperUnrefine_(0.0),
-    maxLevel_(10),
+    maxLevel_(-1),
+    minDx_(-1),
     refineProbes_(dict.lookupOrDefault("refineProbes", true))
 {}
 
@@ -118,7 +120,17 @@ void Foam::errorEstimator::read(const dictionary& dict)
     lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
     upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
     upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
-    maxLevel_ = dict.lookup<label>("maxRefinement");
+
+    if (dict.found("minDx"))
+    {
+        minDx_ = dict.lookup<scalar>("minDx");
+        maxLevel_ = -1;
+    }
+    else
+    {
+        maxLevel_ = dict.lookup<label>("maxRefinement");
+        minDx_ = -1;
+    }
 }
 
 
@@ -193,7 +205,23 @@ void Foam::errorEstimator::normalize(volScalarField& error)
 
 Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
-    return labelList(mesh_.nCells(), maxLevel_);
+
+    if (maxLevel_ > 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
+    {
+        return labelList(mesh_.nCells(), maxLevel_);
+    }
+
+    const labelIOList& cellLevel(mesh_.lookupObject<labelIOList>("cellLevel"));
+    labelList maxLevel(mesh_.nCells(), 0);
+    const volScalarField& dx = meshSizeObject::New(mesh_).dx();
+    forAll(dx, celli)
+    {
+        if (dx[celli] > minDx_)
+        {
+            maxLevel[celli] = cellLevel[celli] + 1;
+        }
+    };
+    return maxLevel;
 }
 
 

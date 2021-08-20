@@ -61,6 +61,7 @@ lookupTables/lookupTable2D/lookupTable2D.C
 lookupTables/lookupTable1D/lookupTable1D.C
 
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
+meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
 

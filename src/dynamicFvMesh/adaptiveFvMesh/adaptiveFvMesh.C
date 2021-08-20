@@ -818,10 +818,12 @@ void Foam::adaptiveFvMesh::selectRefineCandidates
 Foam::labelList Foam::adaptiveFvMesh::selectRefineCells
 (
     const label maxCells,
-    const label maxRefinement,
+    const labelList& maxRefinement,
     const PackedBoolList& candidateCell
 ) const
 {
+    label maxLevel(error_->maxLevel());
+
     // Every refined cell causes 7 extra cells
     label nTotToRefine = (maxCells - globalData().nTotalCells()) / 7;
 
@@ -845,7 +847,7 @@ Foam::labelList Foam::adaptiveFvMesh::selectRefineCells
         {
             if
             (
-                cellLevel[celli] < maxRefinement
+                cellLevel[celli] < maxRefinement[celli]
              && candidateCell.get(celli)
              && (
                     unrefineableCell.empty()
@@ -860,7 +862,7 @@ Foam::labelList Foam::adaptiveFvMesh::selectRefineCells
     else
     {
         // Sort by error? For now just truncate.
-        for (label level = 0; level < maxRefinement; level++)
+        for (label level = 0; level < maxLevel; level++)
         {
             forAll(candidateCell, celli)
             {
@@ -901,6 +903,7 @@ Foam::labelList Foam::adaptiveFvMesh::selectRefineCells
 
     return consistentSet;
 }
+
 
 // YO- This is here only to preserve compatibility with the official release.
 //     It is not used by the refinement procedure, but some utilities such as
@@ -1708,25 +1711,25 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
                 << exit(FatalError);
         }
 
-        label maxRefinement = readLabel(refineDict.lookup("maxRefinement"));
+        //- Update coefficients
+        error_->read(refineDict);
 
-        if (maxRefinement == 0)
+        labelList maxRefinement(error_->maxRefinement());
+        label maxLevel(max(maxRefinement));
+        if (maxLevel == 0)
         {
             topoChanging(hasChanged);
 
             return false;
         }
-        else if (maxRefinement < 0)
+        else if (maxLevel < 0)
         {
             FatalErrorInFunction
-                << "Illegal maximum refinement level " << maxRefinement << nl
+                << "Illegal maximum refinement level " << maxLevel << nl
                 << "The maxRefinement setting in the dynamicMeshDict should"
                 << " be > 0." << nl
                 << exit(FatalError);
         }
-
-        //- Update coefficients
-        error_->read(refineDict);
 
         const scalar lowerRefineLevel = small;
         const scalar upperRefineLevel = great;
@@ -1775,7 +1778,7 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
                 selectRefineCells
                 (
                     maxCells,
-                    maxRefinement,
+                    error_->maxRefinement(),
                     refineCell
                 )
             );

@@ -34,6 +34,11 @@ void Foam::extendedNLevelGlobalCellToCellStencil::collectData
     List<List<Type>>& stencilFld
 ) const
 {
+    if (!mapPtr_.valid())
+    {
+        updateStencil();
+    }
+
     // 1. Construct cell data in compact addressing
     List<Type> flatFld(mapPtr_->constructSize(), Zero);
 

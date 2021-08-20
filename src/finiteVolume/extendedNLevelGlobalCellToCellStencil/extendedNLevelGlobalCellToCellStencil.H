@@ -36,7 +36,7 @@ SourceFiles
 #ifndef extendedNLevelGlobalCellToCellStencil_H
 #define extendedNLevelGlobalCellToCellStencil_H
 
-#include "RefineBalanceMeshObject.H"
+#include "MeshObject.H"
 #include "PackedBoolList.H"
 #include "labelPair.H"
 #include "globalIndex.H"
@@ -142,13 +142,21 @@ public:
 };
 
 
+class extendedNLevelGlobalCellToCellStencil;
+typedef MeshObject
+<
+    polyMesh,
+    Foam::MoveableMeshObject,
+    extendedNLevelGlobalCellToCellStencil
+> NLevelStencil;
+
 /*---------------------------------------------------------------------------*\
         Class extendedNLevelGlobalCellToCellStencil Declaration
 \*---------------------------------------------------------------------------*/
 
 class extendedNLevelGlobalCellToCellStencil
 :
-    public RefineMeshObject
+    public NLevelStencil
 {
 public:
 
@@ -161,16 +169,16 @@ public:
         label nLevels_;
 
         //- Global indexing
-        globalIndex gIndex_;
+        mutable globalIndex gIndex_;
 
         //- Map of neighbours (global indexing)
-        Map<cellStencil> stencilMap_;
+        mutable Map<cellStencil> stencilMap_;
 
         //- List of cellCell neighbours (global)
         //  Used for distributing
-        labelListList cellCells_;
+        mutable labelListList cellCells_;
 
-        autoPtr<mapDistribute> mapPtr_;
+        mutable autoPtr<mapDistribute> mapPtr_;
 
         //- Calculate the cells neighbours up to the kth level
         void addCellNeighbours
@@ -186,7 +194,7 @@ public:
         (
             const globalIndex& cfGlobalIndex,
             labelList& indices
-        );
+        ) const;
 
         //- Combine operator for labelLists
         class unionEqOp
@@ -218,7 +226,21 @@ public:
     // Member Functions
 
         //- Update after refining and balancing
-        virtual void updateObject();
+        virtual void updateStencil() const;
+
+        //- Callback for geometry motion
+        virtual bool movePoints()
+        {
+            mapPtr_.clear();
+            return true;
+        }
+
+        //- Update stencils. Return false if nothing changed.
+        virtual bool update()
+        {
+            mapPtr_.clear();
+            return true;
+        }
 
         //- Collect data across all processors
         template<class Type>
@@ -230,16 +252,28 @@ public:
 
         inline const globalIndex& globalNumbering() const
         {
+            if (!mapPtr_.valid())
+            {
+                updateStencil();
+            }
             return gIndex_;
         }
 
         inline const Map<cellStencil>& cellCellMap() const
         {
+            if (!mapPtr_.valid())
+            {
+                updateStencil();
+            }
             return stencilMap_;
         }
 
         inline const cellStencil& cellCell(const label celli) const
         {
+            if (!mapPtr_.valid())
+            {
+                updateStencil();
+            }
             return stencilMap_[gIndex_.toGlobal(celli)];
         }
 

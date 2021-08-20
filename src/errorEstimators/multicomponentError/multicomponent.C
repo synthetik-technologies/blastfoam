@@ -128,16 +128,21 @@ Foam::labelList Foam::errorEstimators::multicomponent::maxRefinement() const
     forAll(errors_, i)
     {
         const volScalarField& errori(errors_[i].error());
+        labelList maxCellLevel(errors_[i].maxRefinement());
         forAll(maxRefinement_, celli)
         {
-            if (errori[celli] > 0.5 && maxRefinement_[celli] < errors_[i].maxLevel())
+            if
+            (
+                errori[celli] > 0.5
+             && maxRefinement_[celli] < maxCellLevel[celli]
+            )
             {
-                maxRefinement_[celli] = errors_[i].maxLevel();
+                maxRefinement_[celli] = maxCellLevel[celli];
                 const labelList& cellCells(mesh_.cellCells()[celli]);
                 forAll(cellCells, j)
                 {
                     label cellj = cellCells[j];
-                    maxRefinement_[cellj] = errors_[i].maxLevel();
+                    maxRefinement_[cellj] = maxCellLevel[celli];
                 }
 
             }

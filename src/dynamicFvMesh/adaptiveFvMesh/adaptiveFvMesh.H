@@ -161,16 +161,6 @@ protected:
 
         // Selection of cells to un/refine
 
-            //- Calculates approximate value for refinement level so
-            //  we don't go above maxCell
-            scalar getRefineLevel
-            (
-                const label maxCells,
-                const label maxRefinement,
-                const scalar refineLevel,
-                const scalarField&
-            ) const;
-
             //- Get per cell max of connected point
             scalarField maxPointField(const scalarField&) const;
 
@@ -199,7 +189,7 @@ protected:
             virtual labelList selectRefineCells
             (
                 const label maxCells,
-                const label maxRefinement,
+                const labelList& maxRefinement,
                 const PackedBoolList& candidateCell
             ) const;
 

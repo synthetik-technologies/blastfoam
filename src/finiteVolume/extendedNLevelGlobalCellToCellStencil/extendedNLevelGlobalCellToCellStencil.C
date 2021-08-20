@@ -144,7 +144,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil::removeGlobalFaces
 (
     const globalIndex& oldGlobalIndex,
     labelList& indices
-)
+) const
 {
     label ni = 0;
     forAll(indices, i)
@@ -168,20 +168,14 @@ Foam::extendedNLevelGlobalCellToCellStencil::extendedNLevelGlobalCellToCellStenc
     const label nLevels
 )
 :
-    RefineMeshObject
-    (
-        "globalCellStencil",
-        mesh,
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
-    ),
+    NLevelStencil(mesh),
     mesh_(mesh),
     nLevels_(nLevels),
     gIndex_(mesh.nCells()),
     stencilMap_(),
     cellCells_(mesh.nCells())
 {
-    updateObject();
+    updateStencil();
 }
 
 
@@ -193,7 +187,7 @@ Foam::extendedNLevelGlobalCellToCellStencil::~extendedNLevelGlobalCellToCellSten
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::extendedNLevelGlobalCellToCellStencil::updateObject()
+void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
 {
     gIndex_ = globalIndex(mesh_.nCells());
     cellCells_.resize(mesh_.nCells());

@@ -81,6 +81,9 @@ protected:
         //- Optional specification of max level for an error estimator
         label maxLevel_;
 
+        //- Optional specification of smallest cell
+        scalar minDx_;
+
         //- Are probes refined
         Switch refineProbes_;
 
