@@ -123,6 +123,16 @@ protected:
             const Args& ... args
         ) const;
 
+        //- Return a scalar of the given property on a cell
+        template<class Method1, class Method2, class ... Args>
+        scalar blendedCellProperty
+        (
+            Method1 psiMethod1,
+            Method2 psiMethod2,
+            const label& celli,
+            const Args& ... args
+        ) const;
+
         //- Return the blending field for celli
         virtual scalar xi(const label celli) const = 0;
 

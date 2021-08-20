@@ -114,9 +114,6 @@ public:
         //- Post update
         virtual void postUpdate();
 
-        //- Correct fields
-        virtual void correct();
-
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 

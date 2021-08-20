@@ -214,7 +214,7 @@ void Foam::granularPhaseModel::postUpdate()
     (
         1.5
        *(
-            fvm::ddt(alphaRho_, Theta_) - fvc::ddt(alphaRho_, Theta_)
+            fvm::ddt(alpha, rho(), Theta_) - fvc::ddt(alpha, rho(), Theta_)
           + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
         )
      ==
@@ -244,10 +244,9 @@ void Foam::granularPhaseModel::postUpdate()
         );
 
         // Add solid stress and conductivity
-        ThetaEqn
-          ==
-            fvm::laplacian(this->kappa_, Theta_)
-          + ((tau*(*this)) && gradU);
+        ThetaEqn -=
+            fvm::laplacian(this->kappa_, Theta_, "laplacian(kappa,Theta)")
+          + ((tau*alpha) && gradU);
     }
 
     // Momentum
@@ -264,6 +263,7 @@ void Foam::granularPhaseModel::postUpdate()
     constraints.constrain(ThetaEqn);
     ThetaEqn.solve();
     constraints.constrain(Theta_);
+    Theta_.max(0);
 
     //- Update conservative variables
     encode();

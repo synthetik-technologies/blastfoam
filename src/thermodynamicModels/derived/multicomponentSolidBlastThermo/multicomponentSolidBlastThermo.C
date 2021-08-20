@@ -48,7 +48,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
         masterName
     )
 {
-    updateRho();
+    this->initializeFields();
 }
 
 
@@ -71,7 +71,7 @@ Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
         masterName
     )
 {
-    updateRho();
+    this->initializeFields();
 }
 
 

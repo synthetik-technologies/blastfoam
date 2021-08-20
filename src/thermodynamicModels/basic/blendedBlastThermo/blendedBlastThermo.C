@@ -289,6 +289,42 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
 }
 
 
+template<class BasicThermo, class Thermo1, class Thermo2>
+template<class Method1, class Method2, class ... Args>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
+(
+    Method1 psiMethod1,
+    Method2 psiMethod2,
+    const label& celli,
+    const Args& ... args
+) const
+{
+    // Note: Args are fields for the set, not for the mesh as a whole. The
+    // cells list is only used to get the mixture.
+
+    scalar psi;
+
+    scalar x = this->xi(celli);
+    if (x < small)
+    {
+        psi = (this->*psiMethod1)(args ...);
+    }
+    else if ((1.0 - x) < small)
+    {
+        psi = (this->*psiMethod2)(args ...);
+    }
+    else
+    {
+        psi =
+            (this->*psiMethod2)(args ...)*x
+            + (this->*psiMethod1)(args ...)*(1.0 - x);
+    }
+
+    return psi;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicThermo, class Thermo1, class Thermo2>
@@ -666,19 +702,15 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellTHE
     const label celli
 ) const
 {
-    const scalar& x = this->xi(celli);
-    if (x < small)
-    {
-        return Thermo1::TRhoE(T, this->rho_[celli], he);
-    }
-    else if ((1.0 - x) < small)
-    {
-        return Thermo2::TRhoE(T, this->rho_[celli], he);
-    }
-
-    return
-        Thermo2::TRhoE(T, this->rho_[celli], he)*x
-      + Thermo1::TRhoE(T, this->rho_[celli], he)*(1.0 - x);
+    return blendedCellProperty
+    (
+        &Thermo1::TRhoE,
+        &Thermo2::TRhoE,
+        celli,
+        T,
+        this->rho_[celli],
+        he
+    );
 }
 
 
@@ -727,19 +759,15 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCp
     const label celli
 ) const
 {
-    const scalar& x = this->xi(celli);
-    if (x < small)
-    {
-        return Thermo1::Cp(this->rho_[celli], this->e_[celli], T);
-    }
-    else if ((1.0 - x) < small)
-    {
-        return Thermo2::Cp(this->rho_[celli], this->e_[celli], T);
-    }
-
-    return
-        Thermo2::Cp(this->rho_[celli], this->e_[celli], T)*x
-      + Thermo1::Cp(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
+    return blendedCellProperty
+    (
+        &Thermo1::Cp,
+        &Thermo2::Cp,
+        celli,
+        T,
+        this->rho_[celli],
+        this->e_[celli]
+    );
 }
 
 
@@ -788,19 +816,15 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCv
     const label celli
 ) const
 {
-    const scalar& x = this->xi(celli);
-    if (x < small)
-    {
-        return Thermo1::Cv(this->rho_[celli], this->e_[celli], T);
-    }
-    else if ((1.0 - x) < small)
-    {
-        return Thermo2::Cv(this->rho_[celli], this->e_[celli], T);
-    }
-
-    return
-        Thermo2::Cv(this->rho_[celli], this->e_[celli], T)*x
-      + Thermo1::Cv(this->rho_[celli], this->e_[celli], T)*(1.0 - x);
+    return blendedCellProperty
+    (
+        &Thermo1::Cv,
+        &Thermo2::Cv,
+        celli,
+        T,
+        this->rho_[celli],
+        this->e_[celli]
+    );
 }
 
 

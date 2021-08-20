@@ -261,6 +261,11 @@ void Foam::twoPhaseCompressibleSystem::decode()
         );
 
     thermo_.correct();
+    if (constraints_.constrainsField(p_.name()))
+    {
+        constraints_.constrain(p_);
+        p_.correctBoundaryConditions();
+    }
 }
 
 

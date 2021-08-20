@@ -61,6 +61,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
     {
         updateRho(Thermo::baseThermo::p());
     }
+    this->initializeFields();
 }
 
 
@@ -96,6 +97,7 @@ Foam::multicomponentFluidBlastThermo<Thermo>::multicomponentFluidBlastThermo
     {
         updateRho(Thermo::baseThermo::p());
     }
+    this->initializeFields();
 }
 
 

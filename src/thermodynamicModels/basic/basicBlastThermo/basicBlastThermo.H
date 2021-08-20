@@ -119,7 +119,8 @@ public:
         );
 
         //- Initialize models
-        virtual void initializeModels() = 0;
+        virtual void initializeModels()
+        {}
 
 
     //- Destructor
@@ -149,9 +150,10 @@ public:
 
         word phasePropertyName(const word& n) const
         {
-            return IOobject::groupName(n, name_);
+            return IOobject::groupName(n, phaseName_);
         }
 
+        // Directory to compile from
         static fileName templateDir()
         {
             return getEnv("BLAST_DIR")/"etc/codeTemplates";

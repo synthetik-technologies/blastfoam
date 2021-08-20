@@ -115,9 +115,8 @@ Foam::fluidPhaseModel::fluidPhaseModel
     p_(thermoPtr_->p()),
     fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
-    Info<<"hre"<<endl;
     thermoPtr_->read(phaseDict_);
-Info<<"hee"<<endl;
+
     this->turbulence_ =
         phaseCompressible::momentumTransportModel::New
         (

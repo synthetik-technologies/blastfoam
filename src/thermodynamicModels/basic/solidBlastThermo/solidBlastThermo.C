@@ -54,8 +54,9 @@ Foam::solidBlastThermo::solidBlastThermo
 {}
 
 
-void Foam::solidBlastThermo::initializeModels()
+void Foam::solidBlastThermo::initializeFields()
 {
+    updateRho();
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
         volScalarField e(this->calce());
@@ -71,7 +72,9 @@ void Foam::solidBlastThermo::initializeModels()
             }
         }
     }
-    correct();
+
+    this->T_ = this->THE();
+    this->alpha_ = this->kappa()/this->Cv();
 }
 
 

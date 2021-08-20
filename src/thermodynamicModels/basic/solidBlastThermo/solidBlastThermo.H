@@ -75,7 +75,7 @@ public:
     );
 
     //- Initialize models
-    virtual void initializeModels();
+    virtual void initializeFields();
 
 
     //- Declare run-time constructor selection table

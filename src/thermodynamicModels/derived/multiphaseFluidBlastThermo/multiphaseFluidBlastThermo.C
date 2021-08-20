@@ -118,12 +118,16 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
             ).ptr()
         );
 
-        mu_ += volumeFractions_[phasei]*thermos_[phasei].calcMu();
+        thermos_[phasei].read(dict.subDict(phaseIName));
+        residualAlpha_ = max(thermos_[phasei].residualAlpha(), residualAlpha_);
+        residualRho_ = max(thermos_[phasei].residualRho(), residualRho_);
 
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
     }
     rho_ /= max(sumAlpha, residualAlpha_);
+
+    this->initializeFields();
 }
 
 
@@ -133,30 +137,6 @@ void Foam::multiphaseFluidBlastThermo::initializeModels()
     {
         thermos_[phasei].initializeModels();
     }
-
-    if (!e_.typeHeaderOk<volScalarField>(true))
-    {
-        volScalarField e(volumeFractions_[0]*thermos_[0].calce(this->p()));
-        for (label phasei = 1; phasei < thermos_.size(); phasei++)
-        {
-            e += volumeFractions_[phasei]*thermos_[phasei].calce(this->p());
-        }
-        normalise(e);
-
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-    }
-
-    correct();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -223,38 +203,6 @@ void Foam::multiphaseFluidBlastThermo::updateRho(const volScalarField& p)
         rho_ += volumeFractions_[phasei]*thermos_[phasei].rho();
     }
     normalise(rho_);
-}
-
-
-void Foam::multiphaseFluidBlastThermo::correct()
-{
-    volScalarField rGamma(volumeFractions_[0]/(thermos_[0].Gamma() - 1.0));
-    volScalarField pByGamma
-    (
-        rGamma*thermos_[0].pRhoT()*pos(volumeFractions_[0] - residualAlpha_)
-    );
-
-    T_ = volumeFractions_[0]*thermos_[0].THE();
-    mu_ = volumeFractions_[0]*thermos_[0].calcMu();
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        const volScalarField& vf(volumeFractions_[phasei]);
-        volScalarField alphaByGamma(vf/(thermos_[phasei].Gamma() - 1.0));
-        rGamma += alphaByGamma;
-        pByGamma +=
-            alphaByGamma*thermos_[phasei].pRhoT()*pos(vf - residualAlpha_);
-
-        T_ += vf*thermos_[phasei].THE();
-        mu_ += vf*thermos_[phasei].calcMu();
-    }
-    p_ = pByGamma/max(rGamma, residualAlpha_);
-    p_.correctBoundaryConditions();
-
-    normalise(T_);
-    T_.correctBoundaryConditions();
-
-    normalise(mu_);
-    this->alpha_ = calcKappa()/Cp();
 }
 
 
@@ -365,7 +313,7 @@ Foam::multiphaseFluidBlastThermo::speedOfSound() const
     );
     volScalarField alphaRhoXi("alphaRhoXi", alphaRhoXii);
 
-    forAll(thermos_, phasei)
+    for (label phasei = 1; phasei < thermos_.size(); phasei++)
     {
         alphaRhoXii =
             volumeFractions_[phasei]
@@ -399,8 +347,8 @@ Foam::multiphaseFluidBlastThermo::speedOfSound(const label patchi) const
             alphaRhoXii
            *sqr(thermos_[phasei].speedOfSound(patchi));
     }
-
-    scalarField cSqr(alphaXiRhoCSqr/max(alphaRhoXi, 1e-10));
+    alphaRhoXi = max(alphaRhoXi, 1e-10);
+    scalarField cSqr(alphaXiRhoCSqr/alphaRhoXi);
     cSqr = max(cSqr, small);
     return sqrt(cSqr);
 }

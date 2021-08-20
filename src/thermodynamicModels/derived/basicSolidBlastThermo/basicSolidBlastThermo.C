@@ -41,7 +41,7 @@ Foam::basicSolidBlastThermo<Thermo>::basicSolidBlastThermo
 :
     Thermo(mesh, dict, phaseName, masterName)
 {
-    updateRho();
+    this->initializeFields();
 }
 
 

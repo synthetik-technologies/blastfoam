@@ -50,7 +50,7 @@ Foam::functionObjects::writeTimeList::writeTimeList
 )
 :
     fvMeshFunctionObject(name, runTime, dict),
-    writeTimes_(),
+    writeTimes_(0),
     index_(0)
 {
     read(dict);
@@ -111,7 +111,7 @@ bool Foam::functionObjects::writeTimeList::execute()
 
 Foam::scalar Foam::functionObjects::writeTimeList::timeToNextWrite()
 {
-    return writeTimes_[index_] - obr_.time().value();
+    return max(writeTimes_[index_] - obr_.time().value(), 0.0);
 }
 
 

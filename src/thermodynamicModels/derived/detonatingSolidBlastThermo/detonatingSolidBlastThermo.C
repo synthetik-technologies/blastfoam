@@ -66,7 +66,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::detonatingSolidBlastThermo
         )
     )
 {
-    updateRho();
+    this->initializeFields();
 }
 
 
@@ -75,8 +75,6 @@ void Foam::detonatingSolidBlastThermo<Thermo>::initializeModels()
 {
     activation_->initializeModels();
     afterburn_->initializeModels();
-
-    Thermo::initializeModels();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

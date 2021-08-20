@@ -185,6 +185,31 @@ void Foam::multiPhaseModel::solve()
 
 void Foam::multiPhaseModel::postUpdate()
 {
+    const fvConstraints& constraints(this->fluid_.constraints());
+    const fvModels& models(this->fluid_.models());
+
+    if (solveAlpha_)
+    {
+        forAll(alphas_, phasei)
+        {
+            volScalarField& alpha(*this);
+            forAll(alphas_, phasej)
+            {
+                fvScalarMatrix alphaEqn
+                (
+                    fvm::ddt(alphas_[phasej]) - fvc::ddt(alphas_[phasej])
+                 ==
+                    models.source(alphas_[phasej])
+                );
+                constraints.constrain(alphaEqn);
+                alphaEqn.solve();
+                constraints.constrain(alphas_[phasej]);
+
+                alpha += alphas_[phasej];
+            }
+        }
+    }
+
     phaseModel::postUpdate();
     thermoPtr_->postUpdate();
 }

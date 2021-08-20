@@ -121,36 +121,13 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     // Update total density
     this->rho_ = volumeFraction_*rho1_ + (1.0 - volumeFraction_)*rho2_;
 
-    mu_ =
-        volumeFraction_*thermo1_->calcMu()
-      + (1.0 - volumeFraction_)*thermo2_->calcMu();
+    initializeFields();
 }
 
 void Foam::twoPhaseFluidBlastThermo::initializeModels()
 {
     thermo1_->initializeModels();
     thermo2_->initializeModels();
-
-    if (!e_.typeHeaderOk<volScalarField>(true))
-    {
-        volScalarField e
-        (
-            thermo1_->calce(this->p())*volumeFraction_
-          + thermo2_->calce(this->p())*(1.0 - volumeFraction_)
-        );
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
-    }
-    correct();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -197,39 +174,6 @@ void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
     this->rho_ =
         volumeFraction_*thermo1_->rho()
       + (1.0 - volumeFraction_)*thermo2_->rho();
-}
-
-
-void Foam::twoPhaseFluidBlastThermo::correct()
-{
-    this->T_ =
-        volumeFraction_*thermo1_->THE()
-      + (1.0 - volumeFraction_)*thermo2_->THE();
-    this->T_.correctBoundaryConditions();
-
-    {
-        volScalarField alphaXi1
-        (
-            volumeFraction_/(thermo1_->Gamma() - 1.0)
-        );
-        volScalarField alphaXi2
-        (
-            (1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0)
-        );
-
-        this->p() =
-            (
-                alphaXi1*thermo1_->pRhoT()*pos(alphaXi1 - small)
-              + alphaXi2*thermo2_->pRhoT()*pos(alphaXi2 - small)
-            )/(alphaXi1 + alphaXi2);
-        this->p().correctBoundaryConditions();
-    }
-
-    // Update transport coefficients
-    mu_ =
-        volumeFraction_*thermo1_->calcMu()
-      + (1.0 - volumeFraction_)*thermo2_->calcMu();
-    this->alpha_ = this->calcKappa()/this->Cp();
 }
 
 

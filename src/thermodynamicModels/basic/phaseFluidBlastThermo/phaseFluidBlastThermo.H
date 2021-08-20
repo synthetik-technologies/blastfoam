@@ -97,7 +97,7 @@ public:
         );
 
     //- Initialize models
-    virtual void initializeModels()
+    virtual void initializeFields()
     {}
 
     // Selectors

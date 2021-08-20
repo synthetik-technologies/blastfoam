@@ -143,7 +143,9 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
     fluxScheme_(fluxScheme::New(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
+    models_(fvModels::New(mesh)),
+    constraints_(fvConstraints::New(mesh))
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
@@ -153,27 +155,24 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         thermo_->composition().Y().size() > 1
     );
 
-    if (min(thermo_->mu()).value() > small || useChemistry)
-    {
-        turbulence_.set
+    turbulence_.set
+    (
+        compressible::momentumTransportModel::New
         (
-            compressible::momentumTransportModel::New
-            (
-                rho_,
-                U_,
-                rhoPhi_,
-                thermo_()
-            ).ptr()
-        );
-        thermophysicalTransport_.set
+            rho_,
+            U_,
+            rhoPhi_,
+            thermo_()
+        ).ptr()
+    );
+    thermophysicalTransport_.set
+    (
+        fluidReactionThermophysicalTransportModel::New
         (
-            fluidReactionThermophysicalTransportModel::New
-            (
-                turbulence_(),
-                thermo_()
-            ).ptr()
-        );
-    }
+            turbulence_(),
+            thermo_()
+        ).ptr()
+    );
 
     if (useChemistry)
     {
@@ -243,8 +242,7 @@ void Foam::reactingCompressibleSystem::solve()
     rho_ = rhoOld - dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
+    rhoU_ = rhoUOld - dT*deltaRhoU;
     rhoE_ = rhoEOld - dT*deltaRhoE;
 
     if (reaction_.valid())
@@ -284,19 +282,34 @@ void Foam::reactingCompressibleSystem::solve()
 
 void Foam::reactingCompressibleSystem::postUpdate()
 {
-    if (!turbulence_.valid())
-    {
-        return;
-    }
-
     this->decode();
 
-    // Solve momentum diffusion
+    // Solve mass
+    fvScalarMatrix rhoEqn
+    (
+        fvm::ddt(rho_) - fvc::ddt(rho_)
+     ==
+        models_.source(rho_)
+    );
+
+    constraints_.constrain(rhoEqn);
+
+    rhoEqn.solve();
+
+    constraints_.constrain(rho_);
+
+
+
+    // Solve momentum
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-      + turbulence_->divDevTau(U_)
+     ==
+        turbulence_->divDevTau(U_)
+      + models_.source(rho_, U_)
     );
+
+    // Solve thermal energy diffusion
     rhoE_ +=
         rho_.mesh().time().deltaT()
        *fvc::div
@@ -305,20 +318,15 @@ void Foam::reactingCompressibleSystem::postUpdate()
           & fluxScheme_->Uf()
         );
 
-    UEqn.solve();
-    rhoU_ = rho_*U_;
-
-    // Solve thermal energy diffusion
+    // Update internal energy
     e_ = rhoE_/rho_ - 0.5*magSqr(U_);
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-      - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
+     ==
+        thermophysicalTransport_->divq(e_)
+      + models_.source(rho_, e_)
     );
-    eEqn.solve();
-
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-
 
     if (reaction_.valid())
     {
@@ -343,8 +351,12 @@ void Foam::reactingCompressibleSystem::postUpdate()
                   + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
+                  + models_.source(Yi)
                 );
+
+                constraints_.constrain(YiEqn);
                 YiEqn.solve("Yi");
+                constraints_.constrain(Yi);
 
                 Yi.max(0.0);
                 Yt += Yi;
@@ -353,15 +365,34 @@ void Foam::reactingCompressibleSystem::postUpdate()
         composition.normalise();
     }
 
-    eEqn.solve();
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+    // Solve momentum equation
+    constraints_.constrain(UEqn);
+    UEqn.solve();
+    constraints_.constrain(U_);
 
+    // Solve energy equation
+    constraints_.constrain(eEqn);
+    eEqn.solve();
+    constraints_.constrain(e_);
+
+    // Update conserved quantities
+    rhoU_ = rho_*U_;
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
+
+    // Update thermo
     thermo_->correct();
     p_.ref() = rho_()/thermo_->psi()();
+    if (constraints_.constrainsField(p_.name()))
+    {
+        constraints_.constrain(p_);
+    }
     p_.correctBoundaryConditions();
+
+    // Update density boundary conditions
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
 
+    // correct turbulence
     turbulence_->correct();
 }
 

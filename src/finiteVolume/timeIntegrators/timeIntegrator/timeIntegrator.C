@@ -178,10 +178,12 @@ void Foam::timeIntegrator::integrate()
         this->updateAll();
         forAll(systems_, i)
         {
-            Info<< "Solving " << systems_[i].name() << endl;
+            Info<< "Solving " << systems_[i].name() << ":" << endl;
             systems_[i].solve();
         }
     }
+    Info<< endl;
+
 
     this->postUpdateAll();
     stepi_ = 0;

@@ -94,7 +94,7 @@ RDX
     }
 
     residualRho     1e-6;           // Minimum density of the phase
-    residualAlpha   1e-10;          // Minimum volume fraction used for division
+    residualAlpha   1e-6;          // Minimum volume fraction used for division
 }
 
 tnt

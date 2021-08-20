@@ -60,6 +60,7 @@ Foam::basicFluidBlastThermo<Thermo>::basicFluidBlastThermo
     {
         updateRho(Thermo::baseThermo::p());
     }
+    this->initializeFields();
 }
 
 

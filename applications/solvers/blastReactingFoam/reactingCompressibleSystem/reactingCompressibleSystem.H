@@ -46,6 +46,8 @@ SourceFiles
 #include "fluidReactionThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "radiationModel.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 namespace Foam
 {
@@ -121,9 +123,11 @@ protected:
     //- Radiation model
     autoPtr<radiationModel> radiation_;
 
-
     //- Gravitational acceleration
     const uniformDimensionedVectorField& g_;
+
+    const fvModels& models_;
+    const fvConstraints& constraints_;
 
 
 public:

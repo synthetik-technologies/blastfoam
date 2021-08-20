@@ -271,6 +271,11 @@ void Foam::multiphaseCompressibleSystem::decode()
         );
 
     thermoPtr_->correct();
+    if (constraints_.constrainsField(p_.name()))
+    {
+        constraints_.constrain(p_);
+        p_.correctBoundaryConditions();
+    }
 }
 
 

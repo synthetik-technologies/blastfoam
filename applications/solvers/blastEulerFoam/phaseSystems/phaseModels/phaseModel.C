@@ -177,12 +177,10 @@ Foam::phaseModel::phaseModel
 
 void Foam::phaseModel::initializeModels()
 {
-    Info<<"init"<<endl;
     dPtr_.reset
     (
         diameterModel::New(fluid_.mesh(), phaseDict_, name_).ptr()
     );
-Info<<"done"<<endl;
     thermo().initializeModels();
     thermo().correct();
 }
@@ -443,9 +441,7 @@ void Foam::phaseModel::postUpdate()
     }
 
     // Update conserved quantities
-    alphaRho_ = alpha*rho();
-    alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
-    alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
+    encode();
 }
 
 

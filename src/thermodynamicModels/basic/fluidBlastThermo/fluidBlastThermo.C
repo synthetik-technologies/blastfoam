@@ -77,7 +77,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
 {}
 
 
-void Foam::fluidBlastThermo::initializeModels()
+void Foam::fluidBlastThermo::initializeFields()
 {
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
@@ -94,7 +94,11 @@ void Foam::fluidBlastThermo::initializeModels()
             }
         }
     }
-    correct();
+
+    this->T_ = this->THE();
+    this->p() = this->pRhoT();
+    this->mu_ = this->calcMu();
+    this->alpha_ = this->calcKappa()/this->Cp();
 }
 
 

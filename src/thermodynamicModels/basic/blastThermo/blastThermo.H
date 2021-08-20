@@ -99,7 +99,8 @@ public:
     virtual ~blastThermo();
 
     //- Initialize models
-    virtual void initializeModels() = 0;
+    virtual void initializeModels()
+    {}
 
     static fileName templateDir()
     {

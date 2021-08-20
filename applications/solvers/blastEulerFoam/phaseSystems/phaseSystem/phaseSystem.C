@@ -1037,7 +1037,9 @@ void Foam::phaseSystem::postUpdate()
     decode();
     forAll(phaseModels_, phasei)
     {
+        Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].postUpdate();
+        decrIndent(Info);
     }
 
     const dimensionedScalar& deltaT(mesh_.time().deltaT());

@@ -80,6 +80,7 @@ Foam::detonatingFluidBlastThermo<Thermo>::detonatingFluidBlastThermo
     {
         updateRho(Thermo::baseThermo::p());
     }
+    this->initializeFields();
 }
 
 
@@ -88,8 +89,6 @@ void Foam::detonatingFluidBlastThermo<Thermo>::initializeModels()
 {
     activation_->initializeModels();
     afterburn_->initializeModels();
-
-    Thermo::initializeModels();
 }
 
 
