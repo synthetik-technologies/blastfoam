@@ -91,6 +91,12 @@ public:
             const label nodei = -1,
             const label nodej = -1
         ) const;
+
+        //- Function to return Nusselt number model
+        const NusseltNumberModel& NusseltNo() const
+        {
+            return NuModel_(); //parantheses to return data in the autoPtr
+        };
 };
 
 

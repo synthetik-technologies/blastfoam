@@ -52,12 +52,6 @@ namespace kineticTheoryModels
 
 class packingLimitModel
 {
-    // Private data
-
-        //- Are all particle diameters constant
-        Switch constantDiameters_;
-
-
 protected:
 
     // Protected data

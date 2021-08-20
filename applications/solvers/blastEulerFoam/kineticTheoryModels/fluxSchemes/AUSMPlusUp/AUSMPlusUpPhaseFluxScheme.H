@@ -68,9 +68,6 @@ class AUSMPlusUp
         scalar fa_;
         scalar D_;
 
-        //- Reference to packing limit
-        const kineticTheorySystem& kineticTheorySystem_;
-
         //- Interpolated total volume fraction
         tmp<surfaceScalarField> alphapOwn_;
         tmp<surfaceScalarField> alphapNei_;

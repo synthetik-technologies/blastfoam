@@ -177,8 +177,12 @@ Foam::phaseModel::phaseModel
 
 void Foam::phaseModel::initializeModels()
 {
-    dPtr_ = diameterModel::New(fluid_.mesh(), phaseDict_, name_);
-
+    Info<<"init"<<endl;
+    dPtr_.reset
+    (
+        diameterModel::New(fluid_.mesh(), phaseDict_, name_).ptr()
+    );
+Info<<"done"<<endl;
     thermo().initializeModels();
     thermo().correct();
 }
@@ -194,7 +198,12 @@ Foam::autoPtr<Foam::phaseModel> Foam::phaseModel::clone() const
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::phaseModel::~phaseModel()
-{}
+{
+    if (dPtr_.valid())
+    {
+        delete dPtr_.ptr();
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -346,7 +355,7 @@ void Foam::phaseModel::solve()
     // Transport volume fraction if required
     if (solveAlpha_)
     {
-        volScalarField& alpha = *this;
+        volScalarField& alpha(*this);
         volScalarField deltaAlpha
         (
             IOobject::groupName("deltaAlpha", name_),
@@ -365,16 +374,50 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
+    const fvConstraints& constraints(this->fluid_.constraints());
+    const fvModels& models(this->fluid_.models());
+    dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
+    volScalarField& alpha(*this);
+
+    {
+        fvScalarMatrix rhoEqn
+        (
+            fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
+        ==
+            models.source(alpha, rho())
+        );
+        constraints.constrain(rhoEqn);
+        rhoEqn.solve();
+        constraints.constrain(rho());
+    }
+
+    fvVectorMatrix UEqn
+    (
+        fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
+      + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
+     ==
+        models.source(alpha, rho(), U_)
+    );
     if (turbulence_.valid())
     {
-        dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
-          + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
-          + turbulence_->divDevTau(U_)
-        );
+        UEqn += turbulence_->divDevTau(U_);
+    }
+    constraints.constrain(UEqn);
 
+    UEqn.solve();
+
+    constraints.constrain(U_);
+
+    fvScalarMatrix eEqn
+    (
+        fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
+      + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
+     ==
+        models.source(alpha, rho(), he())
+    );
+
+    if (turbulence_.valid())
+    {
         alphaRhoE_ +=
             rho().time().deltaT()
            *fvc::div
@@ -383,22 +426,40 @@ void Foam::phaseModel::postUpdate()
               & flux().Uf()
             );
 
-        UEqn.solve();
-        alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
-
         // Solve thermal energy diffusion
         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRho_, he())
-          + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
-          + thermophysicalTransport_->divq(he())
-        );
-        eEqn.solve();
-        alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
+        eEqn += thermophysicalTransport_->divq(he());
+    }
 
+    constraints.constrain(eEqn);
+
+    eEqn.solve();
+
+    constraints.constrain(he());
+
+    if (turbulence_.valid())
+    {
         turbulence_->correct();
     }
+
+    // Update conserved quantities
+    alphaRho_ = alpha*rho();
+    alphaRhoU_ = cmptMultiply(alphaRho_*U_, solutionDs_);
+    alphaRhoE_ = alphaRho_*(he() + 0.5*magSqr(U_));
+}
+
+
+void Foam::phaseModel::correctVolumeFraction()
+{
+    const fvConstraints& constraints(this->fluid_.constraints());
+
+    volScalarField& alpha(*this);
+    if (constraints.constrainsField(alpha.name()))
+    {
+        constraints.constrain(alpha);
+        alphaRho_.ref() = alpha()*this->rho()();
+    }
+    alpha.correctBoundaryConditions();
 }
 
 

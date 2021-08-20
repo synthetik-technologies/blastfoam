@@ -43,6 +43,7 @@ SourceFiles
 #include "surfaceFields.H"
 #include "integrationSystem.H"
 #include "timeIntegrator.H"
+#include "phaseFluxScheme.H"
 #include "HashPtrTable.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
@@ -373,9 +374,6 @@ protected:
         //- Solve heat transfer between phases
         void relaxTemperature(const dimensionedScalar& deltaT);
 
-        //- Calculate mixture properties
-        void calcMixtureVariables();
-
 
 public:
 
@@ -392,6 +390,9 @@ public:
 
 
     // Member Functions
+
+        //- Calculate mixture properties
+        void calcMixtureVariables();
 
         //- Decode primative variables
         virtual void decode();

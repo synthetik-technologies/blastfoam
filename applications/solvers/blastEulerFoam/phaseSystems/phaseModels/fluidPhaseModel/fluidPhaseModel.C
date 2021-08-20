@@ -115,8 +115,9 @@ Foam::fluidPhaseModel::fluidPhaseModel
     p_(thermoPtr_->p()),
     fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
+    Info<<"hre"<<endl;
     thermoPtr_->read(phaseDict_);
-
+Info<<"hee"<<endl;
     this->turbulence_ =
         phaseCompressible::momentumTransportModel::New
         (
@@ -164,6 +165,23 @@ void Foam::fluidPhaseModel::solve()
 
 void Foam::fluidPhaseModel::postUpdate()
 {
+    const fvConstraints& constraints(this->fluid_.constraints());
+    const fvModels& models(this->fluid_.models());
+
+    if (solveAlpha_)
+    {
+        volScalarField& alpha(*this);
+        fvScalarMatrix alphaEqn
+        (
+            fvm::ddt(alpha) - fvc::ddt(alpha)
+        ==
+            models.source(alpha)
+        );
+        constraints.constrain(alphaEqn);
+        alphaEqn.solve();
+        constraints.constrain(alpha);
+    }
+
     phaseModel::postUpdate();
     thermoPtr_->postUpdate();
 }
@@ -213,22 +231,10 @@ void Foam::fluidPhaseModel::update()
 
 void Foam::fluidPhaseModel::decode()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-
     this->correctBoundaryConditions();
-    if (constraints.constrainsField(this->name()))
-    {
-        constraints.constrain(*this);
-    }
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
-
     rho_.ref() = alphaRho_()/alpha();
-    if (constraints.constrainsField(rho_.name()))
-    {
-        constraints.constrain(rho_);
-        alphaRho_.ref() = (*this)()*rho_;
-    }
     rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField();
@@ -236,11 +242,6 @@ void Foam::fluidPhaseModel::decode()
     alphaRho.max(1e-10);
 
     U_.ref() = alphaRhoU_()/(alphaRho());
-    if (constraints.constrainsField(U_.name()))
-    {
-        constraints.constrain(U_);
-        alphaRhoU_.ref() = alphaRho_()*U_();
-    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
@@ -248,11 +249,6 @@ void Foam::fluidPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-    if (constraints.constrainsField(e_.name()))
-    {
-        constraints.constrain(e_);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
 
     //- Limit internal energy it there is a negative temperature
     if (Foam::min(this->T_).value() < 0.0 && thermoPtr_->limit())
@@ -280,6 +276,7 @@ void Foam::fluidPhaseModel::decode()
         );
     thermoPtr_->correct();
 
+    const fvConstraints& constraints(this->fluid_.constraints());
     if (constraints.constrainsField(p_.name()))
     {
         constraints.constrain(p_);

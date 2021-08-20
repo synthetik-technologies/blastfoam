@@ -85,19 +85,21 @@ Foam::kineticTheoryModels::packingLimitModels::FedorsLandel::alphaMax
 
      scalar alphap = kt_.alphap()[celli];
 
-    if(alphap < kt_.fluid().phases()[0].residualAlpha().value())
+    const UPtrList<const phaseModel>& phases(kt_.packingPhases());
+
+    if (alphap < phases[0].residualAlpha().value())
     {
-        return kt_.fluid().phases()[0].alphaMax();
+        return phases[0].alphaMax();
     }
 
 
-    const phaseModel& phase1 = kt_.fluid().phases()[0];
+    const phaseModel& phase1 = phases[0];
     scalar alpha1 = phase1[celli];
     scalar alphaMax1 = phase1.alphaMax();
     scalar d1 = ds[0];
     scalar cx1 = alpha1/max(alphap, residualAlpha_);
 
-    scalar alphaMax2 = kt_.fluid().phases()[1].alphaMax();
+    scalar alphaMax2 = phases[1].alphaMax();
     scalar d2 = ds[1];
     scalar cx2 = 1.0 - cx1;
 

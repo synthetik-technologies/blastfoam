@@ -104,9 +104,17 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::postUpdate()
 
 void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
 {
-    const volScalarField& alphap(kineticTheorySystem_.alphap());
+    const kineticTheorySystem& kt =
+    (
+        mesh_.lookupObject<kineticTheorySystem>
+        (
+            "kineticTheorySystem"
+        )
+    );
+
+    const volScalarField& alphap(kt.alphap());
     word ktName;
-    if (kineticTheorySystem_.polydisperse())
+    if (kt.polydisperse())
     {
         ktName = alphap.group();
     }
@@ -123,9 +131,9 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::preUpdate(const volScalarField& p)
     alphapOwn_ = alphapLimiter->interpolateOwn();
     alphapNei_ = alphapLimiter->interpolateNei();
 
-    alphaMaxf_ = fvc::interpolate(kineticTheorySystem_.alphaMax());
+    alphaMaxf_ = fvc::interpolate(kt.alphaMax());
     alphaMinFrictionf_ =
-        fvc::interpolate(kineticTheorySystem_.alphaMinFriction());
+        fvc::interpolate(kt.alphaMinFriction());
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -140,13 +148,6 @@ Foam::phaseFluxSchemes::AUSMPlusUp::AUSMPlusUp
     beta_(dict_.lookupOrDefault("beta", 0.125)),
     fa_(dict_.lookupOrDefault("fa", 1.0)),
     D_(dict_.lookupOrDefault("D", 1.0)),
-    kineticTheorySystem_
-    (
-        mesh.lookupObject<kineticTheorySystem>
-        (
-            "kineticTheorySystem"
-        )
-    ),
     cutOffMa_(dict_.lookupOrDefault("cutOffMa", 1e-10)),
     residualAlphaRho_(dict_.lookupOrDefault("residualAlphaRho", 1e-6)),
     residualU_(dict_.lookupOrDefault("residualU", 1e-10))

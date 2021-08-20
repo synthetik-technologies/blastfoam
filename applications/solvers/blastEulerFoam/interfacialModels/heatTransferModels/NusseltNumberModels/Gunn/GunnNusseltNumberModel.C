@@ -42,6 +42,7 @@ namespace NusseltNumberModels
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::NusseltNumberModels::Gunn::Gunn
+
 (
     const dictionary& dict,
     const phasePair& pair
@@ -93,5 +94,6 @@ Foam::scalar Foam::NusseltNumberModels::Gunn::cellNu
       + (1.33 - 2.4*alphag + 1.2*sqr(alphag))
        *pow(Re, 0.7)*pow(Pr, 1.0/3.0);
 }
+
 
 // ************************************************************************* //

@@ -127,9 +127,6 @@ protected:
         void correctNut()
         {}
 
-        //- Lookup or construct kineticTheorySystem
-        kineticTheorySystem& lookupOrConstruct(const fvMesh& mesh, const char*) const;
-
 
 public:
 

@@ -55,6 +55,9 @@ SourceFiles
 #include "phaseDynamicMomentumTransportModel.H"
 #include "fluidBlastThermo.H"
 #include "solidBlastThermo.H"
+#include "UautoPtr.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -157,7 +160,7 @@ protected:
 
 
         //- Diameter model
-        autoPtr<diameterModel> dPtr_;
+        UautoPtr<diameterModel> dPtr_;
 
         //- Turbulence model
         autoPtr<phaseCompressible::momentumTransportModel> turbulence_;
@@ -177,6 +180,12 @@ protected:
 
         //- Solution vector
         vector solutionDs_;
+
+        //- fvModels
+        UautoPtr<const fvModels> modelsPtr_;
+
+        //- fvConstraints
+        UautoPtr<fvConstraints> constraintsPtr_;
 
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
@@ -351,6 +360,9 @@ public:
 
         // integrationSystem functions
 
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
+
             //- Decode conservative variables
             virtual void decode() = 0;
 
@@ -363,7 +375,7 @@ public:
             //- Solve sub-step stepi
             virtual void solve();
 
-            //- Solve viscous terms
+            //- Solve viscous and source terms
             virtual void postUpdate();
 
 
@@ -387,6 +399,9 @@ public:
 
             //- Return the density
             virtual const volScalarField& rho() const = 0;
+
+            //- Access the density
+            virtual volScalarField& rho() = 0;
 
             //- Constant access to the mean velocity
             virtual const volVectorField& U(const label nodei = -1) const

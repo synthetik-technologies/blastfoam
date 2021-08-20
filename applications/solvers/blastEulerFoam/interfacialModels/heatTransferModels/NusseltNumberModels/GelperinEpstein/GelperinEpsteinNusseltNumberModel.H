@@ -78,7 +78,7 @@ public:
     // Member Functions
 
         //- Nusselt number
-        tmp<volScalarField> Nu
+        virtual tmp<volScalarField> Nu
         (
             const label nodei = -1,
             const label nodej = -1

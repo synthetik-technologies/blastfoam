@@ -683,12 +683,6 @@ Foam::phaseSystem::phaseSystem
     fvModels_(fvModels::New(const_cast<fvMesh&>(mesh))),
     fvConstraints_(fvConstraints::New(const_cast<fvMesh&>(mesh)))
 {
-    forAll(phaseModels_, phasei)
-    {
-        phaseModels_[phasei].initializeModels();
-    }
-    encode();
-
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
     {
@@ -744,14 +738,14 @@ Foam::phaseSystem::phaseSystem
     }
 
     volScalarField sumAlpha("sumAlpha", phaseModels_[0]);
-    label nFluids = phaseModels_[0].granular() ? 0 : 1;
+    label nFluids = phaseModels_[0].slavePressure() ? 0 : 1;
     for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
     {
         // Update boundaries
         phaseModels_[phasei].correctBoundaryConditions();
 
         sumAlpha += phaseModels_[phasei];
-        if (!phaseModels_[phasei].granular())
+        if (!phaseModels_[phasei].slavePressure())
         {
             nFluids++;
         }
@@ -788,14 +782,21 @@ Foam::phaseSystem::phaseSystem
             << abort(FatalError);
     }
 
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].initializeModels();
+    }
     encode();
 
     // Check if a granular phase is used and store at pointer if it is
-    if (mesh_.foundObject<kineticTheorySystem>("kineticTheorySystem"))
+    if (mesh_.foundObject<kineticTheorySystem>(kineticTheorySystem::typeName))
     {
         kineticTheoryPtr_ =
         (
-            &mesh_.lookupObjectRef<kineticTheorySystem>("kineticTheorySystem")
+            &mesh_.lookupObjectRef<kineticTheorySystem>
+            (
+                kineticTheorySystem::typeName
+            )
         );
 
         // Initialize fields after all granular phases are initialized
@@ -852,14 +853,21 @@ void Foam::phaseSystem::decode()
     if (phaseModels_.size() == 2)
     {
         volScalarField& alpha1(phaseModels_[0]);
-        volScalarField& alpha2(phaseModels_[1]);
+        phaseModels_[0].correctVolumeFraction();
         phaseModels_[0].decode();
+
+        volScalarField& alpha2(phaseModels_[1]);
         alpha2 = 1.0 - alpha1;
         alpha2.correctBoundaryConditions();
         phaseModels_[1].decode();
     }
     else
     {
+        forAll(phaseModels_, phasei)
+        {
+            phaseModels_[phasei].correctVolumeFraction();
+        }
+
         // find largest volume fraction and set to 1-sum
         forAll(rho_, celli)
         {

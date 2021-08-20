@@ -150,6 +150,12 @@ public:
             return rho_;
         }
 
+        //- Access the density
+        virtual volScalarField& rho()
+        {
+            return rho_;
+        }
+
         //- Return the thermophysical pressure
         virtual const volScalarField& p() const
         {

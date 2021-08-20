@@ -68,7 +68,7 @@ Foam::NusseltNumberModels::duct::Nu
 {
     tmp<volScalarField> Pr(pair_.Pr(nodei, nodej));
     tmp<volScalarField> Re(pair_.Re(nodei, nodej));
-    return 0.23*pow(Re, 0.8)*pow(Pr, 0.4);
+    return 0.023*pow(Re, 0.8)*pow(Pr, 0.4);
 }
 
 

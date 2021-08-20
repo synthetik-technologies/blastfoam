@@ -157,6 +157,7 @@ Foam::tmp<Foam::volScalarField> Foam::phasePair::Pr
     const label nodej
 ) const
 {
+    Info<<min(continuous().kappa())<<" "<<endl;
     return
          continuous().nu()
         *continuous().Cv()

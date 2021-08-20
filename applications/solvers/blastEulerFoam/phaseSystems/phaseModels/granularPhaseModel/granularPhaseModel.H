@@ -151,6 +151,9 @@ public:
 
         // integrationSystem functions
 
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
+
             //- Decode primative variables
             virtual void decode();
 
@@ -183,6 +186,12 @@ public:
 
             //- Return the density
             virtual const volScalarField& rho() const
+            {
+                return rho_;
+            }
+
+            //- Access the density
+            virtual volScalarField& rho()
             {
                 return rho_;
             }
