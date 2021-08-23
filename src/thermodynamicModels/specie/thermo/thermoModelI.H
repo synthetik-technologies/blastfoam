@@ -37,7 +37,23 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     ThermoType(sp),
     tolerance_(1e-4),
     maxIter_(100)
-{}
+{
+    this->set(*this);
+}
+
+
+template<class ThermoType>
+inline Foam::thermoModel<ThermoType>::thermoModel
+(
+    const thermoType& thermo
+)
+:
+    ThermoType(thermo),
+    tolerance_(thermo.tolerance_),
+    maxIter_(thermo.maxIter_)
+{
+    this->set(*this);
+}
 
 
 template<class ThermoType>
@@ -97,7 +113,9 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     ThermoType(name, sp),
     tolerance_(1e-4),
     maxIter_(100)
-{}
+{
+    this->set(*this);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -571,6 +589,16 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::TEa
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class ThermoType>
+inline void Foam::thermoModel<ThermoType>::operator=
+(
+    const thermoModel<ThermoType>& st
+)
+{
+    ThermoType::operator=(st);
+}
+
 
 template<class ThermoType>
 inline void Foam::thermoModel<ThermoType>::operator+=

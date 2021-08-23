@@ -41,6 +41,8 @@ SourceFiles
 #include "word.H"
 #include "scalar.H"
 #include "dictionary.H"
+#include "CpCvModel.H"
+#include "UautoPtr.H"
 
 #include "thermodynamicConstants.H"
 using namespace Foam::constant::thermodynamic;
@@ -62,6 +64,9 @@ inline specieBlast operator==(const specieBlast&, const specieBlast&);
 
 class specieBlast
 {
+    //- Pointer to cpcv model
+    UautoPtr<const CpCvModel> cpcvPtr_;
+
 protected:
 
     // Protected data
@@ -75,12 +80,22 @@ protected:
         //- Molecular weight
         scalar molWeight_;
 
+        //- Return the thermodynamic model
+        const CpCvModel& cpcv() const
+        {
+            if (!cpcvPtr_.valid())
+            {
+                FatalErrorInFunction
+                    << "CpCv model has not been set"
+                    << abort(FatalError);
+            }
+            return cpcvPtr_();
+        }
 
 public:
 
     //- Runtime type information
     ClassName("specie");
-
 
 
     // Constructors
@@ -103,6 +118,10 @@ public:
         specieBlast(const dictionary& dict);
 
 
+    //- Destructor
+    virtual ~specieBlast()
+    {}
+
     // Member Functions
 
         // Access
@@ -118,6 +137,12 @@ public:
 
             //- Gas constant [J/(kg K)]
             inline scalar R() const;
+
+            //- Set the pointer to the CpCvModel
+            void set(const CpCvModel& model)
+            {
+                cpcvPtr_.reset(&model);
+            }
 
 
     // Member operators

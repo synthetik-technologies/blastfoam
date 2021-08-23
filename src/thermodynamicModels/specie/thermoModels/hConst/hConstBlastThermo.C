@@ -34,11 +34,10 @@ template<class EquationOfState>
 Foam::hConstThermo<EquationOfState>::hConstThermo(const dictionary& dict)
 :
     EquationOfState(dict),
+    CpCvModel(CpCvModel::Enthalpy),
     Cp_(dict.subDict("thermodynamics").lookup<scalar>("Cp")),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
     flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", 0.0))
-{
-    EquationOfState::set(*this);
-}
+{}
 
 // ************************************************************************* //

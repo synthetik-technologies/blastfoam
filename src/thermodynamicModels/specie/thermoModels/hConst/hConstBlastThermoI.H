@@ -38,12 +38,11 @@ inline Foam::hConstThermo<EquationOfState>::hConstThermo
 )
 :
     EquationOfState(st),
+    CpCvModel(CpCvModel::Enthalpy),
     Cp_(cp),
     Hf_(hf),
     flameT_(ft)
-{
-    EquationOfState::set(*this);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -55,12 +54,11 @@ inline Foam::hConstThermo<EquationOfState>::hConstThermo
 )
 :
     EquationOfState(ct),
+    CpCvModel(CpCvModel::Enthalpy),
     Cp_(ct.Cp_),
     Hf_(ct.Hf_),
     flameT_(ct.flameT_)
-{
-    EquationOfState::set(*this);
-}
+{}
 
 
 template<class EquationOfState>
@@ -71,12 +69,11 @@ inline Foam::hConstThermo<EquationOfState>::hConstThermo
 )
 :
     EquationOfState(name, ct),
+    CpCvModel(CpCvModel::Enthalpy),
     Cp_(ct.Cp_),
     Hf_(ct.Hf_),
     flameT_(ct.flameT_)
-{
-    EquationOfState::set(*this);
-}
+{}
 
 
 template<class EquationOfState>
@@ -234,7 +231,6 @@ inline void Foam::hConstThermo<EquationOfState>::operator=
     Cp_ = ct.Cp_;
     Hf_ = ct.Hf_;
     flameT_ = ct.flameT_;
-    this->set(*this);
 }
 
 

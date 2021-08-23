@@ -207,6 +207,17 @@ public:
             const scalar T
         ) const;
 
+        //- Heat capacity difference [J/kg/K]
+        virtual scalar CpMCv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const
+        {
+            return MGEquationOfState::CpMCv(this->cpcv(), rho, e, T);
+        }
+
         //- Heat capacity at constant volume of mixture [J/kg/K]
         scalar S
         (

@@ -123,6 +123,9 @@ public:
         //- Construct from components
         inline thermoModel(const ThermoType& sp);
 
+        //- Copy constructor
+        inline thermoModel(const thermoType& thermo);
+
         //- Construct from dictionary
         thermoModel(const dictionary& dict);
 
@@ -426,6 +429,7 @@ public:
 
     // Member Operators
 
+        inline void operator=(const thermoModel&);
         inline void operator+=(const thermoModel&);
         inline void operator*=(const scalar);
 

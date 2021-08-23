@@ -42,7 +42,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "autoPtr.H"
+#include "UautoPtr.H"
 #include "CpCvModel.H"
 
 namespace Foam
@@ -53,9 +53,6 @@ namespace Foam
 
 class MGEquationOfState
 {
-    //- Pointer to cpcv model
-    const CpCvModel* cpcvPtr_;
-
 protected:
 
     //- Return the MieGruniesen coefficient
@@ -80,24 +77,10 @@ protected:
         const scalar e
     ) const = 0;
 
-    //- Return the thermodynamic model
-    const CpCvModel& cpcv() const
-    {
-        if (!cpcvPtr_)
-        {
-            FatalErrorInFunction
-                << "CpCv model has not been set"
-                << abort(FatalError);
-        }
-        return *cpcvPtr_;
-    }
-
 
 public:
 
         MGEquationOfState()
-        :
-            cpcvPtr_(nullptr)
         {}
 
         virtual ~MGEquationOfState()
@@ -109,12 +92,6 @@ public:
         bool temperatureBased() const
         {
             return false;
-        }
-
-        //- Set the pointer to the CpCvModel
-        void set(const CpCvModel& cpcv)
-        {
-            cpcvPtr_ = &cpcv;
         }
 
         //- Return pressure
@@ -194,14 +171,19 @@ public:
         }
 
         //- Heat capacity difference [J/kg/K]
-        virtual scalar CpMCv
+        scalar CpMCv
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const CpCvModel& cpcv,
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const
         {
-            return (this->GammaMG(rho, e) - 1.0)*cpcv().Cv(rho, e, T);
+            scalar G(this->GammaMG(rho, e));
+            return
+                cpcv.eType() == CpCvModel::InternalEnergy
+              ? (G - 1.0)*cpcv.Cv(rho, e, T)
+              : cpcv.Cp(rho, e, T)*(G - 1.0)/G;
         }
 };
 

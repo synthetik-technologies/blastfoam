@@ -41,7 +41,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "autoPtr.H"
+#include "UautoPtr.H"
 #include "CpCvModel.H"
 
 namespace Foam
@@ -54,32 +54,14 @@ namespace Foam
 
 class equationOfState
 {
-    //- Pointer to cpcv model
-    const CpCvModel* cpcvPtr_;
-
-
 protected:
 
     virtual scalar pRhoT(const scalar rho, const scalar T) const = 0;
-
-    //- Return the thermodynamic model
-    const CpCvModel& cpcv() const
-    {
-        if (!cpcvPtr_)
-        {
-            FatalErrorInFunction
-                << "CpCv model has not been set"
-                << abort(FatalError);
-        }
-        return *cpcvPtr_;
-    }
 
 
 public:
 
     equationOfState()
-    :
-        cpcvPtr_(nullptr)
     {}
 
     virtual ~equationOfState()
@@ -92,12 +74,6 @@ public:
         bool temperatureBased() const
         {
             return true;
-        }
-
-        //- Set the pointer to the CpCvModel
-        void set(const CpCvModel& cpcv)
-        {
-            cpcvPtr_ = &cpcv;
         }
 
         //- Return pressure

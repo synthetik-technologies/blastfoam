@@ -29,6 +29,20 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class EquationOfState>
+inline Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
+(
+    const tabulatedThermo& tt
+)
+:
+    EquationOfState(tt),
+    CpCvModel(CpCvModel::InternalEnergy),
+    eTable_(tt.eTable_),
+    Tlow_(tt.Tlow_),
+    Thigh_(tt.Thigh_)
+{}
+
+
+template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::limit
 (
     const scalar T
@@ -164,6 +178,29 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dCpdT
 }
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+inline void Foam::tabulatedThermo<EquationOfState>::operator=
+(
+    const tabulatedThermo<EquationOfState>& ct
+)
+{
+    NotImplemented;
+    return;
+
+//     scalar Y1 = this->Y();
+//
+//     EquationOfState::operator+=(ct);
+//
+//     if (mag(this->Y()) > small)
+//     {
+//         Y1 /= this->Y();
+//         const scalar Y2 = ct.Y()/this->Y();
+//
+//         Cv_ = Y1*Cv_ + Y2*ct.Cv_;
+//         Hf_ = Y1*Hf_ + Y2*ct.Hf_;
+//     }
+}
 
 template<class EquationOfState>
 inline void Foam::tabulatedThermo<EquationOfState>::operator+=

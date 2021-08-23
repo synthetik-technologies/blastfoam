@@ -49,8 +49,25 @@ class CpCvModel
 {
 public:
 
-        virtual ~CpCvModel()
-        {}
+    enum energyType
+    {
+        InternalEnergy,
+        Enthalpy
+    };
+
+protected:
+
+    const energyType eType_;
+
+public:
+
+    CpCvModel(const energyType eType)
+    :
+        eType_(eType)
+    {}
+
+    virtual ~CpCvModel()
+    {}
 
     // Member Functions
 
@@ -101,6 +118,12 @@ public:
             const scalar e,
             const scalar T
         ) const = 0;
+
+        //- Return the energy type
+        energyType eType() const
+        {
+            return eType_;
+        }
 };
 
 

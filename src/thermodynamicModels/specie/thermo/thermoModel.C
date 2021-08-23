@@ -36,7 +36,9 @@ Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
     ThermoType(dict),
     tolerance_(dict.lookupOrDefault("tolerance", 1e-4)),
     maxIter_(dict.lookupOrDefault("maxIter", 100))
-{}
+{
+    this->set(*this);
+}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

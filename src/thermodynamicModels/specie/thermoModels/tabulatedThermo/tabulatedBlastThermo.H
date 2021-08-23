@@ -114,6 +114,8 @@ public:
 
     // Constructors
 
+        tabulatedThermo(const tabulatedThermo& thermo);
+
         tabulatedThermo(const dictionary& dict);
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -188,6 +190,7 @@ public:
 
     // Member operators
 
+        inline void operator=(const tabulatedThermo&);
         inline void operator+=(const tabulatedThermo&);
 
 

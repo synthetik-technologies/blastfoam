@@ -35,6 +35,7 @@ template<class EquationOfState>
 Foam::janafThermo<EquationOfState>::janafThermo(const dictionary& dict)
 :
     EquationOfState(dict),
+    CpCvModel(CpCvModel::Enthalpy),
     Tlow_(dict.subDict("thermodynamics").lookup<scalar>("Tlow")),
     Thigh_(dict.subDict("thermodynamics").lookup<scalar>("Thigh")),
     Tcommon_(dict.subDict("thermodynamics").lookup<scalar>("Tcommon")),
@@ -68,7 +69,6 @@ Foam::janafThermo<EquationOfState>::janafThermo(const dictionary& dict)
             << "Tcommon(" << Tcommon_ << ") > Thigh(" << Thigh_ << ')'
             << exit(FatalError);
     }
-    EquationOfState::set(*this);
 }
 
 // ************************************************************************* //
