@@ -34,7 +34,7 @@ template<class ThermoType>
 Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
 :
     ThermoType(dict),
-    relTol_(dict.subDict("thermodynamics").lookupOrDefault("relTol", 1e-6)),
+    relTol_(dict.subDict("thermodynamics").lookupOrDefault("relTol", 1e-4)),
     absTol_(dict.subDict("thermodynamics").lookupOrDefault("relTol", 1e-2)),
     maxIter_(dict.lookupOrDefault("maxIter", 100))
 {

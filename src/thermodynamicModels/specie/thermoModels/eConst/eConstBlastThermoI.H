@@ -219,6 +219,31 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::dCpdT
     return 0;
 }
 
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eConstThermo<EquationOfState>::dCpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::eConstThermo<EquationOfState>::dCvdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class EquationOfState>

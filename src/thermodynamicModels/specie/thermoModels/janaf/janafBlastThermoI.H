@@ -327,6 +327,33 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::dCpdT
 }
 
 
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::dCpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    const coeffArray& a = coeffs(T);
+    return
+        (((4*a[4]*T + 3*a[3])*T + 2*a[2])*T + a[1]);
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::janafThermo<EquationOfState>::dCvdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class EquationOfState>

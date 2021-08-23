@@ -187,6 +187,22 @@ public:
         //- Temperature derivative of heat capacity at constant pressure
         inline scalar dCpdT(const scalar p, const scalar T) const;
 
+        //- Temperature derivative of heat capacity at constant pressure
+        inline scalar dCpdT
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Temperature derivative of heat capacity at constant volume
+        inline scalar dCvdT
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
 
     // Member operators
 

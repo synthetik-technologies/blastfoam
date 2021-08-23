@@ -183,6 +183,32 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dCpdT
     return 0;
 }
 
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dCpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::dCvdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return eTable_.d2FdX2(T);
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class EquationOfState>

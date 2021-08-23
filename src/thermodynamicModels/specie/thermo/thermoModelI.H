@@ -36,7 +36,7 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 )
 :
     ThermoType(sp),
-    relTol_(1e-6),
+    relTol_(1e-4),
     absTol_(1e-2),
     maxIter_(100)
 {
@@ -112,7 +112,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             );
 
         absError = mag((Tnew - Test));
-        relError = absError/max(Test, small);
+        relError = absError/max(Tnew, small);
 
         if (diagnostics)
         {
@@ -155,7 +155,7 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 :
     ThermoType(name, sp),
     relTol_(1e-2),
-    absTol_(1e-6),
+    absTol_(1e-4),
     maxIter_(100)
 {
     this->set(*this);

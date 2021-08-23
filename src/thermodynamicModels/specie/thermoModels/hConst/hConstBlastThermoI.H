@@ -220,6 +220,30 @@ inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCpdT
 }
 
 
+template<class EquationOfState>
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class EquationOfState>
+inline Foam::scalar Foam::hConstThermo<EquationOfState>::dCvdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
 template<class EquationOfState>
