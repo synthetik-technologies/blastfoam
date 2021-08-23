@@ -29,7 +29,13 @@ License
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
-void Foam::lookupTable1D::readTable(const fileName& file)
+void Foam::lookupTable1D::readTable
+(
+    const fileName& file,
+    const label xi,
+    const label yi,
+    const bool isReal
+)
 {
     fileName fNameExpanded(file);
     fNameExpanded.expand();
@@ -55,18 +61,26 @@ void Foam::lookupTable1D::readTable(const fileName& file)
         {
             continue;
         }
-        line.replaceAll(",", " ");
+        line.replaceAll(delim_, " ");
+        line = '(' + line + ')';
 
         IStringStream isLine(line);
 
-        scalar xi(readScalar(isLine));
-
-        if (is.good())
+        scalarList lineVals(isLine);
+        if (lineVals.size())
         {
-            scalar fi(readScalar(isLine));
-            xTmp.append(xi);
-            xModTmp.append(modXFunc_(xi));
-            fTmp.append(modFunc_(fi));
+            if (isReal)
+            {
+                xTmp.append(lineVals[xi]);
+                xModTmp.append(modXFunc_(lineVals[xi]));
+                fTmp.append(modFunc_(lineVals[yi]));
+            }
+            else
+            {
+                xModTmp.append(lineVals[xi]);
+                xTmp.append(invModXFunc_(lineVals[xi]));
+                fTmp.append(lineVals[yi]);
+            }
         }
     }
     xValues_ = xTmp;
@@ -91,10 +105,73 @@ Foam::lookupTable1D::lookupTable1D()
 
 Foam::lookupTable1D::lookupTable1D
 (
+    const dictionary& dict,
+    const word& xName,
+    const word& yName
+)
+:
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    interpFunc_(nullptr),
+    index_(0),
+    f_(0.0)
+{
+    word mod(dict.lookupOrDefault<word>("mod", "none"));
+    word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
+    word interpolationScheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
+    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+
+    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setInterp(interpolationScheme, interpFunc_);
+
+    if (dict.found("delim"))
+    {
+        delim_ = dict.lookup<string>("delim");
+    }
+
+    if (dict.found("file"))
+    {
+        fileName file(dict.lookup("file"));
+        label xi(dict.lookupOrDefault<label>(xName + "Col", 0));
+        label yi(dict.lookupOrDefault<label>(yName + "Col", 1));
+        readTable(file, xi, yi, isReal);
+    }
+    else
+    {
+        xValues_ = dict.lookup<scalarField>(xName);
+        xModValues_ = xValues_;
+        data_ = dict.lookup<scalarField>(yName);
+        if (!isReal)
+        {
+            forAll(xValues_, i)
+            {
+                xValues_[i] = invModXFunc_(xValues_[i]);
+            }
+        }
+        else
+        {
+            forAll(xValues_, i)
+            {
+                xModValues_[i] = modXFunc_(xValues_[i]);
+                data_[i] = modFunc_(data_[i]);
+            }
+        }
+    }
+}
+
+
+Foam::lookupTable1D::lookupTable1D
+(
     const fileName& file,
     const word& mod,
     const word& xMod,
-    const word& intepolationScheme
+    const word& interpolationScheme
 )
 :
     modFunc_(nullptr),
@@ -107,7 +184,7 @@ Foam::lookupTable1D::lookupTable1D
 {
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(intepolationScheme, interpFunc_);
+    setInterp(interpolationScheme, interpFunc_);
     readTable(file);
 }
 
@@ -239,7 +316,7 @@ Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
     }
 #endif
 
-    update(x);
+    update(modXFunc_(x));
     return invModFunc_(data_[index_] + f_*(data_[index_+1] - data_[index_]));
 }
 
@@ -279,7 +356,7 @@ Foam::lookupTable1D::reverseLookup(const scalar& yin) const
     return invModXFunc_
     (
         xModValues_[index_]
-      + f_*(xValues_[index_+1] - xValues_[index_])
+      + f_*(xModValues_[index_+1] - xModValues_[index_])
     );
 }
 
@@ -295,7 +372,7 @@ Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
     }
 #endif
 
-    update(x);
+    update(modXFunc_(x));
 
     scalar fm(data_[index_]);
     scalar fp(data_[index_ + 1]);
@@ -317,7 +394,7 @@ Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
     }
 #endif
 
-    update(x);
+    update(modXFunc_(x));
     if (index_ == 0)
     {
         index_++;

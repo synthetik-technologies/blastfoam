@@ -74,29 +74,22 @@ Foam::atmosphereModels::table::~table()
 
 void Foam::atmosphereModels::table::createAtmosphere
 (
-    volScalarField& p,
-    volScalarField& rho
+    fluidBlastThermo& thermo
 ) const
 {
-    scalar R = Foam::constant::thermodynamic::RR/W_;
-    forAll(rho, celli)
+    forAll(thermo.p(), celli)
     {
-        p[celli] = pTable_.lookup(h_[celli]);
-        scalar T = TTable_.lookup(h_[celli]);
-        rho[celli] = p[celli]/T/R;
+        thermo.p()[celli] = pTable_.lookup(h_[celli]);
+        thermo.T()[celli] = TTable_.lookup(h_[celli]);
     }
 
-    forAll(rho.boundaryField(), patchi)
-    {
-        forAll(rho.boundaryField()[patchi], facei)
-        {
-            p.boundaryFieldRef()[patchi][facei] =
-                pTable_.lookup(h_.boundaryField()[patchi][facei]);
-            scalar T = TTable_.lookup(h_.boundaryField()[patchi][facei]);
-            rho.boundaryFieldRef()[patchi][facei] =
-                p.boundaryField()[patchi][facei]/T/R;
-        }
-    }
+    thermo.calce(thermo.p());
+    thermo.updateRho();
+    hydrostaticInitialisation
+    (
+        thermo,
+        dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
+    );
 }
 
 // ************************************************************************* //

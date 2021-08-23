@@ -169,8 +169,12 @@ bool Foam::functionObjects::dynamicPressure::execute()
 
 bool Foam::functionObjects::dynamicPressure::write()
 {
-    writeObject(resultName_);
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        writeObject(resultName_);
+        return true;
+    }
+    return false;
 }
 
 

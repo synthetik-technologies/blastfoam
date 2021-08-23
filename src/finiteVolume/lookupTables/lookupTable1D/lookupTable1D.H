@@ -66,6 +66,9 @@ class lookupTable1D
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
+    //- Delimiter
+    string delim_ = ",";
+
     //- Interpolation type
     interpFuncType interpFunc_;
 
@@ -85,7 +88,13 @@ class lookupTable1D
     mutable scalar f_;
 
     //- Read the table
-    void readTable(const fileName& file);
+    void readTable
+    (
+        const fileName& file,
+        const label xi = 0,
+        const label yi = 1,
+        bool isReal = false
+    );
 
     //- Find bottom of interpolation region, return index and weight between i and i+1
     inline label bound(const scalar& f) const;
@@ -98,6 +107,14 @@ public:
 
         //- Empty constructor
         lookupTable1D();
+
+        //- Construct from file
+        lookupTable1D
+        (
+            const dictionary& dict,
+            const word& xName,
+            const word& yName
+        );
 
         //- Construct from file
         lookupTable1D

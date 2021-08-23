@@ -62,12 +62,10 @@ Foam::atmosphereModels::hydrostatic::~hydrostatic()
 
 void Foam::atmosphereModels::hydrostatic::createAtmosphere
 (
-    volScalarField& p,
-    volScalarField& rho
+    fluidBlastThermo& thermo
 ) const
 {
-    rho = rhoRef_;
-    p = pRef_ + (g_ & normal_)*rho*(h_ - groundElevation_);
+    hydrostaticInitialisation(thermo, pRef_);
 }
 
 // ************************************************************************* //

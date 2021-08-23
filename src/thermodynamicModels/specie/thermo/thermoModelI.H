@@ -25,6 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
+#include "IOmanip.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -66,7 +67,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     scalar (thermoModel<ThermoType>::*F)(const scalar, const scalar, const scalar) const,
     scalar (thermoModel<ThermoType>::*dFdT)(const scalar, const scalar, const scalar)
         const,
-    scalar (thermoModel<ThermoType>::*limit)(const scalar) const
+    scalar (thermoModel<ThermoType>::*limit)(const scalar) const,
+    const bool diagnostics
 ) const
 {
     if (rho < small)
@@ -81,6 +83,22 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     scalar Ttol = max(T0, 1.0)*tolerance_;
 
     int    iter = 0;
+    scalar error = great;
+
+    if (diagnostics)
+    {
+        const unsigned int width = IOstream::defaultPrecision() + 8;
+
+        InfoInFunction
+            << "Energy -> temperature conversion failed to converge:" << endl;
+        Pout<< setw(width) << "iter"
+            << setw(width) << "Test"
+            << setw(width) << "e/h Actual"
+            << setw(width) << "e/h Test"
+            << setw(width) << "Cv/Cp"
+            << setw(width) << "Tnew"
+            << endl;
+    }
 
     do
     {
@@ -89,13 +107,33 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             (this->*limit)
             (Test - ((this->*F)(rho, e, Test) - f)/(this->*dFdT)(rho, e, Test));
 
+        error = mag((Tnew - Test)/max(Tnew, small));
+
+        if (diagnostics)
+        {
+            const unsigned int width = IOstream::defaultPrecision() + 8;
+
+            Pout<< setw(width) << iter
+                << setw(width) << Test
+                << setw(width) << f
+                << setw(width) << ((this->*F)(rho, e, Test))
+                << setw(width) << ((this->*dFdT)(rho, e, Test))
+                << setw(width) << Tnew
+                << endl;
+        }
+
         if (iter++ > maxIter_)
         {
+            if (!diagnostics)
+            {
+                T(f, e, rho, T0, F, dFdT, limit, true);
+            }
+
             FatalErrorInFunction
                 << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
-    } while (mag(Tnew - Test) > Ttol);
+    } while (error > Ttol);
 
     return Tnew;
 }

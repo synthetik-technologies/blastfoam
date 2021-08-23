@@ -112,12 +112,12 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
     const word& phaseName
 )
 {
-    if (nPhases == 1)
+    if (nPhases <= 1)
     {
         return basicBlastThermo::New<fluidBlastThermo>
         (
             mesh,
-            dict,
+            dict.optionalSubDict("mixture"),
             phaseName,
             phaseName
         );

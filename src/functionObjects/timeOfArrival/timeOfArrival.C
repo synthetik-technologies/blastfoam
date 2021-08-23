@@ -174,9 +174,13 @@ bool Foam::functionObjects::timeOfArrival::execute()
 
 bool Foam::functionObjects::timeOfArrival::write()
 {
-    pMax_.write();
-    timeOfArrival_.write();
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        pMax_.write();
+        timeOfArrival_.write();
+        return true;
+    }
+    return false;
 }
 
 

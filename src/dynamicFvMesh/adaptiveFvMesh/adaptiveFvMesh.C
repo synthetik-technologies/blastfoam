@@ -1715,7 +1715,7 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
         error_->read(refineDict);
 
         labelList maxRefinement(error_->maxRefinement());
-        label maxLevel(max(maxRefinement));
+        label maxLevel(gMax(maxRefinement));
         if (maxLevel == 0)
         {
             topoChanging(hasChanged);

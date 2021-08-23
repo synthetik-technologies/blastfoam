@@ -96,41 +96,28 @@ int main(int argc, char *argv[])
         atmosphereProperties.lookupOrDefault("sharedTemperature", true)
     );
 
-    wordList phases(phaseProperties.lookupOrDefault("phases", wordList()));
-    PtrList<fluidBlastThermo> thermos(phases.size());
-    forAll(phases, phasei)
-    {
-        thermos.set
+    wordList phases(phaseProperties.lookupOrDefault("phases", wordList(1,word::null)));
+    autoPtr<fluidBlastThermo> thermo
+    (
+        fluidBlastThermo::New
         (
-            phasei,
-            fluidBlastThermo::New
-            (
-                1,
-                mesh,
-                phaseProperties,
-                phaseName
-            ).ptr()
-        );
-    }
-
-    volScalarField& p(thermos[0].p());
-    volScalarField T("rhoTotal", thermos[0].T());
+            phases.size(),
+            mesh,
+            phaseProperties
+        )
+    );
 
     Info<< "Initializing atmosphere." << endl;
-    atmosphere->createAtmosphere(p, T);
+    atmosphere->createAtmosphere(thermo());
 
-    forAll(thermos, i)
+    forAll(thermo->p().boundaryField(), patchi)
     {
-        thermos[i].T() = T;
-
-        thermos[i].updateRho();
-        thermos[i].he() = thermos[i].he(p, T);
-
-        thermos[i].T().write();
-        thermos[i].rho().write();
+        thermo->p().boundaryFieldRef()[patchi] =
+            thermo->p().boundaryField()[patchi].patchInternalField();
     }
-
-    p.write();
+    thermo->T().write();
+    thermo->rho().write();
+    thermo->p().write();
 
     Info<< "Done" << nl << endl;
 }

@@ -351,7 +351,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
     scalar dA
     (
         (a1_*df1 - a2_*(df1*(1.0 - f2) + (1.0 - f1)*df2))*log10(max(e, small))
-      + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(e*log(10.0))
+      + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(max(e, small)*log(10.0))
       + a3_*df2
     );
 

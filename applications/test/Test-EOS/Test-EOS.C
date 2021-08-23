@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     simpleBlastThermo& eos = eosPtr();
 
     scalar p = 1e5;
-    scalar rho = 1000;
+    scalar rho = 1.225;
     scalar e = eos.Es(rho, 0, T);
 
 //     label n = 1000;
@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;
     Info<<"Cv: "<< eos.Cv(rho, e, T) <<endl;
     Info<<"rho: "<< eos.rhoPT(p, T) <<endl;
+    Info<<"p: "<< eos.p(rho, e, T) <<endl;
 
     return 0;
 }

@@ -109,7 +109,8 @@ protected:
             const scalar T0,
             scalar (thermoModel::*F)(const scalar, const scalar, const scalar) const,
             scalar (thermoModel::*dFdT)(const scalar, const scalar, const scalar) const,
-            scalar (thermoModel::*limit)(const scalar) const
+            scalar (thermoModel::*limit)(const scalar) const,
+            const bool diagnostics = false
         ) const;
 
 

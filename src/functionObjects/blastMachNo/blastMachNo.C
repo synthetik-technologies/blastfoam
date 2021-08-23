@@ -108,8 +108,12 @@ bool Foam::functionObjects::blastMachNo::execute()
 
 bool Foam::functionObjects::blastMachNo::write()
 {
-    writeObject(resultName_);
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        writeObject(resultName_);
+        return true;
+    }
+    return false;
 }
 
 

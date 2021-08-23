@@ -85,7 +85,7 @@ inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::Es
     const scalar T
 ) const
 {
-    return eTable_.lookup(T);
+    return eTable_.lookup(T) + EquationOfState::E(rho, e, T);
 }
 
 

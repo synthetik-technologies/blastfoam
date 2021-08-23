@@ -368,6 +368,10 @@ void Foam::functionObjects::fieldMax::setOldFields(const mapPolyMesh& mpm)
 
 bool Foam::functionObjects::fieldMax::write()
 {
+    if (this->mesh_.time().timeIndex() == 0)
+    {
+        return false;
+    }
     forAll(fieldNames_, fieldi)
     {
         writeField<volScalarField>(maxFieldNames_[fieldi]);
