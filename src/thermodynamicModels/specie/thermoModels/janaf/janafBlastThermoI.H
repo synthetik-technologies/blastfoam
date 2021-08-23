@@ -130,7 +130,8 @@ inline Foam::janafThermo<EquationOfState>::janafThermo
 template<class EquationOfState>
 inline Foam::scalar Foam::janafThermo<EquationOfState>::limit
 (
-    const scalar T
+    const scalar T,
+    const scalar Told
 ) const
 {
     if (janafThermo<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))

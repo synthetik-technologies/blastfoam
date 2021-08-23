@@ -103,7 +103,8 @@ Foam::eConstThermo<EquationOfState>::New(const dictionary& dict)
 template<class EquationOfState>
 inline Foam::scalar Foam::eConstThermo<EquationOfState>::limit
 (
-    const scalar T
+    const scalar T,
+    const scalar
 ) const
 {
     return max(T, 0.0);

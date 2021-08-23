@@ -119,7 +119,7 @@ public:
         tabulatedThermo(const dictionary& dict);
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
-        inline scalar limit(const scalar T) const;
+        inline scalar limit(const scalar T, const scalar Told) const;
 
 
     // Member Functions

@@ -140,7 +140,7 @@ public:
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
-        inline scalar limit(const scalar T) const;
+        inline scalar limit(const scalar T, const scalar) const;
 
 
     // Member Functions

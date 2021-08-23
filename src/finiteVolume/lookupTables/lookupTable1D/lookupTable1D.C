@@ -217,15 +217,15 @@ Foam::lookupTable1D::lookupTable1D
     {
         forAll(x, i)
         {
-            xModValues_[i] = modXFunc_(x[i]);
+            xModValues_[i] = invModXFunc_(x[i]);
         }
     }
     else
     {
         forAll(x, i)
         {
-            xValues_[i] = invModXFunc_(x[i]);
-            data_[i] = invModFunc_(x[i]);
+            xValues_[i] = modXFunc_(x[i]);
+            data_[i] = modFunc_(x[i]);
         }
     }
 }
@@ -291,7 +291,6 @@ void Foam::lookupTable1D::update(const scalar& x) const
         f_ = 1.0;
         return;
     }
-
     for (index_ = 1; index_ < xModValues_.size(); index_++)
     {
         if (x <= xValues_[index_])
@@ -336,19 +335,21 @@ Foam::lookupTable1D::reverseLookup(const scalar& yin) const
     scalar y(modFunc_(yin));
     if (y < data_[0])
     {
-        return xValues_[0];
+        index_ = 0;
     }
     if (y > data_.last())
     {
-        return xValues_.last();
+        index_ = data_.size() - 2;
     }
-    index_ = 0;
-    for (index_ = 1; index_ < data_.size(); index_++)
+    else
     {
-        if (y < data_[index_])
+        for (index_ = 0; index_ < data_.size(); index_++)
         {
-            index_--;
-            break;
+            if (y < data_[index_])
+            {
+                index_--;
+                break;
+            }
         }
     }
 

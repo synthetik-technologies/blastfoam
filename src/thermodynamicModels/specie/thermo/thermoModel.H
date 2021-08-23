@@ -91,8 +91,11 @@ protected:
 
     // Protected data
 
-        //- Convergence criteria for temperature
-        scalar tolerance_;
+        //- Relative convergence criteria for temperature
+        scalar relTol_;
+
+        //- Absolute convergence criteria for temperature
+        scalar absTol_;
 
         //- Maximum number of iterations
         label maxIter_;
@@ -109,7 +112,7 @@ protected:
             const scalar T0,
             scalar (thermoModel::*F)(const scalar, const scalar, const scalar) const,
             scalar (thermoModel::*dFdT)(const scalar, const scalar, const scalar) const,
-            scalar (thermoModel::*limit)(const scalar) const,
+            scalar (thermoModel::*limit)(const scalar, const scalar) const,
             const bool diagnostics = false
         ) const;
 

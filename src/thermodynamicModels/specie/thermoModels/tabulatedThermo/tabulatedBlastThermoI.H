@@ -45,9 +45,15 @@ inline Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
 template<class EquationOfState>
 inline Foam::scalar Foam::tabulatedThermo<EquationOfState>::limit
 (
-    const scalar T
+    const scalar T,
+    const scalar Told
 ) const
 {
+    if (T/Told > 5.0)
+    {
+        return Told*5.0;
+    }
+
     if (tabulatedThermo<EquationOfState>::debug && (T < Tlow_ || T > Thigh_))
     {
         WarningInFunction

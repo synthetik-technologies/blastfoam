@@ -36,7 +36,8 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 )
 :
     ThermoType(sp),
-    tolerance_(1e-4),
+    relTol_(1e-6),
+    absTol_(1e-2),
     maxIter_(100)
 {
     this->set(*this);
@@ -50,7 +51,8 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 )
 :
     ThermoType(thermo),
-    tolerance_(thermo.tolerance_),
+    relTol_(thermo.relTol_),
+    absTol_(thermo.absTol_),
     maxIter_(thermo.maxIter_)
 {
     this->set(*this);
@@ -67,7 +69,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
     scalar (thermoModel<ThermoType>::*F)(const scalar, const scalar, const scalar) const,
     scalar (thermoModel<ThermoType>::*dFdT)(const scalar, const scalar, const scalar)
         const,
-    scalar (thermoModel<ThermoType>::*limit)(const scalar) const,
+    scalar (thermoModel<ThermoType>::*limit)(const scalar, const scalar) const,
     const bool diagnostics
 ) const
 {
@@ -76,14 +78,12 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
         return T0;
     }
 
-    scalar Test = (this->*limit)(T0);
+    scalar Test = (this->*limit)(T0, T0);
     scalar Tnew = Test;
 
-    //- Limit tolerance if T is very small
-    scalar Ttol = max(T0, 1.0)*tolerance_;
-
     int    iter = 0;
-    scalar error = great;
+    scalar relError = great;
+    scalar absError = great;
 
     if (diagnostics)
     {
@@ -105,9 +105,14 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
         Test = Tnew;
         Tnew =
             (this->*limit)
-            (Test - ((this->*F)(rho, e, Test) - f)/(this->*dFdT)(rho, e, Test));
+            (
+                Test
+              - ((this->*F)(rho, f, Test) - f)/(this->*dFdT)(rho, f, Test),
+                Test
+            );
 
-        error = mag((Tnew - Test));
+        absError = mag((Tnew - Test));
+        relError = absError/max(Test, small);
 
         if (diagnostics)
         {
@@ -116,8 +121,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             Pout<< setw(width) << iter
                 << setw(width) << Test
                 << setw(width) << f
-                << setw(width) << ((this->*F)(rho, e, Test))
-                << setw(width) << ((this->*dFdT)(rho, e, Test))
+                << setw(width) << ((this->*F)(rho, f, Test))
+                << setw(width) << ((this->*dFdT)(rho, f, Test))
                 << setw(width) << Tnew
                 << endl;
         }
@@ -133,7 +138,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
                 << "Maximum number of iterations exceeded: " << maxIter_
                 << abort(FatalError);
         }
-    } while (error > Ttol);
+    } while (relError > relTol_ && absError > absTol_);
 
     return Tnew;
 }
@@ -149,7 +154,8 @@ inline Foam::thermoModel<ThermoType>::thermoModel
 )
 :
     ThermoType(name, sp),
-    tolerance_(1e-4),
+    relTol_(1e-2),
+    absTol_(1e-6),
     maxIter_(100)
 {
     this->set(*this);

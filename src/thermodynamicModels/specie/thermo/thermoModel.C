@@ -34,7 +34,8 @@ template<class ThermoType>
 Foam::thermoModel<ThermoType>::thermoModel(const dictionary& dict)
 :
     ThermoType(dict),
-    tolerance_(dict.lookupOrDefault("tolerance", 1e-4)),
+    relTol_(dict.subDict("thermodynamics").lookupOrDefault("relTol", 1e-6)),
+    absTol_(dict.subDict("thermodynamics").lookupOrDefault("relTol", 1e-2)),
     maxIter_(dict.lookupOrDefault("maxIter", 100))
 {
     this->set(*this);
@@ -86,7 +87,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
                 << abort(FatalError);
         }
 
-    } while ((mag(pNew - p)/p > tolerance_) && (iter++ < maxIter_));
+    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
     return Enew;
 }
 
@@ -121,7 +122,7 @@ Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
         {
             Rhonew = Rhoest/2.0;
         }
-    } while ((mag(pNew - p)/p > tolerance_) && (iter++ < maxIter_));
+    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
 
     return Rhonew;
 }

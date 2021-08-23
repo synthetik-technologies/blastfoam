@@ -93,6 +93,9 @@ void Foam::fluidBlastThermo::initializeFields()
                     e.boundaryField()[patchi][facei];
             }
         }
+
+        // Initial guess for temperature
+        this->T_ = e/Cv();
     }
 
     this->T_ = this->THE();
