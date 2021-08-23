@@ -292,7 +292,7 @@ void Foam::lookupTable1D::update(const scalar& x) const
         return;
     }
 
-    for (index_ = 0; index_ < xModValues_.size(); index_++)
+    for (index_ = 1; index_ < xModValues_.size(); index_++)
     {
         if (x <= xValues_[index_])
         {
@@ -316,7 +316,7 @@ Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
     }
 #endif
 
-    update(modXFunc_(x));
+    update(x);
     return invModFunc_(data_[index_] + f_*(data_[index_+1] - data_[index_]));
 }
 
@@ -337,6 +337,10 @@ Foam::lookupTable1D::reverseLookup(const scalar& yin) const
     if (y < data_[0])
     {
         return xValues_[0];
+    }
+    if (y > data_.last())
+    {
+        return xValues_.last();
     }
     index_ = 0;
     for (index_ = 1; index_ < data_.size(); index_++)
@@ -372,7 +376,7 @@ Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
     }
 #endif
 
-    update(modXFunc_(x));
+    update(x);
 
     scalar fm(data_[index_]);
     scalar fp(data_[index_ + 1]);

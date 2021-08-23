@@ -107,7 +107,7 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             (this->*limit)
             (Test - ((this->*F)(rho, e, Test) - f)/(this->*dFdT)(rho, e, Test));
 
-        error = mag((Tnew - Test)/max(Tnew, small));
+        error = mag((Tnew - Test));
 
         if (diagnostics)
         {
