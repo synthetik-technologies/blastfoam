@@ -21,12 +21,12 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
-#include "pressureRelaxationModelODE.H"
+#include "pressureRelaxationODE.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::pressureRelaxationModelODE::pressureRelaxationModelODE(phaseSystem& fluid, pressureRelaxationModelTable& pressureRelaxationModels)
+Foam::pressureRelaxationODE::pressureRelaxationODE(phaseSystem& fluid, pressureRelaxationModelTable& pressureRelaxationModels)
 :
     ODESystem(),
     dict_(fluid.subDict("pressureODECoeffs")),
@@ -45,7 +45,7 @@ Foam::pressureRelaxationModelODE::pressureRelaxationModelODE(phaseSystem& fluid,
     (
         IOobject
         (
-            "pressureRelaxationModelODE",
+            "pressureRelaxationODE",
             fluid.mesh().time().timeName(),
             fluid.mesh()
         ),
@@ -90,9 +90,9 @@ Foam::pressureRelaxationModelODE::pressureRelaxationModelODE(phaseSystem& fluid,
             thermos_.set
             (
                 i,
-                &fluid.mesh().lookupObjectRef<fluidThermoModel>
+                &fluid.mesh().lookupObjectRef<fluidBlastThermo>
                 (
-                    IOobject::groupName("basicThermo", phase.group())
+                    IOobject::groupName(basicThermo::dictName, phase.group())
                 )
             );
             i++;
@@ -134,17 +134,18 @@ Foam::pressureRelaxationModelODE::pressureRelaxationModelODE(phaseSystem& fluid,
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::pressureRelaxationModelODE::~pressureRelaxationModelODE()
+Foam::pressureRelaxationODE::~pressureRelaxationODE()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 
-void Foam::pressureRelaxationModelODE::derivatives
+void Foam::pressureRelaxationODE::derivatives
 (
     const scalar time,
     const scalarField& q,
+    const label li,
     scalarField& dqdt
 ) const
 {
@@ -161,18 +162,22 @@ void Foam::pressureRelaxationModelODE::derivatives
         const label e1i = phaseModels_.size() + a1i;
         const label a2i = phaseIndicies_[phase2.index()];
         const label e2i = phaseModels_.size() + a2i;
-        const scalar p1 = thermos_[a1i].pRhoTi(celli_);
-        const scalar p2 = thermos_[a2i].pRhoTi(celli_);
-        if (phase1.alphaRho()[celli_] < 1e-10 || phase2.alphaRho()[celli_] < 1e-10)
+        const scalar p1 = thermos_[a1i].cellpRhoT(li);
+        const scalar p2 = thermos_[a2i].cellpRhoT(li);
+        if
+        (
+            phase1.alphaRho()[li] < 1e-10
+         || phase2.alphaRho()[li] < 1e-10
+        )
         {
             continue;
         }
-        const scalar PI = ip.PIi(celli_);
+        const scalar PI = ip.cellPI(li);
 
-        const scalar alphaRho1 = phase1.alphaRho()[celli_];
-        const scalar alphaRho2 = phase2.alphaRho()[celli_];
+        const scalar alphaRho1 = phase1.alphaRho()[li];
+        const scalar alphaRho2 = phase2.alphaRho()[li];
 
-        const scalar mu = pressureRelaxationModels_[pairi].mui(celli_);
+        const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
 
         dqdt[a1i] += mu*(p1 - p2);
         dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
@@ -182,10 +187,11 @@ void Foam::pressureRelaxationModelODE::derivatives
 }
 
 
-void Foam::pressureRelaxationModelODE::jacobian
+void Foam::pressureRelaxationODE::jacobian
 (
     const scalar t,
     const scalarField& q,
+    const label li,
     scalarField& dqdt,
     scalarSquareMatrix& J
 ) const
@@ -203,29 +209,33 @@ void Foam::pressureRelaxationModelODE::jacobian
         const label e1i = phaseModels_.size() + a1i;
         const label a2i = phaseIndicies_[phase2.index()];
         const label e2i = phaseModels_.size() + a2i;
-        const scalar p1 = thermos_[a1i].pRhoTi(celli_);
-        const scalar p2 = thermos_[a2i].pRhoTi(celli_);
+        const scalar p1 = thermos_[a1i].cellpRhoT(li);
+        const scalar p2 = thermos_[a2i].cellpRhoT(li);
 
-        const scalar& rho1 = phase1.rho()[celli_];
-        const scalar& rho2 = phase2.rho()[celli_];
+        const scalar& rho1 = phase1.rho()[li];
+        const scalar& rho2 = phase2.rho()[li];
 
-        if (phase1.alphaRho()[celli_] < 1e-10 || phase2.alphaRho()[celli_] < 1e-10)
+        if
+        (
+            phase1.alphaRho()[li] < 1e-10
+         || phase2.alphaRho()[li] < 1e-10
+        )
         {
             continue;
         }
-        const scalar PI = ip.Pi(celli_);
+        const scalar PI = ip.cellPI(li);
 
-        const scalar alphaRho1 = phase1.alphaRho()[celli_];
-        const scalar alphaRho2 = phase2.alphaRho()[celli_];
+        const scalar alphaRho1 = phase1.alphaRho()[li];
+        const scalar alphaRho2 = phase2.alphaRho()[li];
 
-        const scalar dPidAlpha1 = ip.dPIdAlphai(celli_, phase1.index());
-        const scalar dPidAlpha2 = ip.dPIdAlphai(celli_, phase2.index());
-        const scalar dPide1 = ip.dPIdei(celli_, phase1.index());
-        const scalar dPide2 = ip.dPIdei(celli_, phase2.index());
-        const scalar dp1de1 = thermos_[a1i].dpdei(celli_);
-        const scalar dp2de2 = thermos_[a2i].dpdei(celli_);
+        const scalar dPidAlpha1 = ip.celldPIdAlpha(li, phase1.index());
+        const scalar dPidAlpha2 = ip.celldPIdAlpha(li, phase2.index());
+        const scalar dPide1 = ip.celldPIde(li, phase1.index());
+        const scalar dPide2 = ip.celldPIde(li, phase2.index());
+        const scalar dp1de1 = thermos_[a1i].celldpde(li);
+        const scalar dp2de2 = thermos_[a2i].celldpde(li);
 
-        const scalar mu = pressureRelaxationModels_[pairi].Ki(celli_);
+        const scalar mu = pressureRelaxationModels_[pairi].cellK(li);
 
         dqdt[a1i] += mu*(p1 - p2);
         dqdt[e1i] += PI*mu*(p2 - p1)/alphaRho1;
@@ -261,39 +271,39 @@ void Foam::pressureRelaxationModelODE::jacobian
 }
 
 
-Foam::scalar Foam::pressureRelaxationModelODE::solve
+Foam::scalar Foam::pressureRelaxationODE::solve
 (
     const scalar& deltaT
 )
 {
-    for(celli_ = 0; celli_ < phaseModels_[0].size(); celli_++)
+    forAll(phaseModels_[0], celli)
     {
         forAll(phaseModels_, phasei)
         {
             const phaseModel& phase = phaseModels_[phasei];
             const label ai = phaseIndicies_[phase.index()];
             const label ei = phaseModels_.size() + ai;
-            q_[ai] = max(min(phase[celli_], 1.0), 0.0);
-            q_[ei] = phase.he()[celli_];
+            q_[ai] = max(min(phase[celli], 1.0), 0.0);
+            q_[ei] = phase.he()[celli];
         }
 
         scalar timeLeft = deltaT;
         while (timeLeft > small)
         {
             scalar dt = timeLeft;
-            odeSolver_->solve(0, dt, q_, deltaT_[celli_]);
+            odeSolver_->solve(0, dt, q_, celli, deltaT_[celli]);
             timeLeft -= dt;
-            deltaT_[celli_] = dt;
+            deltaT_[celli] = dt;
 
             forAll(phaseModels_, phasei)
             {
                 phaseModel& phase = phaseModels_[phasei];
                 const label ai = phaseIndicies_[phase.index()];
                 const label ei = phaseModels_.size() + ai;
-                phase[celli_] = max(min(q_[ai], 1.0), 0.0);
-                phase.rho()[celli_] =
-                    phase.alphaRho()[celli_]/max(phase[celli_], 1e-10);
-                phase.he()[celli_] = q_[ei];
+                phase[celli] = max(min(q_[ai], 1.0), 0.0);
+                phase.rho()[celli] =
+                    phase.alphaRho()[celli]/max(phase[celli], 1e-10);
+                phase.he()[celli] = q_[ei];
             }
         }
 

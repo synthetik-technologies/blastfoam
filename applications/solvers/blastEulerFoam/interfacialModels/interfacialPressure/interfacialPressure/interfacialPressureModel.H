@@ -111,7 +111,21 @@ public:
         virtual tmp<volScalarField> PI() const = 0;
 
         //- Return the interfacial pressure for a cell
-        virtual scalar PIi(const label celli) const = 0;
+        virtual scalar cellPI(const label celli) const = 0;
+
+        //- Return the derivative of the given phase w.r.t. volume fraction
+        virtual scalar celldPIdAlpha
+        (
+            const label celli,
+            const label phasei
+        ) const = 0;
+
+        //- Return the derivative of the given phase w.r.t. internal energy
+        virtual scalar celldPIde
+        (
+            const label celli,
+            const label phasei
+        ) const = 0;
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const

@@ -135,7 +135,7 @@ public:
         ) const = 0;
 
         //- Return the pressure relaxation coefficient for a cell
-        virtual scalar Ki
+        virtual scalar cellK
         (
             const label celli,
             const label nodei = -1,

@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
--------------------------------------------------------------------------------
-2017-05-18 Jeff Heylmun:    Added support of polydisperse phase models
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
@@ -24,88 +22,84 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::pressureRelaxationModels::constant
+    Foam::interfacialPressureModels::none
 
 Description
-    Length based pressureRelaxation model.
+    One phase is used to determine the interfacial pressure
 
 SourceFiles
-    constant.C
+    noneInterfacialPressureModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantPressureRelaxationModel_H
-#define constantPressureRelaxationModel_H
+#ifndef noneInterfacialPressure_H
+#define noneInterfacialPressure_H
 
-#include "pressureRelaxationModel.H"
+#include "interfacialPressureModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class phasePair;
-
-namespace pressureRelaxationModels
+namespace interfacialPressureModels
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class constant Declaration
+                          Class none Declaration
 \*---------------------------------------------------------------------------*/
 
-class constant
+class none
 :
-    public pressureRelaxationModel
+    public interfacialPressureModel
 {
-    // Private data
-
-        //- Pressure relaxation coefficient
-        const dimensionedScalar mu_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("constant");
+    TypeName("none");
 
 
     // Constructors
 
         //- Construct from components
-        constant
+        none
         (
             const dictionary& dict,
-            const phasePair& pair,
-            const bool registerObject
+            const phasePair& pair
         );
 
 
     //- Destructor
-    virtual ~constant();
+    virtual ~none();
 
 
     // Member Functions
 
-        //- Return the pressure relaxation coefficient
-        virtual tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        //- The heat transfer function K used in the enthalpy equation
+        virtual tmp<volScalarField> PI() const;
 
-        //- Return the pressure relaxation coefficient for a cell
-        virtual scalar cellK
+        //- Return the interfacial pressure for a cell
+        virtual scalar cellPI(const label celli) const;
+
+        //- Return the derivative of the given phase w.r.t. volume fraction
+        virtual scalar celldPIdAlpha
         (
             const label celli,
-            const label nodei = -1,
-            const label nodej = -1
+            const label phasei
+        ) const;
+
+        //- Return the derivative of the given phase w.r.t. internal energy
+        virtual scalar celldPIde
+        (
+            const label celli,
+            const label phasei
         ) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace pressureRelaxationModels
+} // End namespace interfacialPressureModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -20,17 +20,17 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 Class
-    Foam::pressureRelaxationModelODE
+    Foam::pressureRelaxationODE
 Description
     Basic ode solver for coupling phases with pressureRelaxation
 
 SourceFiles
-    pressureRelaxationModelODEI.H
-    pressureRelaxationModelODE.C
+    pressureRelaxationODEI.H
+    pressureRelaxationODE.C
 \*---------------------------------------------------------------------------*/
 
-#ifndef pressureRelaxationModelODE_H
-#define pressureRelaxationModelODE_H
+#ifndef pressureRelaxationODE_H
+#define pressureRelaxationODE_H
 
 #include "ODESystem.H"
 #include "ODESolver.H"
@@ -40,7 +40,7 @@ SourceFiles
 #include "labelVector.H"
 #include "pressureRelaxationModel.H"
 #include "interfacialPressureModel.H"
-#include "fluidBlastThermoModel.H"
+#include "fluidBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,10 +48,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class pressureRelaxationModelODE Declaration
+                      Class pressureRelaxationODE Declaration
 \*---------------------------------------------------------------------------*/
 
-class pressureRelaxationModelODE
+class pressureRelaxationODE
 :
     public ODESystem
 {
@@ -67,10 +67,10 @@ class pressureRelaxationModelODE
     // Private Member Functions
 
         //- Disallow copy constructor
-        pressureRelaxationModelODE(const pressureRelaxationModelODE&);
+        pressureRelaxationODE(const pressureRelaxationODE&);
 
         //- Disallow default bitwise assignment
-        void operator=(const pressureRelaxationModelODE&);
+        void operator=(const pressureRelaxationODE&);
 
 
 protected:
@@ -94,7 +94,7 @@ protected:
         labelList phaseIndicies_;
 
         //- Reference to fluid thermo models
-        UPtrList<fluidBlastThermoModel> thermos_;
+        UPtrList<fluidBlastThermo> thermos_;
 
         //- Reference to interfacial pressure model
         UPtrList<interfacialPressureModel> interfacialPressureModels_;
@@ -117,9 +117,6 @@ protected:
         //- Stored time step
         volScalarField::Internal deltaT_;
 
-        //- Current cell
-        label celli_ = 0;
-
         //- Ode solver
         autoPtr<ODESolver> odeSolver_;
 
@@ -130,11 +127,11 @@ public:
     // Constructors
 
         //- Construct from thermo
-        pressureRelaxationModelODE(phaseSystem& fluid, pressureRelaxationModelTable& pressureRelaxationModels);
+        pressureRelaxationODE(phaseSystem& fluid, pressureRelaxationModelTable& pressureRelaxationModels);
 
 
     //- Destructor
-    virtual ~pressureRelaxationModelODE();
+    virtual ~pressureRelaxationODE();
 
 
     // Member Functions
@@ -160,6 +157,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt
             ) const;
 
@@ -167,6 +165,7 @@ public:
             (
                 const scalar t,
                 const scalarField& q,
+                const label li,
                 scalarField& dqdt,
                 scalarSquareMatrix& J
             ) const;

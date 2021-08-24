@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "singleInterfacialPressureModel.H"
+#include "noneInterfacialPressureModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -32,56 +32,53 @@ namespace Foam
 {
 namespace interfacialPressureModels
 {
-    defineTypeNameAndDebug(single, 0);
-    addToRunTimeSelectionTable(interfacialPressureModel, single, dictionary);
+    defineTypeNameAndDebug(none, 0);
+    addToRunTimeSelectionTable(interfacialPressureModel, none, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::single::single
+Foam::interfacialPressureModels::none::none
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    interfacialPressureModel(dict, pair),
-    phaseName_(dict.lookup("phase")),
-    phase_
-    (
-        pair_.phase1().name() == phaseName_
-      ? pair_.phase1()
-      : pair_.phase2()
-    ),
-    p_(phase_.p())
+    interfacialPressureModel(dict, pair)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::single::~single()
+Foam::interfacialPressureModels::none::~none()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::single::PI() const
+Foam::interfacialPressureModels::none::PI() const
 {
-    return p_;
+    return volScalarField::New
+    (
+        "none:PI",
+        this->pair_.phase1().mesh(),
+        dimensionedScalar(dimPressure, 0.0)
+    );
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::single::cellPI(const label celli) const
+Foam::interfacialPressureModels::none::cellPI(const label celli) const
 {
-    return p_[celli];
+    return 0.0;
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::single::celldPIdAlpha
+Foam::interfacialPressureModels::none::celldPIdAlpha
 (
     const label celli,
     const label phasei
@@ -92,19 +89,13 @@ Foam::interfacialPressureModels::single::celldPIdAlpha
 
 
 Foam::scalar
-Foam::interfacialPressureModels::single::celldPIde
+Foam::interfacialPressureModels::none::celldPIde
 (
     const label celli,
     const label phasei
 ) const
 {
-    if (phasei != phase_.index())
-    {
-        return 0.0;
-    }
-    const fluidBlastThermo& thermo =
-        dynamicCast<const fluidBlastThermo>(phase_.thermo());
-    return thermo.celldpde(celli);
+    return 0.0;
 }
 
 

@@ -90,7 +90,7 @@ Foam::tmp<Foam::volScalarField> Foam::pressureRelaxationModels::constant::K
 }
 
 
-Foam::scalar Foam::pressureRelaxationModels::constant::Ki
+Foam::scalar Foam::pressureRelaxationModels::constant::cellK
 (
     const label celli,
     const label nodei,

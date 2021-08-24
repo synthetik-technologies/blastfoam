@@ -79,7 +79,21 @@ public:
         virtual tmp<volScalarField> PI() const;
 
         //- Return the interfacial pressure for a cell
-        virtual scalar PIi(const label celli) const;
+        virtual scalar cellPI(const label celli) const;
+
+        //- Return the derivative of the given phase w.r.t. volume fraction
+        virtual scalar celldPIdAlpha
+        (
+            const label celli,
+            const label phasei
+        ) const;
+
+        //- Return the derivative of the given phase w.r.t. internal energy
+        virtual scalar celldPIde
+        (
+            const label celli,
+            const label phasei
+        ) const;
 };
 
 
