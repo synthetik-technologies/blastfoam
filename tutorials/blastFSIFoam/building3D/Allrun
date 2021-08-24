@@ -9,8 +9,8 @@ runApplication blockMesh
 runApplication splitMeshRegions -cellZones -overwrite
 
 rm -rf constant/polyMesh
-foamDictionary constant/air/polyMesh/boundary -entry entry0.air_to_building.type -set 'mappedMovingWall'
-foamDictionary constant/building/polyMesh/boundary -entry entry0.building_to_air.type -set 'mappedMovingWall'
+foamDictionary constant/air/polyMesh/boundary -entry entry0/air_to_building/type -set 'mappedMovingWall'
+foamDictionary constant/building/polyMesh/boundary -entry entry0/building_to_air/type -set 'mappedMovingWall'
 
 runApplication decomposePar -allRegions
 

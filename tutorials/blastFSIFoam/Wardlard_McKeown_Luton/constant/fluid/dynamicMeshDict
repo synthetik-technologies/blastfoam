@@ -19,7 +19,7 @@ dynamicFvMesh   movingAdaptiveFvMesh;
 errorEstimator scaledDelta;      // Model used to estimate error
 scaledDeltaField p;               // Field used to estimate error
 
-solver      displacementLaplacian;
+motionSolver    displacementLaplacian;
 
 displacementLaplacianCoeffs
 {
