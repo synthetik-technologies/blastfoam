@@ -28,6 +28,9 @@ License
 
 #include "basicSolidBlastThermo.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
@@ -39,7 +42,8 @@ Foam::basicSolidBlastThermo<Thermo>::basicSolidBlastThermo
     const word& masterName
 )
 :
-    Thermo(mesh, dict, phaseName, masterName)
+    Thermo(mesh, dict, phaseName, masterName),
+    mixture_(*this)
 {
     this->initializeFields();
 }

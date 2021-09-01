@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.25;
+endTime         0.05;
 
 writeControl    adjustableRunTime;
 
@@ -47,6 +47,7 @@ deltaT          1e-6;
 
 maxCo           0.5;
 
+libs ("libblastCuda.so");
 // ************************************************************************* //
 
 

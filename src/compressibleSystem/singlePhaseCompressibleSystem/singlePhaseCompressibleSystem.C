@@ -33,7 +33,7 @@ namespace Foam
     defineTypeNameAndDebug(singlePhaseCompressibleSystem, 0);
     addToRunTimeSelectionTable
     (
-        phaseCompressibleSystem,
+        compressibleSystem,
         singlePhaseCompressibleSystem,
         dictionary
     );
@@ -46,7 +46,7 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(1, mesh)
+    compressibleBlastSystem(1, mesh)
 {
     thermoPtr_->initializeModels();
     this->setModels();
@@ -75,82 +75,35 @@ void Foam::singlePhaseCompressibleSystem::solve()
 
     thermoPtr_->solve();
 
-    phaseCompressibleSystem::solve();
+    compressibleBlastSystem::solve();
 }
 
 
-void Foam::singlePhaseCompressibleSystem::update()
+void Foam::singlePhaseCompressibleSystem::postUpdate()
 {
-    decode();
-    fluxScheme_->update
-    (
-        rho_,
-        U_,
-        e_,
-        p_,
-        speedOfSound()(),
-        phi_,
-        rhoPhi_,
-        rhoUPhi_,
-        rhoEPhi_
-    );
-    thermoPtr_->update();
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::singlePhaseCompressibleSystem::ESource() const
-{
-    return thermoPtr_->ESource();
-}
-
-
-void Foam::singlePhaseCompressibleSystem::decode()
-{
-    U_.ref() = rhoU_()/rho_();
-    U_.correctBoundaryConditions();
-
-    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
-
-    e_.ref() = rhoE_()/rho_() - 0.5*magSqr(U_());
-
-    //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
+    if (!needPostUpdate_)
     {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - TLow_));
-        T_.max(TLow_);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
+        compressibleBlastSystem::postUpdate();
+        return;
     }
-    e_.correctBoundaryConditions();
 
-    rhoE_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
+    this->decode();
+
+    // Solve mass
+    if (solveFields_.found(rho_.name()))
+    {
+        fvScalarMatrix rhoEqn
+        (
+            fvm::ddt(rho_) - fvc::ddt(rho_)
+         ==
+            models_.source(rho_)
         );
-
-    thermoPtr_->correct();
-    if (constraints_.constrainsField(p_.name()))
-    {
-        constraints_.constrain(p_);
-        p_.correctBoundaryConditions();
+        constraints_.constrain(rhoEqn);
+        rhoEqn.solve();
+        constraints_.constrain(rho_);
     }
-}
 
-
-void Foam::singlePhaseCompressibleSystem::encode()
-{
-    rhoU_ = rho_*U_;
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
+    compressibleBlastSystem::postUpdate();
 }
 
 // ************************************************************************* //

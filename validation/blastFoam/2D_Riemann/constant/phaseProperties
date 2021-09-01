@@ -15,6 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// systemType cudaSinglePhaseCompressibleSystem;
 type basic;
 thermoType
 {

@@ -48,7 +48,117 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class multicomponentFluidBlastThermo Declaration
+                Class multicomponentBlastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMixture, class ThermoType>
+class multicomponentBlastFluidMixture
+:
+    public BasicMixture
+{
+    const speciesMixtureField<ThermoType>& mixtureField_;
+    mutable UautoPtr<const ThermoType> mixturePtr_;
+
+public:
+
+    multicomponentBlastFluidMixture
+    (
+        const speciesMixtureField<ThermoType>& mixture
+    )
+    :
+        mixtureField_(mixture),
+        mixturePtr_(nullptr)
+    {}
+
+    virtual ~multicomponentBlastFluidMixture()
+    {}
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        mixturePtr_.reset(&mixtureField_[celli]);
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        mixturePtr_.reset(&mixtureField_.boundary(patchi, facei));
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Es(rho, e, T);
+    }
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
+    {
+        return mixturePtr_->TRhoE(T, rho, e);
+    }
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Cp(rho, e, T);
+    }
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Cv(rho, e, T);
+    }
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->kappa(rho, e, T);
+    }
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->p(rho, e, T);
+    }
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->mu(rho, e, T);
+    }
+
+    //- Calculate dpde
+    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Gamma(rho, e, T);
+    }
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e,
+        const scalar T
+    ) const
+    {
+        return sqrt(max(mixturePtr_->cSqr(p, rho, e, T), small));
+    }
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e,
+        const scalar T
+    ) const
+    {
+        return mixturePtr_->cSqr(p, rho, e, T);
+    }
+};
+
+
+/*---------------------------------------------------------------------------*\
+                Class multicomponentFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
@@ -56,6 +166,35 @@ class multicomponentFluidBlastThermo
 :
     public Thermo
 {
+    //- Mixture
+    mutable multicomponentBlastFluidMixture
+    <
+        typename Thermo::BasicMixture,
+        typename Thermo::thermoType
+    > localMixture_;
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        localMixture_.setCell(celli);
+        return localMixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        localMixture_.setPatchFace(patchi, facei);
+        return localMixture_;
+    }
+
+
 public:
 
     //- Runtime type information
@@ -103,32 +242,17 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-        //- Gamma = dpde []
-        virtual tmp<volScalarField> Gamma() const;
-
-        //- Gamma = dpde for patch []
-        virtual tmp<scalarField> Gamma(const label patchi) const;
-
-        //- Gamma = dpde for cell []
-        virtual scalar cellGamma(const label celli) const;
-
 
     //- Thermodynamic and transport functions
 
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 
-        //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> pRhoT() const;
-
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT(const label celli) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar cellGamma(const label celli) const;
 
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;
@@ -140,9 +264,6 @@ public:
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 
     // Access to transport state variables
-
-            //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const;
 
             //- Dynamic viscosity [kg/m/s]
             virtual tmp<volScalarField> mu

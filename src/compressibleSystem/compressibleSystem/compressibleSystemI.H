@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -21,28 +21,52 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Description
-    Calculates and outputs the mean and maximum Courant Numbers for the fluid
-    regions
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef compressibleCourantNo_H
-#define compressibleCourantNo_H
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-#include "fvMesh.H"
-#include "phaseCompressibleSystem.H"
-
-namespace Foam
+const Foam::fluxScheme& Foam::compressibleSystem::flux() const
 {
-    scalar compressibleCourantNo
-    (
-        const fvMesh& mesh,
-        const Time& runTime,
-        const phaseCompressibleSystem& fluid
-    );
+    return fluxScheme_();
 }
 
-#endif
+
+Foam::fluxScheme& Foam::compressibleSystem::flux()
+{
+    return fluxScheme_();
+}
+
+
+const Foam::momentumTransportModel&
+Foam::compressibleSystem::turbulence() const
+{
+    return turbulence_();
+}
+
+
+Foam::momentumTransportModel&
+Foam::compressibleSystem::turbulence()
+{
+    return turbulence_();
+}
+
+
+const Foam::volVectorField& Foam::compressibleSystem::U() const
+{
+    return U_;
+}
+
+
+const Foam::surfaceScalarField& Foam::compressibleSystem::phi() const
+{
+    return phi_;
+}
+
+
+const Foam::surfaceScalarField& Foam::compressibleSystem::rhoPhi() const
+{
+    return rhoPhi_;
+}
+
 
 // ************************************************************************* //

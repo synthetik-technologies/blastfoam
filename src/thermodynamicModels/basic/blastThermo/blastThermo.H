@@ -72,6 +72,12 @@ protected:
         //- Density field [kg/m^3]
         volScalarField rho_;
 
+        //- Heat capacity at constant pressure [J/kg/K]
+        volScalarField Cp_;
+
+        //- Heat capacity at constant volume [J/kg/K]
+        volScalarField Cv_;
+
         //- Is temperature limited
         Switch limit_;
 
@@ -161,6 +167,20 @@ public:
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
 
+            //- Heat capacity at constant pressure [J/kg/K]
+            using basicThermo::Cp;
+            virtual tmp<volScalarField> Cp() const
+            {
+                return Cp_;
+            }
+
+            //- Heat capacity at constant volume [J/kg/K]
+            using basicThermo::Cv;
+            virtual tmp<volScalarField> Cv() const
+            {
+                return Cv_;
+            }
+
             using basicThermo::THE;
 
             //- Temperature from enthalpy/internal energy for celli
@@ -214,13 +234,11 @@ public:
             //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const = 0;
 
+
         // Fields derived from transport state variables
 
             //- Kinematic viscosity [m^2/s]
             virtual tmp<volScalarField> nu() const = 0;
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const = 0;
 
             //- Thermal diffusivity for temperature of mixture [W/m/K]
             virtual tmp<volScalarField> kappa() const;
@@ -269,6 +287,36 @@ public:
         //- Read residual values
         virtual void read(const dictionary&)
         {}
+};
+
+/*---------------------------------------------------------------------------*\
+                           Class blastMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class blastMixture
+{
+public:
+
+    blastMixture()
+    {}
+
+    virtual ~blastMixture()
+    {}
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

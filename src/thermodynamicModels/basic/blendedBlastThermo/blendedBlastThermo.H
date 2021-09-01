@@ -134,7 +134,7 @@ protected:
         ) const;
 
         //- Return the blending field for celli
-        virtual scalar xi(const label celli) const = 0;
+        virtual scalar cellx(const label celli) const = 0;
 
         //- Return the blending field for patchi
         virtual tmp<scalarField> x(const label patchi) const = 0;

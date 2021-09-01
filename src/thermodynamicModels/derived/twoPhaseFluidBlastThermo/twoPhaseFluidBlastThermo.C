@@ -42,6 +42,197 @@ namespace Foam
     );
 }
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::HE
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->HE(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->HE(rho1i_, e, T);
+    }
+    return
+        mixture1Ptr_->HE(rho1i_, e, T)*alpha1i_
+      + mixture2Ptr_->HE(rho2i_, e, T)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::TRhoE
+(
+    const scalar T,
+    const scalar rho,
+    const scalar e
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->TRhoE(T, rho2i_, e);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->TRhoE(T, rho1i_, e);
+    }
+    return
+        mixture1Ptr_->TRhoE(T, rho1i_, e)*alpha1i_
+      + mixture2Ptr_->TRhoE(T, rho2i_, e)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->Cp(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->Cp(rho1i_, e, T);
+    }
+    return
+        mixture1Ptr_->Cp(rho1i_, e, T)*alpha1i_
+      + mixture2Ptr_->Cp(rho2i_, e, T)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->Cv(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->Cv(rho1i_, e, T);
+    }
+    return
+        mixture1Ptr_->Cv(rho1i_, e, T)*alpha1i_
+      + mixture2Ptr_->Cv(rho2i_, e, T)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::kappa
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->kappa(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->kappa(rho1i_, e, T);
+    }
+    return
+        mixture1Ptr_->kappa(rho1i_, e, T)*alpha1i_
+      + mixture2Ptr_->kappa(rho2i_, e, T)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::pRhoT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->pRhoT(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->pRhoT(rho1i_, e, T);
+    }
+    scalar alphaXi1(alpha1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
+    scalar alphaXi2(alpha2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
+    return
+        (
+            mixture1Ptr_->pRhoT(rho1i_, e, T)*alphaXi1
+          + mixture2Ptr_->pRhoT(rho2i_, e, T)*alphaXi2
+        )/(alphaXi1 + alphaXi2);
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::mu
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->mu(rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->mu(rho1i_, e, T);
+    }
+    return
+        mixture1Ptr_->mu(rho1i_, e, T)*alpha1i_
+      + mixture2Ptr_->mu(rho2i_, e, T)*alpha2i_;
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::speedOfSound
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return sqrt(max(cSqr(p, rho, e, T), small));
+}
+
+
+Foam::scalar Foam::twoPhaseBlastFluidMixture::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (alpha1i_ < small)
+    {
+        return mixture2Ptr_->cSqr(p, rho2i_, e, T);
+    }
+    else if (alpha2i_ < small)
+    {
+        return mixture1Ptr_->cSqr(p, rho1i_, e, T);
+    }
+    scalar alphaXi1(alpha1i_*rho1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
+    scalar alphaXi2(alpha2i_*rho2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
+    return
+        (
+            mixture1Ptr_->cSqr(p, rho1i_, e, T)*alphaXi1
+          + mixture2Ptr_->cSqr(p, rho2i_, e, T)*alphaXi2
+        )/(alphaXi1 + alphaXi2);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
@@ -108,7 +299,8 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
             phases_[1],
             phaseName
         )
-    )
+    ),
+    mixture_(volumeFraction_, thermo1_(), thermo2_())
 {
     //- Force reading of residual values
     thermo1_->read(dict.subDict(phases_[0]));
@@ -195,26 +387,6 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::pRhoT() const
-{
-
-    volScalarField alphaXi1
-    (
-        volumeFraction_/(thermo1_->Gamma() - 1.0)
-    );
-    volScalarField alphaXi2
-    (
-        (1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0)
-    );
-
-    return
-        (
-            alphaXi1*thermo1_->pRhoT()*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->pRhoT()*pos(alphaXi2 - small)
-        )/(alphaXi1 + alphaXi2);
-}
-
-
 Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT(const label celli) const
 {
     scalar alphaXi1
@@ -269,70 +441,6 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpde(const label celli) const
             alphaXi1*thermo1_->celldpde(celli)*pos(alphaXi1 - small)
           + alphaXi2*thermo2_->celldpde(celli)*pos(alphaXi2 - small)
         )/(alphaXi1 + alphaXi2);
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::twoPhaseFluidBlastThermo::speedOfSound() const
-{
-    volScalarField alphaXi1(volumeFraction_/(thermo1_->Gamma() - 1.0));
-    volScalarField alphaXi2((1.0 - volumeFraction_)/(thermo2_->Gamma() - 1.0));
-
-    volScalarField cSqr
-    (
-        (
-            alphaXi1*rho1_*sqr(thermo1_->speedOfSound())
-          + alphaXi2*rho2_*sqr(thermo2_->speedOfSound())
-        )
-        /(alphaXi1 + alphaXi2)/this->rho_
-    );
-    cSqr.max(small);
-    return sqrt(cSqr);
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::twoPhaseFluidBlastThermo::speedOfSound(const label patchi) const
-{
-    scalarField alphaXi1
-    (
-        volumeFraction_.boundaryField()[patchi]/(thermo1_->Gamma(patchi) - 1.0)
-    );
-    scalarField alphaXi2
-    (
-        (1.0 - volumeFraction_.boundaryField()[patchi])
-       /(thermo2_->Gamma(patchi) - 1.0)
-    );
-
-    scalarField cSqr
-    (
-        (
-            alphaXi1*rho1_.boundaryField()[patchi]
-           *sqr(thermo1_->speedOfSound(patchi))
-          + alphaXi2*rho2_.boundaryField()[patchi]
-           *sqr(thermo2_->speedOfSound(patchi))
-        )
-        /(this->rho_.boundaryField()[patchi]*(alphaXi1 + alphaXi2)));
-    return sqrt(max(cSqr, small));
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::Gamma() const
-{
-    return
-        volumeFraction_*thermo1_->Gamma()
-      + (1.0 - volumeFraction_)*thermo2_->Gamma();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::twoPhaseFluidBlastThermo::Gamma(const label patchi) const
-{
-    return
-        volumeFraction_.boundaryField()[patchi]
-       *thermo1_->Gamma(patchi)
-      + (1.0 - volumeFraction_.boundaryField()[patchi])
-       *thermo2_->Gamma(patchi);
 }
 
 
@@ -667,22 +775,5 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellW(const label celli) const
         volumeFraction_[celli]*thermo1_->cellW(celli)
       + (1.0 - volumeFraction_[celli])*thermo2_->cellW(celli);
 }
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::calcMu() const
-{
-    return
-        volumeFraction_*thermo1_->calcMu()
-      + (1.0 - volumeFraction_)*thermo2_->calcMu();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::calcKappa() const
-{
-    return
-        volumeFraction_*thermo1_->calcKappa()
-      + (1.0 - volumeFraction_)*thermo2_->calcKappa();
-}
-
 
 // ************************************************************************* //

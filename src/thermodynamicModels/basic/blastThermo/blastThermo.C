@@ -83,6 +83,28 @@ Foam::blastThermo::blastThermo
         mesh,
         dimDensity
     ),
+    Cp_
+    (
+        IOobject
+        (
+            IOobject::groupName("Cp", phaseName),
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
+    ),
+    Cv_
+    (
+        IOobject
+        (
+            IOobject::groupName("Cv", phaseName),
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
+    ),
     limit_(dict.lookupOrDefault("limit", true)),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
@@ -146,7 +168,7 @@ bool Foam::blastThermo::limit() const
 
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::gamma() const
 {
-    return this->Cp()/this->Cv();
+    return volScalarField::New("gamma", Cp_/Cv_);
 }
 
 
@@ -162,7 +184,7 @@ Foam::tmp<Foam::scalarField> Foam::blastThermo::gamma
 
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappa() const
 {
-    return this->Cp()*this->alpha_;
+    return volScalarField::New("kappa", Cp_*this->alpha_);
 }
 
 
@@ -185,7 +207,11 @@ Foam::scalar Foam::blastThermo::cellkappa(const label celli) const
 
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::alphahe() const
 {
-    return this->gamma()*this->alpha_;
+    return volScalarField::New
+    (
+        "alphahe",
+        this->gamma()*this->alpha_
+    );
 }
 
 
@@ -205,7 +231,7 @@ Foam::tmp<Foam::volScalarField> Foam::blastThermo::kappaEff
     const volScalarField& alphat
 ) const
 {
-    return this->Cp()*(this->alpha_ + alphat);
+    return Cp_*(this->alpha_ + alphat);
 }
 
 

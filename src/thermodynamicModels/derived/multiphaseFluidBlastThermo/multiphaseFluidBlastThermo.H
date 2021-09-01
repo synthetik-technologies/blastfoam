@@ -56,6 +56,109 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                    Class multiphaseBlastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class multiphaseBlastFluidMixture
+:
+    public blastFluidMixture
+{
+    const PtrList<volScalarField>& alphas_;
+    const PtrList<volScalarField>& rhos_;
+    const PtrList<phaseFluidBlastThermo>& thermos_;
+
+    UautoPtr<const volScalarField> sumVfPtr_;
+
+    mutable scalarList alphasi_;
+    mutable scalarList rhosi_;
+    mutable UPtrList<const blastPhaseFluidMixture> mixtures_;
+
+
+public:
+
+    multiphaseBlastFluidMixture
+    (
+        const PtrList<volScalarField>& alphas,
+        const PtrList<volScalarField>& rhos,
+        const PtrList<phaseFluidBlastThermo>& thermos
+    )
+    :
+        alphas_(alphas),
+        rhos_(rhos),
+        thermos_(thermos),
+        alphasi_(alphas.size()),
+        rhosi_(alphas.size()),
+        mixtures_(alphas.size())
+    {}
+
+    virtual ~multiphaseBlastFluidMixture()
+    {}
+
+    //- Set the volumeFraction pointer
+    void setTotalVolumeFractionPtr(const volScalarField& volumeFraction)
+    {
+        sumVfPtr_.set(&volumeFraction);
+    }
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        scalar sumVf = sumVfPtr_.valid() ? sumVfPtr_()[celli] : 1.0;
+        forAll(alphas_, i)
+        {
+            alphasi_[i] = alphas_[i][celli]/sumVf;
+            rhosi_[i] = rhos_[i][celli];
+            mixtures_.set(i, &thermos_[i].cellThermoMixture(celli));
+        }
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        scalar sumVf =
+            sumVfPtr_.valid()
+          ? sumVfPtr_().boundaryField()[patchi][facei]
+          : 1.0;
+
+        forAll(alphas_, i)
+        {
+            alphasi_[i] = alphas_[i].boundaryField()[patchi][facei]/sumVf;
+            rhosi_[i] = rhos_[i].boundaryField()[patchi][facei];
+            mixtures_.set
+            (
+                i,
+                &thermos_[i].patchFaceThermoMixture(patchi, facei)
+            );
+        }
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const;
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar, const scalar, const scalar) const;
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound(const scalar, const scalar, const scalar, const scalar) const;
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
+};
+
+/*---------------------------------------------------------------------------*\
                            Class multiphaseFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -85,6 +188,33 @@ class multiphaseFluidBlastThermo
 
         //- Pointer to total volume fraction field
         UautoPtr<const volScalarField> sumVfPtr_;
+
+        //- Mixture
+        mutable multiphaseBlastFluidMixture mixture_;
+
+
+    // Private member functions
+
+        //- Return a cell mixture
+        virtual const blastFluidMixture& cellThermoMixture
+        (
+            const label celli
+        ) const
+        {
+            mixture_.setCell(celli);
+            return mixture_;
+        }
+
+        //- Return a cell mixture
+        virtual const blastFluidMixture& patchFaceThermoMixture
+        (
+            const label patchi,
+            const label facei
+        ) const
+        {
+            mixture_.setPatchFace(patchi, facei);
+            return mixture_;
+        }
 
         //- Return the field normalized by the sumVfPtr field if it is set
         tmp<volScalarField> normalise(tmp<volScalarField>& tf) const
@@ -234,32 +364,17 @@ public:
             //- Recompute the density
             virtual void updateRho(const volScalarField&);
 
-            //- Calculate pressure [Pa]
-            virtual tmp<volScalarField> pRhoT() const;
-
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT(const label celli) const;
+
+            //- Gamma = dpde for cell []
+            virtual scalar cellGamma(const label celli) const;
 
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const;
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const;
-
-            //- Return the speed of sound
-            virtual tmp<volScalarField> speedOfSound() const;
-
-            //- Return the speed of sound for patchi
-            virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-            //- Gamma = dpde []
-            virtual tmp<volScalarField> Gamma() const;
-
-            //- Gamma = dpde for patch []
-            virtual tmp<scalarField> Gamma(const label patchi) const;
-
-            //- Gamma = dpde for cell []
-            virtual scalar cellGamma(const label celli) const;
 
 
         //- Thermodynamic and transport functions
@@ -423,15 +538,6 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar cellW(const label celli) const;
-
-
-        // Access to transport state variables
-
-            //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const;
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const;
 
 
         //- Read residual values

@@ -56,9 +56,25 @@ class solidBlastThermo
     public blastThermo,
     public solidThermo
 {
+protected:
+
+    typedef blastMixture BasicMixture;
 
     //- Return the anisotropic Kappa in the local coordinate system
     tmp<volSymmTensorField> KappaLocal() const;
+
+    //- Return a cell mixture
+    virtual const blastMixture& cellThermoMixture
+    (
+        const label celli
+    ) const = 0;
+
+    //- Return a cell mixture
+    virtual const blastMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const = 0;
 
 public:
 
@@ -109,8 +125,6 @@ public:
     virtual ~solidBlastThermo();
 
     // Member Functions
-
-    // Access functions
 
         //- Correct thermodynamic fields
         virtual void correct();

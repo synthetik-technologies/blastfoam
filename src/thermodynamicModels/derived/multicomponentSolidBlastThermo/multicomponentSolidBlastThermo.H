@@ -48,7 +48,74 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class multicomponentSolidBlastThermo Declaration
+                    Class multicomponentBlastSolidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMixture, class ThermoType>
+class multicomponentBlastSolidMixture
+:
+    public BasicMixture
+{
+    const speciesMixtureField<ThermoType>& mixtureField_;
+    mutable UautoPtr<const ThermoType> mixturePtr_;
+
+public:
+
+    multicomponentBlastSolidMixture
+    (
+        const speciesMixtureField<ThermoType>& mixture
+    )
+    :
+        mixtureField_(mixture),
+        mixturePtr_(nullptr)
+    {}
+
+    virtual ~multicomponentBlastSolidMixture()
+    {}
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        mixturePtr_.reset(&mixtureField_[celli]);
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        mixturePtr_.reset(&mixtureField_.boundary(patchi, facei));
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Es(rho, e, T);
+    }
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
+    {
+        return mixturePtr_->TRhoE(T, rho, e);
+    }
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Cp(rho, e, T);
+    }
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->Cv(rho, e, T);
+    }
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
+    {
+        return mixturePtr_->kappa(rho, e, T);
+    }
+};
+
+/*---------------------------------------------------------------------------*\
+                Class multicomponentSolidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
@@ -56,6 +123,35 @@ class multicomponentSolidBlastThermo
 :
     public Thermo
 {
+    //- Mixture
+    mutable multicomponentBlastSolidMixture
+    <
+        typename Thermo::BasicMixture,
+        typename Thermo::thermoType
+    > localMixture_;
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        localMixture_.setCell(celli);
+        return localMixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        localMixture_.setPatchFace(patchi, facei);
+        return localMixture_;
+    }
+
+
 public:
 
     //- Runtime type information

@@ -48,6 +48,41 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                           Class blastPhaseFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class blastPhaseFluidMixture
+:
+    public basicBlastMixture
+{
+public:
+
+    blastPhaseFluidMixture()
+    {}
+
+    virtual ~blastPhaseFluidMixture()
+    {}
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate dpde
+    virtual scalar Gamma(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr
+    (
+        const scalar,
+        const scalar,
+        const scalar,
+        const scalar
+    ) const = 0;
+};
+
+/*---------------------------------------------------------------------------*\
                            Class phaseFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -58,6 +93,8 @@ class phaseFluidBlastThermo
 protected:
 
     // Protected data
+
+        typedef blastPhaseFluidMixture BasicMixture;
 
         //- Pressure [Pa]
         const volScalarField& p_;
@@ -116,6 +153,19 @@ public:
 
     //- Thermodynamic and transport functions
 
+        //- Return a cell mixture
+        virtual const blastPhaseFluidMixture& cellThermoMixture
+        (
+            const label celli
+        ) const = 0;
+
+        //- Return a cell mixture
+        virtual const blastPhaseFluidMixture& patchFaceThermoMixture
+        (
+            const label patchi,
+            const label facei
+        ) const = 0;
+
         // Access to derived thermodynamic variables
 
             //- Calculate density
@@ -130,41 +180,17 @@ public:
             //- Pressure [Pa]
             const volScalarField& p() const;
 
-            //- Return the speed of sound
-            virtual tmp<volScalarField> pRhoT() const = 0;
-
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT(const label celli) const = 0;
+
+            //- Gamma = dpde for cell []
+            virtual scalar cellGamma(const label celli) const = 0;
 
             //- Derivative of pressure w.r.t density for cell
             virtual scalar celldpdRho(const label celli) const = 0;
 
             //- Derivative of pressure w.r.t internal energy for cell
             virtual scalar celldpde(const label celli) const = 0;
-
-            //- Return the speed of sound
-            virtual tmp<volScalarField> speedOfSound() const = 0;
-
-            //- Return the speed of sound for patchi
-            virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
-
-
-        // Fields derived from thermodynamic state variables
-
-            //- Gamma = dpde []
-            virtual tmp<volScalarField> Gamma() const = 0;
-
-            //- Gamma = dpde for patch []
-            virtual tmp<scalarField> Gamma(const label patchi) const = 0;
-
-            //- Gamma = dpde for cell []
-            virtual scalar cellGamma(const label celli) const = 0;
-
-
-        // Access to transport state variables
-
-            //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const = 0;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

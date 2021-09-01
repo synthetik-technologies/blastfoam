@@ -49,6 +49,79 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                    Class detonatingBlastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+class detonatingBlastFluidMixture
+:
+    public BasicMixture
+{
+    const ThermoType1& thermo1_;
+    const ThermoType2& thermo2_;
+    const activationModel& activation_;
+
+    mutable scalar xi_;
+
+public:
+
+    detonatingBlastFluidMixture
+    (
+        const ThermoType1& thermo1,
+        const ThermoType2& thermo2,
+        const activationModel& activation
+    )
+    :
+        thermo1_(thermo1),
+        thermo2_(thermo2),
+        activation_(activation)
+    {}
+
+    virtual ~detonatingBlastFluidMixture()
+    {}
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        xi_ = activation_.cellLambdaPow(celli);
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        xi_ = activation_.lambdaPow(patchi, facei);
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const;
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar, const scalar, const scalar) const;
+
+    //- Calculate dpde
+    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const;
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound(const scalar, const scalar, const scalar, const scalar) const;
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
+};
+
+/*---------------------------------------------------------------------------*\
                            Class detonatingFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -65,12 +138,41 @@ class detonatingFluidBlastThermo
     //- Afterburn model
     autoPtr<afterburnModel> afterburn_;
 
+    //- Mixture
+    mutable detonatingBlastFluidMixture
+    <
+        typename Thermo::BasicMixture,
+        typename Thermo::thermoType1,
+        typename Thermo::thermoType2
+    > mixture_;
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        mixture_.setCell(celli);
+        return mixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        mixture_.setPatchFace(patchi, facei);
+        return mixture_;
+    }
+
     //- Return the blending field for celli
-    virtual scalar xi(const label celli) const
+    virtual scalar cellx(const label celli) const
     {
         return
             activation_.valid()
-          ? activation_->lambdaPowi(celli)
+          ? activation_->cellLambdaPow(celli)
           : 0.0;
     }
 
@@ -119,21 +221,6 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-        //- Gamma = dpde []
-        virtual tmp<volScalarField> Gamma() const;
-
-        //- Gamma = dpde for patch []
-        virtual tmp<scalarField> Gamma(const label patchi) const;
-
-        //- Gamma = dpde for cell []
-        virtual scalar cellGamma(const label celli) const;
-
 
     //- Thermodynamic and transport functions
 
@@ -143,20 +230,17 @@ public:
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT(const label celli) const;
 
+        //- Gamma = dpde for cell []
+        virtual scalar cellGamma(const label celli) const;
+
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;
 
         //- Derivative of pressure w.r.t internal energy for cell
         virtual scalar celldpde(const label celli) const;
 
-        //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> pRhoT() const;
-
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
-
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> calcMu() const;
 };
 
 

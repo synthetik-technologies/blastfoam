@@ -34,7 +34,7 @@ namespace Foam
     defineTypeNameAndDebug(multiphaseCompressibleSystem, 0);
     addToRunTimeSelectionTable
     (
-        phaseCompressibleSystem,
+        compressibleSystem,
         multiphaseCompressibleSystem,
         dictionary
     );
@@ -47,7 +47,7 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    phaseCompressibleSystem(3, mesh),
+    compressibleBlastSystem(3, mesh),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),
@@ -120,6 +120,28 @@ Foam::multiphaseCompressibleSystem::~multiphaseCompressibleSystem()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::multiphaseCompressibleSystem::update()
+{
+    decode();
+    fluxScheme_->update
+    (
+        alphas_,
+        rhos_,
+        U_,
+        e_,
+        p_,
+        speedOfSound()(),
+        phi_,
+        alphaPhis_,
+        alphaRhoPhis_,
+        rhoPhi_,
+        rhoUPhi_,
+        rhoEPhi_
+    );
+    thermo_.update();
+}
+
+
 void Foam::multiphaseCompressibleSystem::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
@@ -159,43 +181,75 @@ void Foam::multiphaseCompressibleSystem::solve()
     }
 
     thermoPtr_->solve();
-    phaseCompressibleSystem::solve();
+    compressibleBlastSystem::solve();
 }
 
 
-void Foam::multiphaseCompressibleSystem::update()
+void Foam::multiphaseCompressibleSystem::postUpdate()
 {
-    decode();
-    fluxScheme_->update
-    (
-        alphas_,
-        rhos_,
-        U_,
-        e_,
-        p_,
-        speedOfSound()(),
-        phi_,
-        alphaPhis_,
-        alphaRhoPhis_,
-        rhoPhi_,
-        rhoUPhi_,
-        rhoEPhi_
-    );
-    thermoPtr_->update();
+    if (!needPostUpdate_)
+    {
+        compressibleBlastSystem::postUpdate();
+        return;
+    }
+
+    // Solve volume fraction and phase mass transports
+    bool needUpdate = false;
+    forAll(alphas_, phasei)
+    {
+        if (solveFields_.found(alphas_[phasei].name()))
+        {
+            needUpdate = true;
+            fvScalarMatrix alphaEqn
+            (
+                fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
+             ==
+                models_.source(alphas_[phasei])
+            );
+            constraints_.constrain(alphaEqn);
+            alphaEqn.solve();
+            constraints_.constrain(alphas_[phasei]);
+        }
+    }
+    if (needUpdate)
+    {
+        calcAlphas();
+    }
+
+    // Update primitive variables
+    this->decode();
+
+    // Solve phase 1 mass
+    rho_ = dimensionedScalar(dimDensity, 0.0);
+    forAll(rhos_, phasei)
+    {
+        volScalarField& rho(rhos_[phasei]);
+        if (solveFields_.found(rho.name()))
+        {
+            const volScalarField& alpha(alphas_[phasei]);
+            dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
+            fvScalarMatrix alphaRhoEqn
+            (
+                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+            + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
+            ==
+                models_.source(alpha, rho)
+            );
+            constraints_.constrain(alphaRhoEqn);
+            alphaRhoEqn.solve();
+            constraints_.constrain(rho);
+
+            alphaRhos_[phasei] = alpha*rho;
+        }
+        rho_ += alphaRhos_[phasei];
+    }
+
+    compressibleBlastSystem::postUpdate();
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseCompressibleSystem::ESource() const
+void Foam::multiphaseCompressibleSystem::calcAlphas()
 {
-    return thermoPtr_->ESource();
-}
-
-
-void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
-{
-    rho_ = dimensionedScalar("0", dimDensity, 0.0);
-
     // find largest volume fraction and set to 1-sum
     forAll(rho_, celli)
     {
@@ -216,11 +270,20 @@ void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
         }
         alphas_[fixedPhase][celli] = 1.0 - sumAlpha;
     }
-
     forAll(alphas_, phasei)
     {
         alphas_[phasei].correctBoundaryConditions();
+    }
+}
 
+
+void Foam::multiphaseCompressibleSystem::decode()
+{
+    // Calculate densities
+    rho_ = dimensionedScalar("0", dimDensity, 0.0);
+
+    forAll(alphas_, phasei)
+    {
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]
@@ -232,50 +295,8 @@ void Foam::multiphaseCompressibleSystem::calcAlphaAndRho()
 
         rho_ += alphaRhos_[phasei];
     }
-}
 
-void Foam::multiphaseCompressibleSystem::decode()
-{
-    calcAlphaAndRho();
-
-    U_.ref() = rhoU_()/rho_();
-    U_.correctBoundaryConditions();
-
-    rhoU_.boundaryFieldRef() = rho_.boundaryField()*U_.boundaryField();
-
-    volScalarField E(rhoE_/rho_);
-    e_.ref() = E() - 0.5*magSqr(U_());
-
-    //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - TLow_));
-        T_.max(TLow_);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
-
-    rhoE_.boundaryFieldRef() =
-        rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
-
-    thermoPtr_->correct();
-    if (constraints_.constrainsField(p_.name()))
-    {
-        constraints_.constrain(p_);
-        p_.correctBoundaryConditions();
-    }
+    compressibleBlastSystem::decode();
 }
 
 
@@ -287,8 +308,7 @@ void Foam::multiphaseCompressibleSystem::encode()
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
         rho_ += alphaRhos_[phasei];
     }
-    rhoU_ = rho_*U_;
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
+    compressibleBlastSystem::encode();
 }
 
 // ************************************************************************* //

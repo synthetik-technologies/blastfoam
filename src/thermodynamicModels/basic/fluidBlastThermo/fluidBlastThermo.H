@@ -50,6 +50,39 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                           Class blastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class blastFluidMixture
+:
+    public blastMixture
+{
+public:
+
+    blastFluidMixture()
+    {}
+
+    virtual ~blastFluidMixture()
+    {}
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound
+    (
+        const scalar,
+        const scalar,
+        const scalar,
+        const scalar
+    ) const = 0;
+};
+
+
+/*---------------------------------------------------------------------------*\
                         Class fluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -62,12 +95,30 @@ protected:
 
     // Protected data
 
+        typedef blastFluidMixture BasicMixture;
+
         //- Pressure [Pa]
         volScalarField& p_;
 
         //- Dynamic viscosity [kg/m/s]
         volScalarField mu_;
 
+        //- Speed of sound [m/s]
+        volScalarField speedOfSound_;
+
+
+        //- Return a cell mixture
+        virtual const blastFluidMixture& cellThermoMixture
+        (
+            const label celli
+        ) const = 0;
+
+        //- Return a cell mixture
+        virtual const blastFluidMixture& patchFaceThermoMixture
+        (
+            const label patchi,
+            const label facei
+        ) const = 0;
 
 public:
 
@@ -253,26 +304,11 @@ public:
                 const label patchi
             ) const = 0;
 
-            //- Calculate pressure [Pa]
-            virtual tmp<volScalarField> pRhoT() const = 0;
-
-            //- Return the speed of sound
-            virtual tmp<volScalarField> speedOfSound() const = 0;
-
-            //- Return the speed of sound for patchi
-            virtual tmp<scalarField> speedOfSound(const label patchi) const = 0;
-
-            //- Gamma = dpde []
-            virtual tmp<volScalarField> Gamma() const = 0;
-
-            //- Gamma = dpde for patch []
-            virtual tmp<scalarField> Gamma(const label patchi) const = 0;
-
-            //- Gamma = dpde for cell []
-            virtual scalar cellGamma(const label celli) const = 0;
-
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT(const label celli) const = 0;
+
+            //- Return the speed of sound
+            virtual const volScalarField& speedOfSound() const;
 
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const = 0;
@@ -282,9 +318,6 @@ public:
 
 
         // Access to transport state variables
-
-            //- Calculate dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const = 0;
 
             //- Dynamic viscosity of mixture [kg/m/s]
             virtual tmp<volScalarField> mu() const;

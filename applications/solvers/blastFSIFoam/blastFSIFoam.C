@@ -41,10 +41,9 @@ Description
 #include "fvCFD.H"
 #include "dynamicFvMesh.H"
 #include "timeIntegrator.H"
-#include "phaseCompressibleSystem.H"
+#include "compressibleSystem.H"
 #include "solidModel.H"
 #include "regionProperties.H"
-// #include "blastFluidThermoMomentumTransportModel.H"
 #include "fvConstraints.H"
 #include "fvModels.H"
 

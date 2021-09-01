@@ -155,7 +155,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
 
     forAll(psi, celli)
     {
-        scalar x = this->xi(celli);
+        scalar x = this->cellx(celli);
         if (x < small)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
@@ -227,7 +227,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
 
     forAll(cells, celli)
     {
-        scalar x = this->xi(cells[celli]);
+        scalar x = this->cellx(cells[celli]);
         if (x < small)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
@@ -305,7 +305,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
 
     scalar psi;
 
-    scalar x = this->xi(celli);
+    scalar x = this->cellx(celli);
     if (x < small)
     {
         psi = (this->*psiMethod1)(args ...);
@@ -883,8 +883,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellW
 ) const
 {
     return
-        this->xi(celli)*Thermo2::W()
-      + (1.0 - this->xi(celli))*Thermo1::W();
+        this->cellx(celli)*Thermo2::W()
+      + (1.0 - this->cellx(celli))*Thermo1::W();
 }
 
 

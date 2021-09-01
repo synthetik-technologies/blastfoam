@@ -49,6 +49,65 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                    Class detonatingBlastSolidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+class detonatingBlastSolidMixture
+:
+    public BasicMixture
+{
+    const ThermoType1& thermo1_;
+    const ThermoType2& thermo2_;
+    const activationModel& activation_;
+
+    mutable scalar xi_;
+
+public:
+
+    detonatingBlastSolidMixture
+    (
+        const ThermoType1& thermo1,
+        const ThermoType2& thermo2,
+        const activationModel& activation
+    )
+    :
+        thermo1_(thermo1),
+        thermo2_(thermo2),
+        activation_(activation)
+    {}
+
+    virtual ~detonatingBlastSolidMixture()
+    {}
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        xi_ = activation_.cellLambdaPow(celli);
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        xi_ = activation_.lambdaPow(patchi, facei);
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const;
+};
+
+
+/*---------------------------------------------------------------------------*\
                            Class detonatingSolidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -65,12 +124,41 @@ class detonatingSolidBlastThermo
     //- Afterburn model
     autoPtr<afterburnModel> afterburn_;
 
+    //- Mixture
+    mutable detonatingBlastSolidMixture
+    <
+        typename Thermo::BasicMixture,
+        typename Thermo::thermoType1,
+        typename Thermo::thermoType2
+    > mixture_;
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        mixture_.setCell(celli);
+        return mixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        mixture_.setPatchFace(patchi, facei);
+        return mixture_;
+    }
+
     //- Return the blending field for celli
-    virtual scalar xi(const label celli) const
+    virtual scalar cellx(const label celli) const
     {
         return
             activation_.valid()
-          ? activation_->lambdaPowi(celli)
+          ? activation_->cellLambdaPow(celli)
           : 0.0;
     }
 

@@ -51,6 +51,36 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                           Class basicBlastMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class basicBlastMixture
+{
+public:
+
+    basicBlastMixture()
+    {}
+
+    virtual ~basicBlastMixture()
+    {}
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const = 0;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const = 0;
+};
+
+/*---------------------------------------------------------------------------*\
                            Class basicBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 

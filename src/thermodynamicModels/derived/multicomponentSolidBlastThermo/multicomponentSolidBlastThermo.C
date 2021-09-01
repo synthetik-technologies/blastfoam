@@ -46,7 +46,8 @@ Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
         dict,
         phaseName,
         masterName
-    )
+    ),
+    localMixture_(this->mixture_)
 {
     this->initializeFields();
 }
@@ -69,7 +70,8 @@ Foam::multicomponentSolidBlastThermo<Thermo>::multicomponentSolidBlastThermo
         dict,
         phaseName,
         masterName
-    )
+    ),
+    localMixture_(this->mixture_)
 {
     this->initializeFields();
 }

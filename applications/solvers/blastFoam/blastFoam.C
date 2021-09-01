@@ -34,7 +34,7 @@ Description
 #include "dynamicFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
-#include "phaseCompressibleSystem.H"
+#include "compressibleSystem.H"
 #include "timeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

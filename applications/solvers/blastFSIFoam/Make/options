@@ -28,7 +28,7 @@ EXE_LIBS = \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
-    -lphaseCompressibleSystems \
+    -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
     -lblastSolidModels

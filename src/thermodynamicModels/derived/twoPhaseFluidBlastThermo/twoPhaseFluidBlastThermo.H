@@ -55,6 +55,94 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                    Class twoPhaseBlastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+class twoPhaseBlastFluidMixture
+:
+    public blastFluidMixture
+{
+    const volScalarField& alpha_;
+    const phaseFluidBlastThermo& thermo1_;
+    const phaseFluidBlastThermo& thermo2_;
+    const volScalarField& rho1_;
+    const volScalarField& rho2_;
+
+    mutable scalar alpha1i_;
+    mutable scalar alpha2i_;
+    mutable UautoPtr<const blastPhaseFluidMixture> mixture1Ptr_;
+    mutable UautoPtr<const blastPhaseFluidMixture> mixture2Ptr_;
+    mutable scalar rho1i_;
+    mutable scalar rho2i_;
+public:
+
+    twoPhaseBlastFluidMixture
+    (
+        const volScalarField& alpha,
+        const phaseFluidBlastThermo& thermo1,
+        const phaseFluidBlastThermo& thermo2
+    )
+    :
+        alpha_(alpha),
+        thermo1_(thermo1),
+        thermo2_(thermo2),
+        rho1_(thermo1_.rho()),
+        rho2_(thermo2_.rho())
+    {}
+
+    virtual ~twoPhaseBlastFluidMixture()
+    {}
+
+    //- Set the local reaction progress variable
+    void setCell(const label celli) const
+    {
+        alpha1i_ = alpha_[celli];
+        alpha2i_ = 1.0 - alpha1i_;
+        rho1i_ = rho1_[celli];
+        rho2i_ = rho2_[celli];
+        mixture1Ptr_.reset(&thermo1_.cellThermoMixture(celli));
+        mixture2Ptr_.reset(&thermo2_.cellThermoMixture(celli));
+    }
+    void setPatchFace(const label patchi, const label facei) const
+    {
+        alpha1i_ = alpha_.boundaryField()[patchi][facei];
+        alpha2i_ = 1.0 - alpha1i_;
+        rho1i_ = rho1_.boundaryField()[patchi][facei];
+        rho2i_ = rho2_.boundaryField()[patchi][facei];
+        mixture1Ptr_.reset(&thermo1_.patchFaceThermoMixture(patchi, facei));
+        mixture2Ptr_.reset(&thermo2_.patchFaceThermoMixture(patchi, facei));
+    }
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar, const scalar, const scalar) const;
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar, const scalar, const scalar) const;
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar, const scalar, const scalar) const;
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar, const scalar, const scalar) const;
+
+    //- Calculate speed of sound
+    virtual scalar speedOfSound(const scalar, const scalar, const scalar, const scalar) const;
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
+};
+
+
+/*---------------------------------------------------------------------------*\
                            Class twoPhaseFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -81,6 +169,30 @@ class twoPhaseFluidBlastThermo
 
         //- Equation of state for phase 2
         autoPtr<phaseFluidBlastThermo> thermo2_;
+
+        //- Mixture
+        mutable twoPhaseBlastFluidMixture mixture_;
+
+    //- Return a cell mixture
+    virtual const blastFluidMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        mixture_.setCell(celli);
+        return mixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const blastFluidMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        mixture_.setPatchFace(patchi, facei);
+        return mixture_;
+    }
 
 
 public:
@@ -157,11 +269,11 @@ public:
 
         // Fields derived from thermodynamic state variables
 
-            //- Calculate pressure [Pa]
-            virtual tmp<volScalarField> pRhoT() const;
-
             //- Calculate pressure for cell [Pa]
             virtual scalar cellpRhoT(const label celli) const;
+
+            //- Gamma = dpde for cell []
+            virtual scalar cellGamma(const label celli) const;
 
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const;
@@ -171,21 +283,6 @@ public:
 
             //- Recompute the density
             virtual void updateRho(const volScalarField&);
-
-            //- Return the speed of sound
-            virtual tmp<volScalarField> speedOfSound() const;
-
-            //- Return the speed of sound for patchi
-            virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-            //- Gamma = dpde []
-            virtual tmp<volScalarField> Gamma() const;
-
-            //- Gamma = dpde for patch []
-            virtual tmp<scalarField> Gamma(const label patchi) const;
-
-            //- Gamma = dpde for cell []
-            virtual scalar cellGamma(const label celli) const;
 
 
         //- Thermodynamic and transport functions
@@ -354,15 +451,6 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar cellW(const label celli) const;
-
-
-        // Access to transport state variables
-
-            //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const;
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const;
 
 
         //- Read residual values

@@ -22,16 +22,16 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 ------------------------------------------------------------------------*/
 
-#include "phaseCompressibleSystem.H"
+#include "compressibleSystem.H"
 
 // * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
+Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
 (
     const fvMesh& mesh
 )
 {
-    word phaseCompressibleSystemType(word::null);
+    word compressibleSystemType(word::null);
 
     // Create temporary phase properties to lookup type
     // not store in the database to remove possible conflict
@@ -51,11 +51,11 @@ Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
 
     if (phaseProperties.found("systemType"))
     {
-        phaseCompressibleSystemType =
+        compressibleSystemType =
             phaseProperties.lookup<word>("systemType");
     }
 
-    if (phaseCompressibleSystemType == word::null)
+    if (compressibleSystemType == word::null)
     {
         wordList phases
         (
@@ -63,29 +63,29 @@ Foam::autoPtr<Foam::phaseCompressibleSystem> Foam::phaseCompressibleSystem::New
         );
         if (phases.size() == 2)
         {
-            phaseCompressibleSystemType = "twoPhaseCompressibleSystem";
+            compressibleSystemType = "twoPhaseCompressibleSystem";
         }
         else if (phases.size() > 2)
         {
-            phaseCompressibleSystemType = "multiphaseCompressibleSystem";
+            compressibleSystemType = "multiphaseCompressibleSystem";
         }
         else
         {
-            phaseCompressibleSystemType = "singlePhaseCompressibleSystem";
+            compressibleSystemType = "singlePhaseCompressibleSystem";
         }
     }
-    Info<< "Selecting phaseCompressibleSystem: "
-        << phaseCompressibleSystemType << endl;
+    Info<< "Selecting compressibleSystem: "
+        << compressibleSystemType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(phaseCompressibleSystemType);
+        dictionaryConstructorTablePtr_->find(compressibleSystemType);
 
     if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown phaseCompressibleSystem type "
-            << phaseCompressibleSystemType << endl << endl
-            << "Valid phaseCompressibleSystem types are : " << endl
+            << "Unknown compressibleSystem type "
+            << compressibleSystemType << endl << endl
+            << "Valid compressibleSystem types are : " << endl
             << dictionaryConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }

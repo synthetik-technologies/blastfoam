@@ -37,7 +37,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
+#include "compressibleBlastSystem.H"
 #include "multiphaseFluidBlastThermo.H"
 
 namespace Foam
@@ -49,7 +49,7 @@ namespace Foam
 
 class multiphaseCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public compressibleBlastSystem
 {
 protected:
 // Protected data
@@ -82,7 +82,7 @@ protected:
 
 
         //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
+        virtual void calcAlphas();
 
 
 public:
@@ -108,11 +108,11 @@ public:
         //- Update fluxes
         virtual void update();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve a sub-step
         virtual void solve();
+
+        //- Solve implicit terms
+        virtual void postUpdate();
 };
 
 

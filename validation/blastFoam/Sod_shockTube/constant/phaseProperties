@@ -13,6 +13,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// systemType cudaSinglePhaseCompressibleSystem;
 type basic;
 thermoType
 {
@@ -23,6 +24,12 @@ thermoType
 equationOfState
 {
     gamma       1.4;
+    omega 0.4;
+    rho0 1000.0;
+    R1 4.1;
+    R2 1.2;
+    A 1.0;
+    B 5.0;
 }
 
 specie

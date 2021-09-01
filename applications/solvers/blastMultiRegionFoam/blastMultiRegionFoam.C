@@ -42,7 +42,7 @@ Description
 #include "solidBlastThermo.H"
 #include "fixedGradientFvPatchFields.H"
 #include "regionProperties.H"
-#include "compressibleCourantNo.H"
+#include "compressibleSystem.H"
 #include "solidRegionDiffNo.H"
 #include "radiationModel.H"
 #include "coordinateSystem.H"

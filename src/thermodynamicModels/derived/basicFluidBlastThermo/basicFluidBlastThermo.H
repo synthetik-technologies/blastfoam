@@ -47,6 +47,101 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
+                    Class basicBlastFluidMixture Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class BasicMixture, class ThermoType>
+class basicBlastFluidMixture
+:
+    public BasicMixture
+{
+    const ThermoType& thermo_;
+
+public:
+
+    basicBlastFluidMixture(const ThermoType& thermo)
+    :
+        thermo_(thermo)
+    {}
+
+    virtual ~basicBlastFluidMixture()
+    {}
+
+    //- Calculate internal energy
+    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.Es(rho, e, T);
+    }
+
+    //- Calculate temperature
+    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
+    {
+        return thermo_.TRhoE(T, rho, e);
+    }
+
+    //- Calculate specific heat at constant pressure
+    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.Cp(rho, e, T);
+    }
+
+    //- Calculate specific heat at constant volume
+    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.Cv(rho, e, T);
+    }
+
+    //- Calculate thermal diffusivity
+    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.kappa(rho, e, T);
+    }
+
+    //- Calculate pressure
+    virtual scalar pRhoT(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.p(rho, e, T);
+    }
+
+    //- Calculate viscosity
+    virtual scalar mu(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.mu(rho, e, T);
+    }
+
+    //- Calculate dpde
+    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const
+    {
+        return thermo_.Gamma(rho, e, T);
+    }
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e,
+        const scalar T
+    ) const
+    {
+        return sqrt(max(thermo_.cSqr(p, rho, e, T), small));
+    }
+
+    //- Calculate speed of sound squared
+    virtual scalar cSqr
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e,
+        const scalar T
+    ) const
+    {
+        return thermo_.cSqr(p, rho, e, T);
+    }
+};
+
+
+/*---------------------------------------------------------------------------*\
                            Class basicFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -55,6 +150,33 @@ class basicFluidBlastThermo
 :
     public Thermo
 {
+    //- Mixture
+    mutable basicBlastFluidMixture
+    <
+        typename Thermo::BasicMixture,
+        typename Thermo::thermoType
+    > mixture_;
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& cellThermoMixture
+    (
+        const label celli
+    ) const
+    {
+        return mixture_;
+    }
+
+    //- Return a cell mixture
+    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
+    (
+        const label patchi,
+        const label facei
+    ) const
+    {
+        return mixture_;
+    }
+
+
 public:
 
     //- Runtime type information
@@ -94,32 +216,17 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Return the speed of sound for patchi
-        virtual tmp<scalarField> speedOfSound(const label patchi) const;
-
-        //- Gamma = dpde []
-        virtual tmp<volScalarField> Gamma() const;
-
-        //- Gamma = dpde for patch []
-        virtual tmp<scalarField> Gamma(const label patchi) const;
-
-        //- Gamma = dpde for cell []
-        virtual scalar cellGamma(const label celli) const;
-
 
     //- Thermodynamic and transport functions
 
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 
-        //- Calculate thermodynamic pressure
-        virtual tmp<volScalarField> pRhoT() const;
-
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT(const label celli) const;
+
+        //- Gamma = dpde for cell []
+        virtual scalar cellGamma(const label celli) const;
 
         //- Derivative of pressure w.r.t density for cell
         virtual scalar celldpdRho(const label celli) const;
@@ -129,11 +236,6 @@ public:
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
-
-    // Access to transport state variables
-
-            //- Dynamic viscosity of mixture [kg/m/s]
-            virtual tmp<volScalarField> calcMu() const;
 };
 
 

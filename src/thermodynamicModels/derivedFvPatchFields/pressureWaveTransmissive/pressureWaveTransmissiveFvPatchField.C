@@ -121,7 +121,7 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
     // Lookup the velocity and compressibility of the patch
     tmp<scalarField> cp
     (
-        thermo.speedOfSound(this->patch().index())
+        thermo.speedOfSound().boundaryField()[this->patch().index()]
     );
     // Calculate the speed of the field wave w
     // by summing the component of the velocity normal to the boundary

@@ -30,6 +30,6 @@ EXE_LIBS = \
     -lsampling \
     -L$(BLAST_LIBBIN) \
     -lblastThermodynamics \
-    -lphaseCompressibleSystems \
+    -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects

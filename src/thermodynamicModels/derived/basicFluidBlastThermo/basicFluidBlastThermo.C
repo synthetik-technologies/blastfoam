@@ -45,7 +45,8 @@ Foam::basicFluidBlastThermo<Thermo>::basicFluidBlastThermo
         dict,
         phaseName,
         masterName
-    )
+    ),
+    mixture_(*this)
 {
     //- Initialize the density using the pressure and temperature
     //  This is only done at the first time step (Not on restart)
@@ -121,85 +122,6 @@ Foam::basicFluidBlastThermo<Thermo>::ESource() const
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidBlastThermo<Thermo>::speedOfSound() const
-{
-    tmp<volScalarField> cSqr
-    (
-        Thermo::volScalarFieldProperty
-        (
-            "cSqr",
-            sqr(dimVelocity),
-            &Thermo::thermoType::cSqr,
-            Thermo::baseThermo::p(),
-            this->rho_,
-            this->e_,
-            this->T_
-        )
-    );
-    cSqr.ref().max(small);
-    return volScalarField::New
-    (
-       this->phasePropertyName("speedOfSound"), sqrt(cSqr)
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::scalarField>
-Foam::basicFluidBlastThermo<Thermo>::speedOfSound(const label patchi) const
-{
-    return sqrt
-    (
-        max
-        (
-            Thermo::patchFieldProperty
-            (
-                &Thermo::thermoType::cSqr,
-                patchi,
-                Thermo::baseThermo::p().boundaryField()[patchi],
-                this->rho_.boundaryField()[patchi],
-                this->e_.boundaryField()[patchi],
-                this->T_.boundaryField()[patchi]
-            ),
-            small
-        )
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidBlastThermo<Thermo>::Gamma() const
-{
-    return Thermo::volScalarFieldProperty
-    (
-        "Gamma",
-        dimless,
-        &Thermo::thermoType::Gamma,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::scalarField>
-Foam::basicFluidBlastThermo<Thermo>::Gamma(const label patchi) const
-{
-    return Thermo::patchFieldProperty
-    (
-        &Thermo::thermoType::Gamma,
-        patchi,
-        this->rho_.boundaryField()[patchi],
-        this->e_.boundaryField()[patchi],
-        this->T_.boundaryField()[patchi]
-    );
-}
-
-
-template<class Thermo>
 Foam::scalar
 Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 {
@@ -209,23 +131,6 @@ Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
         this->e_[celli],
         this->T_[celli]
     );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidBlastThermo<Thermo>::pRhoT() const
-{
-    return
-        Thermo::volScalarFieldProperty
-        (
-            "p",
-            dimPressure,
-            &Thermo::thermoType::p,
-            this->rho_,
-            this->e_,
-            this->T_
-        );
 }
 
 
@@ -278,22 +183,6 @@ Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
         dimEnergy/dimMass,
         &Thermo::initializeEnergy,
         p,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::basicFluidBlastThermo<Thermo>::calcMu() const
-{
-    return Thermo::volScalarFieldProperty
-    (
-        "mu",
-        dimensionSet(1, -1, -1, 0, 0),
-        &Thermo::thermoType::mu,
         this->rho_,
         this->e_,
         this->T_

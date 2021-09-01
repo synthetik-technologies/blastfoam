@@ -34,7 +34,7 @@ namespace Foam
     defineTypeNameAndDebug(coupledMultiphaseCompressibleSystem, 0);
     addToRunTimeSelectionTable
     (
-        phaseCompressibleSystem,
+        compressibleSystem,
         coupledMultiphaseCompressibleSystem,
         dictionary
     );
@@ -74,7 +74,10 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     {
         volumeFraction_ += alphas_[phasei];
     }
-    dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_()).setTotalVolumeFractionPtr(volumeFraction_);
+    dynamicCast<multiphaseFluidBlastThermo>
+    (
+        thermoPtr_()
+    ).setTotalVolumeFractionPtr(volumeFraction_);
 }
 
 
@@ -172,13 +175,19 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
 void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
 {
+    if (!needPostUpdate_)
+    {
+        compressibleBlastSystem::postUpdate();
+        return;
+    }
+
     this->decode();
 
     //- Store value of density so volume fraction can be included
     volScalarField rho(rho_);
+    rho_ = alphaRho_;
 
-
-    phaseCompressibleSystem::postUpdate();
+    compressibleBlastSystem::postUpdate();
 
     //- Reset density to the correct field
     rho_ = rho;
@@ -299,106 +308,6 @@ void Foam::coupledMultiphaseCompressibleSystem::encode()
     rho_ = alphaRho_/max(volumeFraction_, 1e-10);
     rhoU_ = alphaRho_*U_;
     rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
-}
-
-
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::Cv() const
-{
-    return thermoPtr_->Cv();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::mu() const
-{
-    return thermoPtr_->mu();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::mu(const label patchi) const
-{
-    return thermoPtr_->mu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::nu() const
-{
-    return thermoPtr_->nu();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::nu(const label patchi) const
-{
-    return thermoPtr_->nu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::coupledMultiphaseCompressibleSystem::alpha() const
-{
-    return thermoPtr_->alpha();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::alpha(const label patchi) const
-{
-    return thermoPtr_->alpha(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermoPtr_->alphaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermoPtr_->alphaEff(alphat, patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::coupledMultiphaseCompressibleSystem::alphahe() const
-{
-    return thermoPtr_->alphahe();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::alphahe(const label patchi) const
-{
-    return thermoPtr_->alphahe(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappa() const
-{
-    return thermoPtr_->kappa();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::kappa(const label patchi) const
-{
-    return thermoPtr_->kappa(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermoPtr_->kappaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermoPtr_->kappaEff(alphat, patchi);
 }
 
 // ************************************************************************* //

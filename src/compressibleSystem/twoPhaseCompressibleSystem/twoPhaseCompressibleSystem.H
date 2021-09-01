@@ -37,7 +37,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
+#include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
 #include "fluxScheme.H"
 
@@ -50,7 +50,7 @@ namespace Foam
 
 class twoPhaseCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public compressibleBlastSystem
 {
 // Private data
 
@@ -90,10 +90,6 @@ class twoPhaseCompressibleSystem
         surfaceScalarField alphaRhoPhi2_;
 
 
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
-
-
 public:
 
     TypeName("twoPhaseCompressibleSystem");
@@ -117,34 +113,11 @@ public:
         //- Update fluxes
         void update();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve sub-step stepi
         virtual void solve();
 
-
-    // Member Access Functions
-
-        //- Const access to thermo model
-        virtual const fluidBlastThermo& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Non-const access to thermo model
-        virtual fluidBlastThermo& thermo()
-        {
-            return thermo_;
-        }
-
-        //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const
-        {
-            return thermo_.speedOfSound();
-        }
-
-
+        //- Solve implicit terms
+        virtual void postUpdate();
 };
 
 

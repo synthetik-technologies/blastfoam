@@ -27,6 +27,217 @@ License
 
 #include "detonatingFluidBlastThermo.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::HE
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Es(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Es(rho, e, T);
+    }
+    return thermo2_.Es(rho, e, T)*xi_ + thermo1_.Es(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::TRhoE
+(
+    const scalar T,
+    const scalar rho,
+    const scalar e
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.TRhoE(T, rho, e);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.TRhoE(T, rho, e);
+    }
+
+    return
+        thermo2_.TRhoE(T, rho, e)*xi_
+      + thermo1_.TRhoE(T, rho, e)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Cp(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Cp(rho, e, T);
+    }
+    return thermo2_.Cp(rho, e, T)*xi_ + thermo1_.Cp(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Cv(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Cv(rho, e, T);
+    }
+    return thermo2_.Cv(rho, e, T)*xi_ + thermo1_.Cv(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::kappa
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.kappa(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.kappa(rho, e, T);
+    }
+    return thermo2_.kappa(rho, e, T)*xi_ + thermo1_.kappa(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::pRhoT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.p(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.p(rho, e, T);
+    }
+    return thermo2_.p(rho, e, T)*xi_ + thermo1_.p(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Gamma(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Gamma(rho, e, T);
+    }
+    return thermo2_.Gamma(rho, e, T)*xi_ + thermo1_.Gamma(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::mu
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.mu(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.mu(rho, e, T);
+    }
+    return thermo2_.mu(rho, e, T)*xi_ + thermo1_.mu(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::speedOfSound
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return sqrt(max(cSqr(p, rho, e, T), small));
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.cSqr(p, rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.cSqr(p, rho, e, T);
+    }
+    return
+        thermo2_.cSqr(p, rho, e, T)*xi_
+      + thermo1_.cSqr(p, rho, e, T)*(1.0 - xi_);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
@@ -64,7 +275,8 @@ Foam::detonatingFluidBlastThermo<Thermo>::detonatingFluidBlastThermo
             dict,
             phaseName
         )
-    )
+    ),
+    mixture_(*this, *this, activation_())
 {
     //- Initialize the density using the pressure and temperature
     //  This is only done at the first time step (Not on restart)
@@ -153,132 +365,10 @@ void Foam::detonatingFluidBlastThermo<Thermo>::updateRho(const volScalarField& p
 
 
 template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::speedOfSound() const
-{
-    tmp<volScalarField> cSqr
-    (
-        Thermo::blendedVolScalarFieldProperty
-        (
-            "cSqr",
-            sqr(dimVelocity),
-            &Thermo::thermoType1::cSqr,
-            &Thermo::thermoType2::cSqr,
-            Thermo::baseThermo::p(),
-            this->rho_,
-            this->e_,
-            this->T_
-        )
-    );
-    cSqr.ref().max(small);
-    return volScalarField::New
-    (
-       this->phasePropertyName("speedOfSound"), sqrt(cSqr)
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::scalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::speedOfSound(const label patchi) const
-{
-    return sqrt
-    (
-        max
-        (
-            Thermo::blendedPatchFieldProperty
-            (
-                &Thermo::thermoType1::cSqr,
-                &Thermo::thermoType2::cSqr,
-                patchi,
-                Thermo::baseThermo::p().boundaryField()[patchi],
-                this->rho_.boundaryField()[patchi],
-                this->e_.boundaryField()[patchi],
-                this->T_.boundaryField()[patchi]
-            ),
-            small
-        )
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::Gamma() const
-{
-    return Thermo::blendedVolScalarFieldProperty
-    (
-        "Gamma",
-        dimless,
-        &Thermo::thermoType1::Gamma,
-        &Thermo::thermoType2::Gamma,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::scalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::Gamma(const label patchi) const
-{
-    return Thermo::blendedPatchFieldProperty
-    (
-        &Thermo::thermoType1::Gamma,
-        &Thermo::thermoType2::Gamma,
-        patchi,
-        this->rho_.boundaryField()[patchi],
-        this->e_.boundaryField()[patchi],
-        this->T_.boundaryField()[patchi]
-    );
-}
-
-
-template<class Thermo>
-Foam::scalar
-Foam::detonatingFluidBlastThermo<Thermo>::cellGamma(const label celli) const
-{
-    const scalar& x = this->xi(celli);
-    const scalar rho = this->rho_[celli];
-    const scalar e = this->e_[celli];
-    const scalar T = this->T_[celli];
-    if (x < small)
-    {
-        return Thermo::thermoType1::Gamma(rho, e, T);
-    }
-    else if ((1.0 - x) < small)
-    {
-        return Thermo::thermoType2::Gamma(rho, e, T);
-    }
-
-    return
-        Thermo::thermoType2::Gamma(rho, e, T)*x
-      + Thermo::thermoType1::Gamma(rho, e, T)*(1.0 - x);
-}
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::pRhoT() const
-{
-    return Thermo::blendedVolScalarFieldProperty
-    (
-        "p",
-        dimPressure,
-        &Thermo::thermoType1::p,
-        &Thermo::thermoType2::p,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class Thermo>
 Foam::scalar
 Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
 {
-    const scalar& x = this->xi(celli);
+    const scalar& x = this->cellx(celli);
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
@@ -299,9 +389,32 @@ Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
 
 template<class Thermo>
 Foam::scalar
+Foam::detonatingFluidBlastThermo<Thermo>::cellGamma(const label celli) const
+{
+    const scalar& x = this->cellx(celli);
+    const scalar rho = this->rho_[celli];
+    const scalar e = this->e_[celli];
+    const scalar T = this->T_[celli];
+    if (x < small)
+    {
+        return Thermo::thermoType1::Gamma(rho, e, T);
+    }
+    else if ((1.0 - x) < small)
+    {
+        return Thermo::thermoType2::Gamma(rho, e, T);
+    }
+
+    return
+        Thermo::thermoType2::Gamma(rho, e, T)*x
+      + Thermo::thermoType1::Gamma(rho, e, T)*(1.0 - x);
+}
+
+
+template<class Thermo>
+Foam::scalar
 Foam::detonatingFluidBlastThermo<Thermo>::celldpdRho(const label celli) const
 {
-    const scalar& x = this->xi(celli);
+    const scalar& x = this->cellx(celli);
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
@@ -324,7 +437,7 @@ template<class Thermo>
 Foam::scalar
 Foam::detonatingFluidBlastThermo<Thermo>::celldpde(const label celli) const
 {
-    const scalar& x = this->xi(celli);
+    const scalar& x = this->cellx(celli);
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
@@ -368,23 +481,6 @@ Foam::detonatingFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
     }
 
     return eInit;
-}
-
-
-template<class Thermo>
-Foam::tmp<Foam::volScalarField>
-Foam::detonatingFluidBlastThermo<Thermo>::calcMu() const
-{
-    return Thermo::blendedVolScalarFieldProperty
-    (
-        "mu",
-        dimensionSet(1, -1, -1, 0, 0),
-        &Thermo::thermoType1::mu,
-        &Thermo::thermoType2::mu,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
 }
 
 

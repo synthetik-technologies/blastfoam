@@ -107,10 +107,83 @@ Foam::solidBlastThermo::~solidBlastThermo()
 
 void Foam::solidBlastThermo::correct()
 {
-    this->T_ = this->THE();
-    this->T_.correctBoundaryConditions();
+    const scalarField& rhoCells = this->rho_;
+    const scalarField& eCells = this->e_;
 
-    this->alpha_ = this->kappa()/this->Cv();
+    scalarField& TCells = this->T_.primitiveFieldRef();
+    scalarField& CpCells = this->Cp_.primitiveFieldRef();
+    scalarField& CvCells = this->Cv_.primitiveFieldRef();
+    scalarField& alphaCells = this->alpha_.primitiveFieldRef();
+
+    forAll(rhoCells, celli)
+    {
+        const blastMixture& thermoMixture = this->cellThermoMixture(celli);
+        scalar r(rhoCells[celli]);
+        scalar e(eCells[celli]);
+
+        TCells[celli] = thermoMixture.TRhoE(TCells[celli], r, e);
+
+        scalar T(TCells[celli]);
+
+        CpCells[celli] = thermoMixture.Cp(r, e, T);
+        CvCells[celli] = thermoMixture.Cv(r, e, T);
+        alphaCells[celli] = thermoMixture.kappa(r, e, T)/CpCells[celli];
+    }
+
+    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
+    volScalarField::Boundary& heBf = this->he().boundaryFieldRef();
+    volScalarField::Boundary& TBf = this->T_.boundaryFieldRef();
+    volScalarField::Boundary& CpBf = this->Cp_.boundaryFieldRef();
+    volScalarField::Boundary& CvBf = this->Cv_.boundaryFieldRef();
+    volScalarField::Boundary& alphaBf = this->alpha_.boundaryFieldRef();
+
+    forAll(this->T_.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = rhoBf[patchi];
+
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
+        fvPatchScalarField& pCp = CpBf[patchi];
+        fvPatchScalarField& pCv = CvBf[patchi];
+        fvPatchScalarField& palpha = alphaBf[patchi];
+
+        if (pT.fixesValue())
+        {
+            forAll(pT, facei)
+            {
+                const blastMixture& thermoMixture =
+                    this->patchFaceThermoMixture(patchi, facei);
+                const scalar r(prho[facei]);
+                const scalar T(pT[facei]);
+
+                phe[facei] = thermoMixture.HE(r, phe[facei], T);
+
+                const scalar e(phe[facei]);
+
+                pCp[facei] = thermoMixture.Cp(r, e, T);
+                pCv[facei] = thermoMixture.Cv(r, e, T);
+                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
+            }
+        }
+        else
+        {
+            forAll(pT, facei)
+            {
+                const blastMixture& thermoMixture =
+                    this->patchFaceThermoMixture(patchi, facei);
+                const scalar r(prho[facei]);
+                const scalar e(phe[facei]);
+
+                phe[facei] = thermoMixture.TRhoE(pT[facei], r, e);
+
+                const scalar T(pT[facei]);
+
+                pCp[facei] = thermoMixture.Cp(r, e, T);
+                pCv[facei] = thermoMixture.Cv(r, e, T);
+                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
+            }
+        }
+    }
 }
 
 

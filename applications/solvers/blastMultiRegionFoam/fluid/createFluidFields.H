@@ -1,5 +1,5 @@
 // Initialise fluid field pointer lists
-PtrList<phaseCompressibleSystem> fluids(fluidRegions.size());
+PtrList<compressibleSystem> fluids(fluidRegions.size());
 PtrList<timeIntegrator> timeIntegrators(fluidRegions.size());
 PtrList<uniformDimensionedVectorField> gFluid(fluidRegions.size());
 
@@ -32,7 +32,7 @@ forAll(fluidRegions, i)
     fluids.set
     (
         i,
-        phaseCompressibleSystem::New(fluidRegions[i])
+        compressibleSystem::New(fluidRegions[i])
     );
     timeIntegrators[i].addSystem(fluids[i]);
     fluids[i].update();

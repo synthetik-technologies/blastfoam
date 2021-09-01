@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,14 +22,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::phaseCompressibleSystem
+    Foam::singlePhaseCompressibleSystem
 
 Description
-    Base class for a collection of equation of states using a shared pressure
-    and velocity (5 equation model)
+    Compressible system with one phase
 
 SourceFiles
-    phaseCompressibleSystem.C
+    singlePhaseCompressibleSystem.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -38,7 +37,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
+#include "compressibleBlastSystem.H"
 
 namespace Foam
 {
@@ -49,18 +48,8 @@ namespace Foam
 
 class singlePhaseCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public compressibleBlastSystem
 {
-protected:
-// Protected data
-
-    //- Calculate new alpha and rho fields
-    virtual void calcAlphaAndRho()
-    {
-        return;
-    }
-
-
 public:
 
     TypeName("singlePhaseCompressibleSystem");
@@ -74,22 +63,11 @@ public:
 
     // Member functions
 
-        //- Decode primative variables
-        virtual void decode();
-
-        //- Encode conserved variables
-        virtual void encode();
-
-        //- Update fluxes
-        virtual void update();
-
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve sub-step stepi
         virtual void solve();
 
-
+        //- Solve implicit terms
+        virtual void postUpdate();
 };
 
 

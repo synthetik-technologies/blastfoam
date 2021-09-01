@@ -27,6 +27,116 @@ License
 
 #include "detonatingSolidBlastThermo.H"
 
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::HE
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Es(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Es(rho, e, T);
+    }
+    return thermo2_.Es(rho, e, T)*xi_ + thermo1_.Es(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::TRhoE
+(
+    const scalar T,
+    const scalar rho,
+    const scalar e
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.TRhoE(T, rho, e);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.TRhoE(T, rho, e);
+    }
+
+    return
+        thermo2_.TRhoE(T, rho, e)*xi_
+      + thermo1_.TRhoE(T, rho, e)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Cp(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Cp(rho, e, T);
+    }
+    return thermo2_.Cp(rho, e, T)*xi_ + thermo1_.Cp(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.Cv(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.Cv(rho, e, T);
+    }
+    return thermo2_.Cv(rho, e, T)*xi_ + thermo1_.Cv(rho, e, T)*(1.0 - xi_);
+}
+
+
+template<class BasicMixture, class ThermoType1, class ThermoType2>
+Foam::scalar
+Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::kappa
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (xi_ < small)
+    {
+        return thermo1_.kappa(rho, e, T);
+    }
+    else if ((1.0 - xi_) < small)
+    {
+        return thermo2_.kappa(rho, e, T);
+    }
+    return thermo2_.kappa(rho, e, T)*xi_ + thermo1_.kappa(rho, e, T)*(1.0 - xi_);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
@@ -64,7 +174,8 @@ Foam::detonatingSolidBlastThermo<Thermo>::detonatingSolidBlastThermo
             dict,
             phaseName
         )
-    )
+    ),
+    mixture_(*this, *this, activation_())
 {
     this->initializeFields();
 }
@@ -231,7 +342,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::Kappa() const
 
     forAll(KappaCells, celli)
     {
-        scalar x = xi(celli);
+        scalar x = cellx(celli);
         if (x < small)
         {
             Kappa[celli] =

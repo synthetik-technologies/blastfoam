@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
         clouds.evolve();
         theta = clouds.theta();
 
-        fluid.eSource() = clouds.Sh(fluid.e());
+        fluid.eSource() = clouds.Sh(fluid.he());
         fluid.dragSource() = clouds.SU(fluid.U());
 
         Info<< "Calculating Fluxes" << endl;
