@@ -23,11 +23,11 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         184e-6;
+endTime         200e-6;
 
 writeControl    adjustableRunTime;
 
-writeInterval   2e-6;
+writeInterval   2e-5;
 
 writeFormat     binary;
 
@@ -46,12 +46,15 @@ adjustTimeStep  yes;
 deltaT          1e-9;
 
 maxCo           0.5;
-// maxDeltaT 1e-8;
-
 
 // ************************************************************************* //
 
 
 functions
 {
+    outputTime
+    {
+        type    writeTimeList;
+        times   (184e-6);
+    }
 }

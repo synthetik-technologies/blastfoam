@@ -92,12 +92,12 @@ inline scalar specieBlast::R() const
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
-// inline void specieBlast::operator=(const specieBlast& st)
-// {
-// //     specieName_ = st.specieName_;
-//     Y_ = st.Y_;
-//     molWeight_ = st.molWeight_;
-// }
+inline void specieBlast::operator=(const specieBlast& st)
+{
+//     specieName_ = st.specieName_;
+    Y_ = st.Y_;
+    molWeight_ = st.molWeight_;
+}
 
 
 inline void specieBlast::operator+=(const specieBlast& st)

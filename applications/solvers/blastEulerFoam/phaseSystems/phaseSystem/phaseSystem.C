@@ -676,12 +676,13 @@ Foam::phaseSystem::phaseSystem
 
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
+    fvModels_(fvModels::New(const_cast<fvMesh&>(mesh))),
+    fvConstraints_(fvConstraints::New(mesh)),
+
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
     kineticTheoryPtr_(NULL),
-    polydisperseKineticTheory_(false),
-    fvModels_(fvModels::New(const_cast<fvMesh&>(mesh))),
-    fvConstraints_(fvConstraints::New(const_cast<fvMesh&>(mesh)))
+    polydisperseKineticTheory_(false)
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -1037,6 +1038,7 @@ void Foam::phaseSystem::postUpdate()
     decode();
     forAll(phaseModels_, phasei)
     {
+        incrIndent(Info);
         Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].postUpdate();
         decrIndent(Info);
@@ -1046,6 +1048,9 @@ void Foam::phaseSystem::postUpdate()
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
     decode();
+
+    //- Update fvModels
+    fvModels_.correct();
 }
 
 

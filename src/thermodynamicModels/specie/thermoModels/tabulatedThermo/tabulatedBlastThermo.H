@@ -118,6 +118,12 @@ public:
 
         tabulatedThermo(const dictionary& dict);
 
+        //- Return the energy type
+        inline energyType eType() const
+        {
+            return CpCvModel::InternalEnergy;
+        }
+
         //- Limit the temperature to be in the range Tlow_ to Thigh_
         inline scalar limit(const scalar T, const scalar Told) const;
 

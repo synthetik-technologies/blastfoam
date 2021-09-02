@@ -160,7 +160,12 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
     ),
-    solutionDs_((vector(this->mesh().solutionD()) + vector::one)/2.0)
+    solutionDs_((vector(fluid.mesh().solutionD()) + vector::one)/2.0),
+    models_(fluid.models()),
+    constraints_(fluid.constraints()),
+    solveFields_(),
+    needPostUpdate_(false)
+
 {
     scalar emptyDirV
     (
@@ -172,6 +177,33 @@ Foam::phaseModel::phaseModel
     {
         solutionDs_ = ((vector(this->mesh().geometricD()) + vector::one)/2.0);
     }
+
+    const PtrList<fvModel>& models(models_);
+    forAll(models, modeli)
+    {
+        wordList fields(models[modeli].addSupFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+
+    const PtrList<fvConstraint>& constraints(constraints_);
+    forAll(constraints, modeli)
+    {
+        wordList fields(constraints[modeli].constrainedFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+    needPostUpdate_ = solveFields_.size();
 }
 
 
@@ -372,73 +404,78 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-    const fvModels& models(this->fluid_.models());
-    dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
-    volScalarField& alpha(*this);
+    dimensionedScalar smallAlphaRho(residualAlphaRho());
+    const volScalarField& alpha(*this);
 
+    // Solve momentum
+    if (solveFields_.found(rho().name()))
     {
         fvScalarMatrix rhoEqn
         (
             fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
         ==
-            models.source(alpha, rho())
+            models_.source(alpha, rho())
         );
-        constraints.constrain(rhoEqn);
+        constraints_.constrain(rhoEqn);
         rhoEqn.solve();
-        constraints.constrain(rho());
+        constraints_.constrain(rho());
     }
 
-    fvVectorMatrix UEqn
-    (
-        fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
-      + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
-     ==
-        models.source(alpha, rho(), U_)
-    );
-    if (turbulence_.valid())
+    if (solveFields_.found(U_.name()) || turbulence_.valid())
     {
-        UEqn += turbulence_->divDevTau(U_);
-    }
-    constraints.constrain(UEqn);
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
+          + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
+         ==
+            models_.source(alpha, rho(), U_)
+        );
+        if (turbulence_.valid())
+        {
+            UEqn += turbulence_->divDevTau(U_);
+            alphaRhoE_ +=
+                rho().time().deltaT()
+               *fvc::div
+                (
+                    fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
+                  & flux().Uf()
+                );
+        }
+        constraints_.constrain(UEqn);
+        UEqn.solve();
+        constraints_.constrain(U_);
 
-    UEqn.solve();
-
-    constraints.constrain(U_);
-
-    fvScalarMatrix eEqn
-    (
-        fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
-      + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
-     ==
-        models.source(alpha, rho(), he())
-    );
-
-    if (turbulence_.valid())
-    {
-        alphaRhoE_ +=
-            rho().time().deltaT()
-           *fvc::div
-            (
-                fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-              & flux().Uf()
-            );
-
-        // Solve thermal energy diffusion
         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
-        eEqn += thermophysicalTransport_->divq(he());
     }
 
-    constraints.constrain(eEqn);
+    // Solve thermal energy diffusion
+    if (solveFields_.found(he().name()) || turbulence_.valid())
+    {
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
+          + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
+         ==
+            models_.source(alpha, rho(), he())
+        );
 
-    eEqn.solve();
-
-    constraints.constrain(he());
+        if (turbulence_.valid())
+        {
+            // Add thermal energy diffusion
+            eEqn += thermophysicalTransport_->divq(he());
+        }
+        constraints_.constrain(eEqn);
+        eEqn.solve();
+        constraints_.constrain(he());
+    }
 
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
+
+    thermo().postUpdate();
+    thermo().correct();
 
     // Update conserved quantities
     encode();
@@ -446,17 +483,7 @@ void Foam::phaseModel::postUpdate()
 
 
 void Foam::phaseModel::correctVolumeFraction()
-{
-    const fvConstraints& constraints(this->fluid_.constraints());
-
-    volScalarField& alpha(*this);
-    if (constraints.constrainsField(alpha.name()))
-    {
-        constraints.constrain(alpha);
-        alphaRho_.ref() = alpha()*this->rho()();
-    }
-    alpha.correctBoundaryConditions();
-}
+{}
 
 
 void Foam::phaseModel::update()

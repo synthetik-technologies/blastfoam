@@ -82,7 +82,7 @@ Foam::fluidBlastThermo::fluidBlastThermo
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar(dimVelocity, 0.0)
@@ -168,7 +168,7 @@ Foam::fluidBlastThermo::~fluidBlastThermo()
 void Foam::fluidBlastThermo::correct()
 {
     const scalarField& rhoCells = this->rho_;
-    const scalarField& eCells = this->e_;
+    scalarField& eCells = this->e_;
 
     scalarField& pCells = this->p_.primitiveFieldRef();
     scalarField& TCells = this->T_.primitiveFieldRef();
@@ -181,12 +181,20 @@ void Foam::fluidBlastThermo::correct()
     forAll(rhoCells, celli)
     {
         const blastFluidMixture& thermoMixture = this->cellThermoMixture(celli);
-        scalar r(rhoCells[celli]);
-        scalar e(eCells[celli]);
 
-        TCells[celli] = thermoMixture.TRhoE(TCells[celli], r, e);
+        // Update temperature
+        TCells[celli] =
+            thermoMixture.TRhoE(TCells[celli], rhoCells[celli], eCells[celli]);
+        if (TCells[celli] < this->TLow_)
+        {
+            eCells[celli] =
+                thermoMixture.HE(rhoCells[celli], eCells[celli], this->TLow_);
+            TCells[celli] = TLow_;
+        }
 
-        scalar T(TCells[celli]);
+        const scalar r(rhoCells[celli]);
+        const scalar e(eCells[celli]);
+        const scalar T(TCells[celli]);
 
         pCells[celli] = thermoMixture.pRhoT(r, e, T);
         CpCells[celli] = thermoMixture.Cp(r, e, T);
@@ -196,11 +204,16 @@ void Foam::fluidBlastThermo::correct()
         cCells[celli] = thermoMixture.speedOfSound(pCells[celli], r, e, T);
     }
 
-    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
-    volScalarField::Boundary& heBf = this->he().boundaryFieldRef();
+    this->T_.correctBoundaryConditions();
+    this->he().correctBoundaryConditions();
+    this->p_.correctBoundaryConditions();
 
-    volScalarField::Boundary& pBf = this->p_.boundaryFieldRef();
-    volScalarField::Boundary& TBf = this->T_.boundaryFieldRef();
+
+    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
+    const volScalarField::Boundary& heBf = this->he().boundaryField();
+    const volScalarField::Boundary& pBf = this->p_.boundaryField();
+    const volScalarField::Boundary& TBf = this->T_.boundaryField();
+
     volScalarField::Boundary& CpBf = this->Cp_.boundaryFieldRef();
     volScalarField::Boundary& CvBf = this->Cv_.boundaryFieldRef();
     volScalarField::Boundary& muBf = this->mu_.boundaryFieldRef();
@@ -210,57 +223,29 @@ void Foam::fluidBlastThermo::correct()
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = rhoBf[patchi];
+        const fvPatchScalarField& pT = TBf[patchi];
+        const fvPatchScalarField& phe = heBf[patchi];
+        const fvPatchScalarField& pp = pBf[patchi];
 
-        fvPatchScalarField& pp = pBf[patchi];
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
         fvPatchScalarField& pmu = muBf[patchi];
         fvPatchScalarField& palpha = alphaBf[patchi];
         fvPatchScalarField& pc = cBf[patchi];
 
-        fvPatchScalarField& pT = TBf[patchi];
-        fvPatchScalarField& phe = heBf[patchi];
-        if (pT.fixesValue())
+        forAll(pT, facei)
         {
-            forAll(pT, facei)
-            {
-                const blastFluidMixture& thermoMixture =
-                    this->patchFaceThermoMixture(patchi, facei);
-                const scalar r(prho[facei]);
-                const scalar T(pT[facei]);
+            const blastFluidMixture& thermoMixture =
+                this->patchFaceThermoMixture(patchi, facei);
+            const scalar r(prho[facei]);
+            const scalar e(phe[facei]);
+            const scalar T(pT[facei]);
 
-                phe[facei] = thermoMixture.HE(r, phe[facei], T);
-
-                const scalar e(phe[facei]);
-
-                pp[facei] = thermoMixture.pRhoT(r, e, T);
-                pCp[facei] = thermoMixture.Cp(r, e, T);
-                pCv[facei] = thermoMixture.Cv(r, e, T);
-                pmu[facei] = thermoMixture.mu(r, e, T);
-                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
-                pc[facei] = thermoMixture.speedOfSound(pp[facei], r, e, T);
-            }
-        }
-        else
-        {
-            forAll(pT, facei)
-            {
-                const blastFluidMixture& thermoMixture =
-                    this->patchFaceThermoMixture(patchi, facei);
-                const scalar r(prho[facei]);
-                const scalar e(phe[facei]);
-
-                phe[facei] = thermoMixture.TRhoE(pT[facei], r, e);
-
-                const scalar T(pT[facei]);
-
-                pp[facei] = thermoMixture.pRhoT(r, e, T);
-                pCp[facei] = thermoMixture.Cp(r, e, T);
-                pCv[facei] = thermoMixture.Cv(r, e, T);
-                pmu[facei] = thermoMixture.mu(r, e, T);
-                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
-                pc[facei] = thermoMixture.speedOfSound(pp[facei], r, e, T);
-            }
+            pCp[facei] = thermoMixture.Cp(r, e, T);
+            pCv[facei] = thermoMixture.Cv(r, e, T);
+            pmu[facei] = thermoMixture.mu(r, e, T);
+            palpha[facei] = thermoMixture.kappa(r, e, T)/pCp[facei];
+            pc[facei] = thermoMixture.speedOfSound(pp[facei], r, e, T);
         }
     }
 }

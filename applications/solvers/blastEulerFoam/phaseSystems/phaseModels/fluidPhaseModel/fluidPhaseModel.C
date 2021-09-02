@@ -164,9 +164,6 @@ void Foam::fluidPhaseModel::solve()
 
 void Foam::fluidPhaseModel::postUpdate()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-    const fvModels& models(this->fluid_.models());
-
     if (solveAlpha_)
     {
         volScalarField& alpha(*this);
@@ -174,15 +171,14 @@ void Foam::fluidPhaseModel::postUpdate()
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
         ==
-            models.source(alpha)
+            models_.source(alpha)
         );
-        constraints.constrain(alphaEqn);
+        constraints_.constrain(alphaEqn);
         alphaEqn.solve();
-        constraints.constrain(alpha);
+        constraints_.constrain(alpha);
     }
 
     phaseModel::postUpdate();
-    thermoPtr_->postUpdate();
 }
 
 
@@ -249,22 +245,7 @@ void Foam::fluidPhaseModel::decode()
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-    //- Limit internal energy it there is a negative temperature
-    if (Foam::min(this->T_).value() < 0.0 && thermoPtr_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << Foam::min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_));
-        T_.max(small);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+   thermoPtr_->correct();
 
     alphaRhoE_.boundaryFieldRef() =
         (*this).boundaryField()
@@ -273,7 +254,6 @@ void Foam::fluidPhaseModel::decode()
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
-    thermoPtr_->correct();
 
     const fvConstraints& constraints(this->fluid_.constraints());
     if (constraints.constrainsField(p_.name()))

@@ -115,9 +115,6 @@ public:
     virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const;
 
     //- Calculate speed of sound squared
-    virtual scalar speedOfSound(const scalar, const scalar, const scalar, const scalar) const;
-
-    //- Calculate speed of sound squared
     virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
 };
 

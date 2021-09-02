@@ -108,7 +108,7 @@ Foam::solidBlastThermo::~solidBlastThermo()
 void Foam::solidBlastThermo::correct()
 {
     const scalarField& rhoCells = this->rho_;
-    const scalarField& eCells = this->e_;
+    scalarField& eCells = this->e_;
 
     scalarField& TCells = this->T_.primitiveFieldRef();
     scalarField& CpCells = this->Cp_.primitiveFieldRef();
@@ -118,20 +118,32 @@ void Foam::solidBlastThermo::correct()
     forAll(rhoCells, celli)
     {
         const blastMixture& thermoMixture = this->cellThermoMixture(celli);
-        scalar r(rhoCells[celli]);
-        scalar e(eCells[celli]);
 
-        TCells[celli] = thermoMixture.TRhoE(TCells[celli], r, e);
+        // Update temperature
+        TCells[celli] =
+            thermoMixture.TRhoE(TCells[celli], rhoCells[celli], eCells[celli]);
+        if (TCells[celli] < this->TLow_)
+        {
+            eCells[celli] =
+                thermoMixture.HE(rhoCells[celli], eCells[celli], this->TLow_);
+            TCells[celli] = TLow_;
+        }
 
-        scalar T(TCells[celli]);
+        const scalar r(rhoCells[celli]);
+        const scalar e(eCells[celli]);
+        const scalar T(TCells[celli]);
 
         CpCells[celli] = thermoMixture.Cp(r, e, T);
         CvCells[celli] = thermoMixture.Cv(r, e, T);
-        alphaCells[celli] = thermoMixture.kappa(r, e, T)/CpCells[celli];
+        alphaCells[celli] = thermoMixture.kappa(r, e, T)/CvCells[celli];
     }
 
+    this->T_.correctBoundaryConditions();
+    this->he().correctBoundaryConditions();
+
     const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
-    volScalarField::Boundary& heBf = this->he().boundaryFieldRef();
+    const volScalarField::Boundary& heBf = this->he().boundaryFieldRef();
+
     volScalarField::Boundary& TBf = this->T_.boundaryFieldRef();
     volScalarField::Boundary& CpBf = this->Cp_.boundaryFieldRef();
     volScalarField::Boundary& CvBf = this->Cv_.boundaryFieldRef();
@@ -140,48 +152,24 @@ void Foam::solidBlastThermo::correct()
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = rhoBf[patchi];
+        const fvPatchScalarField& pT = TBf[patchi];
+        const fvPatchScalarField& phe = heBf[patchi];
 
-        fvPatchScalarField& pT = TBf[patchi];
-        fvPatchScalarField& phe = heBf[patchi];
         fvPatchScalarField& pCp = CpBf[patchi];
         fvPatchScalarField& pCv = CvBf[patchi];
         fvPatchScalarField& palpha = alphaBf[patchi];
 
-        if (pT.fixesValue())
+        forAll(pT, facei)
         {
-            forAll(pT, facei)
-            {
-                const blastMixture& thermoMixture =
-                    this->patchFaceThermoMixture(patchi, facei);
-                const scalar r(prho[facei]);
-                const scalar T(pT[facei]);
+            const blastMixture& thermoMixture =
+                this->patchFaceThermoMixture(patchi, facei);
+            const scalar r(prho[facei]);
+            const scalar e(phe[facei]);
+            const scalar T(pT[facei]);
 
-                phe[facei] = thermoMixture.HE(r, phe[facei], T);
-
-                const scalar e(phe[facei]);
-
-                pCp[facei] = thermoMixture.Cp(r, e, T);
-                pCv[facei] = thermoMixture.Cv(r, e, T);
-                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
-            }
-        }
-        else
-        {
-            forAll(pT, facei)
-            {
-                const blastMixture& thermoMixture =
-                    this->patchFaceThermoMixture(patchi, facei);
-                const scalar r(prho[facei]);
-                const scalar e(phe[facei]);
-
-                phe[facei] = thermoMixture.TRhoE(pT[facei], r, e);
-
-                const scalar T(pT[facei]);
-
-                pCp[facei] = thermoMixture.Cp(r, e, T);
-                pCv[facei] = thermoMixture.Cv(r, e, T);
-                palpha[facei] = thermoMixture.kappa(r, e, T) /pCp[facei];
-            }
+            pCp[facei] = thermoMixture.Cp(r, e, T);
+            pCv[facei] = thermoMixture.Cv(r, e, T);
+            palpha[facei] = thermoMixture.kappa(r, e, T)/pCp[facei];
         }
     }
 }

@@ -38,7 +38,6 @@ inline Foam::eConstThermo<EquationOfState>::eConstThermo
 )
 :
     EquationOfState(st),
-    CpCvModel(CpCvModel::InternalEnergy),
     Cv_(cv),
     Hf_(hf),
     flameT_(ft)
@@ -54,7 +53,6 @@ inline Foam::eConstThermo<EquationOfState>::eConstThermo
 )
 :
     EquationOfState(ct),
-    CpCvModel(CpCvModel::InternalEnergy),
     Cv_(ct.Cv_),
     Hf_(ct.Hf_),
     flameT_(ct.flameT_)
@@ -69,7 +67,6 @@ inline Foam::eConstThermo<EquationOfState>::eConstThermo
 )
 :
     EquationOfState(name, ct),
-    CpCvModel(CpCvModel::InternalEnergy),
     Cv_(ct.Cv_),
     Hf_(ct.Hf_),
     flameT_(ct.flameT_)

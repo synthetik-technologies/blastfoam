@@ -66,11 +66,9 @@ Foam::compressibleBlastSystem::compressibleBlastSystem
     rho_(thermoPtr_->rho()),
     p_(thermoPtr_->p()),
     T_(thermoPtr_->T()),
-    e_(thermoPtr_->he()),
-    TLow_("TLow", dimTemperature, 0.0)
+    e_(thermoPtr_->he())
 {
     thermoPtr_->validate("compressibleBlastSystem", "e");
-    TLow_.readIfPresent(*this);
 }
 
 
@@ -97,22 +95,7 @@ void Foam::compressibleBlastSystem::decode()
 
     e_.ref() = rhoE_()/rho_() - 0.5*magSqr(U_());
 
-    //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - TLow_));
-        T_.max(TLow_);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+    thermoPtr_->correct();
 
     rhoE_.boundaryFieldRef() =
         rho_.boundaryField()
@@ -120,8 +103,6 @@ void Foam::compressibleBlastSystem::decode()
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
-
-    thermoPtr_->correct();
 }
 
 

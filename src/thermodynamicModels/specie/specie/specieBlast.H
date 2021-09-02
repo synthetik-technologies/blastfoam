@@ -147,7 +147,7 @@ public:
 
     // Member operators
 
-//         inline void operator=(const specieBlast&);
+        inline void operator=(const specieBlast&);
         inline void operator+=(const specieBlast&);
         inline void operator*=(const scalar);
 

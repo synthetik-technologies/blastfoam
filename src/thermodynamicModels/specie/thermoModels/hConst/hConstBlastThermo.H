@@ -131,12 +131,18 @@ public:
         inline static autoPtr<hConstThermo> New(const dictionary& dict);
 
 
-    //- Return the instantiated type name
+        //- Return the instantiated type name
         static word typeName()
         {
             return
                 "hConst<"
               + word(EquationOfState::typeName()) + '>';
+        }
+
+        //- Return the energy type
+        inline energyType eType() const
+        {
+            return CpCvModel::Enthalpy;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_

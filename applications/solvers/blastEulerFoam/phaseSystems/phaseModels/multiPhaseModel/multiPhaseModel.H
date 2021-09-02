@@ -91,10 +91,6 @@ protected:
             PtrList<surfaceScalarField> alphaRhoPhis_;
 
 
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
-
-
 public:
 
     //- Runtime type information
@@ -117,6 +113,9 @@ public:
     // Member Functions
 
         // integrationSystem functions
+
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
 
             //- Decode primative variables
             virtual void decode();

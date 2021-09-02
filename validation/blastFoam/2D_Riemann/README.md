@@ -4,7 +4,7 @@
 
 This problem was simulated by Lax and Liu (1998) The interaction of multiple shocks occurring in two dimensions. The case consists of four quadrants initialize with varying densities, pressures, and velocities.
 
-The calculation took approx. 6 min to run on a four core desktop at the reference resolution (50 x 50 cells) on a 1 m  x 1 m domain with adaptive mesh refinement with a maximum refinement level of 3. A reference solution from this run is in the "validation/referencePlots" directory. The user run results must be viewed using a graphical viewer.
+The calculation took approx. 10 min to run on a four core desktop at the reference resolution (50 x 50 cells) on a 1 m  x 1 m domain with adaptive mesh refinement with a maximum refinement level of 3. A reference solution from this run is in the "validation/referencePlots" directory. The user run results must be viewed using a graphical viewer.
 
 
 ## Reference

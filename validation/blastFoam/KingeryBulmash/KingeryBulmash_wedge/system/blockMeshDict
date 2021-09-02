@@ -16,10 +16,10 @@ FoamFile
 
 convertToMeters 1;
 
-R 16.0;
-x #calc "cos(5*Foam::constant::mathematical::pi/180.0)*$R";
-z #calc "sin(5*Foam::constant::mathematical::pi/180.0)*$R";
-nz #calc "-sin(5*Foam::constant::mathematical::pi/180.0)*$R";
+R   16.0;
+x   #calc "cos(Foam::constant::mathematical::pi / 180.0) * $R";
+z   #calc "sin(Foam::constant::mathematical::pi / 180.0) * $R";
+nz  #calc "- sin(Foam::constant::mathematical::pi / 180.0) * $R";
 
 vertices
 (

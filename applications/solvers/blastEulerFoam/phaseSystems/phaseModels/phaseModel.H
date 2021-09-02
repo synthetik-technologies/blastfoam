@@ -55,7 +55,7 @@ SourceFiles
 #include "phaseDynamicMomentumTransportModel.H"
 #include "fluidBlastThermo.H"
 #include "solidBlastThermo.H"
-#include "UautoPtr.H"
+#include "hashedWordList.H"
 #include "fvModels.H"
 #include "fvConstraints.H"
 
@@ -182,10 +182,16 @@ protected:
         vector solutionDs_;
 
         //- fvModels
-        UautoPtr<const fvModels> modelsPtr_;
+        const fvModels& models_;
 
         //- fvConstraints
-        UautoPtr<fvConstraints> constraintsPtr_;
+        const fvConstraints& constraints_;
+
+        //- List of fields that have models or constraints
+        hashedWordList solveFields_;
+
+        //- Does postUpdate need to be calles
+        bool needPostUpdate_;
 
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;

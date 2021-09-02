@@ -268,22 +268,7 @@ void Foam::coupledMultiphaseCompressibleSystem::decode()
     volScalarField E(rhoE_/alphaRhos);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-    //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermoPtr_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - TLow_));
-        T_.max(TLow_);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+    thermoPtr_->correct();
 
     rhoE_.boundaryFieldRef() =
         alphaRho_.boundaryField()
@@ -291,9 +276,6 @@ void Foam::coupledMultiphaseCompressibleSystem::decode()
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
-
-    thermoPtr_->correct();
-    T_ /= Foam::max(volumeFraction_, 1e-10);
 }
 
 

@@ -132,18 +132,6 @@ public:
     }
 
     //- Calculate speed of sound squared
-    virtual scalar speedOfSound
-    (
-        const scalar p,
-        const scalar rho,
-        const scalar e,
-        const scalar T
-    ) const
-    {
-        return sqrt(max(mixturePtr_->cSqr(p, rho, e, T), small));
-    }
-
-    //- Calculate speed of sound squared
     virtual scalar cSqr
     (
         const scalar p,

@@ -172,104 +172,112 @@ void Foam::granularPhaseModel::solve()
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-    const fvModels& models(this->fluid_.models());
     dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
     volScalarField& alpha(*this);
 
+    if (solveFields_.found(this->name()))
     {
         fvScalarMatrix alphaEqn
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
          ==
-            models.source(alpha)
+            models_.source(alpha)
         );
 
-        constraints.constrain(alphaEqn);
+        constraints_.constrain(alphaEqn);
         alphaEqn.solve();
-        constraints.constrain(alpha);
+        constraints_.constrain(alpha);
     }
 
-    //- Solve momentum equation (implicit stresses)
-    fvVectorMatrix UEqn
-    (
-        fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
-      + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
-     ==
-        models.source(alpha, rho(), U_)
-    );
+    // Solve momentum
+    if (solveFields_.found(U_.name()) || this->includeViscosity())
+    {
+        //- Solve momentum equation (implicit stresses)
+        fvVectorMatrix UEqn
+        (
+            fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
+          + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
+         ==
+            models_.source(alpha, rho(), U_)
+        );
 
-    //- Solve energy equation
-    fvScalarMatrix eEqn
-    (
-        fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
-      + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
-     ==
-        models.source(alpha, rho(), he())
-    );
+        if (this->includeViscosity())
+        {
+            // Add viscous term
+            UEqn += this->divDevRhoReff(U_);
+        }
+
+        constraints_.constrain(UEqn);
+        UEqn.solve();
+        constraints_.constrain(U_);
+    }
+
+    // Solve thermal energy
+    if (solveFields_.found(he().name()))
+    {
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
+          + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
+        ==
+            models_.source(alpha, rho(), he())
+        );
+        constraints_.constrain(eEqn);
+        eEqn.solve();
+        constraints_.constrain(he());
+    }
 
     //- Solve granular temperature equation including solid stress and
     //  conductivity
-    fvScalarMatrix ThetaEqn
-    (
-        1.5
-       *(
-            fvm::ddt(alpha, rho(), Theta_) - fvc::ddt(alpha, rho(), Theta_)
-          + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
-        )
-     ==
-        models.source(alpha, rho(), Theta_)
-    );
-
-    //- Solve for collisional viscosity terms
-    if (this->includeViscosity())
+    if (solveFields_.found(Theta_.name()) || this->includeViscosity())
     {
-        // Add viscous term
-        UEqn += this->divDevRhoReff(U_);
-
-        tmp<volTensorField> tgradU
+        fvScalarMatrix ThetaEqn
         (
-            fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
-        );
-        const volTensorField& gradU(tgradU());
-        volSymmTensorField D(symm(gradU));
-
-        volSymmTensorField tau
-        (
-            rho_
+            1.5
            *(
-                2.0*this->nut_*D
-              + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
+                fvm::ddt(alpha, rho(), Theta_) - fvc::ddt(alpha, rho(), Theta_)
+              + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
             )
+         ==
+            models_.source(alpha, rho(), Theta_)
         );
 
-        // Add solid stress and conductivity
-        ThetaEqn -=
-            fvm::laplacian(this->kappa_, Theta_, "laplacian(kappa,Theta)")
-          + ((tau*alpha) && gradU);
+        //- Solve for collisional viscosity terms
+        if (this->includeViscosity())
+        {
+            tmp<volTensorField> tgradU
+            (
+                fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+            );
+            const volTensorField& gradU(tgradU());
+            volSymmTensorField D(symm(gradU));
+
+            volSymmTensorField tau
+            (
+                rho_
+               *(
+                    2.0*this->nut_*D
+                  + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
+                )
+            );
+
+            // Add solid stress and conductivity
+            ThetaEqn -=
+                fvm::laplacian(this->kappa_, Theta_, "laplacian(kappa,Theta)")
+              + ((tau*alpha) && gradU);
+        }
+        constraints_.constrain(ThetaEqn);
+        ThetaEqn.solve();
+        constraints_.constrain(Theta_);
+        Theta_.max(0);
     }
 
-    // Momentum
-    constraints.constrain(UEqn);
-    UEqn.solve();
-    constraints.constrain(U_);
-
-    // Energy
-    constraints.constrain(eEqn);
-    eEqn.solve();
-    constraints.constrain(he());
-
-    // Granular energy
-    constraints.constrain(ThetaEqn);
-    ThetaEqn.solve();
-    constraints.constrain(Theta_);
-    Theta_.max(0);
+    thermoPtr_->postUpdate();
 
     //- Update conservative variables
     encode();
 
     dPtr_->postUpdate();
-    thermoPtr_->postUpdate();
 }
 
 

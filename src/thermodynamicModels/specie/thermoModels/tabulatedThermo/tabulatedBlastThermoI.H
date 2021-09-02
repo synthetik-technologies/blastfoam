@@ -35,7 +35,6 @@ inline Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
 )
 :
     EquationOfState(tt),
-    CpCvModel(CpCvModel::InternalEnergy),
     eTable_(tt.eTable_),
     Tlow_(tt.Tlow_),
     Thigh_(tt.Thigh_)

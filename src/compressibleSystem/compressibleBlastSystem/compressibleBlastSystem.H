@@ -87,9 +87,6 @@ protected:
         //- Drag matrix
         tmp<fvVectorMatrix> dragSource_;
 
-        //- Minimum temperature
-        dimensionedScalar TLow_;
-
         //- Allocate models
         virtual void setModels();
 

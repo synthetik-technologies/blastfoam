@@ -181,18 +181,6 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::mu
 }
 
 
-Foam::scalar Foam::multiphaseBlastFluidMixture::speedOfSound
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return sqrt(max(cSqr(p, rho, e, T), small));
-}
-
-
 Foam::scalar Foam::multiphaseBlastFluidMixture::cSqr
 (
     const scalar p,

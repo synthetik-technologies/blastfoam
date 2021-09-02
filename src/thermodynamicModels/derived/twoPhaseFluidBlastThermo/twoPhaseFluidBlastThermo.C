@@ -195,18 +195,6 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::mu
 }
 
 
-Foam::scalar Foam::twoPhaseBlastFluidMixture::speedOfSound
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return sqrt(max(cSqr(p, rho, e, T), small));
-}
-
-
 Foam::scalar Foam::twoPhaseBlastFluidMixture::cSqr
 (
     const scalar p,
@@ -223,13 +211,13 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::cSqr
     {
         return mixture1Ptr_->cSqr(p, rho1i_, e, T);
     }
-    scalar alphaXi1(alpha1i_*rho1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
-    scalar alphaXi2(alpha2i_*rho2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
+    scalar alphaXi1(alpha1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
+    scalar alphaXi2(alpha2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
     return
         (
-            mixture1Ptr_->cSqr(p, rho1i_, e, T)*alphaXi1
-          + mixture2Ptr_->cSqr(p, rho2i_, e, T)*alphaXi2
-        )/(alphaXi1 + alphaXi2);
+            mixture1Ptr_->cSqr(p, rho1i_, e, T)*alphaXi1*rho1i_
+          + mixture2Ptr_->cSqr(p, rho2i_, e, T)*alphaXi2*rho2i_
+        )/(alphaXi1 + alphaXi2)/rho;
 }
 
 

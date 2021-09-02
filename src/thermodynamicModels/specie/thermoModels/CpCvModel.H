@@ -55,15 +55,7 @@ public:
         Enthalpy
     };
 
-protected:
-
-    const energyType eType_;
-
-public:
-
-    CpCvModel(const energyType eType)
-    :
-        eType_(eType)
+    CpCvModel()
     {}
 
     virtual ~CpCvModel()
@@ -120,10 +112,7 @@ public:
         ) const = 0;
 
         //- Return the energy type
-        energyType eType() const
-        {
-            return eType_;
-        }
+        virtual energyType eType() const = 0;
 };
 
 

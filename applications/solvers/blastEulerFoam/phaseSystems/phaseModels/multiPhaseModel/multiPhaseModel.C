@@ -185,29 +185,52 @@ void Foam::multiPhaseModel::solve()
 
 void Foam::multiPhaseModel::postUpdate()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-    const fvModels& models(this->fluid_.models());
-
-    if (solveAlpha_)
+    // Solve volume fraction and phase mass transports
+    bool needUpdate = false;
+    forAll(alphas_, phasei)
     {
-        forAll(alphas_, phasei)
+        if (solveFields_.found(alphas_[phasei].name()))
         {
-            volScalarField& alpha(*this);
-            forAll(alphas_, phasej)
-            {
-                fvScalarMatrix alphaEqn
-                (
-                    fvm::ddt(alphas_[phasej]) - fvc::ddt(alphas_[phasej])
-                 ==
-                    models.source(alphas_[phasej])
-                );
-                constraints.constrain(alphaEqn);
-                alphaEqn.solve();
-                constraints.constrain(alphas_[phasej]);
-
-                alpha += alphas_[phasej];
-            }
+            needUpdate = true;
+            fvScalarMatrix alphaEqn
+            (
+                fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
+                ==
+                models_.source(alphas_[phasei])
+            );
+            constraints_.constrain(alphaEqn);
+            alphaEqn.solve();
+            constraints_.constrain(alphas_[phasei]);
         }
+    }
+    if (needUpdate)
+    {
+        correctVolumeFraction();
+    }
+
+    // Solve phase mass
+    rho_ = dimensionedScalar(dimDensity, 0.0);
+    forAll(rhos_, phasei)
+    {
+        volScalarField& rho(rhos_[phasei]);
+        if (solveFields_.found(rho.name()))
+        {
+            const volScalarField& alpha(alphas_[phasei]);
+            dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
+            fvScalarMatrix alphaRhoEqn
+            (
+                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+              + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
+             ==
+                models_.source(alpha, rho)
+            );
+            constraints_.constrain(alphaRhoEqn);
+            alphaRhoEqn.solve();
+            constraints_.constrain(rho);
+
+            alphaRhos_[phasei] = alpha*rho;
+        }
+        rho_ += alphaRhos_[phasei];
     }
 
     phaseModel::postUpdate();
@@ -240,14 +263,10 @@ void Foam::multiPhaseModel::update()
 }
 
 
-void Foam::multiPhaseModel::calcAlphaAndRho()
+void Foam::multiPhaseModel::correctVolumeFraction()
 {
-    const fvConstraints& constraints(fluid_.constraints());
-
-    alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
-
     // find largest volume fraction and set to 1-sum
-    forAll(rho_, celli)
+    forAll(*this, celli)
     {
         SortableList<scalar> alphas(alphas_.size());
         forAll(alphas_, phasei)
@@ -277,14 +296,23 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
         alphas_[fixedPhase][celli] = (*this)[celli] - sumAlpha;
     }
 
+    volScalarField& alpha(*this);
+    alpha = 0.0;
     forAll(alphas_, phasei)
     {
-        if (constraints.constrainsField(alphas_[phasei].name()))
-        {
-            constraints.constrain(alphas_[phasei]);
-        }
         alphas_[phasei].correctBoundaryConditions();
+        alpha += alphas_[phasei];
+    }
+}
 
+
+void Foam::multiPhaseModel::decode()
+{
+    // Calculate densities
+    alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
+
+    forAll(alphas_, phasei)
+    {
         alphaRhos_[phasei].max(0);
         rhos_[phasei] =
             alphaRhos_[phasei]
@@ -293,23 +321,12 @@ void Foam::multiPhaseModel::calcAlphaAndRho()
                 alphas_[phasei],
                 thermo_.thermo(phasei).residualAlpha()
             );
-        if (constraints.constrainsField(rhos_[phasei].name()))
-        {
-            constraints.constrain(rhos_[phasei]);
-        }
         rhos_[phasei].correctBoundaryConditions();
 
         alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
 
         alphaRho_ += alphaRhos_[phasei];
     }
-}
-
-void Foam::multiPhaseModel::decode()
-{
-    const fvConstraints& constraints(this->fluid_.constraints());
-
-    calcAlphaAndRho();
     volScalarField& alpha(*this);
     this->correctBoundaryConditions();
 
@@ -318,10 +335,6 @@ void Foam::multiPhaseModel::decode()
     volScalarField alphaRho(alphaRho_);
     alphaRho.max(1e-10);
     U_.ref() = alphaRhoU_()/(alphaRho());
-    if (constraints.constrainsField(U_.name()))
-    {
-        constraints.constrain(U_);
-    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
@@ -329,29 +342,8 @@ void Foam::multiPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-    if (constraints.constrainsField(e_.name()))
-    {
 
-        constraints.constrain(e_);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
-
-    //- Limit internal energy it there is a negative temperature
-    if (Foam::min(this->T_).value() < 0.0 && thermoPtr_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << Foam::min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_));
-        T_.max(small);
-        e_ = e_*limit + thermoPtr_->he(p_, T_)*(1.0 - limit);
-        alphaRhoE_.ref() = alphaRho_*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+    thermoPtr_->correct();
 
     alphaRhoE_.boundaryFieldRef() =
         alphaRho_.boundaryField()
@@ -359,8 +351,6 @@ void Foam::multiPhaseModel::decode()
             e_.boundaryField()
           + 0.5*magSqr(U_.boundaryField())
         );
-
-    thermoPtr_->correct();
 }
 
 

@@ -105,7 +105,7 @@ Foam::blastThermo::blastThermo
         mesh,
         dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
     ),
-    limit_(dict.lookupOrDefault("limit", true)),
+    TLow_(dict.lookupOrDefault<scalar>("TLow", 0.0)),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}
@@ -157,12 +157,6 @@ Foam::volScalarField& Foam::blastThermo::rho()
 Foam::tmp<Foam::volScalarField> Foam::blastThermo::rho0() const
 {
     return rho_.oldTime();
-}
-
-
-bool Foam::blastThermo::limit() const
-{
-    return limit_;
 }
 
 

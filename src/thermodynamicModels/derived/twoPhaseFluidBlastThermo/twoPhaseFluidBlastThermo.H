@@ -134,9 +134,6 @@ public:
     //- Calculate viscosity
     virtual scalar mu(const scalar, const scalar, const scalar) const;
 
-    //- Calculate speed of sound
-    virtual scalar speedOfSound(const scalar, const scalar, const scalar, const scalar) const;
-
     //- Calculate speed of sound squared
     virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
 };

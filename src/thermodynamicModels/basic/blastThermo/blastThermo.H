@@ -78,8 +78,8 @@ protected:
         //- Heat capacity at constant volume [J/kg/K]
         volScalarField Cv_;
 
-        //- Is temperature limited
-        Switch limit_;
+        //- Minimum temperature
+        scalar TLow_;
 
         //- Residual volume fraction
         dimensionedScalar residualAlpha_;
@@ -140,9 +140,6 @@ public:
             {
                 return phaseName();
             }
-
-            //- Is energy limited
-            virtual bool limit() const;
 
             //- Is the phase incompressible
             virtual bool incompressible() const

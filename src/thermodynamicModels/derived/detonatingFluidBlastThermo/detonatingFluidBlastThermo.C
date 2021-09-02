@@ -202,20 +202,6 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::mu
 
 template<class BasicMixture, class ThermoType1, class ThermoType2>
 Foam::scalar
-Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::speedOfSound
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return sqrt(max(cSqr(p, rho, e, T), small));
-}
-
-
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
 Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::cSqr
 (
     const scalar p,

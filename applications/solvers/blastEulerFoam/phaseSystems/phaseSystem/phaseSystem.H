@@ -234,6 +234,12 @@ protected:
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
+        //- fvModels
+        fvModels& fvModels_;
+
+        //- fvConstraints
+        const fvConstraints& fvConstraints_;
+
         //- Phase models
         phaseModelList phaseModels_;
 
@@ -292,12 +298,6 @@ protected:
 
             //- Mass transfer rates
             mDotTable mDots_;
-
-        //- fvModels
-        fvModels& fvModels_;
-
-        //- fvConstraints
-        fvConstraints& fvConstraints_;
 
 
     // Private member functions
@@ -555,14 +555,8 @@ public:
             //- Return fvOptions
             inline const fvModels& models() const;
 
-            //- Access fvOptions
-            inline fvModels& models();
-
             //- Return fvOptions
             inline const fvConstraints& constraints() const;
-
-            //- Access fvOptions
-            inline fvConstraints& constraints();
 };
 
 

@@ -37,7 +37,6 @@ Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
 )
 :
     EquationOfState(dict),
-    CpCvModel(CpCvModel::InternalEnergy),
     eTable_
     (
         dict.subDict("thermodynamics").lookup<fileName>("file"),

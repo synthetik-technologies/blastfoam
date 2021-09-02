@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         2e-6;
+endTime         2e-4;
 
 deltaT          1e-6;
 
@@ -57,6 +57,8 @@ functions
         times
         (
             1.7e-5
+            0.0001
+            0.0002
         );
     }
 }

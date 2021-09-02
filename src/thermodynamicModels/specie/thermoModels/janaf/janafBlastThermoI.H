@@ -41,7 +41,6 @@ inline Foam::janafThermo<EquationOfState>::janafThermo
 )
 :
     EquationOfState(st),
-    CpCvModel(CpCvModel::Enthalpy),
     Tlow_(Tlow),
     Thigh_(Thigh),
     Tcommon_(Tcommon)
@@ -91,7 +90,6 @@ inline Foam::janafThermo<EquationOfState>::janafThermo
 )
 :
     EquationOfState(jt),
-    CpCvModel(CpCvModel::Enthalpy),
     Tlow_(jt.Tlow_),
     Thigh_(jt.Thigh_),
     Tcommon_(jt.Tcommon_)
@@ -112,7 +110,6 @@ inline Foam::janafThermo<EquationOfState>::janafThermo
 )
 :
     EquationOfState(name, jt),
-    CpCvModel(CpCvModel::Enthalpy),
     Tlow_(jt.Tlow_),
     Thigh_(jt.Thigh_),
     Tcommon_(jt.Tcommon_)

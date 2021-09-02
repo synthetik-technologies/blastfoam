@@ -4,7 +4,7 @@
 
 This problem was simulated by Woodward and Cololla (1984) and consists of a Mach 10 shock interacting with a wall at x = 1/6 m. The top boundary holds constant values that move with the shock speed.
 
-The calculation took approx. 5 min to run on a four core desktop at the reference resolution (960 x 240 cells) on a 1 m  x 4 m domain. A reference solution from this run are in the "validation/referencePlots" directory. The user run results must be viewed using a graphical viewer.
+The calculation took approx. 10 min to run on a four core desktop at the reference resolution (960 x 240 cells) on a 1 m  x 4 m domain. A reference solution from this run are in the "validation/referencePlots" directory. The user run results must be viewed using a graphical viewer.
 
 
 ## Reference

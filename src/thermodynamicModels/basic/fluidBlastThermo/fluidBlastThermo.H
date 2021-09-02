@@ -72,13 +72,25 @@ public:
     virtual scalar mu(const scalar, const scalar, const scalar) const = 0;
 
     //- Calculate speed of sound squared
-    virtual scalar speedOfSound
+    virtual scalar cSqr
     (
         const scalar,
         const scalar,
         const scalar,
         const scalar
     ) const = 0;
+
+    //- Calculate speed of sound squared
+    virtual scalar speedOfSound
+    (
+        const scalar p,
+        const scalar rho,
+        const scalar e,
+        const scalar T
+    ) const
+    {
+        return sqrt(max(cSqr(p, rho, e, T), small));
+    }
 };
 
 
