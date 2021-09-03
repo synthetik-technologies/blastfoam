@@ -39,7 +39,8 @@ SourceFiles
 
 #include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
-#include "fluxScheme.H"
+#include "interfaceProperties.H"
+
 
 namespace Foam
 {
@@ -60,10 +61,13 @@ class twoPhaseCompressibleSystem
         twoPhaseFluidBlastThermo& thermo_;
 
         //- Volume fraction of phase 1
-        volScalarField& volumeFraction_;
+        volScalarField& alpha1_;
 
         //- Phase 1 density
         volScalarField& rho1_;
+
+        //- Volume fraction of phase 2
+        volScalarField& alpha2_;
 
         //- Phase 2 density
         volScalarField& rho2_;
@@ -88,6 +92,12 @@ class twoPhaseCompressibleSystem
 
         //- Phase 2 mass flux
         surfaceScalarField alphaRhoPhi2_;
+
+    //- Surface tension model
+    autoPtr<interfaceProperties> interfacePropertiesPtr_;
+
+    //- Allocate models
+    virtual void setModels();
 
 
 public:

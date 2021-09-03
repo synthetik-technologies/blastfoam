@@ -113,6 +113,9 @@ public:
             const scalar molWeight
         );
 
+        //- Construct as copy
+        inline rspecieBlast(const rspecieBlast&);
+
         //- Construct as named copy
         inline rspecieBlast(const word& name, const rspecieBlast&);
 

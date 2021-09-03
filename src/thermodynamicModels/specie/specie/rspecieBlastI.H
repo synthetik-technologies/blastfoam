@@ -56,6 +56,14 @@ inline rspecieBlast::rspecieBlast
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+inline rspecieBlast::rspecieBlast(const rspecieBlast& st)
+:
+    specieName_(st.specieName_),
+    Y_(st.Y_),
+    molWeight_(st.molWeight_)
+{}
+
+
 inline rspecieBlast::rspecieBlast(const word& name, const rspecieBlast& st)
 :
     specieName_(name),

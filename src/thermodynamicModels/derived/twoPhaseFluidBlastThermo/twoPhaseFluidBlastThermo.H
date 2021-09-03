@@ -50,6 +50,7 @@ SourceFiles
 
 #include "fluidBlastThermo.H"
 #include "phaseFluidBlastThermo.H"
+#include "twoPhaseMixture.H"
 
 namespace Foam
 {
@@ -145,15 +146,10 @@ public:
 
 class twoPhaseFluidBlastThermo
 :
-    public fluidBlastThermo
+    public fluidBlastThermo,
+    public twoPhaseMixture
 {
 // Private data
-
-        //- Names of phases
-        wordList phases_;
-
-        //- Volume fraction
-        volScalarField volumeFraction_;
 
         //- Density of phase 1
         volScalarField rho1_;
@@ -237,16 +233,28 @@ public:
 
     // Access functions
 
-        //- Const access to volume fraction
-        const volScalarField& volumeFraction() const
+        //- Return phase 1 volume fraction
+        const volScalarField& alpha1() const
         {
-            return volumeFraction_;
+            return alpha1_;
         }
 
-        //- Non-cont access to volume fraction
-        volScalarField& volumeFraction()
+        //- Access phase 1 volume fraction
+        volScalarField& alpha1()
         {
-            return volumeFraction_;
+            return alpha1_;
+        }
+
+        //- Return phase 2 volume fraction
+        const volScalarField& alpha2() const
+        {
+            return alpha2_;
+        }
+
+        //- Access phase 2 volume fraction
+        volScalarField& alpha2()
+        {
+            return alpha2_;
         }
 
         //- Const reference to first equation of state
@@ -404,9 +412,6 @@ public:
                 const label celli
             ) const;
 
-            //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp() const;
-
             //- Heat capacity at constant pressure for patch [J/kg/K]
             virtual tmp<scalarField> Cp
             (
@@ -417,8 +422,6 @@ public:
             //- Heat capacity at constant pressure for a cell [J/kg/K]
             virtual scalar cellCp(const scalar, const label) const;
 
-            //- Heat capacity at constant volume [J/kg/K]
-            virtual tmp<volScalarField> Cv() const;
 
             //- Heat capacity at constant volume for patch [J/kg/K]
             virtual tmp<scalarField> Cv
@@ -429,9 +432,6 @@ public:
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const;
-
-            //- Heat capacity at constant pressure/volume [J/kg/K]
-            virtual tmp<volScalarField> Cpv() const;
 
             //- Heat capacity at constant pressure/volume for patch [J/kg/K]
             virtual tmp<scalarField> Cpv

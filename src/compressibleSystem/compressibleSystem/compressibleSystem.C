@@ -38,6 +38,8 @@ namespace Foam
 }
 
 
+// * * * * * * * * * * * * Private Members Functions * * * * * * * * * * * * //
+
 void Foam::compressibleSystem::setModels()
 {
     if (Foam::max(this->thermo().mu()).value() > small)

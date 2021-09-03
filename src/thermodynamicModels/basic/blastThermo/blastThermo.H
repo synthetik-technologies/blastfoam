@@ -178,6 +178,13 @@ public:
                 return Cv_;
             }
 
+            //- Heat capacity at constant volume [J/kg/K]
+            using basicThermo::Cpv;
+            virtual tmp<volScalarField> Cpv() const
+            {
+                return Cv_;
+            }
+
             using basicThermo::THE;
 
             //- Temperature from enthalpy/internal energy for celli

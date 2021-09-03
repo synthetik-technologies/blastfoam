@@ -779,18 +779,6 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellTHE
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::Cp() const
-{
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].Cp());
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].Cp();
-    }
-    return normalise(tmpF);
-}
-
-
 Foam::tmp<Foam::scalarField>
 Foam::multiphaseFluidBlastThermo::Cp
 (
@@ -828,18 +816,6 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellCp
 }
 
 
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::Cv() const
-{
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].Cv());
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].Cv();
-    }
-    return normalise(tmpF);
-}
-
-
 Foam::tmp<Foam::scalarField>
 Foam::multiphaseFluidBlastThermo::Cv
 (
@@ -874,18 +850,6 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellCv
         f += volumeFractions_[phasei][celli]*thermos_[phasei].cellCv(T, celli);
     }
     return normalise(f, celli);
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::multiphaseFluidBlastThermo::Cpv() const
-{
-    tmp<volScalarField> tmpF(volumeFractions_[0]*thermos_[0].Cpv());
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
-    {
-        tmpF.ref() += volumeFractions_[phasei]*thermos_[phasei].Cpv();
-    }
-    return normalise(tmpF);
 }
 
 
