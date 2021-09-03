@@ -33,8 +33,7 @@ divSchemes
 
 gradSchemes
 {
-    default         leastSquares;
-    grad(D)         leastSquares;
+    default         extendedLeastSquares 0;
     grad(T)         leastSquares;
 }
 

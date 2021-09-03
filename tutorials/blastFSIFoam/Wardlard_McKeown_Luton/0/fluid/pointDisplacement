@@ -29,6 +29,7 @@ boundaryField
     fluid_to_walls
     {
         type            coupledPointMotion;
+        DnbrName        "pointD";
         value           uniform (0 0 0);
     }
 

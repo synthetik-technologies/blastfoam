@@ -6,10 +6,19 @@ cd ${0%/*} || exit 1    # Run from this directory
 
 application="$(getApplication)"
 
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create the mesh for the fluid
 runApplication blockMesh
+
+# -- Transform points
 runApplication transformPoints -scale "(1 0 1)"
+
+# -- Extrude the mesh
 runApplication extrudeMesh
 
-runApplication $application
+#- Run the calc
+runApplication $(getApplication)
 
 #------------------------------------------------------------------------------

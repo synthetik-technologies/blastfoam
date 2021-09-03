@@ -19,4 +19,7 @@ runApplication decomposePar -allRegions
 # -- Set the initial conditions for the fluid
 runParallel setRefinedFields -region fluid
 
+#- Run the calc
+runParallel $(getApplication)
+
 # ----------------------------------------------------------------- end-of-file

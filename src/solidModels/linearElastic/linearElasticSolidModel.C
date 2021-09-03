@@ -283,7 +283,12 @@ bool Foam::solidModels::linearElastic::evolve()
 
         Info<< "Solid Iter " << iCorr << ": residual=" << initialResidual << endl;
 
-    } while (initialResidual > solutionTol_ && ++iCorr < nCorr_);
+    } while
+    (
+        initialResidual > tolerance_
+     && initialResidual > relTol_
+     && ++iCorr < nCorr_
+    );
 
     thermoPtr_->correct();
 
@@ -304,6 +309,7 @@ bool Foam::solidModels::linearElastic::evolve()
         D_,
         pointD_
     );
+    pointD_.correctBoundaryConditions();
 
     Info<< "Max sigmaEq = " << max(sigmaEq_).value()
         << endl;

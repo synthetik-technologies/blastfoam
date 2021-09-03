@@ -68,9 +68,6 @@ protected:
         //- Derived solidModel type
         const word type_;
 
-        //- Thermo dictionary
-        IOdictionary thermophysicalProperties_;
-
         //- Thermodynamic model
         autoPtr<solidBlastThermo> thermoPtr_;
 
@@ -86,11 +83,14 @@ protected:
         //  approaches
         volSymmTensorField sigma_;
 
-        //- Solution standard tolerance
-        const scalar solutionTol_;
+        //- Solution relative tolerance
+        scalar relTol_;
+
+        //- Solution absolute tolerance
+        scalar tolerance_;
 
         //- Maximum number of momentum correctors
-        const int nCorr_;
+        label nCorr_;
 
         //- fvModels
         fvModels& fvModels_;

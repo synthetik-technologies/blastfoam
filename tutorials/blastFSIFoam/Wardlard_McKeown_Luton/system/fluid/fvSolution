@@ -37,6 +37,7 @@ solvers
         preconditioner  DIC;
         tolerance       1e-8;
         relTol          0;
+        minIter         1;
     }
 }
 

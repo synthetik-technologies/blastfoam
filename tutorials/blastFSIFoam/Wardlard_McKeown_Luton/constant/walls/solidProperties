@@ -21,7 +21,8 @@ solidModel linearElastic;
 
 linearElasticCoeffs
 {
-    nCorrectors 100;
+    nCorrectors 1000;
+    solutionTolerance 1e-6;
 }
 
 

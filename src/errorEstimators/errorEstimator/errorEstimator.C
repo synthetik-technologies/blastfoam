@@ -194,7 +194,7 @@ void Foam::errorEstimator::normalize(volScalarField& error)
         }
         forAll(pts, j)
         {
-            label celli = mesh_.findCell(pts[j]);
+            label celli = mesh_.findCell(pts[j], polyMesh::FACE_PLANES);
             if (celli >= 0)
             {
                 error[celli] = 1.0;

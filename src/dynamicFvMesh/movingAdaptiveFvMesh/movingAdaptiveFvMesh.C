@@ -88,6 +88,7 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
                 dynamicCast<displacementMotionSolver>(motionPtr_());
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
+            dispMS.pointDisplacement().correctBoundaryConditions();
         }
         else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
         {
@@ -121,16 +122,16 @@ bool Foam::movingAdaptiveFvMesh::update()
         this->globalData().syncPointData
         (
             pointsNew,
-            plusEqOp<vector>(),
+            maxMagSqrEqOp<vector>(),
             mapDistribute::transform()
         );
-        this->globalData().syncPointData
-        (
-            nSharedPoints,
-            plusEqOp<scalar>(),
-            mapDistribute::transform()
-        );
-        pointsNew /= nSharedPoints;
+//         this->globalData().syncPointData
+//         (
+//             nSharedPoints,
+//             plusEqOp<scalar>(),
+//             mapDistribute::transform()
+//         );
+//         pointsNew /= nSharedPoints;
     }
 
     //- Move mesh
@@ -150,6 +151,26 @@ bool Foam::movingAdaptiveFvMesh::writeObject
 ) const
 {
     motionPtr_->write();
+    if (isA<displacementMotionSolver>(motionPtr_()))
+    {
+        const displacementMotionSolver& dispMS =
+            dynamicCast<const displacementMotionSolver>(motionPtr_());
+        pointIOField points0
+        (
+            IOobject
+            (
+                "points0",
+                this->time().timeName(),
+                polyMesh::meshSubDir,
+                *this,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            dispMS.points0()
+        );
+        points0.write();
+    }
     return adaptiveFvMesh::writeObject(fmt, ver, cmp, write);
 }
 

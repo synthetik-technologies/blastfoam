@@ -158,18 +158,7 @@ Foam::solidModel::solidModel
     ),
     mesh_(mesh),
     type_(type),
-    thermophysicalProperties_
-    (
-        IOobject
-        (
-            "thermophysicalProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    ),
-    thermoPtr_(solidBlastThermo::New(mesh, thermophysicalProperties_)),
+    thermoPtr_(),
     D_
     (
         IOobject
@@ -208,7 +197,15 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
     ),
-    solutionTol_
+    relTol_
+    (
+        subDict(type + "Coeffs").lookupOrDefault<scalar>
+        (
+            "relTol",
+            1e-04
+        )
+    ),
+    tolerance_
     (
         subDict(type + "Coeffs").lookupOrDefault<scalar>
         (
@@ -219,7 +216,21 @@ Foam::solidModel::solidModel
     nCorr_(subDict(type + "Coeffs").lookupOrDefault<label>("nCorrectors", 10000)),
     fvModels_(fvModels::New(mesh)),
     fvConstraints_(fvConstraints::New(mesh))
-{}
+{
+    IOdictionary thermophysicalProperties
+    (
+        IOobject
+        (
+            "thermophysicalProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+    thermoPtr_.set(solidBlastThermo::New(mesh, thermophysicalProperties).ptr());
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

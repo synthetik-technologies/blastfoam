@@ -4,13 +4,16 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-# Create base mesh
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create base mesh
 runApplication blockMesh
 
-# Set the charge
+# -- Set the charge
 runApplication setRefinedFields
 
-#Run calculation
-runApplication blastFoam
+# -- Run calculation
+runApplication $(getApplication)
 
 # ----------------------------------------------------------------- end-of-file

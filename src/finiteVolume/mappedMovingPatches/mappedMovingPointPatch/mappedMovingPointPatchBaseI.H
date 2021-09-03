@@ -60,26 +60,22 @@ inline const Foam::word& Foam::mappedMovingPointPatchBase::displacementFieldName
 inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPointPatchBase::offsets() const
 {
     const polyMesh& sMesh(sampleMesh());
-    const polyPatch sPatch(samplePolyPatch());
-
+    const polyPatch& sPatch(samplePolyPatch());
     if (sMesh.foundObject<pointVectorField>(displacementFieldName()))
     {
-        tmp<vectorField> disp
-        (
+        return
             sMesh.lookupObject<pointVectorField>
             (
                 displacementFieldName()
-            ).boundaryField()[sPatch.index()].patchInternalField()
-        );
-        return disp;
+            ).boundaryField()[sPatch.index()].patchInternalField();
     }
 
     if (debug)
     {
-        Info<< "Offsets are not set for " << sPatch.name() << endl;
+        Info<< "Offsets are not set for " << samplePatch() << endl;
     }
 
-    return tmp<vectorField>(new vectorField(sPatch.size(), Zero));
+    return tmp<vectorField>(new vectorField(sPatch.localPoints().size(), Zero));
 }
 
 

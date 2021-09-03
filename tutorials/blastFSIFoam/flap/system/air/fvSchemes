@@ -39,7 +39,7 @@ laplacianSchemes
 {
     default         Gauss linear corrected;
 
-    laplacian(diffusivity,cellMotionU) Gauss linear uncorrected;
+    laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
 }
 
 interpolationSchemes
