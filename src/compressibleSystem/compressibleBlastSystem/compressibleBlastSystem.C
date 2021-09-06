@@ -168,7 +168,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         (
             fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
          ==
-            models_.source(rho_, U_)
+            modelsPtr_->source(rho_, U_)
         );
 
         if (dragSource_.valid())
@@ -187,9 +187,9 @@ void Foam::compressibleBlastSystem::postUpdate()
                   & fluxScheme_->Uf()
                 );
         }
-        constraints_.constrain(UEqn);
+        constraintsPtr_->constrain(UEqn);
         UEqn.solve();
-        constraints_.constrain(U_);
+        constraintsPtr_->constrain(U_);
 
         // Update internal energy
         e_ = rhoE_/rho_ - 0.5*magSqr(U_);
@@ -202,7 +202,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         (
             fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
          ==
-            models_.source(rho_, e_)
+            modelsPtr_->source(rho_, e_)
         );
         if (extESource_.valid())
         {
@@ -212,9 +212,9 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             eEqn += thermophysicalTransport_->divq(e_);
         }
-        constraints_.constrain(eEqn);
+        constraintsPtr_->constrain(eEqn);
         eEqn.solve();
-        constraints_.constrain(e_);
+        constraintsPtr_->constrain(e_);
     }
 
     if (turbulence_.valid())
@@ -224,7 +224,7 @@ void Foam::compressibleBlastSystem::postUpdate()
 
     encode();
     this->thermo().correct();
-    constraints_.constrain(p_);
+    constraintsPtr_->constrain(p_);
 }
 
 

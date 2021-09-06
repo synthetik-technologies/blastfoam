@@ -54,26 +54,7 @@ Foam::functionObjects::speedOfSound::speedOfSound
     resultName_(IOobject::groupName("speedOfSound", phaseName_)),
     store_(dict.lookupOrDefault("store", false))
 {
-    if (store_)
-    {
-        obr_.store
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    resultName_,
-                    obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero),
-                "zeroGradient"
-            )
-        );
-    }
+    read(dict);
 }
 
 
@@ -95,34 +76,34 @@ bool Foam::functionObjects::speedOfSound::read
     dict.readIfPresent("phaseName", phaseName_);
     dict.readIfPresent("store", store_);
 
-    bool change = false;
-    if ((origName != phaseName_ && origStore) || (origStore && !store_))
-    {
-        change = true;
-        clearObject(resultName_);
-    }
+//     bool change = false;
+//     if ((origName != phaseName_ && origStore) || (origStore && !store_))
+//     {
+//         change = true;
+//         clearObject(resultName_);
+//     }
 
     resultName_ = IOobject::groupName("speedOfSound", phaseName_);
-    if (store_ && change)
-    {
-        obr_.store
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    resultName_,
-                    obr_.time().timeName(),
-                    obr_,
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                this->mesh_,
-                dimensionedScalar("0", dimVelocity, Zero),
-                "zeroGradient"
-            )
-        );
-    }
+//     if (store_ && change && !obr_.found<volScalarField>(resultName_))
+//     {
+//         obr_.store
+//         (
+//             new volScalarField
+//             (
+//                 IOobject
+//                 (
+//                     resultName_,
+//                     obr_.time().timeName(),
+//                     obr_,
+//                     IOobject::NO_READ,
+//                     IOobject::NO_WRITE
+//                 ),
+//                 this->mesh_,
+//                 dimensionedScalar("0", dimVelocity, Zero),
+//                 "zeroGradient"
+//             )
+//         );
+//     }
 
     return true;
 }
@@ -130,35 +111,39 @@ bool Foam::functionObjects::speedOfSound::read
 
 bool Foam::functionObjects::speedOfSound::execute()
 {
-    if
-    (
-        foundObject<fluidBlastThermo>
-        (
-            IOobject::groupName(basicThermo::dictName, phaseName_)
-        )
-    )
+    if (mesh_.foundObject<volScalarField>(resultName_))
     {
-        tmp<volScalarField> c =
-            lookupObject<fluidBlastThermo>
-            (
-                IOobject::groupName
-                (
-                    basicThermo::dictName,
-                    phaseName_
-                )
-            ).speedOfSound();
-        if (store_)
-        {
-            lookupObjectRef<volScalarField>(resultName_) = c;
-            return true;
-        }
-
-        return store
-        (
-            resultName_,
-            c
-        );
+        return true;
     }
+//     if
+//     (
+//         foundObject<fluidBlastThermo>
+//         (
+//             IOobject::groupName(basicThermo::dictName, phaseName_)
+//         )
+//     )
+//     {
+//         tmp<volScalarField> c =
+//             lookupObject<fluidBlastThermo>
+//             (
+//                 IOobject::groupName
+//                 (
+//                     basicThermo::dictName,
+//                     phaseName_
+//                 )
+//             ).speedOfSound();
+//         if (store_)
+//         {
+//             lookupObjectRef<volScalarField>(resultName_) = c;
+//             return true;
+//         }
+//
+//         return store
+//         (
+//             resultName_,
+//             c
+//         );
+//     }
     else
     {
         Warning
@@ -183,10 +168,10 @@ bool Foam::functionObjects::speedOfSound::write()
 
 bool Foam::functionObjects::speedOfSound::clear()
 {
-    if (!store_)
-    {
-        return clearObject(resultName_);
-    }
+//     if (!store_)
+//     {
+//         return clearObject(resultName_);
+//     }
     return true;
 }
 

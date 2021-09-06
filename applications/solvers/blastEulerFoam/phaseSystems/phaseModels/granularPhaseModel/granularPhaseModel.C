@@ -69,9 +69,7 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             IOobject::groupName("alphaRhoPTE", name_),
             fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            fluid.mesh()
         ),
         1.5*(*this)*rho_*this->Theta_
     ),
@@ -81,9 +79,7 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             IOobject::groupName("alphaRhoPTEPhi", name_),
             fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            fluid.mesh()
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
@@ -128,14 +124,17 @@ void Foam::granularPhaseModel::solve()
 
     forAll(fluid_.phases(), phasei)
     {
-        const phaseModel& phase = fluid_.phases()[phasei];
-        if (!phase.granular())
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if (&otherPhase != this)
         {
-            deltaAlphaRhoU += (*this)*phase.gradP();
+            if (!otherPhase.slavePressure())
+            {
+                deltaAlphaRhoU += (*this)*otherPhase.gradP();
+            }
+            deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
+            deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
+            deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
         }
-        deltaAlphaRhoU -= fluid_.mDotU(*this, phase);
-        deltaAlphaRhoE -= fluid_.mDotE(*this, phase);
-        deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, phase);
     }
 
     //- Solve phase mass transport
@@ -235,8 +234,10 @@ void Foam::granularPhaseModel::postUpdate()
         (
             1.5
            *(
-                fvm::ddt(alpha, rho(), Theta_) - fvc::ddt(alpha, rho(), Theta_)
-              + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
+                fvm::ddt(alpha, rho(), Theta_)
+              - fvc::ddt(alpha, rho(), Theta_)
+              + fvm::ddt(smallAlphaRho, Theta_)
+              - fvc::ddt(smallAlphaRho, Theta_)
             )
          ==
             models_.source(alpha, rho(), Theta_)
@@ -263,7 +264,12 @@ void Foam::granularPhaseModel::postUpdate()
 
             // Add solid stress and conductivity
             ThetaEqn -=
-                fvm::laplacian(this->kappa_, Theta_, "laplacian(kappa,Theta)")
+                fvm::laplacian
+                (
+                    this->kappa_,
+                    Theta_,
+                    "laplacian(kappa,Theta)"
+                )
               + ((tau*alpha) && gradU);
         }
         constraints_.constrain(ThetaEqn);

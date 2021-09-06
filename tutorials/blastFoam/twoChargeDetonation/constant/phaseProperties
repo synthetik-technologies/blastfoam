@@ -177,7 +177,7 @@ tnt
 
         G2              0.0;
 
-        pMin            1.2e5; // Cutoff pressure for activation
+        pMin            5e5; // Cutoff pressure for activation
     }
 
     residualRho     1e-6;           // Minimum density of the phase

@@ -204,8 +204,8 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
         if
         (
-            (phase1.granular() && phase1.nNodes() == 1 && !phase2.granular())
-         || (!phase1.granular() && phase2.granular() && phase2.nNodes() == 1)
+            (phase1.granular() && !phase2.granular())
+         || (!phase1.granular() && phase2.granular())
         )
         {
             phaseModel* particles;
@@ -363,9 +363,9 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
                    -virtualMassIter()->K(nodei, nodej)*deltaT
                    *(
                         fvc::ddt(phase1.U())
-                      + (phase1.U() & fvc::grad(phase1.U()))
+                      + fvc::div(phase1.phi(), phase1.U())
                       - fvc::ddt(phase2.U())
-                      - (phase2.U() & fvc::grad(phase2.U()))
+                      - fvc::div(phase2.phi(), phase2.U())
                     )
                 );
 
@@ -537,24 +537,17 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 
 void Foam::phaseSystem::calcMixtureVariables()
 {
-    tmp<volVectorField> alphaRhoU;
-    tmp<volScalarField> alphaRhop;
-    tmp<volScalarField> alphaRhoT;
-    tmp<volScalarField> palphaRho;
-    {
-        const phaseModel& phase = phaseModels_[0];
-        rho_ = phase.alphaRho();
-        alphaRhoU = phase.alphaRho()*phase.U();
-        alphaRhoT = phase.alphaRho()*phase.T();
-        phi_ = phase.alphaPhi();
-        if (!phase.granular())
-        {
-            palphaRho =
-                tmp<volScalarField>(new volScalarField(phase.alphaRho()));
-            alphaRhop = phase.alphaRho()*phase.p();
-        }
-    }
-    for (label phasei = 1; phasei < phaseModels_.size(); ++ phasei)
+    rho_ = phaseModels_[0].alphaRho();
+    phi_ = phaseModels_[0].alphaPhi();
+    volVectorField alphaRhoU
+    (
+        phaseModels_[0].alphaRho()*phaseModels_[0].U()
+    );
+    volScalarField alphaRhoT
+    (
+        phaseModels_[0].alphaRho()*phaseModels_[0].T()
+    );
+    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
     {
         const phaseModel& phase = phaseModels_[phasei];
         const volScalarField& alphaRho = phase.alphaRho();
@@ -562,25 +555,31 @@ void Foam::phaseSystem::calcMixtureVariables()
         alphaRhoU.ref() += alphaRho*phase.U();
         alphaRhoT.ref() += alphaRho*phase.T();
         phi_ += phase.alphaPhi();
-        if (!phase.granular())
-        {
-            if (alphaRhop.valid())
-            {
-                palphaRho.ref() += alphaRho;
-                alphaRhop.ref() += alphaRho*phase.p();
-            }
-            else
-            {
-                palphaRho =
-                    tmp<volScalarField>(new volScalarField(alphaRho));
-                alphaRhop = alphaRho*phase.p();
-            }
-        }
     }
-
-    p_ = alphaRhop/palphaRho;
     U_ = alphaRhoU/rho_;
     T_ = alphaRhoT/rho_;
+
+    if (fluidPhaseModels_.size() < 2)
+    {
+        p_ = fluidPhaseModels_[0].p();
+        return;
+    }
+
+    p_ =  Zero;
+    if (PIPtr_.valid())
+    {
+        PIPtr_() = Zero;
+    }
+    forAll(fluidPhaseModels_, phasei)
+    {
+        const phaseModel& phase(fluidPhaseModels_[phasei]);
+        p_ += phase*phase.p();
+        if (PIPtr_.valid())
+        {
+            PIPtr_() +=
+                phase*(phase.p() + phase.rho()*magSqr(phase.U() - U_));
+        }
+    }
 }
 
 
@@ -631,7 +630,8 @@ Foam::phaseSystem::phaseSystem
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector("0", dimVelocity, Zero)
+        dimensionedVector("0", dimVelocity, Zero),
+        "zeroGradient"
     ),
 
     phi_
@@ -721,6 +721,37 @@ Foam::phaseSystem::phaseSystem
         true
     );
 
+    label nFluids = 0;
+    forAll(phaseModels_, phasei)
+    {
+        if (!phaseModels_[phasei].slavePressure())
+        {
+            fluidPhaseModels_.resize(nFluids + 1);
+            fluidPhaseModels_.set
+            (
+                nFluids++,
+                &phaseModels_[phasei]
+            );
+        }
+    }
+    if (nFluids > 1)
+    {
+        PIPtr_.set
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "PI",
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar(dimPressure, 0.0)
+            )
+        );
+    }
+
     if (lookupOrDefault<Switch>("solveDragODE", false))
     {
         dragODE_.set(new dragODE(*this, dragModels_));
@@ -728,7 +759,8 @@ Foam::phaseSystem::phaseSystem
 
     if (phaseModels_.size() == 2)
     {
-        phaseModels_.last().solveAlpha(false);
+        phaseModels_[0].solveAlpha(true);
+        phaseModels_[1].solveAlpha(false);
     }
     else
     {
@@ -738,49 +770,43 @@ Foam::phaseSystem::phaseSystem
         }
     }
 
-    volScalarField sumAlpha("sumAlpha", phaseModels_[0]);
-    label nFluids = phaseModels_[0].slavePressure() ? 0 : 1;
-    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
+    if (phaseModels_.size() == 2)
     {
-        // Update boundaries
-        phaseModels_[phasei].correctBoundaryConditions();
-
-        sumAlpha += phaseModels_[phasei];
-        if (!phaseModels_[phasei].slavePressure())
+        dynamicCast<volScalarField>(phaseModels_[1]) =
+            1.0 - phaseModels_[0];
+    }
+    else
+    {
+        volScalarField sumAlpha("sumAlpha", phaseModels_[0]);
+        for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
         {
-            nFluids++;
+            // Update boundaries
+            phaseModels_[phasei].correctBoundaryConditions();
+            sumAlpha += phaseModels_[phasei];
         }
-    }
 
-    if (nFluids > 1)
-    {
-        FatalErrorInFunction
-            << "Only one fluid phase is currently supported by blastEulerFoam. "
-            << "Multifluid implementations are under development."
-            << endl
-            << abort(FatalError);
-    }
-
-    if
-    (
-        max(phaseModels_.last()).value() == 0
-     && min(phaseModels_.last()).value() == 0
-    )
-    {
-        dynamicCast<volScalarField>(phaseModels_.last()) = 1.0 - sumAlpha;
-    }
-    else if
-    (
-        max(sumAlpha()).value() - 1 > small
-     && min(sumAlpha()).value() - 1 > small
-    )
-    {
-        FatalErrorInFunction
-            << "Initial volume fractions do not sum to one." << nl
-            << "min(sum(alphas)) = " << min(sumAlpha).value()
-            << ", max(sum(alphas)) = " << max(sumAlpha).value()
-            << endl
-            << abort(FatalError);
+        if
+        (
+            max(phaseModels_.last()).value() == 0
+         && min(phaseModels_.last()).value() == 0
+        )
+        {
+            dynamicCast<volScalarField>(phaseModels_.last()) =
+                1.0 - sumAlpha;
+        }
+        else if
+        (
+            max(sumAlpha()).value() - 1 > small
+         && min(sumAlpha()).value() - 1 > small
+        )
+        {
+            FatalErrorInFunction
+                << "Initial volume fractions do not sum to one." << nl
+                << "min(sum(alphas)) = " << min(sumAlpha).value()
+                << ", max(sum(alphas)) = " << max(sumAlpha).value()
+                << endl
+                << abort(FatalError);
+        }
     }
 
     forAll(phaseModels_, phasei)
@@ -855,11 +881,11 @@ void Foam::phaseSystem::decode()
     {
         volScalarField& alpha1(phaseModels_[0]);
         phaseModels_[0].correctVolumeFraction();
-        phaseModels_[0].decode();
 
         volScalarField& alpha2(phaseModels_[1]);
         alpha2 = 1.0 - alpha1;
-        alpha2.correctBoundaryConditions();
+
+        phaseModels_[0].decode();
         phaseModels_[1].decode();
     }
     else
@@ -912,6 +938,15 @@ void Foam::phaseSystem::decode()
     }
 
     calcMixtureVariables();
+
+    forAll(phaseModels_, phasei)
+    {
+        phaseModel& phase(phaseModels_[phasei]);
+        if (!phase.slavePressure())
+        {
+            phase.p() = p_;
+        }
+    }
 }
 
 

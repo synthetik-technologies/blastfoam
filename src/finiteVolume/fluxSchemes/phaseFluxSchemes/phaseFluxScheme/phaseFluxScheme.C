@@ -312,7 +312,15 @@ void Foam::phaseFluxScheme::update
     preUpdate(p);
     forAll(UOwn, facei)
     {
-
+        if (alphaOwn[facei] < small && alphaNei[facei] < small)
+        {
+            phi[facei] = 0.0;
+            alphaPhi[facei] = 0.0;
+            alphaRhoPhi[facei] = 0.0;
+            alphaRhoUPhi[facei] = Zero;
+            alphaRhoEPhi[facei] = 0.0;
+            continue;
+        }
         calculateFluxes
         (
             alphaOwn[facei], alphaNei[facei],
@@ -335,7 +343,13 @@ void Foam::phaseFluxScheme::update
     {
         forAll(U.boundaryField()[patchi], facei)
         {
-
+//             if
+//             (
+//                 alphaOwn.boundaryField()[patchi][facei] < small
+//              && alphaNei.boundaryField()[patchi][facei] < small)
+//             {
+//                 continue;
+//             }
             calculateFluxes
             (
                 alphaOwn.boundaryField()[patchi][facei],
@@ -461,6 +475,13 @@ void Foam::phaseFluxScheme::update
     {
         forAll(U.boundaryField()[patchi], facei)
         {
+            if
+            (
+                alphaOwn.boundaryField()[patchi][facei] < small
+             && alphaNei.boundaryField()[patchi][facei] < small)
+            {
+                continue;
+            }
             scalar alphaPhi;
             calculateFluxes
             (
@@ -647,6 +668,10 @@ void Foam::phaseFluxScheme::update
     preUpdate(p);
     forAll(UOwn, facei)
     {
+        if (alphaOwn[facei] < small && alphaNei[facei] < small)
+        {
+            continue;
+        }
         scalarList alphasiOwn(alphas.size());
         scalarList alphasiNei(alphas.size());
         scalarList rhosiOwn(alphas.size());
@@ -697,6 +722,13 @@ void Foam::phaseFluxScheme::update
     {
         forAll(U.boundaryField()[patchi], facei)
         {
+            if
+            (
+                alphaOwn.boundaryField()[patchi][facei] < small
+             && alphaNei.boundaryField()[patchi][facei] < small)
+            {
+                continue;
+            }
             scalarList alphasiOwn(alphas.size());
             scalarList alphasiNei(alphas.size());
             scalarList rhosiOwn(alphas.size());

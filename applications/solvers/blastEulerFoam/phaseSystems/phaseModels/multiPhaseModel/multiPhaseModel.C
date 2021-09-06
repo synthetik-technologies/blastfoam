@@ -137,10 +137,6 @@ Foam::multiPhaseModel::multiPhaseModel
     alpha.correctBoundaryConditions();
 
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
-    dynamicCast<multiphaseFluidBlastThermo>
-    (
-        thermoPtr_()
-    ).setTotalVolumeFractionPtr(*this);
 
     solveAlpha(true);
 }
@@ -248,7 +244,7 @@ void Foam::multiPhaseModel::update()
         U_,
         e_,
         p_,
-        c(),
+        speedOfSound(),
         phi_,
         alphaPhiPtr_(),
         alphaRhoPhi_,
@@ -356,7 +352,6 @@ void Foam::multiPhaseModel::decode()
 
 void Foam::multiPhaseModel::encode()
 {
-
     //- Scale volume fractions to new value
     alphaRho_ = dimensionedScalar(dimDensity, 0.0);
     volScalarField& alpha(*this);

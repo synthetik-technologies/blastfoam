@@ -1,5 +1,5 @@
 # General
-fieldMax/fieldMax.C
+fieldMinMax/fieldMinMax.C
 writeTimeList/writeTimeList.C
 conservedQuantities/conservedQuantities.C
 blastProbes/blastProbes.C

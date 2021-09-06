@@ -163,7 +163,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
         if (model_ == BETA || model_ == PROGRAMMEDBETA)
         {
             lambdaBeta =
-                (1.0 - rho0_.value()/max(rho_[celli], small))
+                (1.0 - rho0_.value()/max(rho_[celli], 1e-10))
                /(1.0 - Vcj_.value());
         }
         //- Position based activation

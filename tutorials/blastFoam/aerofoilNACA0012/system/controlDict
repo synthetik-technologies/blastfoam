@@ -28,7 +28,7 @@ deltaT          2e-5;
 
 writeControl    adjustableRunTime;
 
-writeInterval   0.001;
+writeInterval   0.0002;
 
 purgeWrite      0;
 
@@ -47,13 +47,5 @@ runTimeModifiable true;
 adjustTimeStep yes;
 
 maxCo 0.5;
-
-functions
-{
-    tracer
-    {
-        type tracerParticles;
-    }
-}
 
 // ************************************************************************* //

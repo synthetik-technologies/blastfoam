@@ -228,6 +228,9 @@ protected:
         //- Mixture pressure
         volScalarField p_;
 
+        //- Total mixture pressure
+        autoPtr<volScalarField> PIPtr_;
+
         //- Mixture temperature
         volScalarField T_;
 
@@ -242,6 +245,9 @@ protected:
 
         //- Phase models
         phaseModelList phaseModels_;
+
+        //- Fluid phase phase models
+        UPtrList<phaseModel> fluidPhaseModels_;
 
         //- Pointer to kinetic theory system
         kineticTheorySystem* kineticTheoryPtr_;
@@ -430,6 +436,12 @@ public:
             return p_;
         }
 
+        //- Return the interfacial pressure
+        const volScalarField& PI() const
+        {
+            return PIPtr_.valid() ? PIPtr_() : p_;
+        }
+
         //- Return gravitational acceleration
         const uniformDimensionedVectorField& g() const
         {
@@ -505,7 +517,7 @@ public:
 
             //- Return a sub model between two phases
             template<class modelType>
-           bool foundSubModel
+            bool foundSubModel
             (
                 const phaseModel& dispersed,
                 const phaseModel& continuous,

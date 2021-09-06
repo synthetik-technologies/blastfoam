@@ -51,11 +51,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::HE
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->HE(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->HE(rho1i_, e, T);
     }
@@ -72,11 +72,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::TRhoE
     const scalar e
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->TRhoE(T, rho2i_, e);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->TRhoE(T, rho1i_, e);
     }
@@ -93,11 +93,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::Cp
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->Cp(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->Cp(rho1i_, e, T);
     }
@@ -114,11 +114,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::Cv
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->Cv(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->Cv(rho1i_, e, T);
     }
@@ -135,11 +135,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::kappa
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->kappa(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->kappa(rho1i_, e, T);
     }
@@ -156,11 +156,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::pRhoT
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->pRhoT(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->pRhoT(rho1i_, e, T);
     }
@@ -181,11 +181,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::mu
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->mu(rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->mu(rho1i_, e, T);
     }
@@ -203,11 +203,11 @@ Foam::scalar Foam::twoPhaseBlastFluidMixture::cSqr
     const scalar T
 ) const
 {
-    if (alpha1i_ < small)
+    if (alpha1i_ < thermo1_.residualAlpha().value())
     {
         return mixture2Ptr_->cSqr(p, rho2i_, e, T);
     }
-    else if (alpha2i_ < small)
+    else if (alpha2i_ < thermo2_.residualAlpha().value())
     {
         return mixture1Ptr_->cSqr(p, rho1i_, e, T);
     }

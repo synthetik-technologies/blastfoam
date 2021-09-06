@@ -38,11 +38,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::HE
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.Es(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.Es(rho, e, T);
     }
@@ -59,11 +59,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::TRhoE
     const scalar e
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.TRhoE(T, rho, e);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.TRhoE(T, rho, e);
     }
@@ -83,11 +83,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Cp
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.Cp(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.Cp(rho, e, T);
     }
@@ -104,11 +104,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Cv
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.Cv(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.Cv(rho, e, T);
     }
@@ -125,11 +125,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::kappa
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.kappa(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.kappa(rho, e, T);
     }
@@ -146,11 +146,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::pRhoT
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.p(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.p(rho, e, T);
     }
@@ -167,11 +167,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::Gamma
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.Gamma(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.Gamma(rho, e, T);
     }
@@ -188,11 +188,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::mu
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.mu(rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.mu(rho, e, T);
     }
@@ -210,11 +210,11 @@ Foam::detonatingBlastFluidMixture<BasicMixture, ThermoType1, ThermoType2>::cSqr
     const scalar T
 ) const
 {
-    if (xi_ < small)
+    if (xi_ < 1e-10)
     {
         return thermo1_.cSqr(p, rho, e, T);
     }
-    else if ((1.0 - xi_) < small)
+    else if ((1.0 - xi_) < 1e-10)
     {
         return thermo2_.cSqr(p, rho, e, T);
     }

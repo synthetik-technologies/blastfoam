@@ -96,11 +96,11 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
         (
             fvm::ddt(rho_) - fvc::ddt(rho_)
          ==
-            models_.source(rho_)
+            modelsPtr_->source(rho_)
         );
-        constraints_.constrain(rhoEqn);
+        constraintsPtr_->constrain(rhoEqn);
         rhoEqn.solve();
-        constraints_.constrain(rho_);
+        constraintsPtr_->constrain(rho_);
     }
 
     compressibleBlastSystem::postUpdate();

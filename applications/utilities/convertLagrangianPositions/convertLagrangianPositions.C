@@ -171,7 +171,14 @@ int main(int argc, char *argv[])
                     IFstream cis(coordinatesIO.objectPath());
                     coordinatesIO.readHeader(cis);
 
-                    cloudType = positionsIO.headerClassName();
+                    if (revert)
+                    {
+                        cloudType = coordinatesIO.headerClassName();
+                    }
+                    else
+                    {
+                        cloudType = positionsIO.headerClassName();
+                    }
                     ioP.headerClassName() = cloudType;
 
                     if (revert)
@@ -185,7 +192,11 @@ int main(int argc, char *argv[])
                 }
 
                 OFstream positionsOS(positionsIO.objectPath());
-                positionsIO.writeHeader(positionsOS, cloudType);
+                positionsIO.writeHeader
+                (
+                    positionsOS,
+                    revert ? cloudType : cloudType + "Cloud"
+                );
                 OFstream coordinatesOS(coordinatesIO.objectPath());
                 coordinatesIO.writeHeader(coordinatesOS, cloudType);
 

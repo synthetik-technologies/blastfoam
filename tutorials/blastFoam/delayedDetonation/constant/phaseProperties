@@ -133,6 +133,8 @@ RDX
 
         // Linear and compression activation
         burnModel programmedBeta;
+
+        pMin 1.1e5;
     }
 
     residualRho     1e-6;           // Minimum density of the phase

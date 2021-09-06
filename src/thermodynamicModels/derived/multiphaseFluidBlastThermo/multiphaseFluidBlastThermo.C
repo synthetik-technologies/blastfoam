@@ -54,7 +54,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::HE
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].HE(rhosi_[i], e, T);
         }
@@ -73,7 +73,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::TRhoE
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].TRhoE(T, rhosi_[i], e);
         }
@@ -92,7 +92,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::Cp
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].Cp(rhosi_[i], e, T);
         }
@@ -111,7 +111,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::Cv
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].Cv(rhosi_[i], e, T);
         }
@@ -130,7 +130,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::kappa
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].kappa(rhosi_[i], e, T);
         }
@@ -150,7 +150,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::pRhoT
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             scalar alphaXi =
                 alphasi_[i]/(mixtures_[i].Gamma(rhosi_[i], e, T) - 1.0);
@@ -172,7 +172,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::mu
     scalar psi = 0.0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             psi += alphasi_[i]*mixtures_[i].mu(rhosi_[i], e, T);
         }
@@ -193,12 +193,12 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::cSqr
     scalar psi = 0;
     forAll(mixtures_, i)
     {
-        if (alphasi_[i] > small)
+        if (alphasi_[i] > thermos_[i].residualAlpha().value())
         {
             scalar alphaXi =
                 alphasi_[i]*rhosi_[i]
                /(mixtures_[i].Gamma(rhosi_[i], e, T) - 1.0);
-            psi += alphaXi*mixtures_[i].pRhoT(rhosi_[i], e, T);
+            psi += alphaXi*mixtures_[i].cSqr(p, rhosi_[i], e, T);
             sumAlphaXi += alphaXi;
         }
     }

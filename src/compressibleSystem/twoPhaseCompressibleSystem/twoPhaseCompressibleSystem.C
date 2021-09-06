@@ -273,11 +273,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
         (
             fvm::ddt(alpha1_) - fvc::ddt(alpha1_)
         ==
-            models_.source(alpha1_)
+            modelsPtr_->source(alpha1_)
         );
-        constraints_.constrain(alphaEqn);
+        constraintsPtr_->constrain(alphaEqn);
         alphaEqn.solve();
-        constraints_.constrain(alpha1_);
+        constraintsPtr_->constrain(alpha1_);
 
         alpha1_.maxMin(0.0, 1.0);
         alpha2_ = 1.0 - alpha1_;
@@ -291,11 +291,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho1_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho1_)
         ==
-            models_.source(alpha1_, rho1_)
+            modelsPtr_->source(alpha1_, rho1_)
         );
-        constraints_.constrain(alphaRho1Eqn);
+        constraintsPtr_->constrain(alphaRho1Eqn);
         alphaRho1Eqn.solve();
-        constraints_.constrain(rho1_);
+        constraintsPtr_->constrain(rho1_);
     }
     // Solve phase 2 mass
     if (solveFields_.found(rho2_.name()))
@@ -306,11 +306,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho2_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho2_)
         ==
-            models_.source(alpha2_, rho2_)
+            modelsPtr_->source(alpha2_, rho2_)
         );
-        constraints_.constrain(alphaRho2Eqn);
+        constraintsPtr_->constrain(alphaRho2Eqn);
         alphaRho2Eqn.solve();
-        constraints_.constrain(rho2_);
+        constraintsPtr_->constrain(rho2_);
     }
 
     // Update phase masses

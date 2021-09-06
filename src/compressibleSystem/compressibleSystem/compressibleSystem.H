@@ -108,10 +108,10 @@ protected:
         vector solutionDs_;
 
         //- FvModels
-        const fvModels& models_;
+        UautoPtr<const fvModels> modelsPtr_;
 
         //- fvConstraints
-        const fvConstraints& constraints_;
+        UautoPtr<const fvConstraints> constraintsPtr_;
 
         //- List of fields that have models or constraints
         hashedWordList solveFields_;

@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::functionObjects::fieldMax
+    Foam::functionObjects::fieldMinMax
 
 Description
     Tracks the maximum value of a given list of field names at every cell. If
@@ -35,11 +35,12 @@ Description
     \verbatim
     max
     {
-        type                fieldMax;
-        libs                ("libblastFunctionObjects.so");
+        type            fieldMax;
 
         writeControl    writeTime;
         restartOnRestart    false;
+        mode            component;
+        minMax          min;
 
         fields
         (
@@ -54,6 +55,8 @@ Usage
         Property          | Description               | Required | Default
         restartOnRestart  | Restart the averaging on restart |no | no
         fields            | Name of  fields           | yes
+        mode              | Mode to use               | no       | component
+        minMax            | Minimum of maximum        | no       | max
     \endtable
 
 
@@ -61,18 +64,18 @@ See also
     Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    fieldMax.C
+    fieldMinMax.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef functionObjects_fieldMax_H
-#define functionObjects_fieldMax_H
+#ifndef functionObjects_fieldMinMax_H
+#define functionObjects_fieldMinMax_H
 
 #include "fvMeshFunctionObject.H"
 #include "mapPolyMesh.H"
-#include "PtrListDictionary.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "HashPtrTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -86,75 +89,111 @@ namespace functionObjects
                         Class fieldMax Declaration
 \*---------------------------------------------------------------------------*/
 
-class fieldMax
+class fieldMinMax
 :
     public fvMeshFunctionObject
 {
+public:
+
+    enum class modeType
+    {
+        cmpt,
+        mag,
+        cmptMag
+    };
+
+    enum class minMaxType
+    {
+        min,
+        max
+    };
+
+
 protected:
+
+    static const NamedEnum<modeType, 3> modeTypeNames_;
+    static const NamedEnum<minMaxType, 2> minMaxTypeNames_;
 
     // Protected data
 
-
         //- Restart the averaging process on output
         Switch restartOnRestart_;
+
+        //- Use magnitude or component wise
+        modeType mode_;
+
+        //- Min or max function
+        minMaxType minMax_;
 
         //- Name of fields
         wordList fieldNames_;
 
         //- Name of max fields
-        wordList maxFieldNames_;
+        wordList computeFieldNames_;
 
-
-        labelList* cellMap_;
-        labelList* rCellMap_;
+        autoPtr<labelList> cellMap_;
+        autoPtr<labelList> rCellMap_;
 
         //- Old field values
-        PtrListDictionary<volScalarField> vScalarFields_;
-        PtrListDictionary<volVectorField> vVectorFields_;
-        PtrListDictionary<volSphericalTensorField> vSphericalTensorFields_;
-        PtrListDictionary<volSymmTensorField> vSymmTensorFields_;
-        PtrListDictionary<volTensorField> vTensorFields_;
+        HashPtrTable<volScalarField> vScalarFields_;
+        HashPtrTable<volVectorField> vVectorFields_;
+        HashPtrTable<volSphericalTensorField> vSphericalTensorFields_;
+        HashPtrTable<volSymmTensorField> vSymmTensorFields_;
+        HashPtrTable<volTensorField> vTensorFields_;
 
-        PtrListDictionary<surfaceScalarField> sScalarFields_;
-        PtrListDictionary<surfaceVectorField> sVectorFields_;
-        PtrListDictionary<surfaceSphericalTensorField> sSphericalTensorFields_;
-        PtrListDictionary<surfaceSymmTensorField> sSymmTensorFields_;
-        PtrListDictionary<surfaceTensorField> sTensorFields_;
+        HashPtrTable<surfaceScalarField> sScalarFields_;
+        HashPtrTable<surfaceVectorField> sVectorFields_;
+        HashPtrTable<surfaceSphericalTensorField> sSphericalTensorFields_;
+        HashPtrTable<surfaceSymmTensorField> sSymmTensorFields_;
+        HashPtrTable<surfaceTensorField> sTensorFields_;
 
 
         //- Store old fields
-        template<class Type>
-        void mapMax
+        template<class FieldType>
+        void map
         (
             const word& fName,
             const mapPolyMesh&,
-            const PtrListDictionary<Type>& old
+            const HashPtrTable<FieldType>& old
         );
 
         //- Update field max
-        template<class Type>
-        void createMax
+        template<class FieldType>
+        void createMinMax
         (
             const word& fieldName,
-            const word& maxFieldName
+            const word& computeFieldName
         );
 
         //- Create old field
-        template<class Type>
+        template<class FieldType>
         void createOld
         (
-            const word& maxFieldName,
-            PtrListDictionary<Type>& old
+            const word& computeFieldName,
+            HashPtrTable<FieldType>& old
         );
 
         //- Update field max
-        template<class Type>
-        void updateMax
+        template<class FieldType>
+        void update
         (
             const word& fieldName,
-            const word& maxFieldName,
-            PtrListDictionary<Type>& old
+            const word& computeFieldName,
+            const HashPtrTable<FieldType>& old
         );
+
+        //- Compute the min/max using the mode
+        template<class Type>
+        Type compute(const Type& a, const Type& b) const;
+
+        //- Compute the min/max using the mode
+        template<class FieldType>
+        void compute
+        (
+            FieldType& res,
+            const FieldType& a,
+            const FieldType& b
+        ) const;
 
         //- Write field max
         template<class type>
@@ -169,13 +208,13 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("fieldMax");
+    TypeName("fieldMinMax");
 
 
     // Constructors
 
         //- Construct from Time and dictionary
-        fieldMax
+        fieldMinMax
         (
             const word& name,
             const Time& runTime,
@@ -183,11 +222,11 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        fieldMax(const fieldMax&) = delete;
+        fieldMinMax(const fieldMinMax&) = delete;
 
 
     //- Destructor
-    virtual ~fieldMax();
+    virtual ~fieldMinMax();
 
 
     // Member Functions
@@ -208,7 +247,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const fieldMax&) = delete;
+        void operator=(const fieldMinMax&) = delete;
 };
 
 
@@ -220,7 +259,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "fieldMaxTemplates.C"
+    #include "fieldMinMaxTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

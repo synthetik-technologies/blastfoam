@@ -10,7 +10,10 @@ paraFoam -builtin -touch
 # -- Create the mesh for the fluid
 runApplication blockMesh
 
+# -- decompose the case
+runApplication decomposePar
+
 #- Run the calc
-runApplication $(getApplication)
+runParallel $(getApplication)
 
 #------------------------------------------------------------------------------

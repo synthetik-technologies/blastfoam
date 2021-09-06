@@ -24,7 +24,6 @@ fluxSchemes
     particles
     {
         fluxScheme          AUSM+Up;
-        alphaMinFriction    0.5;
     }
 }
 

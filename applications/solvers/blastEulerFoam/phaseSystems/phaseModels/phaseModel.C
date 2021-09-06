@@ -36,6 +36,7 @@ License
 #include "surfaceInterpolate.H"
 #include "phaseFluxScheme.H"
 #include "interfacialPressureModel.H"
+#include "interfacialVelocityModel.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -87,11 +88,10 @@ Foam::phaseModel::phaseModel
             IOobject::groupName("U", name_),
             fluid.mesh().time().timeName(),
             fluid.mesh(),
-            IOobject::READ_IF_PRESENT,
+            IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
-        fluid.mesh(),
-        dimensionedVector("0", dimVelocity, Zero)
+        fluid.mesh()
     ),
     alphaRho_
     (
@@ -113,7 +113,8 @@ Foam::phaseModel::phaseModel
             fluid.mesh()
         ),
         fluid.mesh(),
-        dimensionedVector("0", dimDensity*dimVelocity, Zero)
+        dimensionedVector("0", dimDensity*dimVelocity, Zero),
+        "zeroGradient"
     ),
     alphaRhoE_
     (
@@ -326,8 +327,11 @@ void Foam::phaseModel::solveAlphaRho()
     volScalarField deltaAlphaRho(fvc::div(alphaRhoPhi_));
     forAll(fluid_.phases(), phasei)
     {
-        const phaseModel& phase = fluid_.phases()[phasei];
-        deltaAlphaRho -= fluid_.mDot(*this, phase);
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if (&otherPhase != this)
+        {
+            deltaAlphaRho -= fluid_.mDot(*this, otherPhase);
+        }
     }
 
     this->storeAndBlendDelta(deltaAlphaRho);
@@ -348,7 +352,7 @@ void Foam::phaseModel::solve()
     (
         IOobject::groupName("deltaAlphaRhoU", name_),
         fvc::div(alphaRhoUPhi_)
-      - p()*gradAlpha()
+      - fluid_.PI()*gradAlpha()
       - (*this)*rho()*fluid_.g() // alphaRho has already been updated
     );
 
@@ -357,18 +361,18 @@ void Foam::phaseModel::solve()
         IOobject::groupName("deltaAlphaRhoE", name_),
         fvc::div(alphaRhoEPhi_)
       - ESource()
+      - fluid_.PI()*(fluid_.U() & gradAlpha())
       - (alphaRhoU_ & fluid_.g())
     );
 
     forAll(fluid_.phases(), phasei)
     {
-        const phaseModel& phase = fluid_.phases()[phasei];
-        if (phase.granular())
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if (&otherPhase != this)
         {
-            deltaAlphaRhoE += p()*fvc::div(phase.alphaPhi());
+            deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
+            deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
         }
-        deltaAlphaRhoU -= fluid_.mDotU(*this, phase);
-        deltaAlphaRhoE -= fluid_.mDotE(*this, phase);
     }
     this->storeAndBlendDelta(deltaAlphaRhoU);
     this->storeAndBlendDelta(deltaAlphaRhoE);
@@ -404,6 +408,7 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
+    return;
     dimensionedScalar smallAlphaRho(residualAlphaRho());
     const volScalarField& alpha(*this);
 

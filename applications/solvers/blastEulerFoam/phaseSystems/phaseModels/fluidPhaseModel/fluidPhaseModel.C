@@ -164,7 +164,7 @@ void Foam::fluidPhaseModel::solve()
 
 void Foam::fluidPhaseModel::postUpdate()
 {
-    if (solveAlpha_)
+    if (solveAlpha_ && solveFields_.found(name()))
     {
         volScalarField& alpha(*this);
         fvScalarMatrix alphaEqn
@@ -194,7 +194,7 @@ void Foam::fluidPhaseModel::update()
             U_,
             e_,
             p_,
-            thermoPtr_->speedOfSound(),
+            speedOfSound(),
             phi_,
             this->alphaPhiPtr_(),
             alphaRhoPhi_,
@@ -230,6 +230,7 @@ void Foam::fluidPhaseModel::decode()
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
     rho_.ref() = alphaRho_()/alpha();
+    rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField();

@@ -55,7 +55,7 @@ particles
         Hf          0.0;
     }
 
-    residualAlpha 1e-10;
+    residualAlpha 1e-6;
     residualRho   1e-6;
 
     kineticTheoryCoeffs

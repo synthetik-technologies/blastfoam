@@ -72,7 +72,7 @@ functions
     }
     maxPImpulse
     {
-        type                fieldMax;
+        type                fieldMinMax;
 
         writeControl        writeTime;
         fields
@@ -143,7 +143,7 @@ functions
 
     pressureProbes
     {
-        type                probes;
+        type                blastProbes;
         writeControl        timeStep;
         writeInterval       1;
         adjustLocations     yes;
