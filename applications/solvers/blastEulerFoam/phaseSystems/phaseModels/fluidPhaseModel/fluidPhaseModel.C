@@ -246,7 +246,9 @@ void Foam::fluidPhaseModel::decode()
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
 
-   thermoPtr_->correct();
+    thermoPtr_->correct();
+    thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());
+    thermoPtr_->speedOfSound().max(sqrt(1e-3));
 
     alphaRhoE_.boundaryFieldRef() =
         (*this).boundaryField()

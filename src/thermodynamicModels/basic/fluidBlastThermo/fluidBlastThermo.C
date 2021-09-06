@@ -271,6 +271,12 @@ const Foam::volScalarField& Foam::fluidBlastThermo::speedOfSound() const
 }
 
 
+Foam::volScalarField& Foam::fluidBlastThermo::speedOfSound()
+{
+    return speedOfSound_;
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::fluidBlastThermo::mu() const
 {
     return mu_;

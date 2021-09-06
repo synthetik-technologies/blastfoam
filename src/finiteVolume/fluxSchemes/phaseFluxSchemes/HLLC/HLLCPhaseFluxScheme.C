@@ -215,7 +215,7 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     scalar E;
     scalar p;
 
-    if (SOwn > 0)
+    if (SOwn >= 0)
     {
         alpha = alphaOwn;
         rho = rhoOwn;

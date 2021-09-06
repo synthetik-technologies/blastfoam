@@ -322,6 +322,9 @@ public:
             //- Return the speed of sound
             virtual const volScalarField& speedOfSound() const;
 
+            //- Access the speed of sound
+            virtual volScalarField& speedOfSound();
+
             //- Derivative of pressure w.r.t density for cel
             virtual scalar celldpdRho(const label celli) const = 0;
 

@@ -312,66 +312,76 @@ void Foam::phaseFluxScheme::update
     preUpdate(p);
     forAll(UOwn, facei)
     {
-        if (alphaOwn[facei] < small && alphaNei[facei] < small)
+        if (alphaOwn[facei] < 1e-10 && alphaNei[facei] < 1e-10)
         {
             phi[facei] = 0.0;
             alphaPhi[facei] = 0.0;
             alphaRhoPhi[facei] = 0.0;
             alphaRhoUPhi[facei] = Zero;
             alphaRhoEPhi[facei] = 0.0;
-            continue;
         }
-        calculateFluxes
-        (
-            alphaOwn[facei], alphaNei[facei],
-            rhoOwn[facei], rhoNei[facei],
-            UOwn[facei], UNei[facei],
-            eOwn[facei], eNei[facei],
-            pOwn[facei], pNei[facei],
-            cOwn[facei], cNei[facei],
-            mesh_.Sf()[facei],
-            phi[facei],
-            alphaPhi[facei],
-            alphaRhoPhi[facei],
-            alphaRhoUPhi[facei],
-            alphaRhoEPhi[facei],
-            facei
-        );
+        else
+        {
+            calculateFluxes
+            (
+                alphaOwn[facei], alphaNei[facei],
+                rhoOwn[facei], rhoNei[facei],
+                UOwn[facei], UNei[facei],
+                eOwn[facei], eNei[facei],
+                pOwn[facei], pNei[facei],
+                cOwn[facei], cNei[facei],
+                mesh_.Sf()[facei],
+                phi[facei],
+                alphaPhi[facei],
+                alphaRhoPhi[facei],
+                alphaRhoUPhi[facei],
+                alphaRhoEPhi[facei],
+                facei
+            );
+        }
     }
 
     forAll(U.boundaryField(), patchi)
     {
         forAll(U.boundaryField()[patchi], facei)
         {
-//             if
-//             (
-//                 alphaOwn.boundaryField()[patchi][facei] < small
-//              && alphaNei.boundaryField()[patchi][facei] < small)
-//             {
-//                 continue;
-//             }
-            calculateFluxes
+            if
             (
-                alphaOwn.boundaryField()[patchi][facei],
-                alphaNei.boundaryField()[patchi][facei],
-                rhoOwn.boundaryField()[patchi][facei],
-                rhoNei.boundaryField()[patchi][facei],
-                UOwn.boundaryField()[patchi][facei],
-                UNei.boundaryField()[patchi][facei],
-                eOwn.boundaryField()[patchi][facei],
-                eNei.boundaryField()[patchi][facei],
-                pOwn.boundaryField()[patchi][facei],
-                pNei.boundaryField()[patchi][facei],
-                cOwn.boundaryField()[patchi][facei],
-                cNei.boundaryField()[patchi][facei],
-                mesh_.Sf().boundaryField()[patchi][facei],
-                phi.boundaryFieldRef()[patchi][facei],
-                alphaPhi.boundaryFieldRef()[patchi][facei],
-                alphaRhoPhi.boundaryFieldRef()[patchi][facei],
-                alphaRhoUPhi.boundaryFieldRef()[patchi][facei],
-                alphaRhoEPhi.boundaryFieldRef()[patchi][facei],
-                facei, patchi
-            );
+                alphaOwn.boundaryField()[patchi][facei] < 1e-10
+             && alphaNei.boundaryField()[patchi][facei] < 1e-10
+            )
+            {
+                phi.boundaryFieldRef()[patchi][facei] = 0.0;
+                alphaPhi.boundaryFieldRef()[patchi][facei] = 0.0;
+                alphaRhoPhi.boundaryFieldRef()[patchi][facei] = 0.0;
+                alphaRhoUPhi.boundaryFieldRef()[patchi][facei] = Zero;
+                alphaRhoEPhi.boundaryFieldRef()[patchi][facei] = 0.0;
+            }
+            else
+            {
+                calculateFluxes
+                (
+                    alphaOwn.boundaryField()[patchi][facei],
+                    alphaNei.boundaryField()[patchi][facei],
+                    rhoOwn.boundaryField()[patchi][facei],
+                    rhoNei.boundaryField()[patchi][facei],
+                    UOwn.boundaryField()[patchi][facei],
+                    UNei.boundaryField()[patchi][facei],
+                    eOwn.boundaryField()[patchi][facei],
+                    eNei.boundaryField()[patchi][facei],
+                    pOwn.boundaryField()[patchi][facei],
+                    pNei.boundaryField()[patchi][facei],
+                    cOwn.boundaryField()[patchi][facei],
+                    cNei.boundaryField()[patchi][facei],
+                    mesh_.Sf().boundaryField()[patchi][facei],
+                    phi.boundaryFieldRef()[patchi][facei],
+                    alphaPhi.boundaryFieldRef()[patchi][facei],
+                    alphaRhoPhi.boundaryFieldRef()[patchi][facei],
+                    alphaRhoUPhi.boundaryFieldRef()[patchi][facei],
+                    alphaRhoEPhi.boundaryFieldRef()[patchi][facei],
+                    facei, patchi
+                );
+            }
         }
     }
     postUpdate();
@@ -477,8 +487,9 @@ void Foam::phaseFluxScheme::update
         {
             if
             (
-                alphaOwn.boundaryField()[patchi][facei] < small
-             && alphaNei.boundaryField()[patchi][facei] < small)
+                alphaOwn.boundaryField()[patchi][facei] < 1e-10
+             && alphaNei.boundaryField()[patchi][facei] < 1e-10
+            )
             {
                 continue;
             }
