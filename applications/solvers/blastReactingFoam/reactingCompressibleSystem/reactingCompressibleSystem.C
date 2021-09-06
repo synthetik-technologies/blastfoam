@@ -143,9 +143,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
     fluxScheme_(fluxScheme::New(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
-    models_(fvModels::New(mesh)),
-    constraints_(fvConstraints::New(mesh))
+    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
@@ -202,6 +200,10 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         radDict.add("radiationModel", "none");
         radiation_ = radiationModel::New(radDict, T_);
     }
+
+    modelsPtr_.set(&fvModels::New(mesh));
+    constraintsPtr_.set(&fvConstraints::New(mesh));
+
     encode();
 }
 
@@ -289,14 +291,14 @@ void Foam::reactingCompressibleSystem::postUpdate()
     (
         fvm::ddt(rho_) - fvc::ddt(rho_)
      ==
-        models_.source(rho_)
+        modelsPtr_->source(rho_)
     );
 
-    constraints_.constrain(rhoEqn);
+    constraintsPtr_->constrain(rhoEqn);
 
     rhoEqn.solve();
 
-    constraints_.constrain(rho_);
+    constraintsPtr_->constrain(rho_);
 
 
 
@@ -306,7 +308,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
      ==
         turbulence_->divDevTau(U_)
-      + models_.source(rho_, U_)
+      + modelsPtr_->source(rho_, U_)
     );
 
     // Solve thermal energy diffusion
@@ -325,7 +327,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
      ==
         thermophysicalTransport_->divq(e_)
-      + models_.source(rho_, e_)
+      + modelsPtr_->source(rho_, e_)
     );
 
     if (reaction_.valid())
@@ -351,12 +353,12 @@ void Foam::reactingCompressibleSystem::postUpdate()
                   + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
-                  + models_.source(Yi)
+                  + modelsPtr_->source(Yi)
                 );
 
-                constraints_.constrain(YiEqn);
+                constraintsPtr_->constrain(YiEqn);
                 YiEqn.solve("Yi");
-                constraints_.constrain(Yi);
+                constraintsPtr_->constrain(Yi);
 
                 Yi.max(0.0);
                 Yt += Yi;
@@ -366,14 +368,14 @@ void Foam::reactingCompressibleSystem::postUpdate()
     }
 
     // Solve momentum equation
-    constraints_.constrain(UEqn);
+    constraintsPtr_->constrain(UEqn);
     UEqn.solve();
-    constraints_.constrain(U_);
+    constraintsPtr_->constrain(U_);
 
     // Solve energy equation
-    constraints_.constrain(eEqn);
+    constraintsPtr_->constrain(eEqn);
     eEqn.solve();
-    constraints_.constrain(e_);
+    constraintsPtr_->constrain(e_);
 
     // Update conserved quantities
     rhoU_ = rho_*U_;
@@ -382,9 +384,9 @@ void Foam::reactingCompressibleSystem::postUpdate()
     // Update thermo
     thermo_->correct();
     p_.ref() = rho_()/thermo_->psi()();
-    if (constraints_.constrainsField(p_.name()))
+    if (constraintsPtr_->constrainsField(p_.name()))
     {
-        constraints_.constrain(p_);
+        constraintsPtr_->constrain(p_);
     }
     p_.correctBoundaryConditions();
 

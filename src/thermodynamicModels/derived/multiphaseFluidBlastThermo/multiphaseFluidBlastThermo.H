@@ -103,7 +103,10 @@ public:
     //- Set the local reaction progress variable
     void setCell(const label celli) const
     {
-        scalar sumVf = sumVfPtr_.valid() ? sumVfPtr_()[celli] : 1.0;
+        scalar sumVf =
+            sumVfPtr_.valid()
+          ? max(sumVfPtr_()[celli], 1e-10)
+          : 1.0;
         forAll(alphas_, i)
         {
             alphasi_[i] = alphas_[i][celli]/sumVf;
@@ -115,7 +118,7 @@ public:
     {
         scalar sumVf =
             sumVfPtr_.valid()
-          ? sumVfPtr_().boundaryField()[patchi][facei]
+          ? max(sumVfPtr_().boundaryField()[patchi][facei], 1e-10)
           : 1.0;
 
         forAll(alphas_, i)

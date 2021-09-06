@@ -238,10 +238,10 @@ protected:
         const uniformDimensionedVectorField& g_;
 
         //- fvModels
-        fvModels& fvModels_;
+        UautoPtr<fvModels> fvModelsPtr_;
 
         //- fvConstraints
-        const fvConstraints& fvConstraints_;
+        UautoPtr<const fvConstraints> fvConstraintsPtr_;
 
         //- Phase models
         phaseModelList phaseModels_;

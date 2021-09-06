@@ -182,10 +182,10 @@ protected:
         vector solutionDs_;
 
         //- fvModels
-        const fvModels& models_;
+        UautoPtr<const fvModels> modelsPtr_;
 
         //- fvConstraints
-        const fvConstraints& constraints_;
+        UautoPtr<const fvConstraints> constraintsPtr_;
 
         //- List of fields that have models or constraints
         hashedWordList solveFields_;
@@ -277,6 +277,9 @@ public:
 
     //- Initialize models
     virtual void initializeModels();
+
+    //- Set fvModels and fvConstraints
+    void setFvModelsConstraints();
 
 
     //- Destructor

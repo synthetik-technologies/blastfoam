@@ -180,12 +180,12 @@ void Foam::granularPhaseModel::postUpdate()
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
          ==
-            models_.source(alpha)
+            modelsPtr_->source(alpha)
         );
 
-        constraints_.constrain(alphaEqn);
+        constraintsPtr_->constrain(alphaEqn);
         alphaEqn.solve();
-        constraints_.constrain(alpha);
+        constraintsPtr_->constrain(alpha);
     }
 
     // Solve momentum
@@ -197,7 +197,7 @@ void Foam::granularPhaseModel::postUpdate()
             fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
           + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
          ==
-            models_.source(alpha, rho(), U_)
+            modelsPtr_->source(alpha, rho(), U_)
         );
 
         if (this->includeViscosity())
@@ -206,9 +206,9 @@ void Foam::granularPhaseModel::postUpdate()
             UEqn += this->divDevRhoReff(U_);
         }
 
-        constraints_.constrain(UEqn);
+        constraintsPtr_->constrain(UEqn);
         UEqn.solve();
-        constraints_.constrain(U_);
+        constraintsPtr_->constrain(U_);
     }
 
     // Solve thermal energy
@@ -219,11 +219,11 @@ void Foam::granularPhaseModel::postUpdate()
             fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
           + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
         ==
-            models_.source(alpha, rho(), he())
+            modelsPtr_->source(alpha, rho(), he())
         );
-        constraints_.constrain(eEqn);
+        constraintsPtr_->constrain(eEqn);
         eEqn.solve();
-        constraints_.constrain(he());
+        constraintsPtr_->constrain(he());
     }
 
     //- Solve granular temperature equation including solid stress and
@@ -240,7 +240,7 @@ void Foam::granularPhaseModel::postUpdate()
               - fvc::ddt(smallAlphaRho, Theta_)
             )
          ==
-            models_.source(alpha, rho(), Theta_)
+            modelsPtr_->source(alpha, rho(), Theta_)
         );
 
         //- Solve for collisional viscosity terms
@@ -272,9 +272,9 @@ void Foam::granularPhaseModel::postUpdate()
                 )
               + ((tau*alpha) && gradU);
         }
-        constraints_.constrain(ThetaEqn);
+        constraintsPtr_->constrain(ThetaEqn);
         ThetaEqn.solve();
-        constraints_.constrain(Theta_);
+        constraintsPtr_->constrain(Theta_);
         Theta_.max(0);
     }
 

@@ -79,6 +79,9 @@ int main(int argc, char *argv[])
         //- Clear the flux scheme
         fluid.flux().clear();
 
+        //- Update the fvModels
+        models.correct();
+
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;
         Info<< "max(T): " << max(T).value()

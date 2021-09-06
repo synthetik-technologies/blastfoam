@@ -162,8 +162,6 @@ Foam::phaseModel::phaseModel
         dimensionedScalar("0", dimVelocity*alphaRhoUPhi_.dimensions(), 0.0)
     ),
     solutionDs_((vector(fluid.mesh().solutionD()) + vector::one)/2.0),
-    models_(fluid.models()),
-    constraints_(fluid.constraints()),
     solveFields_(),
     needPostUpdate_(false)
 
@@ -178,8 +176,25 @@ Foam::phaseModel::phaseModel
     {
         solutionDs_ = ((vector(this->mesh().geometricD()) + vector::one)/2.0);
     }
+}
 
-    const PtrList<fvModel>& models(models_);
+
+void Foam::phaseModel::initializeModels()
+{
+    dPtr_.reset
+    (
+        diameterModel::New(fluid_.mesh(), phaseDict_, name_).ptr()
+    );
+    thermo().initializeModels();
+    thermo().correct();
+}
+
+
+void Foam::phaseModel::setFvModelsConstraints()
+{
+    modelsPtr_.set(&fluid_.models());
+    constraintsPtr_.set(&fluid_.constraints());
+    const PtrList<fvModel>& models(modelsPtr_());
     forAll(models, modeli)
     {
         wordList fields(models[modeli].addSupFields());
@@ -192,7 +207,7 @@ Foam::phaseModel::phaseModel
         }
     }
 
-    const PtrList<fvConstraint>& constraints(constraints_);
+    const PtrList<fvConstraint>& constraints(constraintsPtr_());
     forAll(constraints, modeli)
     {
         wordList fields(constraints[modeli].constrainedFields());
@@ -205,17 +220,6 @@ Foam::phaseModel::phaseModel
         }
     }
     needPostUpdate_ = solveFields_.size();
-}
-
-
-void Foam::phaseModel::initializeModels()
-{
-    dPtr_.reset
-    (
-        diameterModel::New(fluid_.mesh(), phaseDict_, name_).ptr()
-    );
-    thermo().initializeModels();
-    thermo().correct();
 }
 
 
@@ -419,11 +423,11 @@ void Foam::phaseModel::postUpdate()
         (
             fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
         ==
-            models_.source(alpha, rho())
+            modelsPtr_->source(alpha, rho())
         );
-        constraints_.constrain(rhoEqn);
+        constraintsPtr_->constrain(rhoEqn);
         rhoEqn.solve();
-        constraints_.constrain(rho());
+        constraintsPtr_->constrain(rho());
     }
 
     if (solveFields_.found(U_.name()) || turbulence_.valid())
@@ -433,7 +437,7 @@ void Foam::phaseModel::postUpdate()
             fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
          ==
-            models_.source(alpha, rho(), U_)
+            modelsPtr_->source(alpha, rho(), U_)
         );
         if (turbulence_.valid())
         {
@@ -446,9 +450,9 @@ void Foam::phaseModel::postUpdate()
                   & flux().Uf()
                 );
         }
-        constraints_.constrain(UEqn);
+        constraintsPtr_->constrain(UEqn);
         UEqn.solve();
-        constraints_.constrain(U_);
+        constraintsPtr_->constrain(U_);
 
         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
     }
@@ -461,7 +465,7 @@ void Foam::phaseModel::postUpdate()
             fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
           + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
          ==
-            models_.source(alpha, rho(), he())
+            modelsPtr_->source(alpha, rho(), he())
         );
 
         if (turbulence_.valid())
@@ -469,9 +473,9 @@ void Foam::phaseModel::postUpdate()
             // Add thermal energy diffusion
             eEqn += thermophysicalTransport_->divq(he());
         }
-        constraints_.constrain(eEqn);
+        constraintsPtr_->constrain(eEqn);
         eEqn.solve();
-        constraints_.constrain(he());
+        constraintsPtr_->constrain(he());
     }
 
     if (turbulence_.valid())

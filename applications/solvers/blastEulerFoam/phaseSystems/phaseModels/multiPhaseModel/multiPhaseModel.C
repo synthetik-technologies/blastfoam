@@ -66,6 +66,8 @@ Foam::multiPhaseModel::multiPhaseModel
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
+    thermo_.setTotalVolumeFractionPtr(*this);
+
     //- Temporarily Store read density
     volScalarField sumAlpha
     (
@@ -192,11 +194,11 @@ void Foam::multiPhaseModel::postUpdate()
             (
                 fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
                 ==
-                models_.source(alphas_[phasei])
+                modelsPtr_->source(alphas_[phasei])
             );
-            constraints_.constrain(alphaEqn);
+            constraintsPtr_->constrain(alphaEqn);
             alphaEqn.solve();
-            constraints_.constrain(alphas_[phasei]);
+            constraintsPtr_->constrain(alphas_[phasei]);
         }
     }
     if (needUpdate)
@@ -218,11 +220,11 @@ void Foam::multiPhaseModel::postUpdate()
                 fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
               + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
              ==
-                models_.source(alpha, rho)
+                modelsPtr_->source(alpha, rho)
             );
-            constraints_.constrain(alphaRhoEqn);
+            constraintsPtr_->constrain(alphaRhoEqn);
             alphaRhoEqn.solve();
-            constraints_.constrain(rho);
+            constraintsPtr_->constrain(rho);
 
             alphaRhos_[phasei] = alpha*rho;
         }

@@ -171,11 +171,11 @@ void Foam::fluidPhaseModel::postUpdate()
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
         ==
-            models_.source(alpha)
+            modelsPtr_->source(alpha)
         );
-        constraints_.constrain(alphaEqn);
+        constraintsPtr_->constrain(alphaEqn);
         alphaEqn.solve();
-        constraints_.constrain(alpha);
+        constraintsPtr_->constrain(alpha);
     }
 
     phaseModel::postUpdate();
