@@ -39,7 +39,125 @@ Description
 
 namespace Foam
 {
-//     defineTemplateTypeNameAndDebug(Cloud<particle>, 0);
+
+enum positionFormat
+{
+    OLD,
+    NEW,
+    UNKNOWN
+};
+
+positionFormat readCloud
+(
+    const polyMesh& mesh,
+    Cloud<particle>& c,
+    IOPosition<Cloud<particle>>& ioP,
+    IFstream& is
+)
+{
+    // Start the reading of the list
+    // Either read the number or beginning of the list
+    token firstToken(is);
+    if (firstToken.isLabel())
+    {
+        // Read beginning of contents
+        is.readBeginList
+        (
+            "IOPosition<CloudType>::readData(Istream&, CloudType&)"
+        );
+
+    }
+    else if (firstToken.isPunctuation())
+    {
+        if (firstToken.pToken() != token::BEGIN_LIST)
+        {
+            FatalIOErrorInFunction
+            (
+                is
+            )   << "incorrect first token, '(', found "
+                << firstToken.info() << exit(FatalIOError);
+        }
+    }
+    else
+    {
+        FatalIOErrorInFunction
+        (
+            is
+        )   << "incorrect first token, expected <int> or '(', found "
+            << firstToken.info() << exit(FatalIOError);
+    }
+
+    // Read position/coordinates
+    scalarList p(is);
+
+    // Check the format
+    positionFormat format = UNKNOWN;
+    if (p.size() == 4)
+    {
+        format = NEW;
+    }
+    else if (p.size() == 3)
+    {
+        format = OLD;
+    }
+    else
+    {
+        FatalIOError
+            << "Unknown positions format" << endl;
+    }
+
+    label pi = 0;
+    token lastToken(is);
+    while
+    (
+       !(
+            lastToken.isPunctuation()
+         && lastToken.pToken() == token::END_LIST
+        )
+    )
+    {
+        is.putBack(lastToken);
+
+        // Read position only
+        if (format == NEW)
+        {
+            if (pi++ == 0)
+            {
+                c.append
+                (
+                    new particle
+                    (
+                        mesh,
+                        barycentric(p[0], p[1], p[2], p[3]),
+                        readLabel(is),
+                        readLabel(is),
+                        readLabel(is)
+                    )
+                );
+            }
+            else
+            {
+                c.append(new particle(mesh, is, false));
+            }
+        }
+        else
+        {
+            c.append
+            (
+                new particle
+                (
+                    mesh,
+                    pi++ == 0 ? vector(p[0], p[1], p[2]) : vector(is),
+                    readLabel(is)
+                )
+            );
+        }
+        is  >> lastToken;
+    }
+
+    return format;
+}
+
 }
 
 
@@ -97,7 +215,7 @@ int main(int argc, char *argv[])
             // Set time for global database
             runTime.setTime(timeDirs[timei], timei);
 
-            Info<< "Time = " << runTime.timeName() << endl << endl;
+            Info<< "Time = " << runTime.timeName() << endl;
 
             fvMesh mesh
             (
@@ -147,90 +265,61 @@ int main(int argc, char *argv[])
                         false
                     )
                 );
-                IOobject coordinatesIO
-                (
-                    IOobject
-                    (
-                        "coordinates",
-                        runTime.timeName(),
-                        cloud::prefix/cloudDirs[i],
-                        mesh,
-                        IOobject::NO_READ,
-                        IOobject::NO_WRITE,
-                        false
-                    )
-                );
                 word cloudType;
                 IDLList<particle> tmp;
                 Cloud<particle> c(mesh, cloudDirs[i], tmp);
                 IOPosition<Cloud<particle>> ioP(c);
+
+                IFstream is(positionsIO.objectPath());
+                positionsIO.readHeader(is);
+                cloudType = positionsIO.headerClassName();
+
+                positionFormat format = readCloud(mesh, c, ioP, is);
+
+                bool write =
+                    (!revert && (format == NEW))
+                 || (revert && (format == OLD));
+
+                if (write)
                 {
-                    IFstream pis(positionsIO.objectPath());
-                    positionsIO.readHeader(pis);
+                    Info << "\tWriting positions file" << endl;
 
-                    IFstream cis(coordinatesIO.objectPath());
-                    coordinatesIO.readHeader(cis);
+                    OFstream positionsOS(positionsIO.objectPath());
+                    positionsIO.writeHeader
+                    (
+                        positionsOS,
+                        revert
+                      ? cloudType.replaceAll("Cloud", '\0')
+                      : cloudType + "Cloud"
+                    );
 
-                    if (revert)
+                    positionsOS  << c.size() << nl << token::BEGIN_LIST << nl;
+                    forAllConstIter(Cloud<particle>, c, pIter)
                     {
-                        cloudType = coordinatesIO.headerClassName();
+                        if (revert)
+                        {
+                            positionsOS
+                                << pIter().coordinates()
+                                << token::SPACE << pIter().cell()
+                                << token::SPACE << pIter().tetFace()
+                                << token::SPACE << pIter().tetPt()
+                                << nl;
+                        }
+                        else
+                        {
+                            positionsOS
+                                << pIter().position()
+                                << token::SPACE << pIter().cell()
+                                << nl;
+                        }
                     }
-                    else
-                    {
-                        cloudType = positionsIO.headerClassName();
-                    }
-                    ioP.headerClassName() = cloudType;
-
-                    if (revert)
-                    {
-                        ioP.readData(cis, c);
-                    }
-                    else
-                    {
-                        ioP.readData(pis, c);
-                    }
+                    positionsOS  << token::END_LIST << endl;
                 }
-
-                OFstream positionsOS(positionsIO.objectPath());
-                positionsIO.writeHeader
-                (
-                    positionsOS,
-                    revert ? cloudType : cloudType + "Cloud"
-                );
-                OFstream coordinatesOS(coordinatesIO.objectPath());
-                coordinatesIO.writeHeader(coordinatesOS, cloudType);
-
-                positionsOS  << c.size() << nl << token::BEGIN_LIST << nl;
-                coordinatesOS  << c.size() << nl << token::BEGIN_LIST << nl;
-                forAllConstIter(Cloud<particle>, c, pIter)
+                else
                 {
-                    if (revert)
-                    {
-                        positionsOS
-                            << pIter().coordinates()
-                            << token::SPACE << pIter().cell()
-                            << token::SPACE << pIter().tetFace()
-                            << token::SPACE << pIter().tetPt()
-                            << nl;
-                    }
-                    else
-                    {
-                        positionsOS
-                            << pIter().position()
-                            << token::SPACE << pIter().cell()
-                            << nl;
-
-                        coordinatesOS
-                            << pIter().coordinates()
-                            << token::SPACE << pIter().cell()
-                            << token::SPACE << pIter().tetFace()
-                            << token::SPACE << pIter().tetPt()
-                            << nl;
-                    }
+                    Info<< "\tNot writing positions file. Already converted" << endl;
                 }
-                positionsOS  << token::END_LIST << endl;
-                coordinatesOS  << token::END_LIST << endl;
-
+                Info<< endl;
             }
         }
     }
