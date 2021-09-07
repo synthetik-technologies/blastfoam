@@ -16,7 +16,7 @@ FoamFile
 
 particles
 {
-    libs ("libparcels.so");
+    libs ("liblagrangianParcel.so");
     type clouds;
 }
 // ************************************************************************* //

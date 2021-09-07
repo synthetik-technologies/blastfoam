@@ -19,4 +19,7 @@ runApplication extrudeMesh
 #- Run the calc
 runApplication $(getApplication)
 
+#- Conver lagrangian positions
+runApplication convertLagrangianPositions
+
 #------------------------------------------------------------------------------
