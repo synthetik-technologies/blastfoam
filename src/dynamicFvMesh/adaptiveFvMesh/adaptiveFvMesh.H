@@ -220,10 +220,7 @@ protected:
             void mapNewInternalFaces(const labelList& faceMap);
 
             //- Overload update mesh to include other methods
-            virtual void updateMesh(const mapPolyMesh& mpm)
-            {
-                fvMesh::updateMesh(mpm);
-            }
+            virtual void updateMesh(const mapPolyMesh& mpm);
 
 
 
