@@ -72,6 +72,9 @@ class lookupTable2D
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
+    //- Delimiter
+    string delim_ = ",";
+
     //- Is the provided data uniform
     Switch uniformX_;
     Switch uniformY_;

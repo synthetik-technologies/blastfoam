@@ -61,7 +61,6 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
     DynamicList<Tuple2<scalar, scalar>> values;
 
     bool mergeSeparators_=false;
-    string separator_(';');
 
     label i = 0;
     while (is.good())
@@ -82,7 +81,7 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
                 bool found = false;
                 while (!found)
                 {
-                    nPos = line.find(separator_, pos);
+                    nPos = line.find(delim_, pos);
 
                     if ((nPos != std::string::npos) && (nPos - pos == 0))
                     {
@@ -94,7 +93,7 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
                     }
                 }
 
-                nPos = line.find(separator_, pos);
+                nPos = line.find(delim_, pos);
 
                 if (nPos == std::string::npos)
                 {
@@ -114,7 +113,7 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
         {
             while ((pos != std::string::npos) && (n <= ny_))
             {
-                std::size_t nPos = line.find(separator_, pos);
+                std::size_t nPos = line.find(delim_, pos);
 
                 if (nPos == std::string::npos)
                 {
@@ -341,6 +340,11 @@ Foam::lookupTable2D::lookupTable2D
     setMod(modType_, modFunc_, invModFunc_);
     setMod(modXType_, modXFunc_, invModXFunc_);
     setMod(modYType_, modYFunc_, invModYFunc_);
+
+    if (dict.found("delim"))
+    {
+        delim_ = dict.lookup<string>("delim");
+    }
 
     fileName file(dict.lookup<word>("file"));
     readTable(file, data_);
