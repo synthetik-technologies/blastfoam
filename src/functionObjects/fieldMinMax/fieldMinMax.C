@@ -36,6 +36,15 @@ namespace functionObjects
 {
     defineTypeNameAndDebug(fieldMinMax, 0);
     addToRunTimeSelectionTable(functionObject, fieldMinMax, dictionary);
+
+    // Add old name
+    addNamedToRunTimeSelectionTable
+    (
+        functionObject,
+        fieldMinMax,
+        dictionary,
+        fieldMax
+    );
 }
 }
 
