@@ -163,25 +163,14 @@ Foam::tmp<Foam::surfaceVectorField> Foam::phaseFluxScheme::Uf() const
 {
     if (Uf_.valid())
     {
-        return Uf_;
+        return Uf_();
     }
-    return tmp<surfaceVectorField>
-    (
-        new surfaceVectorField
-        (
-            IOobject
-            (
-                "phaseFluxScheme::Uf",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedVector("0", dimVelocity, Zero)
-        )
-    );
+    FatalErrorInFunction
+        << IOobject::groupName("phaseFluxScheme::Uf", this->group())
+        << " has not been set." << nl
+        << abort(FatalError);
+
+    return Uf_();
 }
 
 
@@ -189,25 +178,14 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::pf() const
 {
     if (pf_.valid())
     {
-        return pf_;
+        return pf_();
     }
-    return tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("phaseFluxScheme::pf", this->group()),
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedScalar("0", dimPressure, Zero)
-        )
-    );
+    FatalErrorInFunction
+        << IOobject::groupName("phaseFluxScheme::pf", this->group())
+        << " has not been set." << nl
+        << abort(FatalError);
+
+    return pf_;
 }
 
 
@@ -215,25 +193,14 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::alphaf() const
 {
     if (alphaf_.valid())
     {
-        return alphaf_;
+        return alphaf_();
     }
-    return tmp<surfaceScalarField>
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                IOobject::groupName("phaseFluxScheme::alphaf", this->group()),
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedScalar("0", dimless, Zero)
-        )
-    );
+    FatalErrorInFunction
+        << IOobject::groupName("phaseFluxScheme::alphaf", this->group())
+        << " has not been set." << nl
+        << abort(FatalError);
+
+    return alphaf_;
 }
 
 

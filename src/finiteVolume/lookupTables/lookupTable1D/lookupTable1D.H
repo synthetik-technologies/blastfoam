@@ -53,9 +53,11 @@ namespace Foam
                            Class lookupTable1D Declaration
 \*---------------------------------------------------------------------------*/
 
+template<class Type>
 class lookupTable1D
 {
-// Private data
+protected:
+// Protected data
 
     //- Include definition of modifying functions
     #include "tableFuncs.H"
@@ -65,9 +67,6 @@ class lookupTable1D
 
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
-
-    //- Delimiter
-    string delim_ = ",";
 
     //- Interpolation type
     interpFuncType interpFunc_;
@@ -79,7 +78,7 @@ class lookupTable1D
     scalarField xModValues_;
 
     //- Data
-    scalarField data_;
+    Field<Type> data_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -91,14 +90,11 @@ class lookupTable1D
     void readTable
     (
         const fileName& file,
-        const label xi = 0,
-        const label yi = 1,
-        bool isReal = false
+        const string& delim,
+        const label xi,
+        const label yi,
+        bool isReal
     );
-
-    //- Find bottom of interpolation region, return index and weight between i and i+1
-    inline label bound(const scalar& f) const;
-
 
 
 public:
@@ -113,16 +109,7 @@ public:
         (
             const dictionary& dict,
             const word& xName,
-            const word& yName
-        );
-
-        //- Construct from file
-        lookupTable1D
-        (
-            const fileName& file,
-            const word& mod,
-            const word& xMod,
-            const word& interpolationScheme = "linearClamp"
+            const word& name
         );
 
         //- Construct from data given list of x and data
@@ -130,11 +117,11 @@ public:
         lookupTable1D
         (
             const scalarField& x,
-            const scalarField& data,
-            const word& mod,
+            const Field<Type>& data,
             const word& xMod,
+            const word& mod,
             const word& interpolationScheme,
-            const bool correct = false
+            const bool isReal = true
         );
 
         //- Construct from interpolator from only x values, no data is stored
@@ -143,7 +130,7 @@ public:
             const scalarField& x,
             const word& xMod,
             const word& interpolationScheme,
-            const bool correct = false
+            const bool isReal = true
         );
 
 
@@ -168,25 +155,25 @@ public:
             }
 
             //- Modify by modType
-            scalar mod(const scalar& f) const
+            Type mod(const Type& f) const
             {
                 return modFunc_(f);
             }
 
             //- Modify by invModType
-            scalar invMod(const scalar& f) const
+            Type invMod(const Type& f) const
             {
                 return invModFunc_(f);
             }
 
             //- Modify by modXType
-            scalar modX(const scalar& f) const
+            scalar modX(const scalar f) const
             {
                 return modXFunc_(f);
             }
 
             //- Modify by invModXType
-            scalar invModX(const scalar& f) const
+            scalar invModX(const scalar f) const
             {
                 return modXFunc_(f);
             }
@@ -203,20 +190,8 @@ public:
                 return xModValues_;
             }
 
-            //- Non-const access to modified x values
-            scalarField& xMod()
-            {
-                return xModValues_;
-            }
-
             //- Const access to modified data values
-            const scalarField& data() const
-            {
-                return data_;
-            }
-
-            //- Non-const access to modified data values
-            scalarField& data()
+            const Field<Type>& data() const
             {
                 return data_;
             }
@@ -225,47 +200,60 @@ public:
     // Public functions
 
         //- Update index and weight
-        void update(const scalar& x) const;
+        void update(const scalar x) const;
 
         //- Lookup value
-        scalar lookup(const scalar& x) const;
+        Type lookup(const scalar x) const;
 
         //- Interpolate value using the current index and weight
-        template<class Type>
-        Type interpolate(const Type&, const Type&) const;
+        template<class fType>
+        fType interpolate(const fType&, const fType&) const;
 
         //- Interpolate value using the current index and weight
-        template<template<class> class ListType, class Type>
-        Type interpolate(const scalar, const ListType<Type>&) const;
-
-
-        //- Lookup X given f and y
-        scalar reverseLookup(const scalar& f) const;
+        template<template<class> class ListType, class fType>
+        fType interpolate(const scalar, const ListType<fType>&) const;
 
         //- Return first derivative
-        scalar dFdX(const scalar& x) const;
+        Type dFdX(const scalar x) const;
 
         //- Return second derivative w.r.t. x
-        scalar d2FdX2(const scalar& x) const;
+        Type d2FdX2(const scalar x) const;
 
         //- Set data
         void set
         (
             const scalarField& x,
-            const scalarField& data,
+            const Field<Type>& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
-            const bool inReal
+            const bool isReal
         );
 
-        //- Set data
+        //- Set x
         void setX
         (
             const scalarField& x,
-            const bool inReal = true
+            const word& xMod,
+            const word& interpolationScheme,
+            const bool isReal = true
         );
 
+        //- Set data
+        void setData
+        (
+            const Field<Type>& x,
+            const word& mod,
+            const bool isReal = true
+        );
+
+    //- Read from a given dictionary
+    virtual void read
+    (
+        const dictionary& dict,
+        const word& xName,
+        const word& yName
+    );
 };
 
 
@@ -276,6 +264,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
+    #include "lookupTable1D.C"
     #include "lookupTable1DTemplates.C"
 #endif
 

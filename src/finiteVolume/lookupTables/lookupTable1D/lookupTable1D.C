@@ -29,9 +29,11 @@ License
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
-void Foam::lookupTable1D::readTable
+template<class Type>
+void Foam::lookupTable1D<Type>::readTable
 (
     const fileName& file,
+    const string& delim,
     const label xi,
     const label yi,
     const bool isReal
@@ -61,7 +63,7 @@ void Foam::lookupTable1D::readTable
         {
             continue;
         }
-        line.replaceAll(delim_, " ");
+        line.replaceAll(delim, " ");
         line = '(' + line + ')';
 
         IStringStream isLine(line);
@@ -91,7 +93,8 @@ void Foam::lookupTable1D::readTable
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lookupTable1D::lookupTable1D()
+template<class Type>
+Foam::lookupTable1D<Type>::lookupTable1D()
 :
     modFunc_(nullptr),
     invModFunc_(nullptr),
@@ -103,11 +106,12 @@ Foam::lookupTable1D::lookupTable1D()
 {}
 
 
-Foam::lookupTable1D::lookupTable1D
+template<class Type>
+Foam::lookupTable1D<Type>::lookupTable1D
 (
     const dictionary& dict,
     const word& xName,
-    const word& yName
+    const word& name
 )
 :
     modFunc_(nullptr),
@@ -118,85 +122,19 @@ Foam::lookupTable1D::lookupTable1D
     index_(0),
     f_(0.0)
 {
-    word mod(dict.lookupOrDefault<word>("mod", "none"));
-    word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
-    word interpolationScheme
-    (
-        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
-    );
-    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-
-    setMod(mod, modFunc_, invModFunc_);
-    setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(interpolationScheme, interpFunc_);
-
-    if (dict.found("delim"))
-    {
-        delim_ = dict.lookup<string>("delim");
-    }
-
-    if (dict.found("file"))
-    {
-        fileName file(dict.lookup("file"));
-        label xi(dict.lookupOrDefault<label>(xName + "Col", 0));
-        label yi(dict.lookupOrDefault<label>(yName + "Col", 1));
-        readTable(file, xi, yi, isReal);
-    }
-    else
-    {
-        xValues_ = dict.lookup<scalarField>(xName);
-        xModValues_ = xValues_;
-        data_ = dict.lookup<scalarField>(yName);
-        if (!isReal)
-        {
-            forAll(xValues_, i)
-            {
-                xValues_[i] = invModXFunc_(xValues_[i]);
-            }
-        }
-        else
-        {
-            forAll(xValues_, i)
-            {
-                xModValues_[i] = modXFunc_(xValues_[i]);
-                data_[i] = modFunc_(data_[i]);
-            }
-        }
-    }
+    read(dict, xName, name);
 }
 
 
-Foam::lookupTable1D::lookupTable1D
-(
-    const fileName& file,
-    const word& mod,
-    const word& xMod,
-    const word& interpolationScheme
-)
-:
-    modFunc_(nullptr),
-    invModFunc_(nullptr),
-    modXFunc_(nullptr),
-    invModXFunc_(nullptr),
-    interpFunc_(nullptr),
-    index_(0),
-    f_(0.0)
-{
-    setMod(mod, modFunc_, invModFunc_);
-    setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(interpolationScheme, interpFunc_);
-    readTable(file);
-}
-
-
-Foam::lookupTable1D::lookupTable1D
+template<class Type>
+Foam::lookupTable1D<Type>::lookupTable1D
 (
     const scalarField& x,
-    const scalarField& data,
-    const word& mod,
+    const Field<Type>& data,
     const word& xMod,
+    const word& mod,
     const word& interpolationScheme,
-    const bool correct
+    const bool isReal
 )
 :
     modFunc_(nullptr),
@@ -210,33 +148,17 @@ Foam::lookupTable1D::lookupTable1D
     index_(0),
     f_(0.0)
 {
-    setMod(mod, modFunc_, invModFunc_);
-    setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(interpolationScheme, interpFunc_);
-    if (!correct)
-    {
-        forAll(x, i)
-        {
-            xModValues_[i] = invModXFunc_(x[i]);
-        }
-    }
-    else
-    {
-        forAll(x, i)
-        {
-            xValues_[i] = modXFunc_(x[i]);
-            data_[i] = modFunc_(x[i]);
-        }
-    }
+    set(x, data, xMod, mod, interpolationScheme, isReal);
 }
 
 
-Foam::lookupTable1D::lookupTable1D
+template<class Type>
+Foam::lookupTable1D<Type>::lookupTable1D
 (
     const scalarField& x,
     const word& xMod,
     const word& interpolationScheme,
-    const bool correct
+    const bool isReal
 )
 :
     modFunc_(nullptr),
@@ -244,16 +166,56 @@ Foam::lookupTable1D::lookupTable1D
     modXFunc_(nullptr),
     invModXFunc_(nullptr),
     interpFunc_(nullptr),
-    xValues_(x),
-    xModValues_(x),
+    xValues_(),
+    xModValues_(),
     data_(),
     index_(0),
     f_(0.0)
 {
+    setX(x, xMod, interpolationScheme, isReal);
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::lookupTable1D<Type>::~lookupTable1D()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable1D<Type>::set
+(
+    const scalarField& x,
+    const Field<Type>& data,
+    const word& xMod,
+    const word& mod,
+    const word& interpolationScheme,
+    const bool isReal
+)
+{
+    setX(x, xMod, interpolationScheme, isReal);
+    setData(data, mod, isReal);
+}
+
+template<class Type>
+void Foam::lookupTable1D<Type>::setX
+(
+    const scalarField& x,
+    const word& xMod,
+    const word& interpolationScheme,
+    const bool isReal
+)
+{
     setMod(xMod, modXFunc_, invModXFunc_);
     setInterp(interpolationScheme, interpFunc_);
-    if (!correct)
+
+    if (isReal)
     {
+        xValues_ = x;
+        xModValues_.resize(x.size());
         forAll(x, i)
         {
             xModValues_[i] = modXFunc_(x[i]);
@@ -261,6 +223,8 @@ Foam::lookupTable1D::lookupTable1D
     }
     else
     {
+        xModValues_ = x;
+        xValues_.resize(x.size());
         forAll(x, i)
         {
             xValues_[i] = invModXFunc_(x[i]);
@@ -269,15 +233,30 @@ Foam::lookupTable1D::lookupTable1D
 }
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+template<class Type>
+void Foam::lookupTable1D<Type>::setData
+(
+    const Field<Type>& data,
+    const word& mod,
+    const bool isReal
+)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    data_ = data;
 
-Foam::lookupTable1D::~lookupTable1D()
-{}
+    if (!isReal)
+    {
+        data_ = data;
+        forAll(data_, i)
+        {
+            data_[i] = invModFunc_(data[i]);
+        }
+    }
+}
 
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::lookupTable1D::update(const scalar& x) const
+template<class Type>
+void Foam::lookupTable1D<Type>::update(const scalar x) const
 {
     if (x <= xValues_[0])
     {
@@ -304,7 +283,8 @@ void Foam::lookupTable1D::update(const scalar& x) const
 }
 
 
-Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
+template<class Type>
+Type Foam::lookupTable1D<Type>::lookup(const scalar x) const
 {
 #ifdef FULL_DEBUG
     if (!invModFunc_)
@@ -320,53 +300,8 @@ Foam::scalar Foam::lookupTable1D::lookup(const scalar& x) const
 }
 
 
-Foam::scalar
-Foam::lookupTable1D::reverseLookup(const scalar& yin) const
-{
-#ifdef FULL_DEBUG
-    if (!modFunc_)
-    {
-        FatalErrorInFunction
-            << "Try to interpolate data that has not been set."
-            << abort(FatalError);
-    }
-#endif
-
-    scalar y(modFunc_(yin));
-    if (y < data_[0])
-    {
-        index_ = 0;
-    }
-    if (y > data_.last())
-    {
-        index_ = data_.size() - 2;
-    }
-    else
-    {
-        for (index_ = 0; index_ < data_.size(); index_++)
-        {
-            if (y < data_[index_])
-            {
-                index_--;
-                break;
-            }
-        }
-    }
-
-    const scalar& ym(data_[index_]);
-    const scalar& yp(data_[index_+1]);
-
-    f_ = interpFunc_(y, ym, yp);
-
-    return invModXFunc_
-    (
-        xModValues_[index_]
-      + f_*(xModValues_[index_+1] - xModValues_[index_])
-    );
-}
-
-
-Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
+template<class Type>
+Type Foam::lookupTable1D<Type>::dFdX(const scalar x) const
 {
 #ifdef FULL_DEBUG
     if (!invModFunc_)
@@ -388,7 +323,8 @@ Foam::scalar Foam::lookupTable1D::dFdX(const scalar& x) const
 }
 
 
-Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
+template<class Type>
+Type Foam::lookupTable1D<Type>::d2FdX2(const scalar x) const
 {
 #ifdef FULL_DEBUG
     if (!invModFunc_)
@@ -418,66 +354,56 @@ Foam::scalar Foam::lookupTable1D::d2FdX2(const scalar& x) const
 }
 
 
-void Foam::lookupTable1D::set
+template<class Type>
+void Foam::lookupTable1D<Type>::read
 (
-    const scalarField& x,
-    const scalarField& data,
-    const word& mod,
-    const word& xMod,
-    const word& interpolationScheme,
-    const bool inReal
+    const dictionary& dict,
+    const word& xName,
+    const word& name
 )
 {
+    word mod(dict.lookupOrDefault<word>("mod", "none"));
+    word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
+    word interpolationScheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
+    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+
     setMod(mod, modFunc_, invModFunc_);
     setMod(xMod, modXFunc_, invModXFunc_);
     setInterp(interpolationScheme, interpFunc_);
-    if (inReal)
+
+    if (dict.found("file"))
     {
-        xValues_ = x;
-        xModValues_.resize(x.size());
-        data_ = data;
-        forAll(x, i)
-        {
-            xModValues_[i] = modXFunc_(x[i]);
-        }
+        readTable
+        (
+            dict.lookup<fileName>("file"),
+            dict.lookupOrDefault<string>("delim", ","),
+            dict.lookupOrDefault<label>(xName + "Col", 0),
+            dict.lookupOrDefault<label>(name + "Col", 1),
+            isReal
+        );
     }
     else
     {
-        xModValues_ = x;
-        xValues_.resize(x.size());
-        data_ = data;
-        forAll(x, i)
+        xValues_ = dict.lookup<scalarField>(xName);
+        xModValues_ = xValues_;
+        data_ = dict.lookup<scalarField>(name);
+        if (!isReal)
         {
-            xValues_[i] = invModXFunc_(x[i]);
-            data_[i] = invModFunc_(data[i]);
+            forAll(xValues_, i)
+            {
+                xValues_[i] = invModXFunc_(xValues_[i]);
+            }
         }
-    }
-}
-
-void Foam::lookupTable1D::setX
-(
-    const scalarField& x,
-    const bool inReal
-)
-{
-    data_.clear();
-
-    if (inReal)
-    {
-        xValues_ = x;
-        xModValues_.resize(x.size());
-        forAll(x, i)
+        else
         {
-            xModValues_[i] = modXFunc_(x[i]);
-        }
-    }
-    else
-    {
-        xModValues_ = x;
-        xValues_.resize(x.size());
-        forAll(x, i)
-        {
-            xValues_[i] = invModXFunc_(x[i]);
+            forAll(xValues_, i)
+            {
+                xModValues_[i] = modXFunc_(xValues_[i]);
+                data_[i] = modFunc_(data_[i]);
+            }
         }
     }
 }

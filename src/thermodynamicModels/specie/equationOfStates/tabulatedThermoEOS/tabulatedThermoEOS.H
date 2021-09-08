@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTable2D.H"
+#include "scalarLookupTable2D.H"
 
 namespace Foam
 {
@@ -92,10 +92,10 @@ class tabulatedThermoEOS
 // Private data
 
     //- Pressure lookup table
-    lookupTable2D pTable_;
+    scalarLookupTable2D pTable_;
 
     //- Temperature lookup table
-    lookupTable2D TTable_;
+    scalarLookupTable2D TTable_;
 
 
 public:

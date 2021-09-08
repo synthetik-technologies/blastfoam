@@ -48,7 +48,7 @@ SourceFiles
 
 #include "autoPtr.H"
 #include "MGEquationOfState.H"
-#include "lookupTable1D.H"
+#include "scalarLookupTable1D.H"
 
 namespace Foam
 {
@@ -114,7 +114,7 @@ class Tillotson
     scalar pCav_;
 
     //- Stored cavitation energies
-    lookupTable1D EcTable_;
+    scalarLookupTable1D EcTable_;
 
 
 public:

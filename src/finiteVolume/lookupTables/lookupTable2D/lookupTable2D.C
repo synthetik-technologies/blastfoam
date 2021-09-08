@@ -29,21 +29,13 @@ License
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
-Foam::scalar Foam::lookupTable2D::readValue(const List<string>& split) const
-{
-    if (0 >= split.size())
-    {
-        FatalErrorInFunction
-            << "No column " << 0 << " in "
-            << split << endl
-            << exit(FatalError);
-    }
-
-    return readScalar(IStringStream(split[0])());
-}
-
-
-void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& data)
+template<class Type>
+void Foam::lookupTable2D<Type>::readTable
+(
+    const fileName& file,
+    const string& delim,
+    Field<Field<Type>>& data
+)
 {
     fileName fNameExpanded(file);
     fNameExpanded.expand();
@@ -60,91 +52,44 @@ void Foam::lookupTable2D::readTable(const fileName& file, Field<scalarField>& da
 
     DynamicList<Tuple2<scalar, scalar>> values;
 
-    bool mergeSeparators_=false;
-
     label i = 0;
     while (is.good())
     {
         string line;
         is.getLine(line);
 
-        label n = 0;
-        std::size_t pos = 0;
-        DynamicList<string> split;
+        string lineEntry = line;
+        lineEntry.replaceAll(delim, " ");
+        lineEntry = '(' + lineEntry + ')';
+        IStringStream iss(lineEntry);
 
-        if (mergeSeparators_)
-        {
-            std::size_t nPos = 0;
+        List<Type> vals(iss);
 
-            while ((pos != std::string::npos) && (n <= ny_))
-            {
-                bool found = false;
-                while (!found)
-                {
-                    nPos = line.find(delim_, pos);
-
-                    if ((nPos != std::string::npos) && (nPos - pos == 0))
-                    {
-                        pos = nPos + 1;
-                    }
-                    else
-                    {
-                        found = true;
-                    }
-                }
-
-                nPos = line.find(delim_, pos);
-
-                if (nPos == std::string::npos)
-                {
-                    split.append(line.substr(pos));
-                    pos = nPos;
-                    n++;
-                }
-                else
-                {
-                    split.append(line.substr(pos, nPos - pos));
-                    pos = nPos + 1;
-                    n++;
-                }
-            }
-        }
-        else
-        {
-            while ((pos != std::string::npos) && (n <= ny_))
-            {
-                std::size_t nPos = line.find(delim_, pos);
-
-                if (nPos == std::string::npos)
-                {
-                    split.append(line.substr(pos));
-                    pos = nPos;
-                    n++;
-                }
-                else
-                {
-                    split.append(line.substr(pos, nPos - pos));
-                    pos = nPos + 1;
-                    n++;
-                }
-            }
-        }
-
-        if (split.size() <= 1)
+        if (vals.size() <= 1)
         {
             break;
         }
-        for (label j = 0; j < ny_; j++)
+
+        if (vals.size() != yValues_.size())
         {
-            data[i][j] = readScalar(IStringStream(split[j])());
+            FatalErrorInFunction
+                << "Incompatible table rows" << endl
+                << line
+                << abort(FatalError);
+        }
+        forAll(vals, j)
+        {
+            data[i][j] = vals[j];
         }
         i++;
     }
 }
 
-void Foam::lookupTable2D::findUniformIndexes
+
+template<class Type>
+void Foam::lookupTable2D<Type>::findUniformIndexes
 (
-    const scalar& xy,
+    const scalar xy,
     const scalarField& XY,
     label& IJ,
     scalar& f
@@ -174,9 +119,10 @@ void Foam::lookupTable2D::findUniformIndexes
 }
 
 
-void Foam::lookupTable2D::findNonuniformIndexes
+template<class Type>
+void Foam::lookupTable2D<Type>::findNonuniformIndexes
 (
-    const scalar& xy,
+    const scalar xy,
     const scalarField& XY,
     label& IJ,
     scalar& f
@@ -204,83 +150,12 @@ void Foam::lookupTable2D::findNonuniformIndexes
 }
 
 
-Foam::labelList Foam::lookupTable2D::boundi
-(
-    const scalar& f,
-    const Field<scalarField>& data,
-    const label& j
-) const
-{
-    if (f < data[0][j])
-    {
-        return labelList(1, 0);
-    }
-
-    labelList I(data.size());
-    label nFound = 0;
-    for (label i = 0; i < data.size() - 1; i++)
-    {
-        if
-        (
-            f > data[i][j]
-         && f < data[i][j+1]
-         && f > data[i+1][j]
-         && f < data[i+1][j+1]
-        )
-        {
-            I[nFound++] = i;
-        }
-    }
-    if (!nFound)
-    {
-        return labelList(1, data.size() - 2);
-    }
-    I.resize(nFound);
-    return I;
-}
-
-
-Foam::labelList Foam::lookupTable2D::boundj
-(
-    const scalar& f,
-    const Field<scalarField>& data,
-    const label& i
-) const
-{
-    if (data[i][0] > f)
-    {
-        return labelList(1, 0);
-    }
-
-    labelList J(data[i].size());
-    label nFound = 0;
-    for (label j = 0; j < data[i].size() - 1; j++)
-    {
-        if
-        (
-            f > data[i][j]
-         && f < data[i+1][j]
-         && f > data[i][j+1]
-         && f < data[i+1][j+1]
-        )
-        {
-            J[nFound++] = j;
-        }
-    }
-    if (!nFound)
-    {
-        return labelList(1, data[i].size() - 2);
-    }
-    J.resize(nFound);
-    return J;
-}
-
-
-Foam::scalar Foam::lookupTable2D::getValue
+template<class Type>
+Type Foam::lookupTable2D<Type>::getValue
 (
     const label ij,
-    const scalar& f,
-    const scalarField& xy
+    const scalar f,
+    const Field<Type>& xy
 ) const
 {
     if (ij >= xy.size())
@@ -292,7 +167,8 @@ Foam::scalar Foam::lookupTable2D::getValue
 }
 
 
-bool Foam::lookupTable2D::checkUniform(const scalarField& xy) const
+template<class Type>
+bool Foam::lookupTable2D<Type>::checkUniform(const scalarField& xy) const
 {
     scalar dxy = xy[1] - xy[0];
 
@@ -309,201 +185,192 @@ bool Foam::lookupTable2D::checkUniform(const scalarField& xy) const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::lookupTable2D::lookupTable2D
+template<class Type>
+Foam::lookupTable2D<Type>::lookupTable2D()
+:
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    modYFunc_(nullptr),
+    invModYFunc_(nullptr),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    xValues_(),
+    yValues_(),
+    findXIndex_(nullptr),
+    findYIndex_(nullptr)
+{}
+
+template<class Type>
+Foam::lookupTable2D<Type>::lookupTable2D
 (
     const dictionary& dict,
     const word& xName,
-    const word& yName
+    const word& yName,
+    const word& name
 )
 :
-    modType_(dict.lookup("mod")),
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXType_(dict.lookup(xName + "Mod")),
-    modXFunc_(NULL),
-    invModXFunc_(NULL),
-    modYType_(dict.lookup(yName + "Mod")),
-    modYFunc_(NULL),
-    invModYFunc_(NULL),
-    uniformX_(dict.lookupOrDefault(xName + "Uniform", true)),
-    uniformY_(dict.lookupOrDefault(yName + "Uniform", true)),
-    nx_(dict.lookup<label>("n" + xName)),
-    ny_(dict.lookup<label>("n" + yName)),
-    data_(nx_, scalarField(ny_, 0.0)),
-    xMod_(nx_, 0.0),
-    yMod_(ny_, 0.0),
-    x_(nx_, 0.0),
-    y_(ny_, 0.0),
-    findXIndex_(NULL),
-    findYIndex_(NULL)
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    modYFunc_(nullptr),
+    invModYFunc_(nullptr),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    xValues_(),
+    yValues_(),
+    findXIndex_(nullptr),
+    findYIndex_(nullptr)
 {
-    setMod(modType_, modFunc_, invModFunc_);
-    setMod(modXType_, modXFunc_, invModXFunc_);
-    setMod(modYType_, modYFunc_, invModYFunc_);
+    read(dict, xName, yName, name);
+}
 
-    if (dict.found("delim"))
+
+template<class Type>
+Foam::lookupTable2D<Type>::lookupTable2D
+(
+    const scalarField& x,
+    const scalarField& y,
+    const Field<Field<Type>>& data,
+    const word& modXType,
+    const word& modYType,
+    const word& modType,
+    const bool isReal
+)
+:
+    modFunc_(nullptr),
+    invModFunc_(nullptr),
+    modXFunc_(nullptr),
+    invModXFunc_(nullptr),
+    modYFunc_(nullptr),
+    invModYFunc_(nullptr),
+    data_(data),
+    xModValues_(x),
+    yModValues_(y),
+    xValues_(x),
+    yValues_(y),
+    findXIndex_(nullptr),
+    findYIndex_(nullptr)
+{
+    set(x, y, data, modXType, modYType, modType, isReal);
+}
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::lookupTable2D<Type>::~lookupTable2D()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::lookupTable2D<Type>::set
+(
+    const scalarField& x,
+    const scalarField& y,
+    const Field<Field<Type>>& data,
+    const word& modXType,
+    const word& modYType,
+    const word& modType,
+    const bool isReal
+)
+{
+    setX(x, modXType, isReal);
+    setY(y, modYType, isReal);
+    setData(data, modType, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setX
+(
+    const scalarField& x,
+    const word& modXType,
+    const bool isReal
+)
+{
+    setMod(modXType, modXFunc_, invModXFunc_);
+
+    if (isReal)
     {
-        delim_ = dict.lookup<string>("delim");
+        forAll(xValues_, i)
+        {
+            xValues_[i] = invModXFunc_(xModValues_[i]);
+        }
+    }
+    else
+    {
+        forAll(xValues_, i)
+        {
+            xModValues_[i] = modXFunc_(xValues_[i]);
+        }
     }
 
-    fileName file(dict.lookup<word>("file"));
-    readTable(file, data_);
-
-    if (uniformX_)
+    if (checkUniform(xModValues_))
     {
-        scalar dx(dict.lookup<scalar>("d" + xName));
-        scalar minx(dict.lookup<scalar>("min" + xName));
-        forAll(xMod_, i)
-        {
-            xMod_[i] = minx + i*dx;
-        }
         findXIndex_ = &lookupTable2D::findUniformIndexes;
     }
     else
     {
-        xMod_ = dict.lookup<scalarField>(xName);
         findXIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
+}
 
-    if (uniformY_)
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setY
+(
+    const scalarField& y,
+    const word& modYType,
+    const bool isReal
+)
+{
+    setMod(modYType, modYFunc_, invModYFunc_);
+
+    if (isReal)
     {
-        scalar dy(dict.lookup<scalar>("d" + yName));
-        scalar miny(dict.lookup<scalar>("min" + yName));
-        forAll(yMod_, j)
+        forAll(yValues_, j)
         {
-            yMod_[j] = miny + dy*j;
+            yValues_[j] = invModYFunc_(yModValues_[j]);
         }
+    }
+    else
+    {
+        forAll(yValues_, j)
+        {
+            yModValues_[j] = modYFunc_(yValues_[j]);
+        }
+    }
+
+    if (checkUniform(yModValues_))
+    {
         findYIndex_ = &lookupTable2D::findUniformIndexes;
     }
     else
     {
-        yMod_ = dict.lookup<scalarField>(yName);
         findYIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
-
-    forAll(x_, i)
-    {
-        x_[i] = invModXFunc_(xMod_[i]);
-    }
-    forAll(y_, j)
-    {
-        y_[j] = invModYFunc_(yMod_[j]);
-    }
-}
-
-Foam::lookupTable2D::lookupTable2D
-(
-    const fileName& file,
-    const word& modType,
-    const word& modXType,
-    const word& modYType,
-    const label nx,
-    const label ny,
-    const scalar& xMin,
-    const scalar& dx,
-    const scalar& yMin,
-    const scalar& dy
-)
-:
-    modType_(modType),
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXType_(modXType),
-    modXFunc_(NULL),
-    invModXFunc_(NULL),
-    modYType_(modYType),
-    modYFunc_(NULL),
-    invModYFunc_(NULL),
-    uniformX_(true),
-    uniformY_(true),
-    nx_(nx),
-    ny_(ny),
-    data_(nx_, scalarField(ny_, 0.0)),
-    xMod_(nx_, 0.0),
-    yMod_(ny_, 0.0),
-    x_(nx_, 0.0),
-    y_(ny_, 0.0),
-    findXIndex_(NULL),
-    findYIndex_(NULL)
-{
-    setMod(modType, modFunc_, invModFunc_);
-    setMod(modXType, modXFunc_, invModXFunc_);
-    setMod(modYType, modYFunc_, invModYFunc_);
-
-    readTable(file, data_);
-
-    forAll(xMod_, i)
-    {
-        xMod_[i] = xMin + i*dx;
-        x_[i] = invModXFunc_(xMod_[i]);
-    }
-    findXIndex_ = &lookupTable2D::findUniformIndexes;
-
-    forAll(yMod_, j)
-    {
-        yMod_[j] = yMin + dy*j;
-        y_[j] = invModYFunc_(yMod_[j]);
-    }
-    findYIndex_ = &lookupTable2D::findUniformIndexes;
 }
 
 
-Foam::lookupTable2D::lookupTable2D
+template<class Type>
+void Foam::lookupTable2D<Type>::setData
 (
-    const Field<scalarField>& data,
-    const scalarField& x,
-    const scalarField& y,
+    const Field<Field<Type>>& data,
     const word& modType,
-    const word& modXType,
-    const word& modYType,
-    const bool modified
+    const bool isReal
 )
-:
-    modType_(modType),
-    modFunc_(NULL),
-    invModFunc_(NULL),
-    modXType_(modXType),
-    modXFunc_(NULL),
-    invModXFunc_(NULL),
-    modYType_(modYType),
-    modYFunc_(NULL),
-    invModYFunc_(NULL),
-    nx_(data.size()),
-    ny_(data[0].size()),
-    data_(data),
-    xMod_(modified ? x : scalarField(nx_, 0)),
-    yMod_(modified ? y : scalarField(ny_, 0)),
-    x_(!modified ? x : scalarField(nx_, 0)),
-    y_(!modified ? y : scalarField(ny_, 0)),
-    findXIndex_(NULL),
-    findYIndex_(NULL)
 {
     setMod(modType, modFunc_, invModFunc_);
-    setMod(modXType, modXFunc_, invModXFunc_);
-    setMod(modYType, modYFunc_, invModYFunc_);
+    data_ = data;
 
-    if (modified)
+    if (!isReal)
     {
-        forAll(x_, i)
-        {
-            x_[i] = invModXFunc_(xMod_[i]);
-        }
-        forAll(y_, j)
-        {
-            y_[j] = invModYFunc_(yMod_[j]);
-        }
-    }
-    else
-    {
-        forAll(x_, i)
-        {
-            xMod_[i] = modXFunc_(x_[i]);
-        }
-        forAll(y_, j)
-        {
-            yMod_[j] = modYFunc_(y_[j]);
-        }
-
         forAll(data_, i)
         {
             forAll(data_[i], j)
@@ -512,41 +379,15 @@ Foam::lookupTable2D::lookupTable2D
             }
         }
     }
-
-    uniformX_ = checkUniform(xMod_);
-    uniformY_ = checkUniform(yMod_);
-
-    if (uniformX_)
-    {
-        findXIndex_ = &lookupTable2D::findUniformIndexes;
-    }
-    else
-    {
-        findXIndex_ = &lookupTable2D::findNonuniformIndexes;
-    }
-
-    if (uniformY_)
-    {
-        findYIndex_ = &lookupTable2D::findUniformIndexes;
-    }
-    else
-    {
-        findYIndex_ = &lookupTable2D::findNonuniformIndexes;
-    }
 }
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::lookupTable2D::~lookupTable2D()
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::Field<Foam::scalarField>> Foam::lookupTable2D::realData() const
+template<class Type>
+Foam::tmp<Foam::Field<Foam::Field<Type>>>
+Foam::lookupTable2D<Type>::realData() const
 {
-    tmp<Field<scalarField>> tmpf(new Field<scalarField>(data_));
-    Field<scalarField>& f = tmpf.ref();
+    tmp<Field<Field<Type>>> tmpf(new Field<Field<Type>>(data_));
+    Field<Field<Type>>& f = tmpf.ref();
     forAll(f, i)
     {
         forAll(f[i], j)
@@ -558,237 +399,288 @@ Foam::tmp<Foam::Field<Foam::scalarField>> Foam::lookupTable2D::realData() const
 }
 
 
-Foam::scalar Foam::lookupTable2D::lookup
-(
-    const scalar& x,
-    const scalar& y
-) const
+template<class Type>
+void Foam::lookupTable2D<Type>::update(const scalar x, const scalar y) const
 {
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
+    findXIndex_(modXFunc_(x), xModValues_, i_, fx_);
+    findYIndex_(modYFunc_(y), yModValues_, j_, fy_);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::updateX(const scalar x) const
+{
+    findXIndex_(modXFunc_(x), xModValues_, i_, fx_);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::updateY(const scalar y) const
+{
+    findYIndex_(modYFunc_(y), yModValues_, j_, fy_);
+}
+
+
+template<class Type>
+Type Foam::lookupTable2D<Type>::lookup(const scalar x, const scalar y) const
+{
+    update(x, y);
     return
         invModFunc_
         (
-            data_[i][j]*fx*fy
-          + data_[i+1][j]*(1.0 - fx)*fy
-          + data_[i][j+1]*fx*(1.0 - fy)
-          + data_[i+1][j+1]*(1.0 - fx)*(1.0 - fy)
+            data_[i_][j_]*fx_*fy_
+          + data_[i_+1][j_]*(1.0 - fx_)*fy_
+          + data_[i_][j_+1]*fx_*(1.0 - fy_)
+          + data_[i_+1][j_+1]*(1.0 - fx_)*(1.0 - fy_)
         );
 }
 
-Foam::scalar
-Foam::lookupTable2D::reverseLookupY(const scalar& fin, const scalar& x) const
+
+template<class Type>
+Type Foam::lookupTable2D<Type>::dFdX(const scalar x, const scalar y) const
 {
-    scalar f(modFunc_(fin));
-    label i;
-    scalar fx;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    labelList Js(boundj(f, data_, i));
+    update(x, y);
 
-    if (Js.size() == 1)
-    {
-        label j = Js[0];
-        const scalar& mm(data_[i][j]);
-        const scalar& pm(data_[i+1][j]);
-        const scalar& mp(data_[i][j+1]);
-        const scalar& pp(data_[i+1][j+1]);
-        scalar fy =
-            (f - fx*mp + fx*pp - pp)
-           /(fx*mm - fx*mp - fx*pm + fx*pp + pm - pp);
-        return invModYFunc_(getValue(j, 1.0 - fy, yMod_));
-    }
-
-    //- If multiple indicies meet criteria, check for closest
-    scalarList yTrys(Js.size());
-    scalarList errors(Js.size(), great);
-    forAll(Js, J)
-    {
-        label j = Js[J];
-        const scalar& mm(data_[i][j]);
-        const scalar& pm(data_[i+1][j]);
-        const scalar& mp(data_[i][j+1]);
-        const scalar& pp(data_[i+1][j+1]);
-        scalar fy =
-            (f - fx*mp + fx*pp - pp)
-           /(fx*mm - fx*mp - fx*pm + fx*pp + pm - pp);
-        yTrys[J] = invModYFunc_(getValue(j, 1.0 - fy, yMod_));
-        errors[J] = mag(fin - lookup(x, yTrys[j]));
-    }
-    label j = findMin(errors);
-    return yTrys[j];
-}
-
-
-Foam::scalar
-Foam::lookupTable2D::reverseLookupX(const scalar& fin, const scalar& y) const
-{
-    scalar f(modFunc_(fin));
-    label j;
-    scalar fy;
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
-    labelList Is(boundi(f, data_, j));
-
-    if (Is.size() == 1)
-    {
-        label i = Is[0];
-        const scalar& mm(data_[i][j]);
-        const scalar& pm(data_[i+1][j]);
-        const scalar& mp(data_[i][j+1]);
-        const scalar& pp(data_[i+1][j+1]);
-        scalar fx =
-            (f - pm*fy - pp*(1.0 - fy))
-           /(mm*fy + mp*(1.0 - fy) - (pm*fy + pp*(1.0 - fy)));
-        return invModXFunc_(getValue(i, 1.0 - fx, xMod_));
-    }
-
-    //- If multiple indicies meet criteria, check for closest
-    scalarList xTrys(Is.size());
-    scalarList errors(Is.size(), great);
-    forAll(Is, I)
-    {
-        label i = Is[I];
-        const scalar& mm(data_[i][j]);
-        const scalar& pm(data_[i+1][j]);
-        const scalar& mp(data_[i][j+1]);
-        const scalar& pp(data_[i+1][j+1]);
-        scalar fx =
-            (f - pm*fy - pp*(1.0 - fy))
-           /(mm*fy + mp*(1.0 - fy) - (pm*fy + pp*(1.0 - fy)));
-        xTrys[I] = invModXFunc_(getValue(i, 1.0 - fx, xMod_));
-        errors[I] = mag(fin - lookup(xTrys[I], y));
-    }
-    label i = findMin(errors);
-    return xTrys[i];
-}
-
-
-Foam::scalar Foam::lookupTable2D::dFdX(const scalar& x, const scalar& y) const
-{
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
-
-    scalar mm(data_[i][j]);
-    scalar pm(data_[i+1][j]);
-    scalar mp(data_[i][j+1]);
-    scalar pp(data_[i+1][j+1]);
+    const Type& mm(data_[i_][j_]);
+    const Type& pm(data_[i_+1][j_]);
+    const Type& mp(data_[i_][j_+1]);
+    const Type& pp(data_[i_+1][j_+1]);
 
     return
         (
-            invModFunc_(pm*fy + pp*(1.0 - fy))
-          - invModFunc_(mm*fy + mp*(1.0 - fy))
-        )/(x_[i+1] - x_[i]);
+            invModFunc_(pm*fy_ + pp*(1.0 - fy_))
+          - invModFunc_(mm*fy_ + mp*(1.0 - fy_))
+        )/(xValues_[i_+1] - xValues_[i_]);
 }
 
-Foam::scalar Foam::lookupTable2D::dFdY(const scalar& x, const scalar& y) const
-{
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
 
-    scalar mm(data_[i][j]);
-    scalar pm(data_[i+1][j]);
-    scalar mp(data_[i][j+1]);
-    scalar pp(data_[i+1][j+1]);
+template<class Type>
+Type Foam::lookupTable2D<Type>::dFdY(const scalar x, const scalar y) const
+{
+    update(x, y);
+
+    const Type& mm(data_[i_][j_]);
+    const Type& pm(data_[i_+1][j_]);
+    const Type& mp(data_[i_][j_+1]);
+    const Type& pp(data_[i_+1][j_+1]);
 
     return
         (
-            invModFunc_(mp*fx + pp*(1.0 - fx))
-          - invModFunc_(mm*fx + pm*(1.0 - fx))
-        )/(y_[j+1] - y_[j]);
+            invModFunc_(mp*fx_ + pp*(1.0 - fx_))
+          - invModFunc_(mm*fx_ + pm*(1.0 - fx_))
+        )/(yValues_[j_+1] - yValues_[j_]);
 }
 
-Foam::scalar Foam::lookupTable2D::d2FdX2(const scalar& x, const scalar& y) const
-{
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
 
-    if (i == 0)
+template<class Type>
+Type Foam::lookupTable2D<Type>::d2FdX2(const scalar x, const scalar y) const
+{
+    update(x, y);
+
+    if (i_ == 0)
     {
-        i++;
+        i_++;
     }
 
-    scalar gmm(invModFunc_(data_[i-1][j]));
-    scalar gm(invModFunc_(data_[i][j]));
-    scalar gpm(invModFunc_(data_[i+1][j]));
+    const Type gmm(invModFunc_(data_[i_-1][j_]));
+    const Type gm(invModFunc_(data_[i_][j_]));
+    const Type gpm(invModFunc_(data_[i_+1][j_]));
 
-    scalar gmp(invModFunc_(data_[i-1][j+1]));
-    scalar gp(invModFunc_(data_[i][j+1]));
-    scalar gpp(invModFunc_(data_[i+1][j+1]));
+    const Type gmp(invModFunc_(data_[i_-1][j_+1]));
+    const Type gp(invModFunc_(data_[i_][j_+1]));
+    const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& xm(x_[i-1]);
-    const scalar& xi(x_[i]);
-    const scalar& xp(x_[i+1]);
+    const scalar& xm(xValues_[i_-1]);
+    const scalar& xi(xValues_[i_]);
+    const scalar& xp(xValues_[i_+1]);
 
-    scalar gPrimepm((gpm - gm)/(xp - xi));
-    scalar gPrimemm((gm - gmm)/(xi - xm));
-    scalar gPrimepp((gpp - gp)/(xp - xi));
-    scalar gPrimemp((gp - gmp)/(xi - xm));
+    const Type gPrimepm((gpm - gm)/(xp - xi));
+    const Type gPrimemm((gm - gmm)/(xi - xm));
+    const Type gPrimepp((gpp - gp)/(xp - xi));
+    const Type gPrimemp((gp - gmp)/(xi - xm));
 
     return
-        fy*(gPrimepm - gPrimemm)/(0.5*(xp - xm))
-      + (1.0 - fy)*(gPrimepp - gPrimemp)/(0.5*(xp - xm));
+        fy_*(gPrimepm - gPrimemm)/(0.5*(xp - xm))
+      + (1.0 - fy_)*(gPrimepp - gPrimemp)/(0.5*(xp - xm));
 }
 
-Foam::scalar Foam::lookupTable2D::d2FdY2(const scalar& x, const scalar& y) const
-{
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
 
-    if (j == 0)
+template<class Type>
+Type Foam::lookupTable2D<Type>::d2FdY2(const scalar x, const scalar y) const
+{
+    update(x, y);
+
+    if (j_ == 0)
     {
-        j++;
+        j_++;
     }
 
-    scalar gmm(invModFunc_(data_[i][j-1]));
-    scalar gm(invModFunc_(data_[i][j]));
-    scalar gmp(invModFunc_(data_[i][j+1]));
+    const Type gmm(invModFunc_(data_[i_][j_-1]));
+    const Type gm(invModFunc_(data_[i_][j_]));
+    const Type gmp(invModFunc_(data_[i_][j_+1]));
 
-    scalar gpm(invModFunc_(data_[i+1][j-1]));
-    scalar gp(invModFunc_(data_[i+1][j]));
-    scalar gpp(invModFunc_(data_[i+1][j+1]));
+    const Type gpm(invModFunc_(data_[i_+1][j_-1]));
+    const Type gp(invModFunc_(data_[i_+1][j_]));
+    const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& ym(y_[j-1]);
-    const scalar& yi(y_[j]);
-    const scalar& yp(y_[j+1]);
+    const scalar& ym(yValues_[j_-1]);
+    const scalar& yi(yValues_[j_]);
+    const scalar& yp(yValues_[j_+1]);
 
-    scalar gPrimemp((gmp - gm)/(yp - yi));
-    scalar gPrimemm((gm - gmm)/(yi - ym));
-    scalar gPrimepp((gpp - gp)/(yp - yi));
-    scalar gPrimepm((gp - gpm)/(yi - ym));
+    const Type gPrimemp((gmp - gm)/(yp - yi));
+    const Type gPrimemm((gm - gmm)/(yi - ym));
+    const Type gPrimepp((gpp - gp)/(yp - yi));
+    const Type gPrimepm((gp - gpm)/(yi - ym));
 
     return
-        fx*(gPrimemp - gPrimemm)/(0.5*(yp - ym))
-      + (1.0 - fx)*(gPrimepp - gPrimepm)/(0.5*(yp - ym));
+        fx_*(gPrimemp - gPrimemm)/(0.5*(yp - ym))
+      + (1.0 - fx_)*(gPrimepp - gPrimepm)/(0.5*(yp - ym));
 }
 
-Foam::scalar Foam::lookupTable2D::d2FdXdY(const scalar& x, const scalar& y) const
+
+template<class Type>
+Type Foam::lookupTable2D<Type>::d2FdXdY(const scalar x, const scalar y) const
 {
-    scalar fx, fy;
-    label i, j;
-    findXIndex_(modXFunc_(x), xMod_, i, fx);
-    findYIndex_(modYFunc_(y), yMod_, j, fy);
+    update(x, y);
 
-    scalar gmm(invModFunc_(data_[i][j]));
-    scalar gmp(invModFunc_(data_[i][j+1]));
-    scalar gpm(invModFunc_(data_[i+1][j]));
-    scalar gpp(invModFunc_(data_[i+1][j+1]));
+    const Type gmm(invModFunc_(data_[i_][j_]));
+    const Type gmp(invModFunc_(data_[i_][j_+1]));
+    const Type gpm(invModFunc_(data_[i_+1][j_]));
+    const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& xm(x_[i]);
-    const scalar& xp(x_[i+1]);
+    const scalar& xm(xValues_[i]);
+    const scalar& xp(xValues_[i+1]);
 
-    const scalar& ym(y_[j]);
-    const scalar& yp(y_[j+1]);
+    const scalar& ym(yValues_[j]);
+    const scalar& yp(yValues_[j+1]);
 
     return ((gpp - gmp)/(xp - xm) - (gpm - gmm)/(xp - xm))/(yp - ym);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::read
+(
+    const dictionary& dict,
+    const word& xName,
+    const word& yName,
+    const word& name
+)
+{
+    setMod(dict.lookup("mod"), modFunc_, invModFunc_);
+
+    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+
+    if (dict.found(xName))
+    {
+        xValues_ = dict.lookup<scalarList>(xName);
+        setMod(dict.lookup(xName + "Mod"), modXFunc_, invModXFunc_);
+    }
+    else
+    {
+        const dictionary& xDict(dict.subDict(xName + "Coeffs"));
+        label nx = xDict.lookup<label>("n");
+        scalar dx = xDict.lookup<scalar>("delta");
+        scalar minx = xDict.lookup<scalar>("min");
+
+        setMod(xDict.lookup("mod"), modXFunc_, invModXFunc_);
+
+        xValues_.resize(nx);
+        forAll(xValues_, i)
+        {
+            xValues_[i] = minx + dx*i;
+        }
+    }
+
+    {
+        if (dict.found(yName))
+        {
+            yValues_ = dict.lookup<scalarList>(yName);
+            yModValues_.resize(yValues_.size());
+
+            setMod(dict.lookup(yName + "Mod"), modYFunc_, invModYFunc_);
+        }
+        else
+        {
+            const dictionary& yDict(dict.subDict(yName + "Coeffs"));
+            label ny = yDict.lookup<label>("n");
+            scalar dy = yDict.lookup<scalar>("delta");
+            scalar miny = yDict.lookup<scalar>("min");
+
+            setMod(dict.lookup("mod"), modYFunc_, invModYFunc_);
+
+            yValues_.resize(ny);
+            forAll(yValues_, j)
+            {
+                yValues_[j] = miny + dy*j;
+            }
+        }
+    }
+
+    data_.resize(xValues_.size());
+    forAll(data_, i)
+    {
+        data_[i].resize(yValues_.size());
+    }
+
+
+    fileName file(dict.lookup<word>("file"));
+    readTable
+    (
+        file,
+        dict.lookupOrDefault<string>("delim", ","),
+        data_
+    );
+
+    if (!isReal)
+    {
+        xModValues_ = xValues_;
+        yModValues_ = yValues_;
+        forAll(xValues_, i)
+        {
+            xValues_[i] = invModYFunc_(xValues_[i]);
+        }
+        forAll(yValues_, i)
+        {
+            yValues_[i] = invModYFunc_(yValues_[i]);
+        }
+    }
+    else
+    {
+        xModValues_.resize(xValues_.size());
+        yModValues_.resize(yValues_.size());
+        forAll(xValues_, i)
+        {
+            xModValues_[i] = modYFunc_(xValues_[i]);
+            forAll(yValues_, j)
+            {
+                data_[i][j] = modFunc_(data_[i][j]);
+            }
+        }
+        forAll(yValues_, i)
+        {
+            yModValues_[i] = modYFunc_(yValues_[i]);
+        }
+    }
+
+    if (checkUniform(xModValues_))
+    {
+
+        findXIndex_ = &lookupTable2D::findUniformIndexes;
+    }
+    else
+    {
+        findXIndex_ = &lookupTable2D::findNonuniformIndexes;
+    }
+
+    if (checkUniform(yModValues_))
+    {
+        findYIndex_ = &lookupTable2D::findUniformIndexes;
+    }
+    else
+    {
+        findYIndex_ = &lookupTable2D::findNonuniformIndexes;
+    }
 }
 
 // ************************************************************************* //

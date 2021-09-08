@@ -57,8 +57,8 @@ MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
 RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
-lookupTables/lookupTable2D/lookupTable2D.C
-lookupTables/lookupTable1D/lookupTable1D.C
+lookupTables/lookupTable2D/scalarLookupTable2D.C
+lookupTables/lookupTable1D/scalarLookupTable1D.C
 
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 meshSizeObject/meshSizeObject.C

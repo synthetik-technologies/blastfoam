@@ -53,69 +53,71 @@ namespace Foam
                            Class lookupTable2D Declaration
 \*---------------------------------------------------------------------------*/
 
+template<class Type>
 class lookupTable2D
 {
-// Private data
+protected:
+// Protected data
 
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
-    word modType_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
-    word modXType_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
-    word modYType_;
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
-    //- Delimiter
-    string delim_ = ",";
+    //- Interpolation type
+    interpFuncType xInterpFunc_;
+    interpFuncType yInterpFunc_;
 
-    //- Is the provided data uniform
-    Switch uniformX_;
-    Switch uniformY_;
-
-    //- Number of entries for x
-    label nx_;
-
-    //- Number of entries for y
-    label ny_;
 
     //- Data
-    Field<scalarField> data_;
+    Field<Field<Type>> data_;
 
     //- Modified x field values
-    scalarField xMod_;
+    scalarField xModValues_;
 
     //- Modified y field values
-    scalarField yMod_;
+    scalarField yModValues_;
 
     //- Stored real x values
-    scalarField x_;
+    scalarField xValues_;
 
     //- Stored real y values
-    scalarField y_;
+    scalarField yValues_;
 
-    //- Read the next value from the split string
-    scalar readValue(const List<string>&) const;
+    //- Current indexes (used to access location in list after lookup)
+    mutable label i_;
+    mutable label j_;
+
+    //- Current interpolation weight
+    mutable scalar fx_;
+    mutable scalar fy_;
+
 
     //- Read the table
-    void readTable(const fileName& file, Field<scalarField>& data);
+    void readTable
+    (
+        const fileName& file,
+        const string& delim,
+        Field<Field<Type>>& data
+    );
 
     //- Pointer to function to lookup indexes in the x direction
-    void (*findXIndex_)(const scalar&, const scalarField&, label&, scalar&);
+    void (*findXIndex_)(const scalar, const scalarField&, label&, scalar&);
 
     //- Pointer to function to lookup indexes in the y direction
-    void (*findYIndex_)(const scalar&, const scalarField&, label&, scalar&);
+    void (*findYIndex_)(const scalar, const scalarField&, label&, scalar&);
 
     //- Lookup based on uniform indexing
     static void findUniformIndexes
     (
-        const scalar& xy,
+        const scalar xy,
         const scalarField& XY,
         label& IJ,
         scalar& f
@@ -124,7 +126,7 @@ class lookupTable2D
     //- Lookup based on non uniform indexing
     static void findNonuniformIndexes
     (
-        const scalar& xy,
+        const scalar xy,
         const scalarField& XY,
         label& IJ,
         scalar& f
@@ -138,39 +140,28 @@ public:
 
     // Constructors
 
+        //- Construct empty
+        lookupTable2D();
+
         //- Construct from dictionary
         lookupTable2D
         (
             const dictionary& dict,
             const word& xName,
-            const word& yName
-        );
-
-        //- Construct from file
-        lookupTable2D
-        (
-            const fileName& fileName,
-            const word& mod,
-            const word& xMod,
-            const word& yMod,
-            const label nx,
-            const label ny,
-            const scalar& xMin,
-            const scalar& dx,
-            const scalar& yMin,
-            const scalar& dy
+            const word& yName,
+            const word& name
         );
 
         //- Construct from data
         lookupTable2D
         (
-            const Field<scalarField>& data,
             const scalarField& x,
             const scalarField& y,
-            const word& mod,
+            const Field<Field<Type>>& data,
             const word& xMod,
             const word& yMod,
-            const bool modified
+            const word& mod,
+            const bool isReal = true
         );
 
 
@@ -180,22 +171,28 @@ public:
 
     //- Access to data
 
-        //- Return name of modifier
-        const word& modType() const
+        //- Access current index (x)
+        label i() const
         {
-            return modType_;
+            return i_;
         }
 
-        //- Return name of x modifier
-        const word& modXType() const
+        //- Access current index (y)
+        label j() const
         {
-            return modXType_;
+            return j_;
         }
 
-        //- Return name of y modifier
-        const word& modYType() const
+        //- Access current interpolation weight (x)
+        scalar fx() const
         {
-            return modYType_;
+            return fx_;
+        }
+
+        //- Access current interpolation weight (y)
+        scalar fy() const
+        {
+            return fy_;
         }
 
         //- Modify by modType
@@ -237,117 +234,129 @@ public:
         //- Const access to real x values
         const scalarField& x() const
         {
-            return x_;
-        }
-
-        //- Non-const access to real x values
-        scalarField& x()
-        {
-            return x_;
+            return xValues_;
         }
 
         //- Const access to real y values
         const scalarField& y() const
         {
-            return y_;
-        }
-
-        //- Non-const access to real y values
-        scalarField& y()
-        {
-            return y_;
+            return yValues_;
         }
 
         //- Const access to modified x values
         const scalarField& xMod() const
         {
-            return xMod_;
-        }
-
-        //- Non-const access to modified x values
-        scalarField& xMod()
-        {
-            return xMod_;
+            return xModValues_;
         }
 
         //- Const access to modified y values
         const scalarField& yMod() const
         {
-            return yMod_;
-        }
-
-        //- Non-const access to modified y values
-        scalarField& yMod()
-        {
-            return yMod_;
+            return yModValues_;
         }
 
         //- Const access to modified data values
-        const Field<scalarField>& data() const
+        const Field<Field<Type>>& data() const
         {
             return data_;
         }
 
-        //- Non-const access to modified data values
-        Field<scalarField>& data()
-        {
-            return data_;
-        }
+        //- Return real data values
+        tmp<Field<Field<Type>>> realData() const;
 
 
     // Member Functions
 
-        //- Return real data values
-        tmp<Field<scalarField>> realData() const;
+        //- Update indexes and weights
+        void update(const scalar x, const scalar y) const;
+
+        //- Update x index and weight
+        void updateX(const scalar x) const;
+
+        //- Update y index and weight
+        void updateY(const scalar y) const;
 
         //- Lookup value
-        scalar lookup(const scalar& x, const scalar& y) const;
-
-        //- Lookup X given f and y
-        scalar reverseLookupX(const scalar& f, const scalar& y) const;
-
-        //- Lookup y given f and x
-        scalar reverseLookupY(const scalar& f, const scalar& x) const;
+        Type lookup(const scalar x, const scalar y) const;
 
         //- Return first derivative w.r.t. x
-        scalar dFdX(const scalar& x, const scalar& y) const;
+        Type dFdX(const scalar x, const scalar y) const;
 
         //- Return first derivative w.r.t y
-        scalar dFdY(const scalar& x, const scalar& y) const;
+        Type dFdY(const scalar x, const scalar y) const;
 
         //- Return second derivative w.r.t. x
-        scalar d2FdX2(const scalar& x, const scalar& y) const;
+        Type d2FdX2(const scalar x, const scalar y) const;
 
         //- Return mixed second derivative
-        scalar d2FdXdY(const scalar& x, const scalar& y) const;
+        Type d2FdXdY(const scalar x, const scalar y) const;
 
         //- Return second derivative w.r.t. y
-        scalar d2FdY2(const scalar& x, const scalar& y) const;
-
-        //- Find bottom of interpolation region, return index and weight between i and i+1
-        labelList boundi
-        (
-            const scalar& f,
-            const Field<scalarField>& data,
-            const label& j
-        ) const;
-
-        //- Find bottom of interpolation region, return index and weight between j and j+1
-        labelList boundj
-        (
-            const scalar& f,
-            const Field<scalarField>& data,
-            const label& i
-        ) const;
+        Type d2FdY2(const scalar x, const scalar y) const;
 
         //- Return value from a given list from lower index and weight
-        scalar getValue(const label ij, const scalar& f, const scalarField& xy) const;
+        Type getValue(const label ij, const scalar f, const Field<Type>& xy) const;
+
+
+    // Edit functions
+
+        //- Set data, x, and y
+        virtual void set
+        (
+            const scalarField& x,
+            const scalarField& y,
+            const Field<Field<Type>>& data,
+            const word& xMod,
+            const word& yMod,
+            const word& mod,
+            const bool modified
+        );
+
+        //- Set data
+        virtual void setData
+        (
+            const Field<Field<Type>>& data,
+            const word& mod,
+            const bool modified
+        );
+
+        //- Set x
+        virtual void setX
+        (
+            const scalarField& x,
+            const word& xMod,
+            const bool modified
+        );
+
+        //- Set y
+        virtual void setY
+        (
+            const scalarField& y,
+            const word& yMod,
+            const bool modified
+        );
+
+
+        //- Read from a given dictionary
+        virtual void read
+        (
+            const dictionary& dict,
+            const word& xName,
+            const word& yName,
+            const word& name
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+#include "lookupTable2D.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTable1D.H"
+#include "scalarLookupTable1D.H"
 #include "CpCvModel.H"
 
 namespace Foam
@@ -95,7 +95,7 @@ class tabulatedThermo
 // Private data
 
     //- Internal energy lookup table
-    lookupTable1D eTable_;
+    scalarLookupTable1D eTable_;
 
     //- Temperature bounds
     scalar Tlow_;

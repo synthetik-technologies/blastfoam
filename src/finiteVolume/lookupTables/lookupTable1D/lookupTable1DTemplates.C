@@ -29,21 +29,23 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Type Foam::lookupTable1D::interpolate
+template<class fType>
+fType Foam::lookupTable1D<Type>::interpolate
 (
-    const Type& fm,
-    const Type& fp
+    const fType& fm,
+    const fType& fp
 ) const
 {
     return f_ == 0 ? fm : (f_ == 1 ? fp : (1.0 - f_)*fm + f_*fp);
 }
 
 
-template<template<class> class ListType, class Type>
-Type Foam::lookupTable1D::interpolate
+template<class Type>
+template<template<class> class ListType, class fType>
+fType Foam::lookupTable1D<Type>::interpolate
 (
     const scalar x,
-    const ListType<Type>& fs
+    const ListType<fType>& fs
 ) const
 {
     update(x);

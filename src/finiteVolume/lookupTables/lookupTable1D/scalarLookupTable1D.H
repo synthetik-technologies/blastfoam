@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -22,73 +22,88 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::atmosphereModels::table
+    Foam::scalarLookupTable1D
 
 Description
-    Initialize atmosphere using pressure and temperature tables based on
-    height. An ideal gas is assumed.
+    Table used to lookup vales given a 1D table
 
 SourceFiles
-    tableAtmosphereModel.C
+    scalarLookupTable1D.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef tableAtmosphereModel_H
-#define tableAtmosphereModel_H
+#ifndef scalarLookupTable1D_H
+#define scalarLookupTable1D_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "scalarLookupTable1D.H"
-#include "atmosphereModel.H"
+#include "lookupTable1D.H"
 
 namespace Foam
 {
-namespace atmosphereModels
-{
 
 /*---------------------------------------------------------------------------*\
-                           Class table Declaration
+                           Class scalarLookupTable1D Declaration
 \*---------------------------------------------------------------------------*/
 
-class table
+class scalarLookupTable1D
 :
-    public atmosphereModel
+    public lookupTable1D<scalar>
 {
 // Private data
 
-    //- Pressure table
-    scalarLookupTable1D pTable_;
-
-    //- Temperature table
-    scalarLookupTable1D TTable_;
-
-    //- Molecular weight
-    scalar W_;
-
+    //- Include definition of modifying functions
+    #include "scalarTableFuncs.H"
 
 public:
 
-    //- Runtime type information
-    TypeName("table");
+    // Constructors
 
-    // Constructor
-    table(const fvMesh& mesh, const dictionary& dict);
+        //- Empty constructor
+        scalarLookupTable1D();
+
+        //- Construct from file
+        scalarLookupTable1D
+        (
+            const dictionary& dict,
+            const word& xName,
+            const word& name
+        );
+
+        //- Construct from data given list of x and data
+        //  x can be in real or xMod space
+        scalarLookupTable1D
+        (
+            const scalarField& x,
+            const scalarField& data,
+            const word& mod,
+            const word& xMod,
+            const word& interpolationScheme,
+            const bool correct = false
+        );
+
+        //- Construct from interpolator from only x values, no data is stored
+        scalarLookupTable1D
+        (
+            const scalarField& x,
+            const word& xMod,
+            const word& interpolationScheme,
+            const bool correct = false
+        );
 
 
     //- Destructor
-    virtual ~table();
+    virtual ~scalarLookupTable1D();
 
+    // Public functions
 
-    // Member Functions
-
-        //- Create atmosphere
-        virtual void createAtmosphere(fluidBlastThermo& thermo) const;
+        //- Lookup X given f
+        scalar reverseLookup(const scalar f) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace atmosphereModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

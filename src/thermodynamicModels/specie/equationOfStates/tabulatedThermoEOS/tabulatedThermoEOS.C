@@ -37,32 +37,8 @@ Foam::tabulatedThermoEOS<Specie>::tabulatedThermoEOS
 )
 :
     Specie(dict),
-    pTable_
-    (
-        dict.subDict("equationOfState").lookup<fileName>("file"),
-        dict.subDict("equationOfState").lookup<word>("mod"),
-        dict.subDict("equationOfState").lookup<word>("rhoMod"),
-        dict.subDict("equationOfState").lookup<word>("eMod"),
-        dict.subDict("equationOfState").lookup<label>("nRho"),
-        dict.subDict("equationOfState").lookup<label>("ne"),
-        dict.subDict("equationOfState").lookup<scalar>("minRho"),
-        dict.subDict("equationOfState").lookup<scalar>("dRho"),
-        dict.subDict("equationOfState").lookup<scalar>("mine"),
-        dict.subDict("equationOfState").lookup<scalar>("de")
-    ),
-    TTable_
-    (
-        dict.subDict("thermodynamics").lookup<fileName>("file"),
-        dict.subDict("thermodynamics").lookup<word>("mod"),
-        dict.subDict("thermodynamics").lookup<word>("rhoMod"),
-        dict.subDict("thermodynamics").lookup<word>("eMod"),
-        dict.subDict("thermodynamics").lookup<label>("nRho"),
-        dict.subDict("thermodynamics").lookup<label>("ne"),
-        dict.subDict("thermodynamics").lookup<scalar>("minRho"),
-        dict.subDict("thermodynamics").lookup<scalar>("dRho"),
-        dict.subDict("thermodynamics").lookup<scalar>("mine"),
-        dict.subDict("thermodynamics").lookup<scalar>("de")
-    )
+    pTable_(dict.subDict("equationOfState"), "rho", "e", "p"),
+    TTable_(dict.subDict("thermodynamics"), "rho", "e", "T")
 {}
 
 // ************************************************************************* //
