@@ -25,7 +25,7 @@ Class
     Foam::FieldSetTypes::MassIntegrated
 
 Description
-
+    Given a mass integrated quantity, compute a field value
 
 Usage:
     volScalarFieldMassIntegrated alpha.particles 10.23

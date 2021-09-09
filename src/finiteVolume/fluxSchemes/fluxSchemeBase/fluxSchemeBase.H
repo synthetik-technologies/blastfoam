@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,7 @@ Class
     Foam::fluxSchemeBase
 
 Description
-    Base class for flux schemes to interpolate fields and loop over faces
-    and boundaries
+    Base class for flux schemes
 
 SourceFiles
     fluxSchemeBase.C

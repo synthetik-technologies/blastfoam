@@ -25,7 +25,7 @@ Class
     Foam::FieldSetType
 
 Description
-    Base class used to set fields using a specified method
+    Base class used to select how a given field value is computed
 
 SourceFiles
     FieldSetType.C

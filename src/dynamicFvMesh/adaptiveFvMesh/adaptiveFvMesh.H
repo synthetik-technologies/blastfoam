@@ -5,7 +5,8 @@
     \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-21-05-2020  Jeff Heylmun:   Modified original dynamicRefineBalanceFvMesh class
+21-05-2020 Synthetik Applied Technologies: |   Modified original
+                            dynamicRefineBalanceFvMesh class
                             to be more appilcable to compressible flows.
                             Improved compatibility with snappyHexMesh.
 -------------------------------------------------------------------------------

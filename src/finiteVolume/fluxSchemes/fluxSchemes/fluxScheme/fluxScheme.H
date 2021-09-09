@@ -26,11 +26,11 @@ Class
 
 Description
     Base class for flux schemes to interpolate fields and loop over faces
-    and boundaries
+    and boundaries for a single shared velocity and energy
 
 SourceFiles
     fluxScheme.C
-    newFluxScheme.C
+    fluxSchemeNew.C
 
 \*---------------------------------------------------------------------------*/
 

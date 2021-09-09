@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -26,7 +26,7 @@ Class
 
 Description
     Base class for flux schemes to interpolate fields and loop over faces
-    and boundaries
+    and boundaries for a phase with a unique velocity and energy
 
 SourceFiles
     phaseFluxScheme.C

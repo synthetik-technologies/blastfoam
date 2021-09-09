@@ -5,7 +5,8 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Calculate mach number with blastFoam thermo
+13-05-2020 Synthetik Applied Technologies: |    Calculate mach number with
+                                                blastFoam thermo
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.

@@ -5,7 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Store maxes over all times
+13-05-2020 Synthetik Applied Technologies:  |  Store field maxes over all times
+07-09-2021 Synthetik Applied Technologies:  |  Added minimum option
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.

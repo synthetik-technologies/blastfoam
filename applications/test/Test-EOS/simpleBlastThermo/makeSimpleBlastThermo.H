@@ -1,11 +1,9 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2019-2020 OpenFOAM Foundation
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-2021-08-02 Jeff Heylmun:    Added blastFoam thermo classes
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technologies
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -25,7 +25,7 @@ Class
     Foam::scalarLookupTable1D
 
 Description
-    Table used to lookup vales given a 1D table
+    Table used to lookup scalar values given a 1D table
 
 SourceFiles
     scalarLookupTable1D.C

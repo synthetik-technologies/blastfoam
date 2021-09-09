@@ -25,7 +25,7 @@ Class
     Foam::lookupTable1D
 
 Description
-    Table used to lookup vales given a 1D table
+    Table used to lookup values given a 1D table
 
 SourceFiles
     lookupTable1D.C

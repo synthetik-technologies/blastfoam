@@ -20,11 +20,14 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 Class
     Foam::dynamicFvMesh
+
 Description
     Abstract base class for geometry and/or topology changing fvMesh.
+
 SourceFiles
     dynamicFvMesh.C
     dynamicFvMeshNew.C
+
 \*---------------------------------------------------------------------------*/
 
 #ifndef dynamicFvMesh_H

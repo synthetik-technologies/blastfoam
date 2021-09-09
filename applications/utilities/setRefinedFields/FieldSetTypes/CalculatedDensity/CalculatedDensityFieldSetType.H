@@ -25,7 +25,7 @@ Class
     Foam::FieldSetTypes::CalculatedDensity
 
 Description
-    Base class used to set fields using a specified method
+    Given a cell set and a volume integrated quantity, calculate a density
 
 SourceFiles
     CalculatedDensityFieldSetType.C

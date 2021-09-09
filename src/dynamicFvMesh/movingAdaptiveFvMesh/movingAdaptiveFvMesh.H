@@ -5,7 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-21-05-2020   Jeff Heylmun:  Set old cell volumes after refinement is done.
+21-05-2020 Synthetik Applied Technologies: |  Set old cell volumes after
+                                refinement is done.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
