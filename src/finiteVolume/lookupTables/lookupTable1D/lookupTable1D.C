@@ -25,7 +25,7 @@ License
 
 #include "lookupTable1D.H"
 #include "DynamicList.H"
-#include "Field.H"
+#include "List.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
@@ -35,8 +35,7 @@ void Foam::lookupTable1D<Type>::readTable
     const fileName& file,
     const string& delim,
     const label xi,
-    const label yi,
-    const bool isReal
+    const label yi
 )
 {
     fileName fNameExpanded(file);
@@ -52,9 +51,9 @@ void Foam::lookupTable1D<Type>::readTable
             << exit(FatalIOError);
     }
 
-    scalarField xTmp;
-    scalarField xModTmp;
-    scalarField fTmp;
+    scalarList xTmp;
+    scalarList xModTmp;
+    scalarList fTmp;
     string line;
     while (is.good())
     {
@@ -71,22 +70,11 @@ void Foam::lookupTable1D<Type>::readTable
         scalarList lineVals(isLine);
         if (lineVals.size())
         {
-            if (isReal)
-            {
-                xTmp.append(lineVals[xi]);
-                xModTmp.append(modXFunc_(lineVals[xi]));
-                fTmp.append(modFunc_(lineVals[yi]));
-            }
-            else
-            {
-                xModTmp.append(lineVals[xi]);
-                xTmp.append(invModXFunc_(lineVals[xi]));
-                fTmp.append(lineVals[yi]);
-            }
+            xTmp.append(lineVals[xi]);
+            fTmp.append(lineVals[yi]);
         }
     }
     xValues_ = xTmp;
-    xModValues_ = xModTmp;
     data_ = fTmp;
 }
 
@@ -129,8 +117,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const scalarField& x,
-    const Field<Type>& data,
+    const scalarList& x,
+    const List<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -155,7 +143,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const scalarField& x,
+    const scalarList& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -188,8 +176,8 @@ Foam::lookupTable1D<Type>::~lookupTable1D()
 template<class Type>
 void Foam::lookupTable1D<Type>::set
 (
-    const scalarField& x,
-    const Field<Type>& data,
+    const scalarList& x,
+    const List<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -203,7 +191,7 @@ void Foam::lookupTable1D<Type>::set
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
-    const scalarField& x,
+    const scalarList& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -236,7 +224,7 @@ void Foam::lookupTable1D<Type>::setX
 template<class Type>
 void Foam::lookupTable1D<Type>::setData
 (
-    const Field<Type>& data,
+    const List<Type>& data,
     const word& mod,
     const bool isReal
 )
@@ -278,8 +266,30 @@ void Foam::lookupTable1D<Type>::update(const scalar x) const
             break;
         }
     }
-    f_ = interpFunc_(modXFunc_(x), xModValues_[index_], xModValues_[index_ + 1]);
+    f_ = linearWeight(modXFunc_(x), xModValues_[index_], xModValues_[index_ + 1]);
     return;
+}
+
+
+template<class Type>
+Foam::tmp<Foam::List<Type>> Foam::lookupTable1D<Type>::realData() const
+{
+#ifdef FULL_DEBUG
+    if (!invModFunc_)
+    {
+        FatalErrorInFunction
+            << "Try to interpolate data that has not been set."
+            << abort(FatalError);
+    }
+#endif
+
+    tmp<List<Type>> tmpF(new List<Type>(data_));
+    List<Type>& f = tmpF.ref();
+    forAll(f, i)
+    {
+        f[i] - invModFunc_(f[i]);
+    }
+    return tmpF;
 }
 
 
@@ -296,7 +306,7 @@ Type Foam::lookupTable1D<Type>::lookup(const scalar x) const
 #endif
 
     update(x);
-    return invModFunc_(data_[index_] + f_*(data_[index_+1] - data_[index_]));
+    return invModFunc_(interpFunc_(modXFunc_(x), index_, xModValues_, data_));
 }
 
 
@@ -362,7 +372,7 @@ void Foam::lookupTable1D<Type>::read
     const word& name
 )
 {
-    word mod(dict.lookupOrDefault<word>("mod", "none"));
+    word mod(dict.lookupOrDefault<word>(name + "Mod", "none"));
     word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
     word interpolationScheme
     (
@@ -381,29 +391,30 @@ void Foam::lookupTable1D<Type>::read
             dict.lookup<fileName>("file"),
             dict.lookupOrDefault<string>("delim", ","),
             dict.lookupOrDefault<label>(xName + "Col", 0),
-            dict.lookupOrDefault<label>(name + "Col", 1),
-            isReal
+            dict.lookupOrDefault<label>(name + "Col", 1)
         );
     }
     else
     {
-        xValues_ = dict.lookup<scalarField>(xName);
-        xModValues_ = xValues_;
-        data_ = dict.lookup<scalarField>(name);
-        if (!isReal)
+        xValues_ = dict.lookup<scalarList>(xName);
+        data_ = dict.lookup<scalarList>(name);
+
+    }
+
+    xModValues_ = xValues_;
+    if (!isReal)
+    {
+        forAll(xValues_, i)
         {
-            forAll(xValues_, i)
-            {
-                xValues_[i] = invModXFunc_(xValues_[i]);
-            }
+            xValues_[i] = invModXFunc_(xValues_[i]);
         }
-        else
+    }
+    else
+    {
+        forAll(xValues_, i)
         {
-            forAll(xValues_, i)
-            {
-                xModValues_[i] = modXFunc_(xValues_[i]);
-                data_[i] = modFunc_(data_[i]);
-            }
+            xModValues_[i] = modXFunc_(xValues_[i]);
+            data_[i] = modFunc_(data_[i]);
         }
     }
 }

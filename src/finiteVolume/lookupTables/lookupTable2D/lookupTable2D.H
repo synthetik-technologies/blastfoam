@@ -38,12 +38,9 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "Field.H"
-#include "fieldTypes.H"
-#include "FieldFields.H"
+#include "scalarList.H"
 #include "IOstreams.H"
 #include "Switch.H"
-#include "IOField.H"
 #include "fileName.H"
 
 namespace Foam
@@ -71,31 +68,35 @@ protected:
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
-    //- Interpolation type
-    interpFuncType xInterpFunc_;
-    interpFuncType yInterpFunc_;
+    //- Pointer to function to lookup indexes in the x direction
+    findIndexFunc findXIndex_;
 
+    //- Pointer to function to lookup indexes in the y direction
+    findIndexFunc findYIndex_;
+
+    //- Interpolation type
+    interp2DFuncType interpFunc_;
 
     //- Data
-    Field<Field<Type>> data_;
+    List<List<Type>> data_;
 
     //- Modified x field values
-    scalarField xModValues_;
+    scalarList xModValues_;
 
     //- Modified y field values
-    scalarField yModValues_;
+    scalarList yModValues_;
 
     //- Stored real x values
-    scalarField xValues_;
+    scalarList xValues_;
 
     //- Stored real y values
-    scalarField yValues_;
+    scalarList yValues_;
 
     //- Current indexes (used to access location in list after lookup)
     mutable label i_;
     mutable label j_;
 
-    //- Current interpolation weight
+    //- Current linear interpolation weights
     mutable scalar fx_;
     mutable scalar fy_;
 
@@ -105,35 +106,11 @@ protected:
     (
         const fileName& file,
         const string& delim,
-        Field<Field<Type>>& data
-    );
-
-    //- Pointer to function to lookup indexes in the x direction
-    void (*findXIndex_)(const scalar, const scalarField&, label&, scalar&);
-
-    //- Pointer to function to lookup indexes in the y direction
-    void (*findYIndex_)(const scalar, const scalarField&, label&, scalar&);
-
-    //- Lookup based on uniform indexing
-    static void findUniformIndexes
-    (
-        const scalar xy,
-        const scalarField& XY,
-        label& IJ,
-        scalar& f
-    );
-
-    //- Lookup based on non uniform indexing
-    static void findNonuniformIndexes
-    (
-        const scalar xy,
-        const scalarField& XY,
-        label& IJ,
-        scalar& f
+        List<List<Type>>& data
     );
 
     //- Check if spacing in a list is uniform
-    bool checkUniform(const scalarField& xy) const;
+    bool checkUniform(const scalarList& xy) const;
 
 
 public:
@@ -155,12 +132,13 @@ public:
         //- Construct from data
         lookupTable2D
         (
-            const scalarField& x,
-            const scalarField& y,
-            const Field<Field<Type>>& data,
+            const scalarList& x,
+            const scalarList& y,
+            const List<List<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
+            const word& interpolationScheme,
             const bool isReal = true
         );
 
@@ -232,49 +210,55 @@ public:
         }
 
         //- Const access to real x values
-        const scalarField& x() const
+        const scalarList& x() const
         {
             return xValues_;
         }
 
         //- Const access to real y values
-        const scalarField& y() const
+        const scalarList& y() const
         {
             return yValues_;
         }
 
         //- Const access to modified x values
-        const scalarField& xMod() const
+        const scalarList& xMod() const
         {
             return xModValues_;
         }
 
         //- Const access to modified y values
-        const scalarField& yMod() const
+        const scalarList& yMod() const
         {
             return yModValues_;
         }
 
         //- Const access to modified data values
-        const Field<Field<Type>>& data() const
+        const List<List<Type>>& data() const
         {
             return data_;
         }
 
         //- Return real data values
-        tmp<Field<Field<Type>>> realData() const;
+        tmp<List<List<Type>>> realData() const;
 
 
     // Member Functions
 
-        //- Update indexes and weights
+        //- Update indexes
         void update(const scalar x, const scalar y) const;
 
-        //- Update x index and weight
+        //- Update x index
         void updateX(const scalar x) const;
 
-        //- Update y index and weight
+        //- Update y index
         void updateY(const scalar y) const;
+
+        //- Update x weight
+        void updateXWeight(const scalar x) const;
+
+        //- Update y weight
+        void updateYWeight(const scalar y) const;
 
         //- Lookup value
         Type lookup(const scalar x, const scalar y) const;
@@ -295,7 +279,7 @@ public:
         Type d2FdY2(const scalar x, const scalar y) const;
 
         //- Return value from a given list from lower index and weight
-        Type getValue(const label ij, const scalar f, const Field<Type>& xy) const;
+        Type getValue(const label ij, const scalar f, const List<Type>& xy) const;
 
 
     // Edit functions
@@ -303,19 +287,20 @@ public:
         //- Set data, x, and y
         virtual void set
         (
-            const scalarField& x,
-            const scalarField& y,
-            const Field<Field<Type>>& data,
+            const scalarList& x,
+            const scalarList& y,
+            const List<List<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
+            const word& interpolationScheme,
             const bool modified
         );
 
         //- Set data
         virtual void setData
         (
-            const Field<Field<Type>>& data,
+            const List<List<Type>>& data,
             const word& mod,
             const bool modified
         );
@@ -323,7 +308,7 @@ public:
         //- Set x
         virtual void setX
         (
-            const scalarField& x,
+            const scalarList& x,
             const word& xMod,
             const bool modified
         );
@@ -331,7 +316,7 @@ public:
         //- Set y
         virtual void setY
         (
-            const scalarField& y,
+            const scalarList& y,
             const word& yMod,
             const bool modified
         );

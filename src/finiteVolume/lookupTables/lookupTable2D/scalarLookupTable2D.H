@@ -38,6 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "lookupTable2D.H"
+#include "ListOps.H"
 
 namespace Foam
 {
@@ -82,12 +83,13 @@ public:
         //- Construct from data
         scalarLookupTable2D
         (
-            const scalarField& x,
-            const scalarField& y,
-            const Field<Field<scalar>>& data,
+            const scalarList& x,
+            const scalarList& y,
+            const List<List<scalar>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
+            const word& interpolationScheme,
             const bool isReal
         );
 

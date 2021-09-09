@@ -38,12 +38,10 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "Field.H"
-#include "fieldTypes.H"
-#include "FieldFields.H"
+#include "scalarList.H"
 #include "IOstreams.H"
 #include "Switch.H"
-#include "IOField.H"
+#include "IOList.H"
 #include "fileName.H"
 
 namespace Foam
@@ -69,16 +67,16 @@ protected:
     modFuncType invModXFunc_;
 
     //- Interpolation type
-    interpFuncType interpFunc_;
+    interp1DFuncType interpFunc_;
 
     //- List of x values in real space
-    scalarField xValues_;
+    scalarList xValues_;
 
     //- List of x values in the given space
-    scalarField xModValues_;
+    scalarList xModValues_;
 
     //- Data
-    Field<Type> data_;
+    List<Type> data_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -92,8 +90,7 @@ protected:
         const fileName& file,
         const string& delim,
         const label xi,
-        const label yi,
-        bool isReal
+        const label yi
     );
 
 
@@ -116,8 +113,8 @@ public:
         //  x can be in real or xMod space
         lookupTable1D
         (
-            const scalarField& x,
-            const Field<Type>& data,
+            const scalarList& x,
+            const List<Type>& data,
             const word& xMod,
             const word& mod,
             const word& interpolationScheme,
@@ -127,7 +124,7 @@ public:
         //- Construct from interpolator from only x values, no data is stored
         lookupTable1D
         (
-            const scalarField& x,
+            const scalarList& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -179,22 +176,25 @@ public:
             }
 
             //- Const access to real x values
-            const scalarField& x() const
+            const scalarList& x() const
             {
                 return xValues_;
             }
 
             //- Const access to modified x values
-            const scalarField& xMod() const
+            const scalarList& xMod() const
             {
                 return xModValues_;
             }
 
             //- Const access to modified data values
-            const Field<Type>& data() const
+            const List<Type>& data() const
             {
                 return data_;
             }
+
+            //- Return the real data
+            tmp<List<Type>> realData() const;
 
 
     // Public functions
@@ -222,8 +222,8 @@ public:
         //- Set data
         void set
         (
-            const scalarField& x,
-            const Field<Type>& data,
+            const scalarList& x,
+            const List<Type>& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
@@ -233,7 +233,7 @@ public:
         //- Set x
         void setX
         (
-            const scalarField& x,
+            const scalarList& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -242,7 +242,7 @@ public:
         //- Set data
         void setData
         (
-            const Field<Type>& x,
+            const List<Type>& x,
             const word& mod,
             const bool isReal = true
         );

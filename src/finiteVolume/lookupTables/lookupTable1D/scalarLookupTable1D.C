@@ -44,8 +44,8 @@ Foam::scalarLookupTable1D::scalarLookupTable1D
 
 Foam::scalarLookupTable1D::scalarLookupTable1D
 (
-    const scalarField& x,
-    const scalarField& data,
+    const scalarList& x,
+    const scalarList& data,
     const word& mod,
     const word& xMod,
     const word& interpolationScheme,
@@ -58,7 +58,7 @@ Foam::scalarLookupTable1D::scalarLookupTable1D
 
 Foam::scalarLookupTable1D::scalarLookupTable1D
 (
-    const scalarField& x,
+    const scalarList& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -112,7 +112,7 @@ Foam::scalarLookupTable1D::reverseLookup(const scalar yin) const
     const scalar& ym(data_[index_]);
     const scalar& yp(data_[index_+1]);
 
-    f_ = interpFunc_(y, ym, yp);
+    f_ = linearWeight(y, ym, yp);
 
     return invModXFunc_
     (

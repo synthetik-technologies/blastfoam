@@ -74,8 +74,8 @@ public:
         //  x can be in real or xMod space
         scalarLookupTable1D
         (
-            const scalarField& x,
-            const scalarField& data,
+            const scalarList& x,
+            const scalarList& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
@@ -85,7 +85,7 @@ public:
         //- Construct from interpolator from only x values, no data is stored
         scalarLookupTable1D
         (
-            const scalarField& x,
+            const scalarList& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool correct = false

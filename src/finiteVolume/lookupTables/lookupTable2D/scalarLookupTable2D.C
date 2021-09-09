@@ -114,16 +114,27 @@ Foam::scalarLookupTable2D::scalarLookupTable2D
 
 Foam::scalarLookupTable2D::scalarLookupTable2D
 (
-    const scalarField& x,
-    const scalarField& y,
-    const Field<scalarField>& data,
+    const scalarList& x,
+    const scalarList& y,
+    const List<scalarList>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
+    const word& interpolationScheme,
     const bool isReal
 )
 {
-    set(x, y, data, modXType, modYType, modType, isReal);
+    set
+    (
+        x,
+        y,
+        data,
+        modXType,
+        modYType,
+        modType,
+        interpolationScheme,
+        isReal
+    );
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -144,6 +155,7 @@ Foam::scalarLookupTable2D::reverseLookupY
     scalar f(modFunc_(fin));
     updateX(x);
     labelList Js(boundj(f));
+    updateXWeight(x);
 
     if (Js.size() == 1)
     {
@@ -153,9 +165,9 @@ Foam::scalarLookupTable2D::reverseLookupY
         const scalar mp(data_[i_][j_+1]);
         const scalar pp(data_[i_+1][j_+1]);
         fy_ =
-            (f - fx_*mp + fx_*pp - pp)
-           /(fx_*mm - fx_*mp - fx_*pm + fx_*pp + pm - pp);
-        return invModYFunc_(getValue(j_, 1.0 - fy_, yModValues_));
+            (f + fx_*(mm  - pm) - mm)
+           /(fx_*(mm - pm - mp + pp) - mm + mp);
+        return invModYFunc_(getValue(j_, fy_, yModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -169,9 +181,9 @@ Foam::scalarLookupTable2D::reverseLookupY
         const scalar mp(data_[i_][j_+1]);
         const scalar pp(data_[i_+1][j_+1]);
         fy_ =
-            (f - fx_*mp + fx_*pp - pp)
-           /(fx_*mm - fx_*mp - fx_*pm + fx_*pp + pm - pp);
-        yTrys[J] = invModYFunc_(getValue(j_, 1.0 - fy_, yModValues_));
+            (f + fx_*(mm  - pm) - mm)
+           /(fx_*(mm - pm - mp + pp) - mm + mp);
+        yTrys[J] = invModYFunc_(getValue(j_, fy_, yModValues_));
         errors[J] = mag(fin - lookup(x, yTrys[j_]));
     }
     j_ = findMin(errors);
@@ -189,6 +201,7 @@ Foam::scalarLookupTable2D::reverseLookupX
     scalar f(modFunc_(fin));
     updateY(y);
     labelList Is(boundi(f));
+    updateYWeight(y);
 
     if (Is.size() == 1)
     {
@@ -198,9 +211,10 @@ Foam::scalarLookupTable2D::reverseLookupX
         const scalar mp(data_[i_][j_+1]);
         const scalar pp(data_[i_+1][j_+1]);
         fx_ =
-            (f - pm*fy_ - pp*(1.0 - fy_))
-           /(mm*fy_ + mp*(1.0 - fy_) - (pm*fy_ + pp*(1.0 - fy_)));
-        return invModXFunc_(getValue(i_, 1.0 - fx_, xModValues_));
+            (f + fy_*(mm - mp) - mm)
+           /(fy_*(mm - mp - pm + pp) - mm + pm);
+
+        return invModXFunc_(getValue(i_, fx_, xModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -214,9 +228,9 @@ Foam::scalarLookupTable2D::reverseLookupX
         const scalar mp(data_[i_][j_+1]);
         const scalar pp(data_[i_+1][j_+1]);
         fx_ =
-            (f - pm*fy_ - pp*(1.0 - fy_))
-           /(mm*fy_ + mp*(1.0 - fy_) - (pm*fy_ + pp*(1.0 - fy_)));
-        xTrys[I] = invModXFunc_(getValue(i_, 1.0 - fx_, xModValues_));
+            (f + fy_*(mm - mp) - mm)
+           /(fy_*(mm - mp - pm + pp) - mm + pm);
+        xTrys[I] = invModXFunc_(getValue(i_, fx_, xModValues_));
         errors[I] = mag(fin - lookup(xTrys[I], y));
     }
     i_ = findMin(errors);
