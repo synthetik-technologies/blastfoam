@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "scalarList.H"
+#include "Field.H"
 #include "IOstreams.H"
 #include "Switch.H"
 #include "IOList.H"
@@ -70,13 +70,13 @@ protected:
     interp1DFuncType interpFunc_;
 
     //- List of x values in real space
-    scalarList xValues_;
+    Field<scalar> xValues_;
 
     //- List of x values in the given space
-    scalarList xModValues_;
+    Field<scalar> xModValues_;
 
     //- Data
-    List<Type> data_;
+    Field<Type> data_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -176,25 +176,25 @@ public:
             }
 
             //- Const access to real x values
-            const scalarList& x() const
+            const scalarField& x() const
             {
                 return xValues_;
             }
 
             //- Const access to modified x values
-            const scalarList& xMod() const
+            const scalarField& xMod() const
             {
                 return xModValues_;
             }
 
             //- Const access to modified data values
-            const List<Type>& data() const
+            const Field<Type>& data() const
             {
                 return data_;
             }
 
             //- Return the real data
-            tmp<List<Type>> realData() const;
+            tmp<Field<Type>> realData() const;
 
 
     // Public functions
@@ -219,7 +219,13 @@ public:
         //- Return second derivative w.r.t. x
         Type d2FdX2(const scalar x) const;
 
-        //- Set data
+        //- Set x and data
+        void set
+        (
+            const scalarList& x,
+            const List<Type>& data,
+            const bool isReal
+        );
         void set
         (
             const scalarList& x,
@@ -231,6 +237,7 @@ public:
         );
 
         //- Set x
+        void setX(const scalarList& x, const bool isReal = true);
         void setX
         (
             const scalarList& x,
@@ -240,9 +247,10 @@ public:
         );
 
         //- Set data
+        void setData(const List<Type>& data , const bool isReal = true);
         void setData
         (
-            const List<Type>& x,
+            const List<Type>& data,
             const word& mod,
             const bool isReal = true
         );

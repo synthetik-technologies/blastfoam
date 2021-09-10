@@ -70,7 +70,7 @@ public:
     TypeName("pressureBased");
 
     // Constructor
-    pressureBased(const dictionary& dict);
+    pressureBased(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
@@ -88,7 +88,12 @@ public:
     // Public functions
 
         //- Cell based reaction rate
-        virtual scalar k(const scalar& p, const scalar& T) const;
+        virtual scalar k
+        (
+            const scalar p,
+            const scalar T,
+            const label celli
+        ) const;
 
         //- Reaction rate
         virtual tmp<volScalarField> k

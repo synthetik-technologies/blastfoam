@@ -36,7 +36,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::reactionRate::reactionRate(const dictionary& dict)
+Foam::reactionRate::reactionRate(const fvMesh& mesh, const dictionary& dict)
 {}
 
 

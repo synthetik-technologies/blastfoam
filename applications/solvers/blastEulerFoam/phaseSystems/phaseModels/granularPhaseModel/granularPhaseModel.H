@@ -124,10 +124,16 @@ public:
     virtual ~granularPhaseModel();
 
 
-    //- Return that the phase uses a slave pressure
+        //- Return that the phase uses a slave pressure
         virtual bool slavePressure() const
         {
             return true;
+        }
+
+        //- Does the phase model track total energy
+        virtual bool totalEnergy() const
+        {
+            return false;
         }
 
         //- Is the phase granular

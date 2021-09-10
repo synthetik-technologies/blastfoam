@@ -52,7 +52,7 @@ class reactionRate
 public:
 
     //- Runtime type information
-    ClassName("reactionRate");
+    TypeName("reactionRate");
 
 
     // Declare runtime construction
@@ -63,13 +63,14 @@ public:
             reactionRate,
             dictionary,
             (
+                const fvMesh& mesh,
                 const dictionary& dict
             ),
-            (dict)
+            (mesh, dict)
         );
 
     // Constructor
-    reactionRate(const dictionary& dict);
+    reactionRate(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
@@ -78,7 +79,11 @@ public:
 
     // Selectors
 
-        static autoPtr<reactionRate> New(const dictionary& dict);
+        static autoPtr<reactionRate> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict
+        );
 
     //- Construct and return a clone
     virtual autoPtr<reactionRate> clone() const = 0;
@@ -86,8 +91,17 @@ public:
 
     // Public functions
 
+        //- Initialize models
+        virtual void initializeModels()
+        {}
+
         //- Cell based reaction rate
-        virtual scalar k(const scalar& p, const scalar& T) const = 0;
+        virtual scalar k
+        (
+            const scalar p,
+            const scalar T,
+            const label celli
+        ) const = 0;
 
         //- Reaction rate
         virtual tmp<volScalarField> k

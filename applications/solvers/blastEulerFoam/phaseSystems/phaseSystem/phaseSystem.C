@@ -189,12 +189,12 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                     const volVectorField& Ui(*Uis[pair]);
                     phase1.alphaRhoU(nodei) += deltaM;
-                    if (!phase1.granular())
+                    if (phase1.totalEnergy())
                     {
                         phase1.alphaRhoE() += deltaM & Ui;
                     }
                     phase2.alphaRhoU(nodej) -= deltaM;
-                    if (!phase2.granular())
+                    if (phase2.totalEnergy())
                     {
                         phase2.alphaRhoE() -= deltaM & Ui;
                     }
@@ -320,12 +320,12 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fl;
-                if (!phase1.granular())
+                if (phase1.totalEnergy())
                 {
                     phase1.alphaRhoE() += Fl & Ui;
                 }
                 phase2.alphaRhoU(nodej) -= Fl;
-                if (!phase2.granular())
+                if (phase2.totalEnergy())
                 {
                     phase2.alphaRhoE() -= Fl & Ui;
                 }
@@ -371,12 +371,12 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fvm;
-                if (!phase1.granular())
+                if (phase1.totalEnergy())
                 {
                     phase1.alphaRhoE() += Fvm & Ui;
                 }
                 phase2.alphaRhoU(nodej) -= Fvm;
-                if (!phase2.granular())
+                if (phase2.totalEnergy())
                 {
                     phase2.alphaRhoE() -= Fvm & Ui;
                 }
@@ -416,12 +416,12 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fwl;
-                if (!phase1.granular())
+                if (phase1.totalEnergy())
                 {
                     phase1.alphaRhoE() += Fwl & Ui;
                 }
                 phase2.alphaRhoU(nodej) -= Fwl;
-                if (!phase2.granular())
+                if (phase2.totalEnergy())
                 {
                     phase2.alphaRhoE() -= Fwl & Ui;
                 }
@@ -463,12 +463,12 @@ void Foam::phaseSystem::relaxVelocity(const dimensionedScalar& deltaT)
 
                 const volVectorField& Ui(*Uis[pair]);
                 phase1.alphaRhoU(nodei) += Fwl;
-                if (!phase1.granular())
+                if (phase1.totalEnergy())
                 {
                     phase1.alphaRhoE() += Fwl & Ui;
                 }
                 phase2.alphaRhoU(nodej) -= Fwl;
-                if (!phase2.granular())
+                if (phase2.totalEnergy())
                 {
                     phase2.alphaRhoE() -= Fwl & Ui;
                 }
@@ -1115,7 +1115,7 @@ void Foam::phaseSystem::printInfo()
             << ' ' << max(T).value()
             << ' ' << min(T).value()
             << endl;
-        if (!phaseModels_[phasei].granular())
+        if (!phaseModels_[phasei].slavePressure())
         {
             const volScalarField& p(phaseModels_[phasei].p());
             Info<< "\t"

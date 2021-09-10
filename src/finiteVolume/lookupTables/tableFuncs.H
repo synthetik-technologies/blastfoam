@@ -292,9 +292,9 @@ typedef Type (*interp2DFuncType)
     const scalar,
     const label,
     const label,
-    const scalarList&,
-    const scalarList&,
-    const List<List<Type>>&
+    const List<scalar>&,
+    const List<scalar>&,
+    const Field<Field<Type>>&
 );
 
 
@@ -304,9 +304,9 @@ inline static Type bilinearClampInterp
     const scalar y,
     const label i,
     const label j,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     Type m(linearClampInterp(y, j, ys, zs[i]));
@@ -321,9 +321,9 @@ inline static Type bilinearExtrapolateInterp
     const scalar y,
     const label i,
     const label j,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     Type m(linearExtrapolateInterp(x, i, xs, zs[i]));
@@ -338,9 +338,9 @@ inline static Type bicubicClampInterp
     const scalar y,
     const label I,
     const label J,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     const label i = min(max(I, 1), xs.size() - 3);
@@ -366,9 +366,9 @@ inline static Type bicubicExtrapolateInterp
     const scalar y,
     const label I,
     const label J,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     const label i = min(max(I, 1), xs.size() - 3);

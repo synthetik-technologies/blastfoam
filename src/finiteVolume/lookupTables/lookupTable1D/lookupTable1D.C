@@ -178,6 +178,19 @@ void Foam::lookupTable1D<Type>::set
 (
     const scalarList& x,
     const List<Type>& data,
+    const bool isReal
+)
+{
+    setX(x, isReal);
+    setData(data, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::set
+(
+    const scalarList& x,
+    const List<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -188,18 +201,14 @@ void Foam::lookupTable1D<Type>::set
     setData(data, mod, isReal);
 }
 
+
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
     const scalarList& x,
-    const word& xMod,
-    const word& interpolationScheme,
     const bool isReal
 )
 {
-    setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(interpolationScheme, interpFunc_);
-
     if (isReal)
     {
         xValues_ = x;
@@ -222,14 +231,27 @@ void Foam::lookupTable1D<Type>::setX
 
 
 template<class Type>
-void Foam::lookupTable1D<Type>::setData
+void Foam::lookupTable1D<Type>::setX
 (
-    const List<Type>& data,
-    const word& mod,
+    const scalarList& x,
+    const word& xMod,
+    const word& interpolationScheme,
     const bool isReal
 )
 {
-    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setX(x, isReal);
+    setInterp(interpolationScheme, interpFunc_);
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::setData
+(
+    const List<Type>& data,
+    const bool isReal
+)
+{
     data_ = data;
 
     if (!isReal)
@@ -240,6 +262,19 @@ void Foam::lookupTable1D<Type>::setData
             data_[i] = invModFunc_(data[i]);
         }
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::setData
+(
+    const List<Type>& data,
+    const word& mod,
+    const bool isReal
+)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    setData(data, isReal);
 }
 
 
@@ -272,7 +307,7 @@ void Foam::lookupTable1D<Type>::update(const scalar x) const
 
 
 template<class Type>
-Foam::tmp<Foam::List<Type>> Foam::lookupTable1D<Type>::realData() const
+Foam::tmp<Foam::Field<Type>> Foam::lookupTable1D<Type>::realData() const
 {
 #ifdef FULL_DEBUG
     if (!invModFunc_)
@@ -283,8 +318,8 @@ Foam::tmp<Foam::List<Type>> Foam::lookupTable1D<Type>::realData() const
     }
 #endif
 
-    tmp<List<Type>> tmpF(new List<Type>(data_));
-    List<Type>& f = tmpF.ref();
+    tmp<Field<Type>> tmpF(new Field<Type>(data_));
+    Field<Type>& f = tmpF.ref();
     forAll(f, i)
     {
         f[i] - invModFunc_(f[i]);

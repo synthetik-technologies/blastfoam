@@ -34,7 +34,7 @@ void Foam::lookupTable2D<Type>::readTable
 (
     const fileName& file,
     const string& delim,
-    List<List<Type>>& data
+    Field<Field<Type>>& data
 )
 {
     fileName fNameExpanded(file);
@@ -227,6 +227,21 @@ void Foam::lookupTable2D<Type>::set
     const scalarList& x,
     const scalarList& y,
     const List<List<Type>>& data,
+    const bool isReal
+)
+{
+    setX(x, isReal);
+    setY(y, isReal);
+    setData(data, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::set
+(
+    const scalarList& x,
+    const scalarList& y,
+    const List<List<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -245,12 +260,9 @@ template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
     const scalarList& x,
-    const word& modXType,
     const bool isReal
 )
 {
-    setMod(modXType, modXFunc_, invModXFunc_);
-
     if (isReal)
     {
         forAll(xValues_, i)
@@ -278,15 +290,25 @@ void Foam::lookupTable2D<Type>::setX
 
 
 template<class Type>
-void Foam::lookupTable2D<Type>::setY
+void Foam::lookupTable2D<Type>::setX
 (
-    const scalarList& y,
-    const word& modYType,
+    const scalarList& x,
+    const word& modXType,
     const bool isReal
 )
 {
-    setMod(modYType, modYFunc_, invModYFunc_);
+    setMod(modXType, modXFunc_, invModXFunc_);
+    setX(x, isReal);
+}
 
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setY
+(
+    const scalarList& y,
+    const bool isReal
+)
+{
     if (isReal)
     {
         forAll(yValues_, j)
@@ -312,17 +334,31 @@ void Foam::lookupTable2D<Type>::setY
     }
 }
 
+template<class Type>
+void Foam::lookupTable2D<Type>::setY
+(
+    const scalarList& y,
+    const word& modYType,
+    const bool isReal
+)
+{
+    setMod(modYType, modYFunc_, invModYFunc_);
+    setX(y, isReal);
+}
+
 
 template<class Type>
 void Foam::lookupTable2D<Type>::setData
 (
     const List<List<Type>>& data,
-    const word& modType,
     const bool isReal
 )
 {
-    setMod(modType, modFunc_, invModFunc_);
-    data_ = data;
+    data_.resize(data.size());
+    forAll(data, i)
+    {
+        data_[i] = data[i];
+    }
 
     if (!isReal)
     {
@@ -338,11 +374,24 @@ void Foam::lookupTable2D<Type>::setData
 
 
 template<class Type>
-Foam::tmp<Foam::List<Foam::List<Type>>>
+void Foam::lookupTable2D<Type>::setData
+(
+    const List<List<Type>>& data,
+    const word& modType,
+    const bool isReal
+)
+{
+    setMod(modType, modFunc_, invModFunc_);
+    setData(data, isReal);
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Foam::Field<Type>>>
 Foam::lookupTable2D<Type>::realData() const
 {
-    tmp<List<List<Type>>> tmpf(new List<List<Type>>(data_));
-    List<List<Type>>& f = tmpf.ref();
+    tmp<Field<Field<Type>>> tmpf(new Field<Field<Type>>(data_));
+    Field<Field<Type>>& f = tmpf.ref();
     forAll(f, i)
     {
         forAll(f[i], j)
