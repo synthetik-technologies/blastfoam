@@ -15,17 +15,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme AUSM+up;
+fluxScheme Kurganov;
 
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
 {
     default         cellMDLimited leastSquares 1.0;
+    grad(cellDisplacement) Gauss linear;
 }
 
 divSchemes
@@ -40,19 +41,19 @@ divSchemes
 laplacianSchemes
 {
     default         Gauss linear corrected;
+    laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
 }
 
 interpolationSchemes
 {
-    default         cubic;
-    reconstruct(alpha)  vanLeer;
-    reconstruct(rho)    vanLeer;
-    reconstruct(U)      vanLeerV;
-    reconstruct(e)      vanLeer;
-    reconstruct(p)      vanLeer;
-    reconstruct(speedOfSound)      vanLeer;
-
-    "reconstruct(.*)"   vanLeer;
+    default         linear;
+    reconstruct(alpha)  quadraticMUSCL Minmod;
+    reconstruct(rho)    quadraticMUSCL Minmod;
+    reconstruct(U)      quadraticMUSCL Minmod;
+    reconstruct(e)      quadraticMUSCL Minmod;
+    reconstruct(p)      quadraticMUSCL Minmod;
+    reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    "reconstruct(.*)"   quadraticMUSCL Minmod;
 }
 
 snGradSchemes

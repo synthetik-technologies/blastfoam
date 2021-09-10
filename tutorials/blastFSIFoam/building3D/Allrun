@@ -26,6 +26,10 @@ runApplication decomposePar -allRegions
 # -- Set initial conditions in the air region
 runParallel setRefinedFields -region air
 
+# -- Refine the building region
+runParallel -s 1 refineMesh -region building -overwrite
+runParallel -s 2 refineMesh -region building -overwrite
+
 # -- Run the calc
 runParallel $(getApplication)
 

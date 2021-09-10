@@ -412,7 +412,6 @@ void Foam::phaseModel::solve()
 
 void Foam::phaseModel::postUpdate()
 {
-    return;
     dimensionedScalar smallAlphaRho(residualAlphaRho());
     const volScalarField& alpha(*this);
 

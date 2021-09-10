@@ -141,6 +141,8 @@ Foam::multiPhaseModel::multiPhaseModel
     rho_ = alphaRho_/Foam::max(sumAlpha, residualAlpha());
 
     solveAlpha(true);
+
+    encode();
 }
 
 
@@ -238,7 +240,6 @@ void Foam::multiPhaseModel::postUpdate()
 
 void Foam::multiPhaseModel::update()
 {
-    tmp<volScalarField> c(speedOfSound());
     fluxScheme_->update
     (
         alphas_,

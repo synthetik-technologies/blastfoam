@@ -1151,10 +1151,11 @@ void Foam::adaptiveFvMesh::mapNewInternalFaces
 
 void Foam::adaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
+
     if
     (
         this->foundObject<volScalarField::Internal>("V0_Old")
-     || this->foundObject<volScalarField::Internal>("V00Old")
+     || this->foundObject<volScalarField::Internal>("V00_Old")
     )
     {
         //- Only clear old volumes if balancing is occurring
@@ -1966,6 +1967,7 @@ bool Foam::adaptiveFvMesh::balance()
         dynamicMeshDict().optionalSubDict("loadBalance")
     );
 
+    scalar beginBalance = balanceDict.lookupOrDefault("beginBalance", 0.0);
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
@@ -1973,7 +1975,7 @@ bool Foam::adaptiveFvMesh::balance()
         balanceDict.lookupOrDefault("balance", true)
      && Pstream::parRun();
 
-    if(!balance_)
+    if (!balance_ || time().value() < beginBalance)
     {
         return false;
     }
@@ -2158,6 +2160,19 @@ bool Foam::adaptiveFvMesh::balance()
                 coarseWeights
             );
 
+            //- Only clear old volumes if balancing is occurring
+            //- Clear V, V0, and V00 since they are not
+            //  registered, and therefore are not resized and the
+            //  normal mapping does not work.
+            //  Instead we save V0/V00 and reset it.
+
+            // The actual fix to this is in progress
+
+            //  THIS IS A PRIVATE FUNCTION OF fvMesh,
+            //  but we use a MACRO hack to make it accessible
+            this->clearGeom();
+
+
             Info<< "Distributing the mesh ..." << endl;
             fvMeshDistribute distributor(*this);
 
@@ -2177,13 +2192,11 @@ bool Foam::adaptiveFvMesh::balance()
             //  thermo though V0() or V00() results in a fatal error
             if (V0OldTmp.valid())
             {
-                this->V0Ptr_ =
-                    new DimensionedField<scalar, volMesh>(V0OldTmp);
+                this->V0Ptr_ = V0OldTmp.ptr();
             }
             if (V00OldTmp.valid())
             {
-                this->V00Ptr_ =
-                    new DimensionedField<scalar, volMesh>(V00OldTmp);
+                this->V00Ptr_ = V00OldTmp.ptr();
             }
 
             if (returnReduce(nProtected_, sumOp<label>()) > 0)

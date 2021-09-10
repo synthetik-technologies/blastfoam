@@ -14,7 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   adaptiveFvMesh;
+dynamicFvMesh   staticFvMesh;
 
 errorEstimator scaledDelta;      // Model used to estimate error
 scaledDeltaField D;

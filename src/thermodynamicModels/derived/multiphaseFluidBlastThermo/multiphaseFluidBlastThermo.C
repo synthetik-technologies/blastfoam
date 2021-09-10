@@ -202,7 +202,7 @@ Foam::scalar Foam::multiphaseBlastFluidMixture::cSqr
             sumAlphaXi += alphaXi;
         }
     }
-    return psi/sumAlphaXi;
+    return psi/max(sumAlphaXi, 1e-10);
 }
 
 

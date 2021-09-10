@@ -13,7 +13,7 @@ createU()
     set xlabel "X-Position (m)"
     set ylabel "Velocity [m/s]"
     set grid
-    set key right top
+    set key $4 top
     set size 2,2
     set autoscale
     set xrange [0:1]
@@ -34,7 +34,7 @@ createRho()
     set xlabel "X-Position (m)"
     set ylabel "Density [kg/m^3]"
     set grid
-    set key right top
+    set key $4 top
     set size 2,2
     set autoscale
     set xrange [0:1]
@@ -65,27 +65,29 @@ VALIDATIONDATAROOT=./validationData
 ## declare an array variable
 declare -a times=("0.01" "0.016" "0.026" "0.028" "0.03" "0.032" "0.034" "0.038")
 
-## now loop through the above array
-for i in "${times[@]}"
-do
-    echo "Creating U at time: $i"
-    uVal="$VALIDATIONDATAROOT/u_${i}.csv"
-    UBlastFOAM="../postProcessing/sampleDict/${i}/Centerline_U*"
+declare -a positions=(right left left left left left left left)
 
-    createU $uVal $UBlastFOAM $i
+## now loop through the above array
+for i in "${!times[@]}"
+do
+    echo "Creating U at time: ${times[i]}"
+    uVal="$VALIDATIONDATAROOT/u_${times[i]}.csv"
+    UBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_U*"
+
+    createU $uVal $UBlastFOAM ${times[i]} ${positions[i]}
     # or do whatever with individual element of the array
 done
 
 
 
 ## now loop through the above array
-for i in "${times[@]}"
+for i in "${!times[@]}"
 do
-    echo "Creating rho at time: $i"
-    rhoVal="$VALIDATIONDATAROOT/rho_${i}.csv"
-    rhoBlastFOAM="../postProcessing/sampleDict/${i}/Centerline_p*"
+    echo "Creating rho at time: ${times[i]}"
+    rhoVal="$VALIDATIONDATAROOT/rho_${times[i]}.csv"
+    rhoBlastFOAM="../postProcessing/sampleDict/${times[i]}/Centerline_p*"
 
-    createRho $rhoVal $rhoBlastFOAM $i
+    createRho $rhoVal $rhoBlastFOAM ${times[i]} ${positions[i]}
     # or do whatever with individual element of the array
 done
 
