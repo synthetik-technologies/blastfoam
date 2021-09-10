@@ -37,7 +37,7 @@ defaultFieldValues
         a
         {
             type polynomial;
-            a polynomial ((1 1) (2 1));
+            coeffs ((1 1) (2 1));
         }
     }
 );

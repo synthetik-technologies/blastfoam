@@ -42,11 +42,11 @@ makeFieldSetType(symmTensor, VolFieldSetType);
 makeFieldSetType(tensor, VolFieldSetType);
 
 
-// makeFieldSetType(scalar, fvsPatchField, surfaceMesh);
-// makeFieldSetType(vector, fvsPatchField, surfaceMesh);
-// makeFieldSetType(sphericalTensor, fvsPatchField, surfaceMesh);
-// makeFieldSetType(symmTensor, fvsPatchField, surfaceMesh);
-// makeFieldSetType(tensor, fvsPatchField, surfaceMesh);
+// makeFieldSetType(scalar, SurfaceFieldSetType);
+// makeFieldSetType(vector, SurfaceFieldSetType);
+// makeFieldSetType(sphericalTensor, SurfaceFieldSetType);
+// makeFieldSetType(symmTensor, SurfaceFieldSetType);
+// makeFieldSetType(tensor, SurfaceFieldSetType);
 
 }
 // ************************************************************************* //
