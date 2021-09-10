@@ -22,19 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::integrationSystem
+    Foam::timeIntegrationSystem
 
 Description
     Base class for a collection of equation of states using a shared pressure
     and velocity (5 equation model)
 
 SourceFiles
-    integrationSystem.C
+    timeIntegrationSystem.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef integrationSystem_H
-#define integrationSystem_H
+#ifndef timeIntegrationSystem_H
+#define timeIntegrationSystem_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,10 +47,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class integrationSystem Declaration
+                           Class timeIntegrationSystem Declaration
 \*---------------------------------------------------------------------------*/
 
-class integrationSystem
+class timeIntegrationSystem
 {
 protected:
 // Protected data
@@ -232,8 +232,8 @@ public:
 
 
     // Constructor
-    integrationSystem();
-    integrationSystem
+    timeIntegrationSystem();
+    timeIntegrationSystem
     (
         const word& name,
         const fvMesh& mesh
@@ -242,7 +242,7 @@ public:
 
 
     //- Destructor
-    virtual ~integrationSystem();
+    virtual ~timeIntegrationSystem();
 
 
     // Member functions
@@ -305,7 +305,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "integrationSystemTemplates.C"
+    #include "timeIntegrationSystemTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

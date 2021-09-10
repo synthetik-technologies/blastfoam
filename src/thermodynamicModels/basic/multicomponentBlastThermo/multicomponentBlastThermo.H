@@ -85,7 +85,7 @@ protected:
 
     class integrator
     :
-        public integrationSystem
+        public timeIntegrationSystem
     {
     // Private data
         const fvMesh& mesh_;

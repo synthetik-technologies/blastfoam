@@ -44,8 +44,8 @@ Foam::scalarLookupTable1D::scalarLookupTable1D
 
 Foam::scalarLookupTable1D::scalarLookupTable1D
 (
-    const scalarList& x,
-    const scalarList& data,
+    const Field<scalar>& x,
+    const Field<scalar>& data,
     const word& mod,
     const word& xMod,
     const word& interpolationScheme,
@@ -58,7 +58,7 @@ Foam::scalarLookupTable1D::scalarLookupTable1D
 
 Foam::scalarLookupTable1D::scalarLookupTable1D
 (
-    const scalarList& x,
+    const Field<scalar>& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal

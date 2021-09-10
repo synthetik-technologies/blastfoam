@@ -68,7 +68,7 @@ Foam::phaseModel::phaseModel
         fluid.mesh(),
         dimensionedScalar("alpha", dimless, 0)
     ),
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("phaseModel", phaseName),
         fluid.mesh()

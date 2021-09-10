@@ -39,7 +39,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluxScheme.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 #include "fluidThermo.H"
 #include "dynamicMomentumTransportModel.H"
@@ -60,7 +60,7 @@ namespace Foam
 class compressibleSystem
 :
     public IOdictionary,
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 // Protected data

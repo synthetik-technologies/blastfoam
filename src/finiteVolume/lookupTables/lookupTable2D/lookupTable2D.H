@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "scalarList.H"
+#include "Field.H"
 #include "IOstreams.H"
 #include "Switch.H"
 #include "fileName.H"
@@ -78,19 +78,19 @@ protected:
     interp2DFuncType interpFunc_;
 
     //- Data
-    List<List<Type>> data_;
+    Field<Field<Type>> data_;
 
     //- Modified x field values
-    scalarList xModValues_;
+    Field<scalar> xModValues_;
 
     //- Modified y field values
-    scalarList yModValues_;
+    Field<scalar> yModValues_;
 
     //- Stored real x values
-    scalarList xValues_;
+    Field<scalar> xValues_;
 
     //- Stored real y values
-    scalarList yValues_;
+    Field<scalar> yValues_;
 
     //- Current indexes (used to access location in list after lookup)
     mutable label i_;
@@ -106,11 +106,11 @@ protected:
     (
         const fileName& file,
         const string& delim,
-        List<List<Type>>& data
+        Field<Field<Type>>& data
     );
 
     //- Check if spacing in a list is uniform
-    bool checkUniform(const scalarList& xy) const;
+    bool checkUniform(const List<scalar>& xy) const;
 
 
 public:
@@ -132,9 +132,9 @@ public:
         //- Construct from data
         lookupTable2D
         (
-            const scalarList& x,
-            const scalarList& y,
-            const List<List<Type>>& data,
+            const Field<scalar>& x,
+            const Field<scalar>& y,
+            const Field<Field<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -210,37 +210,37 @@ public:
         }
 
         //- Const access to real x values
-        const scalarList& x() const
+        const Field<scalar>& x() const
         {
             return xValues_;
         }
 
         //- Const access to real y values
-        const scalarList& y() const
+        const Field<scalar>& y() const
         {
             return yValues_;
         }
 
         //- Const access to modified x values
-        const scalarList& xMod() const
+        const Field<scalar>& xMod() const
         {
             return xModValues_;
         }
 
         //- Const access to modified y values
-        const scalarList& yMod() const
+        const Field<scalar>& yMod() const
         {
             return yModValues_;
         }
 
         //- Const access to modified data values
-        const List<List<Type>>& data() const
+        const Field<Field<Type>>& data() const
         {
             return data_;
         }
 
         //- Return real data values
-        tmp<List<List<Type>>> realData() const;
+        tmp<Field<Field<Type>>> realData() const;
 
 
     // Member Functions
@@ -287,9 +287,9 @@ public:
         //- Set data, x, and y
         virtual void set
         (
-            const scalarList& x,
-            const scalarList& y,
-            const List<List<Type>>& data,
+            const Field<scalar>& x,
+            const Field<scalar>& y,
+            const Field<Field<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
@@ -300,7 +300,7 @@ public:
         //- Set data
         virtual void setData
         (
-            const List<List<Type>>& data,
+            const Field<Field<Type>>& data,
             const word& mod,
             const bool modified
         );
@@ -308,7 +308,7 @@ public:
         //- Set x
         virtual void setX
         (
-            const scalarList& x,
+            const Field<scalar>& x,
             const word& xMod,
             const bool modified
         );
@@ -316,7 +316,7 @@ public:
         //- Set y
         virtual void setY
         (
-            const scalarList& y,
+            const Field<scalar>& y,
             const word& yMod,
             const bool modified
         );

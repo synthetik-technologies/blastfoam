@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
 #include "dynamicMomentumTransportModel.H"
@@ -54,7 +54,7 @@ namespace Foam
 
 class psiuCompressibleSystem
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 // Protected data

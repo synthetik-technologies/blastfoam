@@ -114,9 +114,9 @@ Foam::scalarLookupTable2D::scalarLookupTable2D
 
 Foam::scalarLookupTable2D::scalarLookupTable2D
 (
-    const scalarList& x,
-    const scalarList& y,
-    const List<scalarList>& data,
+    const Field<scalar>& x,
+    const Field<scalar>& y,
+    const Field<Field<scalar>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -171,8 +171,8 @@ Foam::scalarLookupTable2D::reverseLookupY
     }
 
     //- If multiple indicies meet criteria, check for closest
-    scalarList yTrys(Js.size());
-    scalarList errors(Js.size(), great);
+    Field<scalar> yTrys(Js.size());
+    Field<scalar> errors(Js.size(), great);
     forAll(Js, J)
     {
         j_ = Js[J];
@@ -218,8 +218,8 @@ Foam::scalarLookupTable2D::reverseLookupX
     }
 
     //- If multiple indicies meet criteria, check for closest
-    scalarList xTrys(Is.size());
-    scalarList errors(Is.size(), great);
+    Field<scalar> xTrys(Is.size());
+    Field<scalar> errors(Is.size(), great);
     forAll(Is, I)
     {
         i_ = Is[I];

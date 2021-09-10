@@ -42,7 +42,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "basicThermo.H"
 #include "OSspecific.H"
 
@@ -56,7 +56,7 @@ class basicBlastThermo;
 
 class blastThermo
 :
-    public integrationSystem,
+    public timeIntegrationSystem,
     public basicThermo::implementation
 {
 protected:

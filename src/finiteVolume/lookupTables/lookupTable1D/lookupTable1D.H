@@ -38,7 +38,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "dictionary.H"
-#include "scalarList.H"
+#include "Field.H"
 #include "IOstreams.H"
 #include "Switch.H"
 #include "IOList.H"
@@ -70,13 +70,13 @@ protected:
     interp1DFuncType interpFunc_;
 
     //- List of x values in real space
-    scalarList xValues_;
+    Field<scalar> xValues_;
 
     //- List of x values in the given space
-    scalarList xModValues_;
+    Field<scalar> xModValues_;
 
     //- Data
-    List<Type> data_;
+    Field<Type> data_;
 
     //- Current index (used to access location in list after lookup)
     mutable label index_;
@@ -113,8 +113,8 @@ public:
         //  x can be in real or xMod space
         lookupTable1D
         (
-            const scalarList& x,
-            const List<Type>& data,
+            const Field<scalar>& x,
+            const Field<Type>& data,
             const word& xMod,
             const word& mod,
             const word& interpolationScheme,
@@ -124,7 +124,7 @@ public:
         //- Construct from interpolator from only x values, no data is stored
         lookupTable1D
         (
-            const scalarList& x,
+            const Field<scalar>& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -176,25 +176,25 @@ public:
             }
 
             //- Const access to real x values
-            const scalarList& x() const
+            const Field<scalar>& x() const
             {
                 return xValues_;
             }
 
             //- Const access to modified x values
-            const scalarList& xMod() const
+            const Field<scalar>& xMod() const
             {
                 return xModValues_;
             }
 
             //- Const access to modified data values
-            const List<Type>& data() const
+            const Field<Type>& data() const
             {
                 return data_;
             }
 
             //- Return the real data
-            tmp<List<Type>> realData() const;
+            tmp<Field<Type>> realData() const;
 
 
     // Public functions
@@ -222,8 +222,8 @@ public:
         //- Set data
         void set
         (
-            const scalarList& x,
-            const List<Type>& data,
+            const Field<scalar>& x,
+            const Field<Type>& data,
             const word& mod,
             const word& xMod,
             const word& interpolationScheme,
@@ -233,7 +233,7 @@ public:
         //- Set x
         void setX
         (
-            const scalarList& x,
+            const Field<scalar>& x,
             const word& xMod,
             const word& interpolationScheme,
             const bool isReal = true
@@ -242,7 +242,7 @@ public:
         //- Set data
         void setData
         (
-            const List<Type>& x,
+            const Field<Type>& x,
             const word& mod,
             const bool isReal = true
         );

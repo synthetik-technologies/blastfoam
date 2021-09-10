@@ -23,13 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class FieldType>
-void Foam::integrationSystem::storeOld
+void Foam::timeIntegrationSystem::storeOld
 (
     FieldType& f,
     PtrList<FieldType>& fList,
@@ -70,7 +70,7 @@ void Foam::integrationSystem::storeOld
 
 
 template<class FieldType>
-void Foam::integrationSystem::storeOld(FieldType& f, const bool conservative)
+void Foam::timeIntegrationSystem::storeOld(FieldType& f, const bool conservative)
 {
     if (!timeInt_.valid())
     {
@@ -81,7 +81,7 @@ void Foam::integrationSystem::storeOld(FieldType& f, const bool conservative)
 
 
 template<class FieldType>
-void Foam::integrationSystem::storeDelta
+void Foam::timeIntegrationSystem::storeDelta
 (
     const FieldType& f,
     PtrList<FieldType>& fList
@@ -112,7 +112,7 @@ void Foam::integrationSystem::storeDelta
 
 
 template<class FieldType>
-void Foam::integrationSystem::storeDelta(const FieldType& f)
+void Foam::timeIntegrationSystem::storeDelta(const FieldType& f)
 {
     if (!timeInt_.valid())
     {
@@ -123,7 +123,7 @@ void Foam::integrationSystem::storeDelta(const FieldType& f)
 
 
 template<class Type>
-void Foam::integrationSystem::storeOld
+void Foam::timeIntegrationSystem::storeOld
 (
     Type& f,
     List<Type>& fList,
@@ -139,7 +139,7 @@ void Foam::integrationSystem::storeOld
 
 
 template<class Type>
-void Foam::integrationSystem::storeDelta
+void Foam::timeIntegrationSystem::storeDelta
 (
     const Type& f,
     List<Type>& fList
@@ -154,7 +154,7 @@ void Foam::integrationSystem::storeDelta
 
 
 template<template<class> class ListType, class Type>
-void Foam::integrationSystem::blendOld
+void Foam::timeIntegrationSystem::blendOld
 (
     Type& f,
     const ListType<Type>& fList
@@ -165,7 +165,7 @@ void Foam::integrationSystem::blendOld
 
 
 template<class FieldType>
-void Foam::integrationSystem::blendOld(FieldType& f) const
+void Foam::timeIntegrationSystem::blendOld(FieldType& f) const
 {
     if (!timeInt_.valid())
     {
@@ -176,7 +176,7 @@ void Foam::integrationSystem::blendOld(FieldType& f) const
 
 
 template<template<class> class ListType, class Type>
-void Foam::integrationSystem::blendDelta
+void Foam::timeIntegrationSystem::blendDelta
 (
     Type& f,
     const ListType<Type>& fList
@@ -187,7 +187,7 @@ void Foam::integrationSystem::blendDelta
 
 
 template<class FieldType>
-void Foam::integrationSystem::blendDelta(FieldType& f) const
+void Foam::timeIntegrationSystem::blendDelta(FieldType& f) const
 {
     if (!timeInt_.valid())
     {
@@ -198,7 +198,7 @@ void Foam::integrationSystem::blendDelta(FieldType& f) const
 
 
 template<template<class> class ListType, class Type>
-void Foam::integrationSystem::storeAndBlendOld
+void Foam::timeIntegrationSystem::storeAndBlendOld
 (
     Type& f,
     ListType<Type>& fList,
@@ -211,7 +211,7 @@ void Foam::integrationSystem::storeAndBlendOld
 
 
 template<class FieldType>
-void Foam::integrationSystem::storeAndBlendOld
+void Foam::timeIntegrationSystem::storeAndBlendOld
 (
     FieldType& f,
     const bool conservative
@@ -226,7 +226,7 @@ void Foam::integrationSystem::storeAndBlendOld
 
 
 template<template<class> class ListType, class Type>
-void Foam::integrationSystem::storeAndBlendDelta
+void Foam::timeIntegrationSystem::storeAndBlendDelta
 (
     Type& f,
     ListType<Type>& fList
@@ -237,7 +237,7 @@ void Foam::integrationSystem::storeAndBlendDelta
 }
 
 template<class FieldType>
-void Foam::integrationSystem::storeAndBlendDelta(FieldType& f)
+void Foam::timeIntegrationSystem::storeAndBlendDelta(FieldType& f)
 {
     if (!timeInt_.valid())
     {
@@ -247,7 +247,7 @@ void Foam::integrationSystem::storeAndBlendDelta(FieldType& f)
 }
 
 template<template<class> class ListType, class Type>
-Foam::tmp<Type> Foam::integrationSystem::calcDelta
+Foam::tmp<Type> Foam::timeIntegrationSystem::calcDelta
 (
     const Type& f,
     const ListType<Type>& fList
@@ -277,7 +277,7 @@ Foam::tmp<Type> Foam::integrationSystem::calcDelta
 
 
 template<class FieldType>
-Foam::tmp<FieldType> Foam::integrationSystem::calcDelta(const FieldType& f) const
+Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcDelta(const FieldType& f) const
 {
     if (!timeInt_.valid())
     {
@@ -288,7 +288,7 @@ Foam::tmp<FieldType> Foam::integrationSystem::calcDelta(const FieldType& f) cons
 
 
 template<template<class> class ListType, class Type>
-Foam::tmp<Type> Foam::integrationSystem::calcAndStoreDelta
+Foam::tmp<Type> Foam::timeIntegrationSystem::calcAndStoreDelta
 (
     const Type& f,
     ListType<Type>& fList
@@ -301,7 +301,7 @@ Foam::tmp<Type> Foam::integrationSystem::calcAndStoreDelta
 
 
 template<class FieldType>
-Foam::tmp<FieldType> Foam::integrationSystem::calcAndStoreDelta(const FieldType& f)
+Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcAndStoreDelta(const FieldType& f)
 {
     if (!timeInt_.valid())
     {
@@ -312,7 +312,7 @@ Foam::tmp<FieldType> Foam::integrationSystem::calcAndStoreDelta(const FieldType&
 
 
 template<template<class> class ListType, class Type>
-void Foam::integrationSystem::blendSteps
+void Foam::timeIntegrationSystem::blendSteps
 (
     const labelList& indices,
     Type& f,
@@ -334,7 +334,7 @@ void Foam::integrationSystem::blendSteps
 
 
 template<class FieldType>
-void Foam::integrationSystem::addOldField(const FieldType& f)
+void Foam::timeIntegrationSystem::addOldField(const FieldType& f)
 {
     if (!timeInt_.valid())
     {
@@ -345,7 +345,7 @@ void Foam::integrationSystem::addOldField(const FieldType& f)
 
 
 template<class FieldType>
-void Foam::integrationSystem::addDeltaField(const FieldType& f)
+void Foam::timeIntegrationSystem::addDeltaField(const FieldType& f)
 {
     if (!timeInt_.valid())
     {
@@ -356,7 +356,7 @@ void Foam::integrationSystem::addDeltaField(const FieldType& f)
 
 
 template<class FieldType>
-void Foam::integrationSystem::addOldDeltaField(const FieldType& f)
+void Foam::timeIntegrationSystem::addOldDeltaField(const FieldType& f)
 {
     if (!timeInt_.valid())
     {

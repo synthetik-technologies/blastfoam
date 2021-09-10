@@ -29,13 +29,13 @@ virtual void setMod
 
 
 //- Pointer to function to lookup
-typedef label (*findIndexFunc)(const scalar, const scalarList&);
+typedef label (*findIndexFunc)(const scalar, const List<scalar>&);
 
 //- Lookup based on uniform indexing
 inline static label findUniformIndexes
 (
     const scalar xy,
-    const scalarList& XY
+    const List<scalar>& XY
 )
 {
     scalar xyMin = XY[0];
@@ -53,7 +53,7 @@ inline static label findUniformIndexes
 inline static label findNonuniformIndexes
 (
     const scalar xy,
-    const scalarList& XY
+    const List<scalar>& XY
 )
 {
     if (xy < XY[0])
@@ -77,7 +77,7 @@ typedef Type (*interp1DFuncType)
 (
     const scalar,
     const label,
-    const scalarList&,
+    const List<scalar>&,
     const List<Type>&
 );
 
@@ -96,7 +96,7 @@ inline static Type linearExtrapolateInterp
 (
     const scalar x,
     const label i,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -108,7 +108,7 @@ inline static Type linearClampInterp
 (
     const scalar x,
     const label i,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -128,7 +128,7 @@ inline static Type cubicExtrapolateInterp
 (
     const scalar X,
     const label I,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -199,7 +199,7 @@ inline static Type cubicClampInterp
 (
     const scalar x,
     const label i,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -219,7 +219,7 @@ inline static Type ceilInterp
 (
     const scalar x,
     const label i,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -231,7 +231,7 @@ inline static Type floorInterp
 (
     const scalar x,
     const label i,
-    const scalarList& xs,
+    const List<scalar>& xs,
     const List<Type>& ys
 )
 {
@@ -292,9 +292,9 @@ typedef Type (*interp2DFuncType)
     const scalar,
     const label,
     const label,
-    const scalarList&,
-    const scalarList&,
-    const List<List<Type>>&
+    const List<scalar>&,
+    const List<scalar>&,
+    const Field<Field<Type>>&
 );
 
 
@@ -304,9 +304,9 @@ inline static Type bilinearClampInterp
     const scalar y,
     const label i,
     const label j,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     Type m(linearClampInterp(y, j, ys, zs[i]));
@@ -321,9 +321,9 @@ inline static Type bilinearExtrapolateInterp
     const scalar y,
     const label i,
     const label j,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     Type m(linearExtrapolateInterp(x, i, xs, zs[i]));
@@ -338,9 +338,9 @@ inline static Type bicubicClampInterp
     const scalar y,
     const label I,
     const label J,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     const label i = min(max(I, 1), xs.size() - 3);
@@ -366,9 +366,9 @@ inline static Type bicubicExtrapolateInterp
     const scalar y,
     const label I,
     const label J,
-    const scalarList& xs,
-    const scalarList& ys,
-    const List<List<Type>>& zs
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const Field<Field<Type>>& zs
 )
 {
     const label i = min(max(I, 1), xs.size() - 3);

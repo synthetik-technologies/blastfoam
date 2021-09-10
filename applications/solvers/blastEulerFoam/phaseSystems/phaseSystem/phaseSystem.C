@@ -601,7 +601,7 @@ Foam::phaseSystem::phaseSystem
             IOobject::NO_WRITE
         )
     ),
-    integrationSystem("fluid", mesh),
+    timeIntegrationSystem("fluid", mesh),
 
     mesh_(mesh),
 

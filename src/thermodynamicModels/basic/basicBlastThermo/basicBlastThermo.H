@@ -43,7 +43,7 @@ SourceFiles
 #include "volFields.H"
 #include "dictionary.H"
 #include "wordIOList.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "regIOobject.H"
 #include "OSspecific.H"
 
@@ -86,7 +86,7 @@ public:
 
 class basicBlastThermo
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 

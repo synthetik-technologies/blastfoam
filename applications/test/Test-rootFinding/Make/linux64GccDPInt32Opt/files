@@ -1,0 +1,3 @@
+SOURCE += Test-rootFinding.C
+
+EXE = $(BLAST_APPBIN)/Test-rootFinding

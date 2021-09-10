@@ -42,7 +42,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -54,7 +54,7 @@ namespace Foam
 
 class afterburnModel
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 

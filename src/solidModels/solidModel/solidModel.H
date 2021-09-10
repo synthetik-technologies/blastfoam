@@ -38,7 +38,6 @@ SourceFiles
 #ifndef solidModel_H
 #define solidModel_H
 
-#include "integrationSystem.H"
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"

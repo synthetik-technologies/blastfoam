@@ -150,7 +150,7 @@ Foam::activationModel::activationModel
     const word& phaseName
 )
 :
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("activationModel", phaseName),
         mesh

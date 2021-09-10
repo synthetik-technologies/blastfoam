@@ -41,7 +41,7 @@ SourceFiles
 #include "PtrListDictionary.H"
 #include "volFields.H"
 #include "surfaceFields.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "timeIntegrator.H"
 #include "phaseFluxScheme.H"
 #include "HashPtrTable.H"
@@ -77,7 +77,7 @@ class BlendedInterfacialModel;
 class phaseSystem
 :
     public IOdictionary,
-    public integrationSystem
+    public timeIntegrationSystem
 {
 public:
 

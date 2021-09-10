@@ -45,7 +45,7 @@ Foam::blastThermo::blastThermo
     const word& phaseName
 )
 :
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("blastThermo", phaseName),
         mesh

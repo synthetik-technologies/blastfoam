@@ -1,0 +1,7 @@
+EXE_INC= \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude
+
+EXE_LIBS = \
+    -lfiniteVolume \
+    -L$(FOAM_USER_LIBBIN) \
+    -lblastFiniteVolume

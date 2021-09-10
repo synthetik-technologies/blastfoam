@@ -1,4 +1,4 @@
-timeIntegrators/integrationSystem/integrationSystem.C
+timeIntegrators/timeIntegrationSystem/timeIntegrationSystem.C
 
 timeIntegrators/timeIntegrator/timeIntegrator.C
 timeIntegrators/timeIntegrator/newTimeIntegrator.C
@@ -64,5 +64,23 @@ extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
+
+rootSolvers/rootSystem/rootSystem.C
+rootSolvers/rootSolver/rootSolver.C
+rootSolvers/rootSolver/rootSolverNew.C
+rootSolvers/step/stepRootSolver.C
+rootSolvers/bisection/bisectionRootSolver.C
+rootSolvers/secant/secantRootSolver.C
+rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
+rootSolvers/Steffensen/SteffensenRootSolver.C
+rootSolvers/Ridder/RidderRootSolver.C
+rootSolvers/Brent/BrentRootSolver.C
+rootSolvers/falsePoint/falsePointRootSolver.C
+rootSolvers/Halley/HalleyRootSolver.C
+
+multivariateRootSolvers/multivariateRootSystem/multivariateRootSystem.C
+multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
+multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
+multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

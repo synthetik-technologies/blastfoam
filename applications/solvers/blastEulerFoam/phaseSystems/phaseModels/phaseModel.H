@@ -48,7 +48,7 @@ SourceFiles
 #include "diameterModel.H"
 #include "fvc.H"
 #include "fvm.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 #include "dynamicTransportModel.H"
 #include "PhaseThermophysicalTransportModel.H"
@@ -90,7 +90,7 @@ struct PhaseModelTransportThermoModel<fluidBlastThermo>
 class phaseModel
 :
     public volScalarField,
-    public integrationSystem,
+    public timeIntegrationSystem,
     public dynamicTransportModel
 {
 protected:
@@ -288,7 +288,7 @@ public:
 
     // Member Functions
 
-        using integrationSystem::mesh;
+        using timeIntegrationSystem::mesh;
 
         //- Return that the phase uses a slave pressure
         virtual bool slavePressure() const

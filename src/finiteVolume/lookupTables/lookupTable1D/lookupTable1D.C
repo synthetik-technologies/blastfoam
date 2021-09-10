@@ -24,8 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lookupTable1D.H"
-#include "DynamicList.H"
-#include "List.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
@@ -117,8 +115,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const scalarList& x,
-    const List<Type>& data,
+    const Field<scalar>& x,
+    const Field<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -143,7 +141,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
 template<class Type>
 Foam::lookupTable1D<Type>::lookupTable1D
 (
-    const scalarList& x,
+    const Field<scalar>& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -176,8 +174,8 @@ Foam::lookupTable1D<Type>::~lookupTable1D()
 template<class Type>
 void Foam::lookupTable1D<Type>::set
 (
-    const scalarList& x,
-    const List<Type>& data,
+    const Field<scalar>& x,
+    const Field<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -191,7 +189,7 @@ void Foam::lookupTable1D<Type>::set
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
-    const scalarList& x,
+    const Field<scalar>& x,
     const word& xMod,
     const word& interpolationScheme,
     const bool isReal
@@ -224,7 +222,7 @@ void Foam::lookupTable1D<Type>::setX
 template<class Type>
 void Foam::lookupTable1D<Type>::setData
 (
-    const List<Type>& data,
+    const Field<Type>& data,
     const word& mod,
     const bool isReal
 )
@@ -272,7 +270,7 @@ void Foam::lookupTable1D<Type>::update(const scalar x) const
 
 
 template<class Type>
-Foam::tmp<Foam::List<Type>> Foam::lookupTable1D<Type>::realData() const
+Foam::tmp<Foam::Field<Type>> Foam::lookupTable1D<Type>::realData() const
 {
 #ifdef FULL_DEBUG
     if (!invModFunc_)
@@ -283,8 +281,8 @@ Foam::tmp<Foam::List<Type>> Foam::lookupTable1D<Type>::realData() const
     }
 #endif
 
-    tmp<List<Type>> tmpF(new List<Type>(data_));
-    List<Type>& f = tmpF.ref();
+    tmp<Field<Type>> tmpF(new Field<Type>(data_));
+    Field<Type>& f = tmpF.ref();
     forAll(f, i)
     {
         f[i] - invModFunc_(f[i]);

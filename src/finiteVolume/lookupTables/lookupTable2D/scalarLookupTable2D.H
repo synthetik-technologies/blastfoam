@@ -83,9 +83,9 @@ public:
         //- Construct from data
         scalarLookupTable2D
         (
-            const scalarList& x,
-            const scalarList& y,
-            const List<List<scalar>>& data,
+            const Field<scalar>& x,
+            const Field<scalar>& y,
+            const Field<Field<scalar>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,

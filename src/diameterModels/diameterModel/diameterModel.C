@@ -44,7 +44,7 @@ Foam::diameterModel::diameterModel
     const word& phaseName
 )
 :
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("diameterModel", phaseName),
         mesh

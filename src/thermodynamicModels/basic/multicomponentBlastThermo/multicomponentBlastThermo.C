@@ -126,7 +126,7 @@ Foam::multicomponentBlastThermo::integrator::integrator
     const word& alphaRhoPhiName
 )
 :
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("multicomponentIntegrator", Y[0].group()),
         mesh

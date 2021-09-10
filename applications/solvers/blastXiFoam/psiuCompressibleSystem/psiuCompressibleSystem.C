@@ -40,7 +40,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     const fvMesh& mesh
 )
 :
-    integrationSystem("phaseCompressibleSystem", mesh),
+    timeIntegrationSystem("phaseCompressibleSystem", mesh),
     thermo_(psiuReactionThermo::New(mesh)),
     rho_
     (

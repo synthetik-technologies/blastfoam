@@ -117,7 +117,7 @@ Foam::compressibleSystem::compressibleSystem
             IOobject::NO_WRITE
         )
     ),
-    integrationSystem("compressibleSystem", mesh),
+    timeIntegrationSystem("compressibleSystem", mesh),
     U_
     (
         IOobject

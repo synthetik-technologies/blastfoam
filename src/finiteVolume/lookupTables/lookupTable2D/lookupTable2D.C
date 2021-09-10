@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lookupTable2D.H"
-#include "List.H"
 #include "fileOperation.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
@@ -34,7 +33,7 @@ void Foam::lookupTable2D<Type>::readTable
 (
     const fileName& file,
     const string& delim,
-    List<List<Type>>& data
+    Field<Field<Type>>& data
 )
 {
     fileName fNameExpanded(file);
@@ -104,7 +103,7 @@ Type Foam::lookupTable2D<Type>::getValue
 
 
 template<class Type>
-bool Foam::lookupTable2D<Type>::checkUniform(const scalarList& xy) const
+bool Foam::lookupTable2D<Type>::checkUniform(const List<scalar>& xy) const
 {
     scalar dxy = xy[1] - xy[0];
 
@@ -180,9 +179,9 @@ Foam::lookupTable2D<Type>::lookupTable2D
 template<class Type>
 Foam::lookupTable2D<Type>::lookupTable2D
 (
-    const scalarList& x,
-    const scalarList& y,
-    const List<List<Type>>& data,
+    const Field<scalar>& x,
+    const Field<scalar>& y,
+    const Field<Field<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -224,9 +223,9 @@ Foam::lookupTable2D<Type>::~lookupTable2D()
 template<class Type>
 void Foam::lookupTable2D<Type>::set
 (
-    const scalarList& x,
-    const scalarList& y,
-    const List<List<Type>>& data,
+    const Field<scalar>& x,
+    const Field<scalar>& y,
+    const Field<Field<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -244,7 +243,7 @@ void Foam::lookupTable2D<Type>::set
 template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
-    const scalarList& x,
+    const Field<scalar>& x,
     const word& modXType,
     const bool isReal
 )
@@ -280,7 +279,7 @@ void Foam::lookupTable2D<Type>::setX
 template<class Type>
 void Foam::lookupTable2D<Type>::setY
 (
-    const scalarList& y,
+    const Field<scalar>& y,
     const word& modYType,
     const bool isReal
 )
@@ -316,7 +315,7 @@ void Foam::lookupTable2D<Type>::setY
 template<class Type>
 void Foam::lookupTable2D<Type>::setData
 (
-    const List<List<Type>>& data,
+    const Field<Field<Type>>& data,
     const word& modType,
     const bool isReal
 )
@@ -338,11 +337,11 @@ void Foam::lookupTable2D<Type>::setData
 
 
 template<class Type>
-Foam::tmp<Foam::List<Foam::List<Type>>>
+Foam::tmp<Foam::Field<Foam::Field<Type>>>
 Foam::lookupTable2D<Type>::realData() const
 {
-    tmp<List<List<Type>>> tmpf(new List<List<Type>>(data_));
-    List<List<Type>>& f = tmpf.ref();
+    tmp<Field<Field<Type>>> tmpf(new Field<Field<Type>>(data_));
+    Field<Field<Type>>& f = tmpf.ref();
     forAll(f, i)
     {
         forAll(f[i], j)
@@ -562,7 +561,7 @@ void Foam::lookupTable2D<Type>::read
 
     if (dict.found(xName))
     {
-        xValues_ = dict.lookup<scalarList>(xName);
+        xValues_ = dict.lookup<Field<scalar>>(xName);
         setMod(dict.lookup(xName + "Mod"), modXFunc_, invModXFunc_);
     }
     else
@@ -584,7 +583,7 @@ void Foam::lookupTable2D<Type>::read
     {
         if (dict.found(yName))
         {
-            yValues_ = dict.lookup<scalarList>(yName);
+            yValues_ = dict.lookup<Field<scalar>>(yName);
             yModValues_.resize(yValues_.size());
 
             setMod(dict.lookup(yName + "Mod"), modYFunc_, invModYFunc_);

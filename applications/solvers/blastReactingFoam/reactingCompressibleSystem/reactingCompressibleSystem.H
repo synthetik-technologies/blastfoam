@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "fluxScheme.H"
 #include "fluidReactionThermo.H"
 #include "combustionModel.H"
@@ -58,7 +58,7 @@ namespace Foam
 
 class reactingCompressibleSystem
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 // Protected data
