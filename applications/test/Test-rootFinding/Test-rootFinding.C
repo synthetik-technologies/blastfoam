@@ -2,6 +2,7 @@
 #include "rootSolver.H"
 #include "multivariateRootSolver.H"
 #include "argList.H"
+#include "IntegratorsFwd.H"
 
 using namespace Foam;
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
     dictionary dict;
 
     Info<< endl;
-    Info<< "Univariate methods" << endl;
+    Info<< "Univariate root finding" << endl;
     wordList methods(rootSolver::dictionaryConstructorTablePtr_->toc());
     forAll(methods, i)
     {
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
     }
 
     Info<< nl << nl;
-    Info<< "Mulitvariate methods" << endl;
+    Info<< "Mulitvariate root finding" << endl;
     wordList multivariateMethods
     (
         multivariateRootSolver::dictionaryConstructorTablePtr_->toc()
@@ -144,6 +145,36 @@ int main(int argc, char *argv[])
             << ", nSteps=" << solver->nSteps()
             << ", errors=" << solver->errors() << nl << endl;
     }
+
+
+    Info<< nl << nl;
+    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 0.5)" << endl;
+    labelList nSteps({10, 20, 30, 50, 100});
+    dict.set("nSteps", 1000);
+    const scalar ans = 0.463800538604203;
+    wordList intMethods
+    (
+        scalarIntegrator::dictionaryConstructorTablePtr_->toc()
+    );
+    forAll(intMethods, i)
+    {
+        dict.set("integrator", intMethods[i]);
+        autoPtr<scalarIntegrator> integrator
+        (
+            scalarIntegrator::New(eqn, dict)
+        );
+
+        forAll(nSteps, stepi)
+        {
+            integrator->nSteps() = nSteps[stepi];
+            scalar est = integrator->integrate(0, 0.5, 0);
+            Info<< "\t" << integrator->nSteps() << " steps: "
+                << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
+        }
+        Info<< endl;
+    }
+
+    Info<< nl << "done" << endl;
 
     return 0;
 }

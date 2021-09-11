@@ -84,4 +84,6 @@ multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
 multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
 multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C
 
+integrators/Integrator/Integrators.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume
