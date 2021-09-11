@@ -65,7 +65,9 @@ meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
 
-rootSolvers/rootSystem/rootSystem.C
+equations/scalarEquation/scalarEquation.C
+equations/scalarMultivariateEquation/scalarMultivariateEquation.C
+
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C
 rootSolvers/step/stepRootSolver.C
@@ -78,7 +80,6 @@ rootSolvers/Brent/BrentRootSolver.C
 rootSolvers/falsePoint/falsePointRootSolver.C
 rootSolvers/Halley/HalleyRootSolver.C
 
-multivariateRootSolvers/multivariateRootSystem/multivariateRootSystem.C
 multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
 multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
 multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C

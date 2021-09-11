@@ -28,7 +28,7 @@ Description
     Find root using the Ridder method
 
 SourceFiles
-    rootSolver.C
+    RidderRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class RidderRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class RidderRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        RidderRootSolver(const rootSystem& eqn, const dictionary& dict);
+        RidderRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         RidderRootSolver(const rootSolver&) = delete;

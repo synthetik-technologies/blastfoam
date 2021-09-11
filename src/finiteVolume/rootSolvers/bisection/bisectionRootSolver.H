@@ -28,7 +28,7 @@ Description
     Find root using the bisection method
 
 SourceFiles
-    rootSolver.C
+    bisectionRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                        Class bisectionRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class bisectionRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        bisectionRootSolver(const rootSystem& eqn, const dictionary& dict);
+        bisectionRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         bisectionRootSolver(const rootSolver&) = delete;

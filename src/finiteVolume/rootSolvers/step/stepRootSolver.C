@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::stepRootSolver::stepRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -50,7 +50,7 @@ Foam::stepRootSolver::stepRootSolver
 
 Foam::stepRootSolver::stepRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const scalar dx
 )
 :

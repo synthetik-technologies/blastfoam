@@ -28,7 +28,7 @@ Description
     Find root using the step method
 
 SourceFiles
-    rootSolver.C
+    stepRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class stepRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class stepRootSolver
@@ -66,12 +66,12 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        stepRootSolver(const rootSystem& eqn, const dictionary& dict);
+        stepRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Construct for given rootSolver, lower bound, and step size
         stepRootSolver
         (
-            const rootSystem& eqn,
+            const scalarEquation& eqn,
             const scalar dx
         );
 

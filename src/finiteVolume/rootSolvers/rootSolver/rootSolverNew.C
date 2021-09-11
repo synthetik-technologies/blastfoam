@@ -29,7 +29,7 @@ License
 
 Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 {

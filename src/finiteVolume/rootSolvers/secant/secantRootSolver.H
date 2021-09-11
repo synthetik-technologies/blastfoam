@@ -28,7 +28,7 @@ Description
     Find root using the secant method
 
 SourceFiles
-    rootSolver.C
+    secantRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class secantRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class secantRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        secantRootSolver(const rootSystem& eqn, const dictionary& dict);
+        secantRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         secantRootSolver(const rootSolver&) = delete;

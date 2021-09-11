@@ -28,7 +28,7 @@ Description
     Find root using the Halley method
 
 SourceFiles
-    rootSolver.C
+    HalleyRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class HalleyRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class HalleyRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        HalleyRootSolver(const rootSystem& eqn, const dictionary& dict);
+        HalleyRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         HalleyRootSolver(const rootSolver&) = delete;

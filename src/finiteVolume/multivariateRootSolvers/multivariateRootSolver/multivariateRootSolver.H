@@ -35,7 +35,7 @@ SourceFiles
 #ifndef multivariateRootSolver_H
 #define multivariateRootSolver_H
 
-#include "multivariateRootSystem.H"
+#include "scalarMultivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -55,8 +55,8 @@ protected:
 
     // Protected data
 
-        //- Reference to multivariateRootSystem
-        const multivariateRootSystem& eqns_;
+        //- Reference to scalarMultivariateEquation
+        const scalarMultivariateEquation& eqns_;
 
         //- Size of the ODESystem (adjustable)
         mutable label n_;
@@ -91,15 +91,19 @@ public:
             autoPtr,
             multivariateRootSolver,
             dictionary,
-            (const multivariateRootSystem& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
 
 
     // Constructors
 
         //- Construct for given multivariateRootSolver
-        multivariateRootSolver(const multivariateRootSystem& ode, const dictionary& dict);
+        multivariateRootSolver
+        (
+            const scalarMultivariateEquation& eqns,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         multivariateRootSolver(const multivariateRootSolver&) = delete;
@@ -110,7 +114,7 @@ public:
         //- Select null constructed
         static autoPtr<multivariateRootSolver> New
         (
-            const multivariateRootSystem& ode,
+            const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
 

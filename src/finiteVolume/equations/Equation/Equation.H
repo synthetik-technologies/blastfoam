@@ -22,18 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::rootSystem
+    Foam::Equation
 
 Description
     Abstract base class for the systems of ordinary differential equations.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef rootSystem_H
-#define rootSystem_H
+#ifndef Equation_H
+#define Equation_H
 
-#include "scalarField.H"
-#include "scalarMatrices.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -41,20 +40,21 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSystem Declaration
+                          Class Equation Declaration
 \*---------------------------------------------------------------------------*/
 
-class rootSystem
+template<class Type>
+class Equation
 {
 protected:
 
     // Protected data
 
         //- Lower limit
-        scalar xMin_;
+        scalar lowerLimit_;
 
         //- Upper limit
-        scalar xMax_;
+        scalar upperLimit_;
 
 
 public:
@@ -62,14 +62,14 @@ public:
     // Constructors
 
         //- Construct null
-        rootSystem();
+        Equation();
 
         //- Construct given bounds
-        rootSystem(const scalar xMin, const scalar xMax);
+        Equation(const Type lowerLimit, const Type upperLimit);
 
 
     //- Destructor
-    virtual ~rootSystem();
+    virtual ~Equation();
 
 
     // Member Functions
@@ -77,47 +77,50 @@ public:
         //- Return the lower limit
         scalar lower() const
         {
-            return xMin_;
+            return lowerLimit_;
         }
 
         //- Access the lower limit
         scalar& lower()
         {
-            return xMin_;
+            return lowerLimit_;
         }
 
         //- Return the upper limit
         scalar upper() const
         {
-            return xMax_;
+            return upperLimit_;
         }
 
         //- Access the upper limit
         scalar& upper()
         {
-            return xMax_;
+            return upperLimit_;
         }
 
+        //- Check if the coordinates are with in the range
+        bool checkBounds(const scalar xs) const;
+
         //- Return the function value
-        virtual scalar f(const scalar x, const label li) const = 0;
+        virtual Type f(const scalar x, const label li) const = 0;
 
         //- Calculate the first derivative of the equation
-        virtual scalar dfdx(const scalar x, const label li) const = 0;
+        virtual Type dfdx(const scalar x, const label li) const = 0;
 
         //- Calculate the second derivative of the equation
-        virtual scalar d2fdx2(const scalar x, const label li) const = 0;
-
-        //- Check if the solution is bracketed
-        void checkConditions(const scalar y0, const scalar y1) const;
-
-        //- Check if the solution is bracketed (compute bounds)
-        void checkConditions(const label li) const;
+        virtual Type d2fdx2(const scalar x, const label li) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+#include "Equation.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

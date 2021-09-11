@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::BrentRootSolver::BrentRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -61,7 +61,10 @@ Foam::scalar Foam::BrentRootSolver::solve
     scalar y0 = eqn_.f(x0, li);
     scalar y1 = eqn_.f(x1, li);
 
-    eqn_.checkConditions(y0, y1);
+    if (!eqn_.containsRoot(y0, y1))
+    {
+        return x;
+    }
 
     if (mag(y0) < mag(y1))
     {

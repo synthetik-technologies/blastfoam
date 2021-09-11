@@ -46,7 +46,7 @@ bool Foam::multivariateRootSolver::converged(const scalarField& errors) const
 
 Foam::multivariateRootSolver::multivariateRootSolver
 (
-    const multivariateRootSystem& eqns,
+    const scalarMultivariateEquation& eqns,
     const dictionary& dict
 )
 :

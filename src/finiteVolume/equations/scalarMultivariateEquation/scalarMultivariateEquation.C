@@ -23,48 +23,58 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "rootSystem.H"
+#include "scalarMultivariateEquation.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::rootSystem::rootSystem()
-:
-    xMin_(-great),
-    xMax_(great)
+Foam::scalarMultivariateEquation::scalarMultivariateEquation()
 {}
 
 
-Foam::rootSystem::rootSystem(const scalar xMin, const scalar xMax)
+Foam::scalarMultivariateEquation::scalarMultivariateEquation
+(
+    const scalarField& lowerLimits,
+    const scalarField& upperLimits
+)
 :
-    xMin_(xMin),
-    xMax_(xMax)
+    MultivariateEquation<scalar>(lowerLimits, upperLimits)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::rootSystem::~rootSystem()
+Foam::scalarMultivariateEquation::~scalarMultivariateEquation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::rootSystem::checkConditions(const scalar y0, const scalar y1) const
+bool Foam::scalarMultivariateEquation::containsRoot
+(
+    const scalarField& y0s,
+    const scalarField& y1s
+) const
 {
-    if (y0*y1 > 0)
+    forAll(y0s, i)
     {
-        FatalErrorInFunction
-            << "Solution is not bracked in "
-            << "(" << xMin_ << ","<< xMax_ << ")" << endl
-            << abort(FatalError);
+        if (y0s[i]*y1s[i] > 0)
+        {
+            #ifdef FULLDEBUG
+            FatalErrorInFunction
+                << "Solution of component " << i << " is not bracked in "
+                << "(" << lowerLimits_[i] << ","<< upperLimits_[i] << ")" << endl
+                << abort(FatalError);
+            #endif
+            return false;
+        }
     }
+    return true;
 }
 
 
-void Foam::rootSystem::checkConditions(const label li) const
+bool Foam::scalarMultivariateEquation::containsRoot(const label li) const
 {
-    checkConditions(f(xMin_, li), f(xMax_, li));
+    return containsRoot(f(lowerLimits_, li), f(upperLimits_, li));
 }
-
 
 // ************************************************************************* //

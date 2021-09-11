@@ -43,7 +43,7 @@ bool Foam::rootSolver::converged(const scalar error) const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::rootSolver::rootSolver(const rootSystem& eqn, const dictionary& dict)
+Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
 :
     eqn_(eqn),
     tolerance_(dict.lookupOrDefault<scalar>("tolerance", small)),

@@ -28,7 +28,7 @@ Description
     Find root using the Steffensen method
 
 SourceFiles
-    rootSolver.C
+    SteffensenRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class SteffensenRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class SteffensenRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        SteffensenRootSolver(const rootSystem& eqn, const dictionary& dict);
+        SteffensenRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         SteffensenRootSolver(const rootSolver&) = delete;

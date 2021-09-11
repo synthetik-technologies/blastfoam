@@ -8,7 +8,7 @@ using namespace Foam;
 
 class testEqn
 :
-    public rootSystem
+    public scalarEquation
 {
 public:
     // Constructor
@@ -17,7 +17,7 @@ public:
 
     testEqn(const scalar xMin, const scalar xMax)
     :
-        rootSystem(xMin, xMax)
+        scalarEquation(xMin, xMax)
     {}
 
     //- Destructor
@@ -49,7 +49,7 @@ public:
 
 class multivariateTestEqn
 :
-    public multivariateRootSystem
+    public scalarMultivariateEquation
 {
 public:
     // Constructors
@@ -58,7 +58,7 @@ public:
 
     multivariateTestEqn(const scalarField& xMins, const scalarField& xMaxs)
     :
-        multivariateRootSystem(xMins, xMaxs)
+        scalarMultivariateEquation(xMins, xMaxs)
     {}
 
     //- Destructor
@@ -75,18 +75,18 @@ public:
         }
 
         //- Return the function value
-        virtual void f
+        virtual tmp<scalarField> f
         (
             const scalarField& x,
-            const label li,
-            scalarField& fx
+            const label li
         ) const
         {
+            tmp<scalarField> fxTmp(new scalarField(x.size()));
+            scalarField& fx = fxTmp.ref();
             fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
             fx[1] = sqr(x[0]) - x[1] + 1.0;
 
-//             fx[0] = 5.0*x[0] + x[1] - 4.0;
-//             fx[1] = x[0] - 3.0*x[1] + 1.0;
+            return fxTmp;
         }
 
         //- Calculate the first derivative of the equation
@@ -98,19 +98,13 @@ public:
             scalarSquareMatrix& dfdx
         ) const
         {
-            f(x, li, fx);
+            fx = f(x, li);
 
             dfdx(0, 0) = stabilise(2.0*x[0], small);
             dfdx(0, 1) = 2.0*x[1];
             dfdx(1, 0) = 2.0*x[0];
             dfdx(1, 1) = -1.0;
-
-//             dfdx(0, 0) = 5.0;
-//             dfdx(0, 1) = 1.0;
-//             dfdx(1, 0) = 1.0;
-//             dfdx(1, 1) = -3.0;
         }
-
 };
 
 int main(int argc, char *argv[])

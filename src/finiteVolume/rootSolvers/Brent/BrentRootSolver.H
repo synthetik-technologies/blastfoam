@@ -28,7 +28,7 @@ Description
     Find root using the Brent method
 
 SourceFiles
-    rootSolver.C
+    BrentRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class BrentRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class BrentRootSolver
@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        BrentRootSolver(const rootSystem& eqn, const dictionary& dict);
+        BrentRootSolver(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         BrentRootSolver(const rootSolver&) = delete;

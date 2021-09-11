@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::HalleyRootSolver::HalleyRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :

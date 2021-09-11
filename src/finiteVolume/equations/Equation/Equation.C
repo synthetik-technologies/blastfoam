@@ -23,34 +23,51 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multivariateRootSolver.H"
+#include "Equation.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::multivariateRootSolver> Foam::multivariateRootSolver::New
-(
-    const scalarMultivariateEquation& eqn,
-    const dictionary& dict
-)
+template<class Type>
+Foam::Equation<Type>::Equation()
+:
+    lowerLimit_(-great*pTraits<Type>::one),
+    upperLimit_(great*pTraits<Type>::one)
+{}
+
+
+template<class Type>
+Foam::Equation<Type>::Equation(const Type lowerLimit, const Type upperLimit)
+:
+    lowerLimit_(lowerLimit),
+    upperLimit_(upperLimit)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::Equation<Type>::~Equation()
+{}
+
+
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+template<class Type>
+bool Foam::Equation<Type>::checkBounds(const scalar x) const
 {
-    word multivariateRootSolverTypeName(dict.lookup("solver"));
-    Info<< "Selecting multivariateRoot solver " << multivariateRootSolverTypeName << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(multivariateRootSolverTypeName);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (x < lowerLimit_ || x > upperLimit_)
     {
+        #ifdef FULLDEBUG
         FatalErrorInFunction
-            << "Unknown multivariateRootSolver type "
-            << multivariateRootSolverTypeName << nl << nl
-            << "Valid multivariateRootSolvers are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
+            << "Request function evaluation is out of bounds." << nl
+            << "lowerLimit: " << lowerLimit_ << endl
+            << "upperLimit: " << upperLimit_ << endl
+            << "x: " << x << endl
+            << abort(FatalError);
+        #endif
+        return false;
     }
-
-    return autoPtr<multivariateRootSolver>(cstrIter()(eqn, dict));
+    return false;
 }
-
 
 // ************************************************************************* //

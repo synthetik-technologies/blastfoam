@@ -23,72 +23,53 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multivariateRootSystem.H"
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-void Foam::multivariateRootSystem::checkLimits() const
-{
-    if (xMins_.size() != nEqns() || xMaxs_.size() != nEqns())
-    {
-        FatalErrorInFunction
-            << "Limits have not been set, but are required for the " << nl
-            << "requested root solver." << endl
-            << abort(FatalError);
-    }
-}
+#include "scalarEquation.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::multivariateRootSystem::multivariateRootSystem()
+Foam::scalarEquation::scalarEquation()
 {}
 
 
-Foam::multivariateRootSystem::multivariateRootSystem
+Foam::scalarEquation::scalarEquation
 (
-    const scalarField& xMins,
-    const scalarField& xMaxs
+    const scalar lowerLimit,
+    const scalar upperLimit
 )
 :
-    xMins_(xMins),
-    xMaxs_(xMaxs)
+    Equation<scalar>(lowerLimit, upperLimit)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::multivariateRootSystem::~multivariateRootSystem()
+Foam::scalarEquation::~scalarEquation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-void Foam::multivariateRootSystem::checkConditions
-(
-    const scalarField& y0s,
-    const scalarField& y1s
-) const
+bool Foam::scalarEquation::containsRoot(const scalar y0, const scalar y1) const
 {
-    forAll(y0s, i)
+    if (y0*y1 > 0)
     {
-        if (y0s[i]*y1s[i] > 0)
-        {
-            FatalErrorInFunction
-                << "Solution of component " << i << " is not bracked in "
-                << "(" << xMins_[i] << ","<< xMaxs_[i] << ")" << endl
-                << abort(FatalError);
-        }
+        #ifdef FULLDEBUG
+        FatalErrorInFunction
+            << "Solution is not bracked:" << nl
+            << "limits: (" << xMin_ << ","<< xMax_ << ")" << endl
+            << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl;
+            << abort(FatalError);
+        #endif
+        return false;
     }
+    return true;
 }
 
 
-void Foam::multivariateRootSystem::checkConditions(const label li) const
+bool Foam::scalarEquation::containsRoot(const label li) const
 {
-    scalarField y0s(nEqns());
-    scalarField y1s(nEqns());
-    f(xMins_, li, y0s);
-    f(xMaxs_, li, y1s);
-    checkConditions(y0s, y1s);
+    return containsRoot(f(lowerLimit_, li), f(upperLimit_, li));
 }
+
 
 // ************************************************************************* //

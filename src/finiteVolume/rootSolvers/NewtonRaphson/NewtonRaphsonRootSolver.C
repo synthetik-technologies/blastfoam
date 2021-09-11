@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :

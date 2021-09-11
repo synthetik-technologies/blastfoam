@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::multivariateRootSystem
+    Foam::scalarEquation
 
 Description
     Abstract base class for the systems of ordinary differential equations.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multivariateRootSystem_H
-#define multivariateRootSystem_H
+#ifndef scalarEquation_H
+#define scalarEquation_H
 
-#include "scalarField.H"
-#include "scalarMatrices.H"
+#include "Equation.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -41,107 +41,42 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class multivariateRootSystem Declaration
+                          Class scalarEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-class multivariateRootSystem
+class scalarEquation
+:
+    public Equation<scalar>
 {
-protected:
-
-    // Protected data
-
-        //- Lower limits
-        scalarField xMins_;
-
-        //- Upper limits
-        scalarField xMaxs_;
-
-
-    // Protected member functions
-
-        //- Make sure limits have been set
-        void checkLimits() const;
-
 public:
 
     // Constructors
 
         //- Construct null
-        multivariateRootSystem();
+        scalarEquation();
 
-        //- Construct with limits
-        multivariateRootSystem
-        (
-            const scalarField& xMins,
-            const scalarField& xMaxs
-        );
+        //- Construct given bounds
+        scalarEquation(const scalar lowerLimit, const scalar upperLimit);
 
 
     //- Destructor
-    virtual ~multivariateRootSystem();
+    virtual ~scalarEquation();
 
 
     // Member Functions
 
-        //- Return the number of equations in the system
-        virtual label nEqns() const = 0;
-
-        //- Return the lower limits
-        const scalarField& lower() const
-        {
-            return xMins_;
-        }
-
-        //- Access the lower limits
-        scalarField& lower()
-        {
-            return xMins_;
-        }
-
-        //- Return the upper limits
-        const scalarField upper() const
-        {
-            return xMaxs_;
-        }
-
-        //- Access the upper limits
-        scalarField& upper()
-        {
-            return xMaxs_;
-        }
-
-        //- Return the function value
-        virtual void f
-        (
-            const scalarField& x,
-            const label li,
-            scalarField& fx
-        ) const = 0;
-
-        //- Calculate the first derivative of the equation
-        virtual void jacobian
-        (
-            const scalarField& x,
-            const label li,
-            scalarField& fx,
-            scalarSquareMatrix& dfdx
-        ) const = 0;
-
         //- Check if the solution is bracketed
-        void checkConditions
-        (
-            const scalarField& y0s,
-            const scalarField& y1s
-        ) const;
+        bool containsRoot(const scalar y0, const scalar y1) const;
 
         //- Check if the solution is bracketed (compute bounds)
-        void checkConditions(const label li) const;
+        bool containsRoot(const label li) const;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

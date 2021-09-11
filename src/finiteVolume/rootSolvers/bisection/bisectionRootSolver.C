@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::bisectionRootSolver::bisectionRootSolver
 (
-    const rootSystem& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -59,7 +59,10 @@ Foam::scalar Foam::bisectionRootSolver::solve
     scalar xLow = eqn_.lower();
     scalar xHigh = eqn_.upper();
 
-    eqn_.checkConditions(li);
+    if (!eqn_.containsRoot(li))
+    {
+        return x0;
+    }
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {

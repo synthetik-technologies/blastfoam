@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,22 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::falsePointRootSolver
+    Foam::scalarMultivariateRootSystem
 
 Description
-    Find root using the falsePoint method
-
-SourceFiles
-    falsePointRootSolver.C
+    Abstract base class for a system of scalar equations
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef falsePointRootSolver_H
-#define falsePointRootSolver_H
+#ifndef scalarMultivariateRootSystem_H
+#define scalarMultivariateRootSystem_H
 
-#include "rootSolver.H"
-#include "typeInfo.H"
-#include "autoPtr.H"
+#include "MultivariateEquation.H"
+#include "scalarMatrices.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,45 +41,62 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class falsePointRootSolver Declaration
+                    Class scalarMultivariateEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-class falsePointRootSolver
+class scalarMultivariateEquation
 :
-    public rootSolver
+    public MultivariateEquation<scalar>
 {
-public:
+protected:
 
-    //- Runtime type information
-    TypeName("falsePoint");
+    // Protected data
+
+        //- Lower limits
+        scalarField xMins_;
+
+        //- Upper limits
+        scalarField xMaxs_;
+
+public:
 
     // Constructors
 
-        //- Construct for given rootSolver
-        falsePointRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        //- Construct null
+        scalarMultivariateEquation();
 
-        //- Disallow default bitwise copy construction
-        falsePointRootSolver(const rootSolver&) = delete;
+        //- Construct with limits
+        scalarMultivariateEquation
+        (
+            const scalarField& xMins,
+            const scalarField& xMaxs
+        );
 
 
     //- Destructor
-    virtual ~falsePointRootSolver()
-    {}
+    virtual ~scalarMultivariateEquation();
 
 
     // Member Functions
 
-        //- Solve the root
-        virtual scalar solve
+        //- Calculate the first derivative of the equation
+        virtual void jacobian
         (
-            const scalar x0,
-            const label li
+            const scalarField& x,
+            const label li,
+            scalarField& fx,
+            scalarSquareMatrix& dfdx
+        ) const = 0;
+
+        //- Check if the solution is bracketed
+        bool containsRoot
+        (
+            const scalarField& y0s,
+            const scalarField& y1s
         ) const;
 
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const falsePointRootSolver&) = delete;
+        //- Check if the solution is bracketed (compute bounds)
+        bool containsRoot(const label li) const;
 };
 
 

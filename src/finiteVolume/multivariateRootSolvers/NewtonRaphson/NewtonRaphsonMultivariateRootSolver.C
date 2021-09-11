@@ -45,7 +45,7 @@ namespace Foam
 
 Foam::NewtonRaphsonMultivariateRootSolver::NewtonRaphsonMultivariateRootSolver
 (
-    const multivariateRootSystem& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :

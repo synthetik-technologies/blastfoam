@@ -62,12 +62,15 @@ public:
         //- Construct for given multivariateMultivariateRootSolver
         NewtonRaphsonMultivariateRootSolver
         (
-            const multivariateRootSystem& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Disallow default bitwise copy construction
-        NewtonRaphsonMultivariateRootSolver(const multivariateRootSolver&) = delete;
+        NewtonRaphsonMultivariateRootSolver
+        (
+            const multivariateRootSolver&
+        ) = delete;
 
 
     //- Destructor
