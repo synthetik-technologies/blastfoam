@@ -49,7 +49,8 @@ Foam::NewtonRaphsonMultivariateRootSolver::NewtonRaphsonMultivariateRootSolver
     const dictionary& dict
 )
 :
-    multivariateRootSolver(eqn, dict)
+    multivariateRootSolver(eqn, dict),
+    beta_(dict.lookupOrDefault<scalar>("beta", 1.0))
 {}
 
 
@@ -77,8 +78,13 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         {
             return xNewTmp;
         }
+        scalar alpha = 1.0;
+        if (beta_ != 1.0)
+        {
+            alpha = 1.0/(1.0 + beta_*sum(magSqr(delta)));
+        }
 
-        xNew = xOld + delta;
+        xNew = xOld + alpha*delta;
         xOld = xNew;
         eqns_.jacobian(xOld, li, f, J);
     }

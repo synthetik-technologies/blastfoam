@@ -52,6 +52,12 @@ class NewtonRaphsonMultivariateRootSolver
 :
     public multivariateRootSolver
 {
+// Private data
+
+    //- Damping factor
+    scalar beta_;
+
+
 public:
 
     //- Runtime type information

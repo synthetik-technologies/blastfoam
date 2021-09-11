@@ -7,124 +7,189 @@
 using namespace Foam;
 
 
-class testEqn
+class testEqn1
 :
     public scalarEquation
 {
 public:
-    // Constructor
-    testEqn()
-    {}
-
-    testEqn(const scalar xMin, const scalar xMax)
+    testEqn1(const scalar xMin, const scalar xMax)
     :
         scalarEquation(xMin, xMax)
     {}
 
-    //- Destructor
-    virtual ~testEqn()
+    virtual ~testEqn1()
     {}
 
+    virtual scalar f(const scalar x, const label li) const
+    {
+        return Foam::cos(x) - Foam::pow3(x);
+    }
+    virtual scalar dfdx(const scalar x, const label li) const
+    {
+        return -Foam::sin(x) - 3.0*Foam::sqr(x);
+    }
+    virtual scalar d2fdx2(const scalar x, const label li) const
+    {
+        return -Foam::cos(x) - 6.0*x;
+    }
+};
 
-    // Member Functions
+class testEqn2
+:
+    public scalarEquation
+{
+public:
+    testEqn2(const scalar xMin, const scalar xMax)
+    :
+        scalarEquation(xMin, xMax)
+    {}
 
-        //- Return the function value
-        virtual scalar f(const scalar x, const label li) const
-        {
-            return Foam::cos(x) - Foam::pow3(x);
-        }
+    virtual ~testEqn2()
+    {}
 
-        //- Calculate the first derivative of the equation
-        virtual scalar dfdx(const scalar x, const label li) const
-        {
-            return -Foam::sin(x) - 3.0*Foam::sqr(x);
-        }
-
-        //- Calculate the second derivative of the equation
-        virtual scalar d2fdx2(const scalar x, const label li) const
-        {
-            return -Foam::cos(x) - 6.0*x;
-        }
+    virtual scalar f(const scalar x, const label li) const
+    {
+        return Foam::exp(x) - 10.0*x;
+    }
+    virtual scalar dfdx(const scalar x, const label li) const
+    {
+        return Foam::exp(x) - 10.0;
+    }
+    virtual scalar d2fdx2(const scalar x, const label li) const
+    {
+        return Foam::exp(x);
+    }
 };
 
 
-class multivariateTestEqn
+class multivariateTestEqn1
 :
     public scalarMultivariateEquation
 {
 public:
     // Constructors
-    multivariateTestEqn()
-    {}
-
-    multivariateTestEqn(const scalarField& xMins, const scalarField& xMaxs)
-    :
-        scalarMultivariateEquation(xMins, xMaxs)
+    multivariateTestEqn1()
     {}
 
     //- Destructor
-    virtual ~multivariateTestEqn()
+    virtual ~multivariateTestEqn1()
     {}
 
+    virtual label nEqns() const
+    {
+        return 2;
+    }
 
-    // Member Functions
+    virtual tmp<scalarField> f
+    (
+        const scalarField& x,
+        const label li
+    ) const
+    {
+        tmp<scalarField> fxTmp(new scalarField(x.size()));
+        scalarField& fx = fxTmp.ref();
+        fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
+        fx[1] = sqr(x[0]) - x[1] + 1.0;
 
-        //- Return the number of equations in the system
-        virtual label nEqns() const
-        {
-            return 2;
-        }
+        return fxTmp;
+    }
 
-        //- Return the function value
-        virtual tmp<scalarField> f
-        (
-            const scalarField& x,
-            const label li
-        ) const
-        {
-            tmp<scalarField> fxTmp(new scalarField(x.size()));
-            scalarField& fx = fxTmp.ref();
-            fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
-            fx[1] = sqr(x[0]) - x[1] + 1.0;
+    virtual void jacobian
+    (
+        const scalarField& x,
+        const label li,
+        scalarField& fx,
+        scalarSquareMatrix& dfdx
+    ) const
+    {
+        fx = f(x, li);
 
-            return fxTmp;
-        }
-
-        //- Calculate the first derivative of the equation
-        virtual void jacobian
-        (
-            const scalarField& x,
-            const label li,
-            scalarField& fx,
-            scalarSquareMatrix& dfdx
-        ) const
-        {
-            fx = f(x, li);
-
-            dfdx(0, 0) = stabilise(2.0*x[0], small);
-            dfdx(0, 1) = 2.0*x[1];
-            dfdx(1, 0) = 2.0*x[0];
-            dfdx(1, 1) = -1.0;
-        }
+        dfdx(0, 0) = stabilise(2.0*x[0], small);
+        dfdx(0, 1) = 2.0*x[1];
+        dfdx(1, 0) = 2.0*x[0];
+        dfdx(1, 1) = -1.0;
+    }
 };
+
+
+class multivariateTestEqn2
+:
+    public scalarMultivariateEquation
+{
+public:
+    // Constructors
+    multivariateTestEqn2()
+    {}
+
+    //- Destructor
+    virtual ~multivariateTestEqn2()
+    {}
+
+    virtual label nEqns() const
+    {
+        return 2;
+    }
+
+    virtual tmp<scalarField> f
+    (
+        const scalarField& x,
+        const label li
+    ) const
+    {
+        tmp<scalarField> fxTmp(new scalarField(x.size()));
+        scalarField& fx = fxTmp.ref();
+        fx[0] = x[1] - sqr(x[0]) + x[0];
+        fx[1] = sqr(x[0])/16.0 + sqr(x[1]) - 1.0;
+
+        return fxTmp;
+    }
+
+    virtual void jacobian
+    (
+        const scalarField& x,
+        const label li,
+        scalarField& fx,
+        scalarSquareMatrix& dfdx
+    ) const
+    {
+        fx = f(x, li);
+
+        dfdx(0, 0) = -2.0*x[0] + 1.0;
+        dfdx(0, 1) = 1.0;
+        dfdx(1, 0) = 2.0*x[0]/16.0;
+        dfdx(1, 1) = stabilise(2.0*x[1], small);
+    }
+};
+
 
 int main(int argc, char *argv[])
 {
 
-    testEqn eqn(0, 2.0);
-    multivariateTestEqn eqns;
+    PtrList<scalarEquation> uniEqns(2);
+    uniEqns.set(0, new testEqn1(0.0, 1.0));
+    uniEqns.set(1, new testEqn2(0.0, 1.0));
+
+    PtrList<scalarMultivariateEquation> multEqns(2);
+    multEqns.set(0, new multivariateTestEqn1());
+    multEqns.set(1, new multivariateTestEqn2());
     dictionary dict;
 
     Info<< endl;
     Info<< "Univariate root finding" << endl;
     wordList methods(rootSolver::dictionaryConstructorTablePtr_->toc());
-    forAll(methods, i)
+    forAll(uniEqns, eqni)
     {
-        dict.set("solver", methods[i]);
-        autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
-        Info<<"roots=" << solver->solve(0.5, 0)
-            << ", nSteps=" << solver->nSteps()
-            << ", error=" << solver->error() << nl << endl;
+        Info<< "Solving equation " << eqni << endl;
+
+        const scalarEquation& eqn = uniEqns[eqni];
+        forAll(methods, i)
+        {
+            dict.set("solver", methods[i]);
+            autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
+            Info<<"roots=" << solver->solve(0.5, 0)
+                << ", nSteps=" << solver->nSteps()
+                << ", error=" << solver->error() << nl << endl;
+        }
     }
 
     Info<< nl << nl;
@@ -133,17 +198,22 @@ int main(int argc, char *argv[])
     (
         multivariateRootSolver::dictionaryConstructorTablePtr_->toc()
     );
-    forAll(multivariateMethods, i)
+    forAll(multEqns, eqni)
     {
-        dict.set("solver", multivariateMethods[i]);
-        autoPtr<multivariateRootSolver> solver
-        (
-            multivariateRootSolver::New(eqns, dict)
-        );
+        Info<< "Solving equation " << eqni << endl;
         scalarField x0(2, 0.0);
-        Info<<"root=" << solver->solve(x0, 0)
-            << ", nSteps=" << solver->nSteps()
-            << ", errors=" << solver->errors() << nl << endl;
+        const scalarMultivariateEquation& eqns = multEqns[eqni];
+        forAll(multivariateMethods, i)
+        {
+            dict.set("solver", multivariateMethods[i]);
+            autoPtr<multivariateRootSolver> solver
+            (
+                multivariateRootSolver::New(eqns, dict)
+            );
+            Info<<"roots=" << solver->solve(x0, 0)
+                << ", nSteps=" << solver->nSteps()
+                << ", error=" << solver->error() << nl << endl;
+        }
     }
 
 
@@ -161,7 +231,7 @@ int main(int argc, char *argv[])
         dict.set("integrator", intMethods[i]);
         autoPtr<scalarIntegrator> integrator
         (
-            scalarIntegrator::New(eqn, dict)
+            scalarIntegrator::New(uniEqns[0], dict)
         );
 
         forAll(nSteps, stepi)
