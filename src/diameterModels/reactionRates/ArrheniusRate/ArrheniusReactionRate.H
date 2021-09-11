@@ -70,7 +70,7 @@ public:
     TypeName("Arrhenius");
 
     // Constructor
-    Arrhenius(const dictionary& dict);
+    Arrhenius(const fvMesh& mesh, const dictionary& dict);
 
 
     //- Destructor
@@ -87,7 +87,12 @@ public:
     // Public functions
 
         //- Cell based reaction rate
-        virtual scalar k(const scalar& p, const scalar& T) const;
+        virtual scalar k
+        (
+            const scalar p,
+            const scalar T,
+            const label celli
+        ) const;
 
         //- Reaction rate
         virtual tmp<volScalarField> k

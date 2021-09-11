@@ -50,7 +50,12 @@ makeFieldSetTypeType(CalculatedDensityVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(CalculatedDensityVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(CalculatedDensityVol, tensor, VolFieldSetType);
 
-// }
+// makeFieldSetTypeType(CalculatedDensitySurface, scalar, SurfaceFieldSetType);
+// makeFieldSetTypeType(CalculatedDensitySurface, vector, SurfaceFieldSetType);
+// makeFieldSetTypeType(CalculatedDensitySurface, sphericalTensor, SurfaceFieldSetType);
+// makeFieldSetTypeType(CalculatedDensitySurface, symmTensor, SurfaceFieldSetType);
+// makeFieldSetTypeType(CalculatedDensitySurface, tensor, SurfaceFieldSetType);
+
 }
 // ************************************************************************* //
 

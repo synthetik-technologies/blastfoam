@@ -296,6 +296,12 @@ public:
             return false;
         }
 
+        //- Does the phase model track total energy
+        virtual bool totalEnergy() const
+        {
+            return true;
+        }
+
         //- Is the phase granular
         virtual bool granular() const
         {

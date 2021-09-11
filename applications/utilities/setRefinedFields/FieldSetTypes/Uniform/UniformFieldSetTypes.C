@@ -50,6 +50,12 @@ makeFieldSetTypeType(UniformVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(UniformVol, tensor, VolFieldSetType);
 
+// makeFieldSetTypeType(UniformSurface, scalar, SurfaceFieldSetType);
+// makeFieldSetTypeType(UniformSurface, vector, SurfaceFieldSetType);
+// makeFieldSetTypeType(UniformSurface, sphericalTensor, SurfaceFieldSetType);
+// makeFieldSetTypeType(UniformSurface, symmTensor, SurfaceFieldSetType);
+// makeFieldSetTypeType(UniformSurface, tensor, SurfaceFieldSetType);
+
 // }
 }
 // ************************************************************************* //

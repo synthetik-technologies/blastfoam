@@ -34,7 +34,17 @@ Foam::FieldSetType<Type, Patch, Mesh>::New
     const bool write
 )
 {
-    word fieldName(is);
+    token t(is);
+    if (!t.isWord())
+    {
+        is.putBack(t);
+        return autoPtr<FieldSetType<Type, Patch, Mesh>>
+        (
+            new FieldSetType<Type, Patch, Mesh>(mesh, selectedCells)
+        );
+    }
+
+    word fieldName(t.wordToken());
     word fieldSetType(fieldDesc);
     word fieldType(fieldDesc);
 
@@ -43,7 +53,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::New
 
     if (fieldType != FieldType::typeName)
     {
-        is.putBack(fieldName);
+        is.putBack(t);
         return autoPtr<FieldSetType<Type, Patch, Mesh>>
         (
             new FieldSetType<Type, Patch, Mesh>(mesh, selectedCells)

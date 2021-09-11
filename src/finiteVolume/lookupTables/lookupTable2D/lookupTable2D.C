@@ -226,6 +226,21 @@ void Foam::lookupTable2D<Type>::set
     const Field<scalar>& x,
     const Field<scalar>& y,
     const Field<Field<Type>>& data,
+    const bool isReal
+)
+{
+    setX(x, isReal);
+    setY(y, isReal);
+    setData(data, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::set
+(
+    const Field<scalar>& x,
+    const Field<scalar>& y,
+    const Field<Field<Type>>& data,
     const word& modXType,
     const word& modYType,
     const word& modType,
@@ -244,12 +259,9 @@ template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
     const Field<scalar>& x,
-    const word& modXType,
     const bool isReal
 )
 {
-    setMod(modXType, modXFunc_, invModXFunc_);
-
     if (isReal)
     {
         forAll(xValues_, i)
@@ -277,15 +289,25 @@ void Foam::lookupTable2D<Type>::setX
 
 
 template<class Type>
-void Foam::lookupTable2D<Type>::setY
+void Foam::lookupTable2D<Type>::setX
 (
-    const Field<scalar>& y,
-    const word& modYType,
+    const Field<scalar>& x,
+    const word& modXType,
     const bool isReal
 )
 {
-    setMod(modYType, modYFunc_, invModYFunc_);
+    setMod(modXType, modXFunc_, invModXFunc_);
+    setX(x, isReal);
+}
 
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setY
+(
+    const Field<scalar>& y,
+    const bool isReal
+)
+{
     if (isReal)
     {
         forAll(yValues_, j)
@@ -311,17 +333,31 @@ void Foam::lookupTable2D<Type>::setY
     }
 }
 
+template<class Type>
+void Foam::lookupTable2D<Type>::setY
+(
+    const Field<scalar>& y,
+    const word& modYType,
+    const bool isReal
+)
+{
+    setMod(modYType, modYFunc_, invModYFunc_);
+    setX(y, isReal);
+}
+
 
 template<class Type>
 void Foam::lookupTable2D<Type>::setData
 (
     const Field<Field<Type>>& data,
-    const word& modType,
     const bool isReal
 )
 {
-    setMod(modType, modFunc_, invModFunc_);
-    data_ = data;
+    data_.resize(data.size());
+    forAll(data, i)
+    {
+        data_[i] = data[i];
+    }
 
     if (!isReal)
     {
@@ -333,6 +369,19 @@ void Foam::lookupTable2D<Type>::setData
             }
         }
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setData
+(
+    const Field<Field<Type>>& data,
+    const word& modType,
+    const bool isReal
+)
+{
+    setMod(modType, modFunc_, invModFunc_);
+    setData(data, isReal);
 }
 
 

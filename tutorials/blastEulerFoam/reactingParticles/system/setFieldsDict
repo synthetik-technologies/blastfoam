@@ -14,7 +14,7 @@ FoamFile
   object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-fields (alpha.particles);
+fields (alpha.particles p);
 
 defaultFieldValues
 (
@@ -36,9 +36,20 @@ regions
 
         fieldValues
         (
+            volScalarFieldValue alpha.particles 0.6
+        );
+    }
+    cylinderToCell
+    {
+        p1 (0.5 0.1 -1);
+        p2 (0.5 0.1 1);
+        radius 0.01;
+        level 3;
+
+        fieldValues
+        (
             volScalarFieldValue p               1e7
             volScalarFieldValue T.gas           2000
-            volScalarFieldValue alpha.particles 0.6
             volScalarFieldValue ignitor.gas     1.0
             volScalarFieldValue air.gas         0
         );

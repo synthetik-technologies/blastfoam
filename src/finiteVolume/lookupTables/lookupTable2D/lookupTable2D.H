@@ -41,6 +41,7 @@ SourceFiles
 #include "Field.H"
 #include "IOstreams.H"
 #include "Switch.H"
+#include "Field.H"
 #include "fileName.H"
 
 namespace Foam
@@ -290,35 +291,57 @@ public:
             const Field<scalar>& x,
             const Field<scalar>& y,
             const Field<Field<Type>>& data,
+            const bool isReal = true
+        );
+        virtual void set
+        (
+            const Field<scalar>& x,
+            const Field<scalar>& y,
+            const Field<Field<Type>>& data,
             const word& xMod,
             const word& yMod,
             const word& mod,
             const word& interpolationScheme,
-            const bool modified
-        );
-
-        //- Set data
-        virtual void setData
-        (
-            const Field<Field<Type>>& data,
-            const word& mod,
-            const bool modified
+            const bool isReal = true
         );
 
         //- Set x
         virtual void setX
         (
             const Field<scalar>& x,
+            const bool isReal = true
+        );
+        virtual void setX
+        (
+            const Field<scalar>& x,
             const word& xMod,
-            const bool modified
+            const bool isReal = true
         );
 
         //- Set y
         virtual void setY
         (
             const Field<scalar>& y,
+            const bool isReal = true
+        );
+        virtual void setY
+        (
+            const Field<scalar>& y,
             const word& yMod,
-            const bool modified
+            const bool isReal = true
+        );
+
+        //- Set data
+        virtual void setData
+        (
+            const Field<Field<Type>>& data,
+            const bool isReal = true
+        );
+        virtual void setData
+        (
+            const Field<Field<Type>>& data,
+            const word& mod,
+            const bool isReal = true
         );
 
 

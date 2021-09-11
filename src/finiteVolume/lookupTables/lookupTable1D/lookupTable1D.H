@@ -219,7 +219,13 @@ public:
         //- Return second derivative w.r.t. x
         Type d2FdX2(const scalar x) const;
 
-        //- Set data
+        //- Set x and data
+        void set
+        (
+            const Field<scalar>& x,
+            const Field<Type>& data,
+            const bool isReal
+        );
         void set
         (
             const Field<scalar>& x,
@@ -231,6 +237,7 @@ public:
         );
 
         //- Set x
+        void setX(const Field<scalar>& x, const bool isReal = true);
         void setX
         (
             const Field<scalar>& x,
@@ -240,9 +247,10 @@ public:
         );
 
         //- Set data
+        void setData(const Field<Type>& data, const bool isReal = true);
         void setData
         (
-            const Field<Type>& x,
+            const Field<Type>& data,
             const word& mod,
             const bool isReal = true
         );

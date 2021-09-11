@@ -176,6 +176,19 @@ void Foam::lookupTable1D<Type>::set
 (
     const Field<scalar>& x,
     const Field<Type>& data,
+    const bool isReal
+)
+{
+    setX(x, isReal);
+    setData(data, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::set
+(
+    const Field<scalar>& x,
+    const Field<Type>& data,
     const word& xMod,
     const word& mod,
     const word& interpolationScheme,
@@ -186,18 +199,14 @@ void Foam::lookupTable1D<Type>::set
     setData(data, mod, isReal);
 }
 
+
 template<class Type>
 void Foam::lookupTable1D<Type>::setX
 (
     const Field<scalar>& x,
-    const word& xMod,
-    const word& interpolationScheme,
     const bool isReal
 )
 {
-    setMod(xMod, modXFunc_, invModXFunc_);
-    setInterp(interpolationScheme, interpFunc_);
-
     if (isReal)
     {
         xValues_ = x;
@@ -220,14 +229,27 @@ void Foam::lookupTable1D<Type>::setX
 
 
 template<class Type>
-void Foam::lookupTable1D<Type>::setData
+void Foam::lookupTable1D<Type>::setX
 (
-    const Field<Type>& data,
-    const word& mod,
+    const Field<scalar>& x,
+    const word& xMod,
+    const word& interpolationScheme,
     const bool isReal
 )
 {
-    setMod(mod, modFunc_, invModFunc_);
+    setMod(xMod, modXFunc_, invModXFunc_);
+    setX(x, isReal);
+    setInterp(interpolationScheme, interpFunc_);
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::setData
+(
+    const Field<Type>& data,
+    const bool isReal
+)
+{
     data_ = data;
 
     if (!isReal)
@@ -238,6 +260,19 @@ void Foam::lookupTable1D<Type>::setData
             data_[i] = invModFunc_(data[i]);
         }
     }
+}
+
+
+template<class Type>
+void Foam::lookupTable1D<Type>::setData
+(
+    const Field<Type>& data,
+    const word& mod,
+    const bool isReal
+)
+{
+    setMod(mod, modFunc_, invModFunc_);
+    setData(data, isReal);
 }
 
 

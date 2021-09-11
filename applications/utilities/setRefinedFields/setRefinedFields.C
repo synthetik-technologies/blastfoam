@@ -106,6 +106,8 @@ public:
         autoPtr<setCellField> operator()(Istream& fieldValues) const
         {
             word fieldType(fieldValues);
+            word fieldName (fieldValues);
+            fieldValues.putBack(fieldName);
 
             if
             (
@@ -124,8 +126,7 @@ public:
             )
             {
                 WarningInFunction
-                    << "field type " << fieldType << " not currently supported"
-                    << endl;
+                    << "Field " << fieldName << " not found" << endl;
             }
 
             return autoPtr<setCellField>(new setCellField());
@@ -478,7 +479,6 @@ int main(int argc, char *argv[])
             IOobject::MUST_READ
         );
 
-        // Check the "constant" directory
         if (fieldHeader.typeHeaderOk<volScalarField>(true))
         {
             fields.set
@@ -581,6 +581,42 @@ int main(int argc, char *argv[])
             );
     }
 
+    // If debugging read in all to the necessary fields
+    if (debug)
+    {
+        Info<<"start"<<endl;
+        // Read default values and set fields
+        if (setFieldsDict.found("defaultFieldValues"))
+        {
+            PtrList<setCellField> defaultFieldValues
+            (
+                setFieldsDict.lookup("defaultFieldValues"),
+                setCellField::iNew(mesh, labelList(), false)
+            );
+        }
+
+        forAll(regions, regionI)
+        {
+            if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+            {
+                PtrList<setCellField> fieldValues
+                (
+                    regions[regionI].dict().lookup("fieldValues"),
+                    setCellField::iNew(mesh, labelList(), false)
+                );
+            }
+            else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
+            {
+                PtrList<setFaceField> fieldValues
+                (
+                    regions[regionI].dict().lookup("fieldValues"),
+                    setFaceField::iNew(mesh, labelList(), false)
+                );
+            }
+        }
+        Info<<"end"<<endl;
+    }
+
     // Flag for final iteration
     bool end = false;
 
@@ -589,6 +625,11 @@ int main(int argc, char *argv[])
 
     while(!end)
     {
+        if (debug)
+        {
+            runTime++;
+        }
+
         if (maxIter <= iter)
         {
             prepareToStop = true;
@@ -909,7 +950,6 @@ int main(int argc, char *argv[])
                 writeOk = writeOk && scalarCellLevel.write();
                 error.write();
                 scalarMaxCellLevel.write();
-                runTime++;
             }
 
             // Update mesh (return if mesh changes)
@@ -951,7 +991,7 @@ int main(int argc, char *argv[])
             }
             scalarCellLevel.write();
         }
-        else
+        else if (debug)
         {
             volScalarField scalarCellLevel
             (
