@@ -38,6 +38,7 @@ SourceFiles
 #include "Equation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,10 +58,13 @@ protected:
     // Protected data
 
         //- Reference to Equation
-        const Equation<Type>& eqn_;
+        UautoPtr<const Equation<Type>> eqnPtr_;
 
         //- Number of steps to integrate with
         label nSteps_;
+
+        //- Number of intervals
+        label nIntervals_;
 
 public:
 
@@ -111,10 +115,23 @@ public:
             return nSteps_;
         }
 
-        //- Access the number of steps
-        label& nSteps()
+        //- Return the number of intervals
+        label nIntervals() const
         {
-            return nSteps_;
+            return nIntervals_;
+        }
+
+        //- Access the number of steps
+        virtual void setNIntervals(const label nIntervals)
+        {
+            nSteps_ = nIntervals;
+            nIntervals_ = nIntervals;
+        }
+
+        //- Set the equation to integrate
+        void setEqn(const Equation<Type>& eqn)
+        {
+            eqnPtr_.reset(&eqn);
         }
 
         //- Integrate the equation from x0 to x1

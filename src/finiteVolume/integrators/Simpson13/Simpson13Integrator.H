@@ -88,6 +88,13 @@ public:
 
     // Member Operators
 
+        //- Access the number of steps
+        virtual void setNIntervals(const label nIntervals)
+        {
+            this->nSteps_ = nIntervals*2.0;
+            this->nIntervals_ = nIntervals;
+        }
+
         //- Disallow default bitwise assignment
         void operator=(const Simpson13Integrator<Type>&) = delete;
 };

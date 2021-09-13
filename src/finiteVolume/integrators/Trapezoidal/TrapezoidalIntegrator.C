@@ -50,16 +50,16 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate
 ) const
 {
     scalar dx = x1 - x0;
-    if (dx < small)
+    if (mag(dx) < small)
     {
-        return dx*this->eqn_.f(x0, li);
+        return dx*this->eqnPtr_->f(x0, li);
     }
     dx /= scalar(this->nSteps_);
 
     scalar a = x0;
     scalar b = a + dx;
-    Type fa(this->eqn_.f(a, li));
-    Type fb(this->eqn_.f(b, li));
+    Type fa(this->eqnPtr_->f(a, li));
+    Type fb(this->eqnPtr_->f(b, li));
     Type res(0.5*(fa + fb));
 
     for (label i = 1; i < this->nSteps_; i++)
@@ -67,7 +67,7 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate
         a += dx;
         b += dx;
         fa = fb;
-        fb = this->eqn_.f(b, li);
+        fb = this->eqnPtr_->f(b, li);
         res += 0.5*(fa + fb);
     }
 

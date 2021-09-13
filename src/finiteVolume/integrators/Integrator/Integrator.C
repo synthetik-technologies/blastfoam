@@ -63,8 +63,9 @@ Foam::Integrator<Type>::Integrator
     const dictionary& dict
 )
 :
-    eqn_(eqn),
-    nSteps_(dict.lookupOrDefault<label>("nSteps", 10))
+    eqnPtr_(&eqn),
+    nSteps_(dict.lookupOrDefault<label>("nSteps", 10)),
+    nIntervals_(nSteps_)
 {}
 
 

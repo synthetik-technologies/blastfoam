@@ -50,20 +50,20 @@ Type Foam::MidPointIntegrator<Type>::integrate
 ) const
 {
     scalar dx = x1 - x0;
-    if (dx < small)
+    if (mag(dx) < small)
     {
-        return dx*this->eqn_.f(x0, li);
+        return dx*this->eqnPtr_->f(x0, li);
     }
     dx /= scalar(this->nSteps_);
 
     scalar a = x0;
     scalar b = a + dx;
-    Type res(this->eqn_.f(0.5*(a + b), li));
+    Type res(this->eqnPtr_->f(0.5*(a + b), li));
     for (label i = 1; i < this->nSteps_; i++)
     {
         a += dx;
         b += dx;
-        res += this->eqn_.f(0.5*(a + b), li);
+        res += this->eqnPtr_->f(0.5*(a + b), li);
     }
     return dx*res;
 }

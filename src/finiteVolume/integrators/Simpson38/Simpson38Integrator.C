@@ -36,7 +36,9 @@ Foam::Simpson38Integrator<Type>::Simpson38Integrator
 )
 :
     Integrator<Type>(eqn, dict)
-{}
+{
+    this->setNIntervals(this->nIntervals_);
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -50,39 +52,39 @@ Type Foam::Simpson38Integrator<Type>::integrate
 ) const
 {
     scalar dx = x1 - x0;
-    if (dx < small)
+    if (mag(dx) < small)
     {
-        return dx*this->eqn_.f(x0, li);
+        return dx*this->eqnPtr_->f(x0, li);
+    }
+    if (this->nSteps_ <= 1)
+    {
+        return
+            dx/8.0
+           *(
+                this->eqnPtr_->f(x0, li)
+              + 3.0*this->eqnPtr_->f((2.0*x0 + x1)/3.0, li)
+              + 3.0*this->eqnPtr_->f((x0 + 2.0*x1)/3.0, li)
+              + this->eqnPtr_->f(x1, li)
+            );
     }
     dx /= scalar(this->nSteps_);
 
-    scalar a = x0;
-    scalar b = a + dx;
-    Type fa(this->eqn_.f(a, li));
-    Type fb(this->eqn_.f(b, li));
-    Type res
-    (
-        fa + fb
-      + (
-            this->eqn_.f(twoThirds*a + oneThird*b, li)
-          + this->eqn_.f(oneThird*a + twoThirds*b, li)
-        )*3.0
-    );
-
-    for (label i = 1; i < this->nSteps_; i++)
+    Type res(this->eqnPtr_->f(x0, li) + this->eqnPtr_->f(x1, li));
+    for (label i = 1; i <= this->nIntervals_; i++)
     {
-        a = b;
-        b += dx;
-        fa = fb;
-        fb = this->eqn_.f(b, li);
         res +=
-            fa + fb
-          + (
-                this->eqn_.f(twoThirds*a + oneThird*b, li)
-              + this->eqn_.f(oneThird*a + twoThirds*b, li)
-            )*3.0;
+            3.0
+           *(
+                this->eqnPtr_->f(x0 + dx*(3*i-2), li)
+              + this->eqnPtr_->f(x0 + dx*(3*i-1), li)
+            );
     }
-    return dx/8.0*res;
+    for (label i = 1; i < this->nIntervals_; i++)
+    {
+        res += 2.0*this->eqnPtr_->f(x0 + i*dx*3.0, li);
+    }
+
+    return dx*3.0/8.0*res;
 }
 
 // ************************************************************************* //

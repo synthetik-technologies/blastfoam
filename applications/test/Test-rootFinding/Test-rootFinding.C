@@ -166,12 +166,23 @@ int main(int argc, char *argv[])
 {
 
     PtrList<scalarEquation> uniEqns(2);
+    wordList uniEqnStrs(2);
     uniEqns.set(0, new testEqn1(0.0, 1.0));
+    uniEqnStrs[0] = "f(x) = cos(x) - x^3";
     uniEqns.set(1, new testEqn2(0.0, 1.0));
+    uniEqnStrs[1] = "f(x) = exp(x) - 10*x";
 
     PtrList<scalarMultivariateEquation> multEqns(2);
+    wordList multiEqnStrs(2);
     multEqns.set(0, new multivariateTestEqn1());
+    multiEqnStrs[0] =
+        word("\tf1(x1, x2) = x1^2 + x2^2 - 4.0\n")
+      + word("\tf2(x1, x2) = x1^2 - x2 + 1.0\n");
     multEqns.set(1, new multivariateTestEqn2());
+    multiEqnStrs[1] =
+        word("\tf1(x1, x2) = x2^2 + x1^2 + x1\n")
+      + word("\tf2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n");
+
     dictionary dict;
 
     Info<< endl;
@@ -179,17 +190,20 @@ int main(int argc, char *argv[])
     wordList methods(rootSolver::dictionaryConstructorTablePtr_->toc());
     forAll(uniEqns, eqni)
     {
-        Info<< "Solving equation " << eqni << endl;
+        Info<< "Solving " << uniEqnStrs[eqni] << endl;
+        incrIndent(Info);
 
         const scalarEquation& eqn = uniEqns[eqni];
         forAll(methods, i)
         {
             dict.set("solver", methods[i]);
             autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
-            Info<<"roots=" << solver->solve(0.5, 0)
+            Info<<"\troot=" << solver->solve(0.5, 0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }
+        Info<<nl;
+        decrIndent(Info);
     }
 
     Info<< nl << nl;
@@ -200,7 +214,7 @@ int main(int argc, char *argv[])
     );
     forAll(multEqns, eqni)
     {
-        Info<< "Solving equation " << eqni << endl;
+        Info<< "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
         scalarField x0(2, 0.0);
         const scalarMultivariateEquation& eqns = multEqns[eqni];
         forAll(multivariateMethods, i)
@@ -210,18 +224,18 @@ int main(int argc, char *argv[])
             (
                 multivariateRootSolver::New(eqns, dict)
             );
-            Info<<"roots=" << solver->solve(x0, 0)
+            Info<<"\troots=" << solver->solve(x0, 0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }
+        Info<<nl;
     }
 
 
     Info<< nl << nl;
-    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 0.5)" << endl;
-    labelList nSteps({10, 20, 30, 50, 100});
-    dict.set("nSteps", 1000);
-    const scalar ans = 0.463800538604203;
+    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 2.5)" << endl;
+    labelList nIntervals({1, 5, 10, 25, 50});
+    const scalar ans = -9.167152855896045;
     wordList intMethods
     (
         scalarIntegrator::dictionaryConstructorTablePtr_->toc()
@@ -234,11 +248,11 @@ int main(int argc, char *argv[])
             scalarIntegrator::New(uniEqns[0], dict)
         );
 
-        forAll(nSteps, stepi)
+        forAll(nIntervals, inti)
         {
-            integrator->nSteps() = nSteps[stepi];
-            scalar est = integrator->integrate(0, 0.5, 0);
-            Info<< "\t" << integrator->nSteps() << " steps: "
+            integrator->setNIntervals(nIntervals[inti]);
+            scalar est = integrator->integrate(0, 2.5, 0);
+            Info<< "\t" << integrator->nIntervals() << " steps: "
                 << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
         }
         Info<< endl;

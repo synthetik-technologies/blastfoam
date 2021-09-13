@@ -105,10 +105,25 @@ public:
         virtual Type f(const scalar x, const label li) const = 0;
 
         //- Calculate the first derivative of the equation
-        virtual Type dfdx(const scalar x, const label li) const = 0;
+        virtual Type dfdx(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return f(x, li);
+        }
 
         //- Calculate the second derivative of the equation
-        virtual Type d2fdx2(const scalar x, const label li) const = 0;
+        virtual Type d2fdx2(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return f(x, li);
+        }
+
+        //- Calculate the third derivative of the equation
+        virtual Type d3fdx3(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return f(x, li);
+        }
 };
 
 
