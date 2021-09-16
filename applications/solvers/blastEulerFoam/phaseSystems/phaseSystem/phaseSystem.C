@@ -1292,7 +1292,7 @@ Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) con
     volScalarField mD12(min(mD, zeroM));
     mDotEi += mD21*phase2.he() + mD12*phase1.he() + mD21*hc;
 
-    if (!phase1.granular())
+    if (phase1.totalEnergy())
     {
         volScalarField K1(0.5*magSqr(phase1.U()));
         volScalarField K2(0.5*magSqr(phase2.U()));
