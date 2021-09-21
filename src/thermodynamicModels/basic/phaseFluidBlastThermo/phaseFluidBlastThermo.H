@@ -41,46 +41,11 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastThermo.H"
+#include "phaseBlastThermo.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                           Class blastPhaseFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-class blastPhaseFluidMixture
-:
-    public basicBlastMixture
-{
-public:
-
-    blastPhaseFluidMixture()
-    {}
-
-    virtual ~blastPhaseFluidMixture()
-    {}
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate dpde
-    virtual scalar Gamma(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr
-    (
-        const scalar,
-        const scalar,
-        const scalar,
-        const scalar
-    ) const = 0;
-};
 
 /*---------------------------------------------------------------------------*\
                            Class phaseFluidBlastThermo Declaration
@@ -88,17 +53,35 @@ public:
 
 class phaseFluidBlastThermo
 :
-    public basicBlastThermo
+    public phaseBlastThermo
 {
 protected:
-
-    // Protected data
-
-        typedef blastPhaseFluidMixture BasicMixture;
 
         //- Pressure [Pa]
         const volScalarField& p_;
 
+        // protected member functions
+
+            //- Pressure [Pa]
+            volScalarField& p()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Speed of sound [m/s]
+            volScalarField& speedOfSound()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Dynamic viscosity of mixture [kg/m/s]
+            volScalarField& muRef()
+            {
+                NotImplemented;
+                return rho_;
+            }
 
 public:
 
@@ -153,23 +136,29 @@ public:
 
     //- Thermodynamic and transport functions
 
-        //- Return a cell mixture
-        virtual const blastPhaseFluidMixture& cellThermoMixture
+        //- Add contribution to thermodynamic variables
+        virtual void calculate
         (
-            const label celli
-        ) const = 0;
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T,
+            volScalarField& alphaCp,
+            volScalarField& alphaCv,
+            volScalarField& alphamu,
+            volScalarField& alphaAlphah,
+            volScalarField& pXiSum,
+            volScalarField& XiSum,
+            volScalarField& rhoXiSum
+        ) = 0;
 
-        //- Return a cell mixture
-        virtual const blastPhaseFluidMixture& patchFaceThermoMixture
+        //- Add contribution to speed of sound
+        virtual void calculateSpeedOfSound
         (
-            const label patchi,
-            const label facei
-        ) const = 0;
+            const volScalarField& alpha,
+            volScalarField& cSqrRhoXiSum
+        ) = 0;
 
         // Access to derived thermodynamic variables
-
-            //- Calculate density
-            virtual void correct();
 
             //- Calculate density
             virtual void updateRho(const volScalarField&) = 0;

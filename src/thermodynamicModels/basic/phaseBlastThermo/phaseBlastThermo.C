@@ -26,20 +26,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseFluidBlastThermo.H"
+#include "phaseBlastThermo.H"
 #include "blastThermo.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
 namespace Foam
 {
-    defineTypeNameAndDebug(phaseFluidBlastThermo, 0);
-    defineRunTimeSelectionTable(phaseFluidBlastThermo, dictionary);
+    defineTypeNameAndDebug(phaseBlastThermo, 0);
+    defineRunTimeSelectionTable(phaseBlastThermo, dictionary);
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
+Foam::phaseBlastThermo::phaseBlastThermo
 (
     const fvMesh& mesh,
     const dictionary& dict,
@@ -47,32 +48,35 @@ Foam::phaseFluidBlastThermo::phaseFluidBlastThermo
     const word& masterName
 )
 :
-    phaseBlastThermo
+    timeIntegrationSystem
     (
-        mesh,
-        dict,
-        phaseName,
-        masterName
+        IOobject::groupName("phaseBlastThermo", phaseName),
+        mesh
     ),
-    p_
+    masterName_(masterName),
+    phaseName_(phaseName),
+    rho_
     (
-        mesh.lookupObject<volScalarField>
+        mesh.lookupObjectRef<volScalarField>
         (
-            IOobject::groupName("p", masterName)
+            IOobject::groupName("rho", phaseName)
         )
-    )
+    ),
+    T_(mesh.lookupObject<volScalarField>(IOobject::groupName("T", masterName_))),
+    e_(mesh.lookupObject<volScalarField>(IOobject::groupName("e", masterName_))),
+    residualAlpha_("residualAlpha", dimless, 0.0),
+    residualRho_("residualRho", dimDensity, 0.0)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::phaseFluidBlastThermo::~phaseFluidBlastThermo()
+Foam::phaseBlastThermo::~phaseBlastThermo()
 {}
 
+// * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * * * Selector  * * * * * * * * * * * * * * * //
-
-Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
+Foam::autoPtr<Foam::phaseBlastThermo> Foam::phaseBlastThermo::New
 (
     const fvMesh& mesh,
     const dictionary& dict,
@@ -80,7 +84,18 @@ Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
     const word& masterName
 )
 {
-    return blastThermo::New<phaseFluidBlastThermo>
+    dictionaryConstructorTable::iterator cstrIter =
+        blastThermo::lookupCstrIter
+        <
+            phaseBlastThermo,
+            dictionaryConstructorTable
+        >
+        (
+            dict,
+            dictionaryConstructorTablePtr_
+        );
+
+    return cstrIter()
     (
         mesh,
         dict,
@@ -88,11 +103,8 @@ Foam::autoPtr<Foam::phaseFluidBlastThermo> Foam::phaseFluidBlastThermo::New
         masterName
     );
 }
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::volScalarField& Foam::phaseFluidBlastThermo::p() const
-{
-    return p_;
-}
 
 // ************************************************************************* //

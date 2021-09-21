@@ -325,6 +325,79 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
 }
 
 
+template<class BasicThermo, class Thermo1, class Thermo2>
+void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperature
+(
+    const volScalarField& alpha,
+    const volScalarField& he,
+    const volScalarField& T0,
+    volScalarField& alphaT
+)
+{
+    const Thermo1& t1(*this);
+    const Thermo2& t2(*this);
+
+    forAll(alphaT, celli)
+    {
+        const scalar x2 = this->cellx(celli);
+        const scalar x1 = 1.0 - x2;
+        const scalar rhoi(this->rho_[celli]);
+        scalar ei = he[celli];
+        scalar Ti;
+
+        if (x2 < small)
+        {
+            Ti = t1.TRhoE(T0[celli], rhoi, ei);
+        }
+        else if (x1 < small)
+        {
+            Ti = t2.TRhoE(T0[celli], rhoi, ei);
+        }
+        else
+        {
+            Ti =
+                t1.TRhoE(T0[celli], rhoi, ei)*x1
+              + t2.TRhoE(T0[celli], rhoi, ei)*x2;
+        }
+        alphaT[celli] += Ti*alpha[celli];
+    }
+
+    forAll(alphaT.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
+        const fvPatchScalarField& phe = he.boundaryField()[patchi];
+        const scalarField px(this->x(patchi));
+        fvPatchScalarField& palphaT = alphaT.boundaryFieldRef()[patchi];
+
+        forAll(palphaT, facei)
+        {
+            const scalar x2 = px[facei];
+            const scalar x1 = 1.0 - x2;
+            scalar Ti;
+            if (x2 < small)
+            {
+                Ti =
+                    t1.TRhoE(pT0[facei], prho[facei], phe[facei]);
+            }
+            else if (x1 < small)
+            {
+                Ti =
+                    t2.TRhoE(pT0[facei], prho[facei], phe[facei]);
+            }
+            else
+            {
+                Ti =
+                    t1.TRhoE(pT0[facei], prho[facei], phe[facei])*x1
+                    + t2.TRhoE(pT0[facei], prho[facei], phe[facei])*x2;
+            }
+            palphaT[facei] += Ti*palpha[facei];
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicThermo, class Thermo1, class Thermo2>
@@ -401,8 +474,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
         &Thermo1::Es,
         &Thermo2::Es,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -479,8 +552,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::hs
         &Thermo1::Hs,
         &Thermo2::Hs,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -557,8 +630,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::ha
         &Thermo1::Ha,
         &Thermo2::Ha,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -666,7 +739,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
         &Thermo2::TRhoE,
         cells,
         T,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
         he
     );
 }

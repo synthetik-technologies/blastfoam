@@ -27,6 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "mixtureBlastThermo.H"
+#include "blastThermo.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -201,6 +202,60 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellSetProperty
     return tPsi;
 }
 
+
+template<class BasicThermo, class ThermoType>
+void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateTemperature
+(
+    const volScalarField& alpha,
+    const volScalarField& he,
+    const volScalarField& T0,
+    volScalarField& alphaT
+)
+{
+    const scalarField& rhoCells = this->rho_.primitiveField();
+    const scalarField& alphaCells = alpha.primitiveField();
+    const scalarField& eCells = he.primitiveField();
+    const scalarField& T0Cells = T0.primitiveField();
+    scalarField& alphaTCells = alphaT.primitiveFieldRef();
+
+
+    forAll(alphaT, celli)
+    {
+        const ThermoType& t(this->mixture_[celli]);
+        const scalar vfi = alphaCells[celli];
+        if (vfi > this->residualAlpha().value())
+        {
+            // Update temperature
+            alphaTCells[celli] +=
+                t.TRhoE(T0Cells[celli], rhoCells[celli], eCells[celli])
+               *alphaCells[celli];
+        }
+    }
+
+    const volScalarField::Boundary& alphaBf = alpha.boundaryField();
+    const volScalarField::Boundary& rhoBf = this->rho_.boundaryField();
+    const volScalarField::Boundary& heBf = he.boundaryField();
+    const volScalarField::Boundary& T0Bf = T0.boundaryField();
+    volScalarField::Boundary& alphaTBf = alphaT.boundaryFieldRef();
+
+    forAll(alphaT.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = rhoBf[patchi];
+        const fvPatchScalarField& palpha = alphaBf[patchi];
+        const fvPatchScalarField& phe = heBf[patchi];
+        const fvPatchScalarField& pT0 = T0Bf[patchi];
+        fvPatchScalarField& palphaT = alphaTBf[patchi];
+
+        forAll(palphaT, facei)
+        {
+            const ThermoType& t(this->mixture_.boundary(patchi, facei));
+            palphaT[facei] +=
+                t.TRhoE(pT0[facei], prho[facei], phe[facei])
+                *palpha[facei];
+        }
+    }
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicThermo, class ThermoType>
@@ -279,18 +334,11 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::~mixtureBlastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::correct()
-{
-    this->mixture_.update();
-    BasicThermo::correct();
-}
-
 
 template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::update()
+void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::updateMixture()
 {
-    this->mixture_.update();
+    this->mixture_.updateMixture();
 }
 
 
@@ -339,8 +387,8 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
     (
         &ThermoType::Es,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -413,8 +461,8 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::hs
     (
         &ThermoType::Hs,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -487,8 +535,8 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::ha
     (
         &ThermoType::Ha,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }

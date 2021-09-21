@@ -128,6 +128,45 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::patchFieldProperty
 }
 
 
+template<class BasicThermo, class ThermoType>
+void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateTemperature
+(
+    const volScalarField& alpha,
+    const volScalarField& he,
+    const volScalarField& T0,
+    volScalarField& alphaT
+)
+{
+    const ThermoType& t(*this);
+    forAll(alphaT, celli)
+    {
+        const scalar vfi = alpha[celli];
+        if (vfi > this->residualAlpha().value())
+        {
+            // Update temperature
+            alphaT[celli] +=
+                t.TRhoE(T0[celli], this->rho_[celli], he[celli])*vfi;
+        }
+    }
+
+    forAll(alphaT.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& phe = he.boundaryField()[patchi];
+        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
+        fvPatchScalarField& palphaT = alphaT.boundaryFieldRef()[patchi];
+
+        forAll(palphaT, facei)
+        {
+            palphaT[facei] +=
+                t.TRhoE(pT0[facei], prho[facei], phe[facei])
+                *palpha[facei];
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicThermo, class ThermoType>
@@ -232,8 +271,8 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::he
     (
         &ThermoType::Es,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -306,8 +345,8 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::hs
     (
         &ThermoType::Es,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -380,8 +419,8 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::ha
     (
         &ThermoType::Ha,
         cells,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
-        basicBlastThermo::cellSetScalarList(this->e_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->e_, cells),
         T
     );
 }
@@ -483,7 +522,7 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::THE
         &ThermoType::TRhoE,
         cells,
         T,
-        basicBlastThermo::cellSetScalarList(this->rho_, cells),
+        blastThermo::cellSetScalarList(this->rho_, cells),
         he
     );
 }
@@ -678,22 +717,6 @@ Foam::scalar
 Foam::eBlastThermo<BasicThermo, ThermoType>::cellW(const label celli) const
 {
     return ThermoType::W();
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::calcKappa() const
-{
-    return volScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &ThermoType::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
 }
 
 

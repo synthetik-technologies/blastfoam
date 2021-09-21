@@ -47,140 +47,13 @@ SourceFiles
 namespace Foam
 {
 
-/*---------------------------------------------------------------------------*\
-                Class multicomponentBlastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-template<class BasicMixture, class ThermoType>
-class multicomponentBlastFluidMixture
-:
-    public BasicMixture
-{
-    const speciesMixtureField<ThermoType>& mixtureField_;
-    mutable UautoPtr<const ThermoType> mixturePtr_;
-
-public:
-
-    multicomponentBlastFluidMixture
-    (
-        const speciesMixtureField<ThermoType>& mixture
-    )
-    :
-        mixtureField_(mixture),
-        mixturePtr_(nullptr)
-    {}
-
-    virtual ~multicomponentBlastFluidMixture()
-    {}
-
-    //- Set the local reaction progress variable
-    void setCell(const label celli) const
-    {
-        mixturePtr_.reset(&mixtureField_[celli]);
-    }
-    void setPatchFace(const label patchi, const label facei) const
-    {
-        mixturePtr_.reset(&mixtureField_.boundary(patchi, facei));
-    }
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->Es(rho, e, T);
-    }
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
-    {
-        return mixturePtr_->TRhoE(T, rho, e);
-    }
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->Cp(rho, e, T);
-    }
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->Cv(rho, e, T);
-    }
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->kappa(rho, e, T);
-    }
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->p(rho, e, T);
-    }
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->mu(rho, e, T);
-    }
-
-    //- Calculate dpde
-    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const
-    {
-        return mixturePtr_->Gamma(rho, e, T);
-    }
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr
-    (
-        const scalar p,
-        const scalar rho,
-        const scalar e,
-        const scalar T
-    ) const
-    {
-        return mixturePtr_->cSqr(p, rho, e, T);
-    }
-};
-
-
-/*---------------------------------------------------------------------------*\
-                Class multicomponentFluidBlastThermo Declaration
-\*---------------------------------------------------------------------------*/
-
 template<class Thermo>
 class multicomponentFluidBlastThermo
 :
     public Thermo
 {
-    //- Mixture
-    mutable multicomponentBlastFluidMixture
-    <
-        typename Thermo::BasicMixture,
-        typename Thermo::thermoType
-    > localMixture_;
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& cellThermoMixture
-    (
-        const label celli
-    ) const
-    {
-        localMixture_.setCell(celli);
-        return localMixture_;
-    }
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
-    (
-        const label patchi,
-        const label facei
-    ) const
-    {
-        localMixture_.setPatchFace(patchi, facei);
-        return localMixture_;
-    }
+    //- Calculate thermodynamic fields
+    void calculate();
 
 
 public:
@@ -212,6 +85,31 @@ public:
 
 
     // Member Functions
+
+        //- Correct thermodynamic fields
+        virtual void correct();
+
+        //- Add contribution to mixture temperature
+        virtual void calculate
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T,
+            volScalarField& Cp,
+            volScalarField& Cv,
+            volScalarField& mu,
+            volScalarField& alphah,
+            volScalarField& pXiSum,
+            volScalarField& XiSum,
+            volScalarField& rhoXiSum
+        );
+
+        //- Add contribution to speed of sound
+        virtual void calculateSpeedOfSound
+        (
+            const volScalarField& alpha,
+            volScalarField& cSqrRhoXiSum
+        );
 
         //- Pre update step
         virtual void update()

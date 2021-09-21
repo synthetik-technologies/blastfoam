@@ -56,91 +56,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class twoPhaseBlastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-class twoPhaseBlastFluidMixture
-:
-    public blastFluidMixture
-{
-    const volScalarField& alpha_;
-    const phaseFluidBlastThermo& thermo1_;
-    const phaseFluidBlastThermo& thermo2_;
-    const volScalarField& rho1_;
-    const volScalarField& rho2_;
-
-    mutable scalar alpha1i_;
-    mutable scalar alpha2i_;
-    mutable UautoPtr<const blastPhaseFluidMixture> mixture1Ptr_;
-    mutable UautoPtr<const blastPhaseFluidMixture> mixture2Ptr_;
-    mutable scalar rho1i_;
-    mutable scalar rho2i_;
-public:
-
-    twoPhaseBlastFluidMixture
-    (
-        const volScalarField& alpha,
-        const phaseFluidBlastThermo& thermo1,
-        const phaseFluidBlastThermo& thermo2
-    )
-    :
-        alpha_(alpha),
-        thermo1_(thermo1),
-        thermo2_(thermo2),
-        rho1_(thermo1_.rho()),
-        rho2_(thermo2_.rho())
-    {}
-
-    virtual ~twoPhaseBlastFluidMixture()
-    {}
-
-    //- Set the local reaction progress variable
-    void setCell(const label celli) const
-    {
-        alpha1i_ = alpha_[celli];
-        alpha2i_ = 1.0 - alpha1i_;
-        rho1i_ = rho1_[celli];
-        rho2i_ = rho2_[celli];
-        mixture1Ptr_.reset(&thermo1_.cellThermoMixture(celli));
-        mixture2Ptr_.reset(&thermo2_.cellThermoMixture(celli));
-    }
-    void setPatchFace(const label patchi, const label facei) const
-    {
-        alpha1i_ = alpha_.boundaryField()[patchi][facei];
-        alpha2i_ = 1.0 - alpha1i_;
-        rho1i_ = rho1_.boundaryField()[patchi][facei];
-        rho2i_ = rho2_.boundaryField()[patchi][facei];
-        mixture1Ptr_.reset(&thermo1_.patchFaceThermoMixture(patchi, facei));
-        mixture2Ptr_.reset(&thermo2_.patchFaceThermoMixture(patchi, facei));
-    }
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar, const scalar, const scalar) const;
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar, const scalar, const scalar) const;
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar, const scalar, const scalar) const;
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
-};
-
-
-/*---------------------------------------------------------------------------*\
                            Class twoPhaseFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -163,30 +78,9 @@ class twoPhaseFluidBlastThermo
         //- Equation of state for phase 2
         autoPtr<phaseFluidBlastThermo> thermo2_;
 
-        //- Mixture
-        mutable twoPhaseBlastFluidMixture mixture_;
 
-    //- Return a cell mixture
-    virtual const blastFluidMixture& cellThermoMixture
-    (
-        const label celli
-    ) const
-    {
-        mixture_.setCell(celli);
-        return mixture_;
-    }
-
-    //- Return a cell mixture
-    virtual const blastFluidMixture& patchFaceThermoMixture
-    (
-        const label patchi,
-        const label facei
-    ) const
-    {
-        mixture_.setPatchFace(patchi, facei);
-        return mixture_;
-    }
-
+        //- Correct thermodynamic fields
+        virtual void calculate();
 
 public:
 
@@ -209,6 +103,9 @@ public:
 
 
     // Member Functions
+
+        //- Correct thermodynamic fields
+        virtual void correct();
 
         //- Pre update
         virtual void update();
@@ -258,13 +155,13 @@ public:
         }
 
         //- Const reference to first equation of state
-        const basicBlastThermo& thermo(const label i) const
+        const phaseFluidBlastThermo& thermo(const label i) const
         {
             return i == 0 ? thermo1_() : thermo2_();
         }
 
         //- Non-const reference to first equation of state
-        basicBlastThermo& thermo(const label i)
+        phaseFluidBlastThermo& thermo(const label i)
         {
             return i == 0 ? thermo1_() : thermo2_();
         }
@@ -295,6 +192,11 @@ public:
             //- Enthalpy/Internal energy
             //  for given pressure and temperature [J/kg]
             virtual const volScalarField& he() const
+            {
+                return blastThermo::he();
+            }
+
+            virtual volScalarField& he()
             {
                 return blastThermo::he();
             }

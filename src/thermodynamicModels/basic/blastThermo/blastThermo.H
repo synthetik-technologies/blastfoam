@@ -59,6 +59,9 @@ class blastThermo
     public timeIntegrationSystem,
     public basicThermo::implementation
 {
+public:
+    using basicThermo::implementation::alpha;
+
 protected:
 
     // Protected data
@@ -88,6 +91,27 @@ protected:
         dimensionedScalar residualRho_;
 
 
+        // Protected member functions
+
+            //- Heat capacity at constant pressure [J/kg/K]
+            volScalarField& CpRef()
+            {
+                return Cp_;
+            }
+
+            //- Heat capacity at constant volume [J/kg/K]
+            volScalarField& CvRef()
+            {
+                return Cv_;
+            }
+
+            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
+            volScalarField& alpha()
+            {
+                return alpha_;
+            }
+
+
 
 public:
 
@@ -108,10 +132,87 @@ public:
     virtual void initializeModels()
     {}
 
-    static fileName templateDir()
-    {
-        return getEnv("BLAST_DIR")/"etc/codeTemplates";
-    }
+    // Selector
+
+        template<class Thermo>
+        static autoPtr<Thermo> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const word& phaseName,
+            const word& masterName
+        );
+
+
+    // Static member functions
+
+        // Directory to compile from
+        static fileName templateDir()
+        {
+            return getEnv("BLAST_DIR")/"etc/codeTemplates";
+        }
+
+        //- Return the thermo type name given a dictionary
+        static word readThermoType(const dictionary& dict);
+
+        //- Split name of thermo package into a list of the components names
+        static wordList splitThermoName
+        (
+            const word& thermoName
+        );
+
+        //- Split name of thermo package into a list of the components names
+        static wordList splitThermoName
+        (
+            const word& thermoName,
+            const label nCmpts
+        );
+
+        //- Lookup or construct field
+        static volScalarField& lookupOrConstruct
+        (
+            const fvMesh& mesh,
+            const word& name,
+            const IOobject::readOption rOpt,
+            const IOobject::writeOption wOpt,
+            const dimensionSet& dims,
+            const bool allowNoGroup = false
+        );
+
+        //- Generic lookup for thermodynamics package thermoTypeName
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoTypeDict,
+            Table* tablePtr,
+            const int nCmpts,
+            const char* cmptNames[],
+            const word& thermoTypeName
+        );
+
+        //- Generic lookup for each of the related thermodynamics packages
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoDict,
+            Table* tablePtr
+        );
+
+        //- Generic lookup for each of the related thermodynamics packages
+        template<class Thermo, class Table>
+        static typename Table::iterator lookupCstrIter
+        (
+            const dictionary& thermoDict,
+            Table* tablePtr,
+            const word& state
+        );
+
+        //- Return a subList
+        static UIndirectList<scalar> cellSetScalarList
+        (
+            const volScalarField& psi,
+            const labelList& cells
+        );
 
     // Access functions
 
@@ -296,39 +397,15 @@ public:
         }
 };
 
-/*---------------------------------------------------------------------------*\
-                           Class blastMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-class blastMixture
-{
-public:
-
-    blastMixture()
-    {}
-
-    virtual ~blastMixture()
-    {}
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar, const scalar, const scalar) const = 0;
-};
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "blastThermoTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

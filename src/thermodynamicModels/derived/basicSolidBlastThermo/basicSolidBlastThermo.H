@@ -47,58 +47,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class basicBlastSolidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-template<class BasicMixture, class Thermo>
-class basicBlastSolidMixture
-:
-    public BasicMixture
-{
-    const Thermo& thermo_;
-
-public:
-
-    basicBlastSolidMixture(const Thermo& thermo)
-    :
-        thermo_(thermo)
-    {}
-
-    virtual ~basicBlastSolidMixture()
-    {}
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Es(rho, e, T);
-    }
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
-    {
-        return thermo_.TRhoE(T, rho, e);
-    }
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Cp(rho, e, T);
-    }
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Cv(rho, e, T);
-    }
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.kappa(rho, e, T);
-    }
-};
-
-/*---------------------------------------------------------------------------*\
                            Class basicSolidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -107,30 +55,8 @@ class basicSolidBlastThermo
 :
     public Thermo
 {
-    mutable basicBlastSolidMixture
-    <
-        typename Thermo::BasicMixture,
-        typename Thermo::thermoType
-    > mixture_;
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& cellThermoMixture
-    (
-        const label celli
-    ) const
-    {
-        return mixture_;
-    }
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
-    (
-        const label patchi,
-        const label facei
-    ) const
-    {
-        return mixture_;
-    }
+    //- Add contribution to mixture temperature
+    virtual void calculate();
 
 
 public:
@@ -153,6 +79,9 @@ public:
 
 
     // Member Functions
+
+        //- Correct thermodynamic fields
+        virtual void correct();
 
         //- Pre update
         virtual void update()

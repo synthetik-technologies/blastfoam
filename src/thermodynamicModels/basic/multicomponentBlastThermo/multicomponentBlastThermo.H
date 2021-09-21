@@ -40,7 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastThermo.H"
+#include "timeIntegrationSystem.H"
 #include "PtrListDictionary.H"
 #include "basicSpecieMixture.H"
 #include "fvScalarMatrix.H"
@@ -52,7 +52,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class multicomponentBlastThermo Declaration
+                    Class multicomponentBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
 class multicomponentBlastThermo

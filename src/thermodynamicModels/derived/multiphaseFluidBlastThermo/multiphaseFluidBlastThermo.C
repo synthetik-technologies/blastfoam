@@ -44,167 +44,89 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-Foam::scalar Foam::multiphaseBlastFluidMixture::HE
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
+void Foam::multiphaseFluidBlastThermo::calculate()
 {
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
+    volScalarField T0(T_);
+    T_ = Zero;
+    forAll(thermos_, i)
     {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].HE(rhosi_[i], e, T);
-        }
+        thermos_[i].calculateTemperature
+        (
+            volumeFractions_[i],
+            this->he(),
+            T0,
+            T_
+        );
     }
-    return psi;
-}
 
+    volScalarField XiSum
+    (
+        volScalarField::New("XiSum", mesh(), dimensionedScalar(dimless, 0.0))
+    );
+    volScalarField rhoXiSum
+    (
+        volScalarField::New
+        (
+            "rhoXiSum",
+            mesh(),
+            dimensionedScalar(dimDensity, 0.0)
+        )
+    );
+    volScalarField pXiSum
+    (
+        volScalarField::New
+        (
+            "pXiSum",
+            mesh(),
+            dimensionedScalar(dimPressure, 0.0)
+        )
+    );
+    volScalarField cSqrRhoXiSum
+    (
+        volScalarField::New
+        (
+            "cSqrRhoXiSum",
+            mesh(),
+            dimensionedScalar(sqr(dimVelocity)*dimDensity, 0.0)
+        )
+    );
 
-Foam::scalar Foam::multiphaseBlastFluidMixture::TRhoE
-(
-    const scalar T,
-    const scalar rho,
-    const scalar e
-) const
-{
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
+    this->Cp_ = Zero;
+    this->Cv_ = Zero;
+    this->alpha_ = Zero;
+    this->mu_ = Zero;
+
+    forAll(thermos_, i)
     {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].TRhoE(T, rhosi_[i], e);
-        }
+        thermos_[i].calculate
+        (
+            volumeFractions_[i],
+            this->he(),
+            this->T_,
+            this->Cp_,
+            this->Cv_,
+            this->alpha_,
+            this->mu_,
+            pXiSum,
+            XiSum,
+            rhoXiSum
+        );
     }
-    return psi;
-}
+    this->p_ = pXiSum/XiSum;
+    this->p_.correctBoundaryConditions();
+    rhoXiSum.max(small);
 
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::Cp
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
+    forAll(thermos_, i)
     {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].Cp(rhosi_[i], e, T);
-        }
+        thermos_[i].calculateSpeedOfSound
+        (
+            volumeFractions_[i],
+            cSqrRhoXiSum
+        );
     }
-    return psi;
+    cSqrRhoXiSum.max(small);
+    this->speedOfSound_ = sqrt(cSqrRhoXiSum/rhoXiSum);
 }
-
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::Cv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
-    {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].Cv(rhosi_[i], e, T);
-        }
-    }
-    return psi;
-}
-
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::kappa
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
-    {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].kappa(rhosi_[i], e, T);
-        }
-    }
-    return psi;
-}
-
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::pRhoT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar sumAlphaXi = 0;
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
-    {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            scalar alphaXi =
-                alphasi_[i]/(mixtures_[i].Gamma(rhosi_[i], e, T) - 1.0);
-            psi += alphaXi*mixtures_[i].pRhoT(rhosi_[i], e, T);
-            sumAlphaXi += alphaXi;
-        }
-    }
-    return psi/sumAlphaXi;
-}
-
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::mu
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar psi = 0.0;
-    forAll(mixtures_, i)
-    {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            psi += alphasi_[i]*mixtures_[i].mu(rhosi_[i], e, T);
-        }
-    }
-    return psi;
-}
-
-
-Foam::scalar Foam::multiphaseBlastFluidMixture::cSqr
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    scalar sumAlphaXi = 0;
-    scalar psi = 0;
-    forAll(mixtures_, i)
-    {
-        if (alphasi_[i] > thermos_[i].residualAlpha().value())
-        {
-            scalar alphaXi =
-                alphasi_[i]*rhosi_[i]
-               /(mixtures_[i].Gamma(rhosi_[i], e, T) - 1.0);
-            psi += alphaXi*mixtures_[i].cSqr(p, rhosi_[i], e, T);
-            sumAlphaXi += alphaXi;
-        }
-    }
-    return psi/max(sumAlphaXi, 1e-10);
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -222,8 +144,7 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
     residualAlpha_(dimless, 0.0),
-    sumVfPtr_(nullptr),
-    mixture_(volumeFractions_, rhos_, thermos_)
+    sumVfPtr_(nullptr)
 
 {
     volScalarField sumAlpha
@@ -313,6 +234,22 @@ Foam::multiphaseFluidBlastThermo::~multiphaseFluidBlastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::multiphaseFluidBlastThermo::correct()
+{
+    if (debug)
+    {
+        InfoInFunction << endl;
+    }
+
+    calculate();
+
+    if (debug)
+    {
+        Info<< "    Finished" << endl;
+    }
+}
+
+
 void Foam::multiphaseFluidBlastThermo::read(const dictionary& dict)
 {
     forAll(thermos_, phasei)
@@ -329,7 +266,6 @@ void Foam::multiphaseFluidBlastThermo::setTotalVolumeFractionPtr
 )
 {
     sumVfPtr_.set(&vf);
-    mixture_.setTotalVolumeFractionPtr(vf);
 }
 
 

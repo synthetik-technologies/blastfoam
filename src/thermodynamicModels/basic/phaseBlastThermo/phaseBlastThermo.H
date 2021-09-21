@@ -25,18 +25,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::basicBlastThermo
+    Foam::phaseBlastThermo
 
 Description
     General thermodynamic class for a fluid/solid
 
 SourceFiles
-    basicBlastThermo.C
+    phaseBlastThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef basicBlastThermo_H
-#define basicBlastThermo_H
+#ifndef phaseBlastThermo_H
+#define phaseBlastThermo_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,40 +51,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class basicBlastMixture Declaration
+                           Class phaseBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
-class basicBlastMixture
-{
-public:
-
-    basicBlastMixture()
-    {}
-
-    virtual ~basicBlastMixture()
-    {}
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar, const scalar, const scalar) const = 0;
-};
-
-/*---------------------------------------------------------------------------*\
-                           Class basicBlastThermo Declaration
-\*---------------------------------------------------------------------------*/
-
-class basicBlastThermo
+class phaseBlastThermo
 :
     public timeIntegrationSystem
 {
@@ -113,6 +83,46 @@ protected:
         //- Residual density
         dimensionedScalar residualRho_;
 
+        //- Minimum temperature
+        scalar TLow_ = 0.0;
+
+
+        // Protected member functions
+
+            //- Temperature [K]
+            volScalarField& T()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Internal energy [J/kg]
+            volScalarField& he()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Heat capacity at constant pressure [J/kg/K]
+            volScalarField& CpRef()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Heat capacity at constant volume [J/kg/K]
+            volScalarField& CvRef()
+            {
+                NotImplemented;
+                return rho_;
+            }
+
+            //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
+            volScalarField& alpha()
+            {
+                NotImplemented;
+                return rho_;
+            }
 
 public:
 
@@ -121,7 +131,7 @@ public:
         declareRunTimeSelectionTable
         (
             autoPtr,
-            basicBlastThermo,
+            phaseBlastThermo,
             dictionary,
             (
                 const fvMesh& mesh,
@@ -134,13 +144,13 @@ public:
 
 
     //- Runtime type information
-    TypeName("basicBlastThermo");
+    TypeName("phaseBlastThermo");
 
 
     // Constructor
 
         //- Construct with input field
-        basicBlastThermo
+        phaseBlastThermo
         (
             const fvMesh& mesh,
             const dictionary& dict,
@@ -154,20 +164,11 @@ public:
 
 
     //- Destructor
-    virtual ~basicBlastThermo();
+    virtual ~phaseBlastThermo();
 
     // Selectors
 
-        template<class Thermo>
-        static autoPtr<Thermo> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const word& phaseName,
-            const word& masterName
-        );
-
-        static autoPtr<basicBlastThermo> New
+        static autoPtr<phaseBlastThermo> New
         (
             const fvMesh& mesh,
             const dictionary& dict,
@@ -178,96 +179,43 @@ public:
 
     // Static public functions
 
-        word phasePropertyName(const word& n) const
-        {
-            return IOobject::groupName(n, phaseName_);
-        }
-
         // Directory to compile from
         static fileName templateDir()
         {
             return getEnv("BLAST_DIR")/"etc/codeTemplates";
         }
 
-        //- Return the thermo type name given a dictionary
-        static word readThermoType(const dictionary& dict);
-
-        //- Split name of thermo package into a list of the components names
-        static wordList splitThermoName
-        (
-            const word& thermoName
-        );
-
-        //- Split name of thermo package into a list of the components names
-        static wordList splitThermoName
-        (
-            const word& thermoName,
-            const label nCmpts
-        );
-
-        //- Lookup or construct field
-        static volScalarField& lookupOrConstruct
-        (
-            const fvMesh& mesh,
-            const word& name,
-            const IOobject::readOption rOpt,
-            const IOobject::writeOption wOpt,
-            const dimensionSet& dims,
-            const bool allowNoGroup = false
-        );
-
-        //- Generic lookup for thermodynamics package thermoTypeName
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoTypeDict,
-            Table* tablePtr,
-            const int nCmpts,
-            const char* cmptNames[],
-            const word& thermoTypeName
-        );
-
-        //- Generic lookup for each of the related thermodynamics packages
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoDict,
-            Table* tablePtr
-        );
-
-        //- Generic lookup for each of the related thermodynamics packages
-        template<class Thermo, class Table>
-        static typename Table::iterator lookupCstrIter
-        (
-            const dictionary& thermoDict,
-            Table* tablePtr,
-            const word& state
-        );
-
-        //- Return a subList
-        static UIndirectList<scalar> cellSetScalarList
-        (
-            const volScalarField& psi,
-            const labelList& cells
-        );
-
+        //- Return the thermodynamic type name
         virtual word thermoName() const = 0;
 
+
     // Access functions
+
+        //- Return the name of a property for this thermos phase
+        word phasePropertyName(const word& n) const
+        {
+            return IOobject::groupName(n, phaseName_);
+        }
+
+        //- Return the name of the phase
         const word& phaseName() const
         {
             return phaseName_;
         }
+
+        //- Return the name of the master phase name
         const word& masterName() const
         {
             return masterName_;
         }
 
+        //- Return the residual alpha value
         const dimensionedScalar& residualAlpha() const
         {
             return residualAlpha_;
         }
 
+        //- Return the residual density value
         const dimensionedScalar& residualRho() const
         {
             return residualRho_;
@@ -300,6 +248,15 @@ public:
 
     // Member Functions
 
+        //- Add contribution to mixture temperature
+        virtual void calculateTemperature
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T0,
+            volScalarField& alphaT
+        ) = 0;
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
 
@@ -327,7 +284,7 @@ public:
                 const label patchi
             ) const = 0;
 
-            //- Sensible enthalpy [J/kg/K]
+            //- Sensible enthalpy [J/kg]
             virtual tmp<volScalarField> hs() const = 0;
 
             //- Sensible enthalpy
@@ -338,7 +295,7 @@ public:
                 const volScalarField& T
             ) const = 0;
 
-            //- Sensible enthalpy for patch [J/kg/K]
+            //- Sensible enthalpy for patch [J/kg]
             virtual tmp<scalarField> hs
             (
                 const scalarField& T,
@@ -352,7 +309,7 @@ public:
                 const labelList& cells
             ) const = 0;
 
-            //- Absolute enthalpy [J/kg/K]
+            //- Absolute enthalpy [J/kg]
             virtual tmp<volScalarField> ha() const = 0;
 
             //- Absolute enthalpy
@@ -418,9 +375,6 @@ public:
                 const label celli
             ) const = 0;
 
-            //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp() const = 0;
-
             //- Heat capacity at constant pressure for patch [J/kg/K]
             virtual tmp<scalarField> Cp
             (
@@ -431,9 +385,6 @@ public:
             //- Heat capacity at constant pressure for a cell [J/kg/K]
             virtual scalar cellCp(const scalar, const label) const = 0;
 
-            //- Heat capacity at constant volume [J/kg/K]
-            virtual tmp<volScalarField> Cv() const = 0;
-
             //- Heat capacity at constant volume for patch [J/kg/K]
             virtual tmp<scalarField> Cv
             (
@@ -443,9 +394,6 @@ public:
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const = 0;
-
-            //- Heat capacity at constant pressure/volume [J/kg/K]
-            virtual tmp<volScalarField> Cpv() const = 0;
 
             //- Heat capacity at constant pressure/volume for patch [J/kg/K]
             virtual tmp<scalarField> Cpv
@@ -464,10 +412,6 @@ public:
             virtual scalar cellW(const label) const = 0;
 
 
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const = 0;
-
-
         //- Read residual values
         virtual void read(const dictionary& dict)
         {
@@ -480,12 +424,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "basicBlastThermoTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

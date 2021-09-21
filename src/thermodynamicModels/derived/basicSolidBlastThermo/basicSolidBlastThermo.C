@@ -30,6 +30,59 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+template<class Thermo>
+void Foam::basicSolidBlastThermo<Thermo>::calculate()
+{
+    const typename Thermo::thermoType& t(*this);
+    forAll(this->rho_, celli)
+    {
+        const scalar& rhoi(this->rho_[celli]);
+        scalar& ei(this->he()[celli]);
+        scalar& Ti = this->Thermo::baseThermo::T()[celli];
+
+        // Update temperature
+        Ti = t.TRhoE(Ti, rhoi, ei);
+        if (Ti < this->TLow_)
+        {
+            ei = t.Es(rhoi, ei, this->TLow_);
+            Ti = this->TLow_;
+        }
+
+        scalar Cpi = t.Cp(rhoi, ei, Ti);
+        this->CpRef()[celli] = Cpi;
+        this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
+        this->alpha()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+    }
+
+    this->Thermo::baseThermo::T().correctBoundaryConditions();
+    this->he().correctBoundaryConditions();
+
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& pT =
+            this->Thermo::baseThermo::T().boundaryField()[patchi];
+        const fvPatchScalarField& phe = this->he().boundaryField()[patchi];
+
+        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& palpha =
+            this->alpha().boundaryFieldRef()[patchi];
+
+        forAll(prho, facei)
+        {
+            const scalar rhoi(prho[facei]);
+            const scalar ei(phe[facei]);
+            const scalar Ti(pT[facei]);
+
+            const scalar Cpi = t.Cp(rhoi, ei, Ti);
+            pCp[facei] = Cpi;
+            pCv[facei] = t.Cv(rhoi, ei, Ti);
+            palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+        }
+    }
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -42,8 +95,7 @@ Foam::basicSolidBlastThermo<Thermo>::basicSolidBlastThermo
     const word& masterName
 )
 :
-    Thermo(mesh, dict, phaseName, masterName),
-    mixture_(*this)
+    Thermo(mesh, dict, phaseName, masterName)
 {
     this->initializeFields();
 }
@@ -57,6 +109,23 @@ Foam::basicSolidBlastThermo<Thermo>::~basicSolidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::basicSolidBlastThermo<Thermo>::correct()
+{
+    if (debug)
+    {
+        InfoInFunction << endl;
+    }
+
+    calculate();
+
+    if (debug)
+    {
+        Info<< "    Finished" << endl;
+    }
+}
+
 
 template<class Thermo>
 void Foam::basicSolidBlastThermo<Thermo>::updateRho()

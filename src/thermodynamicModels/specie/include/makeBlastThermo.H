@@ -28,7 +28,7 @@ License
 #ifndef makeBlastThermo_H
 #define makeBlastThermo_H
 
-#include "basicBlastThermo.H"
+#include "blastThermo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

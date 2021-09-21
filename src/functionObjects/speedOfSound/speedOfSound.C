@@ -112,7 +112,6 @@ bool Foam::functionObjects::speedOfSound::read
 
 bool Foam::functionObjects::speedOfSound::execute()
 {
-    Info<<resultName_<<endl;
     if (mesh_.foundObject<volScalarField>(resultName_))
     {
         return true;

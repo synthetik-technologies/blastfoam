@@ -44,180 +44,95 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-Foam::scalar Foam::twoPhaseBlastFluidMixture::HE
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
+void Foam::twoPhaseFluidBlastThermo::calculate()
 {
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->HE(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->HE(rho1i_, e, T);
-    }
-    return
-        mixture1Ptr_->HE(rho1i_, e, T)*alpha1i_
-      + mixture2Ptr_->HE(rho2i_, e, T)*alpha2i_;
-}
+    volScalarField T0(T_);
+    T_ = Zero;
+    thermo1_->calculateTemperature(alpha1_, this->he(), T0, T_);
+    thermo2_->calculateTemperature(alpha2_, this->he(), T0, T_);
+    T_.correctBoundaryConditions();
+    this->he().correctBoundaryConditions();
 
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::TRhoE
-(
-    const scalar T,
-    const scalar rho,
-    const scalar e
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->TRhoE(T, rho2i_, e);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->TRhoE(T, rho1i_, e);
-    }
-    return
-        mixture1Ptr_->TRhoE(T, rho1i_, e)*alpha1i_
-      + mixture2Ptr_->TRhoE(T, rho2i_, e)*alpha2i_;
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::Cp
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->Cp(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->Cp(rho1i_, e, T);
-    }
-    return
-        mixture1Ptr_->Cp(rho1i_, e, T)*alpha1i_
-      + mixture2Ptr_->Cp(rho2i_, e, T)*alpha2i_;
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::Cv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->Cv(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->Cv(rho1i_, e, T);
-    }
-    return
-        mixture1Ptr_->Cv(rho1i_, e, T)*alpha1i_
-      + mixture2Ptr_->Cv(rho2i_, e, T)*alpha2i_;
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::kappa
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->kappa(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->kappa(rho1i_, e, T);
-    }
-    return
-        mixture1Ptr_->kappa(rho1i_, e, T)*alpha1i_
-      + mixture2Ptr_->kappa(rho2i_, e, T)*alpha2i_;
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::pRhoT
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->pRhoT(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->pRhoT(rho1i_, e, T);
-    }
-    scalar alphaXi1(alpha1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
-    scalar alphaXi2(alpha2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
-    return
+    volScalarField XiSum
+    (
+        volScalarField::New("XiSum", mesh(), dimensionedScalar(dimless, 0.0))
+    );
+    volScalarField rhoXiSum
+    (
+        volScalarField::New
         (
-            mixture1Ptr_->pRhoT(rho1i_, e, T)*alphaXi1
-          + mixture2Ptr_->pRhoT(rho2i_, e, T)*alphaXi2
-        )/(alphaXi1 + alphaXi2);
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::mu
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->mu(rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->mu(rho1i_, e, T);
-    }
-    return
-        mixture1Ptr_->mu(rho1i_, e, T)*alpha1i_
-      + mixture2Ptr_->mu(rho2i_, e, T)*alpha2i_;
-}
-
-
-Foam::scalar Foam::twoPhaseBlastFluidMixture::cSqr
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (alpha1i_ < thermo1_.residualAlpha().value())
-    {
-        return mixture2Ptr_->cSqr(p, rho2i_, e, T);
-    }
-    else if (alpha2i_ < thermo2_.residualAlpha().value())
-    {
-        return mixture1Ptr_->cSqr(p, rho1i_, e, T);
-    }
-    scalar alphaXi1(alpha1i_/(mixture1Ptr_->Gamma(rho1i_, e, T) - 1.0));
-    scalar alphaXi2(alpha2i_/(mixture2Ptr_->Gamma(rho2i_, e, T) - 1.0));
-    return
+            "rhoXiSum",
+            mesh(),
+            dimensionedScalar(dimDensity, 0.0)
+        )
+    );
+    volScalarField pXiSum
+    (
+        volScalarField::New
         (
-            mixture1Ptr_->cSqr(p, rho1i_, e, T)*alphaXi1*rho1i_
-          + mixture2Ptr_->cSqr(p, rho2i_, e, T)*alphaXi2*rho2i_
-        )/(alphaXi1 + alphaXi2)/rho;
+            "pXiSum",
+            mesh(),
+            dimensionedScalar(dimPressure, 0.0)
+        )
+    );
+    volScalarField cSqrRhoXiSum
+    (
+        volScalarField::New
+        (
+            "cSqrRhoXiSum",
+            mesh(),
+            dimensionedScalar(sqr(dimVelocity)*dimDensity, 0.0)
+        )
+    );
+
+    this->Cp_ = Zero;
+    this->Cv_ = Zero;
+    this->alpha_ = Zero;
+    this->mu_ = Zero;
+
+    thermo1_->calculate
+    (
+        alpha1_,
+        this->he(),
+        this->T_,
+        this->Cp_,
+        this->Cv_,
+        this->alpha_,
+        this->mu_,
+        pXiSum,
+        XiSum,
+        rhoXiSum
+    );
+    thermo2_->calculate
+    (
+        alpha2_,
+        this->he(),
+        this->T_,
+        this->Cp_,
+        this->Cv_,
+        this->alpha_,
+        this->mu_,
+        pXiSum,
+        XiSum,
+        rhoXiSum
+    );
+    this->p_ = pXiSum/XiSum;
+    this->p_.correctBoundaryConditions();
+
+    thermo1_->calculateSpeedOfSound
+    (
+        alpha1_,
+        cSqrRhoXiSum
+    );
+    thermo2_->calculateSpeedOfSound
+    (
+        alpha2_,
+        cSqrRhoXiSum
+    );
+
+    rhoXiSum.max(small);
+    cSqrRhoXiSum.max(small);
+    this->speedOfSound_ = sqrt(cSqrRhoXiSum/rhoXiSum);
 }
 
 
@@ -275,8 +190,7 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
             phase2Name_,
             phaseName
         )
-    ),
-    mixture_(alpha1_, thermo1_(), thermo2_())
+    )
 {
     //- Force reading of residual values
     thermo1_->read(dict.subDict(phase2Name_));
@@ -310,6 +224,22 @@ void Foam::twoPhaseFluidBlastThermo::read(const dictionary& dict)
 {
     thermo1_->read(dict.subDict(thermo1_->name()));
     thermo2_->read(dict.subDict(thermo2_->name()));
+}
+
+
+void Foam::twoPhaseFluidBlastThermo::correct()
+{
+    if (debug)
+    {
+        InfoInFunction << endl;
+    }
+
+    calculate();
+
+    if (debug)
+    {
+        Info<< "    Finished" << endl;
+    }
 }
 
 

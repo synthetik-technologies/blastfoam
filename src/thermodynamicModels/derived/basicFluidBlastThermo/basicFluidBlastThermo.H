@@ -47,89 +47,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class basicBlastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-template<class BasicMixture, class ThermoType>
-class basicBlastFluidMixture
-:
-    public BasicMixture
-{
-    const ThermoType& thermo_;
-
-public:
-
-    basicBlastFluidMixture(const ThermoType& thermo)
-    :
-        thermo_(thermo)
-    {}
-
-    virtual ~basicBlastFluidMixture()
-    {}
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Es(rho, e, T);
-    }
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar T, const scalar rho, const scalar e) const
-    {
-        return thermo_.TRhoE(T, rho, e);
-    }
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Cp(rho, e, T);
-    }
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Cv(rho, e, T);
-    }
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.kappa(rho, e, T);
-    }
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.p(rho, e, T);
-    }
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.mu(rho, e, T);
-    }
-
-    //- Calculate dpde
-    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const
-    {
-        return thermo_.Gamma(rho, e, T);
-    }
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr
-    (
-        const scalar p,
-        const scalar rho,
-        const scalar e,
-        const scalar T
-    ) const
-    {
-        return thermo_.cSqr(p, rho, e, T);
-    }
-};
-
-
-/*---------------------------------------------------------------------------*\
                            Class basicFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -138,31 +55,10 @@ class basicFluidBlastThermo
 :
     public Thermo
 {
-    //- Mixture
-    mutable basicBlastFluidMixture
-    <
-        typename Thermo::BasicMixture,
-        typename Thermo::thermoType
-    > mixture_;
+    // Protected member functions
 
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& cellThermoMixture
-    (
-        const label celli
-    ) const
-    {
-        return mixture_;
-    }
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
-    (
-        const label patchi,
-        const label facei
-    ) const
-    {
-        return mixture_;
-    }
+        //- Add contribution to mixture temperature
+        virtual void calculate();
 
 
 public:
@@ -184,6 +80,31 @@ public:
 
 
     // Member Functions
+
+        //- Correct thermodynamic fields
+        virtual void correct();
+
+        //- Add contribution to mixture temperature
+        virtual void calculate
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T,
+            volScalarField& Cp,
+            volScalarField& Cv,
+            volScalarField& mu,
+            volScalarField& alphah,
+            volScalarField& pXiSum,
+            volScalarField& XiSum,
+            volScalarField& rhoXiSum
+        );
+
+        //- Add contribution to speed of sound
+        virtual void calculateSpeedOfSound
+        (
+            const volScalarField& alpha,
+            volScalarField& cSqrRhoXiSum
+        );
 
         //- Pre update
         virtual void update()

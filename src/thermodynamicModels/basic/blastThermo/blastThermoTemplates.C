@@ -26,7 +26,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "basicBlastThermo.H"
+#include "blastThermo.H"
 #include "wordIOList.H"
 #include "compileTemplate.H"
 #include "OSspecific.H"
@@ -34,7 +34,7 @@ License
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo, class Table>
-typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
+typename Table::iterator Foam::blastThermo::lookupCstrIter
 (
     const dictionary& thermoDict,
     Table* tablePtr,
@@ -170,7 +170,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
             {
                 wordList names
                 (
-                    basicBlastThermo::splitThermoName(validThermoTypeNames[i])
+                    blastThermo::splitThermoName(validThermoTypeNames[i])
                 );
 
                 if (names.size())
@@ -193,7 +193,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
 
 template<class Thermo, class Table>
-typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
+typename Table::iterator Foam::blastThermo::lookupCstrIter
 (
     const dictionary& thermoDict,
     Table* tablePtr
@@ -254,7 +254,7 @@ typename Table::iterator Foam::basicBlastThermo::lookupCstrIter
 
 
 template<class Thermo>
-Foam::autoPtr<Thermo> Foam::basicBlastThermo::New
+Foam::autoPtr<Thermo> Foam::blastThermo::New
 (
     const fvMesh& mesh,
     const dictionary& dict,

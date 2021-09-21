@@ -50,51 +50,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class blastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-class blastFluidMixture
-:
-    public blastMixture
-{
-public:
-
-    blastFluidMixture()
-    {}
-
-    virtual ~blastFluidMixture()
-    {}
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar, const scalar, const scalar) const = 0;
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr
-    (
-        const scalar,
-        const scalar,
-        const scalar,
-        const scalar
-    ) const = 0;
-
-    //- Calculate speed of sound squared
-    virtual scalar speedOfSound
-    (
-        const scalar p,
-        const scalar rho,
-        const scalar e,
-        const scalar T
-    ) const
-    {
-        return sqrt(max(cSqr(p, rho, e, T), small));
-    }
-};
-
-
-/*---------------------------------------------------------------------------*\
                         Class fluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -104,10 +59,6 @@ class fluidBlastThermo
     public fluidThermo
 {
 protected:
-
-    // Protected data
-
-        typedef blastFluidMixture BasicMixture;
 
         //- Pressure [Pa]
         volScalarField& p_;
@@ -119,18 +70,14 @@ protected:
         volScalarField speedOfSound_;
 
 
-        //- Return a cell mixture
-        virtual const blastFluidMixture& cellThermoMixture
-        (
-            const label celli
-        ) const = 0;
+        // protected member functions
 
-        //- Return a cell mixture
-        virtual const blastFluidMixture& patchFaceThermoMixture
-        (
-            const label patchi,
-            const label facei
-        ) const = 0;
+            //- Dynamic viscosity of mixture [kg/m/s]
+            volScalarField& muRef()
+            {
+                return mu_;
+            }
+
 
 public:
 
@@ -209,9 +156,6 @@ public:
 
 
         // Fields derived from thermodynamic state variables
-
-            //- Correct thermodynamic fields
-            virtual void correct();
 
             //- Calclate internal energy [J/kg]
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;

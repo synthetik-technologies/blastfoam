@@ -29,111 +29,124 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
-Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::HE
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
+template<class Thermo>
+void Foam::detonatingSolidBlastThermo<Thermo>::calculate()
 {
-    if (xi_ < small)
+    const typename Thermo::thermoType1& t1(*this);
+    const typename Thermo::thermoType2& t2(*this);
+    forAll(this->rho_, celli)
     {
-        return thermo1_.Es(rho, e, T);
-    }
-    else if ((1.0 - xi_) < small)
-    {
-        return thermo2_.Es(rho, e, T);
-    }
-    return thermo2_.Es(rho, e, T)*xi_ + thermo1_.Es(rho, e, T)*(1.0 - xi_);
-}
+        const scalar x2 = this->cellx(celli);
+        const scalar x1 = 1.0 - x2;
+        const scalar rhoi(this->rho_[celli]);
+        scalar& ei(this->he()[celli]);
+        scalar& Ti(this->Thermo::baseThermo::T()[celli]);
 
+        if (x2 < small)
+        {
+            Ti =
+                t1.TRhoE(Ti, rhoi, ei);
+            if (Ti < this->TLow_)
+            {
+                ei = t1.Es(rhoi, ei, this->TLow_);
+                Ti = this->TLow_;
+            }
 
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
-Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::TRhoE
-(
-    const scalar T,
-    const scalar rho,
-    const scalar e
-) const
-{
-    if (xi_ < small)
-    {
-        return thermo1_.TRhoE(T, rho, e);
-    }
-    else if ((1.0 - xi_) < small)
-    {
-        return thermo2_.TRhoE(T, rho, e);
+            const scalar Cpi = t1.Cp(rhoi, ei, Ti);
+            this->CpRef()[celli] = Cpi;
+            this->CvRef()[celli] = t1.Cv(rhoi, ei, Ti);
+            this->alpha()[celli] = t1.kappa(rhoi, ei, Ti)/Cpi;
+        }
+        else if (x1 < small)
+        {
+            Ti =
+                t2.TRhoE(Ti, rhoi, ei);
+            if (Ti < this->TLow_)
+            {
+                ei = t2.Es(rhoi, ei, this->TLow_);
+                Ti = this->TLow_;
+            }
+
+            const scalar Cpi = t2.Cp(rhoi, ei, Ti);
+            this->CpRef()[celli] = Cpi;
+            this->CvRef()[celli] = t2.Cv(rhoi, ei, Ti);
+            this->alpha()[celli] = t2.kappa(rhoi, ei, Ti)/Cpi;
+        }
+        else
+        {
+            Ti =
+                t1.TRhoE(Ti, rhoi, ei)*x1
+              + t2.TRhoE(Ti, rhoi, ei)*x2;
+            if (Ti < this->TLow_)
+            {
+                ei =
+                    t1.Es(rhoi, ei, this->TLow_)*x1
+                  + t2.Es(rhoi, ei, this->TLow_)*x2;
+                Ti = this->TLow_;
+            }
+
+            this->CpRef()[celli] =
+                t1.Cp(rhoi, ei, Ti)*x1
+              + t2.Cp(rhoi, ei, Ti)*x2;;
+            this->CvRef()[celli] =
+                t1.Cv(rhoi, ei, Ti)*x1
+              + t2.Cv(rhoi, ei, Ti)*x2;
+            this->alpha()[celli] =
+                t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
+              + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
+        }
     }
 
-    return
-        thermo2_.TRhoE(T, rho, e)*xi_
-      + thermo1_.TRhoE(T, rho, e)*(1.0 - xi_);
-}
+    this->Thermo::baseThermo::T().correctBoundaryConditions();
+    this->he().correctBoundaryConditions();
 
+    forAll(this->T_.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& pT =
+            this->Thermo::baseThermo::T().boundaryField()[patchi];
+        const fvPatchScalarField& phe = this->he().boundaryField()[patchi];
+        const scalarField px(this->x(patchi));
 
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
-Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::Cp
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (xi_ < small)
-    {
-        return thermo1_.Cp(rho, e, T);
-    }
-    else if ((1.0 - xi_) < small)
-    {
-        return thermo2_.Cp(rho, e, T);
-    }
-    return thermo2_.Cp(rho, e, T)*xi_ + thermo1_.Cp(rho, e, T)*(1.0 - xi_);
-}
+        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& palpha =
+            this->alpha().boundaryFieldRef()[patchi];
 
+        forAll(pT, facei)
+        {
+            const scalar x2 = px[facei];
+            const scalar x1 = 1.0 - x2;
+            const scalar rhoi(prho[facei]);
+            const scalar ei(phe[facei]);
+            const scalar Ti(pT[facei]);
 
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
-Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::Cv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (xi_ < small)
-    {
-        return thermo1_.Cv(rho, e, T);
+            if (x2 < small)
+            {
+                pCp[facei] = t1.Cp(rhoi, ei, Ti);
+                pCv[facei] = t1.Cv(rhoi, ei, Ti);
+                palpha[facei] = t1.kappa(rhoi, ei, Ti)/pCp[facei];
+            }
+            else if (x1 < small)
+            {
+                pCp[facei] = t2.Cp(rhoi, ei, Ti);
+                pCv[facei] = t2.Cv(rhoi, ei, Ti);
+                palpha[facei] = t2.kappa(rhoi, ei, Ti)/pCp[facei];
+            }
+            else
+            {
+                pCp[facei] =
+                    t1.Cp(rhoi, ei, Ti)*x1
+                  + t2.Cp(rhoi, ei, Ti)*x2;
+                pCv[facei] =
+                    t1.Cv(rhoi, ei, Ti)*x1
+                  + t2.Cv(rhoi, ei, Ti)*x2;
+                palpha[facei] =
+                    t1.kappa(rhoi, ei, Ti)/pCp[facei]*x1
+                  + t2.kappa(rhoi, ei, Ti)/pCp[facei]*x2;
+            }
+        }
     }
-    else if ((1.0 - xi_) < small)
-    {
-        return thermo2_.Cv(rho, e, T);
-    }
-    return thermo2_.Cv(rho, e, T)*xi_ + thermo1_.Cv(rho, e, T)*(1.0 - xi_);
-}
-
-
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-Foam::scalar
-Foam::detonatingBlastSolidMixture<BasicMixture, ThermoType1, ThermoType2>::kappa
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    if (xi_ < small)
-    {
-        return thermo1_.kappa(rho, e, T);
-    }
-    else if ((1.0 - xi_) < small)
-    {
-        return thermo2_.kappa(rho, e, T);
-    }
-    return thermo2_.kappa(rho, e, T)*xi_ + thermo1_.kappa(rho, e, T)*(1.0 - xi_);
 }
 
 
@@ -174,8 +187,7 @@ Foam::detonatingSolidBlastThermo<Thermo>::detonatingSolidBlastThermo
             dict,
             phaseName
         )
-    ),
-    mixture_(*this, *this, activation_())
+    )
 {
     this->initializeFields();
 }
@@ -196,6 +208,22 @@ Foam::detonatingSolidBlastThermo<Thermo>::~detonatingSolidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::detonatingSolidBlastThermo<Thermo>::correct()
+{
+    if (debug)
+    {
+        InfoInFunction << endl;
+    }
+
+    calculate();
+
+    if (debug)
+    {
+        Info<< "    Finished" << endl;
+    }
+}
 
 template<class Thermo>
 void Foam::detonatingSolidBlastThermo<Thermo>::update()

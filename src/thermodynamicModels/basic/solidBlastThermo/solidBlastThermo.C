@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "solidBlastThermo.H"
-#include "basicBlastThermo.H"
 #include "fvmLaplacian.H"
 #include "fvcLaplacian.H"
 #include "coordinateSystem.H"
@@ -73,8 +72,7 @@ void Foam::solidBlastThermo::initializeFields()
         }
     }
 
-    this->T_ = this->THE();
-    this->alpha_ = this->kappa()/this->Cv();
+    correct();
 }
 
 
@@ -87,7 +85,7 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
     const word& phaseName
 )
 {
-    return basicBlastThermo::New<solidBlastThermo>
+    return blastThermo::New<solidBlastThermo>
     (
         mesh,
         dict,
@@ -104,7 +102,7 @@ Foam::solidBlastThermo::~solidBlastThermo()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
+/*
 void Foam::solidBlastThermo::correct()
 {
     const scalarField& rhoCells = this->rho_;
@@ -172,7 +170,7 @@ void Foam::solidBlastThermo::correct()
             palpha[facei] = thermoMixture.kappa(r, e, T)/pCp[facei];
         }
     }
-}
+}*/
 
 
 Foam::tmp<Foam::volScalarField> Foam::solidBlastThermo::nu() const

@@ -148,7 +148,7 @@ void Foam::speciesMixtureField<ThermoType>::updateObject()
 
 
 template<class ThermoType>
-void Foam::speciesMixtureField<ThermoType>::update()
+void Foam::speciesMixtureField<ThermoType>::updateMixture()
 {
     PtrList<ThermoType>& cells(*this);
     forAll(cells, celli)

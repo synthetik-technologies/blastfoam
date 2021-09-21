@@ -78,6 +78,11 @@ functions
             impulse
         );
     }
+    speedOfSound
+    {
+        type speedOfSound;
+        writeControl writeTime;
+    }
 
     timeOfArrival
     {

@@ -49,76 +49,6 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class detonatingBlastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-template<class BasicMixture, class ThermoType1, class ThermoType2>
-class detonatingBlastFluidMixture
-:
-    public BasicMixture
-{
-    const ThermoType1& thermo1_;
-    const ThermoType2& thermo2_;
-    const activationModel& activation_;
-
-    mutable scalar xi_;
-
-public:
-
-    detonatingBlastFluidMixture
-    (
-        const ThermoType1& thermo1,
-        const ThermoType2& thermo2,
-        const activationModel& activation
-    )
-    :
-        thermo1_(thermo1),
-        thermo2_(thermo2),
-        activation_(activation)
-    {}
-
-    virtual ~detonatingBlastFluidMixture()
-    {}
-
-    //- Set the local reaction progress variable
-    void setCell(const label celli) const
-    {
-        xi_ = activation_.cellLambdaPow(celli);
-    }
-    void setPatchFace(const label patchi, const label facei) const
-    {
-        xi_ = activation_.lambdaPow(patchi, facei);
-    }
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar, const scalar, const scalar) const;
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar, const scalar, const scalar) const;
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar, const scalar, const scalar) const;
-
-    //- Calculate dpde
-    virtual scalar Gamma(const scalar rho, const scalar e, const scalar T) const;
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
-};
-
-/*---------------------------------------------------------------------------*\
                            Class detonatingFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
 
@@ -135,34 +65,8 @@ class detonatingFluidBlastThermo
     //- Afterburn model
     autoPtr<afterburnModel> afterburn_;
 
-    //- Mixture
-    mutable detonatingBlastFluidMixture
-    <
-        typename Thermo::BasicMixture,
-        typename Thermo::thermoType1,
-        typename Thermo::thermoType2
-    > mixture_;
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& cellThermoMixture
-    (
-        const label celli
-    ) const
-    {
-        mixture_.setCell(celli);
-        return mixture_;
-    }
-
-    //- Return a cell mixture
-    virtual const typename Thermo::BasicMixture& patchFaceThermoMixture
-    (
-        const label patchi,
-        const label facei
-    ) const
-    {
-        mixture_.setPatchFace(patchi, facei);
-        return mixture_;
-    }
+    //- Correct thermodynamic fields
+    void calculate();
 
     //- Return the blending field for celli
     virtual scalar cellx(const label celli) const
@@ -205,6 +109,31 @@ public:
 
 
     // Member Functions
+
+        //- Correct thermodynamic fields
+        virtual void correct();
+
+        //- Add contribution to mixture temperature
+        virtual void calculate
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T,
+            volScalarField& Cp,
+            volScalarField& Cv,
+            volScalarField& mu,
+            volScalarField& alphah,
+            volScalarField& pXiSum,
+            volScalarField& XiSum,
+            volScalarField& rhoXiSum
+        );
+
+        //- Add contribution to speed of sound
+        virtual void calculateSpeedOfSound
+        (
+            const volScalarField& alpha,
+            volScalarField& cSqrRhoXiSum
+        );
 
         //- Pre update
         virtual void update();

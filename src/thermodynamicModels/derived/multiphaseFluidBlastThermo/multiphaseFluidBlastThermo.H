@@ -54,110 +54,6 @@ SourceFiles
 
 namespace Foam
 {
-
-/*---------------------------------------------------------------------------*\
-                    Class multiphaseBlastFluidMixture Declaration
-\*---------------------------------------------------------------------------*/
-
-class multiphaseBlastFluidMixture
-:
-    public blastFluidMixture
-{
-    const PtrList<volScalarField>& alphas_;
-    const PtrList<volScalarField>& rhos_;
-    const PtrList<phaseFluidBlastThermo>& thermos_;
-
-    UautoPtr<const volScalarField> sumVfPtr_;
-
-    mutable scalarList alphasi_;
-    mutable scalarList rhosi_;
-    mutable UPtrList<const blastPhaseFluidMixture> mixtures_;
-
-
-public:
-
-    multiphaseBlastFluidMixture
-    (
-        const PtrList<volScalarField>& alphas,
-        const PtrList<volScalarField>& rhos,
-        const PtrList<phaseFluidBlastThermo>& thermos
-    )
-    :
-        alphas_(alphas),
-        rhos_(rhos),
-        thermos_(thermos),
-        alphasi_(alphas.size()),
-        rhosi_(alphas.size()),
-        mixtures_(alphas.size())
-    {}
-
-    virtual ~multiphaseBlastFluidMixture()
-    {}
-
-    //- Set the volumeFraction pointer
-    void setTotalVolumeFractionPtr(const volScalarField& volumeFraction)
-    {
-        sumVfPtr_.set(&volumeFraction);
-    }
-
-    //- Set the local reaction progress variable
-    void setCell(const label celli) const
-    {
-        scalar sumVf =
-            sumVfPtr_.valid()
-          ? max(sumVfPtr_()[celli], 1e-10)
-          : 1.0;
-        forAll(alphas_, i)
-        {
-            alphasi_[i] = alphas_[i][celli]/sumVf;
-            rhosi_[i] = rhos_[i][celli];
-            mixtures_.set(i, &thermos_[i].cellThermoMixture(celli));
-        }
-    }
-    void setPatchFace(const label patchi, const label facei) const
-    {
-        scalar sumVf =
-            sumVfPtr_.valid()
-          ? max(sumVfPtr_().boundaryField()[patchi][facei], 1e-10)
-          : 1.0;
-
-        forAll(alphas_, i)
-        {
-            alphasi_[i] = alphas_[i].boundaryField()[patchi][facei]/sumVf;
-            rhosi_[i] = rhos_[i].boundaryField()[patchi][facei];
-            mixtures_.set
-            (
-                i,
-                &thermos_[i].patchFaceThermoMixture(patchi, facei)
-            );
-        }
-    }
-
-    //- Calculate internal energy
-    virtual scalar HE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate temperature
-    virtual scalar TRhoE(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant pressure
-    virtual scalar Cp(const scalar, const scalar, const scalar) const;
-
-    //- Calculate specific heat at constant volume
-    virtual scalar Cv(const scalar, const scalar, const scalar) const;
-
-    //- Calculate thermal diffusivity
-    virtual scalar kappa(const scalar, const scalar, const scalar) const;
-
-    //- Calculate pressure
-    virtual scalar pRhoT(const scalar, const scalar, const scalar) const;
-
-    //- Calculate viscosity
-    virtual scalar mu(const scalar, const scalar, const scalar) const;
-
-    //- Calculate speed of sound squared
-    virtual scalar cSqr(const scalar, const scalar, const scalar, const scalar) const;
-};
-
 /*---------------------------------------------------------------------------*\
                            Class multiphaseFluidBlastThermo Declaration
 \*---------------------------------------------------------------------------*/
@@ -189,32 +85,11 @@ class multiphaseFluidBlastThermo
         //- Pointer to total volume fraction field
         UautoPtr<const volScalarField> sumVfPtr_;
 
-        //- Mixture
-        mutable multiphaseBlastFluidMixture mixture_;
-
 
     // Private member functions
 
-        //- Return a cell mixture
-        virtual const blastFluidMixture& cellThermoMixture
-        (
-            const label celli
-        ) const
-        {
-            mixture_.setCell(celli);
-            return mixture_;
-        }
-
-        //- Return a cell mixture
-        virtual const blastFluidMixture& patchFaceThermoMixture
-        (
-            const label patchi,
-            const label facei
-        ) const
-        {
-            mixture_.setPatchFace(patchi, facei);
-            return mixture_;
-        }
+        //- Correct thermodynamic fields
+        virtual void calculate();
 
         //- Return the field normalized by the sumVfPtr field if it is set
         tmp<volScalarField> normalise(tmp<volScalarField>& tf) const
@@ -294,6 +169,9 @@ public:
 
      // Member Functions
 
+        //- Correct thermodynamic fields
+        virtual void correct();
+
         //- Pre update
         virtual void update();
 
@@ -345,13 +223,13 @@ public:
         }
 
         //- Non-const access to thermo model phasei
-        virtual basicBlastThermo& thermo(const label phasei)
+        virtual phaseFluidBlastThermo& thermo(const label phasei)
         {
             return thermos_[phasei];
         }
 
         //- Const access to thermo model phasei
-        virtual const basicBlastThermo& thermo(const label phasei) const
+        virtual const phaseFluidBlastThermo& thermo(const label phasei) const
         {
             return thermos_[phasei];
         }

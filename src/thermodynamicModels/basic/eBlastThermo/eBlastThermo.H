@@ -40,7 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastThermo.H"
+#include "volFields.H"
 
 namespace Foam
 {
@@ -111,6 +111,15 @@ public:
 
     // Member functions
 
+        //- Add contribution to mixture temperature
+        virtual void calculateTemperature
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T0,
+            volScalarField& alphaT
+        );
+
         //- Return the thermo name
         virtual word thermoName() const;
 
@@ -123,6 +132,7 @@ public:
             //- Calculate internal energy given a pressure
             virtual tmp<volScalarField> calce() const;
 
+            using BasicThermo::he;
             //- Enthalpy/Internal energy
             //  for given pressure and temperature [J/kg]
             virtual tmp<volScalarField> he
@@ -236,6 +246,7 @@ public:
                 const label celli
             ) const;
 
+            using BasicThermo::Cp;
             //- Heat capacity at constant pressure [J/kg/K]
             virtual tmp<volScalarField> Cp() const;
 
@@ -249,6 +260,7 @@ public:
             //- Heat capacity at constant pressure for a cell [J/kg/K]
             virtual scalar cellCp(const scalar, const label) const;
 
+            using BasicThermo::Cv;
             //- Heat capacity at constant volume [J/kg/K]
             virtual tmp<volScalarField> Cv() const;
 
@@ -280,12 +292,6 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar cellW(const label celli) const;
-
-
-        // Fields derived from transport state variables
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const;
 };
 
 

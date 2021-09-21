@@ -125,7 +125,7 @@ public:
         ) const;
 
         //- Update all mixtures
-        void update();
+        void updateMixture();
 
         //- Update size of fields
         virtual void updateObject();

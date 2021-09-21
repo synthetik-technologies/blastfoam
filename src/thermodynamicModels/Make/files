@@ -1,7 +1,7 @@
 specie/specie/specieBlast.C
 specie/specie/rspecieBlast.C
 
-basic/basicBlastThermo/basicBlastThermo.C
+basic/phaseBlastThermo/phaseBlastThermo.C
 basic/phaseFluidBlastThermo/phaseFluidBlastThermo.C
 
 basic/blastThermo/blastThermo.C

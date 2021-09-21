@@ -40,7 +40,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "basicBlastThermo.H"
+#include "blastThermo.H"
 
 namespace Foam
 {
@@ -163,11 +163,21 @@ public:
 
     // Member functions
 
+        //- Add contribution to mixture temperature
+        virtual void calculateTemperature
+        (
+            const volScalarField& alpha,
+            const volScalarField& he,
+            const volScalarField& T0,
+            volScalarField& T
+        );
+
         //- Return the thermo name
         virtual word thermoName() const;
 
         //- Thermodynamic and transport functions
 
+            using BasicThermo::he;
             //- Enthalpy/Internal energy
             //  for given pressure and temperature [J/kg]
             virtual tmp<volScalarField> he
@@ -281,6 +291,7 @@ public:
                 const label celli
             ) const;
 
+            using BasicThermo::Cp;
             //- Heat capacity at constant pressure [J/kg/K]
             virtual tmp<volScalarField> Cp() const;
 
@@ -294,6 +305,7 @@ public:
             //- Heat capacity at constant pressure for a cell [J/kg/K]
             virtual scalar cellCp(const scalar, const label) const;
 
+            using BasicThermo::Cv;
             //- Heat capacity at constant volume [J/kg/K]
             virtual tmp<volScalarField> Cv() const;
 

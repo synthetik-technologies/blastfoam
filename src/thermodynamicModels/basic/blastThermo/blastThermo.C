@@ -27,7 +27,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastThermo.H"
-#include "basicBlastThermo.H"
 
 /* * * * * * * * * * * * * * * private static data * * * * * * * * * * * * * */
 
@@ -117,6 +116,251 @@ Foam::blastThermo::~blastThermo()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::UIndirectList<Foam::scalar> Foam::blastThermo::cellSetScalarList
+(
+    const volScalarField& psi,
+    const labelList& cells
+)
+{
+    return UIndirectList<scalar>(psi, cells);
+}
+
+
+Foam::word Foam::blastThermo::readThermoType(const dictionary& dict)
+{
+    return word
+    (
+        word(dict.lookup("transport")) + '<'
+      + word(dict.lookup("thermo")) + '<'
+      + word(dict.lookup("equationOfState"))  + '<'
+      + word("specie") + ">>>"
+    );
+}
+
+Foam::wordList Foam::blastThermo::splitThermoName
+(
+    const word& thermoName,
+    const int nCmpt
+)
+{
+    wordList cmpts(nCmpt);
+
+    string::size_type beg=0, end=0, endb=0, endc=0;
+    int i = 0;
+
+    while
+    (
+        (endb = thermoName.find('<', beg)) != string::npos
+     || (endc = thermoName.find(',', beg)) != string::npos
+    )
+    {
+        if (endb == string::npos)
+        {
+            end = endc;
+        }
+        else if ((endc = thermoName.find(',', beg)) != string::npos)
+        {
+            end = std::min(endb, endc);
+        }
+        else
+        {
+            end = endb;
+        }
+
+        if (beg < end)
+        {
+            cmpts[i] = thermoName.substr(beg, end-beg);
+            cmpts[i++].replaceAll(">","");
+
+            // If the number of number of components in the name
+            // is greater than nCmpt return an empty list
+            if (i == nCmpt)
+            {
+                return wordList();
+            }
+        }
+        beg = end + 1;
+    }
+
+    // If the number of number of components in the name is not equal to nCmpt
+    // return an empty list
+    if (i + 1 != nCmpt)
+    {
+        return wordList();
+    }
+
+    if (beg < thermoName.size())
+    {
+        cmpts[i] = thermoName.substr(beg, string::npos);
+        cmpts[i].replaceAll(">","");
+    }
+
+    return cmpts;
+}
+
+
+Foam::wordList Foam::blastThermo::splitThermoName
+(
+    const word& thermoName
+)
+{
+    wordList cmpts;
+    string::size_type beg=0, end=0, endb=0, endc=0;
+
+    while
+    (
+        (endb = thermoName.find('<', beg)) != string::npos
+     || (endc = thermoName.find(',', beg)) != string::npos
+    )
+    {
+        if (endb == string::npos)
+        {
+            end = endc;
+        }
+        else if ((endc = thermoName.find(',', beg)) != string::npos)
+        {
+          end = std::min(endb, endc);
+        }
+        else
+        {
+            end = endb;
+        }
+
+        if (beg < end)
+        {
+            word newStr = thermoName.substr(beg, end-beg);
+            newStr.replaceAll(">","");
+            cmpts.append(newStr);
+        }
+        beg = end + 1;
+    }
+    if (beg < thermoName.size())
+    {
+        word newStr = thermoName.substr(beg, string::npos);
+        newStr.replaceAll(">","");
+        cmpts.append(newStr);
+    }
+
+    wordList cmptsFinal(6);
+    if (cmpts[0] == "detonating")
+    {
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2] + '/' + cmpts[6];
+        cmptsFinal[3] = cmpts[3] + '/' + cmpts[7];
+        cmptsFinal[4] = cmpts[4] + '/' + cmpts[8];
+        cmptsFinal[5] = cmpts[5] + '/' + cmpts[9];
+    }
+    else
+    {
+        cmptsFinal[0] = cmpts[0];
+        cmptsFinal[1] = cmpts[1];
+        cmptsFinal[2] = cmpts[2];
+        cmptsFinal[3] = cmpts[3];
+        cmptsFinal[4] = cmpts[4];
+        cmptsFinal[5] = cmpts[5];
+    }
+
+    return cmptsFinal;
+}
+
+
+Foam::volScalarField& Foam::blastThermo::lookupOrConstruct
+(
+    const fvMesh& mesh,
+    const word& name,
+    const IOobject::readOption rOpt,
+    const IOobject::writeOption wOpt,
+    const dimensionSet& dims,
+    const bool allowNoGroup
+)
+{
+    const word baseName(IOobject::member(name));
+    if (!mesh.foundObject<volScalarField>(name))
+    {
+        volScalarField* fPtr = nullptr;
+        IOobject io
+        (
+            name,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            wOpt
+        );
+        IOobject baseIo
+        (
+            baseName,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            wOpt
+        );
+
+        if (io.typeHeaderOk<volScalarField>(true))
+        {
+            io.readOpt() = IOobject::MUST_READ;
+            fPtr =
+                new volScalarField
+                (
+                    io,
+                    mesh
+                );
+        }
+        else if (mesh.foundObject<volScalarField>(baseName) && allowNoGroup)
+        {
+            const volScalarField& baseField =
+                mesh.lookupObjectRef<volScalarField>(baseName);
+            fPtr =
+                new volScalarField
+                (
+                    io,
+                    baseField,
+                    baseField.boundaryField()
+                );
+        }
+        else if (baseIo.typeHeaderOk<volScalarField>(true) && allowNoGroup)
+        {
+            baseIo.readOpt() = IOobject::MUST_READ;
+            fPtr =
+                new volScalarField
+                (
+                    baseIo,
+                    mesh
+                );
+
+            // Rename to the desired name
+            fPtr->rename(name);
+        }
+        else if (rOpt != IOobject::MUST_READ)
+        {
+            fPtr =
+                new volScalarField
+                (
+                    io,
+                    mesh,
+                    dimensionedScalar("0", dims, Zero)
+                );
+        }
+        else if (allowNoGroup)
+        {
+            FatalErrorInFunction
+                << name << " or " << baseName << " is required" << endl
+                << abort(FatalError);
+        }
+        else
+        {
+            FatalErrorInFunction
+                << name << " is required" << endl
+                << abort(FatalError);
+        }
+
+        // Transfer ownership of this object to the objectRegistry
+        fPtr->store(fPtr);
+    }
+
+    return mesh.lookupObjectRef<volScalarField>(name);
+}
 
 const Foam::volScalarField& Foam::blastThermo::he() const
 {
