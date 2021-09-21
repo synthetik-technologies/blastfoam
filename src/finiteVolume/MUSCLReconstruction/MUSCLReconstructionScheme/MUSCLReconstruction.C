@@ -42,17 +42,15 @@ Foam::MUSCLReconstruction<Type, MUSCLType, Limiter, LimitFunc>::calcLimiter
 ) const
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
-    const word limiterFieldName(type() + "Limiter(" + this->phi_.name() + ')');
+    const word limiterFieldName
+    (
+        type() + "Limiter(" + this->phi_.name() + ')'
+    );
     tmp<fieldType> tlimiterField
     (
-        new fieldType
+        fieldType::New
         (
-            IOobject
-            (
-                limiterFieldName,
-                this->mesh_.time().timeName(),
-                this->mesh_
-            ),
+            limiterFieldName,
             this->mesh_,
             dimensioned<Type>(dimless, Zero)
         )

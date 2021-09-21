@@ -52,14 +52,9 @@ Foam::upwindMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiOwn
     (
-        new GeometricField<Type, fvsPatchField, surfaceMesh>
+        GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            IOobject
-            (
-                this->phi_.name() + "Own",
-                this->mesh_.time().timeName(),
-                this->mesh_
-            ),
+            this->phi_.name() + "Own",
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -97,14 +92,9 @@ Foam::upwindMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiNei
     (
-        new GeometricField<Type, fvsPatchField, surfaceMesh>
+        GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            IOobject
-            (
-                this->phi_.name() + "Nei",
-                this->mesh_.time().timeName(),
-                this->mesh_
-            ),
+            this->phi_.name() + "Nei",
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
