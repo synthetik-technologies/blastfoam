@@ -83,6 +83,8 @@ rootSolvers/Halley/HalleyRootSolver.C
 multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
 multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
 multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C
+multivariateRootSolvers/goodBroyden/goodBroydenMultivariateRootSolver.C
+multivariateRootSolvers/badBroyden/badBroydenMultivariateRootSolver.C
 
 integrators/Integrator/Integrators.C
 

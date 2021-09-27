@@ -33,6 +33,7 @@ Description
 #define MultivariateEquation_H
 
 #include "scalarField.H"
+#include "SquareMatrix.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -115,11 +116,31 @@ public:
         bool checkBounds(const scalarField& xs) const;
 
         //- Return the function value
-        virtual tmp<Field<Type>> f
+        tmp<Field<Type>> f
         (
             const scalarField& x,
             const label li
+        ) const;
+
+        //- Return the function value
+        virtual void f
+        (
+            const scalarField& x,
+            const label li,
+            Field<Type>& fx
         ) const = 0;
+
+        //- Calculate the Jacobian of the equation
+        virtual void jacobian
+        (
+            const scalarField& x,
+            const label li,
+            scalarField& fx,
+            SquareMatrix<Type>& dfdx
+        ) const
+        {
+            NotImplemented;
+        }
 };
 
 

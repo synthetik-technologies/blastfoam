@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,18 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::scalarMultivariateRootSystem
+    Foam::goodBroydenMultivariateRootSolver
 
 Description
-    Abstract base class for a system of scalar equations
+    Find multivariateMultivariateRoot using the goodBroyden method
+
+SourceFiles
+    multivariateMultivariateRootSolver.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scalarMultivariateRootSystem_H
-#define scalarMultivariateRootSystem_H
+#ifndef goodBroydenMultivariateRootSolver_H
+#define goodBroydenMultivariateRootSolver_H
 
-#include "MultivariateEquation.H"
-#include "scalarMatrices.H"
+#include "multivariateRootSolver.H"
+#include "typeInfo.H"
+#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -41,53 +45,58 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class scalarMultivariateEquation Declaration
+                          Class multivariateMultivariateRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
-class scalarMultivariateEquation
+class goodBroydenMultivariateRootSolver
 :
-    public MultivariateEquation<scalar>
+    public multivariateRootSolver
 {
-protected:
+    // Private data
 
-    // Protected data
+        //- Finite difference value
+        scalarField dx_;
 
-        //- Lower limits
-        scalarField xMins_;
-
-        //- Upper limits
-        scalarField xMaxs_;
 
 public:
 
+    //- Runtime type information
+    TypeName("goodBroyden");
+
     // Constructors
 
-        //- Construct null
-        scalarMultivariateEquation();
-
-        //- Construct with limits
-        scalarMultivariateEquation
+        //- Construct for given multivariateMultivariateRootSolver
+        goodBroydenMultivariateRootSolver
         (
-            const scalarField& xMins,
-            const scalarField& xMaxs
+            const scalarMultivariateEquation& eqn,
+            const dictionary& dict
         );
+
+        //- Disallow default bitwise copy construction
+        goodBroydenMultivariateRootSolver
+        (
+            const multivariateRootSolver&
+        ) = delete;
 
 
     //- Destructor
-    virtual ~scalarMultivariateEquation();
+    virtual ~goodBroydenMultivariateRootSolver()
+    {}
 
 
     // Member Functions
 
-        //- Check if the solution is bracketed
-        bool containsRoot
+        //- Solve the multivariateMultivariateRoot
+        virtual tmp<scalarField> solve
         (
-            const scalarField& y0s,
-            const scalarField& y1s
+            const scalarField& x0,
+            const label li
         ) const;
 
-        //- Check if the solution is bracketed (compute bounds)
-        bool containsRoot(const label li) const;
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const goodBroydenMultivariateRootSolver&) = delete;
 };
 
 

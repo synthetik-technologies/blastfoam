@@ -80,18 +80,15 @@ public:
         return 2;
     }
 
-    virtual tmp<scalarField> f
+    virtual void f
     (
         const scalarField& x,
-        const label li
+        const label li,
+        scalarField& fx
     ) const
     {
-        tmp<scalarField> fxTmp(new scalarField(x.size()));
-        scalarField& fx = fxTmp.ref();
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
         fx[1] = sqr(x[0]) - x[1] + 1.0;
-
-        return fxTmp;
     }
 
     virtual void jacobian
@@ -102,7 +99,7 @@ public:
         scalarSquareMatrix& dfdx
     ) const
     {
-        fx = f(x, li);
+        f(x, li, fx);
 
         dfdx(0, 0) = stabilise(2.0*x[0], small);
         dfdx(0, 1) = 2.0*x[1];
@@ -130,18 +127,15 @@ public:
         return 2;
     }
 
-    virtual tmp<scalarField> f
+    virtual void f
     (
         const scalarField& x,
-        const label li
+        const label li,
+        scalarField& fx
     ) const
     {
-        tmp<scalarField> fxTmp(new scalarField(x.size()));
-        scalarField& fx = fxTmp.ref();
         fx[0] = x[1] - sqr(x[0]) + x[0];
         fx[1] = sqr(x[0])/16.0 + sqr(x[1]) - 1.0;
-
-        return fxTmp;
     }
 
     virtual void jacobian
@@ -152,7 +146,7 @@ public:
         scalarSquareMatrix& dfdx
     ) const
     {
-        fx = f(x, li);
+        f(x, li, fx);
 
         dfdx(0, 0) = -2.0*x[0] + 1.0;
         dfdx(0, 1) = 1.0;
@@ -215,7 +209,7 @@ int main(int argc, char *argv[])
     forAll(multEqns, eqni)
     {
         Info<< "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
-        scalarField x0(2, 0.0);
+        scalarField x0(2, 0.1);
         const scalarMultivariateEquation& eqns = multEqns[eqni];
         forAll(multivariateMethods, i)
         {
@@ -232,31 +226,31 @@ int main(int argc, char *argv[])
     }
 
 
-    Info<< nl << nl;
-    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 2.5)" << endl;
-    labelList nIntervals({1, 5, 10, 25, 50});
-    const scalar ans = -9.167152855896045;
-    wordList intMethods
-    (
-        scalarIntegrator::dictionaryConstructorTablePtr_->toc()
-    );
-    forAll(intMethods, i)
-    {
-        dict.set("integrator", intMethods[i]);
-        autoPtr<scalarIntegrator> integrator
-        (
-            scalarIntegrator::New(uniEqns[0], dict)
-        );
-
-        forAll(nIntervals, inti)
-        {
-            integrator->setNIntervals(nIntervals[inti]);
-            scalar est = integrator->integrate(0, 2.5, 0);
-            Info<< "\t" << integrator->nIntervals() << " steps: "
-                << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
-        }
-        Info<< endl;
-    }
+//     Info<< nl << nl;
+//     Info<< "Integration of f(x) = cos(x) - x^3 in (0, 2.5)" << endl;
+//     labelList nIntervals({1, 5, 10, 25, 50});
+//     const scalar ans = -9.167152855896045;
+//     wordList intMethods
+//     (
+//         scalarIntegrator::dictionaryConstructorTablePtr_->toc()
+//     );
+//     forAll(intMethods, i)
+//     {
+//         dict.set("integrator", intMethods[i]);
+//         autoPtr<scalarIntegrator> integrator
+//         (
+//             scalarIntegrator::New(uniEqns[0], dict)
+//         );
+//
+//         forAll(nIntervals, inti)
+//         {
+//             integrator->setNIntervals(nIntervals[inti]);
+//             scalar est = integrator->integrate(0, 2.5, 0);
+//             Info<< "\t" << integrator->nIntervals() << " steps: "
+//                 << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
+//         }
+//         Info<< endl;
+//     }
 
     Info<< nl << "done" << endl;
 

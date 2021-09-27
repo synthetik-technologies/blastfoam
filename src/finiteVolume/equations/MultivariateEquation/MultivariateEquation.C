@@ -89,4 +89,18 @@ bool Foam::MultivariateEquation<Type>::checkBounds(const scalarField& xs) const
     return true;
 }
 
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::MultivariateEquation<Type>::f
+(
+    const scalarField& x,
+    const label li
+) const
+{
+    tmp<Field<Type>> tmpFx(new Field<Type>(x.size()));
+    this->f(x, li, tmpFx.ref());
+    return tmpFx;
+}
+
 // ************************************************************************* //
