@@ -36,7 +36,8 @@ License
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
 #include "janafBlastThermo.H"
-#include "tabulatedBlastThermo.H"
+#include "eTabulatedBlastThermo.H"
+#include "hTabulatedBlastThermo.H"
 
 #include "perfectGas.H"
 #include "AbelNobel.H"

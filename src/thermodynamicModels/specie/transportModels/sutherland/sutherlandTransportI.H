@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,6 +22,8 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
+
+#include "specieBlast.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -134,19 +136,6 @@ inline Foam::scalar Foam::sutherlandTransport<Thermo>::kappa
 {
     scalar Cv_ = this->Cv(rho, e, T);
     return mu(rho, e, T)*Cv_*(1.32 + 1.77*this->R()/Cv_);
-}
-
-
-template<class Thermo>
-inline Foam::scalar Foam::sutherlandTransport<Thermo>::alphah
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-
-    return kappa(rho, e, T)/this->Cp(rho, e, T);
 }
 
 

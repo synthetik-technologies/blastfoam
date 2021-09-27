@@ -52,4 +52,38 @@ Foam::solidJWL<Specie>::solidJWL
         )/(rho0_*omega_);
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::solidJWL<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("rho0", rho0_);
+    dict.add("omega", omega_);
+    dict.add("A", A_);
+    dict.add("B", B_);
+    dict.add("R1", R1_);
+    dict.add("R2", R2_);
+    dict.add("pRef", pRef_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const solidJWL<Specie>& sj
+)
+{
+    sj.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

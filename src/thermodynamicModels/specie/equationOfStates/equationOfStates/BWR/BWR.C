@@ -48,4 +48,39 @@ Foam::BWR<Specie>::BWR
 
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::BWR<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("A0", A0_);
+    dict.add("B0", B0_);
+    dict.add("C0", C0_);
+    dict.add("a", a_);
+    dict.add("b", b_);
+    dict.add("c", c_);
+    dict.add("alpha", alpha_);
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const BWR<Specie>& bwr
+)
+{
+    bwr.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

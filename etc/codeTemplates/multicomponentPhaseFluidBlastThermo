@@ -17,12 +17,19 @@ transport
 (
     const
     sutherland
+    polynomial
+    logPolynomial
+    WLF
 );
 
 thermo
 (
     eConst
     hConst
+    ePower
+    ePolynomial
+    hPower
+    hPolynomial
     janaf
 );
 

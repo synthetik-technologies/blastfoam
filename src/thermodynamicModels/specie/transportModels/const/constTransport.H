@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,18 +25,34 @@ Class
     Foam::constTransport
 
 Description
-    transport model based with constant properties
+    Transport package with constant properties
+
+Usage
+    \table
+        Property     | Description
+        mu           | Constant dynamic viscosity [Pa.s]
+        Pr           | Constant Prandtl number []
+    \endtable
+
+    Example specification of constTransport for air:
+    \verbatim
+    transport
+    {
+        mu              1.82e-05;
+        Pr              0.71;
+    }
+    \endverbatim
 
 SourceFiles
+    constTransportI.H
     constTransport.C
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef constTransportBlast_H
-#define constTransportBlast_H
+#ifndef constTransport_H
+#define constTransport_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "autoPtr.H"
 
 namespace Foam
 {
@@ -71,7 +84,7 @@ Ostream& operator<<
 
 
 /*---------------------------------------------------------------------------*\
-                           Class const Declaration
+                       Class constTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
@@ -79,14 +92,16 @@ class constTransport
 :
     public Thermo
 {
-    // Private data
+    // Private Data
 
-        //- Constant dynamic viscosity [Pa s]
+        //- Constant dynamic viscosity [Pa.s]
         scalar mu_;
 
-        //- Prandtl Number []
-        scalar Pr_;
+        //- Reciprocal Prandtl Number []
+        scalar rPr_;
 
+
+    // Private Member Functions
 
         //- Construct from components
         inline constTransport
@@ -113,40 +128,33 @@ public:
         // Selector from dictionary
         inline static autoPtr<constTransport> New(const dictionary& dict);
 
-    //- Return the instantiated type name
-        static word typeName()
-        {
-            return
-                "const<"
-              + word(Thermo::typeName()) + '>';
-        }
-
 
     // Member Functions
 
-        //- Dynamic viscosity [kg/ms]
-        scalar mu
+        //- Return the instantiated type name
+        static word typeName()
+        {
+            return "const<" + Thermo::typeName() + '>';
+        }
+
+        //- Dynamic viscosity [kg/m/s]
+        inline scalar mu
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Thermal conductivity [W/mK]
-        scalar kappa
+        //- Thermal conductivity [W/m/K]
+        inline scalar kappa
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Thermal diffusivity of enthalpy [kg/ms]
-        scalar alphah
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
+        //- Write to Ostream
+        void write(Ostream& os) const;
 
 
     // Member Operators
@@ -166,6 +174,15 @@ public:
         friend constTransport operator* <Thermo>
         (
             const scalar,
+            const constTransport&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Thermo>
+        (
+            Ostream&,
             const constTransport&
         );
 };

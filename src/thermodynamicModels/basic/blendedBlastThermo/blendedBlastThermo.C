@@ -757,7 +757,7 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::THE
     return blendedPatchFieldProperty
     (
         &Thermo1::TRhoE,
-        &Thermo2::Ha,
+        &Thermo2::TRhoE,
         patchi,
         T,
         this->rho_.boundaryField()[patchi],

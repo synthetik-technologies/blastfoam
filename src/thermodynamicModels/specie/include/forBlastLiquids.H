@@ -35,7 +35,8 @@ License
 
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
-#include "janafBlastThermo.H"
+#include "eTabulatedBlastThermo.H"
+#include "hTabulatedBlastThermo.H"
 
 #include "Tait.H"
 #include "BWR.H"
@@ -57,7 +58,6 @@ License
 
 #define forLiquidThermos(Mu, Macro, Args...)                                \
     forLiquidEqns(Mu, eConstThermo, Macro, Args);                           \
-    forLiquidEqns(Mu, janafThermo, Macro, Args);                            \
     forLiquidEqns(Mu, hConstThermo, Macro, Args)
 
 #define forLiquidTransports(Macro, Args...)                                 \

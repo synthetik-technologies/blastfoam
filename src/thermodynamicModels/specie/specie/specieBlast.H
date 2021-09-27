@@ -41,7 +41,6 @@ SourceFiles
 #include "word.H"
 #include "scalar.H"
 #include "dictionary.H"
-#include "CpCvModel.H"
 #include "UautoPtr.H"
 
 #include "thermodynamicConstants.H"
@@ -58,15 +57,19 @@ inline specieBlast operator+(const specieBlast&, const specieBlast&);
 inline specieBlast operator*(const scalar, const specieBlast&);
 inline specieBlast operator==(const specieBlast&, const specieBlast&);
 
+Ostream& operator<<
+(
+    Ostream&,
+    const specieBlast&
+);
+
+
 /*---------------------------------------------------------------------------*\
                            Class specieBlast Declaration
 \*---------------------------------------------------------------------------*/
 
 class specieBlast
 {
-    //- Pointer to cpcv model
-    UautoPtr<const CpCvModel> cpcvPtr_;
-
 protected:
 
     // Protected data
@@ -80,17 +83,9 @@ protected:
         //- Molecular weight
         scalar molWeight_;
 
-        //- Return the thermodynamic model
-        const CpCvModel& cpcv() const
-        {
-            if (!cpcvPtr_.valid())
-            {
-                FatalErrorInFunction
-                    << "CpCv model has not been set"
-                    << abort(FatalError);
-            }
-            return cpcvPtr_();
-        }
+        //- Is the Cp/Cv model internal energy based
+        bool eBased_;
+
 
 public:
 
@@ -121,10 +116,6 @@ public:
         specieBlast(const dictionary& dict);
 
 
-    //- Destructor
-    virtual ~specieBlast()
-    {}
-
     // Member Functions
 
         // Access
@@ -141,11 +132,11 @@ public:
             //- Gas constant [J/(kg K)]
             inline scalar R() const;
 
-            //- Set the pointer to the CpCvModel
-            void set(const CpCvModel& model)
-            {
-                cpcvPtr_.reset(&model);
-            }
+
+        // IO
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
 
 
     // Member operators
@@ -168,6 +159,11 @@ public:
             const specieBlast&,
             const specieBlast&
         );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<<(Ostream&, const specieBlast&);
 };
 
 

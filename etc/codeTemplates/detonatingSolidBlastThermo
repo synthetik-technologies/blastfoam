@@ -17,19 +17,28 @@ uTransport
 (
     constIso
     constAnIso
+    polynomial
+    exponential
 );
 
 rTransport
 (
     constIso
     constAnIso
+    polynomial
+    exponential
 );
 
 uThermo
 (
     eConst
     hConst
-    tabulated
+    ePower
+    ePolynomial
+    eTabulated
+    hPower
+    hPolynomial
+    hTabulated
 );
 
 rThermo

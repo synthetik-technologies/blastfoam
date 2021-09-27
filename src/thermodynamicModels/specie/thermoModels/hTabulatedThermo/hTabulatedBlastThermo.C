@@ -26,25 +26,34 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "tabulatedBlastThermo.H"
+#include "hTabulatedBlastThermo.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class EquationOfState>
-Foam::tabulatedThermo<EquationOfState>::tabulatedThermo
+Foam::hTabulatedThermo<EquationOfState>::hTabulatedThermo
 (
     const dictionary& dict
 )
 :
     EquationOfState(dict),
-    eTable_
-    (
-        dict.subDict("thermodynamics").lookup<fileName>("file"),
-        dict.subDict("thermodynamics").lookup<word>("mod"),
-        dict.subDict("thermodynamics").lookup<word>("TMod")
-    ),
-    Tlow_(min(eTable_.x())),
-    Thigh_(max(eTable_.x()))
+    hTable_(dict, "T", "h"),
+    Tlow_(min(hTable_.x())),
+    Thigh_(max(hTable_.x()))
 {}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const hTabulatedThermo<EquationOfState>& ht
+)
+{
+    ht.write(os);
+    return os;
+}
 
 // ************************************************************************* //

@@ -5,7 +5,8 @@ inline scalar Cv
     const scalar T
 ) const
 {
-    return Cp(rho, e, T) - EquationOfState::CpMCv(rho, e, T);
+    const scalar cp(Cp(rho, e, T));
+    return cp - EquationOfState::CpMCv(rho, e, T, cp);
 }
 
 inline scalar Es

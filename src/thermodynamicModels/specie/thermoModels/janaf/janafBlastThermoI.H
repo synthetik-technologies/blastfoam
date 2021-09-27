@@ -86,25 +86,6 @@ Foam::janafThermo<EquationOfState>::coeffs
 template<class EquationOfState>
 inline Foam::janafThermo<EquationOfState>::janafThermo
 (
-    const janafThermo& jt
-)
-:
-    EquationOfState(jt),
-    Tlow_(jt.Tlow_),
-    Thigh_(jt.Thigh_),
-    Tcommon_(jt.Tcommon_)
-{
-    for (label coefLabel=0; coefLabel<nCoeffs_; coefLabel++)
-    {
-        highCpCoeffs_[coefLabel] = jt.highCpCoeffs_[coefLabel];
-        lowCpCoeffs_[coefLabel] = jt.lowCpCoeffs_[coefLabel];
-    }
-}
-
-
-template<class EquationOfState>
-inline Foam::janafThermo<EquationOfState>::janafThermo
-(
     const word& name,
     const janafThermo& jt
 )
@@ -352,22 +333,6 @@ inline Foam::scalar Foam::janafThermo<EquationOfState>::dCvdT
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
-
-template<class EquationOfState>
-inline void Foam::janafThermo<EquationOfState>::operator=
-(
-    const janafThermo<EquationOfState>& jt
-)
-{
-    EquationOfState::operator=(jt);
-
-    Tlow_ = jt.Tlow_;
-    Thigh_ = jt.Thigh_;
-    Tcommon_ = jt.Tcommon_;
-    highCpCoeffs_ = jt.highCpCoeffs_;
-    lowCpCoeffs_ = jt.lowCpCoeffs_;
-}
-
 
 template<class EquationOfState>
 inline void Foam::janafThermo<EquationOfState>::operator+=

@@ -45,4 +45,37 @@ Foam::BKW<Specie>::BKW
     gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::BKW<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("k", k_);
+    dict.add("kappa", kappa_);
+    dict.add("Theta", Theta_);
+    dict.add("a", a_);
+    dict.add("beta", beta_);
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const BKW<Specie>& bkw
+)
+{
+    bkw.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

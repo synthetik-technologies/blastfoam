@@ -94,6 +94,19 @@ Foam::BirchMurnaghan3<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BirchMurnaghan3<Specie>::pRhoT
 (
     const scalar rho,
@@ -159,6 +172,19 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::dpdv
           + (7.0*pow(rho/rho0_, 2.0/3.0) - 5.0)
            *(3.0*(K0Prime_ - 4.0)*(pow(rho/rho0_, 2.0/3.0) - 1.0) + 4.0)
         );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -253,7 +279,8 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return 0.0;

@@ -52,6 +52,53 @@ inline Foam::CochranChan<Specie>::CochranChan
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar rhos(max(rho, 1e-10));
+    return
+        Gamma0_*rho
+       *(
+          - A_/((1.0 - Epsilon1_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon1_) - 1.0)
+          + B_/((1.0 - Epsilon2_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon2_) - 1.0)
+        )
+      - A_*pow(rho0_/rhos, -Epsilon1_) + B_*pow(rho0_/rhos, -Epsilon2_)
+      - e0_*rho*Gamma0_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::delta
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar rhos(max(rho, 1e-10));
+    return
+      (
+           -A_
+           *(
+               Epsilon1_*pow(rho0_/rhos, -Epsilon1_)
+              *(Epsilon1_ - Gamma0_ - 1.0)/rhos
+             + Gamma0_/rho0_
+            )/(Epsilon1_ - 1.0)
+          + B_
+           *(
+               Epsilon2_*pow(rho0_/rhos, -Epsilon2_)
+              *(Epsilon2_ - Gamma0_ - 1.0)/rhos
+             + Gamma0_/rho0_
+            )/(Epsilon2_ - 1.0)
+          - Gamma0_*e0_
+        )/Gamma0_;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -100,59 +147,46 @@ Foam::CochranChan<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::GammaMG
+Foam::scalar Foam::CochranChan<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return
+        limit
+      ? max(Gamma0_*rho*e - Pi(rho, e), 0.0)
+      : Gamma0_*rho*e - Pi(rho, e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
     return Gamma0_ + 1.0;
 }
 
-template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    scalar rhos(max(rho, 1e-10));
-    return
-        Gamma0_*rho
-       *(
-          - A_/((1.0 - Epsilon1_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon1_) - 1.0)
-          + B_/((1.0 - Epsilon2_)*rho0_)*(pow(rho0_/rhos, 1.0 - Epsilon2_) - 1.0)
-        )
-      - A_*pow(rho0_/rhos, -Epsilon1_) + B_*pow(rho0_/rhos, -Epsilon2_)
-      - e0_*rho*Gamma0_;
-}
-
 
 template<class Specie>
-Foam::scalar Foam::CochranChan<Specie>::delta
+Foam::scalar Foam::CochranChan<Specie>::cSqr
 (
     const scalar p,
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
-    scalar rhos(max(rho, 1e-10));
-    return
-      (
-           -A_
-           *(
-               Epsilon1_*pow(rho0_/rhos, -Epsilon1_)
-              *(Epsilon1_ - Gamma0_ - 1.0)/rhos
-             + Gamma0_/rho0_
-            )/(Epsilon1_ - 1.0)
-          + B_
-           *(
-               Epsilon2_*pow(rho0_/rhos, -Epsilon2_)
-              *(Epsilon2_ - Gamma0_ - 1.0)/rhos
-             + Gamma0_/rho0_
-            )/(Epsilon2_ - 1.0)
-          - Gamma0_*e0_
-        )/Gamma0_;
+    scalar h(((Gamma0_ + 1.0)*p + Pi(rho, e))/(Gamma0_*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*Gamma0_;
 }
 
 
@@ -181,6 +215,56 @@ Foam::scalar Foam::CochranChan<Specie>::dpde
 ) const
 {
     return Gamma0_*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::CochranChan<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    return this->eBased_ ? Gamma0_*CpCv : CpCv*Gamma0_/(Gamma0_ + 1.0);
 }
 
 

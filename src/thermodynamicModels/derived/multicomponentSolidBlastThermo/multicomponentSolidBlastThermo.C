@@ -35,6 +35,7 @@ License
 template<class Thermo>
 void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 {
+    this->updateMixture();
     forAll(this->rho_, celli)
     {
         const typename Thermo::thermoType& t(this->mixture_[celli]);

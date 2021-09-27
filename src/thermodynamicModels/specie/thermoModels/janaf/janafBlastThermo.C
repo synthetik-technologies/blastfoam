@@ -70,4 +70,18 @@ Foam::janafThermo<EquationOfState>::janafThermo(const dictionary& dict)
     }
 }
 
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const janafThermo<EquationOfState>& jt
+)
+{
+    jt.write(os);
+    return os;
+}
+
 // ************************************************************************* //

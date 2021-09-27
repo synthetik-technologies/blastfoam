@@ -17,13 +17,18 @@ transport
 (
     constIso
     constAnIso
+    polynomial
+    exponential
 );
 
 thermo
 (
     eConst
     hConst
-    tabulated
+    ePower
+    ePolynomial
+    hPower
+    hPolynomial
 );
 
 equationOfState

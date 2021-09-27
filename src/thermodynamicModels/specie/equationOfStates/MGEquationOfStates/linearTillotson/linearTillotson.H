@@ -47,7 +47,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "MGEquationOfState.H"
 #include "scalarLookupTable1D.H"
 
 namespace Foam
@@ -93,8 +92,7 @@ Ostream& operator<<
 template<class Specie>
 class linearTillotson
 :
-    public Specie,
-    public MGEquationOfState
+    public Specie
 {
 // Private data
 
@@ -122,9 +120,29 @@ class linearTillotson
         scalarLookupTable1D EcTable_;
 
 
+    // Private member functions
+
+        //- Return deviation from ideal gas pressure
+        inline scalar Pi
+        (
+            const scalar rho,
+            const scalar e
+        ) const;
+
+        //- Return non-ideal speed of sound
+        inline scalar delta
+        (
+            const scalar p,
+            const scalar rho,
+            const scalar e
+        ) const;
+
+
 public:
 
-    //- Construct from components
+    // Constructors
+
+        //- Construct from components
         inline linearTillotson
         (
             const Specie& sp,
@@ -168,20 +186,20 @@ public:
               + word(Specie::typeName_()) + '>';
         }
 
-        //- Is this a solid equation of state
-        static bool solid()
+        //- Is temperature used
+        static inline bool temperatureBased()
         {
             return false;
         }
 
-        //- Is temperature used
-        bool temperatureBased() const
+        //- Is this a solid equation of state
+        static inline bool solid()
         {
             return false;
         }
 
         //- Return pressure
-        virtual scalar p
+        inline scalar p
         (
             const scalar rho,
             const scalar e,
@@ -189,30 +207,27 @@ public:
             const bool limit = true
         ) const;
 
-        //- Return deviation from ideal gas pressure
-        virtual scalar Pi
+        //- Return the MieGruniesen coefficient
+        inline scalar Gamma
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
-        //- Return non-ideal speed of sound
-        virtual scalar delta
+        //- Return the speed of sound
+        inline scalar cSqr
         (
             const scalar p,
             const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Gamma function
-        virtual scalar GammaMG
-        (
-            const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
         //- Return derivative of pressure w.r.t density
-        scalar dpdv
+        inline scalar dpdv
         (
             const scalar rho,
             const scalar e,
@@ -220,7 +235,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. internal energy
-        scalar dpde
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -228,7 +243,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpdT
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -236,7 +251,7 @@ public:
         ) const;
 
         //- Internal energy correction [J/kg]
-        scalar E
+        inline scalar E
         (
             const scalar rho,
             const scalar e,
@@ -244,7 +259,7 @@ public:
         ) const;
 
         //- Enthalpy correction [J/kg]
-        scalar H
+        inline scalar H
         (
             const scalar rho,
             const scalar e,
@@ -252,7 +267,7 @@ public:
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
+        inline scalar Cv
         (
             const scalar rho,
             const scalar e,
@@ -260,7 +275,7 @@ public:
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
+        inline scalar Cp
         (
             const scalar rho,
             const scalar e,
@@ -268,23 +283,27 @@ public:
         ) const;
 
         //- Heat capacity difference [J/kg/K]
-        virtual scalar CpMCv
+        inline scalar CpMCv
         (
             const scalar rho,
             const scalar e,
-            const scalar T
-        ) const
-        {
-            return MGEquationOfState::CpMCv(this->cpcv(), rho, e, T);
-        }
+            const scalar T,
+            const scalar CpCv
+        ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar p,
             const scalar rho,
             const scalar T
         ) const;
+
+
+        // IO
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
 
 
     // Member operators
@@ -310,6 +329,15 @@ public:
         friend linearTillotson operator== <Specie>
         (
             const linearTillotson&,
+            const linearTillotson&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Specie>
+        (
+            Ostream&,
             const linearTillotson&
         );
 };

@@ -220,7 +220,8 @@ public:
             (
                 const scalar rho,
                 const scalar e,
-                const scalar T
+                const scalar T,
+                const scalar CpCv
             ) const;
 
             //- Return specific heat ratio

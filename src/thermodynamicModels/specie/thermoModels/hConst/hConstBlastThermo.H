@@ -28,11 +28,35 @@ Class
     Foam::hConstThermo
 
 Description
-    Thermodynamics model based with constant properties
+    Enthalpy based thermodynamics package using a constant heat capacity
+    at constant pressure:
+
+    \verbatim
+        h = Cp*(T - Tref) + Hsref
+    \endverbatim
+
+Usage
+    \table
+        Property     | Description
+        Cp           | Constant Heat capacity at constant pressure [J/kmol/K]
+        Tref         | Reference temperature [K] (defaults to 0)
+        Hsref        | Reference sensible enthalpy [J/kg] (defaults to 0)
+        Hf           | Heat of formation [J/kg]
+    \endtable
+
+    Example specification of hConstThermo for air:
+    \verbatim
+    thermodynamics
+    {
+        Cp          1007;
+        Hf          0;
+    }
+    \endverbatim
 
 SourceFiles
-    hConstBlastThermoI.H
-    hConstBlastThermo.C
+    hConstThermoI.H
+    hConstThermo.C
+
 \*---------------------------------------------------------------------------*/
 
 #ifndef hConstThermoBlast_H
@@ -41,7 +65,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "thermoModel.H"
-#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -86,16 +109,21 @@ Ostream& operator<<
 template<class EquationOfState>
 class hConstThermo
 :
-    public EquationOfState,
-    public CpCvModel
+    public EquationOfState
 {
     // Private data
 
-        //- Heat capacity at constant pressure [J/kg/K]
+        //- Heat capacity at constant pressure [J/kmol/K]
         scalar Cp_;
 
         //- Heat of formation [J/kg]
         scalar Hf_;
+
+        //- Reference temperature around which to linearise [K]
+        scalar Tref_;
+
+        //- Reference sensible enthalpy around which to linearise [J/kg]
+        scalar Hsref_;
 
         //- Flame temperature [K]
         scalar flameT_;
@@ -105,9 +133,11 @@ class hConstThermo
         inline hConstThermo
         (
             const EquationOfState& st,
-            const scalar cv,
-            const scalar hf,
-            const scalar ft
+            const scalar Cp,
+            const scalar Hf,
+            const scalar Tref,
+            const scalar Hsref,
+            const scalar flameT
         );
 
 
@@ -117,9 +147,6 @@ public:
 
         //- Construct from dictionary
         hConstThermo(const dictionary& dict);
-
-        //- Construct as copy
-        inline hConstThermo(const hConstThermo&);
 
         //- Construct as named copy
         inline hConstThermo(const word&, const hConstThermo&);
@@ -131,7 +158,7 @@ public:
         inline static autoPtr<hConstThermo> New(const dictionary& dict);
 
 
-        //- Return the instantiated type name
+    //- Return the instantiated type name
         static word typeName()
         {
             return
@@ -140,9 +167,9 @@ public:
         }
 
         //- Return the energy type
-        inline energyType eType() const
+        static bool enthalpy()
         {
-            return CpCvModel::Enthalpy;
+            return true;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -151,7 +178,7 @@ public:
 
     // Member Functions
 
-        //- Heat capacity at constant pressure of mixture [J/kg/K]
+        //- Heat capacity at constant pressure [J/kg/K]
         inline scalar Cp
         (
             const scalar rho,
@@ -159,7 +186,7 @@ public:
             const scalar T
         ) const;
 
-        //- Sensible enthalpy [J/kg]
+        //- Absolute enthalpy [J/kg]
         inline scalar Hs
         (
             const scalar rho,
@@ -199,6 +226,7 @@ public:
         //- Flame temperature [K]
         inline scalar flameT() const;
 
+
         //- Entropy [J/kg/K]
         inline scalar S
         (
@@ -231,9 +259,14 @@ public:
         ) const;
 
 
+        // I-O
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
+
+
     // Member operators
 
-        inline void operator=(const hConstThermo&);
         inline void operator+=(const hConstThermo&);
 
 
@@ -256,6 +289,15 @@ public:
             const hConstThermo&,
             const hConstThermo&
         );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <EquationOfState>
+        (
+            Ostream&,
+            const hConstThermo&
+        );
 };
 
 
@@ -265,7 +307,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "hConstBlastThermoI.H"
+#include"hConstBlastThermoI.H"
 
 #ifdef NoRepository
     #include "hConstBlastThermo.C"

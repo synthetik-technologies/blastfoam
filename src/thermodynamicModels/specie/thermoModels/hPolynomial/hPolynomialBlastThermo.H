@@ -2,10 +2,10 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2021 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
+2021-09-27 Jeff Heylmun:    Modified class for a density based thermodynamic
                             class
 -------------------------------------------------------------------------------
 License
@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::tabulatedThermo
+    Foam::hPolynomialThermo
 
 Description
     Thermodynamic model that uses a table based on density and internal energy
@@ -33,73 +33,96 @@ Description
     additional quantities such as specific heats
 
 SourceFiles
-    tabulatedThermo.C
+    hPolynomialThermo.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef tabulatedThermoBlast_H
-#define tabulatedThermoBlast_H
+#ifndef hPolynomialThermoBlast_H
+#define hPolynomialThermoBlast_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "scalarLookupTable1D.H"
-#include "CpCvModel.H"
+#include "Polynomial.H"
 
 namespace Foam
 {
 
 // Forward declaration of friend functions and operators
 
-template<class EquationOfState> class tabulatedThermo;
+template<class EquationOfState, int PolySize>
+class hPolynomialThermo;
 
-template<class EquationOfState>
-inline tabulatedThermo<EquationOfState> operator+
+template<class EquationOfState, int PolySize>
+inline hPolynomialThermo<EquationOfState, PolySize> operator+
 (
-    const tabulatedThermo<EquationOfState>&,
-    const tabulatedThermo<EquationOfState>&
+    const hPolynomialThermo<EquationOfState, PolySize>&,
+    const hPolynomialThermo<EquationOfState, PolySize>&
 );
 
-template<class EquationOfState>
-inline tabulatedThermo<EquationOfState> operator*
+template<class EquationOfState, int PolySize>
+inline hPolynomialThermo<EquationOfState, PolySize> operator*
 (
     const scalar,
-    const tabulatedThermo<EquationOfState>&
+    const hPolynomialThermo<EquationOfState, PolySize>&
 );
 
-template<class EquationOfState>
-inline tabulatedThermo<EquationOfState> operator==
+template<class EquationOfState, int PolySize>
+inline hPolynomialThermo<EquationOfState, PolySize> operator==
 (
-    const tabulatedThermo<EquationOfState>&,
-    const tabulatedThermo<EquationOfState>&
+    const hPolynomialThermo<EquationOfState, PolySize>&,
+    const hPolynomialThermo<EquationOfState, PolySize>&
 );
 
-template<class EquationOfState>
+template<class EquationOfState, int PolySize>
 Ostream& operator<<
 (
     Ostream&,
-    const tabulatedThermo<EquationOfState>&
+    const hPolynomialThermo<EquationOfState, PolySize>&
 );
 
 
 /*---------------------------------------------------------------------------*\
-                        Class tabulatedThermo Declaration
+                        Class hPolynomialThermo Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class EquationOfState>
-class tabulatedThermo
+template<class EquationOfState, int PolySize=8>
+class hPolynomialThermo
 :
-    public EquationOfState,
-    public CpCvModel
+    public EquationOfState
 {
-// Private data
+    // Private Data
 
-    //- Internal energy lookup table
-    scalarLookupTable1D eTable_;
+        //- Heat of formation
+        scalar Hf_;
 
-    //- Temperature bounds
-    scalar Tlow_;
-    scalar Thigh_;
+        //- Standard entropy
+        scalar Sf_;
+
+        //- Specific heat at constant pressure polynomial coeffs [J/kg/K/K^i]
+        Polynomial<PolySize> CpCoeffs_;
+
+        //- Enthalpy polynomial coeffs [J/kg/K^i]
+        //  Derived from Cp coeffs. Relative to Tstd.
+        typename Polynomial<PolySize>::intPolyType hCoeffs_;
+
+        //- Entropy polynomial coeffs [J/kg/K/K^i]
+        //  Derived from Cp coeffs. Relative to Tstd.
+        Polynomial<PolySize> sCoeffs_;
+
+
+    // Private Member Functions
+
+        //- Construct from components
+        inline hPolynomialThermo
+        (
+            const EquationOfState& pt,
+            const scalar Hf,
+            const scalar Sf,
+            const Polynomial<PolySize>& CpCoeffs,
+            const typename Polynomial<PolySize>::intPolyType& hCoeffs,
+            const Polynomial<PolySize>& sCoeffs
+        );
 
 
 public:
@@ -108,20 +131,22 @@ public:
         static word typeName()
         {
             return
-                "tabulated<"
+                "hPolynomial<"
               + word(EquationOfState::typeName()) + ">";
         }
 
     // Constructors
 
-        tabulatedThermo(const tabulatedThermo& thermo);
+        //- Construct from dictionary
+        hPolynomialThermo(const dictionary& dict);
 
-        tabulatedThermo(const dictionary& dict);
+        //- Construct as a named copy
+        inline hPolynomialThermo(const word&, const hPolynomialThermo&);
 
         //- Return the energy type
-        inline energyType eType() const
+        static bool enthalpy()
         {
-            return CpCvModel::InternalEnergy;
+            return true;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -130,47 +155,47 @@ public:
 
     // Member Functions
 
-        //- Heat capacity at constant volume of mixture [J/kg/K]
-        inline scalar Cv
+        //- Heat capacity at constant pressure [J/kg/K]
+        inline scalar Cp
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Sensible internal energy [J/kg]
-        inline scalar Es
+        //- Absolute enthalpy [J/kg]
+        inline scalar Hs
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Sensible thermal internal energy [J/kg]
-        inline scalar Ets
+        //- Sensible thermal enthalpy [J/kg]
+        inline scalar Hts
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Absolute internal energy [J/kg]
-        inline scalar Ea
+        //- Absolute enthalpy [J/kg]
+        inline scalar Ha
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        //- Absolute thermal internal energy [J/kg]
-        inline scalar Eta
+        //- Absolute thermal enthalpy [J/kg]
+        inline scalar Hta
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
-        #include "EtoHFuncs.H"
+        #include "HtoEFuncs.H"
 
         //- Heat of formation [J/kg]
         inline scalar Hf() const;
@@ -210,30 +235,44 @@ public:
         ) const;
 
 
+        // I-O
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
+
+
     // Member operators
 
-        inline void operator=(const tabulatedThermo&);
-        inline void operator+=(const tabulatedThermo&);
+        inline void operator+=(const hPolynomialThermo&);
 
 
     // Friend operators
 
-        friend tabulatedThermo operator+ <EquationOfState>
+        friend hPolynomialThermo operator+ <EquationOfState>
         (
-            const tabulatedThermo&,
-            const tabulatedThermo&
+            const hPolynomialThermo&,
+            const hPolynomialThermo&
         );
 
-        friend tabulatedThermo operator* <EquationOfState>
+        friend hPolynomialThermo operator* <EquationOfState>
         (
             const scalar,
-            const tabulatedThermo&
+            const hPolynomialThermo&
         );
 
-        friend tabulatedThermo operator== <EquationOfState>
+        friend hPolynomialThermo operator== <EquationOfState>
         (
-            const tabulatedThermo&,
-            const tabulatedThermo&
+            const hPolynomialThermo&,
+            const hPolynomialThermo&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <EquationOfState>
+        (
+            Ostream&,
+            const hPolynomialThermo&
         );
 };
 
@@ -244,10 +283,10 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "tabulatedBlastThermoI.H"
+#include "hPolynomialBlastThermoI.H"
 
 #ifdef NoRepository
-    #include "tabulatedBlastThermo.C"
+    #include "hPolynomialBlastThermo.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

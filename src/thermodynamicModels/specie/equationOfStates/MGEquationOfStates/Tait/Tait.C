@@ -49,5 +49,35 @@ Foam::Tait<Specie>::Tait
     }
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::Tait<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("a", a_);
+    dict.add("b", b_);
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const Tait<Specie>& t
+)
+{
+    t.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //
 

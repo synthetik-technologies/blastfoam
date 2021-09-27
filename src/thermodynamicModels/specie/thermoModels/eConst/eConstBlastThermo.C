@@ -36,7 +36,49 @@ Foam::eConstThermo<EquationOfState>::eConstThermo(const dictionary& dict)
     EquationOfState(dict),
     Cv_(dict.subDict("thermodynamics").lookup<scalar>("Cv")),
     Hf_(dict.subDict("thermodynamics").lookup<scalar>("Hf")),
-    flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", 0.0))
+    Tref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Tref", 0)),
+    Esref_(dict.subDict("thermodynamics").lookupOrDefault<scalar>("Esref", 0)),
+    flameT_(dict.subDict("thermodynamics").lookupOrDefault("flameT", Hf_/Cv_))
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+void Foam::eConstThermo<EquationOfState>::write(Ostream& os) const
+{
+    EquationOfState::write(os);
+
+    dictionary dict("thermodynamics");
+    dict.add("Cv", Cv_);
+    dict.add("Hf", Hf_);
+    if (Tref_ != Tstd)
+    {
+        dict.add("Tref", Tref_);
+    }
+    if (Esref_ != 0)
+    {
+        dict.add("Esref", Esref_);
+    }
+    if (flameT_ != 0)
+    {
+        dict.add("flameT", flameT_);
+    }
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class EquationOfState>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const eConstThermo<EquationOfState>& et
+)
+{
+    et.write(os);
+    return os;
+}
 
 // ************************************************************************* //

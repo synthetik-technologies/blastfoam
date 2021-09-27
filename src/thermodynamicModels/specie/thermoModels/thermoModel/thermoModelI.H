@@ -40,7 +40,7 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     absTol_(1e-2),
     maxIter_(100)
 {
-    this->set(*this);
+    this->eBased_ = !ThermoType::enthalpy();
 }
 
 
@@ -55,7 +55,7 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     absTol_(thermo.absTol_),
     maxIter_(thermo.maxIter_)
 {
-    this->set(*this);
+    this->eBased_ = !ThermoType::enthalpy();
 }
 
 
@@ -157,9 +157,7 @@ inline Foam::thermoModel<ThermoType>::thermoModel
     relTol_(1e-2),
     absTol_(1e-4),
     maxIter_(100)
-{
-    this->set(*this);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -520,6 +518,90 @@ inline Foam::scalar
 Foam::thermoModel<ThermoType>::dcpdT(const scalar p, const scalar T) const
 {
     return this->dCpdT(p, T)*this->W();
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::initializeEnergy
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    if (rho < small)
+    {
+        return 0.0;
+    }
+
+    scalar Eest = ThermoType::Es(rho, e, T);
+
+    if (ThermoType::temperatureBased())
+    {
+        return Eest;
+    }
+
+    if (mag(ThermoType::dpde(rho, e, T)) < small)
+    {
+        return Eest;
+    }
+
+    scalar Enew = Eest;
+    scalar pNew;
+    int    iter = 0;
+    do
+    {
+        Eest = Enew;
+        pNew = ThermoType::p(rho, Eest, T, false); // Do not limit p
+        Enew -=
+            (pNew - p)/stabilise(ThermoType::dpde(rho, Eest, T), small);
+
+        if (iter++ > 100)
+        {
+            FatalErrorInFunction
+                << "Maximum number of iterations exceeded: " << 100
+                << abort(FatalError);
+        }
+
+    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
+    return Enew;
+}
+
+
+template<class ThermoType>
+inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
+(
+    const scalar p,
+    const scalar T
+) const
+{
+    //- Simple method to calculate initial density
+    //  Should be modified to solve the 2D problem for
+    //  density and internal energy
+    scalar Rhoest = 1.0;
+    scalar Rhonew = Rhoest;
+    scalar pNew = p;
+    scalar E = ThermoType::Es(Rhoest, 0.0, T); //- Initial guess
+
+    int    iter = 0;
+    do
+    {
+        Rhoest = Rhonew;
+
+        scalar dpdRho(-ThermoType::dpdv(Rhoest, E, T)/sqr(max(Rhoest, 1e-10)));
+        pNew = ThermoType::p(Rhoest, E, T, false); // Do not limit p
+        Rhonew =
+            Rhoest - (pNew - p)/stabilise(dpdRho, small);
+        E = ThermoType::Es(Rhoest, E, T);
+
+        if (Rhonew < 1e-10)
+        {
+            Rhonew = Rhoest/2.0;
+        }
+    } while ((mag(pNew - p)/p > relTol_) && (iter++ < maxIter_));
+
+    return Rhonew;
 }
 
 

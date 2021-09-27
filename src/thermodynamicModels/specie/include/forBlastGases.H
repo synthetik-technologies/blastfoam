@@ -30,13 +30,17 @@ License
 
 #include "constTransport.H"
 #include "sutherlandTransport.H"
+#include "WLFTransport.H"
+#include "polynomialTransport.H"
+#include "logPolynomialTransport.H"
+#include "tabulatedTransport.H"
 
 #include "thermoModel.H"
 
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
 #include "janafBlastThermo.H"
-#include "tabulatedBlastThermo.H"
+#include "eTabulatedBlastThermo.H"
 
 #include "perfectGas.H"
 #include "AbelNobel.H"

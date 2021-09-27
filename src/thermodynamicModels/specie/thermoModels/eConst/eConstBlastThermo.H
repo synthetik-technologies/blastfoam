@@ -41,7 +41,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "thermoModel.H"
-#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -86,8 +85,7 @@ Ostream& operator<<
 template<class EquationOfState>
 class eConstThermo
 :
-    public EquationOfState,
-    public CpCvModel
+    public EquationOfState
 {
     // Private data
 
@@ -97,6 +95,12 @@ class eConstThermo
         //- Heat of formation [J/kg]
         scalar Hf_;
 
+        //- Reference temperature around which to linearise [K]
+        scalar Tref_;
+
+        //- Reference sensible enthalpy around which to linearise [J/kg]
+        scalar Esref_;
+
         //- Flame temperature [K]
         scalar flameT_;
 
@@ -105,9 +109,11 @@ class eConstThermo
         inline eConstThermo
         (
             const EquationOfState& st,
-            const scalar cv,
-            const scalar hf,
-            const scalar ft
+            const scalar Cv,
+            const scalar Hf,
+            const scalar Tref,
+            const scalar Esref,
+            const scalar flameT
         );
 
 
@@ -120,9 +126,6 @@ public:
 
         //- Construct as named copy
         inline eConstThermo(const word&, const eConstThermo&);
-
-        //- Construct as copy
-        inline eConstThermo(const eConstThermo&);
 
         //- Construct and return a clone
         inline autoPtr<eConstThermo> clone() const;
@@ -140,9 +143,9 @@ public:
         }
 
         //- Return the energy type
-        inline energyType eType() const
+        static bool enthalpy()
         {
-            return CpCvModel::InternalEnergy;
+            return false;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -232,9 +235,14 @@ public:
         ) const;
 
 
+        // I-O
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
+
+
     // Member operators
 
-        inline void operator=(const eConstThermo&);
         inline void operator+=(const eConstThermo&);
 
 
@@ -255,6 +263,15 @@ public:
         friend eConstThermo operator== <EquationOfState>
         (
             const eConstThermo&,
+            const eConstThermo&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <EquationOfState>
+        (
+            Ostream&,
             const eConstThermo&
         );
 };

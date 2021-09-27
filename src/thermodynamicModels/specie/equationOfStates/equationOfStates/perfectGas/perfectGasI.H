@@ -79,15 +79,15 @@ Foam::perfectGas<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::perfectGas<Specie>::Gamma
+Foam::scalar Foam::perfectGas<Specie>::p
 (
     const scalar rho,
     const scalar e,
     const scalar T,
-    const scalar cv
+    const bool limit
 ) const
 {
-    return this->R()/cv + 1.0;
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
 }
 
 
@@ -99,6 +99,19 @@ Foam::scalar Foam::perfectGas<Specie>::pRhoT
 ) const
 {
     return rho*this->R()*T;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::perfectGas<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return this->R()/cv + 1.0;
 }
 
 
@@ -125,6 +138,19 @@ Foam::scalar Foam::perfectGas<Specie>::dpdv
 ) const
 {
     return -this->R()*T*sqr(rho);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::perfectGas<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -193,7 +219,8 @@ Foam::scalar Foam::perfectGas<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return this->R();

@@ -42,7 +42,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "equationOfState.H"
 
 namespace Foam
 {
@@ -98,8 +97,7 @@ inline rhoConst<Specie> operator==
 template<class Specie>
 class rhoConst
 :
-    public Specie,
-    public equationOfState
+    public Specie
 {
 // Private data
 
@@ -136,26 +134,34 @@ public:
             + word(Specie::typeName_()) + '>';
         }
 
+        //- Is temperature used
+        static bool temperatureBased()
+        {
+            return true;
+        }
+
         //- Is this a solid equation of state
         static bool solid()
         {
             return true;
         }
 
-        scalar rho0() const
+        inline scalar rho0() const
         {
             return rho0_;
         }
 
         //- Return deviation from ideal gas pressure
-        virtual scalar pRhoT
+        inline scalar p
         (
             const scalar rho,
-            const scalar T
+            const scalar e,
+            const scalar T,
+            const bool limit = true
         ) const;
 
         //- Return non-ideal speed of sound
-        scalar cSqr
+        inline scalar cSqr
         (
             const scalar p,
             const scalar rho,
@@ -165,7 +171,7 @@ public:
         ) const;
 
         //- Gamma function
-        scalar Gamma
+        inline scalar Gamma
         (
             const scalar rho,
             const scalar e,
@@ -174,7 +180,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t density
-        scalar dpdv
+        inline scalar dpdv
         (
             const scalar rho,
             const scalar e,
@@ -182,7 +188,15 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpdT
+        inline scalar dpdT
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. internalEnergy
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -190,7 +204,7 @@ public:
         ) const;
 
         //- Internal energy correction [J/kg]
-        scalar E
+        inline scalar E
         (
             const scalar rho,
             const scalar e,
@@ -198,7 +212,7 @@ public:
         ) const;
 
         //- Enthalpy correction [J/kg]
-        scalar H
+        inline scalar H
         (
             const scalar rho,
             const scalar e,
@@ -206,7 +220,7 @@ public:
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
+        inline scalar Cv
         (
             const scalar rho,
             const scalar e,
@@ -214,7 +228,7 @@ public:
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
+        inline scalar Cp
         (
             const scalar rho,
             const scalar e,
@@ -222,15 +236,16 @@ public:
         ) const;
 
         //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
+        inline scalar CpMCv
         (
             const scalar rho,
             const scalar e,
-            const scalar T
+            const scalar T,
+            const scalar CpCv
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar p,
             const scalar rho,

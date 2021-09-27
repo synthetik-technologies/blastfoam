@@ -39,4 +39,29 @@ Foam::DoanNickel<Specie>::DoanNickel
     Specie(dict)
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::DoanNickel<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const DoanNickel<Specie>& dn
+)
+{
+    dn.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

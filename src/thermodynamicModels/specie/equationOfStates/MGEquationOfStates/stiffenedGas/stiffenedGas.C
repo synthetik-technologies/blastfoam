@@ -48,4 +48,33 @@ Foam::stiffenedGas<Specie>::stiffenedGas
     }
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::stiffenedGas<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("a", a_);
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const stiffenedGas<Specie>& sg
+)
+{
+    sg.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

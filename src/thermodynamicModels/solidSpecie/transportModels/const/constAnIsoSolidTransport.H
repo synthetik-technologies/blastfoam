@@ -5,11 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,31 +25,26 @@ Class
     Foam::constAnIsoSolidTransport
 
 Description
-    transport model based with constant properties
+    Constant properties Transport package.
+    Templated into a given Thermodynamics package (needed for thermal
+    conductivity).
 
 SourceFiles
+    constAnIsoSolidTransportI.H
     constAnIsoSolidTransport.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constAnIsoSolidTransportBlast_H
-#define constAnIsoSolidTransportBlast_H
+#ifndef constAnIsoSolidTransport_H
+#define constAnIsoSolidTransport_H
+#include "vector.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "autoPtr.H"
 
 namespace Foam
 {
 
 template<class Thermo> class constAnIsoSolidTransport;
-
-template<class Thermo>
-inline constAnIsoSolidTransport<Thermo> operator+
-(
-    const constAnIsoSolidTransport<Thermo>&,
-    const constAnIsoSolidTransport<Thermo>&
-);
 
 template<class Thermo>
 inline constAnIsoSolidTransport<Thermo> operator*
@@ -61,8 +53,16 @@ inline constAnIsoSolidTransport<Thermo> operator*
     const constAnIsoSolidTransport<Thermo>&
 );
 
+template<class Thermo>
+Ostream& operator<<
+(
+    Ostream&,
+    const constAnIsoSolidTransport<Thermo>&
+);
+
+
 /*---------------------------------------------------------------------------*\
-                           Class constAnIsoSolidTransport Declaration
+                  Class constAnIsoSolidTransport Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Thermo>
@@ -70,26 +70,19 @@ class constAnIsoSolidTransport
 :
     public Thermo
 {
-    // Private data
+    // Private Data
 
-        //- Constant isotropic thermal conductivity
+        //- Constant anisotropic thermal conductivity.
         vector kappa_;
 
-        // Private Member Functions
+
+    // Private Member Functions
 
         //- Construct from components
         inline constAnIsoSolidTransport(const Thermo& t, const vector kappa);
 
 
 public:
-
-    //- Return the instantiated type name
-        static word typeName()
-        {
-            return
-                "constAnIso<"
-              + word(Thermo::typeName()) + '>';
-        }
 
     // Constructors
 
@@ -101,64 +94,76 @@ public:
         );
 
         //- Construct from dictionary
-        constAnIsoSolidTransport(const dictionary& dict);
+        constAnIsoSolidTransport(const dictionary&);
+
+        //- Construct and return a clone
+        inline autoPtr<constAnIsoSolidTransport> clone() const;
+
+        // Selector from dictionary
+        inline static autoPtr<constAnIsoSolidTransport> New
+        (
+            const dictionary& dict
+        );
 
 
     // Member Functions
 
+        //- Return the instantiated type name
+        static word typeName()
+        {
+            return "constAnIso<" + Thermo::typeName() + '>';
+        }
+
         //- Is the thermal conductivity isotropic
-        static const bool isotropic = true;
+        static const bool isotropic = false;
 
-        //- Dynamic viscosity [kg/ms]
-        scalar mu
+        //- Isotropic thermal conductivity [W/m/K]
+        inline scalar kappa
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
-        //- Thermal conductivity [W/mK]
-        scalar kappa
+        //- Un-isotropic thermal conductivity [W/m/K]
+        inline vector Kappa
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
-        //- Thermal conductivity [W/mK]
-        vector Kappa
+        //- Dynamic viscosity [kg/m/s]
+        inline scalar mu
         (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
+            const scalar rho,
+            const scalar e,
+            const scalar T
         ) const;
 
-        //- Thermal diffusivity of enthalpy [kg/ms]
-        scalar alphah
-        (
-            const scalar& rho,
-            const scalar& e,
-            const scalar& T
-        ) const;
+        //- Write to Ostream
+        void write(Ostream& os) const;
 
 
     // Member Operators
 
         inline void operator+=(const constAnIsoSolidTransport&);
-        inline void operator*=(const scalar);
 
 
     // Friend operators
 
-        friend constAnIsoSolidTransport operator+ <Thermo>
-        (
-            const constAnIsoSolidTransport&,
-            const constAnIsoSolidTransport&
-        );
-
         friend constAnIsoSolidTransport operator* <Thermo>
         (
             const scalar,
+            const constAnIsoSolidTransport&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Thermo>
+        (
+            Ostream&,
             const constAnIsoSolidTransport&
         );
 };

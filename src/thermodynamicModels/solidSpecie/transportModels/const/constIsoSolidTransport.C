@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -27,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "constIsoSolidTransport.H"
+#include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -37,9 +35,38 @@ Foam::constIsoSolidTransport<Thermo>::constIsoSolidTransport
 )
 :
     Thermo(dict),
-    kappa_(readScalar(dict.subDict("transport").lookup("kappa")))
+    kappa_(dict.subDict("transport").lookup<scalar>("kappa"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::constIsoSolidTransport<Thermo>::constIsoSolidTransport::write
+(
+    Ostream& os
+) const
+{
+    Thermo::write(os);
+
+    dictionary dict("transport");
+    dict.add("kappa", kappa_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+template<class Thermo>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const constIsoSolidTransport<Thermo>& ct
+)
+{
+    ct.write(os);
+    return os;
+}
 
 
 // ************************************************************************* //

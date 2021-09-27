@@ -50,7 +50,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "MGEquationOfState.H"
 
 namespace Foam
 {
@@ -95,8 +94,7 @@ Ostream& operator<<
 template<class Specie>
 class DoanNickel
 :
-    public Specie,
-    public MGEquationOfState
+    public Specie
 {
 // Private data
 
@@ -139,24 +137,44 @@ class DoanNickel
     //- Max value used in exp function
     const scalar expMax_ = 250;
 
-    //- Derivative of specific heat ration w.r.t. density
-    scalar dGammadRho
-    (
-        const scalar rho,
-        const scalar e
-    ) const;
 
-    //- Derivative of specific heat w.r.t. internal energy
-    scalar dGammade
-    (
-        const scalar rho,
-        const scalar e
-    ) const;
+    // Private member functions
+
+        //- Return non-ideal speed of sound
+        inline scalar delta
+        (
+            const scalar p,
+            const scalar rho,
+            const scalar e
+        ) const;
+
+        //- Gamma function
+        inline scalar GammaMG
+        (
+            const scalar rho,
+            const scalar e
+        ) const;
+
+        //- Derivative of specific heat ration w.r.t. density
+        inline scalar dGammadRho
+        (
+            const scalar rho,
+            const scalar e
+        ) const;
+
+        //- Derivative of specific heat w.r.t. internal energy
+        inline scalar dGammade
+        (
+            const scalar rho,
+            const scalar e
+        ) const;
 
 
 public:
 
-    //- Construct from components
+    // Constructors
+
+        //- Construct from components
         inline DoanNickel
         (
             const Specie& sp
@@ -192,36 +210,56 @@ public:
               + word(Specie::typeName_()) + '>';
         }
 
-        //- Is this a solid equation of state
-        static bool solid()
+        //- Is temperature used
+        static inline bool temperatureBased()
         {
             return false;
         }
 
-        //- Return pressure deviation from ideal
-        scalar Pi
+        //- Is this a solid equation of state
+        static inline bool solid()
+        {
+            return false;
+        }
+
+        //- Return pressure
+        inline scalar p
         (
             const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T,
+            const bool limit = true
         ) const;
 
-        //- Return speed of sound
-        scalar delta
+        //- Return the MieGruniesen coefficient
+        inline scalar Gamma
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
+        ) const;
+
+        //- Return the speed of sound
+        inline scalar cSqr
         (
             const scalar p,
             const scalar rho,
-            const scalar e
-        ) const;
-
-        //- Gamma function
-        scalar GammaMG
-        (
-            const scalar rho,
-            const scalar e
+            const scalar e,
+            const scalar T,
+            const scalar Cv
         ) const;
 
         //- Return derivative of pressure w.r.t density
-        scalar dpdv
+        inline scalar dpdv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. internal energy
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -229,7 +267,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpde
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -237,7 +275,7 @@ public:
         ) const;
 
         //- Internal energy correction [J/kg]
-        scalar E
+        inline scalar E
         (
             const scalar rho,
             const scalar e,
@@ -245,7 +283,23 @@ public:
         ) const;
 
         //- Enthalpy correction [J/kg]
-        scalar H
+        inline scalar H
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity at constant volume [J/kg/K]
+        inline scalar Cv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity at constant pressure [J/kg/K]
+        inline scalar Cp
         (
             const scalar rho,
             const scalar e,
@@ -253,23 +307,27 @@ public:
         ) const;
 
         //- Heat capacity difference [J/kg/K]
-        virtual scalar CpMCv
+        inline scalar CpMCv
         (
             const scalar rho,
             const scalar e,
-            const scalar T
-        ) const
-        {
-            return MGEquationOfState::CpMCv(this->cpcv(), rho, e, T);
-        }
+            const scalar T,
+            const scalar CpCv
+        ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar p,
             const scalar rho,
             const scalar T
         ) const;
+
+
+        // IO
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
 
 
     // Member operators
@@ -295,6 +353,15 @@ public:
         friend DoanNickel operator== <Specie>
         (
             const DoanNickel&,
+            const DoanNickel&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Specie>
+        (
+            Ostream&,
             const DoanNickel&
         );
 };

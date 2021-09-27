@@ -212,6 +212,7 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateTemperature
     volScalarField& alphaT
 )
 {
+    updateMixture();
     const scalarField& rhoCells = this->rho_.primitiveField();
     const scalarField& alphaCells = alpha.primitiveField();
     const scalarField& eCells = he.primitiveField();

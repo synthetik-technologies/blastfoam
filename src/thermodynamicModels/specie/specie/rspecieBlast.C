@@ -43,4 +43,28 @@ Foam::rspecieBlast::rspecieBlast(const dictionary& dict)
     molWeight_(dict.subDict("specie").lookup<scalar>("molWeight"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::rspecieBlast::write(Ostream& os) const
+{
+    dictionary dict("specie");
+    if (Y_ != 1)
+    {
+        dict.add("massFraction", Y_);
+    }
+    dict.add("molWeight", molWeight_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+Foam::Ostream& Foam::operator<<(Ostream& os, const rspecieBlast& st)
+{
+    st.write(os);
+    os.check("Ostream& operator<<(Ostream& os, const rspecieBlast& st)");
+    return os;
+}
+
 // ************************************************************************* //

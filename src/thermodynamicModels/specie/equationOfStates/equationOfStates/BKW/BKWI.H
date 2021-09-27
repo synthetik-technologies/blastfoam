@@ -97,6 +97,19 @@ Foam::BKW<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::BKW<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BKW<Specie>::pRhoT
 (
     const scalar rho,
@@ -105,6 +118,35 @@ Foam::scalar Foam::BKW<Specie>::pRhoT
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return this->R()*T*rho*(1.0 + x*exp(beta_*x));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small) + 1.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return
+        (sqr(dpdT(rho, e, T))*T/cv - dpdv(rho, e, T))
+       /sqr(max(rho, 1e-10));
 }
 
 
@@ -124,6 +166,19 @@ Foam::scalar Foam::BKW<Specie>::dpdv
            exp(beta_*x)*dxdv*(1.0 + x*beta_)
          - (1.0 + x*exp(beta_*x))*rho
         );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -204,7 +259,8 @@ Foam::scalar Foam::BKW<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));

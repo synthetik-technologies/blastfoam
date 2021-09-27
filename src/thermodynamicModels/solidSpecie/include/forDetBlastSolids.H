@@ -34,7 +34,8 @@ License
 #include "thermoModel.H"
 #include "eConstBlastThermo.H"
 #include "hConstBlastThermo.H"
-#include "tabulatedBlastThermo.H"
+#include "eTabulatedBlastThermo.H"
+#include "hTabulatedBlastThermo.H"
 
 #include "rhoConst.H"
 
@@ -54,12 +55,12 @@ License
 #define forDetrSolidThermos(uMu, rMu, uCp, Macro, Args...)                    \
     forDetuSolidEqns(uMu, rMu, uCp, eConstThermo, Macro, Args);               \
     forDetuSolidEqns(uMu, rMu, uCp, hConstThermo, Macro, Args);               \
-    forDetuSolidEqns(uMu, rMu, uCp, tabulatedThermo, Macro, Args);
+    forDetuSolidEqns(uMu, rMu, uCp, eTabulatedThermo, Macro, Args);
 
 #define forDetuSolidThermos(uMu, rMu, Macro, Args...)                         \
     forDetrSolidThermos(uMu, rMu, eConstThermo, Macro, Args);                 \
     forDetrSolidThermos(uMu, rMu, hConstThermo, Macro, Args);                 \
-    forDetrSolidThermos(uMu, rMu, tabulatedThermo, Macro, Args);
+    forDetrSolidThermos(uMu, rMu, eTabulatedThermo, Macro, Args);
 
 #define forDetrSolidTransports(uMu, Macro, Args...)                           \
     forDetuSolidThermos(uMu, constIsoSolidTransport, Macro, Args);            \

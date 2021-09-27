@@ -137,4 +137,38 @@ Foam::Tillotson<Specie>::Tillotson(const dictionary& dict)
     );
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::Tillotson<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("rho0", rho0_);
+    dict.add("e0", e0_);
+    dict.add("a", a_);
+    dict.add("b", b_);
+    dict.add("A", A_);
+    dict.add("B", B_);
+    dict.add("pCav", pCav_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const Tillotson<Specie>& t
+)
+{
+    t.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

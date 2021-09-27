@@ -44,7 +44,6 @@ SourceFiles
 
 #include "scalar.H"
 #include "List.H"
-#include "CpCvModel.H"
 
 namespace Foam
 {
@@ -74,6 +73,13 @@ inline janafThermo<EquationOfState> operator==
     const janafThermo<EquationOfState>&
 );
 
+template<class EquationOfState>
+Ostream& operator<<
+(
+    Ostream&,
+    const janafThermo<EquationOfState>&
+);
+
 
 /*---------------------------------------------------------------------------*\
                            Class janafThermo Declaration
@@ -82,8 +88,7 @@ inline janafThermo<EquationOfState> operator==
 template<class EquationOfState>
 class janafThermo
 :
-    public EquationOfState,
-    public CpCvModel
+    public EquationOfState
 {
 public:
 
@@ -132,9 +137,6 @@ public:
         janafThermo(const dictionary& dict);
 
         //- Construct as a named copy
-        inline janafThermo(const janafThermo&);
-
-        //- Construct as a named copy
         inline janafThermo(const word&, const janafThermo&);
 
 
@@ -147,9 +149,9 @@ public:
         }
 
         //- Return the energy type
-        inline energyType eType() const
+        static bool enthalpy()
         {
-            return CpCvModel::Enthalpy;
+            return true;
         }
 
         //- Limit the temperature to be in the range Tlow_ to Thigh_
@@ -261,7 +263,6 @@ public:
 
     // Member operators
 
-        inline void operator=(const janafThermo&);
         inline void operator+=(const janafThermo&);
 
 
@@ -282,6 +283,15 @@ public:
         friend janafThermo operator== <EquationOfState>
         (
             const janafThermo&,
+            const janafThermo&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <EquationOfState>
+        (
+            Ostream&,
             const janafThermo&
         );
 };

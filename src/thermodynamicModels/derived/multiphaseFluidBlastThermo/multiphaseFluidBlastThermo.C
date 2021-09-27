@@ -58,6 +58,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             T_
         );
     }
+    normalise(T_);
 
     volScalarField XiSum
     (
@@ -114,7 +115,12 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     }
     this->p_ = pXiSum/XiSum;
     this->p_.correctBoundaryConditions();
-    rhoXiSum.max(small);
+
+    // Normalise variables
+    normalise(Cp_);
+    normalise(Cv_);
+    normalise(mu_);
+    normalise(alpha_);
 
     forAll(thermos_, i)
     {
@@ -124,6 +130,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             cSqrRhoXiSum
         );
     }
+    rhoXiSum.max(small);
     cSqrRhoXiSum.max(small);
     this->speedOfSound_ = sqrt(cSqrRhoXiSum/rhoXiSum);
 }

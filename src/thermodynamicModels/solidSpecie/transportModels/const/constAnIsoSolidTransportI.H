@@ -2,21 +2,25 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
+
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
+
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
+
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
 \*---------------------------------------------------------------------------*/
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -44,14 +48,39 @@ inline Foam::constAnIsoSolidTransport<Thermo>::constAnIsoSolidTransport
     kappa_(ct.kappa_)
 {}
 
+
+template<class Thermo>
+inline Foam::autoPtr<Foam::constAnIsoSolidTransport<Thermo>>
+Foam::constAnIsoSolidTransport<Thermo>::clone() const
+{
+    return autoPtr<constAnIsoSolidTransport<Thermo>>
+    (
+        new constAnIsoSolidTransport<Thermo>(*this)
+    );
+}
+
+
+template<class Thermo>
+inline Foam::autoPtr<Foam::constAnIsoSolidTransport<Thermo>>
+Foam::constAnIsoSolidTransport<Thermo>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<constAnIsoSolidTransport<Thermo>>
+    (
+        new constAnIsoSolidTransport<Thermo>(dict)
+    );
+}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Thermo>
 inline Foam::scalar Foam::constAnIsoSolidTransport<Thermo>::kappa
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return mag(kappa_);
@@ -60,9 +89,9 @@ inline Foam::scalar Foam::constAnIsoSolidTransport<Thermo>::kappa
 template<class Thermo>
 inline Foam::vector Foam::constAnIsoSolidTransport<Thermo>::Kappa
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return kappa_;
@@ -72,26 +101,15 @@ inline Foam::vector Foam::constAnIsoSolidTransport<Thermo>::Kappa
 template<class Thermo>
 inline Foam::scalar Foam::constAnIsoSolidTransport<Thermo>::mu
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     NotImplemented;
     return scalar(0);
 }
 
-
-template<class Thermo>
-inline Foam::scalar Foam::constAnIsoSolidTransport<Thermo>::alphah
-(
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
-) const
-{
-    return mag(kappa_)/this->Cp(rho, e, T);
-}
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
 
@@ -110,50 +128,7 @@ inline void Foam::constAnIsoSolidTransport<Thermo>::operator+=
 }
 
 
-template<class Thermo>
-inline void Foam::constAnIsoSolidTransport<Thermo>::operator*=
-(
-    const scalar s
-)
-{
-    Thermo::operator*=(s);
-}
-
-
 // * * * * * * * * * * * * * * * Friend Operators  * * * * * * * * * * * * * //
-
-template<class Thermo>
-inline Foam::constAnIsoSolidTransport<Thermo> Foam::operator+
-(
-    const constAnIsoSolidTransport<Thermo>& ct1,
-    const constAnIsoSolidTransport<Thermo>& ct2
-)
-{
-    Thermo t
-    (
-        static_cast<const Thermo&>(ct1) + static_cast<const Thermo&>(ct2)
-    );
-
-    if (mag(t.Y()) < small)
-    {
-        return constAnIsoSolidTransport<Thermo>
-        (
-            t,
-            ct1.kappa_
-        );
-    }
-    else
-    {
-        scalar Y1 = ct1.Y()/t.Y();
-        scalar Y2 = ct2.Y()/t.Y();
-
-        return constAnIsoSolidTransport<Thermo>
-        (
-            t,
-            Y1*ct1.kappa_ + Y2*ct2.kappa_
-        );
-    }
-}
 
 
 template<class Thermo>

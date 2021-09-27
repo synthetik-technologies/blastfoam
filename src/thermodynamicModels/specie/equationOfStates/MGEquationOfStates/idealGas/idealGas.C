@@ -44,4 +44,32 @@ Foam::idealGas<Specie>::idealGas(const dictionary& dict)
     }
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::idealGas<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const idealGas<Specie>& ig
+)
+{
+    ig.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

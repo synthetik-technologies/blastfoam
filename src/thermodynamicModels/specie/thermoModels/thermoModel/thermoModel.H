@@ -147,7 +147,7 @@ public:
     // Member Functions
 
         //- Return Mie Gruniesen coefficient
-        scalar Gamma
+        inline scalar Gamma
         (
             const scalar rho,
             const scalar e,
@@ -155,7 +155,7 @@ public:
         ) const;
 
         //- Return pressure
-        scalar p
+        inline scalar p
         (
             const scalar rho,
             const scalar e,
@@ -163,7 +163,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t density
-        scalar dpdRho
+        inline scalar dpdRho
         (
             const scalar rho,
             const scalar e,
@@ -171,7 +171,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t internal energy
-        scalar dpde
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -179,7 +179,7 @@ public:
         ) const;
 
         //- Return speed of sound
-        scalar cSqr
+        inline scalar cSqr
         (
             const scalar p,
             const scalar rho,
@@ -188,7 +188,7 @@ public:
         ) const;
 
         //- Return specific heat ratio
-        scalar CpByCv
+        inline scalar CpByCv
         (
             const scalar rho,
             const scalar e,
@@ -196,7 +196,7 @@ public:
         ) const;
 
         //- Initialize internal energy
-        scalar initializeEnergy
+        inline scalar initializeEnergy
         (
             const scalar p,
             const scalar rho,
@@ -205,7 +205,7 @@ public:
         ) const;
 
         //- Initialize internal energy
-        scalar rhoPT
+        inline scalar rhoPT
         (
             const scalar p,
             const scalar T

@@ -130,49 +130,50 @@ public:
             //- Return derivative of pressure w.r.t. specific volume
             virtual scalar dpdv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Return derivative of pressure w.r.t. Temperature
             virtual scalar dpdT
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Return derivative of pressure w.r.t. internal energy
             virtual scalar dpde
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Internal energy correction [J/kg]
             virtual scalar E
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Enthalpy correction [J/kg]
             virtual scalar H
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Heat capacity difference [J/kg/K]
             virtual scalar CpMCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T,
+                const scalar CpCv
             ) const = 0;
 
         //- Thermo model
@@ -180,49 +181,49 @@ public:
             //- Heat capacity at constant volume of mixture [J/kg/K]
             virtual scalar Cv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Sensible internal energy [J/kg]
             virtual scalar Es
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Absolute internal energy [J/kg]
             virtual scalar Ea
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Heat capacity at constant pressure of mixture [J/kg/K]
             virtual scalar Cp
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Sensible enthalpy [J/kg]
             virtual scalar Hs
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Absolute enthalpy [J/kg]
             virtual scalar Ha
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Heat of formation [J/kg]
@@ -235,10 +236,10 @@ public:
             //- Entropy [J/kg/K]
             virtual scalar S
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Derivative of Gibbs free energy w.r.t. temperature
@@ -253,50 +254,50 @@ public:
             //- Return Mie Gruniesen coefficient
             virtual scalar Gamma
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Return pressure
             virtual scalar p
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Return speed of sound
             virtual scalar cSqr
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Return specific heat ratio
             virtual scalar CpByCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Initialize internal energy
             virtual scalar initializeEnergy
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Initialize internal energy
             virtual scalar rhoPT
             (
-                const scalar& p,
-                const scalar& T
+                const scalar p,
+                const scalar T
             ) const = 0;
 
             //- Temperature from enthalpy or internal energy
@@ -353,25 +354,25 @@ public:
             //- Dynamic viscosity [kg/ms]
             virtual scalar mu
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Thermal conductivity [W/mK]
             virtual scalar kappa
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 
             //- Thermal diffusivity of enthalpy [kg/ms]
             virtual scalar alphah
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const = 0;
 };
 
@@ -419,9 +420,9 @@ public:
             //- Return derivative of pressure w.r.t. specific volume
             virtual scalar dpdv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::dpdv(rho, e, T);
@@ -430,9 +431,9 @@ public:
             //- Return derivative of pressure w.r.t. Temperature
             virtual scalar dpdT
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::dpdT(rho, e, T);
@@ -441,9 +442,9 @@ public:
             //- Return derivative of pressure w.r.t. internal energy
             virtual scalar dpde
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::dpde(rho, e, T);
@@ -452,9 +453,9 @@ public:
             //- Internal energy correction [J/kg]
             virtual scalar E
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::E(rho, e, T);
@@ -463,9 +464,9 @@ public:
             //- Enthalpy correction [J/kg]
             virtual scalar H
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::H(rho, e, T);
@@ -474,12 +475,13 @@ public:
             //- Heat capacity difference [J/kg/K]
             virtual scalar CpMCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T,
+                const scalar CpCv
             ) const
             {
-                return ThermoType::CpMCv(rho, e, T);
+                return ThermoType::CpMCv(rho, e, T, CpCv);
             }
 
         //- Thermo model
@@ -487,9 +489,9 @@ public:
             //- Heat capacity at constant volume of mixture [J/kg/K]
             virtual scalar Cv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Cv(rho, e, T);
@@ -498,9 +500,9 @@ public:
             //- Sensible internal energy [J/kg]
             virtual scalar Es
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Es(rho, e, T);
@@ -509,9 +511,9 @@ public:
             //- Absolute internal energy [J/kg]
             virtual scalar Ea
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Ea(rho, e, T);
@@ -520,9 +522,9 @@ public:
             //- Heat capacity at constant pressure of mixture [J/kg/K]
             virtual scalar Cp
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Cp(rho, e, T);
@@ -531,9 +533,9 @@ public:
             //- Sensible enthalpy [J/kg]
             virtual scalar Hs
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Hs(rho, e, T);
@@ -542,9 +544,9 @@ public:
             //- Absolute enthalpy [J/kg]
             virtual scalar Ha
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Ha(rho, e, T);
@@ -566,10 +568,10 @@ public:
             //- Entropy [J/kg/K]
             virtual scalar S
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::S(p, rho, e, T);
@@ -593,9 +595,9 @@ public:
             //- Return Mie Gruniesen coefficient
             virtual scalar Gamma
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::Gamma(rho, e, T);
@@ -604,9 +606,9 @@ public:
             //- Return pressure
             virtual scalar p
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::p(rho, e, T);
@@ -615,10 +617,10 @@ public:
             //- Return speed of sound
             virtual scalar cSqr
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::cSqr(p, rho, e, T);
@@ -627,9 +629,9 @@ public:
             //- Return specific heat ratio
             virtual scalar CpByCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::CpByCv(rho, e, T);
@@ -638,10 +640,10 @@ public:
             //- Initialize internal energy
             virtual scalar initializeEnergy
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::initializeEnergy(p, rho, e, T);
@@ -650,8 +652,8 @@ public:
             //- Initialize internal energy
             virtual scalar rhoPT
             (
-                const scalar& p,
-                const scalar& T
+                const scalar p,
+                const scalar T
             ) const
             {
                 return ThermoType::rhoPT(p,T);
@@ -726,9 +728,9 @@ public:
             //- Dynamic viscosity [kg/ms]
             virtual scalar mu
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::mu(rho, e, T);
@@ -737,9 +739,9 @@ public:
             //- Thermal conductivity [W/mK]
             virtual scalar kappa
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::kappa(rho, e, T);
@@ -748,9 +750,9 @@ public:
             //- Thermal diffusivity of enthalpy [kg/ms]
             virtual scalar alphah
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const
             {
                 return ThermoType::alphah(rho, e, T);

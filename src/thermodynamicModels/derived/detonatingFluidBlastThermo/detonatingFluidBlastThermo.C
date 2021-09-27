@@ -115,8 +115,11 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
               + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
             this->speedOfSound()[celli] =
-                sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small))*x1
-              + sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small))*x2;
+                sqrt
+                (
+                    max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
+                  + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                );
         }
     }
 
@@ -184,8 +187,11 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                     t1.kappa(rhoi, ei, Ti)/pCp[facei]*x1
                   + t2.kappa(rhoi, ei, Ti)/pCp[facei]*x2;
                 pc[facei] =
-                    sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small))*x1
-                  + sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small))*x2;
+                    sqrt
+                    (
+                        max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
+                      + max(t2.cSqr(pi, rhoi, ei, Ti), small)*x2
+                    );
             }
         }
     }

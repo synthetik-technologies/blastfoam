@@ -5,11 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,6 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
@@ -37,7 +35,7 @@ inline Foam::constTransport<Thermo>::constTransport
 :
     Thermo(t),
     mu_(mu),
-    Pr_(1.0/Pr)
+    rPr_(1.0/Pr)
 {}
 
 
@@ -50,7 +48,7 @@ inline Foam::constTransport<Thermo>::constTransport
 :
     Thermo(name, ct),
     mu_(ct.mu_),
-    Pr_(ct.Pr_)
+    rPr_(ct.rPr_)
 {}
 
 
@@ -101,19 +99,7 @@ inline Foam::scalar Foam::constTransport<Thermo>::kappa
     const scalar T
 ) const
 {
-    return this->Cp(rho, e, T)*mu(rho, e, T)/Pr_;
-}
-
-
-template<class Thermo>
-inline Foam::scalar Foam::constTransport<Thermo>::alphah
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return mu(rho, e, T)/Pr_;
+    return this->Cp(rho, e, T)*mu(rho, e, T)*rPr_;
 }
 
 
@@ -135,7 +121,7 @@ inline void Foam::constTransport<Thermo>::operator+=
         scalar Y2 = st.Y()/this->Y();
 
         mu_ = Y1*mu_ + Y2*st.mu_;
-        Pr_ = Y1*Pr_ + Y2*st.Pr_;
+        rPr_ = 1.0/(Y1/rPr_ + Y2/st.rPr_);
     }
 }
 
@@ -170,7 +156,7 @@ inline Foam::constTransport<Thermo> Foam::operator+
         (
             t,
             0,
-            ct1.Pr_
+            ct1.rPr_
         );
     }
     else
@@ -182,7 +168,7 @@ inline Foam::constTransport<Thermo> Foam::operator+
         (
             t,
             Y1*ct1.mu_ + Y2*ct2.mu_,
-            Y1*ct1.Pr_ + Y2*ct2.Pr_
+            1.0/(Y1/ct1.rPr_ + Y2/ct2.rPr_)
         );
     }
 }
@@ -199,7 +185,7 @@ inline Foam::constTransport<Thermo> Foam::operator*
     (
         s*static_cast<const Thermo&>(ct),
         ct.mu_,
-        ct.Pr_
+        1.0/ct.rPr_
     );
 }
 

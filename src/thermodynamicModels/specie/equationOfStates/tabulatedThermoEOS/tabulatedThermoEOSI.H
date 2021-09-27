@@ -260,7 +260,8 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cp
     const scalar T
 ) const
 {
-    return CpMCv(rho, e, T) + Cv(rho, e, T);
+    const scalar cv = Cv(rho, e, T);
+    return CpMCv(rho, e, T, cv) + cv;
 }
 
 
@@ -269,7 +270,8 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return dpdT(rho, e, T)/max(rho, 1e-10);
