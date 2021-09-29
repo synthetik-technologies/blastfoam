@@ -55,6 +55,13 @@ inline constIsoSolidTransport<Thermo> operator*
 );
 
 template<class Thermo>
+inline constIsoSolidTransport<Thermo> operator+
+(
+    const constIsoSolidTransport<Thermo>&,
+    const constIsoSolidTransport<Thermo>&
+);
+
+template<class Thermo>
 Ostream& operator<<
 (
     Ostream&,
@@ -156,6 +163,12 @@ public:
         friend constIsoSolidTransport operator* <Thermo>
         (
             const scalar,
+            const constIsoSolidTransport&
+        );
+
+        friend constIsoSolidTransport operator+ <Thermo>
+        (
+            const constIsoSolidTransport&,
             const constIsoSolidTransport&
         );
 

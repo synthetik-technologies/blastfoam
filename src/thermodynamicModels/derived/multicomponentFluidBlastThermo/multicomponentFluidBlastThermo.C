@@ -123,7 +123,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
     forAll(alpha, celli)
     {
         const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha().value())
+        if (vfi > this->residualAlpha_.value())
         {
             const typename Thermo::thermoType& t(this->mixture_[celli]);
             const scalar alphai(alpha[celli]);
@@ -161,25 +161,28 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculate
 
         forAll(palpha, facei)
         {
-            const typename Thermo::thermoType& t
-            (
-                this->mixture_.boundary(patchi, facei)
-            );
             const scalar alphai(palpha[facei]);
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
-            const scalar Xii = alphai/(t.Gamma(rhoi, ei, Ti) - 1.0);
+            if (alphai > this->residualAlpha_.value())
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                const scalar rhoi(prho[facei]);
+                const scalar ei(phe[facei]);
+                const scalar Ti(pT[facei]);
+                const scalar Xii = alphai/(t.Gamma(rhoi, ei, Ti) - 1.0);
 
-            const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
 
-            ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
-            palphaCp[facei] = Cpi*alphai;
-            palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
-            palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
-            palphaAlphah[facei] = t.kappa(rhoi, ei, Ti)/Cpi*alphai;
-            pxiSum[facei] += Xii;
-            prhoXiSum[facei] += rhoi*Xii;
+                ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
+                palphaCp[facei] = Cpi*alphai;
+                palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
+                palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
+                palphaAlphah[facei] = t.kappa(rhoi, ei, Ti)/Cpi*alphai;
+                pxiSum[facei] += Xii;
+                prhoXiSum[facei] += rhoi*Xii;
+            }
         }
     }
 }
@@ -195,7 +198,7 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculateSpeedOfSound
     forAll(this->rho_, celli)
     {
         const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha().value())
+        if (vfi > this->residualAlpha_.value())
         {
             const typename Thermo::thermoType& t(this->mixture_[celli]);
             cSqrRhoXiSum[celli] +=
@@ -230,15 +233,18 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::calculateSpeedOfSound
 
         forAll(pT, facei)
         {
-            const typename Thermo::thermoType& t
-            (
-                this->mixture_.boundary(patchi, facei)
-            );
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
 
-            pcSqrRhoXiSum[facei] +=
-                t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
-               *palpha[facei]*prho[facei]
-               /(t.Gamma(prho[facei], phe[facei], pT[facei]) - 1.0);
+                pcSqrRhoXiSum[facei] +=
+                    t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
+                   *palpha[facei]*prho[facei]
+                   /(t.Gamma(prho[facei], phe[facei], pT[facei]) - 1.0);
+            }
         }
     }
 }

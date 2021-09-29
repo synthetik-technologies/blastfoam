@@ -120,6 +120,15 @@ public:
             volScalarField& alphaT
         );
 
+        //- Add contribution to mixture energy
+        virtual void calculateEnergy
+        (
+            const volScalarField& alpha,
+            const volScalarField& he0,
+            const volScalarField& T,
+            volScalarField& alphaHE
+        );
+
         //- Return the thermo name
         virtual word thermoName() const;
 

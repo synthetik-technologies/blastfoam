@@ -155,6 +155,15 @@ public:
             volScalarField& alphaT
         );
 
+        //- Add contribution to mixture energy
+        virtual void calculateEnergy
+        (
+            const volScalarField& alpha,
+            const volScalarField& he0,
+            const volScalarField& T,
+            volScalarField& alphaHE
+        );
+
         //- Pre update step
         virtual void updateMixture();
 

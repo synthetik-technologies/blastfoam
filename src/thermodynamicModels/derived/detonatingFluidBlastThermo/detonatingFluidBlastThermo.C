@@ -225,7 +225,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
         const scalar rhoi(this->rho_[celli]);
         const scalar ei(he[celli]);
         const scalar Ti(T[celli]);
-        if (alphai > this->residualAlpha().value())
+        if (alphai > this->residualAlpha_.value())
         {
             scalar Xii = alphai;
 
@@ -311,61 +311,63 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
 
         forAll(palpha, facei)
         {
-
-            const scalar x2 = px[facei];
-            const scalar x1 = 1.0 - x2;
             const scalar alphai = palpha[facei];
-            const scalar& rhoi(prho[facei]);
-            const scalar& ei(phe[facei]);
-            const scalar& Ti(pT[facei]);
-            scalar Xii = alphai;
-
-            if (x2 < small)
+            if (alphai > this->residualAlpha_.value())
             {
-                Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                const scalar& rhoi(prho[facei]);
+                const scalar& ei(phe[facei]);
+                const scalar& Ti(pT[facei]);
+                scalar Xii = alphai;
 
-                ppXiSum[facei] += t1.p(rhoi, ei, Ti)*Xii;
-                palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
-                palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai;
-                palphaMu[facei] += t1.mu(rhoi, ei, Ti)*alphai;
-                palphaAlphah[facei] +=
-                    t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
-            }
-            else if (x1 < small)
-            {
-                Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
+                if (x2 < small)
+                {
+                    Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
 
-                ppXiSum[facei] += t2.p(rhoi, ei, Ti);
-                palphaCp[facei] += t2.Cp(rhoi, ei, Ti);
-                palphaCv[facei] += t2.Cv(rhoi, ei, Ti);
-                palphaMu[facei] += t2.mu(rhoi, ei, Ti);
-                palphaAlphah[facei] +=
-                    t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti);
+                    ppXiSum[facei] += t1.p(rhoi, ei, Ti)*Xii;
+                    palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
+                    palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai;
+                    palphaMu[facei] += t1.mu(rhoi, ei, Ti)*alphai;
+                    palphaAlphah[facei] +=
+                        t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
+                }
+                else if (x1 < small)
+                {
+                    Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
+
+                    ppXiSum[facei] += t2.p(rhoi, ei, Ti);
+                    palphaCp[facei] += t2.Cp(rhoi, ei, Ti);
+                    palphaCv[facei] += t2.Cv(rhoi, ei, Ti);
+                    palphaMu[facei] += t2.mu(rhoi, ei, Ti);
+                    palphaAlphah[facei] +=
+                        t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti);
+                }
+                else
+                {
+                    Xii /=
+                        t1.Gamma(rhoi, ei, Ti)*x1
+                      + t2.Gamma(rhoi, ei, Ti)*x2
+                      - 1.0;
+                    ppXiSum[facei] +=
+                        t1.p(rhoi, ei, Ti)*x1
+                      + t2.p(rhoi, ei, Ti)*x2;
+                    palphaCp[facei] +=
+                        t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.Cp(rhoi, ei, Ti)*x2;
+                    palphaCv[facei] +=
+                        t1.Cv(rhoi, ei, Ti)*x1
+                      + t2.Cv(rhoi, ei, Ti)*x2;
+                    palphaMu[facei] +=
+                        t1.mu(rhoi, ei, Ti)*x1
+                      + t2.mu(rhoi, ei, Ti)*x2;
+                    palphaAlphah[facei] +=
+                        t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
+                      + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
+                }
+                pxiSum[facei] += Xii;
+                prhoXiSum[facei] += rhoi*Xii;
             }
-            else
-            {
-                Xii /=
-                    t1.Gamma(rhoi, ei, Ti)*x1
-                  + t2.Gamma(rhoi, ei, Ti)*x2
-                  - 1.0;
-                ppXiSum[facei] +=
-                    t1.p(rhoi, ei, Ti)*x1
-                  + t2.p(rhoi, ei, Ti)*x2;
-                palphaCp[facei] +=
-                    t1.Cp(rhoi, ei, Ti)*x1
-                  + t2.Cp(rhoi, ei, Ti)*x2;
-                palphaCv[facei] +=
-                    t1.Cv(rhoi, ei, Ti)*x1
-                  + t2.Cv(rhoi, ei, Ti)*x2;
-                palphaMu[facei] +=
-                    t1.mu(rhoi, ei, Ti)*x1
-                  + t2.mu(rhoi, ei, Ti)*x2;
-                palphaAlphah[facei] +=
-                    t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
-                  + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
-            }
-            pxiSum[facei] += Xii;
-            prhoXiSum[facei] += rhoi*Xii;
         }
     }
 }
@@ -383,7 +385,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
 
     forAll(this->rho_, celli)
     {
-        if (alpha[celli] > this->residualAlpha().value())
+        if (alpha[celli] > this->residualAlpha_.value())
         {
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
@@ -478,82 +480,85 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
 
         forAll(pT, facei)
         {
-            const scalar x2 = px[facei];
-            const scalar x1 = 1.0 - x2;
-            if (x2 < small)
+            if (palpha[facei] > this->residualAlpha_.value())
             {
-                pcSqr[facei] +=
-                    t1.cSqr
-                    (
-                        pp[facei],
-                        prho[facei],
-                        phe[facei],
-                        pT[facei]
-                    )*prho[facei]*palpha[facei]
-                   /(
-                        t1.Gamma
-                        (
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )
-                      - 1.0
-                    );
-            }
-            else if (x1 < small)
-            {
-                pcSqr[facei] +=
-                    t2.cSqr
-                    (
-                        pp[facei],
-                        prho[facei],
-                        phe[facei],
-                        pT[facei]
-                    )*prho[facei]*palpha[facei]
-                   /(
-                        t2.Gamma
-                        (
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )
-                      - 1.0
-                    );
-            }
-            else
-            {
-                pcSqr[facei] +=
-                    (
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                if (x2 < small)
+                {
+                    pcSqr[facei] +=
                         t1.cSqr
                         (
                             pp[facei],
                             prho[facei],
                             phe[facei],
                             pT[facei]
-                        )*x1
-                      + t2.cSqr
+                        )*prho[facei]*palpha[facei]
+                       /(
+                            t1.Gamma
+                            (
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )
+                          - 1.0
+                        );
+                }
+                else if (x1 < small)
+                {
+                    pcSqr[facei] +=
+                        t2.cSqr
                         (
                             pp[facei],
                             prho[facei],
                             phe[facei],
                             pT[facei]
-                        )*x2
-                    )*prho[facei]*palpha[facei]
-                   /(
-                        t1.Gamma
+                        )*prho[facei]*palpha[facei]
+                       /(
+                            t2.Gamma
+                            (
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )
+                          - 1.0
+                        );
+                }
+                else
+                {
+                    pcSqr[facei] +=
                         (
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )*x1
-                      + t2.Gamma
-                        (
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )  *x2
-                      - 1.0
-                    );
+                            t1.cSqr
+                            (
+                                pp[facei],
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )*x1
+                          + t2.cSqr
+                            (
+                                pp[facei],
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )*x2
+                        )*prho[facei]*palpha[facei]
+                       /(
+                            t1.Gamma
+                            (
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )*x1
+                          + t2.Gamma
+                            (
+                                prho[facei],
+                                phe[facei],
+                                pT[facei]
+                            )  *x2
+                          - 1.0
+                        );
+                }
             }
         }
     }

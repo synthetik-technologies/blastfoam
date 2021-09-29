@@ -117,7 +117,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
     forAll(alpha, celli)
     {
         const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha().value())
+        if (vfi > this->residualAlpha_.value())
         {
             const scalar alphai(alpha[celli]);
             const scalar rhoi(this->rho_[celli]);
@@ -155,20 +155,23 @@ void Foam::basicFluidBlastThermo<Thermo>::calculate
         forAll(palpha, facei)
         {
             const scalar alphai(palpha[facei]);
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
-            const scalar Xii = alphai/(t.Gamma(rhoi, ei, Ti) - 1.0);
+            if (alphai > this->residualAlpha_.value())
+            {
+                const scalar rhoi(prho[facei]);
+                const scalar ei(phe[facei]);
+                const scalar Ti(pT[facei]);
+                const scalar Xii = alphai/(t.Gamma(rhoi, ei, Ti) - 1.0);
 
-            const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
 
-            ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
-            palphaCp[facei] = Cpi*alphai;
-            palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
-            palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
-            palphaAlphah[facei] = t.kappa(rhoi, ei, Ti)/Cpi*alphai;
-            pxiSum[facei] += Xii;
-            prhoXiSum[facei] += rhoi*Xii;
+                ppXiSum[facei] = t.p(rhoi, ei, Ti)*Xii;
+                palphaCp[facei] = Cpi*alphai;
+                palphaCv[facei] = t.Cv(rhoi, ei, Ti)*alphai;
+                palphaMu[facei] = t.mu(rhoi, ei, Ti)*alphai;
+                palphaAlphah[facei] = t.kappa(rhoi, ei, Ti)/Cpi*alphai;
+                pxiSum[facei] += Xii;
+                prhoXiSum[facei] += rhoi*Xii;
+            }
         }
     }
 }
@@ -185,7 +188,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
     forAll(this->rho_, celli)
     {
         const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha().value())
+        if (vfi > this->residualAlpha_.value())
         {
             cSqrRhoXiSum[celli] +=
                 t.cSqr
@@ -219,10 +222,13 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
 
         forAll(pT, facei)
         {
-            pcSqrRhoXiSum[facei] +=
-                t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
-               *palpha[facei]*prho[facei]
-               /(t.Gamma(prho[facei], phe[facei], pT[facei]) - 1.0);
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                pcSqrRhoXiSum[facei] +=
+                    t.cSqr(pp[facei], prho[facei], phe[facei], pT[facei])
+                   *palpha[facei]*prho[facei]
+                   /(t.Gamma(prho[facei], phe[facei], pT[facei]) - 1.0);
+            }
         }
     }
 }

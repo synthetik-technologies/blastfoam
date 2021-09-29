@@ -145,4 +145,37 @@ inline Foam::constAnIsoSolidTransport<Thermo> Foam::operator*
     );
 }
 
+
+template<class Thermo>
+inline Foam::constAnIsoSolidTransport<Thermo> Foam::operator+
+(
+    const constAnIsoSolidTransport<Thermo>& ct1,
+    const constAnIsoSolidTransport<Thermo>& ct2
+)
+{
+    Thermo thermo
+    (
+        static_cast<const Thermo&>(ct1)
+      + static_cast<const Thermo&>(ct2)
+    );
+
+    if (mag(thermo.Y()) < small)
+    {
+        return constAnIsoSolidTransport<Thermo>
+        (
+            thermo,
+            ct1.kappa_
+        );
+    }
+    else
+    {
+        return constAnIsoSolidTransport<Thermo>
+        (
+            thermo,
+            ct1.Y()/thermo.Y()*ct1.kappa_
+          + ct2.Y()/thermo.Y()*ct2.kappa_
+        );
+    }
+}
+
 // ************************************************************************* //

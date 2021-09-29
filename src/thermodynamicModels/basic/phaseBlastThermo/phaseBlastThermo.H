@@ -257,6 +257,15 @@ public:
             volScalarField& alphaT
         ) = 0;
 
+        //- Add contribution to mixture energy
+        virtual void calculateEnergy
+        (
+            const volScalarField& alpha,
+            const volScalarField& he0,
+            const volScalarField& T,
+            volScalarField& alphaHE
+        ) = 0;
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
 

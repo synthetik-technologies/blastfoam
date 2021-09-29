@@ -51,6 +51,15 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     thermo1_->calculateTemperature(alpha1_, this->he(), T0, T_);
     thermo2_->calculateTemperature(alpha2_, this->he(), T0, T_);
     T_.correctBoundaryConditions();
+
+    if (min(T_).value() < this->TLow_)
+    {
+        T_.max(this->TLow_);
+        volScalarField he0(this->he().oldTime());
+        this->he() =  Zero;
+        thermo1_->calculateTemperature(alpha1_, he0, T_, this->he());
+        thermo2_->calculateTemperature(alpha2_, he0, T_, this->he());
+    }
     this->he().correctBoundaryConditions();
 
     volScalarField XiSum

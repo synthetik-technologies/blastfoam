@@ -339,27 +339,30 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperatu
 
     forAll(alphaT, celli)
     {
-        const scalar x2 = this->cellx(celli);
-        const scalar x1 = 1.0 - x2;
-        const scalar rhoi(this->rho_[celli]);
-        scalar ei = he[celli];
-        scalar Ti;
+        if (alpha[celli] > this->residualAlpha_.value())
+        {
+            const scalar x2 = this->cellx(celli);
+            const scalar x1 = 1.0 - x2;
+            const scalar rhoi(this->rho_[celli]);
+            scalar ei = he[celli];
+            scalar Ti;
 
-        if (x2 < small)
-        {
-            Ti = t1.TRhoE(T0[celli], rhoi, ei);
+            if (x2 < small)
+            {
+                Ti = t1.TRhoE(T0[celli], rhoi, ei);
+            }
+            else if (x1 < small)
+            {
+                Ti = t2.TRhoE(T0[celli], rhoi, ei);
+            }
+            else
+            {
+                Ti =
+                    t1.TRhoE(T0[celli], rhoi, ei)*x1
+                  + t2.TRhoE(T0[celli], rhoi, ei)*x2;
+            }
+            alphaT[celli] += Ti*alpha[celli];
         }
-        else if (x1 < small)
-        {
-            Ti = t2.TRhoE(T0[celli], rhoi, ei);
-        }
-        else
-        {
-            Ti =
-                t1.TRhoE(T0[celli], rhoi, ei)*x1
-              + t2.TRhoE(T0[celli], rhoi, ei)*x2;
-        }
-        alphaT[celli] += Ti*alpha[celli];
     }
 
     forAll(alphaT.boundaryField(), patchi)
@@ -373,26 +376,103 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperatu
 
         forAll(palphaT, facei)
         {
-            const scalar x2 = px[facei];
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                scalar Ti;
+                if (x2 < small)
+                {
+                    Ti = t1.TRhoE(pT0[facei], prho[facei], phe[facei]);
+                }
+                else if (x1 < small)
+                {
+                    Ti = t2.TRhoE(pT0[facei], prho[facei], phe[facei]);
+                }
+                else
+                {
+                    Ti =
+                        t1.TRhoE(pT0[facei], prho[facei], phe[facei])*x1
+                      + t2.TRhoE(pT0[facei], prho[facei], phe[facei])*x2;
+                }
+                palphaT[facei] += Ti*palpha[facei];
+            }
+        }
+    }
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
+(
+    const volScalarField& alpha,
+    const volScalarField& he0,
+    const volScalarField& T,
+    volScalarField& alphaHE
+)
+{
+    const Thermo1& t1(*this);
+    const Thermo2& t2(*this);
+
+    forAll(alphaHE, celli)
+    {
+        if (alpha[celli] > this->residualAlpha_.value())
+        {
+            const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
-            scalar Ti;
+            const scalar rhoi(this->rho_[celli]);
+            scalar hei;
+
             if (x2 < small)
             {
-                Ti =
-                    t1.TRhoE(pT0[facei], prho[facei], phe[facei]);
+                hei = t1.Es(rhoi, he0[celli], T[celli]);
             }
             else if (x1 < small)
             {
-                Ti =
-                    t2.TRhoE(pT0[facei], prho[facei], phe[facei]);
+                hei = t2.Es(rhoi, he0[celli], T[celli]);
             }
             else
             {
-                Ti =
-                    t1.TRhoE(pT0[facei], prho[facei], phe[facei])*x1
-                    + t2.TRhoE(pT0[facei], prho[facei], phe[facei])*x2;
+                hei =
+                    t1.Es(rhoi, he0[celli], T[celli])*x1
+                  + t2.Es(rhoi, he0[celli], T[celli])*x2;
             }
-            palphaT[facei] += Ti*palpha[facei];
+            alphaHE[celli] += hei*alpha[celli];
+        }
+    }
+
+    forAll(alphaHE.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& pT = T.boundaryField()[patchi];
+        const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
+        const scalarField px(this->x(patchi));
+        fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
+
+        forAll(palphaHE, facei)
+        {
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                scalar hei;
+                if (x2 < small)
+                {
+                    hei = t1.Es(prho[facei], phe0[facei], pT[facei]);
+                }
+                else if (x1 < small)
+                {
+                    hei = t2.Es(prho[facei], phe0[facei], pT[facei]);
+                }
+                else
+                {
+                    hei =
+                        t1.Es(prho[facei], phe0[facei], pT[facei])*x1
+                      + t2.Es(prho[facei], phe0[facei], pT[facei])*x2;
+                }
+                palphaHE[facei] += hei*palpha[facei];
+            }
         }
     }
 }

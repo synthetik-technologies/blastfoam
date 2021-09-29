@@ -59,6 +59,25 @@ void Foam::multiphaseFluidBlastThermo::calculate()
         );
     }
     normalise(T_);
+    T_.correctBoundaryConditions();
+    if (min(T_).value() < this->TLow_)
+    {
+        T_.max(this->TLow_);
+        volScalarField he0(this->he().oldTime());
+        this->he() =  Zero;
+        forAll(thermos_, i)
+        {
+            thermos_[i].calculateEnergy
+            (
+                volumeFractions_[i],
+                he0,
+                T_,
+                this->he()
+            );
+        }
+        normalise(this->he());
+    }
+    this->he().correctBoundaryConditions();
 
     volScalarField XiSum
     (

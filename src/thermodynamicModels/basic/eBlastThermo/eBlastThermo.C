@@ -141,7 +141,7 @@ void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateTemperature
     forAll(alphaT, celli)
     {
         const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha().value())
+        if (vfi > this->residualAlpha_.value())
         {
             // Update temperature
             alphaT[celli] +=
@@ -159,13 +159,57 @@ void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateTemperature
 
         forAll(palphaT, facei)
         {
-            palphaT[facei] +=
-                t.TRhoE(pT0[facei], prho[facei], phe[facei])
-                *palpha[facei];
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                palphaT[facei] +=
+                    t.TRhoE(pT0[facei], prho[facei], phe[facei])
+                   *palpha[facei];
+            }
         }
     }
 }
 
+
+template<class BasicThermo, class ThermoType>
+void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateEnergy
+(
+    const volScalarField& alpha,
+    const volScalarField& he0,
+    const volScalarField& T,
+    volScalarField& alphaHE
+)
+{
+    const ThermoType& t(*this);
+    forAll(alphaHE, celli)
+    {
+        const scalar vfi = alpha[celli];
+        if (vfi > this->residualAlpha_.value())
+        {
+            // Update temperature
+            alphaHE[celli] +=
+                t.Es(this->rho_[celli], he0[celli], T[celli])*vfi;
+        }
+    }
+
+    forAll(alphaHE.boundaryField(), patchi)
+    {
+        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
+        const fvPatchScalarField& pT = T.boundaryField()[patchi];
+        fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
+
+        forAll(palphaHE, facei)
+        {
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                palphaHE[facei] +=
+                    t.Es(prho[facei], phe0[facei], pT[facei])
+                   *palpha[facei];
+            }
+        }
+    }
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
