@@ -46,7 +46,7 @@ bool Foam::rootSolver::converged(const scalar error) const
 Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
 :
     eqn_(eqn),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", small)),
+    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-10)),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 10000)),
     stepi_(0),
     error_(great)

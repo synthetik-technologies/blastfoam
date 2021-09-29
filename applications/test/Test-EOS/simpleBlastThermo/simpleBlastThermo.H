@@ -366,14 +366,6 @@ public:
                 const scalar e,
                 const scalar T
             ) const = 0;
-
-            //- Thermal diffusivity of enthalpy [kg/ms]
-            virtual scalar alphah
-            (
-                const scalar rho,
-                const scalar e,
-                const scalar T
-            ) const = 0;
 };
 
 
@@ -745,17 +737,6 @@ public:
             ) const
             {
                 return ThermoType::kappa(rho, e, T);
-            }
-
-            //- Thermal diffusivity of enthalpy [kg/ms]
-            virtual scalar alphah
-            (
-                const scalar rho,
-                const scalar e,
-                const scalar T
-            ) const
-            {
-                return ThermoType::alphah(rho, e, T);
             }
 };
 

@@ -68,7 +68,8 @@ Foam::scalar Foam::secantRootSolver::solve
     {
         scalar yHigh = eqn_.f(xHigh, li);
         xNew =
-            xHigh - yHigh*(xHigh - xLow)/(yHigh - eqn_.f(xLow, li));
+            xHigh - yHigh*(xHigh - xLow)
+           /stabilise(yHigh - eqn_.f(xLow, li), small);
 
         xLow = xHigh;
         xHigh = xNew;

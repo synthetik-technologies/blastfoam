@@ -44,7 +44,6 @@ int main(int argc, char *argv[])
     Info<<"p: "<< eos.p(rho, e, T) <<endl;
     Info<<"c: "<< Foam::sqrt(eos.cSqr(p, rho, e, T)) <<endl;
     Info<<"T: "<< T <<endl;
-    Info<<"CpMCv: "<< eos.CpMCv(rho, e, T) <<endl;
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;
     Info<<"Cv: "<< eos.Cv(rho, e, T) <<endl;
     Info<<"rho: "<< eos.rhoPT(p, T) <<endl;
