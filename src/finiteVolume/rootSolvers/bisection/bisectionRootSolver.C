@@ -58,6 +58,7 @@ Foam::scalar Foam::bisectionRootSolver::solve
     scalar xMean = x0;
     scalar xLow = eqn_.lower();
     scalar xHigh = eqn_.upper();
+    scalar y = eqn_.f(xMean, li);
 
     if (!eqn_.containsRoot(li))
     {
@@ -66,9 +67,6 @@ Foam::scalar Foam::bisectionRootSolver::solve
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xMean = (xLow + xHigh)/2.0;
-        scalar y = eqn_.f(xMean, li);
-
         if (y > 0)
         {
             xLow = xMean;
@@ -78,10 +76,13 @@ Foam::scalar Foam::bisectionRootSolver::solve
             xHigh = xMean;
         }
 
-        if (converged(xHigh - xLow) || converged(y))
+        if (converged(y))
         {
             return xMean;
         }
+
+        xMean = (xLow + xHigh)/2.0;
+        y = eqn_.f(xMean, li);
 
     }
     WarningInFunction
