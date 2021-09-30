@@ -16,17 +16,12 @@ FoamFile
 
 convertToMeters 1;
 
-H   2.5;
-R   0.5;
+H   1.5;
+R   1.5;
 
-cellSize 0.05;
-
-nx  #calc "ceil($R / $cellSize)";
-nH  #calc "ceil($H / $cellSize)";
-
-x #calc "$R * cos(5.0 * Foam::constant::mathematical::pi/180)";
-y #calc "$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
-ny #calc "-$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
+x #calc "$R * cos(Foam::constant::mathematical::pi/180)";
+y #calc "$R * sin(Foam::constant::mathematical::pi/180)";
+ny #calc "-$R * sin(Foam::constant::mathematical::pi/180)";
 vertices
 (
     (0 0 0)
@@ -39,7 +34,7 @@ vertices
 
 blocks
 (
-    hex (0 1 2 0 3 4 5 3) ($nx 1 $nH) simpleGrading (1 1 1)
+    hex (0 1 2 0 3 4 5 3) (30 1 30) simpleGrading (1 1 1)
 );
 
 edges

@@ -38,6 +38,8 @@ Description
 #include "wedgeFvPatch.H"
 #include "IOobjectList.H"
 #include "HashSet.H"
+#include "UautoPtr.H"
+#include "genericFvPatchField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -54,11 +56,26 @@ wordList createBoundaryTypes
     HashTable<word> srcBoundaryTypes;
     forAll(srcBoundary, patchi)
     {
-        srcBoundaryTypes.insert
-        (
-            srcBoundary[patchi].patch().name(),
-            srcBoundary[patchi].type()
-        );
+        if (!isA<genericFvPatchField<Type>>(srcBoundary[patchi]))
+        {
+            srcBoundaryTypes.insert
+            (
+                srcBoundary[patchi].patch().name(),
+                srcBoundary[patchi].type()
+            );
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Unknown patch type for patch "
+                << srcBoundary[patchi].patch().name()
+                << " for " << src.name() << nl
+                << "Perhaps the library is missing?" << nl
+                << "include the necessary library with"
+                << " \'libs (\"lib*.so\")\'" << nl
+                << " in the controlDict" << endl
+                << abort(FatalError);
+        }
     }
 
     wordList targetBoundaryTypes
@@ -84,6 +101,7 @@ void mapVolFields
     const fvMesh& sourceMesh,
     const fvMesh& targetMesh,
     const labelList& cellMap,
+    const labelList& extendedCellMap,
     const IOobjectList& objects,
     const tensorField& R,
     const HashSet<word>& mapFields
@@ -102,12 +120,13 @@ void mapVolFields
             IOobject::AUTO_WRITE
         );
 
-        bool map = false;
+        bool mapField = false;
         fieldType fieldSource(*fieldIter(), sourceMesh);
         autoPtr<fieldType> fieldTargetPtr;
+        UautoPtr<const labelList> mapPtr;
         if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
         {
-            map = true;
+            mapField = true;
             fieldTargetPtr.set
             (
                 new fieldType
@@ -116,10 +135,11 @@ void mapVolFields
                     targetMesh
                 )
             );
+            mapPtr.set(&cellMap);
         }
         else if (mapFields.found(fieldTargetIOobject.name()))
         {
-            map = true;
+            mapField = true;
             fieldTargetIOobject.readOpt() = IOobject::NO_READ;
             fieldTargetPtr.set
             (
@@ -136,124 +156,103 @@ void mapVolFields
                     createBoundaryTypes<Type>(fieldSource, targetMesh)
                 )
             );
+            mapPtr.set(&extendedCellMap);
         }
 
-        if (map)
+        if (mapField)
         {
             Info<< "    mapping " << fieldIter()->name() << endl;
 
             // Read fieldTarget
             fieldType& fieldTarget = fieldTargetPtr();
 
-            forAll(cellMap, celli)
+            const labelList& map = mapPtr();
+
+            forAll(map, celli)
             {
-                label cellj = cellMap[celli];
+                label cellj = map[celli];
                 if (cellj != -1)
                 {
                     Type v = fieldSource[cellj];
-                    fieldTarget[celli] = (R[celli] & v);
+                    fieldTarget[celli] = transform(R[celli], v);
                 }
             }
             fieldTarget.write();
         }
+#ifdef FULLDEBUG
+        else
+        {
+            Info<< "    Not mapping " << fieldIter()->name() << nl
+                << "         Add to \"additionalFields\" if you would "
+                << "like to include it" << endl;
+        }
+#endif
     }
 }
 
-void mapVolScalarFields
-(
-    const fvMesh& sourceMesh,
-    const fvMesh& targetMesh,
-    const labelList& cellMap,
-    const IOobjectList& objects,
-    const HashSet<word>& mapFields
-)
-{
-    typedef GeometricField<scalar, fvPatchField, volMesh> fieldType;
-    IOobjectList fields = objects.lookupClass(fieldType::typeName);
-    forAllIter(IOobjectList, fields, fieldIter)
-    {
-        IOobject fieldTargetIOobject
-        (
-            fieldIter()->name(),
-            targetMesh.time().timeName(),
-            targetMesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        );
-
-        // Read field fieldSource
-        fieldType fieldSource(*fieldIter(), sourceMesh);
-        autoPtr<fieldType> fieldTargetPtr;
-
-        bool map = false;
-        if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
-        {
-            map = true;
-            fieldTargetPtr.set
-            (
-                new fieldType
-                (
-                    fieldTargetIOobject,
-                    targetMesh
-                )
-            );
-        }
-        else if (mapFields.found(fieldTargetIOobject.name()))
-        {
-            map = true;
-            fieldTargetIOobject.readOpt() = IOobject::NO_READ;
-            fieldTargetPtr.set
-            (
-                new fieldType
-                (
-                    fieldTargetIOobject,
-                    targetMesh,
-                    dimensioned<scalar>
-                    (
-                        "0",
-                        fieldSource.dimensions(),
-                        0.0
-                    ),
-                    createBoundaryTypes<scalar>(fieldSource, targetMesh)
-                )
-            );
-        }
-        if (map)
-        {
-            Info<< "    mapping " << fieldIter()->name() << endl;
-
-            // Read fieldTarget
-            fieldType& fieldTarget = fieldTargetPtr();
-            forAll(cellMap, celli)
-            {
-                label cellj = cellMap[celli];
-                if (cellj != -1)
-                {
-                    fieldTarget[celli] = fieldSource[cellj];
-                }
-            }
-            fieldTarget.correctBoundaryConditions();
-            fieldTarget.write();
-        }
-    }
-}
 
 void mapFields
 (
     const fvMesh& sourceMesh,
     const fvMesh& targetMesh,
     const labelList& cellMap,
+    const labelList& extendedCellMap,
     const tensorField& R,
     const HashSet<word>& additionalFields
 )
 {
     IOobjectList objects(sourceMesh, sourceMesh.time().timeName());
 
-    mapVolScalarFields(sourceMesh, targetMesh, cellMap, objects, additionalFields);
-    mapVolFields<vector>(sourceMesh, targetMesh, cellMap, objects, R, additionalFields);
-//     mapVolFields<sphericalTensor>(sourceMesh, targetMesh, cellMap, objects, R);
-//     mapVolFields<symmTensor>(sourceMesh, targetMesh, cellMap, objects, R);
-    mapVolFields<tensor>(sourceMesh, targetMesh, cellMap, objects, R, additionalFields);
+    mapVolFields<scalar>
+    (
+        sourceMesh,
+        targetMesh,
+        cellMap,
+        extendedCellMap,
+        objects,
+        R,
+        additionalFields
+    );
+    mapVolFields<vector>
+    (
+        sourceMesh,
+        targetMesh,
+        cellMap,
+        extendedCellMap,
+        objects,
+        R,
+        additionalFields
+    );
+    mapVolFields<sphericalTensor>
+    (
+        sourceMesh,
+        targetMesh,
+        cellMap,
+        extendedCellMap,
+        objects,
+        R,
+        additionalFields
+    );
+    mapVolFields<symmTensor>
+    (
+        sourceMesh,
+        targetMesh,
+        cellMap,
+        extendedCellMap,
+        objects,
+        R,
+        additionalFields
+    );
+    mapVolFields<tensor>
+    (
+        sourceMesh,
+        targetMesh,
+        cellMap,
+        extendedCellMap,
+        objects,
+        R,
+        additionalFields
+    );
 }
 
 
@@ -276,7 +275,7 @@ Foam::Pair<Foam::vector> calculateAxis(const fvMesh& mesh)
             vector a = cmptMag(wp.axis());
             forAll(foundAxis, ai)
             {
-                if (mag(a - foundAxis[ai]) < 1e-10)
+                if (mag(a - foundAxis[ai]) < 1e-6)
                 {
                     found = true;
                     break;
@@ -292,8 +291,8 @@ Foam::Pair<Foam::vector> calculateAxis(const fvMesh& mesh)
     }
     forAll(yAxis, cmpti)
     {
-        rAxis[cmpti] = min(rAxis[cmpti]*pos(rAxis[cmpti] - small), 1.0);
-        yAxis[cmpti] = min(yAxis[cmpti]*pos(yAxis[cmpti] - small), 1.0);
+        rAxis[cmpti] = min(rAxis[cmpti]*pos(rAxis[cmpti] - 1e-6), 1.0);
+        yAxis[cmpti] = min(yAxis[cmpti]*pos(yAxis[cmpti] - 1e-6), 1.0);
     }
     return axis;
 }
@@ -323,16 +322,13 @@ void calcMapAndR
     const vector& rotationAxis,
     const vector& rAxis,
     labelList& cellMap,
+    labelList& extendedCellMap,
     tensorField& R
 )
 {
     label nSourceD = sourceMesh.nGeometricD();
-    vector sourceD(sourceMesh.geometricD());
     vector targetD(targetMesh.geometricD());
 
-    // Create map
-    cellMap = labelList(targetMesh.nCells(), -1);
-    R = tensorField(targetMesh.nCells(), tensor::I);
     forAll(cellMap, celli)
     {
         // Get the position on the target mesh
@@ -349,12 +345,6 @@ void calcMapAndR
         // Radius
         scalar r = mag(nTarget);
 
-        // Remove points outside of the maximum radius
-        if (r > maxR)
-        {
-            r = great;
-        }
-
         // Offset from the source mesh center (only solved directions)
         vector nSource(Zero);
         if (nSourceD == 1)
@@ -368,32 +358,23 @@ void calcMapAndR
             nSource = y*rotationAxis + x*rAxis;
         }
 
+        R[celli] = rotationTensor(nSource, nTarget);
+
         // Actual point on the source mesh
         vector ptSource = nSource + sourceCentre;
 
         // Map from the source mesh to the target mesh
         cellMap[celli] = sourceMesh.findCell(ptSource);
+        extendedCellMap[celli] = cellMap[celli];
 
         // Extend radius is the target point is outside of the source mesh
-        if (maxR < 0 && cellMap[celli] < 0)
+        if (cellMap[celli] < 0)
         {
-            cellMap[celli] = sourceMesh.findNearestCell(ptSource);
-        }
-
-        // Calculate the rotation matrix for vectors and tensors
-        if (cellMap[celli] >= 0)
-        {
-            vector a = nSource/mag(nSource);
-            vector b = nTarget/mag(nTarget);
-            vector v = (a ^ b);
-            scalar c = a & b;
-            tensor A
-            (
-                0.0, -v[2], v[1],
-                v[2], 0.0, -v[0],
-                -v[1], v[0], 0.0
-            );
-            R[celli] = tensor::I + A + (A & A)/(1.0 + c);
+            extendedCellMap[celli] = sourceMesh.findNearestCell(ptSource);
+            if (r < maxR)
+            {
+                cellMap[celli] = extendedCellMap[celli];
+            }
         }
     }
 }
@@ -691,8 +672,9 @@ int main(int argc, char *argv[])
         Info<< "Source mesh size: " << sourceMesh.nCells() << tab
             << "Target mesh size: " << targetMesh.nCells() << nl << endl;
 
-        labelList cellMap;
-        tensorField R;
+        labelList cellMap(targetMesh.nCells(), -1);
+        labelList extendedCellMap(targetMesh.nCells(), -1);
+        tensorField R(targetMesh.nCells(), tensor::I);
         calcMapAndR
         (
             sourceMesh,
@@ -703,6 +685,7 @@ int main(int argc, char *argv[])
             rotationAxis,
             rAxis,
             cellMap,
+            extendedCellMap,
             R
         );
 
@@ -712,17 +695,20 @@ int main(int argc, char *argv[])
             sourceMesh,
             targetMesh,
             cellMap,
+            extendedCellMap,
             R,
             additionalFieldsNames
         );
 
         if (copyUniform)
         {
-            Info<<"here"<<endl;
+            fileName local = "uniform";
+            fileName path = targetMesh.time().timePath();
+
             IOobjectList uniformObjects
             (
                 sourceMesh,
-                sourceMesh.time().timeName()/"uniform"
+                sourceMesh.time().timeName()/local
             );
             forAllConstIter
             (
@@ -731,8 +717,16 @@ int main(int argc, char *argv[])
                 iter
             )
             {
-                Info<<iter()->name()<<endl;
-                Info<<iter()->objectPath()<<endl;
+                fileName name = iter()->name();
+                if (name != "time")
+                {
+                    fileName srcPath = iter()->objectPath();
+                    cp
+                    (
+                        iter()->objectPath(),
+                        path/local/name
+                    );
+                }
             }
         }
     }

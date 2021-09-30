@@ -96,6 +96,11 @@ bool Foam::activationModel::detonationPoint::check
     const volScalarField& alphaRho
 )
 {
+    if (activated_)
+    {
+        return true;
+    }
+
     const fvMesh& mesh = alphaRho.mesh();
     const vector& pt(*this);
 
@@ -135,7 +140,7 @@ bool Foam::activationModel::detonationPoint::check
             << "activation of detonation point " << pt
             << abort(FatalError);
     }
-    activated_ = mesh.time().value() > delay_;
+    activated_ = activated_ || mesh.time().value() > delay_;
 
     return true;
 }
