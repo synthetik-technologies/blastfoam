@@ -552,9 +552,9 @@ int main(int argc, char *argv[])
 
     label maxLevel =
     (
-        levels.size() && !setFieldsDict.found("maxLevel")
-        ? max(levels)
-        : setFieldsDict.lookupOrDefault<label>("maxLevel", 0)
+        levels.size() && !setFieldsDict.found("maxRefinement")
+      ? max(levels)
+      : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
     );
 
     // Error fields is the same since it is looked up
@@ -584,7 +584,6 @@ int main(int argc, char *argv[])
     // If debugging read in all to the necessary fields
     if (debug)
     {
-        Info<<"start"<<endl;
         // Read default values and set fields
         if (setFieldsDict.found("defaultFieldValues"))
         {
@@ -614,7 +613,6 @@ int main(int argc, char *argv[])
                 );
             }
         }
-        Info<<"end"<<endl;
     }
 
     // Flag for final iteration
