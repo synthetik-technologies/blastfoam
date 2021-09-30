@@ -57,8 +57,8 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         T_.max(this->TLow_);
         volScalarField he0(this->he().oldTime());
         this->he() =  Zero;
-        thermo1_->calculateTemperature(alpha1_, he0, T_, this->he());
-        thermo2_->calculateTemperature(alpha2_, he0, T_, this->he());
+        thermo1_->calculateEnergy(alpha1_, he0, T_, this->he());
+        thermo2_->calculateEnergy(alpha2_, he0, T_, this->he());
     }
     this->he().correctBoundaryConditions();
 
