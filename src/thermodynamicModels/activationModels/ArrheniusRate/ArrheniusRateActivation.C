@@ -48,7 +48,7 @@ Foam::activationModels::ArrheniusRateActivation::ArrheniusRateActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName),
+    activationModel(mesh, dict, phaseName, false),
     rho0_
     (
         "rho0",

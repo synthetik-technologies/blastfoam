@@ -47,7 +47,7 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName),
+    activationModel(mesh, dict, phaseName, false),
 
     pScale_(dict.lookupOrDefault("pScale", 1.0)),
 

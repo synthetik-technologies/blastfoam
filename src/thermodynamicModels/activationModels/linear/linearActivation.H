@@ -70,13 +70,6 @@ class linearActivation
         //- Correct lambda field after advection
         virtual void correct();
 
-        //- Do detonation points need to be specified
-        virtual bool needDetonationPoints() const
-        {
-            return true;
-        }
-
-
 
 public:
 

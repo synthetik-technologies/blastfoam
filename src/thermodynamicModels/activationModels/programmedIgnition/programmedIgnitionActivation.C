@@ -59,7 +59,15 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName),
+    activationModel
+    (
+        mesh,
+        dict,
+        phaseName,
+        burnModelNames_.read(dict.lookup("burnModel")) == PROGRAMMED
+      ? true
+      : false
+    ),
     rho_
     (
         mesh.lookupObject<volScalarField>
@@ -152,7 +160,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
     const cellList& cells = this->mesh().cells();
     const scalarField magSf(mag(this->mesh().faceAreas()));
 
-    dimensionedScalar t(this->time());
+    dimensionedScalar t(timeIntegrationSystem::time());
 
     forAll(lambda_, celli)
     {

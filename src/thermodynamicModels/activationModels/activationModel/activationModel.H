@@ -41,6 +41,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
+#include "IOPtrList.H"
 #include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 
@@ -55,9 +56,9 @@ class activationModel
 :
     public timeIntegrationSystem
 {
-protected:
+public:
 
-    // Protected data
+    // Public class declaration
 
         // Declaration of detonation point class
         class detonationPoint
@@ -78,16 +79,30 @@ protected:
 
         public:
 
-            detonationPoint
-            (
-                const volScalarField& mesh,
-                const vector& pt,
-                const scalar& delay,
-                const scalar& radius
-            );
+            //- Type name
+            TypeName("detonationPoint");
 
-            virtual ~detonationPoint()
-            {}
+            // Constructors
+
+                //- Construct from components
+                detonationPoint
+                (
+                    const vector& pt,
+                    const scalar delay,
+                    const scalar radius
+                );
+
+                //- Construct from Istream
+                detonationPoint(Istream& is);
+
+
+            //- Construct on freestore from Istream and return
+            static autoPtr<detonationPoint> New(Istream& is);
+
+            //- Clone the detonation point
+            virtual autoPtr<detonationPoint> clone() const;
+
+            virtual ~detonationPoint();
 
             // Public access
 
@@ -104,21 +119,40 @@ protected:
                 }
 
                 //- Return delay
-                const scalar& delay() const
+                scalar delay() const
                 {
                     return delay_;
                 }
 
+                //- Return the activation radius
+                scalar radius() const
+                {
+                    return radius_;
+                }
+
+                //- Check if the point will activate any cells or mass
+                //  and set activated if time > delay
+                bool check(const volScalarField&);
+
                 //- Set activated cells by setting lambda
                 void setActivated(volScalarField&, bool update) const;
+
+            // Ostream operator
+
+                friend Ostream& operator<<
+                (
+                    Ostream&,
+                    const detonationPoint&
+                );
         };
 
+protected:
 
         //- Progress variable
         volScalarField lambda_;
 
         //- Detonation points
-        PtrList<detonationPoint> detonationPoints_;
+        IOPtrList<detonationPoint> detonationPoints_;
 
         //- Specific activation energy
         dimensionedScalar e0_;
@@ -152,25 +186,24 @@ protected:
         virtual void correct()
         {}
 
-        //- Return the center of centerOfMass
-        //  Only valid for a single detonation point
-        vector centerOfMass
+        //- Return the list of detonation points read from the
+        //  input dictionary
+        PtrList<detonationPoint> readDetonationPoints
         (
-            const fvMesh& mesh,
-            const volScalarField& alpha
+            const dictionary& dict,
+            const volScalarField& alpha,
+            const bool needDetonationPoints
         ) const;
 
-        //- Do detonation points need to be specified
-        virtual bool needDetonationPoints() const
-        {
-            return false;
-        }
+        //- Return the center of centerOfMass
+        //  Only valid for a single detonation point
+        vector centerOfMass(const volScalarField& alpha) const;
 
 
 public:
 
     //- Runtime type information
-    ClassName("activationModel");
+    TypeName("activationModel");
 
 
     // Declare runtime construction
@@ -193,7 +226,8 @@ public:
     (
         const fvMesh& mesh,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const bool needDetonationPoints
     );
 
 
@@ -270,6 +304,8 @@ public:
         virtual tmp<volScalarField> ESource() const;
 };
 
+
+Ostream& operator<<(Ostream&, const activationModel::detonationPoint&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

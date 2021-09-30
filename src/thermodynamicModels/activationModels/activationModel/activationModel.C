@@ -31,35 +31,83 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(activationModel, 0);
+    defineTypeNameAndDebug(activationModel::detonationPoint, 0);
+    defineTemplateTypeNameAndDebug
+    (
+        IOPtrList<activationModel::detonationPoint>,
+        0
+    );
     defineRunTimeSelectionTable(activationModel, dictionary);
 }
 
-// * * * * * * * * * * * * * detonationPoint Functions * * * * * * * * * * * //
+// * * * * * * * * * * Static detonationPoint functions  * * * * * * * * * * //
+
+Foam::autoPtr<Foam::activationModel::detonationPoint>
+Foam::activationModel::detonationPoint::New(Istream& is)
+{
+    return autoPtr<detonationPoint>(new detonationPoint(is));
+}
+
+
+// * * * * * * * * * * * * detonationPoint constructor * * * * * * * * * * * //
 
 Foam::activationModel::detonationPoint::detonationPoint
 (
-    const volScalarField& alpha,
     const vector& pt,
-    const scalar& delay,
-    const scalar& radius
+    const scalar delay,
+    const scalar radius
 )
 :
     vector(pt),
     activated_(false),
     delay_(delay),
     radius_(radius)
+{}
+
+
+Foam::activationModel::detonationPoint::detonationPoint(Istream& is)
+:
+    vector(is),
+    activated_(readBool(is)),
+    delay_(readScalar(is)),
+    radius_(readScalar(is))
+{}
+
+// * * * * * * * * * * * * detonationPoint destructor * * * * * * * * * * * //
+
+Foam::activationModel::detonationPoint::~detonationPoint()
+{}
+
+
+// * * * * * * * * * * detonationPoint member functions  * * * * * * * * * * //
+
+Foam::autoPtr<Foam::activationModel::detonationPoint>
+Foam::activationModel::detonationPoint::clone() const
 {
-    const fvMesh& mesh = alpha.mesh();
+    return autoPtr<detonationPoint>
+    (
+        new detonationPoint(*this)
+    );
+}
+
+
+bool Foam::activationModel::detonationPoint::check
+(
+    const volScalarField& alphaRho
+)
+{
+    const fvMesh& mesh = alphaRho.mesh();
+    const vector& pt(*this);
 
     label nCells = 0;
-    scalar sumAlpha = 0.0;
-    if (radius > small)
+    scalar sumAlphaRho = 0.0;
+    if (radius_ > small)
     {
         forAll(mesh.C(), celli)
         {
-            if (mag(mesh.C()[celli] - pt) < radius)
+            if (mag(mesh.C()[celli] - pt) < radius_)
             {
-                sumAlpha += alpha[celli];
+                sumAlphaRho += alphaRho[celli];
                 nCells++;
             }
         }
@@ -69,7 +117,7 @@ Foam::activationModel::detonationPoint::detonationPoint
         label celli = mesh.findCell(pt);
         if (celli >= 0)
         {
-            sumAlpha += alpha[celli];
+            sumAlphaRho += alphaRho[celli];
             nCells++;
         }
     }
@@ -80,14 +128,18 @@ Foam::activationModel::detonationPoint::detonationPoint
             << "detonation point " << pt
             << abort(FatalError);
     }
-    if (returnReduce(sumAlpha, sumOp<scalar>()) < small)
+    if (returnReduce(sumAlphaRho, sumOp<scalar>()) < small)
     {
         FatalErrorInFunction
             << "No mass was found in the region specified for "
             << "activation of detonation point " << pt
             << abort(FatalError);
     }
+    activated_ = mesh.time().value() > delay_;
+
+    return true;
 }
+
 
 void Foam::activationModel::detonationPoint::setActivated
 (
@@ -141,13 +193,28 @@ void Foam::activationModel::detonationPoint::setActivated
 }
 
 
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const activationModel::detonationPoint& dp
+)
+{
+    os  << vector(dp) << token::SPACE
+        << dp.activated_ << token::SPACE
+        << dp.delay_ << token::SPACE
+        << dp.radius_ << token::SPACE;
+    return os;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::activationModel::activationModel
 (
     const fvMesh& mesh,
     const dictionary& dict,
-    const word& phaseName
+    const word& phaseName,
+    const bool needDetonationPoints
 )
 :
     timeIntegrationSystem
@@ -168,7 +235,27 @@ Foam::activationModel::activationModel
         mesh,
         dimensionedScalar("0", dimless, 0.0)
     ),
-    detonationPoints_(0),
+    detonationPoints_
+    (
+        IOobject
+        (
+            IOobject::groupName("detonationPoints", phaseName),
+            mesh.time().timeName(),
+            "uniform",
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        readDetonationPoints
+        (
+            dict,
+            mesh.lookupObject<volScalarField>
+            (
+                IOobject::groupName("alpha", phaseName)
+            ),
+            needDetonationPoints
+        )
+    ),
     e0_
     (
         dict.found("E0")
@@ -186,46 +273,52 @@ Foam::activationModel::activationModel
     alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
-    const volScalarField& alpha
-    (
-        mesh.lookupObject<volScalarField>
-        (
-            IOobject::groupName("alpha", phaseName)
-        )
-    );
-
-    forAll(detonationPoints_, pti)
+    if (detonationPoints_.size())
     {
-        label celli = mesh.findCell(detonationPoints_[pti]);
-        if (returnReduce(celli, maxOp<label>()) < 0)
+        vectorField points(detonationPoints_.size());
+        scalarField delays(detonationPoints_.size());
+        scalarField radii(detonationPoints_.size());
+        forAll(detonationPoints_, pti)
         {
-            FatalErrorInFunction
-                << "Detonation point at " << detonationPoints_[pti]
-                << " is was not found in the mesh. "
-                << abort(FatalError);
+            points[pti] = detonationPoints_[pti];
+            delays[pti] = detonationPoints_[pti].delay();
+            radii[pti] = detonationPoints_[pti].radius();
         }
-        else if (celli >= 0)
-        {
-            if (alpha[celli] < small)
-            {
-                FatalErrorInFunction
-                    << "There is no mass for phase " << phaseName
-                    << " at " << detonationPoints_[pti]
-                    << abort(FatalError);
-            }
-        }
+        Info<< "Initiation Points: " << nl
+            << "    " << points << nl
+            << "Delays: " << nl
+            << "    " << delays << nl
+            << "Radii: " << nl
+            << "    " << radii << endl;
     }
+}
 
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::activationModel::~activationModel()
+{}
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::PtrList<Foam::activationModel::detonationPoint>
+Foam::activationModel::readDetonationPoints
+(
+    const dictionary& dict,
+    const volScalarField& alpha,
+    const bool needDetonationPoints
+) const
+{
     Switch useCOM(dict.lookupOrDefault("useCOM", false));
     List<vector> points
     (
         (!useCOM || dict.found("points"))
       ? (
-            this->needDetonationPoints()
+            needDetonationPoints
           ? dict.lookup<List<vector>>("points")
           : dict.lookupOrDefault("points", List<vector>(0))
         )
-      : List<vector>(1, this->centerOfMass(mesh, alpha))
+      : List<vector>(1, this->centerOfMass(alpha))
     );
 
     scalarList delays
@@ -259,43 +352,25 @@ Foam::activationModel::activationModel
                 << "    # of delays: " << delays.size() << nl
                 << abort(FatalError);
         }
-
-        Info<< "Initiation Points: " << nl
-            << "    " << points << nl
-            << "Delays: " << nl
-            << "    " << delays << nl
-            << "Radii: " << nl
-            << "    " << radii << endl;
     }
 
-    detonationPoints_.resize(points.size());
-    forAll(detonationPoints_, i)
+    PtrList<detonationPoint> detPoints(points.size());
+    forAll(detPoints, i)
     {
-        detonationPoints_.set
+        detPoints.set
         (
             i,
             new detonationPoint
             (
-                alpha,
                 points[i],
                 delays[i],
                 radii[i]
             )
         );
-        if (mesh.time().value() > delays[i])
-        {
-            detonationPoints_[i].activated() = true;
-        }
     }
+    return detPoints;
 }
 
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::activationModel::~activationModel()
-{}
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::activationModel::initializeModels()
 {
@@ -314,14 +389,19 @@ void Foam::activationModel::initializeModels()
     (
         &lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
     );
+
+    forAll(detonationPoints_, i)
+    {
+        detonationPoints_[i].check(alphaRhoPtr_());
+    }
 }
 
 Foam::vector Foam::activationModel::centerOfMass
 (
-    const fvMesh& mesh,
     const volScalarField& alpha
 ) const
 {
+    const fvMesh& mesh = alpha.mesh();
     scalarField Vtot(mesh.V()*alpha.primitiveField());
     vectorField m1(Vtot*mesh.C().primitiveField());
     scalar V(gSum(Vtot));
@@ -406,5 +486,6 @@ Foam::tmp<Foam::volScalarField> Foam::activationModel::ddtLambda() const
 {
     return ddtLambda_();
 }
+
 
 // ************************************************************************* //

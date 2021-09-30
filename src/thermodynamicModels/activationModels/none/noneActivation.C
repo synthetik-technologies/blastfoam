@@ -47,7 +47,7 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName)
+    activationModel(mesh, dict, phaseName, false)
 {
     lambda_ = 1.0;
 }
