@@ -42,6 +42,43 @@ Description
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
+wordList createBoundaryTypes
+(
+    const GeometricField<Type, fvPatchField, volMesh>& src,
+    const fvMesh& targetMesh
+)
+{
+    const typename GeometricField<Type, fvPatchField, volMesh>::Boundary&
+        srcBoundary = src.boundaryField();
+
+    HashTable<word> srcBoundaryTypes;
+    forAll(srcBoundary, patchi)
+    {
+        srcBoundaryTypes.insert
+        (
+            srcBoundary[patchi].patch().name(),
+            srcBoundary[patchi].type()
+        );
+    }
+
+    wordList targetBoundaryTypes
+    (
+        targetMesh.boundary().size(),
+        calculatedFvPatchField<Type>::typeName
+    );
+    forAll(targetMesh.boundary(), patchi)
+    {
+        if (srcBoundaryTypes.found(targetMesh.boundaryMesh()[patchi].name()))
+        {
+            targetBoundaryTypes[patchi] =
+                srcBoundaryTypes[targetMesh.boundaryMesh()[patchi].name()];
+        }
+    }
+    return targetBoundaryTypes;
+}
+
+
+template<class Type>
 void mapVolFields
 (
     const fvMesh& sourceMesh,
@@ -95,7 +132,8 @@ void mapVolFields
                         "0",
                         fieldSource.dimensions(),
                         pTraits<Type>::zero
-                    )
+                    ),
+                    createBoundaryTypes<Type>(fieldSource, targetMesh)
                 )
             );
         }
@@ -175,7 +213,8 @@ void mapVolScalarFields
                         "0",
                         fieldSource.dimensions(),
                         0.0
-                    )
+                    ),
+                    createBoundaryTypes<scalar>(fieldSource, targetMesh)
                 )
             );
         }
@@ -204,18 +243,17 @@ void mapFields
     const fvMesh& sourceMesh,
     const fvMesh& targetMesh,
     const labelList& cellMap,
-    const HashSet<word>& fields,
     const tensorField& R,
-    const HashSet<word>& mapFields
+    const HashSet<word>& additionalFields
 )
 {
     IOobjectList objects(sourceMesh, sourceMesh.time().timeName());
 
-    mapVolScalarFields(sourceMesh, targetMesh, cellMap, objects, mapFields);
-    mapVolFields<vector>(sourceMesh, targetMesh, cellMap, objects, R, mapFields);
+    mapVolScalarFields(sourceMesh, targetMesh, cellMap, objects, additionalFields);
+    mapVolFields<vector>(sourceMesh, targetMesh, cellMap, objects, R, additionalFields);
 //     mapVolFields<sphericalTensor>(sourceMesh, targetMesh, cellMap, objects, R);
 //     mapVolFields<symmTensor>(sourceMesh, targetMesh, cellMap, objects, R);
-    mapVolFields<tensor>(sourceMesh, targetMesh, cellMap, objects, R, mapFields);
+    mapVolFields<tensor>(sourceMesh, targetMesh, cellMap, objects, R, additionalFields);
 }
 
 
@@ -428,6 +466,11 @@ int main(int argc, char *argv[])
         "wordList|'(rho U)'",
         "List of additional fields to map"
     );
+    argList::addBoolOption
+    (
+        "uniform",
+        "Copy uniform objects (not time)"
+    );
 
     #include "addRegionOption.H"
 
@@ -484,11 +527,7 @@ int main(int argc, char *argv[])
     }
     HashSet<word> additionalFields(additionalFieldsNames);
 
-    if (args.optionFound("parallel"))
-    {
-        caseDirTarget =
-            caseDirTarget/fileName(word("processor")+ name(Pstream::myProcNo()));
-    }
+    bool copyUniform = args.optionFound("uniform");
 
     fvMesh& targetMesh = mesh;
     Time& runTimeTarget = runTime;
@@ -673,10 +712,29 @@ int main(int argc, char *argv[])
             sourceMesh,
             targetMesh,
             cellMap,
-            additionalFieldsNames,
             R,
-            fields
+            additionalFieldsNames
         );
+
+        if (copyUniform)
+        {
+            Info<<"here"<<endl;
+            IOobjectList uniformObjects
+            (
+                sourceMesh,
+                sourceMesh.time().timeName()/"uniform"
+            );
+            forAllConstIter
+            (
+                IOobjectList,
+                uniformObjects,
+                iter
+            )
+            {
+                Info<<iter()->name()<<endl;
+                Info<<iter()->objectPath()<<endl;
+            }
+        }
     }
 
     Info<< "\nEnd\n" << endl;

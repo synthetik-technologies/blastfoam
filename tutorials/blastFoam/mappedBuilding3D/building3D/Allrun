@@ -1,0 +1,32 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Pre-process the stl
+runApplication surfaceFeatures
+
+# -- Create the mesh for the fluid
+runApplication blockMesh
+
+# -- Decompose the mesh
+runApplication decomposePar -copyZero
+
+# -- Cut out the stl
+runParallel snappyHexMesh -overwrite
+
+runParallel -s 0 rotateFields ../axisymmeticCharge -sourceTime 7e-5 -fields '(rho)' -centre '(0 0 1)'
+
+# -- Set the initial conditions for the fluid
+runParallel -s 1 setRefinedFields -updateAll
+
+runParallel -s 1 rotateFields ../axisymmeticCharge -sourceTime 5e-5 -fields '(rho)' -centre '(0 0 1)'
+
+#- Run the calc
+# runParallel $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file

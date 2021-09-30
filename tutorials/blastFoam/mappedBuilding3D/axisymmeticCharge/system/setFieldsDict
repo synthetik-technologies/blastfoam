@@ -1,0 +1,54 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fields (alpha.c4);
+nBufferLayers 5;
+
+defaultFieldValues
+(
+    volScalarFieldValue alpha.c4 0
+);
+
+
+regions
+(
+    cylindericalMassToCell // Use cylinder for 3D
+    {
+        rho 1601;
+        mass 25;
+        centre (0 0 0.5);
+        direction (0 0 1);
+        LbyD    2.5;
+
+        backup
+        {
+            centre (0 0 0.5);
+            L (0 0 0.5);
+            radius 0.75;
+        }
+        refineInternal yes;
+        level 3;
+
+        fieldValues
+        (
+            volScalarFieldValue alpha.c4    1
+        );
+    }
+);
+
+
+// ************************************************************************* //

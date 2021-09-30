@@ -1,0 +1,90 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+H   2.5;
+R   0.5;
+
+cellSize 0.05;
+
+nx  #calc "ceil($R / $cellSize)";
+nH  #calc "ceil($H / $cellSize)";
+
+x #calc "$R * cos(5.0 * Foam::constant::mathematical::pi/180)";
+y #calc "$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
+ny #calc "-$R * sin(5.0 * Foam::constant::mathematical::pi/180)";
+vertices
+(
+    (0 0 0)
+    ($x $ny 0)
+    ($x $y  0)
+    (0 0 $H)
+    ($x $ny $H)
+    ($x $y  $H)
+);
+
+blocks
+(
+    hex (0 1 2 0 3 4 5 3) ($nx 1 $nH) simpleGrading (1 1 1)
+);
+
+edges
+(
+);
+
+boundary
+(
+    ground
+    {
+        type patch;
+        faces
+        (
+            (0 1 2 0)
+        );
+    }
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (1 2 5 4)
+            (3 4 5 3)
+        );
+    }
+    wedge0
+    {
+        type wedge;
+        faces
+        (
+            (0 1 4 3)
+        );
+    }
+    wedge1
+    {
+        type wedge;
+        faces
+        (
+            (0 2 5 3)
+        );
+    }
+ );
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
