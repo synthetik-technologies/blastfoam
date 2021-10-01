@@ -25,7 +25,7 @@ Class
     Foam::scalarMultivariateRootSystem
 
 Description
-    Abstract base class for a system of scalar equations
+    Base class for a system of scalar equations
 
 \*---------------------------------------------------------------------------*/
 

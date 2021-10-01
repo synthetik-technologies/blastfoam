@@ -25,7 +25,7 @@ Class
     Foam::meshSizeObject
 
 Description
-    Creates an n-level cell stencil using global indicies
+    Mesh object to calculate the mesh size
 
 SourceFiles
     meshSizeObject.C

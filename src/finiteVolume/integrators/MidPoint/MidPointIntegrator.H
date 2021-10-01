@@ -25,7 +25,7 @@ Class
     Foam::MidPointIntegrator
 
 Description
-    Find root using the MidPoint method
+    Mid-point integration
 
 SourceFiles
     MidPointIntegrator.C

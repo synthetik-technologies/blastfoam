@@ -25,7 +25,7 @@ Class
     Foam::Simpson38Integrator
 
 Description
-    Find root using the Simpson38 method
+    Simpson 3/8 integration method
 
 SourceFiles
     Simpson38Integrator.C

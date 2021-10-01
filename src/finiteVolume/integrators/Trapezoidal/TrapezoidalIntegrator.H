@@ -25,7 +25,7 @@ Class
     Foam::TrapezoidalIntegrator
 
 Description
-    Find root using the Trapezoidal method
+    Trapezoidal integration method
 
 SourceFiles
     TrapezoidalIntegrator.C

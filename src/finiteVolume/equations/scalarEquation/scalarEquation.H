@@ -25,7 +25,7 @@ Class
     Foam::scalarEquation
 
 Description
-    Abstract base class for the systems of ordinary differential equations.
+    Base class for the a scalar equation
 
 \*---------------------------------------------------------------------------*/
 

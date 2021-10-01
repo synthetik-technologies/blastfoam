@@ -25,7 +25,7 @@ Class
     Foam::Equation
 
 Description
-    Abstract base class for the systems of ordinary differential equations.
+    Abstract base class for the an equation.
 
 \*---------------------------------------------------------------------------*/
 

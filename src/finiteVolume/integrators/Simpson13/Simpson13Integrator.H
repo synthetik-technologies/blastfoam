@@ -25,7 +25,7 @@ Class
     Foam::Simpson13Integrator
 
 Description
-    Find root using the Simpson13 method
+   Simpson 1/3 integration method
 
 SourceFiles
     Simpson13Integrator.C
