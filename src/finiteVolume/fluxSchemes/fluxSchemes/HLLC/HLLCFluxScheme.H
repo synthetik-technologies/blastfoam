@@ -113,6 +113,7 @@ class HLLC
             const vector& UOwn, const vector& UNei,
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
+            const vector& Sf,
             const label facei, const label patchi = -1
         ) const;
 

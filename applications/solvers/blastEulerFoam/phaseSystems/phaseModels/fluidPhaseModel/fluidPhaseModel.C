@@ -248,15 +248,10 @@ void Foam::fluidPhaseModel::decode()
 
     thermoPtr_->correct();
     thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());
-    thermoPtr_->speedOfSound().max(sqrt(1e-3));
+    thermoPtr_->speedOfSound().max(small);
 
-    alphaRhoE_.boundaryFieldRef() =
-        (*this).boundaryField()
-       *rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
+    // Update total energy because e may have changed
+    alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 
     const fvConstraints& constraints(this->fluid_.constraints());
     if (constraints.constrainsField(p_.name()))

@@ -391,14 +391,15 @@ Foam::scalar Foam::fluxSchemes::HLL::energyFlux
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
     const scalar& pOwn, const scalar& pNei,
+    const vector& Sf,
     const label facei, const label patchi
 ) const
 {
-    scalar SOwn = getValue(facei, patchi, SOwn_());
-    scalar SNei = getValue(facei, patchi, SNei_());
-    scalar UvOwn = getValue(facei, patchi, UvOwn_());
-    scalar UvNei = getValue(facei, patchi, UvNei_());
-    scalar magSf = mag(getValue(facei, patchi, mesh_.Sf()));
+    scalar SOwn = getValue(facei, patchi, SOwn_);
+    scalar SNei = getValue(facei, patchi, SNei_);
+    scalar UvOwn = getValue(facei, patchi, UvOwn_);
+    scalar UvNei = getValue(facei, patchi, UvNei_);
+    scalar magSf = mag(Sf);
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar HOwn = EOwn + pOwn/rhoOwn;
@@ -441,10 +442,10 @@ Foam::scalar Foam::fluxSchemes::HLL::interpolate
     const label facei, const label patchi
 ) const
 {
-    scalar SOwn = getValue(facei, patchi, SOwn_());
-    scalar SNei = getValue(facei, patchi, SNei_());
-    scalar UvOwn = getValue(facei, patchi, UvOwn_());
-    scalar UvNei = getValue(facei, patchi, UvNei_());
+    scalar SOwn = getValue(facei, patchi, SOwn_);
+    scalar SNei = getValue(facei, patchi, SNei_);
+    scalar UvOwn = getValue(facei, patchi, UvOwn_);
+    scalar UvNei = getValue(facei, patchi, UvNei_);
 
     if (SOwn >= 0)
     {

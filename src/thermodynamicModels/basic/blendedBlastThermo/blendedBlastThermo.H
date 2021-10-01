@@ -180,6 +180,7 @@ public:
         virtual void calculateEnergy
         (
             const volScalarField& alpha,
+            const volScalarField& T0,
             const volScalarField& he0,
             const volScalarField& T,
             volScalarField& alphaHE

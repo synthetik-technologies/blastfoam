@@ -406,6 +406,7 @@ template<class BasicThermo, class Thermo1, class Thermo2>
 void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
 (
     const volScalarField& alpha,
+    const volScalarField& T0,
     const volScalarField& he0,
     const volScalarField& T,
     volScalarField& alphaHE
@@ -416,7 +417,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
 
     forAll(alphaHE, celli)
     {
-        if (alpha[celli] > this->residualAlpha_.value())
+        if (T0[celli] > this->TLow_)
+        {
+            alphaHE[celli] += alpha[celli]*he0[celli];
+        }
+        else if (alpha[celli] > this->residualAlpha_.value())
         {
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
@@ -444,7 +449,9 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
     forAll(alphaHE.boundaryField(), patchi)
     {
         const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& prho =
+            this->rho_.boundaryField()[patchi];
+        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
         const fvPatchScalarField& pT = T.boundaryField()[patchi];
         const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
         const scalarField px(this->x(patchi));
@@ -452,7 +459,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
 
         forAll(palphaHE, facei)
         {
-            if (palpha[facei] > this->residualAlpha_.value())
+            if (pT0[facei] > this->TLow_)
+            {
+                palphaHE[facei] += palpha[facei]*phe0[facei];
+            }
+            else if (palpha[facei] > this->residualAlpha_.value())
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;

@@ -344,8 +344,6 @@ void Foam::granularPhaseModel::decode()
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.ref() = alphaRhoE_()/alphaRho();
-    e_.correctBoundaryConditions();
-    alphaRhoE_.boundaryFieldRef() = alphaRho_.boundaryField()*e_.boundaryField();
 
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
@@ -355,6 +353,10 @@ void Foam::granularPhaseModel::decode()
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
     thermoPtr_->correct();
+
+    // Update total energy because e may have changed
+    alphaRhoE_ = alphaRho_*e_;
+
     kineticTheoryModel::correct();
 }
 

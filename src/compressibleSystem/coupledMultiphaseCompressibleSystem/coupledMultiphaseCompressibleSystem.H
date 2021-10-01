@@ -56,13 +56,10 @@ class coupledMultiphaseCompressibleSystem
         volScalarField volumeFraction_;
 
         //- Pointer to dispersed phase volume fraction
-        const volScalarField* alphadPtr_;
+        UautoPtr<const volScalarField> alphadPtr_;
 
         //- Phasic density
         volScalarField alphaRho_;
-
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
 
 
 public:
@@ -82,8 +79,8 @@ public:
         //- Set a pointer to the dispersed phase volume fraction
         void setDispersedVolumeFraction(const volScalarField& alphad)
         {
-            alphadPtr_ = &alphad;
-            decode();
+            alphadPtr_.set(&alphad);
+            encode();
         }
 
         //- Return const access to volume fraction

@@ -58,7 +58,58 @@ Foam::tmp<Foam::surfaceScalarField> Foam::phaseFluxScheme::interpolate
     const word& fName
 ) const
 {
-    return interpolateField(f, fName);
+    bool isRho = f.member() == "rho";
+    autoPtr<MUSCLReconstructionScheme<scalar>> fLimiter
+    (
+        MUSCLReconstructionScheme<scalar>::New(f, fName)
+    );
+
+    tmp<surfaceScalarField> tfOwn(fLimiter->interpolateOwn());
+    const surfaceScalarField& fOwn = tfOwn();
+    tmp<surfaceScalarField> tfNei(fLimiter->interpolateNei());
+    const surfaceScalarField& fNei = tfNei();
+
+    tmp<surfaceScalarField> tmpff
+    (
+        surfaceScalarField::New
+        (
+            fName + "f",
+            mesh_,
+            dimensionedScalar("0", f.dimensions(), Zero)
+        )
+    );
+    surfaceScalarField& ff = tmpff.ref();
+
+    forAll(fOwn(), facei)
+    {
+        ff[facei] = interpolate
+        (
+            fOwn[facei],
+            fNei[facei],
+            isRho,
+            facei
+        );
+    }
+
+    forAll(ff.boundaryField(), patchi)
+    {
+        scalarField& pff = ff.boundaryFieldRef()[patchi];
+        const scalarField& pfOwn = fOwn.boundaryField()[patchi];
+        const scalarField& pfNei = fNei.boundaryField()[patchi];
+
+        forAll(pff, facei)
+        {
+            pff[facei] =
+                interpolate
+                (
+                    pfOwn[facei],
+                    pfNei[facei],
+                    isRho,
+                    facei, patchi
+                );
+        }
+    }
+    return tmpff;
 }
 
 

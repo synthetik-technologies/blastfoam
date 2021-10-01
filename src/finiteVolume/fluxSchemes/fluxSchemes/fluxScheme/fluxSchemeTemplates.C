@@ -48,22 +48,16 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolateFie
         MUSCLReconstructionScheme<Type>::New(f, name)
     );
 
-    tmp<fieldType> fOwn(fLimiter->interpolateOwn());
-    tmp<fieldType> fNei(fLimiter->interpolateNei());
+    tmp<fieldType> tfOwn(fLimiter->interpolateOwn());
+    const fieldType& fOwn = tfOwn();
+    tmp<fieldType> tfNei(fLimiter->interpolateNei());
+    const fieldType& fNei = tfNei();
 
     tmp<fieldType> tmpf
     (
-        new fieldType
+        fieldType::New
         (
-            IOobject
-            (
-                f.name() + "f",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            f.name() + "f",
             mesh_,
             dimensioned<Type>("0", f.dimensions(), pTraits<Type>::zero)
         )
@@ -72,12 +66,15 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolateFie
 
     forAll(fOwn(), facei)
     {
+        Type& fi = ff[facei];
+        const Type& fiOwn = fOwn[facei];
+        const Type& fiNei = fNei[facei];
         for (label i = 0; i < nCmpts; i++)
         {
-            setComponent(ff[facei], i) = interpolate
+            setComponent(fi, i) = interpolate
             (
-                component(fOwn()[facei], i),
-                component(fNei()[facei], i),
+                component(fiOwn, i),
+                component(fiNei, i),
                 facei
             );
         }
@@ -85,15 +82,22 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxScheme::interpolateFie
 
     forAll(f.boundaryField(), patchi)
     {
-        forAll(f.boundaryField()[patchi], facei)
+        Field<Type>& pff = ff.boundaryFieldRef()[patchi];
+        const Field<Type>& pfOwn = fOwn.boundaryField()[patchi];
+        const Field<Type>& pfNei = fNei.boundaryField()[patchi];
+
+        forAll(pff, facei)
         {
+            Type& fi = pff[facei];
+            const Type& fiOwn = pfOwn[facei];
+            const Type& fiNei = pfNei[facei];
             for (label i = 0; i < nCmpts; i++)
             {
-                setComponent(ff.boundaryFieldRef()[patchi][facei], i) =
+                setComponent(fi, i) =
                     interpolate
                     (
-                        component(fOwn().boundaryField()[patchi][facei], i),
-                        component(fNei().boundaryField()[patchi][facei], i),
+                        component(fiOwn, i),
+                        component(fiNei, i),
                         facei, patchi
                     );
             }

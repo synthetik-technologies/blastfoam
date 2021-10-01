@@ -62,6 +62,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     T_.correctBoundaryConditions();
     if (min(T_).value() < this->TLow_)
     {
+        T0 = T_;
         T_.max(this->TLow_);
         volScalarField he0(this->he().oldTime());
         this->he() =  Zero;
@@ -70,6 +71,7 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             thermos_[i].calculateEnergy
             (
                 volumeFractions_[i],
+                T0,
                 he0,
                 T_,
                 this->he()

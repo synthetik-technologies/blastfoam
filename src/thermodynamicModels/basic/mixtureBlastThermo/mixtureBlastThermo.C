@@ -216,8 +216,8 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateTemperature
     forAll(alphaT, celli)
     {
         const ThermoType& t(this->mixture_[celli]);
-        const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha_.value())
+        const scalar alphai = alpha[celli];
+        if (alphai > this->residualAlpha_.value())
         {
             // Update temperature
             alphaT[celli] +=
@@ -226,7 +226,7 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateTemperature
                     T0[celli],
                     this->rho_[celli],
                     he[celli]
-                )*alpha[celli];
+                )*alphai;
         }
     }
 
@@ -260,6 +260,7 @@ template<class BasicThermo, class ThermoType>
 void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateEnergy
 (
     const volScalarField& alpha,
+    const volScalarField& T0,
     const volScalarField& he0,
     const volScalarField& T,
     volScalarField& alphaHE
@@ -269,8 +270,12 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateEnergy
     forAll(alphaHE, celli)
     {
         const ThermoType& t(this->mixture_[celli]);
-        const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha_.value())
+        const scalar alphai = alpha[celli];
+        if (T0[celli] > this->TLow_)
+        {
+            alphaHE[celli] += alphai*he0[celli];
+        }
+        else if (alphai > this->residualAlpha_.value())
         {
             // Update temperature
             alphaHE[celli] +=
@@ -279,7 +284,7 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateEnergy
                     this->rho_[celli],
                     he0[celli],
                     T[celli]
-                )*alpha[celli];
+                )*alphai;
         }
     }
 
@@ -288,13 +293,18 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateEnergy
         const fvPatchScalarField& prho =
             this->rho_.boundaryField()[patchi];
         const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
         const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
         const fvPatchScalarField& pT = T.boundaryField()[patchi];
         fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
 
         forAll(palphaHE, facei)
         {
-            if (palpha[facei] > this->residualAlpha_.value())
+            if (pT0[facei] > this->TLow_)
+            {
+                palphaHE[facei] += palpha[facei]*phe0[facei];
+            }
+            else if (palpha[facei] > this->residualAlpha_.value())
             {
                 const ThermoType& t
                 (

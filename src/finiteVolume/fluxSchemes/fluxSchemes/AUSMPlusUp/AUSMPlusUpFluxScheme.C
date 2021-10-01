@@ -271,10 +271,11 @@ Foam::scalar Foam::fluxSchemes::AUSMPlusUp::energyFlux
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
     const scalar& pOwn, const scalar& pNei,
+    const vector& Sf,
     const label facei, const label patchi
 ) const
 {
-    scalar phi = getValue(facei, patchi, phi_());
+    scalar phi = getValue(facei, patchi, phi_);
     if ( phi >= 0)
     {
         return
@@ -297,7 +298,7 @@ Foam::scalar Foam::fluxSchemes::AUSMPlusUp::interpolate
 ) const
 {
 
-    if (getValue(facei, patchi, phi_()) >= 0)
+    if (getValue(facei, patchi, phi_) >= 0)
     {
         return fOwn;
     }

@@ -1,4 +1,5 @@
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I../phaseSystems/lnInclude \
     -I../interfacialModels/lnInclude\
     -I../phaseCompressibleMomentumTransportModels/lnInclude \

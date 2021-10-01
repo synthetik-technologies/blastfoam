@@ -50,7 +50,12 @@ rThermo
 (
     eConst
     hConst
-    tabulated
+    ePower
+    ePolynomial
+    eTabulated
+    hPower
+    hPolynomial
+    hTabulated
     janaf
 );
 

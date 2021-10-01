@@ -15,22 +15,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Left
-p1          3.7e10;
-rho1        2485.37;
-
-//- Right
-p2          1.0e5;
-rho2        8900.0;
-
-
 defaultFieldValues
 (
-    volVectorFieldValue U              (0 0 0)
-    volScalarFieldValue p              $p1
+    volScalarFieldValue p              3.7e10
     volScalarFieldValue alpha.copper   0
-    volScalarFieldValue rho.copper     $rho2
-    volScalarFieldValue rho.gas        $rho1
 );
 
 regions
@@ -41,10 +29,8 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue p           $p2
-            volScalarFieldValue alpha.copper 1
-            volScalarFieldValue rho.copper  $rho2
-            volScalarFieldValue rho.gas     $rho1
+            volScalarFieldValue p               1.0e5
+            volScalarFieldValue alpha.copper    1
         );
     }
  );

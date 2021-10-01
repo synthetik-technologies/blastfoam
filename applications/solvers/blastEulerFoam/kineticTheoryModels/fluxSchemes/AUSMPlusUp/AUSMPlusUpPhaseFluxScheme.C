@@ -344,7 +344,7 @@ Foam::scalar Foam::phaseFluxSchemes::AUSMPlusUp::interpolate
 ) const
 {
 
-    if (getValue(facei, patchi, phi_()) >= 0)
+    if (getValue(facei, patchi, phi_) >= 0)
     {
         return fOwn;
     }

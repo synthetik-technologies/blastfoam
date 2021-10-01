@@ -277,8 +277,8 @@ Foam::scalar Foam::phaseFluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
-    scalar aOwn = getValue(facei, patchi, aOwn_());
-    scalar aNei = getValue(facei, patchi, aNei_());
+    scalar aOwn = getValue(facei, patchi, aOwn_);
+    scalar aNei = getValue(facei, patchi, aNei_);
 
     return aOwn*fOwn + aNei*fNei;
 }

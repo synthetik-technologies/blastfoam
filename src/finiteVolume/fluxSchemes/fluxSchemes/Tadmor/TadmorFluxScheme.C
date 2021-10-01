@@ -271,12 +271,13 @@ Foam::scalar Foam::fluxSchemes::Tadmor::energyFlux
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
     const scalar& pOwn, const scalar& pNei,
+    const vector& Sf,
     const label facei, const label patchi
 ) const
 {
-    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_());
-    scalar aphivNei = getValue(facei, patchi, aPhivNei_());
-    scalar aSf = getValue(facei, patchi, aSf_());
+    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_);
+    scalar aphivNei = getValue(facei, patchi, aPhivNei_);
+    scalar aSf = getValue(facei, patchi, aSf_);
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);

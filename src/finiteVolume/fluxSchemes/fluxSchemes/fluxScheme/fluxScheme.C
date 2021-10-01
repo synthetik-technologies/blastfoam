@@ -56,7 +56,50 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::interpolate
     const word& fName
 ) const
 {
-    return interpolateField(f, fName);
+    autoPtr<MUSCLReconstructionScheme<scalar>> fLimiter
+    (
+        MUSCLReconstructionScheme<scalar>::New(f, fName)
+    );
+
+    tmp<surfaceScalarField> fOwnTmp(fLimiter->interpolateOwn());
+    tmp<surfaceScalarField> fNeiTmp(fLimiter->interpolateNei());
+
+    const surfaceScalarField& fOwn = fOwnTmp();
+    const surfaceScalarField& fNei = fNeiTmp();
+
+    tmp<surfaceScalarField> tmpf
+    (
+        surfaceScalarField::New
+        (
+            fName + "f",
+            mesh_,
+            dimensioned<scalar>("0", f.dimensions(), Zero)
+        )
+    );
+    surfaceScalarField& ff = tmpf.ref();
+
+    forAll(fOwn, facei)
+    {
+        ff[facei] = interpolate(fOwn[facei], fNei[facei], facei);
+    }
+
+    forAll(f.boundaryField(), patchi)
+    {
+        scalarField& pf = ff.boundaryFieldRef()[patchi];
+        const scalarField& pfOwn = fOwn.boundaryField()[patchi];
+        const scalarField& pfNei = fNei.boundaryField()[patchi];
+        forAll(pf, facei)
+        {
+            pf[facei] =
+                interpolate
+                (
+                    pfOwn[facei],
+                    pfNei[facei],
+                    facei, patchi
+                );
+        }
+    }
+    return tmpf;
 }
 
 
@@ -103,8 +146,6 @@ Foam::tmp<Foam::surfaceTensorField> Foam::fluxScheme::interpolate
 void Foam::fluxScheme::clear()
 {
     Uf_.clear();
-    rhoOwn_.clear();
-    rhoNei_.clear();
 }
 
 void Foam::fluxScheme::createSavedFields()
@@ -131,26 +172,15 @@ void Foam::fluxScheme::createSavedFields()
 
 Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
 {
-    if (Uf_.valid())
+//     if (Uf_.valid())
     {
         return Uf_;
     }
-    return tmp<surfaceVectorField>
+    return surfaceVectorField::New
     (
-        new surfaceVectorField
-        (
-            IOobject
-            (
-                "fluxScheme::Uf",
-                mesh_.time().timeName(),
-                mesh_,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh_,
-            dimensionedVector("0", dimVelocity, Zero)
-        )
+        "fluxScheme::Uf",
+        mesh_,
+        dimensionedVector("0", dimVelocity, Zero)
     );
 }
 
@@ -191,8 +221,10 @@ void Foam::fluxScheme::update
         MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
 
-    rhoOwn_ = rhoLimiter->interpolateOwn();
-    rhoNei_ = rhoLimiter->interpolateNei();
+    tmp<surfaceScalarField> trhoOwn(rhoLimiter->interpolateOwn());
+    tmp<surfaceScalarField> trhoNei(rhoLimiter->interpolateNei());
+    const surfaceScalarField& rhoOwn = trhoOwn();
+    const surfaceScalarField& rhoNei = trhoNei();
 
     tmp<surfaceVectorField> tUOwn(ULimiter->interpolateOwn());
     tmp<surfaceVectorField> tUNei(ULimiter->interpolateNei());
@@ -221,7 +253,7 @@ void Foam::fluxScheme::update
 
         calculateFluxes
         (
-            rhoOwn_()[facei], rhoNei_()[facei],
+            rhoOwn[facei], rhoNei[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
@@ -237,13 +269,16 @@ void Foam::fluxScheme::update
 
     forAll(U.boundaryField(), patchi)
     {
+        scalarField& pphi = phi.boundaryFieldRef()[patchi];
+        scalarField& prhoPhi = rhoPhi.boundaryFieldRef()[patchi];
+        vectorField& prhoUPhi = rhoUPhi.boundaryFieldRef()[patchi];
+        scalarField& prhoEPhi = rhoEPhi.boundaryFieldRef()[patchi];
         forAll(U.boundaryField()[patchi], facei)
         {
-
             calculateFluxes
             (
-                rhoOwn_().boundaryField()[patchi][facei],
-                rhoNei_().boundaryField()[patchi][facei],
+                rhoOwn.boundaryField()[patchi][facei],
+                rhoNei.boundaryField()[patchi][facei],
                 UOwn.boundaryField()[patchi][facei],
                 UNei.boundaryField()[patchi][facei],
                 eOwn.boundaryField()[patchi][facei],
@@ -253,16 +288,17 @@ void Foam::fluxScheme::update
                 cOwn.boundaryField()[patchi][facei],
                 cNei.boundaryField()[patchi][facei],
                 mesh_.Sf().boundaryField()[patchi][facei],
-                phi.boundaryFieldRef()[patchi][facei],
-                rhoPhi.boundaryFieldRef()[patchi][facei],
-                rhoUPhi.boundaryFieldRef()[patchi][facei],
-                rhoEPhi.boundaryFieldRef()[patchi][facei],
+                pphi[facei],
+                prhoPhi[facei],
+                prhoUPhi[facei],
+                prhoEPhi[facei],
                 facei, patchi
             );
         }
     }
     postUpdate();
 }
+
 
 void Foam::fluxScheme::update
 (
@@ -288,34 +324,26 @@ void Foam::fluxScheme::update
 
     PtrList<surfaceScalarField> rhosOwn(alphas.size());
     PtrList<surfaceScalarField> rhosNei(alphas.size());
-    rhoOwn_ =
+    tmp<surfaceScalarField> trhoOwn
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
-            IOobject
-            (
-                "rhoOwn",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            "rhoOwn",
             mesh_,
             dimensionedScalar("0", dimDensity, 0.0)
         )
     );
-    rhoNei_ =
+    surfaceScalarField& rhoOwn = trhoOwn.ref();
+    tmp<surfaceScalarField> trhoNei
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
-            IOobject
-            (
-                "rhoNei",
-                mesh_.time().timeName(),
-                mesh_
-            ),
+            "rhoNei",
             mesh_,
             dimensionedScalar("0", dimDensity, 0.0)
         )
     );
+    surfaceScalarField& rhoNei = trhoNei.ref();
 
     forAll(alphas, phasei)
     {
@@ -347,8 +375,8 @@ void Foam::fluxScheme::update
             phasei,
             rhoLimiter->interpolateNei()
         );
-        rhoOwn_.ref() += alphasOwn[phasei]*rhosOwn[phasei];
-        rhoNei_.ref() += alphasNei[phasei]*rhosNei[phasei];
+        rhoOwn += alphasOwn[phasei]*rhosOwn[phasei];
+        rhoNei += alphasNei[phasei]*rhosNei[phasei];
     }
 
     autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
@@ -389,16 +417,18 @@ void Foam::fluxScheme::update
     const surfaceScalarField& cNei = tcNei();
 
     preUpdate(p);
+
+    // Allocate list for cell and face operations
+    scalarList alphasiOwn(alphas.size());
+    scalarList alphasiNei(alphas.size());
+    scalarList rhosiOwn(alphas.size());
+    scalarList rhosiNei(alphas.size());
+
+    scalarList alphaPhisi(alphas.size());
+    scalarList alphaRhoPhisi(alphas.size());
+
     forAll(UOwn, facei)
     {
-        scalarList alphasiOwn(alphas.size());
-        scalarList alphasiNei(alphas.size());
-        scalarList rhosiOwn(alphas.size());
-        scalarList rhosiNei(alphas.size());
-
-        scalarList alphaPhisi(alphas.size());
-        scalarList alphaRhoPhisi(alphas.size());
-
         forAll(alphas, phasei)
         {
             alphasiOwn[phasei] = alphasOwn[phasei][facei];
@@ -410,7 +440,7 @@ void Foam::fluxScheme::update
         (
             alphasiOwn, alphasiNei,
             rhosiOwn, rhosiNei,
-            rhoOwn_()[facei], rhoNei_()[facei],
+            rhoOwn[facei], rhoNei[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
@@ -437,14 +467,6 @@ void Foam::fluxScheme::update
     {
         forAll(U.boundaryField()[patchi], facei)
         {
-            scalarList alphasiOwn(alphas.size());
-            scalarList alphasiNei(alphas.size());
-            scalarList rhosiOwn(alphas.size());
-            scalarList rhosiNei(alphas.size());
-
-            scalarList alphaPhisi(alphas.size());
-            scalarList alphaRhoPhisi(alphas.size());
-
             forAll(alphas, phasei)
             {
                 alphasiOwn[phasei] =
@@ -460,8 +482,8 @@ void Foam::fluxScheme::update
             (
                 alphasiOwn, alphasiNei,
                 rhosiOwn, rhosiNei,
-                rhoOwn_().boundaryField()[patchi][facei],
-                rhoNei_().boundaryField()[patchi][facei],
+                rhoOwn.boundaryField()[patchi][facei],
+                rhoNei.boundaryField()[patchi][facei],
                 UOwn.boundaryField()[patchi][facei],
                 UNei.boundaryField()[patchi][facei],
                 eOwn.boundaryField()[patchi][facei],
@@ -497,7 +519,7 @@ void Foam::fluxScheme::update
 
 void Foam::fluxScheme::update
 (
-    const volScalarField& alpha,
+    const volScalarField& alpha1,
     const volScalarField& rho1,
     const volScalarField& rho2,
     const volVectorField& U,
@@ -505,7 +527,7 @@ void Foam::fluxScheme::update
     const volScalarField& p,
     const volScalarField& c,
     surfaceScalarField& phi,
-    surfaceScalarField& alphaPhi,
+    surfaceScalarField& alphaPhi1,
     surfaceScalarField& alphaRhoPhi1,
     surfaceScalarField& alphaRhoPhi2,
     surfaceScalarField& rhoPhi,
@@ -516,9 +538,9 @@ void Foam::fluxScheme::update
     createSavedFields();
 
     // Interpolate fields
-    autoPtr<MUSCLReconstructionScheme<scalar>> alphaLimiter
+    autoPtr<MUSCLReconstructionScheme<scalar>> alpha1Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(alpha, "alpha")
+        MUSCLReconstructionScheme<scalar>::New(alpha1, "alpha")
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> rho1Limiter
     (
@@ -545,10 +567,15 @@ void Foam::fluxScheme::update
         MUSCLReconstructionScheme<scalar>::New(c, "speedOfSound")
     );
 
-    tmp<surfaceScalarField> talphaOwn(alphaLimiter->interpolateOwn());
-    tmp<surfaceScalarField> talphaNei(alphaLimiter->interpolateNei());
-    const surfaceScalarField& alphaOwn = talphaOwn();
-    const surfaceScalarField& alphaNei = talphaNei();
+    tmp<surfaceScalarField> talpha1Own(alpha1Limiter->interpolateOwn());
+    tmp<surfaceScalarField> talpha1Nei(alpha1Limiter->interpolateNei());
+    const surfaceScalarField& alpha1Own = talpha1Own();
+    const surfaceScalarField& alpha1Nei = talpha1Nei();
+
+    tmp<surfaceScalarField> talpha2Own(1.0 - alpha1Own);
+    tmp<surfaceScalarField> talpha2Nei(1.0 - alpha1Nei);
+    const surfaceScalarField& alpha2Own = talpha2Own();
+    const surfaceScalarField& alpha2Nei = talpha2Nei();
 
     tmp<surfaceScalarField> trho1Own(rho1Limiter->interpolateOwn());
     tmp<surfaceScalarField> trho1Nei(rho1Limiter->interpolateNei());
@@ -580,21 +607,22 @@ void Foam::fluxScheme::update
     const surfaceScalarField& cOwn = tcOwn();
     const surfaceScalarField& cNei = tcNei();
 
-    rhoOwn_ = (alphaOwn*rho1Own + (1.0 - alphaOwn)*rho2Own);
-    rhoNei_ = (alphaNei*rho1Nei + (1.0 - alphaNei)*rho2Nei);
+    surfaceScalarField rhoOwn(alpha1Own*rho1Own + alpha2Own*rho2Own);
+    surfaceScalarField rhoNei(alpha1Nei*rho1Nei + alpha2Nei*rho2Nei);
 
     preUpdate(p);
+
     forAll(UOwn, facei)
     {
         scalarList alphaPhisi(2);
         scalarList alphaRhoPhisi(2);
         calculateFluxes
         (
-            {alphaOwn[facei], 1.0 - alphaOwn[facei]},
-            {alphaNei[facei], 1.0 - alphaNei[facei]},
+            {alpha1Own[facei], alpha2Own[facei]},
+            {alpha1Nei[facei], alpha2Nei[facei]},
             {rho1Own[facei], rho2Own[facei]},
             {rho1Nei[facei], rho2Nei[facei]},
-            rhoOwn_()[facei], rhoNei_()[facei],
+            rhoOwn[facei], rhoNei[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
@@ -608,7 +636,7 @@ void Foam::fluxScheme::update
             facei
         );
 
-        alphaPhi[facei] = alphaPhisi[0];
+        alphaPhi1[facei] = alphaPhisi[0];
         alphaRhoPhi1[facei] = alphaRhoPhisi[0];
         alphaRhoPhi2[facei] = alphaRhoPhisi[1];
 
@@ -625,12 +653,12 @@ void Foam::fluxScheme::update
             calculateFluxes
             (
                 {
-                    alphaOwn.boundaryField()[patchi][facei],
-                    1.0 - alphaOwn.boundaryField()[patchi][facei]
+                    alpha1Own.boundaryField()[patchi][facei],
+                    alpha2Own.boundaryField()[patchi][facei]
                 },
                 {
-                    alphaNei.boundaryField()[patchi][facei],
-                    1.0 - alphaNei.boundaryField()[patchi][facei]
+                    alpha1Nei.boundaryField()[patchi][facei],
+                    alpha2Nei.boundaryField()[patchi][facei]
                 },
                 {
                     rho1Own.boundaryField()[patchi][facei],
@@ -640,8 +668,8 @@ void Foam::fluxScheme::update
                     rho1Nei.boundaryField()[patchi][facei],
                     rho2Nei.boundaryField()[patchi][facei]
                 },
-                rhoOwn_().boundaryField()[patchi][facei],
-                rhoNei_().boundaryField()[patchi][facei],
+                rhoOwn.boundaryField()[patchi][facei],
+                rhoNei.boundaryField()[patchi][facei],
                 UOwn.boundaryField()[patchi][facei],
                 UNei.boundaryField()[patchi][facei],
                 eOwn.boundaryField()[patchi][facei],
@@ -659,9 +687,11 @@ void Foam::fluxScheme::update
                 facei, patchi
             );
 
-            alphaPhi.boundaryFieldRef()[patchi][facei] = alphaPhisi[0];
-            alphaRhoPhi1.boundaryFieldRef()[patchi][facei] = alphaRhoPhisi[0];
-            alphaRhoPhi2.boundaryFieldRef()[patchi][facei] = alphaRhoPhisi[1];
+            alphaPhi1.boundaryFieldRef()[patchi][facei] = alphaPhisi[0];
+            alphaRhoPhi1.boundaryFieldRef()[patchi][facei] =
+                alphaRhoPhisi[0];
+            alphaRhoPhi2.boundaryFieldRef()[patchi][facei] =
+                alphaRhoPhisi[1];
 
             rhoPhi.boundaryFieldRef()[patchi][facei] =
                 alphaRhoPhi1.boundaryField()[patchi][facei]
@@ -680,22 +710,14 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     const volScalarField& p
 ) const
 {
-    tmp<surfaceScalarField> rhoOwn;
-    tmp<surfaceScalarField> rhoNei;
-    if (rho.name() == "rho")
-    {
-        rhoOwn = tmp<surfaceScalarField>(new surfaceScalarField(rhoOwn_()));
-        rhoNei = tmp<surfaceScalarField>(new surfaceScalarField(rhoNei_()));
-    }
-    else
-    {
-        autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
-        (
-            MUSCLReconstructionScheme<scalar>::New(rho, "rho")
-        );
-        rhoOwn = rhoLimiter->interpolateOwn();
-        rhoNei = rhoLimiter->interpolateNei();
-    }
+    autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
+    (
+        MUSCLReconstructionScheme<scalar>::New(rho, "rho")
+    );
+    tmp<surfaceScalarField> trhoOwn(rhoLimiter->interpolateOwn());
+    tmp<surfaceScalarField> trhoNei(rhoLimiter->interpolateNei());
+    surfaceScalarField& rhoOwn = trhoOwn.ref();
+    surfaceScalarField& rhoNei = trhoNei.ref();
 
     // Interpolate fields
     autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
@@ -754,10 +776,11 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
     {
         phi[facei] = energyFlux
         (
-            rhoOwn()[facei], rhoNei()[facei],
+            rhoOwn[facei], rhoNei[facei],
             UOwn[facei], UNei[facei],
             eOwn[facei], eNei[facei],
             pOwn[facei], pNei[facei],
+            mesh_.Sf()[facei],
             facei
         );
     }
@@ -769,14 +792,15 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::energyFlux
             phi.boundaryFieldRef()[patchi][facei] =
                 energyFlux
                 (
-                    rhoOwn().boundaryField()[patchi][facei],
-                    rhoNei().boundaryField()[patchi][facei],
+                    rhoOwn.boundaryField()[patchi][facei],
+                    rhoNei.boundaryField()[patchi][facei],
                     UOwn.boundaryField()[patchi][facei],
                     UNei.boundaryField()[patchi][facei],
                     eOwn.boundaryField()[patchi][facei],
                     eNei.boundaryField()[patchi][facei],
                     pOwn.boundaryField()[patchi][facei],
                     pNei.boundaryField()[patchi][facei],
+                    mesh_.Sf().boundaryField()[patchi][facei],
                     facei, patchi
                 );
         }

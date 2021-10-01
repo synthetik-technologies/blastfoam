@@ -208,25 +208,23 @@ void Foam::coupledMultiphaseCompressibleSystem::update()
 }
 
 
-void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
+void Foam::coupledMultiphaseCompressibleSystem::decode()
 {
-    volumeFraction_ = min(1.0, max(0.0, 1.0 - *alphadPtr_));
-    alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
+    volumeFraction_ = min(1.0, max(0.0, 1.0 - alphadPtr_()));
+    alphaRho_ = Zero;
     volScalarField sumAlpha
     (
-        IOobject
+        volScalarField::New
         (
             "sumAlpha",
-            rho_.time().timeName(),
-            rho_.mesh()
-        ),
-        rho_.mesh(),
-        0.0
+            rho_.mesh(),
+            0.0
+        )
     );
+    // Correct all but the last phase
     for (label phasei = 0; phasei < alphas_.size() - 1; phasei++)
     {
-        alphas_[phasei].max(0);
-        alphas_[phasei].min(1);
+        alphas_[phasei].maxMin(0.0, 1.0);
         alphas_[phasei].correctBoundaryConditions();
         sumAlpha += alphas_[phasei];
 
@@ -236,46 +234,50 @@ void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
            /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
         rhos_[phasei].correctBoundaryConditions();
 
-        alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+        alphaRhos_[phasei].boundaryFieldRef() =
+            alphas_[phasei].boundaryField()
+           *rhos_[phasei].boundaryField();
         alphaRho_ += alphaRhos_[phasei];
     }
-    label phasei = alphas_.size() - 1;
-    alphas_[phasei] = volumeFraction_ - sumAlpha;
-    alphas_[phasei].max(0.0);
-    alphas_[phasei].min(1.0);
 
-    alphaRhos_[phasei].max(0.0);
-    rhos_[phasei] = alphaRhos_[phasei]
-           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
-    rhos_[phasei].correctBoundaryConditions();
-    alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
-    alphaRho_ += alphaRhos_[phasei];
+    // Correct the last phase
+    label lastPhase = alphas_.size() - 1;
+    alphas_[lastPhase] = volumeFraction_ - sumAlpha;
+    alphas_[lastPhase].maxMin(0.0, 1.0);
+
+    alphaRhos_[lastPhase].max(0.0);
+    rhos_[lastPhase] =
+            alphaRhos_[lastPhase]
+           /max
+            (
+                alphas_[lastPhase],
+                thermo_.thermo(lastPhase).residualAlpha()
+            );
+    rhos_[lastPhase].correctBoundaryConditions();
+    alphaRhos_[lastPhase].boundaryFieldRef() =
+        alphas_[lastPhase].boundaryField()
+       *rhos_[lastPhase].boundaryField();
+    alphaRho_ += alphaRhos_[lastPhase];
+
+    // Update density
     rho_ = alphaRho_/max(volumeFraction_, 1e-10);
-}
 
-
-void Foam::coupledMultiphaseCompressibleSystem::decode()
-{
-    calcAlphaAndRho();
-
+    // Update velocity
     volScalarField alphaRhos(alphaRho_);
     alphaRhos.max(1e-10);
     U_.ref() = rhoU_()/alphaRhos();
     U_.correctBoundaryConditions();
 
-    rhoU_.boundaryFieldRef() = alphaRho_.boundaryField()*U_.boundaryField();
+    rhoU_.boundaryFieldRef() =
+        alphaRho_.boundaryField()*U_.boundaryField();
 
-    volScalarField E(rhoE_/alphaRhos);
-    e_.ref() = E() - 0.5*magSqr(U_());
+    //- Update internal energy
+    e_.ref() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
 
     thermoPtr_->correct();
 
-    rhoE_.boundaryFieldRef() =
-        alphaRho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
+    // Update total energy since e may have changed
+    rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 }
 
 

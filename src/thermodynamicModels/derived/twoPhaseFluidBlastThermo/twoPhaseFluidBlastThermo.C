@@ -54,11 +54,12 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
 
     if (min(T_).value() < this->TLow_)
     {
+        T0 = T_;
         T_.max(this->TLow_);
-        volScalarField he0(this->he().oldTime());
+        volScalarField he0(this->he());
         this->he() = Zero;
-        thermo1_->calculateEnergy(alpha1_, he0, T_, this->he());
-        thermo2_->calculateEnergy(alpha2_, he0, T_, this->he());
+        thermo1_->calculateEnergy(alpha1_, T0, he0, T_, this->he());
+        thermo2_->calculateEnergy(alpha2_, T0, he0, T_, this->he());
     }
     this->he().correctBoundaryConditions();
 
@@ -130,7 +131,12 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     );
 
     cSqrRhoXiSum.max(small);
-    this->speedOfSound_ = sqrt(cSqrRhoXiSum/XiSum/this->rho_);
+    this->speedOfSound_ =
+        sqrt
+        (
+            cSqrRhoXiSum
+           /max(this->rho_*XiSum, this->residualRho_)
+        );
 }
 
 

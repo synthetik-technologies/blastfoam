@@ -66,13 +66,8 @@ inline Foam::scalar Foam::eTabulatedThermo<EquationOfState>::limit
                " out of temperature range "
             << Tlow_ << " -> " << Thigh_ << ";  T = " << T
             << endl;
-
-        return min(max(T, Tlow_), Thigh_);
     }
-    else
-    {
-        return T;
-    }
+    return min(max(T, Tlow_), Thigh_);
 }
 
 

@@ -320,14 +320,15 @@ Foam::scalar Foam::fluxSchemes::Kurganov::energyFlux
     const vector& UOwn, const vector& UNei,
     const scalar& eOwn, const scalar& eNei,
     const scalar& pOwn, const scalar& pNei,
+    const vector& Sf,
     const label facei, const label patchi
 ) const
 {
-    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_());
-    scalar aphivNei = getValue(facei, patchi, aPhivNei_());
-    scalar aOwn = getValue(facei, patchi, aOwn_());
-    scalar aNei = getValue(facei, patchi, aNei_());
-    scalar aSf = getValue(facei, patchi, aSf_());
+    scalar aphivOwn = getValue(facei, patchi, aPhivOwn_);
+    scalar aphivNei = getValue(facei, patchi, aPhivNei_);
+    scalar aOwn = getValue(facei, patchi, aOwn_);
+    scalar aNei = getValue(facei, patchi, aNei_);
+    scalar aSf = getValue(facei, patchi, aSf_);
 
     scalar EOwn = eOwn + 0.5*magSqr(UOwn);
     scalar ENei = eNei + 0.5*magSqr(UNei);
@@ -349,8 +350,8 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
     const label facei, const label patchi
 ) const
 {
-    scalar aOwn = getValue(facei, patchi, aOwn_());
-    scalar aNei = getValue(facei, patchi, aNei_());
+    scalar aOwn = getValue(facei, patchi, aOwn_);
+    scalar aNei = getValue(facei, patchi, aNei_);
 
    return aOwn*fOwn + aNei*fNei;
 }

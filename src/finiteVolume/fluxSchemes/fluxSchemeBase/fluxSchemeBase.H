@@ -80,7 +80,7 @@ protected:
 
         //- Set a surface field at facei
         template<class Type>
-        Type save
+        inline Type save
         (
             const label facei,
             const label patchi,
@@ -104,7 +104,7 @@ protected:
 
         //- Set Uf at facei
         template<class Type>
-        Type getValue
+        inline Type getValue
         (
             const label facei,
             const label patchi,
@@ -115,6 +115,21 @@ protected:
                 patchi == -1
               ? xf[facei]
               : xf.boundaryField()[patchi][facei];
+        }
+
+        //- Set Uf at facei
+        template<class Type>
+        inline Type getValue
+        (
+            const label facei,
+            const label patchi,
+            const tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>& xf
+        ) const
+        {
+            return
+                patchi == -1
+              ? xf()[facei]
+              : xf().boundaryField()[patchi][facei];
         }
 
 

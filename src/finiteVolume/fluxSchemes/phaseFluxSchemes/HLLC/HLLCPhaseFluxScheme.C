@@ -428,9 +428,9 @@ Foam::scalar Foam::phaseFluxSchemes::HLLC::interpolate
 
     if (rho)
     {
-        scalar SNei = getValue(facei, patchi, SNei_());
-        scalar UvOwn = getValue(facei, patchi, UvOwn_());
-        scalar UvNei = getValue(facei, patchi, UvNei_());
+        scalar SNei = getValue(facei, patchi, SNei_);
+        scalar UvOwn = getValue(facei, patchi, UvOwn_);
+        scalar UvNei = getValue(facei, patchi, UvNei_);
         if (SOwn > 0)
         {
             return fOwn;

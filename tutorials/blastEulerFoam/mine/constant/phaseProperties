@@ -116,7 +116,7 @@ gas
             thermoType
             {
                 transport   const;
-                thermo      eConst;
+                thermo      ePolynomial;
                 equationOfState JWL;
             }
 
@@ -140,7 +140,9 @@ gas
             }
             thermodynamics
             {
-                Cv          1400;           // Heat capacity
+                // Heat capacity coefficients
+                CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
+                Sf          0.0;
                 Hf          0.0;
             }
         }

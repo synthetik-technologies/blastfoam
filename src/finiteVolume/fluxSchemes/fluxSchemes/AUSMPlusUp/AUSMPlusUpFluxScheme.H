@@ -117,6 +117,7 @@ class AUSMPlusUp
             const vector& UOwn, const vector& UNei,
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
+            const vector& Sf,
             const label facei, const label patchi = -1
         ) const;
 
@@ -130,13 +131,13 @@ class AUSMPlusUp
         // Mach number polynomials
 
             //- First order
-            scalar M1(const scalar& Ma, const label sign) const
+            inline scalar M1(const scalar& Ma, const label sign) const
             {
                 return 0.5*(Ma + sign*mag(Ma));
             }
 
             //- Second order
-            scalar M2(const scalar& Ma, const label sign) const
+            inline scalar M2(const scalar& Ma, const label sign) const
             {
                 if (mag(Ma) >= 1.0)
                 {
@@ -146,17 +147,19 @@ class AUSMPlusUp
             }
 
             //- Fourth order
-            scalar M4(const scalar& Ma, const label sign) const
+            inline scalar M4(const scalar& Ma, const label sign) const
             {
                 if (mag(Ma) >= 1.0)
                 {
                     return M1(Ma, sign);
                 }
-                return sign*0.25*sqr(Ma + sign) + sign*beta_*sqr(sqr(Ma) - 1.0);
+                return
+                    sign*0.25*sqr(Ma + sign)
+                  + sign*beta_*sqr(sqr(Ma) - 1.0);
             }
 
             //- Fifth order
-            scalar P5(const scalar& Ma, const label sign) const
+            inline scalar P5(const scalar& Ma, const label sign) const
             {
                 if (mag(Ma) >= 1.0)
                 {

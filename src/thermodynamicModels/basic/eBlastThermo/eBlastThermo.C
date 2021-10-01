@@ -140,12 +140,12 @@ void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateTemperature
     const ThermoType& t(*this);
     forAll(alphaT, celli)
     {
-        const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha_.value())
+        const scalar alphai = alpha[celli];
+        if (alphai > this->residualAlpha_.value())
         {
             // Update temperature
             alphaT[celli] +=
-                t.TRhoE(T0[celli], this->rho_[celli], he[celli])*vfi;
+                t.TRhoE(T0[celli], this->rho_[celli], he[celli])*alphai;
         }
     }
 
@@ -174,6 +174,7 @@ template<class BasicThermo, class ThermoType>
 void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateEnergy
 (
     const volScalarField& alpha,
+    const volScalarField& T0,
     const volScalarField& he0,
     const volScalarField& T,
     volScalarField& alphaHE
@@ -182,12 +183,16 @@ void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateEnergy
     const ThermoType& t(*this);
     forAll(alphaHE, celli)
     {
-        const scalar vfi = alpha[celli];
-        if (vfi > this->residualAlpha_.value())
+        const scalar alphai = alpha[celli];
+        if (T0[celli] > this->TLow_)
+        {
+            alphaHE[celli] += alphai*he0[celli];
+        }
+        else if (alphai > this->residualAlpha_.value())
         {
             // Update temperature
             alphaHE[celli] +=
-                t.Es(this->rho_[celli], he0[celli], T[celli])*vfi;
+                t.Es(this->rho_[celli], he0[celli], T[celli])*alphai;
         }
     }
 
@@ -195,13 +200,18 @@ void Foam::eBlastThermo<BasicThermo, ThermoType>::calculateEnergy
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
         const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
+        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
         const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
         const fvPatchScalarField& pT = T.boundaryField()[patchi];
         fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
 
         forAll(palphaHE, facei)
         {
-            if (palpha[facei] > this->residualAlpha_.value())
+            if (pT0[facei] > this->TLow_)
+            {
+                palphaHE[facei] += palpha[facei]*phe0[facei];
+            }
+            else if (palpha[facei] > this->residualAlpha_.value())
             {
                 palphaHE[facei] +=
                     t.Es(prho[facei], phe0[facei], pT[facei])

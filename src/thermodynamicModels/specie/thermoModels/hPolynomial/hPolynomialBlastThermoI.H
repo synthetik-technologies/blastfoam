@@ -76,7 +76,7 @@ Foam::hPolynomialThermo<EquationOfState, PolySize>::limit
     const scalar Told
 ) const
 {
-    return T;
+    return max(T, 0);
 }
 
 

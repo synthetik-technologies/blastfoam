@@ -58,10 +58,6 @@ protected:
     //- Saved interpolated U field
     tmp<surfaceVectorField> Uf_;
 
-    //- Saved interpolated rho fields
-    tmp<surfaceScalarField> rhoOwn_;
-    tmp<surfaceScalarField> rhoNei_;
-
 
     // Protected Functions
 
@@ -107,6 +103,7 @@ protected:
             const vector& UOwn, const vector& UNei,
             const scalar& eOwn, const scalar& eNei,
             const scalar& pOwn, const scalar& pNei,
+            const vector& Sf,
             const label facei, const label patchi = -1
         ) const = 0;
 
