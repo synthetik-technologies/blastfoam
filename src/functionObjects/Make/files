@@ -8,7 +8,6 @@ blastProbes/blastProbesGrouping.C
 
 # Blast specific
 impulse/impulse.C
-speedOfSound/speedOfSound.C
 blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
