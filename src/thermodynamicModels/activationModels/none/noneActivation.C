@@ -47,9 +47,32 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false)
+    activationModel(mesh, dict, phaseName, false),
+    needActivation_(false)
 {
     lambda_ = 1.0;
+    if (detonationPoints_.size() == 0)
+    {
+        detonationPoints_.resize(1);
+        detonationPoints_.set
+        (
+            0,
+            new detonationPoint
+            (
+                Zero,
+                0.0,
+                0.0
+            )
+        );
+    }
+    forAll(detonationPoints_, i)
+    {
+        if (!detonationPoints_[i].activated())
+        {
+            needActivation_ = true;
+            detonationPoints_[i].activated() = true;
+        }
+    }
 }
 
 
@@ -59,6 +82,16 @@ Foam::activationModels::noneActivation::~noneActivation()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::activationModels::noneActivation::solve()
+{
+    //- Set detonation points as activated for write
+    forAll(detonationPoints_, i)
+    {
+        detonationPoints_[i].activated() = true;
+    }
+}
+
 
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
@@ -79,9 +112,9 @@ Foam::activationModels::noneActivation::initESource() const
     (
         "noActivation:initESource",
         lambda_.mesh(),
-        lambda_.mesh().time().restart()
-      ? dimensionedScalar("0", e0_.dimensions(), 0.0)
-      : e0_
+        needActivation_
+      ? e0_
+      : dimensionedScalar("0", e0_.dimensions(), 0.0)
     );
 }
 
@@ -93,7 +126,7 @@ Foam::activationModels::noneActivation::ESource() const
     (
         "noActivation:ESource",
         lambda_.mesh(),
-        dimensionedScalar("0", inv(dimTime), 0.0)
+        dimensionedScalar("0", e0_.dimensions()/dimTime, 0.0)
     );
 }
 

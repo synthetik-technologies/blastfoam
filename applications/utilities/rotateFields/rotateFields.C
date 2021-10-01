@@ -442,12 +442,6 @@ int main(int argc, char *argv[])
     );
     argList::addOption
     (
-        "sourceCentre",
-        "vector|'(0 0 0)'",
-        "Location of center in the source mesh"
-    );
-    argList::addOption
-    (
         "additionalFields",
         "wordList|'(rho U)'",
         "List of additional fields to map"
@@ -653,16 +647,7 @@ int main(int argc, char *argv[])
             )
         );
 
-        vector sourceCentre(Zero);
-        if (args.optionFound("sourceCentre"))
-        {
-            sourceCentre = args.optionRead<vector>("sourceCentre");
-        }
-        else
-        {
-            sourceCentre = calculateCentre(sourceMesh);
-        }
-
+        vector sourceCentre(calculateCentre(sourceMesh));
         vector targetCentre(sourceCentre);
         if (args.optionFound("centre"))
         {

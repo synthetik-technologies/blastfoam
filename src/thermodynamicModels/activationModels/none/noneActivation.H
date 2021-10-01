@@ -54,6 +54,10 @@ class noneActivation
 {
 // Private data
 
+    //- Does the model need to be activated
+    bool needActivation_;
+
+
         //- Return the time rate of chage of lambda
         virtual tmp<volScalarField> delta() const
         {
@@ -88,8 +92,7 @@ public:
         {}
 
         //- Solve sub-step stepi
-        virtual void solve()
-        {}
+        virtual void solve();
 
         //- Remove stored fields
         virtual void clearODEFields()
