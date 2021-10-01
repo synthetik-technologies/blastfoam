@@ -52,24 +52,27 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
     pScale_(dict.lookupOrDefault("pScale", 1.0)),
 
     I_("I", inv(dimTime), 0.0),
-    a_("a", dimless, 0.0),
-    b_("b", dimless, 0.0),
-    x_("x", dimless, 0.0),
-    maxLambdaI_("maxLambdaI", dimless, 1.0),
+    a_(0.0),
+    b_(0.0),
+    x_(0.0),
+    maxLambdaI_(1.0),
+    needI_(false),
 
     G1_("G1", dimPressure, 0.0),
-    c_("c", dimless, 0.0),
-    d_("d", dimless, 0.0),
-    y_("y", dimless, 0.0),
-    minLambda1_("minLambda1", dimless, 0.0),
-    maxLambda1_("maxLambda1", dimless, 1.0),
+    c_(0.0),
+    d_(0.0),
+    y_(0.0),
+    minLambda1_(0.0),
+    maxLambda1_(1.0),
+    needG1_(false),
 
     G2_("G2", dimless, 0.0),
-    e_("e", dimless, 0.0),
-    f_("f", dimless, 0.0),
-    z_("z", dimless, 0.0),
-    minLambda2_("minLambda2", dimless, 0.0),
-    maxLambda2_("maxLambda2", dimless, 1.0),
+    e_(0.0),
+    f_(0.0),
+    z_(0.0),
+    minLambda2_(0.0),
+    maxLambda2_(1.0),
+    needG2_(false),
 
     pName_(dict.lookupOrDefault("pName", word("p"))),
     p_(mesh.lookupObject<volScalarField>(pName_)),
@@ -86,33 +89,36 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
     I_.read(dict);
     if (I_.value() > 0)
     {
-        a_.read(dict);
-        b_.read(dict);
-        x_.read(dict);
-        maxLambdaI_.read(dict);
+        a_ = dict.lookup<scalar>("a");
+        b_ = dict.lookup<scalar>("b");
+        x_ = dict.lookup<scalar>("x");
+        maxLambdaI_ = dict.lookup<scalar>("maxLambdaI");
         rho0_.read(dict.parent().subDict("products").subDict("equationOfState"));
+        needI_ = true;
     }
 
     G1_.read(dict);
     if (G1_.value() > 0)
     {
-        c_.read(dict);
-        d_.read(dict);
-        y_.read(dict);
-        minLambda1_.read(dict);
-        maxLambda2_.readIfPresent(dict);
+        c_ = dict.lookup<scalar>("c");
+        d_ = dict.lookup<scalar>("d");
+        y_ = dict.lookup<scalar>("y");
+        minLambda1_ = dict.lookupOrDefault<scalar>("minLambda1", 0.0);
+        maxLambda1_ = dict.lookupOrDefault<scalar>("maxLambda1", 1.0);
         G1_.dimensions().reset(pow(dimPressure, -y_)/dimTime);
+        needG1_ = true;
     }
 
     G2_.read(dict);
     if (G2_.value() > 0)
     {
-        e_.read(dict);
-        f_.read(dict);
-        z_.read(dict);
-        minLambda2_.read(dict);
-        maxLambda2_.readIfPresent(dict);
+        e_ = dict.lookup<scalar>("e");
+        f_ = dict.lookup<scalar>("f");
+        z_ = dict.lookup<scalar>("z");
+        minLambda2_ = dict.lookupOrDefault<scalar>("minLambda2", 1.0);
+        maxLambda2_ = dict.lookupOrDefault<scalar>("maxLambda2", 1.0);
         G2_.dimensions().reset(pow(dimPressure, -z_)/dimTime);
+        needG2_ = true;
     }
 }
 
@@ -128,60 +134,52 @@ Foam::activationModels::pressureBasedActivation::~pressureBasedActivation()
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::pressureBasedActivation::delta() const
 {
-    // Remove pressures less than minimum pressure
-    volScalarField p(p_*pos(p_ - pMin_));
-    if (pScale_ != 1.0)
-    {
-        p *= pScale_;
-    }
-    p.max(small);
-    tmp<volScalarField> R
+    tmp<volScalarField> tR
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                IOobject::groupName("pressureBased:R", lambda_.group()),
-                p_.mesh().time().timeName(),
-                p_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
+            IOobject::groupName("pressureBased:R", lambda_.group()),
             p_.mesh(),
             dimensionedScalar("0", inv(dimTime), 0.0)
         )
     );
-    volScalarField oneMLambda(Foam::max(1.0 - lambda_, 0.0));
-    if (I_.value() > 0)
+    volScalarField& R = tR.ref();
+
+    forAll(R, celli)
     {
-        R.ref() +=
-            I_
-           *pow(Foam::max(rho_/rho0_ - 1.0 - a_, 0.0), x_)
-           *pow(oneMLambda, b_)
-           *pos0(maxLambdaI_ - lambda_);
+        // Remove pressures less than minimum pressure
+        scalar p = p_[celli]*pScale_;
+
+        const scalar lambdai = lambda_[celli];
+        const scalar oneMLambda = max(1.0 - lambdai, 0.0);
+        if (needI_ && lambdai < maxLambdaI_)
+        {
+            R[celli] +=
+                I_.value()
+               *pow
+               (
+                   Foam::max(rho_[celli]/rho0_.value() - 1.0 - a_, 0.0),
+                    x_
+                )
+               *pow(oneMLambda, b_);
+        }
+        if (p > pMin_.value())
+        {
+            if (needG1_ && lambdai > minLambda1_ && lambdai < maxLambda1_)
+            {
+                R[celli] +=
+                    G1_.value()
+                   *pow(oneMLambda, c_)*pow(lambdai, d_)*pow(p, y_);
+            }
+            if (needG2_ && lambdai > minLambda2_ && lambdai < maxLambda2_)
+            {
+                R[celli] +=
+                    G2_.value()
+                   *pow(oneMLambda, e_)*pow(lambdai, f_)*pow(p, z_);
+            }
+        }
     }
-    if (G1_.value() > 0)
-    {
-        R.ref() +=
-            G1_
-           *pow(oneMLambda, c_)
-           *pow(lambda_, d_)
-           *pow(p, y_)
-           *pos0(lambda_ - minLambda1_)
-           *pos(maxLambda1_ - lambda_);
-    }
-    if (G2_.value() > 0)
-    {
-        R.ref() +=
-            G2_
-           *pow(oneMLambda, e_)
-           *pow(lambda_, f_)
-           *pow(p, z_)
-           *pos0(lambda_ - minLambda2_)
-           *pos(maxLambda2_ - lambda_);
-    }
-    return R;
+    return tR;
 }
 
 // ************************************************************************* //

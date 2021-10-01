@@ -67,26 +67,29 @@ class pressureBasedActivation
 
     //- Ignition coefficients
     dimensionedScalar I_;
-    dimensionedScalar a_;
-    dimensionedScalar b_;
-    dimensionedScalar x_;
-    dimensionedScalar maxLambdaI_;
+    scalar a_;
+    scalar b_;
+    scalar x_;
+    scalar maxLambdaI_;
+    bool needI_;
 
     //- First reaction rate constants
     dimensionedScalar G1_;
-    dimensionedScalar c_;
-    dimensionedScalar d_;
-    dimensionedScalar y_;
-    dimensionedScalar minLambda1_;
-    dimensionedScalar maxLambda1_;
+    scalar c_;
+    scalar d_;
+    scalar y_;
+    scalar minLambda1_;
+    scalar maxLambda1_;
+    bool needG1_;
 
     //- Second reaction rate constants
     dimensionedScalar G2_;
-    dimensionedScalar e_;
-    dimensionedScalar f_;
-    dimensionedScalar z_;
-    dimensionedScalar minLambda2_;
-    dimensionedScalar maxLambda2_;
+    scalar e_;
+    scalar f_;
+    scalar z_;
+    scalar minLambda2_;
+    scalar maxLambda2_;
+    bool needG2_;
 
     //- Name of pressure
     word pName_;
