@@ -56,7 +56,7 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     {
         T_.max(this->TLow_);
         volScalarField he0(this->he().oldTime());
-        this->he() =  Zero;
+        this->he() = Zero;
         thermo1_->calculateEnergy(alpha1_, he0, T_, this->he());
         thermo2_->calculateEnergy(alpha2_, he0, T_, this->he());
     }
@@ -65,15 +65,6 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     volScalarField XiSum
     (
         volScalarField::New("XiSum", mesh(), dimensionedScalar(dimless, 0.0))
-    );
-    volScalarField rhoXiSum
-    (
-        volScalarField::New
-        (
-            "rhoXiSum",
-            mesh(),
-            dimensionedScalar(dimDensity, 0.0)
-        )
     );
     volScalarField pXiSum
     (
@@ -109,8 +100,7 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         this->alpha_,
         this->mu_,
         pXiSum,
-        XiSum,
-        rhoXiSum
+        XiSum
     );
     thermo2_->calculate
     (
@@ -122,9 +112,9 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         this->alpha_,
         this->mu_,
         pXiSum,
-        XiSum,
-        rhoXiSum
+        XiSum
     );
+    XiSum.max(small);
     this->p_ = pXiSum/XiSum;
     this->p_.correctBoundaryConditions();
 
@@ -139,9 +129,8 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         cSqrRhoXiSum
     );
 
-    rhoXiSum.max(small);
     cSqrRhoXiSum.max(small);
-    this->speedOfSound_ = sqrt(cSqrRhoXiSum/rhoXiSum);
+    this->speedOfSound_ = sqrt(cSqrRhoXiSum/XiSum/this->rho_);
 }
 
 

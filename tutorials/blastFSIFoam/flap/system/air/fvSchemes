@@ -20,7 +20,7 @@ fluxScheme          Kurganov;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes

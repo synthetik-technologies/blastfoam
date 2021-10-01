@@ -90,14 +90,14 @@ protected:
         // Protected member functions
 
             //- Temperature [K]
-            volScalarField& T()
+            volScalarField& TRef()
             {
                 NotImplemented;
                 return rho_;
             }
 
             //- Internal energy [J/kg]
-            volScalarField& he()
+            volScalarField& heRef()
             {
                 NotImplemented;
                 return rho_;
@@ -118,7 +118,7 @@ protected:
             }
 
             //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            volScalarField& alpha()
+            volScalarField& alphaRef()
             {
                 NotImplemented;
                 return rho_;

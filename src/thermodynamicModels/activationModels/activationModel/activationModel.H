@@ -300,6 +300,9 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ddtLambda() const;
 
+        //- Return initial energy source
+        virtual tmp<volScalarField> initESource() const;
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 };

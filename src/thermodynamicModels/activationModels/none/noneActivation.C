@@ -63,28 +63,39 @@ Foam::activationModels::noneActivation::~noneActivation()
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "noActivation:ddtLambda",
-                lambda_.time().timeName(),
-                lambda_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            lambda_.mesh(),
-            dimensionedScalar
-            (
-                "ESource",
-                inv(dimTime),
-                0.0
-            )
-        )
+        "noActivation:ddtLambda",
+        lambda_.mesh(),
+        dimensionedScalar("0", inv(dimTime), 0.0)
     );
 }
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::noneActivation::initESource() const
+{
+    return volScalarField::New
+    (
+        "noActivation:initESource",
+        lambda_.mesh(),
+        lambda_.mesh().time().restart()
+      ? dimensionedScalar("0", e0_.dimensions(), 0.0)
+      : e0_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::noneActivation::ESource() const
+{
+    return volScalarField::New
+    (
+        "noActivation:ESource",
+        lambda_.mesh(),
+        dimensionedScalar("0", inv(dimTime), 0.0)
+    );
+}
+
 
 // ************************************************************************* //

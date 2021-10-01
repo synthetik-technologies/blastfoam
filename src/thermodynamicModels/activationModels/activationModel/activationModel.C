@@ -278,6 +278,7 @@ Foam::activationModel::activationModel
     alphaRhoPhiPtr_(nullptr),
     maxDLambda_(dict.lookupOrDefault("maxDLambda", 1.0))
 {
+    lambda_.storeOldTime();
     if (detonationPoints_.size())
     {
         vectorField points(detonationPoints_.size());
@@ -478,6 +479,17 @@ void Foam::activationModel::solve()
 
     lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::activationModel::initESource() const
+{
+    return volScalarField::New
+    (
+        "initESource",
+        lambda_.mesh(),
+        dimensionedScalar("0", e0_.dimensions(), 0.0)
+    );
 }
 
 

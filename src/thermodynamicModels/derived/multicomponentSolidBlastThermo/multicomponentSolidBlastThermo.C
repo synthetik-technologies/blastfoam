@@ -40,8 +40,8 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
     {
         const typename Thermo::thermoType& t(this->mixture_[celli]);
         const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(this->he()[celli]);
-        scalar& Ti = this->Thermo::baseThermo::T()[celli];
+        scalar& ei(this->heRef()[celli]);
+        scalar& Ti = this->TRef()[celli];
 
         // Update temperature
         Ti = t.TRhoE(Ti, rhoi, ei);
@@ -54,23 +54,24 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
         scalar Cpi = t.Cp(rhoi, ei, Ti);
         this->CpRef()[celli] = Cpi;
         this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
-        this->alpha()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+        this->alphaRef()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
     }
 
-    this->Thermo::baseThermo::T().correctBoundaryConditions();
-    this->he().correctBoundaryConditions();
+    this->TRef().correctBoundaryConditions();
+    this->heRef().correctBoundaryConditions();
 
     forAll(this->rho_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
         const fvPatchScalarField& pT =
-            this->Thermo::baseThermo::T().boundaryField()[patchi];
-        const fvPatchScalarField& phe = this->he().boundaryField()[patchi];
+            this->TRef().boundaryField()[patchi];
+        const fvPatchScalarField& phe =
+            this->heRef().boundaryField()[patchi];
 
         fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& palpha =
-            this->alpha().boundaryFieldRef()[patchi];
+            this->alphaRef().boundaryFieldRef()[patchi];
 
         forAll(prho, facei)
         {
@@ -165,28 +166,12 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::correct()
 template<class Thermo>
 void Foam::multicomponentSolidBlastThermo<Thermo>::updateRho()
 {
-    volScalarField& rhoRef(this->rho_);
-    volScalarField rhoNew
+    this->rho_ == this->volScalarFieldProperty
     (
-        this->volScalarFieldProperty
-        (
-            "rho",
-            dimDensity,
-            &Thermo::thermoType::rho0
-        )
+        "rho",
+        dimDensity,
+        &Thermo::thermoType::rho0
     );
-    forAll(rhoRef, celli)
-    {
-        rhoRef[celli] = rhoNew[celli];
-    }
-    forAll(rhoRef.boundaryField(), patchi)
-    {
-        forAll(rhoRef.boundaryField()[patchi], facei)
-        {
-            rhoRef.boundaryFieldRef()[patchi][facei] =
-                rhoNew.boundaryField()[patchi][facei];
-        }
-    }
 }
 
 
@@ -196,14 +181,9 @@ Foam::multicomponentSolidBlastThermo<Thermo>::ESource() const
 {
     return tmp<volScalarField>
     (
-        new volScalarField
+        volScalarField::New
         (
-            IOobject
-            (
-                "ESource",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh()
-            ),
+            "ESource",
             this->rho_.mesh(),
             dimensionedScalar("0", dimEnergy/dimTime/dimVolume, 0.0)
         )

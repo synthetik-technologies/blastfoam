@@ -39,10 +39,10 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
         const scalar x2 = this->cellx(celli);
         const scalar x1 = 1.0 - x2;
         const scalar rhoi(this->rho_[celli]);
-        scalar& ei(this->he()[celli]);
-        scalar& Ti(this->Thermo::baseThermo::T()[celli]);
+        scalar& ei(this->heRef()[celli]);
+        scalar& Ti(this->TRef()[celli]);
 
-        if (x2 < small)
+        if (x2 < this->residualActivation_)
         {
             Ti =
                 t1.TRhoE(Ti, rhoi, ei);
@@ -55,15 +55,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             const scalar pi = t1.p(rhoi, ei, Ti);
             const scalar Cpi = t1.Cp(rhoi, ei, Ti);
 
-            this->Thermo::baseThermo::p()[celli] = pi;
+            this->pRef()[celli] = pi;
             this->CpRef()[celli] = Cpi;
             this->CvRef()[celli] = t1.Cv(rhoi, ei, Ti);
             this->muRef()[celli] = t1.mu(rhoi, ei, Ti);
-            this->alpha()[celli] = t1.kappa(rhoi, ei, Ti)/Cpi;
-            this->speedOfSound()[celli] =
+            this->alphaRef()[celli] = t1.kappa(rhoi, ei, Ti)/Cpi;
+            this->speedOfSoundRef()[celli] =
                 sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
         }
-        else if (x1 < small)
+        else if (x1 < this->residualActivation_)
         {
             Ti =
                 t2.TRhoE(Ti, rhoi, ei);
@@ -76,12 +76,12 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             const scalar pi = t2.p(rhoi, ei, Ti);
             const scalar Cpi = t2.Cp(rhoi, ei, Ti);
 
-            this->Thermo::baseThermo::p()[celli] = pi;
+            this->pRef()[celli] = pi;
             this->CpRef()[celli] = Cpi;
             this->CvRef()[celli] = t2.Cv(rhoi, ei, Ti);
             this->muRef()[celli] = t2.mu(rhoi, ei, Ti);
-            this->alpha()[celli] = t2.kappa(rhoi, ei, Ti)/Cpi;
-            this->speedOfSound()[celli] =
+            this->alphaRef()[celli] = t2.kappa(rhoi, ei, Ti)/Cpi;
+            this->speedOfSoundRef()[celli] =
                 sqrt(max(t2.cSqr(pi, rhoi, ei, Ti), small));
         }
         else
@@ -101,7 +101,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 t1.p(rhoi, ei, Ti)*x1
               + t2.p(rhoi, ei, Ti)*x2;
 
-            this->Thermo::baseThermo::p()[celli] = pi;
+            this->pRef()[celli] = pi;
             this->CpRef()[celli] =
                 t1.Cp(rhoi, ei, Ti)*x1
               + t2.Cp(rhoi, ei, Ti)*x2;;
@@ -111,10 +111,10 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             this->muRef()[celli] =
                 t1.mu(rhoi, ei, Ti)*x1
               + t2.mu(rhoi, ei, Ti)*x2;
-            this->alpha()[celli] =
+            this->alphaRef()[celli] =
                 t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
               + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
-            this->speedOfSound()[celli] =
+            this->speedOfSoundRef()[celli] =
                 sqrt
                 (
                     max(t1.cSqr(pi, rhoi, ei, Ti), small)*x1
@@ -123,27 +123,28 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
         }
     }
 
-    this->Thermo::baseThermo::T().correctBoundaryConditions();
-    this->he().correctBoundaryConditions();
-    this->Thermo::baseThermo::p().correctBoundaryConditions();
+    this->TRef().correctBoundaryConditions();
+    this->heRef().correctBoundaryConditions();
+    this->pRef().correctBoundaryConditions();
 
     forAll(this->T_.boundaryField(), patchi)
     {
         const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
         const fvPatchScalarField& pT =
-            this->Thermo::baseThermo::T().boundaryField()[patchi];
-        const fvPatchScalarField& phe = this->he().boundaryField()[patchi];
+            this->TRef().boundaryField()[patchi];
+        const fvPatchScalarField& phe =
+            this->heRef().boundaryField()[patchi];
         const fvPatchScalarField& pp =
-            this->Thermo::baseThermo::p().boundaryField()[patchi];
+            this->pRef().boundaryField()[patchi];
         const scalarField px(this->x(patchi));
 
         fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& pmu = this->muRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& palpha =
-            this->alpha().boundaryFieldRef()[patchi];
+            this->alphaRef().boundaryFieldRef()[patchi];
         fvPatchScalarField& pc =
-            this->speedOfSound().boundaryFieldRef()[patchi];
+            this->speedOfSoundRef().boundaryFieldRef()[patchi];
 
         forAll(pT, facei)
         {
@@ -154,7 +155,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
             const scalar Ti(pT[facei]);
             const scalar pi(pp[facei]);
 
-            if (x2 < small)
+            if (x2 < this->residualActivation_)
             {
                 pCp[facei] = t1.Cp(rhoi, ei, Ti);
                 pCv[facei] = t1.Cv(rhoi, ei, Ti);
@@ -163,7 +164,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate()
                 pc[facei] =
                     sqrt(max(t1.cSqr(pi, rhoi, ei, Ti), small));
             }
-            else if (x1 < small)
+            else if (x1 < this->residualActivation_)
             {
                 pCp[facei] = t2.Cp(rhoi, ei, Ti);
                 pCv[facei] = t2.Cv(rhoi, ei, Ti);
@@ -210,8 +211,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
     volScalarField& alphaMu,
     volScalarField& alphaAlphah,
     volScalarField& pXiSum,
-    volScalarField& XiSum,
-    volScalarField& rhoXiSum
+    volScalarField& XiSum
 )
 {
     const typename Thermo::thermoType1& t1(*this);
@@ -229,7 +229,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
         {
             scalar Xii = alphai;
 
-            if (x2 < small)
+            if (x2 < this->residualActivation_)
             {
                 Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
 
@@ -240,9 +240,8 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
                 pXiSum[celli] += t1.p(rhoi, ei, Ti)*Xii;
                 XiSum[celli] += Xii;
-                rhoXiSum[celli] += rhoi*Xii;
             }
-            else if (x1 < small)
+            else if (x1 < this->residualActivation_)
             {
                 Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
 
@@ -253,7 +252,6 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*alphai;
                 pXiSum[celli] += t2.p(rhoi, ei, Ti)*Xii;
                 XiSum[celli] += Xii;
-                rhoXiSum[celli] += rhoi*Xii;
             }
             else
             {
@@ -287,7 +285,6 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                       + t2.p(rhoi, ei, Ti)*x2
                     )*Xii;
                 XiSum[celli] += Xii;
-                rhoXiSum[celli] += rhoi*Xii;
             }
         }
     }
@@ -307,7 +304,6 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
             alphaAlphah.boundaryFieldRef()[patchi];
         fvPatchScalarField& ppXiSum = pXiSum.boundaryFieldRef()[patchi];
         fvPatchScalarField& pxiSum = XiSum.boundaryFieldRef()[patchi];
-        fvPatchScalarField& prhoXiSum = rhoXiSum.boundaryFieldRef()[patchi];
 
         forAll(palpha, facei)
         {
@@ -321,7 +317,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                 const scalar& Ti(pT[facei]);
                 scalar Xii = alphai;
 
-                if (x2 < small)
+                if (x2 < this->residualActivation_)
                 {
                     Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
 
@@ -332,7 +328,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                     palphaAlphah[facei] +=
                         t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
                 }
-                else if (x1 < small)
+                else if (x1 < this->residualActivation_)
                 {
                     Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
 
@@ -366,7 +362,6 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                       + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
                 }
                 pxiSum[facei] += Xii;
-                prhoXiSum[facei] += rhoi*Xii;
             }
         }
     }
@@ -390,7 +385,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
 
-            if (x2 < small)
+            if (x2 < this->residualActivation_)
             {
                 cSqrRhoXiSum[celli] +=
                     t1.cSqr
@@ -410,7 +405,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                       - 1.0
                     );
             }
-            else if (x1 < small)
+            else if (x1 < this->residualActivation_)
             {
                 cSqrRhoXiSum[celli] +=
                     t2.cSqr
@@ -484,7 +479,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                if (x2 < small)
+                if (x2 < this->residualActivation_)
                 {
                     pcSqr[facei] +=
                         t1.cSqr
@@ -504,7 +499,7 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
                           - 1.0
                         );
                 }
-                else if (x1 < small)
+                else if (x1 < this->residualActivation_)
                 {
                     pcSqr[facei] +=
                         t2.cSqr
@@ -682,27 +677,15 @@ void Foam::detonatingFluidBlastThermo<Thermo>::postUpdate()
 template<class Thermo>
 void Foam::detonatingFluidBlastThermo<Thermo>::updateRho(const volScalarField& p)
 {
-    volScalarField rhoNew
+    this->rho_ == Thermo::blendedVolScalarFieldProperty
     (
-        Thermo::blendedVolScalarFieldProperty
-        (
-            "rho",
-            dimDensity,
-            &Thermo::thermoType1::rhoPT,
-            &Thermo::thermoType2::rhoPT,
-            p,
-            this->T_
-        )
+        "rho",
+        dimDensity,
+        &Thermo::thermoType1::rhoPT,
+        &Thermo::thermoType2::rhoPT,
+        p,
+        this->T_
     );
-    this->rho_ = rhoNew;
-    forAll(this->rho_.boundaryField(), patchi)
-    {
-        forAll(this->rho_.boundaryField()[patchi], facei)
-        {
-            this->rho_.boundaryFieldRef()[patchi][facei] =
-                rhoNew.boundaryField()[patchi][facei];
-        }
-    }
 }
 
 
@@ -714,11 +697,11 @@ Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
     const scalar rho = this->rho_[celli];
     const scalar e = this->e_[celli];
     const scalar T = this->T_[celli];
-    if (x < small)
+    if (x < this->residualActivation_)
     {
         return Thermo::thermoType1::p(rho, e, T);
     }
-    else if ((1.0 - x) < small)
+    else if ((1.0 - x) < this->residualActivation_)
     {
         return Thermo::thermoType2::p(rho, e, T);
     }
@@ -802,27 +785,36 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 {
-    tmp<volScalarField> eInit
-    (
-        Thermo::volScalarFieldProperty
-        (
-            "e",
-            dimEnergy/dimMass,
-            &Thermo::thermoType1::initializeEnergy,
-            p,
-            this->rho_,
-            this->e_,
-            this->T_
-        )
-    );
-
     //- Add detonation energy to initially reacted material
-    if (this->rho_.time().timeIndex() == 0)
+    //  restarts are handled in the activation model
+    if (!this->rho_.mesh().time().restart())
     {
-        eInit.ref() += activation_->e0()*activation_->lambda();
+        return volScalarField::New
+        (
+            "eInit",
+            Thermo::volScalarFieldProperty
+            (
+                "e",
+                dimEnergy/dimMass,
+                &Thermo::thermoType1::initializeEnergy,
+                p,
+                this->rho_,
+                this->e_,
+                this->T_
+            ) + activation_->initESource()
+        );
     }
-
-    return eInit;
+    return Thermo::blendedVolScalarFieldProperty
+    (
+        "eInit",
+        dimEnergy/dimMass,
+        &Thermo::thermoType1::initializeEnergy,
+        &Thermo::thermoType2::initializeEnergy,
+        p,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
 }
 
 
@@ -830,21 +822,10 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::detonatingFluidBlastThermo<Thermo>::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ESource",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            (activation_->ESource() + afterburn_->ESource())*this->rho_
-        )
+        "ESource",
+        (activation_->ESource() + afterburn_->ESource())*this->rho_
     );
 }
 

@@ -177,6 +177,11 @@ void mapVolFields
                     fieldTarget[celli] = transform(R[celli], v);
                 }
             }
+            forAll(fieldTarget.boundaryField(), patchi)
+            {
+                fieldTarget.boundaryFieldRef()[patchi] =
+                    fieldTarget.boundaryField()[patchi].patchInternalField();
+            }
             fieldTarget.write();
         }
 #ifdef FULLDEBUG

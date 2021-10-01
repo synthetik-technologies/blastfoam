@@ -124,8 +124,7 @@ public:
             volScalarField& mu,
             volScalarField& alphah,
             volScalarField& pXiSum,
-            volScalarField& XiSum,
-            volScalarField& rhoXiSum
+            volScalarField& XiSum
         );
 
         //- Add contribution to speed of sound

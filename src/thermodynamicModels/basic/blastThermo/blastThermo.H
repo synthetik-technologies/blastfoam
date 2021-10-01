@@ -59,9 +59,6 @@ class blastThermo
     public timeIntegrationSystem,
     public basicThermo::implementation
 {
-public:
-    using basicThermo::implementation::alpha;
-
 protected:
 
     // Protected data
@@ -93,6 +90,19 @@ protected:
 
         // Protected member functions
 
+            //- Temperature [K]
+            //  Non-const access allowed for transport equations
+            volScalarField& TRef()
+            {
+                return this->T_;
+            }
+
+            //- Return enthalpy/Internal energy [J/kg]
+            volScalarField& heRef()
+            {
+                return e_;
+            }
+
             //- Heat capacity at constant pressure [J/kg/K]
             volScalarField& CpRef()
             {
@@ -106,7 +116,7 @@ protected:
             }
 
             //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-            volScalarField& alpha()
+            volScalarField& alphaRef()
             {
                 return alpha_;
             }

@@ -62,6 +62,10 @@ protected:
     typedef Thermo1 thermoType1;
     typedef Thermo2 thermoType2;
 
+    //- Residual value of activation parameter
+    scalar residualActivation_;
+
+
     // Protected functions
 
         //- Return a volScalarField of the given property

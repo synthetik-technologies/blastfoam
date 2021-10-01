@@ -156,11 +156,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
     forAll(psi, celli)
     {
         scalar x = this->cellx(celli);
-        if (x < small)
+        if (x < residualActivation_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if ((1.0 - x) < small)
+        else if ((1.0 - x) < residualActivation_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
@@ -182,12 +182,12 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
         forAll(pPsi, facei)
         {
             const scalar& x = xp()[facei];
-            if (x < small)
+            if (x < residualActivation_)
             {
                 pPsi[facei] =
                     (this->*psiMethod1)(args.boundaryField()[patchi][facei] ...);
             }
-            else if ((1.0 - x) < small)
+            else if ((1.0 - x) < residualActivation_)
             {
                 pPsi[facei] =
                     (this->*psiMethod2)(args.boundaryField()[patchi][facei] ...);
@@ -228,11 +228,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
     forAll(cells, celli)
     {
         scalar x = this->cellx(cells[celli]);
-        if (x < small)
+        if (x < residualActivation_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if ((1.0 - x) < small)
+        else if ((1.0 - x) < residualActivation_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
@@ -269,11 +269,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
 
     forAll(psi, facei)
     {
-        if (x[facei] < small)
+        if (x[facei] < residualActivation_)
         {
              psi[facei] = (this->*psiMethod1)(args[facei] ...);
         }
-        else if ((1.0 - x[facei]) < small)
+        else if ((1.0 - x[facei]) < residualActivation_)
         {
             psi[facei] = (this->*psiMethod2)(args[facei] ...);
         }
@@ -306,11 +306,11 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
     scalar psi;
 
     scalar x = this->cellx(celli);
-    if (x < small)
+    if (x < residualActivation_)
     {
         psi = (this->*psiMethod1)(args ...);
     }
-    else if ((1.0 - x) < small)
+    else if ((1.0 - x) < residualActivation_)
     {
         psi = (this->*psiMethod2)(args ...);
     }
@@ -347,11 +347,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperatu
             scalar ei = he[celli];
             scalar Ti;
 
-            if (x2 < small)
+            if (x2 < residualActivation_)
             {
                 Ti = t1.TRhoE(T0[celli], rhoi, ei);
             }
-            else if (x1 < small)
+            else if (x1 < residualActivation_)
             {
                 Ti = t2.TRhoE(T0[celli], rhoi, ei);
             }
@@ -381,11 +381,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperatu
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
                 scalar Ti;
-                if (x2 < small)
+                if (x2 < residualActivation_)
                 {
                     Ti = t1.TRhoE(pT0[facei], prho[facei], phe[facei]);
                 }
-                else if (x1 < small)
+                else if (x1 < residualActivation_)
                 {
                     Ti = t2.TRhoE(pT0[facei], prho[facei], phe[facei]);
                 }
@@ -423,11 +423,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
             const scalar rhoi(this->rho_[celli]);
             scalar hei;
 
-            if (x2 < small)
+            if (x2 < residualActivation_)
             {
                 hei = t1.Es(rhoi, he0[celli], T[celli]);
             }
-            else if (x1 < small)
+            else if (x1 < residualActivation_)
             {
                 hei = t2.Es(rhoi, he0[celli], T[celli]);
             }
@@ -457,11 +457,11 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
                 scalar hei;
-                if (x2 < small)
+                if (x2 < residualActivation_)
                 {
                     hei = t1.Es(prho[facei], phe0[facei], pT[facei]);
                 }
-                else if (x1 < small)
+                else if (x1 < residualActivation_)
                 {
                     hei = t2.Es(prho[facei], phe0[facei], pT[facei]);
                 }
@@ -499,7 +499,8 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedBlastThermo
         masterName
     ),
     Thermo1(dict1),
-    Thermo2(dict2)
+    Thermo2(dict2),
+    residualActivation_(dict.lookupOrDefault("residualActivation", 1e-10))
 {}
 
 

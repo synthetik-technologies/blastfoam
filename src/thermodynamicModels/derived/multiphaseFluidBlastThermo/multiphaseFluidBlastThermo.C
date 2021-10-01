@@ -83,15 +83,6 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     (
         volScalarField::New("XiSum", mesh(), dimensionedScalar(dimless, 0.0))
     );
-    volScalarField rhoXiSum
-    (
-        volScalarField::New
-        (
-            "rhoXiSum",
-            mesh(),
-            dimensionedScalar(dimDensity, 0.0)
-        )
-    );
     volScalarField pXiSum
     (
         volScalarField::New
@@ -128,10 +119,10 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             this->alpha_,
             this->mu_,
             pXiSum,
-            XiSum,
-            rhoXiSum
+            XiSum
         );
     }
+    XiSum.max(small);
     this->p_ = pXiSum/XiSum;
     this->p_.correctBoundaryConditions();
 
@@ -149,9 +140,13 @@ void Foam::multiphaseFluidBlastThermo::calculate()
             cSqrRhoXiSum
         );
     }
-    rhoXiSum.max(small);
     cSqrRhoXiSum.max(small);
-    this->speedOfSound_ = sqrt(cSqrRhoXiSum/rhoXiSum);
+    this->speedOfSound_ =
+        sqrt
+        (
+            cSqrRhoXiSum
+           /max(this->rho_*XiSum, this->residualRho_)
+        );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //

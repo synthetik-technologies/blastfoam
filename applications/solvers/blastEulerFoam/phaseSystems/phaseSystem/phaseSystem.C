@@ -552,8 +552,8 @@ void Foam::phaseSystem::calcMixtureVariables()
         const phaseModel& phase = phaseModels_[phasei];
         const volScalarField& alphaRho = phase.alphaRho();
         rho_ += alphaRho;
-        alphaRhoU.ref() += alphaRho*phase.U();
-        alphaRhoT.ref() += alphaRho*phase.T();
+        alphaRhoU += alphaRho*phase.U();
+        alphaRhoT += alphaRho*phase.T();
         phi_ += phase.alphaPhi();
     }
     U_ = alphaRhoU/rho_;
@@ -771,6 +771,7 @@ Foam::phaseSystem::phaseSystem
     {
         dynamicCast<volScalarField>(phaseModels_[1]) =
             1.0 - phaseModels_[0];
+        phaseModels_[1].correctVolumeFraction();
     }
     else
     {
@@ -888,6 +889,7 @@ void Foam::phaseSystem::decode()
 
         volScalarField& alpha2(phaseModels_[1]);
         alpha2 = 1.0 - alpha1;
+        phaseModels_[1].correctVolumeFraction();
 
         phaseModels_[0].decode();
         phaseModels_[1].decode();
@@ -931,7 +933,7 @@ void Foam::phaseSystem::decode()
 
         forAll(phaseModels_, phasei)
         {
-            phaseModels_[phasei].correctBoundaryConditions();
+            phaseModels_[phasei].correctVolumeFraction();
             phaseModels_[phasei].decode();
         }
     }

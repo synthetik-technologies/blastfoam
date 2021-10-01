@@ -453,6 +453,7 @@ void Foam::phaseModel::postUpdate()
         UEqn.solve();
         constraintsPtr_->constrain(U_);
 
+        Info<<Foam::min(alphaRho_)<<endl;
         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
     }
 

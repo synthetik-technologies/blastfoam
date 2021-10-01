@@ -78,6 +78,19 @@ protected:
                 return mu_;
             }
 
+            //- Pressure [Pa]
+            //  Non-const access allowed for transport equations
+            volScalarField& pRef()
+            {
+                return p_;
+            }
+
+            //- Access the speed of sound
+            volScalarField& speedOfSoundRef()
+            {
+                return speedOfSound_;
+            }
+
 
 public:
 

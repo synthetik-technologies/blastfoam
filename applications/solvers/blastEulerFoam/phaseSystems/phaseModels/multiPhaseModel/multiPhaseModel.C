@@ -157,6 +157,7 @@ Foam::multiPhaseModel::~multiPhaseModel()
 void Foam::multiPhaseModel::solve()
 {
     dimensionedScalar dT = rho_.time().deltaT();
+    dynamicCast<volScalarField>(*this) = 0.0;
     forAll(alphas_, phasei)
     {
         volScalarField deltaAlpha
@@ -176,6 +177,8 @@ void Foam::multiPhaseModel::solve()
         alphaRhos_[phasei].storePrevIter();
         alphaRhos_[phasei] -= dT*deltaAlphaRho;
         alphaRhos_[phasei].correctBoundaryConditions();
+
+        *this += alphas_[phasei];
     }
 
     thermoPtr_->solve();
@@ -265,9 +268,14 @@ void Foam::multiPhaseModel::update()
 void Foam::multiPhaseModel::correctVolumeFraction()
 {
     // find largest volume fraction and set to 1-sum
+    scalarList rAlphas(alphas_.size());
+    SortableList<scalar> alphas(alphas_.size());
+    forAll(rAlphas, phasei)
+    {
+        rAlphas[phasei] = thermo_.thermo(phasei).residualAlpha().value();
+    }
     forAll(*this, celli)
     {
-        SortableList<scalar> alphas(alphas_.size());
         forAll(alphas_, phasei)
         {
             alphas_[phasei][celli] =
@@ -276,7 +284,7 @@ void Foam::multiPhaseModel::correctVolumeFraction()
                     Foam::min
                     (
                         alphas_[phasei][celli],
-                        this->alphaMax()
+                        (*this)[celli]
                     ),
                     0.0
                 );
@@ -289,18 +297,25 @@ void Foam::multiPhaseModel::correctVolumeFraction()
         scalar sumAlpha = 0.0;
         for (label phasei = 1; phasei < alphas.size(); phasei++)
         {
+            // Conserve mass
+            rhos_[phasei][celli] =
+                Foam::max(alphaRhos_[phasei][celli], 0.0)
+               /Foam::max(alphas[phasei], rAlphas[phasei]);
+
             sumAlpha += alphas[phasei];
         }
         sumAlpha = Foam::min(sumAlpha, (*this)[celli]);
         alphas_[fixedPhase][celli] = (*this)[celli] - sumAlpha;
+
+        // Conserve mass
+        rhos_[fixedPhase][celli] =
+            Foam::max(alphaRhos_[fixedPhase][celli], 0.0)
+           /Foam::max(alphas_[fixedPhase][celli], rAlphas[fixedPhase]);
     }
 
-    volScalarField& alpha(*this);
-    alpha = 0.0;
     forAll(alphas_, phasei)
     {
         alphas_[phasei].correctBoundaryConditions();
-        alpha += alphas_[phasei];
     }
 }
 
@@ -341,6 +356,7 @@ void Foam::multiPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
+    e_.correctBoundaryConditions();
 
     thermoPtr_->correct();
 

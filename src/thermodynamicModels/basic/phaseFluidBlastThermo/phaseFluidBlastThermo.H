@@ -63,14 +63,14 @@ protected:
         // protected member functions
 
             //- Pressure [Pa]
-            volScalarField& p()
+            volScalarField& pRef()
             {
                 NotImplemented;
                 return rho_;
             }
 
             //- Speed of sound [m/s]
-            volScalarField& speedOfSound()
+            volScalarField& speedOfSoundRef()
             {
                 NotImplemented;
                 return rho_;
@@ -147,8 +147,7 @@ public:
             volScalarField& alphamu,
             volScalarField& alphaAlphah,
             volScalarField& pXiSum,
-            volScalarField& XiSum,
-            volScalarField& rhoXiSum
+            volScalarField& XiSum
         ) = 0;
 
         //- Add contribution to speed of sound

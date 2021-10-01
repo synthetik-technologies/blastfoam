@@ -315,17 +315,10 @@ void Foam::granularPhaseModel::update()
 
 void Foam::granularPhaseModel::correctVolumeFraction()
 {
-    const fvConstraints& constraints(this->fluid_.constraints());
-
     volScalarField& alpha(*this);
 
     //- Update volume fraction since density is known
     alpha.ref() = alphaRho_()/rho_();
-    if (constraints.constrainsField(alpha.name()))
-    {
-        constraints.constrain(alpha);
-        alphaRho_.ref() = alpha()*rho_();
-    }
     alpha.correctBoundaryConditions();
 }
 
