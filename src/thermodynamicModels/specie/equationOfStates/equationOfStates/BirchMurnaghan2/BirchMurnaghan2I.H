@@ -198,7 +198,8 @@ Foam::scalar Foam::BirchMurnaghan2<Specie>::E
 {
     return
         (
-            9.0/8.0*K0_*pow(rho/rho0_, 5.0/3.0)*(pow(rho/rho0_, 2.0/3.0) - 2.0)
+            9.0/8.0*K0_*pow(rho/rho0_, 5.0/3.0)
+           *(pow(rho/rho0_, 2.0/3.0) - 2.0)
           - pRef_
         )/max(rho, 1e-10);
 }

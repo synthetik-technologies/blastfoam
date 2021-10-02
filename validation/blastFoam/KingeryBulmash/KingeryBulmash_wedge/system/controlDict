@@ -78,19 +78,12 @@ functions
             impulse
         );
     }
-    speedOfSound
-    {
-        type speedOfSound;
-        writeControl writeTime;
-    }
-
     timeOfArrival
     {
         type                timeOfArrival;
         writeControl        writeTime;
         writeInterval       1;
     }
-
     pressureProbes
     {
         type                blastProbes;

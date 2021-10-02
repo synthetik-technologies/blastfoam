@@ -29,27 +29,20 @@ License
 #define forDetBlastGasses_H
 
 #include "constTransport.H"
-#include "sutherlandTransport.H"
 
 #include "thermoModel.H"
 
-#include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
-#include "janafBlastThermo.H"
-#include "eTabulatedBlastThermo.H"
-#include "hTabulatedBlastThermo.H"
+#include "ePolynomialBlastThermo.H"
 
 #include "perfectGas.H"
 #include "AbelNobel.H"
 #include "JWLC.H"
 
-#include "idealGas.H"
-#include "stiffenedGas.H"
 #include "vanderWaals.H"
 #include "JWL.H"
 #include "LSZK.H"
 #include "BKW.H"
-#include "DoanNickel.H"
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
@@ -79,10 +72,12 @@ License
     forDetrGasEqns(uMu, rMu, uCp, rCp, solidJWL, Macro, Args);
 
 #define forDetrGasThermos(uMu, rMu, uCp, Macro, Args...)                    \
-    forDetuGasEqns(uMu, rMu, uCp, eConstThermo, Macro, Args);
+    forDetuGasEqns(uMu, rMu, uCp, eConstThermo, Macro, Args);               \
+    forDetuGasEqns(uMu, rMu, uCp, ePolynomialThermo, Macro, Args);
 
 #define forDetuGasThermos(uMu, rMu, Macro, Args...)                         \
-    forDetrGasThermos(uMu, rMu, eConstThermo, Macro, Args);
+    forDetrGasThermos(uMu, rMu, eConstThermo, Macro, Args);                 \
+    forDetrGasThermos(uMu, rMu, ePolynomialThermo, Macro, Args);
 
 #define forDetrGasTransports(uMu, Macro, Args...)                           \
     forDetuGasThermos(uMu, constTransport, Macro, Args);

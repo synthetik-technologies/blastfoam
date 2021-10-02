@@ -417,16 +417,16 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
 
     forAll(alphaHE, celli)
     {
+        scalar hei = he0[celli];
         if (T0[celli] > this->TLow_)
         {
-            alphaHE[celli] += alpha[celli]*he0[celli];
+            hei = he0[celli];
         }
         else if (alpha[celli] > this->residualAlpha_.value())
         {
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
             const scalar rhoi(this->rho_[celli]);
-            scalar hei;
 
             if (x2 < residualActivation_)
             {
@@ -442,8 +442,8 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
                     t1.Es(rhoi, he0[celli], T[celli])*x1
                   + t2.Es(rhoi, he0[celli], T[celli])*x2;
             }
-            alphaHE[celli] += hei*alpha[celli];
         }
+        alphaHE[celli] += hei*alpha[celli];
     }
 
     forAll(alphaHE.boundaryField(), patchi)
@@ -459,15 +459,15 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
 
         forAll(palphaHE, facei)
         {
+            scalar hei = phe0[facei];
             if (pT0[facei] > this->TLow_)
             {
-                palphaHE[facei] += palpha[facei]*phe0[facei];
+                hei = phe0[facei];
             }
             else if (palpha[facei] > this->residualAlpha_.value())
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
-                scalar hei;
                 if (x2 < residualActivation_)
                 {
                     hei = t1.Es(prho[facei], phe0[facei], pT[facei]);
@@ -482,8 +482,8 @@ void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
                         t1.Es(prho[facei], phe0[facei], pT[facei])*x1
                       + t2.Es(prho[facei], phe0[facei], pT[facei])*x2;
                 }
-                palphaHE[facei] += hei*palpha[facei];
             }
+            palphaHE[facei] += hei*palpha[facei];
         }
     }
 }

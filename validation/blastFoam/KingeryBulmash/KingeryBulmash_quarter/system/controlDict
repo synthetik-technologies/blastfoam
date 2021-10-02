@@ -78,7 +78,6 @@ functions
             impulse
         );
     }
-
     timeOfArrival
     {
         type                timeOfArrival;

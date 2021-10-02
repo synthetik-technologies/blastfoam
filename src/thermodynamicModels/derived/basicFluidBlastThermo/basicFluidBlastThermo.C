@@ -202,7 +202,7 @@ void Foam::basicFluidBlastThermo<Thermo>::calculateSpeedOfSound
                         this->e_[celli],
                         this->T_[celli]
                     )
-                 - 1.0
+                  - 1.0
                 );
         }
     }

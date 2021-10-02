@@ -29,14 +29,11 @@ License
 #define forBlastLiquids_H
 
 #include "constTransport.H"
-#include "sutherlandTransport.H"
 
 #include "thermoModel.H"
 
-#include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
-#include "eTabulatedBlastThermo.H"
-#include "hTabulatedBlastThermo.H"
+#include "ePolynomialBlastThermo.H"
 
 #include "Tait.H"
 #include "BWR.H"
@@ -58,7 +55,7 @@ License
 
 #define forLiquidThermos(Mu, Macro, Args...)                                \
     forLiquidEqns(Mu, eConstThermo, Macro, Args);                           \
-    forLiquidEqns(Mu, hConstThermo, Macro, Args)
+    forLiquidEqns(Mu, ePolynomialThermo, Macro, Args);
 
 #define forLiquidTransports(Macro, Args...)                                 \
     forLiquidThermos(constTransport, Macro, Args);

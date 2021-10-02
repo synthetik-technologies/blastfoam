@@ -30,17 +30,13 @@ License
 
 #include "constTransport.H"
 #include "sutherlandTransport.H"
-#include "WLFTransport.H"
-#include "polynomialTransport.H"
-#include "logPolynomialTransport.H"
-#include "tabulatedTransport.H"
 
 #include "thermoModel.H"
 
 #include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
 #include "janafBlastThermo.H"
-#include "eTabulatedBlastThermo.H"
+#include "ePolynomialBlastThermo.H"
 
 #include "perfectGas.H"
 #include "AbelNobel.H"
@@ -71,12 +67,11 @@ License
 
 #define forGasThermos(Mu, Macro, Args...)                                   \
     forGasEqns(Mu, eConstThermo, Macro, Args);                              \
-    forGasEqns(Mu, janafThermo, Macro, Args);                               \
+    forGasEqns(Mu, ePolynomialThermo, Macro, Args);                         \
     forGasEqns(Mu, hConstThermo, Macro, Args)
 
 #define forGasTransports(Macro, Args...)                                    \
-    forGasThermos(constTransport, Macro, Args);                             \
-    forGasThermos(sutherlandTransport, Macro, Args)
+    forGasThermos(constTransport, Macro, Args);
 
 #define forGases(Macro, Args...)                                            \
     forGasTransports(Macro, Args)

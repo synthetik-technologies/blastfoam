@@ -21,7 +21,6 @@ nBufferLayers 5;
 defaultFieldValues
 (
     volScalarFieldValue alpha.c4 0
-    volVectorFieldValue U (0 0 0)
 );
 
 

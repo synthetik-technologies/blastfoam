@@ -449,8 +449,7 @@ void Foam::activationModel::solve()
         );
     }
     this->correct();
-    lambda_.min(1);
-    lambda_.max(0);
+    lambda_.maxMin(0.0, 1.0);
     lambda_.correctBoundaryConditions();
 
     // Compute the limited change in lambda

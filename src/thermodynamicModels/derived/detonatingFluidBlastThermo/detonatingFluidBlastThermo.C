@@ -227,38 +227,32 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
         const scalar Ti(T[celli]);
         if (alphai > this->residualAlpha_.value())
         {
-            scalar Xii = alphai;
+            scalar Gamma = alphai;
+            scalar pi;
 
             if (x2 < this->residualActivation_)
             {
-                Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
-
                 alphaCp[celli] += t1.Cp(rhoi, ei, Ti)*alphai;
                 alphaCv[celli] += t1.Cv(rhoi, ei, Ti)*alphai;
                 alphaMu[celli] += t1.mu(rhoi, ei, Ti)*alphai;
                 alphaAlphah[celli] +=
                     t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
-                pXiSum[celli] += t1.p(rhoi, ei, Ti)*Xii;
-                XiSum[celli] += Xii;
+                Gamma = t1.Gamma(rhoi, ei, Ti);
+                pi = t1.p(rhoi, ei, Ti);
             }
             else if (x1 < this->residualActivation_)
             {
-                Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
-
                 alphaCp[celli] += t2.Cp(rhoi, ei, Ti)*alphai;
                 alphaCv[celli] += t2.Cv(rhoi, ei, Ti)*alphai;
                 alphaMu[celli] += t2.mu(rhoi, ei, Ti)*alphai;
                 alphaAlphah[celli] +=
                     t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*alphai;
-                pXiSum[celli] += t2.p(rhoi, ei, Ti)*Xii;
-                XiSum[celli] += Xii;
+
+                Gamma = t2.Gamma(rhoi, ei, Ti);
+                pi = t2.p(rhoi, ei, Ti);
             }
             else
             {
-                Xii /=
-                    x1*t1.Gamma(rhoi, ei, Ti)
-                  + x2*t2.Gamma(rhoi, ei, Ti)
-                  - 1.0;
                 alphaCp[celli] +=
                     (
                         t1.Cp(rhoi, ei, Ti)*x1
@@ -279,13 +273,14 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                         t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
                       + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2
                     )*alphai;
-                pXiSum[celli] +=
-                    (
-                        t1.p(rhoi, ei, Ti)*x1
-                      + t2.p(rhoi, ei, Ti)*x2
-                    )*Xii;
-                XiSum[celli] += Xii;
+
+                Gamma =
+                    t1.Gamma(rhoi, ei, Ti)*x1 + t1.Gamma(rhoi, ei, Ti)*x2;
+                pi = t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
             }
+            scalar Xii = alphai/(Gamma - 1.0);
+            pXiSum[celli] += pi*Xii;
+            XiSum[celli] += Xii;
         }
     }
 
@@ -315,52 +310,60 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculate
                 const scalar& rhoi(prho[facei]);
                 const scalar& ei(phe[facei]);
                 const scalar& Ti(pT[facei]);
-                scalar Xii = alphai;
+                scalar Gamma;
+                scalar pi;
 
                 if (x2 < this->residualActivation_)
                 {
-                    Xii /= t1.Gamma(rhoi, ei, Ti) - 1.0;
-
-                    ppXiSum[facei] += t1.p(rhoi, ei, Ti)*Xii;
                     palphaCp[facei] += t1.Cp(rhoi, ei, Ti)*alphai;
                     palphaCv[facei] += t1.Cv(rhoi, ei, Ti)*alphai;
                     palphaMu[facei] += t1.mu(rhoi, ei, Ti)*alphai;
                     palphaAlphah[facei] +=
                         t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*alphai;
+
+                    Gamma = t1.Gamma(rhoi, ei, Ti);
+                    pi = t1.p(rhoi, ei, Ti);
                 }
                 else if (x1 < this->residualActivation_)
                 {
-                    Xii /= t2.Gamma(rhoi, ei, Ti) - 1.0;
-
-                    ppXiSum[facei] += t2.p(rhoi, ei, Ti);
-                    palphaCp[facei] += t2.Cp(rhoi, ei, Ti);
-                    palphaCv[facei] += t2.Cv(rhoi, ei, Ti);
-                    palphaMu[facei] += t2.mu(rhoi, ei, Ti);
+                    palphaCp[facei] += t2.Cp(rhoi, ei, Ti)*alphai;
+                    palphaCv[facei] += t2.Cv(rhoi, ei, Ti)*alphai;
+                    palphaMu[facei] += t2.mu(rhoi, ei, Ti)*alphai;
                     palphaAlphah[facei] +=
-                        t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti);
+                        t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*alphai;
+
+                    Gamma = t2.Gamma(rhoi, ei, Ti);
+                    pi = t2.p(rhoi, ei, Ti);
                 }
                 else
                 {
-                    Xii /=
-                        t1.Gamma(rhoi, ei, Ti)*x1
-                      + t2.Gamma(rhoi, ei, Ti)*x2
-                      - 1.0;
-                    ppXiSum[facei] +=
-                        t1.p(rhoi, ei, Ti)*x1
-                      + t2.p(rhoi, ei, Ti)*x2;
                     palphaCp[facei] +=
-                        t1.Cp(rhoi, ei, Ti)*x1
-                      + t2.Cp(rhoi, ei, Ti)*x2;
+                        (
+                            t1.Cp(rhoi, ei, Ti)*x1
+                          + t2.Cp(rhoi, ei, Ti)*x2
+                        )*alphai;
                     palphaCv[facei] +=
-                        t1.Cv(rhoi, ei, Ti)*x1
-                      + t2.Cv(rhoi, ei, Ti)*x2;
+                        (
+                            t1.Cv(rhoi, ei, Ti)*x1
+                          + t2.Cv(rhoi, ei, Ti)*x2
+                        )*alphai;
                     palphaMu[facei] +=
-                        t1.mu(rhoi, ei, Ti)*x1
-                      + t2.mu(rhoi, ei, Ti)*x2;
+                        (
+                            t1.mu(rhoi, ei, Ti)*x1
+                          + t2.mu(rhoi, ei, Ti)*x2
+                        )*alphai;
                     palphaAlphah[facei] +=
-                        t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
-                      + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2;
+                        (
+                            t1.kappa(rhoi, ei, Ti)/t1.Cp(rhoi, ei, Ti)*x1
+                          + t2.kappa(rhoi, ei, Ti)/t2.Cp(rhoi, ei, Ti)*x2
+                        )*alphai;
+
+                    Gamma =
+                        t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
+                    pi = t1.p(rhoi, ei, Ti)*x1 + t2.p(rhoi, ei, Ti)*x2;
                 }
+                scalar Xii = alphai/(Gamma - 1.0);
+                ppXiSum[facei] += pi*Xii;
                 pxiSum[facei] += Xii;
             }
         }
@@ -380,86 +383,37 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
 
     forAll(this->rho_, celli)
     {
-        if (alpha[celli] > this->residualAlpha_.value())
+        const scalar alphai = alpha[celli];
+        if (alphai > this->residualAlpha_.value())
         {
             const scalar x2 = this->cellx(celli);
             const scalar x1 = 1.0 - x2;
+            const scalar pi = this->p_[celli];
+            const scalar rhoi = this->rho_[celli];
+            const scalar ei = this->e_[celli];
+            const scalar Ti = this->T_[celli];
+            scalar cSqr;
+            scalar Gamma;
 
             if (x2 < this->residualActivation_)
             {
-                cSqrRhoXiSum[celli] +=
-                    t1.cSqr
-                    (
-                        this->p_[celli],
-                        this->rho_[celli],
-                        this->e_[celli],
-                        this->T_[celli]
-                    )*this->rho_[celli]*alpha[celli]
-                   /(
-                        t1.Gamma
-                        (
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )
-                      - 1.0
-                    );
+                cSqr = t1.cSqr(pi, rhoi, ei, Ti);
+                Gamma = t1.Gamma(rhoi, ei, Ti);
             }
             else if (x1 < this->residualActivation_)
             {
-                cSqrRhoXiSum[celli] +=
-                    t2.cSqr
-                    (
-                        this->p_[celli],
-                        this->rho_[celli],
-                        this->e_[celli],
-                        this->T_[celli]
-                    )*this->rho_[celli]*alpha[celli]
-                   /(
-                        t2.Gamma
-                        (
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )
-                      - 1.0
-                    );
+                cSqr = t2.cSqr(pi, rhoi, ei, Ti);
+                Gamma = t2.Gamma(rhoi, ei, Ti);
             }
             else
             {
-                cSqrRhoXiSum[celli] +=
-                    (
-                        t1.cSqr
-                        (
-                            this->p_[celli],
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )*x1
-                      + t2.cSqr
-                        (
-                            this->p_[celli],
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )*x2
-                    )*this->rho_[celli]*alpha[celli]
-                   /(
-                        t1.Gamma
-                        (
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )*x1
-                      + t2.Gamma
-                        (
-                            this->rho_[celli],
-                            this->e_[celli],
-                            this->T_[celli]
-                        )  *x2
-                      - 1.0
-                    );
+                cSqr =
+                    t1.cSqr(pi, rhoi, ei, Ti)*x1
+                  + t2.cSqr(pi, rhoi, ei, Ti)*x2;
+                Gamma =
+                    t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
             }
+            cSqrRhoXiSum[celli] += cSqr*rhoi*alphai/(Gamma - 1.0);
         }
     }
 
@@ -471,89 +425,42 @@ void Foam::detonatingFluidBlastThermo<Thermo>::calculateSpeedOfSound
         const fvPatchScalarField& phe = this->e_.boundaryField()[patchi];
         const fvPatchScalarField& pp = this->p_.boundaryField()[patchi];
         const scalarField px(this->x(patchi));
-        fvPatchScalarField& pcSqr = cSqrRhoXiSum.boundaryFieldRef()[patchi];
+        fvPatchScalarField& pcSqrRhoXiSum =
+            cSqrRhoXiSum.boundaryFieldRef()[patchi];
 
         forAll(pT, facei)
         {
-            if (palpha[facei] > this->residualAlpha_.value())
+            const scalar alphai = palpha[facei];
+            if (alphai > this->residualAlpha_.value())
             {
                 const scalar x2 = px[facei];
                 const scalar x1 = 1.0 - x2;
+                const scalar pi = pp[facei];
+                const scalar rhoi = prho[facei];
+                const scalar ei = phe[facei];
+                const scalar Ti = pT[facei];
+                scalar cSqr;
+                scalar Gamma;
+
                 if (x2 < this->residualActivation_)
                 {
-                    pcSqr[facei] +=
-                        t1.cSqr
-                        (
-                            pp[facei],
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )*prho[facei]*palpha[facei]
-                       /(
-                            t1.Gamma
-                            (
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )
-                          - 1.0
-                        );
+                    cSqr = t1.cSqr(pi, rhoi, ei, Ti);
+                    Gamma = t1.Gamma(rhoi, ei, Ti);
                 }
                 else if (x1 < this->residualActivation_)
                 {
-                    pcSqr[facei] +=
-                        t2.cSqr
-                        (
-                            pp[facei],
-                            prho[facei],
-                            phe[facei],
-                            pT[facei]
-                        )*prho[facei]*palpha[facei]
-                       /(
-                            t2.Gamma
-                            (
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )
-                          - 1.0
-                        );
+                    cSqr = t2.cSqr(pi, rhoi, ei, Ti);
+                    Gamma = t2.Gamma(rhoi, ei, Ti);
                 }
                 else
                 {
-                    pcSqr[facei] +=
-                        (
-                            t1.cSqr
-                            (
-                                pp[facei],
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )*x1
-                          + t2.cSqr
-                            (
-                                pp[facei],
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )*x2
-                        )*prho[facei]*palpha[facei]
-                       /(
-                            t1.Gamma
-                            (
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )*x1
-                          + t2.Gamma
-                            (
-                                prho[facei],
-                                phe[facei],
-                                pT[facei]
-                            )  *x2
-                          - 1.0
-                        );
+                    cSqr =
+                        t1.cSqr(pi, rhoi, ei, Ti)*x1
+                      + t2.cSqr(pi, rhoi, ei, Ti)*x2;
+                    Gamma =
+                        t1.Gamma(rhoi, ei, Ti)*x1 + t2.Gamma(rhoi, ei, Ti)*x2;
                 }
+                pcSqrRhoXiSum[facei] += cSqr*rhoi*alphai/(Gamma - 1.0);
             }
         }
     }

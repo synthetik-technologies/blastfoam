@@ -67,7 +67,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::interpolate
     const surfaceScalarField& fOwn = fOwnTmp();
     const surfaceScalarField& fNei = fNeiTmp();
 
-    tmp<surfaceScalarField> tmpf
+    tmp<surfaceScalarField> tmpff
     (
         surfaceScalarField::New
         (
@@ -76,21 +76,21 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::interpolate
             dimensioned<scalar>("0", f.dimensions(), Zero)
         )
     );
-    surfaceScalarField& ff = tmpf.ref();
+    surfaceScalarField& ff = tmpff.ref();
 
     forAll(fOwn, facei)
     {
         ff[facei] = interpolate(fOwn[facei], fNei[facei], facei);
     }
 
-    forAll(f.boundaryField(), patchi)
+    forAll(ff.boundaryField(), patchi)
     {
-        scalarField& pf = ff.boundaryFieldRef()[patchi];
+        scalarField& pff = ff.boundaryFieldRef()[patchi];
         const scalarField& pfOwn = fOwn.boundaryField()[patchi];
         const scalarField& pfNei = fNei.boundaryField()[patchi];
-        forAll(pf, facei)
+        forAll(pff, facei)
         {
-            pf[facei] =
+            pff[facei] =
                 interpolate
                 (
                     pfOwn[facei],
@@ -99,7 +99,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::interpolate
                 );
         }
     }
-    return tmpf;
+    return tmpff;
 }
 
 

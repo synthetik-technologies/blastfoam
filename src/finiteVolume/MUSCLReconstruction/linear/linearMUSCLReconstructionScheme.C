@@ -85,8 +85,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
 
     const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
-    const vectorField& cc = this->mesh_.cellCentres();
-    const vectorField& fc = this->mesh_.faceCentres();
+    const vectorField& cc = this->mesh_.C();
+    const vectorField& fc = this->mesh_.Cf();
 
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tlimOwn
     (
@@ -192,8 +192,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
 
     const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
-    const vectorField& cc = this->mesh_.cellCentres();
-    const vectorField& fc = this->mesh_.faceCentres();
+    const vectorField& cc = this->mesh_.C();
+    const vectorField& fc = this->mesh_.Cf();
 
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tlimNei
     (

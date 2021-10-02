@@ -76,7 +76,7 @@ typename Table::iterator Foam::blastThermo::lookupCstrIter
                 const dictionary& rDict =
                     thermoDict.subDict("products").subDict("thermoType");
                 thermoTypeDict.add("reactants", uDict);
-                thermoTypeDict.add("reactants", rDict);
+                thermoTypeDict.add("products", rDict);
 
                 entries =
                     {

@@ -32,11 +32,8 @@ License
 
 #include "thermoModel.H"
 
-#include "hConstBlastThermo.H"
 #include "eConstBlastThermo.H"
-#include "janafBlastThermo.H"
-#include "eTabulatedBlastThermo.H"
-#include "hTabulatedBlastThermo.H"
+#include "ePolynomialBlastThermo.H"
 
 #include "CochranChan.H"
 #include "Murnaghan.H"
@@ -60,8 +57,7 @@ License
 
 #define forSolidFluidThermos(Mu, Macro, Args...)                            \
     forSolidFluidEqns(Mu, eConstThermo, Macro, Args);                       \
-    forSolidFluidEqns(Mu, janafThermo, Macro, Args);                        \
-    forSolidFluidEqns(Mu, hConstThermo, Macro, Args)
+    forSolidFluidEqns(Mu, ePolynomialThermo, Macro, Args);
 
 #define forSolidFluidTransports(Macro, Args...)                             \
     forSolidFluidThermos(constTransport, Macro, Args);

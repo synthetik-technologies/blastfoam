@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 castellatedMesh on;
-snap            on;
+snap            off;
 addLayers       off;
 
 geometry
@@ -25,13 +25,6 @@ geometry
         type triSurfaceMesh;
         file "L_Wall.stl";
         scale 0.001;
-    }
-    cylinder
-    {
-        type searchableCylinder;
-        point1 (-1 -1 0);
-        point2 (-1 -1 1);
-        radius 0.5;
     }
 };
 
@@ -82,14 +75,6 @@ castellatedMeshControls
         {
             level (1 1);
             patchInfo { type wall; }
-        }
-        cylinder
-        {
-            level (2 2);
-            patchInfo
-            {
-                type patch;
-            }
         }
     }
 
