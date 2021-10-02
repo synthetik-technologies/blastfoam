@@ -238,7 +238,8 @@ Foam::activationModel::activationModel
             IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedScalar("0", dimless, 0.0)
+        dimensionedScalar("0", dimless, 0.0),
+        "zeroGradient"
     ),
     detonationPoints_
     (
@@ -457,18 +458,19 @@ void Foam::activationModel::solve()
     volScalarField& ddtLambda = ddtLambda_.ref();
     volScalarField ddtLambdaLimited(ddtLambda);
 
-    //- Compute actual delta for the time step knowing the blended
-    ddtLambda = this->calcAndStoreDelta(ddtLambda);
-
     volScalarField deltaAlphaRhoLambda(fvc::div(alphaRhoPhiPtr_(), lambda_));
     this->storeAndBlendDelta(deltaAlphaRhoLambda);
 
     //- Solve advection
     lambda_ =
         (
-            lambdaOld*alphaRhoPtr_().prevIter() - dT*deltaAlphaRhoLambda
-        )/max(alphaRhoPtr_(), smallRho)
-      + dT*ddtLambdaLimited;
+            lambdaOld*alphaRhoPtr_().prevIter()
+          - dT*(deltaAlphaRhoLambda - ddtLambdaLimited*alphaRhoPtr_())
+        )/max(alphaRhoPtr_(), smallRho);
+
+    //- Compute actual delta for the time step knowing the blended
+    ddtLambda = this->calcAndStoreDelta(ddtLambda);
+
 
     //- Correct the lambda field since zero mass will cause "unactivation"
     //  which is not correct for some models

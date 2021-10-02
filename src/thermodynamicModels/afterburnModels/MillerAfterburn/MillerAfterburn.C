@@ -60,7 +60,8 @@ Foam::afterburnModels::MillerAfterburn::MillerAfterburn
             IOobject::AUTO_WRITE
         ),
         mesh_,
-        0.0
+        0.0,
+        "zeroGradient"
     ),
     pScale_(dict.lookupOrDefault("pScale", 1.0)),
     pName_(dict_.lookupOrDefault("pName", word("p"))),
