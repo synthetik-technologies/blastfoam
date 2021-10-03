@@ -99,7 +99,6 @@ class BKW
     scalar Theta_;
     scalar a_;
     scalar beta_;
-    scalar gamma_;
 
 
 public:
@@ -114,8 +113,7 @@ public:
             const scalar kappa,
             const scalar Theta,
             const scalar a,
-            const scalar beta,
-            const scalar gamma
+            const scalar beta
         );
 
         //- Construct from dictionary

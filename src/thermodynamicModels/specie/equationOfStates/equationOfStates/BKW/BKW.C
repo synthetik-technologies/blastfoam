@@ -41,8 +41,7 @@ Foam::BKW<Specie>::BKW
     kappa_(dict.subDict("equationOfState").lookup<scalar>("kappa")),
     Theta_(dict.subDict("equationOfState").lookup<scalar>("Theta")),
     a_(dict.subDict("equationOfState").lookup<scalar>("a")),
-    beta_(dict.subDict("equationOfState").lookup<scalar>("beta")),
-    gamma_(dict.subDict("equationOfState").lookup<scalar>("gamma"))
+    beta_(dict.subDict("equationOfState").lookup<scalar>("beta"))
 {}
 
 
@@ -59,7 +58,6 @@ void Foam::BKW<Specie>::write(Ostream& os) const
     dict.add("Theta", Theta_);
     dict.add("a", a_);
     dict.add("beta", beta_);
-    dict.add("gamma", gamma_);
     os  << indent << dict.dictName() << dict;
 }
 
