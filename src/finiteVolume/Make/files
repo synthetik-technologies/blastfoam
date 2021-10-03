@@ -57,35 +57,9 @@ MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
 RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
-lookupTables/lookupTable2D/scalarLookupTable2D.C
-lookupTables/lookupTable1D/scalarLookupTable1D.C
-
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
 meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
-
-equations/scalarEquation/scalarEquation.C
-equations/scalarMultivariateEquation/scalarMultivariateEquation.C
-
-rootSolvers/rootSolver/rootSolver.C
-rootSolvers/rootSolver/rootSolverNew.C
-rootSolvers/step/stepRootSolver.C
-rootSolvers/bisection/bisectionRootSolver.C
-rootSolvers/secant/secantRootSolver.C
-rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
-rootSolvers/Steffensen/SteffensenRootSolver.C
-rootSolvers/Ridder/RidderRootSolver.C
-rootSolvers/Brent/BrentRootSolver.C
-rootSolvers/falsePoint/falsePointRootSolver.C
-rootSolvers/Halley/HalleyRootSolver.C
-
-multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
-multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
-multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C
-multivariateRootSolvers/goodBroyden/goodBroydenMultivariateRootSolver.C
-multivariateRootSolvers/badBroyden/badBroydenMultivariateRootSolver.C
-
-integrators/Integrator/Integrators.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

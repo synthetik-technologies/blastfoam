@@ -694,33 +694,20 @@ Foam::detonatingFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
 {
     //- Add detonation energy to initially reacted material
     //  restarts are handled in the activation model
-    if (!this->rho_.mesh().time().restart())
-    {
-        return volScalarField::New
-        (
-            "eInit",
-            Thermo::volScalarFieldProperty
-            (
-                "e",
-                dimEnergy/dimMass,
-                &Thermo::thermoType1::initializeEnergy,
-                p,
-                this->rho_,
-                this->e_,
-                this->T_
-            ) + activation_->initESource()
-        );
-    }
-    return Thermo::blendedVolScalarFieldProperty
+    return volScalarField::New
     (
         "eInit",
-        dimEnergy/dimMass,
-        &Thermo::thermoType1::initializeEnergy,
-        &Thermo::thermoType2::initializeEnergy,
-        p,
-        this->rho_,
-        this->e_,
-        this->T_
+        Thermo::blendedVolScalarFieldProperty
+        (
+            "e",
+            dimEnergy/dimMass,
+            &Thermo::thermoType1::initializeEnergy,
+            &Thermo::thermoType2::initializeEnergy,
+            p,
+            this->rho_,
+            this->e_,
+            this->T_
+        ) + activation_->initESource()
     );
 }
 

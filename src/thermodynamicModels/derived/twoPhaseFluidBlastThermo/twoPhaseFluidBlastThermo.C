@@ -27,6 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "twoPhaseFluidBlastThermo.H"
+#include "scalarEquation.H"
+#include "NewtonRaphsonRootSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -41,6 +43,48 @@ namespace Foam
         phase
     );
 }
+
+// * * * * * * * * * * twoPhaseEEquation Member Functions  * * * * * * * * * //
+
+namespace Foam
+{
+    class twoPhaseEEquation
+    :
+        public scalarEquation
+    {
+        const twoPhaseFluidBlastThermo& thermo_;
+        const volScalarField& p_;
+        mutable volScalarField* e_;
+
+    public:
+        twoPhaseEEquation
+        (
+            twoPhaseFluidBlastThermo& thermo
+        )
+        :
+            thermo_(thermo),
+            p_(thermo_.p()),
+            e_(&thermo.he())
+        {}
+
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
+
+        virtual scalar f(const scalar e, const label li) const
+        {
+            (*e_)[li] = e;
+            return p_[li] - thermo_.cellpRhoT(li);
+        }
+        virtual scalar dfdx(const scalar e, const label li) const
+        {
+            (*e_)[li] = e;
+            return -thermo_.celldpde(li);
+        }
+    };
+}
+
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -287,7 +331,26 @@ Foam::twoPhaseFluidBlastThermo::ESource() const
 Foam::tmp<Foam::volScalarField>
 Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
 {
-    return alpha1_*thermo1_->calce(p) + alpha2_*thermo2_->calce(p);
+    tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
+    volScalarField& eInit(eInitTmp.ref());
+    twoPhaseFluidBlastThermo& thermo
+    (
+        const_cast<twoPhaseFluidBlastThermo&>(*this)
+    );
+    volScalarField& e(const_cast<volScalarField&>(e_));
+
+    twoPhaseEEquation eqn(thermo);
+    dictionary dict;
+    dict.add("tolerance", 1e-6);
+    NewtonRaphsonRootSolver solver(eqn, dict);
+    forAll(eInit, celli)
+    {
+        const scalar e0 = e[celli];
+        eInit[celli] = solver.solve(e0, celli);
+        e[celli] = e0;
+    }
+
+    return eInitTmp;
 }
 
 

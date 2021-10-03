@@ -425,7 +425,6 @@ Foam::vector Foam::activationModel::centerOfMass
 
 void Foam::activationModel::solve()
 {
-
     // Store old value of lambda, old value of alphaRho is stored in the
     // phaseCompressible system
     volScalarField lambdaOld(lambda_);

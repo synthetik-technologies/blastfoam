@@ -4,6 +4,7 @@ EXE_INC = \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/solidThemo/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude
 
@@ -11,4 +12,5 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lfluidThermophysicalModels \
     -L$(BLAST_LIBBIN) \
+    -lblastNumerics \
     -lblastThermodynamics

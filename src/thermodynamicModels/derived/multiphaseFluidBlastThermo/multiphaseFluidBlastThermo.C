@@ -27,6 +27,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multiphaseFluidBlastThermo.H"
+#include "scalarEquation.H"
+#include "NewtonRaphsonRootSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -40,6 +42,48 @@ namespace Foam
         multiphaseFluidBlastThermo,
         phase
     );
+}
+
+
+// * * * * * * * * * multiphaseEEquation Member Functions  * * * * * * * * * //
+
+namespace Foam
+{
+    class multiphaseEEquation
+    :
+        public scalarEquation
+    {
+        const multiphaseFluidBlastThermo& thermo_;
+        const volScalarField& p_;
+        mutable volScalarField* e_;
+
+    public:
+        multiphaseEEquation
+        (
+            multiphaseFluidBlastThermo& thermo
+        )
+        :
+            thermo_(thermo),
+            p_(thermo_.p()),
+            e_(&thermo.he())
+        {}
+
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
+
+        virtual scalar f(const scalar e, const label li) const
+        {
+            (*e_)[li] = e;
+            return p_[li] - thermo_.cellpRhoT(li);
+        }
+        virtual scalar dfdx(const scalar e, const label li) const
+        {
+            (*e_)[li] = e;
+            return -thermo_.celldpde(li);
+        }
+    };
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -346,12 +390,26 @@ Foam::tmp<Foam::volScalarField> Foam::multiphaseFluidBlastThermo::ESource() cons
 Foam::tmp<Foam::volScalarField>
 Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 {
-    tmp<volScalarField> e(volumeFractions_[0]*thermos_[0].calce(p));
-    for (label phasei = 1; phasei < thermos_.size(); phasei++)
+    tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
+    volScalarField& eInit(eInitTmp.ref());
+    multiphaseFluidBlastThermo& thermo
+    (
+        const_cast<multiphaseFluidBlastThermo&>(*this)
+    );
+    volScalarField& e(const_cast<volScalarField&>(e_));
+
+    multiphaseEEquation eqn(thermo);
+    dictionary dict;
+    dict.add("tolerance", 1e-6);
+    NewtonRaphsonRootSolver solver(eqn, dict);
+    forAll(eInit, celli)
     {
-        e.ref() += volumeFractions_[phasei]*thermos_[phasei].calce(p);
+        const scalar e0 = e[celli];
+        eInit[celli] = solver.solve(e0, celli);
+        e[celli] = e0;
     }
-    return normalise(e);
+
+    return eInitTmp;
 }
 
 

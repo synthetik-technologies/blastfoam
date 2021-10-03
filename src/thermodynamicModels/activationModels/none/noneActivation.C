@@ -47,10 +47,8 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false),
-    needActivation_(false)
+    activationModel(mesh, dict, phaseName, false)
 {
-    lambda_ = 1.0;
     if (detonationPoints_.size() == 0)
     {
         detonationPoints_.resize(1);
@@ -59,7 +57,11 @@ Foam::activationModels::noneActivation::noneActivation
             0,
             new detonationPoint
             (
-                Zero,
+                returnReduce
+                (
+                    minMagSqr(mesh.C().primitiveField()),
+                    minMagSqrOp<vector>()
+                ),
                 0.0,
                 0.0
             )
@@ -69,10 +71,13 @@ Foam::activationModels::noneActivation::noneActivation
     {
         if (!detonationPoints_[i].activated())
         {
-            needActivation_ = true;
             detonationPoints_[i].activated() = true;
         }
     }
+
+    // Store the original value of lambda and set to fully activated
+    lambda_.storeOldTime();
+    lambda_ == 1.0;
 }
 
 
@@ -82,16 +87,6 @@ Foam::activationModels::noneActivation::~noneActivation()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::activationModels::noneActivation::solve()
-{
-    //- Set detonation points as activated for write
-    forAll(detonationPoints_, i)
-    {
-        detonationPoints_[i].activated() = true;
-    }
-}
-
 
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
@@ -111,10 +106,7 @@ Foam::activationModels::noneActivation::initESource() const
     return volScalarField::New
     (
         "noActivation:initESource",
-        lambda_.mesh(),
-        needActivation_
-      ? e0_
-      : dimensionedScalar("0", e0_.dimensions(), 0.0)
+        e0_*(lambda_ - lambda_.oldTime())
     );
 }
 

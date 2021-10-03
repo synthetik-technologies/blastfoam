@@ -20,6 +20,11 @@ public:
     virtual ~testEqn1()
     {}
 
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
+
     virtual scalar f(const scalar x, const label li) const
     {
         return Foam::cos(x) - Foam::pow3(x);
@@ -46,6 +51,11 @@ public:
 
     virtual ~testEqn2()
     {}
+
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
 
     virtual scalar f(const scalar x, const label li) const
     {
@@ -78,6 +88,11 @@ public:
     virtual label nEqns() const
     {
         return 2;
+    }
+
+    virtual label nDerivatives() const
+    {
+        return 1;
     }
 
     virtual void f
@@ -125,6 +140,11 @@ public:
     virtual label nEqns() const
     {
         return 2;
+    }
+
+    virtual label nDerivatives() const
+    {
+        return 1;
     }
 
     virtual void f
@@ -181,7 +201,7 @@ int main(int argc, char *argv[])
 
     Info<< endl;
     Info<< "Univariate root finding" << endl;
-    wordList methods(rootSolver::dictionaryConstructorTablePtr_->toc());
+    wordList methods(rootSolver::dictionaryTwoConstructorTablePtr_->toc());
     forAll(uniEqns, eqni)
     {
         Info<< "Solving " << uniEqnStrs[eqni] << endl;
@@ -204,7 +224,7 @@ int main(int argc, char *argv[])
     Info<< "Mulitvariate root finding" << endl;
     wordList multivariateMethods
     (
-        multivariateRootSolver::dictionaryConstructorTablePtr_->toc()
+        multivariateRootSolver::dictionaryOneConstructorTablePtr_->toc()
     );
     forAll(multEqns, eqni)
     {
