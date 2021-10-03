@@ -82,8 +82,10 @@ Foam::multiPhaseModel::multiPhaseModel
     );
     alphaRho_ = dimensionedScalar(dimDensity, 0.0);
 
+    wordList phaseNames(alphas_.size());
     forAll(alphas_, phasei)
     {
+        phaseNames[phasei] = alphas_[phasei].group();
         sumAlpha += alphas_[phasei];
         word phaseName = alphas_[phasei].group();
         alphaRhos_.set
@@ -133,6 +135,9 @@ Foam::multiPhaseModel::multiPhaseModel
             )
         );
     }
+
+    this->fluxScheme_->phases() = phaseNames;
+
     // Reset density to correct value
     volScalarField& alpha = *this;
     alpha = sumAlpha;

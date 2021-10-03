@@ -42,6 +42,7 @@ SourceFiles
 #include "fluxScheme.H"
 #include "phaseFluxScheme.H"
 #include "UautoPtr.H"
+#include "hashedWordList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -107,6 +108,30 @@ public:
             }
             else
             {
+                // If the phase name is not the primary phase
+                // check all of the included phases
+                HashTable<const phaseFluxScheme*> schemes
+                (
+                    mesh.lookupClass<phaseFluxScheme>()
+                );
+                forAllConstIter
+                (
+                    HashTable<const phaseFluxScheme*>,
+                    schemes,
+                    iter
+                )
+                {
+                    hashedWordList phases(iter()->phases());
+                    {
+                        if (phases.found(faceFlux.group()))
+                        {
+                            fluxSchemePtr_.set(iter());
+                        }
+                    }
+                }
+            }
+            if (!fluxSchemePtr_.valid())
+            {
                 FatalErrorInFunction
                     << "Could not determine a fluxScheme to use"
                     << abort(FatalError);
@@ -145,31 +170,33 @@ public:
             }
             else
             {
-                token t(is);
-                if (t.isWord())
+                // If the phase name is not the primary phase
+                // check all of the included phases
+                HashTable<const phaseFluxScheme*> schemes
+                (
+                    mesh.lookupClass<phaseFluxScheme>()
+                );
+                forAllConstIter
+                (
+                    HashTable<const phaseFluxScheme*>,
+                    schemes,
+                    iter
+                )
                 {
-                    word phaseName = t.wordToken();
-
-                    fluxSchemePtr_.set
-                    (
-                        &mesh.lookupObject<phaseFluxScheme>
-                        (
-                            IOobject::groupName
-                            (
-                                fluxSchemeBase::typeName,
-                                phaseName
-                            )
-                        )
-                    );
+                    hashedWordList phases(iter()->phases());
+                    {
+                        if (phases.found(faceFlux.group()))
+                        {
+                            fluxSchemePtr_.set(iter());
+                        }
+                    }
                 }
-                else
-                {
-                    FatalErrorInFunction
-                        << "Could not determine a fluxScheme to use." << nl
-                        << "Please specify which phase flux to use" << nl
-                        << "i.e. div(alphaRhoPhi.c4,lambda.c4) Riemann gas;" << nl
-                        << abort(FatalError);
-                }
+            }
+            if (!fluxSchemePtr_.valid())
+            {
+                FatalErrorInFunction
+                    << "Could not determine a fluxScheme to use"
+                    << abort(FatalError);
             }
         }
 

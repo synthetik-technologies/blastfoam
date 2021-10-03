@@ -58,6 +58,9 @@ protected:
     //- Dictionary for phase fluxScheme
     const dictionary& dict_;
 
+    //- Included phases
+    wordList phases_;
+
     //- Saved interpolated alpha field
     tmp<surfaceScalarField> alphaf_;
 
@@ -192,6 +195,18 @@ public:
 
 
     // Member Functions
+
+        //- Return the phases belonging to this flux scheme
+        virtual const wordList& phases() const
+        {
+            return phases_;
+        }
+
+        //- Access the phases belonging to this flux scheme
+        virtual wordList& phases()
+        {
+            return phases_;
+        }
 
         //- Clear savedFields
         virtual void clear();

@@ -38,10 +38,15 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::phaseFluxScheme::phaseFluxScheme(const fvMesh& mesh, const word& name)
+Foam::phaseFluxScheme::phaseFluxScheme
+(
+    const fvMesh& mesh,
+    const word& name
+)
 :
     fluxSchemeBase(mesh, name),
-    dict_(mesh.schemesDict().subDict("fluxSchemes").subDict(name))
+    dict_(mesh.schemesDict().subDict("fluxSchemes").subDict(name)),
+    phases_(1, name)
 {}
 
 
