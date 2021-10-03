@@ -23,30 +23,18 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RidderRootSolver.H"
+#include "NewtonRaphsonMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(RidderRootSolver, 0);
+    defineTypeNameAndDebug(NewtonRaphsonMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        RidderRootSolver,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        NewtonRaphsonMinimizationScheme,
         dictionaryTwo
     );
 }
@@ -54,19 +42,19 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::RidderRootSolver::RidderRootSolver
+Foam::NewtonRaphsonMinimizationScheme::NewtonRaphsonMinimizationScheme
 (
     const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    rootSolver(eqn, dict)
+    minimizationScheme(eqn, dict)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::RidderRootSolver::solve
+Foam::scalar Foam::NewtonRaphsonMinimizationScheme::solve
 (
     const scalar x,
     const scalar xLow,
@@ -74,55 +62,19 @@ Foam::scalar Foam::RidderRootSolver::solve
     const label li
 ) const
 {
-    scalar x0 = xLow;
-    scalar x1 = xHigh;
+    scalar xOld = x;
     scalar xNew = x;
-    scalar y0 = eqn_.f(x0, li);
-    scalar y1 = eqn_.f(x1, li);
-
-    if (!eqn_.containsRoot(y0, y1))
-    {
-        return x0;
-    }
-
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar xMean = 0.5*(x0 + x1);
-        scalar yMean = eqn_.f(xMean, li);
+        xNew = xOld - eqn_.dfdx(xOld, li)/stabilise(eqn_.d2fdx2(xOld, li), small);
 
-        xNew =
-            xMean
-          + (xMean - x0)*sign(y0 - y1)
-           *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
-
-        if (converged(xNew - x1) || converged(xNew - x1))
+        error_ = mag(xNew - xOld);
+        if (error_ < tolerance_)
         {
             return xNew;
         }
+        xOld = xNew;
 
-        scalar yNew = eqn_.f(xNew, li);
-        if (converged(yNew))
-        {
-            return xNew;
-        }
-
-        if (yMean*yNew < 0)
-        {
-            x0 = xMean;
-            y0 = yMean;
-            x1 = xNew;
-            y1 = yNew;
-        }
-        else if (y1*yNew < 0)
-        {
-            x0 = xNew;
-            y0 = yNew;
-        }
-        else
-        {
-            x1 = xNew;
-            y1 = yNew;
-        }
     }
     WarningInFunction
         << "Could not converge to the given root." << endl;

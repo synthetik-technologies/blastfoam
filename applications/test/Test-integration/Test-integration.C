@@ -1,6 +1,7 @@
 #include "dictionary.H"
-#include "rootSolver.H"
 #include "argList.H"
+#include "scalarEquation.H"
+#include "IntegratorsFwd.H"
 
 using namespace Foam;
 
@@ -69,38 +70,35 @@ public:
     }
 };
 
-
 int main(int argc, char *argv[])
 {
 
-    PtrList<scalarEquation> uniEqns(2);
-    wordList uniEqnStrs(2);
-    uniEqns.set(0, new testEqn1(0.0, 1.0));
-    uniEqnStrs[0] = "f(x) = cos(x) - x^3";
-    uniEqns.set(1, new testEqn2(0.0, 1.0));
-    uniEqnStrs[1] = "f(x) = exp(x) - 10*x";
-
+    testEqn1 eqn(0.0, 1.0);
     dictionary dict;
 
-    Info<< endl;
-    Info<< "Univariate root finding" << endl;
-    wordList methods(rootSolver::dictionaryTwoConstructorTablePtr_->toc());
-    forAll(uniEqns, eqni)
+    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 2.5)" << endl;
+    labelList nIntervals({1, 5, 10, 25, 50});
+    const scalar ans = -9.167152855896045;
+    wordList intMethods
+    (
+        scalarIntegrator::dictionaryConstructorTablePtr_->toc()
+    );
+    forAll(intMethods, i)
     {
-        Info<< "Solving " << uniEqnStrs[eqni] << endl;
-        incrIndent(Info);
+        dict.set("integrator", intMethods[i]);
+        autoPtr<scalarIntegrator> integrator
+        (
+            scalarIntegrator::New(eqn, dict)
+        );
 
-        const scalarEquation& eqn = uniEqns[eqni];
-        forAll(methods, i)
+        forAll(nIntervals, inti)
         {
-            dict.set("solver", methods[i]);
-            autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
-            Info<<"\troot=" << solver->solve(0.5, 0)
-                << ", nSteps=" << solver->nSteps()
-                << ", error=" << solver->error() << nl << endl;
+            integrator->setNIntervals(nIntervals[inti]);
+            scalar est = integrator->integrate(0, 2.5, 0);
+            Info<< "\t" << integrator->nIntervals() << " steps: "
+                << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
         }
-        Info<<nl;
-        decrIndent(Info);
+        Info<< endl;
     }
 
     Info<< nl << "done" << endl;

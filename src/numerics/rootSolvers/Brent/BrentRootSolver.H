@@ -77,6 +77,8 @@ public:
         virtual scalar solve
         (
             const scalar x0,
+            const scalar x1,
+            const scalar x2,
             const label li
         ) const;
 

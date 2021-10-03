@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::HalleyRootSolver
+    Foam::NewtonRaphsonMinimizationScheme
 
 Description
-    Find root using the Halley method
+    Find root using the NewtonRaphson method
 
 SourceFiles
-    HalleyRootSolver.C
+    NewtonRaphsonMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef HalleyRootSolver_H
-#define HalleyRootSolver_H
+#ifndef NewtonRaphsonMinimizationScheme_H
+#define NewtonRaphsonMinimizationScheme_H
 
-#include "rootSolver.H"
+#include "minimizationScheme.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -45,29 +45,29 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class HalleyRootSolver Declaration
+                          Class NewtonRaphsonMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class HalleyRootSolver
+class NewtonRaphsonMinimizationScheme
 :
-    public rootSolver
+    public minimizationScheme
 {
 public:
 
     //- Runtime type information
-    TypeName("Halley");
+    TypeName("NewtonRaphson");
 
     // Constructors
 
-        //- Construct for given rootSolver
-        HalleyRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        //- Construct for given minimizationScheme
+        NewtonRaphsonMinimizationScheme(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
-        HalleyRootSolver(const rootSolver&) = delete;
+        NewtonRaphsonMinimizationScheme(const minimizationScheme&) = delete;
 
 
     //- Destructor
-    virtual ~HalleyRootSolver()
+    virtual ~NewtonRaphsonMinimizationScheme()
     {}
 
 
@@ -77,15 +77,15 @@ public:
         virtual scalar solve
         (
             const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalar x1,
+            const scalar x2,
             const label li
         ) const;
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const HalleyRootSolver&) = delete;
+        void operator=(const NewtonRaphsonMinimizationScheme&) = delete;
 };
 
 

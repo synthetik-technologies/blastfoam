@@ -57,5 +57,39 @@ Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::scalar Foam::rootSolver::solve() const
+{
+    return this->solve
+    (
+        (eqn_.lower() + eqn_.upper())*0.5,
+        eqn_.lower(),
+        eqn_.upper(),
+        0
+    );
+}
+
+
+Foam::scalar Foam::rootSolver::solve(const scalar x0) const
+{
+    return this->solve(x0, eqn_.lower(), eqn_.upper(), 0);
+}
+
+
+Foam::scalar Foam::rootSolver::solve(const scalar x0, const label li) const
+{
+    return this->solve(x0, eqn_.lower(), eqn_.upper(), li);
+}
+
+
+Foam::scalar Foam::rootSolver::solve
+(
+    const scalar x0,
+    const scalar xLow,
+    const scalar xHigh
+) const
+{
+    return this->solve(x0, xLow, xHigh, 0);
+}
+
 
 // ************************************************************************* //

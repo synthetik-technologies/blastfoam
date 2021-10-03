@@ -23,61 +23,22 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "HalleyRootSolver.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-namespace Foam
+inline Foam::scalar& Foam::minimizationScheme::tolerance()
 {
-    defineTypeNameAndDebug(HalleyRootSolver, 0);
-    addToRunTimeSelectionTable(rootSolver, HalleyRootSolver, dictionaryTwo);
+    return tolerance_;
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::HalleyRootSolver::HalleyRootSolver
-(
-    const scalarEquation& eqn,
-    const dictionary& dict
-)
-:
-    rootSolver(eqn, dict)
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::scalar Foam::HalleyRootSolver::solve
-(
-    const scalar x0,
-    const scalar x1,
-    const scalar x2,
-    const label li
-) const
+inline Foam::label Foam::minimizationScheme::nSteps() const
 {
-    scalar xOld = x0;
-    scalar xNew = x0;
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
-    {
-        scalar f = eqn_.f(xOld, li);
-        scalar fp = eqn_.dfdx(xOld, li);
-        scalar fpp = eqn_.d2fdx2(xOld, li);
-
-        xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, tolerance_);
-
-        if (converged(xNew - xOld))
-        {
-            return xNew;
-        }
-        xOld = xNew;
-
-    }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
-
-    return xNew;
+    return stepi_;
 }
+
+
+inline Foam::scalar Foam::minimizationScheme::error() const
+{
+    return error_;
+}
+
 
 // ************************************************************************* //

@@ -69,12 +69,14 @@ Foam::bisectionRootSolver::bisectionRootSolver
 Foam::scalar Foam::bisectionRootSolver::solve
 (
     const scalar x0,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
     scalar xMean = x0;
-    scalar xLow = eqn_.lower();
-    scalar xHigh = eqn_.upper();
+    scalar xLow = x1;
+    scalar xHigh = x2;
     scalar y = eqn_.f(xMean, li);
 
     if (!eqn_.containsRoot(li))

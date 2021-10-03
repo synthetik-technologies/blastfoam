@@ -91,6 +91,8 @@ public:
         virtual scalar solve
         (
             const scalar x0,
+            const scalar xLow,
+            const scalar xHigh,
             const label li
         ) const;
 

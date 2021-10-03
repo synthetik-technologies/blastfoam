@@ -63,6 +63,8 @@ Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 Foam::scalar Foam::NewtonRaphsonRootSolver::solve
 (
     const scalar x0,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {

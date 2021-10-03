@@ -23,97 +23,77 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "falsePointRootSolver.H"
-#include "addToRunTimeSelectionTable.H"
+#include "minimizationScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(falsePointRootSolver, 0);
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        falsePointRootSolver,
-        dictionaryZero
-    );
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        falsePointRootSolver,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        rootSolver,
-        falsePointRootSolver,
-        dictionaryTwo
-    );
+    defineTypeNameAndDebug(minimizationScheme, 0);
+    defineRunTimeSelectionTable(minimizationScheme, dictionaryZero);
+    defineRunTimeSelectionTable(minimizationScheme, dictionaryOne);
+    defineRunTimeSelectionTable(minimizationScheme, dictionaryTwo);
 }
 
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+
+bool Foam::minimizationScheme::converged(const scalar error) const
+{
+    error_ = mag(error);
+    return error_ < tolerance_;
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::falsePointRootSolver::falsePointRootSolver
-(
-    const scalarEquation& eqn,
-    const dictionary& dict
-)
+Foam::minimizationScheme::minimizationScheme(const scalarEquation& eqn, const dictionary& dict)
 :
-    rootSolver(eqn, dict)
+    eqn_(eqn),
+    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-10)),
+    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 10000)),
+    stepi_(0),
+    error_(great)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::falsePointRootSolver::solve
+Foam::scalar Foam::minimizationScheme::solve() const
+{
+    return this->solve
+    (
+        (eqn_.lower() + eqn_.upper())*0.5,
+        eqn_.lower(),
+        eqn_.upper(),
+        0
+    );
+}
+
+
+Foam::scalar Foam::minimizationScheme::solve(const scalar x0) const
+{
+    return this->solve(x0, eqn_.lower(), eqn_.upper(), 0);
+}
+
+
+Foam::scalar Foam::minimizationScheme::solve
 (
     const scalar x0,
-    const scalar x1,
-    const scalar x2,
     const label li
 ) const
 {
-    scalar xNew = x0;
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar yLow = eqn_.f(xLow, li);
-    scalar yHigh = eqn_.f(xHigh, li);
-
-    if (!eqn_.containsRoot(yLow, yHigh))
-    {
-        return x0;
-    }
-
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
-    {
-        xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, tolerance_);
-        scalar yNew = eqn_.f(xNew, li);
-
-        if (converged(yNew))
-        {
-            return xNew;
-        }
-
-        if (yNew > 0)
-        {
-            xLow = xNew;
-            yLow = yNew;
-        }
-        else
-        {
-            xHigh = xNew;
-            yHigh = yNew;
-        }
-        if (converged(xHigh - xLow))
-        {
-            return xNew;
-        }
-    }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
-
-    return xNew;
+    return this->solve(x0, eqn_.lower(), eqn_.upper(), li);
 }
+
+
+Foam::scalar Foam::minimizationScheme::solve
+(
+    const scalar x0,
+    const scalar xLow,
+    const scalar xHigh
+) const
+{
+    return this->solve(x0, xLow, xHigh, 0);
+}
+
 
 // ************************************************************************* //

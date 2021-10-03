@@ -69,6 +69,8 @@ Foam::SteffensenRootSolver::SteffensenRootSolver
 Foam::scalar Foam::SteffensenRootSolver::solve
 (
     const scalar x0,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {

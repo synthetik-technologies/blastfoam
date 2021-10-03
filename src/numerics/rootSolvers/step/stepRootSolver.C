@@ -81,10 +81,12 @@ Foam::stepRootSolver::stepRootSolver
 Foam::scalar Foam::stepRootSolver::solve
 (
     const scalar x0,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
-    scalar x = x0;
+    scalar x = x1;
     scalar dx = dx_;
     scalar yLower = eqn_.f(x0, li);
 

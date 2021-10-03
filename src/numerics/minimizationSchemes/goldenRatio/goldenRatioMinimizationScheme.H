@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::HalleyRootSolver
+    Foam::goldenRatioMinimizationScheme
 
 Description
-    Find root using the Halley method
+    Find root using the goldenRatio method
 
 SourceFiles
-    HalleyRootSolver.C
+    goldenRatioMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef HalleyRootSolver_H
-#define HalleyRootSolver_H
+#ifndef goldenRatioMinimizationScheme_H
+#define goldenRatioMinimizationScheme_H
 
-#include "rootSolver.H"
+#include "minimizationScheme.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -45,29 +45,33 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class HalleyRootSolver Declaration
+                        Class goldenRatioMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class HalleyRootSolver
+class goldenRatioMinimizationScheme
 :
-    public rootSolver
+    public minimizationScheme
 {
+    const static scalar goldenRatio;
+    const static scalar invPhi;
+    const static scalar invPhi2;
+
 public:
 
     //- Runtime type information
-    TypeName("Halley");
+    TypeName("goldenRatio");
 
     // Constructors
 
-        //- Construct for given rootSolver
-        HalleyRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        //- Construct for given minimizationScheme
+        goldenRatioMinimizationScheme(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
-        HalleyRootSolver(const rootSolver&) = delete;
+        goldenRatioMinimizationScheme(const minimizationScheme&) = delete;
 
 
     //- Destructor
-    virtual ~HalleyRootSolver()
+    virtual ~goldenRatioMinimizationScheme()
     {}
 
 
@@ -77,15 +81,15 @@ public:
         virtual scalar solve
         (
             const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalar x1,
+            const scalar x2,
             const label li
         ) const;
 
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const HalleyRootSolver&) = delete;
+        void operator=(const goldenRatioMinimizationScheme&) = delete;
 };
 
 

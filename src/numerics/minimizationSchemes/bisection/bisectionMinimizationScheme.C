@@ -23,30 +23,30 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RidderRootSolver.H"
+#include "bisectionMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(RidderRootSolver, 0);
+    defineTypeNameAndDebug(bisectionMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        bisectionMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        bisectionMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        bisectionMinimizationScheme,
         dictionaryTwo
     );
 }
@@ -54,80 +54,55 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::RidderRootSolver::RidderRootSolver
+Foam::bisectionMinimizationScheme::bisectionMinimizationScheme
 (
     const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    rootSolver(eqn, dict)
+    minimizationScheme(eqn, dict)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::RidderRootSolver::solve
+Foam::scalar Foam::bisectionMinimizationScheme::solve
 (
     const scalar x,
-    const scalar xLow,
-    const scalar xHigh,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
-    scalar x0 = xLow;
-    scalar x1 = xHigh;
-    scalar xNew = x;
-    scalar y0 = eqn_.f(x0, li);
-    scalar y1 = eqn_.f(x1, li);
-
-    if (!eqn_.containsRoot(y0, y1))
-    {
-        return x0;
-    }
+    scalar xLow = x1;
+    scalar xHigh = x2;
+    scalar xMean = 0.5*(x1 + x2);
+    scalar yLow = eqn_.f(xLow, li);
+    scalar yHigh = eqn_.f(xHigh, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar xMean = 0.5*(x0 + x1);
-        scalar yMean = eqn_.f(xMean, li);
-
-        xNew =
-            xMean
-          + (xMean - x0)*sign(y0 - y1)
-           *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
-
-        if (converged(xNew - x1) || converged(xNew - x1))
+        if (converged(xHigh - xLow))
         {
-            return xNew;
+            return xMean;
         }
 
-        scalar yNew = eqn_.f(xNew, li);
-        if (converged(yNew))
+        if (yHigh < yLow)
         {
-            return xNew;
-        }
-
-        if (yMean*yNew < 0)
-        {
-            x0 = xMean;
-            y0 = yMean;
-            x1 = xNew;
-            y1 = yNew;
-        }
-        else if (y1*yNew < 0)
-        {
-            x0 = xNew;
-            y0 = yNew;
+            xLow = xMean;
+            yLow = eqn_.f(xLow, li);
         }
         else
         {
-            x1 = xNew;
-            y1 = yNew;
+            xHigh = xMean;
+            yHigh = eqn_.f(xHigh, li);
         }
+        xMean = (xLow + xHigh)*0.5;
     }
     WarningInFunction
         << "Could not converge to the given root." << endl;
 
-    return xNew;
+    return xMean;
 }
 
 // ************************************************************************* //

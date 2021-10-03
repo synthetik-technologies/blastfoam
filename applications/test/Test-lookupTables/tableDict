@@ -1,0 +1,34 @@
+
+table1D
+{
+    file "T.csv";
+    eMod ln;
+    TMod ln;
+    interpolationScheme cubicClamp;
+    isReal false;
+}
+
+table2D
+{
+    file        "p.csv";
+    mod          ln;
+    delim       ";";
+    isReal      false;
+
+    rhoCoeffs
+    {
+        mod         log10;
+
+        n           7;
+        delta       1.0;
+        min         -3.0;
+    }
+    eCoeffs
+    {
+        mod         ln;
+
+        n           40;
+        min         11.8748;
+        delta       1.0;
+    }
+}

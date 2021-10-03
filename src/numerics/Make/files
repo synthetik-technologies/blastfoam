@@ -24,4 +24,10 @@ multivariateRootSolvers/badBroyden/badBroydenMultivariateRootSolver.C
 
 integrators/Integrator/Integrators.C
 
+minimizationSchemes/minimizationScheme/minimizationScheme.C
+minimizationSchemes/minimizationScheme/minimizationSchemeNew.C
+minimizationSchemes/bisection/bisectionMinimizationScheme.C
+minimizationSchemes/goldenRatio/goldenRatioMinimizationScheme.C
+minimizationSchemes/NewtonRaphson/NewtonRaphsonMinimizationScheme.C
+
 LIB = $(BLAST_LIBBIN)/libblastNumerics

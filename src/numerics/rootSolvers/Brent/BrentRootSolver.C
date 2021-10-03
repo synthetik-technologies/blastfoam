@@ -69,11 +69,13 @@ Foam::BrentRootSolver::BrentRootSolver
 Foam::scalar Foam::BrentRootSolver::solve
 (
     const scalar x,
+    const scalar xLow,
+    const scalar xHigh,
     const label li
 ) const
 {
-    scalar x0 = eqn_.lower();
-    scalar x1 = eqn_.upper();
+    scalar x0 = xLow;
+    scalar x1 = xHigh;
     scalar xNew = x;
     scalar y0 = eqn_.f(x0, li);
     scalar y1 = eqn_.f(x1, li);

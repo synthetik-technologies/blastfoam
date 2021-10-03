@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::rootSolver
+    Foam::minimizationScheme
 
 Description
     Abstract base-class for root system solvers
 
 SourceFiles
-    rootSolver.C
+    minimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef rootSolver_H
-#define rootSolver_H
+#ifndef minimizationScheme_H
+#define minimizationScheme_H
 
 #include "scalarEquation.H"
 #include "typeInfo.H"
@@ -45,10 +45,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class rootSolver Declaration
+                          Class minimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class rootSolver
+class minimizationScheme
 {
 
 protected:
@@ -76,14 +76,14 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("rootSolver");
+    TypeName("minimizationScheme");
 
     // Declare run-time constructor selection table
 
         declareRunTimeSelectionTable
         (
             autoPtr,
-            rootSolver,
+            minimizationScheme,
             dictionaryZero,
             (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
@@ -91,7 +91,7 @@ public:
         declareRunTimeSelectionTable
         (
             autoPtr,
-            rootSolver,
+            minimizationScheme,
             dictionaryOne,
             (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
@@ -99,7 +99,7 @@ public:
         declareRunTimeSelectionTable
         (
             autoPtr,
-            rootSolver,
+            minimizationScheme,
             dictionaryTwo,
             (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
@@ -108,17 +108,17 @@ public:
 
     // Constructors
 
-        //- Construct for given rootSolver
-        rootSolver(const scalarEquation& eqn, const dictionary& dict);
+        //- Construct for given minimizationScheme
+        minimizationScheme(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
-        rootSolver(const rootSolver&) = delete;
+        minimizationScheme(const minimizationScheme&) = delete;
 
 
     // Selectors
 
         //- Select null constructed
-        static autoPtr<rootSolver> New
+        static autoPtr<minimizationScheme> New
         (
             const scalarEquation& eqn,
             const dictionary& dict
@@ -126,7 +126,7 @@ public:
 
 
     //- Destructor
-    virtual ~rootSolver()
+    virtual ~minimizationScheme()
     {}
 
 
@@ -174,7 +174,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const rootSolver&) = delete;
+        void operator=(const minimizationScheme&) = delete;
 };
 
 
@@ -184,7 +184,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "rootSolverI.H"
+#include "minimizationSchemeI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

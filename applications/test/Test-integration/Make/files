@@ -1,0 +1,3 @@
+Test-integration.C
+
+EXE = $(BLAST_APPBIN)/Test-integration

@@ -69,12 +69,14 @@ Foam::secantRootSolver::secantRootSolver
 Foam::scalar Foam::secantRootSolver::solve
 (
     const scalar x0,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
     scalar xNew = x0;
-    scalar xLow = eqn_.lower();
-    scalar xHigh = eqn_.upper();
+    scalar xLow = x1;
+    scalar xHigh = x2;
 
     if (!eqn_.containsRoot(li))
     {

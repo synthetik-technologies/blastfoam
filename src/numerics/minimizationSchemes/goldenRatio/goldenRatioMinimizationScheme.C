@@ -23,111 +23,103 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RidderRootSolver.H"
+#include "goldenRatioMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(RidderRootSolver, 0);
+    defineTypeNameAndDebug(goldenRatioMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        goldenRatioMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        goldenRatioMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderRootSolver,
+        minimizationScheme,
+        goldenRatioMinimizationScheme,
         dictionaryTwo
     );
 }
 
+const Foam::scalar Foam::goldenRatioMinimizationScheme::goldenRatio =
+    (sqrt(5.0) + 1.0)/2.0;
+
+const Foam::scalar Foam::goldenRatioMinimizationScheme::invPhi =
+    (sqrt(5.0) - 1.0)/2.0;
+
+const Foam::scalar Foam::goldenRatioMinimizationScheme::invPhi2 =
+    (3.0 - sqrt(5.0))/2.0;
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::RidderRootSolver::RidderRootSolver
+Foam::goldenRatioMinimizationScheme::goldenRatioMinimizationScheme
 (
     const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    rootSolver(eqn, dict)
+    minimizationScheme(eqn, dict)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::RidderRootSolver::solve
+Foam::scalar Foam::goldenRatioMinimizationScheme::solve
 (
     const scalar x,
-    const scalar xLow,
-    const scalar xHigh,
+    const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
-    scalar x0 = xLow;
-    scalar x1 = xHigh;
-    scalar xNew = x;
-    scalar y0 = eqn_.f(x0, li);
-    scalar y1 = eqn_.f(x1, li);
-
-    if (!eqn_.containsRoot(y0, y1))
+    scalar a = min(x1, x2);
+    scalar b = max(x1, x2);
+    scalar h = b - a;
+    if (h < tolerance_)
     {
-        return x0;
+        return x1;
     }
+    label n = ceil(log(tolerance_/h)/log(invPhi));
 
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
+    scalar c = a + invPhi2*h;
+    scalar d = a + invPhi*h;
+
+    scalar yc = eqn_.f(c, li);
+    scalar yd = eqn_.f(d, li);
+
+    for (stepi_ = 0; stepi_ < n; stepi_++)
     {
-        scalar xMean = 0.5*(x0 + x1);
-        scalar yMean = eqn_.f(xMean, li);
-
-        xNew =
-            xMean
-          + (xMean - x0)*sign(y0 - y1)
-           *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
-
-        if (converged(xNew - x1) || converged(xNew - x1))
+        if (yc < yd)
         {
-            return xNew;
-        }
-
-        scalar yNew = eqn_.f(xNew, li);
-        if (converged(yNew))
-        {
-            return xNew;
-        }
-
-        if (yMean*yNew < 0)
-        {
-            x0 = xMean;
-            y0 = yMean;
-            x1 = xNew;
-            y1 = yNew;
-        }
-        else if (y1*yNew < 0)
-        {
-            x0 = xNew;
-            y0 = yNew;
+            b = d;
+            d = c;
+            yd = yc;
+            h = invPhi*h;
+            c = a + invPhi2*h;
+            yc = eqn_.f(c, li);
         }
         else
         {
-            x1 = xNew;
-            y1 = yNew;
+            a = c;
+            c = d;
+            yc = yd;
+            h = invPhi*h;
+            d = a + invPhi*h;
+            yd = eqn_.f(d, li);
         }
+        converged(b - a);
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
-
-    return xNew;
+    return 0.5*(a + b);
 }
 
 // ************************************************************************* //
