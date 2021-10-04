@@ -63,7 +63,6 @@ functions
 
         codeExecute
         #{
-            static bool write = true;
             static scalar startTime = -1;
             static scalar endTime = -1;
             label celli = mesh().findCell(vector(0.001, 0, 0.09));
@@ -80,11 +79,13 @@ functions
                 endTime = mesh().time().value();
             }
 
-            if (startTime > 0 && endTime > 0 && write)
+            if (startTime > 0 && endTime > 0)
             {
-                write = false;
                 OFstream outputFile("detonationVelocity");
                 outputFile<< 1.0/8.0 << ',' << 0.005/(endTime - startTime)<<endl;
+
+                // Stop the simulation after writing
+                mesh().time().stopAt(Time::stopAtControl::nextWrite);
             }
         #};
     }

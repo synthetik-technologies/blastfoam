@@ -155,7 +155,7 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         }
     }
     T_.correctBoundaryConditions();
-Info<<"nSteps: "<<maxIter<<endl;
+
     if (min(T_).value() < this->TLow_)
     {
         forAll(TCells, celli)

@@ -47,7 +47,7 @@ ANFO
         }
         thermodynamics
         {
-            Cv              1130.78;           // Heat capacity
+            Cv              1740;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -80,7 +80,7 @@ ANFO
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              1740;           // Heat capacity
             Hf              0.0;
         }
     }
