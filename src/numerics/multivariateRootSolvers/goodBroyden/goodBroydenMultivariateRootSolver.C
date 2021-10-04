@@ -92,7 +92,7 @@ Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
     scalarRectangularMatrix dx(x.size(), 1);
     scalarRectangularMatrix df(x.size(), 1);
 
-    scalarSquareMatrix Jinv(SVDinv(J));
+    scalarRectangularMatrix Jinv(SVDinv(J));
 
     scalarField fOld(eqns_.f(x0, li));
     scalarField f(fOld);
@@ -120,16 +120,13 @@ Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
         }
 
         // Update Jinv
-        Jinv =
+        Jinv = 
             Jinv
-          + scalarSquareMatrix
-            (
-                ((dx - Jinv*df)*(dx.T()*Jinv))
-               /((dx.T()*Jinv)*df)(0, 0)
-            );
+          + ((dx - Jinv*df)*(dx.T()*Jinv))
+           /stabilise(((dx.T()*Jinv)*df)(0, 0), small);
     }
     WarningInFunction
-        << "Could not converge to the given multivariateMultivariateRoot." << endl;
+        << "Could not converge. Final error=" << error_ << endl;
 
     return xTmp;
 }

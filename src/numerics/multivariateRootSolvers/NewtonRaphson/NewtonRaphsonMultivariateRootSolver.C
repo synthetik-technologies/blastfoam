@@ -89,7 +89,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         eqns_.jacobian(xOld, li, f, J);
     }
     WarningInFunction
-        << "Could not converge to the given multivariateMultivariateRoot." << endl;
+        << "Could not converge. Final error=" << error_ << endl;
 
     return xNewTmp;
 }
