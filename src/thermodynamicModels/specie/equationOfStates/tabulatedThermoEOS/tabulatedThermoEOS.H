@@ -146,7 +146,13 @@ public:
         // Equation of state functions
 
             //- Return pressure
-            scalar p(const scalar rho, const scalar e, const scalar T) const;
+            scalar p
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T,
+                const bool limit = true
+            ) const;
 
             //- Return derivative of pressure w.r.t. specific volume
             scalar dpdv

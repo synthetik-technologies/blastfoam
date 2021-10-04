@@ -335,14 +335,18 @@ Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 
 
 template<class Thermo>
-Foam::scalar
-Foam::basicFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
+Foam::scalar Foam::basicFluidBlastThermo<Thermo>::cellpRhoT
+(
+    const label celli,
+    const bool limit
+) const
 {
     return Thermo::thermoType::p
     (
         this->rho_[celli],
         this->e_[celli],
-        this->T_[celli]
+        this->T_[celli],
+        limit
     );
 }
 

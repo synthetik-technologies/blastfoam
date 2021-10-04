@@ -175,18 +175,6 @@ Foam::scalar Foam::thermoModel<ThermoType>::Gamma
 
 
 template<class ThermoType>
-Foam::scalar Foam::thermoModel<ThermoType>::p
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return ThermoType::p(rho, e, T, true);
-}
-
-
-template<class ThermoType>
 Foam::scalar Foam::thermoModel<ThermoType>::dpdRho
 (
     const scalar rho,

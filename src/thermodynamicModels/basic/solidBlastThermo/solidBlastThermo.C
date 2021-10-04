@@ -58,18 +58,7 @@ void Foam::solidBlastThermo::initializeFields()
     updateRho();
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
-        volScalarField e(this->calce());
-        e_ = e;
-
-        //- Force fixed boundaries to be updates
-        forAll(e_.boundaryField(), patchi)
-        {
-            forAll(e_.boundaryField()[patchi], facei)
-            {
-                e_.boundaryFieldRef()[patchi][facei] =
-                    e.boundaryField()[patchi][facei];
-            }
-        }
+        e_ == this->calce();
     }
 
     correct();

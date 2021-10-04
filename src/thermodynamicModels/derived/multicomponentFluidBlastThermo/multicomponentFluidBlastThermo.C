@@ -384,14 +384,18 @@ Foam::multicomponentFluidBlastThermo<Thermo>::ESource() const
 
 
 template<class Thermo>
-Foam::scalar
-Foam::multicomponentFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
+Foam::scalar Foam::multicomponentFluidBlastThermo<Thermo>::cellpRhoT
+(
+    const label celli,
+    const bool limit
+) const
 {
     return this->mixture_[celli].p
     (
         this->rho_[celli],
         this->e_[celli],
-        this->T_[celli]
+        this->T_[celli],
+        limit
     );
 }
 

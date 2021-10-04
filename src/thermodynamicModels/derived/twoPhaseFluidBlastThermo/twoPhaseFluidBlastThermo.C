@@ -69,12 +69,12 @@ namespace Foam
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;
-            return p_[li] - thermo_.cellpRhoT(li);
+            return thermo_.cellpRhoT(li, false) - p_[li];
         }
         virtual scalar dfdx(const scalar e, const label li) const
         {
             (*e_)[li] = e;
-            return -thermo_.celldpde(li);
+            return thermo_.celldpde(li);
         }
     };
 
@@ -130,16 +130,19 @@ namespace Foam
 
 void Foam::twoPhaseFluidBlastThermo::calculate()
 {
+    T_ = THE();
     scalarField& TCells = T_.primitiveFieldRef();
     scalarField& heCells = this->he().primitiveFieldRef();
     volScalarField::Boundary& bT = T_.boundaryFieldRef();
     volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
 
+    label maxIter = 0;
     twoPhaseTHEEquation eqn(*this, this->TLow_);
     NewtonRaphsonRootSolver solver(eqn, dictionary());
     forAll(TCells, celli)
     {
         TCells[celli] = solver.solve(TCells[celli], celli);
+        maxIter = max(maxIter, solver.nSteps());
     }
     forAll(bT, patchi)
     {
@@ -148,10 +151,11 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         forAll(pT, facei)
         {
             pT[facei] = solver.solve(pT[facei], facei);
+            maxIter = max(maxIter, solver.nSteps());
         }
     }
     T_.correctBoundaryConditions();
-
+Info<<"nSteps: "<<maxIter<<endl;
     if (min(T_).value() < this->TLow_)
     {
         forAll(TCells, celli)
@@ -427,8 +431,20 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
 }
 
 
-Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT(const label celli) const
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT
+(
+    const label celli,
+    const bool limit
+) const
 {
+    if (alpha2_[celli] < thermo2_->residualAlpha().value())
+    {
+        return thermo1_->cellpRhoT(celli, limit);
+    }
+    if (alpha1_[celli] < thermo1_->residualAlpha().value())
+    {
+        return thermo2_->cellpRhoT(celli, limit);
+    }
     scalar alphaXi1
     (
         alpha1_[celli]/(thermo1_->cellGamma(celli) - 1.0)
@@ -440,14 +456,22 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::cellpRhoT(const label celli) const
 
     return
         (
-            alphaXi1*thermo1_->cellpRhoT(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->cellpRhoT(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->cellpRhoT(celli, limit)
+          + alphaXi2*thermo2_->cellpRhoT(celli, limit)
         )/(alphaXi1 + alphaXi2);
 }
 
 
 Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdRho(const label celli) const
 {
+    if (alpha2_[celli] < thermo2_->residualAlpha().value())
+    {
+        return thermo1_->celldpdRho(celli);
+    }
+    if (alpha1_[celli] < thermo1_->residualAlpha().value())
+    {
+        return thermo2_->celldpdRho(celli);
+    }
     scalar alphaXi1
     (
         alpha1_[celli]/(thermo1_->cellGamma(celli) - 1.0)
@@ -459,14 +483,22 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpdRho(const label celli) const
 
     return
         (
-            alphaXi1*thermo1_->celldpdRho(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->celldpdRho(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->celldpdRho(celli)
+          + alphaXi2*thermo2_->celldpdRho(celli)
         )/(alphaXi1 + alphaXi2);
 }
 
 
 Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpde(const label celli) const
 {
+    if (alpha2_[celli] < thermo2_->residualAlpha().value())
+    {
+        return thermo1_->celldpde(celli);
+    }
+    if (alpha1_[celli] < thermo1_->residualAlpha().value())
+    {
+        return thermo2_->celldpde(celli);
+    }
     scalar alphaXi1
     (
         alpha1_[celli]/(thermo1_->cellGamma(celli) - 1.0)
@@ -478,8 +510,8 @@ Foam::scalar Foam::twoPhaseFluidBlastThermo::celldpde(const label celli) const
 
     return
         (
-            alphaXi1*thermo1_->celldpde(celli)*pos(alphaXi1 - small)
-          + alphaXi2*thermo2_->celldpde(celli)*pos(alphaXi2 - small)
+            alphaXi1*thermo1_->celldpde(celli)
+          + alphaXi2*thermo2_->celldpde(celli)
         )/(alphaXi1 + alphaXi2);
 }
 

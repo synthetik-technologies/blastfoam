@@ -70,7 +70,7 @@ namespace Foam
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;
-            return thermo_.cellpRhoT(li) - p_[li];
+            return thermo_.cellpRhoT(li, false) - p_[li];
         }
         virtual scalar dfdx(const scalar e, const label li) const
         {
@@ -464,7 +464,11 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 }
 
 
-Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT(const label celli) const
+Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT
+(
+    const label celli,
+    const bool limit
+) const
 {
     scalar rGamma = 0.0;
     scalar pByGamma = 0.0;
@@ -475,7 +479,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellpRhoT(const label celli) cons
         {
             scalar Xi(alphai/(thermos_[phasei].cellGamma(celli) - 1.0));
             rGamma += Xi;
-            pByGamma += Xi*thermos_[phasei].cellpRhoT(celli);
+            pByGamma += Xi*thermos_[phasei].cellpRhoT(celli, limit);
         }
     }
     return pByGamma/max(rGamma, residualAlpha_.value());

@@ -96,7 +96,7 @@ inline Foam::scalar Foam::eConstThermo<EquationOfState>::limit
     const scalar
 ) const
 {
-    return max(T, 0);
+    return T;
 }
 
 

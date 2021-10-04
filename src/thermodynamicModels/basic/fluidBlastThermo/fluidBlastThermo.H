@@ -274,7 +274,11 @@ public:
             ) const = 0;
 
             //- Calculate pressure for cell [Pa]
-            virtual scalar cellpRhoT(const label celli) const = 0;
+            virtual scalar cellpRhoT
+            (
+                const label celli,
+                const bool limit = true
+            ) const = 0;
 
             //- Return the speed of sound
             virtual const volScalarField& speedOfSound() const;

@@ -169,7 +169,11 @@ public:
             const volScalarField& p() const;
 
             //- Calculate pressure for cell [Pa]
-            virtual scalar cellpRhoT(const label celli) const = 0;
+            virtual scalar cellpRhoT
+            (
+                const label celli,
+                const bool limit = true
+            ) const = 0;
 
             //- Gamma = dpde for cell []
             virtual scalar cellGamma(const label celli) const = 0;

@@ -73,13 +73,12 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
-
-        error_ = mag(xNew - xOld);
         eqn_.limit(xNew);
-        if (error_ < tolerance_)
+        if (converged(xNew - xOld))
         {
             return xNew;
         }
+
         xOld = xNew;
 
     }

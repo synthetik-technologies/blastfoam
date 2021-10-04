@@ -131,7 +131,11 @@ public:
         virtual void updateRho(const volScalarField& p);
 
         //- Calculate pressure for cell [Pa]
-        virtual scalar cellpRhoT(const label celli) const;
+        virtual scalar cellpRhoT
+        (
+            const label celli,
+            const bool limit = true
+        ) const;
 
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;

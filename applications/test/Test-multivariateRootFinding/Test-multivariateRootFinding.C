@@ -13,7 +13,11 @@ public:
     // Constructors
     multivariateTestEqn1()
     :
-        scalarMultivariateEquation(scalarField(2, 0.0), scalarField(2, 2.0))
+        scalarMultivariateEquation
+        (
+            scalarField(2, 0.0),
+            scalarField(2, 2.0)
+        )
     {}
 
     //- Destructor

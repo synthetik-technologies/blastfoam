@@ -597,8 +597,11 @@ void Foam::detonatingFluidBlastThermo<Thermo>::updateRho(const volScalarField& p
 
 
 template<class Thermo>
-Foam::scalar
-Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
+Foam::scalar Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT
+(
+    const label celli,
+    const bool limit
+) const
 {
     const scalar& x = this->cellx(celli);
     const scalar rho = this->rho_[celli];
@@ -606,16 +609,16 @@ Foam::detonatingFluidBlastThermo<Thermo>::cellpRhoT(const label celli) const
     const scalar T = this->T_[celli];
     if (x < this->residualActivation_)
     {
-        return Thermo::thermoType1::p(rho, e, T);
+        return Thermo::thermoType1::p(rho, e, T, limit);
     }
     else if ((1.0 - x) < this->residualActivation_)
     {
-        return Thermo::thermoType2::p(rho, e, T);
+        return Thermo::thermoType2::p(rho, e, T, limit);
     }
 
     return
-        Thermo::thermoType2::p(rho, e, T)*x
-      + Thermo::thermoType1::p(rho, e, T)*(1.0 - x);
+        Thermo::thermoType2::p(rho, e, T, limit)*x
+      + Thermo::thermoType1::p(rho, e, T, limit)*(1.0 - x);
 }
 
 

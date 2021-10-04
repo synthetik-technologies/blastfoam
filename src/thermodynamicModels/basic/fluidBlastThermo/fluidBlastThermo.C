@@ -91,6 +91,7 @@ void Foam::fluidBlastThermo::initializeFields()
 {
     if (!e_.typeHeaderOk<volScalarField>(true))
     {
+        //- Calculate internal energy if it was not read
         e_ == this->calce(p_);
     }
 

@@ -154,14 +154,6 @@ public:
             const scalar T
         ) const;
 
-        //- Return pressure
-        inline scalar p
-        (
-            const scalar rho,
-            const scalar e,
-            const scalar T
-        ) const;
-
         //- Return derivative of pressure w.r.t density
         inline scalar dpdRho
         (

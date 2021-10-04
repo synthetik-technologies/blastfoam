@@ -85,10 +85,14 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const bool limit
 ) const
 {
-    return pTable_.lookup(rho, e);
+    return
+        limit
+      ? max(pTable_.lookup(rho, e), 0.0)
+      : pTable_.lookup(rho, e);
 }
 
 

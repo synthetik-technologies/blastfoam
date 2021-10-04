@@ -120,6 +120,7 @@ Foam::activationModels::pressureBasedActivation::pressureBasedActivation
         G2_.dimensions().reset(pow(dimPressure, -z_)/dimTime);
         needG2_ = true;
     }
+    pMin_.readIfPresent(dict);
 
     // Scale the minimum pressure
     pMin_ *= pScale_;
