@@ -69,7 +69,7 @@ public:
     // Constructors
 
         //- Construct null
-        MultivariateEquation();
+        MultivariateEquation(const label nEqns);
 
         //- Construct with limits
         MultivariateEquation
@@ -117,6 +117,12 @@ public:
         scalarField& upper()
         {
             return upperLimits_;
+        }
+
+        //- Limit the value of x to the range of the equation
+        inline void limit(Field<Type>& x) const
+        {
+            x = min(upperLimits_, max(x, lowerLimits_));
         }
 
         //- Check if the coordinates are with in the range

@@ -118,6 +118,7 @@ Foam::scalar Foam::BrentRootSolver::findRoot
         {
             xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), tolerance_);
         }
+        eqn_.limit(xNew);
 
         // Use bisection method if satisfies the conditions.
         scalar delta = mag(tolerance_*x1);

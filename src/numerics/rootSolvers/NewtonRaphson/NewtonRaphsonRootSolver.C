@@ -75,7 +75,7 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
         xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
 
         error_ = mag(xNew - xOld);
-        limit(xNew);
+        eqn_.limit(xNew);
         if (error_ < tolerance_)
         {
             return xNew;

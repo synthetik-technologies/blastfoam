@@ -27,7 +27,9 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::scalarMultivariateEquation::scalarMultivariateEquation()
+Foam::scalarMultivariateEquation::scalarMultivariateEquation(const label n)
+:
+    MultivariateEquation<scalar>(n)
 {}
 
 

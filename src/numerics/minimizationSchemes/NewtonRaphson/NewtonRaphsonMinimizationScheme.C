@@ -69,7 +69,7 @@ Foam::scalar Foam::NewtonRaphsonMinimizationScheme::solve
         xNew = xOld - eqn_.dfdx(xOld, li)/stabilise(eqn_.d2fdx2(xOld, li), small);
 
         error_ = mag(xNew - xOld);
-        limit(xNew);
+        eqn_.limit(xNew);
         if (error_ < tolerance_)
         {
             return xNew;

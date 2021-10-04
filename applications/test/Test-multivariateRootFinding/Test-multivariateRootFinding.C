@@ -12,6 +12,8 @@ class multivariateTestEqn1
 public:
     // Constructors
     multivariateTestEqn1()
+    :
+        scalarMultivariateEquation(scalarField(2, 0.0), scalarField(2, 2.0))
     {}
 
     //- Destructor
@@ -57,6 +59,8 @@ class multivariateTestEqn2
 public:
     // Constructors
     multivariateTestEqn2()
+    :
+        scalarMultivariateEquation(2)
     {}
 
     //- Destructor
@@ -87,7 +91,7 @@ public:
     {
         f(x, li, fx);
 
-        dfdx(0, 0) = -2.0*x[0] + 1.0;
+        dfdx(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
         dfdx(0, 1) = 1.0;
         dfdx(1, 0) = 2.0*x[0]/16.0;
         dfdx(1, 1) = stabilise(2.0*x[1], small);
@@ -127,7 +131,7 @@ int main(int argc, char *argv[])
             (
                 multivariateRootSolver::New(eqns, dict)
             );
-            Info<< "    roots=" << solver->solve(x0, 0)
+            Info<< "    roots=" << solver->solve(x0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }

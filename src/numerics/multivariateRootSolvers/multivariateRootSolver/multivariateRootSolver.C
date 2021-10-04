@@ -72,4 +72,59 @@ void Foam::multivariateRootSolver::printNoConvergence() const
     }
 }
 
+
+Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve() const
+{
+    return this->findRoots
+    (
+        ((eqns_.lower() + eqns_.upper())*0.5)(),
+        eqns_.lower(),
+        eqns_.upper(),
+        0
+    );
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+(
+    const scalarField& x0
+) const
+{
+    return this->findRoots(x0, eqns_.lower(), eqns_.upper(), 0);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+(
+    const scalarField& x0,
+    const label li
+) const
+{
+    return this->findRoots(x0, eqns_.lower(), eqns_.upper(), li);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+(
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh
+) const
+{
+    return this->findRoots(x0, xLow, xHigh, 0);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+(
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
+    const label li
+) const
+{
+    return this->findRoots(x0, xLow, xHigh, li);
+}
+
+
 // ************************************************************************* //

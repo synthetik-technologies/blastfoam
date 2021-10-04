@@ -62,9 +62,12 @@ Foam::badBroydenMultivariateRootSolver::badBroydenMultivariateRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField> Foam::badBroydenMultivariateRootSolver::solve
+Foam::tmp<Foam::scalarField>
+Foam::badBroydenMultivariateRootSolver::findRoots
 (
     const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {
@@ -105,7 +108,7 @@ Foam::tmp<Foam::scalarField> Foam::badBroydenMultivariateRootSolver::solve
         scalarField delta(-Jinv*f);
         x += delta;
 
-        limit(x);
+        eqns_.limit(x);
 
         if (converged(delta))
         {
@@ -126,8 +129,7 @@ Foam::tmp<Foam::scalarField> Foam::badBroydenMultivariateRootSolver::solve
             Jinv
           + ((dx - Jinv*df)*df.T())/stabilise((df.T()*df)(0, 0), small);
     }
-    WarningInFunction
-        << "Could not converge. Final error=" << error_ << endl;
+    printNoConvergence();
 
     return xTmp;
 }

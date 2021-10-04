@@ -73,10 +73,6 @@ protected:
         //- Is the solution converged
         bool converged(const scalar error) const;
 
-        inline void limit(scalar& x) const
-        {
-            x = min(eqn_.upper(), max(x, eqn_.lower()));
-        }
 
 public:
 

@@ -66,7 +66,7 @@ Foam::scalar Foam::HalleyRootSolver::findRoot
         scalar fpp = eqn_.d2fdx2(xOld, li);
 
         xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, tolerance_);
-        limit(xNew);
+        eqn_.limit(xNew);
 
         if (converged(xNew - xOld))
         {

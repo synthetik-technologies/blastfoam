@@ -48,28 +48,18 @@ class scalarMultivariateEquation
 :
     public MultivariateEquation<scalar>
 {
-protected:
-
-    // Protected data
-
-        //- Lower limits
-        scalarField xMins_;
-
-        //- Upper limits
-        scalarField xMaxs_;
-
 public:
 
     // Constructors
 
         //- Construct null
-        scalarMultivariateEquation();
+        scalarMultivariateEquation(const label nEqns);
 
         //- Construct with limits
         scalarMultivariateEquation
         (
-            const scalarField& xMins,
-            const scalarField& xMaxs
+            const scalarField& upperLimits,
+            const scalarField& lowerLimits
         );
 
 

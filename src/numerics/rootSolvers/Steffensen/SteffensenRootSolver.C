@@ -81,7 +81,7 @@ Foam::scalar Foam::SteffensenRootSolver::findRoot
         scalar fx = eqn_.f(xOld, li);
         scalar gx = eqn_.f(xOld + fx, li)/stabilise(fx, small) - 1.0;
         xNew = xOld - eqn_.f(xOld, li)/stabilise(gx, small);
-        limit(xNew);
+        eqn_.limit(xNew);
 
         if (converged(xNew - xOld))
         {

@@ -98,6 +98,12 @@ public:
             return upperLimit_;
         }
 
+        //- Limit the value of x to the range of the equation
+        inline void limit(Type& x) const
+        {
+            x = min(upperLimit_, max(x, lowerLimit_));
+        }
+
         //- Check if derivatives have been implemented
         static bool checkFirstDerivative(const Equation<Type>& eqn);
         static bool checkSecondDerivative(const Equation<Type>& eqn);

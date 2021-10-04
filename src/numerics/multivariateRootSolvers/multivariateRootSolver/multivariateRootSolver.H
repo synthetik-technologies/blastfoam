@@ -79,11 +79,6 @@ protected:
         //- Is the solution converged
         bool converged(const scalarField& errors) const;
 
-        inline void limit(scalarField& x) const
-        {
-            x = min(eqns_.upper(), max(x, eqns_.lower()));
-        }
-
 public:
 
     //- Runtime type information
@@ -151,11 +146,42 @@ public:
         //- Return the error
         inline scalar error() const;
 
-        //- Find the multivariateRoot of the equation
-        //- Solve the multivariateRoot
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve() const;
+
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve(const scalarField& x0) const;
+
+        //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
             const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh
+        ) const;
+
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve
+        (
+            const scalarField& x0,
+            const label li
+        ) const;
+
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> solve
+        (
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
+            const label li
+        ) const;
+
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> findRoots
+        (
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const = 0;
 

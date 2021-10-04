@@ -99,7 +99,7 @@ Foam::scalar Foam::RidderRootSolver::findRoot
         {
             return xNew;
         }
-        limit(xNew);
+        eqn_.limit(xNew);
 
         scalar yNew = eqn_.f(xNew, li);
         if (converged(yNew))

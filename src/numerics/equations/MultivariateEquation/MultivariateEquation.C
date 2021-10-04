@@ -31,11 +31,11 @@ template<class Type>
 bool Foam::MultivariateEquation<Type>::checkJacobian
 (
     const MultivariateEquation<Type>& eqns
-) 
+)
 {
-    if 
+    if
     (
-        reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::jacobian)) 
+        reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::jacobian))
      == reinterpret_cast<void*>(&MultivariateEquation<Type>::jacobian)
     )
     {
@@ -49,12 +49,12 @@ bool Foam::MultivariateEquation<Type>::checkJacobian
 // bool Foam::MultivariateEquation<Type>::checkHessian
 // (
 //     const MultivariateEquation<Type>& eqns
-// ) 
+// )
 // {
 //     return false;
-//     if 
+//     if
 //     (
-//         reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::hessian)) 
+//         reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::hessian))
 //      == reinterpret_cast<void*>(&MultivariateEquation<Type>::hessian)
 //     )
 //     {
@@ -81,7 +81,10 @@ void Foam::MultivariateEquation<Type>::checkLimits() const
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::MultivariateEquation<Type>::MultivariateEquation()
+Foam::MultivariateEquation<Type>::MultivariateEquation(const label n)
+:
+    lowerLimits_(n, -great*pTraits<Type>::one),
+    upperLimits_(n, great*pTraits<Type>::one)
 {}
 
 
@@ -115,7 +118,7 @@ Foam::label Foam::MultivariateEquation<Type>::nDerivatives() const
     {
         nDeriv++;
     }
-    else 
+    else
     {
         return nDeriv;
     }

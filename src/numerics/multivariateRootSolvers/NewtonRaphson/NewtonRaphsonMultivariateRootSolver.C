@@ -56,9 +56,11 @@ Foam::NewtonRaphsonMultivariateRootSolver::NewtonRaphsonMultivariateRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoots
 (
     const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {
@@ -78,6 +80,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         {
             return xNewTmp;
         }
+
         // Relax delta
         if (beta_ != 1.0)
         {
@@ -85,7 +88,8 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         }
 
         xNew = xOld + delta;
-        limit(xNew);
+        eqns_.limit(xNew);
+
         xOld = xNew;
         eqns_.jacobian(xOld, li, f, J);
     }

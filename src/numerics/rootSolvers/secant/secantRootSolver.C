@@ -89,7 +89,7 @@ Foam::scalar Foam::secantRootSolver::findRoot
         xNew =
             xHigh - yHigh*(xHigh - xLow)
            /stabilise(yHigh - eqn_.f(xLow, li), small);
-        limit(xNew);
+        eqn_.limit(xNew);
 
         xLow = xHigh;
         xHigh = xNew;

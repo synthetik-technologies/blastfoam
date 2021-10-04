@@ -62,9 +62,12 @@ Foam::goodBroydenMultivariateRootSolver::goodBroydenMultivariateRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
+Foam::tmp<Foam::scalarField>
+Foam::goodBroydenMultivariateRootSolver::findRoots
 (
     const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {
@@ -104,7 +107,7 @@ Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
 
         scalarField delta(-Jinv*f);
         x += delta;
-        limit(x);
+        eqns_.limit(x);
 
         if (converged(delta))
         {
