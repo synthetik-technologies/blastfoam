@@ -133,15 +133,29 @@ protected:
         (
             Method1 psiMethod1,
             Method2 psiMethod2,
-            const label& celli,
+            const label celli,
             const Args& ... args
         ) const;
 
-        //- Return the blending field for celli
-        virtual scalar cellx(const label celli) const = 0;
+        //- Return a scalar of the given property on a cell
+        template<class Method1, class Method2, class ... Args>
+        scalar blendedPatchFaceProperty
+        (
+            Method1 psiMethod1,
+            Method2 psiMethod2,
+            const label patchi,
+            const label facei,
+            const Args& ... args
+        ) const;
 
         //- Return the blending field for patchi
-        virtual tmp<scalarField> x(const label patchi) const = 0;
+        virtual tmp<scalarField> x(const label) const = 0;
+
+        //- Return the blending field for celli
+        virtual scalar cellx(const label) const = 0;
+
+        //- Return the blending field for patchi facei
+        virtual scalar patchFacex(const label, const label) const = 0;
 
 
 public:
@@ -166,25 +180,6 @@ public:
 
 
     // Member functions
-
-        //- Add contribution to mixture temperature
-        virtual void calculateTemperature
-        (
-            const volScalarField& alpha,
-            const volScalarField& he,
-            const volScalarField& T0,
-            volScalarField& T
-        );
-
-        //- Add contribution to mixture energy
-        virtual void calculateEnergy
-        (
-            const volScalarField& alpha,
-            const volScalarField& T0,
-            const volScalarField& he0,
-            const volScalarField& T,
-            volScalarField& alphaHE
-        );
 
         //- Return the thermo name
         virtual word thermoName() const;
@@ -212,6 +207,21 @@ public:
             (
                 const scalarField& T,
                 const label patchi
+            ) const;
+
+            //- Enthalpy/Internal energy for a cell [J/kg]
+            virtual scalar cellHE
+            (
+                const scalar T,
+                const label celli
+            ) const;
+
+            //- Enthalpy/Internal energy for patch and face [J/kg]
+            virtual scalar patchFaceHE
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
             ) const;
 
             //- Sensible enthalpy [J/kg/K]
@@ -343,6 +353,17 @@ public:
                 const label patchi
             ) const;
 
+            //- Heat capacity at constant pressure/volume for a cell [J/kg/K]
+            virtual scalar cellCpv(const scalar, const label) const;
+
+            //- Heat capacity at constant pressure/volume for a patch and face [J/kg/K]
+            virtual scalar patchFaceCpv
+            (
+                const scalar,
+                const label,
+                const label
+            ) const;
+
              //- Molecular weight [kg/kmol]
             virtual tmp<volScalarField> W() const;
 
@@ -351,12 +372,6 @@ public:
 
             //- Molecular weight for cell [kg/kmol]
             virtual scalar cellW(const label celli) const;
-
-
-        // Fields derived from transport state variables
-
-            //- Thermal diffusivity for temperature of mixture [W/m/K]
-            virtual tmp<volScalarField> calcKappa() const;
 };
 
 

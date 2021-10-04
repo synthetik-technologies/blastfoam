@@ -223,6 +223,21 @@ public:
                 const label patchi
             ) const;
 
+            //- Enthalpy/Internal energy for a cell [J/kg]
+            virtual scalar cellHE
+            (
+                const scalar T,
+                const label celli
+            ) const;
+
+            //- Enthalpy/Internal energy for patch and face [J/kg]
+            virtual scalar patchFaceHE
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
+            ) const;
+
             //- Sensible enthalpy [J/kg/K]
             virtual tmp<volScalarField> hs() const;
 
@@ -340,6 +355,17 @@ public:
             (
                 const scalarField& T,
                 const label patchi
+            ) const;
+
+            //- Heat capacity at constant pressure/volume for a cell [J/kg/K]
+            virtual scalar cellCpv(const scalar, const label) const;
+
+            //- Heat capacity at constant pressure/volume for a patch and face [J/kg/K]
+            virtual scalar patchFaceCpv
+            (
+                const scalar,
+                const label,
+                const label
             ) const;
 
              //- Molecular weight [kg/kmol]

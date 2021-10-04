@@ -92,7 +92,7 @@ class multiphaseFluidBlastThermo
         virtual void calculate();
 
         //- Return the field normalized by the sumVfPtr field if it is set
-        tmp<volScalarField> normalise(tmp<volScalarField>& tf) const
+        inline tmp<volScalarField> normalise(tmp<volScalarField>& tf) const
         {
             return
                 sumVfPtr_.valid()
@@ -101,7 +101,11 @@ class multiphaseFluidBlastThermo
         }
 
         //- Return the field normalized by the sumVfPtr field if it is set
-        tmp<scalarField> normalise(tmp<scalarField>& tf, const label patchi) const
+        inline tmp<scalarField> normalise
+        (
+            tmp<scalarField>& tf,
+            const label patchi
+        ) const
         {
             return
                 sumVfPtr_.valid()
@@ -110,7 +114,7 @@ class multiphaseFluidBlastThermo
         }
 
         //- Return the field normalized by the sumVfPtr field if it is set
-        tmp<scalarField> normalise
+        inline tmp<scalarField> normalise
         (
             tmp<scalarField>& tf,
             const labelList& cells
@@ -128,7 +132,11 @@ class multiphaseFluidBlastThermo
         }
 
         //- Return a cell normalized by the sumVfPtr field if it is set
-        scalar normalise(const scalar f, const label celli) const
+        inline scalar cellNormalise
+        (
+            const scalar f,
+            const label celli
+        ) const
         {
             return
                 sumVfPtr_.valid()
@@ -136,8 +144,27 @@ class multiphaseFluidBlastThermo
               : f;
         }
 
+        //- Return a cell normalized by the sumVfPtr field if it is set
+        inline scalar patchFaceNormalise
+        (
+            const scalar f,
+            const label patchi,
+            const label facei
+        ) const
+        {
+            return
+                sumVfPtr_.valid()
+              ? f
+               /max
+                (
+                    sumVfPtr_().boundaryField()[patchi][facei],
+                    residualAlpha_.value()
+                )
+              : f;
+        }
+
         //- Return the field normalized by the sumVfPtr field if it is set
-        void normalise(volScalarField& f) const
+        inline void normalise(volScalarField& f) const
         {
             if (sumVfPtr_.valid())
             {
@@ -281,6 +308,21 @@ public:
                 const label patchi
             ) const;
 
+            //- Enthalpy/Internal energy for a cell [J/kg]
+            virtual scalar cellHE
+            (
+                const scalar T,
+                const label celli
+            ) const;
+
+            //- Enthalpy/Internal energy for patch and face [J/kg]
+            virtual scalar patchFaceHE
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
+            ) const;
+
             //- Sensible enthalpy [J/kg/K]
             virtual tmp<volScalarField> hs() const;
 
@@ -397,6 +439,17 @@ public:
             (
                 const scalarField& T,
                 const label patchi
+            ) const;
+
+            //- Heat capacity at constant pressure/volume for a cell [J/kg/K]
+            virtual scalar cellCpv(const scalar, const label) const;
+
+            //- Heat capacity at constant pressure/volume for a patch and face [J/kg/K]
+            virtual scalar patchFaceCpv
+            (
+                const scalar,
+                const label,
+                const label
             ) const;
 
              //- Molecular weight [kg/kmol]

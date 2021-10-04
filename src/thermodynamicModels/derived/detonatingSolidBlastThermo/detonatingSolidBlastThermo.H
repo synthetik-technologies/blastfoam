@@ -71,19 +71,19 @@ class detonatingSolidBlastThermo
     //- Return the blending field for celli
     virtual scalar cellx(const label celli) const
     {
-        return
-            activation_.valid()
-          ? activation_->cellLambdaPow(celli)
-          : 0.0;
+        return activation_->cellLambdaPow(celli);
     }
 
     //- Return the blending field for patchi
     virtual tmp<scalarField> x(const label patchi) const
     {
-        return
-            activation_.valid()
-          ? activation_->lambdaPow(patchi)
-          : tmp<scalarField>(new scalarField(this->rho_.size(), 0.0));
+        return activation_->lambdaPow(patchi);
+    }
+
+    //- Return the blending field for patchi facei
+    virtual scalar patchFacex(const label patchi, const label facei) const
+    {
+        return activation_->patchFaceLambdaPow(patchi, facei);
     }
 
 

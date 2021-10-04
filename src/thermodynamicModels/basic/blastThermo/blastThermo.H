@@ -275,6 +275,21 @@ public:
             //- Return enthalpy/Internal energy [J/kg]
             virtual volScalarField& he();
 
+            //- Enthalpy/Internal energy for a cell [J/kg]
+            virtual scalar cellHE
+            (
+                const scalar T,
+                const label celli
+            ) const = 0;
+
+            //- Enthalpy/Internal energy for patch and face [J/kg]
+            virtual scalar patchFaceHE
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
+            ) const = 0;
+
             //- Heat capacity at constant pressure [J/kg/K]
             using basicThermo::Cp;
             virtual tmp<volScalarField> Cp() const
@@ -348,6 +363,17 @@ public:
 
             //- Heat capacity at constant volume of mixture for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const = 0;
+
+            //- Heat capacity at constant pressure/volume for a cell [J/kg/K]
+            virtual scalar cellCpv(const scalar, const label) const = 0;
+
+            //- Heat capacity at constant pressure/volume for a patch and face [J/kg/K]
+            virtual scalar patchFaceCpv
+            (
+                const scalar,
+                const label,
+                const label
+            ) const = 0;
 
 
         // Fields derived from transport state variables

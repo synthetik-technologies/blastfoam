@@ -155,20 +155,21 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
 
     forAll(psi, celli)
     {
-        scalar x = this->cellx(celli);
-        if (x < residualActivation_)
+        const scalar x2 = this->cellx(celli);
+        const scalar x1 = 1.0 - x2;
+        if (x2 < residualActivation_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if ((1.0 - x) < residualActivation_)
+        else if (x1 < residualActivation_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
         else
         {
             psi[celli] =
-                (this->*psiMethod2)(args[celli] ...)*x
-              + (this->*psiMethod1)(args[celli] ...)*(1.0 - x);
+                (this->*psiMethod2)(args[celli] ...)*x2
+              + (this->*psiMethod1)(args[celli] ...)*x1;
         }
     }
 
@@ -181,13 +182,14 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
 
         forAll(pPsi, facei)
         {
-            const scalar& x = xp()[facei];
-            if (x < residualActivation_)
+            const scalar x2 = xp()[facei];
+            const scalar x1 = 1.0 - x2;
+            if (x2 < residualActivation_)
             {
                 pPsi[facei] =
                     (this->*psiMethod1)(args.boundaryField()[patchi][facei] ...);
             }
-            else if ((1.0 - x) < residualActivation_)
+            else if (x1 < residualActivation_)
             {
                 pPsi[facei] =
                     (this->*psiMethod2)(args.boundaryField()[patchi][facei] ...);
@@ -195,11 +197,14 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedVolScalarFieldPr
             else
             {
                 pPsi[facei] =
-                    (this->*psiMethod2)(args.boundaryField()[patchi][facei] ...)*x
+                    (this->*psiMethod2)
+                    (
+                        args.boundaryField()[patchi][facei] ...
+                    )*x2
                   + (this->*psiMethod1)
                     (
                         args.boundaryField()[patchi][facei] ...
-                    )*(1.0 - x);
+                    )*x1;
             }
         }
     }
@@ -227,20 +232,21 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellSetProperty
 
     forAll(cells, celli)
     {
-        scalar x = this->cellx(cells[celli]);
-        if (x < residualActivation_)
+        const scalar x2 = this->cellx(cells[celli]);
+        const scalar x1 = 1.0 - x2;
+        if (x2 < residualActivation_)
         {
             psi[celli] = (this->*psiMethod1)(args[celli] ...);
         }
-        else if ((1.0 - x) < residualActivation_)
+        else if (x1 < residualActivation_)
         {
             psi[celli] = (this->*psiMethod2)(args[celli] ...);
         }
         else
         {
             psi[celli] =
-                (this->*psiMethod2)(args[celli] ...)*x
-              + (this->*psiMethod1)(args[celli] ...)*(1.0 - x);
+                (this->*psiMethod2)(args[celli] ...)*x2
+              + (this->*psiMethod1)(args[celli] ...)*x1;
         }
     }
 
@@ -265,23 +271,25 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFieldProper
     );
     scalarField& psi = tPsi.ref();
     tmp<scalarField> xtmp(this->x(patchi));
-    const scalarField& x(xtmp());
+    const scalarField& px(xtmp());
 
     forAll(psi, facei)
     {
-        if (x[facei] < residualActivation_)
+        const scalar x2 = px[facei];
+        const scalar x1 = 1.0 - x2;
+        if (x2 < residualActivation_)
         {
              psi[facei] = (this->*psiMethod1)(args[facei] ...);
         }
-        else if ((1.0 - x[facei]) < residualActivation_)
+        else if (x1 < residualActivation_)
         {
             psi[facei] = (this->*psiMethod2)(args[facei] ...);
         }
         else
         {
             psi[facei] =
-                (this->*psiMethod2)(args[facei] ...)*x[facei]
-              + (this->*psiMethod1)(args[facei] ...)*(1.0 - x[facei]);
+                (this->*psiMethod2)(args[facei] ...)*x2
+              + (this->*psiMethod1)(args[facei] ...)*x1;
         }
     }
 
@@ -296,29 +304,27 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
 (
     Method1 psiMethod1,
     Method2 psiMethod2,
-    const label& celli,
+    const label celli,
     const Args& ... args
 ) const
 {
-    // Note: Args are fields for the set, not for the mesh as a whole. The
-    // cells list is only used to get the mixture.
-
     scalar psi;
 
-    scalar x = this->cellx(celli);
-    if (x < residualActivation_)
+    const scalar x2 = this->cellx(celli);
+    const scalar x1 = 1.0 - x2;
+    if (x2 < residualActivation_)
     {
         psi = (this->*psiMethod1)(args ...);
     }
-    else if ((1.0 - x) < residualActivation_)
+    else if (x1 < residualActivation_)
     {
         psi = (this->*psiMethod2)(args ...);
     }
     else
     {
         psi =
-            (this->*psiMethod2)(args ...)*x
-            + (this->*psiMethod1)(args ...)*(1.0 - x);
+            (this->*psiMethod2)(args ...)*x2
+          + (this->*psiMethod1)(args ...)*x1;
     }
 
     return psi;
@@ -326,166 +332,37 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedCellProperty
 
 
 template<class BasicThermo, class Thermo1, class Thermo2>
-void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateTemperature
+template<class Method1, class Method2, class ... Args>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::blendedPatchFaceProperty
 (
-    const volScalarField& alpha,
-    const volScalarField& he,
-    const volScalarField& T0,
-    volScalarField& alphaT
-)
+    Method1 psiMethod1,
+    Method2 psiMethod2,
+    const label patchi,
+    const label facei,
+    const Args& ... args
+) const
 {
-    const Thermo1& t1(*this);
-    const Thermo2& t2(*this);
+    scalar psi;
 
-    forAll(alphaT, celli)
+    const scalar x2 = this->patchFacex(patchi, facei);
+    const scalar x1 = 1.0 - x2;
+    if (x2 < residualActivation_)
     {
-        if (alpha[celli] > this->residualAlpha_.value())
-        {
-            const scalar x2 = this->cellx(celli);
-            const scalar x1 = 1.0 - x2;
-            const scalar rhoi(this->rho_[celli]);
-            scalar ei = he[celli];
-            scalar Ti;
-
-            if (x2 < residualActivation_)
-            {
-                Ti = t1.TRhoE(T0[celli], rhoi, ei);
-            }
-            else if (x1 < residualActivation_)
-            {
-                Ti = t2.TRhoE(T0[celli], rhoi, ei);
-            }
-            else
-            {
-                Ti =
-                    t1.TRhoE(T0[celli], rhoi, ei)*x1
-                  + t2.TRhoE(T0[celli], rhoi, ei)*x2;
-            }
-            alphaT[celli] += Ti*alpha[celli];
-        }
+        psi = (this->*psiMethod1)(args ...);
+    }
+    else if (x1 < residualActivation_)
+    {
+        psi = (this->*psiMethod2)(args ...);
+    }
+    else
+    {
+        psi =
+            (this->*psiMethod2)(args ...)*x2
+          + (this->*psiMethod1)(args ...)*x1;
     }
 
-    forAll(alphaT.boundaryField(), patchi)
-    {
-        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
-        const fvPatchScalarField& phe = he.boundaryField()[patchi];
-        const scalarField px(this->x(patchi));
-        fvPatchScalarField& palphaT = alphaT.boundaryFieldRef()[patchi];
-
-        forAll(palphaT, facei)
-        {
-            if (palpha[facei] > this->residualAlpha_.value())
-            {
-                const scalar x2 = px[facei];
-                const scalar x1 = 1.0 - x2;
-                scalar Ti;
-                if (x2 < residualActivation_)
-                {
-                    Ti = t1.TRhoE(pT0[facei], prho[facei], phe[facei]);
-                }
-                else if (x1 < residualActivation_)
-                {
-                    Ti = t2.TRhoE(pT0[facei], prho[facei], phe[facei]);
-                }
-                else
-                {
-                    Ti =
-                        t1.TRhoE(pT0[facei], prho[facei], phe[facei])*x1
-                      + t2.TRhoE(pT0[facei], prho[facei], phe[facei])*x2;
-                }
-                palphaT[facei] += Ti*palpha[facei];
-            }
-        }
-    }
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-void Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calculateEnergy
-(
-    const volScalarField& alpha,
-    const volScalarField& T0,
-    const volScalarField& he0,
-    const volScalarField& T,
-    volScalarField& alphaHE
-)
-{
-    const Thermo1& t1(*this);
-    const Thermo2& t2(*this);
-
-    forAll(alphaHE, celli)
-    {
-        scalar hei = he0[celli];
-        if (T0[celli] > this->TLow_)
-        {
-            hei = he0[celli];
-        }
-        else if (alpha[celli] > this->residualAlpha_.value())
-        {
-            const scalar x2 = this->cellx(celli);
-            const scalar x1 = 1.0 - x2;
-            const scalar rhoi(this->rho_[celli]);
-
-            if (x2 < residualActivation_)
-            {
-                hei = t1.Es(rhoi, he0[celli], T[celli]);
-            }
-            else if (x1 < residualActivation_)
-            {
-                hei = t2.Es(rhoi, he0[celli], T[celli]);
-            }
-            else
-            {
-                hei =
-                    t1.Es(rhoi, he0[celli], T[celli])*x1
-                  + t2.Es(rhoi, he0[celli], T[celli])*x2;
-            }
-        }
-        alphaHE[celli] += hei*alpha[celli];
-    }
-
-    forAll(alphaHE.boundaryField(), patchi)
-    {
-        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
-        const fvPatchScalarField& prho =
-            this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
-        const fvPatchScalarField& pT = T.boundaryField()[patchi];
-        const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
-        const scalarField px(this->x(patchi));
-        fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
-
-        forAll(palphaHE, facei)
-        {
-            scalar hei = phe0[facei];
-            if (pT0[facei] > this->TLow_)
-            {
-                hei = phe0[facei];
-            }
-            else if (palpha[facei] > this->residualAlpha_.value())
-            {
-                const scalar x2 = px[facei];
-                const scalar x1 = 1.0 - x2;
-                if (x2 < residualActivation_)
-                {
-                    hei = t1.Es(prho[facei], phe0[facei], pT[facei]);
-                }
-                else if (x1 < residualActivation_)
-                {
-                    hei = t2.Es(prho[facei], phe0[facei], pT[facei]);
-                }
-                else
-                {
-                    hei =
-                        t1.Es(prho[facei], phe0[facei], pT[facei])*x1
-                      + t2.Es(prho[facei], phe0[facei], pT[facei])*x2;
-                }
-            }
-            palphaHE[facei] += hei*palpha[facei];
-        }
-    }
+    return psi;
 }
 
 
@@ -588,6 +465,47 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::he
         patchi,
         this->rho_.boundaryField()[patchi],
         this->e_.boundaryField()[patchi],
+        T
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellHE
+(
+    const scalar T,
+    const label celli
+) const
+{
+    return blendedCellProperty
+    (
+        &Thermo1::Es,
+        &Thermo2::Es,
+        celli,
+        this->rho_[celli],
+        this->e_[celli],
+        T
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::patchFaceHE
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    return blendedPatchFaceProperty
+    (
+        &Thermo1::Es,
+        &Thermo2::Es,
+        patchi, facei,
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
         T
     );
 }
@@ -929,9 +847,9 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCp
         &Thermo1::Cp,
         &Thermo2::Cp,
         celli,
-        T,
         this->rho_[celli],
-        this->e_[celli]
+        this->e_[celli],
+        T
     );
 }
 
@@ -986,9 +904,9 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCv
         &Thermo1::Cv,
         &Thermo2::Cv,
         celli,
-        T,
         this->rho_[celli],
-        this->e_[celli]
+        this->e_[celli],
+        T
     );
 }
 
@@ -1010,6 +928,47 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cpv
 ) const
 {
     return Cv(T, patchi);
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCpv
+(
+    const scalar T,
+    const label celli
+) const
+{
+    return blendedCellProperty
+    (
+        &Thermo1::Cv,
+        &Thermo2::Cv,
+        celli,
+        this->rho_[celli],
+        this->e_[celli],
+        T
+    );
+}
+
+
+template<class BasicThermo, class Thermo1, class Thermo2>
+Foam::scalar
+Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::patchFaceCpv
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    return blendedPatchFaceProperty
+    (
+        &Thermo1::Cv,
+        &Thermo2::Cv,
+        patchi, facei,
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        T
+    );
 }
 
 
@@ -1050,23 +1009,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellW
     return
         this->cellx(celli)*Thermo2::W()
       + (1.0 - this->cellx(celli))*Thermo1::W();
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::calcKappa() const
-{
-    return blendedVolScalarFieldProperty
-    (
-        "kappa",
-        dimEnergy/dimTime/dimLength/dimTemperature,
-        &Thermo1::kappa,
-        &Thermo2::kappa,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
 }
 
 

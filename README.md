@@ -7,7 +7,7 @@
 
 
 
-# blastFoam Version 4.0
+# blastFoam Version 5.0
 
 blastFoam is a library for single and multiphase compressible flow with application to high-explosive detonation, explosive safety and airblast, as well as general compressible flows. blastFoam is developed by [Synthetik Applied Technologies](https://www.synthetik-technologies.com). This offering is not approved or endorsed by OpenCFD Limited, producer and distributor of the OpenFOAM software via www.openfoam.com, and owner of the OPENFOAM<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/>  and OpenCFD<img alt="$\textregistered$" src="svgs/6abda71802c3922eebfcf1b67d5169b2.png" align="middle" width="16.438455000000005pt" height="22.831379999999992pt"/> trade marks.
 
@@ -44,19 +44,16 @@ Detailed instructions on how to install and use blastFoam are found in the [blas
 ### How to install OpenFOAM for Linux
 Compiling OpenFOAM is straight forward, and a more detailed guide to installation can be found [here]{https://openfoam.org/download/source/software-for-compilation}. Once the necessary dependencies have been installed
 
-1. Clone the OpenFOAM-7 repository
+1. Clone the OpenFOAM-9 repository
 ```bash
 cd $HOME/OpenFOAM
-git clone https://github.com/OpenFOAM/OpenFOAM-7.git
-# or from the Synthetik repository which includes several bug fixes
-# for moving meshes
-git clone https://github.com/synthetik-technologies/OpenFOAM-7.git
+git clone https://github.com/OpenFOAM/OpenFOAM-9.git
 ```
 
 2. Compile OpenFOAM
 ```bash
-cd OpenFOAM-7
-echo "source $HOME/OpenFOAM/OpenFOAM-7/etc/bashrc" >> ~/.bashrc
+cd OpenFOAM-9
+echo "source $HOME/OpenFOAM/OpenFOAM-9/etc/bashrc" >> ~/.bashrc
 source etc/bashrc
 ./Allwmake > log.Allwmake 2>&1
 ```
@@ -76,48 +73,11 @@ An installation video for Windows 10 is available on our YouTube channel: https:
 Compiling OpenFOAM on macOS is relatively straightforward. This [guide and repository](https://github.com/mrklein/openfoam-os-x/wiki/OpenFOAM(R)-git-version-&-Homebrew) provides step-by-step instructions as well as the necessary patch to compile OpenFOAM on macOS.
 
 
-### How to install OpenQBMM
-
-1. Install OpenFOAM-7 (if not already installed, see above)
-
-See https://openfoam.org/version/7 for OpenFOAM installation instructions.
-
-2. Create the OpenFOAM directory
-```bash
-mkdir -p $HOME/OpenFOAM
-```
-
-3. Go to the $HOME/OpenFOAM directory
-```bash
-cd $HOME/OpenFOAM
-```
-
-4. Clone the OpenQBMM repository
-```bash
-git clone https://github.com/OpenQBMM/OpenQBMM.git
-```
-
-5. Go to the OpenQBMM directory
-```bash
-cd $HOME/OpenFOAM/OpenQBMM
-```
-
-6. Switch to the development-openfoam.org branch
-```bash
-git checkout development-openfoam.org
-```
-8. Compile OpenQBMM (for parallel use "-j")
-```bash
-./Allwmake
-```
-
-9. Test your installation by running the tutorial and validation cases
-
 
 ### How to install blastFoam
 
-1. Install OpenFOAM-7 (if not already installed, see above). A modified versino of OpenFOAM-7 is available for download from (https://github.com/synthetik-technologies/OpenFOAM-7) which includes several additional bug fixes. The only required change to use this version is the download location.
-See https://openfoam.org/version/7 for OpenFOAM installation instructions.
+1. Install OpenFOAM-9 (if not already installed, see above)
+See https://openfoam.org/version/9 for OpenFOAM installation instructions.
 
 2. Create the OpenFOAM directory
 ```bash
@@ -137,11 +97,6 @@ git clone https://github.com/synthetik-technologies/blastfoam.git
 5. Go to the blastfoam directory
 ```bash
 cd $HOME/OpenFOAM/blastfoam
-```
-
-6. (Optional) Set the location of OpenQBMM in the etc/bashrc by setting QBMM_INST_DIR
-```bash
-export QBMM_INST_DIR=$HOME/$WM_PROJECT/OpenQBMM
 ```
 
 7. Append the etc/bashrc to your .bashrc and/or .zshrc file
@@ -198,18 +153,18 @@ BiBTex:
 ## User Guide
 To cite the [blastFoam User Guide](blastFoam_User_Guide.pdf).:
 ```
-J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 4.0 User Guide", Synthetik Applied Technologies, LLC., 06-Nov-2020.
+J. Heylmun, P. Vonk, and T. Brewer, "blastFoam 5.0 User Guide", Synthetik Applied Technologies, LLC., 06-Oct-2020.
 ```
 BiBTex:
 ```
-@misc{heylmun_blastfoamguide_2020,
-	title = {{blastFoam version 4.0} {User} {Guide} },
+@misc{heylmun_blastfoamguide_2021,
+	title = {{blastFoam version 5.0} {User} {Guide} },
 	url = {https://github.com/synthetik-technologies/blastfoam},
 	language = {English},
 	publisher = {Synthetik Applied Technologies, LLC.},
 	author = {Heylmun, Jeffrey and Vonk, Peter and Brewer, Timothy},
 	month = nov,
-	year = {2020}
+	year = {2021}
 }
 ```
 
@@ -231,6 +186,22 @@ BiBTex:
 
 
 
+### blastFoam Version 5.0 Release Notes and Features
+blastFoam 5.0 greatly improves compatibility of blastFoam thermodynamics with that of standard OpenFOAM. This results in the ability to use most standard OpenFOAM functionObjects and fvModels and constraints. This also includes the ability to compile new combinations of thermodynamic models at run-time. Additional thermodynamic models have been added including ePower, ePolynomial, eTabulated, hPower, hPolynomial, and hTabulated. Additional fluid transport models have been added including polynomial, logPolynomial, sutherland, WLF, and tabulated. Additional sold transport models have been added including exponential and polynomial.
+
+Support for fvModels and fvConstraints has been added. This allows for sources that are not typically included in the solver, for example point mass sources.
+
+Improvements for the rotateFields utility included mapping of fields not included in the target directory as well as fixes to the rotation of non scalar fields. 1-D cases can now be directly mapped to 3D cases.
+
+A large selection of numerical methods have also been added including univariate and root finding methods, numerical integration, and minimization.
+
+New methods to initialize non-uniform fields have been added to the setRefinedFields utility such as calculatedDensity, function, and massIntegrate. New cell set types have also been added and include boxMassToCell, cylindericalMassToCell, and sphericalMassToCell.
+
+Because the output of lagrangian particles is not compatible with the builtin paraview reader, the convertLagrangianPositions utility has been added to convert the standard lagrangian format to one that paraview can read, allowing the viewing of parallel largrangian cases, without the need to reconstruct cases.
+
+
+### Previous Releases
+
 ### blastFoam Version 4.0 Release Notes and Features
 blastFoam 4.0 introduces particle solvers. This includes Eulerian multi-fluid methods (blastEulerFoam), Lagrangian (blastParcelFoam), and possible coupling to OpenQBMM for number-density function transport coupling (blastPbeTransportFoam, blastUncoupledVdfTransportFoam, and blastVdfTransportFoam).
 
@@ -248,9 +219,6 @@ A simple fluid-structure-interaction solver (blastFSIFoam) has been added, howev
 
 Further improvements have been made to the setRefinedFields utility for more control over setting fields and faster convergence of refinement.
 
-
-
-### Previous Releases
 
 ## blastFoam Version 3.0 Release Notes and Features
 

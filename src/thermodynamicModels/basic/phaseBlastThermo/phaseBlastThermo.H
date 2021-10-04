@@ -248,25 +248,6 @@ public:
 
     // Member Functions
 
-        //- Add contribution to mixture temperature
-        virtual void calculateTemperature
-        (
-            const volScalarField& alpha,
-            const volScalarField& he,
-            const volScalarField& T0,
-            volScalarField& alphaT
-        ) = 0;
-
-        //- Add contribution to mixture energy
-        virtual void calculateEnergy
-        (
-            const volScalarField& alpha,
-            const volScalarField& T0,
-            const volScalarField& he0,
-            const volScalarField& T,
-            volScalarField& alphaHE
-        ) = 0;
-
         //- Return energy source
         virtual tmp<volScalarField> ESource() const = 0;
 
@@ -292,6 +273,21 @@ public:
             (
                 const scalarField& T,
                 const label patchi
+            ) const = 0;
+
+            //- Enthalpy/internal energy for a cell
+            virtual scalar cellHE
+            (
+                const scalar T,
+                const label celli
+            ) const = 0;
+
+            //- Enthalpy/internal energy for a patch and face
+            virtual scalar patchFaceHE
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
             ) const = 0;
 
             //- Sensible enthalpy [J/kg]
@@ -410,6 +406,17 @@ public:
             (
                 const scalarField&,
                 const label
+            ) const = 0;
+
+            //- Heat capacity at constant pressure/volume for a cell [J/kg/K]
+            virtual scalar cellCpv(const scalar, const label) const = 0;
+
+            //- Heat capacity at constant pressure/volume for a patch and face [J/kg/K]
+            virtual scalar patchFaceCpv
+            (
+                const scalar T,
+                const label patchi,
+                const label facei
             ) const = 0;
 
              //- Molecular weight [kg/kmol]

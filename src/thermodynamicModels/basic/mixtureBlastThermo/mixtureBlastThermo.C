@@ -203,122 +203,6 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellSetProperty
 }
 
 
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateTemperature
-(
-    const volScalarField& alpha,
-    const volScalarField& he,
-    const volScalarField& T0,
-    volScalarField& alphaT
-)
-{
-    updateMixture();
-    forAll(alphaT, celli)
-    {
-        const ThermoType& t(this->mixture_[celli]);
-        const scalar alphai = alpha[celli];
-        if (alphai > this->residualAlpha_.value())
-        {
-            // Update temperature
-            alphaT[celli] +=
-                t.TRhoE
-                (
-                    T0[celli],
-                    this->rho_[celli],
-                    he[celli]
-                )*alphai;
-        }
-    }
-
-    forAll(alphaT.boundaryField(), patchi)
-    {
-        const fvPatchScalarField& prho =
-            this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
-        const fvPatchScalarField& phe = he.boundaryField()[patchi];
-        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
-        fvPatchScalarField& palphaT = alphaT.boundaryFieldRef()[patchi];
-
-        forAll(palphaT, facei)
-        {
-            if (palpha[facei] > this->residualAlpha_.value())
-            {
-                const ThermoType& t
-                (
-                    this->mixture_.boundary(patchi, facei)
-                );
-                palphaT[facei] +=
-                    t.TRhoE(pT0[facei], prho[facei], phe[facei])
-                   *palpha[facei];
-            }
-        }
-    }
-}
-
-
-template<class BasicThermo, class ThermoType>
-void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::calculateEnergy
-(
-    const volScalarField& alpha,
-    const volScalarField& T0,
-    const volScalarField& he0,
-    const volScalarField& T,
-    volScalarField& alphaHE
-)
-{
-    updateMixture();
-    forAll(alphaHE, celli)
-    {
-        const ThermoType& t(this->mixture_[celli]);
-        const scalar alphai = alpha[celli];
-        if (T0[celli] > this->TLow_)
-        {
-            alphaHE[celli] += alphai*he0[celli];
-        }
-        else if (alphai > this->residualAlpha_.value())
-        {
-            // Update temperature
-            alphaHE[celli] +=
-                t.TRhoE
-                (
-                    this->rho_[celli],
-                    he0[celli],
-                    T[celli]
-                )*alphai;
-        }
-    }
-
-    forAll(alphaHE.boundaryField(), patchi)
-    {
-        const fvPatchScalarField& prho =
-            this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& palpha = alpha.boundaryField()[patchi];
-        const fvPatchScalarField& pT0 = T0.boundaryField()[patchi];
-        const fvPatchScalarField& phe0 = he0.boundaryField()[patchi];
-        const fvPatchScalarField& pT = T.boundaryField()[patchi];
-        fvPatchScalarField& palphaHE = alphaHE.boundaryFieldRef()[patchi];
-
-        forAll(palphaHE, facei)
-        {
-            if (pT0[facei] > this->TLow_)
-            {
-                palphaHE[facei] += palpha[facei]*phe0[facei];
-            }
-            else if (palpha[facei] > this->residualAlpha_.value())
-            {
-                const ThermoType& t
-                (
-                    this->mixture_.boundary(patchi, facei)
-                );
-                palphaHE[facei] +=
-                    t.TRhoE(prho[facei], phe0[facei], pT[facei])
-                   *palpha[facei];
-            }
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class BasicThermo, class ThermoType>
@@ -471,6 +355,41 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::he
         patchi,
         this->rho_.boundaryField()[patchi],
         this->e_.boundaryField()[patchi],
+        T
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellHE
+(
+    const scalar T,
+    const label celli
+) const
+{
+    return this->mixture_[celli].ThermoType::Es
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        T
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::patchFaceHE
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    return this->mixture_.boundary(patchi, facei).ThermoType::Es
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
         T
     );
 }
@@ -862,6 +781,41 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::Cpv
 ) const
 {
     return Cv(T, patchi);
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::cellCpv
+(
+    const scalar T,
+    const label celli
+) const
+{
+    return this->mixture_[celli].ThermoType::Cv
+    (
+        this->rho_[celli],
+        this->e_[celli],
+        T
+    );
+}
+
+
+template<class BasicThermo, class ThermoType>
+Foam::scalar
+Foam::mixtureBlastThermo<BasicThermo, ThermoType>::patchFaceCpv
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    return this->mixture_.boundary(patchi, facei).ThermoType::Cv
+    (
+        this->rho_.boundaryField()[patchi][facei],
+        this->e_.boundaryField()[patchi][facei],
+        T
+    );
 }
 
 

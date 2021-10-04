@@ -83,6 +83,57 @@ namespace Foam
             return -thermo_.celldpde(li);
         }
     };
+
+
+    class twoPhaseTHEEquation
+    :
+        public scalarEquation
+    {
+        const twoPhaseFluidBlastThermo& thermo_;
+        const volScalarField& he_;
+        const scalar TLow_;
+        label patchi_;
+
+    public:
+        twoPhaseTHEEquation
+        (
+            twoPhaseFluidBlastThermo& thermo,
+            const scalar TLow
+        )
+        :
+            scalarEquation(TLow, great),
+            thermo_(thermo),
+            he_(thermo.he()),
+            TLow_(TLow),
+            patchi_(-1)
+        {}
+
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
+
+        label& patch()
+        {
+            return patchi_;
+        }
+
+        virtual scalar f(const scalar T, const label li) const
+        {
+            return
+                patchi_ == -1
+              ? thermo_.cellHE(T, li) - he_[li]
+              : thermo_.patchFaceHE(T, patchi_, li)
+              - he_.boundaryField()[patchi_][li];
+        }
+        virtual scalar dfdx(const scalar T, const label li) const
+        {
+            return
+                patchi_ == -1
+              ? thermo_.cellCpv(T, li)
+              : thermo_.patchFaceCpv(T, patchi_, li);
+        }
+    };
 }
 
 
@@ -90,20 +141,26 @@ namespace Foam
 
 void Foam::twoPhaseFluidBlastThermo::calculate()
 {
-    volScalarField T0(T_);
-    T_ = Zero;
-    thermo1_->calculateTemperature(alpha1_, this->he(), T0, T_);
-    thermo2_->calculateTemperature(alpha2_, this->he(), T0, T_);
-    T_.correctBoundaryConditions();
+    twoPhaseTHEEquation eqn(*this, this->TLow_);
+    NewtonRaphsonRootSolver solver(eqn, dictionary());
+    forAll(T_, celli)
+    {
+        T_[celli] = solver.solve(T_[celli], celli);
+    }
+    forAll(T_.boundaryField(), patchi)
+    {
+        eqn.patch() = patchi;
+        scalarField& pT = T_.boundaryFieldRef()[patchi];
+        forAll(pT, facei)
+        {
+            pT[facei] = solver.solve(pT[facei], facei);
+        }
+    }
 
     if (min(T_).value() < this->TLow_)
     {
-        T0 = T_;
         T_.max(this->TLow_);
-        volScalarField he0(this->he().oldTime());
-        this->he() = Zero;
-        thermo1_->calculateEnergy(alpha1_, T0, he0, T_, this->he());
-        thermo2_->calculateEnergy(alpha2_, T0, he0, T_, this->he());
+        this->he() = this->he(p_, T_);
     }
     this->he().correctBoundaryConditions();
 
@@ -455,6 +512,49 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::he
 }
 
 
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellHE
+(
+    const scalar T,
+    const label celli
+) const
+{
+    if (alpha2_[celli] < residualAlpha_.value())
+    {
+        return thermo1_->cellHE(T, celli);
+    }
+    else if (alpha1_[celli] < residualAlpha_.value())
+    {
+        return thermo2_->cellHE(T, celli);
+    }
+    return
+        alpha1_[celli]*thermo1_->cellHE(T, celli)
+      + alpha2_[celli]*thermo2_->cellHE(T, celli);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFaceHE
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    if (alpha2_.boundaryField()[patchi][facei] < residualAlpha_.value())
+    {
+        return thermo1_->patchFaceHE(T, patchi, facei);
+    }
+    if (alpha1_.boundaryField()[patchi][facei] < residualAlpha_.value())
+    {
+        return thermo2_->patchFaceHE(T, patchi, facei);
+    }
+    return
+        alpha1_.boundaryField()[patchi][facei]
+       *thermo1_->patchFaceHE(T, patchi, facei)
+      + alpha2_.boundaryField()[patchi][facei]
+       *thermo2_->patchFaceHE(T, patchi, facei);
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::twoPhaseFluidBlastThermo::hs() const
 {
     return alpha1_*thermo1_->hs() + alpha2_*thermo2_->hs();
@@ -670,6 +770,49 @@ Foam::tmp<Foam::scalarField> Foam::twoPhaseFluidBlastThermo::Cpv
     return
         alpha1_.boundaryField()[patchi]*thermo1_->Cpv(T, patchi)
       + alpha2_.boundaryField()[patchi]*thermo2_->Cpv(T, patchi);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::cellCpv
+(
+    const scalar T,
+    const label celli
+) const
+{
+    if (alpha2_[celli] < residualAlpha_.value())
+    {
+        return thermo1_->cellCpv(T, celli);
+    }
+    else if (alpha1_[celli] < residualAlpha_.value())
+    {
+        return thermo2_->cellCpv(T, celli);
+    }
+    return
+        alpha1_[celli]*thermo1_->cellCpv(T, celli)
+      + alpha2_[celli]*thermo2_->cellCpv(T, celli);
+}
+
+
+Foam::scalar Foam::twoPhaseFluidBlastThermo::patchFaceCpv
+(
+    const scalar T,
+    const label patchi,
+    const label facei
+) const
+{
+    if (alpha2_.boundaryField()[patchi][facei] < residualAlpha_.value())
+    {
+        return thermo1_->patchFaceCpv(T, patchi, facei);
+    }
+    if (alpha1_.boundaryField()[patchi][facei] < residualAlpha_.value())
+    {
+        return thermo2_->patchFaceCpv(T, patchi, facei);
+    }
+    return
+        alpha1_.boundaryField()[patchi][facei]
+       *thermo1_->patchFaceCpv(T, patchi, facei)
+      + alpha2_.boundaryField()[patchi][facei]
+       *thermo2_->patchFaceCpv(T, patchi, facei);
 }
 
 

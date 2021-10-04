@@ -274,25 +274,29 @@ public:
         }
 
         //- Return lambda to the m power for blending
-        tmp<volScalarField> lambdaPow() const
+        inline tmp<volScalarField> lambdaPow() const
         {
             return pow(lambda_, lambdaExp_);
         }
 
         //- Return lambda to the m power for blending for patchi
-        tmp<scalarField> lambdaPow(const label patchi) const
+        inline tmp<scalarField> lambdaPow(const label patchi) const
         {
             return pow(lambda_.boundaryField()[patchi], lambdaExp_);
         }
 
         //- Return ambda to the m power for blending for celli
-        scalar cellLambdaPow(const label celli) const
+        inline scalar cellLambdaPow(const label celli) const
         {
             return pow(lambda_[celli], lambdaExp_);
         }
 
         //- Return lambda to the m power for blending for patchi and facei
-        scalar lambdaPow(const label patchi, const label facei) const
+        inline scalar patchFaceLambdaPow
+        (
+            const label patchi,
+            const label facei
+        ) const
         {
             return pow(lambda_.boundaryField()[patchi][facei], lambdaExp_);
         }

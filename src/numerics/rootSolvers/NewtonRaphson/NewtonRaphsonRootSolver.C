@@ -75,6 +75,7 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::solve
         xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
 
         error_ = mag(xNew - xOld);
+        xNew = min(max(xNew, eqn_.lower()), eqn_.upper());
         if (error_ < tolerance_)
         {
             return xNew;
