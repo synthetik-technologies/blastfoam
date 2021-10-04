@@ -78,13 +78,13 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         {
             return xNewTmp;
         }
-        scalar alpha = 1.0;
+        // Relax delta
         if (beta_ != 1.0)
         {
-            alpha = 1.0/(1.0 + beta_*sum(magSqr(delta)));
+            delta *= 1.0/(1.0 + beta_*sum(magSqr(delta)));
         }
 
-        xNew = xOld + alpha*delta;
+        xNew = xOld + delta;
         xOld = xNew;
         eqns_.jacobian(xOld, li, f, J);
     }

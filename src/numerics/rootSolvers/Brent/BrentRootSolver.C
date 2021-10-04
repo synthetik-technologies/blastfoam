@@ -151,7 +151,7 @@ Foam::scalar Foam::BrentRootSolver::solve
         x3 = x2;
         x2 = x1;
 
-        if (y0*y1 < 0)
+        if (y0*yNew < 0)
         {
             x1 = xNew;
             y1 = yNew;
