@@ -61,7 +61,15 @@ Foam::stepRootSolver::stepRootSolver
 )
 :
     rootSolver(eqn, dict),
-    dx_(dict.lookupOrDefault<scalar>("dx", (eqn_.upper() - eqn_.lower())/100.0))
+    dx_
+    (
+        dict.lookupOrDefault<scalar>
+        (
+            "dx",
+            (eqn_.upper() - eqn_.lower())
+           /ceil(maxSteps_/10)
+        )
+    )
 {}
 
 
