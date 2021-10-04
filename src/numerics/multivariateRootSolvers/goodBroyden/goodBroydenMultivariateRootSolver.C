@@ -104,6 +104,7 @@ Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
 
         scalarField delta(-Jinv*f);
         x += delta;
+        limit(x);
 
         if (converged(delta))
         {
@@ -120,7 +121,7 @@ Foam::tmp<Foam::scalarField> Foam::goodBroydenMultivariateRootSolver::solve
         }
 
         // Update Jinv
-        Jinv = 
+        Jinv =
             Jinv
           + ((dx - Jinv*df)*(dx.T()*Jinv))
            /stabilise(((dx.T()*Jinv)*df)(0, 0), small);

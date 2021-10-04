@@ -96,4 +96,15 @@ Foam::scalar Foam::minimizationScheme::solve
 }
 
 
+void Foam::minimizationScheme::printNoConvergence() const
+{
+    if (debug)
+    {
+        WarningInFunction
+            << "Did not converge with in " << stepi_ << " steps." << nl
+            << "Final error=" << error_ <<endl;
+    }
+}
+
+
 // ************************************************************************* //

@@ -66,7 +66,7 @@ Foam::secantRootSolver::secantRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::secantRootSolver::solve
+Foam::scalar Foam::secantRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -89,6 +89,7 @@ Foam::scalar Foam::secantRootSolver::solve
         xNew =
             xHigh - yHigh*(xHigh - xLow)
            /stabilise(yHigh - eqn_.f(xLow, li), small);
+        limit(xNew);
 
         xLow = xHigh;
         xHigh = xNew;
@@ -99,8 +100,7 @@ Foam::scalar Foam::secantRootSolver::solve
         }
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

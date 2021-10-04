@@ -70,12 +70,12 @@ namespace Foam
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;
-            return p_[li] - thermo_.cellpRhoT(li);
+            return thermo_.cellpRhoT(li) - p_[li];
         }
         virtual scalar dfdx(const scalar e, const label li) const
         {
             (*e_)[li] = e;
-            return -thermo_.celldpde(li);
+            return thermo_.celldpde(li);
         }
     };
 
@@ -85,7 +85,6 @@ namespace Foam
     {
         const multiphaseFluidBlastThermo& thermo_;
         const volScalarField& he_;
-        const scalar TLow_;
         label patchi_;
 
     public:
@@ -98,14 +97,8 @@ namespace Foam
             scalarEquation(TLow, great),
             thermo_(thermo),
             he_(thermo.he()),
-            TLow_(TLow),
             patchi_(-1)
         {}
-
-        virtual label nDerivatives() const
-        {
-            return 1;
-        }
 
         label& patch()
         {
@@ -134,26 +127,46 @@ namespace Foam
 
 void Foam::multiphaseFluidBlastThermo::calculate()
 {
+    scalarField& TCells = T_.primitiveFieldRef();
+    scalarField& heCells = this->he().primitiveFieldRef();
+    volScalarField::Boundary& bT = T_.boundaryFieldRef();
+    volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
+
     multiphaseTHEEquation eqn(*this, this->TLow_);
     NewtonRaphsonRootSolver solver(eqn, dictionary());
-    forAll(T_, celli)
+    forAll(TCells, celli)
     {
-        T_[celli] = solver.solve(T_[celli], celli);
+        TCells[celli] = solver.solve(TCells[celli], celli);
     }
-    forAll(T_.boundaryField(), patchi)
+    forAll(bT, patchi)
     {
         eqn.patch() = patchi;
-        scalarField& pT = T_.boundaryFieldRef()[patchi];
+        scalarField& pT = bT[patchi];
         forAll(pT, facei)
         {
             pT[facei] = solver.solve(pT[facei], facei);
         }
     }
+    T_.correctBoundaryConditions();
 
     if (min(T_).value() < this->TLow_)
     {
-        T_.max(this->TLow_);
-        this->he() = this->he(p_, T_);
+        forAll(TCells, celli)
+        {
+            if (TCells[celli] < this->TLow_)
+            {
+                TCells[celli] = this->TLow_;
+                heCells[celli] = this->cellHE(this->TLow_, celli);
+            }
+        }
+        forAll(bhe, patchi)
+        {
+            scalarField& pT = bT[patchi];
+            scalarField& phe = bhe[patchi];
+
+            pT = max(pT, this->TLow_);
+            phe = this->he(pT, patchi);
+        }
     }
     this->he().correctBoundaryConditions();
 
@@ -312,7 +325,6 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         sumAlpha += volumeFractions_[phasei];
     }
     rho_ /= max(sumAlpha, residualAlpha_);
-
     this->initializeFields();
 }
 
@@ -436,9 +448,16 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
     NewtonRaphsonRootSolver solver(eqn, dict);
     forAll(eInit, celli)
     {
-        const scalar e0 = e[celli];
-        eInit[celli] = solver.solve(e0, celli);
-        e[celli] = e0;
+        if (mag(celldpde(celli)) < small)
+        {
+            eInit[celli] = cellHE(T_[celli], celli);
+        }
+        else
+        {
+            const scalar e0 = e[celli];
+            eInit[celli] = solver.solve(e0, celli);
+            e[celli] = e0;
+        }
     }
 
     return eInitTmp;
@@ -580,7 +599,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::cellHE
     forAll(thermos_, phasei)
     {
         scalar alphai(volumeFractions_[phasei][celli]);
-        if (alphai > residualAlpha_.value())
+        if (alphai > thermos_[phasei].residualAlpha().value())
         {
             heSum += alphai*thermos_[phasei].cellHE(T, celli);
         }
@@ -603,7 +622,7 @@ Foam::scalar Foam::multiphaseFluidBlastThermo::patchFaceHE
         (
             volumeFractions_[phasei].boundaryField()[patchi][facei]
         );
-        if (alphai > residualAlpha_.value())
+        if (alphai > thermos_[phasei].residualAlpha().value())
         {
             heSum += alphai*thermos_[phasei].patchFaceHE(T, patchi, facei);
         }

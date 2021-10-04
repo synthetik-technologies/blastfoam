@@ -316,8 +316,6 @@ public:
             ) const;
 
             using BasicThermo::Cp;
-            //- Heat capacity at constant pressure [J/kg/K]
-            virtual tmp<volScalarField> Cp() const;
 
             //- Heat capacity at constant pressure for patch [J/kg/K]
             virtual tmp<scalarField> Cp
@@ -330,8 +328,6 @@ public:
             virtual scalar cellCp(const scalar, const label) const;
 
             using BasicThermo::Cv;
-            //- Heat capacity at constant volume [J/kg/K]
-            virtual tmp<volScalarField> Cv() const;
 
             //- Heat capacity at constant volume for patch [J/kg/K]
             virtual tmp<scalarField> Cv
@@ -343,8 +339,7 @@ public:
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const;
 
-            //- Heat capacity at constant pressure/volume [J/kg/K]
-            virtual tmp<volScalarField> Cpv() const;
+            using BasicThermo::Cpv;
 
             //- Heat capacity at constant pressure/volume for patch [J/kg/K]
             virtual tmp<scalarField> Cpv

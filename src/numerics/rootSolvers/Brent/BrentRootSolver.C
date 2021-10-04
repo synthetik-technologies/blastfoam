@@ -66,7 +66,7 @@ Foam::BrentRootSolver::BrentRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::BrentRootSolver::solve
+Foam::scalar Foam::BrentRootSolver::findRoot
 (
     const scalar x,
     const scalar xLow,
@@ -172,8 +172,7 @@ Foam::scalar Foam::BrentRootSolver::solve
             y1 = ytmp;
         }
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

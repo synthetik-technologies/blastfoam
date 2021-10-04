@@ -73,6 +73,12 @@ protected:
         //- Is the solution converged
         bool converged(const scalar error) const;
 
+        //- Limit the value of x to the range of the equation
+        inline void limit(scalar& x) const
+        {
+            x = min(eqn_.upper(), max(x, eqn_.lower()));
+        }
+
 public:
 
     //- Runtime type information
@@ -170,6 +176,10 @@ public:
             const scalar xHigh,
             const label li
         ) const = 0;
+
+        //- Print failure
+        virtual void printNoConvergence() const;
+
 
     // Member Operators
 

@@ -66,7 +66,7 @@ Foam::falsePointRootSolver::falsePointRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::falsePointRootSolver::solve
+Foam::scalar Foam::falsePointRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -88,6 +88,7 @@ Foam::scalar Foam::falsePointRootSolver::solve
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, 1e-10);
+        limit(xNew);
         scalar yNew = eqn_.f(xNew, li);
 
         if (converged(yNew) || converged(xHigh - xLow))
@@ -106,8 +107,7 @@ Foam::scalar Foam::falsePointRootSolver::solve
             yHigh = yNew;
         }
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

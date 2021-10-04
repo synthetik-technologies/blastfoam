@@ -86,7 +86,7 @@ Foam::stepRootSolver::stepRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::stepRootSolver::solve
+Foam::scalar Foam::stepRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -115,8 +115,7 @@ Foam::scalar Foam::stepRootSolver::solve
         }
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return x;
 }

@@ -66,7 +66,7 @@ Foam::SteffensenRootSolver::SteffensenRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::SteffensenRootSolver::solve
+Foam::scalar Foam::SteffensenRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -81,6 +81,7 @@ Foam::scalar Foam::SteffensenRootSolver::solve
         scalar fx = eqn_.f(xOld, li);
         scalar gx = eqn_.f(xOld + fx, li)/stabilise(fx, small) - 1.0;
         xNew = xOld - eqn_.f(xOld, li)/stabilise(gx, small);
+        limit(xNew);
 
         if (converged(xNew - xOld))
         {
@@ -89,8 +90,7 @@ Foam::scalar Foam::SteffensenRootSolver::solve
         xOld = xNew;
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

@@ -74,8 +74,7 @@ public:
     // Member Functions
 
         //- Solve the root
-        using rootSolver::solve;
-        virtual scalar solve
+        virtual scalar findRoot
         (
             const scalar x0,
             const scalar x1,

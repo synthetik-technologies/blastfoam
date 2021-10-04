@@ -85,6 +85,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::solve
         }
 
         xNew = xOld + delta;
+        limit(xNew);
         xOld = xNew;
         eqns_.jacobian(xOld, li, f, J);
     }

@@ -59,7 +59,7 @@ Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
 
 Foam::scalar Foam::rootSolver::solve() const
 {
-    return this->solve
+    return this->findRoot
     (
         (eqn_.lower() + eqn_.upper())*0.5,
         eqn_.lower(),
@@ -71,13 +71,13 @@ Foam::scalar Foam::rootSolver::solve() const
 
 Foam::scalar Foam::rootSolver::solve(const scalar x0) const
 {
-    return this->solve(x0, eqn_.lower(), eqn_.upper(), 0);
+    return this->findRoot(x0, eqn_.lower(), eqn_.upper(), 0);
 }
 
 
 Foam::scalar Foam::rootSolver::solve(const scalar x0, const label li) const
 {
-    return this->solve(x0, eqn_.lower(), eqn_.upper(), li);
+    return this->findRoot(x0, eqn_.lower(), eqn_.upper(), li);
 }
 
 
@@ -88,8 +88,30 @@ Foam::scalar Foam::rootSolver::solve
     const scalar xHigh
 ) const
 {
-    return this->solve(x0, xLow, xHigh, 0);
+    return this->findRoot(x0, xLow, xHigh, 0);
 }
 
+
+Foam::scalar Foam::rootSolver::solve
+(
+    const scalar x0,
+    const scalar xLow,
+    const scalar xHigh,
+    const label li
+) const
+{
+    return this->findRoot(x0, xLow, xHigh, li);
+}
+
+
+void Foam::rootSolver::printNoConvergence() const
+{
+    if (debug)
+    {
+        WarningInFunction
+            << "Did not converge with in " << stepi_ << " steps." << nl
+            << "Final error=" << error_ <<endl;
+    }
+}
 
 // ************************************************************************* //

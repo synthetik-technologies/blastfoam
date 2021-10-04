@@ -79,6 +79,11 @@ protected:
         //- Is the solution converged
         bool converged(const scalarField& errors) const;
 
+        inline void limit(scalarField& x) const
+        {
+            x = min(eqns_.upper(), max(x, eqns_.lower()));
+        }
+
 public:
 
     //- Runtime type information
@@ -153,6 +158,9 @@ public:
             const scalarField& x0,
             const label li
         ) const = 0;
+
+        //- Print failure
+        virtual void printNoConvergence() const;
 
     // Member Operators
 

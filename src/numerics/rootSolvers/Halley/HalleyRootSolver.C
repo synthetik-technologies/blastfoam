@@ -49,7 +49,7 @@ Foam::HalleyRootSolver::HalleyRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::HalleyRootSolver::solve
+Foam::scalar Foam::HalleyRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -66,6 +66,7 @@ Foam::scalar Foam::HalleyRootSolver::solve
         scalar fpp = eqn_.d2fdx2(xOld, li);
 
         xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, tolerance_);
+        limit(xNew);
 
         if (converged(xNew - xOld))
         {
@@ -74,8 +75,7 @@ Foam::scalar Foam::HalleyRootSolver::solve
         xOld = xNew;
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

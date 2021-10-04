@@ -798,23 +798,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellTHE
 
 
 template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cp() const
-{
-    return blendedVolScalarFieldProperty
-    (
-        "Cp",
-        dimEnergy/dimMass/dimTemperature,
-        &Thermo1::Cp,
-        &Thermo2::Cp,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
 Foam::tmp<Foam::scalarField>
 Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cp
 (
@@ -850,23 +833,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCp
         this->rho_[celli],
         this->e_[celli],
         T
-    );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cv() const
-{
-    return blendedVolScalarFieldProperty
-    (
-        "Cv",
-        dimEnergy/dimMass/dimTemperature,
-        &Thermo1::Cv,
-        &Thermo2::Cv,
-        this->rho_,
-        this->e_,
-        this->T_
     );
 }
 
@@ -908,14 +874,6 @@ Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::cellCv
         this->e_[celli],
         T
     );
-}
-
-
-template<class BasicThermo, class Thermo1, class Thermo2>
-Foam::tmp<Foam::volScalarField>
-Foam::blendedBlastThermo<BasicThermo, Thermo1, Thermo2>::Cpv() const
-{
-    return volScalarField::New("Cpv", Cv());
 }
 
 

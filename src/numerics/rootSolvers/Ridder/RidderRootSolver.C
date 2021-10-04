@@ -66,7 +66,7 @@ Foam::RidderRootSolver::RidderRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::RidderRootSolver::solve
+Foam::scalar Foam::RidderRootSolver::findRoot
 (
     const scalar x,
     const scalar xLow,
@@ -95,10 +95,11 @@ Foam::scalar Foam::RidderRootSolver::solve
           + (xMean - x0)*sign(y0 - y1)
            *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
 
-        if (converged(xNew - x1) || converged(xNew - x1))
+        if (converged(xNew - x0) || converged(xNew - x1))
         {
             return xNew;
         }
+        limit(xNew);
 
         scalar yNew = eqn_.f(xNew, li);
         if (converged(yNew))
@@ -124,8 +125,7 @@ Foam::scalar Foam::RidderRootSolver::solve
             y1 = yNew;
         }
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

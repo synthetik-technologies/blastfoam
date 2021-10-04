@@ -73,6 +73,11 @@ protected:
         //- Is the solution converged
         bool converged(const scalar error) const;
 
+        inline void limit(scalar& x) const
+        {
+            x = min(eqn_.upper(), max(x, eqn_.lower()));
+        }
+
 public:
 
     //- Runtime type information
@@ -169,7 +174,19 @@ public:
             const scalar xLow,
             const scalar xHigh,
             const label li
+        ) const;
+
+        //- Find the root of the equation between xHigh and xLow
+        virtual scalar findRoot
+        (
+            const scalar x0,
+            const scalar xLow,
+            const scalar xHigh,
+            const label li
         ) const = 0;
+
+        //- Print failure
+        virtual void printNoConvergence() const;
 
     // Member Operators
 

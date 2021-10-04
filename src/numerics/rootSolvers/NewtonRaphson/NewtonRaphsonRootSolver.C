@@ -60,7 +60,7 @@ Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::NewtonRaphsonRootSolver::solve
+Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -75,7 +75,7 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::solve
         xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
 
         error_ = mag(xNew - xOld);
-        xNew = min(max(xNew, eqn_.lower()), eqn_.upper());
+        limit(xNew);
         if (error_ < tolerance_)
         {
             return xNew;
@@ -83,8 +83,7 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::solve
         xOld = xNew;
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xNew;
 }

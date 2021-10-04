@@ -560,22 +560,6 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::cellTHE
 
 
 template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::Cp() const
-{
-    return volScalarFieldProperty
-    (
-        "Cp",
-        dimEnergy/dimMass/dimTemperature,
-        &ThermoType::Cp,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
 Foam::eBlastThermo<BasicThermo, ThermoType>::Cp
 (
@@ -613,22 +597,6 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::cellCp
 
 
 template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::Cv() const
-{
-    return volScalarFieldProperty
-    (
-        "Cv",
-        dimEnergy/dimMass/dimTemperature,
-        &ThermoType::Cv,
-        this->rho_,
-        this->e_,
-        this->T_
-    );
-}
-
-
-template<class BasicThermo, class ThermoType>
 Foam::tmp<Foam::scalarField>
 Foam::eBlastThermo<BasicThermo, ThermoType>::Cv
 (
@@ -662,14 +630,6 @@ Foam::eBlastThermo<BasicThermo, ThermoType>::cellCv
             this->e_[celli],
             T
         );
-}
-
-
-template<class BasicThermo, class ThermoType>
-Foam::tmp<Foam::volScalarField>
-Foam::eBlastThermo<BasicThermo, ThermoType>::Cpv() const
-{
-    return volScalarField::New("Cpv", Cv());
 }
 
 

@@ -102,11 +102,6 @@ namespace Foam
             patchi_(-1)
         {}
 
-        virtual label nDerivatives() const
-        {
-            return 1;
-        }
-
         label& patch()
         {
             return patchi_;
@@ -135,26 +130,46 @@ namespace Foam
 
 void Foam::twoPhaseFluidBlastThermo::calculate()
 {
+    scalarField& TCells = T_.primitiveFieldRef();
+    scalarField& heCells = this->he().primitiveFieldRef();
+    volScalarField::Boundary& bT = T_.boundaryFieldRef();
+    volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
+
     twoPhaseTHEEquation eqn(*this, this->TLow_);
     NewtonRaphsonRootSolver solver(eqn, dictionary());
-    forAll(T_, celli)
+    forAll(TCells, celli)
     {
-        T_[celli] = solver.solve(T_[celli], celli);
+        TCells[celli] = solver.solve(TCells[celli], celli);
     }
-    forAll(T_.boundaryField(), patchi)
+    forAll(bT, patchi)
     {
         eqn.patch() = patchi;
-        scalarField& pT = T_.boundaryFieldRef()[patchi];
+        scalarField& pT = bT[patchi];
         forAll(pT, facei)
         {
             pT[facei] = solver.solve(pT[facei], facei);
         }
     }
+    T_.correctBoundaryConditions();
 
     if (min(T_).value() < this->TLow_)
     {
-        T_.max(this->TLow_);
-        this->he() = this->he(p_, T_);
+        forAll(TCells, celli)
+        {
+            if (TCells[celli] < this->TLow_)
+            {
+                TCells[celli] = this->TLow_;
+                heCells[celli] = this->cellHE(this->TLow_, celli);
+            }
+        }
+        forAll(bhe, patchi)
+        {
+            scalarField& pT = bT[patchi];
+            scalarField& phe = bhe[patchi];
+
+            pT = max(pT, this->TLow_);
+            phe = this->he(pT, patchi);
+        }
     }
     this->he().correctBoundaryConditions();
 
@@ -396,9 +411,16 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
     NewtonRaphsonRootSolver solver(eqn, dict);
     forAll(eInit, celli)
     {
-        const scalar e0 = e[celli];
-        eInit[celli] = solver.solve(e0, celli);
-        e[celli] = e0;
+        if (mag(celldpde(celli)) < small)
+        {
+            eInit[celli] = cellHE(T_[celli], celli);
+        }
+        else
+        {
+            const scalar e0 = e[celli];
+            eInit[celli] = solver.solve(e0, celli);
+            e[celli] = e0;
+        }
     }
 
     return eInitTmp;

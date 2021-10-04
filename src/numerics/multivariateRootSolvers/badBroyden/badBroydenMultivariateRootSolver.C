@@ -105,6 +105,8 @@ Foam::tmp<Foam::scalarField> Foam::badBroydenMultivariateRootSolver::solve
         scalarField delta(-Jinv*f);
         x += delta;
 
+        limit(x);
+
         if (converged(delta))
         {
             return xTmp;

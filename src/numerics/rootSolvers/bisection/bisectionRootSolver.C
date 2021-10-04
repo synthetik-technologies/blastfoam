@@ -66,7 +66,7 @@ Foam::bisectionRootSolver::bisectionRootSolver
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::bisectionRootSolver::solve
+Foam::scalar Foam::bisectionRootSolver::findRoot
 (
     const scalar x0,
     const scalar x1,
@@ -104,8 +104,7 @@ Foam::scalar Foam::bisectionRootSolver::solve
         y = eqn_.f(xMean, li);
 
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
+    printNoConvergence();
 
     return xMean;
 }
