@@ -66,12 +66,6 @@ namespace Foam
             p_(thermo_.p()),
             e_(&thermo.he())
         {}
-
-        virtual label nDerivatives() const
-        {
-            return 1;
-        }
-
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;

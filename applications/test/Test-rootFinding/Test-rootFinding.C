@@ -18,11 +18,6 @@ public:
     virtual ~testEqn1()
     {}
 
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-
     virtual scalar f(const scalar x, const label li) const
     {
         return Foam::cos(x) - Foam::pow3(x);
@@ -49,11 +44,6 @@ public:
 
     virtual ~testEqn2()
     {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
 
     virtual scalar f(const scalar x, const label li) const
     {
@@ -88,22 +78,18 @@ int main(int argc, char *argv[])
     forAll(uniEqns, eqni)
     {
         Info<< "Solving " << uniEqnStrs[eqni] << endl;
-        incrIndent(Info);
-
         const scalarEquation& eqn = uniEqns[eqni];
         forAll(methods, i)
         {
             dict.set("solver", methods[i]);
             autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
-            Info<<"\troot=" << solver->solve(0.5, 0)
+            Info<<"    root=" << solver->solve(0.5, 0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }
-        Info<<nl;
-        decrIndent(Info);
     }
 
-    Info<< nl << "done" << endl;
+    Info<< "done" << endl;
 
     return 0;
 }

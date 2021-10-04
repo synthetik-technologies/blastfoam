@@ -25,6 +25,45 @@ License
 
 #include "MultivariateEquation.H"
 
+// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
+
+template<class Type>
+bool Foam::MultivariateEquation<Type>::checkJacobian
+(
+    const MultivariateEquation<Type>& eqns
+) 
+{
+    if 
+    (
+        reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::jacobian)) 
+     == reinterpret_cast<void*>(&MultivariateEquation<Type>::jacobian)
+    )
+    {
+        return false;
+    }
+    return true;
+}
+
+
+// template<class Type>
+// bool Foam::MultivariateEquation<Type>::checkHessian
+// (
+//     const MultivariateEquation<Type>& eqns
+// ) 
+// {
+//     return false;
+//     if 
+//     (
+//         reinterpret_cast<void*>(eqns.*(&MultivariateEquation<Type>::hessian)) 
+//      == reinterpret_cast<void*>(&MultivariateEquation<Type>::hessian)
+//     )
+//     {
+//         return false;
+//     }
+//     return true;
+// }
+
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
@@ -66,6 +105,29 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+template<class Type>
+Foam::label Foam::MultivariateEquation<Type>::nDerivatives() const
+{
+    label nDeriv = 0;
+    // Check if Jacobian has been implemented
+    if (checkJacobian(*this))
+    {
+        nDeriv++;
+    }
+    else 
+    {
+        return nDeriv;
+    }
+
+    // Check if Hessian has been implemented
+    // if (checkHessian(*this))
+    // {
+    //     nDeriv++;
+    // }
+    return nDeriv;
+}
+
 
 template<class Type>
 bool Foam::MultivariateEquation<Type>::checkBounds(const scalarField& xs) const

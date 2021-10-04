@@ -34,9 +34,14 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
 )
 {
     word rootSolverTypeName(dict.lookup("solver"));
+    label nDeriv = eqn.nDerivatives();
     Info<< "Selecting root solver " << rootSolverTypeName << endl;
+    if (debug)
+    {
+        Info<< "    detected " << nDeriv << " implemented derivatives" << endl;
+    }
 
-    if (eqn.nDerivatives() <= 0)
+    if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
             dictionaryZeroConstructorTablePtr_->find(rootSolverTypeName);
@@ -52,7 +57,7 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
         }
         return autoPtr<rootSolver>(cstrIter()(eqn, dict));
     }
-    else if (eqn.nDerivatives() == 1)
+    else if (nDeriv == 1)
     {
         dictionaryOneConstructorTable::iterator cstrIter =
             dictionaryOneConstructorTablePtr_->find(rootSolverTypeName);

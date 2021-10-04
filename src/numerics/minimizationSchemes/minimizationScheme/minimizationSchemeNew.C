@@ -34,9 +34,15 @@ Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
 )
 {
     word minimizationSchemeTypeName(dict.lookup("solver"));
+    label nDeriv = eqn.nDerivatives();
     Info<< "Selecting root solver " << minimizationSchemeTypeName << endl;
 
-    if (eqn.nDerivatives() <= 0)
+    if (debug)
+    {
+        Info<< "    detected " << nDeriv << " implemented derivatives" << endl;
+    }
+
+    if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
             dictionaryZeroConstructorTablePtr_->find(minimizationSchemeTypeName);
@@ -52,7 +58,7 @@ Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
         }
         return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
     }
-    else if (eqn.nDerivatives() == 1)
+    else if (nDeriv == 1)
     {
         dictionaryOneConstructorTable::iterator cstrIter =
             dictionaryOneConstructorTablePtr_->find(minimizationSchemeTypeName);

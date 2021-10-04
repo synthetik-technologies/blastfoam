@@ -52,8 +52,8 @@ Foam::multivariateRootSolver::multivariateRootSolver
 )
 :
     eqns_(eqns),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", small)),
-    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 10000)),
+    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
     errors_(eqns.nEqns(), great),
     error_(great)

@@ -87,15 +87,15 @@ Foam::scalar Foam::falsePointRootSolver::solve
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, tolerance_);
+        xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, 1e-10);
         scalar yNew = eqn_.f(xNew, li);
 
-        if (converged(yNew))
+        if (converged(yNew) || converged(xHigh - xLow))
         {
             return xNew;
         }
 
-        if (yNew > 0)
+        if (yNew*yLow > 0)
         {
             xLow = xNew;
             yLow = yNew;
@@ -104,10 +104,6 @@ Foam::scalar Foam::falsePointRootSolver::solve
         {
             xHigh = xNew;
             yHigh = yNew;
-        }
-        if (converged(xHigh - xLow))
-        {
-            return xNew;
         }
     }
     WarningInFunction

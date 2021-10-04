@@ -20,11 +20,6 @@ public:
     virtual ~testEqn1()
     {}
 
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-
     virtual scalar f(const scalar x, const label li) const
     {
         return mag(x - 2.0) + sqr(x - 1.0);
@@ -51,11 +46,6 @@ public:
 
     virtual ~testEqn2()
     {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
 
     virtual scalar f(const scalar x, const label li) const
     {
@@ -90,11 +80,9 @@ int main(int argc, char *argv[])
     (
         minimizationScheme::dictionaryTwoConstructorTablePtr_->toc()
     );
-    dict.set("tolerance", 1e-5);
     forAll(uniEqns, eqni)
     {
         Info<< "Solving " << uniEqnStrs[eqni] << endl;
-        incrIndent(Info);
 
         const scalarEquation& eqn = uniEqns[eqni];
         forAll(methods, i)
@@ -104,15 +92,13 @@ int main(int argc, char *argv[])
             (
                 minimizationScheme::New(eqn, dict)
             );
-            Info<<"\tmin=" << solver->solve()
+            Info<<"    min=" << solver->solve()
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }
-        Info<<nl;
-        decrIndent(Info);
     }
 
-    Info<< nl << "done" << endl;
+    Info<< "done" << endl;
 
     return 0;
 }

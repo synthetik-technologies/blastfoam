@@ -85,11 +85,15 @@ public:
 
     // Member Functions
 
+        //- Check if derivatives have been implemented
+        static bool checkJacobian(const MultivariateEquation<Type>& eqn);
+        // static bool checkHessian(const MultivariateEquation<Type>& eqn);
+
         //- Return the number of equations in the system
         virtual label nEqns() const = 0;
 
         //- Return the number of derivatives in the system
-        virtual label nDerivatives() const = 0;
+        label nDerivatives() const;
 
         //- Return the lower limits
         const scalarField& lower() const

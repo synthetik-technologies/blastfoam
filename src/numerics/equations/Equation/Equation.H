@@ -98,8 +98,14 @@ public:
             return upperLimit_;
         }
 
-        //- Return the number of implemented derivatives
-        virtual label nDerivatives() const = 0;
+        //- Check if derivatives have been implemented
+        static bool checkFirstDerivative(const Equation<Type>& eqn);
+        static bool checkSecondDerivative(const Equation<Type>& eqn);
+        static bool checkThirdDerivative(const Equation<Type>& eqn);
+        static bool checkFourthDerivative(const Equation<Type>& eqn);
+
+        //- Return the number of derivatives
+        label nDerivatives() const;
 
         //- Check if the coordinates are with in the range
         bool checkBounds(const scalar xs) const;
@@ -110,22 +116,29 @@ public:
         //- Calculate the first derivative of the equation
         virtual Type dfdx(const scalar x, const label li) const
         {
-            NotImplemented;
-            return f(x, li);
+            NotImplemented
+            return pTraits<Type>::zero;
         }
 
         //- Calculate the second derivative of the equation
         virtual Type d2fdx2(const scalar x, const label li) const
         {
-            NotImplemented;
-            return f(x, li);
+            NotImplemented
+            return pTraits<Type>::zero;
         }
 
         //- Calculate the third derivative of the equation
         virtual Type d3fdx3(const scalar x, const label li) const
         {
             NotImplemented;
-            return f(x, li);
+            return pTraits<Type>::zero;
+        }
+
+        //- Calculate the fourth derivative of the equation
+        virtual Type d4fdx4(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return pTraits<Type>::zero;
         }
 };
 

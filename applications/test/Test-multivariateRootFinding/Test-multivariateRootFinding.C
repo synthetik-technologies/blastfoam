@@ -22,12 +22,6 @@ public:
     {
         return 2;
     }
-
-    virtual label nDerivatives() const
-    {
-        return 1;
-    }
-
     virtual void f
     (
         const scalarField& x,
@@ -38,7 +32,6 @@ public:
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
         fx[1] = sqr(x[0]) - x[1] + 1.0;
     }
-
     virtual void jacobian
     (
         const scalarField& x,
@@ -74,12 +67,6 @@ public:
     {
         return 2;
     }
-
-    virtual label nDerivatives() const
-    {
-        return 1;
-    }
-
     virtual void f
     (
         const scalarField& x,
@@ -90,7 +77,6 @@ public:
         fx[0] = x[1] - sqr(x[0]) + x[0];
         fx[1] = sqr(x[0])/16.0 + sqr(x[1]) - 1.0;
     }
-
     virtual void jacobian
     (
         const scalarField& x,
@@ -111,21 +97,19 @@ public:
 
 int main(int argc, char *argv[])
 {
-
     PtrList<scalarMultivariateEquation> multEqns(2);
     wordList multiEqnStrs(2);
     multEqns.set(0, new multivariateTestEqn1());
     multiEqnStrs[0] =
-        word("\tf1(x1, x2) = x1^2 + x2^2 - 4.0\n")
-      + word("\tf2(x1, x2) = x1^2 - x2 + 1.0\n");
+        word("    f1(x1, x2) = x1^2 + x2^2 - 4.0\n")
+      + word("    f2(x1, x2) = x1^2 - x2 + 1.0\n");
     multEqns.set(1, new multivariateTestEqn2());
     multiEqnStrs[1] =
-        word("\tf1(x1, x2) = x2^2 + x1^2 + x1\n")
-      + word("\tf2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n");
+        word("    f1(x1, x2) = x2^2 + x1^2 + x1\n")
+      + word("    f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n");
 
     dictionary dict;
 
-    Info<< nl;
     Info<< "Mulitvariate root finding" << endl;
     wordList multivariateMethods
     (
@@ -143,14 +127,13 @@ int main(int argc, char *argv[])
             (
                 multivariateRootSolver::New(eqns, dict)
             );
-            Info<<"\troots=" << solver->solve(x0, 0)
+            Info<< "    roots=" << solver->solve(x0, 0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;
         }
-        Info<<nl;
     }
 
-    Info<< nl << "done" << endl;
+    Info<< "done" << endl;
 
     return 0;
 }
