@@ -1696,6 +1696,7 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
     scalar beginUnrefine = refineDict.lookupOrDefault("beginUnrefine", 0.0);
 
     bool hasChanged = false;
+    bool balanced = false;
 
     if (refineInterval == 0)
     {
@@ -1904,7 +1905,8 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
 
         reduce(hasChanged, orOp<bool>());
         topoChanging(hasChanged);
-        if (balance())
+        balanced = balance();
+        if (balanced)
         {
             //- Update objects stored on the mesh db
             BalanceMeshObject::updateObjects(*this);
@@ -1914,8 +1916,9 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
             (
                 const_cast<Time&>(this->time())
             );
+            hasChanged = true;
         }
-        else
+        else if (hasChanged)
         {
             //- Update objects stored on the mesh db
             RefineMeshObject::updateObjects(*this);
@@ -1937,7 +1940,7 @@ bool Foam::adaptiveFvMesh::refine(const bool correctError)
         nRefinementIterations_++;
     }
 
-    return hasChanged;
+    return hasChanged || balanced;
 }
 
 

@@ -119,13 +119,14 @@ bool Foam::movingAdaptiveFvMesh::update()
     // consistent
     if (Pstream::parRun())
     {
-        Field<scalar> nSharedPoints(pointsNew.size(), 1);
         this->globalData().syncPointData
         (
             pointsNew,
             maxMagSqrEqOp<vector>(),
             mapDistribute::transform()
         );
+
+//         Field<scalar> nSharedPoints(pointsNew.size(), 1);
 //         this->globalData().syncPointData
 //         (
 //             nSharedPoints,
