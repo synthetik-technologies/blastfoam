@@ -19,19 +19,19 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 Class
-    Foam::dynamicFvMesh
+    Foam::dynamicBlastFvMesh
 
 Description
     Abstract base class for geometry and/or topology changing fvMesh.
 
 SourceFiles
-    dynamicFvMesh.C
-    dynamicFvMeshNew.C
+    dynamicBlastFvMesh.C
+    dynamicBlastFvMeshNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicFvMesh_H
-#define dynamicFvMesh_H
+#ifndef dynamicBlastFvMesh_H
+#define dynamicBlastFvMesh_H
 
 #include "fvMesh.H"
 
@@ -41,10 +41,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class dynamicFvMesh Declaration
+                           Class dynamicBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicFvMesh
+class dynamicBlastFvMesh
 :
     public fvMesh
 {
@@ -60,16 +60,16 @@ class dynamicFvMesh
         static IOobject dynamicMeshDictIOobject(const IOobject& io);
 
         //- Disallow default bitwise copy construct
-        dynamicFvMesh(const dynamicFvMesh&);
+        dynamicBlastFvMesh(const dynamicBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicFvMesh&);
+        void operator=(const dynamicBlastFvMesh&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("dynamicFvMesh");
+    TypeName("dynamicBlastFvMesh");
 
 
     // Declare run-time constructor selection table
@@ -77,7 +77,7 @@ public:
         declareRunTimeSelectionTable
         (
             autoPtr,
-            dynamicFvMesh,
+            dynamicBlastFvMesh,
             dictionary,
             (const IOobject& io),
             (io)
@@ -90,7 +90,7 @@ public:
     {
         // Private data
 
-            const dynamicFvMesh& mesh_;
+            const dynamicBlastFvMesh& mesh_;
 
             wordList velocityFields_;
 
@@ -100,7 +100,7 @@ public:
 
             velocityMotionCorrection
             (
-                const dynamicFvMesh& mesh,
+                const dynamicBlastFvMesh& mesh,
                 const dictionary& dict
             );
 
@@ -114,11 +114,11 @@ public:
     // Constructors
 
         //- Construct from objectRegistry, and read/write options
-        dynamicFvMesh(const IOobject& io, const bool canModify = false);
+        dynamicBlastFvMesh(const IOobject& io, const bool canModify = false);
 
         //- Construct from components without boundary.
         //  Boundary is added using addFvPatches() member function
-        dynamicFvMesh
+        dynamicBlastFvMesh
         (
             const IOobject& io,
             pointField&& points,
@@ -130,7 +130,7 @@ public:
 
         //- Construct without boundary from cells rather than owner/neighbour.
         //  Boundary is added using addPatches() member function
-        dynamicFvMesh
+        dynamicBlastFvMesh
         (
             const IOobject& io,
             pointField&& points,
@@ -142,14 +142,14 @@ public:
 
     // Selectors
 
-        //- Select, construct and return the dynamicFvMesh
+        //- Select, construct and return the dynamicBlastFvMesh
         //  If the constant/dynamicMeshDict does not exist
         //  a staticFvMesh is returned
-        static autoPtr<dynamicFvMesh> New(const IOobject& io);
+        static autoPtr<dynamicBlastFvMesh> New(const IOobject& io);
 
 
     //- Destructor
-    virtual ~dynamicFvMesh();
+    virtual ~dynamicBlastFvMesh();
 
 
     // Member Functions

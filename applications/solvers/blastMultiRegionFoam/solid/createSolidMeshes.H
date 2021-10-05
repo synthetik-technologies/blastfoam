@@ -3,7 +3,7 @@
         rp.found("solid") ? rp["solid"] : wordList(0)
     );
 
-    PtrList<dynamicFvMesh> solidRegions(solidNames.size());
+    PtrList<dynamicBlastFvMesh> solidRegions(solidNames.size());
 
     forAll(solidNames, i)
     {
@@ -13,7 +13,7 @@
         solidRegions.set
         (
             i,
-            dynamicFvMesh::New
+            dynamicBlastFvMesh::New
             (
                 IOobject
                 (

@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "staticFvMesh.H"
+#include "staticBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -32,34 +32,39 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(staticFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, staticFvMesh, dictionary);
+    defineTypeNameAndDebug(staticBlastFvMesh, 0);
+    addToRunTimeSelectionTable
+    (
+        dynamicBlastFvMesh,
+        staticBlastFvMesh,
+        dictionary
+    );
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::staticFvMesh::staticFvMesh(const IOobject& io)
+Foam::staticBlastFvMesh::staticBlastFvMesh(const IOobject& io)
 :
-    dynamicFvMesh(io, true)
+    dynamicBlastFvMesh(io, true)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::staticFvMesh::~staticFvMesh()
+Foam::staticBlastFvMesh::~staticBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::staticFvMesh::update()
+bool Foam::staticBlastFvMesh::update()
 {
     return false;
 }
 
 
-bool Foam::staticFvMesh::refine(const bool)
+bool Foam::staticBlastFvMesh::refine(const bool)
 {
     return false;
 }

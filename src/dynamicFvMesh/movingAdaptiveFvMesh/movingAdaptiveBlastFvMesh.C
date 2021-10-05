@@ -24,7 +24,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
-#include "movingAdaptiveFvMesh.H"
+#include "movingAdaptiveBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "motionSolver.H"
 #include "mappedMovingPatchBase.H"
@@ -36,11 +36,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(movingAdaptiveFvMesh, 0);
+    defineTypeNameAndDebug(movingAdaptiveBlastFvMesh, 0);
     addToRunTimeSelectionTable
     (
-        dynamicFvMesh,
-        movingAdaptiveFvMesh,
+        dynamicBlastFvMesh,
+        movingAdaptiveBlastFvMesh,
         dictionary
     );
 }
@@ -48,9 +48,9 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::movingAdaptiveFvMesh::movingAdaptiveFvMesh(const IOobject& io)
+Foam::movingAdaptiveBlastFvMesh::movingAdaptiveBlastFvMesh(const IOobject& io)
 :
-    adaptiveFvMesh(io),
+    adaptiveBlastFvMesh(io),
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
     velocityMotionCorrection_(*this, dynamicMeshDict())
 {}
@@ -58,13 +58,13 @@ Foam::movingAdaptiveFvMesh::movingAdaptiveFvMesh(const IOobject& io)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::movingAdaptiveFvMesh::~movingAdaptiveFvMesh()
+Foam::movingAdaptiveBlastFvMesh::~movingAdaptiveBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
+void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
     fvMesh::updateMesh(mpm);
 
@@ -73,15 +73,15 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 //     motionPtr_->updateMesh(mpm);
 }
 
-const Foam::motionSolver& Foam::movingAdaptiveFvMesh::motion() const
+const Foam::motionSolver& Foam::movingAdaptiveBlastFvMesh::motion() const
 {
     return motionPtr_();
 }
 
 
-bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
+bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 {
-    if (adaptiveFvMesh::refine(correctError))
+    if (adaptiveBlastFvMesh::refine(correctError))
     {
         if (isA<displacementMotionSolver>(motionPtr_()))
         {
@@ -110,7 +110,7 @@ bool Foam::movingAdaptiveFvMesh::refine(const bool correctError)
 }
 
 
-bool Foam::movingAdaptiveFvMesh::update()
+bool Foam::movingAdaptiveBlastFvMesh::update()
 {
     // Get the new points solving for displacement
     pointField pointsNew(motionPtr_->newPoints());
@@ -144,7 +144,7 @@ bool Foam::movingAdaptiveFvMesh::update()
 }
 
 
-bool Foam::movingAdaptiveFvMesh::writeObject
+bool Foam::movingAdaptiveBlastFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,
@@ -173,7 +173,7 @@ bool Foam::movingAdaptiveFvMesh::writeObject
         );
         points0.write();
     }
-    return adaptiveFvMesh::writeObject(fmt, ver, cmp, write);
+    return adaptiveBlastFvMesh::writeObject(fmt, ver, cmp, write);
 }
 
 

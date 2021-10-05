@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicMotionSolverListFvMesh.H"
+#include "dynamicMotionSolverListBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "motionSolver.H"
 #include "pointMesh.H"
@@ -33,11 +33,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicMotionSolverListFvMesh, 0);
+    defineTypeNameAndDebug(dynamicMotionSolverListBlastFvMesh, 0);
     addToRunTimeSelectionTable
     (
-        dynamicFvMesh,
-        dynamicMotionSolverListFvMesh,
+        dynamicBlastFvMesh,
+        dynamicMotionSolverListBlastFvMesh,
         dictionary
     );
 }
@@ -45,12 +45,12 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicMotionSolverListFvMesh::dynamicMotionSolverListFvMesh
+Foam::dynamicMotionSolverListBlastFvMesh::dynamicMotionSolverListBlastFvMesh
 (
     const IOobject& io
 )
 :
-    dynamicFvMesh(io),
+    dynamicBlastFvMesh(io),
     motionSolvers_
     (
         dynamicMeshDict().lookup("solvers"),
@@ -61,19 +61,19 @@ Foam::dynamicMotionSolverListFvMesh::dynamicMotionSolverListFvMesh
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicMotionSolverListFvMesh::~dynamicMotionSolverListFvMesh()
+Foam::dynamicMotionSolverListBlastFvMesh::~dynamicMotionSolverListBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::dynamicMotionSolverListFvMesh::refine(const bool)
+bool Foam::dynamicMotionSolverListBlastFvMesh::refine(const bool)
 {
     return false;
 }
 
 
-bool Foam::dynamicMotionSolverListFvMesh::update()
+bool Foam::dynamicMotionSolverListBlastFvMesh::update()
 {
     if (motionSolvers_.size())
     {

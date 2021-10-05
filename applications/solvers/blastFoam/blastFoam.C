@@ -31,7 +31,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
 #include "compressibleSystem.H"
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 

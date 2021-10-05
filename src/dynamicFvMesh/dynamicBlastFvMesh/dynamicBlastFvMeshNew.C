@@ -23,12 +23,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "staticFvMesh.H"
+#include "staticBlastFvMesh.H"
 #include "Time.H"
 
 // * * * * * * * * * * * * * * * * Selectors * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
+Foam::autoPtr<Foam::dynamicBlastFvMesh> Foam::dynamicBlastFvMesh::New(const IOobject& io)
 {
     IOobject dictHeader(dynamicMeshDictIOobject(io));
 
@@ -41,7 +41,7 @@ Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
             dict.lookup<word>("dynamicFvMesh")
         );
 
-        Info<< "Selecting dynamicFvMesh " << dynamicFvMeshTypeName << endl;
+        Info<< "Selecting dynamicBlastFvMesh " << dynamicFvMeshTypeName << endl;
 
         libs.open
         (
@@ -53,7 +53,7 @@ Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
         if (!dictionaryConstructorTablePtr_)
         {
             FatalErrorInFunction
-                << "dynamicFvMesh table is empty"
+                << "dynamicBlastFvMesh table is empty"
                 << exit(FatalError);
         }
 
@@ -63,18 +63,18 @@ Foam::autoPtr<Foam::dynamicFvMesh> Foam::dynamicFvMesh::New(const IOobject& io)
         if (cstrIter == dictionaryConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown dynamicFvMesh type "
+                << "Unknown dynamicBlastFvMesh type "
                 << dynamicFvMeshTypeName << nl << nl
-                << "Valid dynamicFvMesh types are :" << endl
+                << "Valid dynamicBlastFvMesh types are :" << endl
                 << dictionaryConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
 
-        return autoPtr<dynamicFvMesh>(cstrIter()(io));
+        return autoPtr<dynamicBlastFvMesh>(cstrIter()(io));
     }
     else
     {
-        return autoPtr<dynamicFvMesh>(new staticFvMesh(io));
+        return autoPtr<dynamicBlastFvMesh>(new staticBlastFvMesh(io));
     }
 }
 

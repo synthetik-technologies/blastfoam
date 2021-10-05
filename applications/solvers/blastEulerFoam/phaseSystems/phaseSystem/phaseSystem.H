@@ -250,7 +250,7 @@ protected:
         UPtrList<phaseModel> fluidPhaseModels_;
 
         //- Pointer to kinetic theory system
-        kineticTheorySystem* kineticTheoryPtr_;
+        UautoPtr<kineticTheorySystem> kineticTheoryPtr_;
 
         //- Is the kinetic theory polydisperse
         bool polydisperseKineticTheory_;
@@ -261,8 +261,6 @@ protected:
         //- Ode system and solver for solving the  drag system
         autoPtr<dragODE> dragODE_;
 
-        //- Switch to solve drag in ode solver
-        Switch solveDragOde_;
 
         // Sub Models
 

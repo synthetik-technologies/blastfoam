@@ -26,24 +26,24 @@ License
 
 
 Class
-    Foam::movingAdaptiveFvMesh
+    Foam::movingAdaptiveBlastFvMesh
 
 SourceFiles
-    movingAdaptiveFvMesh.C
+    movingAdaptiveBlastFvMesh.C
 
 Description
     Mesh movement is solved with motion solvers, and adaptive mesh refinement
     is also included.
 
 Additional files
-    adaptiveFvMesh.H
+    adaptiveBlastFvMesh.H
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef movingAdaptiveFvMesh_H
-#define movingAdaptiveFvMesh_H
+#ifndef movingAdaptiveBlastFvMesh_H
+#define movingAdaptiveBlastFvMesh_H
 
-#include "adaptiveFvMesh.H"
+#include "adaptiveBlastFvMesh.H"
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
@@ -57,14 +57,14 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class movingAdaptiveFvMesh Declaration
+                     Class movingAdaptiveBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
 class motionSolver;
 
-class movingAdaptiveFvMesh
+class movingAdaptiveBlastFvMesh
 :
-    public adaptiveFvMesh
+    public adaptiveBlastFvMesh
 {
     // Private data
 
@@ -82,10 +82,10 @@ class movingAdaptiveFvMesh
         virtual void updateMesh(const mapPolyMesh& mpm);
 
         //- Disallow default bitwise copy construct
-        movingAdaptiveFvMesh(const movingAdaptiveFvMesh&);
+        movingAdaptiveBlastFvMesh(const movingAdaptiveBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const movingAdaptiveFvMesh&);
+        void operator=(const movingAdaptiveBlastFvMesh&);
 
 
 
@@ -99,11 +99,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        movingAdaptiveFvMesh(const IOobject& io);
+        movingAdaptiveBlastFvMesh(const IOobject& io);
 
 
     //- Destructor
-    ~movingAdaptiveFvMesh();
+    ~movingAdaptiveBlastFvMesh();
 
 
     // Member Functions

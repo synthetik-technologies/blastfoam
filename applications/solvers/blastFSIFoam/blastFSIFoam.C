@@ -39,7 +39,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "timeIntegrator.H"
 #include "compressibleSystem.H"
 #include "solidModel.H"

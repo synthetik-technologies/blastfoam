@@ -29,7 +29,7 @@ License
 
 
 template<class GeoField>
-void Foam::adaptiveFvMesh::correctBoundaries()
+void Foam::adaptiveBlastFvMesh::correctBoundaries()
 {
     HashTable<GeoField*> flds(this->objectRegistry::lookupClass<GeoField>());
 
@@ -84,7 +84,7 @@ void Foam::adaptiveFvMesh::correctBoundaries()
             //Scheduled patch updates not supported
             FatalErrorIn
             (
-                "dynamicRefineBalancedFvMeshTemplates::correctBoundaries"
+                "dynamicRefineBalancedBlastFvMeshTemplates::correctBoundaries"
             )   << "Unsuported communications type "
                 << Pstream::commsTypeNames[Pstream::defaultCommsType]
                 << exit(FatalError);

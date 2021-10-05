@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicRefineFvMesh
+    Foam::dynamicRefineBlastFvMesh
 
 Description
     A fvMesh with built-in multi-criteria refinement.
@@ -77,7 +77,7 @@ Description
 
 
 SourceFiles
-    dynamicRefineFvMesh.C
+    dynamicRefineBlastFvMesh.C
 
 Authors:
     File adapted in 2018 by:
@@ -89,10 +89,10 @@ Authors:
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicRefineFvMesh_H
-#define dynamicRefineFvMesh_H
+#ifndef dynamicRefineBlastFvMesh_H
+#define dynamicRefineBlastFvMesh_H
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
@@ -105,12 +105,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class dynamicRefineFvMesh Declaration
+                     Class dynamicRefineBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicRefineFvMesh
+class dynamicRefineBlastFvMesh
 :
-    public dynamicFvMesh
+    public dynamicBlastFvMesh
 {
 protected:
 
@@ -230,10 +230,10 @@ protected:
 private:
 
         //- Disallow default bitwise copy construct
-        dynamicRefineFvMesh(const dynamicRefineFvMesh&);
+        dynamicRefineBlastFvMesh(const dynamicRefineBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicRefineFvMesh&);
+        void operator=(const dynamicRefineBlastFvMesh&);
 
 public:
 
@@ -244,11 +244,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit dynamicRefineFvMesh(const IOobject& io);
+        explicit dynamicRefineBlastFvMesh(const IOobject& io);
 
 
     //- Destructor
-    virtual ~dynamicRefineFvMesh();
+    virtual ~dynamicRefineBlastFvMesh();
 
 
     // Member Functions

@@ -25,12 +25,14 @@ transport
 thermoType
 {
     transport const;
-    thermo      tabulated;
+    thermo      eConst;
     equationOfState DoanNickel;
 }
 
 thermodynamics
 {
+    Cv 718;
+    Hf 0;
 
     file        "T.csv";
     nRho        7;

@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicMotionSolverListFvMesh
+    Foam::dynamicMotionSolverListBlastFvMesh
 
 Description
-    Foam::dynamicMotionSolverListFvMesh
+    Foam::dynamicMotionSolverListBlastFvMesh
 
 SourceFiles
-    dynamicMotionSolverListFvMesh.C
+    dynamicMotionSolverListBlastFvMesh.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicMotionSolverListFvMesh_H
-#define dynamicMotionSolverListFvMesh_H
+#ifndef dynamicMotionSolverListBlastFvMesh_H
+#define dynamicMotionSolverListBlastFvMesh_H
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,12 +45,12 @@ namespace Foam
 class motionSolver;
 
 /*---------------------------------------------------------------------------*\
-                           Class dynamicMotionSolverListFvMesh Declaration
+            Class dynamicMotionSolverListBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicMotionSolverListFvMesh
+class dynamicMotionSolverListBlastFvMesh
 :
-    public dynamicFvMesh
+    public dynamicBlastFvMesh
 {
     // Private data
 
@@ -60,10 +60,10 @@ class dynamicMotionSolverListFvMesh
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        dynamicMotionSolverListFvMesh(const dynamicMotionSolverListFvMesh&);
+        dynamicMotionSolverListBlastFvMesh(const dynamicMotionSolverListBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicMotionSolverListFvMesh&);
+        void operator=(const dynamicMotionSolverListBlastFvMesh&);
 
 
 public:
@@ -75,11 +75,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        dynamicMotionSolverListFvMesh(const IOobject& io);
+        dynamicMotionSolverListBlastFvMesh(const IOobject& io);
 
 
     //- Destructor
-    ~dynamicMotionSolverListFvMesh();
+    ~dynamicMotionSolverListBlastFvMesh();
 
 
     // Member Functions

@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicMotionSolverFvMesh
+    Foam::dynamicMotionSolverBlastFvMesh
 
 Description
-    The dynamicMotionSolverFvMesh
+    The dynamicMotionSolverBlastFvMesh
 
 SourceFiles
-    dynamicMotionSolverFvMesh.C
+    dynamicMotionSolverBlastFvMesh.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicMotionSolverFvMesh_H
-#define dynamicMotionSolverFvMesh_H
+#ifndef dynamicMotionSolverBlastFvMesh_H
+#define dynamicMotionSolverBlastFvMesh_H
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,12 +45,12 @@ namespace Foam
 class motionSolver;
 
 /*---------------------------------------------------------------------------*\
-                  Class dynamicMotionSolverFvMesh Declaration
+                  Class dynamicMotionSolverBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicMotionSolverFvMesh
+class dynamicMotionSolverBlastFvMesh
 :
-    public dynamicFvMesh
+    public dynamicBlastFvMesh
 {
     // Private data
 
@@ -65,10 +65,10 @@ class dynamicMotionSolverFvMesh
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        dynamicMotionSolverFvMesh(const dynamicMotionSolverFvMesh&);
+        dynamicMotionSolverBlastFvMesh(const dynamicMotionSolverBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicMotionSolverFvMesh&);
+        void operator=(const dynamicMotionSolverBlastFvMesh&);
 
 
 public:
@@ -80,11 +80,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        dynamicMotionSolverFvMesh(const IOobject& io);
+        dynamicMotionSolverBlastFvMesh(const IOobject& io);
 
 
     //- Destructor
-    ~dynamicMotionSolverFvMesh();
+    ~dynamicMotionSolverBlastFvMesh();
 
 
     // Member Functions

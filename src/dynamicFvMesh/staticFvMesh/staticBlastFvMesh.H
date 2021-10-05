@@ -22,20 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::staticFvMesh
+    Foam::staticBlastFvMesh
 
 Description
-    Foam::staticFvMesh
+    Foam::staticBlastFvMesh
 
 SourceFiles
-    staticFvMesh.C
+    staticBlastFvMesh.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef staticFvMesh_H
-#define staticFvMesh_H
+#ifndef staticBlastFvMesh_H
+#define staticBlastFvMesh_H
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -43,20 +43,20 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class staticFvMesh Declaration
+                           Class staticBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class staticFvMesh
+class staticBlastFvMesh
 :
-    public dynamicFvMesh
+    public dynamicBlastFvMesh
 {
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        staticFvMesh(const staticFvMesh&);
+        staticBlastFvMesh(const staticBlastFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const staticFvMesh&);
+        void operator=(const staticBlastFvMesh&);
 
 
 public:
@@ -68,11 +68,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        staticFvMesh(const IOobject& io);
+        staticBlastFvMesh(const IOobject& io);
 
 
     //- Destructor
-    ~staticFvMesh();
+    ~staticBlastFvMesh();
 
 
     // Member Functions

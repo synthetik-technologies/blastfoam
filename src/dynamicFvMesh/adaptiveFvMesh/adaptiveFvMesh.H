@@ -6,7 +6,7 @@
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 21-05-2020 Synthetik Applied Technologies: |   Modified original
-                            dynamicRefineBalanceFvMesh class
+                            dynamicRefineBalanceBlastFvMesh class
                             to be more appilcable to compressible flows.
                             Improved compatibility with snappyHexMesh.
 -------------------------------------------------------------------------------
@@ -28,11 +28,11 @@ License
 
 
 Class
-    Foam::adaptiveFvMesh
+    Foam::adaptiveBlastFvMesh
 
 SourceFiles
-    adaptiveFvMesh.C
-    adaptiveFvMeshTemplates.C
+    adaptiveBlastFvMesh.C
+    adaptiveBlastFvMeshTemplates.C
 
 Authors
     T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
@@ -78,10 +78,10 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef adaptiveFvMesh_H
-#define adaptiveFvMesh_H
+#ifndef adaptiveBlastFvMesh_H
+#define adaptiveBlastFvMesh_H
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "errorEstimator.H"
 #include "hexRef.H"
 #include "PackedBoolList.H"
@@ -96,12 +96,12 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class adaptiveFvMesh Declaration
+                     Class adaptiveBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class adaptiveFvMesh
+class adaptiveBlastFvMesh
 :
-    public dynamicFvMesh
+    public dynamicBlastFvMesh
 {
 protected:
 
@@ -234,14 +234,14 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit adaptiveFvMesh(const IOobject& io);
+        explicit adaptiveBlastFvMesh(const IOobject& io);
 
         //- Disallow default bitwise copy construction
-        adaptiveFvMesh(const adaptiveFvMesh&) = delete;
+        adaptiveBlastFvMesh(const adaptiveBlastFvMesh&) = delete;
 
 
     //- Destructor
-    virtual ~adaptiveFvMesh();
+    virtual ~adaptiveBlastFvMesh();
 
 
     // Member Functions
@@ -303,7 +303,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const adaptiveFvMesh&) = delete;
+        void operator=(const adaptiveBlastFvMesh&) = delete;
 };
 
 
@@ -315,7 +315,7 @@ public:
 
 
 #ifdef NoRepository
-    #include "adaptiveFvMeshTemplates.C"
+    #include "adaptiveBlastFvMeshTemplates.C"
 #endif
 
 #endif

@@ -15,9 +15,9 @@
     }
 
 
-    autoPtr<dynamicFvMesh> meshPtr
+    autoPtr<dynamicBlastFvMesh> meshPtr
     (
-        dynamicFvMesh::New
+        dynamicBlastFvMesh::New
         (
             IOobject
             (
@@ -29,4 +29,4 @@
         )
     );
 
-    dynamicFvMesh& mesh = meshPtr();
+    dynamicBlastFvMesh& mesh = meshPtr();

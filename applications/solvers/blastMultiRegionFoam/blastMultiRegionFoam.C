@@ -46,7 +46,7 @@ Description
 #include "solidRegionDiffNo.H"
 #include "radiationModel.H"
 #include "coordinateSystem.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 
 #include "fvModels.H"
 #include "fvConstraints.H"

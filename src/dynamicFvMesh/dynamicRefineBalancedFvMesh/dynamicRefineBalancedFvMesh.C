@@ -24,7 +24,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicRefineBalancedFvMesh.H"
+#include "dynamicRefineBalancedBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceInterpolate.H"
 #include "volFields.H"
@@ -41,12 +41,17 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicRefineBalancedFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineBalancedFvMesh, dictionary);
+    defineTypeNameAndDebug(dynamicRefineBalancedBlastFvMesh, 0);
+    addToRunTimeSelectionTable
+    (
+        dynamicBlastFvMesh,
+        dynamicRefineBalancedBlastFvMesh,
+        dictionary
+    );
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-Foam::label Foam::dynamicRefineBalancedFvMesh::topParentID(label p)
+Foam::label Foam::dynamicRefineBalancedBlastFvMesh::topParentID(label p)
 {
     label nextP = meshCutter()->history().splitCells()[p].parent_;
     if( nextP < 0 )
@@ -61,19 +66,19 @@ Foam::label Foam::dynamicRefineBalancedFvMesh::topParentID(label p)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineBalancedFvMesh::dynamicRefineBalancedFvMesh
+Foam::dynamicRefineBalancedBlastFvMesh::dynamicRefineBalancedBlastFvMesh
 (
     const IOobject& io
 )
 :
-    dynamicRefineFvMesh(io),
+    dynamicRefineBlastFvMesh(io),
     rebalance_(false)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineBalancedFvMesh::~dynamicRefineBalancedFvMesh()
+Foam::dynamicRefineBalancedBlastFvMesh::~dynamicRefineBalancedBlastFvMesh()
 {
 
 }
@@ -81,17 +86,17 @@ Foam::dynamicRefineBalancedFvMesh::~dynamicRefineBalancedFvMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::dynamicRefineBalancedFvMesh::update()
+bool Foam::dynamicRefineBalancedBlastFvMesh::update()
 {
     return false;
 }
 
 
-bool Foam::dynamicRefineBalancedFvMesh::refine(const bool)
+bool Foam::dynamicRefineBalancedBlastFvMesh::refine(const bool)
 {
 
-    //Part 1 - Call normal update from dynamicRefineFvMesh
-    bool hasChanged = dynamicRefineFvMesh::refine();
+    //Part 1 - Call normal update from dynamicRefineBlastFvMesh
+    bool hasChanged = dynamicRefineBlastFvMesh::refine();
 
     if( Pstream::parRun() && hasChanged)
     {
@@ -136,7 +141,7 @@ bool Foam::dynamicRefineBalancedFvMesh::refine(const bool)
                     IOobject::NO_WRITE,
                     false
                 )
-            ).subDict("dynamicRefineFvMeshCoeffs")
+            ).subDict("dynamicRefineBlastFvMeshCoeffs")
         );
 
         Switch enableBalancing = refineDict.lookup("enableBalancing");

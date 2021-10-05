@@ -1,13 +1,13 @@
     Info<< "Create mesh for time = "
         << runTime.timeName() << nl << endl;
 
-    autoPtr<dynamicFvMesh> meshPtr
+    autoPtr<dynamicBlastFvMesh> meshPtr
     (
-        dynamicFvMesh::New
+        dynamicBlastFvMesh::New
         (
             IOobject
             (
-                dynamicFvMesh::defaultRegion,
+                dynamicBlastFvMesh::defaultRegion,
                 runTime.timeName(),
                 runTime,
                 IOobject::MUST_READ
@@ -15,4 +15,4 @@
         )
     );
 
-    dynamicFvMesh& mesh = meshPtr();
+    dynamicBlastFvMesh& mesh = meshPtr();

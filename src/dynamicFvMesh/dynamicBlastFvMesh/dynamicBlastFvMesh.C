@@ -26,21 +26,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicFvMesh, 0);
-    defineRunTimeSelectionTable(dynamicFvMesh, dictionary);
+    defineTypeNameAndDebug(dynamicBlastFvMesh, 0);
+    defineRunTimeSelectionTable(dynamicBlastFvMesh, dictionary);
 }
 
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
-Foam::IOobject Foam::dynamicFvMesh::dynamicMeshDictIOobject(const IOobject& io)
+Foam::IOobject Foam::dynamicBlastFvMesh::dynamicMeshDictIOobject(const IOobject& io)
 {
     // defaultRegion (region0) gets loaded from constant, other ones get loaded
     // from constant/<regionname>. Normally we'd use polyMesh::dbDir() but we
@@ -60,7 +60,7 @@ Foam::IOobject Foam::dynamicFvMesh::dynamicMeshDictIOobject(const IOobject& io)
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicFvMesh::dynamicFvMesh(const IOobject& io, const bool canModify)
+Foam::dynamicBlastFvMesh::dynamicBlastFvMesh(const IOobject& io, const bool canModify)
 :
     fvMesh(io),
     dynamicMeshDict_
@@ -77,7 +77,7 @@ Foam::dynamicFvMesh::dynamicFvMesh(const IOobject& io, const bool canModify)
 {}
 
 
-Foam::dynamicFvMesh::dynamicFvMesh
+Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
 (
     const IOobject& io,
     pointField&& points,
@@ -110,7 +110,7 @@ Foam::dynamicFvMesh::dynamicFvMesh
 {}
 
 
-Foam::dynamicFvMesh::dynamicFvMesh
+Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
 (
     const IOobject& io,
     pointField&& points,
@@ -141,9 +141,9 @@ Foam::dynamicFvMesh::dynamicFvMesh
 {}
 
 
-Foam::dynamicFvMesh::velocityMotionCorrection::velocityMotionCorrection
+Foam::dynamicBlastFvMesh::velocityMotionCorrection::velocityMotionCorrection
 (
-    const dynamicFvMesh& mesh,
+    const dynamicBlastFvMesh& mesh,
     const dictionary& dict
 )
 :
@@ -154,13 +154,13 @@ Foam::dynamicFvMesh::velocityMotionCorrection::velocityMotionCorrection
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicFvMesh::~dynamicFvMesh()
+Foam::dynamicBlastFvMesh::~dynamicBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::dynamicFvMesh::velocityMotionCorrection::update() const
+void Foam::dynamicBlastFvMesh::velocityMotionCorrection::update() const
 {
     forAll(velocityFields_, i)
     {

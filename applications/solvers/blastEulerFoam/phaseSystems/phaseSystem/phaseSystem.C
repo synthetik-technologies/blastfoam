@@ -537,17 +537,27 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 
 void Foam::phaseSystem::calcMixtureVariables()
 {
-    rho_ = phaseModels_[0].alphaRho();
-    phi_ = phaseModels_[0].alphaPhi();
+    rho_ = Zero;
+    phi_ = Zero;
     volVectorField alphaRhoU
     (
-        phaseModels_[0].alphaRho()*phaseModels_[0].U()
+        volVectorField::New
+        (
+            "alphaRhoU",
+            mesh_,
+            dimensionedVector(dimDensity*dimVelocity, Zero)
+        )
     );
     volScalarField alphaRhoT
     (
-        phaseModels_[0].alphaRho()*phaseModels_[0].T()
+        volScalarField::New
+        (
+            "alphaRhoT",
+            mesh_,
+            dimensionedScalar(dimDensity*dimTemperature, 0.0)
+        )
     );
-    for (label phasei = 1; phasei < phaseModels_.size(); phasei++)
+    forAll(phaseModels_, phasei)
     {
         const phaseModel& phase = phaseModels_[phasei];
         const volScalarField& alphaRho = phase.alphaRho();
@@ -676,10 +686,15 @@ Foam::phaseSystem::phaseSystem
 
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
+    fvModelsPtr_(nullptr),
+    fvConstraintsPtr_(nullptr),
+
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
-    kineticTheoryPtr_(NULL),
-    polydisperseKineticTheory_(false)
+    kineticTheoryPtr_(nullptr),
+    polydisperseKineticTheory_(false),
+
+    dragODE_(nullptr)
 {
     // Blending methods
     forAllConstIter(dictionary, subDict("blending"), iter)
@@ -814,9 +829,15 @@ Foam::phaseSystem::phaseSystem
     encode();
 
     // Check if a granular phase is used and store at pointer if it is
-    if (mesh_.foundObject<kineticTheorySystem>(kineticTheorySystem::typeName))
+    if
+    (
+        mesh_.foundObject<kineticTheorySystem>
+        (
+            kineticTheorySystem::typeName
+        )
+    )
     {
-        kineticTheoryPtr_ =
+        kineticTheoryPtr_.set
         (
             &mesh_.lookupObjectRef<kineticTheorySystem>
             (
@@ -938,7 +959,7 @@ void Foam::phaseSystem::decode()
         }
     }
 
-    if (kineticTheoryPtr_ != NULL)
+    if (kineticTheoryPtr_.valid())
     {
         kineticTheoryPtr_->correct();
     }
@@ -1128,7 +1149,7 @@ void Foam::phaseSystem::printInfo()
         Info<< endl;
 
     }
-    if (kineticTheoryPtr_)
+    if (kineticTheoryPtr_.valid())
     {
         if (kineticTheoryPtr_->polydisperse())
         {

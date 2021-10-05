@@ -28,7 +28,7 @@ License
 #include "fvPatchField.H"
 
 template<class Type>
-void Foam::dynamicRefineBalancedFvMesh::correctBoundaries()
+void Foam::dynamicRefineBalancedBlastFvMesh::correctBoundaries()
 {
     typedef GeometricField<Type, fvPatchField, volMesh> GeoField;
 
@@ -85,7 +85,7 @@ void Foam::dynamicRefineBalancedFvMesh::correctBoundaries()
             //Scheduled patch updates not supported
             FatalErrorIn
             (
-                "dynamicRefineBalancedFvMeshTemplates::correctBoundaries"
+                "dynamicRefineBalancedBlastFvMeshTemplates::correctBoundaries"
             )   << "Unsuported communications type "
                 << Pstream::commsTypeNames[Pstream::defaultCommsType]
                 << exit(FatalError);

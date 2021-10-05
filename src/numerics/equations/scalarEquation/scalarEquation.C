@@ -56,8 +56,8 @@ bool Foam::scalarEquation::containsRoot(const scalar y0, const scalar y1) const
         #ifdef FULLDEBUG
         FatalErrorInFunction
             << "Solution is not bracked:" << nl
-            << "limits: (" << xMin_ << ","<< xMax_ << ")" << endl
-            << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl;
+            << "limits: (" << lowerLimit_ << ","<< upperLimit_ << ")" << endl
+            << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl
             << abort(FatalError);
         #endif
         return false;

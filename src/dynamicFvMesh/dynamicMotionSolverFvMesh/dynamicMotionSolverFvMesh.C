@@ -19,7 +19,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicMotionSolverFvMesh.H"
+#include "dynamicMotionSolverBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "motionSolver.H"
 
@@ -27,11 +27,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicMotionSolverFvMesh, 0);
+    defineTypeNameAndDebug(dynamicMotionSolverBlastFvMesh, 0);
     addToRunTimeSelectionTable
     (
-        dynamicFvMesh,
-        dynamicMotionSolverFvMesh,
+        dynamicBlastFvMesh,
+        dynamicMotionSolverBlastFvMesh,
         dictionary
     );
 }
@@ -39,9 +39,9 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicMotionSolverFvMesh::dynamicMotionSolverFvMesh(const IOobject& io)
+Foam::dynamicMotionSolverBlastFvMesh::dynamicMotionSolverBlastFvMesh(const IOobject& io)
 :
-    dynamicFvMesh(io),
+    dynamicBlastFvMesh(io),
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
     velocityMotionCorrection_(*this, dynamicMeshDict())
 {}
@@ -49,25 +49,25 @@ Foam::dynamicMotionSolverFvMesh::dynamicMotionSolverFvMesh(const IOobject& io)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicMotionSolverFvMesh::~dynamicMotionSolverFvMesh()
+Foam::dynamicMotionSolverBlastFvMesh::~dynamicMotionSolverBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::motionSolver& Foam::dynamicMotionSolverFvMesh::motion() const
+const Foam::motionSolver& Foam::dynamicMotionSolverBlastFvMesh::motion() const
 {
     return motionPtr_();
 }
 
 
-bool Foam::dynamicMotionSolverFvMesh::refine(const bool)
+bool Foam::dynamicMotionSolverBlastFvMesh::refine(const bool)
 {
     return false;
 }
 
 
-bool Foam::dynamicMotionSolverFvMesh::update()
+bool Foam::dynamicMotionSolverBlastFvMesh::update()
 {
     fvMesh::movePoints(motionPtr_->newPoints());
     velocityMotionCorrection_.update();
@@ -76,7 +76,7 @@ bool Foam::dynamicMotionSolverFvMesh::update()
 }
 
 
-bool Foam::dynamicMotionSolverFvMesh::writeObject
+bool Foam::dynamicMotionSolverBlastFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,

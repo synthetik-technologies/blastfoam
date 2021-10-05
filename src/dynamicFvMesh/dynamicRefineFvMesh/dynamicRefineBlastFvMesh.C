@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicRefineFvMesh.H"
+#include "dynamicRefineBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceInterpolate.H"
 #include "volFields.H"
@@ -40,8 +40,13 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicRefineFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicFvMesh, dynamicRefineFvMesh, dictionary);
+    defineTypeNameAndDebug(dynamicRefineBlastFvMesh, 0);
+    addToRunTimeSelectionTable
+    (
+        dynamicBlastFvMesh,
+        dynamicRefineBlastFvMesh,
+        dictionary
+    );
 
 
     // Helper class for accessing max cell level of faces accross processor patches
@@ -58,7 +63,7 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::label Foam::dynamicRefineFvMesh::count
+Foam::label Foam::dynamicRefineBlastFvMesh::count
 (
     const PackedBoolList& l,
     const unsigned int val
@@ -84,7 +89,7 @@ Foam::label Foam::dynamicRefineFvMesh::count
 }
 
 
-void Foam::dynamicRefineFvMesh::calculateProtectedCells
+void Foam::dynamicRefineBlastFvMesh::calculateProtectedCells
 (
     PackedBoolList& unrefineableCell
 ) const
@@ -190,7 +195,7 @@ void Foam::dynamicRefineFvMesh::calculateProtectedCells
 }
 
 
-void Foam::dynamicRefineFvMesh::readDict()
+void Foam::dynamicRefineBlastFvMesh::readDict()
 {
     dictionary refineDict
     (
@@ -239,7 +244,7 @@ void Foam::dynamicRefineFvMesh::readDict()
 
 // Refines cells, maps fields and recalculates (an approximate) flux
 Foam::autoPtr<Foam::mapPolyMesh>
-Foam::dynamicRefineFvMesh::refine
+Foam::dynamicRefineBlastFvMesh::refine
 (
     const labelList& cellsToRefine
 )
@@ -497,7 +502,7 @@ Foam::dynamicRefineFvMesh::refine
 
 
 Foam::autoPtr<Foam::mapPolyMesh>
-Foam::dynamicRefineFvMesh::unrefine
+Foam::dynamicRefineBlastFvMesh::unrefine
 (
     const labelList& splitElems
 )
@@ -662,7 +667,7 @@ Foam::dynamicRefineFvMesh::unrefine
 
 
 Foam::scalarField
-Foam::dynamicRefineFvMesh::maxPointField(const scalarField& pFld) const
+Foam::dynamicRefineBlastFvMesh::maxPointField(const scalarField& pFld) const
 {
     scalarField vFld(nCells(), -GREAT);
 
@@ -679,7 +684,7 @@ Foam::dynamicRefineFvMesh::maxPointField(const scalarField& pFld) const
 }
 
 Foam::scalarField
-Foam::dynamicRefineFvMesh::maxCellField(const volScalarField& vFld) const
+Foam::dynamicRefineBlastFvMesh::maxCellField(const volScalarField& vFld) const
 {
     scalarField pFld(nPoints(), -GREAT);
 
@@ -697,7 +702,7 @@ Foam::dynamicRefineFvMesh::maxCellField(const volScalarField& vFld) const
 
 /*
 Foam::scalarField
-Foam::dynamicRefineFvMesh::minCellField(const volScalarField& vFld) const
+Foam::dynamicRefineBlastFvMesh::minCellField(const volScalarField& vFld) const
 {
     scalarField pFld(nPoints(), -GREAT);
 
@@ -716,7 +721,7 @@ Foam::dynamicRefineFvMesh::minCellField(const volScalarField& vFld) const
 
 // Simple (non-parallel) interpolation by averaging.
 Foam::scalarField
-Foam::dynamicRefineFvMesh::cellToPoint(const scalarField& vFld) const
+Foam::dynamicRefineBlastFvMesh::cellToPoint(const scalarField& vFld) const
 {
     scalarField pFld(nPoints());
 
@@ -735,7 +740,7 @@ Foam::dynamicRefineFvMesh::cellToPoint(const scalarField& vFld) const
 }
 
 
-Foam::scalarField Foam::dynamicRefineFvMesh::error
+Foam::scalarField Foam::dynamicRefineBlastFvMesh::error
 (
     const scalarField& fld,
     const scalar minLevel,
@@ -757,7 +762,7 @@ Foam::scalarField Foam::dynamicRefineFvMesh::error
 }
 
 
-void Foam::dynamicRefineFvMesh::selectRefineCandidates
+void Foam::dynamicRefineBlastFvMesh::selectRefineCandidates
 (
     const scalar lowerRefineLevel,
     const scalar upperRefineLevel,
@@ -805,7 +810,7 @@ void Foam::dynamicRefineFvMesh::selectRefineCandidates
 }
 
 
-Foam::labelList Foam::dynamicRefineFvMesh::selectRefineCells
+Foam::labelList Foam::dynamicRefineBlastFvMesh::selectRefineCells
 (
     const label maxCells,
     const label maxRefinement,
@@ -895,7 +900,7 @@ Foam::labelList Foam::dynamicRefineFvMesh::selectRefineCells
 // YO- This is here only to preserve compatibility with the official release.
 //     It is not used by the refinement procedure, but some utilities such as
 //     decomposePar rely on it.
-Foam::labelList Foam::dynamicRefineFvMesh::selectUnrefinePoints
+Foam::labelList Foam::dynamicRefineBlastFvMesh::selectUnrefinePoints
 (
     const scalar unrefineLevel,
     const PackedBoolList& markedCell,
@@ -955,7 +960,7 @@ Foam::labelList Foam::dynamicRefineFvMesh::selectUnrefinePoints
 }
 //-YO
 
-void Foam::dynamicRefineFvMesh::extendMarkedCells
+void Foam::dynamicRefineBlastFvMesh::extendMarkedCells
 (
     PackedBoolList& markedCell
 ) const
@@ -997,7 +1002,7 @@ void Foam::dynamicRefineFvMesh::extendMarkedCells
 }
 
 
-void Foam::dynamicRefineFvMesh::checkEightAnchorPoints
+void Foam::dynamicRefineBlastFvMesh::checkEightAnchorPoints
 (
     PackedBoolList& protectedCell,
     label& nProtected
@@ -1048,7 +1053,7 @@ void Foam::dynamicRefineFvMesh::checkEightAnchorPoints
 
 
 template <class T>
-void Foam::dynamicRefineFvMesh::mapNewInternalFaces
+void Foam::dynamicRefineBlastFvMesh::mapNewInternalFaces
 (
     const labelList& faceMap
 )
@@ -1068,7 +1073,7 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
         {
             if (debug)
             {
-                Info << "dynamicRefineFvMesh::mapNewInternalFaces(): " <<iter.key()<< endl;
+                Info << "dynamicRefineBlastFvMesh::mapNewInternalFaces(): " <<iter.key()<< endl;
             }
 
             Field<T> tsFld(this->nFaces(), pTraits<T>::zero);
@@ -1178,9 +1183,9 @@ void Foam::dynamicRefineFvMesh::mapNewInternalFaces
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineFvMesh::dynamicRefineFvMesh(const IOobject& io)
+Foam::dynamicRefineBlastFvMesh::dynamicRefineBlastFvMesh(const IOobject& io)
 :
-    dynamicFvMesh(io),
+    dynamicBlastFvMesh(io),
     meshCutter_(hexRef::New(*this)),
     dumpLevel_(false),
     nRefinementIterations_(0),
@@ -1569,19 +1574,19 @@ Foam::dynamicRefineFvMesh::dynamicRefineFvMesh(const IOobject& io)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineFvMesh::~dynamicRefineFvMesh()
+Foam::dynamicRefineBlastFvMesh::~dynamicRefineBlastFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::dynamicRefineFvMesh::update()
+bool Foam::dynamicRefineBlastFvMesh::update()
 {
     return false;
 }
 
 
-bool Foam::dynamicRefineFvMesh::refine(const bool)
+bool Foam::dynamicRefineBlastFvMesh::refine(const bool)
 {
     // Re-read dictionary. Choosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
@@ -1634,7 +1639,7 @@ bool Foam::dynamicRefineFvMesh::refine(const bool)
             // reads multiple refinement criteria if subdict multiCritRefinementControls
             // in dynamicMeshDict is present or else does nothing
             // calculates the multiCritRefinementField which needs to be set as field in
-            // dynamicRefineFvMeshCoeffs.field multiCritRefinementField;
+            // dynamicRefineBlastFvMeshCoeffs.field multiCritRefinementField;
             multiCritRefinement_.updateRefinementField();
         }
 
@@ -1800,7 +1805,7 @@ bool Foam::dynamicRefineFvMesh::refine(const bool)
 }
 
 
-bool Foam::dynamicRefineFvMesh::writeObject
+bool Foam::dynamicRefineBlastFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,
@@ -1813,7 +1818,7 @@ bool Foam::dynamicRefineFvMesh::writeObject
 
     bool writeOk =
     (
-        dynamicFvMesh::writeObject(fmt, ver, cmp)
+        dynamicBlastFvMesh::writeObject(fmt, ver, cmp)
      && meshCutter_->write()
     );
 
