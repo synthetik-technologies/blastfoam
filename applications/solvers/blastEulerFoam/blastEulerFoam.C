@@ -32,7 +32,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "phaseSystem.H"
 #include "wedgeFvPatch.H"
 #include "timeIntegrator.H"
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 
     #include "setRootCaseLists.H"
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
     #include "EigenCourantNos.H"

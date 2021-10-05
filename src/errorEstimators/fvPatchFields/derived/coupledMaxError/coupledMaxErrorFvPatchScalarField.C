@@ -77,16 +77,6 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 
 Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 (
-    const coupledMaxErrorFvPatchScalarField& ptf
-)
-:
-    fixedValueFvPatchField<scalar>(ptf),
-    mpp_(ptf.mpp_)
-{}
-
-
-Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
-(
     const coupledMaxErrorFvPatchScalarField& ptf,
     const DimensionedField<scalar, volMesh>& iF
 )

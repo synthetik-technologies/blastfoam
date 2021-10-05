@@ -23,85 +23,30 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "phaseCompressibleMomentumTransportModel.H"
-#include "addToRunTimeSelectionTable.H"
-#include "makeMomentumTransportModel.H"
-
-#include "laminarModel.H"
-#include "RASModel.H"
-#include "LESModel.H"
+#include "phaseDynamicMomentumTransportModels.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-makeMomentumTransportModelTypes
-(
-    volScalarField,
-    volScalarField,
-    compressibleMomentumTransportModel,
-    PhaseCompressibleMomentumTransportModel,
-    phaseModel
-);
+#include "LaheyKEpsilon.H"
+makeRASModel(LaheyKEpsilon);
 
-makeBaseMomentumTransportModel
-(
-    volScalarField,
-    volScalarField,
-    compressibleMomentumTransportModel,
-    PhaseCompressibleMomentumTransportModel,
-    phaseModel
-);
+#include "kOmegaSSTSato.H"
+makeRASModel(kOmegaSSTSato);
 
-#define makeLaminarModel(Type)                                                 \
-    makeTemplatedLaminarModel                                                  \
-    (phaseModelPhaseCompressibleMomentumTransportModel, laminar, Type)
+#include "continuousGasKEpsilon.H"
+makeRASModel(continuousGasKEpsilon);
 
-#define makeRASModel(Type)                                                     \
-    makeTemplatedMomentumTransportModel                                        \
-    (phaseModelPhaseCompressibleMomentumTransportModel, RAS, Type)
+#include "mixtureKEpsilon.H"
+makeRASModel(mixtureKEpsilon);
 
-#define makeLESModel(Type)                                                     \
-    makeTemplatedMomentumTransportModel                                        \
-    (phaseModelPhaseCompressibleMomentumTransportModel, LES, Type)
+#include "SmagorinskyZhang.H"
+makeLESModel(SmagorinskyZhang);
 
+#include "NicenoKEqn.H"
+makeLESModel(NicenoKEqn);
 
-#include "Stokes.H"
-makeLaminarModel(Stokes);
-
-#include "generalizedNewtonian.H"
-makeLaminarModel(generalizedNewtonian);
-
-#include "kEpsilon.H"
-makeRASModel(kEpsilon);
-
-// #include "LaheyKEpsilon.H"
-// makeRASModel(LaheyKEpsilon);
-
-// #include "kOmegaSST.H"
-// makeRASModel(kOmegaSST);
-
-// #include "kOmegaSSTSato.H"
-// makeRASModel(kOmegaSSTSato);
-
-// #include "continuousGasKEpsilon.H"
-// makeRASModel(continuousGasKEpsilon);
-
-// #include "mixtureKEpsilon.H"
-// makeRASModel(mixtureKEpsilon);
-
-#include "Smagorinsky.H"
-makeLESModel(Smagorinsky);
-
-#include "kEqn.H"
-makeLESModel(kEqn);
-
-// #include "SmagorinskyZhang.H"
-// makeLESModel(SmagorinskyZhang);
-
-// #include "NicenoKEqn.H"
-// makeLESModel(NicenoKEqn);
-
-// #include "continuousGasKEqn.H"
-// makeLESModel(continuousGasKEqn);
+#include "continuousGasKEqn.H"
+makeLESModel(continuousGasKEqn);
 
 
 // ************************************************************************* //

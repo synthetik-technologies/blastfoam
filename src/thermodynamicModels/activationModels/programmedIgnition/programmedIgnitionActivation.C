@@ -59,7 +59,15 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName),
+    activationModel
+    (
+        mesh,
+        dict,
+        phaseName,
+        burnModelNames_.read(dict.lookup("burnModel")) == PROGRAMMED
+      ? true
+      : false
+    ),
     rho_
     (
         mesh.lookupObject<volScalarField>
@@ -105,7 +113,7 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
                 (
                     tIgn_[celli],
                     (useDelay ? dp.delay() : 0.0)
-                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                  + mag(this->mesh().C()[celli] - dp)/vDet_.value()
                 );
         }
     }
@@ -149,10 +157,10 @@ Foam::activationModels::programmedIgnitionActivation::delta() const
 
 void Foam::activationModels::programmedIgnitionActivation::correct()
 {
-    const cellList& cells = mesh_.cells();
-    const scalarField magSf(mag(mesh_.faceAreas()));
+    const cellList& cells = this->mesh().cells();
+    const scalarField magSf(mag(this->mesh().faceAreas()));
 
-    dimensionedScalar t(this->time());
+    dimensionedScalar t(timeIntegrationSystem::time());
 
     forAll(lambda_, celli)
     {
@@ -163,7 +171,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
         if (model_ == BETA || model_ == PROGRAMMEDBETA)
         {
             lambdaBeta =
-                (1.0 - rho0_.value()/max(rho_[celli], small))
+                (1.0 - rho0_.value()/max(rho_[celli], 1e-10))
                /(1.0 - Vcj_.value());
         }
         //- Position based activation
@@ -175,7 +183,7 @@ void Foam::activationModels::programmedIgnitionActivation::correct()
             {
                 A += magSf[c[facei]];
             }
-            scalar edgeLength = mesh_.V()[celli]/A;
+            scalar edgeLength = this->mesh().V()[celli]/A;
             lambdaProgram =
                 max(t.value() - tIgn_[celli], 0.0)
                 *vDet_.value()/(1.5*edgeLength);

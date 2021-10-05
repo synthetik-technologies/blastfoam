@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -37,8 +37,8 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
-#include "multiphaseFluidThermo.H"
+#include "compressibleBlastSystem.H"
+#include "multiphaseFluidBlastThermo.H"
 
 namespace Foam
 {
@@ -49,7 +49,7 @@ namespace Foam
 
 class multiphaseCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public compressibleBlastSystem
 {
 protected:
 // Protected data
@@ -57,7 +57,7 @@ protected:
     //- Primitative variables
 
         //- Equation of states
-        multiphaseFluidThermo thermo_;
+        multiphaseFluidBlastThermo& thermo_;
 
         //- Volume fractions
         PtrList<volScalarField>& alphas_;
@@ -82,7 +82,7 @@ protected:
 
 
         //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
+        virtual void calcAlphas();
 
 
 public:
@@ -108,32 +108,11 @@ public:
         //- Update fluxes
         virtual void update();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve a sub-step
         virtual void solve();
 
-
-    // Member Access Functions
-
-        //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo()
-        {
-            return thermo_;
-        }
-
-        //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const
-        {
-            return thermo_.speedOfSound();
-        }
+        //- Solve implicit terms
+        virtual void postUpdate();
 };
 
 

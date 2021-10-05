@@ -39,15 +39,17 @@ Description
 
 #include "fvCFD.H"
 #include "timeIntegrator.H"
-#include "fluidThermoModel.H"
-#include "solidThermoModel.H"
+#include "solidBlastThermo.H"
 #include "fixedGradientFvPatchFields.H"
 #include "regionProperties.H"
-#include "compressibleCourantNo.H"
+#include "compressibleSystem.H"
 #include "solidRegionDiffNo.H"
 #include "radiationModel.H"
 #include "coordinateSystem.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
+
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 #include "mappedPatchSelector.H"
 #include "mappedPointPatchSelector.H"

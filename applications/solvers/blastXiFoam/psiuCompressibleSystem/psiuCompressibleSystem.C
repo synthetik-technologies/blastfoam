@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -40,7 +40,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     const fvMesh& mesh
 )
 :
-    integrationSystem("phaseCompressibleSystem", mesh),
+    timeIntegrationSystem("phaseCompressibleSystem", mesh),
     thermo_(psiuReactionThermo::New(mesh)),
     rho_
     (
@@ -52,8 +52,7 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        mesh,
-        dimensionedScalar("rho", dimDensity, 0.0)
+        thermo_->rho()
     ),
     U_
     (
@@ -156,8 +155,6 @@ Foam::psiuCompressibleSystem::psiuCompressibleSystem
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
-    rho_ = thermo_->rho();
-
     thermo_->validate("psiuCompressibleSystem", "ea");
 
     if (min(thermo_->mu()).value() > small)

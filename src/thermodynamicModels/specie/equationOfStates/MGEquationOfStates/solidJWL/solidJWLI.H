@@ -54,6 +54,43 @@ inline Foam::solidJWL<Specie>::solidJWL
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar V(rho0_/max(rho, 1e-10));
+    return
+        A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
+      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
+      - omega_*rho*e0_
+      - pRef_;
+
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::delta
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar rhos(max(rho, 1e-10));
+    return
+        (
+            A_*exp(-R1_*rho0_/rhos)
+           *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
+          + B_*exp(-R2_*rho0_/rhos)
+           *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
+          + omega_*e0_
+        )/omega_;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -102,12 +139,29 @@ Foam::solidJWL<Specie>::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::GammaMG
+Foam::scalar Foam::solidJWL<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return
+        limit
+      ? max(omega_*rho*e - Pi(rho, e), 0.0)
+      : omega_*rho*e - Pi(rho, e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
     return omega_ + 1.0;
@@ -115,39 +169,17 @@ Foam::scalar Foam::solidJWL<Specie>::GammaMG
 
 
 template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    scalar V(rho0_/max(rho, 1e-10));
-    return
-        A_*(omega_/(R1_*V) - 1.0)*exp(-R1_*V)
-      + B_*(omega_/(R2_*V) - 1.0)*exp(-R2_*V)
-      - omega_*rho*e0_
-      - pRef_;
-
-}
-
-
-template<class Specie>
-Foam::scalar Foam::solidJWL<Specie>::delta
+Foam::scalar Foam::solidJWL<Specie>::cSqr
 (
     const scalar p,
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
-    scalar rhos(max(rho, 1e-10));
-    return
-        (
-            A_*exp(-R1_*rho0_/rhos)
-           *(omega_*(1.0/(R1_*rho0_) + 1.0/rhos) - R1_*rho0_/sqr(rhos))
-          + B_*exp(-R2_*rho0_/rhos)
-           *(omega_*(1.0/(R2_*rho0_) + 1.0/rhos) - R2_*rho0_/sqr(rhos))
-          + omega_*e0_
-        )/omega_;
+    scalar h(((omega_ + 1.0)*p + Pi(rho, e))/(omega_*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*omega_;
 }
 
 
@@ -180,6 +212,56 @@ Foam::scalar Foam::solidJWL<Specie>::dpde
 ) const
 {
     return omega_*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::solidJWL<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    return this->eBased_ ? omega_*CpCv : CpCv*omega_/(omega_ + 1.0);
 }
 
 

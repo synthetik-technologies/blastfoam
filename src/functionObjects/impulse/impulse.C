@@ -137,7 +137,7 @@ bool Foam::functionObjects::impulse::execute()
 
 bool Foam::functionObjects::impulse::write()
 {
-    if (obr_.time().timeIndex() != 0)
+    if (this->mesh_.time().timeIndex() > 0)
     {
         impulse_.write();
         return true;

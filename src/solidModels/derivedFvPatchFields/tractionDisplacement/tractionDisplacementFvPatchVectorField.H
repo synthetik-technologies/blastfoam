@@ -94,16 +94,7 @@ public:
         tractionDisplacementFvPatchVectorField
         (
             const tractionDisplacementFvPatchVectorField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new tractionDisplacementFvPatchVectorField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         tractionDisplacementFvPatchVectorField

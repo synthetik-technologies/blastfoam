@@ -51,28 +51,25 @@ Foam::granularPhaseModel::granularPhaseModel
         *this,
         phaseDict_.subDict("kineticTheoryCoeffs")
     ),
-    thermo_
+    thermoPtr_
     (
-        solidThermoModel::New
+        solidBlastThermo::New
         (
-            phaseName,
             fluid.mesh(),
             phaseDict_,
-            true,
             phaseName
         )
     ),
-    rho_(thermo_->rho()),
-    p_(fluid.p()),
+    rho_(thermoPtr_->rho()),
+    e_(thermoPtr_->he()),
+    T_(thermoPtr_->T()),
     alphaRhoPTE_
     (
         IOobject
         (
             IOobject::groupName("alphaRhoPTE", name_),
             fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            fluid.mesh()
         ),
         1.5*(*this)*rho_*this->Theta_
     ),
@@ -82,22 +79,13 @@ Foam::granularPhaseModel::granularPhaseModel
         (
             IOobject::groupName("alphaRhoPTEPhi", name_),
             fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            fluid.mesh()
         ),
         1.5*this->alphaRhoPhi_*fvc::interpolate(Theta_)
     ),
-    residualAlpha_
-    (
-        thermo_->residualAlpha()
-    ),
-    fluxScheme_(new fluxSchemes::AUSMPlusUp(fluid.mesh(), phaseName))
+    fluxScheme_(phaseFluxScheme::NewSolid(fluid.mesh(), phaseName))
 {
-    thermo_->read(phaseDict_);
-    phaseModel::initializeModels();
-    thermo_->initializeModels();
-    encode();
+    thermoPtr_->read();
 }
 
 
@@ -136,21 +124,24 @@ void Foam::granularPhaseModel::solve()
 
     forAll(fluid_.phases(), phasei)
     {
-        const phaseModel& phase = fluid_.phases()[phasei];
-        if (!phase.granular())
+        const phaseModel& otherPhase = fluid_.phases()[phasei];
+        if (&otherPhase != this)
         {
-            deltaAlphaRhoU += (*this)*phase.gradP();
+            if (!otherPhase.slavePressure())
+            {
+                deltaAlphaRhoU += (*this)*otherPhase.gradP();
+            }
+            deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
+            deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
+            deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, otherPhase);
         }
-        deltaAlphaRhoU -= fluid_.mDotU(*this, phase);
-        deltaAlphaRhoE -= fluid_.mDotE(*this, phase);
-        deltaAlphaRhoPTE -= fluid_.mDotPTE(*this, phase);
     }
 
     //- Solve phase mass transport
     phaseModel::solveAlphaRho();
 
     //- Solve thermodynamics to get energy production
-    thermo_->solve();
+    thermoPtr_->solve();
 
     //- Blend deltas
     deltaAlphaRhoU = cmptMultiply(deltaAlphaRhoU, solutionDs_);
@@ -180,58 +171,119 @@ void Foam::granularPhaseModel::solve()
 
 void Foam::granularPhaseModel::postUpdate()
 {
-    //- Solve for collisional viscosity terms
-    if (this->includeViscosity())
+    dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
+    volScalarField& alpha(*this);
+
+    if (solveFields_.found(this->name()))
     {
-        tmp<volTensorField> tgradU
+        fvScalarMatrix alphaEqn
         (
-            fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+            fvm::ddt(alpha) - fvc::ddt(alpha)
+         ==
+            modelsPtr_->source(alpha)
         );
-        const volTensorField& gradU(tgradU());
-        volSymmTensorField D(symm(gradU));
 
-        volSymmTensorField tau
-        (
-            rho_
-           *(
-                2.0*this->nut_*D
-              + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
-            )
-        );
-        dimensionedScalar smallAlphaRho(residualAlphaRho());
+        constraintsPtr_->constrain(alphaEqn);
+        alphaEqn.solve();
+        constraintsPtr_->constrain(alpha);
+    }
 
+    // Solve momentum
+    if (solveFields_.found(U_.name()) || this->includeViscosity())
+    {
         //- Solve momentum equation (implicit stresses)
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+            fvm::ddt(alpha, rho(), U_) - fvc::ddt(alpha, rho(), U_)
           + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
-          + this->divDevRhoReff(U_)
+         ==
+            modelsPtr_->source(alpha, rho(), U_)
         );
-        UEqn.solve();
 
-        //- Solve granular temperature equation including solid stress and
-        //  conductivity
+        if (this->includeViscosity())
+        {
+            // Add viscous term
+            UEqn += this->divDevRhoReff(U_);
+        }
+
+        constraintsPtr_->constrain(UEqn);
+        UEqn.solve();
+        constraintsPtr_->constrain(U_);
+    }
+
+    // Solve thermal energy
+    if (solveFields_.found(he().name()))
+    {
+        fvScalarMatrix eEqn
+        (
+            fvm::ddt(alpha, rho(), he()) - fvc::ddt(alpha, rho(), he())
+          + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
+        ==
+            modelsPtr_->source(alpha, rho(), he())
+        );
+        constraintsPtr_->constrain(eEqn);
+        eEqn.solve();
+        constraintsPtr_->constrain(he());
+    }
+
+    //- Solve granular temperature equation including solid stress and
+    //  conductivity
+    if (solveFields_.found(Theta_.name()) || this->includeViscosity())
+    {
         fvScalarMatrix ThetaEqn
         (
             1.5
            *(
-                fvm::ddt(alphaRho_, Theta_) - fvc::ddt(alphaRho_, Theta_)
-              + fvm::ddt(smallAlphaRho, Theta_) - fvc::ddt(smallAlphaRho, Theta_)
+                fvm::ddt(alpha, rho(), Theta_)
+              - fvc::ddt(alpha, rho(), Theta_)
+              + fvm::ddt(smallAlphaRho, Theta_)
+              - fvc::ddt(smallAlphaRho, Theta_)
             )
-          - fvm::laplacian(this->kappa_, Theta_)
          ==
-            ((tau*(*this)) && gradU)
+            modelsPtr_->source(alpha, rho(), Theta_)
         );
+
+        //- Solve for collisional viscosity terms
+        if (this->includeViscosity())
+        {
+            tmp<volTensorField> tgradU
+            (
+                fvc::grad(fluxScheme_->interpolate(U_, U_.name()))
+            );
+            const volTensorField& gradU(tgradU());
+            volSymmTensorField D(symm(gradU));
+
+            volSymmTensorField tau
+            (
+                rho_
+               *(
+                    2.0*this->nut_*D
+                  + (this->lambda_ - (2.0/3.0)*this->nut_)*tr(D)*I
+                )
+            );
+
+            // Add solid stress and conductivity
+            ThetaEqn -=
+                fvm::laplacian
+                (
+                    this->kappa_,
+                    Theta_,
+                    "laplacian(kappa,Theta)"
+                )
+              + ((tau*alpha) && gradU);
+        }
+        constraintsPtr_->constrain(ThetaEqn);
         ThetaEqn.solve();
-
-        //- Update conservative variables
-        alphaRhoU_ =  alphaRho_*U_;
-        alphaRhoPTE_ =  alphaRho_*1.5*Theta_;
-
+        constraintsPtr_->constrain(Theta_);
+        Theta_.max(0);
     }
 
+    thermoPtr_->postUpdate();
+
+    //- Update conservative variables
+    encode();
+
     dPtr_->postUpdate();
-    thermo_->postUpdate();
 }
 
 
@@ -256,40 +308,34 @@ void Foam::granularPhaseModel::update()
     alphaRhoPTEPhi_ =
         1.5*alphaRhoPhi_*fluxScheme_->interpolate(Theta_, "Theta");
 
-    thermo_->update();
+    thermoPtr_->update();
     phaseModel::update();
+}
+
+
+void Foam::granularPhaseModel::correctVolumeFraction()
+{
+    volScalarField& alpha(*this);
+
+    //- Update volume fraction since density is known
+    alpha.ref() = alphaRho_()/rho_();
+    alpha.correctBoundaryConditions();
 }
 
 
 void Foam::granularPhaseModel::decode()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
-
-    volScalarField& alpha(*this);
-
-    //- Update volume fraction since density is known
-    alpha.ref() = alphaRho_()/rho_();
-    if (options.optionList::appliesToField(alpha.name()))
-    {
-        options.correct(alpha);
-        alphaRho_.ref() = alpha()*rho_();
-    }
-    alpha.correctBoundaryConditions();
+    const volScalarField& alpha(*this);
 
     //- Correct phase mass at boundaries
     alphaRho_.boundaryFieldRef() =
         alpha.boundaryField()*rho_.boundaryField();
 
     //- Store limited phase mass (only used for division)
-    volScalarField alphaRho(Foam::max(alpha, residualAlpha_)*rho_);
+    volScalarField alphaRho(Foam::max(alpha, residualAlpha())*rho_);
 
     //- Calculate velocity from momentum
     U_.ref() = alphaRhoU_()/alphaRho();
-    if (options.optionList::appliesToField(U_.name()))
-    {
-        options.correct(U_);
-        alphaRhoU_.ref() = alphaRho_()*U_();
-    }
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
@@ -298,28 +344,19 @@ void Foam::granularPhaseModel::decode()
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
     e_.ref() = alphaRhoE_()/alphaRho();
-    if (options.optionList::appliesToField(e_.name()))
-    {
-        options.correct(e_);
-        alphaRhoE_.ref() = alphaRho_()*e_();
-    }
-    e_.correctBoundaryConditions();
-    alphaRhoE_.boundaryFieldRef() = alphaRho_.boundaryField()*e_.boundaryField();
 
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
     Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRho());
-    if (options.optionList::appliesToField(Theta_.name()))
-    {
-
-        options.correct(Theta_);
-        alphaRhoPTE_.ref() = 1.5*alphaRho_()*Theta_();
-    }
     Theta_.correctBoundaryConditions();
     alphaRhoPTE_.boundaryFieldRef() =
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
-    thermo_->correct();
+    thermoPtr_->correct();
+
+    // Update total energy because e may have changed
+    alphaRhoE_ = alphaRho_*e_;
+
     kineticTheoryModel::correct();
 }
 
@@ -419,7 +456,7 @@ Foam::granularPhaseModel::speedOfSound() const
 
 void Foam::granularPhaseModel::correctThermo()
 {
-    T_ = thermo_->calcT();
+    thermoPtr_->correct();
     kineticTheoryModel::correct();
 }
 
@@ -427,49 +464,49 @@ void Foam::granularPhaseModel::correctThermo()
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::ESource() const
 {
-    return (*this)*thermo_->ESource();
+    return (*this)*thermoPtr_->ESource();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::alpha() const
 {
-    return thermo_->alpha();
+    return thermoPtr_->alpha();
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::granularPhaseModel::alpha(const label patchi) const
 {
-    return thermo_->alpha(patchi);
+    return thermoPtr_->alpha(patchi);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::alphahe() const
 {
-    return thermo_->alphahe();
+    return thermoPtr_->alphahe();
 }
 
 
 Foam::tmp<Foam::scalarField>
 Foam::granularPhaseModel::alphahe(const label patchi) const
 {
-    return thermo_->alphahe(patchi);
+    return thermoPtr_->alphahe(patchi);
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::Cp() const
 {
-    return thermo_->Cp();
+    return thermoPtr_->Cp();
 }
 
 
 Foam::tmp<Foam::volScalarField>
 Foam::granularPhaseModel::Cv() const
 {
-    return thermo_->Cv();
+    return thermoPtr_->Cv();
 }
 
 // ************************************************************************* //

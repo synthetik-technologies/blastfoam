@@ -95,7 +95,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::lengthBased::Ki
 }
 
 
-Foam::scalar Foam::dragModels::lengthBased::CdRe
+Foam::scalar Foam::dragModels::lengthBased::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -111,7 +111,7 @@ Foam::scalar Foam::dragModels::lengthBased::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::lengthBased::Ki
+Foam::scalar Foam::dragModels::lengthBased::cellKi
 (
     const label celli,
     const label nodei,
@@ -122,7 +122,7 @@ Foam::scalar Foam::dragModels::lengthBased::Ki
         C_.value()
        *pair_.dispersed().rho()[celli]
        *4.0
-       /sqr(pair_.dispersed().di(celli, nodei));
+       /sqr(pair_.dispersed().celld(celli, nodei));
 }
 
 // ************************************************************************* //

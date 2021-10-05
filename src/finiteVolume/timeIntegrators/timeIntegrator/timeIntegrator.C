@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "timeIntegrator.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -161,7 +161,7 @@ void Foam::timeIntegrator::initialize()
     }
 }
 
-void Foam::timeIntegrator::addSystem(integrationSystem& system)
+void Foam::timeIntegrator::addSystem(timeIntegrationSystem& system)
 {
     label oldSize = systems_.size();
     systems_.resize(oldSize + 1);
@@ -178,10 +178,12 @@ void Foam::timeIntegrator::integrate()
         this->updateAll();
         forAll(systems_, i)
         {
-            Info<< "Solving " << systems_[i].name() << endl;
+            Info<< "Solving " << systems_[i].name() << ":" << endl;
             systems_[i].solve();
         }
     }
+    Info<< endl;
+
 
     this->postUpdateAll();
     stepi_ = 0;

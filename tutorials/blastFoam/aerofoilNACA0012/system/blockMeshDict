@@ -2,12 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Version:  7
+    \\  /    A nd           | Version:  9
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    version     2.0;
     format      ascii;
     class       dictionary;
     object      blockMeshDict;
@@ -16,22 +15,23 @@ FoamFile
 
 domain
 {
-    xMin -4;
-    xMax  4;
-    zMin -2;
-    zMax  2;
+    xMax  100;
+    zMax  50;
+
+    xMin #neg $xMax;
+    zMin #neg $zMax;
 
     // Number of cells
-    zCells  80; // aerofoil to far field
-    xUCells 30; // upstream
-    xMCells 30; // middle
-    xDCells 40; // downstream
+    zCells  60; // aerofoil to far field
+    xUCells 60; // upstream
+    xMCells 25; // middle
+    xDCells 50; // downstream
 
     // Mesh grading
-    zGrading    40;  // aerofoil to far field
-    xUGrading   5;   // towards centre upstream
-    leadGrading 0.2; // towards leading edge
-    xDGrading   10;  // downstream
+    zGrading    30000;  // aerofoil to far field
+    xUGrading   10;     // towards centre upstream
+    leadGrading 0.005;  // towards leading edge
+    xDGrading   400;    // downstream
 }
 
 aerofoil
@@ -42,8 +42,9 @@ aerofoil
     zTrail  0;
     xUpper  0.3;
     zUpper  0.06;
-    xLower  0.3;
-    zLower -0.06;
+
+    xLower  $xUpper;
+    zLower  #neg $zUpper;
 }
 
 geometry
@@ -56,82 +57,82 @@ geometry
     cylinder
     {
         type   searchableCylinder;
-        point1 ($:aerofoil.xUpper -1e3 0);
-        point2 ($:aerofoil.xUpper  1e3 0);
-        radius $:domain.zMax;
+        point1 ($!aerofoil/xUpper -1e3 0);
+        point2 ($!aerofoil/xUpper  1e3 0);
+        radius $!domain/zMax;
     }
 }
 
 vertices
 (
-    project ($aerofoil.xLower -0.1 $domain.zMin) (cylinder)
-    ($aerofoil.xTrail -0.1 $domain.zMin)
-    ($domain.xMax -0.1 $domain.zMin)
+    project ($aerofoil/xLower -0.1 $domain/zMin) (cylinder)
+    ($aerofoil/xTrail -0.1 $domain/zMin)
+    ($domain/xMax -0.1 $domain/zMin)
 
-    project ($domain.xMin     -0.1 $aerofoil.zLead) (cylinder)
-    project ($aerofoil.xLead  -0.1 $aerofoil.zLead) (aerofoil)
-    project ($aerofoil.xTrail -0.1 $aerofoil.zTrail) (aerofoil)
-    ($domain.xMax -0.1 $aerofoil.zTrail)
+    project ($domain/xMin     -0.1 $aerofoil/zLead) (cylinder)
+    project ($aerofoil/xLead  -0.1 $aerofoil/zLead) (aerofoil)
+    project ($aerofoil/xTrail -0.1 $aerofoil/zTrail) (aerofoil)
+    ($domain/xMax -0.1 $aerofoil/zTrail)
 
-    project ($aerofoil.xLower -0.1 $aerofoil.zLower) (aerofoil)
-    project ($aerofoil.xUpper -0.1 $aerofoil.zUpper) (aerofoil)
+    project ($aerofoil/xLower -0.1 $aerofoil/zLower) (aerofoil)
+    project ($aerofoil/xUpper -0.1 $aerofoil/zUpper) (aerofoil)
 
-    project ($aerofoil.xUpper -0.1 $domain.zMax) (aerofoil)
-    project ($aerofoil.xTrail -0.1 $domain.zMax) (aerofoil)
-    ($domain.xMax -0.1 $domain.zMax)
+    project ($aerofoil/xUpper -0.1 $domain/zMax) (aerofoil)
+    project ($aerofoil/xTrail -0.1 $domain/zMax) (aerofoil)
+    ($domain/xMax -0.1 $domain/zMax)
 
-    project ($aerofoil.xLower  0.1 $domain.zMin) (cylinder)
-    ($aerofoil.xTrail  0.1 $domain.zMin)
-    ($domain.xMax 0.1 $domain.zMin)
+    project ($aerofoil/xLower  0.1 $domain/zMin) (cylinder)
+    ($aerofoil/xTrail  0.1 $domain/zMin)
+    ($domain/xMax 0.1 $domain/zMin)
 
-    project ($domain.xMin      0.1 $aerofoil.zLead) (cylinder)
-    project ($aerofoil.xLead   0.1 $aerofoil.zLead) (aerofoil)
-    project ($aerofoil.xTrail  0.1 $aerofoil.zTrail) (aerofoil)
-    ($domain.xMax 0.1 $aerofoil.zTrail)
+    project ($domain/xMin      0.1 $aerofoil/zLead) (cylinder)
+    project ($aerofoil/xLead   0.1 $aerofoil/zLead) (aerofoil)
+    project ($aerofoil/xTrail  0.1 $aerofoil/zTrail) (aerofoil)
+    ($domain/xMax 0.1 $aerofoil/zTrail)
 
-    project ($aerofoil.xLower  0.1 $aerofoil.zLower) (aerofoil)
-    project ($aerofoil.xUpper  0.1 $aerofoil.zUpper) (aerofoil)
+    project ($aerofoil/xLower  0.1 $aerofoil/zLower) (aerofoil)
+    project ($aerofoil/xUpper  0.1 $aerofoil/zUpper) (aerofoil)
 
-    project ($aerofoil.xUpper  0.1 $domain.zMax) (aerofoil)
-    project ($aerofoil.xTrail  0.1 $domain.zMax) (aerofoil)
-    ($domain.xMax 0.1 $domain.zMax)
+    project ($aerofoil/xUpper  0.1 $domain/zMax) (aerofoil)
+    project ($aerofoil/xTrail  0.1 $domain/zMax) (aerofoil)
+    ($domain/xMax 0.1 $domain/zMax)
 );
 
 blocks
 (
     hex ( 7 4 16 19 0 3 15 12)
-    ($:domain.xUCells 1 $:domain.zCells)
+    ($!domain/xUCells 1 $!domain/zCells)
     edgeGrading
     (
-        $:domain.leadGrading $:domain.leadGrading $:domain.xUGrading $:domain.xUGrading
+        $!domain/leadGrading $!domain/leadGrading $!domain/xUGrading $!domain/xUGrading
         1 1 1 1
-        $:domain.zGrading $:domain.zGrading $:domain.zGrading $:domain.zGrading
+        $!domain/zGrading $!domain/zGrading $!domain/zGrading $!domain/zGrading
     )
 
     hex ( 5 7 19 17 1 0 12 13)
-    ($:domain.xMCells 1 $:domain.zCells)
-    simpleGrading (1 1 $:domain.zGrading)
+    ($!domain/xMCells 1 $!domain/zCells)
+    simpleGrading (1 1 $!domain/zGrading)
 
     hex ( 17 18 6 5 13 14 2 1)
-    ($:domain.xDCells 1 $:domain.zCells)
-    simpleGrading ($:domain.xDGrading 1 $:domain.zGrading)
+    ($!domain/xDCells 1 $!domain/zCells)
+    simpleGrading ($!domain/xDGrading 1 $!domain/zGrading)
 
     hex ( 20 16 4 8 21 15 3 9)
-    ($:domain.xUCells 1 $:domain.zCells)
+    ($!domain/xUCells 1 $!domain/zCells)
     edgeGrading
     (
-        $:domain.leadGrading $:domain.leadGrading $:domain.xUGrading $:domain.xUGrading
+        $!domain/leadGrading $!domain/leadGrading $!domain/xUGrading $!domain/xUGrading
         1 1 1 1
-        $:domain.zGrading $:domain.zGrading $:domain.zGrading $:domain.zGrading
+        $!domain/zGrading $!domain/zGrading $!domain/zGrading $!domain/zGrading
     )
 
     hex ( 17 20 8 5 22 21 9 10)
-    ($:domain.xMCells 1 $:domain.zCells)
-    simpleGrading (1 1 $:domain.zGrading)
+    ($!domain/xMCells 1 $!domain/zCells)
+    simpleGrading (1 1 $!domain/zGrading)
 
     hex ( 5 6 18 17 10 11 23 22)
-    ($:domain.xDCells 1 $:domain.zCells)
-    simpleGrading ($:domain.xDGrading 1 $:domain.zGrading)
+    ($!domain/xDCells 1 $!domain/zCells)
+    simpleGrading ($!domain/xDGrading 1 $!domain/zGrading)
 );
 
 edges

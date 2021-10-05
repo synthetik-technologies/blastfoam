@@ -1,14 +1,12 @@
 EXE_INC= \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
-    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
-    -I$(LIB_SRC)/ThermophysicalTransportModels/rhoReactionThermo/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/fluidReactionThermo/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/reactionThermo/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
@@ -22,18 +20,14 @@ EXE_INC= \
 
 EXE_LIBS = \
     -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -lthermophysicalTransportModels \
-    -lrhoReactionThermophysicalTransportModels \
-    -lreactionThermophysicalModels \
+    -lfluidReactionThermophysicalTransportModels \
     -lspecie \
     -lfluidThermophysicalModels \
     -lchemistryModel \
-    -lODE \
     -lcombustionModels \
     -lradiationModels \
     -L$(BLAST_LIBBIN) \
-    -lfluxSchemes \
-    -lblastDynamicMesh \
-    -lblastDynamicFvMesh \
-    -lerrorEstimate
+    -lblastFiniteVolume \
+    -lblastDynamicFvMesh

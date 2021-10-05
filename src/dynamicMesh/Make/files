@@ -8,7 +8,7 @@ $(hexRef)/hexRef3D/hexRef3D.C
 $(hexRef)/hexRef2D/hexRef2D.C
 $(hexRef)/hexRef2DAxi/hexRef2DAxi.C
 
-fvMeshDistribute/blastFvMeshDistribute.C
-fvMeshSubset/blastFvMeshSubset.C
+#fvMeshDistribute/blastFvMeshDistribute.C
+#fvMeshSubset/blastFvMeshSubset.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

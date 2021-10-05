@@ -27,7 +27,6 @@ Class
 Description
 
 SourceFiles
-    NusseltNumberModel.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -42,7 +41,6 @@ SourceFiles
 
 namespace Foam
 {
-
 class phasePair;
 
 /*---------------------------------------------------------------------------*\
@@ -57,7 +55,6 @@ protected:
 
         //- Phase pair
         const phasePair& pair_;
-
 
 public:
 
@@ -101,7 +98,6 @@ public:
 
 
     // Selectors
-
         static autoPtr<NusseltNumberModel> New
         (
             const dictionary& dict,
@@ -111,11 +107,25 @@ public:
 
     // Member Functions
 
+        //- Return the pair
+        const phasePair& pair() const
+        {
+            return pair_;
+        }
+
         //- Nusselt number
         virtual tmp<volScalarField> Nu
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
+        ) const = 0;
+
+        //- Nusselt number for cell
+        virtual scalar cellNu
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 };
 

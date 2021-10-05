@@ -59,13 +59,13 @@ water
     {
         transport   const;
         thermo      eConst;
-        equationOfState Tait;
+        equationOfState stiffenedGas;
     }
     equationOfState
     {
-        gamma           7.15;
-        a               3309;
-        b               3.0e8;
+        gamma           7.0;
+//         a               0;
+        a               3.0e8;
     }
     specie
     {

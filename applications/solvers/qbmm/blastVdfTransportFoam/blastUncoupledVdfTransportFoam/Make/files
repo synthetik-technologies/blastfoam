@@ -1,3 +1,0 @@
-blastUncoupledVdfTransportFoam.C
-
-EXE = $(BLAST_APPBIN)/blastUncoupledVdfTransportFoam

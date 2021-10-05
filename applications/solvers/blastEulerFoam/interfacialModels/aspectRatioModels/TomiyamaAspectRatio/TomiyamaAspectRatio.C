@@ -84,7 +84,7 @@ Foam::aspectRatioModels::TomiyamaAspectRatio::E
 }
 
 
-Foam::scalar Foam::aspectRatioModels::TomiyamaAspectRatio::E
+Foam::scalar Foam::aspectRatioModels::TomiyamaAspectRatio::cellE
 (
     const label celli,
     const label nodei,
@@ -92,10 +92,10 @@ Foam::scalar Foam::aspectRatioModels::TomiyamaAspectRatio::E
 ) const
 {
     return
-        VakhrushevEfremov::E(celli, nodei, nodej)
+        VakhrushevEfremov::cellE(celli, nodei, nodej)
        *max
        (
-           scalar(1) - 0.35*yWall()[celli]/pair_.dispersed().di(celli, nodei),
+           scalar(1) - 0.35*yWall()[celli]/pair_.dispersed().celld(celli, nodei),
            scalar(0.65)
        );
 }

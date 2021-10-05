@@ -111,16 +111,7 @@ public:
         JohnsonJacksonParticleThetaFvPatchScalarField
         (
             const JohnsonJacksonParticleThetaFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new JohnsonJacksonParticleThetaFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         JohnsonJacksonParticleThetaFvPatchScalarField

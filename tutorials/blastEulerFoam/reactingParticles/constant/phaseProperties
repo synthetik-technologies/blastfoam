@@ -81,6 +81,7 @@ gas
 
     type            multicomponent;
     species         (ignitor air products);
+    defaultSpecie   air;
     calculateDensity yes;
     thermoType
     {

@@ -44,20 +44,51 @@ Foam::phaseSystem::phases()
     return phaseModels_;
 }
 
+
+inline const Foam::phaseSystem::phaseModelList&
+Foam::phaseSystem::movingPhases() const
+{
+    return phaseModels_;
+}
+
+
 inline const Foam::phaseSystem::phasePairTable&
 Foam::phaseSystem::phasePairs() const
 {
     return phasePairs_;
 }
 
-inline const Foam::fv::options& Foam::phaseSystem::fvOptions() const
+
+inline const Foam::phaseModel&
+Foam::phaseSystem::otherPhase(const phaseModel& phase) const
 {
-    return *fvOptionsPtr_;
+    if (phaseModels_.size() != 2)
+    {
+        FatalErrorInFunction
+            << "Call from a two-phase model in a multi-phase system."
+            << exit(FatalError);
+    }
+
+    if (&phase == &phaseModels_[0])
+    {
+        return phaseModels_[1];
+    }
+    else
+    {
+        return phaseModels_[0];
+    }
 }
 
-inline Foam::fv::options& Foam::phaseSystem::fvOptions()
+
+inline const Foam::fvModels& Foam::phaseSystem::models() const
 {
-    return *fvOptionsPtr_;
+    return fvModelsPtr_();
 }
+
+inline const Foam::fvConstraints& Foam::phaseSystem::constraints() const
+{
+    return fvConstraintsPtr_();
+}
+
 
 // ************************************************************************* //

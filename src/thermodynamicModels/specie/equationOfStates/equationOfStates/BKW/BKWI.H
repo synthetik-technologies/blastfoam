@@ -36,8 +36,7 @@ inline Foam::BKW<Specie>::BKW
     const scalar kappa,
     const scalar Theta,
     const scalar a,
-    const scalar beta,
-    const scalar gamma
+    const scalar beta
 )
 :
     Specie(sp),
@@ -45,8 +44,7 @@ inline Foam::BKW<Specie>::BKW
     kappa_(kappa),
     Theta_(Theta),
     a_(a),
-    beta_(beta),
-    gamma_(gamma)
+    beta_(beta)
 {}
 
 
@@ -64,8 +62,7 @@ inline Foam::BKW<Specie>::BKW
     kappa_(pf.kappa_),
     Theta_(pf.Theta_),
     a_(pf.a_),
-    beta_(pf.beta_),
-    gamma_(pf.gamma_)
+    beta_(pf.beta_)
 {}
 
 
@@ -97,6 +94,19 @@ Foam::BKW<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::BKW<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BKW<Specie>::pRhoT
 (
     const scalar rho,
@@ -105,6 +115,35 @@ Foam::scalar Foam::BKW<Specie>::pRhoT
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
     return this->R()*T*rho*(1.0 + x*exp(beta_*x));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small) + 1.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return
+        (sqr(dpdT(rho, e, T))*T/cv - dpdv(rho, e, T))
+       /sqr(max(rho, 1e-10));
 }
 
 
@@ -124,6 +163,19 @@ Foam::scalar Foam::BKW<Specie>::dpdv
            exp(beta_*x)*dxdv*(1.0 + x*beta_)
          - (1.0 + x*exp(beta_*x))*rho
         );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BKW<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -204,7 +256,8 @@ Foam::scalar Foam::BKW<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     scalar x = kappa_*k_*rho/(this->W()*pow(T + Theta_, a_));
@@ -250,7 +303,6 @@ inline void Foam::BKW<Specie>::operator+=
         Theta_ = Y1*Theta_ + Y2*pf.Theta_;
         a_ = Y1*a_ + Y2*pf.a_;
         beta_ = Y1*beta_ + Y2*pf.beta_;
-        gamma_ = Y1*gamma_ + Y2*pf.gamma_;
     }
 }
 
@@ -286,8 +338,7 @@ inline Foam::BKW<Specie> Foam::operator+
             pf1.kappa,
             pf1.Theta_,
             pf1.a_,
-            pf1.beta_,
-            pf1.gamma_
+            pf1.beta_
         );
     }
     else
@@ -302,8 +353,7 @@ inline Foam::BKW<Specie> Foam::operator+
             Y1*pf1.kappa_ + Y2*pf2.kappa,
             Y1*pf1.Theta_ + Y2*pf2.Theta_,
             Y1*pf1.a_ + Y2*pf2.a_,
-            Y1*pf1.beta_ + Y2*pf2.beta_,
-            Y1*pf1.gamma_ + Y2*pf2.gamma_
+            Y1*pf1.beta_ + Y2*pf2.beta_
         );
     }
 }
@@ -323,8 +373,7 @@ inline Foam::BKW<Specie> Foam::operator*
         pf.kappa,
         pf.Theta_,
         pf.a_,
-        pf.beta_,
-        pf.gamma_
+        pf.beta_
     );
 }
 
@@ -352,8 +401,7 @@ inline Foam::BKW<Specie> Foam::operator==
         Y2*pf2.kappa_ - Y1*pf1.kappa,
         Y2*pf2.Theta_ - Y1*pf1.Theta_,
         Y2*pf2.a_ - Y1*pf1.a_,
-        Y2*pf2.beta_ - Y1*pf1.beta_,
-        Y2*pf2.gamma_ - Y1*pf1.gamma_
+        Y2*pf2.beta_ - Y1*pf1.beta_
     );
 }
 

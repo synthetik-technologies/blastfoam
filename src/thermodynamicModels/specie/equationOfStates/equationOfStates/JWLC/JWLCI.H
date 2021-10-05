@@ -100,15 +100,15 @@ Foam::JWLC<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::JWLC<Specie>::Gamma
+Foam::scalar Foam::JWLC<Specie>::p
 (
     const scalar rho,
     const scalar e,
     const scalar T,
-    const scalar cv
+    const bool limit
 ) const
 {
-    return omega_ + 1.0;
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
 }
 
 
@@ -121,6 +121,19 @@ Foam::scalar Foam::JWLC<Specie>::pRhoT
 {
     scalar V(rho0_/max(rho, 1e-10));
     return A_*exp(-R1_*V) + B_*exp(-R2_*V) + C_/pow(V, omega_ + 1.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::JWLC<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return omega_ + 1.0;
 }
 
 
@@ -161,6 +174,19 @@ Foam::scalar Foam::JWLC<Specie>::dpdv
           + B_*R2_*exp(-R2_*V)
           + C_*(1.0 + omega_)/pow(V, 2.0 + omega_)
         );
+}
+
+
+template<class Specie>
+Foam::scalar Foam::JWLC<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -242,7 +268,8 @@ Foam::scalar Foam::JWLC<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return 0.0;

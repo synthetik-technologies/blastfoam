@@ -85,9 +85,9 @@ functions
         pRef            101298;
         store yes;
     }
-    fieldMax
+    fieldMinMax
     {
-        type            fieldMax;
+        type            fieldMinMax;
         writeControl    writeTime;
         writeInterval   1;
 
@@ -101,7 +101,7 @@ functions
 
     pressureProbes
     {
-        type            probes;
+        type           blastProbes;
         writeControl   timeStep;
         writeInterval  1;
         adjustLocations yes;

@@ -100,6 +100,19 @@ Foam::Murnaghan<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::pRhoT
 (
     const scalar rho,
@@ -150,6 +163,19 @@ Foam::scalar Foam::Murnaghan<Specie>::dpdv
 
 
 template<class Specie>
+Foam::scalar Foam::Murnaghan<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::Murnaghan<Specie>::dpdT
 (
     const scalar rho,
@@ -172,7 +198,8 @@ Foam::scalar Foam::Murnaghan<Specie>::E
     scalar rhos(max(rho, 1e-10));
     return
        -pRef_/rhos
-      + (pow(rho/rho0_, n_) - (n_ - 1.0))/(kappa_*n_*rhos*max(n_ - 1.0, small));
+      + (pow(rho/rho0_, n_) - (n_ - 1.0))
+       /(kappa_*n_*max(rho*(n_ - 1.0), 1e-10));
 }
 
 
@@ -217,7 +244,8 @@ Foam::scalar Foam::Murnaghan<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return 0.0;

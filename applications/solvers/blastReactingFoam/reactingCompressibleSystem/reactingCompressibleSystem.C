@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -41,8 +41,8 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     const fvMesh& mesh
 )
 :
-    integrationSystem("phaseCompressibleSystem", mesh),
-    thermo_(rhoReactionThermo::New(mesh)),
+    timeIntegrationSystem("phaseCompressibleSystem", mesh),
+    thermo_(fluidReactionThermo::New(mesh)),
     rho_
     (
         IOobject
@@ -150,44 +150,38 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
 
     Switch useChemistry
     (
-        word(thermo_->subDict("thermoType").lookup("mixture"))
-     == "multiComponentMixture"
+        thermo_->composition().Y().size() > 1
     );
 
-    if (min(thermo_->mu()).value() > small || useChemistry)
-    {
-        turbulence_.set
+    turbulence_.set
+    (
+        compressible::momentumTransportModel::New
         (
-            compressible::momentumTransportModel::New
-            (
-                rho_,
-                U_,
-                rhoPhi_,
-                thermo_()
-            ).ptr()
-        );
-        thermophysicalTransport_.set
+            rho_,
+            U_,
+            rhoPhi_,
+            thermo_()
+        ).ptr()
+    );
+    thermophysicalTransport_.set
+    (
+        fluidReactionThermophysicalTransportModel::New
         (
-            rhoReactionThermophysicalTransportModel::New
-            (
-                turbulence_(),
-                thermo_()
-            ).ptr()
-        );
-    }
+            turbulence_(),
+            thermo_()
+        ).ptr()
+    );
 
     if (useChemistry)
     {
         reaction_.set
         (
-            CombustionModel<rhoReactionThermo>::New
+            combustionModel::New
             (
-                refCast<rhoReactionThermo>(thermo_()),
+                thermo_(),
                 turbulence_()
             ).ptr()
         );
-        word inertSpecie(thermo_->lookup("inertSpecie"));
-        inertIndex_ = thermo_->composition().species()[inertSpecie];
     }
 
     IOobject radIO
@@ -206,6 +200,10 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         radDict.add("radiationModel", "none");
         radiation_ = radiationModel::New(radDict, T_);
     }
+
+    modelsPtr_.set(&fvModels::New(mesh));
+    constraintsPtr_.set(&fvConstraints::New(mesh));
+
     encode();
 }
 
@@ -246,13 +244,13 @@ void Foam::reactingCompressibleSystem::solve()
     rho_ = rhoOld - dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
+    rhoU_ = rhoUOld - dT*deltaRhoU;
     rhoE_ = rhoEOld - dT*deltaRhoE;
 
     if (reaction_.valid())
     {
-        PtrList<volScalarField>& Ys = thermo_->composition().Y();
+        basicSpecieMixture& composition = thermo_->composition();
+        PtrList<volScalarField>& Ys = composition.Y();
         volScalarField Yt(0.0*Ys[0]);
         forAll(Ys, i)
         {
@@ -261,7 +259,7 @@ void Foam::reactingCompressibleSystem::solve()
                 Ys[i].storeOldTime();
             }
 
-            if (i != inertIndex_ && thermo_->composition().active(i))
+            if (composition.solve(i))
             {
                 volScalarField YOld(Ys[i]);
                 this->storeAndBlendOld(YOld);
@@ -279,27 +277,41 @@ void Foam::reactingCompressibleSystem::solve()
                 Yt += Ys[i];
             }
         }
-        Ys[inertIndex_] = scalar(1) - Yt;
-        Ys[inertIndex_].max(0.0);
+        composition.normalise();
     }
 }
 
 
 void Foam::reactingCompressibleSystem::postUpdate()
 {
-    if (!turbulence_.valid())
-    {
-        return;
-    }
-
     this->decode();
 
-    // Solve momentum diffusion
+    // Solve mass
+    fvScalarMatrix rhoEqn
+    (
+        fvm::ddt(rho_) - fvc::ddt(rho_)
+     ==
+        modelsPtr_->source(rho_)
+    );
+
+    constraintsPtr_->constrain(rhoEqn);
+
+    rhoEqn.solve();
+
+    constraintsPtr_->constrain(rho_);
+
+
+
+    // Solve momentum
     fvVectorMatrix UEqn
     (
         fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-      + turbulence_->divDevTau(U_)
+     ==
+        turbulence_->divDevTau(U_)
+      + modelsPtr_->source(rho_, U_)
     );
+
+    // Solve thermal energy diffusion
     rhoE_ +=
         rho_.mesh().time().deltaT()
        *fvc::div
@@ -308,32 +320,30 @@ void Foam::reactingCompressibleSystem::postUpdate()
           & fluxScheme_->Uf()
         );
 
-    UEqn.solve();
-    rhoU_ = rho_*U_;
-
-    // Solve thermal energy diffusion
+    // Update internal energy
     e_ = rhoE_/rho_ - 0.5*magSqr(U_);
     fvScalarMatrix eEqn
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-      - fvm::laplacian(thermophysicalTransport_->alphaEff(), e_)
+     ==
+        thermophysicalTransport_->divq(e_)
+      + modelsPtr_->source(rho_, e_)
     );
-    eEqn.solve();
-
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
 
     if (reaction_.valid())
     {
         Info<< "Solving reactions" << endl;
         reaction_->correct();
 
+        basicSpecieMixture& composition = thermo_->composition();
+
         eEqn -= reaction_->Qdot();
 
-        PtrList<volScalarField>& Y = thermo_->composition().Y();
+        PtrList<volScalarField>& Y = composition.Y();
         volScalarField Yt(0.0*Y[0]);
         forAll(Y, i)
         {
-            if (i != inertIndex_ && thermo_->composition().active(i))
+            if (composition.solve(i))
             {
                 volScalarField& Yi = Y[i];
                 fvScalarMatrix YiEqn
@@ -343,26 +353,48 @@ void Foam::reactingCompressibleSystem::postUpdate()
                   + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
+                  + modelsPtr_->source(Yi)
                 );
+
+                constraintsPtr_->constrain(YiEqn);
                 YiEqn.solve("Yi");
+                constraintsPtr_->constrain(Yi);
 
                 Yi.max(0.0);
                 Yt += Yi;
             }
         }
-        Y[inertIndex_] = scalar(1) - Yt;
-        Y[inertIndex_].max(0.0);
+        composition.normalise();
     }
 
-    eEqn.solve();
-    rhoE_ = rho_*(e_ + 0.5*magSqr(U_)); // Includes change to total energy from viscous term in momentum equation
+    // Solve momentum equation
+    constraintsPtr_->constrain(UEqn);
+    UEqn.solve();
+    constraintsPtr_->constrain(U_);
 
+    // Solve energy equation
+    constraintsPtr_->constrain(eEqn);
+    eEqn.solve();
+    constraintsPtr_->constrain(e_);
+
+    // Update conserved quantities
+    rhoU_ = rho_*U_;
+    rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
+
+    // Update thermo
     thermo_->correct();
     p_.ref() = rho_()/thermo_->psi()();
+    if (constraintsPtr_->constrainsField(p_.name()))
+    {
+        constraintsPtr_->constrain(p_);
+    }
     p_.correctBoundaryConditions();
+
+    // Update density boundary conditions
     rho_.boundaryFieldRef() ==
         thermo_->psi().boundaryField()*p_.boundaryField();
 
+    // correct turbulence
     turbulence_->correct();
 }
 

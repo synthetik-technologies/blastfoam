@@ -101,16 +101,7 @@ public:
         hydrostaticDisplacementFvPatchVectorField
         (
             const hydrostaticDisplacementFvPatchVectorField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchVectorField> clone() const
-        {
-            return tmp<fvPatchVectorField>
-            (
-                new hydrostaticDisplacementFvPatchVectorField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         hydrostaticDisplacementFvPatchVectorField

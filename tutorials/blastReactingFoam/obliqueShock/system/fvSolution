@@ -22,19 +22,12 @@ solvers
         solver          diagonal;
     }
 
-    U
+    "(e|U)"
     {
         solver          smoothSolver;
         smoother        GaussSeidel;
         nSweeps         2;
         tolerance       1e-09;
-        relTol          0.01;
-    }
-
-    h
-    {
-        $U;
-        tolerance       1e-10;
         relTol          0;
     }
 }

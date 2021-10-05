@@ -42,6 +42,7 @@ SourceFiles
 #include "dictionary.H"
 #include "runTimeSelectionTables.H"
 #include "uniformDimensionedFields.H"
+#include "fluidBlastThermo.H"
 
 namespace Foam
 {
@@ -72,6 +73,12 @@ protected:
     //- Height field
     volScalarField h_;
 
+    //- Stabilize fields
+    void hydrostaticInitialisation
+    (
+        fluidBlastThermo& thermo,
+        const dimensionedScalar& pRef
+    ) const;
 
 public:
 
@@ -112,11 +119,7 @@ public:
 
     // Member Functions
 
-        virtual void createAtmosphere
-        (
-            volScalarField& p,
-            volScalarField& rho
-        ) const = 0;
+        virtual void createAtmosphere(fluidBlastThermo& thermo) const = 0;
 };
 
 

@@ -175,16 +175,7 @@ public:
         burstSlipFvPatchField
         (
             const burstSlipFvPatchField<Type>&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new burstSlipFvPatchField<Type>(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         burstSlipFvPatchField

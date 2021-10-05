@@ -40,4 +40,32 @@ Foam::AbelNobel<Specie>::AbelNobel
     b_(dict.subDict("equationOfState").lookup<scalar>("b"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::AbelNobel<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("b", b_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const AbelNobel<Specie>& an
+)
+{
+    an.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

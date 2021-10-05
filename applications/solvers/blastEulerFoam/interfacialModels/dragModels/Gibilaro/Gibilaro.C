@@ -89,7 +89,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::Gibilaro::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Gibilaro::CdRe
+Foam::scalar Foam::dragModels::Gibilaro::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -107,7 +107,7 @@ Foam::scalar Foam::dragModels::Gibilaro::CdRe
 
     return
         (4.0/3.0)
-       *(17.3/alpha2 + 0.336*pair_.Re(celli, nodei, nodej))
+       *(17.3/alpha2 + 0.336*pair_.cellRe(celli, nodei, nodej))
        *max
         (
             pair_.continuous()[celli],

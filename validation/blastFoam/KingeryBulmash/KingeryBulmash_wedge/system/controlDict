@@ -70,7 +70,7 @@ functions
     }
     maxPImpulse
     {
-        type                fieldMax;
+        type                fieldMinMax;
         writeControl        writeTime;
         fields
         (
@@ -78,17 +78,15 @@ functions
             impulse
         );
     }
-
     timeOfArrival
     {
         type                timeOfArrival;
         writeControl        writeTime;
         writeInterval       1;
     }
-
     pressureProbes
     {
-        type                probes;
+        type                blastProbes;
         writeControl        timeStep;
         writeInterval       1;
         adjustLocations     yes;

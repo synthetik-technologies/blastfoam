@@ -5,8 +5,9 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-08-06-2020  Jeff Heylmun  : Reload exisiting probe files and move blastProbes to
-                            the nearest cell/face.
+08-06-2020  Synthetik Applied Technologies: |   Reload exisiting probe files and
+                                                move blastProbes to
+                                                the nearest cell/face.
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -36,6 +37,7 @@ License
 #include "SortableList.H"
 #include "IFstream.H"
 #include "vtkWriteOps.H"
+#include "OSspecific.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //

@@ -83,21 +83,25 @@ Foam::tabulatedThermoEOS<Specie>::New
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
-    return pTable_.lookup(rho, e);
+    return
+        limit
+      ? max(pTable_.lookup(rho, e), 0.0)
+      : pTable_.lookup(rho, e);
 }
 
 
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return -sqr(rho)*pTable_.dFdX(rho, e);
@@ -105,11 +109,23 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdv
 
 
 template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdRho
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return pTable_.dFdX(rho, e);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdT
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     scalar dTdRho(TTable_.dFdX(rho, e));
@@ -131,9 +147,9 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpdT
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpde
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return pTable_.dFdY(rho, e);
@@ -143,9 +159,9 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::dpde
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Gamma
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return pTable_.dFdY(rho, e)/max(rho, 1e-10);
@@ -155,10 +171,10 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Gamma
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::cSqr
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return pTable_.dFdX(rho, e) + Gamma(rho, e, T)*p/max(rho, 1e-10);
@@ -167,9 +183,9 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::cSqr
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Es
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return TTable_.reverseLookupY(T, rho);
@@ -179,12 +195,36 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Es
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ea
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return TTable_.reverseLookupY(T, rho);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::Hs
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Es(rho, e, T) + pTable_.lookup(rho, e)/max(rho, 1e-10);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::Ha
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return Ea(rho, e, T) + pTable_.lookup(rho, e)/max(rho, 1e-10);
 }
 
 
@@ -207,9 +247,9 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::flameT() const
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return 1.0/max(TTable_.dFdY(rho, e), small);
@@ -219,72 +259,73 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cv
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::Cp
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
-    return CpMCv(rho, e, T) + Cv(rho, e, T);
+    const scalar cv = Cv(rho, e, T);
+    return CpMCv(rho, e, T, cv) + cv;
 }
 
 
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpMCv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return dpdT(rho, e, T)/max(rho, 1e-10);
 }
 
-template<class Specied>
-Foam::scalar Foam::tabulatedThermoEOS<Specied>::CpByCv
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::CpByCv
 (
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return Cp(rho, e, T)/Cv(rho, e, T);
 }
 
 
-template<class Specied>
-Foam::scalar Foam::tabulatedThermoEOS<Specied>::TRhoE
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::TRhoE
 (
-    const scalar& T0,
-    const scalar& rho,
-    const scalar& e
+    const scalar T0,
+    const scalar rho,
+    const scalar e
 ) const
 {
     return TTable_.lookup(rho, e);
 }
 
 
-template<class Specied>
-Foam::scalar Foam::tabulatedThermoEOS<Specied>::initializeEnergy
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::initializeEnergy
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T
 ) const
 {
     return pTable_.reverseLookupY(p, rho);
 }
 
-template<class Specied>
-Foam::scalar Foam::tabulatedThermoEOS<Specied>::initializeRho
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::rhoPT
 (
-    const scalar& p,
-    const scalar& rho,
-    const scalar& e,
-    const scalar& T
+    const scalar p,
+    const scalar T
 ) const
 {
-    return rho;
+    NotImplemented;
+    return p;
 }
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -56,13 +56,10 @@ class coupledMultiphaseCompressibleSystem
         volScalarField volumeFraction_;
 
         //- Pointer to dispersed phase volume fraction
-        const volScalarField* alphadPtr_;
+        UautoPtr<const volScalarField> alphadPtr_;
 
         //- Phasic density
         volScalarField alphaRho_;
-
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
 
 
 public:
@@ -82,8 +79,8 @@ public:
         //- Set a pointer to the dispersed phase volume fraction
         void setDispersedVolumeFraction(const volScalarField& alphad)
         {
-            alphadPtr_ = &alphad;
-            decode();
+            alphadPtr_.set(&alphad);
+            encode();
         }
 
         //- Return const access to volume fraction
@@ -112,65 +109,6 @@ public:
 
         //- Solve implicit terms
         virtual void postUpdate();
-
-
-    //- Return functions for transport model
-
-        //- Heat capacit at contant volume of mixture [J/kg/K]
-        virtual tmp<volScalarField> Cv() const;
-
-        //- Dynamic viscosity of mixture [kg/m/s]
-        virtual tmp<volScalarField> mu() const;
-
-        //- Dynamic viscosity of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> mu(const label patchi) const;
-
-        //- Kinematic viscosity of mixture [m^2/s]
-        virtual tmp<volScalarField> nu() const;
-
-        //- Kinematic viscosity of mixture for patch [m^2/s]
-        virtual tmp<scalarField> nu(const label patchi) const;
-
-        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alpha() const;
-
-        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alpha(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity of mixture
-        //  for patch [kg/m/s]
-        virtual tmp<scalarField> alphaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
-
-        //- Thermal diffusivity for energy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphahe() const;
-
-        //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alphahe(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture [W/m/K]
-        virtual tmp<volScalarField> kappa() const;
-
-        //- Thermal diffusivity for temperature of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappa(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture [W/m/K]
-        virtual tmp<volScalarField> kappaEff(const volScalarField&) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture for patch [W/m/K]
-        virtual tmp<scalarField> kappaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
 };
 
 

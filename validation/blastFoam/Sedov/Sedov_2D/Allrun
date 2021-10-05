@@ -4,12 +4,22 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create mesh
 runApplication blockMesh
+
+# -- Set initial conditions
 runApplication setFields
-runApplication blastFoam
-postProcess -func sampleDict -latestTime
 
+# -- run the calc
+runApplication $(getApplication)
 
+# -- Sample the results
+runApplication postProcess -func sampleDict -latestTime
+
+# -- Create graphs
 (cd validation && ./createGraphs)
 
 # ----------------------------------------------------------------- end-of-file

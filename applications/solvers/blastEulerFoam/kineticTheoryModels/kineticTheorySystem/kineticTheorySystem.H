@@ -102,6 +102,11 @@ class kineticTheorySystem
             //- Phase averaged granular temperature
             autoPtr<volScalarField> ThetapPtr_;
 
+        //- List of phases that use kinetic theory
+        UPtrList<const phaseModel> ktPhases_;
+
+        //- List of phases that contribute to packing
+        UPtrList<const phaseModel> packingPhases_;
 
         //- PtrList of kinetic theory models
         UPtrList<kineticTheoryModel> kineticTheoryModels_;
@@ -184,11 +189,15 @@ class kineticTheorySystem
 
 public:
 
+    TypeName("kineticTheorySystem");
+
     // Constructors
 
         //- Construct from components
         kineticTheorySystem(const phaseSystem&);
 
+    //- Lookup or construct kineticTheorySystem
+    static kineticTheorySystem& New(const phaseSystem&);
 
     //- Destructor
     ~kineticTheorySystem();
@@ -231,6 +240,9 @@ public:
         //- Add phase to list of kinetic theory phases.
         void addPhase(kineticTheoryModel&);
 
+        //- Add phase to list of packing phases
+        void addPackingPhase(const phaseModel&);
+
         //- Return true if phase is granular
         bool found(const word&) const;
 
@@ -270,6 +282,12 @@ public:
 
         //- coefficients of friction between granular phases
         scalar Cf(const phasePairKey& pair) const;
+
+        //- Return the list of packing phases
+        const UPtrList<const phaseModel>& packingPhases() const
+        {
+            return packingPhases_;
+        }
 
         //- Return the list of granular temperatures
         const UPtrList<volScalarField>& Thetas() const

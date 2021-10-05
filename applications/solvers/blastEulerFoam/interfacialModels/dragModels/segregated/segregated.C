@@ -190,7 +190,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::segregated::Kf
 }
 
 
-Foam::scalar Foam::dragModels::segregated::CdRe
+Foam::scalar Foam::dragModels::segregated::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -206,7 +206,7 @@ Foam::scalar Foam::dragModels::segregated::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::segregated::K
+Foam::scalar Foam::dragModels::segregated::cellK
 (
     const label celli,
     const label nodei,

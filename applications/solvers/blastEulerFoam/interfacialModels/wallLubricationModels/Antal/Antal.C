@@ -68,7 +68,7 @@ Foam::wallLubricationModels::Antal::~Antal()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Antal::Fi
+Foam::tmp<Foam::volVectorField> Foam::wallLubricationModels::Antal::FI
 (
     const label nodei,
     const label nodej

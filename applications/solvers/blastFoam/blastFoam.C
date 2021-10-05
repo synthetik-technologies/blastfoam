@@ -31,40 +31,21 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "wedgeFvPatch.H"
-#include "phaseCompressibleSystem.H"
+#include "compressibleSystem.H"
 #include "timeIntegrator.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
 {
-    argList::addBoolOption
-    (
-        "listTurbulenceModels",
-        "List turbulenceModels"
-    );
+    #include "postProcess.H"
+
     #include "setRootCase.H"
-    if (args.optionFound("listTurbulenceModels"))
-    {
-        Info<< "Turbulence models"
-            << blast::laminarModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-
-        Info<< "RAS models"
-            << blast::RASModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-
-        Info<< "LES models"
-            << blast::LESModel::dictionaryConstructorTablePtr_->sortedToc()
-            << endl;
-        exit(1);
-    }
-
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 
@@ -73,6 +54,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        models.preUpdateMesh();
+
         //- Refine the mesh
         mesh.refine();
 
@@ -92,6 +75,8 @@ int main(int argc, char *argv[])
 
         //- Decode to get new values of non-conservative variables
         fluid->decode();
+
+        models.correct();
 
         //- Clear the flux scheme
         fluid->flux().clear();

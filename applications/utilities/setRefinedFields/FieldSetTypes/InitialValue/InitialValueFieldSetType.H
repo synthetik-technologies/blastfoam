@@ -25,7 +25,8 @@ Class
     Foam::FieldSetTypes::InitialValue
 
 Description
-    Base class used to set fields using a specified method
+    Use the saved field value as the field value. This is used to reset a field
+    to the initial conditions
 
 SourceFiles
     InitialValueFieldSetType.C

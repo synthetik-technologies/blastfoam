@@ -27,6 +27,7 @@ License
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
+
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -75,5 +76,15 @@ Foam::NusseltNumberModels::constant::Nu
     );
 }
 
+
+Foam::scalar Foam::NusseltNumberModels::constant::cellNu
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    return Nu_.value();
+}
 
 // ************************************************************************* //

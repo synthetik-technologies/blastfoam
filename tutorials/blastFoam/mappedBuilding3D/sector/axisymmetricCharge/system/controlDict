@@ -1,0 +1,125 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  location    "system";
+  object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     blastFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         1e-4;
+
+writeControl    adjustableRunTime;
+
+writeInterval   1e-5;
+
+writeFormat     binary;
+
+writePrecision  12;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+adjustTimeStep  yes;
+
+deltaT          1e-8;
+
+maxCo           0.5;
+
+// ************************************************************************* //
+
+
+functions
+{
+    impulse
+    {
+        type            impulse;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        pRef            101298;
+    }
+    speedOfSound
+    {
+        type            speedOfSound;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        store yes;
+    }
+    dynamicPressure
+    {
+        type            dynamicPressure;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        store yes;
+    }
+    overpressure
+    {
+        type            overpressure;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        pRef            101298;
+        store yes;
+    }
+    fieldMinMax
+    {
+        type            fieldMinMax;
+        writeControl    writeTime;
+        writeInterval   1;
+
+        fields
+        (
+            speedOfSound
+            dynamicPressure
+            overpressure
+        );
+    }
+
+    pressureProbes
+    {
+        type           blastProbes;
+        writeControl   timeStep;
+        writeInterval  1;
+        adjustLocations yes;
+
+        probeLocations
+        (
+            (1 0 0)
+            (2 0 0)
+            (5 0 0)
+            (10 0 0)
+            (15 0 0)
+            (20 0 0)
+        );
+        fields
+        (
+            p
+            impulse
+            dynamicPressure
+        );
+    }
+}

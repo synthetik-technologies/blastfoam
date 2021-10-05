@@ -1,9 +1,0 @@
-#!/bin/sh
-cd ${0%/*} || exit 1    # Run from this directory
-
-# Parse arguments for library compilation
-set -x
-
-wclean $targetType populationBalanceODE
-wclean $targetType blastPbeTransportFoam
-wclean all blastVdfTransportFoam

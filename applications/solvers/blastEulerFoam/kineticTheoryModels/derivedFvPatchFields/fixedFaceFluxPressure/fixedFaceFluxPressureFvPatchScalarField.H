@@ -107,16 +107,7 @@ public:
         fixedFaceFluxPressureFvPatchScalarField
         (
             const fixedFaceFluxPressureFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchScalarField> clone() const
-        {
-            return tmp<fvPatchScalarField>
-            (
-                new fixedFaceFluxPressureFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Construct as copy setting internal field reference
         fixedFaceFluxPressureFvPatchScalarField

@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -74,10 +74,10 @@ class MillerAfterburn
         const volScalarField& p_;
 
         //- Density name
-        word alphaRhoName_;
+        UautoPtr<const volScalarField> alphaRhoPtr_;
 
         //- Name of flux
-        word alphaRhoPhiName_;
+        UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
         //- Model coefficients
         dimensionedScalar Q0_;
@@ -109,6 +109,9 @@ public:
 
 
     // Member Functions
+
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels();
 
         //- Solve sub-step stepi
         virtual void solve();

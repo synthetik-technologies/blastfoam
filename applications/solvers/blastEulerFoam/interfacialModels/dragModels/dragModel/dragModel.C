@@ -154,7 +154,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModel::Kf
 }
 
 
-Foam::scalar Foam::dragModel::Ki
+Foam::scalar Foam::dragModel::cellKi
 (
     const label celli,
     const label nodei,
@@ -163,15 +163,15 @@ Foam::scalar Foam::dragModel::Ki
 {
     return
         0.75
-       *CdRe(celli, nodei, nodej)
-       *swarmCorrection_->Cs(celli, nodei, nodej)
+       *cellCdRe(celli, nodei, nodej)
+       *swarmCorrection_->cellCs(celli, nodei, nodej)
        *pair_.continuous().rho()[celli]
-       *pair_.continuous().nui(celli)
-       /sqr(pair_.dispersed().di(celli, nodei));
+       *pair_.continuous().cellnu(celli)
+       /sqr(pair_.dispersed().celld(celli, nodei));
 }
 
 
-Foam::scalar Foam::dragModel::K
+Foam::scalar Foam::dragModel::cellK
 (
     const label celli,
     const label nodei,
@@ -181,9 +181,9 @@ Foam::scalar Foam::dragModel::K
     return
         max
         (
-            pair_.dispersed().volumeFractioni(celli, nodei),
+            pair_.dispersed().cellvolumeFraction(celli, nodei),
             pair_.dispersed().residualAlpha().value()
-        )*Ki(celli, nodei, nodej);
+        )*cellKi(celli, nodei, nodej);
 }
 
 

@@ -34,7 +34,7 @@ SourceFiles
 #ifndef SyamlalViscosity_H
 #define SyamlalViscosity_H
 
-#include "viscosityModel.H"
+#include "kineticTheoryViscosityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

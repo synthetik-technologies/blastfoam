@@ -41,10 +41,12 @@ SourceFiles
 #include "PtrListDictionary.H"
 #include "volFields.H"
 #include "surfaceFields.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "timeIntegrator.H"
+#include "phaseFluxScheme.H"
 #include "HashPtrTable.H"
-#include "fvOptions.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -75,7 +77,7 @@ class BlendedInterfacialModel;
 class phaseSystem
 :
     public IOdictionary,
-    public integrationSystem
+    public timeIntegrationSystem
 {
 public:
 
@@ -226,17 +228,29 @@ protected:
         //- Mixture pressure
         volScalarField p_;
 
+        //- Total mixture pressure
+        autoPtr<volScalarField> PIPtr_;
+
         //- Mixture temperature
         volScalarField T_;
 
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
+        //- fvModels
+        UautoPtr<fvModels> fvModelsPtr_;
+
+        //- fvConstraints
+        UautoPtr<const fvConstraints> fvConstraintsPtr_;
+
         //- Phase models
         phaseModelList phaseModels_;
 
+        //- Fluid phase phase models
+        UPtrList<phaseModel> fluidPhaseModels_;
+
         //- Pointer to kinetic theory system
-        kineticTheorySystem* kineticTheoryPtr_;
+        UautoPtr<kineticTheorySystem> kineticTheoryPtr_;
 
         //- Is the kinetic theory polydisperse
         bool polydisperseKineticTheory_;
@@ -247,8 +261,6 @@ protected:
         //- Ode system and solver for solving the  drag system
         autoPtr<dragODE> dragODE_;
 
-        //- Switch to solve drag in ode solver
-        Switch solveDragOde_;
 
         // Sub Models
 
@@ -290,9 +302,6 @@ protected:
 
             //- Mass transfer rates
             mDotTable mDots_;
-
-        //- fvOptions
-        fv::options* fvOptionsPtr_;
 
 
     // Private member functions
@@ -369,9 +378,6 @@ protected:
         //- Solve heat transfer between phases
         void relaxTemperature(const dimensionedScalar& deltaT);
 
-        //- Calculate mixture properties
-        void calcMixtureVariables();
-
 
 public:
 
@@ -388,6 +394,9 @@ public:
 
 
     // Member Functions
+
+        //- Calculate mixture properties
+        void calcMixtureVariables();
 
         //- Decode primative variables
         virtual void decode();
@@ -423,6 +432,12 @@ public:
         const volScalarField& p() const
         {
             return p_;
+        }
+
+        //- Return the interfacial pressure
+        const volScalarField& PI() const
+        {
+            return PIPtr_.valid() ? PIPtr_() : p_;
         }
 
         //- Return gravitational acceleration
@@ -500,7 +515,7 @@ public:
 
             //- Return a sub model between two phases
             template<class modelType>
-           bool foundSubModel
+            bool foundSubModel
             (
                 const phaseModel& dispersed,
                 const phaseModel& continuous,
@@ -537,14 +552,21 @@ public:
             //- Return non-const access to phase models
             inline phaseModelList& phases();
 
+            //- Return moving phase models
+            inline const phaseModelList& movingPhases() const;
+
             //- Return the phase pairs
             inline const phasePairTable& phasePairs() const;
 
-            //- Access fvOptions
-            inline const fv::options& fvOptions() const;
+            //- Return the phase not given as an argument in a two-phase system
+            //  An error is generated if the system is not two-phase
+            inline const phaseModel& otherPhase(const phaseModel& phase) const;
 
             //- Return fvOptions
-            inline fv::options& fvOptions();
+            inline const fvModels& models() const;
+
+            //- Return fvOptions
+            inline const fvConstraints& constraints() const;
 };
 
 

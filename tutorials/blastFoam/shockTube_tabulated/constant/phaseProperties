@@ -35,30 +35,50 @@ transport
 equationOfState
 {
     file        "p.csv";
-    nRho        7;
-    ne          40;
-    minRho      -3.0;
-    mine        11.8748;
-    dRho        1.0;
-    de          1.0;
+    mod          ln;
+    delim       ";";
+    isReal      false;
 
-    mod         ln;
-    rhoMod      log10;
-    eMod        ln;
+    rhoCoeffs
+    {
+        mod         log10;
+
+        n           7;
+        delta       1.0;
+        min         -3.0;
+    }
+    eCoeffs
+    {
+        mod         ln;
+
+        n           40;
+        min         11.8748;
+        delta       1.0;
+    }
 }
 thermodynamics
 {
     file        "T.csv";
-    nRho        7;
-    ne          40;
-    minRho      -3.0;
-    mine        11.8748;
-    dRho        1.0;
-    de          1.0;
+    mod          ln;
+    delim       ";";
+    isReal      false;
 
-    mod         ln;
-    rhoMod      log10;
-    eMod        ln;
+    rhoCoeffs
+    {
+        mod         log10;
+
+        n           7;
+        delta       1.0;
+        min         -3.0;
+    }
+    eCoeffs
+    {
+        mod         ln;
+
+        n           40;
+        min         11.8748;
+        delta       1.0;
+    }
 }
 
 // ************************************************************************* //

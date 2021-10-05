@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -80,6 +80,9 @@ protected:
 
         //- Optional specification of max level for an error estimator
         label maxLevel_;
+
+        //- Optional specification of smallest cell
+        scalar minDx_;
 
         //- Are probes refined
         Switch refineProbes_;

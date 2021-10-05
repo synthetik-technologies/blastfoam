@@ -136,7 +136,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::dragModels::Chao::Kf
 }
 
 
-Foam::scalar Foam::dragModels::Chao::CdRe
+Foam::scalar Foam::dragModels::Chao::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -152,7 +152,7 @@ Foam::scalar Foam::dragModels::Chao::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::Chao::K
+Foam::scalar Foam::dragModels::Chao::cellK
 (
     const label celli,
     const label nodei,
@@ -172,17 +172,17 @@ Foam::scalar Foam::dragModels::Chao::K
     scalar gij(kineticTheorySystem_.gs0(phase1, phase2)()[celli]);
     scalar dij
     (
-        0.5*(phase1.di(celli, nodei) + phase2.di(celli, nodej))
+        0.5*(phase1.celld(celli, nodei) + phase2.celld(celli, nodej))
     );
     scalar m0
     (
         constant::mathematical::pi/6.0
        *(
-            rho1*pow3(phase1.di(celli, nodei))
-          + rho2*pow3(phase2.di(celli, nodej))
+            rho1*pow3(phase1.celld(celli, nodei))
+          + rho2*pow3(phase2.celld(celli, nodej))
         )
     );
-    scalar magUr(pair_.magUr(celli, nodei, nodej));
+    scalar magUr(pair_.cellmagUr(celli, nodei, nodej));
 
     return
         phase1[celli]*phase2[celli]

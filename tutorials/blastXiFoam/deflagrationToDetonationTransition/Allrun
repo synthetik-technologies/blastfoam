@@ -4,11 +4,25 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create the mesh
 runApplication blockMesh
+
+# -- Collect cells to remove
 runApplication topoSet
+
+# -- Update the mesh
 runApplication subsetMesh -overwrite c0 -patch walls
+
+# -- Decompose the mesh
 runApplication decomposePar
+
+# -- Set the initial conditions
 runParallel setFields
+
+# -- Run the calc
 runParallel blastXiFoam
 
 # ----------------------------------------------------------------- end-of-file

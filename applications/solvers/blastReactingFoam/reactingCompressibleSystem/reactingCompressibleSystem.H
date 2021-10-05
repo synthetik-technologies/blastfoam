@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -38,14 +38,16 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "fluxScheme.H"
-#include "rhoReactionThermo.H"
-#include "CombustionModel.H"
-#include "fluidThermoMomentumTransportModel.H"
-#include "rhoReactionThermophysicalTransportModel.H"
+#include "fluidReactionThermo.H"
+#include "combustionModel.H"
+#include "dynamicMomentumTransportModel.H"
+#include "fluidReactionThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 #include "radiationModel.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 namespace Foam
 {
@@ -56,13 +58,13 @@ namespace Foam
 
 class reactingCompressibleSystem
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 // Protected data
 
     //- Thermo
-    autoPtr<rhoReactionThermo> thermo_;
+    autoPtr<fluidReactionThermo> thermo_;
 
     //- Primitative variables
 
@@ -112,21 +114,20 @@ protected:
         autoPtr<compressible::momentumTransportModel> turbulence_;
 
         //- Thermo turbulence model
-        autoPtr<rhoReactionThermophysicalTransportModel> thermophysicalTransport_;
+        autoPtr<fluidReactionThermophysicalTransportModel> thermophysicalTransport_;
 
 
     //- Chemistry
-    autoPtr<CombustionModel<rhoReactionThermo>> reaction_;
-
-    //- Index of inert specie
-    label inertIndex_;
+    autoPtr<combustionModel> reaction_;
 
     //- Radiation model
     autoPtr<radiationModel> radiation_;
 
-
     //- Gravitational acceleration
     const uniformDimensionedVectorField& g_;
+
+    UautoPtr<const fvModels> modelsPtr_;
+    UautoPtr<const fvConstraints> constraintsPtr_;
 
 
 public:

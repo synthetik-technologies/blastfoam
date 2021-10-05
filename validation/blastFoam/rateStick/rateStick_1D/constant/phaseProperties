@@ -47,7 +47,7 @@ ANFO
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              1740;           // Heat capacity
             Hf              0.0;
         }
     }
@@ -80,12 +80,12 @@ ANFO
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
+            Cv              1740;           // Heat capacity
             Hf              0.0;
         }
     }
 
-    activationModel a;
+    activationModel pressureBased;
     initiation
     {
         E0              4.0e9;

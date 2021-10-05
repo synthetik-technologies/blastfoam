@@ -95,16 +95,7 @@ public:
         coupledMaxErrorFvPatchScalarField
         (
             const coupledMaxErrorFvPatchScalarField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<scalar>> clone() const
-        {
-            return tmp<fvPatchField<scalar>>
-            (
-                new coupledMaxErrorFvPatchScalarField(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         coupledMaxErrorFvPatchScalarField

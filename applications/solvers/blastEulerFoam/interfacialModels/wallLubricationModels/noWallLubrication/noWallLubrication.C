@@ -67,7 +67,7 @@ Foam::wallLubricationModels::noWallLubrication::~noWallLubrication()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volVectorField>
-Foam::wallLubricationModels::noWallLubrication::Fi
+Foam::wallLubricationModels::noWallLubrication::FI
 (
     const label nodei,
     const label nodej

@@ -34,7 +34,7 @@ Description
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "zeroGradientFvPatchFields.H"
 #include "reactingCompressibleSystem.H"
 #include "timeIntegrator.H"
@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     #include "setRootCase.H"
 
     #include "createTime.H"
-    #include "createDynamicFvMesh.H"
+    #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 
@@ -78,6 +78,9 @@ int main(int argc, char *argv[])
 
         //- Clear the flux scheme
         fluid.flux().clear();
+
+        //- Update the fvModels
+        models.correct();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

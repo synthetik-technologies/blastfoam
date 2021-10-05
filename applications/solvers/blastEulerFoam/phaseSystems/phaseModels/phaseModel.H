@@ -48,11 +48,16 @@ SourceFiles
 #include "diameterModel.H"
 #include "fvc.H"
 #include "fvm.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
-#include "phaseCompressibleMomentumTransportModelFwd.H"
+#include "dynamicTransportModel.H"
 #include "PhaseThermophysicalTransportModel.H"
-#include "basicThermoModel.H"
+#include "phaseDynamicMomentumTransportModel.H"
+#include "fluidBlastThermo.H"
+#include "solidBlastThermo.H"
+#include "hashedWordList.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,7 +66,21 @@ namespace Foam
 
 
 class phaseSystem;
-class fluxScheme;
+class phaseFluxScheme;
+
+// Trait for converting the ThermoModel's thermo type to the thermo type needed
+// for the thermophysical transport model type; i.e., from rho-type thermo to
+// fluid-type thermo.
+
+template<class ThermoModel>
+struct PhaseModelTransportThermoModel;
+
+template<>
+struct PhaseModelTransportThermoModel<fluidBlastThermo>
+{
+    typedef fluidThermo type;
+};
+
 
 /*---------------------------------------------------------------------------*\
                            Class phaseModel Declaration
@@ -71,9 +90,21 @@ class fluxScheme;
 class phaseModel
 :
     public volScalarField,
-    public integrationSystem
+    public timeIntegrationSystem,
+    public dynamicTransportModel
 {
 protected:
+    // Protected typedefs
+
+        //- Thermo type for the thermophysical transport model
+        typedef
+            typename PhaseModelTransportThermoModel
+            <
+                fluidBlastThermo
+            >::type
+            transportThermoModel;
+
+
     // Protected data
 
         //- Reference to phase system
@@ -96,12 +127,6 @@ protected:
 
             //- Mean velocity
             volVectorField U_;
-
-            //- Temperature
-            volScalarField T_;
-
-            //- Internal energy
-            volScalarField e_;
 
 
         // Conseritative variables
@@ -135,18 +160,18 @@ protected:
 
 
         //- Diameter model
-        autoPtr<diameterModel> dPtr_;
+        UautoPtr<diameterModel> dPtr_;
 
         //- Turbulence model
-        autoPtr<phaseCompressibleMomentumTransportModel> turbulence_;
+        autoPtr<phaseCompressible::momentumTransportModel> turbulence_;
 
         //- Thermophysical transport model
         autoPtr
         <
             PhaseThermophysicalTransportModel
             <
-                phaseCompressibleMomentumTransportModel,
-                basicThermoModel
+                phaseCompressible::momentumTransportModel,
+                transportThermoModel
             >
         > thermophysicalTransport_;
 
@@ -155,6 +180,18 @@ protected:
 
         //- Solution vector
         vector solutionDs_;
+
+        //- fvModels
+        UautoPtr<const fvModels> modelsPtr_;
+
+        //- fvConstraints
+        UautoPtr<const fvConstraints> constraintsPtr_;
+
+        //- List of fields that have models or constraints
+        hashedWordList solveFields_;
+
+        //- Does postUpdate need to be calles
+        bool needPostUpdate_;
 
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
@@ -241,6 +278,9 @@ public:
     //- Initialize models
     virtual void initializeModels();
 
+    //- Set fvModels and fvConstraints
+    void setFvModelsConstraints();
+
 
     //- Destructor
     virtual ~phaseModel();
@@ -248,10 +288,18 @@ public:
 
     // Member Functions
 
+        using timeIntegrationSystem::mesh;
+
         //- Return that the phase uses a slave pressure
         virtual bool slavePressure() const
         {
             return false;
+        }
+
+        //- Does the phase model track total energy
+        virtual bool totalEnergy() const
+        {
+            return true;
         }
 
         //- Is the phase granular
@@ -307,13 +355,16 @@ public:
         }
 
         //- Return the flux scheme
-        virtual const fluxScheme& flux() const = 0;
+        virtual const phaseFluxScheme& flux() const = 0;
 
         //- Access the flux scheme
-        virtual fluxScheme& flux() = 0;
+        virtual phaseFluxScheme& flux() = 0;
 
         //- Return the residual phase-fraction for given phase
-        virtual dimensionedScalar residualAlpha() const = 0;
+        virtual dimensionedScalar residualAlpha() const
+        {
+            return thermo().residualAlpha();
+        }
 
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
@@ -323,6 +374,9 @@ public:
 
 
         // integrationSystem functions
+
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
 
             //- Decode conservative variables
             virtual void decode() = 0;
@@ -336,7 +390,7 @@ public:
             //- Solve sub-step stepi
             virtual void solve();
 
-            //- Solve viscous terms
+            //- Solve viscous and source terms
             virtual void postUpdate();
 
 
@@ -349,13 +403,20 @@ public:
             }
 
             //- Constant access to alpha field for nodei
-            virtual scalar volumeFractioni(const label celli, const label nodei = -1) const
+            virtual scalar cellvolumeFraction
+            (
+                const label celli,
+                const label nodei = -1
+            ) const
             {
                 return (*this)[celli];
             }
 
             //- Return the density
             virtual const volScalarField& rho() const = 0;
+
+            //- Access the density
+            virtual volScalarField& rho() = 0;
 
             //- Constant access to the mean velocity
             virtual const volVectorField& U(const label nodei = -1) const
@@ -396,7 +457,7 @@ public:
             }
 
             //- Return diameter of nodei for celli
-            virtual scalar di(const label celli, const label nodei = -1) const
+            virtual scalar celld(const label celli, const label nodei = -1) const
             {
                 return dPtr_->d()[celli];
             }
@@ -414,21 +475,21 @@ public:
             virtual tmp<volVectorField> gradAlpha() const = 0;
 
             //- Return the internal energy
-            virtual const volScalarField& e() const
+            virtual const volScalarField& he() const
             {
-                return e_;
+                return thermo().he();
             }
 
             //- Return non-const access to the internal energy
-            virtual volScalarField& e()
+            virtual volScalarField& he()
             {
-                return e_;
+                return thermo().he();
             }
 
             //- Return temperature
-            virtual tmp<volScalarField> T() const
+            virtual const volScalarField& T() const
             {
-                return T_;
+                return thermo().T();
             }
 
             //- Constant access to phasic density
@@ -503,10 +564,10 @@ public:
         // Thermodynamic properties
 
             //- Return thermodynamic model
-            virtual const basicThermoModel& thermo() const = 0;
+            virtual const blastThermo& thermo() const = 0;
 
             //- Access thermodynamic model
-            virtual basicThermoModel& thermo() = 0;
+            virtual blastThermo& thermo() = 0;
 
             //- Return the laminar viscosity
             virtual tmp<volScalarField> nu() const = 0;
@@ -515,7 +576,7 @@ public:
             virtual tmp<scalarField> nu(const label patchi) const = 0;
 
             //- Return the laminar viscosity for patch
-            virtual scalar nui(const label celli) const = 0;
+            virtual scalar cellnu(const label celli) const = 0;
 
             //- Return the laminar dynamic viscosity
             virtual tmp<volScalarField> mu() const = 0;
@@ -538,7 +599,7 @@ public:
 
             //- Thermal diffusivity for temperature of mixture
             //  for cell [J/m/s/K]
-            virtual scalar kappai(const label celli) const = 0;
+            virtual scalar cellkappa(const label celli) const = 0;
 
             //- Thermal diffusivity for energy of mixture [kg/m/s]
             virtual tmp<volScalarField> alphahe() const = 0;
@@ -582,7 +643,7 @@ public:
             virtual tmp<volScalarField> Cv() const = 0;
 
             //- Return the specific heat capacity at constant volume
-            virtual scalar Cvi(const label celli) const = 0;
+            virtual scalar cellCv(const label celli) const = 0;
 
             //- Return the speed of sound
             virtual tmp<volScalarField> speedOfSound() const = 0;

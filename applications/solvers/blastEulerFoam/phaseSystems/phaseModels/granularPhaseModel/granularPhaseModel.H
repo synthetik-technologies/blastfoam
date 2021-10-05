@@ -55,9 +55,9 @@ SourceFiles
 #define granularPhaseModel_H
 
 #include "phaseModel.H"
-#include "solidThermoModel.H"
+#include "solidBlastThermo.H"
 #include "kineticTheoryModel.H"
-#include "AUSMPlusUp.H"
+#include "phaseFluxScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -84,13 +84,16 @@ protected:
     // Protected data
 
         //- Thermophysical properties
-        autoPtr<solidThermoModel> thermo_;
+        autoPtr<solidBlastThermo> thermoPtr_;
 
         //- Phase density
         volScalarField& rho_;
 
-        //- Reference to thermodynamic pressure
-        const volScalarField& p_;
+        //- Internal energy
+        volScalarField& e_;
+
+        //- Temperature
+        volScalarField& T_;
 
         //- Pseudo thermal energy
         volScalarField alphaRhoPTE_;
@@ -98,11 +101,8 @@ protected:
         //- Pseudo thermal energy flux
         surfaceScalarField alphaRhoPTEPhi_;
 
-        //- Residual phase fraction
-        const dimensionedScalar& residualAlpha_;
-
         //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
+        autoPtr<phaseFluxScheme> fluxScheme_;
 
 
 public:
@@ -111,6 +111,7 @@ public:
     ClassName("granular");
 
     // Constructors
+
         granularPhaseModel
         (
             const phaseSystem& fluid,
@@ -123,10 +124,16 @@ public:
     virtual ~granularPhaseModel();
 
 
-    //- Return that the phase uses a slave pressure
+        //- Return that the phase uses a slave pressure
         virtual bool slavePressure() const
         {
             return true;
+        }
+
+        //- Does the phase model track total energy
+        virtual bool totalEnergy() const
+        {
+            return false;
         }
 
         //- Is the phase granular
@@ -141,12 +148,6 @@ public:
             solveAlpha_ = false;
         }
 
-        //- Return the residual phase-fraction for given phase
-        virtual dimensionedScalar residualAlpha() const
-        {
-            return residualAlpha_;
-        }
-
         //- Return the residual phase-density for given phase
         virtual dimensionedScalar residualAlphaRho() const
         {
@@ -155,6 +156,9 @@ public:
 
 
         // integrationSystem functions
+
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
 
             //- Decode primative variables
             virtual void decode();
@@ -173,13 +177,13 @@ public:
 
 
         //- Return the flux scheme
-        virtual const fluxScheme& flux() const
+        virtual const phaseFluxScheme& flux() const
         {
             return fluxScheme_();
         }
 
         //- Access the flux scheme
-        virtual fluxScheme& flux()
+        virtual phaseFluxScheme& flux()
         {
             return fluxScheme_();
         }
@@ -188,6 +192,12 @@ public:
 
             //- Return the density
             virtual const volScalarField& rho() const
+            {
+                return rho_;
+            }
+
+            //- Access the density
+            virtual volScalarField& rho()
             {
                 return rho_;
             }
@@ -207,7 +217,7 @@ public:
             //- Return the thermophysical pressure
             virtual const volScalarField& p() const
             {
-                return p_;
+                return fluid_.p();
             }
 
             //- Return non-const access to the thermodynamic pressure
@@ -249,15 +259,15 @@ public:
         // Thermodynamic properties
 
             //- Return thermodynamic model
-            virtual const basicThermoModel& thermo() const
+            virtual const blastThermo& thermo() const
             {
-                return thermo_();
+                return thermoPtr_();
             }
 
             //- Access thermodynamic model
-            virtual basicThermoModel& thermo()
+            virtual blastThermo& thermo()
             {
-                return thermo_();
+                return thermoPtr_();
             }
 
             //- Return the laminar viscosity
@@ -273,7 +283,7 @@ public:
             }
 
             //- Return the laminar viscosity for patch
-            virtual scalar nui(const label celli) const
+            virtual scalar cellnu(const label celli) const
             {
                 return this->nut_[celli];
             }
@@ -313,7 +323,7 @@ public:
 
             //- Thermal diffusivity for temperature of mixture
             //  for cell [J/m/s/K]
-            virtual scalar kappai(const label celli) const
+            virtual scalar cellkappa(const label celli) const
             {
                 return this->kappa_[celli];
             }
@@ -331,7 +341,7 @@ public:
                 const volScalarField& alphat
             ) const
             {
-                return thermo_->kappaEff(alphat);
+                return thermoPtr_->kappaEff(alphat);
             }
 
             //- Effective thermal turbulent diffusivity for temperature
@@ -342,7 +352,7 @@ public:
                 const label patchi
             ) const
             {
-                return thermo_->kappaEff(alphat, patchi);
+                return thermoPtr_->kappaEff(alphat, patchi);
             }
 
             //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
@@ -351,7 +361,7 @@ public:
                 const volScalarField& alphat
             ) const
             {
-                return thermo_->alphaEff(alphat);
+                return thermoPtr_->alphaEff(alphat);
             }
 
             //- Effective thermal turbulent diffusivity of mixture
@@ -362,7 +372,7 @@ public:
                 const label patchi
             ) const
             {
-                return thermo_->alphaEff(alphat, patchi);
+                return thermoPtr_->alphaEff(alphat, patchi);
             }
 
             //- Return the specific heat capacity at constant pressure
@@ -372,9 +382,9 @@ public:
             virtual tmp<volScalarField> Cv() const;
 
             //- Return the specific heat capacity at constant volume
-            virtual scalar Cvi(const label celli) const
+            virtual scalar cellCv(const label celli) const
             {
-                return thermo_->Cvi(celli);
+                return thermoPtr_->cellCv(T_[celli], celli);
             }
 
             //- Return the speed of sound

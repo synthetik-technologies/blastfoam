@@ -67,16 +67,44 @@ Foam::interfacialPressureModels::single::~single()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::single::Pi() const
+Foam::interfacialPressureModels::single::PI() const
 {
     return p_;
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::single::Pi(const label celli) const
+Foam::interfacialPressureModels::single::cellPI(const label celli) const
 {
     return p_[celli];
+}
+
+
+Foam::scalar
+Foam::interfacialPressureModels::single::celldPIdAlpha
+(
+    const label celli,
+    const label phasei
+) const
+{
+    return 0.0;
+}
+
+
+Foam::scalar
+Foam::interfacialPressureModels::single::celldPIde
+(
+    const label celli,
+    const label phasei
+) const
+{
+    if (phasei != phase_.index())
+    {
+        return 0.0;
+    }
+    const fluidBlastThermo& thermo =
+        dynamicCast<const fluidBlastThermo>(phase_.thermo());
+    return thermo.celldpde(celli);
 }
 
 

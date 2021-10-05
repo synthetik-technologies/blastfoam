@@ -75,7 +75,7 @@ Foam::virtualMassModel::~virtualMassModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::virtualMassModel::Ki
+Foam::tmp<Foam::volScalarField> Foam::virtualMassModel::KI
 (
     const label nodei,
     const label nodej
@@ -91,7 +91,7 @@ Foam::tmp<Foam::volScalarField> Foam::virtualMassModel::K
     const label nodej
 ) const
 {
-    return pair_.dispersed().volumeFraction(nodei)*Ki(nodei, nodej);
+    return pair_.dispersed().volumeFraction(nodei)*KI(nodei, nodej);
 }
 
 
@@ -103,7 +103,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::virtualMassModel::Kf
 {
     return
         fvc::interpolate(pair_.dispersed().volumeFraction(nodei))
-       *fvc::interpolate(Ki(nodei, nodej));
+       *fvc::interpolate(KI(nodei, nodej));
 }
 
 

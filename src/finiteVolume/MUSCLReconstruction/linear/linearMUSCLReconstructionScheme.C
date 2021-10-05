@@ -74,14 +74,9 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiOwn
     (
-        new GeometricField<Type, fvsPatchField, surfaceMesh>
+        GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            IOobject
-            (
-                this->phi_.name() + "Own",
-                this->mesh_.time().timeName(),
-                this->mesh_
-            ),
+            this->phi_.name() + "Own",
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -90,8 +85,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
 
     const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
-    const vectorField& cc = this->mesh_.cellCentres();
-    const vectorField& fc = this->mesh_.faceCentres();
+    const vectorField& cc = this->mesh_.C();
+    const vectorField& fc = this->mesh_.Cf();
 
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tlimOwn
     (
@@ -128,11 +123,12 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
         if (patch.coupled())
         {
-            Field<Type> pphiOwn(pphi.patchInternalField());
-            Field<Type> pphiNei(pphi.patchNeighbourField());
+            Field<Type>& pphiOwn = phiOwn.boundaryFieldRef()[patchi];
+            Field<Type> pphipOwn(pphi.patchInternalField());
+            Field<Type> pphipNei(pphi.patchNeighbourField());
 
-            Field<Type> minVal(min(pphiOwn, pphiNei));
-            Field<Type> maxVal(max(pphiOwn, pphiNei));
+            Field<Type> minVal(min(pphipOwn, pphipNei));
+            Field<Type> maxVal(max(pphipOwn, pphipNei));
 
             const Field<Type>& plimOwn
             (
@@ -156,20 +152,18 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
                     this->gradPhis_[cmpti].boundaryField()[patchi].patchInternalField()
                 );
 
-                forAll(pphiOwn, facei)
+                forAll(pphipOwn, facei)
                 {
-                    setComponent(phiOwn.boundaryFieldRef()[patchi][facei], cmpti) =
-                        component(pphiOwn[facei], cmpti)
+                    setComponent(pphiOwn[facei], cmpti) =
+                        component(pphipOwn[facei], cmpti)
                       + component(plimOwn[facei], cmpti)
                        *(pdeltaOwn[facei] & pgradPhiOwn[facei]);
                 }
             }
 
             // Hard limit to min/max of owner/neighbour values
-            phiOwn.boundaryFieldRef()[patchi] =
-                max(minVal, phiOwn.boundaryField()[patchi]);
-            phiOwn.boundaryFieldRef()[patchi] =
-                min(maxVal, phiOwn.boundaryField()[patchi]);
+            pphiOwn = max(minVal, phiOwn.boundaryField()[patchi]);
+            pphiOwn = min(maxVal, phiOwn.boundaryField()[patchi]);
         }
         else
         {
@@ -187,14 +181,9 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tphiNei
     (
-        new GeometricField<Type, fvsPatchField, surfaceMesh>
+        GeometricField<Type, fvsPatchField, surfaceMesh>::New
         (
-            IOobject
-            (
-                this->phi_.name() + "Nei",
-                this->mesh_.time().timeName(),
-                this->mesh_
-            ),
+            this->phi_.name() + "Nei",
             this->mesh_,
             dimensioned<Type>(this->phi_.dimensions(), Zero)
         )
@@ -203,8 +192,8 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
 
     const labelList& owner = this->mesh_.owner();
     const labelList& neighbour = this->mesh_.neighbour();
-    const vectorField& cc = this->mesh_.cellCentres();
-    const vectorField& fc = this->mesh_.faceCentres();
+    const vectorField& cc = this->mesh_.C();
+    const vectorField& fc = this->mesh_.Cf();
 
     tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tlimNei
     (
@@ -240,11 +229,12 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
         if (patch.coupled())
         {
-            Field<Type> pphiOwn(pphi.patchInternalField());
-            Field<Type> pphiNei(pphi.patchNeighbourField());
+            Field<Type>& pphiNei = phiNei.boundaryFieldRef()[patchi];
+            Field<Type> pphipOwn(pphi.patchInternalField());
+            Field<Type> pphipNei(pphi.patchNeighbourField());
 
-            Field<Type> minVal(min(pphiOwn, pphiNei));
-            Field<Type> maxVal(max(pphiOwn, pphiNei));
+            Field<Type> minVal(min(pphipOwn, pphipNei));
+            Field<Type> maxVal(max(pphipOwn, pphipNei));
 
             const Field<Type>& plimNei
             (
@@ -267,20 +257,18 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
                     this->gradPhis_[cmpti].boundaryField()[patchi].patchNeighbourField()
                 );
 
-                forAll(pphiNei, facei)
+                forAll(pphipNei, facei)
                 {
-                    setComponent(phiNei.boundaryFieldRef()[patchi][facei], cmpti) =
-                        component(pphiNei[facei], cmpti)
+                    setComponent(pphiNei[facei], cmpti) =
+                        component(pphipNei[facei], cmpti)
                       + component(plimNei[facei], cmpti)
                        *(pdeltaNei[facei] & pgradPhiNei[facei]);
                 }
             }
 
             // Hard limit to min/max of owner/neighbour values
-            phiNei.boundaryFieldRef()[patchi] =
-                max(minVal, phiNei.boundaryField()[patchi]);
-            phiNei.boundaryFieldRef()[patchi] =
-                min(maxVal, phiNei.boundaryField()[patchi]);
+            pphiNei = max(minVal, phiNei.boundaryField()[patchi]);
+            pphiNei = min(maxVal, phiNei.boundaryField()[patchi]);
         }
         else
         {

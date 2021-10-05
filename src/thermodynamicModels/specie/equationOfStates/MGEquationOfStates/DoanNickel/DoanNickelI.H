@@ -38,57 +38,6 @@ inline Foam::DoanNickel<Specie>::DoanNickel
 {}
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-template<class Specie>
-inline Foam::DoanNickel<Specie>::DoanNickel
-(
-    const word& name,
-    const DoanNickel<Specie>& pf
-)
-:
-    Specie(name, pf)
-{}
-
-
-template<class Specie>
-inline Foam::autoPtr<Foam::DoanNickel<Specie>>
-Foam::DoanNickel<Specie>::clone() const
-{
-    return autoPtr<DoanNickel<Specie>>
-    (
-        new DoanNickel<Specie>(*this)
-    );
-}
-
-
-template<class Specie>
-inline Foam::autoPtr<Foam::DoanNickel<Specie>>
-Foam::DoanNickel<Specie>::New
-(
-    const dictionary& dict
-)
-{
-    return autoPtr<DoanNickel<Specie>>
-    (
-        new DoanNickel<Specie>(dict)
-    );
-}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::Pi
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return 0.0;
-}
-
-
 template<class Specie>
 Foam::scalar Foam::DoanNickel<Specie>::delta
 (
@@ -140,70 +89,6 @@ Foam::scalar Foam::DoanNickel<Specie>::GammaMG
           + d_*exp(-e/E3_)*f2
           + g_*f3
         )*pow(rhoByRho0, A) + 1.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::dpdv
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*e);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::dpde
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    //- Unscale the change in internal energy
-    return 1e-6*dGammade(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*rho;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::E
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    // Need to calculate
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::H
-(
-    const scalar rho,
-    const scalar e,
-    const scalar T
-) const
-{
-    // Need to calculate
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::DoanNickel<Specie>::S
-(
-    const scalar p,
-    const scalar rho,
-    const scalar T
-) const
-{
-    // Need to calculate
-    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
 
 
@@ -351,7 +236,7 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
     scalar dA
     (
         (a1_*df1 - a2_*(df1*(1.0 - f2) + (1.0 - f1)*df2))*log10(max(e, small))
-      + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(e*log(10.0))
+      + (a1_*f1 + a2_*(1.0 - f1)*(1.0 - f2))/(max(e, small)*log(10.0))
       + a3_*df2
     );
 
@@ -368,6 +253,206 @@ Foam::scalar Foam::DoanNickel<Specie>::dGammade
           + g_*df3;
 
     return (g*log(rhoByRho0)*dA + dg)*pow(rhoByRho0, A);
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+template<class Specie>
+inline Foam::DoanNickel<Specie>::DoanNickel
+(
+    const word& name,
+    const DoanNickel<Specie>& pf
+)
+:
+    Specie(name, pf)
+{}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::DoanNickel<Specie>>
+Foam::DoanNickel<Specie>::clone() const
+{
+    return autoPtr<DoanNickel<Specie>>
+    (
+        new DoanNickel<Specie>(*this)
+    );
+}
+
+
+template<class Specie>
+inline Foam::autoPtr<Foam::DoanNickel<Specie>>
+Foam::DoanNickel<Specie>::New
+(
+    const dictionary& dict
+)
+{
+    return autoPtr<DoanNickel<Specie>>
+    (
+        new DoanNickel<Specie>(dict)
+    );
+}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return
+        limit
+      ? max((GammaMG(rho, e) - 1.0)*rho*e, 0.0)
+      : (GammaMG(rho, e) - 1.0)*rho*e;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    return GammaMG(rho, e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    scalar gamma(GammaMG(rho, e));
+    scalar h(gamma*p/((gamma - 1.0)*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*(gamma - 1.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::dpdv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return -sqr(rho)*(dGammadRho(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    //- Unscale the change in internal energy
+    return 1e-6*dGammade(rho, e)*rho*e + (GammaMG(rho, e) - 1.0)*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    scalar gamma(this->GammaMG(rho, e));
+    return this->eBased_ ? (gamma - 1.0)*CpCv : CpCv*(gamma - 1.0)/gamma;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::E
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    // Need to calculate
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::H
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    // Need to calculate
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::DoanNickel<Specie>::S
+(
+    const scalar p,
+    const scalar rho,
+    const scalar T
+) const
+{
+    // Need to calculate
+    return -this->R()*log(p/Foam::constant::thermodynamic::Pstd);
 }
 
 

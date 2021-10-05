@@ -81,38 +81,46 @@ Foam::idealGas<Specie>::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
 template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::Pi
+Foam::scalar Foam::idealGas<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
-    return 0.0;
+    return
+        limit
+      ? max((gamma_ - 1.0)*rho*e, 0.0)
+      : (gamma_ - 1.0)*rho*e;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::delta
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::idealGas<Specie>::GammaMG
+Foam::scalar Foam::idealGas<Specie>::Gamma
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
     return gamma_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    return p*gamma_/max(rho, 1e-10);
 }
 
 
@@ -137,6 +145,56 @@ Foam::scalar Foam::idealGas<Specie>::dpde
 ) const
 {
     return (gamma_ - 1.0)*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::idealGas<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    return this->eBased_ ? (gamma_ - 1.0)*CpCv : CpCv*(gamma_ - 1.0)/gamma_;
 }
 
 

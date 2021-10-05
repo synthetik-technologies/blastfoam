@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -35,7 +35,7 @@ Foam::scalar Foam::sutherlandTransport<Thermo>::readCoeff
     const dictionary& dict
 )
 {
-    return readScalar(dict.subDict("transport").lookup(coeffName));
+    return dict.subDict("transport").lookup<scalar>(coeffName);
 }
 
 
@@ -61,6 +61,39 @@ Foam::sutherlandTransport<Thermo>::sutherlandTransport
     As_(readCoeff("As", dict)),
     Ts_(readCoeff("Ts", dict))
 {}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::sutherlandTransport<Thermo>::write(Ostream& os) const
+{
+    os  << this->specieName() << endl
+        << token::BEGIN_BLOCK  << incrIndent << nl;
+
+    Thermo::write(os);
+
+    dictionary dict("transport");
+    dict.add("As", As_);
+    dict.add("Ts", Ts_);
+
+    os  << indent << dict.dictName() << dict
+        << decrIndent << token::END_BLOCK << nl;
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+template<class Thermo>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const sutherlandTransport<Thermo>& st
+)
+{
+    st.write(os);
+    return os;
+}
 
 
 // ************************************************************************* //

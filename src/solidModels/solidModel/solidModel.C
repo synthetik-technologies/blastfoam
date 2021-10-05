@@ -53,7 +53,8 @@ Foam::tmp<Foam::volScalarField> Foam::solidModel::uniformOrRead
         mesh.time().timeName(),
         mesh,
         IOobject::NO_READ,
-        IOobject::NO_WRITE
+        IOobject::NO_WRITE,
+        false
     );
 
     if (type == "uniform")
@@ -157,27 +158,7 @@ Foam::solidModel::solidModel
     ),
     mesh_(mesh),
     type_(type),
-    thermophysicalProperties_
-    (
-        IOobject
-        (
-            "thermophysicalProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    ),
-    thermoPtr_
-    (
-        solidThermoModel::NewBasic
-        (
-            word::null,
-            mesh,
-            thermophysicalProperties_,
-            true
-        )
-    ),
+    thermoPtr_(),
     D_
     (
         IOobject
@@ -216,7 +197,15 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
     ),
-    solutionTol_
+    relTol_
+    (
+        subDict(type + "Coeffs").lookupOrDefault<scalar>
+        (
+            "relTol",
+            1e-04
+        )
+    ),
+    tolerance_
     (
         subDict(type + "Coeffs").lookupOrDefault<scalar>
         (
@@ -225,8 +214,23 @@ Foam::solidModel::solidModel
         )
     ),
     nCorr_(subDict(type + "Coeffs").lookupOrDefault<label>("nCorrectors", 10000)),
-    fvOptions_(fv::options::New(mesh))
-{}
+    fvModels_(fvModels::New(mesh)),
+    fvConstraints_(fvConstraints::New(mesh))
+{
+    IOdictionary thermophysicalProperties
+    (
+        IOobject
+        (
+            "thermophysicalProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE,
+            false
+        )
+    );
+    thermoPtr_.set(solidBlastThermo::New(mesh, thermophysicalProperties).ptr());
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

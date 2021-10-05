@@ -1,23 +1,28 @@
-specie/specie/blastSpecie.C
-specie/specie/rBlastSpecie.C
+specie/specie/specieBlast.C
+specie/specie/rspecieBlast.C
 
-basic/basicThermo/basicThermoModel.C
+basic/phaseBlastThermo/phaseBlastThermo.C
+basic/phaseFluidBlastThermo/phaseFluidBlastThermo.C
 
-basic/fluidThermo/fluidThermoModel.C
-basic/fluidThermo/newFluidThermoModel.C
+basic/blastThermo/blastThermo.C
+basic/fluidBlastThermo/fluidBlastThermo.C
+basic/solidBlastThermo/solidBlastThermo.C
 
-basic/solidThermo/solidThermoModel.C
-basic/solidThermo/newSolidThermoModel.C
+basic/multicomponentBlastThermo/multicomponentBlastThermo.C
 
-derived/basicFluidThermo/basicFluidThermos.C
-derived/detonatingFluidThermo/detonatingFluidThermos.C
+derived/twoPhaseFluidBlastThermo/twoPhaseFluidBlastThermo.C
+derived/multiphaseFluidBlastThermo/multiphaseFluidBlastThermo.C
 
-derived/basicSolidThermo/basicSolidThermoModels.C
-derived/detonatingSolidThermo/detonatingSolidThermos.C
+derived/basicFluidBlastThermo/basicFluidBlastThermos.C
+derived/basicFluidBlastThermo/basicPhaseFluidBlastThermos.C
+derived/basicSolidBlastThermo/basicSolidBlastThermos.C
 
-derived/twoPhaseFluidThermo/twoPhaseFluidThermo.C
-derived/multiphaseFluidThermo/multiphaseFluidThermo.C
-derived/multicomponentFluidThermo/multicomponentFluidThermos.C
+derived/detonatingFluidBlastThermo/detonatingFluidBlastThermos.C
+derived/detonatingSolidBlastThermo/detonatingSolidBlastThermos.C
+
+derived/multicomponentFluidBlastThermo/multicomponentFluidBlastThermos.C
+derived/multicomponentFluidBlastThermo/multicomponentPhaseFluidBlastThermos.C
+derived/multicomponentSolidBlastThermo/multicomponentSolidBlastThermos.C
 
 activationModels/activationModel/activationModel.C
 activationModels/activationModel/newActivationModel.C
@@ -36,13 +41,6 @@ afterburnModels/MillerAfterburn/MillerAfterburn.C
 afterburnModels/noAfterburn/noAfterburn.C
 
 derivedFvPatchFields/pressureWaveTransmissive/pressureWaveTransmissiveFvPatchFields.C
-derivedFvPatchFields/energyJump/energyJump/blastEnergyJumpFvPatchScalarField.C
-derivedFvPatchFields/energyJump/energyJumpAMI/blastEnergyJumpAMIFvPatchScalarField.C
-derivedFvPatchFields/fixedEnergy/blastFixedEnergyFvPatchScalarField.C
-derivedFvPatchFields/gradientEnergy/blastGradientEnergyFvPatchScalarField.C
-derivedFvPatchFields/gradientEnergy/blastGradientEnergyCalculatedTemperatureFvPatchScalarField.C
-derivedFvPatchFields/mixedEnergy/blastMixedEnergyFvPatchScalarField.C
-derivedFvPatchFields/mixedEnergy/blastMixedEnergyCalculatedTemperatureFvPatchScalarField.C
 
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

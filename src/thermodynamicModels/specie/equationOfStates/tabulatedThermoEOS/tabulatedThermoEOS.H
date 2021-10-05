@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "lookupTable2D.H"
+#include "scalarLookupTable2D.H"
 
 namespace Foam
 {
@@ -92,10 +92,10 @@ class tabulatedThermoEOS
 // Private data
 
     //- Pressure lookup table
-    lookupTable2D pTable_;
+    scalarLookupTable2D pTable_;
 
     //- Temperature lookup table
-    lookupTable2D TTable_;
+    scalarLookupTable2D TTable_;
 
 
 public:
@@ -146,30 +146,44 @@ public:
         // Equation of state functions
 
             //- Return pressure
-            scalar p(const scalar& rho, const scalar& e, const scalar& T) const;
+            scalar p
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T,
+                const bool limit = true
+            ) const;
 
             //- Return derivative of pressure w.r.t. specific volume
             scalar dpdv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
+            //- Return derivative of pressure w.r.t. specific density
+            scalar dpdRho
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Return derivative of pressure w.r.t. Temperature
             scalar dpdT
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Return derivative of pressure w.r.t. internal energy
             scalar dpde
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
         // Thermodynamic functions
@@ -177,82 +191,83 @@ public:
             //- Return Mie Gruniesen coefficient
             scalar Gamma
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Return speed of sound
             scalar cSqr
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Heat capacity at constant volume [J/kg/K]
             scalar Cv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Heat capacity at constant pressure [J/kg/K]
             scalar Cp
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Heat capacity difference [J/kg/K]
             scalar CpMCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T,
+                const scalar CpCv
             ) const;
 
             //- Return specific heat ratio
             scalar CpByCv
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Sensible internal energy [J/kg]
             scalar Es
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Absolute internal energy [J/kg]
             scalar Ea
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Sensible enthalpy [J/kg]
             scalar Hs
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Absolute enthalpy [J/kg]
             scalar Ha
             (
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Heat of formation [J/kg]
@@ -264,36 +279,34 @@ public:
             //- Entropy [J/kg/K]
             scalar S
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Return temperature
             scalar TRhoE
             (
-                const scalar& T0,
-                const scalar& rho,
-                const scalar& e
+                const scalar T0,
+                const scalar rho,
+                const scalar e
             ) const;
 
             //- Initialize internal energy
             scalar initializeEnergy
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar rho,
+                const scalar e,
+                const scalar T
             ) const;
 
             //- Initialize internal energy
-            scalar initializeRho
+            scalar rhoPT
             (
-                const scalar& p,
-                const scalar& rho,
-                const scalar& e,
-                const scalar& T
+                const scalar p,
+                const scalar T
             ) const;
 
         // Member operators

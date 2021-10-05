@@ -68,6 +68,19 @@ Foam::rhoConst<Specie>::clone() const
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::rhoConst<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return pRef_;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::Gamma
 (
     const scalar rho,
@@ -77,17 +90,6 @@ Foam::scalar Foam::rhoConst<Specie>::Gamma
 ) const
 {
     return 1.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::rhoConst<Specie>::pRhoT
-(
-    const scalar rho,
-    const scalar T
-) const
-{
-    return pRef_;
 }
 
 
@@ -119,6 +121,18 @@ Foam::scalar Foam::rhoConst<Specie>::dpdv
 
 template<class Specie>
 Foam::scalar Foam::rhoConst<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::rhoConst<Specie>::dpde
 (
     const scalar rho,
     const scalar e,
@@ -182,7 +196,8 @@ Foam::scalar Foam::rhoConst<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return 0.0;

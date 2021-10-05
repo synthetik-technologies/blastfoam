@@ -37,10 +37,7 @@ Description
 #include "volFields.H"
 #include "atmosphereModel.H"
 #include "fvc.H"
-#include "fluidThermoModel.H"
-#include "twoPhaseFluidThermo.H"
-#include "multiphaseFluidThermo.H"
-#include "PtrListDictionary.H"
+#include "fluidBlastThermo.H"
 
 
 using namespace Foam;
@@ -99,204 +96,28 @@ int main(int argc, char *argv[])
         atmosphereProperties.lookupOrDefault("sharedTemperature", true)
     );
 
-    //- Field names
-    word rhoName(IOobject::groupName("rho", phaseName));
-    word pName
+    wordList phases(phaseProperties.lookupOrDefault("phases", wordList(1,word::null)));
+    autoPtr<fluidBlastThermo> thermo
     (
-        sharedPressure
-      ? "p"
-      : IOobject::groupName("p", phaseName)
-    );
-    word TName
-    (
-        sharedTemperature
-      ? "T"
-      : IOobject::groupName("T", phaseName)
-    );
-    word eName
-    (
-        sharedTemperature
-      ? "e"
-      : IOobject::groupName("e", phaseName)
-    );
-
-    //- Density field
-    volScalarField rho
-    (
-        IOobject
+        fluidBlastThermo::New
         (
-            rhoName,
-            runTime.timeName(),
+            phases.size(),
             mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
+            phaseProperties
+        )
     );
-
-    volScalarField p
-    (
-        IOobject
-        (
-            pName,
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
-
-    volScalarField T
-    (
-        IOobject
-        (
-            TName,
-            runTime.timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    );
-    volScalarField e
-    (
-        IOobject
-        (
-            eName,
-            runTime.timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar(sqr(dimVelocity), -1.0),
-        fluidThermoModel::eBoundaryTypes(T),
-        fluidThermoModel::eBoundaryBaseTypes(T)
-    );
-
-    wordList phases(phaseProperties.lookupOrDefault("phases", wordList()));
-    bool multiphase(false);
-    if (phases.size() > 0)
-    {
-        multiphase = phaseProperties.subDict(phases[0]).found("thermoCoeffs");
-    }
-    PtrListDictionary<fluidThermoModel> thermos
-    (
-        multiphase
-      ? phases.size()
-      : 1
-    );
-    fluidThermoModel* thermoPtr = nullptr;
-    if (!multiphase)
-    {
-        if (phases.size() <= 1)
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                fluidThermoModel::New
-                (
-                    word::null,
-                    mesh,
-                    phaseProperties.subDict("mixture"),
-                    true
-                ).ptr()
-            );
-            thermoPtr = &thermos[0];
-        }
-        else if (phases.size() == 2)
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                twoPhaseFluidThermo::New
-                (
-                    word::null,
-                    mesh,
-                    phaseProperties,
-                    true
-                ).ptr()
-            );
-            thermoPtr =
-                thermos[0].thermo(0).rho().group() == phaseName
-              ? &thermos[0].thermo(0)
-              : &thermos[0].thermo(1);
-        }
-        else
-        {
-            thermos.set
-            (
-                0,
-                "mixture",
-                multiphaseFluidThermo::New
-                (
-                    word::null,
-                    mesh,
-                    phaseProperties,
-                    true
-                ).ptr()
-            );
-            forAll(phases, phasei)
-            {
-                if (thermos[0].thermo(phasei).rho().group() == phaseName)
-                {
-                    thermoPtr = &thermos[0].thermo(phasei);
-                    break;
-                }
-            }
-        }
-    }
-    else
-    {
-        forAll(phases, phasei)
-        {
-            thermos.set
-            (
-                phasei,
-                phases[phasei],
-                fluidThermoModel::New
-                (
-                    phaseName,
-                    mesh,
-                    phaseProperties.subDict(phases[phasei]).subDict("thermoCoeffs"),
-                    true
-                ).ptr()
-            );
-            if (phases[phasei] == phaseName)
-            {
-                thermoPtr = &thermos[phasei];
-            }
-        }
-    }
 
     Info<< "Initializing atmosphere." << endl;
-    atmosphere->createAtmosphere(p, rho);
+    atmosphere->createAtmosphere(thermo());
 
-    if (thermoPtr)
+    forAll(thermo->p().boundaryField(), patchi)
     {
-        e = thermoPtr->calce();
-        T = thermoPtr->calcT();
+        thermo->p().boundaryFieldRef()[patchi] =
+            thermo->p().boundaryField()[patchi].patchInternalField();
     }
-
-    if (multiphase)
-    {
-        if (atmosphereProperties.lookup<Switch>("equilibriumTemperature"))
-        {
-            forAll(phases, phasei)
-            {
-                Info<< "Setting " << thermos[phasei].T().name() << endl;
-                thermos[phasei].T() = T;
-                thermos[phasei].T().write();
-            }
-        }
-    }
-
-    p.write();
-    rho.write();
-    T.write();
+    thermo->T().write();
+    thermo->rho().write();
+    thermo->p().write();
 
     Info<< "Done" << nl << endl;
 }

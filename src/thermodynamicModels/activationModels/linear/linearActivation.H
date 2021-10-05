@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -69,13 +69,6 @@ class linearActivation
 
         //- Correct lambda field after advection
         virtual void correct();
-
-        //- Do detonation points need to be specified
-        virtual bool needDetonationPoints() const
-        {
-            return true;
-        }
-
 
 
 public:

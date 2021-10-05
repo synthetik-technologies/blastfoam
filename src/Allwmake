@@ -4,17 +4,13 @@ cd "${0%/*}" || exit                                # Run from this directory
 
 #------------------------------------------------------------------------------
 
+wmake $targetType numerics
 wmake $targetType finiteVolume
 wmake $targetType diameterModels
 wmake $targetType thermodynamicModels
-wmake $targetType MomentumTransportModels
-wmake $targetType ThermophysicalTransportModels
 wmake $targetType radiationModels
-wmake $targetType fluxSchemes
 wmake $targetType compressibleSystem
 wmake $targetType dynamicMesh
-
-lagrangian/Allwmake $targetType $*
 
 wmake $targetType functionObjects
 
@@ -24,22 +20,5 @@ wmake $targetType dynamicFvMesh
 wmake $targetType atmosphereModels
 wmake $targetType solidModels
 
-if [ -z "$QBMM_INST_DIR" ]
-then
-    echo "**************************************************"
-    echo "    QBMM_INST_DIR has not been defined."
-    echo "    QBMM classes will not be compiled."
-    echo "    Please add \"export QBMM_INST_DIR=QBMM_DIR\""
-    echo "    to you .bashrc file, before sourcing blastfoam"
-    echo "**************************************************"
-elif [ ! -d "$QBMM_INST_DIR" ]
-then
-    echo "**************************************************"
-    echo "    $QBMM_INST_DIR is not a valid directory."
-    echo "    QBMM classes will not be compiled."
-    echo "**************************************************"
-else
-    wmake $targetType QBMM
-fi
 # -----------------------------------------------------------------------------
 

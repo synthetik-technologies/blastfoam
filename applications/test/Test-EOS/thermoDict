@@ -1,64 +1,87 @@
-thermoType
-{
-    transport const;
-    thermo  eConst;
-    equationOfState Tillotson;
-}
+
+// thermoType
+// {
+//     transport const;
+//     thermo  eConst;
+//     equationOfState Tillotson;
+// }
 
 specie
 {
     molWeight 18.01;
 }
 
-thermodynamics
-{
-    Cv  2400;
-    Hf  0;
-}
+// thermodynamics
+// {
+//     Cv  2400;
+//     Hf  0;
+// }
 
 transport
 {
     mu  0;
     Pr  1.0;
 }
-
-equationOfState
+thermoType
 {
-//     b 0.001;
-// Shock
-//     rho0    1000;
-//     c       1480;
-//     Gamma0  0.5;
-//     a       0;
-//     S1      2.56;
-//     S2      1.986;
-//     S3      1.2268;
-
-// Tillotson
-    rho0    1000.0;
-    a       0.7;
-    b       0.15;
-    A       21.1e8;
-    B       132.5e8;
-
-    e0      7e5;
-
-    pCav    5000;
-    rhoCav  995;
-    k       1.33;
-
-// linearTillotson
-//     p0      1e5;
-//     rho0    1000.0;
-//     e0      3.543e5;
-//     omega   0.28;
-//     A       2.2e9;
-//     B       9.54e9;
-//     C       14.57e9;
-//     pCav    5000;
-
-// Stiffened gas
-//     a 3309;
-//     b 0;
-//     gamma 7.15;
+    transport const;
+    thermo      eConst;
+    equationOfState DoanNickel;
 }
+
+thermodynamics
+{
+    Cv 718;
+    Hf 0;
+
+    file        "T.csv";
+    nRho        7;
+    ne          40;
+    minRho      -3.0;
+    mine        11.8748;
+    dRho        1.0;
+    de          1.0;
+
+    mod         ln;
+    TMod        ln;
+}
+// equationOfState
+// {
+// //     b 0.001;
+// // Shock
+// //     rho0    1000;
+// //     c       1480;
+// //     Gamma0  0.5;
+// //     a       0;
+// //     S1      2.56;
+// //     S2      1.986;
+// //     S3      1.2268;
+//
+// // Tillotson
+//     rho0    1000.0;
+//     a       0.7;
+//     b       0.15;
+//     A       21.1e8;
+//     B       132.5e8;
+//
+//     e0      7e5;
+//
+//     pCav    5000;
+//     rhoCav  995;
+//     k       1.33;
+//
+// // linearTillotson
+// //     p0      1e5;
+// //     rho0    1000.0;
+// //     e0      3.543e5;
+// //     omega   0.28;
+// //     A       2.2e9;
+// //     B       9.54e9;
+// //     C       14.57e9;
+// //     pCav    5000;
+//
+// // Stiffened gas
+// //     a 3309;
+// //     b 0;
+// //     gamma 7.15;
+// }

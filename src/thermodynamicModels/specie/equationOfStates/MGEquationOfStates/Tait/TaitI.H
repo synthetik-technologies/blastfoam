@@ -46,6 +46,17 @@ inline Foam::Tait<Specie>::Tait
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    return gamma_*(b_ - a_);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -90,36 +101,46 @@ Foam::Tait<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::Tait<Specie>::Pi
+Foam::scalar Foam::Tait<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
-    return gamma_*(b_ - a_);
+    return
+        limit
+      ? max((gamma_ - 1.0)*rho*e - Pi(rho, e), 0.0)
+      : (gamma_ - 1.0)*rho*e - Pi(rho, e);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Tait<Specie>::delta
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e
-) const
-{
-    return 0.0;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Tait<Specie>::GammaMG
+Foam::scalar Foam::Tait<Specie>::Gamma
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
     return gamma_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    scalar h((gamma_*p + Pi(rho, e))/((gamma_ - 1.0)*max(rho, 1e-10)));
+    return h*(gamma_ - 1.0);
 }
 
 
@@ -144,6 +165,56 @@ Foam::scalar Foam::Tait<Specie>::dpde
 ) const
 {
     return (gamma_ - 1.0)*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tait<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    return this->eBased_ ? (gamma_ - 1.0)*CpCv : CpCv*(gamma_ - 1.0)/gamma_;
 }
 
 

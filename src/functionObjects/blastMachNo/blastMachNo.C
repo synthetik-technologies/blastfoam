@@ -5,7 +5,8 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Calculate mach number with blastFoam thermo
+13-05-2020 Synthetik Applied Technologies: |    Calculate mach number with
+                                                blastFoam thermo
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -26,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "blastMachNo.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -50,7 +51,7 @@ Foam::functionObjects::blastMachNo::blastMachNo
 :
     fvMeshFunctionObject(name, runTime, dict),
     phaseName_(dict.lookupOrDefault("phaseName", word::null)),
-    systemName_(IOobject::groupName("basicThermo", phaseName_)),
+    systemName_(IOobject::groupName(basicThermo::dictName, phaseName_)),
     resultName_(IOobject::groupName("Ma", phaseName_)),
     UName_(IOobject::groupName("U", phaseName_))
 {}
@@ -78,12 +79,12 @@ bool Foam::functionObjects::blastMachNo::execute()
     if
     (
         foundObject<volVectorField>(UName_)
-     && foundObject<fluidThermoModel>(systemName_)
+     && foundObject<fluidBlastThermo>(systemName_)
     )
     {
         tmp<volScalarField> speedOfSound
         (
-            lookupObject<fluidThermoModel>(systemName_).speedOfSound()
+            lookupObject<fluidBlastThermo>(systemName_).speedOfSound()
         );
         speedOfSound.ref().max(small);
 
@@ -108,8 +109,12 @@ bool Foam::functionObjects::blastMachNo::execute()
 
 bool Foam::functionObjects::blastMachNo::write()
 {
-    writeObject(resultName_);
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        writeObject(resultName_);
+        return true;
+    }
+    return false;
 }
 
 

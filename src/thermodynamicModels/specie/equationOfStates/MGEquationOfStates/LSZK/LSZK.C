@@ -49,4 +49,34 @@ Foam::LSZK<Specie>::LSZK
     }
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::LSZK<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("b", b_);
+    dict.add("a", a_);
+    dict.add("gamma", gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const LSZK<Specie>& l
+)
+{
+    l.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

@@ -92,7 +92,11 @@ public:
     // Member Functions
 
         //- Lift coefficient
-        virtual tmp<volScalarField> Cl(const label, const label) const;
+        virtual tmp<volScalarField> Cl
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

@@ -4,18 +4,33 @@ cd ${0%/*} || exit 1    # run from this directory
 # Source tutorial run functions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create the mesh
 runApplication blockMesh
 
+# -- Split the mesh into regions
 runApplication splitMeshRegions -cellZones -overwrite
 
+# -- Remove the original mesh
 rm -rf constant/polyMesh
-foamDictionary constant/air/polyMesh/boundary -entry entry0.air_to_building.type -set 'mappedMovingWall'
-foamDictionary constant/building/polyMesh/boundary -entry entry0.building_to_air.type -set 'mappedMovingWall'
 
+# -- Change patch types
+foamDictionary constant/air/polyMesh/boundary -entry entry0/air_to_building/type -set 'mappedMovingWall'
+foamDictionary constant/building/polyMesh/boundary -entry entry0/building_to_air/type -set 'mappedMovingWall'
+
+# -- Decompose the mesh
 runApplication decomposePar -allRegions
 
+# -- Set initial conditions in the air region
 runParallel setRefinedFields -region air
 
+# -- Refine the building region
+runParallel -s 1 refineMesh -region building -overwrite
+runParallel -s 2 refineMesh -region building -overwrite
+
+# -- Run the calc
 runParallel $(getApplication)
 
 # ----------------------------------------------------------------- end-of-file

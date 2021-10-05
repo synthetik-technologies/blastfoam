@@ -79,7 +79,7 @@ Foam::tmp<Foam::volScalarField> Foam::orderedPhasePair::E
 }
 
 
-Foam::scalar Foam::orderedPhasePair::E
+Foam::scalar Foam::orderedPhasePair::cellE
 (
     const label celli,
     const label nodei,

@@ -14,14 +14,14 @@ uniformDimensionedVectorField g
 );
 
 autoPtr<timeIntegrator> integrator(timeIntegrator::New(mesh));
-autoPtr<phaseCompressibleSystem> fluid
+autoPtr<compressibleSystem> fluid
 (
-    phaseCompressibleSystem::New(mesh)
+    compressibleSystem::New(mesh)
 );
 integrator->addSystem(fluid());
 
 const volScalarField& p = fluid->p();
 const volScalarField& T = fluid->T();
-const surfaceScalarField& phi = fluid->phi();
 fluid->update();
 
+fvModels& models(fvModels::New(mesh));

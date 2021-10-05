@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicRefineFvMesh
+    Foam::dynamicRefineBlastFvMesh
 
 Description
-    Implementation of multi-criterion refinement options for dynamicRefineFvMesh
+    Implementation of multi-criterion refinement options for dynamicRefineBlastFvMesh
 
     Multiples criteria can be selected:
     fields      (e.g. alpha, speciesConcentration)
@@ -33,9 +33,9 @@ Description
     curls       (e.g. )
     interface   (e.g. alpha 0.5 iso-surface)
 
-    To be used with 
-        dynamicRefineFvMeshCoeffs.field multiCritRefinementField
-    and 
+    To be used with
+        dynamicRefineBlastFvMeshCoeffs.field multiCritRefinementField
+    and
         multiCritRefinementControls
     Has no effect if the multiCritRefinementControls subdict doesnt exist.
 
@@ -48,14 +48,14 @@ Authors
     All rights reserved.
 
 Description
-    multi-criterion refinement as plugin for dynamicRefineFvMesh
+    multi-criterion refinement as plugin for dynamicRefineBlastFvMesh
 
     You may refer to this software as :
     //- full bibliographic data to be provided
 
     This code has been developed by :
         Daniel Rettenmaier (main developer).
-    
+
     Method Development and Intellectual Property :
         Daniel Deising <deising@mma.tu-darmstadt.de>
         Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
@@ -69,7 +69,7 @@ Description
         Institute for Fluid Mechanics and Aerodynamics
         Center of Smart Interfaces
         Technische Universitaet Darmstadt
-       
+
     If you use this software for your scientific work or your publications,
     please don't forget to acknowledge explicitly the use of it.
 
@@ -79,9 +79,9 @@ Description
 #ifndef multiCritRefinement_H
 #define multiCritRefinement_H
 
-//#include "dynamicFvMesh.H"
+//#include "dynamicBlastFvMesh.H"
 //#include "PackedBoolList.H"
-#include "dynamicFvMesh.H"
+#include "dynamicBlastFvMesh.H"
 #include "surfaceInterpolate.H"
 #include "volFields.H"
 #include "syncTools.H"
@@ -99,7 +99,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class dynamicRefineFvMesh Declaration
+                     Class multiCritRefinement Declaration
 \*---------------------------------------------------------------------------*/
 
 class multiCritRefinement
@@ -127,9 +127,9 @@ private:
 
         //- list of all fields and their refinement criteria:
         //   minValue <= field <= maxValue
-        //   refinementLevel, nAddLayers                                                    
+        //   refinementLevel, nAddLayers
         HashTable< dictionary > fields_;
-        
+
         //- list of scalar fields of which the |gradient| serves as refinement criteria
         //  minValue <= mag(grad(field)) <= maxValue
         HashTable< dictionary > gradFields_;
@@ -170,7 +170,7 @@ public:
 
         //- Constructor
             explicit multiCritRefinement(
-                    const labelList& cellLevel, 
+                    const labelList& cellLevel,
                     const fvMesh& mesh
             );
 
@@ -184,7 +184,7 @@ public:
         //- Disallow default bitwise copy construct
         multiCritRefinement(const multiCritRefinement&);
 
-        //- calculates the multiCritRefinementField 
+        //- calculates the multiCritRefinementField
         void updateRefinementField();
 
 

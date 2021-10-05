@@ -38,7 +38,7 @@ regions
             radius 0.1;
         }
         refineInternal yes;
-        level 3;
+        level 4;
 
         fieldValues
         (

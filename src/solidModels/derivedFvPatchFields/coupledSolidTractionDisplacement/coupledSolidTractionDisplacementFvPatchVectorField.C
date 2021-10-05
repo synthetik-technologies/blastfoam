@@ -5,8 +5,10 @@
     \\  /    A nd           | Copyright (C) 2018-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
+25-06-2021 Synthetik Applied Technologies: |    Added coupledSolidTraction
+-------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivatived work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -71,19 +73,6 @@ coupledSolidTractionDisplacementFvPatchVectorField
 :
     tractionDisplacementFvPatchVectorField(tdpvf, p, iF, mapper),
     mpp_(p),
-    pName_(tdpvf.pName_),
-    pRef_(tdpvf.pRef_)
-{}
-
-
-Foam::coupledSolidTractionDisplacementFvPatchVectorField::
-coupledSolidTractionDisplacementFvPatchVectorField
-(
-    const coupledSolidTractionDisplacementFvPatchVectorField& tdpvf
-)
-:
-    tractionDisplacementFvPatchVectorField(tdpvf),
-    mpp_(tdpvf.mpp_),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}

@@ -24,6 +24,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "atmosphereModel.H"
+#include "fluidThermo.H"
+#include "fvmLaplacian.H"
+#include "fvcDiv.H"
+#include "fvcSnGrad.H"
+#include "surfaceInterpolate.H"
+#include "constrainPressure.H"
+#include "uniformDimensionedFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -67,5 +74,95 @@ Foam::atmosphereModel::atmosphereModel
 
 Foam::atmosphereModel::~atmosphereModel()
 {}
+
+void Foam::atmosphereModel::hydrostaticInitialisation
+(
+    fluidBlastThermo& thermo,
+    const dimensionedScalar& pRef
+) const
+{
+    volScalarField& p(thermo.p());
+    volScalarField& rho(thermo.rho());
+    const fvMesh& mesh = p.mesh();
+
+    volScalarField gh("gh", (g_ & normal_)*h_);
+    surfaceScalarField ghf("ghf", fvc::interpolate(gh));
+
+    volScalarField p_rgh
+    (
+        IOobject
+        (
+            "p_rgh",
+            mesh.time().timeName(),
+            mesh
+        ),
+        p - rho*gh - pRef,
+        "fixedFluxPressure"
+    );
+
+    volVectorField U
+    (
+        IOobject
+        (
+            "U",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedVector(dimVelocity, Zero),
+        "noSlip"
+    );
+
+    volScalarField ph_rgh
+    (
+        IOobject
+        (
+            "ph_rgh",
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimensionSet(1, -1, -2, 0, 0, 0, 0), 0.0),
+        "fixedFluxPressure"
+    );
+
+    label nCorr
+    (
+        dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 5)
+    );
+
+    dictionary solverDict;
+    solverDict.add("solver", "PCG");
+    solverDict.add("preconditioner", "DIC");
+    solverDict.add("tolerance", 1e-6);
+    solverDict.add("relTol", 0);
+
+    for (label i=0; i<nCorr; i++)
+    {
+        surfaceScalarField rhof("rhof", fvc::interpolate(rho));
+
+        surfaceScalarField phig
+        (
+            "phig",
+            -rhof*ghf*fvc::snGrad(rho)*mesh.magSf()
+        );
+
+        // Update the pressure BCs to ensure flux consistency
+        constrainPressure(ph_rgh, rho, U, phig, rhof);
+
+        fvScalarMatrix ph_rghEqn
+        (
+            fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
+        );
+
+        ph_rghEqn.solve(solverDict);
+
+        p = ph_rgh + rho*gh + pRef;
+        thermo.updateRho();
+        thermo.calce(p);
+
+        Info<< "Hydrostatic pressure variation "
+            << (max(ph_rgh) - min(ph_rgh)).value() << endl;
+    }
+}
 
 // ************************************************************************* //

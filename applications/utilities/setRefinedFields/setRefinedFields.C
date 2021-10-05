@@ -34,9 +34,10 @@ Description
 #include "timeSelector.H"
 #include "fvMesh.H"
 #include "topoSetSource.H"
-#include "cellZoneSet.H"
-#include "faceZoneSet.H"
+#include "cellSet.H"
+#include "faceSet.H"
 #include "volFields.H"
+#include "systemDict.H"
 
 #include "hexRef.H"
 #include "hexRef3D.H"
@@ -105,6 +106,8 @@ public:
         autoPtr<setCellField> operator()(Istream& fieldValues) const
         {
             word fieldType(fieldValues);
+            word fieldName (fieldValues);
+            fieldValues.putBack(fieldName);
 
             if
             (
@@ -123,8 +126,7 @@ public:
             )
             {
                 WarningInFunction
-                    << "field type " << fieldType << " not currently supported"
-                    << endl;
+                    << "Field " << fieldName << " not found" << endl;
             }
 
             return autoPtr<setCellField>(new setCellField());
@@ -339,11 +341,7 @@ public:
 
 //- Read and add fields to the database
 template<class FieldType>
-void readAndAddFields
-(
-    const fvMesh& mesh,
-    const IOobjectList& objects
-)
+void readAndAddFields(const fvMesh& mesh, const IOobjectList& objects)
 {
 
     IOobjectList fields = objects.lookupClass(FieldType::typeName);
@@ -412,22 +410,6 @@ int main(int argc, char *argv[])
         "force3D",
         "Force 3-D refinement"
     );
-    argList::addBoolOption
-    (
-        "noWrite",
-        "Do not write fields"
-    );
-    argList::addBoolOption
-    (
-        "noZones",
-        "Do not create zones"
-    );
-    argList::addBoolOption
-    (
-        "noRefine",
-        "Do not refine"
-    );
-
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -440,23 +422,11 @@ int main(int argc, char *argv[])
 
     #include "createNamedMesh.H"
 
-    const word dictName("setFieldsDict");
-    #include "setSystemMeshDictionaryIO.H"
+    const dictionary setFieldsDict(systemDict("setFieldsDict", args, mesh));
 
     // Update All fields in the current time folder
     // Resizes to make sure all fields are consistent with the mesh
     bool updateAll(args.optionFound("updateAll"));
-
-    // Do not write fields
-    // Usefull if a refined mesh is needed before mesh manipulation
-    bool noWrite(args.optionFound("noWrite"));
-
-    bool noZones(args.optionFound("noZones"));
-    bool noRefine(args.optionFound("noRefine"));
-
-    Info<< "Reading " << dictName << "\n" << endl;
-
-    IOdictionary setFieldsDict(dictIO);
 
     autoPtr<hexRef> meshCutter;
     bool refine = true;
@@ -473,7 +443,6 @@ int main(int argc, char *argv[])
         // 1D so do not refine
         refine = false;
     }
-    refine = refine && !noRefine;
 
     Switch debug(args.optionFound("debug"));
 
@@ -510,7 +479,6 @@ int main(int argc, char *argv[])
             IOobject::MUST_READ
         );
 
-        // Check the "constant" directory
         if (fieldHeader.typeHeaderOk<volScalarField>(true))
         {
             fields.set
@@ -524,7 +492,7 @@ int main(int argc, char *argv[])
                         runTime.timeName(),
                         mesh,
                         IOobject::MUST_READ,
-                        noWrite ? IOobject::NO_WRITE : IOobject::AUTO_WRITE
+                        IOobject::AUTO_WRITE
                     ),
                     mesh
                 )
@@ -552,9 +520,6 @@ int main(int argc, char *argv[])
     // Stored to reduce the number of reads
     PtrList<topoSetSource> sources(regions.size());
     PtrList<topoSetSource> backupSources(regions.size());
-    HashPtrTable<topoSet> cellSets;
-    HashPtrTable<topoSet> faceSets;
-
     labelList levels(regions.size(), 0);
     forAll(regions, regionI)
     {
@@ -587,9 +552,9 @@ int main(int argc, char *argv[])
 
     label maxLevel =
     (
-        levels.size() && !setFieldsDict.found("maxLevel")
-        ? max(levels)
-        : setFieldsDict.lookupOrDefault<label>("maxLevel", 0)
+        levels.size() && !setFieldsDict.found("maxRefinement")
+      ? max(levels)
+      : setFieldsDict.lookupOrDefault<label>("maxRefinement", 0)
     );
 
     // Error fields is the same since it is looked up
@@ -616,6 +581,40 @@ int main(int argc, char *argv[])
             );
     }
 
+    // If debugging read in all to the necessary fields
+    if (debug)
+    {
+        // Read default values and set fields
+        if (setFieldsDict.found("defaultFieldValues"))
+        {
+            PtrList<setCellField> defaultFieldValues
+            (
+                setFieldsDict.lookup("defaultFieldValues"),
+                setCellField::iNew(mesh, labelList(), false)
+            );
+        }
+
+        forAll(regions, regionI)
+        {
+            if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
+            {
+                PtrList<setCellField> fieldValues
+                (
+                    regions[regionI].dict().lookup("fieldValues"),
+                    setCellField::iNew(mesh, labelList(), false)
+                );
+            }
+            else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
+            {
+                PtrList<setFaceField> fieldValues
+                (
+                    regions[regionI].dict().lookup("fieldValues"),
+                    setFaceField::iNew(mesh, labelList(), false)
+                );
+            }
+        }
+    }
+
     // Flag for final iteration
     bool end = false;
 
@@ -624,6 +623,11 @@ int main(int argc, char *argv[])
 
     while(!end)
     {
+        if (debug)
+        {
+            runTime++;
+        }
+
         if (maxIter <= iter)
         {
             prepareToStop = true;
@@ -637,9 +641,6 @@ int main(int argc, char *argv[])
             end = true;
         }
 
-        bool writeSets = !noZones && (end || debug);
-        bool write = !noWrite && (end || debug);
-
         // Read default values and set fields
         if (setFieldsDict.found("defaultFieldValues"))
         {
@@ -652,7 +653,7 @@ int main(int argc, char *argv[])
             PtrList<setCellField> defaultFieldValues
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, cells, write)
+                setCellField::iNew(mesh, cells, end || debug)
             );
             Info<< endl;
         }
@@ -666,7 +667,6 @@ int main(int argc, char *argv[])
             // Cell sets
             if (sources[regionI].setType() == topoSetSource::CELLSETSOURCE)
             {
-                const dictionary& regionDict = regions[regionI].dict();
                 cellSet selectedCellSet
                 (
                     mesh,
@@ -723,12 +723,12 @@ int main(int argc, char *argv[])
                 }
 
                 // Set field values
-                if (regionDict.found("fieldValues"))
+                if (regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setCellField> fieldValues
                     (
-                        regionDict.lookup("fieldValues"),
-                        setCellField::iNew(mesh, cells, write)
+                        regions[regionI].dict().lookup("fieldValues"),
+                        setCellField::iNew(mesh, cells, end || debug)
                     );
                 }
 
@@ -737,7 +737,7 @@ int main(int argc, char *argv[])
                     WarningInFunction
                         << "No cells were selected for using " << nl
                         << regions[regionI].name()
-                        << regionDict
+                        << regions[regionI].dict()
                         << "To expand searchable region add backup " << nl
                         << "Region or expand backup region." << endl;
                 }
@@ -745,38 +745,10 @@ int main(int argc, char *argv[])
                 // Save the number of cells in the set
                 savedCells.append(cells);
 
-                if (writeSets)
-                {
-                    if (regionDict.found("setName"))
-                    {
-                        word setName = regionDict.lookup<word>("setName");
-                        if (!cellSets.found(setName))
-                        {
-                            cellSets.insert
-                            (
-                                setName,
-                                topoSet::New
-                                (
-                                    "cellSet",
-                                    mesh,
-                                    setName,
-                                    IOobject::NO_READ
-                                ).ptr()
-                            );
-                        }
-                        topoSet& set = *cellSets[setName];
-                        forAll(cells, i)
-                        {
-                            set.insert(cells[i]);
-                        }
-                    }
-                }
-
             }
             // Face sets
             else if (sources[regionI].setType() == topoSetSource::FACESETSOURCE)
             {
-                const dictionary& regionDict = regions[regionI].dict();
                 faceSet selectedFaceSet
                 (
                     mesh,
@@ -790,30 +762,22 @@ int main(int argc, char *argv[])
                     selectedFaceSet
                 );
 
-                labelList faces(selectedFaceSet.toc());
-                if (regionDict.found("fieldValues"))
+                labelList selectedFaces(selectedFaceSet.toc());
+                if (regions[regionI].dict().found("fieldValues"))
                 {
                     PtrList<setFaceField> fieldValues
                     (
-                        regionDict.lookup("fieldValues"),
-                        setFaceField::iNew(mesh, faces, write)
+                        regions[regionI].dict().lookup("fieldValues"),
+                        setFaceField::iNew(mesh, selectedFaces, end || debug)
                     );
                 }
 
-                if (!returnReduce(faces.size(), sumOp<label>()))
-                {
-                    WarningInFunction
-                        << "No faces were selected for using " << nl
-                        << regions[regionI].name()
-                        << regionDict << endl;
-                }
-
                 // Set owner and neighbor cells of the selected faces
-                labelList faceCells(faces.size()*2);
+                labelList faceCells(selectedFaces.size()*2);
                 label nFaces = 0;
-                forAll(faces, i)
+                forAll(selectedFaces, i)
                 {
-                    label facei = faces[i];
+                    label facei = selectedFaces[i];
                     faceCells[nFaces] = mesh.faceOwner()[facei];
                     nFaces++;
                     if (mesh.isInternalFace(facei))
@@ -824,33 +788,6 @@ int main(int argc, char *argv[])
                 }
                 faceCells.resize(nFaces);
                 savedCells.append(faceCells);
-
-                if (writeSets)
-                {
-                    if (regionDict.found("setName"))
-                    {
-                        word setName = regionDict.lookup<word>("setName");
-                        if (!faceSets.found(setName))
-                        {
-                            faceSets.insert
-                            (
-                                setName,
-                                topoSet::New
-                                (
-                                    "faceSet",
-                                    mesh,
-                                    setName,
-                                    IOobject::NO_READ
-                                ).ptr()
-                            );
-                        }
-                        topoSet& set = *faceSets[setName];
-                        forAll(faces, i)
-                        {
-                            set.insert(faces[i]);
-                        }
-                    }
-                }
             }
         }
 
@@ -1011,7 +948,6 @@ int main(int argc, char *argv[])
                 writeOk = writeOk && scalarCellLevel.write();
                 error.write();
                 scalarMaxCellLevel.write();
-                runTime++;
             }
 
             // Update mesh (return if mesh changes)
@@ -1038,53 +974,6 @@ int main(int argc, char *argv[])
         runTime.write();
     }
 
-    if ((cellSets.size() || faceSets.size()) && !noZones)
-    {
-        List<cellZone*> cellZones(cellSets.size());
-        List<faceZone*> faceZones(faceSets.size());
-        List<pointZone*> pointZones(0);
-        label i = 0;
-        forAllConstIter
-        (
-            HashPtrTable<topoSet>,
-            cellSets,
-            iter
-        )
-        {
-            cellZones[i] = new cellZone
-            (
-                iter()->name(),
-                iter()->toc(),
-                i,
-                mesh.cellZones()
-            );
-        }
-
-        i = 0;
-        forAllConstIter
-        (
-            HashPtrTable<topoSet>,
-            faceSets,
-            iter
-        )
-        {
-            faceZones[i] = new faceZone
-            (
-                iter()->name(),
-                iter()->toc(),
-                boolList(iter()->size(), false),
-                i,
-                mesh.faceZones()
-            );
-            i++;
-        }
-        mesh.pointZones().clear();
-        mesh.faceZones().clear();
-        mesh.cellZones().clear();
-
-        mesh.addZones(pointZones, faceZones, cellZones);
-    }
-
     if (refine)
     {
         // Handle cell level (as volScalarField) explicitly
@@ -1100,7 +989,7 @@ int main(int argc, char *argv[])
             }
             scalarCellLevel.write();
         }
-        else if (updateAll)
+        else if (debug)
         {
             volScalarField scalarCellLevel
             (

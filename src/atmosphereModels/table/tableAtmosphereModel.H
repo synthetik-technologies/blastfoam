@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "lookupTable1D.H"
+#include "scalarLookupTable1D.H"
 #include "atmosphereModel.H"
 
 namespace Foam
@@ -57,10 +57,10 @@ class table
 // Private data
 
     //- Pressure table
-    lookupTable1D pTable_;
+    scalarLookupTable1D pTable_;
 
     //- Temperature table
-    lookupTable1D TTable_;
+    scalarLookupTable1D TTable_;
 
     //- Molecular weight
     scalar W_;
@@ -82,11 +82,7 @@ public:
     // Member Functions
 
         //- Create atmosphere
-        virtual void createAtmosphere
-        (
-            volScalarField& p,
-            volScalarField& rho
-        ) const;
+        virtual void createAtmosphere(fluidBlastThermo& thermo) const;
 };
 
 

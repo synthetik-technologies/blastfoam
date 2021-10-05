@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -37,9 +37,10 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "phaseCompressibleSystem.H"
-#include "twoPhaseFluidThermo.H"
-#include "fluxScheme.H"
+#include "compressibleBlastSystem.H"
+#include "twoPhaseFluidBlastThermo.H"
+#include "interfaceProperties.H"
+
 
 namespace Foam
 {
@@ -50,20 +51,23 @@ namespace Foam
 
 class twoPhaseCompressibleSystem
 :
-    public phaseCompressibleSystem
+    public compressibleBlastSystem
 {
 // Private data
 
     //- Primitative variables
 
         //- Equation of state
-        twoPhaseFluidThermo thermo_;
+        twoPhaseFluidBlastThermo& thermo_;
 
         //- Volume fraction of phase 1
-        volScalarField& volumeFraction_;
+        volScalarField& alpha1_;
 
         //- Phase 1 density
         volScalarField& rho1_;
+
+        //- Volume fraction of phase 2
+        volScalarField& alpha2_;
 
         //- Phase 2 density
         volScalarField& rho2_;
@@ -89,9 +93,11 @@ class twoPhaseCompressibleSystem
         //- Phase 2 mass flux
         surfaceScalarField alphaRhoPhi2_;
 
+    //- Surface tension model
+    autoPtr<interfaceProperties> interfacePropertiesPtr_;
 
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
+    //- Allocate models
+    virtual void setModels();
 
 
 public:
@@ -117,34 +123,11 @@ public:
         //- Update fluxes
         void update();
 
-        //- Return energy source term
-        virtual tmp<volScalarField> ESource() const;
-
         //- Solve sub-step stepi
         virtual void solve();
 
-
-    // Member Access Functions
-
-        //- Const access to thermo model
-        virtual const fluidThermoModel& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Non-const access to thermo model
-        virtual fluidThermoModel& thermo()
-        {
-            return thermo_;
-        }
-
-        //- Return speed of sound
-        virtual tmp<volScalarField> speedOfSound() const
-        {
-            return thermo_.speedOfSound();
-        }
-
-
+        //- Solve implicit terms
+        virtual void postUpdate();
 };
 
 

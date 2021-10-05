@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Calculate dynamic pressure
+13-05-2020 Synthetik Applied Technologies: | Calculate dynamic pressure
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -169,8 +169,12 @@ bool Foam::functionObjects::dynamicPressure::execute()
 
 bool Foam::functionObjects::dynamicPressure::write()
 {
-    writeObject(resultName_);
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        writeObject(resultName_);
+        return true;
+    }
+    return false;
 }
 
 

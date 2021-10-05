@@ -9,10 +9,10 @@ Original plots were digitized using WebPlotDigitizer: https://github.com/ankitro
 All cases used a cell size of 0.25 mm. The run times on a four core desktop (1D case was run in serial) and number of cells for the cases were:
 
 1D (400 cells): 17 s
-6 mm (1920 cells): 90 s
-8 mm (32000 cells): 3 min
-12.5 mm (40000 cells): 4 min
-20 mm (40000 cells): 4 min
+6 mm (32000 cells): 5 min
+8 mm (32000 cells): 5 min
+12.5 mm (40000 cells): 5 min
+20 mm (40000 cells): 5 min
 
 Reference solution and plots from this run are in the "validation/referencePlots" directory. Plots will be automatically created using the postProcess and createGraphs utilities for subsequent runs. Results for the standard JWL and JWL-C model are provided in the reference plots, but the cases only use the JWL-C form.
 

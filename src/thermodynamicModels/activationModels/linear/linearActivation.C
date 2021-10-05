@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -47,7 +47,7 @@ Foam::activationModels::linearActivation::linearActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName),
+    activationModel(mesh, dict, phaseName, true),
     vDet_("vDet", dimVelocity, dict),
     tIgn_
     (
@@ -77,7 +77,7 @@ Foam::activationModels::linearActivation::linearActivation
                 (
                     tIgn_[celli],
                     (useDelay ? dp.delay() : 0.0)
-                  + mag(mesh_.C()[celli] - dp)/vDet_.value()
+                  + mag(this->mesh().C()[celli] - dp)/vDet_.value()
                 );
         }
     }

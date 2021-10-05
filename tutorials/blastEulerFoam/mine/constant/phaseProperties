@@ -55,7 +55,7 @@ particles
         Hf          0.0;
     }
 
-    residualAlpha 1e-10;
+    residualAlpha 1e-6;
     residualRho   1e-6;
 
     kineticTheoryCoeffs
@@ -84,7 +84,7 @@ gas
             {
                 transport   const;
                 thermo      eConst;
-                equationOfState idealGas;
+                equationOfState Murnaghan;
             }
 
             equationOfState
@@ -116,7 +116,7 @@ gas
             thermoType
             {
                 transport   const;
-                thermo      eConst;
+                thermo      ePolynomial;
                 equationOfState JWL;
             }
 
@@ -140,12 +140,14 @@ gas
             }
             thermodynamics
             {
-                Cv          1400;           // Heat capacity
+                // Heat capacity coefficients
+                CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
+                Sf          0.0;
                 Hf          0.0;
             }
         }
         residualRho     1e-6;           // Minimum density of the phase
-        residualAlpha   1e-10;          // Minimum volume fraction used for division
+        residualAlpha   1e-6;          // Minimum volume fraction used for division
 
         activationModel linear;
         initiation
@@ -185,7 +187,7 @@ gas
             Hf          0.0;
         }
         residualRho     1e-6;
-        residualAlpha   1e-10;
+        residualAlpha   1e-6;
     }
 }
 

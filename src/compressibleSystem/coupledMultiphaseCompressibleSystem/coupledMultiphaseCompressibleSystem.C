@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -34,7 +34,7 @@ namespace Foam
     defineTypeNameAndDebug(coupledMultiphaseCompressibleSystem, 0);
     addToRunTimeSelectionTable
     (
-        phaseCompressibleSystem,
+        compressibleSystem,
         coupledMultiphaseCompressibleSystem,
         dictionary
     );
@@ -74,7 +74,10 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     {
         volumeFraction_ += alphas_[phasei];
     }
-    this->thermo_.setTotalVolumeFractionPtr(volumeFraction_);
+    dynamicCast<multiphaseFluidBlastThermo>
+    (
+        thermoPtr_()
+    ).setTotalVolumeFractionPtr(volumeFraction_);
 }
 
 
@@ -155,7 +158,7 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
     }
     rho_ /= max(volumeFraction_, 1e-6);
 
-    thermo_.solve();
+    thermoPtr_->solve();
 
     deltaRhoE -= ESource();
 
@@ -172,80 +175,22 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
 void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
 {
+    if (!needPostUpdate_)
+    {
+        compressibleBlastSystem::postUpdate();
+        return;
+    }
+
     this->decode();
 
     //- Store value of density so volume fraction can be included
     volScalarField rho(rho_);
-
-    // Modify for turbulence
     rho_ = alphaRho_;
-    rho_.oldTime() = alphaRho_.oldTime();
 
-    if
-    (
-        dragSource_.valid()
-     || extESource_.valid()
-     || turbulence_.valid()
-    )
-    {
-        // Solve momentum
-        fvVectorMatrix UEqn
-        (
-            fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
-        );
-
-        if (dragSource_.valid())
-        {
-            UEqn -= dragSource_();
-        }
-
-        if (turbulence_.valid())
-        {
-            //- Volume fraction is include in stress since we modify the density
-            UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rho_.mesh().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
-        }
-        UEqn.solve();
-        rhoU_ = cmptMultiply(rho_*U_, solutionDs_);
-
-        // Solve thermal energy diffusion
-        e_ = rhoE_/rho_ - 0.5*magSqr(U_);
-        fvScalarMatrix eEqn
-        (
-            fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
-        );
-        if (extESource_.valid())
-        {
-            eEqn -= extESource_();
-        }
-        if (turbulence_.valid())
-        {
-            eEqn -= fvm::laplacian
-                (
-                    volumeFraction_*thermophysicalTransport_->alphaEff(),
-                    e()
-                );
-        }
-        eEqn.solve();
-
-        rhoE_ = rho_*(e_ + 0.5*magSqr(U_));
-    }
-
-    if (turbulence_.valid())
-    {
-        turbulence_->correct();
-    }
+    compressibleBlastSystem::postUpdate();
 
     //- Reset density to the correct field
     rho_ = rho;
-
-    this->thermo().postUpdate();
 }
 
 
@@ -263,25 +208,23 @@ void Foam::coupledMultiphaseCompressibleSystem::update()
 }
 
 
-void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
+void Foam::coupledMultiphaseCompressibleSystem::decode()
 {
-    volumeFraction_ = min(1.0, max(0.0, 1.0 - *alphadPtr_));
-    alphaRho_ = dimensionedScalar("0", dimDensity, 0.0);
+    volumeFraction_ = min(1.0, max(0.0, 1.0 - alphadPtr_()));
+    alphaRho_ = Zero;
     volScalarField sumAlpha
     (
-        IOobject
+        volScalarField::New
         (
             "sumAlpha",
-            rho_.time().timeName(),
-            rho_.mesh()
-        ),
-        rho_.mesh(),
-        0.0
+            rho_.mesh(),
+            0.0
+        )
     );
+    // Correct all but the last phase
     for (label phasei = 0; phasei < alphas_.size() - 1; phasei++)
     {
-        alphas_[phasei].max(0);
-        alphas_[phasei].min(1);
+        alphas_[phasei].maxMin(0.0, 1.0);
         alphas_[phasei].correctBoundaryConditions();
         sumAlpha += alphas_[phasei];
 
@@ -291,64 +234,50 @@ void Foam::coupledMultiphaseCompressibleSystem::calcAlphaAndRho()
            /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
         rhos_[phasei].correctBoundaryConditions();
 
-        alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
+        alphaRhos_[phasei].boundaryFieldRef() =
+            alphas_[phasei].boundaryField()
+           *rhos_[phasei].boundaryField();
         alphaRho_ += alphaRhos_[phasei];
     }
-    label phasei = alphas_.size() - 1;
-    alphas_[phasei] = volumeFraction_ - sumAlpha;
-    alphas_[phasei].max(0.0);
-    alphas_[phasei].min(1.0);
 
-    alphaRhos_[phasei].max(0.0);
-    rhos_[phasei] = alphaRhos_[phasei]
-           /max(alphas_[phasei], thermo_.thermo(phasei).residualAlpha());
-    rhos_[phasei].correctBoundaryConditions();
-    alphaRhos_[phasei] = alphas_[phasei]*rhos_[phasei];
-    alphaRho_ += alphaRhos_[phasei];
+    // Correct the last phase
+    label lastPhase = alphas_.size() - 1;
+    alphas_[lastPhase] = volumeFraction_ - sumAlpha;
+    alphas_[lastPhase].maxMin(0.0, 1.0);
+
+    alphaRhos_[lastPhase].max(0.0);
+    rhos_[lastPhase] =
+            alphaRhos_[lastPhase]
+           /max
+            (
+                alphas_[lastPhase],
+                thermo_.thermo(lastPhase).residualAlpha()
+            );
+    rhos_[lastPhase].correctBoundaryConditions();
+    alphaRhos_[lastPhase].boundaryFieldRef() =
+        alphas_[lastPhase].boundaryField()
+       *rhos_[lastPhase].boundaryField();
+    alphaRho_ += alphaRhos_[lastPhase];
+
+    // Update density
     rho_ = alphaRho_/max(volumeFraction_, 1e-10);
-}
 
-
-void Foam::coupledMultiphaseCompressibleSystem::decode()
-{
-    calcAlphaAndRho();
-
+    // Update velocity
     volScalarField alphaRhos(alphaRho_);
     alphaRhos.max(1e-10);
     U_.ref() = rhoU_()/alphaRhos();
     U_.correctBoundaryConditions();
 
-    rhoU_.boundaryFieldRef() = alphaRho_.boundaryField()*U_.boundaryField();
+    rhoU_.boundaryFieldRef() =
+        alphaRho_.boundaryField()*U_.boundaryField();
 
-    volScalarField E(rhoE_/alphaRhos);
-    e_.ref() = E() - 0.5*magSqr(U_());
+    //- Update internal energy
+    e_.ref() = rhoE_()/alphaRhos() - 0.5*magSqr(U_());
 
-    //- Limit internal energy it there is a negative temperature
-    if(min(T_).value() < TLow_.value() && thermo_.limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_ - TLow_));
-        T_.max(TLow_);
-        e_ = e_*limit + thermo_.E()*(1.0 - limit);
-        rhoE_.ref() = rho_*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+    thermoPtr_->correct();
 
-    rhoE_.boundaryFieldRef() =
-        alphaRho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
-
-    thermo_.correct();
-    T_ /= Foam::max(volumeFraction_, 1e-10);
+    // Update total energy since e may have changed
+    rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 }
 
 
@@ -363,106 +292,6 @@ void Foam::coupledMultiphaseCompressibleSystem::encode()
     rho_ = alphaRho_/max(volumeFraction_, 1e-10);
     rhoU_ = alphaRho_*U_;
     rhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
-}
-
-
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::Cv() const
-{
-    return thermo_.Cv();
-}
-
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::mu() const
-{
-    return thermo_.mu();
-}
-
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::mu(const label patchi) const
-{
-    return thermo_.mu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::nu() const
-{
-    return thermo_.nu();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::nu(const label patchi) const
-{
-    return thermo_.nu(patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::coupledMultiphaseCompressibleSystem::alpha() const
-{
-    return thermo_.alpha();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::alpha(const label patchi) const
-{
-    return thermo_.alpha(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_.alphaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::alphaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_.alphaEff(alphat, patchi);
-}
-
-Foam::tmp<Foam::volScalarField>
-Foam::coupledMultiphaseCompressibleSystem::alphahe() const
-{
-    return thermo_.alphahe();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::alphahe(const label patchi) const
-{
-    return thermo_.alphahe(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappa() const
-{
-    return thermo_.kappa();
-}
-
-Foam::tmp<Foam::scalarField>
-Foam::coupledMultiphaseCompressibleSystem::kappa(const label patchi) const
-{
-    return thermo_.kappa(patchi);
-}
-
-Foam::tmp<Foam::volScalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
-(
-    const volScalarField& alphat
-) const
-{
-    return thermo_.kappaEff(alphat);
-}
-
-Foam::tmp<Foam::scalarField> Foam::coupledMultiphaseCompressibleSystem::kappaEff
-(
-    const scalarField& alphat,
-    const label patchi
-) const
-{
-    return thermo_.kappaEff(alphat, patchi);
 }
 
 // ************************************************************************* //

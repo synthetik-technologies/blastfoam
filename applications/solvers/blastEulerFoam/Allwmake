@@ -8,7 +8,6 @@ wmakeLnInclude interfacialModels
 wmake $targetType phaseSystems
 wmake $targetType interfacialModels
 wmake $targetType phaseCompressibleMomentumTransportModels
-wmake $targetType multiphaseThermophysicalTransportModels
 wmake $targetType kineticTheoryModels
 
 wmake

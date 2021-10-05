@@ -49,7 +49,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "MGEquationOfState.H"
 
 namespace Foam
 {
@@ -94,8 +93,7 @@ Ostream& operator<<
 template<class Specie>
 class stiffenedGas
 :
-    public Specie,
-    public MGEquationOfState
+    public Specie
 {
 // Private data
 
@@ -107,14 +105,14 @@ class stiffenedGas
 
 
         //- Return deviation from ideal gas pressure
-        virtual scalar Pi
+        inline scalar Pi
         (
             const scalar rho,
             const scalar e
         ) const;
 
         //- Return non-ideal speed of sound
-        virtual scalar delta
+        inline scalar delta
         (
             const scalar p,
             const scalar rho,
@@ -122,7 +120,7 @@ class stiffenedGas
         ) const;
 
         //- Gamma function
-        virtual scalar GammaMG
+        inline scalar GammaMG
         (
             const scalar rho,
             const scalar e
@@ -131,7 +129,9 @@ class stiffenedGas
 
 public:
 
-    //- Construct from components
+    // Constructors
+
+        //- Construct from components
         inline stiffenedGas
         (
             const Specie& sp,
@@ -169,14 +169,56 @@ public:
               + word(Specie::typeName_()) + '>';
         }
 
-        //- Is this a solid equation of state
-        static bool solid()
+        //- Is temperature used
+        static inline bool temperatureBased()
         {
             return false;
         }
 
+        //- Is this a solid equation of state
+        static inline bool solid()
+        {
+            return false;
+        }
+
+        //- Return pressure
+        inline scalar p
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const bool limit = true
+        ) const;
+
+        //- Return the MieGruniesen coefficient
+        inline scalar Gamma
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
+        ) const;
+
+        //- Return the speed of sound
+        inline scalar cSqr
+        (
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar Cv
+        ) const;
+
         //- Return derivative of pressure w.r.t density
-        scalar dpdv
+        inline scalar dpdv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. internal energy
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -184,7 +226,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpde
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -192,7 +234,7 @@ public:
         ) const;
 
         //- Internal energy correction [J/kg]
-        scalar E
+        inline scalar E
         (
             const scalar rho,
             const scalar e,
@@ -200,20 +242,51 @@ public:
         ) const;
 
         //- Enthalpy correction [J/kg]
-        scalar H
+        inline scalar H
         (
             const scalar rho,
             const scalar e,
             const scalar T
         ) const;
 
+        //- Heat capacity at constant volume [J/kg/K]
+        inline scalar Cv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity at constant pressure [J/kg/K]
+        inline scalar Cp
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Heat capacity difference [J/kg/K]
+        inline scalar CpMCv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar CpCv
+        ) const;
+
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar p,
             const scalar rho,
             const scalar T
         ) const;
+
+
+        // IO
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
 
 
     // Member operators
@@ -239,6 +312,15 @@ public:
         friend stiffenedGas operator== <Specie>
         (
             const stiffenedGas&,
+            const stiffenedGas&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Specie>
+        (
+            Ostream&,
             const stiffenedGas&
         );
 };

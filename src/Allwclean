@@ -3,21 +3,17 @@ cd "${0%/*}" || exit                                # Run from this directory
 #------------------------------------------------------------------------------
 # set -x
 
-wclean $targetType thermodynamicModels
-wclean $targetType MomentumTransportModels
-wclean $targetType ThermophysicalTransportModels
-wclean $targetType fluxSchemes
+wclean $targetType numerics
 wclean $targetType finiteVolume
-wclean $targetType compressibleSystem
+wclean $targetType diameterModels
+wclean $targetType thermodynamicModels
 wclean $targetType radiationModels
+wclean $targetType compressibleSystem
 wclean $targetType dynamicMesh
 wclean $targetType dynamicFvMesh
 wclean $targetType errorEstimators
 wclean $targetType functionObjects
-wclean all lagrangian
 wclean $targetType atmosphereModels
-wclean $targetType diameterModels
 wclean $targetType solidModels
 
-wclean $targetType QBMM
 #------------------------------------------------------------------------------

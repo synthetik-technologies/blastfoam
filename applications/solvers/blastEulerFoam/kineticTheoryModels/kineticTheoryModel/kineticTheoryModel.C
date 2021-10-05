@@ -36,28 +36,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::kineticTheorySystem&
-Foam::kineticTheoryModel::lookupOrConstruct
-(
-    const fvMesh& mesh,
-    const char* name
-) const
-{
-    if (!mesh.foundObject<kineticTheorySystem>(name))
-    {
-        kineticTheorySystem* ktPtr
-        (
-            new kineticTheorySystem(phase_.fluid())
-        );
-
-        // Transfer ownership of this object to the objectRegistry
-        ktPtr->store(ktPtr);
-    }
-
-    return mesh.lookupObjectRef<kineticTheorySystem>(name);
-}
-
-
 Foam::kineticTheoryModel::kineticTheoryModel
 (
     const phaseModel& phase,
@@ -65,7 +43,7 @@ Foam::kineticTheoryModel::kineticTheoryModel
 )
 :
     phase_(phase),
-    kineticTheorySystem_(lookupOrConstruct(phase.mesh(), "kineticTheorySystem")),
+    kineticTheorySystem_(kineticTheorySystem::New(phase.fluid())),
 
     maxNut_
     (

@@ -46,7 +46,6 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "equationOfState.H"
 
 namespace Foam
 {
@@ -90,8 +89,7 @@ Ostream& operator<<
 template<class Specie>
 class BKW
 :
-    public Specie,
-    public equationOfState
+    public Specie
 {
 // Private data
 
@@ -101,7 +99,6 @@ class BKW
     scalar Theta_;
     scalar a_;
     scalar beta_;
-    scalar gamma_;
 
 
 public:
@@ -116,8 +113,7 @@ public:
             const scalar kappa,
             const scalar Theta,
             const scalar a,
-            const scalar beta,
-            const scalar gamma
+            const scalar beta
         );
 
         //- Construct from dictionary
@@ -150,21 +146,63 @@ public:
             + word(Specie::typeName_()) + '>';
         }
 
+        //- Is temperature used
+        static bool temperatureBased()
+        {
+            return true;
+        }
+
         //- Is this a solid equation of state
         static bool solid()
         {
             return false;
         }
 
-        //- Return deviation from ideal gas pressure
-        virtual scalar pRhoT
+        //- Return pressure optionally limited pressure
+        inline scalar p
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const bool limit = true
+        ) const;
+
+        //- Return unlimited pressure
+        inline scalar pRhoT
         (
             const scalar rho,
             const scalar T
         ) const;
 
+        //- Return the MieGruniesen coefficient
+        inline scalar Gamma
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
+        ) const;
+
+        //- Return the speed of sound
+        inline scalar cSqr
+        (
+            const scalar p,
+            const scalar rho,
+            const scalar e,
+            const scalar T,
+            const scalar cv
+        ) const;
+
         //- Return derivative of pressure w.r.t density
-        scalar dpdv
+        inline scalar dpdv
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
+        //- Return derivative of pressure w.r.t. internal energy
+        inline scalar dpde
         (
             const scalar rho,
             const scalar e,
@@ -172,7 +210,7 @@ public:
         ) const;
 
         //- Return derivative of pressure w.r.t. Temperature
-        scalar dpdT
+        inline scalar dpdT
         (
             const scalar rho,
             const scalar e,
@@ -180,7 +218,7 @@ public:
         ) const;
 
         //- Internal energy correction [J/kg]
-        scalar E
+        inline scalar E
         (
             const scalar rho,
             const scalar e,
@@ -188,7 +226,7 @@ public:
         ) const;
 
         //- Enthalpy correction [J/kg]
-        scalar H
+        inline scalar H
         (
             const scalar rho,
             const scalar e,
@@ -196,7 +234,7 @@ public:
         ) const;
 
         //- Heat capacity at constant volume [J/kg/K]
-        scalar Cv
+        inline scalar Cv
         (
             const scalar rho,
             const scalar e,
@@ -204,7 +242,7 @@ public:
         ) const;
 
         //- Heat capacity at constant pressure [J/kg/K]
-        scalar Cp
+        inline scalar Cp
         (
             const scalar rho,
             const scalar e,
@@ -212,20 +250,27 @@ public:
         ) const;
 
         //- Heat capacity difference [J/kg/K]
-        scalar CpMCv
+        inline scalar CpMCv
         (
             const scalar rho,
             const scalar e,
-            const scalar T
+            const scalar T,
+            const scalar CpCv
         ) const;
 
         //- Heat capacity at constant volume of mixture [J/kg/K]
-        scalar S
+        inline scalar S
         (
             const scalar p,
             const scalar rho,
             const scalar T
         ) const;
+
+
+        // IO
+
+            //- Write to Ostream
+            void write(Ostream& os) const;
 
 
     // Member operators
@@ -251,6 +296,15 @@ public:
         friend BKW operator== <Specie>
         (
             const BKW&,
+            const BKW&
+        );
+
+
+    // Ostream Operator
+
+        friend Ostream& operator<< <Specie>
+        (
+            Ostream&,
             const BKW&
         );
 };

@@ -20,8 +20,7 @@ fluxScheme      Kurganov;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP 4;   // 4 step RK2SSP
-                                // (gives more accurate energy release)
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
@@ -42,7 +41,7 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
+    default             linear;
     reconstruct(alpha)  linearMUSCL vanAlbada;
     reconstruct(rho)    linearMUSCL vanAlbada;
     reconstruct(U)      linearMUSCL vanAlbada;

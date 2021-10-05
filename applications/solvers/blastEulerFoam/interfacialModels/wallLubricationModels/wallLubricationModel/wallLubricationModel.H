@@ -124,13 +124,25 @@ public:
     // Member Functions
 
         //- Return phase-intensive wall lubrication force
-        virtual tmp<volVectorField> Fi(const label, const label) const = 0;
+        virtual tmp<volVectorField> FI
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const = 0;
 
         //- Return wall lubrication force
-        virtual tmp<volVectorField> F(const label, const label) const;
+        virtual tmp<volVectorField> F
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Return face wall lubrication force
-        virtual tmp<surfaceScalarField> Ff(const label, const label) const;
+        virtual tmp<surfaceScalarField> Ff
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

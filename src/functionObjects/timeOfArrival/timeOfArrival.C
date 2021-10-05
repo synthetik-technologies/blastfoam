@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-20-06-2020 Jeff Heylmun:    | Time of arrival implementation
+20-06-2020 Synthetik Applied Technologies: | Time of arrival implementation
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -174,9 +174,13 @@ bool Foam::functionObjects::timeOfArrival::execute()
 
 bool Foam::functionObjects::timeOfArrival::write()
 {
-    pMax_.write();
-    timeOfArrival_.write();
-    return true;
+    if (this->mesh_.time().timeIndex() > 0)
+    {
+        pMax_.write();
+        timeOfArrival_.write();
+        return true;
+    }
+    return false;
 }
 
 

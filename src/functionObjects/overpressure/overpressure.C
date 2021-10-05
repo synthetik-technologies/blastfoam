@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2016-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-13-05-2020 Jeff Heylmun:    | Calculate overpressure
+13-05-2020 Synthetik Applied Technologies: | Calculate overpressure
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -160,7 +160,7 @@ bool Foam::functionObjects::overpressure::execute()
 
 bool Foam::functionObjects::overpressure::write()
 {
-    if (obr_.time().timeIndex() != 0)
+    if (this->mesh_.time().timeIndex() > 0)
     {
         writeObject(resultName_);
         return true;

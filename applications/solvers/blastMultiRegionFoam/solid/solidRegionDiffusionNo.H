@@ -4,7 +4,7 @@ forAll(solidRegions, i)
 {
     // Note: do not use setRegionSolidFields.H to avoid double registering Cp
     //#include "setRegionSolidFields.H"
-    const solidThermoModel& thermo = thermos[i];
+    const solidThermo& thermo = thermoSolid[i];
 
     tmp<volScalarField> magKappa;
     if (thermo.isotropic())
@@ -28,7 +28,6 @@ forAll(solidRegions, i)
         (
             solidRegions[i],
             runTime,
-            thermo.T(),
             rho*cp,
             magKappa()
         ),

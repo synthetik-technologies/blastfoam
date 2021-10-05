@@ -15,12 +15,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-fluxScheme      Tadmor;
+fluxScheme      Kurganov;
 
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK2SSP;
+    timeIntegrator  RK2SSP 3;
 }
 
 gradSchemes
@@ -41,15 +41,15 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             cubic;
-    reconstruct(alpha)  Minmod;
-    reconstruct(rho)    Minmod;
-    reconstruct(U)      MinmodV;
-    reconstruct(e)      Minmod;
-    reconstruct(p)      Minmod;
-    reconstruct(speedOfSound)      Minmod;
+    default             linear;
+    reconstruct(alpha)  quadraticMUSCL Minmod;
+    reconstruct(rho)    quadraticMUSCL Minmod;
+    reconstruct(U)      quadraticMUSCL Minmod;
+    reconstruct(e)      quadraticMUSCL Minmod;
+    reconstruct(p)      quadraticMUSCL Minmod;
+    reconstruct(speedOfSound)   quadraticMUSCL Minmod;
 
-    reconstruct(lambda.c4) Minmod;
+    reconstruct(lambda.c4) quadraticMUSCL Minmod;
 }
 
 snGradSchemes

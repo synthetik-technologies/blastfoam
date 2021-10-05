@@ -1,20 +1,23 @@
-    const wordList solidsNames(rp["solid"]);
+    const wordList solidNames
+    (
+        rp.found("solid") ? rp["solid"] : wordList(0)
+    );
 
-    PtrList<dynamicFvMesh> solidRegions(solidsNames.size());
+    PtrList<dynamicBlastFvMesh> solidRegions(solidNames.size());
 
-    forAll(solidsNames, i)
+    forAll(solidNames, i)
     {
-        Info<< "Create solid mesh for region " << solidsNames[i]
+        Info<< "Create solid mesh for region " << solidNames[i]
             << " for time = " << runTime.timeName() << nl << endl;
 
         solidRegions.set
         (
             i,
-            dynamicFvMesh::New
+            dynamicBlastFvMesh::New
             (
                 IOobject
                 (
-                    solidsNames[i],
+                    solidNames[i],
                     runTime.timeName(),
                     runTime,
                     IOobject::MUST_READ
@@ -27,4 +30,3 @@
         //(void)solidRegions[i].weights();
         //(void)solidRegions[i].deltaCoeffs();
     }
-

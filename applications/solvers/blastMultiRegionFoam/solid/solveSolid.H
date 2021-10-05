@@ -13,14 +13,10 @@ do
     }
     fvScalarMatrix eEqn
     (
-        fvm::ddt(betav*rho, e)
-      - (
-            thermo.isotropic()
-          ? fvm::laplacian(betav*thermo.alpha(), e, "laplacian(alpha,e)")
-          : fvm::laplacian(betav*taniAlpha(), e, "laplacian(alpha,e)")
-        )
-//      ==
-//         fvOptions(rho, e)
+        fvm::ddt(rho, e)
+      + thermo.divq(e)
+     ==
+        fvModels.source(rho, e)
     );
 
     if (!lastIter)
@@ -29,13 +25,14 @@ do
         e.relax();
     }
 
-//     fvOptions.constrain(eEqn);
+    fvConstraints.constrain(eEqn);
 
     converged = eEqn.solve().initialResidual() < tolerance;
 
-//     fvOptions.correct(e);
+    fvConstraints.constrain(e);
 
 } while (++iter < maxIter && !lastIter);
+
 if (converged)
 {
     Info<< "Converged in " << iter << " iterations" << endl;
@@ -47,5 +44,5 @@ else
 
 thermo.correct();
 
-Info<< "max(T): " << max(T).value()
-    << ", min(T): " << min(T).value() << endl;
+Info<< "Min/max T:" << min(thermo.T()).value() << ' '
+    << max(thermo.T()).value() << endl;

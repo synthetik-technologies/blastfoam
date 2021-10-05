@@ -88,15 +88,15 @@ Foam::dragModels::TomiyamaCorrelated::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::TomiyamaCorrelated::CdRe
+Foam::scalar Foam::dragModels::TomiyamaCorrelated::cellCdRe
 (
     const label celli,
     const label nodei,
     const label nodej
 ) const
 {
-    scalar Re(pair_.Re(celli, nodei, nodej));
-    scalar Eo(pair_.Eo(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
+    scalar Eo(pair_.cellEo(celli, nodei, nodej));
 
     return
         max

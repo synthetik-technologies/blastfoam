@@ -64,7 +64,7 @@ Foam::interfacialVelocityModels::massAveraged::~massAveraged()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volVectorField>
-Foam::interfacialVelocityModels::massAveraged::Ui() const
+Foam::interfacialVelocityModels::massAveraged::UI() const
 {
     volScalarField alphaRho
     (
@@ -80,7 +80,7 @@ Foam::interfacialVelocityModels::massAveraged::Ui() const
 }
 
 Foam::tmp<Foam::surfaceScalarField>
-Foam::interfacialVelocityModels::massAveraged::phi() const
+Foam::interfacialVelocityModels::massAveraged::phiI() const
 {
     volScalarField alphaRho
     (

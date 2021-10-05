@@ -118,10 +118,18 @@ public:
 
         //- Turbulent diffusivity
         //  multiplying the gradient of the phase-fraction
-        virtual tmp<volScalarField> D(const label, const label) const = 0;
+        virtual tmp<volScalarField> D
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const = 0;
 
         //- Turbulent dispersion force
-        virtual tmp<volVectorField> F(const label, const label) const;
+        virtual tmp<volVectorField> F
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

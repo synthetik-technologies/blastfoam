@@ -109,10 +109,10 @@ public:
     // Member Functions
 
         //- Return the interfacial Velocity
-        virtual tmp<volVectorField> Ui() const = 0;
+        virtual tmp<volVectorField> UI() const = 0;
 
         //- Return the interfacial volumetric flux
-        virtual tmp<surfaceScalarField> phi() const = 0;
+        virtual tmp<surfaceScalarField> phiI() const = 0;
 
         //- Dummy write for regIOobject
         bool writeData(Ostream& os) const

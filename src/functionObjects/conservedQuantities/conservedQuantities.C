@@ -5,7 +5,7 @@
     \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-28-10-2020 Jeff Heylmun:    | Calculate conservedQuantities
+28-10-2020 Synthetik Applied Technologies: | Calculate conservedQuantities
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.

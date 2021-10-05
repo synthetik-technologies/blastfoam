@@ -103,6 +103,19 @@ Foam::BWR<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::BWR<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BWR<Specie>::pRhoT
 (
     const scalar rho,
@@ -117,6 +130,35 @@ Foam::scalar Foam::BWR<Specie>::pRhoT
       + 2.0*C0_*pow3(rho)/sqr(T)
       + c_*pow4(rho)/sqr(T)*exp(-gamma_*sqr(rho))
        *(2.0*sqr(gamma_*sqr(rho)) - 3.0*gamma_*sqr(rho) - 3.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BWR<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return max(dpdT(rho, e, T)/(cv*max(rho, 1e-10)), small) + 1.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BWR<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar cv
+) const
+{
+    return
+        (sqr(dpdT(rho, e, T))*T/cv - dpdv(rho, e, T))
+       /sqr(max(rho, 1e-10));
 }
 
 
@@ -137,6 +179,19 @@ Foam::scalar Foam::BWR<Specie>::dpdv
       + 2.0*C0_*pow3(rho)/sqr(T)
       + c_*pow4(rho)/sqr(T)*exp(-gamma_*sqr(rho))
        *(2.0*sqr(gamma_*sqr(rho)) - 3.0*gamma_*sqr(rho) - 3.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::BWR<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
@@ -227,7 +282,8 @@ Foam::scalar Foam::BWR<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return

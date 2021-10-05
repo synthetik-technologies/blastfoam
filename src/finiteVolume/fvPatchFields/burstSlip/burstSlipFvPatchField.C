@@ -113,26 +113,6 @@ Foam::burstSlipFvPatchField<Type>::burstSlipFvPatchField
 template<class Type>
 Foam::burstSlipFvPatchField<Type>::burstSlipFvPatchField
 (
-    const burstSlipFvPatchField<Type>& ptf
-)
-:
-    fixedValueFvPatchField<Type>(ptf),
-    pName_(ptf.pName_),
-    cyclicPatchName_(ptf.cyclicPatchName_),
-    cyclicPatchLabel_(ptf.cyclicPatchLabel_),
-    pBurst_(ptf.pBurst_),
-    burstImpulse_(ptf.burstImpulse_),
-    useImpulse_(ptf.useImpulse_),
-    impulse_(ptf.impulse_),
-    partialBurst_(ptf.partialBurst_),
-    intact_(ptf.intact_),
-    curTimeIndex_(ptf.curTimeIndex_)
-{}
-
-
-template<class Type>
-Foam::burstSlipFvPatchField<Type>::burstSlipFvPatchField
-(
     const burstSlipFvPatchField<Type>& ptf,
     const DimensionedField<Type, volMesh>& iF
 )

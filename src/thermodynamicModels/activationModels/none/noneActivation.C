@@ -47,9 +47,37 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName)
+    activationModel(mesh, dict, phaseName, false)
 {
-    lambda_ = 1.0;
+    if (detonationPoints_.size() == 0)
+    {
+        detonationPoints_.resize(1);
+        detonationPoints_.set
+        (
+            0,
+            new detonationPoint
+            (
+                returnReduce
+                (
+                    minMagSqr(mesh.C().primitiveField()),
+                    minMagSqrOp<vector>()
+                ),
+                0.0,
+                0.0
+            )
+        );
+    }
+    forAll(detonationPoints_, i)
+    {
+        if (!detonationPoints_[i].activated())
+        {
+            detonationPoints_[i].activated() = true;
+        }
+    }
+
+    // Store the original value of lambda and set to fully activated
+    lambda_.storeOldTime();
+    lambda_ == 1.0;
 }
 
 
@@ -63,28 +91,36 @@ Foam::activationModels::noneActivation::~noneActivation()
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "noActivation:ddtLambda",
-                lambda_.time().timeName(),
-                lambda_.mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            lambda_.mesh(),
-            dimensionedScalar
-            (
-                "ESource",
-                inv(dimTime),
-                0.0
-            )
-        )
+        "noActivation:ddtLambda",
+        lambda_.mesh(),
+        dimensionedScalar("0", inv(dimTime), 0.0)
     );
 }
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::noneActivation::initESource() const
+{
+    return volScalarField::New
+    (
+        "noActivation:initESource",
+        e0_*(lambda_ - lambda_.oldTime())
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::activationModels::noneActivation::ESource() const
+{
+    return volScalarField::New
+    (
+        "noActivation:ESource",
+        lambda_.mesh(),
+        dimensionedScalar("0", e0_.dimensions()/dimTime, 0.0)
+    );
+}
+
 
 // ************************************************************************* //

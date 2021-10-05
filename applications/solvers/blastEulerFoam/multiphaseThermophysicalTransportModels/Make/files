@@ -1,3 +1,0 @@
-multiphaseThermophysicalTransportModels.C
-
-LIB = $(BLAST_LIBBIN)/libblastMultiphaseThermophysicalTransportModels

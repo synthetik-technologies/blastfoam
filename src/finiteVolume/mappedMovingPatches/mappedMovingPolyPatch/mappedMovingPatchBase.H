@@ -5,9 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-08-21 Synthetik Applied Technology: Mapping of patches
+2020-08-21 Synthetik Applied Technologies: Mapping of patches
 -------------------------------------------------------------------------------
-
 License
     This file is derivative work of OpenFOAM.
 

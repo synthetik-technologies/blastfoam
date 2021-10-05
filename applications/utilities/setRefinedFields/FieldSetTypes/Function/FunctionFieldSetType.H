@@ -25,7 +25,8 @@ Class
     Foam::FieldSetTypes::Function
 
 Description
-    Linear combination of x, y, and z equations used by specifying an equation and the used coefficient functions i.e. f = a(x) + b(y)*d(x) + c(z)
+    Linear combination of x, y, and z equations used by specifying an equation
+    and the used coefficient functions i.e. f = a(x) + b(y)*d(x) + c(z)
 
 
 Usage:

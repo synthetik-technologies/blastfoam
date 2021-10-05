@@ -25,7 +25,7 @@ Class
     Foam::FieldSetTypes::Uniform
 
 Description
-    Base class used to set fields using a specified method
+    Set the field value to a uniform value
 
 SourceFiles
     UniformFieldSetType.C

@@ -44,6 +44,29 @@ inline Foam::LSZK<Specie>::LSZK
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    return -a_*pow(rho, b_);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::delta
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e
+) const
+{
+    return -a_*b_*pow(rho, b_ - 1.0)/(gamma_ - 1.0);
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -88,36 +111,46 @@ Foam::LSZK<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::Pi
+Foam::scalar Foam::LSZK<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
-    return -a_*pow(rho, b_);
+    return
+        limit
+      ? max((gamma_ - 1.0)*rho*e - Pi(rho, e), 0.0)
+      : (gamma_ - 1.0)*rho*e - Pi(rho, e);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::delta
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e
-) const
-{
-    return -a_*b_*pow(rho, b_ - 1.0)/(gamma_ - 1.0);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::LSZK<Specie>::GammaMG
+Foam::scalar Foam::LSZK<Specie>::Gamma
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
     return gamma_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::cSqr
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    scalar h((gamma_*p + Pi(rho, e))/((gamma_ - 1.0)*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*(gamma_ - 1.0);
 }
 
 
@@ -142,6 +175,56 @@ Foam::scalar Foam::LSZK<Specie>::dpde
 ) const
 {
     return (gamma_ - 1.0)*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::LSZK<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    return this->eBased_ ? (gamma_ - 1.0)*CpCv : CpCv*(gamma_ - 1.0)/gamma_;
 }
 
 

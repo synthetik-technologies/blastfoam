@@ -34,7 +34,7 @@ SourceFiles
 #ifndef noneViscosity_H
 #define noneViscosity_H
 
-#include "viscosityModel.H"
+#include "kineticTheoryViscosityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

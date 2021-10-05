@@ -52,6 +52,60 @@ inline Foam::Tillotson<Specie>::Tillotson
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::Tillotson<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar mu(rho/rho0_ - 1.0);
+    return
+      - A_*mu
+      - B_*sqr(mu)
+      - b_*sqr(e*rho*rho0_)*e0_*rho
+       /sqr(e*sqr(rho0_) + e0_*sqr(rho));
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tillotson<Specie>::delta
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    scalar G(GammaMG(rho, e));
+    scalar dGammadRho =
+        4.0*b_*e*sqr(e0_*rho0_)*pow3(rho)/pow3(x);
+
+    scalar dPidRho =
+      - A_/rho0_
+      - B_*2.0*(rho - rho0_)/sqr(rho0_)
+      + b_*sqr(e)*e0_*sqr(rho*rho0_)/pow3(x)*(e0_*sqr(rho) - 3.0*e*sqr(rho0_));
+    return
+      - (p + Pi(rho, e))*dGammadRho/sqr(G - 1.0)
+      + dPidRho/(G - 1.0);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tillotson<Specie>::GammaMG
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
+    return
+        (a_*x + b_*e0_*sqr(rho))/x
+      - b_*e*e0_*sqr(rho*rho0_)/sqr(x)
+      + 1.0;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -120,41 +174,15 @@ Foam::scalar Foam::Tillotson<Specie>::p
 
 
 template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::Pi
+Foam::scalar Foam::Tillotson<Specie>::Gamma
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
-    scalar mu(rho/rho0_ - 1.0);
-    return
-      - A_*mu
-      - B_*sqr(mu)
-      - b_*sqr(e*rho*rho0_)*e0_*rho
-       /sqr(e*sqr(rho0_) + e0_*sqr(rho));
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::delta
-(
-    const scalar p,
-    const scalar rho,
-    const scalar e
-) const
-{
-    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
-    scalar G(GammaMG(rho, e));
-    scalar dGammadRho =
-        4.0*b_*e*sqr(e0_*rho0_)*pow3(rho)/pow3(x);
-
-    scalar dPidRho =
-      - A_/rho0_
-      - B_*2.0*(rho - rho0_)/sqr(rho0_)
-      + b_*sqr(e)*e0_*sqr(rho*rho0_)/pow3(x)*(e0_*sqr(rho) - 3.0*e*sqr(rho0_));
-    return
-      - (p + Pi(rho, e))*dGammadRho/sqr(G - 1.0)
-      + dPidRho/(G - 1.0);
+    return GammaMG(rho, e);
 }
 
 
@@ -168,24 +196,9 @@ Foam::scalar Foam::Tillotson<Specie>::cSqr
     const scalar Cv
 ) const
 {
-    scalar gamma(GammaMG(rho, e));
-    scalar h((gamma*p + Pi(rho, e))/((gamma - 1.0)*max(rho, 1e-10)));
-    return (h - delta(p, rho, e))*(gamma - 1.0);
-}
-
-
-template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::GammaMG
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    scalar x(e*sqr(rho0_) + e0_*sqr(rho));
-    return
-        (a_*x + b_*e0_*sqr(rho))/x
-      - b_*e*e0_*sqr(rho*rho0_)/sqr(x)
-      + 1.0;
+    scalar G(GammaMG(rho, e));
+    scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*(G - 1.0);
 }
 
 
@@ -236,19 +249,19 @@ Foam::scalar Foam::Tillotson<Specie>::dpdT
 ) const
 {
     NotImplemented;
-    return this->R()*rho;
+    return 0.0;
 }
 
 
 template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::E
+Foam::scalar Foam::Tillotson<Specie>::Cp
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return EcTable_.lookup(rho) - e0_;
+    return 0.0;
 }
 
 
@@ -265,14 +278,28 @@ Foam::scalar Foam::Tillotson<Specie>::Cv
 
 
 template<class Specie>
-Foam::scalar Foam::Tillotson<Specie>::Cp
+Foam::scalar Foam::Tillotson<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    scalar G(this->GammaMG(rho, e));
+    return this->eBased_ ? (G - 1.0)*CpCv : CpCv*(G - 1.0)/G;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::Tillotson<Specie>::E
 (
     const scalar rho,
     const scalar e,
     const scalar T
 ) const
 {
-    return 0.0;
+    return EcTable_.lookup(rho) - e0_;
 }
 
 

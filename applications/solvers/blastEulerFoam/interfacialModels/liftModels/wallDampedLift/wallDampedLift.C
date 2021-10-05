@@ -76,13 +76,13 @@ Foam::tmp<Foam::volScalarField> Foam::liftModels::wallDamped::Cl
 }
 
 
-Foam::tmp<Foam::volVectorField> Foam::liftModels::wallDamped::Fi
+Foam::tmp<Foam::volVectorField> Foam::liftModels::wallDamped::FI
 (
     const label nodei,
     const label nodej
 ) const
 {
-    return wallDampingModel_->damp(liftModel_->Fi(nodei, nodej));
+    return wallDampingModel_->damp(liftModel_->FI(nodei, nodej));
 }
 
 

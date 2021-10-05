@@ -95,7 +95,11 @@ public:
     // Member Functions
 
         //- Virtual mass coefficient
-        virtual tmp<volScalarField> Cvm(const label, const label) const;
+        virtual tmp<volScalarField> Cvm
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

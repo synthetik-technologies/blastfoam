@@ -38,12 +38,12 @@ SourceFiles
 #ifndef solidModel_H
 #define solidModel_H
 
-#include "integrationSystem.H"
 #include "fvMesh.H"
 #include "volFields.H"
 #include "pointFields.H"
-#include "solidThermoModel.H"
-#include "fvOptions.H"
+#include "solidBlastThermo.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -67,11 +67,8 @@ protected:
         //- Derived solidModel type
         const word type_;
 
-        //- Thermo dictionary
-        IOdictionary thermophysicalProperties_;
-
         //- Thermodynamic model
-        autoPtr<solidThermoModel> thermoPtr_;
+        autoPtr<solidBlastThermo> thermoPtr_;
 
         //- Total displacement field
         volVectorField D_;
@@ -85,14 +82,21 @@ protected:
         //  approaches
         volSymmTensorField sigma_;
 
-        //- Solution standard tolerance
-        const scalar solutionTol_;
+        //- Solution relative tolerance
+        scalar relTol_;
+
+        //- Solution absolute tolerance
+        scalar tolerance_;
 
         //- Maximum number of momentum correctors
-        const int nCorr_;
+        label nCorr_;
 
-        //- fvOptions
-        fv::options& fvOptions_;
+        //- fvModels
+        fvModels& fvModels_;
+
+        //- fvConstraints
+        fvConstraints& fvConstraints_;
+
 
         //- This function will check that the D field was read from disk
         virtual void DisRequired();
@@ -175,7 +179,7 @@ public:
             }
 
             //- Return const-reference to the density
-            const solidThermoModel& thermo() const;
+            const solidBlastThermo& thermo() const;
 
             //- Return non-const reference to D
             virtual volVectorField& D()

@@ -2,48 +2,33 @@ EXE_INC = \
     -I. \
     -I./fluid \
     -I./solid \
-    -IderivedFvPatchFields/tractionDisplacement \
-    -IderivedFvPatchFields/hydrostaticDisplacement \
     -I./include \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
-    -I$(LIB_SRC)/finiteVolume/cfdTools \
-    -I$(LIB_SRC)/ODE/lnInclude \
+    -I$(LIB_SRC)/transportModels/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
     -I$(LIB_SRC)/regionModels/regionModel/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/MomentumTransportModels/lnInclude \
-    -I$(BLAST_DIR)/src/ThermophysicalTransportModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/fluxSchemes/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
-    -I$(BLAST_DIR)/src/radiationModels/lnInclude \
-    -I$(BLAST_DIR)/src/errorEstimators/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/solidModels/lnInclude
 
 
 EXE_LIBS = \
-    -lODE \
-    -lmomentumTransportModels \
-    -lfluidThermoMomentumTransportModels \
-    -lmeshTools \
     -lfiniteVolume \
+    -lmeshTools \
+    -lmomentumTransportModels \
+    -lcompressibleMomentumTransportModels \
     -lregionModels \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastThermodynamics \
-    -lblastMomentumTransportModels \
-    -lblastThermophysicalTransportModels \
-    -ldiameterModels \
-    -lfluxSchemes \
-    -lphaseCompressibleSystems \
-    -lblastRadiationModels \
-    -lblastDynamicMesh \
+    -lcompressibleSystems \
     -lblastDynamicFvMesh \
-    -lerrorEstimate \
     -lblastFunctionObjects \
-    -lblastSolidModels \
-    $(BLAST_QBMM_LIBS)
+    -lblastSolidModels

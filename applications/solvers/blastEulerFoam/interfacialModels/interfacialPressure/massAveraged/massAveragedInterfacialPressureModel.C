@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "massAveragedInterfacialPressureModel.H"
+#include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -64,35 +65,87 @@ Foam::interfacialPressureModels::massAveraged::~massAveraged()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::massAveraged::Pi() const
+Foam::interfacialPressureModels::massAveraged::PI() const
 {
     volScalarField alphaRho
     (
         this->pair_.phase1().alphaRho() + this->pair_.phase2().alphaRho()
     );
-    volScalarField alphaRhoPi
+    alphaRho.max(1e-10);
+    volScalarField alphaRhoPI
     (
         this->pair_.phase1().alphaRho()*this->pair_.phase1().p()
       + this->pair_.phase2().alphaRho()*this->pair_.phase2().p()
     );
 
-    return alphaRhoPi/max(alphaRho, dimensionedScalar(dimDensity, 1e-10));
+    return alphaRhoPI/alphaRho;
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::massAveraged::Pi(const label celli) const
+Foam::interfacialPressureModels::massAveraged::cellPI(const label celli) const
 {
     const phaseModel& phase1 = this->pair_.phase1();
     const phaseModel& phase2 = this->pair_.phase2();
     scalar alphaRho(phase1.alphaRho()[celli] + phase2.alphaRho()[celli]);
-    scalar alphaRhoPi
+    scalar alphaRhoPI
     (
         phase1.alphaRho()[celli]*phase1.p()[celli]
       + phase2.alphaRho()[celli]*phase2.p()[celli]
     );
 
-    return alphaRhoPi/max(alphaRho, 1e-10);
+    return alphaRhoPI/max(alphaRho, 1e-10);
 }
+
+
+Foam::scalar
+Foam::interfacialPressureModels::massAveraged::celldPIdAlpha
+(
+    const label celli,
+    const label phasei
+) const
+{
+    const phaseModel& phase1 =
+        this->pair_.phase1().index() == phasei
+      ? this->pair_.phase1()
+      : this->pair_.phase2();
+    const phaseModel& phase2 = this->pair_.otherPhase(phase1);
+    const scalar p1 = phase1.p()[celli];
+    const scalar rho1 = phase1.rho()[celli];
+    scalar alphaRho
+    (
+        max(phase1.alphaRho()[celli] + phase2.alphaRho()[celli], 1e-10)
+    );
+    scalar alphaRhoPI
+    (
+        phase1.alphaRho()[celli]*p1 + phase2.alphaRho()[celli]*phase2.p()[celli]
+    );
+
+    return rho1*p1/alphaRho - alphaRhoPI*rho1/sqr(alphaRho);
+}
+
+
+Foam::scalar
+Foam::interfacialPressureModels::massAveraged::celldPIde
+(
+    const label celli,
+    const label phasei
+) const
+{
+    const phaseModel& phase1 =
+        this->pair_.phase1().index() == phasei
+      ? this->pair_.phase1()
+      : this->pair_.phase2();
+    const phaseModel& phase2 = this->pair_.otherPhase(phase1);
+    const fluidBlastThermo& thermo1 =
+        dynamicCast<const fluidBlastThermo>(phase1.thermo());
+    scalar alphaRho
+    (
+        max(phase1.alphaRho()[celli] + phase2.alphaRho()[celli], 1e-10)
+    );
+
+    return phase1.alphaRho()[celli]*thermo1.celldpde(celli)/alphaRho;
+}
+
 
 // ************************************************************************* //

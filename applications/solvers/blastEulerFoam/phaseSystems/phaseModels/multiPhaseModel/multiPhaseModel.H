@@ -38,10 +38,9 @@ SourceFiles
 #ifndef multiPhaseModel_H
 #define multiPhaseModel_H
 
-#include "phaseModel.H"
-#include "fluidThermoModel.H"
+#include "fluidPhaseModel.H"
 #include "fluxScheme.H"
-#include "multiphaseFluidThermo.H"
+#include "multiphaseFluidBlastThermo.H"
 #include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -57,7 +56,7 @@ namespace Foam
 
 class multiPhaseModel
 :
-    public phaseModel
+    public fluidPhaseModel
 {
 protected:
     // Protected data
@@ -65,25 +64,16 @@ protected:
         //- Names of components
         wordList phases_;
 
-        //- Phase pressure
-        volScalarField p_;
-
-        //- Density field
-        volScalarField rho_;
-
-        //- Volume fraction flux
-        surfaceScalarField alphaPhi_;
-
         //- Primitative variables
 
             //- Equation of states
-            multiphaseFluidThermo thermo_;
+            multiphaseFluidBlastThermo& thermo_;
 
             //- Volume fractions
             PtrList<volScalarField>& alphas_;
 
             //- Phase densities
-            UPtrList<volScalarField>& rhos_;
+            PtrList<volScalarField>& rhos_;
 
 
         //- Conserved variables
@@ -99,15 +89,6 @@ protected:
 
             //- Phase mass fluxes
             PtrList<surfaceScalarField> alphaRhoPhis_;
-
-
-        //- Calculate new alpha and rho fields
-        virtual void calcAlphaAndRho();
-
-        //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
-
-        virtual tmp<volScalarField> ESource() const;
 
 
 public:
@@ -131,17 +112,10 @@ public:
 
     // Member Functions
 
-        //- Return the residual phase-fraction for given phase
-        //  Used to stabilize the phase momentum as the phase-fraction -> 0
-        dimensionedScalar residualAlpha() const
-        {
-            return thermo_.residualAlpha();
-        }
-
-
         // integrationSystem functions
 
-             virtual void solveAlpha(const bool s);
+            //- Correct volume fraction
+            virtual void correctVolumeFraction();
 
             //- Decode primative variables
             virtual void decode();
@@ -157,143 +131,6 @@ public:
 
             //- Update viscous terms
             virtual void postUpdate();
-
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
-        {
-            return fluxScheme_();
-        }
-
-        //- Access the flux scheme
-        virtual fluxScheme& flux()
-        {
-            return fluxScheme_();
-        }
-
-
-        //- Return the density
-        virtual const volScalarField& rho() const
-        {
-            return rho_;
-        }
-
-        //- Return the thermophysical pressure
-        virtual const volScalarField& p() const
-        {
-            return p_;
-        }
-
-        //- Return non-const access to the thermodynamic pressure
-        virtual volScalarField& p()
-        {
-            return p_;
-        }
-
-        //- Return non-const access to the pressure gradient
-        virtual tmp<volVectorField> gradP() const;
-
-        //- Return non-const access to the volume fraction gradient
-        virtual tmp<volVectorField> gradAlpha() const;
-
-        //- Constant access to the volume fraction flux
-        virtual tmp<surfaceScalarField> alphaPhi() const
-        {
-            return alphaPhi_;
-        }
-
-        //- Return thermodynamic model
-        virtual const basicThermoModel& thermo() const
-        {
-            return thermo_;
-        }
-
-        //- Access thermodynamic model
-        virtual basicThermoModel& thermo()
-        {
-            return thermo_;
-        }
-
-        //- Return the laminar viscosity
-        virtual tmp<volScalarField> nu() const;
-
-        //- Return the laminar viscosity for patch
-        virtual tmp<scalarField> nu(const label patchi) const;
-
-        //- Return the laminar viscosity for patch
-        virtual scalar nui(const label celli) const;
-
-        //- Return the laminar dynamic viscosity
-        virtual tmp<volScalarField> mu() const;
-
-        //- Return the laminar dynamic viscosity for patch
-        virtual tmp<scalarField> mu(const label patchi) const;
-
-        //- Thermal diffusivity for enthalpy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alpha() const;
-
-        //- Thermal diffusivity for enthalpy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alpha(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture [J/m/s/K]
-        virtual tmp<volScalarField> kappa() const;
-
-        //- Thermal diffusivity for temperature of mixture
-        //  for patch [J/m/s/K]
-        virtual tmp<scalarField> kappa(const label patchi) const;
-
-        //- Thermal diffusivity for temperature of mixture
-        //  for cell [J/m/s/K]
-        virtual scalar kappai(const label celli) const;
-
-        //- Thermal diffusivity for energy of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphahe() const;
-
-        //- Thermal diffusivity for energy of mixture for patch [kg/m/s]
-        virtual tmp<scalarField> alphahe(const label patchi) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture [J/m/s/K]
-        virtual tmp<volScalarField> kappaEff
-        (
-            const volScalarField& alphat
-        ) const;
-
-        //- Effective thermal turbulent diffusivity for temperature
-        //  of mixture for patch [J/m/s/K]
-        virtual tmp<scalarField> kappaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
-
-        //- Effective thermal turbulent diffusivity of mixture [kg/m/s]
-        virtual tmp<volScalarField> alphaEff
-        (
-            const volScalarField& alphat
-        ) const;
-
-        //- Effective thermal turbulent diffusivity of mixture
-        //  for patch [kg/m/s]
-        virtual tmp<scalarField> alphaEff
-        (
-            const scalarField& alphat,
-            const label patchi
-        ) const;
-
-        //- Return the specific heat capacity at constant pressure
-        virtual tmp<volScalarField> Cp() const;
-
-        //- Return the specific heat capacity at constant volume
-        virtual tmp<volScalarField> Cv() const;
-
-        //- Return the specific heat capacity at constant volume
-        virtual scalar Cvi(const label celli) const;
-
-        //- Return the speed of sound
-        virtual tmp<volScalarField> speedOfSound() const;
-
-        //- Correct thermodynamic quantities
-        virtual void correctThermo();
 };
 
 

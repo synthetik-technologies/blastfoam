@@ -79,11 +79,7 @@ public:
     // Member Functions
 
         //- Create atmosphere
-        virtual void createAtmosphere
-        (
-            volScalarField& p,
-            volScalarField& rho
-        ) const;
+        virtual void createAtmosphere(fluidBlastThermo& thermo) const;
 };
 
 

@@ -42,7 +42,7 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -54,7 +54,7 @@ namespace Foam
 
 class afterburnModel
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 
@@ -65,6 +65,9 @@ protected:
 
         //- Dictionary containing coefficients
         const dictionary& dict_;
+
+        //- name of the phase
+        const word phaseName_;
 
 
 public:
@@ -112,6 +115,10 @@ public:
 
 
     // Member Functions
+
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels()
+        {}
 
         //- Update
         virtual void update()

@@ -32,7 +32,6 @@ License
 #include "partialSlipFvPatchFields.H"
 #include "fvcFlux.H"
 #include "surfaceInterpolate.H"
-#include "phaseCompressibleMomentumTransportModel.H"
 #include "addToRunTimeSelectionTable.H"
 
 
@@ -50,53 +49,31 @@ Foam::fluidPhaseModel::fluidPhaseModel
 (
     const phaseSystem& fluid,
     const word& phaseName,
-    const label index
+    const label index,
+    const label nPhases
 )
 :
     phaseModel(fluid, phaseName, index),
-    p_
+    thermoPtr_
     (
-        IOobject
+        fluidBlastThermo::New
         (
-            IOobject::groupName("p", phaseName),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        fluid_.p(),
-        fluid_.p().boundaryField()
-    ),
-    rho_
-    (
-        IOobject
-        (
-            IOobject::groupName("rho", phaseName),
-            fluid.mesh().time().timeName(),
-            fluid.mesh(),
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        fluid_.mesh()
-    ),
-    thermo_
-    (
-        fluidThermoModel::New
-        (
-            phaseName,
+            nPhases,
             fluid.mesh(),
             phaseDict_,
-            true,
             phaseName
         )
     ),
-    fluxScheme_(fluxScheme::New(fluid.mesh(), name_))
+    rho_(thermoPtr_->rho()),
+    e_(thermoPtr_->he()),
+    T_(thermoPtr_->T()),
+    p_(thermoPtr_->p()),
+    fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
-    thermo_->read(phaseDict_);
-    thermo_->correct();
+    thermoPtr_->read();
 
     this->turbulence_ =
-        phaseCompressibleMomentumTransportModel::New
+        phaseCompressible::momentumTransportModel::New
         (
             *this,
             rho_,
@@ -108,14 +85,10 @@ Foam::fluidPhaseModel::fluidPhaseModel
     this->thermophysicalTransport_ =
         PhaseThermophysicalTransportModel
         <
-            phaseCompressibleMomentumTransportModel,
-            basicThermoModel
-        >::New(turbulence_, thermo_());
-
-    phaseModel::initializeModels();
-    thermo_->initializeModels();
+            phaseCompressible::momentumTransportModel,
+            transportThermoModel
+        >::New(turbulence_, thermoPtr_());
 }
-
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -127,7 +100,7 @@ Foam::fluidPhaseModel::~fluidPhaseModel()
 
 Foam::tmp<Foam::volScalarField> Foam::fluidPhaseModel::ESource() const
 {
-    return (*this)*thermo_->ESource();
+    return (*this)*thermoPtr_->ESource();
 }
 
 
@@ -137,7 +110,7 @@ void Foam::fluidPhaseModel::solve()
     phaseModel::solveAlphaRho();
 
     // Solve thermodynamic models (activation and afterburn)
-    thermo_->solve();
+    thermoPtr_->solve();
 
     // Solve momentum and energy transport
     phaseModel::solve();
@@ -146,8 +119,21 @@ void Foam::fluidPhaseModel::solve()
 
 void Foam::fluidPhaseModel::postUpdate()
 {
+    if (solveAlpha_ && solveFields_.found(name()))
+    {
+        volScalarField& alpha(*this);
+        fvScalarMatrix alphaEqn
+        (
+            fvm::ddt(alpha) - fvc::ddt(alpha)
+        ==
+            modelsPtr_->source(alpha)
+        );
+        constraintsPtr_->constrain(alphaEqn);
+        alphaEqn.solve();
+        constraintsPtr_->constrain(alpha);
+    }
+
     phaseModel::postUpdate();
-    thermo_->postUpdate();
 }
 
 
@@ -163,7 +149,7 @@ void Foam::fluidPhaseModel::update()
             U_,
             e_,
             p_,
-            thermo_->speedOfSound()(),
+            speedOfSound(),
             phi_,
             this->alphaPhiPtr_(),
             alphaRhoPhi_,
@@ -180,7 +166,7 @@ void Foam::fluidPhaseModel::update()
             U_,
             e_,
             p_,
-            thermo_->speedOfSound()(),
+            thermoPtr_->speedOfSound(),
             phi_,
             alphaRhoPhi_,
             alphaRhoUPhi_,
@@ -188,29 +174,18 @@ void Foam::fluidPhaseModel::update()
         );
     }
 
-    thermo_->update();
+    thermoPtr_->update();
     phaseModel::update();
 }
 
 
 void Foam::fluidPhaseModel::decode()
 {
-    fv::options& options(const_cast<phaseSystem&>(this->fluid_).fvOptions());
-
     this->correctBoundaryConditions();
-    if (options.optionList::appliesToField(this->name()))
-    {
-        options.correct(*this);
-    }
     volScalarField alpha(Foam::max(*this, residualAlpha()));
 
-
     rho_.ref() = alphaRho_()/alpha();
-    if (options.optionList::appliesToField(rho_.name()))
-    {
-        options.correct(rho_);
-        alphaRho_.ref() = (*this)()*rho_;
-    }
+    rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
     alphaRho_.boundaryFieldRef() =
         (*this).boundaryField()*rho_.boundaryField();
@@ -218,11 +193,6 @@ void Foam::fluidPhaseModel::decode()
     alphaRho.max(1e-10);
 
     U_.ref() = alphaRhoU_()/(alphaRho());
-    if (options.optionList::appliesToField(U_.name()))
-    {
-        options.correct(U_);
-        alphaRhoU_.ref() = alphaRho_()*U_();
-    }
     U_.correctBoundaryConditions();
 
     alphaRhoU_.boundaryFieldRef() =
@@ -230,41 +200,18 @@ void Foam::fluidPhaseModel::decode()
 
     volScalarField E(alphaRhoE_/alphaRho);
     e_.ref() = E() - 0.5*magSqr(U_());
-    if (options.optionList::appliesToField(e_.name()))
-    {
-        options.correct(e_);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
 
-    //- Limit internal energy it there is a negative temperature
-    if (Foam::min(this->T_).value() < 0.0 && thermo_->limit())
-    {
-        if (debug)
-        {
-            WarningInFunction
-                << "Lower limit of temperature reached, min(T) = "
-                << Foam::min(T_).value()
-                << ", limiting internal energy." << endl;
-        }
-        volScalarField limit(pos(T_));
-        T_.max(small);
-        e_ = e_*limit + thermo_->E()*(1.0 - limit);
-        alphaRhoE_.ref() = alphaRho_()*(e_() + 0.5*magSqr(U_()));
-    }
-    e_.correctBoundaryConditions();
+    thermoPtr_->correct();
+    thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());
+    thermoPtr_->speedOfSound().max(small);
 
-    alphaRhoE_.boundaryFieldRef() =
-        (*this).boundaryField()
-       *rho_.boundaryField()
-       *(
-            e_.boundaryField()
-          + 0.5*magSqr(U_.boundaryField())
-        );
-    thermo_->correct();
+    // Update total energy because e may have changed
+    alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 
-    if (options.optionList::appliesToField(p_.name()))
+    const fvConstraints& constraints(this->fluid_.constraints());
+    if (constraints.constrainsField(p_.name()))
     {
-        options.correct(p_);
+        constraints.constrain(p_);
         p_.correctBoundaryConditions();
     }
 }
@@ -295,7 +242,7 @@ Foam::fluidPhaseModel::gradAlpha() const
 
 void Foam::fluidPhaseModel::correctThermo()
 {
-    thermo_->correct();
+    thermoPtr_->correct();
 }
 
 // ************************************************************************* //

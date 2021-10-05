@@ -136,16 +136,7 @@ public:
         pressureWaveTransmissiveFvPatchField
         (
             const pressureWaveTransmissiveFvPatchField&
-        );
-
-        //- Construct and return a clone
-        virtual tmp<fvPatchField<Type>> clone() const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new pressureWaveTransmissiveFvPatchField<Type>(*this)
-            );
-        }
+        ) = delete;
 
         //- Copy constructor setting internal field reference
         pressureWaveTransmissiveFvPatchField

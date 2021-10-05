@@ -7,11 +7,10 @@
   \*---------------------------------------------------------------------------*/
 FoamFile
 {
-  version     2.0;
   format      ascii;
   class       dictionary;
   location    "system";
-  object      controlDict;
+  object      "controlDict";
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -31,7 +30,7 @@ writeInterval   1;
 
 writeFormat     ascii;
 
-writePrecision  6;
+writePrecision  12;
 
 writeCompression off;
 

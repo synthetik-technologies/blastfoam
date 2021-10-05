@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2020-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -128,16 +128,21 @@ Foam::labelList Foam::errorEstimators::multicomponent::maxRefinement() const
     forAll(errors_, i)
     {
         const volScalarField& errori(errors_[i].error());
+        labelList maxCellLevel(errors_[i].maxRefinement());
         forAll(maxRefinement_, celli)
         {
-            if (errori[celli] > 0.5 && maxRefinement_[celli] < errors_[i].maxLevel())
+            if
+            (
+                errori[celli] > 0.5
+             && maxRefinement_[celli] < maxCellLevel[celli]
+            )
             {
-                maxRefinement_[celli] = errors_[i].maxLevel();
+                maxRefinement_[celli] = maxCellLevel[celli];
                 const labelList& cellCells(mesh_.cellCells()[celli]);
                 forAll(cellCells, j)
                 {
                     label cellj = cellCells[j];
-                    maxRefinement_[cellj] = errors_[i].maxLevel();
+                    maxRefinement_[cellj] = maxCellLevel[celli];
                 }
 
             }

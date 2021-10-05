@@ -43,13 +43,14 @@ Foam::afterburnModel::afterburnModel
     const word& phaseName
 )
 :
-    integrationSystem
+    timeIntegrationSystem
     (
         IOobject::groupName("afterburnModel", phaseName),
         mesh
     ),
     mesh_(mesh),
-    dict_(dict)
+    dict_(dict),
+    phaseName_(phaseName)
 {}
 
 

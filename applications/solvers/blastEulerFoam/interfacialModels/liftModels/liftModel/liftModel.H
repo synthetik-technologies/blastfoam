@@ -117,29 +117,29 @@ public:
         //- Return lift coefficient
         virtual tmp<volScalarField> Cl
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const = 0;
 
         //- Return phase-intensive lift force
-        virtual tmp<volVectorField> Fi
+        virtual tmp<volVectorField> FI
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return lift force
         virtual tmp<volVectorField> F
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return face lift force
         virtual tmp<surfaceScalarField> Ff
         (
-            const label nodei,
-            const label nodej
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 };
 

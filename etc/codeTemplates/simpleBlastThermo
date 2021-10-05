@@ -1,0 +1,84 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  9
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      simpleBlastThermo;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+transport
+(
+    const
+    sutherland
+    polynomial
+    logPolynomial
+    WLF
+    tabulated
+);
+
+thermo
+(
+    eConst
+    hConst
+    ePower
+    ePolynomial
+    eTabulated
+    hPower
+    hPolynomial
+    hTabulated
+    janaf
+);
+
+equationOfState
+(
+    perfectGas
+    AbelNobel
+    JWLC
+    idealGas
+    stiffenedGas
+    vanderWaals
+    JWL
+    LSZK
+    BKW
+    DoanNickel
+    CochranChan
+    Murnaghan
+    BirchMurnaghan2
+    BirchMurnaghan3
+    solidJWL
+    Tait
+    BWR
+    linearTillotson
+    Tillotson
+);
+
+specie
+(
+    specieBlast
+);
+
+codeOptions
+#{
+EXE_INC = \
+    -I$(LIB_SRC)/transportModels/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/thermophysicalProperties/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
+    -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/applications/test/Test-EOS/simpleBlastThermo
+
+LIB_LIBS =
+
+#};
+
+
+// ************************************************************************* //

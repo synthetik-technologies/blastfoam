@@ -87,24 +87,37 @@ public:
     // Member Functions
 
         //- Drag coefficient
-        virtual tmp<volScalarField> CdRe(const label, const label) const;
+        virtual tmp<volScalarField> CdRe
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- The drag function used in the momentum equation
-        virtual tmp<volScalarField> Ki(const label, const label) const;
+        virtual tmp<volScalarField> Ki
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- Drag coefficient
-        virtual scalar CdRe
+        virtual scalar cellCdRe
         (
             const label,
-            const label,
-            const label
+            const label nodei = -1,
+            const label nodej = -1
         ) const;
 
         //- Return the phase-intensive drag coefficient Ki
         //  used in the momentum equations
         //    ddt(alpha1*rho1*U1) + ... = ... alphad*K*(U1-U2)
         //    ddt(alpha2*rho2*U2) + ... = ... alphad*K*(U2-U1)
-        virtual scalar Ki(const label, const label, const label) const;
+        virtual scalar cellKi
+        (
+            const label,
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 

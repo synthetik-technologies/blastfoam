@@ -2,14 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-04-02 Jeff Heylmun:    Modified class for a density based thermodynamic
-                            class
--------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -27,21 +24,46 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "constTransport.H"
-#include "dictionary.H"
+#include "IOstreams.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Thermo>
-Foam::constTransport<Thermo>::constTransport
-(
-    const dictionary& dict
-)
+Foam::constTransport<Thermo>::constTransport(const dictionary& dict)
 :
     Thermo(dict),
-    mu_(readScalar(dict.subDict("transport").lookup("mu"))),
-    Pr_(max(readScalar(dict.subDict("transport").lookup("Pr")), small))
+    mu_(dict.subDict("transport").lookup<scalar>("mu")),
+    rPr_(1.0/dict.subDict("transport").lookup<scalar>("Pr"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Thermo>
+void Foam::constTransport<Thermo>::constTransport::write(Ostream& os) const
+{
+    os  << this->specieName() << endl;
+    os  << token::BEGIN_BLOCK  << incrIndent << nl;
+
+    Thermo::write(os);
+
+    dictionary dict("transport");
+    dict.add("mu", mu_);
+    dict.add("Pr", 1.0/rPr_);
+    os  << indent << dict.dictName() << dict;
+
+    os  << decrIndent << token::END_BLOCK << nl;
+}
+
+
+// * * * * * * * * * * * * * * * IOstream Operators  * * * * * * * * * * * * //
+
+template<class Thermo>
+Foam::Ostream& Foam::operator<<(Ostream& os, const constTransport<Thermo>& ct)
+{
+    ct.write(os);
+    return os;
+}
 
 
 // ************************************************************************* //

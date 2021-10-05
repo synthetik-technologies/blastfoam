@@ -23,13 +23,13 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         200e-6;
+endTime         2e-4;
 
 deltaT          1e-6;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
 purgeWrite      0;
 
@@ -48,5 +48,19 @@ runTimeModifiable true;
 adjustTimeStep  true;
 
 maxCo   0.5;
+
+functions
+{
+    outputTime
+    {
+        type    writeTimeList;
+        times
+        (
+            1.7e-5
+            0.0001
+            0.0002
+        );
+    }
+}
 
 // ************************************************************************* //

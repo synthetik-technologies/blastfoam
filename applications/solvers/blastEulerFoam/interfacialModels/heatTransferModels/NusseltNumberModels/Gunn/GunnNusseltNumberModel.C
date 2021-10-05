@@ -42,6 +42,7 @@ namespace NusseltNumberModels
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::NusseltNumberModels::Gunn::Gunn
+
 (
     const dictionary& dict,
     const phasePair& pair
@@ -69,6 +70,24 @@ Foam::NusseltNumberModels::Gunn::Nu
     const volScalarField& alphag(pair_.continuous().volumeFraction(nodej));
     volScalarField Pr(pair_.Pr(nodei, nodej));
     volScalarField Re(pair_.Re(nodei, nodej));
+    return
+        (7.0 - 10.0*alphag + 5.0*sqr(alphag))
+       *(1.0 + 0.7*pow(Re, 0.2)*pow(Pr, 1.0/3.0))
+      + (1.33 - 2.4*alphag + 1.2*sqr(alphag))
+       *pow(Re, 0.7)*pow(Pr, 1.0/3.0);
+}
+
+
+Foam::scalar Foam::NusseltNumberModels::Gunn::cellNu
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    scalar alphag(pair_.continuous().cellvolumeFraction(celli, nodej));
+    scalar Pr(pair_.cellPr(celli, nodei, nodej));
+    scalar Re(pair_.cellRe(celli, nodei, nodej));
     return
         (7.0 - 10.0*alphag + 5.0*sqr(alphag))
        *(1.0 + 0.7*pow(Re, 0.2)*pow(Pr, 1.0/3.0))

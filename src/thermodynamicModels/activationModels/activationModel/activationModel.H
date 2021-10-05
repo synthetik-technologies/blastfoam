@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -41,7 +41,8 @@ SourceFiles
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "dictionary.H"
-#include "integrationSystem.H"
+#include "IOPtrList.H"
+#include "timeIntegrationSystem.H"
 #include "runTimeSelectionTables.H"
 
 namespace Foam
@@ -53,11 +54,11 @@ namespace Foam
 
 class activationModel
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
-protected:
+public:
 
-    // Protected data
+    // Public class declaration
 
         // Declaration of detonation point class
         class detonationPoint
@@ -66,6 +67,9 @@ protected:
         {
             //- Has this point been activated
             mutable bool activated_;
+
+            //- Has the point been printed
+            mutable bool printedActivated_;
 
             //- Delay time
             scalar delay_;
@@ -78,16 +82,30 @@ protected:
 
         public:
 
-            detonationPoint
-            (
-                const volScalarField& mesh,
-                const vector& pt,
-                const scalar& delay,
-                const scalar& radius
-            );
+            //- Type name
+            TypeName("detonationPoint");
 
-            virtual ~detonationPoint()
-            {}
+            // Constructors
+
+                //- Construct from components
+                detonationPoint
+                (
+                    const vector& pt,
+                    const scalar delay,
+                    const scalar radius
+                );
+
+                //- Construct from Istream
+                detonationPoint(Istream& is);
+
+
+            //- Construct on freestore from Istream and return
+            static autoPtr<detonationPoint> New(Istream& is);
+
+            //- Clone the detonation point
+            virtual autoPtr<detonationPoint> clone() const;
+
+            virtual ~detonationPoint();
 
             // Public access
 
@@ -104,21 +122,40 @@ protected:
                 }
 
                 //- Return delay
-                const scalar& delay() const
+                scalar delay() const
                 {
                     return delay_;
                 }
 
+                //- Return the activation radius
+                scalar radius() const
+                {
+                    return radius_;
+                }
+
+                //- Check if the point will activate any cells or mass
+                //  and set activated if time > delay
+                bool check(const volScalarField&);
+
                 //- Set activated cells by setting lambda
                 void setActivated(volScalarField&, bool update) const;
+
+            // Ostream operator
+
+                friend Ostream& operator<<
+                (
+                    Ostream&,
+                    const detonationPoint&
+                );
         };
 
+protected:
 
         //- Progress variable
         volScalarField lambda_;
 
         //- Detonation points
-        PtrList<detonationPoint> detonationPoints_;
+        IOPtrList<detonationPoint> detonationPoints_;
 
         //- Specific activation energy
         dimensionedScalar e0_;
@@ -126,17 +163,12 @@ protected:
         //- Exponent used to blend reacted and unreacted states (\lambda^m)
         scalar lambdaExp_;
 
-        //- Density name
-        word alphaRhoName_;
 
         //- Reference to phase mass
-        const volScalarField& alphaRho_;
-
-        //- Name of flux
-        word alphaRhoPhiName_;
+        UautoPtr<const volScalarField> alphaRhoPtr_;
 
         //- Reference to phase mass flux
-        const surfaceScalarField& alphaRhoPhi_;
+        UautoPtr<const surfaceScalarField> alphaRhoPhiPtr_;
 
         //- Maximum change in lambda per time step
         scalar maxDLambda_;
@@ -157,25 +189,24 @@ protected:
         virtual void correct()
         {}
 
-        //- Return the center of centerOfMass
-        //  Only valid for a single detonation point
-        vector centerOfMass
+        //- Return the list of detonation points read from the
+        //  input dictionary
+        PtrList<detonationPoint> readDetonationPoints
         (
-            const fvMesh& mesh,
-            const volScalarField& alpha
+            const dictionary& dict,
+            const volScalarField& alpha,
+            const bool needDetonationPoints
         ) const;
 
-        //- Do detonation points need to be specified
-        virtual bool needDetonationPoints() const
-        {
-            return false;
-        }
+        //- Return the center of centerOfMass
+        //  Only valid for a single detonation point
+        vector centerOfMass(const volScalarField& alpha) const;
 
 
 public:
 
     //- Runtime type information
-    ClassName("activationModel");
+    TypeName("activationModel");
 
 
     // Declare runtime construction
@@ -198,7 +229,8 @@ public:
     (
         const fvMesh& mesh,
         const dictionary& dict,
-        const word& phaseName
+        const word& phaseName,
+        const bool needDetonationPoints
     );
 
 
@@ -217,6 +249,9 @@ public:
 
 
     // Member Functions
+
+        //- Set pointers to mass and mass flux
+        virtual void initializeModels();
 
         //- Update
         virtual void update()
@@ -242,30 +277,45 @@ public:
         }
 
         //- Return lambda to the m power for blending
-        tmp<volScalarField> lambdaPow() const
+        inline tmp<volScalarField> lambdaPow() const
         {
             return pow(lambda_, lambdaExp_);
         }
 
-        //- Return ambda to the m power for blending for patchi
-        tmp<scalarField> lambdaPow(const label patchi) const
+        //- Return lambda to the m power for blending for patchi
+        inline tmp<scalarField> lambdaPow(const label patchi) const
         {
             return pow(lambda_.boundaryField()[patchi], lambdaExp_);
         }
 
         //- Return ambda to the m power for blending for celli
-        scalar lambdaPowi(const label celli) const
+        inline scalar cellLambdaPow(const label celli) const
         {
             return pow(lambda_[celli], lambdaExp_);
+        }
+
+        //- Return lambda to the m power for blending for patchi and facei
+        inline scalar patchFaceLambdaPow
+        (
+            const label patchi,
+            const label facei
+        ) const
+        {
+            return pow(lambda_.boundaryField()[patchi][facei], lambdaExp_);
         }
 
         //- Return energy source
         virtual tmp<volScalarField> ddtLambda() const;
 
+        //- Return initial energy source
+        virtual tmp<volScalarField> initESource() const;
+
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 };
 
+
+Ostream& operator<<(Ostream&, const activationModel::detonationPoint&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

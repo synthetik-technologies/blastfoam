@@ -5,9 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-2020-08-21 Synthetik Applied Technology: Mapping of point patches
+2020-08-21 Synthetik Applied Technologies: Mapping of point patches
 -------------------------------------------------------------------------------
-
 License
     This file is derivative work of OpenFOAM.
 
@@ -60,26 +59,22 @@ inline const Foam::word& Foam::mappedMovingPointPatchBase::displacementFieldName
 inline Foam::tmp<Foam::vectorField> Foam::mappedMovingPointPatchBase::offsets() const
 {
     const polyMesh& sMesh(sampleMesh());
-    const polyPatch sPatch(samplePolyPatch());
-
+    const polyPatch& sPatch(samplePolyPatch());
     if (sMesh.foundObject<pointVectorField>(displacementFieldName()))
     {
-        tmp<vectorField> disp
-        (
+        return
             sMesh.lookupObject<pointVectorField>
             (
                 displacementFieldName()
-            ).boundaryField()[sPatch.index()].patchInternalField()
-        );
-        return disp;
+            ).boundaryField()[sPatch.index()].patchInternalField();
     }
 
     if (debug)
     {
-        Info<< "Offsets are not set for " << sPatch.name() << endl;
+        Info<< "Offsets are not set for " << samplePatch() << endl;
     }
 
-    return tmp<vectorField>(new vectorField(sPatch.size(), Zero));
+    return tmp<vectorField>(new vectorField(sPatch.localPoints().size(), Zero));
 }
 
 

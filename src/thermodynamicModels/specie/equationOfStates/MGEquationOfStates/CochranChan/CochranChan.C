@@ -43,4 +43,38 @@ Foam::CochranChan<Specie>::CochranChan(const dictionary& dict)
     e0_(dict.subDict("equationOfState").lookupOrDefault<scalar>("e0", 0.0))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::CochranChan<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("rho0", rho0_);
+    dict.add("Gamma0", Gamma0_);
+    dict.add("A", A_);
+    dict.add("Epsilon1", Epsilon1_);
+    dict.add("B", B_);
+    dict.add("Epsilon2", Epsilon2_);
+    dict.add("e0", e0_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const CochranChan<Specie>& cc
+)
+{
+    cc.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

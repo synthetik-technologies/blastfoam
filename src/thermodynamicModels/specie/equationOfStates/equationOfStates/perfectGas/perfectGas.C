@@ -39,4 +39,30 @@ Foam::perfectGas<Specie>::perfectGas
     Specie(dict)
 {}
 
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::perfectGas<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const perfectGas<Specie>& pg
+)
+{
+    pg.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

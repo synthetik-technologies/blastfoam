@@ -41,4 +41,36 @@ Foam::BirchMurnaghan3<Specie>::BirchMurnaghan3
     Gamma_(dict.subDict("equationOfState").lookup<scalar>("Gamma"))
 {}
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+template<class Specie>
+void Foam::BirchMurnaghan3<Specie>::write(Ostream& os) const
+{
+    Specie::write(os);
+    dictionary dict("equationOfState");
+    dict.add("rho0", rho0_);
+    dict.add("pRef", pRef_);
+    dict.add("K0", K0_);
+    dict.add("K0Prime", K0Prime_);
+    dict.add("Gamma", Gamma_);
+    os  << indent << dict.dictName() << dict;
+}
+
+
+// * * * * * * * * * * * * * * * Ostream Operator  * * * * * * * * * * * * * //
+
+template<class Specie>
+Foam::Ostream& Foam::operator<<
+(
+    Ostream& os,
+    const BirchMurnaghan3<Specie>& bm3
+)
+{
+    bm3.write(os);
+    return os;
+}
+
+
 // ************************************************************************* //

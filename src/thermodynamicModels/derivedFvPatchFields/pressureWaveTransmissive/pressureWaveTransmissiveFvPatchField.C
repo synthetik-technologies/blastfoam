@@ -29,7 +29,7 @@ License
 #include "pressureWaveTransmissiveFvPatchField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
-#include "fluidThermoModel.H"
+#include "fluidBlastThermo.H"
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -80,18 +80,6 @@ template<class Type>
 Foam::pressureWaveTransmissiveFvPatchField<Type>::
 pressureWaveTransmissiveFvPatchField
 (
-    const pressureWaveTransmissiveFvPatchField& ptpsf
-)
-:
-    advectiveFvPatchField<Type>(ptpsf),
-    phaseName_(ptpsf.phaseName_)
-{}
-
-
-template<class Type>
-Foam::pressureWaveTransmissiveFvPatchField<Type>::
-pressureWaveTransmissiveFvPatchField
-(
     const pressureWaveTransmissiveFvPatchField& ptpsf,
     const DimensionedField<Type, volMesh>& iF
 )
@@ -110,9 +98,11 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
     const surfaceScalarField& phi =
         this->db().template lookupObject<surfaceScalarField>(this->phiName_);
 
-    fvsPatchField<scalar> phip =
+    Field<scalar> phip
+    (
         this->patch().template
-            lookupPatchField<surfaceScalarField, scalar>(this->phiName_);
+            lookupPatchField<surfaceScalarField, scalar>(this->phiName_)
+    );
 
     if (phi.dimensions() == dimDensity*dimVelocity*dimArea)
     {
@@ -123,15 +113,15 @@ Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
         phip /= rhop;
     }
 
-   const fluidThermoModel& thermo =
-        this->db().template lookupObject<fluidThermoModel>
+   const fluidBlastThermo& thermo =
+        this->db().template lookupObject<fluidBlastThermo>
         (
-            IOobject::groupName("basicThermo", phaseName_)
+            IOobject::groupName(basicThermo::dictName, phaseName_)
         );
     // Lookup the velocity and compressibility of the patch
     tmp<scalarField> cp
     (
-        thermo.speedOfSound(this->patch().index())
+        thermo.speedOfSound().boundaryField()[this->patch().index()]
     );
     // Calculate the speed of the field wave w
     // by summing the component of the velocity normal to the boundary

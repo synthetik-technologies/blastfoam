@@ -47,7 +47,7 @@ SourceFiles
 namespace Foam
 {
 
-class integrationSystem;
+class timeIntegrationSystem;
 
 /*---------------------------------------------------------------------------*\
                            Class timeIntegrator Declaration
@@ -64,7 +64,7 @@ protected:
     const fvMesh& mesh_;
 
     //- Reference to compressible system
-    UPtrList<integrationSystem> systems_;
+    UPtrList<timeIntegrationSystem> systems_;
 
     //- Current step index
     label stepi_;
@@ -206,7 +206,7 @@ public:
     // Member Functions
 
         //- Add a system to the
-        void addSystem(integrationSystem& system);
+        void addSystem(timeIntegrationSystem& system);
 
         //- Integrate fluxes in time
         virtual void integrate();

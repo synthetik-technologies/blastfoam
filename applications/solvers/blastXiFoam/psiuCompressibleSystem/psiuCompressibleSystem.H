@@ -2,8 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019 Synthetik Applied Technologies
-     \\/     M anipulation  |
+    \\  /    A nd           | Copyright (C) 2019-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is derivative work of OpenFOAM.
@@ -38,10 +38,10 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "integrationSystem.H"
+#include "timeIntegrationSystem.H"
 #include "fluxScheme.H"
 #include "psiuReactionThermo.H"
-#include "fluidThermoMomentumTransportModel.H"
+#include "dynamicMomentumTransportModel.H"
 #include "fluidThermophysicalTransportModel.H"
 #include "uniformDimensionedFields.H"
 
@@ -54,7 +54,7 @@ namespace Foam
 
 class psiuCompressibleSystem
 :
-    public integrationSystem
+    public timeIntegrationSystem
 {
 protected:
 // Protected data

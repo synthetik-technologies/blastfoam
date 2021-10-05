@@ -53,6 +53,13 @@ typedef VolFieldSetType<symmTensor> symmTensorVolFieldSetType;
 typedef VolFieldSetType<sphericalTensor> sphericalTensorVolFieldSetType;
 typedef VolFieldSetType<tensor> tensorVolFieldSetType;
 
+
+// typedef SurfaceFieldSetType<scalar> scalarSurfaceFieldSetType;
+// typedef SurfaceFieldSetType<vector> vectorSurfaceFieldSetType;
+// typedef SurfaceFieldSetType<symmTensor> symmTensorSurfaceFieldSetType;
+// typedef SurfaceFieldSetType<sphericalTensor> sphericalTensorSurfaceFieldSetType;
+// typedef SurfaceFieldSetType<tensor> tensorSurfaceFieldSetType;
+
 }
 
 #endif

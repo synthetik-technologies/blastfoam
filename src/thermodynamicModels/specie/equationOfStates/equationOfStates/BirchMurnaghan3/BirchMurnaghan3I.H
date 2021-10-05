@@ -94,6 +94,19 @@ Foam::BirchMurnaghan3<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::p
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const bool limit
+) const
+{
+    return limit ? max(pRhoT(rho, T), 0.0) : pRhoT(rho, T);
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BirchMurnaghan3<Specie>::pRhoT
 (
     const scalar rho,
@@ -163,6 +176,19 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::dpdv
 
 
 template<class Specie>
+Foam::scalar Foam::BirchMurnaghan3<Specie>::dpde
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
 Foam::scalar Foam::BirchMurnaghan3<Specie>::dpdT
 (
     const scalar rho,
@@ -183,19 +209,17 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::E
 ) const
 {
     return
-      - (
-            9.0*K0_*rho/(16.0*pow3(rho0_))
+        (
+            9.0/16.0*K0_
            *(
-              - K0Prime_*sqr(rho) + pow(rho, 2.0/3.0)*pow3(rho0_)
+                cbrt(pow5(rho/rho0_))
                *(
-                    3.0*K0Prime_*pow(rho/rho0_, 2.0/3.0)
-                  - 3.0*K0Prime_
-                  - 14.0*pow(rho/rho0_, 2.0/3.0)
-                  + 16.0
-                )*pow(rho0_, -5.0/3.0)
-              + 4.0*sqr(rho)
-            )/16.0
-          + pRef_
+                   cbrt(sqr(rho/rho0_))*(14.0 - 3.0*K0Prime_)
+                 + 3.0*K0Prime_ - 16.0
+                )
+              + pow3(rho/rho0_)*(K0Prime_ - 4.0)
+            )
+          - pRef_
         )/max(rho, 1e-10);
 }
 
@@ -253,7 +277,8 @@ Foam::scalar Foam::BirchMurnaghan3<Specie>::CpMCv
 (
     const scalar rho,
     const scalar e,
-    const scalar T
+    const scalar T,
+    const scalar CpCv
 ) const
 {
     return 0.0;

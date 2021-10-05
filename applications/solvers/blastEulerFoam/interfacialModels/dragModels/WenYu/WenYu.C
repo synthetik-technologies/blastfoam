@@ -91,7 +91,7 @@ Foam::tmp<Foam::volScalarField> Foam::dragModels::WenYu::CdRe
 }
 
 
-Foam::scalar Foam::dragModels::WenYu::CdRe
+Foam::scalar Foam::dragModels::WenYu::cellCdRe
 (
     const label celli,
     const label nodei,
@@ -102,12 +102,12 @@ Foam::scalar Foam::dragModels::WenYu::CdRe
     (
         max
         (
-            pair_.continuous().volumeFractioni(celli),
+            pair_.continuous().cellvolumeFraction(celli),
             pair_.continuous().residualAlpha().value()
         )
     );
 
-    scalar Res(alpha2*pair_.Re(celli, nodei, nodej));
+    scalar Res(alpha2*pair_.cellRe(celli, nodei, nodej));
     scalar CdsRes
     (
         neg(Res - 1000)*24.0*(1.0 + 0.15*pow(Res, 0.687))

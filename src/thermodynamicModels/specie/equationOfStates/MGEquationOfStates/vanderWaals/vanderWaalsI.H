@@ -48,6 +48,50 @@ inline Foam::vanderWaals<Specie>::vanderWaals
 {}
 
 
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::Pi
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    return
+        (1.0 - (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10))*a_*sqr(rho)
+      + ((gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0)*c_;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::delta
+(
+    const scalar p,
+    const scalar rho,
+    const scalar e
+) const
+{
+    scalar pi
+    (
+        (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10)
+       *(rho*e + a_*sqr(rho) - c_)
+      - (a_*sqr(rho) + c_)
+    );
+    return
+        -b_*(pi + a_*sqr(rho))/(gamma_ - 1.0)
+       + ((1.0 - b_*rho)/(gamma_ - 1.0) - 1.0)*2.0*a_*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::GammaMG
+(
+    const scalar rho,
+    const scalar e
+) const
+{
+    return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Specie>
@@ -93,46 +137,47 @@ Foam::vanderWaals<Specie>::New
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::Pi
+Foam::scalar Foam::vanderWaals<Specie>::p
 (
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const bool limit
 ) const
 {
     return
-        (1.0 - (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10))*a_*sqr(rho)
-      + ((gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0)*c_;
+        limit
+      ? max((GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e), 0.0)
+      : (GammaMG(rho, e) - 1.0)*rho*e - Pi(rho, e);
 }
 
 
 template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::delta
+Foam::scalar Foam::vanderWaals<Specie>::Gamma
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar Cv
+) const
+{
+    return GammaMG(rho, e);
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::cSqr
 (
     const scalar p,
     const scalar rho,
-    const scalar e
+    const scalar e,
+    const scalar T,
+    const scalar Cv
 ) const
 {
-    scalar pi
-    (
-        (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10)
-       *(rho*e + a_*sqr(rho) - c_)
-      - (a_*sqr(rho) + c_)
-    );
-    return
-        -b_*(pi + a_*sqr(rho))/(gamma_ - 1.0)
-       + ((1.0 - b_*rho)/(gamma_ - 1.0) - 1.0)*2.0*a_*rho;
-}
-
-
-template<class Specie>
-Foam::scalar Foam::vanderWaals<Specie>::GammaMG
-(
-    const scalar rho,
-    const scalar e
-) const
-{
-    return (gamma_ - 1.0)/stabilise((1.0 - b_*rho), 1e-10) + 1.0;
+    scalar G(GammaMG(rho, e));
+    scalar h((G*p + Pi(rho, e))/((G - 1.0)*max(rho, 1e-10)));
+    return (h - delta(p, rho, e))*(G - 1.0);
 }
 
 
@@ -164,6 +209,57 @@ Foam::scalar Foam::vanderWaals<Specie>::dpde
 ) const
 {
     return (GammaMG(rho, e) - 1.0)*rho;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::dpdT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::Cp
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::Cv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return 0.0;
+}
+
+
+template<class Specie>
+Foam::scalar Foam::vanderWaals<Specie>::CpMCv
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T,
+    const scalar CpCv
+) const
+{
+    scalar G(this->GammaMG(rho, e));
+    return this->eBased_ ? (G - 1.0)*CpCv : CpCv*(G - 1.0)/G;
 }
 
 

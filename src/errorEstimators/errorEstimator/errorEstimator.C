@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2019-2020
+    \\  /    A nd           | Copyright (C) 2019-2021
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -30,6 +30,7 @@ License
 #include "timeControlFunctionObject.H"
 #include "probes.H"
 #include "blastProbes.H"
+#include "meshSizeObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -99,7 +100,8 @@ Foam::errorEstimator::errorEstimator
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
     upperUnrefine_(0.0),
-    maxLevel_(10),
+    maxLevel_(-1),
+    minDx_(-1),
     refineProbes_(dict.lookupOrDefault("refineProbes", true))
 {}
 
@@ -118,13 +120,22 @@ void Foam::errorEstimator::read(const dictionary& dict)
     lowerUnrefine_ = dict.lookup<scalar>("unrefineLevel");
     upperRefine_ = dict.lookupOrDefault("upperRefineLevel", great);
     upperUnrefine_ = dict.lookupOrDefault("upperUnrefineLevel", great);
-    maxLevel_ = dict.lookup<label>("maxRefinement");
+
+    if (dict.found("maxRefinement"))
+    {
+        maxLevel_ = dict.lookup<label>("maxRefinement");
+        minDx_ = -1;
+    }
+    else
+    {
+        minDx_ = dict.lookup<scalar>("minDx");
+        maxLevel_ = -1;
+    }
 }
 
 
 void Foam::errorEstimator::getFieldValue(const word& name, volScalarField& f) const
 {
-
     this->getFieldValueType<scalar>(name, f);
     this->getFieldValueType<vector>(name, f);
     this->getFieldValueType<symmTensor>(name, f);
@@ -168,45 +179,24 @@ void Foam::errorEstimator::normalize(volScalarField& error)
     labelList map;
     forAll(funcs, i)
     {
-        if (isA<functionObjects::timeControl>(funcs[i]))
+        vectorField pts;
+        if (isA<probes>(funcs[i]))
         {
-            const functionObjects::timeControl& tc
-            (
-                dynamicCast<const functionObjects::timeControl>(funcs[i])
-            );
-            bool sameRegion = true;
-            const dictionary& dict = tc.dict();
-            if (dict.found("region"))
-            {
-                word regionName = dict.lookup<word>("region");
-                sameRegion = regionName == error_.mesh().name();
-            }
+            const probes& p(refCast<const probes>(funcs[i]));
+            pts = p;
 
-            if (isA<probes>(tc.filter()) && sameRegion)
+        }
+        if (isA<blastProbes>(funcs[i]))
+        {
+            const blastProbes& p(refCast<const blastProbes>(funcs[i]));
+            pts = p;
+        }
+        forAll(pts, j)
+        {
+            label celli = mesh_.findCell(pts[j], polyMesh::FACE_PLANES);
+            if (celli >= 0)
             {
-                const probes& p(refCast<const probes>(tc.filter()));
-                const labelList& cells(p.elements());
-                forAll(cells, j)
-                {
-                    label celli = cells[j];
-                    if (celli >= 0)
-                    {
-                        error[celli] = 1.0;
-                    }
-                }
-            }
-            if (isA<blastProbes>(tc.filter()) && sameRegion)
-            {
-                const blastProbes& p(refCast<const blastProbes>(tc.filter()));
-                const labelList& cells(p.elements());
-                forAll(cells, j)
-                {
-                    label celli = cells[j];
-                    if (celli >= 0)
-                    {
-                        error[celli] = 1.0;
-                    }
-                }
+                error[celli] = 1.0;
             }
         }
     }
@@ -214,7 +204,22 @@ void Foam::errorEstimator::normalize(volScalarField& error)
 
 Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
-    return labelList(mesh_.nCells(), maxLevel_);
+    if (maxLevel_ > 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
+    {
+        return labelList(mesh_.nCells(), maxLevel_);
+    }
+
+    const labelIOList& cellLevel(mesh_.lookupObject<labelIOList>("cellLevel"));
+    labelList maxLevel(mesh_.nCells(), 0);
+    const volScalarField& dx = meshSizeObject::New(mesh_).dx();
+    forAll(dx, celli)
+    {
+        if (dx[celli] > minDx_)
+        {
+            maxLevel[celli] = cellLevel[celli] + 1;
+        }
+    };
+    return maxLevel;
 }
 
 

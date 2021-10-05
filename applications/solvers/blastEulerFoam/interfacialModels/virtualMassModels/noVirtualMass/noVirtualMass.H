@@ -80,10 +80,18 @@ public:
     // Member Functions
 
         //- Virtual mass coefficient
-        virtual tmp<volScalarField> Cvm(const label, const label) const;
+        virtual tmp<volScalarField> Cvm
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 
         //- The virtual mass function K used in the momentum equation
-        virtual tmp<volScalarField> K(const label, const label) const;
+        virtual tmp<volScalarField> K
+        (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
 };
 
 
