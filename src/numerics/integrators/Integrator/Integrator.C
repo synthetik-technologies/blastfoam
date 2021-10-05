@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Integrator.H"
+#include "Simpson13Integrator.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -34,7 +35,10 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     const dictionary& dict
 )
 {
-    word integratorTypeName(dict.lookup("integrator"));
+    word integratorTypeName
+    (
+        dict.lookupOrDefault("integrator", Simpson13Integrator<Type>::typeName)
+    );
     Info<< "Selecting integrator " << integratorTypeName << endl;
 
     typename dictionaryConstructorTable::iterator cstrIter =
@@ -53,6 +57,29 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     return autoPtr<Integrator<Type>>(cstrIter()(eqn, dict));
 }
 
+
+template<class Type>
+Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+(
+    const Equation<Type>& eqn,
+    const word& integratorTypeName
+)
+{
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(integratorTypeName);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown integrator type "
+            << integratorTypeName << nl << nl
+            << "Valid integrators are : " << endl
+            << dictionaryConstructorTablePtr_->sortedToc()
+            << exit(FatalError);
+    }
+
+    return autoPtr<Integrator<Type>>(cstrIter()(eqn, dictionary()));
+}
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 

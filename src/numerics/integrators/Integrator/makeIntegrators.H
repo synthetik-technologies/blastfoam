@@ -42,6 +42,10 @@ License
     makeIntegrator(Type)                                                       \
     makeIntegratorTypes(Type);
 
+#define makeIntegratorsArg(Dummy, Type)                                        \
+    makeIntegrator(Type)                                                       \
+    makeIntegratorTypes(Type);
+
 #endif
 
 // ************************************************************************* //

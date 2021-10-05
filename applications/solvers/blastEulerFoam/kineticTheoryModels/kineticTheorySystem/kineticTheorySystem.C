@@ -282,13 +282,13 @@ bool Foam::kineticTheorySystem::polydisperse() const
 
 const Foam::volScalarField& Foam::kineticTheorySystem::alphap() const
 {
-    return alphapPtr_.valid() ? alphapPtr_() : kineticTheoryModels_[0].phase();
+    return alphapPtr_.valid() ? alphapPtr_() : packingPhases_[0];
 }
 
 
 const Foam::volVectorField& Foam::kineticTheorySystem::Up() const
 {
-    return UpPtr_.valid() ? UpPtr_() : kineticTheoryModels_[0].phase().U();
+    return UpPtr_.valid() ? UpPtr_() : packingPhases_[0].U();
 }
 
 

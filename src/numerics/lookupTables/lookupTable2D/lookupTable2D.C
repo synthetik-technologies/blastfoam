@@ -259,21 +259,34 @@ template<class Type>
 void Foam::lookupTable2D<Type>::setX
 (
     const Field<scalar>& x,
+    const word& modXType,
+    const bool isReal
+)
+{
+    setMod(modXType, modXFunc_, invModXFunc_);
+    setX(x, isReal);
+}
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::setX
+(
+    const Field<scalar>& x,
     const bool isReal
 )
 {
     if (isReal)
     {
-        forAll(xValues_, i)
+        forAll(xValues_, j)
         {
-            xValues_[i] = invModXFunc_(xModValues_[i]);
+            xValues_[j] = invModXFunc_(xModValues_[j]);
         }
     }
     else
     {
-        forAll(xValues_, i)
+        forAll(xValues_, j)
         {
-            xModValues_[i] = modXFunc_(xValues_[i]);
+            xModValues_[j] = modXFunc_(xValues_[j]);
         }
     }
 
@@ -289,7 +302,7 @@ void Foam::lookupTable2D<Type>::setX
 
 
 template<class Type>
-void Foam::lookupTable2D<Type>::setX
+void Foam::lookupTable2D<Type>::setY
 (
     const Field<scalar>& x,
     const word& modXType,
@@ -331,18 +344,6 @@ void Foam::lookupTable2D<Type>::setY
     {
         findYIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
-}
-
-template<class Type>
-void Foam::lookupTable2D<Type>::setY
-(
-    const Field<scalar>& y,
-    const word& modYType,
-    const bool isReal
-)
-{
-    setMod(modYType, modYFunc_, invModYFunc_);
-    setX(y, isReal);
 }
 
 

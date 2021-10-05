@@ -101,6 +101,13 @@ public:
             const dictionary& dict
         );
 
+        //- Select null constructed
+        static autoPtr<Integrator<Type>> New
+        (
+            const Equation<Type>& eqn,
+            const word& intType
+        );
+
 
     //- Destructor
     virtual ~Integrator()
@@ -139,7 +146,7 @@ public:
         (
             const scalar x0,
             const scalar x1,
-            const label li
+            const label li = -1
         ) const = 0;
 
     // Member Operators

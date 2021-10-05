@@ -92,8 +92,8 @@ License
 template<class Type>
 Foam::Equation<Type>::Equation()
 :
-    lowerLimit_(-great*pTraits<Type>::one),
-    upperLimit_(great*pTraits<Type>::one)
+    lowerLimit_(-great),
+    upperLimit_(great)
 {}
 
 
