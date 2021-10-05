@@ -56,6 +56,11 @@ protected:
         //- Upper limit
         scalar upperLimit_;
 
+        //- Check if derivatives have been implemented
+//         bool checkFirstDerivative() const;
+//         bool checkSecondDerivative() const;
+//         bool checkThirdDerivative() const;
+//         bool checkFourthDerivative() const;
 
 public:
 
@@ -104,20 +109,18 @@ public:
             x = min(upperLimit_, max(x, lowerLimit_));
         }
 
-        //- Check if derivatives have been implemented
-        static bool checkFirstDerivative(const Equation<Type>& eqn);
-        static bool checkSecondDerivative(const Equation<Type>& eqn);
-        static bool checkThirdDerivative(const Equation<Type>& eqn);
-        static bool checkFourthDerivative(const Equation<Type>& eqn);
-
         //- Return the number of derivatives
-        label nDerivatives() const;
+        virtual label nDerivatives() const = 0;
 
         //- Check if the coordinates are with in the range
         bool checkBounds(const scalar xs) const;
 
         //- Return the function value
-        virtual Type f(const scalar x, const label li) const = 0;
+        virtual Type f(const scalar x, const label li) const
+        {
+            NotImplemented
+            return pTraits<Type>::zero;
+        }
 
         //- Calculate the first derivative of the equation
         virtual Type dfdx(const scalar x, const label li) const

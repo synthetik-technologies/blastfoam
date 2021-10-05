@@ -520,9 +520,9 @@ Type Foam::lookupTable2D<Type>::d2FdX2(const scalar x, const scalar y) const
     const Type gp(invModFunc_(data_[i_][j_+1]));
     const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& xm(xValues_[i_-1]);
-    const scalar& xi(xValues_[i_]);
-    const scalar& xp(xValues_[i_+1]);
+    const scalar xm(xValues_[i_-1]);
+    const scalar xi(xValues_[i_]);
+    const scalar xp(xValues_[i_+1]);
 
     const Type gPrimepm((gpm - gm)/(xp - xi));
     const Type gPrimemm((gm - gmm)/(xi - xm));
@@ -554,9 +554,9 @@ Type Foam::lookupTable2D<Type>::d2FdY2(const scalar x, const scalar y) const
     const Type gp(invModFunc_(data_[i_+1][j_]));
     const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& ym(yValues_[j_-1]);
-    const scalar& yi(yValues_[j_]);
-    const scalar& yp(yValues_[j_+1]);
+    const scalar ym(yValues_[j_-1]);
+    const scalar yi(yValues_[j_]);
+    const scalar yp(yValues_[j_+1]);
 
     const Type gPrimemp((gmp - gm)/(yp - yi));
     const Type gPrimemm((gm - gmm)/(yi - ym));
@@ -579,11 +579,11 @@ Type Foam::lookupTable2D<Type>::d2FdXdY(const scalar x, const scalar y) const
     const Type gpm(invModFunc_(data_[i_+1][j_]));
     const Type gpp(invModFunc_(data_[i_+1][j_+1]));
 
-    const scalar& xm(xValues_[i]);
-    const scalar& xp(xValues_[i+1]);
+    const scalar xm(xValues_[i_]);
+    const scalar xp(xValues_[i_+1]);
 
-    const scalar& ym(yValues_[j]);
-    const scalar& yp(yValues_[j+1]);
+    const scalar ym(yValues_[j_]);
+    const scalar yp(yValues_[j_+1]);
 
     return ((gpp - gmp)/(xp - xm) - (gpm - gmm)/(xp - xm))/(yp - ym);
 }

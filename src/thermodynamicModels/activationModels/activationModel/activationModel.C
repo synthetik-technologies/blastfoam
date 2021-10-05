@@ -60,6 +60,7 @@ Foam::activationModel::detonationPoint::detonationPoint
 :
     vector(pt),
     activated_(false),
+    printedActivated_(false),
     delay_(delay),
     radius_(radius)
 {}
@@ -69,6 +70,7 @@ Foam::activationModel::detonationPoint::detonationPoint(Istream& is)
 :
     vector(is),
     activated_(readBool(is)),
+    printedActivated_(false),
     delay_(readScalar(is)),
     radius_(readScalar(is))
 {}
@@ -158,7 +160,11 @@ void Foam::activationModel::detonationPoint::setActivated
         return;
     }
 
-    Info<<"activating point " << *this << endl;
+    if (!printedActivated_)
+    {
+        Info<<"activating point " << vector(*this) << endl;
+        printedActivated_ = true;
+    }
     const fvMesh& mesh = lambda.mesh();
     label nCells = 0;
     if (radius_ > small)

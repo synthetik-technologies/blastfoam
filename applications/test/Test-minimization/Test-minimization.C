@@ -20,6 +20,10 @@ public:
     virtual ~testEqn1()
     {}
 
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
     virtual scalar f(const scalar x, const label li) const
     {
         return mag(x - 2.0) + sqr(x - 1.0);
@@ -47,6 +51,10 @@ public:
     virtual ~testEqn2()
     {}
 
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
     virtual scalar f(const scalar x, const label li) const
     {
         return sqr(x - 2.0);

@@ -85,7 +85,7 @@ Foam::granularPhaseModel::granularPhaseModel
     ),
     fluxScheme_(phaseFluxScheme::NewSolid(fluid.mesh(), phaseName))
 {
-    thermoPtr_->read(phaseDict_);
+    thermoPtr_->read();
 }
 
 

@@ -89,22 +89,13 @@ public:
     //- Runtime type information
     ClassName("fluid");
 
-
     // Constructor
     fluidPhaseModel
     (
         const phaseSystem& fluid,
         const word& phaseName,
-        const label index
-    );
-
-    // Constructor
-    fluidPhaseModel
-    (
-        const label nPhases,
-        const phaseSystem& fluid,
-        const word& phaseName,
-        const label index
+        const label index,
+        const label nPhases = 1
     );
 
 

@@ -333,6 +333,8 @@ public:
                 const label celli
             ) const;
 
+            using fluidBlastThermo::Cp;
+
             //- Heat capacity at constant pressure for patch [J/kg/K]
             virtual tmp<scalarField> Cp
             (
@@ -344,6 +346,8 @@ public:
             virtual scalar cellCp(const scalar, const label) const;
 
 
+            using fluidBlastThermo::Cv;
+
             //- Heat capacity at constant volume for patch [J/kg/K]
             virtual tmp<scalarField> Cv
             (
@@ -353,6 +357,8 @@ public:
 
             //- Heat capacity at constant volume for a cell [J/kg/K]
             virtual scalar cellCv(const scalar, const label) const;
+
+            using fluidBlastThermo::Cpv;
 
             //- Heat capacity at constant pressure/volume for patch [J/kg/K]
             virtual tmp<scalarField> Cpv
@@ -383,7 +389,7 @@ public:
 
 
         //- Read residual values
-        virtual void read(const dictionary& dict);
+        virtual bool read();
 };
 
 

@@ -60,6 +60,10 @@ protected:
 
     // Protected member functions
 
+        //- Check if derivatives have been implemented
+//         bool checkJacobian() const;
+//         bool checkHessian() const;
+
         //- Make sure limits have been set
         void checkLimits() const;
 
@@ -85,15 +89,11 @@ public:
 
     // Member Functions
 
-        //- Check if derivatives have been implemented
-        static bool checkJacobian(const MultivariateEquation<Type>& eqn);
-        // static bool checkHessian(const MultivariateEquation<Type>& eqn);
-
         //- Return the number of equations in the system
         virtual label nEqns() const = 0;
 
         //- Return the number of derivatives in the system
-        label nDerivatives() const;
+        virtual label nDerivatives() const = 0;
 
         //- Return the lower limits
         const scalarField& lower() const

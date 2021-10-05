@@ -224,12 +224,6 @@ public:
 
             //- Return the source term for the energy equation
             virtual tmp<fvScalarMatrix> divq(volScalarField& he) const;
-
-        //- Read residual values
-        virtual void read(const dictionary& dict)
-        {
-            this->residualAlpha_.read(dict);
-        }
 };
 
 

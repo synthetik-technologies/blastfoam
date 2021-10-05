@@ -67,6 +67,10 @@ namespace Foam
             p_(thermo_.p()),
             e_(&thermo.he())
         {}
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;
@@ -105,6 +109,10 @@ namespace Foam
             return patchi_;
         }
 
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
         virtual scalar f(const scalar T, const label li) const
         {
             return
@@ -361,13 +369,14 @@ void Foam::multiphaseFluidBlastThermo::correct()
 }
 
 
-void Foam::multiphaseFluidBlastThermo::read(const dictionary& dict)
+bool Foam::multiphaseFluidBlastThermo::read()
 {
     forAll(thermos_, phasei)
     {
-        thermos_[phasei].read(dict.subDict(thermos_[phasei].phaseName()));
+        thermos_[phasei].read(this->subDict(thermos_[phasei].phaseName()));
         residualAlpha_ = max(residualAlpha_, thermos_[phasei].residualAlpha());
     }
+    return true;
 }
 
 

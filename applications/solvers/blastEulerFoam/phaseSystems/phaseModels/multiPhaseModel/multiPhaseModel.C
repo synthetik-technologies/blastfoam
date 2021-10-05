@@ -58,7 +58,13 @@ Foam::multiPhaseModel::multiPhaseModel
     const label index
 )
 :
-    fluidPhaseModel(3, fluid, phaseName, index),
+    fluidPhaseModel
+    (
+        fluid,
+        phaseName,
+        index,
+        3 // This is just used to force the multiphase thermo
+    ),
     thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
     alphas_(thermo_.volumeFractions()),
     rhos_(thermo_.rhos()),

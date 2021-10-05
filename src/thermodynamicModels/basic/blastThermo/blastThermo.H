@@ -426,11 +426,7 @@ public:
             ) const;
 
         //- Read residual values
-        virtual void read(const dictionary& dict)
-        {
-            this->residualRho_.read(dict);
-            this->residualAlpha_.read(dict);
-        }
+        virtual bool read();
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -117,6 +117,14 @@ Foam::blastThermo::~blastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::blastThermo::read()
+{
+    this->residualRho_.read(*this);
+    this->residualAlpha_.read(*this);
+    return true;
+}
+
+
 Foam::UIndirectList<Foam::scalar> Foam::blastThermo::cellSetScalarList
 (
     const volScalarField& psi,

@@ -49,53 +49,8 @@ Foam::fluidPhaseModel::fluidPhaseModel
 (
     const phaseSystem& fluid,
     const word& phaseName,
-    const label index
-)
-:
-    phaseModel(fluid, phaseName, index),
-    thermoPtr_
-    (
-        fluidBlastThermo::New
-        (
-            1,
-            fluid.mesh(),
-            phaseDict_,
-            phaseName
-        )
-    ),
-    rho_(thermoPtr_->rho()),
-    e_(thermoPtr_->he()),
-    T_(thermoPtr_->T()),
-    p_(thermoPtr_->p()),
-    fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
-{
-    thermoPtr_->read(phaseDict_);
-
-    this->turbulence_ =
-        phaseCompressible::momentumTransportModel::New
-        (
-            *this,
-            rho_,
-            U_,
-            alphaRhoPhi_,
-            phi_,
-            *this
-        );
-    this->thermophysicalTransport_ =
-        PhaseThermophysicalTransportModel
-        <
-            phaseCompressible::momentumTransportModel,
-            transportThermoModel
-        >::New(turbulence_, thermoPtr_());
-}
-
-
-Foam::fluidPhaseModel::fluidPhaseModel
-(
-    const label nPhases,
-    const phaseSystem& fluid,
-    const word& phaseName,
-    const label index
+    const label index,
+    const label nPhases
 )
 :
     phaseModel(fluid, phaseName, index),
@@ -115,7 +70,7 @@ Foam::fluidPhaseModel::fluidPhaseModel
     p_(thermoPtr_->p()),
     fluxScheme_(phaseFluxScheme::New(fluid.mesh(), name_))
 {
-    thermoPtr_->read(phaseDict_);
+    thermoPtr_->read();
 
     this->turbulence_ =
         phaseCompressible::momentumTransportModel::New

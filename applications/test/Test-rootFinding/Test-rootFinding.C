@@ -18,6 +18,10 @@ public:
     virtual ~testEqn1()
     {}
 
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
     virtual scalar f(const scalar x, const label li) const
     {
         return Foam::cos(x) - Foam::pow3(x);
@@ -45,6 +49,10 @@ public:
     virtual ~testEqn2()
     {}
 
+    virtual label nDerivatives() const
+    {
+        return 2;
+    }
     virtual scalar f(const scalar x, const label li) const
     {
         return Foam::exp(x) - 10.0*x;

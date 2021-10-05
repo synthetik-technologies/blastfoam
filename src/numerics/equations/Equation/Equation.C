@@ -25,66 +25,66 @@ License
 
 #include "Equation.H"
 
-// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Private member functions  * * * * * * * * * * * //
 
-template<class Type>
-bool Foam::Equation<Type>::checkFirstDerivative(const Equation<Type>& eqn) 
-{
-    if 
-    (
-        reinterpret_cast<void*>(eqn.*(&Equation<Type>::dfdx)) 
-     == reinterpret_cast<void*>(&Equation<Type>::dfdx)
-    )
-    {
-        return false;
-    }
-    return true;
-}
-
-
-template<class Type>
-bool Foam::Equation<Type>::checkSecondDerivative(const Equation<Type>& eqn) 
-{
-    if 
-    (
-        reinterpret_cast<void*>(eqn.*(&Equation<Type>::d2fdx2)) 
-     == reinterpret_cast<void*>(&Equation<Type>::d2fdx2)
-    )
-    {
-        return false;
-    }
-    return true;
-}
-
-
-template<class Type>
-bool Foam::Equation<Type>::checkThirdDerivative(const Equation<Type>& eqn) 
-{
-    if 
-    (
-        reinterpret_cast<void*>(eqn.*(&Equation<Type>::d3fdx3)) 
-     == reinterpret_cast<void*>(&Equation<Type>::d3fdx3)
-    )
-    {
-        return false;
-    }
-    return true;
-}
-
-
-template<class Type>
-bool Foam::Equation<Type>::checkFourthDerivative(const Equation<Type>& eqn) 
-{
-    if 
-    (
-        reinterpret_cast<void*>(eqn.*(&Equation<Type>::d4fdx4)) 
-     == reinterpret_cast<void*>(&Equation<Type>::d4fdx4)
-    )
-    {
-        return false;
-    }
-    return true;
-}
+// template<class Type>
+// bool Foam::Equation<Type>::checkFirstDerivative() const
+// {
+//     if
+//     (
+//         (void*)(this->*(&Equation<Type>::dfdx))
+//      == (void*)(&Equation<Type>::dfdx)
+//     )
+//     {
+//         return false;
+//     }
+//     return true;
+// }
+//
+//
+// template<class Type>
+// bool Foam::Equation<Type>::checkSecondDerivative() const
+// {
+//     if
+//     (
+//         (void*)(this->*(&Equation<Type>::d2fdx2))
+//      == (void*)(&Equation<Type>::d2fdx2)
+//     )
+//     {
+//         return false;
+//     }
+//     return true;
+// }
+//
+//
+// template<class Type>
+// bool Foam::Equation<Type>::checkThirdDerivative() const
+// {
+//     if
+//     (
+//         (void*)(this->*(&Equation<Type>::d3fdx3))
+//      == (void*)(&Equation<Type>::d3fdx3)
+//     )
+//     {
+//         return false;
+//     }
+//     return true;
+// }
+//
+//
+// template<class Type>
+// bool Foam::Equation<Type>::checkFourthDerivative() const
+// {
+//     if
+//     (
+//         (void*)(this->*(&Equation<Type>::d4fdx4))
+//      == (void*)(&Equation<Type>::d4fdx4)
+//     )
+//     {
+//         return false;
+//     }
+//     return true;
+// }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -114,47 +114,47 @@ Foam::Equation<Type>::~Equation()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::label Foam::Equation<Type>::nDerivatives() const
-{
-    label nDeriv = 0;
-    // Check if first derivative has been implemented
-    if (checkFirstDerivative(*this))
-    {
-        nDeriv++;
-    }
-    else 
-    {
-        return nDeriv;
-    }
-
-    // Check if second derivative has been implemented
-    if (checkSecondDerivative(*this))
-    {
-        nDeriv++;
-    }
-    else 
-    {
-        return nDeriv;
-    }
-
-    // Check if third derivative has been implemented
-    if (checkThirdDerivative(*this))
-    {
-        nDeriv++;
-    }
-    else 
-    {
-        return nDeriv;
-    }
-
-    // Check if fourth derivative has been implemented
-    if (checkFourthDerivative(*this))
-    {
-        nDeriv++;
-    }
-    return nDeriv;
-}
+// template<class Type>
+// Foam::label Foam::Equation<Type>::nDerivatives() const
+// {
+//     label nDeriv = 0;
+//     // Check if first derivative has been implemented
+//     if (checkFirstDerivative())
+//     {
+//         nDeriv++;
+//     }
+//     else
+//     {
+//         return nDeriv;
+//     }
+//
+//     // Check if second derivative has been implemented
+//     if (checkSecondDerivative())
+//     {
+//         nDeriv++;
+//     }
+//     else
+//     {
+//         return nDeriv;
+//     }
+//
+//     // Check if third derivative has been implemented
+//     if (checkThirdDerivative())
+//     {
+//         nDeriv++;
+//     }
+//     else
+//     {
+//         return nDeriv;
+//     }
+//
+//     // Check if fourth derivative has been implemented
+//     if (checkFourthDerivative())
+//     {
+//         nDeriv++;
+//     }
+//     return nDeriv;
+// }
 
 
 template<class Type>

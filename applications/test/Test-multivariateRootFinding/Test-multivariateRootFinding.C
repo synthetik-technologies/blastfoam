@@ -28,6 +28,10 @@ public:
     {
         return 2;
     }
+    virtual label nDerivatives() const
+    {
+        return 1;
+    }
     virtual void f
     (
         const scalarField& x,
@@ -74,6 +78,10 @@ public:
     virtual label nEqns() const
     {
         return 2;
+    }
+    virtual label nDerivatives() const
+    {
+        return 1;
     }
     virtual void f
     (

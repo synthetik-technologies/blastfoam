@@ -66,6 +66,10 @@ namespace Foam
             p_(thermo_.p()),
             e_(&thermo.he())
         {}
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
         virtual scalar f(const scalar e, const label li) const
         {
             (*e_)[li] = e;
@@ -85,7 +89,6 @@ namespace Foam
     {
         const twoPhaseFluidBlastThermo& thermo_;
         const volScalarField& he_;
-        const scalar TLow_;
         label patchi_;
 
     public:
@@ -98,7 +101,6 @@ namespace Foam
             scalarEquation(TLow, great),
             thermo_(thermo),
             he_(thermo.he()),
-            TLow_(TLow),
             patchi_(-1)
         {}
 
@@ -107,6 +109,10 @@ namespace Foam
             return patchi_;
         }
 
+        virtual label nDerivatives() const
+        {
+            return 1;
+        }
         virtual scalar f(const scalar T, const label li) const
         {
             return
@@ -338,10 +344,11 @@ Foam::twoPhaseFluidBlastThermo::~twoPhaseFluidBlastThermo()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::twoPhaseFluidBlastThermo::read(const dictionary& dict)
+bool Foam::twoPhaseFluidBlastThermo::read()
 {
-    thermo1_->read(dict.subDict(thermo1_->name()));
-    thermo2_->read(dict.subDict(thermo2_->name()));
+    thermo1_->read(this->subDict(thermo1_->name()));
+    thermo2_->read(this->subDict(thermo2_->name()));
+    return true;
 }
 
 

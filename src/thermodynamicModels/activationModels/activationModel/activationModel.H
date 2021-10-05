@@ -68,6 +68,9 @@ public:
             //- Has this point been activated
             mutable bool activated_;
 
+            //- Has the point been printed
+            mutable bool printedActivated_;
+
             //- Delay time
             scalar delay_;
 
