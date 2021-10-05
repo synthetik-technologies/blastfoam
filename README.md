@@ -37,7 +37,7 @@ The slides from the workshop have been added to the repository: [blastFoam May W
 
 ## Installation
 
-Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Installation is simple and requires only OpenFOAM-7 and (optionally) gnuplot be installed. Basic installation steps are as follows:
+Detailed instructions on how to install and use blastFoam are found in the [blastFoam User Guide](blastFoam_User_Guide.pdf). Installation is simple and requires only OpenFOAM-9 and (optionally) gnuplot be installed. Basic installation steps are as follows:
 
 
 
