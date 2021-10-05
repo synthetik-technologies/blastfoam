@@ -83,7 +83,7 @@ functions
             if (startTime > 0 && endTime > 0 && write)
             {
                 OFstream outputFile("detonationVelocity");
-                outputFile<< 1.0/8.0 << ',' << 0.005/(endTime - startTime)<<endl;
+                outputFile<< 0.0 << ',' << 0.005/(endTime - startTime)<<endl;
 
                 write = false;
             }
