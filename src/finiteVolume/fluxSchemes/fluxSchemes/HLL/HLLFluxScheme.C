@@ -439,6 +439,7 @@ Foam::scalar Foam::fluxSchemes::HLL::energyFlux
 Foam::scalar Foam::fluxSchemes::HLL::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
+    const bool isDensity,
     const label facei, const label patchi
 ) const
 {

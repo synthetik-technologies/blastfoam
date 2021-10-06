@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fluxSchemeBase.H"
+#include "MUSCLReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -56,6 +57,103 @@ Foam::fluxSchemeBase::~fluxSchemeBase()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::tmp<Foam::surfaceScalarField> Foam::fluxSchemeBase::interpolate
+(
+    const volScalarField& f,
+    const word& fName
+) const
+{
+    autoPtr<MUSCLReconstructionScheme<scalar>> fLimiter
+    (
+        MUSCLReconstructionScheme<scalar>::New(f, fName)
+    );
+
+    tmp<surfaceScalarField> fOwnTmp(fLimiter->interpolateOwn());
+    tmp<surfaceScalarField> fNeiTmp(fLimiter->interpolateNei());
+
+    const surfaceScalarField& fOwn = fOwnTmp();
+    const surfaceScalarField& fNei = fNeiTmp();
+
+    tmp<surfaceScalarField> tmpff
+    (
+        surfaceScalarField::New
+        (
+            fName + "f",
+            mesh_,
+            dimensioned<scalar>("0", f.dimensions(), Zero)
+        )
+    );
+    surfaceScalarField& ff = tmpff.ref();
+    const bool isDensity = (f.dimensions() == dimDensity);
+
+    forAll(fOwn, facei)
+    {
+        ff[facei] =
+            interpolate(fOwn[facei], fNei[facei], isDensity, facei);
+    }
+
+    forAll(ff.boundaryField(), patchi)
+    {
+        scalarField& pff = ff.boundaryFieldRef()[patchi];
+        const scalarField& pfOwn = fOwn.boundaryField()[patchi];
+        const scalarField& pfNei = fNei.boundaryField()[patchi];
+        forAll(pff, facei)
+        {
+            pff[facei] =
+                interpolate
+                (
+                    pfOwn[facei],
+                    pfNei[facei],
+                    isDensity,
+                    facei, patchi
+                );
+        }
+    }
+    return tmpff;
+}
+
+
+Foam::tmp<Foam::surfaceVectorField> Foam::fluxSchemeBase::interpolate
+(
+    const volVectorField& f,
+    const word& fName
+) const
+{
+    return interpolateField(f, fName);
+}
+
+
+Foam::tmp<Foam::surfaceSymmTensorField> Foam::fluxSchemeBase::interpolate
+(
+    const volSymmTensorField& f,
+    const word& fName
+) const
+{
+    return interpolateField(f, fName);
+}
+
+
+Foam::tmp<Foam::surfaceSphericalTensorField>
+Foam::fluxSchemeBase::interpolate
+(
+    const volSphericalTensorField& f,
+    const word& fName
+) const
+{
+    return interpolateField(f, fName);
+}
+
+
+Foam::tmp<Foam::surfaceTensorField> Foam::fluxSchemeBase::interpolate
+(
+    const volTensorField& f,
+    const word& fName
+) const
+{
+    return interpolateField(f, fName);
+}
+
 
 bool Foam::fluxSchemeBase::writeData(Ostream& os) const
 {

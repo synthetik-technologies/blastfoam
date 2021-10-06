@@ -296,6 +296,7 @@ Foam::scalar Foam::fluxSchemes::AUSMPlus::energyFlux
 Foam::scalar Foam::fluxSchemes::AUSMPlus::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
+    const bool isDensity,
     const label facei, const label patchi
 ) const
 {

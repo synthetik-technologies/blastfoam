@@ -110,13 +110,7 @@ protected:
             const label facei, const label patchi = -1
         ) = 0;
 
-        //- Interpolate field
-        virtual scalar interpolate
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const bool rho,
-            const label facei, const label patchi = -1
-        ) const = 0;
+
 
         //- Update fields before calculating fluxes
         virtual void preUpdate(const volScalarField& p)
@@ -125,23 +119,6 @@ protected:
         //- Correct fluxes
         virtual void postUpdate()
         {}
-
-        inline word scheme(const word& name, const word& phase) const
-        {
-            word schemeName =
-                "reconstruct(" + IOobject::groupName(name, phase) + ")";
-            if
-            (
-                !mesh_.schemesDict().subDict("interpolationSchemes").found(schemeName)
-            )
-            {
-                WarningInFunction
-                    << "Riemann schemes are used, but no limiter is " << nl
-                    << "specified for " << name << "." << nl
-                    << "This may result in unstable solutions." << endl;
-            }
-            return schemeName;
-        }
 
 
 public:
@@ -271,45 +248,6 @@ public:
 
         //- Return interpolated volume fraction field
         tmp<surfaceScalarField> alphaf() const;
-
-        //- Interpolation functions
-        virtual tmp<surfaceScalarField> interpolate
-        (
-            const volScalarField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceVectorField> interpolate
-        (
-            const volVectorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceSymmTensorField> interpolate
-        (
-            const volSymmTensorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceSphericalTensorField> interpolate
-        (
-            const volSphericalTensorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceTensorField> interpolate
-        (
-            const volTensorField& f,
-            const word& fName
-        ) const;
-
-        //- Flux for three scalar fields
-        template<class Type>
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolateField
-        (
-            const GeometricField<Type, fvPatchField, volMesh>& f,
-            const word& fName
-        ) const;
 };
 
 
@@ -317,11 +255,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "phaseFluxSchemeTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
