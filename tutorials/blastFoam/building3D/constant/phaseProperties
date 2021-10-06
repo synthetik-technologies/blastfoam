@@ -86,7 +86,7 @@ c4
         }
     }
 
-    activationModel none;
+    activationModel pressureBased;
     initiation
     {
         E0              9.0e9;
