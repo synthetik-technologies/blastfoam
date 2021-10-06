@@ -47,7 +47,8 @@ Foam::activationModels::noneActivation::noneActivation
     const word& phaseName
 )
 :
-    activationModel(mesh, dict, phaseName, false)
+    activationModel(mesh, dict, phaseName, false),
+    setLambda_(true)
 {
     if (detonationPoints_.size() == 0)
     {
@@ -74,10 +75,6 @@ Foam::activationModels::noneActivation::noneActivation
             detonationPoints_[i].activated() = true;
         }
     }
-
-    // Store the original value of lambda and set to fully activated
-    lambda_.storeOldTime();
-    lambda_ == 1.0;
 }
 
 
@@ -87,6 +84,16 @@ Foam::activationModels::noneActivation::~noneActivation()
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::activationModels::noneActivation::solve()
+{
+    if (setLambda_)
+    {
+        lambda_ == 1.0;
+        setLambda_ = false;
+    }
+}
+
 
 Foam::tmp<Foam::volScalarField>
 Foam::activationModels::noneActivation::ddtLambda() const
@@ -106,7 +113,7 @@ Foam::activationModels::noneActivation::initESource() const
     return volScalarField::New
     (
         "noActivation:initESource",
-        e0_*(lambda_ - lambda_.oldTime())
+        e0_*(1.0 - lambda_)
     );
 }
 

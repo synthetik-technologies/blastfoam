@@ -98,7 +98,11 @@ Foam::Equation<Type>::Equation()
 
 
 template<class Type>
-Foam::Equation<Type>::Equation(const Type lowerLimit, const Type upperLimit)
+Foam::Equation<Type>::Equation
+(
+    const scalar lowerLimit,
+    const scalar upperLimit
+)
 :
     lowerLimit_(lowerLimit),
     upperLimit_(upperLimit)
