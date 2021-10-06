@@ -30,4 +30,20 @@ minimizationSchemes/bisection/bisectionMinimizationScheme.C
 minimizationSchemes/goldenRatio/goldenRatioMinimizationScheme.C
 minimizationSchemes/NewtonRaphson/NewtonRaphsonMinimizationScheme.C
 
+
+algorithms/polygon/clipping/SutherlandHodgman.C
+algorithms/polygon/pointInPolygon/HormannAgathos.C
+algorithms/rotation/RodriguesRotation.C
+
+octree = algorithms/octree
+$(octree)/octreeName.C
+$(octree)/octreeDataPoint.C
+$(octree)/octreeDataPointTreeLeaf.C
+$(octree)/octreeDataEdges.C
+$(octree)/octreeDataCell.C
+$(octree)/octreeDataFace.C
+$(octree)/octreeDataBoundBox.C
+$(octree)/treeNodeName.C
+$(octree)/treeLeafName.C
+
 LIB = $(BLAST_LIBBIN)/libblastNumerics
