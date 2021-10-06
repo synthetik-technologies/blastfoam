@@ -322,6 +322,22 @@ Foam::basicFluidBlastThermo<Thermo>::ESource() const
 
 
 template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::initESource() const
+{
+    return tmp<volScalarField>
+    (
+        volScalarField::New
+        (
+            "initESource",
+            this->rho_.mesh(),
+            dimensionedScalar("0", dimEnergy/dimMass, 0.0)
+        )
+    );
+}
+
+
+template<class Thermo>
 Foam::scalar
 Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 {

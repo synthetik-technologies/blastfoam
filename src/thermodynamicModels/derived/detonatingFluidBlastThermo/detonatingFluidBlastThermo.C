@@ -727,5 +727,12 @@ Foam::detonatingFluidBlastThermo<Thermo>::ESource() const
 }
 
 
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::detonatingFluidBlastThermo<Thermo>::initESource() const
+{
+    return activation_->initESource();
+}
+
 
 // ************************************************************************* //

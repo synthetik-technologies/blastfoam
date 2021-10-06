@@ -429,6 +429,8 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
             e[celli] = e0;
         }
     }
+    eInit +=
+        alpha1_*thermo1_->initESource() + alpha2_*thermo2_->initESource();
 
     return eInitTmp;
 }

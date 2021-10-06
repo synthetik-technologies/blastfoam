@@ -366,19 +366,24 @@ template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::ESource() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "ESource",
-                this->rho_.mesh().time().timeName(),
-                this->rho_.mesh()
-            ),
-            this->rho_.mesh(),
-            dimensionedScalar("0", dimEnergy/dimTime/dimVolume, 0.0)
-        )
+        "ESource",
+        this->rho_.mesh(),
+        dimensionedScalar("0", dimEnergy/dimTime/dimVolume, 0.0)
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::multicomponentFluidBlastThermo<Thermo>::initESource() const
+{
+    return volScalarField::New
+    (
+        "initESource",
+        this->rho_.mesh(),
+        dimensionedScalar("0", dimEnergy/dimMass, 0.0)
     );
 }
 

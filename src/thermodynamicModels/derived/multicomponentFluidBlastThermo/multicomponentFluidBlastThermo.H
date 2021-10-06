@@ -127,6 +127,9 @@ public:
         //- Return energy source
         virtual tmp<volScalarField> ESource() const;
 
+        //- Return initial energy source
+        virtual tmp<volScalarField> initESource() const;
+
 
     //- Thermodynamic and transport functions
 

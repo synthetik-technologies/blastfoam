@@ -468,6 +468,10 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
             e[celli] = e0;
         }
     }
+    forAll(volumeFractions_, phasei)
+    {
+        eInit += volumeFractions_[phasei]*thermos_[phasei].initESource();
+    }
 
     return eInitTmp;
 }
