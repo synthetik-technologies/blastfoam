@@ -26,7 +26,7 @@ c4
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnaghan;
+            equationOfState BirchMurnaghan3;
         }
         equationOfState
         {
@@ -86,7 +86,7 @@ c4
         }
     }
 
-    activationModel pressureBased;
+    activationModel none;
     initiation
     {
         E0              9.0e9;
