@@ -50,99 +50,6 @@ Foam::fluxScheme::~fluxScheme()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::surfaceScalarField> Foam::fluxScheme::interpolate
-(
-    const volScalarField& f,
-    const word& fName
-) const
-{
-    autoPtr<MUSCLReconstructionScheme<scalar>> fLimiter
-    (
-        MUSCLReconstructionScheme<scalar>::New(f, fName)
-    );
-
-    tmp<surfaceScalarField> fOwnTmp(fLimiter->interpolateOwn());
-    tmp<surfaceScalarField> fNeiTmp(fLimiter->interpolateNei());
-
-    const surfaceScalarField& fOwn = fOwnTmp();
-    const surfaceScalarField& fNei = fNeiTmp();
-
-    tmp<surfaceScalarField> tmpff
-    (
-        surfaceScalarField::New
-        (
-            fName + "f",
-            mesh_,
-            dimensioned<scalar>("0", f.dimensions(), Zero)
-        )
-    );
-    surfaceScalarField& ff = tmpff.ref();
-
-    forAll(fOwn, facei)
-    {
-        ff[facei] = interpolate(fOwn[facei], fNei[facei], facei);
-    }
-
-    forAll(ff.boundaryField(), patchi)
-    {
-        scalarField& pff = ff.boundaryFieldRef()[patchi];
-        const scalarField& pfOwn = fOwn.boundaryField()[patchi];
-        const scalarField& pfNei = fNei.boundaryField()[patchi];
-        forAll(pff, facei)
-        {
-            pff[facei] =
-                interpolate
-                (
-                    pfOwn[facei],
-                    pfNei[facei],
-                    facei, patchi
-                );
-        }
-    }
-    return tmpff;
-}
-
-
-Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::interpolate
-(
-    const volVectorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceSymmTensorField> Foam::fluxScheme::interpolate
-(
-    const volSymmTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceSphericalTensorField> Foam::fluxScheme::interpolate
-(
-    const volSphericalTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
-Foam::tmp<Foam::surfaceTensorField> Foam::fluxScheme::interpolate
-(
-    const volTensorField& f,
-    const word& fName
-) const
-{
-    return interpolateField(f, fName);
-}
-
-
 void Foam::fluxScheme::clear()
 {
     Uf_.clear();
@@ -172,7 +79,7 @@ void Foam::fluxScheme::createSavedFields()
 
 Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
 {
-//     if (Uf_.valid())
+    if (Uf_.valid())
     {
         return Uf_;
     }

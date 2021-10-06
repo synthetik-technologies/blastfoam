@@ -136,19 +136,16 @@ namespace Foam
 
 void Foam::twoPhaseFluidBlastThermo::calculate()
 {
-    T_ = THE();
     scalarField& TCells = T_.primitiveFieldRef();
     scalarField& heCells = this->he().primitiveFieldRef();
     volScalarField::Boundary& bT = T_.boundaryFieldRef();
     volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
 
-    label maxIter = 0;
     twoPhaseTHEEquation eqn(*this, this->TLow_);
     NewtonRaphsonRootSolver solver(eqn, dictionary());
     forAll(TCells, celli)
     {
         TCells[celli] = solver.solve(TCells[celli], celli);
-        maxIter = max(maxIter, solver.nSteps());
     }
     forAll(bT, patchi)
     {
@@ -157,7 +154,6 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
         forAll(pT, facei)
         {
             pT[facei] = solver.solve(pT[facei], facei);
-            maxIter = max(maxIter, solver.nSteps());
         }
     }
     T_.correctBoundaryConditions();

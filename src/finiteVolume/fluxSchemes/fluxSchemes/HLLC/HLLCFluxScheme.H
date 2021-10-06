@@ -121,6 +121,7 @@ class HLLC
         virtual scalar interpolate
         (
             const scalar& fOwn, const scalar& fNei,
+            const bool isDensity,
             const label facei, const label patchi = -1
         ) const;
 

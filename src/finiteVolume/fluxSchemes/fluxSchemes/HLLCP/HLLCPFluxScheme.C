@@ -658,11 +658,12 @@ Foam::scalar Foam::fluxSchemes::HLLCP::energyFlux
 Foam::scalar Foam::fluxSchemes::HLLCP::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
+    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
-    scalar SOwn = getValue(facei, patchi, SOwn_());
-    scalar SStar = getValue(facei, patchi, SStar_());
+    scalar SOwn = getValue(facei, patchi, SOwn_);
+    scalar SStar = getValue(facei, patchi, SStar_);
 
     if (SOwn > 0 || SStar > 0)
     {
@@ -672,6 +673,7 @@ Foam::scalar Foam::fluxSchemes::HLLCP::interpolate
     {
         return fNei;
     }
+
 }
 
 // ************************************************************************* //

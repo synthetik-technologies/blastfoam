@@ -107,13 +107,6 @@ protected:
             const label facei, const label patchi = -1
         ) const = 0;
 
-        //- Interpolate field
-        virtual scalar interpolate
-        (
-            const scalar& fOwn, const scalar& fNei,
-            const label facei, const label patchi = -1
-        ) const = 0;
-
         //- Update fields before calculating fluxes
         virtual void preUpdate(const volScalarField& p)
         {}
@@ -222,44 +215,6 @@ public:
 
         //- Return interpolated U field
         tmp<surfaceVectorField> Uf() const;
-
-        //- Interpolation functions
-        virtual tmp<surfaceScalarField> interpolate
-        (
-            const volScalarField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceVectorField> interpolate
-        (
-            const volVectorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceSymmTensorField> interpolate
-        (
-            const volSymmTensorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceSphericalTensorField> interpolate
-        (
-            const volSphericalTensorField& f,
-            const word& fName
-        ) const;
-
-        virtual tmp<surfaceTensorField> interpolate
-        (
-            const volTensorField& f,
-            const word& fName
-        ) const;
-
-        template<class Type>
-        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolateField
-        (
-            const GeometricField<Type, fvPatchField, volMesh>& f,
-            const word& fName
-        ) const;
 };
 
 
@@ -267,11 +222,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "fluxSchemeTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

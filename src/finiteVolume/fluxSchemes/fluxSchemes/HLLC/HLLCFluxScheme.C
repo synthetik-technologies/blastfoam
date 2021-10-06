@@ -536,6 +536,7 @@ Foam::scalar Foam::fluxSchemes::HLLC::energyFlux
 Foam::scalar Foam::fluxSchemes::HLLC::interpolate
 (
     const scalar& fOwn, const scalar& fNei,
+    const bool isDensity,
     const label facei, const label patchi
 ) const
 {
@@ -551,5 +552,6 @@ Foam::scalar Foam::fluxSchemes::HLLC::interpolate
         return fNei;
     }
 }
+
 
 // ************************************************************************* //
