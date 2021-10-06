@@ -185,6 +185,13 @@ public:
 
         //- Templated interpolation
         template<class Type>
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& f
+        ) const;
+
+        //- Templated interpolation
+        template<class Type>
         tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolateField
         (
             const GeometricField<Type, fvPatchField, volMesh>& f,
@@ -200,6 +207,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "fluxSchemeBaseTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

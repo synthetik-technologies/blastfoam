@@ -665,37 +665,15 @@ Foam::scalar Foam::fluxSchemes::HLLCP::interpolate
     scalar SOwn = getValue(facei, patchi, SOwn_);
     scalar SStar = getValue(facei, patchi, SStar_);
 
-    if (!isDensity)
-    {
-        if (SOwn > 0 || SStar > 0)
-        {
-            return fOwn;
-        }
-        else
-        {
-            return fNei;
-        }
-    }
-
-    scalar SNei = getValue(facei, patchi, SNei_);
-    scalar UvOwn = getValue(facei, patchi, UvOwn_);
-    scalar UvNei = getValue(facei, patchi, UvNei_);
-    if (SOwn > 0)
+    if (SOwn > 0 || SStar > 0)
     {
         return fOwn;
-    }
-    else if (SStar > 0)
-    {
-        return fOwn*(SOwn - UvOwn)/(SOwn - SStar);
-    }
-    else if (SNei > 0)
-    {
-        return fNei*(SNei - UvNei)/(SNei - SStar);
     }
     else
     {
         return fNei;
     }
+
 }
 
 // ************************************************************************* //

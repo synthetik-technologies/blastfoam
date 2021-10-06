@@ -79,7 +79,7 @@ void Foam::fluxScheme::createSavedFields()
 
 Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
 {
-//     if (Uf_.valid())
+    if (Uf_.valid())
     {
         return Uf_;
     }
