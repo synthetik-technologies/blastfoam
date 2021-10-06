@@ -70,7 +70,7 @@ public:
         Equation();
 
         //- Construct given bounds
-        Equation(const Type lowerLimit, const Type upperLimit);
+        Equation(const scalar lowerLimit, const scalar upperLimit);
 
 
     //- Destructor
@@ -116,38 +116,34 @@ public:
         bool checkBounds(const scalar xs) const;
 
         //- Return the function value
-        virtual Type f(const scalar x, const label li) const
-        {
-            NotImplemented
-            return pTraits<Type>::zero;
-        }
+        virtual Type f(const scalar x, const label li) const = 0;
 
         //- Calculate the first derivative of the equation
         virtual Type dfdx(const scalar x, const label li) const
         {
             NotImplemented
-            return pTraits<Type>::zero;
+            return f(x, li);
         }
 
         //- Calculate the second derivative of the equation
         virtual Type d2fdx2(const scalar x, const label li) const
         {
             NotImplemented
-            return pTraits<Type>::zero;
+            return f(x, li);
         }
 
         //- Calculate the third derivative of the equation
         virtual Type d3fdx3(const scalar x, const label li) const
         {
             NotImplemented;
-            return pTraits<Type>::zero;
+            return f(x, li);
         }
 
         //- Calculate the fourth derivative of the equation
         virtual Type d4fdx4(const scalar x, const label li) const
         {
             NotImplemented;
-            return pTraits<Type>::zero;
+            return f(x, li);
         }
 };
 
