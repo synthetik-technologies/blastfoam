@@ -1,9 +1,0 @@
-solidModel/solidModel.C
-solidModel/newSolidModel.C
-linearElastic/linearElasticSolidModel.C
-
-derivedFvPatchFields/coupledSolidTractionDisplacement/coupledSolidTractionDisplacementFvPatchVectorField.C
-derivedFvPatchFields/hydrostaticDisplacement/hydrostaticDisplacementFvPatchVectorField.C
-derivedFvPatchFields/tractionDisplacement/tractionDisplacementFvPatchVectorField.C
-
-LIB = $(BLAST_LIBBIN)/libblastSolidModels
