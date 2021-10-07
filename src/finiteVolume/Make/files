@@ -48,6 +48,7 @@ mappedMovingFvPatches/mappedMovingWallFvPatch.C
 
 mappedPatchSelector/mappedPatchSelector.C
 mappedPointPatchSelector/mappedPointPatchSelector.C
+pointPatchFields/derived/mapInterpolated/mapInterpolatedPointPatchFields.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C
@@ -62,7 +63,7 @@ meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
 
-fvPatchFields/burstSlip/burstSlipFvPatchFields.C
-fvPatchFields/burstZeroGradient/burstZeroGradientFvPatchFields.C
+#fvPatchFields/burstSlip/burstSlipFvPatchFields.C
+#fvPatchFields/burstZeroGradient/burstZeroGradientFvPatchFields.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

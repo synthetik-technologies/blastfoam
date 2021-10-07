@@ -22,8 +22,8 @@ boundaryField
 {
     air_to_flap
     {
-        type            coupledPointMotion;
-        DnbrName        "pointD";
+        type            mapInterpolated;
+        volName         "D";
         value           $internalField;
     }
     ground

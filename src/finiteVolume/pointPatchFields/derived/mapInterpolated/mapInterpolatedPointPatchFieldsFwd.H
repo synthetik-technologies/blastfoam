@@ -1,11 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020-2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,48 +23,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::word& Foam::mappedPatchSelector::sampleRegion() const
+#ifndef mapInterpolatedPointPatchFieldsFwd_H
+#define mapInterpolatedPointPatchFieldsFwd_H
+
+#include "fieldTypes.H"
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+namespace Foam
 {
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sampleRegion();
-    }
 
-    return mappedMovingPatchPtr_->sampleRegion();
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+template<class Type> class mapInterpolatedPointPatchField;
 
-inline const Foam::word& Foam::mappedPatchSelector::samplePatch() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sampleRegion();
-    }
+makePointPatchTypeFieldTypedef(scalar, mapInterpolated);
+makePointPatchTypeFieldTypedef(vector, mapInterpolated);
 
-    return mappedMovingPatchPtr_->sampleRegion();
-}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace Foam
 
-inline const Foam::word& Foam::mappedPatchSelector::coupleGroup() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->coupleGroup();
-    }
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-    return mappedMovingPatchPtr_->coupleGroup();
-}
-
-
-inline Foam::label Foam::mappedPatchSelector::sampleSize() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sampleSize();
-    }
-
-    return mappedMovingPatchPtr_->sampleSize();
-}
-
+#endif
 
 // ************************************************************************* //
