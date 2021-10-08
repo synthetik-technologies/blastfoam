@@ -12,13 +12,18 @@ Info<< "max(T): " << max(fluids[i].T()).value()
     << ", min(T): " << min(fluids[i].T()).value() << endl;
 
 //- Only update if viscosity is present
-static word ttmName(thermophysicalTransportModel::typeName);
-
-if(fluidRegions[i].foundObject<thermophysicalTransportModel>(ttmName))
-{
-    devRhoReffs[i] =
-        fluidRegions[i].lookupObject<thermophysicalTransportModel>(ttmName)
-        .momentumTransport().devTau();
-}
+// if
+// (
+//     fluidRegions[i].foundObject<thermophysicalTransportModel>
+//     (
+//         thermophysicalTransportModel::typeName
+//     )
+// )
+// {
+//     devRhoReffs[i] ==
+//         fluidRegions[i].lookupObject<thermophysicalTransportModel>(
+//             thermophysicalTransportModel::typeName
+//         ).momentumTransport().devTau();
+// }
 
 timeIntegrators[i].clearODEFields();

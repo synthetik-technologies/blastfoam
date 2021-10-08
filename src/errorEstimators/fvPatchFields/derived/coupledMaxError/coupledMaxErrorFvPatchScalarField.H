@@ -55,7 +55,7 @@ class coupledMaxErrorFvPatchScalarField
 // Private Data
 
     //- Selector for mapped patch type
-    mappedPatchSelector mpp_;
+    const mappedPatchSelector& mpp_;
 
 
 public:

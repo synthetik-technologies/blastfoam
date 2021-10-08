@@ -26,14 +26,15 @@ c4
         {
             transport   const;
             thermo      eConst;
-            equationOfState Murnaghan;
+            equationOfState BirchMurnaghan3;
         }
         equationOfState
         {
+            rho0            1601;
             Gamma           0.25;
             pRef            101298;
-            rho0            1601;
-            K0              0;
+            K0              8.04e9;
+            K0Prime         7.97;
         }
         specie
         {
@@ -55,7 +56,7 @@ c4
         thermoType
         {
             transport   const;
-            thermo      eConst;
+            thermo      ePolynomial;
             equationOfState JWL;
         }
         equationOfState
@@ -78,21 +79,22 @@ c4
         }
         thermodynamics
         {
-            Cv              1400;           // Heat capacity
-            Hf              0.0;
+            // Heat capacity coefficients
+            CvCoeffs<8> (413.15 2.1538 0 0 0 0 0 0);
+            Sf          0.0;
+            Hf          0.0;
         }
     }
 
-    activationModel linear;
+    activationModel none;
     initiation
     {
-        E0          9.0e9;
-        useCOM      yes;            // Use the center of mass
-        vDet        7850;            // Detonation velocity [m/s]
+        E0              9.0e9;
+        vDet       7850;            // Detonation velocity [m/s]
     }
 
     residualRho     1e-6;           // Minimum density of the phase
-    residualAlpha   1e-10;          // Minimum volume fraction used for division
+    residualAlpha   1e-6;          // Minimum volume fraction used for division
 }
 
 air
@@ -125,7 +127,7 @@ air
     }
 
     residualRho     1e-6;
-    residualAlpha   1e-10;
+    residualAlpha   1e-6;
 }
 
 // ************************************************************************* //

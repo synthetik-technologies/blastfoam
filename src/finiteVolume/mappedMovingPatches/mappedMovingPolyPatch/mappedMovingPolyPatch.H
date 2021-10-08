@@ -83,7 +83,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("mappedMovingPatch");
+    TypeName("mappedMoving");
 
 
     // Constructors

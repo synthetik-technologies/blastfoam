@@ -78,4 +78,42 @@ void Foam::mappedPatchSelector::reverseDistribute
 }
 
 
+template<class Type>
+void Foam::mappedPatchSelector::distributePoint(List<Type>& lst) const
+{
+    if (mappedPatchPtr_)
+    {
+        mappedPatchPtr_->distribute(lst);
+    }
+    else
+    {
+        mappedMovingPatchPtr_->distribute(lst);
+    }
+
+    tmp<Field<Type>> fld(new Field<Type>(lst));
+    lst = pointInterpolator().faceToPointInterpolate(fld);
+}
+
+
+template<class Type, class CombineOp>
+void Foam::mappedPatchSelector::distributePoint
+(
+    List<Type>& lst,
+    const CombineOp& cop
+) const
+{
+    if (mappedPatchPtr_)
+    {
+        mappedPatchPtr_->distribute(lst, cop);
+    }
+    else
+    {
+        mappedMovingPatchPtr_->distribute(lst, cop);
+    }
+
+    tmp<Field<Type>> fld(new Field<Type>(lst));
+    lst = pointInterpolator().faceToPointInterpolate(fld);
+}
+
+
 // ************************************************************************* //

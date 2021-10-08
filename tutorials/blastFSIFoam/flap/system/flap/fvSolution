@@ -20,8 +20,8 @@ solvers
     "(D|DD|T)"
     {
         solver          PCG;
-        tolerance       1e-9;
-        relTol          0;
+        tolerance       1e-8;
+        relTol          0.01;
         preconditioner  DIC;
     }
 }
@@ -35,8 +35,8 @@ stressAnalysis
 
 relaxationFactors
 {
-//     D  0.5;
-//     DD 0.5;
+    D  0.5;
+    DD 0.5;
 //     T  1;
 }
 

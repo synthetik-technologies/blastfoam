@@ -56,8 +56,6 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class thermalModel
-:
-    public IOdictionary
 {
     // Private data
 
@@ -125,9 +123,6 @@ public:
         {
             return thermoPtr_->kappa();
         }
-
-        //- Read thermalProperties dictionary
-        virtual bool read();
 };
 
 

@@ -50,36 +50,27 @@ defineTypeNameAndDebug(thermalModel, 0);
 
 thermalModel::thermalModel(const fvMesh& mesh)
 :
-    IOdictionary
-    (
-        IOobject
-        (
-            "thermophysicalProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    ),
     mesh_(mesh),
     thermoPtr_
     (
         solidBlastThermo::New
         (
             mesh,
-            *this
+            IOdictionary
+            (
+                IOobject
+                (
+                    "thermophysicalProperties",
+                    mesh.time().constant(),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::NO_WRITE,
+                    false
+                )
+            )
         )
     )
 {}
-
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-bool thermalModel::read()
-{
-    return regIOobject::read();
-}
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

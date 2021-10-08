@@ -55,7 +55,7 @@ class mapInterpolatedPointPatchField
 {
     // Private Data
 
-        mappedPatchSelector mpp_;
+        const mappedPatchSelector& mpp_;
 
         //- Name of neighbour displacement field
         const word volName_;

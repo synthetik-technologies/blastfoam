@@ -29,35 +29,6 @@ solvers
         tolerance       1e-6;
         relTol          0;
     }
-
-    "(k|epsilon).*"
-    {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-        tolerance       1e-6;
-        relTol          0;
-    }
-
-    "Yi.*"
-    {
-        $kFinal;
-    }
-    G
-    {
-        solver          PBiCGStab;
-        preconditioner  DIC;
-        tolerance       1e-10;
-        relTol          0;
-        minIter         1;
-    }
-    Ii
-    {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-        tolerance       1e-10;
-        relTol          0;
-        minIter         1;
-    }
 }
 
 

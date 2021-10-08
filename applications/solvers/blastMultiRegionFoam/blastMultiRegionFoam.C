@@ -51,9 +51,6 @@ Description
 #include "fvModels.H"
 #include "fvConstraints.H"
 
-#include "mappedPatchSelector.H"
-#include "mappedPointPatchSelector.H"
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
@@ -88,8 +85,6 @@ int main(int argc, char *argv[])
         Info<< "Time = " << runTime.timeName() << nl << endl;
 
         #include "updateMeshes.H"
-
-        #include "clearPatches.H"
 
         forAll(fluidRegions, i)
         {

@@ -1,0 +1,98 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  | =========                 |                                                 |
+  | \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+  |  \\    /   O peration     | Version:  2.3.0                                 |
+  |   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+  |    \\/     M anipulation  |                                                 |
+  \*---------------------------------------------------------------------------*/
+FoamFile
+{
+  version     2.0;
+  format      ascii;
+  class       dictionary;
+  object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1; // feet to meters
+
+// theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
+
+x0      0;
+x1      0.0442808543;
+
+
+y1      0;
+y2      0.2286;
+
+z0      0;
+z1      0.0038740728;
+nz1    -0.0038740728;
+
+
+vertices
+(
+    ($x0 $y1 $z0)
+    ($x1 $y1 $nz1)
+    ($x1 $y2 $nz1)
+    ($x0 $y2 $z0)
+
+    ($x1 $y1 $z1)
+    ($x1 $y2 $z1)
+);
+
+blocks
+(
+    hex (0 1 2 3 0 4 5 3) fluid (50 200 1) simpleGrading (1 1 1)
+ );
+
+edges
+(
+);
+
+boundary
+(
+    fixedWalls
+    {
+        type wall;
+        faces
+        (
+            (0 1 4 0)
+            (3 2 5 3)
+        );
+    }
+    fluid_to_walls
+    {
+        type mappedMovingWall;
+        sampleMode nearestPatchFace;
+        sampleRegion walls;
+        samplePatch walls_to_fluid;
+        faces
+        (
+            (1 2 5 4)
+        );
+    }
+
+    front
+    {
+        type wedge;
+        faces
+        (
+            (0 1 2 3)
+        );
+    }
+    back
+    {
+        type wedge;
+        faces
+        (
+            (0 4 5 3)
+        );
+    }
+ );
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

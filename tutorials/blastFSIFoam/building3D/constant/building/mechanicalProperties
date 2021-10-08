@@ -19,17 +19,14 @@ planeStress     no;
 thermalStress   no;
 compactNormalStress no;
 
-nu
-{
-    type        uniform;
-    value       0.3;
-}
-
-E
-{
-    type        uniform;
-    value       1e+9;
-}
-
+mechanical
+(
+    building
+    {
+        type    linearElastic;
+        nu      0.3;
+        E       1e9;
+    }
+);
 
 // ************************************************************************* //

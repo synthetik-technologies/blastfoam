@@ -26,7 +26,7 @@ License
 #include "mapInterpolatedPointPatchField.H"
 #include "pointMesh.H"
 #include "pointFields.H"
-#include "primitivePatchInterpolation.H"
+#include "mappedPatchSelectorList.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -40,10 +40,13 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
     fixedValuePointPatchField<Type>(p, iF),
     mpp_
     (
-        dynamicCast<const fvMesh>
+        mappedPatchSelectorList::New
         (
-            p.boundaryMesh().mesh().thisDb()
-        ).boundary()[p.index()]
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )(p)
     ),
     volName_(word(iF.name()).replaceAll("point", word::null))
 {}
@@ -61,10 +64,13 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
     fixedValuePointPatchField<Type>(p, iF),
     mpp_
     (
-        dynamicCast<const fvMesh>
+        mappedPatchSelectorList::New
         (
-            p.boundaryMesh().mesh().thisDb()
-        ).boundary()[p.index()]
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )(p)
     ),
     volName_(ptf.volName_)
 {
@@ -88,16 +94,19 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
     fixedValuePointPatchField<Type>(p, iF, dict, false),
     mpp_
     (
-        dynamicCast<const fvMesh>
+        mappedPatchSelectorList::New
         (
-            p.boundaryMesh().mesh().thisDb()
-        ).boundary()[p.index()]
+            dynamicCast<const polyMesh>
+            (
+                p.boundaryMesh().mesh().thisDb()
+            )
+        )(p)
     ),
     volName_
     (
         dict.lookupOrDefault<word>
         (
-            "volName",
+            "volField",
             word(iF.name()).replaceAll("point", word::null)
         )
     )
@@ -112,7 +121,16 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
 )
 :
     fixedValuePointPatchField<Type>(ptf, iF),
-    mpp_(ptf.mpp_),
+    mpp_
+    (
+        mappedPatchSelectorList::New
+        (
+            dynamicCast<const polyMesh>
+            (
+                ptf.patch().boundaryMesh().mesh().thisDb()
+            )
+        )(ptf.patch())
+    ),
     volName_(ptf.volName_)
 {}
 
@@ -133,11 +151,6 @@ void Foam::mapInterpolatedPointPatchField<Type>::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const polyPatch& pPatch =
-        dynamicCast<const polyMesh>
-        (
-            this->patch().boundaryMesh().mesh().thisDb()
-        ).boundaryMesh()[this->patch().index()];
     const polyMesh& nbrMesh = mpp_.sampleMesh();
     const polyPatch& samplePatch = mpp_.samplePolyPatch();
     const label samplePatchi = samplePatch.index();
@@ -146,10 +159,9 @@ void Foam::mapInterpolatedPointPatchField<Type>::updateCoeffs()
         nbrMesh.lookupObject<GeometricField<Type, fvPatchField, volMesh>>(volName_);
     Field<Type> pNbr(nbr.boundaryField()[samplePatchi]);
 
-    mpp_.distribute(pNbr);
-    primitivePatchInterpolation ppI(pPatch);
+    mpp_.distributePoint(pNbr);
 
-    Field<Type>::operator=(ppI.faceToPointInterpolate(pNbr));
+    Field<Type>::operator=(pNbr);
 
     fixedValuePointPatchField<Type>::updateCoeffs();
 }
@@ -159,7 +171,7 @@ template<class Type>
 void Foam::mapInterpolatedPointPatchField<Type>::write(Ostream& os) const
 {
     pointPatchField<Type>::write(os);
-    writeEntry(os, "volName", volName_);
+    writeEntry(os, "volField", volName_);
 }
 
 // ************************************************************************* //

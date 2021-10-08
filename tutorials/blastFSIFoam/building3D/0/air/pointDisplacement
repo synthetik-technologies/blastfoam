@@ -22,7 +22,8 @@ boundaryField
 {
     air_to_building
     {
-        type            coupledPointMotion;
+        type            mapInterpolated;
+        volField        "D";
         value           uniform (0 0 0);
     }
     ground

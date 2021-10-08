@@ -83,12 +83,36 @@ c4
         }
     }
 
-    activationModel linear;
+    activationModel pressureBased;
     initiation
     {
-        E0          9.0e9;
+        E0              9.0e9;
+
+        I               4.0e6;
+        a               0.0367;
+        b               0.667;
+        x               7.0;
+        maxLambdaI      0.022;
+
+        G1              1.4997e-7;
+        c               0.667;
+        d               0.33;
+        y               2.0;
+        minLambda1      0.022;
+
+        G2              0.0;
+        e               0.667;
+        f               0.667;
+        z               3.0;
+        minLambda2      0.022;
+
+        pMin            101300;  // Above this pressure activation is                                    // "turned on" [Pa]
+
         useCOM      yes;            // Use the center of mass
-        vDet        7850;           // Detonation velocity [m/s]
+        radius      0.05;           // Set cell with in 0.05 m of
+                                    // COM
+
+        vDet       7850;            // Detonation velocity [m/s]
     }
 
     residualRho     1e-6;           // Minimum density of the phase

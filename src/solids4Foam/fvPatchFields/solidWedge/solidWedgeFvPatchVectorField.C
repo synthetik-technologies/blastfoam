@@ -204,7 +204,7 @@ void solidWedgeFvPatchVectorField::evaluate(const Pstream::commsTypes)
         refCast<const wedgeFvPatch>(this->patch());
 
     // Rotate patchC field back to centre plane to find transformed cell centres
-    const vectorField& patchC = patch().patch().faceCentres();
+    const vectorField patchC(patch().patch().faceCentres());
     vectorField transC(wedgePatch.faceT().T() & patchC);
 
     // Calculate correction vector which connects actual cell centre to the

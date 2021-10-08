@@ -38,16 +38,16 @@ SourceFiles
 #ifndef mappedPatchSelector_H
 #define mappedPatchSelector_H
 
-#include "fvPatch.H"
+#include "polyPatch.H"
 #include "mappedPatchBase.H"
 #include "mappedMovingPatchBase.H"
+#include "primitivePatchInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class polyPatch;
 class polyMesh;
 class mapDistribute;
 
@@ -61,11 +61,17 @@ protected:
 
     // Protected data
 
+        //- Reference to the poly patch
+        const polyPatch& patch_;
+
         //- Pointer to mappedPatchBase
         const mappedPatchBase* mappedPatchPtr_;
 
         //- Pointer to mappedMovingPatchBase
         const mappedMovingPatchBase* mappedMovingPatchPtr_;
+
+        //- Interpolation from face to point values
+        mutable autoPtr<primitivePatchInterpolation> pointInterpolatorPtr_;
 
 
 public:
@@ -77,7 +83,7 @@ public:
     // Constructors
 
         //- Construct from patch
-        mappedPatchSelector(const fvPatch&);
+        mappedPatchSelector(const polyPatch&);
 
 
     //- Destructor
@@ -88,20 +94,11 @@ public:
 
         // Access
 
-            //- Region to sample
-            inline const word& sampleRegion() const;
+            //- Get this mesh
+            const polyMesh& mesh() const;
 
-            //- Patch (only if NEARESTPATCHFACE)
-            inline const word& samplePatch() const;
-
-            //- PatchGroup (only if NEARESTPATCHFACE)
-            inline const word& coupleGroup() const;
-
-            //- Return size of mappedMoving mesh/patch/boundary
-            inline label sampleSize() const;
-
-            //- Return reference to the parallel distribution map
-            inline const mapDistribute& map() const;
+            //- Get the this patch
+            const polyPatch& patch() const;
 
             //- Get the region mesh
             const polyMesh& sampleMesh() const;
@@ -109,24 +106,8 @@ public:
             //- Get the patch on the region
             const polyPatch& samplePolyPatch() const;
 
-
-        // Helpers
-
-            //- Get the sample points
-            tmp<pointField> samplePoints() const;
-
-            //- Get a point on the face given a face decomposition method:
-            //  face-centre-tet : face centre. Returns index of face.
-            //  face-planes     : face centre. Returns index of face.
-            //  face-diagonal   : intersection of ray from cellcentre to
-            //                    facecentre with any of the triangles.
-            //                    Returns index (0..size-2) of triangle.
-            pointIndexHit facePoint
-            (
-                const polyMesh&,
-                const label facei,
-                const polyMesh::cellDecomposition
-            );
+            //- Return the point interpolator
+            const primitivePatchInterpolation& pointInterpolator() const;
 
 
         // Distribute
@@ -148,13 +129,23 @@ public:
             void reverseDistribute(List<Type>& lst, const CombineOp& cop) const;
 
 
-    // Static functions
+        // Point interpolation
 
-        // Function to clear patches if an update has occurred
-        static void clearMappedPatches(fvMesh& mesh);
+            //- Wrapper around map/interpolate data distribution
+            template<class Type>
+            void distributePoint(List<Type>& lst) const;
 
-        //- Check if a patch is of a mapped type
-        static bool isAMappedType(const fvPatch& patch);
+            //- Wrapper around map/interpolate data distribution with operation
+            template<class Type, class CombineOp>
+            void distributePoint
+            (
+                List<Type>& lst,
+                const CombineOp& cop
+            ) const;
+
+
+        // Clear the weights
+        void clearOut();
 };
 
 

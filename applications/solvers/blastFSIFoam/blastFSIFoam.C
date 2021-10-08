@@ -47,9 +47,6 @@ Description
 #include "fvConstraints.H"
 #include "fvModels.H"
 
-#include "mappedPatchSelector.H"
-#include "mappedPointPatchSelector.H"
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

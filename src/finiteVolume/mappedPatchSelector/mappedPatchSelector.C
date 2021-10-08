@@ -23,14 +23,10 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "mappedPatchSelector.H"
-#include "mappedWallFvPatch.H"
-#include "mappedMovingWallFvPatch.H"
 
-#include "mappedPolyPatch.H"
-#include "mappedWallPolyPatch.H"
-#include "mappedVariableThicknessWallPolyPatch.H"
+#include "mappedPatchBase.H"
 
-#include "mappedMovingPolyPatch.H"
+#include "mappedMovingPatchBase.H"
 #include "mappedMovingWallPolyPatch.H"
 #include "mappedMovingVariableThicknessWallPolyPatch.H"
 
@@ -46,20 +42,21 @@ namespace Foam
 
 Foam::mappedPatchSelector::mappedPatchSelector
 (
-    const fvPatch& pp
+    const polyPatch& pp
 )
 :
+    patch_(pp),
     mappedPatchPtr_(nullptr),
     mappedMovingPatchPtr_(nullptr)
 {
-    if (isA<mappedWallFvPatch>(pp))
+    if (isA<mappedPatchBase>(pp))
     {
-        mappedPatchPtr_ = &refCast<const mappedPatchBase>(pp.patch());
+        mappedPatchPtr_ = &refCast<const mappedPatchBase>(pp);
     }
-    else
+    else if (isA<mappedMovingPatchBase>(pp))
     {
         mappedMovingPatchPtr_ =
-            &refCast<const mappedMovingPatchBase>(pp.patch());
+            &refCast<const mappedMovingPatchBase>(pp);
     }
 }
 
@@ -94,69 +91,38 @@ const Foam::polyPatch& Foam::mappedPatchSelector::samplePolyPatch() const
 }
 
 
-Foam::tmp<Foam::pointField> Foam::mappedPatchSelector::samplePoints() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->samplePoints();
-    }
-
-    return mappedMovingPatchPtr_->samplePoints();
-}
-
-
-Foam::pointIndexHit Foam::mappedPatchSelector::facePoint
-(
-    const polyMesh& mesh,
-    const label facei,
-    const polyMesh::cellDecomposition decompMode
-)
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->facePoint(mesh, facei, decompMode);
-    }
-
-    return mappedMovingPatchPtr_->facePoint(mesh, facei, decompMode);
-}
-
-
 // * * * * * * * * * * * * * * * Global Functions  * * * * * * * * * * * * * //
-// Function to clear patches if an update has occurred
-void Foam::mappedPatchSelector::clearMappedPatches(fvMesh& mesh)
+
+void Foam::mappedPatchSelector::clearOut()
 {
-    forAll(mesh.boundaryMesh(), patchi)
+    if (mappedPatchPtr_)
     {
-        if (isA<mappedWallPolyPatch>(mesh.boundary()[patchi]))
-        {
-            polyBoundaryMesh& pbMesh =
-                const_cast<polyBoundaryMesh&>(mesh.boundaryMesh());
-            refCast<mappedPatchBase>(pbMesh[patchi]).clearOut();
-        }
-        if (isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi]))
-        {
-            polyBoundaryMesh& pbMesh =
-                const_cast<polyBoundaryMesh&>
-                (
-                    mesh.boundaryMesh()
-                );
-            refCast<mappedMovingPatchBase>(pbMesh[patchi]).clearOut();
-        }
+        //- Clear this patch
+        mappedPatchBase& mpb =
+            const_cast<mappedPatchBase&>(*mappedPatchPtr_);
+        mpb.clearOut();
+
+        // Clear the sample patch
+        polyPatch& spp(const_cast<polyPatch&>(samplePolyPatch()));
+        dynamicCast<mappedPatchBase>(spp).clearOut();
+    }
+
+    if (mappedMovingPatchPtr_)
+    {
+        //- Clear this patch
+        mappedMovingPatchBase& mmpb =
+            const_cast<mappedMovingPatchBase&>(*mappedMovingPatchPtr_);
+        mmpb.clearOut();
+
+        // Clear the sample patch
+        polyPatch& spp(const_cast<polyPatch&>(samplePolyPatch()));
+        dynamicCast<mappedMovingPatchBase>(spp).clearOut();
+    }
+
+    if (pointInterpolatorPtr_.valid())
+    {
+        pointInterpolatorPtr_->movePoints();
     }
 }
-
-bool Foam::mappedPatchSelector::isAMappedType(const fvPatch& patch)
-{
-    if (isA<mappedWallPolyPatch>(patch))
-    {
-        return true;
-    }
-    if (isA<mappedMovingWallFvPatch>(patch))
-    {
-        return true;
-    }
-    return false;
-}
-
 
 // ************************************************************************* //

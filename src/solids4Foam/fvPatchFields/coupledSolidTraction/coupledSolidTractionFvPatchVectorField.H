@@ -56,7 +56,7 @@ class coupledSolidTractionFvPatchVectorField
     // Private Data
 
         //- Selector for mapped patch type
-        mappedPatchSelector mpp_;
+        const mappedPatchSelector& mpp_;
 
         //- Name of neighbour pressure field
         const word pName_;

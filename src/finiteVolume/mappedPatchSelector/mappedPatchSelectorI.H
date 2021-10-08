@@ -22,47 +22,30 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::word& Foam::mappedPatchSelector::sampleRegion() const
+inline const Foam::primitivePatchInterpolation&
+Foam::mappedPatchSelector::pointInterpolator() const
 {
-    if (mappedPatchPtr_)
+    if (!pointInterpolatorPtr_.valid())
     {
-        return mappedPatchPtr_->sampleRegion();
+        pointInterpolatorPtr_.set
+        (
+            new primitivePatchInterpolation(patch_)
+        );
     }
 
-    return mappedMovingPatchPtr_->sampleRegion();
+    return pointInterpolatorPtr_();
 }
 
 
-inline const Foam::word& Foam::mappedPatchSelector::samplePatch() const
+inline const Foam::polyMesh& Foam::mappedPatchSelector::mesh() const
 {
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sampleRegion();
-    }
-
-    return mappedMovingPatchPtr_->sampleRegion();
+    return patch_.boundaryMesh().mesh();
 }
 
 
-inline const Foam::word& Foam::mappedPatchSelector::coupleGroup() const
+inline const Foam::polyPatch& Foam::mappedPatchSelector::patch() const
 {
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->coupleGroup();
-    }
-
-    return mappedMovingPatchPtr_->coupleGroup();
-}
-
-
-inline Foam::label Foam::mappedPatchSelector::sampleSize() const
-{
-    if (mappedPatchPtr_)
-    {
-        return mappedPatchPtr_->sampleSize();
-    }
-
-    return mappedMovingPatchPtr_->sampleSize();
+    return patch_;
 }
 
 

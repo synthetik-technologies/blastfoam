@@ -11,6 +11,4 @@ adaptiveFvMesh/adaptiveBlastFvMesh.C
 
 movingAdaptiveFvMesh/movingAdaptiveBlastFvMesh.C
 
-pointPatchFields/derived/coupledPointMotion/coupledMotionPointPatchFields.C
-
 LIB = $(BLAST_LIBBIN)/libblastDynamicFvMesh

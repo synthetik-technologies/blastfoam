@@ -30,6 +30,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "compressibleMomentumTransportModel.H"
 #include "incompressibleMomentumTransportModel.H"
+#include "mappedPatchSelectorList.H"
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
@@ -182,7 +183,10 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    mpp_(p),
+    mpp_
+    (
+        mappedPatchSelectorList::New(p.boundaryMesh().mesh())(p.patch())
+    ),
     pName_("p"),
     pRef_(0.0)
 {}
@@ -197,7 +201,10 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(p, iF),
-    mpp_(p),
+    mpp_
+    (
+        mappedPatchSelectorList::New(p.boundaryMesh().mesh())(p.patch())
+    ),
     pName_(dict.lookupOrDefault("pName", word("p"))),
     pRef_(dict.lookup<scalar>("pRef"))
 {}
@@ -213,7 +220,10 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(tdpvf, p, iF, mapper),
-    mpp_(p),
+    mpp_
+    (
+        mappedPatchSelectorList::New(p.boundaryMesh().mesh())(p.patch())
+    ),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}
@@ -227,7 +237,13 @@ coupledSolidTractionFvPatchVectorField
 )
 :
     solidTractionFvPatchVectorField(tdpvf, iF),
-    mpp_(tdpvf.mpp_),
+    mpp_
+    (
+        mappedPatchSelectorList::New(tdpvf.patch().boundaryMesh().mesh())
+        (
+            tdpvf.patch().patch()
+        )
+    ),
     pName_(tdpvf.pName_),
     pRef_(tdpvf.pRef_)
 {}

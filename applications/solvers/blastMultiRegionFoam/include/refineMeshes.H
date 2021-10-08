@@ -21,14 +21,11 @@ forAll(solidRegions, i)
 }
 
 //- Update Meshes and check if balancing has occurred
-bool needRemap = false;
 forAll(fluidRegions, i)
 {
-    // Already cleared mapped patches
-    needRemap = needRemap || fluidRegions[i].refine(false);
+    fluidRegions[i].refine(false);
 }
 forAll(solidRegions, i)
 {
-    // Already cleared mapped patches
-    needRemap = needRemap || solidRegions[i].refine(false);
+    solidRegions[i].refine(false);
 }

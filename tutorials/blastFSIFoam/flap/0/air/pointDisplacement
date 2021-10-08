@@ -23,7 +23,7 @@ boundaryField
     air_to_flap
     {
         type            mapInterpolated;
-        volName         "D";
+        volField        "D";
         value           $internalField;
     }
     ground

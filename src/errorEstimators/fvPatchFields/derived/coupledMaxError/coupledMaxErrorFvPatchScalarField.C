@@ -28,7 +28,7 @@ License
 #include "fvMesh.H"
 #include "volMesh.H"
 #include "volFields.H"
-#include "mappedPatchBase.H"
+#include "mappedPatchSelectorList.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -39,7 +39,13 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 )
 :
     fixedValueFvPatchField<scalar>(p, iF),
-    mpp_(p)
+    mpp_
+    (
+        mappedPatchSelectorList::New
+        (
+            p.patch().boundaryMesh().mesh()
+        )(p.patch())
+    )
 {}
 
 
@@ -52,7 +58,13 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 )
 :
     fixedValueFvPatchField<scalar>(p, iF),
-    mpp_(p)
+    mpp_
+    (
+        mappedPatchSelectorList::New
+        (
+            p.patch().boundaryMesh().mesh()
+        )(p.patch())
+    )
 {
     // For unmapped faces set to internal field value (zero-gradient)
     if (notNull(iF) && mapper.hasUnmapped())
@@ -71,7 +83,13 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 )
 :
     fixedValueFvPatchField<scalar>(p, iF, dict),
-    mpp_(p)
+    mpp_
+    (
+        mappedPatchSelectorList::New
+        (
+            p.patch().boundaryMesh().mesh()
+        )(p.patch())
+    )
 {}
 
 
@@ -82,7 +100,13 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 )
 :
     fixedValueFvPatchField<scalar>(ptf, iF),
-    mpp_(ptf.mpp_)
+    mpp_
+    (
+        mappedPatchSelectorList::New
+        (
+            ptf.patch().patch().boundaryMesh().mesh()
+        )(ptf.patch().patch())
+    )
 {}
 
 

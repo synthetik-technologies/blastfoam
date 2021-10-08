@@ -32,8 +32,6 @@ Description
 
 SourceFiles
     mappedMovingPointPatch.C
-    mappedMovingPointPatchBase.H
-    mappedMovingPointPatchBase.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -41,7 +39,8 @@ SourceFiles
 #define mappedMovingPointPatch_H
 
 #include "facePointPatch.H"
-#include "mappedMovingPointPatchBase.H"
+#include "mappedMovingPolyPatch.H"
+#include "addToRunTimeSelectionTable.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -57,35 +56,13 @@ class pointMesh;
 
 class mappedMovingPointPatch
 :
-    public facePointPatch,
-    public mappedMovingPointPatchBase
+    public facePointPatch
 {
-
-protected:
-
-        //- Initialise the calculation of the patch geometry
-        virtual void initCalcGeometry(PstreamBuffers&);
-
-        //- Calculate the patch geometry
-        virtual void calcGeometry(PstreamBuffers&);
-
-        //- Initialise the patches for moving points
-        virtual void initMovePoints(PstreamBuffers&, const pointField&);
-
-        //- Correct patches after moving points
-        virtual void movePoints(PstreamBuffers&, const pointField&);
-
-        //- Initialise the update of the patch topology
-        virtual void initUpdateMesh(PstreamBuffers&);
-
-        //- Update of the patch topology
-        virtual void updateMesh(PstreamBuffers&);
-
 
 public:
 
     //- Runtime type information
-    TypeName("mappedMovingWall");
+    TypeName(mappedMovingPolyPatch::typeName_());
 
 
     // Constructors
@@ -95,16 +72,10 @@ public:
         (
             const polyPatch& pp,
             const pointBoundaryMesh& bm
-        );
-
-    //- Destructor
-    virtual ~mappedMovingPointPatch();
-
-
-    // Member Functions
-
-        //- Write the PointPatch data as a dictionary
-        virtual void write(Ostream&) const;
+        )
+        :
+            facePointPatch(pp, bm)
+        {}
 };
 
 
