@@ -60,8 +60,14 @@ class cellStencil
     //- Location of cell centre
     vector centre_;
 
+    //- Level of each neighbour cell
+    labelList levels_;
+
     //- Local cells
     mutable labelList localStencil_;
+
+    //- Local levels
+    mutable labelList localLevels_;
 
 
 public:
@@ -75,32 +81,50 @@ public:
     :
         labelList(stencil),
         owner_(stencil.owner_),
-        centre_(stencil.centre_)
+        centre_(stencil.centre_),
+        levels_(stencil.levels_)
     {}
 
     cellStencil
     (
         const label own,
         const labelList& stencil,
+        const labelList& levels,
         const vector& centre = vector::zero
     )
     :
         labelList(stencil),
         owner_(own),
-        centre_(centre)
+        centre_(centre),
+        levels_(levels)
     {}
 
     cellStencil
     (
         const label own,
         const labelList&& stencil,
+        const Map<label>& levelMap,
         const vector& centre = vector::zero
     )
     :
         labelList(stencil),
         owner_(own),
-        centre_(centre)
-    {}
+        centre_(centre),
+        levels_(stencil.size())
+    {
+        const labelList& st(*this);
+        forAll(st, i)
+        {
+            if (levelMap.found(st[i]))
+            {
+                levels_[i] = levelMap[st[i]];
+            }
+            else
+            {
+                levels_[i] = 0;
+            }
+        }
+    }
 
     void updateLocalStencil(const globalIndex&);
 
@@ -124,16 +148,30 @@ public:
         return centre_;
     }
 
+    const labelList& levels() const
+    {
+        return levels_;
+    }
+
+    labelList& levels()
+    {
+        return levels_;
+    }
+
+
     const labelList& localStencil() const
     {
         return localStencil_;
     }
+
+    labelList localStencil(const label level) const;
 
     void operator=(const cellStencil& stencil)
     {
         labelList::operator=(stencil);
         owner_ = stencil.owner_;
         centre_ = stencil.centre_;
+        levels_ = stencil.levels_;
     }
 
     friend Ostream& operator<<(Ostream& os, const cellStencil&);
@@ -142,21 +180,19 @@ public:
 };
 
 
-class extendedNLevelGlobalCellToCellStencil;
-typedef MeshObject
-<
-    polyMesh,
-    Foam::MoveableMeshObject,
-    extendedNLevelGlobalCellToCellStencil
-> NLevelStencil;
-
 /*---------------------------------------------------------------------------*\
         Class extendedNLevelGlobalCellToCellStencil Declaration
 \*---------------------------------------------------------------------------*/
 
+template<class StencilType>
 class extendedNLevelGlobalCellToCellStencil
 :
-    public NLevelStencil
+    public MeshObject
+    <
+        polyMesh,
+        Foam::MoveableMeshObject,
+        extendedNLevelGlobalCellToCellStencil<StencilType>
+    >
 {
 public:
 
@@ -166,7 +202,7 @@ public:
         const polyMesh& mesh_;
 
         //- Number of time to extend neighbour list
-        label nLevels_;
+        mutable label nLevels_;
 
         //- Global indexing
         mutable globalIndex gIndex_;
@@ -187,7 +223,7 @@ public:
             const label celli,
             Map<label>& visited,
             labelList& neighbours,
-            const label level = 0
+            const label level = 1
         ) const;
 
         void removeGlobalFaces
@@ -207,7 +243,7 @@ public:
 public:
 
     //- Runtime type information
-    TypeName("extendedNLevelGlobalCellToCellStencil");
+    ClassName("extendedNLevelGlobalCellToCellStencil");
 
 
     // Constructors
@@ -225,8 +261,19 @@ public:
 
     // Member Functions
 
+        //- Build a mapDistribute for the supplied destination processor data
+        static autoPtr<mapDistribute> buildMap(const List<label>& toProc);
+
         //- Update after refining and balancing
         virtual void updateStencil() const;
+
+        //- Set the size of the stencil to build
+        //  The largest need stencil will be build, but a smaller stencil
+        // can be accessed
+        virtual void setNLevel(const label n) const
+        {
+            nLevels_ = max(nLevels_, n);
+        }
 
         //- Callback for geometry motion
         virtual bool movePoints()
@@ -290,6 +337,7 @@ public:
 //
 
 #ifdef NoRepository
+#include "extendedNLevelGlobalCellToCellStencil.C"
 #include "extendedNLevelGlobalCellToCellStencilTemplates.C"
 #endif
 

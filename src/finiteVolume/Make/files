@@ -58,7 +58,7 @@ MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
 RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
-extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencil.C
+extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencils.C
 meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C

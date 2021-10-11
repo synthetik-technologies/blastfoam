@@ -24,15 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "extendedNLevelGlobalCellToCellStencil.H"
-#include "extendedCentredCellToCellStencil.H"
-#include "CECCellToCellStencil.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
-
-namespace Foam
-{
-    defineTypeNameAndDebug(extendedNLevelGlobalCellToCellStencil, 0);
-}
 
 void Foam::cellStencil::updateLocalStencil
 (
@@ -41,21 +34,46 @@ void Foam::cellStencil::updateLocalStencil
 {
     const labelList& stencil(*this);
     localStencil_ = stencil;
+    if (!levels_.size())
+    {
+        levels_.setSize(stencil.size(), 0);
+    }
+    localLevels_ = levels_;
     label ni = 0;
     forAll(stencil, i)
     {
         if (idx.isLocal(stencil[i]))
         {
-            localStencil_[ni++] = idx.toLocal(stencil[i]);
+            localStencil_[ni] = idx.toLocal(stencil[i]);
+            localLevels_[ni] = levels_[i];
+            ni++;
         }
     }
     localStencil_.resize(ni);
+    localLevels_.resize(ni);
+}
+
+
+Foam::labelList Foam::cellStencil::localStencil(const label level) const
+{
+    labelList st(localStencil_);
+    label i = 0;
+    forAll(st, I)
+    {
+        if (localLevels_[I] == level)
+        {
+            st[i++] = st[I];
+        }
+    }
+    st.resize(i);
+    return st;
 }
 
 Foam::Ostream& Foam::operator<<(Ostream& os, const cellStencil& c)
 {
     const labelList& lst(c);
-    os << lst << " "
+    os  << lst << " "
+        << c.levels() << " "
         << c.owner() << " "
         << c.centre() << " ";
     return os;
@@ -66,12 +84,15 @@ Foam::Istream& Foam::operator>>(Istream& is, cellStencil& c)
 {
     labelList& lst(c);
     is >> lst;
+    is >> c.levels();
     is >> c.owner();
     is >> c.centre();
     return is;
 }
 
-void Foam::extendedNLevelGlobalCellToCellStencil::unionEqOp::operator()
+template<class StencilType>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::unionEqOp::
+operator()
 (
     labelList& x,
     const labelList& y
@@ -95,7 +116,10 @@ void Foam::extendedNLevelGlobalCellToCellStencil::unionEqOp::operator()
     }
 }
 
-void Foam::extendedNLevelGlobalCellToCellStencil::addCellNeighbours
+
+template<class StencilType>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
 (
     const Map<labelList>& cellCells,
     const label celli,
@@ -108,18 +132,19 @@ void Foam::extendedNLevelGlobalCellToCellStencil::addCellNeighbours
     {
         return;
     }
+    Map<label>::iterator iter = levels.find(celli);
     // Set the level
-    if (levels.found(celli))
+    if(iter == levels.end())
     {
-        if (levels[celli] <= level)
-        {
-            return;
-        }
-        levels[celli] = level;
+        levels.insert(celli, level);
+    }
+    else if (iter() <= level)
+    {
+        return;
     }
     else
     {
-        levels.insert(celli, level);
+        levels[celli] = level;
     }
 
     //- Append all neighbours to the list
@@ -140,7 +165,10 @@ void Foam::extendedNLevelGlobalCellToCellStencil::addCellNeighbours
     }
 }
 
-void Foam::extendedNLevelGlobalCellToCellStencil::removeGlobalFaces
+
+template<class StencilType>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::removeGlobalFaces
 (
     const globalIndex& oldGlobalIndex,
     labelList& indices
@@ -162,32 +190,124 @@ void Foam::extendedNLevelGlobalCellToCellStencil::removeGlobalFaces
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::extendedNLevelGlobalCellToCellStencil::extendedNLevelGlobalCellToCellStencil
+template<class StencilType>
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::
+extendedNLevelGlobalCellToCellStencil
 (
     const polyMesh& mesh,
     const label nLevels
 )
 :
-    NLevelStencil(mesh),
+    MeshObject
+    <
+        polyMesh,
+        Foam::MoveableMeshObject,
+        extendedNLevelGlobalCellToCellStencil<StencilType>
+    >(mesh),
     mesh_(mesh),
     nLevels_(nLevels),
     gIndex_(mesh.nCells()),
     stencilMap_(),
     cellCells_(mesh.nCells())
-{
-    updateStencil();
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::extendedNLevelGlobalCellToCellStencil::~extendedNLevelGlobalCellToCellStencil()
+template<class StencilType>
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::
+~extendedNLevelGlobalCellToCellStencil()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
+template<class StencilType>
+Foam::autoPtr<Foam::mapDistribute> Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::buildMap
+(
+    const List<label>& toProc
+)
+{
+    // Determine send map
+    // ~~~~~~~~~~~~~~~~~~
+
+    // 1. Count
+    labelList nSend(Pstream::nProcs(), 0);
+
+    forAll(toProc, i)
+    {
+        label proci = toProc[i];
+
+        nSend[proci]++;
+    }
+
+
+    // 2. Size sendMap
+    labelListList sendMap(Pstream::nProcs());
+
+    forAll(nSend, proci)
+    {
+        sendMap[proci].setSize(nSend[proci]);
+
+        nSend[proci] = 0;
+    }
+
+    // 3. Fill sendMap
+    forAll(toProc, i)
+    {
+        label proci = toProc[i];
+
+        sendMap[proci][nSend[proci]++] = i;
+    }
+
+    // 4. Send over how many I need to receive
+    labelList recvSizes;
+    Pstream::exchangeSizes(sendMap, recvSizes);
+
+
+    // Determine receive map
+    // ~~~~~~~~~~~~~~~~~~~~~
+
+    labelListList constructMap(Pstream::nProcs());
+
+    // Local transfers first
+    constructMap[Pstream::myProcNo()] = identity
+    (
+        sendMap[Pstream::myProcNo()].size()
+    );
+
+    label constructSize = constructMap[Pstream::myProcNo()].size();
+
+    forAll(constructMap, proci)
+    {
+        if (proci != Pstream::myProcNo())
+        {
+            label nRecv = recvSizes[proci];
+
+            constructMap[proci].setSize(nRecv);
+
+            for (label i = 0; i < nRecv; i++)
+            {
+                constructMap[proci][i] = constructSize++;
+            }
+        }
+    }
+
+    return autoPtr<mapDistribute>
+    (
+        new mapDistribute
+        (
+            constructSize,
+            move(sendMap),
+            move(constructMap)
+        )
+    );
+}
+
+
+template<class StencilType>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
 {
     gIndex_ = globalIndex(mesh_.nCells());
     cellCells_.resize(mesh_.nCells());
@@ -197,7 +317,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
 
     //- Create global map (1 level deep)
     {
-        CECCellToCellStencil ctcStencil(mesh_);
+        StencilType ctcStencil(mesh_);
         List<List<label>> stencil(ctcStencil);
         const globalIndex& cfgIndex = ctcStencil.globalNumbering();
         forAll(stencil, i)
@@ -229,10 +349,10 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
             }
         }
 
-        for (label leveli = 1; leveli < nLevels_; leveli++)
+        while (returnReduce(missingCells.size(), sumOp<label>()))
         {
             // Create the requests for new cell neighbours
-            List<labelList> requests(Pstream::nProcs());
+            DynamicList<label> requests(Pstream::nProcs());
             labelList requestedCells(missingCells.size());
             label idx = 0;
             forAllConstIter
@@ -243,59 +363,18 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
             )
             {
                 label celli = iter.key();
-                requests[gIndex_.whichProcID(celli)].append(idx);
+                requests.append(gIndex_.whichProcID(celli));
                 requestedCells[idx++] = celli;
-
             }
 
-            // Count number of requests
-            labelList nSend(Pstream::nProcs());
-            forAll(nSend, proci)
-            {
-                nSend[proci] = requests[proci].size();
-            }
+            // Needed for reverseDistribute
+            label constructSize = requests.size();
 
-            labelList recvSizes;
-            Pstream::exchangeSizes(requests, recvSizes);
-
-            // Determine receive map
-            // ~~~~~~~~~~~~~~~~~~~~~
-            labelListList constructMap(Pstream::nProcs());
-
-            // Local transfers first
-            constructMap[Pstream::myProcNo()] = identity
-            (
-                requests[Pstream::myProcNo()].size()
-            );
-
-            label constructSize =
-                constructMap[Pstream::myProcNo()].size();
-
-            forAll(constructMap, proci)
-            {
-                if (proci != Pstream::myProcNo())
-                {
-                    label nRecv = recvSizes[proci];
-
-                    constructMap[proci].setSize(nRecv);
-
-                    for (label i = 0; i < nRecv; i++)
-                    {
-                        constructMap[proci][i] = constructSize++;
-                    }
-                }
-            }
-
-            // Create map
-            mapDistribute map
-            (
-                constructSize,
-                move(requests),
-                move(constructMap)
-            );
+            // make the map
+            autoPtr<mapDistribute> map(buildMap(requests));
 
             // Send requests
-            map.distribute(requestedCells);
+            map().distribute(requestedCells);
 
             // Add neighbours to be sent using the ordering provided
             labelListList newCells(requestedCells.size());
@@ -305,7 +384,7 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
             }
 
             // Send the data back
-            map.reverseDistribute(constructSize, newCells);
+            map().reverseDistribute(constructSize, newCells);
 
             // Insert the new neighbours to the single level map
             forAll(newCells, i)
@@ -316,17 +395,16 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
                     newCells[i]
                 );
             }
-            if (leveli != nLevels_ - 1)
+
+            // Update missing cells
+            missingCells.clear();
+            forAll(newCells, i)
             {
-                missingCells.clear();
-                forAll(newCells, i)
+                forAll(newCells[i], j)
                 {
-                    forAll(newCells[i], j)
+                    if (!singleLevelMap.found(newCells[i][j]))
                     {
-                        if (!singleLevelMap.found(newCells[i][j]))
-                        {
-                            missingCells.insert(newCells[i][j]);
-                        }
+                        missingCells.insert(newCells[i][j]);
                     }
                 }
             }
@@ -352,17 +430,26 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
         stencilMap_.insert
         (
             gCelli,
-            cellStencil(gCelli, move(neighbors), mesh_.cellCentres()[celli])
+            cellStencil
+            (
+                gCelli,
+                move(neighbors),
+                levels,
+                mesh_.cellCentres()[celli]
+            )
         );
         cellCells_[celli] = stencilMap_[gCelli];
     }
 
+    // Collect cell stencils not on this processor
     if (Pstream::parRun())
     {
         Map<label> idxMap;
         List<labelList> sendMap(Pstream::nProcs());
         List<cellStencil> newCells;
         label idx = 0;
+
+        // Check if local stencil
         forAll(cellCells_, i)
         {
             label celli = gIndex_.toGlobal(i);
@@ -434,7 +521,9 @@ void Foam::extendedNLevelGlobalCellToCellStencil::updateStencil() const
         }
     }
 
-    //- Clean up map (remove non local indicies, and convert to local)
+    //- Clean up map
+    //  remove stencils that do not have any local indicies,
+    //  and convert to local
     forAllIter
     (
         Map<cellStencil>,

@@ -23,49 +23,32 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "extendedNLevelGlobalCellToCellStencil.H"
+#include "extendedNLevelGlobalCellToCellStencils.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
-template<class StencilType>
-template<class Type>
-void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectData
-(
-    const Field<Type>& fld,
-    List<List<Type>>& stencilFld
-) const
+namespace Foam
 {
-    if (!mapPtr_.valid())
-    {
-        updateStencil();
-    }
+    defineTemplateTypeNameAndDebugWithName
+    (
+        extendedNLevelCFCCellToCellStencil,
+        "extendedNLevelCFCCellToCellStencil",
+        0
+    );
 
-    // 1. Construct cell data in compact addressing
-    List<Type> flatFld(mapPtr_->constructSize(), Zero);
+    defineTemplateTypeNameAndDebugWithName
+    (
+        extendedNLevelCECCellToCellStencil,
+        "extendedNLevelCECCellToCellStencil",
+        0
+    );
 
-    // Insert my internal values
-    forAll(fld, celli)
-    {
-        flatFld[celli] = fld[celli];
-    }
-
-    // Do all swapping
-    mapPtr_->distribute(flatFld);
-
-    // 2. Pull to stencil
-    stencilFld.setSize(cellCells_.size());
-
-    forAll(cellCells_, celli)
-    {
-        const labelList& compactCells = cellCells_[celli];
-
-        stencilFld[celli].setSize(compactCells.size());
-
-        forAll(compactCells, i)
-        {
-            stencilFld[celli][i] = flatFld[compactCells[i]];
-        }
-    }
+    defineTemplateTypeNameAndDebugWithName
+    (
+        extendedNLevelCPCCellToCellStencil,
+        "extendedNLevelCPCCellToCellStencil",
+        0
+    );
 }
 
 // ************************************************************************* //
