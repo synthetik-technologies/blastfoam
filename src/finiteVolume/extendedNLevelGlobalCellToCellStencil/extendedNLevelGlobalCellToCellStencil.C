@@ -25,7 +25,7 @@ License
 
 #include "extendedNLevelGlobalCellToCellStencil.H"
 
-// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+// * * * * * * * * * * * cellStencil Member Functions  * * * * * * * * * * * //
 
 void Foam::cellStencil::updateLocalStencil
 (
@@ -69,6 +69,7 @@ Foam::labelList Foam::cellStencil::localStencil(const label level) const
     return st;
 }
 
+
 Foam::Ostream& Foam::operator<<(Ostream& os, const cellStencil& c)
 {
     const labelList& lst(c);
@@ -89,6 +90,7 @@ Foam::Istream& Foam::operator>>(Istream& is, cellStencil& c)
     is >> c.centre();
     return is;
 }
+
 
 template<class StencilType>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::unionEqOp::
@@ -117,6 +119,8 @@ operator()
 }
 
 
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
+
 template<class StencilType>
 void
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
@@ -124,34 +128,46 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
     const Map<labelList>& cellCells,
     const label celli,
     Map<label>& levels,
-    labelList& neighbours,
+    DynamicList<label>& neighbours,
     const label level
 ) const
 {
-    if (level > nLevels_ || !cellCells.found(celli))
+    if (level > nLevels_)
     {
         return;
     }
+
+    // Check if this cell has been added yet
     Map<label>::iterator iter = levels.find(celli);
-    // Set the level
+
+    // Add the cell because it does not exist yet
     if(iter == levels.end())
     {
         levels.insert(celli, level);
     }
     else if (iter() <= level)
     {
+        // The current cell has been added at a lower level
+        // so its neighbors have also been added
         return;
     }
     else
     {
+        // This cell is being added at the lowest level
         levels[celli] = level;
     }
 
-    //- Append all neighbours to the list
+    if (level == nLevels_)
+    {
+        return;
+    }
+
+    //- Append all neighbours to the list (only unique)
     const labelList& cc(cellCells[celli]);
     unionEqOp()(neighbours, cc);
 
     // Extend based on neighbor neighbors
+    // Starts at 1 since this cell is 0
     for (label i = 1; i < cc.size(); i++)
     {
         addCellNeighbours
@@ -168,7 +184,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
 
 template<class StencilType>
 void
-Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::removeGlobalFaces
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::makeGlobal
 (
     const globalIndex& oldGlobalIndex,
     labelList& indices
@@ -319,10 +335,9 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
     {
         StencilType ctcStencil(mesh_);
         List<List<label>> stencil(ctcStencil);
-        const globalIndex& cfgIndex = ctcStencil.globalNumbering();
         forAll(stencil, i)
         {
-            removeGlobalFaces(cfgIndex, stencil[i]);
+            makeGlobal(ctcStencil.globalNumbering(), stencil[i]);
             singleLevelMap.insert(gIndex_.toGlobal(i), stencil[i]);
         }
     }
@@ -396,7 +411,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
                 );
             }
 
-            // Update missing cells
+            // Update missing cells that were added with the new cells
             missingCells.clear();
             forAll(newCells, i)
             {
@@ -412,21 +427,19 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
     }
 
     // Build the expanding cellCell map
-    Map<label> levels;
     forAll(cellCells_, celli)
     {
-        levels.clear();
+        Map<label> levels;
+        DynamicList<label> neighbors;
 
-        labelList neighbors;
+        const label gCelli = gIndex_.toGlobal(celli);
         addCellNeighbours
         (
             singleLevelMap,
-            gIndex_.toGlobal(celli),
+            gCelli,
             levels,
             neighbors
         );
-
-        const label gCelli = gIndex_.toGlobal(celli);
         stencilMap_.insert
         (
             gCelli,

@@ -41,6 +41,7 @@ SourceFiles
 #include "labelPair.H"
 #include "globalIndex.H"
 #include "mapDistribute.H"
+#include "DynamicList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -110,19 +111,12 @@ public:
         labelList(stencil),
         owner_(own),
         centre_(centre),
-        levels_(stencil.size())
+        levels_(stencil.size(), 0)
     {
-        const labelList& st(*this);
+        labelList& st(*this);
         forAll(st, i)
         {
-            if (levelMap.found(st[i]))
-            {
-                levels_[i] = levelMap[st[i]];
-            }
-            else
-            {
-                levels_[i] = 0;
-            }
+            levels_[i] = levelMap[st[i]];
         }
     }
 
@@ -222,11 +216,11 @@ public:
             const Map<labelList>& cellCells,
             const label celli,
             Map<label>& visited,
-            labelList& neighbours,
-            const label level = 1
+            DynamicList<label>& neighbours,
+            const label level = 0
         ) const;
 
-        void removeGlobalFaces
+        void makeGlobal
         (
             const globalIndex& cfGlobalIndex,
             labelList& indices
