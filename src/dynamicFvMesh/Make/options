@@ -6,6 +6,7 @@ EXE_INC = \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
     -I$(LIB_SRC)/fvMotionSolver/lnInclude \
     -I$(LIB_SRC)/lagrangian/parcel/lnInclude \
+    -I$(LIB_SRC)/mesh/blockMesh/lnInclude \
     -I$(LIB_SRC)/parallel/decompose/decompositionMethods/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
@@ -17,6 +18,7 @@ LIB_LIBS = \
     -lfiniteVolume \
     -lfileFormats \
     -ldynamicMesh \
+    -lblockMesh \
     -ldecompositionMethods \
     -lfvMotionSolvers \
     -llagrangianParcel \

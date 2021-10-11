@@ -11,4 +11,51 @@ adaptiveFvMesh/adaptiveBlastFvMesh.C
 
 movingAdaptiveFvMesh/movingAdaptiveBlastFvMesh.C
 
+
+overset/processorLOD/processorLOD/processorLOD.C
+overset/processorLOD/box/box.C
+overset/processorLOD/cellBox/cellBox.C
+overset/processorLOD/faceBox/faceBox.C
+
+overset/meshToMesh/oversetMeshToMesh.C
+overset/meshToMesh/oversetMeshToMeshParallelOps.C
+meshToMeshMethods = overset/meshToMesh/calcMethod
+$(meshToMeshMethods)/meshToMeshMethod/oversetMeshToMeshMethod.C
+$(meshToMeshMethods)/meshToMeshMethod/oversetMeshToMeshMethodNew.C
+$(meshToMeshMethods)/cellVolumeWeight/oversetCellVolumeWeightMethod.C
+$(meshToMeshMethods)/correctedCellVolumeWeight/oversetCorrectedCellVolumeWeightMethod.C
+$(meshToMeshMethods)/direct/oversetDirectMethod.C
+$(meshToMeshMethods)/mapNearest/oversetMapNearestMethod.C
+
+overset/cellCellStencil/cellCellStencil/cellCellStencil.C
+overset/cellCellStencil/cellVolumeWeight/cellVolumeWeightCellCellStencil.C
+overset/cellCellStencil/cellCellStencil/cellCellStencilObject.C
+overset/cellCellStencil/inverseDistance/inverseDistanceCellCellStencil.C
+overset/cellCellStencil/inverseDistance/waveMethod.C
+overset/cellCellStencil/inverseDistance/meshToMeshData.C
+overset/cellCellStencil/trackingInverseDistance/voxelMeshSearch.C
+overset/cellCellStencil/trackingInverseDistance/trackingInverseDistanceCellCellStencil.C
+overset/cellCellStencil/leastSquares/leastSquaresCellCellStencil.C
+
+overset/dynamicOversetFvMesh/dynamicOversetBlastFvMesh.C
+
+overset/fvMeshPrimitiveLduAddressing/fvMeshPrimitiveLduAddressing.C
+
+overset/oversetPolyPatch/oversetPolyPatch.C
+overset/oversetPolyPatch/oversetFvPatch.C
+overset/oversetPolyPatch/oversetFvPatchFields.C
+overset/oversetPolyPatch/oversetFvsPatchFields.C
+overset/oversetPolyPatch/oversetPointPatch.C
+overset/oversetPolyPatch/oversetPointPatchFields.C
+
+overset/oversetAdjustPhi/oversetAdjustPhi.C
+
+overset/regionsToCell/regionsToCell.C
+
+overset/lduPrimitiveProcessorInterface/lduPrimitiveProcessorInterface.C
+overset/lduPrimitiveProcessorInterface/calculatedProcessorFvPatchFields.C
+overset/lduPrimitiveProcessorInterface/GAMG/calculatedProcessorGAMGInterface.C
+overset/lduPrimitiveProcessorInterface/GAMG/calculatedProcessorGAMGInterfaceField.C
+
+
 LIB = $(BLAST_LIBBIN)/libblastDynamicFvMesh
