@@ -68,4 +68,69 @@ void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::collectData
     }
 }
 
+
+template<class StencilType>
+template<class Type, class WeightType>
+Foam::tmp
+<
+    Foam::GeometricField
+    <
+        typename Foam::outerProduct<WeightType, Type>::type,
+        Foam::fvPatchField,
+        Foam::volMesh
+    >
+> Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::weightedSum
+(
+    const GeometricField<Type, fvPatchField, volMesh>& fld,
+    const List<List<WeightType>>& stencilWeights
+) const
+{
+    typedef typename outerProduct<WeightType, Type>::type WeightedType;
+    typedef GeometricField<WeightedType, fvPatchField, volMesh>
+        WeightedFieldType;
+
+    const fvMesh& mesh = fld.mesh();
+
+    // Collect internal and boundary values
+    List<List<Type>> stencilFld;
+    collectData(fld, stencilFld);
+
+    tmp<WeightedFieldType> twf
+    (
+        new WeightedFieldType
+        (
+            IOobject
+            (
+                fld.name(),
+                mesh.time().timeName(),
+                mesh
+            ),
+            mesh,
+            dimensioned<WeightedType>
+            (
+                fld.name(),
+                fld.dimensions(),
+                Zero
+            )
+        )
+    );
+    WeightedFieldType& wf = twf();
+
+    forAll(wf, celli)
+    {
+        const List<Type>& stField = stencilFld[celli];
+        const List<WeightType>& stWeight = stencilWeights[celli];
+
+        forAll(stField, i)
+        {
+            wf[celli] += stWeight[i]*stField[i];
+        }
+    }
+
+    // Boundaries values?
+
+    return twf;
+}
+
+
 // ************************************************************************* //

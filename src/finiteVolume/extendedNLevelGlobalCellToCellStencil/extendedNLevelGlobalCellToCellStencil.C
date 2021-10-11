@@ -140,9 +140,9 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
     // Check if this cell has been added yet
     Map<label>::iterator iter = levels.find(celli);
 
-    // Add the cell because it does not exist yet
     if(iter == levels.end())
     {
+        // Add the cell because it does not exist yet
         levels.insert(celli, level);
     }
     else if (iter() <= level)
@@ -163,11 +163,12 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addCellNeighbours
     }
 
     //- Append all neighbours to the list (only unique)
-    const labelList& cc(cellCells[celli]);
-    unionEqOp()(neighbours, cc);
+    unionEqOp()(neighbours, cellCells[celli]);
+
 
     // Extend based on neighbor neighbors
     // Starts at 1 since this cell is 0
+    const labelList& cc(cellCells[celli]);
     for (label i = 1; i < cc.size(); i++)
     {
         addCellNeighbours

@@ -42,6 +42,7 @@ SourceFiles
 #include "globalIndex.H"
 #include "mapDistribute.H"
 #include "DynamicList.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -283,14 +284,6 @@ public:
             return true;
         }
 
-        //- Collect data across all processors
-        template<class Type>
-        void collectData
-        (
-            const Field<Type>& fld,
-            List<List<Type>>& stencilFld
-        ) const;
-
         inline const globalIndex& globalNumbering() const
         {
             if (!mapPtr_.valid())
@@ -317,6 +310,30 @@ public:
             }
             return stencilMap_[gIndex_.toGlobal(celli)];
         }
+
+        //- Collect data across all processors
+        template<class Type>
+        void collectData
+        (
+            const Field<Type>& fld,
+            List<List<Type>>& stencilFld
+        ) const;
+
+        //- Sum surface field contributions to create cell values
+        template<class Type, class WeightType>
+        tmp
+        <
+            GeometricField
+            <
+                typename outerProduct<WeightType, Type>::type,
+                fvPatchField,
+                volMesh
+            >
+        > weightedSum
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& fld,
+            const List<List<WeightType>>& stencilWeights
+        ) const;
 
         virtual bool writeData(Ostream&) const
         {
