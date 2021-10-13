@@ -19,9 +19,9 @@ solvers
 {
     "(D|DD|T)"
     {
-        solver          PBiCGStab;
+        solver          PCG;
         preconditioner  DIC;
-        tolerance       1e-09;
+        tolerance       1e-10;
         relTol          0.01;
     }
 }

@@ -1909,6 +1909,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
 
 
     // Print a bit
+    if (debug)
     {
         Info<< type() << " : detected " << nZones
             << " mesh regions" << endl;

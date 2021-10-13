@@ -20,23 +20,27 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    fixedWalls
+    bottomFixedWalls
     {
-        type            slip;
+        type            fixedNormalSlip;
+        n               (0 -1 0);
     }
 
+    topFixedWalls
+    {
+        type            fixedNormalSlip;
+        n               (0 1 0);
+    }
     fluid_to_walls
     {
         type            mapInterpolated;
         volField        D;
         value           uniform (0 0 0);
     }
-
     front
     {
         type            wedge;
     }
-
     back
     {
         type            wedge;

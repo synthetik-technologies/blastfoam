@@ -1,0 +1,153 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2020-2021
+     \\/     M anipulation  | Synthetik Applied Technologies
+-------------------------------------------------------------------------------
+License
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "globalPolyBoundaryMesh.H"
+#include "pointMesh.H"
+#include "hashedWordList.H"
+
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(globalPolyBoundaryMesh, 0);
+}
+
+
+// * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
+
+Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
+(
+    const polyMesh& mesh
+)
+:
+    GlobalPolyBoundaryMesh(mesh)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::globalPolyBoundaryMesh::~globalPolyBoundaryMesh()
+{}
+
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::globalPolyBoundaryMesh::movePoints()
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->movePoints();
+    }
+    return true;
+}
+
+
+void Foam::globalPolyBoundaryMesh::updateMesh(const mapPolyMesh& mpm)
+{
+    forAllIter
+    (
+        HashPtrTable<globalPolyPatch>,
+        patches_,
+        iter
+    )
+    {
+        iter()->updateMesh();
+    }
+}
+
+
+
+void Foam::globalPolyBoundaryMesh::reorderPatches
+(
+    const labelUList& newToOld,
+    const bool validBoundary
+)
+{
+    patches_.clear();
+}
+
+
+void Foam::globalPolyBoundaryMesh::addPatch(const label patchi)
+{}
+
+
+// * * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * //
+
+const Foam::globalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator[](const word& patchName) const
+{
+    if (!patches_.found(patchName))
+    {
+        patches_.insert
+        (
+            patchName,
+            globalPolyPatch::New
+            (
+                mesh_.boundaryMesh()[patchName]
+            ).ptr()
+        );
+    }
+
+    return *patches_[patchName];
+}
+
+const Foam::globalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
+{
+    if (!patches_.found(pp.name()))
+    {
+        patches_.insert(pp.name(), globalPolyPatch::New(pp).ptr());
+    }
+
+    return *patches_[pp.name()];
+}
+
+
+const Foam::globalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator[](const pointPatch& pp) const
+{
+    if (!patches_.found(pp.name()))
+    {
+        patches_.insert
+        (
+            pp.name(),
+            globalPolyPatch::New
+            (
+                dynamicCast<const polyMesh>
+                (
+                    pp.boundaryMesh().mesh().thisDb()
+                ).boundaryMesh()[pp.index()]
+            ).ptr()
+        );
+    }
+
+    return *patches_[pp.name()];
+}
+
+// ************************************************************************* //

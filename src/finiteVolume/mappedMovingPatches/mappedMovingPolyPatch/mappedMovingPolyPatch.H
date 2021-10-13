@@ -79,7 +79,6 @@ protected:
         //- Update of the patch topology
         virtual void updateMesh(PstreamBuffers&);
 
-
 public:
 
     //- Runtime type information
@@ -107,7 +106,9 @@ public:
             const label start,
             const label index,
             const word& sampleRegion,
+            const mappedPatchBase::sampleMode mode,
             const word& samplePatch,
+            const vectorField& offset,
             const polyBoundaryMesh& bm
         );
 

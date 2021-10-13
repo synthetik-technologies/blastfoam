@@ -40,7 +40,6 @@ SourceFiles
 
 #include "polyPatch.H"
 #include "mappedPatchBase.H"
-#include "mappedMovingPatchBase.H"
 #include "primitivePatchInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -66,9 +65,6 @@ protected:
 
         //- Pointer to mappedPatchBase
         const mappedPatchBase* mappedPatchPtr_;
-
-        //- Pointer to mappedMovingPatchBase
-        const mappedMovingPatchBase* mappedMovingPatchPtr_;
 
         //- Interpolation from face to point values
         mutable autoPtr<primitivePatchInterpolation> pointInterpolatorPtr_;

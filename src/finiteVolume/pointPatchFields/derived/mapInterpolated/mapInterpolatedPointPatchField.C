@@ -26,7 +26,10 @@ License
 #include "mapInterpolatedPointPatchField.H"
 #include "pointMesh.H"
 #include "pointFields.H"
+#include "volFields.H"
 #include "mappedPatchSelectorList.H"
+#include "globalPolyBoundaryMesh.H"
+#include "coupledGlobalPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -158,10 +161,23 @@ void Foam::mapInterpolatedPointPatchField<Type>::updateCoeffs()
     const GeometricField<Type, fvPatchField, volMesh>& nbr =
         nbrMesh.lookupObject<GeometricField<Type, fvPatchField, volMesh>>(volName_);
     Field<Type> pNbr(nbr.boundaryField()[samplePatchi]);
+    mpp_.distribute(pNbr);
 
-    mpp_.distributePoint(pNbr);
+    const globalPolyPatch& gpp =
+        globalPolyBoundaryMesh::New(mpp_.mesh())[this->patch()];
+    Field<Type>::operator=
+    (
+        gpp.globalPointToPatch
+        (
+            gpp.interpolator().faceToPointInterpolate
+            (
+                gpp.patchFaceToGlobal(pNbr)
+            )
+        )
+    );
 
-    Field<Type>::operator=(pNbr);
+//     mpp_.distributePoint(pNbr);
+//     Field<Type>::operator=(pNbr);
 
     fixedValuePointPatchField<Type>::updateCoeffs();
 }

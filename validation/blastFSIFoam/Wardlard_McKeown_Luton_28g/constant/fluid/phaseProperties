@@ -95,7 +95,7 @@ c4
     }
 
     residualRho     1e-6;           // Minimum density of the phase
-    residualAlpha   1e-10;          // Minimum volume fraction used for division
+    residualAlpha   1e-6;          // Minimum volume fraction used for division
 }
 
 water
@@ -129,13 +129,12 @@ water
     }
     thermodynamics
     {
-        type        eConst;
         Cv          2400; // Give correct reference temperature
         Hf          0;
     }
 
     residualRho     1e-6;
-    residualAlpha   1e-10;
+    residualAlpha   1e-6;
 }
 
 // ************************************************************************* //

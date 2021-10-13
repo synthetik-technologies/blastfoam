@@ -2,8 +2,7 @@ dynamicFvMesh/dynamicBlastFvMesh.C
 dynamicFvMesh/dynamicBlastFvMeshNew.C
 staticFvMesh/staticBlastFvMesh.C
 dynamicMotionSolverFvMesh/dynamicMotionSolverBlastFvMesh.C
-dynamicMotionSolverListFvMesh/dynamicMotionSolverListBlastFvMesh.C
-#
+
 dynamicRefineFvMesh/multiCritRefinement.C
 dynamicRefineFvMesh/dynamicRefineBlastFvMesh.C
 dynamicRefineBalancedFvMesh/dynamicRefineBalancedBlastFvMesh.C

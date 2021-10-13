@@ -25,12 +25,12 @@ License
 template<class Type>
 void Foam::mappedPatchSelector::distribute(List<Type>& lst) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         return mappedPatchPtr_->distribute(lst);
-    }
+//     }
 
-    return mappedMovingPatchPtr_->distribute(lst);
+//     return mappedMovingPatchPtr_->distribute(lst);
 }
 
 
@@ -41,24 +41,24 @@ void Foam::mappedPatchSelector::distribute
     const CombineOp& cop
 ) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         return mappedPatchPtr_->distribute(lst, cop);
-    }
+//     }
 
-    return mappedMovingPatchPtr_->distribute(lst, cop);
+//     return mappedMovingPatchPtr_->distribute(lst, cop);
 }
 
 
 template<class Type>
 void Foam::mappedPatchSelector::reverseDistribute(List<Type>& lst) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         return mappedPatchPtr_->reverseDistribute(lst);
-    }
+//     }
 
-    return mappedMovingPatchPtr_->reverseDistribute(lst);
+//     return mappedMovingPatchPtr_->reverseDistribute(lst);
 }
 
 
@@ -69,26 +69,26 @@ void Foam::mappedPatchSelector::reverseDistribute
     const CombineOp& cop
 ) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         return mappedPatchPtr_->reverseDistribute(lst, cop);
-    }
+//     }
 
-    return mappedMovingPatchPtr_->reverseDistribute(lst, cop);
+//     return mappedMovingPatchPtr_->reverseDistribute(lst, cop);
 }
 
 
 template<class Type>
 void Foam::mappedPatchSelector::distributePoint(List<Type>& lst) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         mappedPatchPtr_->distribute(lst);
-    }
-    else
-    {
-        mappedMovingPatchPtr_->distribute(lst);
-    }
+//     }
+//     else
+//     {
+//         mappedMovingPatchPtr_->distribute(lst);
+//     }
 
     tmp<Field<Type>> fld(new Field<Type>(lst));
     lst = pointInterpolator().faceToPointInterpolate(fld);
@@ -102,14 +102,14 @@ void Foam::mappedPatchSelector::distributePoint
     const CombineOp& cop
 ) const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         mappedPatchPtr_->distribute(lst, cop);
-    }
-    else
-    {
-        mappedMovingPatchPtr_->distribute(lst, cop);
-    }
+//     }
+//     else
+//     {
+//         mappedMovingPatchPtr_->distribute(lst, cop);
+//     }
 
     tmp<Field<Type>> fld(new Field<Type>(lst));
     lst = pointInterpolator().faceToPointInterpolate(fld);

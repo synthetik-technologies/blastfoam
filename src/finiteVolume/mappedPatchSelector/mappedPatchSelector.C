@@ -24,12 +24,6 @@ License
 
 #include "mappedPatchSelector.H"
 
-#include "mappedPatchBase.H"
-
-#include "mappedMovingPatchBase.H"
-#include "mappedMovingWallPolyPatch.H"
-#include "mappedMovingVariableThicknessWallPolyPatch.H"
-
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
@@ -46,17 +40,11 @@ Foam::mappedPatchSelector::mappedPatchSelector
 )
 :
     patch_(pp),
-    mappedPatchPtr_(nullptr),
-    mappedMovingPatchPtr_(nullptr)
+    mappedPatchPtr_(nullptr)
 {
     if (isA<mappedPatchBase>(pp))
     {
         mappedPatchPtr_ = &refCast<const mappedPatchBase>(pp);
-    }
-    else if (isA<mappedMovingPatchBase>(pp))
-    {
-        mappedMovingPatchPtr_ =
-            &refCast<const mappedMovingPatchBase>(pp);
     }
 }
 
@@ -71,23 +59,23 @@ Foam::mappedPatchSelector::~mappedPatchSelector()
 
 const Foam::polyMesh& Foam::mappedPatchSelector::sampleMesh() const
 {
-    if (mappedPatchPtr_)
+//     if (mappedPatchPtr_)
     {
         return mappedPatchPtr_->sampleMesh();
     }
 
-    return mappedMovingPatchPtr_->sampleMesh();
+//     return mappedMovingPatchPtr_->sampleMesh();
 }
 
 
 const Foam::polyPatch& Foam::mappedPatchSelector::samplePolyPatch() const
 {
-    if (mappedPatchPtr_)
-    {
+//     if (mappedPatchPtr_)
+//     {
         return mappedPatchPtr_->samplePolyPatch();
-    }
+//     }
 
-    return mappedMovingPatchPtr_->samplePolyPatch();
+//     return mappedMovingPatchPtr_->samplePolyPatch();
 }
 
 
@@ -95,7 +83,7 @@ const Foam::polyPatch& Foam::mappedPatchSelector::samplePolyPatch() const
 
 void Foam::mappedPatchSelector::clearOut()
 {
-    if (mappedPatchPtr_)
+//     if (mappedPatchPtr_)
     {
         //- Clear this patch
         mappedPatchBase& mpb =
@@ -107,17 +95,17 @@ void Foam::mappedPatchSelector::clearOut()
         dynamicCast<mappedPatchBase>(spp).clearOut();
     }
 
-    if (mappedMovingPatchPtr_)
-    {
-        //- Clear this patch
-        mappedMovingPatchBase& mmpb =
-            const_cast<mappedMovingPatchBase&>(*mappedMovingPatchPtr_);
-        mmpb.clearOut();
-
-        // Clear the sample patch
-        polyPatch& spp(const_cast<polyPatch&>(samplePolyPatch()));
-        dynamicCast<mappedMovingPatchBase>(spp).clearOut();
-    }
+//     if (mappedMovingPatchPtr_)
+//     {
+//         //- Clear this patch
+//         mappedMovingPatchBase& mmpb =
+//             const_cast<mappedMovingPatchBase&>(*mappedMovingPatchPtr_);
+//         mmpb.clearOut();
+//
+//         // Clear the sample patch
+//         polyPatch& spp(const_cast<polyPatch&>(samplePolyPatch()));
+//         dynamicCast<mappedMovingPatchBase>(spp).clearOut();
+//     }
 
     if (pointInterpolatorPtr_.valid())
     {

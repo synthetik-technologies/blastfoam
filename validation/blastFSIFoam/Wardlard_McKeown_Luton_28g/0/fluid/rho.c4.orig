@@ -20,7 +20,12 @@ internalField   uniform 1770;
 
 boundaryField
 {
-    fixedWalls
+    bottomFixedWalls
+    {
+        type            zeroGradient;
+    }
+
+    topFixedWalls
     {
         type            zeroGradient;
     }

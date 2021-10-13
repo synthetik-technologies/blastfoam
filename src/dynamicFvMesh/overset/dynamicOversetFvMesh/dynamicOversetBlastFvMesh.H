@@ -37,7 +37,7 @@ SourceFiles
 #ifndef dynamicOversetBlastFvMesh_H
 #define dynamicOversetBlastFvMesh_H
 
-#include "dynamicMotionSolverListBlastFvMesh.H"
+#include "dynamicMotionSolverBlastFvMesh.H"
 #include "labelIOList.H"
 #include "fvMeshPrimitiveLduAddressing.H"
 #include "lduInterfaceFieldPtrsList.H"
@@ -60,7 +60,7 @@ class GAMGAgglomeration;
 
 class dynamicOversetBlastFvMesh
 :
-    public dynamicMotionSolverListBlastFvMesh
+    public dynamicMotionSolverBlastFvMesh
 {
 protected:
 
@@ -182,7 +182,7 @@ private:
 public:
 
     //- Runtime type information
-    TypeName("dynamicOversetBlastFvMesh");
+    TypeName("dynamicOversetFvMesh");
 
 
     // Constructors

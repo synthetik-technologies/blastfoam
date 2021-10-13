@@ -35,7 +35,7 @@ cycleWrite      0;
 
 writeFormat     binary;
 
-writePrecision  8;
+writePrecision  12;
 
 writeCompression off;
 

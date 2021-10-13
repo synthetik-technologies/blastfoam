@@ -30,18 +30,6 @@ Description
     Determines a mapping between patch face centres and processors
     they're on.
 
-    If constructed from dictionary:
-    \verbatim
-        // Region to sample (default is region0)
-        sampleRegion region0;
-
-        samplePatch movingWall;
-
-    \endverbatim
-
-    Note: if offsetMode is \c normal it uses outwards pointing normals. So
-    supply a negative distance if sampling inside the domain.
-
 SourceFiles
     mappedMovingPatchBase.C
 
@@ -50,143 +38,36 @@ SourceFiles
 #ifndef mappedMovingPatchBase_H
 #define mappedMovingPatchBase_H
 
-#include "pointField.H"
-#include "Tuple2.H"
-#include "pointIndexHit.H"
-#include "AMIInterpolation.H"
-#include "coupleGroupIdentifier.H"
-#include "fvMesh.H"
-#include "volFields.H"
-#include "pointFields.H"
-#include "UautoPtr.H"
+#include "mappedPatchBase.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-class polyPatch;
-class polyMesh;
-class mapDistribute;
-
 /*---------------------------------------------------------------------------*\
-                       Class mappedMovingPatchBase Declaration
+                      Class mappedMovingPatchBase Declaration
 \*---------------------------------------------------------------------------*/
 
 class mappedMovingPatchBase
+:
+    public mappedPatchBase
 {
-
-public:
-
-    //- Helper class for finding nearest
-    //  Nearest:
-    //  - point+local index
-    //  - sqr(distance)
-    //  - processor
-    typedef Tuple2<pointIndexHit, Tuple2<scalar, label>> nearInfo;
-
-    class nearestEqOp
-    {
-
-    public:
-
-        void operator()(nearInfo& x, const nearInfo& y) const
-        {
-            if (y.first().hit())
-            {
-                if (!x.first().hit())
-                {
-                    x = y;
-                }
-                else if (y.second().first() < x.second().first())
-                {
-                    x = y;
-                }
-            }
-        }
-    };
-
-    class maxProcEqOp
-    {
-
-    public:
-
-        void operator()(nearInfo& x, const nearInfo& y) const
-        {
-            if (y.first().hit())
-            {
-                if (!x.first().hit())
-                {
-                    x = y;
-                }
-                else if (y.second().second() > x.second().second())
-                {
-                    x = y;
-                }
-            }
-        }
-    };
-
 
 protected:
 
-    // Protected data
-
-        //- Patch to sample
-        const polyPatch& patch_;
-
-        //- Region to sample
-        mutable word sampleRegion_;
-
-
-        //- Patch (if in sampleMode NEARESTPATCH*)
-        mutable word samplePatch_;
-
-        //- PatchGroup (if in sampleMode NEARESTPATCH*)
-        const coupleGroupIdentifier coupleGroup_;
-
         //- Displacement field name
-        word displacementFieldName_;
+        word displacementField_;
 
+        //- Sample patch displacement field name
+        word sampleDisplacementField_;
 
-        // Derived information
-
-            //- Communication schedule:
-            //
-            //    - Cells/faces to sample per processor
-            //    - Patch faces to receive per processor
-            //    - schedule
-            mutable autoPtr<mapDistribute> mapPtr_;
-
-
-    // Protected Member Functions
-
-        //- Get the points from face-centre-decomposition face centres
-        //  and project them onto the face-diagonal-decomposition triangles.
-        tmp<pointField> facePoints(const polyPatch&) const;
-
-        //- Collect single list of samples and originating processor+face.
-        void collectSamples
-        (
-            const pointField& facePoints,
-            pointField&,
-            labelList& patchFaceProcs,
-            labelList& patchFaces,
-            pointField& patchFc
-        ) const;
-
-        //- Find cells/faces containing samples
-        void findSamples
-        (
-            const pointField&,
-            labelList& sampleProcs,     // processor containing sample
-            labelList& sampleIndices,   // local index of cell/face
-            pointField& sampleLocations // actual representative location
-        ) const;
+        //- Offset vector (from patch faces to destination mesh objects)
+        void setOffsets() const;
 
         //- Calculate mapping
-        void calcMapping() const;
-
+        virtual void calcMapping() const;
 
 public:
 
@@ -196,29 +77,42 @@ public:
 
     // Constructors
 
-        //- Construct from patch
-        mappedMovingPatchBase(const polyPatch&);
+        //- Construct from components
+        mappedMovingPatchBase
+        (
+            const polyPatch& pp
+        );
 
-
-        //- Construct from offsetMode=uniform
+        //- Construct from components
         mappedMovingPatchBase
         (
             const polyPatch& pp,
             const word& sampleRegion,
-            const word& samplePatch
+            const mappedPatchBase::sampleMode mode,
+            const word& samplePatch,
+            const vectorField& offset
         );
 
         //- Construct from dictionary
-        mappedMovingPatchBase(const polyPatch&, const dictionary&);
-
-        //- Construct as copy, resetting patch
-        mappedMovingPatchBase(const polyPatch&, const mappedMovingPatchBase&);
-
-        //- Construct as copy, resetting patch, map original data
         mappedMovingPatchBase
         (
-            const polyPatch&,
-            const mappedMovingPatchBase&,
+            const polyPatch& pp,
+            const dictionary& dict
+        );
+
+        //- Construct given the original patch and resetting the
+        //  face list and boundary mesh information
+        mappedMovingPatchBase
+        (
+            const polyPatch& pp,
+            const mappedMovingPatchBase& mmpb
+        );
+
+        //- Construct given the original patch and a map
+        mappedMovingPatchBase
+        (
+            const polyPatch& pp,
+            const mappedMovingPatchBase& mmpb,
             const labelUList& mapAddressing
         );
 
@@ -229,76 +123,20 @@ public:
 
     // Member Functions
 
-        void clearOut();
+        //- Return the name of the displacement field
+        const word& displacementField() const
+        {
+            return displacementField_;
+        }
 
-        // Access
-
-            //- Region to sample
-            inline const word& sampleRegion() const;
-
-            //- Patch (only if NEARESTPATCHFACE)
-            inline const word& samplePatch() const;
-
-            //- PatchGroup (only if NEARESTPATCHFACE)
-            inline const word& coupleGroup() const;
-
-            //- Return size of mappedMoving mesh/patch/boundary
-            inline label sampleSize() const;
-
-            //- Return reference to the parallel distribution map
-            inline const mapDistribute& map() const;
-
-            //- Get the region mesh
-            const polyMesh& sampleMesh() const;
-
-            //- Get the patch on the region
-            const polyPatch& samplePolyPatch() const;
-
-            //- Return the name of the displacement field
-            inline const word& displacementFieldName() const;
+        //- Return the name of the sample patch displacement field
+        const word& sampleDisplacementField() const
+        {
+            return sampleDisplacementField_;
+        }
 
 
-        // Helpers
-
-            //- Get the sample points
-            tmp<pointField> samplePoints() const;
-
-            //- Get a point on the face given a face decomposition method:
-            //  face-centre-tet : face centre. Returns index of face.
-            //  face-planes     : face centre. Returns index of face.
-            //  face-diagonal   : intersection of ray from cellcentre to
-            //                    facecentre with any of the triangles.
-            //                    Returns index (0..size-2) of triangle.
-            static pointIndexHit facePoint
-            (
-                const polyMesh&,
-                const label facei,
-                const polyMesh::cellDecomposition
-            );
-
-            //- Offset vector (from patch faces to destination mesh objects)
-            inline tmp<vectorField> offsets() const;
-
-        // Distribute
-
-            //- Wrapper around map/interpolate data distribution
-            template<class Type>
-            void distribute(List<Type>& lst) const;
-
-            //- Wrapper around map/interpolate data distribution with operation
-            template<class Type, class CombineOp>
-            void distribute(List<Type>& lst, const CombineOp& cop) const;
-
-            //- Wrapper around map/interpolate data distribution
-            template<class Type>
-            void reverseDistribute(List<Type>& lst) const;
-
-            //- Wrapper around map/interpolate data distribution with operation
-            template<class Type, class CombineOp>
-            void reverseDistribute(List<Type>& lst, const CombineOp& cop) const;
-
-
-        // I/O
+    // I/O
 
             //- Write as a dictionary
             virtual void write(Ostream&) const;
@@ -308,16 +146,6 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "mappedMovingPatchBaseI.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "mappedMovingPatchBaseTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

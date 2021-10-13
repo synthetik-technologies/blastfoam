@@ -533,7 +533,7 @@ Foam::dynamicOversetBlastFvMesh::dynamicOversetBlastFvMesh
 //     const bool doInit
 )
 :
-    dynamicMotionSolverListBlastFvMesh(io)//, doInit)
+    dynamicMotionSolverBlastFvMesh(io)//, doInit)
 {
 //     if (doInit)
     {
@@ -547,7 +547,7 @@ bool Foam::dynamicOversetBlastFvMesh::init(const bool doInit)
 {
 //     if (doInit)
 //     {
-//         dynamicMotionSolverListBlastFvMesh::init(doInit);
+//         dynamicMotionSolverBlastFvMesh::init(doInit);
 //     }
 
     active_ = false;
@@ -572,7 +572,7 @@ const Foam::lduAddressing& Foam::dynamicOversetBlastFvMesh::lduAddr() const
 {
     if (!active_)
     {
-        //return dynamicMotionSolverListBlastFvMesh::lduAddr();
+        //return dynamicMotionSolverBlastFvMesh::lduAddr();
         return dynamicBlastFvMesh::lduAddr();
     }
     if (!lduPtr_.valid())
@@ -588,7 +588,7 @@ Foam::lduInterfacePtrsList Foam::dynamicOversetBlastFvMesh::interfaces() const
 {
     if (!active_)
     {
-        //return dynamicMotionSolverListBlastFvMesh::interfaces();
+        //return dynamicMotionSolverBlastFvMesh::interfaces();
         return dynamicBlastFvMesh::interfaces();
     }
     if (!lduPtr_.valid())
@@ -615,8 +615,8 @@ Foam::dynamicOversetBlastFvMesh::primitiveLduAddr() const
 
 bool Foam::dynamicOversetBlastFvMesh::update()
 {
-    //if (dynamicMotionSolverListBlastFvMesh::update())
-    if (dynamicMotionSolverListBlastFvMesh::update())
+    //if (dynamicMotionSolverBlastFvMesh::update())
+    if (dynamicMotionSolverBlastFvMesh::update())
     {
         // Calculate the local extra faces for the interpolation. Note: could
         // let demand-driven lduAddr() trigger it but just to make sure.
@@ -678,7 +678,7 @@ bool Foam::dynamicOversetBlastFvMesh::writeObject
     const bool write
 ) const
 {
-    bool ok = dynamicMotionSolverListBlastFvMesh::writeObject(fmt, ver, cmp, write);
+    bool ok = dynamicMotionSolverBlastFvMesh::writeObject(fmt, ver, cmp, write);
 
     // For postprocessing : write cellTypes and zoneID
     {

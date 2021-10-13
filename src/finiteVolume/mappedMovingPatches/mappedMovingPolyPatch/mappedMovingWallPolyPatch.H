@@ -26,6 +26,10 @@ License
 Class
     Foam::mappedMovingWallPolyPatch
 
+Description
+    Determines a mapping between patch face centres and processors
+    they're on.
+
 SourceFiles
     mappedMovingWallPolyPatch.C
 
@@ -103,7 +107,9 @@ public:
             const label start,
             const label index,
             const word& sampleRegion,
+            const mappedPatchBase::sampleMode mode,
             const word& samplePatch,
+            const vectorField& offset,
             const polyBoundaryMesh& bm
         );
 
@@ -163,14 +169,7 @@ public:
         {
             return autoPtr<polyPatch>
             (
-                new mappedMovingWallPolyPatch
-                (
-                    *this,
-                    bm,
-                    index,
-                    newSize,
-                    newStart
-                )
+                new mappedMovingWallPolyPatch(*this, bm, index, newSize, newStart)
             );
         }
 

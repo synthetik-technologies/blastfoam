@@ -35,6 +35,7 @@ FoamFile
         nFaces          800;
         startFace       32020;
         sampleMode      nearestPatchFace;
+        displacementField D;
         sampleRegion    fluid;
         samplePatch     fluid_to_walls;
     }

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 2020-08-21 Synthetik Applied Technologies: Mapping of patches
@@ -26,8 +26,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "mappedMovingWallPolyPatch.H"
+#include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
-#include "mappedMovingPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -36,14 +36,11 @@ namespace Foam
     defineTypeNameAndDebug(mappedMovingWallPolyPatch, 0);
 
     addToRunTimeSelectionTable(polyPatch, mappedMovingWallPolyPatch, word);
-    addToRunTimeSelectionTable
-    (
-        polyPatch,
-        mappedMovingWallPolyPatch,
-        dictionary
-    );
+    addToRunTimeSelectionTable(polyPatch, mappedMovingWallPolyPatch, dictionary);
 }
 
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
 
@@ -60,10 +57,10 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
     wallPolyPatch(name, size, start, index, bm, patchType),
     mappedMovingPatchBase(static_cast<const polyPatch&>(*this))
 {
-    //  mappedMoving is not constraint type so add mappedMoving group explicitly
-    if (findIndex(inGroups(), mappedMovingPolyPatch::typeName) == -1)
+    //  mapped is not constraint type so add mapped group explicitly
+    if (findIndex(inGroups(), typeName) == -1)
     {
-        inGroups().append(mappedMovingPolyPatch::typeName);
+        inGroups().append(typeName);
     }
 }
 
@@ -75,7 +72,9 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
     const label start,
     const label index,
     const word& sampleRegion,
+    const mappedPatchBase::sampleMode mode,
     const word& samplePatch,
+    const vectorField& offsets,
     const polyBoundaryMesh& bm
 )
 :
@@ -84,7 +83,9 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
     (
         static_cast<const polyPatch&>(*this),
         sampleRegion,
-        samplePatch
+        mode,
+        samplePatch,
+        offsets
     )
 {}
 
@@ -101,10 +102,10 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
     wallPolyPatch(name, dict, index, bm, patchType),
     mappedMovingPatchBase(*this, dict)
 {
-    //  mappedMoving is not constraint type so add mappedMoving group explicitly
-    if (findIndex(inGroups(), mappedMovingPolyPatch::typeName) == -1)
+    //  mapped is not constraint type so add mapped group explicitly
+    if (findIndex(inGroups(), typeName) == -1)
     {
-        inGroups().append(mappedMovingPolyPatch::typeName);
+        inGroups().append(typeName);
     }
 }
 
@@ -152,7 +153,7 @@ Foam::mappedMovingWallPolyPatch::mappedMovingWallPolyPatch
 
 Foam::mappedMovingWallPolyPatch::~mappedMovingWallPolyPatch()
 {
-    mappedMovingPatchBase::clearOut();
+    mappedPatchBase::clearOut();
 }
 
 

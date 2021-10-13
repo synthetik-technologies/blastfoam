@@ -27,8 +27,6 @@ License
 #include "movingAdaptiveBlastFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "motionSolver.H"
-#include "mappedMovingPatchBase.H"
-#include "mappedMovingWallFvPatch.H"
 #include "displacementMotionSolver.H"
 #include "componentDisplacementMotionSolver.H"
 
@@ -89,7 +87,43 @@ bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
                 dynamicCast<displacementMotionSolver>(motionPtr_());
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
-            dispMS.pointDisplacement().correctBoundaryConditions();
+            if (Pstream::parRun())
+            {
+                // Transfer onto coupled patch
+                const globalMeshData& gmd = this->globalData();
+                const indirectPrimitivePatch& cpp = gmd.coupledPatch();
+                const labelList& meshPoints = cpp.meshPoints();
+
+                const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
+                const labelListList& slaves = gmd.globalCoPointSlaves();
+
+                List<vector> elems(slavesMap.constructSize());
+                forAll(meshPoints, i)
+                {
+                    elems[i] = dispMS.points0()[meshPoints[i]];
+                }
+
+                // Combine master data with slave data
+                forAll(slaves, i)
+                {
+                    const labelList& slavePoints = slaves[i];
+
+                    // Copy master data to slave slots
+                    forAll(slavePoints, j)
+                    {
+                        elems[slavePoints[j]] = elems[i];
+                    }
+                }
+
+                // Push slave-slot data back to slaves
+                slavesMap.reverseDistribute(elems.size(), elems, false);
+
+                // Extract back onto mesh
+                forAll(meshPoints, i)
+                {
+                    dispMS.points0()[meshPoints[i]] = elems[i];
+                }
+            }
         }
         else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
         {
@@ -119,21 +153,40 @@ bool Foam::movingAdaptiveBlastFvMesh::update()
     // consistent
     if (Pstream::parRun())
     {
-        this->globalData().syncPointData
-        (
-            pointsNew,
-            maxMagSqrEqOp<vector>(),
-            mapDistribute::transform()
-        );
+        // Transfer onto coupled patch
+        const globalMeshData& gmd = this->globalData();
+        const indirectPrimitivePatch& cpp = gmd.coupledPatch();
+        const labelList& meshPoints = cpp.meshPoints();
 
-//         Field<scalar> nSharedPoints(pointsNew.size(), 1);
-//         this->globalData().syncPointData
-//         (
-//             nSharedPoints,
-//             plusEqOp<scalar>(),
-//             mapDistribute::transform()
-//         );
-//         pointsNew /= nSharedPoints;
+        const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
+        const labelListList& slaves = gmd.globalCoPointSlaves();
+
+        List<vector> elems(slavesMap.constructSize());
+        forAll(meshPoints, i)
+        {
+            elems[i] = pointsNew[meshPoints[i]];
+        }
+
+        // Combine master data with slave data
+        forAll(slaves, i)
+        {
+            const labelList& slavePoints = slaves[i];
+
+            // Copy master data to slave slots
+            forAll(slavePoints, j)
+            {
+                elems[slavePoints[j]] = elems[i];
+            }
+        }
+
+        // Push slave-slot data back to slaves
+        slavesMap.reverseDistribute(elems.size(), elems, false);
+
+        // Extract back onto mesh
+        forAll(meshPoints, i)
+        {
+            pointsNew[meshPoints[i]] = elems[i];
+        }
     }
 
     //- Move mesh
@@ -171,6 +224,22 @@ bool Foam::movingAdaptiveBlastFvMesh::writeObject
             ),
             dispMS.points0()
         );
+        pointVectorField points0pv
+        (
+            IOobject
+            (
+                "points0",
+                this->time().timeName(),
+                *this,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            pointMesh::New(*this),
+            dimensionedVector(dimLength, Zero)
+        );
+        points0pv.primitiveFieldRef() = dispMS.points0();
+        points0pv.write();
         points0.write();
     }
     return adaptiveBlastFvMesh::writeObject(fmt, ver, cmp, write);

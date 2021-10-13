@@ -26,6 +26,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "mappedMovingPolyPatch.H"
+#include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -37,7 +38,6 @@ namespace Foam
     addToRunTimeSelectionTable(polyPatch, mappedMovingPolyPatch, word);
     addToRunTimeSelectionTable(polyPatch, mappedMovingPolyPatch, dictionary);
 }
-
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
 
@@ -54,12 +54,13 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
     polyPatch(name, size, start, index, bm, patchType),
     mappedMovingPatchBase(static_cast<const polyPatch&>(*this))
 {
-    //  mappedMoving is not constraint type so add mappedMoving group explicitly
+    //  mapped is not constraint type so add mapped group explicitly
     if (findIndex(inGroups(), typeName) == -1)
     {
         inGroups().append(typeName);
     }
 }
+
 
 Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
 (
@@ -68,7 +69,9 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
     const label start,
     const label index,
     const word& sampleRegion,
+    const mappedPatchBase::sampleMode mode,
     const word& samplePatch,
+    const vectorField& offsets,
     const polyBoundaryMesh& bm
 )
 :
@@ -77,7 +80,9 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
     (
         static_cast<const polyPatch&>(*this),
         sampleRegion,
-        samplePatch
+        mode,
+        samplePatch,
+        offsets
     )
 {}
 
@@ -92,9 +97,16 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
 )
 :
     polyPatch(name, dict, index, bm, patchType),
-    mappedMovingPatchBase(*this, dict)
+    mappedMovingPatchBase
+    (
+        *this,
+        dict.lookupOrDefault<word>("sampleRegion", ""),
+        this->sampleModeNames_.read(dict.lookup("sampleMode")),
+        dict.lookupOrDefault<word>("samplePatch", ""),
+        vectorField(this->size(), Zero)
+    )
 {
-    //  mappedMoving is not constraint type so add mappedMoving group explicitly
+    //  mapped is not constraint type so add mapped group explicitly
     if (findIndex(inGroups(), typeName) == -1)
     {
         inGroups().append(typeName);
@@ -145,7 +157,7 @@ Foam::mappedMovingPolyPatch::mappedMovingPolyPatch
 
 Foam::mappedMovingPolyPatch::~mappedMovingPolyPatch()
 {
-    mappedMovingPatchBase::clearOut();
+    mappedPatchBase::clearOut();
 }
 
 
