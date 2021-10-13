@@ -25,6 +25,7 @@ License
 
 #include "densityGradient.H"
 #include "fvc.H"
+#include "meshSizeObject.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -67,7 +68,7 @@ void Foam::errorEstimators::densityGradient::update(const bool scale)
     const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
 
     volVectorField gradRho(fvc::grad(rho));
-    scalarField dL(mesh_.V()/fvc::surfaceSum(mesh_.magSf()));
+    const volScalarField& dL(meshSizeObject::New(mesh_).dx());
 
     const labelUList& owner = mesh_.owner();
     const labelUList& neighbour = mesh_.neighbour();
