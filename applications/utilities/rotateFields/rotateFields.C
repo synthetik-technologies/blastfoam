@@ -363,7 +363,6 @@ void calcMapAndR
             nSource = y*rotationAxis + x*rAxis;
         }
 
-        R[celli] = rotationTensor(nSource, nTarget);
 
         // Actual point on the source mesh
         vector ptSource = nSource + sourceCentre;
@@ -381,6 +380,17 @@ void calcMapAndR
                 cellMap[celli] = extendedCellMap[celli];
             }
         }
+
+        //- If mapping from a 2D case then there is only 1 rotation axis
+        //  so to remove problems of rotating about the wrong axis we
+        //  explicitly remove the axis direction from the directional
+        //  vectors
+        if (nSourceD == 2)
+        {
+            nTarget -= (nTarget & rotationAxis)*rotationAxis;
+            nSource -= (nSource & rotationAxis)*rotationAxis;
+        }
+        R[celli] = rotationTensor(nSource, nTarget);
     }
 }
 
@@ -493,10 +503,12 @@ int main(int argc, char *argv[])
     if (args.optionFound("maxR"))
     {
         maxR = args.optionRead<scalar>("maxR");
+        Info<< "Maximum distance from target centre is " << maxR << endl;
     }
     else if (args.optionFound("extend"))
     {
         maxR = great;
+        Info<< "Extending mapping to the edge of the domain" << endl;
     }
 
 
@@ -653,6 +665,8 @@ int main(int argc, char *argv[])
         {
             targetCentre = args.optionRead<vector>("centre");
         }
+        Info<< "Source centre: " << sourceCentre << nl
+            << "Target centre: " << targetCentre << endl;
 
         Pair<vector> sourceAxis(calculateAxis(sourceMesh));
         Pair<vector> targetAxis(calculateAxis(targetMesh));
@@ -665,13 +679,15 @@ int main(int argc, char *argv[])
         labelList cellMap(targetMesh.nCells(), -1);
         labelList extendedCellMap(targetMesh.nCells(), -1);
         tensorField R(targetMesh.nCells(), tensor::I);
+
+        Info<< "Calulating map and rotation tensors" << endl;
         calcMapAndR
         (
             sourceMesh,
             targetMesh,
             maxR,
-            targetCentre,
             sourceCentre,
+            targetCentre,
             rotationAxis,
             rAxis,
             cellMap,
@@ -680,6 +696,7 @@ int main(int argc, char *argv[])
         );
 
         // Map fields from the source mesh to the target mesh
+        Info<< "Mapping field" << endl;
         mapFields
         (
             sourceMesh,
