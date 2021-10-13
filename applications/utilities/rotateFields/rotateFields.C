@@ -332,7 +332,6 @@ void calcMapAndR
 )
 {
     label nSourceD = sourceMesh.nGeometricD();
-    label nTargetD = targetMesh.nGeometricD();
     vector targetD(targetMesh.geometricD());
 
     forAll(cellMap, celli)
