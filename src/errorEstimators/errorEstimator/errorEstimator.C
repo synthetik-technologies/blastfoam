@@ -43,46 +43,51 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::errorEstimator::constructError
+Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
 (
     const fvMesh& mesh
 ) const
 {
-    wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
-    forAll(boundaryTypes, patchi)
-    {
-        if
-        (
-            isA<mappedWallFvPatch>(mesh.boundary()[patchi])
-         || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
-        )
-        {
-            boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
-        }
-        if (debug)
-        {
-            Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
-                << " cellType:" << boundaryTypes[patchi] << endl;
-        }
-    }
+    word errorName(IOobject::groupName("error", name_));
 
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
+    if (!mesh.foundObject<volScalarField>(errorName))
+    {
+        wordList boundaryTypes(mesh.boundaryMesh().size(), "zeroGradient");
+        forAll(boundaryTypes, patchi)
+        {
+            if
             (
-                IOobject::groupName("error", name_),
-                mesh.time().timeName(),
+                isA<mappedWallFvPatch>(mesh.boundary()[patchi])
+            || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
+            )
+            {
+                boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;
+            }
+            if (debug)
+            {
+                Pout<< "Patch:" << mesh.boundary()[patchi].patch().name() <<nl
+                    << " cellType:" << boundaryTypes[patchi] << endl;
+            }
+        }
+
+        volScalarField* fPtr =
+            new volScalarField
+            (
+                IOobject
+                (
+                    errorName,
+                    mesh.time().timeName(),
+                    mesh,
+                    IOobject::NO_READ,
+                    debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+                ),
                 mesh,
-                IOobject::NO_READ,
-                debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
-            ),
-            mesh,
-            0.0,
-            boundaryTypes
-        )
-    );
+                0.0,
+                boundaryTypes
+            );
+        fPtr->store(fPtr);
+    }
+    return mesh.lookupObjectRef<volScalarField>(errorName);
 }
 
 
@@ -95,7 +100,7 @@ Foam::errorEstimator::errorEstimator
 :
     mesh_(mesh),
     name_(name),
-    error_(constructError(mesh)),
+    error_(lookupOrConstructError(mesh)),
     lowerRefine_(0.0),
     lowerUnrefine_(0.0),
     upperRefine_(0.0),
