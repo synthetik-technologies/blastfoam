@@ -28,4 +28,4 @@
 
     Info<< "\nSource time: " << runTimeSource.value()
         << "\nTarget time: " << runTimeTarget.value()
-        << endl;
+        << nl << endl;
