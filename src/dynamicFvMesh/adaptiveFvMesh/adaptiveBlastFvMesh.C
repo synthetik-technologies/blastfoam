@@ -1721,11 +1721,7 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
     // Note: cannot refine at time 0 since no V0 present since mesh not
     //       moved yet.
 
-    if
-    (
-        time().timeIndex() > 0
-     && time().timeIndex() % refineInterval == 0
-    )
+    if (time().timeIndex() % refineInterval == 0)
     {
         HashTable<parcelCloud*> clouds(this->objectRegistry::lookupClass<parcelCloud>());
         forAllIter(HashTable<parcelCloud*>, clouds, iter)
