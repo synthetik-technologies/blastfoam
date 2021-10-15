@@ -453,7 +453,9 @@ void Foam::phaseModel::postUpdate()
         UEqn.solve();
         constraintsPtr_->constrain(U_);
 
-        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
+        he() =
+            alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho)
+          - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion

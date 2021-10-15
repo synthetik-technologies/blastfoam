@@ -318,6 +318,7 @@ void Foam::granularPhaseModel::correctVolumeFraction()
     volScalarField& alpha(*this);
 
     //- Update volume fraction since density is known
+    alphaRho_.max(0.0);
     alpha.ref() = alphaRho_()/rho_();
     alpha.correctBoundaryConditions();
 }
@@ -328,34 +329,34 @@ void Foam::granularPhaseModel::decode()
     const volScalarField& alpha(*this);
 
     //- Correct phase mass at boundaries
-    alphaRho_.boundaryFieldRef() =
+    alphaRho_.boundaryFieldRef() ==
         alpha.boundaryField()*rho_.boundaryField();
 
     //- Store limited phase mass (only used for division)
-    volScalarField alphaRho(Foam::max(alpha, residualAlpha())*rho_);
+    volScalarField alphaRhoLimited(Foam::max(alpha, residualAlpha())*rho_);
 
     //- Calculate velocity from momentum
-    U_.ref() = alphaRhoU_()/alphaRho();
+    U_.ref() = alphaRhoU_()/alphaRhoLimited();
     U_.correctBoundaryConditions();
 
     //- Correct momentum at boundaries
-    alphaRhoU_.boundaryFieldRef() = alphaRho_.boundaryField()*U_.boundaryField();
+    alphaRhoU_.boundaryFieldRef() == alphaRho_.boundaryField()*U_.boundaryField();
 
     //- Limit and update thermal energy
     alphaRhoE_.max(0.0);
-    e_.ref() = alphaRhoE_()/alphaRho();
+    e_.ref() = alphaRhoE_()/alphaRhoLimited();
 
     //- Compute granular temperature
     alphaRhoPTE_.max(0.0);
-    Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRho());
+    Theta_.ref() = alphaRhoPTE_()/(1.5*alphaRhoLimited());
     Theta_.correctBoundaryConditions();
-    alphaRhoPTE_.boundaryFieldRef() =
+    alphaRhoPTE_.boundaryFieldRef() ==
         1.5*Theta_.boundaryField()*alphaRho_.boundaryField();
 
     thermoPtr_->correct();
 
     // Update total energy because e may have changed
-    alphaRhoE_ = alphaRho_*e_;
+    alphaRhoE_ == alphaRho_*e_;
 
     kineticTheoryModel::correct();
 }
