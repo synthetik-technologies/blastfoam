@@ -23,7 +23,7 @@ solidModel nonLinearGeometryTotalLagrangian;
 nonLinearGeometryTotalLagrangianCoeffs
 {
     // Maximum number of momentum correctors
-    nCorrectors             10000;
+    nCorrectors             2000;
 
     // Solution tolerance for displacement
     solutionTolerance       1e-06;
@@ -35,7 +35,7 @@ nonLinearGeometryTotalLagrangianCoeffs
     materialTolerance       1e-06;
 
     // Write frequency for the residuals
-    infoFrequency           500;
+    infoFrequency           100;
 }
 
 

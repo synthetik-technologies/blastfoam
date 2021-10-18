@@ -78,16 +78,10 @@ private:
         //- Optional displacement field
         word displacementField_;
 
-        //- Optional sample patch displacement field
-        word sampleDisplacementField_;
-
         // Demand-driven private data
 
             //- Displaced patch
             mutable autoPtr<standAlonePatch> dispPatchPtr_;
-
-            //- Displaced neighbor patch
-            mutable autoPtr<standAlonePatch> dispSamplePatchPtr_;
 
             //- Patch interpolator
             mutable autoPtr<standAlonePatchToPatchInterpolation>
@@ -108,9 +102,6 @@ private:
         //- Return the displaced patch
         const standAlonePatch& dispPatch() const;
 
-        //- Return the displaced sample patch
-        const standAlonePatch& dispSamplePatch() const;
-
 
 public:
 
@@ -125,8 +116,7 @@ public:
         (
             const word& patchName,
             const polyMesh& mesh,
-            const word& displacementField = word::null,
-            const word& sampleDisplacementField = word::null
+            const word& displacementField = word::null
         );
 
         //- Construct from dictionary
@@ -140,8 +130,7 @@ public:
         coupledGlobalPolyPatch
         (
             const polyPatch&,
-            const word& displacementField = word::null,
-            const word& sampleDisplacementField = word::null
+            const word& displacementField = word::null
         );
 
 

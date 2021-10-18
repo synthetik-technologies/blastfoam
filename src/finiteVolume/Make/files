@@ -50,7 +50,9 @@ mappedMovingFvPatches/mappedMovingWallFvPatch.C
 
 mappedPatchSelector/mappedPatchSelector.C
 mappedPatchSelector/mappedPatchSelectorList.C
+
 pointPatchFields/derived/mapInterpolated/mapInterpolatedPointPatchFields.C
+pointPatchFields/derived/mapCoupled/mapCoupledPointPatchFields.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C

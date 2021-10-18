@@ -29,7 +29,7 @@ boundaryField
     {
         type            solidTraction;
         traction        uniform (0 0 0);
-        pressure        uniform 0;
+        pressure        uniform 0.0;
         value           uniform (0 0 0);
     }
     walls_to_fluid

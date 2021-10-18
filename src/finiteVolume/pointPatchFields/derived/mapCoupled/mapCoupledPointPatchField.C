@@ -23,16 +23,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "mapInterpolatedPointPatchField.H"
+#include "mapCoupledPointPatchField.H"
 #include "pointMesh.H"
 #include "pointFields.H"
-#include "volFields.H"
 #include "coupledGlobalPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
+Foam::mapCoupledPointPatchField<Type>::mapCoupledPointPatchField
 (
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF
@@ -49,14 +48,14 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
             )
         )
     ),
-    nbrName_(word(iF.name()).replaceAll("point", word::null))
+    nbrName_(iF.name())
 {}
 
 
 template<class Type>
-Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
+Foam::mapCoupledPointPatchField<Type>::mapCoupledPointPatchField
 (
-    const mapInterpolatedPointPatchField<Type>& ptf,
+    const mapCoupledPointPatchField<Type>& ptf,
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
     const pointPatchFieldMapper& mapper
@@ -85,7 +84,7 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
 
 
 template<class Type>
-Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
+Foam::mapCoupledPointPatchField<Type>::mapCoupledPointPatchField
 (
     const pointPatch& p,
     const DimensionedField<Type, pointMesh>& iF,
@@ -103,21 +102,14 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
             )
         )
     ),
-    nbrName_
-    (
-        dict.lookupOrDefault<word>
-        (
-            "nbrName",
-            word(iF.name()).replaceAll("point", word::null)
-        )
-    )
+    nbrName_(dict.lookup<word>("nbrName"))
 {}
 
 
 template<class Type>
-Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
+Foam::mapCoupledPointPatchField<Type>::mapCoupledPointPatchField
 (
-    const mapInterpolatedPointPatchField<Type>& ptf,
+    const mapCoupledPointPatchField<Type>& ptf,
     const DimensionedField<Type, pointMesh>& iF
 )
 :
@@ -139,7 +131,7 @@ Foam::mapInterpolatedPointPatchField<Type>::mapInterpolatedPointPatchField
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-void Foam::mapInterpolatedPointPatchField<Type>::updateCoeffs()
+void Foam::mapCoupledPointPatchField<Type>::updateCoeffs()
 {
     if (this->updated())
     {
@@ -157,19 +149,27 @@ void Foam::mapInterpolatedPointPatchField<Type>::updateCoeffs()
     const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
     const label samplePatchi = samplePatch.patch().index();
 
-    const fvPatchField<Type>& nbr =
-        nbrMesh.lookupObject<GeometricField<Type, fvPatchField, volMesh>>
+    const pointPatchField<Type>& nbr =
+        nbrMesh.lookupObject<GeometricField<Type, pointPatchField, pointMesh>>
         (
             nbrName_
         ).boundaryField()[samplePatchi];
+    Field<Type> pnbr(nbr.size());
+    if (isA<valuePointPatchField<Type>>(nbr))
+    {
+        pnbr = dynamicCast<const valuePointPatchField<Type>>(nbr);
+    }
+    else
+    {
+        pnbr = nbr.patchInternalField();
+    }
 
-    Field<Type>::operator=(samplePatch.faceToPointInterpolate(nbr));
-    fixedValuePointPatchField<Type>::updateCoeffs();
+    Field<Type>::operator=(samplePatch.pointInterpolate(pnbr));
 }
 
 
 template<class Type>
-void Foam::mapInterpolatedPointPatchField<Type>::write(Ostream& os) const
+void Foam::mapCoupledPointPatchField<Type>::write(Ostream& os) const
 {
     pointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);

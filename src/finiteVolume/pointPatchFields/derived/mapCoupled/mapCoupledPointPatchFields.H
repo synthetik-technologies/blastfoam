@@ -5,10 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-21-08-2021 Synthetik Applied Technologies: |   Added lookup of displacement field
--------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,15 +23,28 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "mappedMovingFvPatch.H"
-#include "addToRunTimeSelectionTable.H"
+#ifndef mapCoupledPointPatchFields_H
+#define mapCoupledPointPatchFields_H
+
+#include "mapCoupledPointPatchField.H"
+#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(mappedMovingFvPatch, 0);
-    addToRunTimeSelectionTable(fvPatch, mappedMovingFvPatch, polyPatch);
-}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef mapCoupledPointPatchField<scalar> coupleMotionPointPatchScalarField;
+typedef mapCoupledPointPatchField<vector> coupleMotionPointPatchVectorField;
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

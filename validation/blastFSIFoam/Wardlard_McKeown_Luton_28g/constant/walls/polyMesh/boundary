@@ -21,21 +21,21 @@ FoamFile
         type            wall;
         inGroups        List<word> 1(wall);
         nFaces          40;
-        startFace       31180;
+        startFace       7780;
     }
     freeWall
     {
         type            patch;
-        nFaces          800;
-        startFace       31220;
+        nFaces          200;
+        startFace       7820;
     }
     walls_to_fluid
     {
         type            mappedMovingWall;
-        nFaces          800;
-        startFace       32020;
+        nFaces          200;
+        startFace       8020;
         sampleMode      nearestPatchFace;
-        displacementField D;
+        displacementField pointD;
         sampleRegion    fluid;
         samplePatch     fluid_to_walls;
     }
@@ -43,15 +43,15 @@ FoamFile
     {
         type            wedge;
         inGroups        List<word> 1(wedge);
-        nFaces          16000;
-        startFace       32820;
+        nFaces          4000;
+        startFace       8220;
     }
     back
     {
         type            wedge;
         inGroups        List<word> 1(wedge);
-        nFaces          16000;
-        startFace       48820;
+        nFaces          4000;
+        startFace       12220;
     }
 )
 

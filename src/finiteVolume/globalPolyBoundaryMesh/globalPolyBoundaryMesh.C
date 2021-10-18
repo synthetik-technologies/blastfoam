@@ -23,6 +23,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "globalPolyBoundaryMesh.H"
+#include "coupledGlobalPolyPatch.H"
 #include "pointMesh.H"
 #include "hashedWordList.H"
 
@@ -89,7 +90,7 @@ void Foam::globalPolyBoundaryMesh::reorderPatches
     const bool validBoundary
 )
 {
-    patches_.clear();
+//     patches_.clear();
 }
 
 
@@ -150,4 +151,47 @@ Foam::globalPolyBoundaryMesh::operator[](const pointPatch& pp) const
     return *patches_[pp.name()];
 }
 
+
+const Foam::coupledGlobalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator()(const word& patchName) const
+{
+    const globalPolyPatch& gpp = this->operator[](patchName);
+    if (!isA<coupledGlobalPolyPatch>(gpp))
+    {
+        FatalErrorInFunction
+            << patchName << " is not a coupled patch, it is type "
+            << gpp.patch().type() << endl
+            << abort(FatalError);
+    }
+    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+}
+
+const Foam::coupledGlobalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
+{
+    const globalPolyPatch& gpp = this->operator[](pp);
+    if (!isA<coupledGlobalPolyPatch>(gpp))
+    {
+        FatalErrorInFunction
+            << pp.name() << " is not a coupled patch, it is type "
+            << gpp.patch().type() << endl
+            << abort(FatalError);
+    }
+    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+}
+
+
+const Foam::coupledGlobalPolyPatch&
+Foam::globalPolyBoundaryMesh::operator()(const pointPatch& pp) const
+{
+    const globalPolyPatch& gpp = this->operator[](pp);
+    if (!isA<coupledGlobalPolyPatch>(gpp))
+    {
+        FatalErrorInFunction
+            << pp.name() << " is not a coupled patch, it is type "
+            << gpp.patch().type() << endl
+            << abort(FatalError);
+    }
+    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+}
 // ************************************************************************* //

@@ -49,6 +49,7 @@ namespace Foam
 {
 
 class pointPatch;
+class coupledGlobalPolyPatch;
 
 class globalPolyBoundaryMesh;
 typedef MeshObject
@@ -114,6 +115,15 @@ public:
 
         //- Return the globalPolyPatch for the given pointPatch
         const globalPolyPatch& operator[](const pointPatch&) const;
+
+        //- Return the coupledGlobalPolyPatch for the given polyPatch
+        const coupledGlobalPolyPatch& operator()(const word&) const;
+
+        //- Return the coupledGlobalPolyPatch for the given polyPatch
+        const coupledGlobalPolyPatch& operator()(const polyPatch&) const;
+
+        //- Return the coupledGlobalPolyPatch for the given pointPatch
+        const coupledGlobalPolyPatch& operator()(const pointPatch&) const;
 };
 
 

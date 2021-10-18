@@ -20,12 +20,7 @@ internalField   uniform (0 0 0);
 
 boundaryField
 {
-    bottomFixedWalls
-    {
-        type            slip;
-    }
-
-    topFixedWalls
+    fixedWalls
     {
         type            slip;
     }

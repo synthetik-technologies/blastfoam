@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::mapInterpolatedFvPatchField
+    Foam::coupledPointMotionFvPatchField
 
 Description
-    Foam::mapInterpolatedPointPatchField
+    Foam::mapCoupledPointPatchField
 
 SourceFiles
-    mapInterpolatedPointPatchField.C
+    mapCoupledPointPatchField.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef mapInterpolatedPointPatchField_H
-#define mapInterpolatedPointPatchField_H
+#ifndef mapCoupledPointPatchField_H
+#define mapCoupledPointPatchField_H
 
 #include "Random.H"
 #include "fixedValuePointPatchFields.H"
@@ -45,11 +45,11 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class mapInterpolatedPointPatchField Declaration
+                     Class mapCoupledPointPatchField Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class mapInterpolatedPointPatchField
+class mapCoupledPointPatchField
 :
     public fixedValuePointPatchField<Type>
 {
@@ -57,53 +57,53 @@ class mapInterpolatedPointPatchField
 
         const globalPolyBoundaryMesh& globalBoundary_;
 
-        //- Name of neighbour field
+        //- Name of neighbour displacement field
         const word nbrName_;
 
 
 public:
 
     //- Runtime type information
-    TypeName("mapInterpolated");
+    TypeName("mapCoupled");
 
 
     // Constructors
 
         //- Construct from patch and internal field
-        mapInterpolatedPointPatchField
+        mapCoupledPointPatchField
         (
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&
         );
 
         //- Construct from patch, internal field and dictionary
-        mapInterpolatedPointPatchField
+        mapCoupledPointPatchField
         (
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
             const dictionary&
         );
 
-        //- Construct by mapping given mapInterpolatedPointPatchField
+        //- Construct by mapping given mapCoupledPointPatchField
         //  onto a new patch
-        mapInterpolatedPointPatchField
+        mapCoupledPointPatchField
         (
-            const mapInterpolatedPointPatchField<Type>&,
+            const mapCoupledPointPatchField<Type>&,
             const pointPatch&,
             const DimensionedField<Type, pointMesh>&,
             const pointPatchFieldMapper&
         );
 
         //- Copy constructor
-        mapInterpolatedPointPatchField
+        mapCoupledPointPatchField
         (
-            const mapInterpolatedPointPatchField<Type>&
+            const mapCoupledPointPatchField<Type>&
         ) = delete;
 
         //- Copy constructor setting internal field reference
-        mapInterpolatedPointPatchField
+        mapCoupledPointPatchField
         (
-            const mapInterpolatedPointPatchField<Type>&,
+            const mapCoupledPointPatchField<Type>&,
             const DimensionedField<Type, pointMesh>&
         );
 
@@ -115,7 +115,7 @@ public:
         {
             return autoPtr<pointPatchField<Type>>
             (
-                new mapInterpolatedPointPatchField<Type>(*this, iF)
+                new mapCoupledPointPatchField<Type>(*this, iF)
             );
         }
 
@@ -138,7 +138,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "mapInterpolatedPointPatchField.C"
+    #include "mapCoupledPointPatchField.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

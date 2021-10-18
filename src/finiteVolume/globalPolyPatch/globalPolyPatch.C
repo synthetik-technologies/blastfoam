@@ -256,7 +256,7 @@ void Foam::globalPolyPatch::calcGlobalMasterToCurrentProcPointAddr() const
     );
     labelList& curMap = globalMasterToCurrentProcPointAddrPtr_();
 
-    vectorField fzGlobalPoints = globalPatch().localPoints();
+    vectorField fzGlobalPoints(globalPatch().localPoints());
 
     // Set all slave points to zero because only the master order is used
     if (!Pstream::master())
@@ -393,12 +393,12 @@ void Foam::globalPolyPatch::calcInterp() const
             << endl;
     }
 
-//     if (interpPtr_.valid())
-//     {
-//         FatalErrorInFunction
-//             << "pointer already set"
-//             << abort(FatalError);
-//     }
+    if (interpPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set"
+            << abort(FatalError);
+    }
 
     interpPtr_.reset
     (
@@ -508,11 +508,7 @@ Foam::autoPtr<Foam::globalPolyPatch> Foam::globalPolyPatch::New
                 dynamicCast<const mappedMovingPatchBase>
                 (
                     pp
-                ).displacementField(),
-                dynamicCast<const mappedMovingPatchBase>
-                (
-                    pp
-                ).sampleDisplacementField()
+                ).displacementField()
             )
         );
     }
@@ -560,7 +556,6 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
 const Foam::PrimitivePatchInterpolation<Foam::standAlonePatch>&
 Foam::globalPolyPatch::interpolator() const
 {
-    interpPtr_.clear();
     if (!interpPtr_.valid())
     {
         calcInterp();
@@ -613,6 +608,10 @@ void Foam::globalPolyPatch::updateMesh()
 void Foam::globalPolyPatch::movePoints()
 {
     clearOut();
+//     if (globalPatchPtr_.valid())
+//     {
+//         globalPatchPtr_->movePoints();
+//     }
 }
 
 

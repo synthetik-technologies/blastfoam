@@ -164,11 +164,12 @@ Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
 
     if (pField.size() == samplePatch().patch().localPoints().size())
     {
-        return this->interpolator().pointToFaceInterpolate
+        const coupledGlobalPolyPatch& sPatch(samplePatch());
+        return sPatch.globalFaceToPatch
         (
-            this->globalPointToPatch
+            this->patchToPatchInterpolator().faceInterpolate
             (
-                this->patchToPatchInterpolator().pointInterpolate
+                this->interpolator().pointToFaceInterpolate
                 (
                     samplePatch().patchPointToGlobal(pField)
                 )

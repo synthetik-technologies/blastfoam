@@ -649,7 +649,9 @@ Foam::solidModel::solidModel
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        volPointInterpolation::New(mesh).interpolate(DD_)//,
+        pMesh_,
+        dimensionedVector("0", dimLength, vector::zero)
+//         volPointInterpolation::New(mesh).interpolate(DD_)//,
 //         pointDBoundaryTypes(DD_)
     ),
     gradD_

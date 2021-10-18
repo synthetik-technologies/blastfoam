@@ -25,12 +25,12 @@ displacementLaplacianCoeffs
 {
     diffusivity quadratic inverseDistance (fluid_to_walls);
 }
-balance yes;
-// beginUnrefine 1e-6;         // At what time does unrefinement start (default is 0)
-balanceInterval 1;
+
+beginUnrefine 1e-6;         // At what time does unrefinement start (default is 0)
+
 
 // How often to refine
-refineInterval  1;
+refineInterval  5;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
 lowerRefineLevel 0.1;

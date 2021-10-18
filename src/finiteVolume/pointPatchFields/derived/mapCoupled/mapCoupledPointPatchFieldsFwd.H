@@ -5,10 +5,8 @@
     \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-21-08-2021 Synthetik Applied Technologies: |   Added lookup of displacement field
--------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,56 +21,24 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::mappedMovingWallFvPatch
-
-Description
-    Foam::mappedMovingWallFvPatch
-
-SourceFiles
-    mappedMovingWallFvPatch.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef mappedMovingWallFvPatch_H
-#define mappedMovingWallFvPatch_H
+#ifndef mapCoupledPointPatchFieldsFwd_H
+#define mapCoupledPointPatchFieldsFwd_H
 
-#include "wallFvPatch.H"
-#include "mappedMovingWallPolyPatch.H"
+#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-/*---------------------------------------------------------------------------*\
-                     Class mappedMovingWallFvPatch Declaration
-\*---------------------------------------------------------------------------*/
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-class mappedMovingWallFvPatch
-:
-    public wallFvPatch
-{
+template<class Type> class mapCoupledPointPatchField;
 
-public:
-
-    //- Runtime type information
-    TypeName(mappedMovingWallPolyPatch::typeName_());
-
-
-    // Constructors
-
-        //- Construct from components
-        mappedMovingWallFvPatch
-        (
-            const polyPatch& patch,
-            const fvBoundaryMesh& bm
-        )
-        :
-            wallFvPatch(patch, bm)
-        {}
-};
-
+makePointPatchTypeFieldTypedef(scalar, mapCoupled);
+makePointPatchTypeFieldTypedef(vector, mapCoupled);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

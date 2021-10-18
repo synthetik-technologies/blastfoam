@@ -14,21 +14,14 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-6
+5
 (
-    bottomFixedWalls
+    fixedWalls
     {
         type            wall;
         inGroups        List<word> 1(wall);
-        nFaces          50;
+        nFaces          100;
         startFace       19750;
-    }
-    topFixedWalls
-    {
-        type            wall;
-        inGroups        List<word> 1(wall);
-        nFaces          50;
-        startFace       19800;
     }
     fluid_to_walls
     {
@@ -36,7 +29,6 @@ FoamFile
         nFaces          200;
         startFace       19850;
         sampleMode      nearestPatchFace;
-        sampleDisplacementField D;
         sampleRegion    walls;
         samplePatch     walls_to_fluid;
     }

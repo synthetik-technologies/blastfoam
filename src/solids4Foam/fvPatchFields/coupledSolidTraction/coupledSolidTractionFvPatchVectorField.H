@@ -38,7 +38,7 @@ SourceFiles
 #define coupledSolidTractionFvPatchVectorField_H
 
 #include "solidTractionFvPatchVectorField.H"
-#include "mappedPatchSelector.H"
+#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,7 +56,7 @@ class coupledSolidTractionFvPatchVectorField
     // Private Data
 
         //- Selector for mapped patch type
-        const mappedPatchSelector& mpp_;
+        const globalPolyBoundaryMesh& globalBoundary_;
 
         //- Name of neighbour pressure field
         const word pName_;
