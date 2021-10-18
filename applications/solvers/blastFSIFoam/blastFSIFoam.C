@@ -52,10 +52,6 @@ Description
 
 int main(int argc, char *argv[])
 {
-    #define NO_CONTROL
-    #define CREATE_MESH createMeshesPostProcess.H
-    #include "postProcess.H"
-
     #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createMeshes.H"

@@ -795,7 +795,7 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedVector("zero", dimLength, vector::zero)
     ),
-    globalPatchesPtrList_()
+    globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
     // Force old time fields to be stored
     D_.oldTime().oldTime();
@@ -906,115 +906,6 @@ void Foam::solidModel::DDisRequired()
 }
 
 
-void Foam::solidModel::makeGlobalPatches
-(
-    const wordList& patchNames,
-    const bool currentConfiguration
-) const
-{
-    globalPatchesPtrList_.setSize(patchNames.size());
-
-    forAll(patchNames, i)
-    {
-        if (globalPatchesPtrList_.set(i))
-        {
-            FatalErrorIn
-            (
-                type() + "::makeGlobalPatches(const wordList&) const"
-            )   << "Pointer already set for global patch: "
-                << patchNames[i] << "!"
-                << abort(FatalError);
-        }
-
-        if (currentConfiguration)
-        {
-            // The global patch will create a standAlone zone based on the
-            // current point positions. So we will temporarily move the mesh to
-            // the deformed position, then create the globalPatch, then move the
-            // mesh back
-            const pointField pointsBackup = mesh().points();
-
-            // Lookup patch index
-            const label patchID =
-                mesh().boundaryMesh().findPatchID(patchNames[i]);
-            if (patchID == -1)
-            {
-                FatalErrorIn("void Foam::solidModel::makeGlobalPatches(...)")
-                    << "Patch not found!" << abort(FatalError);
-            }
-
-            // Patch point displacement
-            const vectorField pointDisplacement
-            (
-                pointDorPointDD().internalField(),
-                mesh().boundaryMesh()[patchID].meshPoints()
-            );
-
-            // Calculate deformation point positions
-            const pointField newPoints
-            (
-                mesh().points() + pointDorPointDD().internalField()
-            );
-
-            // Move the mesh to deformed position
-            // const_cast is justified as it is not our intention to permanently
-            // move the mesh; however, it would be better if we did not need it
-            mesh().V();
-            const_cast<dynamicFvMesh&>(mesh()).movePoints(newPoints);
-            const_cast<dynamicFvMesh&>(mesh()).moving(false);
-            const_cast<dynamicFvMesh&>(mesh()).setPhi().writeOpt() =
-                IOobject::NO_WRITE;
-
-            // Create global patch based on deformed mesh
-            globalPatchesPtrList_.set
-            (
-                i,
-                new globalPolyPatch(patchNames[i], mesh())
-            );
-
-            // Force creation of standAlonePatch
-            globalPatchesPtrList_[i].globalPatch();
-
-            // Move the mesh back
-            const_cast<dynamicFvMesh&>(mesh()).movePoints(pointsBackup);
-            mesh().V();
-            const_cast<dynamicFvMesh&>(mesh()).moving(false);
-            const_cast<dynamicFvMesh&>(mesh()).setPhi().writeOpt() =
-                IOobject::NO_WRITE;
-        }
-        else
-        {
-            globalPatchesPtrList_.set
-            (
-                i,
-                new globalPolyPatch(patchNames[i], mesh())
-            );
-        }
-    }
-}
-
-
-const Foam::PtrList<Foam::globalPolyPatch>&
-Foam::solidModel::globalPatches() const
-{
-    if (globalPatchesPtrList_.empty())
-    {
-        FatalErrorIn(type() + "::globalPatches() const")
-            << "makeGlobalPatches(const wordList&) must be called "
-            << "before globalPatch can be called!"
-            << abort(FatalError);
-    }
-
-    return globalPatchesPtrList_;
-}
-
-
-void Foam::solidModel::clearGlobalPatches() const
-{
-    globalPatchesPtrList_.clear();
-}
-
-
 Foam::vector Foam::solidModel::pointU(const label pointID) const
 {
     pointVectorField pointU
@@ -1040,49 +931,49 @@ Foam::vector Foam::solidModel::pointU(const label pointID) const
 Foam::tmp<Foam::vectorField>
 Foam::solidModel::faceZonePointDisplacementIncrement
 (
-    const label interfaceI
+    const polyPatch& pp
 ) const
 {
     // Create patch point field
     const vectorField patchPointDispIncr
     (
         pointDD().internalField(),
-        globalPatches()[interfaceI].patch().meshPoints()
+        globalPatches_[pp].patch().meshPoints()
     );
 
     // Return the global patch field
-    return globalPatches()[interfaceI].patchPointToGlobal(patchPointDispIncr);
+    return globalPatches_[pp].patchPointToGlobal(patchPointDispIncr);
 }
 
 
 Foam::tmp<Foam::vectorField>
 Foam::solidModel::faceZonePointDisplacementOld
 (
-    const label interfaceI
+    const polyPatch& pp
 ) const
 {
     // Create patch point field
     const vectorField patchPointDispOld
     (
         pointD().oldTime().internalField(),
-        globalPatches()[interfaceI].patch().meshPoints()
+        globalPatches_[pp].patch().meshPoints()
     );
 
     // Return the global patch field
-    return globalPatches()[interfaceI].patchPointToGlobal(patchPointDispOld);
+    return globalPatches_[pp].patchPointToGlobal(patchPointDispOld);
 }
 
 
 Foam::tmp<Foam::vectorField> Foam::solidModel::faceZoneAcceleration
 (
-    const label interfaceI
+    const polyPatch& pp
 ) const
 {
     const volVectorField a(fvc::d2dt2(D()));
 
-    return globalPatches()[interfaceI].patchFaceToGlobal
+    return globalPatches_[pp].patchFaceToGlobal
     (
-        a.boundaryField()[globalPatches()[interfaceI].patch().index()]
+        a.boundaryField()[globalPatches_[pp].patch().index()]
     );
 }
 
@@ -1196,102 +1087,6 @@ Foam::autoPtr<Foam::solidModel> Foam::solidModel::NewLU(dynamicFvMesh& mesh)
     }
 
     return autoPtr<solidModel>(cstrIter()(mesh));
-}
-
-
-void Foam::solidModel::setTraction
-(
-    fvPatchVectorField& tractionPatch,
-    const vectorField& traction
-)
-{
-    if (tractionPatch.type() == solidTractionFvPatchVectorField::typeName)
-    {
-        solidTractionFvPatchVectorField& patchD =
-            refCast<solidTractionFvPatchVectorField>(tractionPatch);
-
-        patchD.traction() = traction;
-    }
-    else
-    {
-        FatalErrorIn
-        (
-            "void Foam::solidModel::setTraction\n"
-            "(\n"
-            "    fvPatchVectorField& tractionPatch,\n"
-            "    const vectorField& traction\n"
-            ")"
-        )   << "Boundary condition "
-            << tractionPatch.type()
-            << " for patch " << tractionPatch.patch().name()
-            << " should instead be type "
-            << solidTractionFvPatchVectorField::typeName
-            << abort(FatalError);
-    }
-}
-
-
-void Foam::solidModel::setPressure
-(
-    fvPatchVectorField& pressurePatch,
-    const scalarField& pressure
-)
-{
-    if (pressurePatch.type() == solidTractionFvPatchVectorField::typeName)
-    {
-        solidTractionFvPatchVectorField& patchD =
-            refCast<solidTractionFvPatchVectorField>(pressurePatch);
-
-        patchD.pressure() = pressure;
-    }
-    else
-    {
-        FatalErrorIn
-        (
-            "void Foam::solidModel::setPressure\n"
-            "(\n"
-            "    fvPatchVectorField& pressurePatch,\n"
-            "    const vectorField& pressure\n"
-            ")"
-        )   << "Boundary condition "
-            << pressurePatch.type()
-            << "for patch" << pressurePatch.patch().name()
-            << " should instead be type "
-            << solidTractionFvPatchVectorField::typeName
-            << abort(FatalError);
-    }
-}
-
-
-void Foam::solidModel::setTraction
-(
-    const label interfaceI,
-    const label patchID,
-    const vectorField& faceZoneTraction
-)
-{
-    const vectorField patchTraction
-    (
-        globalPatches()[interfaceI].globalFaceToPatch(faceZoneTraction)
-    );
-
-    setTraction(solutionD().boundaryFieldRef()[patchID], patchTraction);
-}
-
-
-void Foam::solidModel::setPressure
-(
-    const label interfaceI,
-    const label patchID,
-    const scalarField& faceZonePressure
-)
-{
-    const scalarField patchPressure
-    (
-        globalPatches()[interfaceI].globalFaceToPatch(faceZonePressure)
-    );
-
-    setPressure(solutionD().boundaryFieldRef()[patchID], patchPressure);
 }
 
 

@@ -28,7 +28,7 @@ License
 #include "fvMesh.H"
 #include "volMesh.H"
 #include "volFields.H"
-#include "mappedPatchSelectorList.H"
+#include "mappedPatchBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -38,14 +38,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF),
-    mpp_
-    (
-        mappedPatchSelectorList::New
-        (
-            p.patch().boundaryMesh().mesh()
-        )(p.patch())
-    )
+    fixedValueFvPatchField<scalar>(p, iF)
 {}
 
 
@@ -57,14 +50,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const fvPatchFieldMapper& mapper
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF),
-    mpp_
-    (
-        mappedPatchSelectorList::New
-        (
-            p.patch().boundaryMesh().mesh()
-        )(p.patch())
-    )
+    fixedValueFvPatchField<scalar>(p, iF)
 {
     // For unmapped faces set to internal field value (zero-gradient)
     if (notNull(iF) && mapper.hasUnmapped())
@@ -82,14 +68,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const dictionary& dict
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF, dict),
-    mpp_
-    (
-        mappedPatchSelectorList::New
-        (
-            p.patch().boundaryMesh().mesh()
-        )(p.patch())
-    )
+    fixedValueFvPatchField<scalar>(p, iF, dict)
 {}
 
 
@@ -99,14 +78,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const DimensionedField<scalar, volMesh>& iF
 )
 :
-    fixedValueFvPatchField<scalar>(ptf, iF),
-    mpp_
-    (
-        mappedPatchSelectorList::New
-        (
-            ptf.patch().patch().boundaryMesh().mesh()
-        )(ptf.patch().patch())
-    )
+    fixedValueFvPatchField<scalar>(ptf, iF)
 {}
 
 
@@ -125,22 +97,23 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    const polyMesh& nbrMesh = mpp_.sampleMesh();
-    const fvMesh& nbrFvMesh = refCast<const fvMesh>(nbrMesh);
-    const label samplePatchi = mpp_.samplePolyPatch().index();
-    const fvPatch& nbrPatch = nbrFvMesh.boundary()[samplePatchi];
+    const mappedPatchBase& mpp =
+        refCast<const mappedPatchBase>(this->patch().patch());
+    const fvMesh& nbrMesh = refCast<const fvMesh>(mpp.sampleMesh());
 
     scalarField::operator=(this->patchInternalField());
 
-    if (nbrFvMesh.foundObject<volScalarField>("error"))
+    if (nbrMesh.foundObject<volScalarField>("error"))
     {
-        const fvPatchScalarField& nbrError
-        (
-            nbrPatch.lookupPatchField<volScalarField, scalar>("error")
-        );
-        scalarField errorp(nbrError.patchInternalField());
+        const label samplePatchi = mpp.samplePolyPatch().index();
+        const fvPatchField<scalar>& nbrPatchField =
+            nbrMesh.template lookupObject<volScalarField>
+            (
+                "error"
+            ).boundaryField()[samplePatchi];
+        scalarField errorp(nbrPatchField.patchInternalField());
 
-        mpp_.distribute(errorp);
+        mpp.distribute(errorp);
 
         scalarField::operator=(max(errorp, *this));
 

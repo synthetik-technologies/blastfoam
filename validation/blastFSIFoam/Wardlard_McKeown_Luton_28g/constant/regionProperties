@@ -21,4 +21,25 @@ regions
     solid       (walls)
 );
 
+interfaces
+(
+    fluid
+    {
+        fluid_to_walls
+        {
+            sampleRegion walls;
+            samplePatch  walls_to_fluid;
+        }
+    }
+    walls
+    {
+        walls_to_fluid
+        {
+            sampleRegion fluid;
+            samplePatch  fluid_to_walls;
+            displacementField pointD;
+        }
+    }
+);
+
 // ************************************************************************* //

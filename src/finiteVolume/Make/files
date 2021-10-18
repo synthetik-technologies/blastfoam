@@ -39,18 +39,6 @@ globalPolyPatch/globalPolyPatch.C
 coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
 globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
 
-mappedMovingPatches/mappedMovingPolyPatch/mappedMovingPatchBase.C
-mappedMovingPatches/mappedMovingPolyPatch/mappedMovingPolyPatch.C
-mappedMovingPatches/mappedMovingPolyPatch/mappedMovingWallPolyPatch.C
-mappedMovingPatches/mappedMovingPointPatch/mappedMovingPointPatch.C
-mappedMovingPatches/mappedMovingPointPatch/mappedMovingWallPointPatch.C
-
-mappedMovingFvPatches/mappedMovingFvPatch.C
-mappedMovingFvPatches/mappedMovingWallFvPatch.C
-
-mappedPatchSelector/mappedPatchSelector.C
-mappedPatchSelector/mappedPatchSelectorList.C
-
 pointPatchFields/derived/mapInterpolated/mapInterpolatedPointPatchFields.C
 pointPatchFields/derived/mapCoupled/mapCoupledPointPatchFields.C
 

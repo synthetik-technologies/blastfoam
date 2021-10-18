@@ -25,8 +25,12 @@ License
 
 #include "globalPolyPatch.H"
 #include "coupledGlobalPolyPatch.H"
-#include "mappedMovingPatchBase.H"
 #include "polyPatchID.H"
+#include "volFields.H"
+#include "pointPatchFields.H"
+#include "valuePointPatchFields.H"
+#include "vtkWritePolyData.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -426,12 +430,6 @@ void Foam::globalPolyPatch::clearOut() const
     pointToGlobalAddrPtr_.clear();
     faceToGlobalAddrPtr_.clear();
     globalMasterToCurrentProcPointAddrPtr_.clear();
-    clearInterp();
-}
-
-
-void Foam::globalPolyPatch::clearInterp() const
-{
     interpPtr_.clear();
 }
 
@@ -441,48 +439,17 @@ void Foam::globalPolyPatch::clearInterp() const
 // Construct from components
 Foam::globalPolyPatch::globalPolyPatch
 (
-    const word& patchName,
-    const polyMesh& mesh
-)
-:
-    mesh_(mesh),
-    patchName_(patchName),
-    patch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
-    globalPatchPtr_(NULL),
-    pointToGlobalAddrPtr_(NULL),
-    faceToGlobalAddrPtr_(NULL),
-    globalMasterToCurrentProcPointAddrPtr_(NULL),
-    interpPtr_(NULL)
-{
-    check();
-}
-
-
-// Construct from dictionary
-Foam::globalPolyPatch::globalPolyPatch
-(
     const dictionary& dict,
-    const polyMesh& mesh
+    const polyPatch& patch
 )
 :
-    mesh_(mesh),
-    patchName_(dict.lookup("patch")),
+    mesh_(patch.boundaryMesh().mesh()),
+    patchName_(patch.name()),
     patch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
-    globalPatchPtr_(NULL),
-    pointToGlobalAddrPtr_(NULL),
-    faceToGlobalAddrPtr_(NULL),
-    globalMasterToCurrentProcPointAddrPtr_(NULL),
-    interpPtr_(NULL)
-{
-    check();
-}
-
-
-Foam::globalPolyPatch::globalPolyPatch(const polyPatch& pp)
-:
-    mesh_(pp.boundaryMesh().mesh()),
-    patchName_(pp.name()),
-    patch_(pp),
+    displacementField_
+    (
+        dict.lookupOrDefault<word>("displacementField", "none")
+    ),
     globalPatchPtr_(NULL),
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
@@ -495,33 +462,20 @@ Foam::globalPolyPatch::globalPolyPatch(const polyPatch& pp)
 
 Foam::autoPtr<Foam::globalPolyPatch> Foam::globalPolyPatch::New
 (
-    const polyPatch& pp
+    const dictionary& dict,
+    const polyPatch& patch
 )
 {
-    if (isA<mappedMovingPatchBase>(pp))
+    if (!dict.found(patch.name()))
     {
         return autoPtr<globalPolyPatch>
         (
-            new coupledGlobalPolyPatch
-            (
-                pp,
-                dynamicCast<const mappedMovingPatchBase>
-                (
-                    pp
-                ).displacementField()
-            )
-        );
-    }
-    else if (isA<mappedPatchBase>(pp))
-    {
-        return autoPtr<globalPolyPatch>
-        (
-            new coupledGlobalPolyPatch(pp)
+            new globalPolyPatch(dict, patch)
         );
     }
     return autoPtr<globalPolyPatch>
     (
-        new globalPolyPatch(pp)
+        new coupledGlobalPolyPatch(dict.subDict(patch.name()), patch)
     );
 }
 
@@ -547,6 +501,72 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
     if (!globalPatchPtr_.valid())
     {
         calcGlobalPatch();
+
+        if (displacementField_ != "none")
+        {
+            pointField pts
+            (
+                const_cast<pointField&>(globalPatchPtr_->localPoints())
+            );
+            if (this->mesh_.foundObject<volVectorField>(displacementField_))
+            {
+                pts +=
+                    this->interpolator().faceToPointInterpolate
+                    (
+                        this->patchFaceToGlobal
+                        (
+                            this->mesh_.lookupObject<volVectorField>
+                            (
+                                displacementField_
+                            ).boundaryField()[this->patch_.index()]
+                        )
+                    );
+            }
+            else if
+            (
+                this->mesh_.foundObject<pointVectorField>(displacementField_)
+            )
+            {
+                const pointPatchVectorField& disp =
+                    this->mesh_.lookupObject<pointVectorField>
+                    (
+                        displacementField_
+                    ).boundaryField()[this->patch_.index()];
+
+                if (isA<valuePointPatchVectorField>(disp))
+                {
+                    pts +=
+                        patchPointToGlobal
+                        (
+                            dynamicCast<const valuePointPatchVectorField>(disp)
+                        );
+                }
+                else
+                {
+                    pts += patchPointToGlobal(disp.patchInternalField());
+                }
+            }
+            faceList faces(globalPatchPtr_);
+            globalPatchPtr_.reset(new standAlonePatch(faces, pts));
+            if (debug)
+            {
+                word name = patch_.name();
+                if (mesh_.time().outputTime())
+                {
+                    mkDir("postProcessing"/mesh_.time().timeName());
+                    vtkWritePolyData::write
+                    (
+                        "postProcessing" / mesh_.time().timeName() / name + ".vtk",
+                        "name",
+                        false,
+                        globalPatchPtr_->localPoints(),
+                        labelList(),
+                        edgeList(),
+                        globalPatchPtr_()
+                    );
+                }
+            }
+        }
     }
 
     return globalPatchPtr_();

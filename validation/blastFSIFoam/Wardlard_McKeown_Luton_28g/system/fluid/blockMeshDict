@@ -63,7 +63,7 @@ boundary
     }
     fluid_to_walls
     {
-        type mappedMovingWall;
+        type mappedWall;
         sampleMode nearestPatchFace;
         sampleRegion walls;
         samplePatch walls_to_fluid;

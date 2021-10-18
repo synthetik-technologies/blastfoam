@@ -25,7 +25,9 @@ License
 #include "globalPolyBoundaryMesh.H"
 #include "coupledGlobalPolyPatch.H"
 #include "pointMesh.H"
+#include "IOdictionary.H"
 #include "hashedWordList.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -42,7 +44,14 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
     const polyMesh& mesh
 )
 :
-    GlobalPolyBoundaryMesh(mesh)
+    GlobalPolyBoundaryMesh(mesh),
+    interfacesDicts_
+    (
+        mesh.time().db().lookupObject<IOdictionary>("regionProperties").lookup
+        (
+            "interfaces"
+        )
+    )
 {}
 
 
@@ -89,9 +98,7 @@ void Foam::globalPolyBoundaryMesh::reorderPatches
     const labelUList& newToOld,
     const bool validBoundary
 )
-{
-//     patches_.clear();
-}
+{}
 
 
 void Foam::globalPolyBoundaryMesh::addPatch(const label patchi)
@@ -110,6 +117,7 @@ Foam::globalPolyBoundaryMesh::operator[](const word& patchName) const
             patchName,
             globalPolyPatch::New
             (
+                interfacesDicts_[mesh_.name()],
                 mesh_.boundaryMesh()[patchName]
             ).ptr()
         );
@@ -123,7 +131,11 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
 {
     if (!patches_.found(pp.name()))
     {
-        patches_.insert(pp.name(), globalPolyPatch::New(pp).ptr());
+        patches_.insert
+        (
+            pp.name(),
+            globalPolyPatch::New(interfacesDicts_[mesh_.name()], pp).ptr()
+        );
     }
 
     return *patches_[pp.name()];
@@ -140,6 +152,7 @@ Foam::globalPolyBoundaryMesh::operator[](const pointPatch& pp) const
             pp.name(),
             globalPolyPatch::New
             (
+                interfacesDicts_[mesh_.name()],
                 dynamicCast<const polyMesh>
                 (
                     pp.boundaryMesh().mesh().thisDb()

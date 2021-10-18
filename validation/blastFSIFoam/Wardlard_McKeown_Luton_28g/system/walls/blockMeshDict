@@ -75,9 +75,8 @@ boundary
 
     walls_to_fluid
     {
-        type mappedMovingWall;
+        type mappedWall;
         sampleMode nearestPatchFace;
-        displacementField pointD;
         sampleRegion fluid;
         samplePatch fluid_to_walls;
         faces

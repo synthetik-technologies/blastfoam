@@ -75,13 +75,8 @@ private:
         //- Patch to sample
         word samplePatch_;
 
-        //- Optional displacement field
-        word displacementField_;
 
         // Demand-driven private data
-
-            //- Displaced patch
-            mutable autoPtr<standAlonePatch> dispPatchPtr_;
 
             //- Patch interpolator
             mutable autoPtr<standAlonePatchToPatchInterpolation>
@@ -102,6 +97,9 @@ private:
         //- Return the displaced patch
         const standAlonePatch& dispPatch() const;
 
+        //- Clear the interpolator
+        virtual void clearInterp(const bool top = true) const;
+
 
 public:
 
@@ -114,23 +112,8 @@ public:
         //- Construct from components
         coupledGlobalPolyPatch
         (
-            const word& patchName,
-            const polyMesh& mesh,
-            const word& displacementField = word::null
-        );
-
-        //- Construct from dictionary
-        coupledGlobalPolyPatch
-        (
-            const dictionary&,
-            const polyMesh&
-        );
-
-        //- Construct from polyPatch
-        coupledGlobalPolyPatch
-        (
-            const polyPatch&,
-            const word& displacementField = word::null
+            const dictionary& dict,
+            const polyPatch& patch
         );
 
 
@@ -208,9 +191,6 @@ public:
 
         //- Clear addressing
         virtual void clearOut() const;
-
-        //- Clear the interpolator
-        virtual void clearInterp() const;
 };
 
 

@@ -282,7 +282,8 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     const coupledGlobalPolyPatch& cgpp =
         globalBoundary_(this->patch().patch());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
-    const coupledGlobalPolyPatch& samplePatch = cgpp.samplePatch();
+    const coupledGlobalPolyPatch& samplePatch =
+        globalPolyBoundaryMesh::New(nbrMesh)(cgpp.samplePatch().patch());
     const label samplePatchi = samplePatch.patch().index();
     const fvPatch& sampleFvPatch =
         refCast<const fvMesh>(nbrMesh).boundary()[samplePatchi];

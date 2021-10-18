@@ -449,7 +449,8 @@ void Foam::mechanicalModel::interpolate
     else
     {
         FatalErrorIn(type())
-            << "Not implemented for this version of OpenFOAM" << abort(FatalError);
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
     }
 }
 

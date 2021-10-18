@@ -38,10 +38,10 @@ SourceFiles
 #define globalPolyBoundaryMesh_H
 
 #include "globalPolyPatch.H"
-#include "mappedPatchSelector.H"
 #include "regIOobject.H"
 #include "HashPtrTable.H"
 #include "MeshObject.H"
+#include "PtrListDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,6 +68,8 @@ class globalPolyBoundaryMesh
     public GlobalPolyBoundaryMesh
 {
 // Private member data
+
+    const HashTable<dictionary> interfacesDicts_;
 
     // Table of mapped patch selectors
     mutable HashPtrTable<globalPolyPatch> patches_;

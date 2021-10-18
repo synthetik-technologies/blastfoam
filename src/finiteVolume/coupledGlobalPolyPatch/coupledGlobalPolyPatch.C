@@ -25,9 +25,7 @@ License
 
 #include "coupledGlobalPolyPatch.H"
 #include "globalPolyBoundaryMesh.H"
-#include "volFields.H"
-#include "pointPatchFields.H"
-#include "valuePointPatchFields.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -37,78 +35,6 @@ namespace Foam
 }
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-const Foam::standAlonePatch& Foam::coupledGlobalPolyPatch::dispPatch() const
-{
-    if (dispPatchPtr_.valid())
-    {
-        return dispPatchPtr_();
-    }
-
-    if (debug)
-    {
-        InfoInFunction
-            << "Calculating displaced patch"
-            << endl;
-    }
-
-    // Create globalPatch with optional displacement
-    if (this->mesh_.foundObject<volVectorField>(displacementField_))
-    {
-        dispPatchPtr_.set
-        (
-            new standAlonePatch
-            (
-                this->globalPatch(),
-                this->globalPatch().localPoints()
-              + this->interpolator().faceToPointInterpolate
-                (
-                    this->patchFaceToGlobal
-                    (
-                        this->mesh_.lookupObject<volVectorField>
-                        (
-                            displacementField_
-                        ).boundaryField()[this->patch_.index()]
-                    )
-                )
-            )
-        );
-    }
-    else if (this->mesh_.foundObject<pointVectorField>(displacementField_))
-    {
-        const pointPatchVectorField& disp =
-            this->mesh_.lookupObject<pointVectorField>
-            (
-                displacementField_
-            ).boundaryField()[this->patch_.index()];
-
-        pointField pdisp(disp.size());
-        if (isA<valuePointPatchVectorField>(disp))
-        {
-            pdisp = dynamicCast<const valuePointPatchVectorField>(disp);
-        }
-        else
-        {
-            pdisp = disp.patchInternalField();
-        }
-
-        dispPatchPtr_.set
-        (
-            new standAlonePatch
-            (
-                this->globalPatch(),
-                this->globalPatch().localPoints()
-              + this->patchPointToGlobal(pdisp)
-            )
-        );
-    }
-    else
-    {
-        dispPatchPtr_.set(new standAlonePatch(globalPatch()));
-    }
-    return dispPatchPtr_();
-}
-
 
 void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
 {
@@ -123,10 +49,10 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
     (
         new standAlonePatchToPatchInterpolation
         (
-            dispPatch(),
-            samplePatch().dispPatch(),
+            globalPatch(),
+            samplePatch().globalPatch()/*,
             intersection::algorithm::visible,
-            intersection::direction::contactSphere
+            intersection::direction::contactSphere*/
         )
     );
 }
@@ -139,19 +65,16 @@ void Foam::coupledGlobalPolyPatch::clearOut() const
 }
 
 
-void Foam::coupledGlobalPolyPatch::clearInterp() const
+void Foam::coupledGlobalPolyPatch::clearInterp(const bool top) const
 {
-    if
-    (
-        dispPatchPtr_.valid()
-     || patchToSampleInterpPtr_.valid()
-    )
+    if (patchToSampleInterpPtr_.valid())
     {
-        dispPatchPtr_.clear();
         patchToSampleInterpPtr_.clear();
-        samplePatch().clearInterp();
     }
-    globalPolyPatch::clearInterp();
+    if (top)
+    {
+        samplePatch().clearInterp(false);
+    }
 }
 
 
@@ -160,68 +83,13 @@ void Foam::coupledGlobalPolyPatch::clearInterp() const
 // Construct from components
 Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
 (
-    const word& patchName,
-    const polyMesh& mesh,
-    const word& displacementField
-)
-:
-    globalPolyPatch(patchName, mesh),
-    sampleRegion_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).sampleRegion()
-    ),
-    samplePatch_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).sampleRegion()
-    ),
-    displacementField_(displacementField),
-    dispPatchPtr_(nullptr),
-    patchToSampleInterpPtr_(nullptr)
-{}
-
-
-// Construct from dictionary
-Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
-(
     const dictionary& dict,
-    const polyMesh& mesh
+    const polyPatch& patch
 )
 :
-    globalPolyPatch(dict, mesh),
-    sampleRegion_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).sampleRegion()
-    ),
-    samplePatch_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).sampleRegion()
-    ),
-    displacementField_
-    (
-        dict.lookupOrDefault("displacementField", word::null)
-    ),
-    dispPatchPtr_(nullptr),
-    patchToSampleInterpPtr_(nullptr)
-{}
-
-
-Foam::coupledGlobalPolyPatch::coupledGlobalPolyPatch
-(
-    const polyPatch& pp,
-    const word& displacementField
-)
-:
-    globalPolyPatch(pp),
-    sampleRegion_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).sampleRegion()
-    ),
-    samplePatch_
-    (
-        dynamicCast<const mappedPatchBase>(patch_).samplePatch()
-    ),
-    displacementField_(displacementField),
-    dispPatchPtr_(nullptr),
+    globalPolyPatch(dict, patch),
+    sampleRegion_(dict.lookup("sampleRegion")),
+    samplePatch_(dict.lookup("samplePatch")),
     patchToSampleInterpPtr_(nullptr)
 {}
 
@@ -246,10 +114,7 @@ const Foam::polyMesh& Foam::coupledGlobalPolyPatch::sampleMesh() const
 const Foam::coupledGlobalPolyPatch&
 Foam::coupledGlobalPolyPatch::samplePatch() const
 {
-    return dynamicCast<const coupledGlobalPolyPatch>
-    (
-        globalPolyBoundaryMesh::New(sampleMesh())[samplePatch_]
-    );
+    return globalPolyBoundaryMesh::New(sampleMesh())(samplePatch_);
 }
 
 const Foam::coupledGlobalPolyPatch::standAlonePatchToPatchInterpolation&
@@ -265,7 +130,6 @@ Foam::coupledGlobalPolyPatch::patchToPatchInterpolator() const
 
 void Foam::coupledGlobalPolyPatch::movePoints()
 {
-    Info<<"cgpp movePoints"<<endl;
     clearOut();
 }
 

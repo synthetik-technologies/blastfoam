@@ -25,8 +25,7 @@ License
 
 #include "errorEstimator.H"
 #include "coupledMaxErrorFvPatchScalarField.H"
-#include "mappedWallFvPatch.H"
-#include "mappedMovingWallFvPatch.H"
+#include "mappedPatchBase.H"
 #include "timeControlFunctionObject.H"
 #include "probes.H"
 #include "blastProbes.H"
@@ -53,8 +52,7 @@ Foam::tmp<Foam::volScalarField> Foam::errorEstimator::constructError
     {
         if
         (
-            isA<mappedWallFvPatch>(mesh.boundary()[patchi])
-         || isA<mappedMovingWallFvPatch>(mesh.boundary()[patchi])
+            isA<mappedPatchBase>(mesh.boundary()[patchi])
         )
         {
             boundaryTypes[patchi] = coupledMaxErrorFvPatchScalarField::typeName;

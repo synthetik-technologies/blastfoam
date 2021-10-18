@@ -69,6 +69,9 @@ protected:
         //- Reference to patch
         const polyPatch& patch_;
 
+        //- Optional displacement field
+        word displacementField_;
+
         // Demand-driven private data
 
             //- Primitive patch made out of faces from parallel decomposition
@@ -120,23 +123,17 @@ public:
         //- Construct from components
         globalPolyPatch
         (
-            const word& patchName,
-            const polyMesh& mesh
+            const dictionary& dict,
+            const polyPatch& patch
         );
-
-        //- Construct from dictionary
-        globalPolyPatch
-        (
-            const dictionary&,
-            const polyMesh&
-        );
-
-        //- Construct from polyPatch
-        globalPolyPatch(const polyPatch& pp);
 
 
     //- Return a new globalPolyPatch
-    static autoPtr<globalPolyPatch> New(const polyPatch&);
+    static autoPtr<globalPolyPatch> New
+    (
+        const dictionary& dict,
+        const polyPatch& patch
+    );
 
 
     //- Destructor
@@ -245,9 +242,6 @@ public:
 
         //- Clear addressing
         virtual void clearOut() const;
-
-        //- Clear interpolation
-        virtual void clearInterp() const;
 };
 
 

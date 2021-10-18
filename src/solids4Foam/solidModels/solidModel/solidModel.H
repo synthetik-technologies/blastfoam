@@ -51,10 +51,10 @@ SourceFiles
 #include "nonLinearGeometry.H"
 #include "uniformDimensionedFields.H"
 #include "momentumStabilisation.H"
-#include "globalPolyPatch.H"
 #include "setCellDisplacements.H"
 #include "OFstream.H"
 #include "fvMatricesFwd.H"
+#include "globalPolyBoundaryMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -191,12 +191,8 @@ class solidModel
         //- Reference D (without relaxation) field used for Quasi-Newton method
         volVectorField unrelaxedDRef_;
 
-        //- Ptr list of global poly patches
-        //  This is a copy of a patch which is reconstructed in full on each
-        //  processor. This is convenient for interpolating between two patches
-        //  in parallel, as used, for example, in the fluid-solid interaction
-        //  procedure
-        mutable PtrList<globalPolyPatch> globalPatchesPtrList_;
+        //- Reference to globalPolyBoundaryMesh
+        const globalPolyBoundaryMesh& globalPatches_;
 
         //- Optional: set displacement at internal cells
         mutable autoPtr<setCellDisplacements> setCellDispsPtr_;
@@ -527,19 +523,19 @@ public:
             //- Face zone point displacement increment
             virtual tmp<vectorField> faceZonePointDisplacementIncrement
             (
-                const label interfaceI
+                const polyPatch& pp
             ) const;
 
             //- Face zone point displacement increment
             virtual tmp<vectorField> faceZonePointDisplacementOld
             (
-                const label interfaceI
+                const polyPatch& pp
             ) const;
 
             //- Face zone acceleration
             virtual tmp<vectorField> faceZoneAcceleration
             (
-                const label interfaceI
+                const polyPatch& pp
             ) const;
 
             //- Return enforceLinear switch
@@ -587,49 +583,7 @@ public:
             //- This function will check that the DD field was read from disk
             virtual void DDisRequired();
 
-            //- Make the global poly patches
-            void makeGlobalPatches
-            (
-                const wordList& patchNames,
-                const bool currentConfiguration = true
-            ) const;
-
-            //- Return const-access to the global poly patches
-            const PtrList<globalPolyPatch>& globalPatches() const;
-
-            //- Clear global poly patches
-            void clearGlobalPatches() const;
-
         // Edit
-
-            //- Set traction at specified patch
-            virtual void setTraction
-            (
-                fvPatchVectorField& tractionPatch,
-                const vectorField& traction
-            );
-
-            //- Set pressure at specified patch
-            virtual void setPressure
-            (
-                fvPatchVectorField& pressurePatch,
-                const scalarField& pressure
-            );
-
-            virtual void setTraction
-            (
-                const label interfaceI,
-                const label patchID,
-                const vectorField& faceZoneTraction
-            );
-
-            //- Set traction at specified patch
-            virtual void setPressure
-            (
-                const label interfaceI,
-                const label patchID,
-                const scalarField& faceZonePressure
-            );
 
             //- Check if solid model is diverging using the Jacobian field
             virtual Switch& checkEnforceLinear(const volScalarField& J);
