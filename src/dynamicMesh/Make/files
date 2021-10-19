@@ -2,6 +2,7 @@ hexRef = hexRef
 
 $(hexRef)/hexRef.C
 $(hexRef)/hexRefData.C
+$(hexRef)/hexRefRefinementHistory.C
 $(hexRef)/hexRefNew.C
 
 $(hexRef)/hexRef3D/hexRef3D.C

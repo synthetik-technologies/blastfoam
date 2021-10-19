@@ -22,13 +22,13 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::hexRef2D
+    Foam::hexRef1D
 
 Description
     Refinement of (split) hexes using polyTopoChange.
 
 SourceFiles
-    hexRef2D.C
+    hexRef1D.C
 
 Authors
     Original code:
@@ -38,8 +38,8 @@ Authors
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hexRef2D_H
-#define hexRef2D_H
+#ifndef hexRef1D_H
+#define hexRef1D_H
 
 #include "hexRef.H"
 
@@ -49,10 +49,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class hexRef2D Declaration
+                           Class hexRef1D Declaration
 \*---------------------------------------------------------------------------*/
 
-class hexRef2D : public hexRef
+class hexRef1D : public hexRef
 {
 
 protected:
@@ -100,17 +100,28 @@ protected:
             polyTopoChange& meshMod
         ) const;
 
+        //- Store vertices from startFp upto face split point.
+        //  Used when splitting face into 4.
+//         virtual void walkFaceToMid
+//         (
+//             const labelList& edgeMidPoint,
+//             const label cLevel,
+//             const label facei,
+//             const label startFp,
+//             DynamicList<label>& faceVerts
+//         ) const;
+
         //- Disallow default bitwise copy construct
-        hexRef2D(const hexRef2D&);
+        hexRef1D(const hexRef1D&);
 
         //- Disallow default bitwise assignment
-        void operator=(const hexRef2D&);
+        void operator=(const hexRef1D&);
 
 
 public:
 
     //- Runtime type information
-    TypeName("hexRef2D");
+    TypeName("hexRef1D");
 
 
     // Constructors
@@ -118,22 +129,22 @@ public:
         //- Construct from mesh, read_if_present refinement data
         //  (from write below). If readHistory is true does read_if_present
         //  of refinement history. If false clears all history
-        hexRef2D(const polyMesh& mesh, const bool readHistory = true);
+        hexRef1D(const polyMesh& mesh, const bool readHistory = true);
 
         //- Construct from mesh and un/refinement data and optional size of
         //  starting cells
-        hexRef2D
+        hexRef1D
         (
             const polyMesh& mesh,
             const labelList& cellLevel,
             const labelList& pointLevel,
-            const hexRefRefinementHistory& history,
+            const refinementHistory& history,
             const scalar level0Edge = -GREAT
         );
 
         //- Construct from mesh and refinement data and optional size of
         //  starting cells
-        hexRef2D
+        hexRef1D
         (
             const polyMesh& mesh,
             const labelList& cellLevel,

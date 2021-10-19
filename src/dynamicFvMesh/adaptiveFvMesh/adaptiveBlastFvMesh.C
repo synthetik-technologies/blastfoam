@@ -1905,7 +1905,10 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
         {
             // Compact refinement history occasionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
-            const_cast<refinementHistory&>(meshCutter().history()).compact();
+            const_cast<hexRefRefinementHistory&>
+            (
+                meshCutter().history()
+            ).compact();
         }
 
         reduce(hasChanged, orOp<bool>());

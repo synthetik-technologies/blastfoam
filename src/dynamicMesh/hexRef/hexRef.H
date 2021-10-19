@@ -26,7 +26,7 @@ Class
 
 Description
     Refinement of (split) hexes using polyTopoChange.
-    hexRef8.H has been abstracted to fit hexRef4 and hexRef4Axi 
+    hexRef8.H has been abstracted to fit hexRef4 and hexRef4Axi
 
 SourceFiles
     hexRef.C
@@ -34,10 +34,10 @@ SourceFiles
 Authors
     Yun Ouedraogo 2018
 
-    Formerly hexRef8 adapted in 2018 by: 
+    Formerly hexRef8 adapted in 2018 by:
     Daniel Rettenmaier <rettenmaier@tu-darmstadt.de>
     Daniel Deising <deising@mma.tu-darmstadt.de>
-    Changes: 
+    Changes:
         + Corrected adressing of refined internal faces
 
 \*---------------------------------------------------------------------------*/
@@ -51,7 +51,7 @@ Authors
 #include "DynamicList.H"
 #include "primitivePatch.H"
 #include "removeFaces.H"
-#include "refinementHistory.H"
+#include "hexRefRefinementHistory.H"
 #include "PackedBoolList.H"
 #include "uniformDimensionedFields.H"
 #include "cellShapeList.H"
@@ -93,7 +93,7 @@ protected:
         uniformDimensionedScalarField level0Edge_;
 
         //- Refinement history
-        refinementHistory history_;
+        hexRefRefinementHistory history_;
 
         //- Face remover engine
         removeFaces faceRemover_;
@@ -385,7 +385,7 @@ public:
             const polyMesh& mesh,
             const labelList& cellLevel,
             const labelList& pointLevel,
-            const refinementHistory& history,
+            const hexRefRefinementHistory& history,
             const scalar level0Edge
         ),
         (mesh, cellLevel, pointLevel, history, level0Edge)
@@ -420,7 +420,7 @@ public:
             const polyMesh& mesh,
             const labelList& cellLevel,
             const labelList& pointLevel,
-            const refinementHistory& history,
+            const hexRefRefinementHistory& history,
             const scalar level0Edge = -GREAT
         );
 
@@ -446,7 +446,7 @@ public:
             const polyMesh& mesh,
             const labelList& cellLevel,
             const labelList& pointLevel,
-            const refinementHistory& history,
+            const hexRefRefinementHistory& history,
             const scalar level0Edge = -GREAT
         );
 
@@ -480,7 +480,7 @@ public:
                 return pointLevel_;
             }
 
-            const refinementHistory& history() const
+            const hexRefRefinementHistory& history() const
             {
                 return history_;
             }
