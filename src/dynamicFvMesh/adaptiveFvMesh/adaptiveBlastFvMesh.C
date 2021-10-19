@@ -1722,11 +1722,7 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
     // Note: cannot refine at time 0 since no V0 present since mesh not
     //       moved yet.
 
-    if
-    (
-        time().timeIndex() > 0
-     && time().timeIndex() % refineInterval == 0
-    )
+    if (time().timeIndex() % refineInterval == 0)
     {
         HashTable<parcelCloud*> clouds(this->objectRegistry::lookupClass<parcelCloud>());
         forAllIter(HashTable<parcelCloud*>, clouds, iter)
@@ -1906,7 +1902,10 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
         {
             // Compact refinement history occasionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
-            const_cast<refinementHistory&>(meshCutter().history()).compact();
+            const_cast<hexRefRefinementHistory&>
+            (
+                meshCutter().history()
+            ).compact();
         }
 
         reduce(hasChanged, orOp<bool>());

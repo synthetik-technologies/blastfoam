@@ -82,14 +82,18 @@ const Foam::motionSolver& Foam::movingAdaptiveBlastFvMesh::motion() const
 
 bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 {
-    if (adaptiveBlastFvMesh::refine(correctError) & balanced_)
+    if (adaptiveBlastFvMesh::refine(correctError))
     {
         if (isA<displacementMotionSolver>(motionPtr_()))
         {
             displacementMotionSolver& dispMS =
                 dynamicCast<displacementMotionSolver>(motionPtr_());
-            dispMS.points0() =
-                points() - dispMS.pointDisplacement().primitiveField();
+            pointField newPoints0
+            (
+                points() - dispMS.pointDisplacement().primitiveField()
+            );
+            this->pushUntransformedData(newPoints0);
+            dispMS.points0() = newPoints0;
         }
         else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
         {
@@ -103,6 +107,7 @@ bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 //                 points().component(dispMS.cmpt())
 //               - dispMS.pointDisplacement().primitiveField();
         }
+        return true;
     }
 
     return false;
@@ -114,24 +119,10 @@ bool Foam::movingAdaptiveBlastFvMesh::update()
     // Get the new points solving for displacement
     pointField pointsNew(motionPtr_->newPoints());
 
-    // Average point locations across processors so that processor patches are
-    // consistent
+    //- Sync points across boundaries
     if (Pstream::parRun())
     {
-        Field<scalar> nSharedPoints(pointsNew.size(), 1);
-        this->globalData().syncPointData
-        (
-            pointsNew,
-            plusEqOp<vector>(),
-            mapDistribute::transform()
-        );
-        this->globalData().syncPointData
-        (
-            nSharedPoints,
-            plusEqOp<scalar>(),
-            mapDistribute::transform()
-        );
-        pointsNew /= nSharedPoints;
+       this->pushUntransformedData(pointsNew);
     }
 
     //- Move mesh
@@ -155,7 +146,7 @@ bool Foam::movingAdaptiveBlastFvMesh::writeObject
     {
         const displacementMotionSolver& dispMS =
             dynamicCast<const displacementMotionSolver>(motionPtr_());
-        pointIOField points0
+        pointIOField
         (
             IOobject
             (
@@ -168,24 +159,7 @@ bool Foam::movingAdaptiveBlastFvMesh::writeObject
                 false
             ),
             dispMS.points0()
-        );
-        pointVectorField points0pv
-        (
-            IOobject
-            (
-                "points0",
-                this->time().timeName(),
-                *this,
-                IOobject::NO_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            pointMesh::New(*this),
-            dimensionedVector(dimLength, Zero)
-        );
-        points0pv.primitiveFieldRef() = dispMS.points0();
-        points0pv.write();
-        points0.write();
+        ).write();
     }
     return adaptiveBlastFvMesh::writeObject(fmt, ver, cmp, write);
 }

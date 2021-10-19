@@ -20,7 +20,6 @@ errorEstimator scaledDelta;      // Model used to estimate error
 scaledDeltaField p;               // Field used to estimate error
 
 motionSolver      displacementLaplacian;
-
 displacementLaplacianCoeffs
 {
     diffusivity quadratic inverseDistance (fluid_to_walls);

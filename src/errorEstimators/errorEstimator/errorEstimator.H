@@ -64,7 +64,7 @@ protected:
         word name_;
 
         //- Reference to error field
-        volScalarField error_;
+        volScalarField& error_;
 
         //- Lower refine level
         scalar lowerRefine_;
@@ -90,7 +90,7 @@ protected:
 
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
-        tmp<volScalarField> constructError(const fvMesh& mesh) const;
+        volScalarField& lookupOrConstructError(const fvMesh& mesh) const;
 
         template<class Base, class T>
         inline bool instanceOf(const T&)

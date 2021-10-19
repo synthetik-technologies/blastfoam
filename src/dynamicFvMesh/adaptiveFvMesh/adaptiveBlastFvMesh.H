@@ -226,6 +226,10 @@ protected:
             //- Overload update mesh to include other methods
             virtual void updateMesh(const mapPolyMesh& mpm);
 
+            //- Helper: push master point data to collocated points
+            template<class Type>
+            void pushUntransformedData(Field<Type>&) const;
+
 
 
 public:

@@ -63,7 +63,10 @@ void Foam::meshSizeObject::updateMeshSize() const
             (
                 "meshCellSize",
                 mesh_.time().timeName(),
-                mesh_
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
             ),
             mesh_,
             dimensionedScalar(dimLength, 0.0)
