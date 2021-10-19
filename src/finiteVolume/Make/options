@@ -6,4 +6,7 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/numerics/lnInclude
 
 LIB_LIBS = \
-    -lfileFormats
+    -lfileFormats \
+    -lmeshTools \
+    -L$(BLAST_LIBBIN) \
+    -lblastNumerics

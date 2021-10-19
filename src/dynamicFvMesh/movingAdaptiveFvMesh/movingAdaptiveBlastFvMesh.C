@@ -66,9 +66,12 @@ void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
     fvMesh::updateMesh(mpm);
 
-    // Only the points0 fields is updated, but this is handled after
-    // refinement/balancing so we skip
-//     motionPtr_->updateMesh(mpm);
+    // Do not update while balancing since the point0 class does not
+    // support this
+    if (!isBalancing_)
+    {
+        motionPtr_->updateMesh(mpm);
+    }
 }
 
 const Foam::motionSolver& Foam::movingAdaptiveBlastFvMesh::motion() const
@@ -79,7 +82,7 @@ const Foam::motionSolver& Foam::movingAdaptiveBlastFvMesh::motion() const
 
 bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 {
-    if (adaptiveBlastFvMesh::refine(correctError))
+    if (adaptiveBlastFvMesh::refine(correctError) & balanced_)
     {
         if (isA<displacementMotionSolver>(motionPtr_()))
         {
@@ -87,43 +90,6 @@ bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
                 dynamicCast<displacementMotionSolver>(motionPtr_());
             dispMS.points0() =
                 points() - dispMS.pointDisplacement().primitiveField();
-            if (Pstream::parRun())
-            {
-                // Transfer onto coupled patch
-                const globalMeshData& gmd = this->globalData();
-                const indirectPrimitivePatch& cpp = gmd.coupledPatch();
-                const labelList& meshPoints = cpp.meshPoints();
-
-                const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
-                const labelListList& slaves = gmd.globalCoPointSlaves();
-
-                List<vector> elems(slavesMap.constructSize());
-                forAll(meshPoints, i)
-                {
-                    elems[i] = dispMS.points0()[meshPoints[i]];
-                }
-
-                // Combine master data with slave data
-                forAll(slaves, i)
-                {
-                    const labelList& slavePoints = slaves[i];
-
-                    // Copy master data to slave slots
-                    forAll(slavePoints, j)
-                    {
-                        elems[slavePoints[j]] = elems[i];
-                    }
-                }
-
-                // Push slave-slot data back to slaves
-                slavesMap.reverseDistribute(elems.size(), elems, false);
-
-                // Extract back onto mesh
-                forAll(meshPoints, i)
-                {
-                    dispMS.points0()[meshPoints[i]] = elems[i];
-                }
-            }
         }
         else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
         {
@@ -137,7 +103,6 @@ bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 //                 points().component(dispMS.cmpt())
 //               - dispMS.pointDisplacement().primitiveField();
         }
-        return true;
     }
 
     return false;
@@ -153,40 +118,20 @@ bool Foam::movingAdaptiveBlastFvMesh::update()
     // consistent
     if (Pstream::parRun())
     {
-        // Transfer onto coupled patch
-        const globalMeshData& gmd = this->globalData();
-        const indirectPrimitivePatch& cpp = gmd.coupledPatch();
-        const labelList& meshPoints = cpp.meshPoints();
-
-        const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
-        const labelListList& slaves = gmd.globalCoPointSlaves();
-
-        List<vector> elems(slavesMap.constructSize());
-        forAll(meshPoints, i)
-        {
-            elems[i] = pointsNew[meshPoints[i]];
-        }
-
-        // Combine master data with slave data
-        forAll(slaves, i)
-        {
-            const labelList& slavePoints = slaves[i];
-
-            // Copy master data to slave slots
-            forAll(slavePoints, j)
-            {
-                elems[slavePoints[j]] = elems[i];
-            }
-        }
-
-        // Push slave-slot data back to slaves
-        slavesMap.reverseDistribute(elems.size(), elems, false);
-
-        // Extract back onto mesh
-        forAll(meshPoints, i)
-        {
-            pointsNew[meshPoints[i]] = elems[i];
-        }
+        Field<scalar> nSharedPoints(pointsNew.size(), 1);
+        this->globalData().syncPointData
+        (
+            pointsNew,
+            plusEqOp<vector>(),
+            mapDistribute::transform()
+        );
+        this->globalData().syncPointData
+        (
+            nSharedPoints,
+            plusEqOp<scalar>(),
+            mapDistribute::transform()
+        );
+        pointsNew /= nSharedPoints;
     }
 
     //- Move mesh

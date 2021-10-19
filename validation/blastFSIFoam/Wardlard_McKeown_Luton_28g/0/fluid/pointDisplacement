@@ -27,8 +27,8 @@ boundaryField
 
     fluid_to_walls
     {
-        type            mapCoupled;
-        nbrName         pointD;
+        type            mapInterpolated;
+        nbrName         D;
         value           uniform (0 0 0);
     }
 

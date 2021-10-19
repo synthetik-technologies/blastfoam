@@ -28,11 +28,36 @@ minimizationSchemes/minimizationScheme/minimizationScheme.C
 minimizationSchemes/minimizationScheme/minimizationSchemeNew.C
 minimizationSchemes/bisection/bisectionMinimizationScheme.C
 minimizationSchemes/goldenRatio/goldenRatioMinimizationScheme.C
+minimizationSchemes/quadraticFit/quadraticFitMinimizationScheme.C
 minimizationSchemes/NewtonRaphson/NewtonRaphsonMinimizationScheme.C
 
 
 algorithms/polygon/clipping/SutherlandHodgman.C
 algorithms/polygon/pointInPolygon/HormannAgathos.C
 algorithms/rotation/RodriguesRotation.C
+
+octree = algorithms/octree
+$(octree)/octreeName.C
+$(octree)/octreeDataPoint.C
+$(octree)/octreeDataPointTreeLeaf.C
+$(octree)/octreeDataEdges.C
+$(octree)/octreeDataCell.C
+$(octree)/octreeDataFace.C
+$(octree)/octreeDataBoundBox.C
+$(octree)/treeNodeName.C
+$(octree)/treeLeafName.C
+
+RBFInterpolation/RBFInterpolation.C
+RBFInterpolation/RBFFunctions/RBFFunction/RBFFunction.C
+RBFInterpolation/RBFFunctions/RBFFunction/RBFFunctionNew.C
+RBFInterpolation/RBFFunctions/linear/linearRBFFunction.C
+RBFInterpolation/RBFFunctions/W2/W2RBFFunction.C
+RBFInterpolation/RBFFunctions/TPS/TPSRBFFunction.C
+RBFInterpolation/RBFFunctions/IMQB/IMQBRBFFunction.C
+RBFInterpolation/RBFFunctions/Gauss/GaussRBFFunction.C
+RBFInterpolation/RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
+RBFInterpolation/RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
+RBFInterpolation/RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
+RBFInterpolation/RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
 
 LIB = $(BLAST_LIBBIN)/libblastNumerics

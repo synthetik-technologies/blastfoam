@@ -131,6 +131,9 @@ protected:
         //- Has the mesh been balanced this step
         mutable bool balanced_;
 
+        //- Is the mesh in the process of being balanced
+        mutable bool isBalancing_;
+
         //- Static dictionary for runTime balancing
         dictionary decompositionDict_;
 

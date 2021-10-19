@@ -1194,6 +1194,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
     nRefinementIterations_(0),
     nProtected_(0),
     protectedCell_(nCells(), 0),
+    isBalancing_(false),
     decompositionDict_
     (
         IOdictionary
@@ -1814,7 +1815,7 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                 selectRefineCells
                 (
                     maxCells,
-                    error_->maxRefinement(),
+                    maxRefinement,
                     refineCell
                 )
             );
@@ -1951,11 +1952,11 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
 
 void Foam::adaptiveBlastFvMesh::updateError()
 {
-    if (this->time().outputTime() && errorEstimator::debug)
-    {
-        error_->update(false);
-        error_->error().write();
-    }
+//     if (this->time().outputTime() && errorEstimator::debug)
+//     {
+//         error_->update(false);
+//         error_->error().write();
+//     }
     //- Update error field
     error_->update();
 }
@@ -2068,6 +2069,8 @@ bool Foam::adaptiveBlastFvMesh::balance()
         // the number of processors.
         if (maxImbalance > allowableImbalance)
         {
+            isBalancing_ = true;
+
             //- Save the old volumes so it will be distributed and
             //  resized
             //  We cheat because so we can check which fields
@@ -2232,6 +2235,9 @@ bool Foam::adaptiveBlastFvMesh::balance()
             scalar averageLoadNew = overallLoadNew/double(Pstream::nProcs());
 
             Info << "Max deviation: " << max(Foam::mag(procLoadNew-averageLoadNew)/averageLoadNew)*100.0 << " %" << endl;
+
+            isBalancing_ = false;
+            balanced_ = true;
         }
         else
         {
