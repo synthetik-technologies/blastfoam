@@ -21,4 +21,27 @@ regions
     solid       (walls)
 );
 
+interfaces
+(
+    fluid
+    {
+        fluid_to_walls
+        {
+            sampleRegion walls;
+            samplePatch  walls_to_fluid;
+            mappingType  AMI;
+            interpolationMethod faceAreaWeight;
+        }
+    }
+    walls
+    {
+        walls_to_fluid
+        {
+            sampleRegion fluid;
+            samplePatch  fluid_to_walls;
+            displacementField D;
+        }
+    }
+);
+
 // ************************************************************************* //

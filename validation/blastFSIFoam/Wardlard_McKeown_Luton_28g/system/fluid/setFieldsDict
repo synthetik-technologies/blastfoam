@@ -56,13 +56,6 @@ regions
         level 1;
         refineInternal yes;
     }
-
-    patchToFace
-    {
-        name fluid_to_walls;
-        refineFaces yes;
-        level 1;
-    }
 );
 
 

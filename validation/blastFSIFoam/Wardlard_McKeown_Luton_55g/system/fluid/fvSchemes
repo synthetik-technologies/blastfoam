@@ -41,15 +41,16 @@ laplacianSchemes
     laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
 }
 
+scheme upwindMUSCL;
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  quadraticMUSCL Minmod;
-    reconstruct(rho)    quadraticMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      quadraticMUSCL Minmod;
-    reconstruct(p)      quadraticMUSCL Minmod;
-    reconstruct(speedOfSound) quadraticMUSCL Minmod;
+    reconstruct(alpha)  $scheme;
+    reconstruct(rho)    $scheme;
+    reconstruct(U)      $scheme;
+    reconstruct(e)      $scheme;
+    reconstruct(p)      $scheme;
+    reconstruct(speedOfSound) $scheme;
 }
 
 snGradSchemes

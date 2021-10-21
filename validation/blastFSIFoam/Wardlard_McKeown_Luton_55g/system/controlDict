@@ -25,7 +25,7 @@ stopAt          endTime;
 
 endTime         400e-6;
 
-deltaT          1e-8;
+deltaT          1e-10;
 
 writeControl    adjustableRunTime;
 
@@ -35,7 +35,7 @@ cycleWrite      0;
 
 writeFormat     binary;
 
-writePrecision  12;
+writePrecision  8;
 
 writeCompression off;
 
@@ -51,16 +51,15 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
-
 // ************************************************************************* //
-
 
 functions
 {
     solidProbes
     {
-        type blastProbes;
+        type probes;
         region walls;
+        fixLocations yes;
         probeLocations
         (
             (0.045 0.115 0)

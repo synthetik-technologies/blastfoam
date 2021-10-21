@@ -32,11 +32,18 @@ mechanical
         // Ramberg-Osgood equations
 
         type            nonLinearPowerLawPlastic;
-        E               70e9;
+
+        E               71e9;
         nu              0.33;
         k               355.6e6;
         n               0.1798;
         sigmaY          131e6;
+
+//         E               70e9;
+//         nu              0.33;
+//         k               284559562;
+//         n               0.1543;
+//         sigmaY          120e6;
 
         solvePressureEqn no;
     }

@@ -19,11 +19,11 @@ numberOfSubdomains 32; //4; // 20;
 
 // preservePatches (patch0 patch1 patch2);
 
-method          scotch; //simple;
+method          simple; //simple;
 
 simpleCoeffs
 {
-    n               ( 2 2 1 );
+    n               ( $numberOfSubdomains 1 1 );
     delta           0.001;
 }
 

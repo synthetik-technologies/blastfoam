@@ -16,31 +16,34 @@ FoamFile
 
 convertToMeters 1; // feet to meters
 
-theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
+// theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
 
-Ri       0.04445;
-xip      #calc "$Ri*cos($theta)";
-xin      #calc "-$Ri*cos($theta)";
+x0      0;
+x1      0.0442808543;
 
-Y       0.2286;
 
-zip     #calc "$Ri*sin($theta)";
-zin     #calc "-$Ri*sin($theta)";
+y1      0;
+y2      0.2286;
+
+z0      0;
+z1      0.0038740728;
+nz1    -0.0038740728;
+
 
 vertices
 (
-    (0 0 0)
-    ($xip 0 $zin)
-    ($xip $Y $zin)
-    (0 $Y 0)
+    ($x0 $y1 $z0)
+    ($x1 $y1 $nz1)
+    ($x1 $y2 $nz1)
+    ($x0 $y2 $z0)
 
-    ($xip 0 $zip)
-    ($xip $Y $zip)
+    ($x1 $y1 $z1)
+    ($x1 $y2 $z1)
 );
 
 blocks
 (
-    hex (0 1 2 3 0 4 5 3) fluid (50 200 1) simpleGrading (1 1 1)
+    hex (0 1 2 3 0 4 5 3) fluid (200 400 1) simpleGrading (1 1 1)
  );
 
 edges
@@ -49,25 +52,18 @@ edges
 
 boundary
 (
-    bottomFixedWalls
+    fixedWalls
     {
         type wall;
         faces
         (
             (0 1 4 0)
-        );
-    }
-    topFixedWalls
-    {
-        type wall;
-        faces
-        (
             (3 2 5 3)
         );
     }
     fluid_to_walls
     {
-        type mappedMovingWall;
+        type mappedWall;
         sampleMode nearestPatchFace;
         sampleRegion walls;
         samplePatch walls_to_fluid;
