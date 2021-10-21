@@ -31,6 +31,20 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(newAMIInterpolationName, 0);
+
+    template<>
+    const char*
+    Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 5>::names[] =
+    {
+        "direct",
+        "mapNearest",
+        "faceAreaWeight",
+        "partialFaceAreaWeight",
+        "sweptFaceAreaWeight"
+    };
+
+    const Foam::NamedEnum<Foam::newAMIInterpolationName::interpolationMethod, 5>
+    Foam::newAMIInterpolationName::interpolationMethodNames_;
 }
 
 

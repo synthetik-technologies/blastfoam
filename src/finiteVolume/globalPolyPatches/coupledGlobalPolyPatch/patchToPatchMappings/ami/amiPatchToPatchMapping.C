@@ -27,6 +27,7 @@ License
 #include "amiPatchToPatchMapping.H"
 #include "addToRunTimeSelectionTable.H"
 #include "FieldField.H"
+#include "newAMIInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -69,7 +70,11 @@ void amiPatchToPatchMapping::makeInterpolator() const
             zoneB(),
             faceAreaIntersect::tmMesh, // triMode
             true,   // requireMatch
-            amiZoneInterpolation::imFaceAreaWeight, // interpolationMethodNames
+            newAMIInterpolation<standAlonePatch, standAlonePatch>::
+            interpolationMethodNames_
+            [
+                dict_.lookup<word>("interpolationMethod")
+            ], // interpolationMethodNames
             -1,     // lowWeightCorrection
             false,  // reverseTarget
             true    // use globalPolyPatch

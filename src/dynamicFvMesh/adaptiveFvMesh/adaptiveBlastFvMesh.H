@@ -131,6 +131,13 @@ protected:
         //- Has the mesh been balanced this step
         mutable bool balanced_;
 
+        //- Is the mesh in the process of being refined
+        mutable bool isRefining_;
+
+        //- Is the mesh in the process of being unrefined
+        mutable bool isUnrefining_;
+
+
         //- Is the mesh in the process of being balanced
         mutable bool isBalancing_;
 
@@ -139,6 +146,12 @@ protected:
 
         //- Decomposition method
         autoPtr<decompositionMethod> decomposer_;
+
+        // Saved fields for mapping
+
+            //- Saved volumes as scalarFields
+            mutable DimensionedField<scalar, volMesh>* V0OldPtr_;
+            mutable DimensionedField<scalar, volMesh>* V00OldPtr_;
 
 
     // Protected Member Functions
@@ -225,6 +238,9 @@ protected:
 
             //- Overload update mesh to include other methods
             virtual void updateMesh(const mapPolyMesh& mpm);
+
+            //- Distribute additional information
+            virtual void distribute(const mapDistributePolyMesh& map);
 
             //- Helper: push master point data to collocated points
             template<class Type>

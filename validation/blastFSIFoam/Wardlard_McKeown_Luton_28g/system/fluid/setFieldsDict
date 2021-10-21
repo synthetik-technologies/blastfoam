@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 fields (alpha.c4);
-nBufferLayers 2;
+nBufferLayers 1;
 
 defaultFieldValues
 (
@@ -34,7 +34,7 @@ regions
             centre (0 0.1143 0);
             radius .01;
         }
-        level 3;
+        level 1;
         refineInternal no;
 
         fieldValues
@@ -53,8 +53,15 @@ regions
             centre (0 0.1143 0);
             radius .01;
         }
-        level 3;
+        level 1;
         refineInternal yes;
+    }
+
+    patchToFace
+    {
+        name fluid_to_walls;
+        refineFaces yes;
+        level 1;
     }
 );
 

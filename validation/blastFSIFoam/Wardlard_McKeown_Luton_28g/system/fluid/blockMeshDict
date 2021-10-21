@@ -43,7 +43,7 @@ vertices
 
 blocks
 (
-    hex (0 1 2 3 0 4 5 3) fluid (50 200 1) simpleGrading (1 1 1)
+    hex (0 1 2 3 0 4 5 3) fluid (200 800 1) simpleGrading (1 1 1)
  );
 
 edges

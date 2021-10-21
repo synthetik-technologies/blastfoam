@@ -47,17 +47,16 @@ $(octree)/octreeDataBoundBox.C
 $(octree)/treeNodeName.C
 $(octree)/treeLeafName.C
 
-RBFInterpolation/RBFInterpolation.C
-RBFInterpolation/RBFFunctions/RBFFunction/RBFFunction.C
-RBFInterpolation/RBFFunctions/RBFFunction/RBFFunctionNew.C
-RBFInterpolation/RBFFunctions/linear/linearRBFFunction.C
-RBFInterpolation/RBFFunctions/W2/W2RBFFunction.C
-RBFInterpolation/RBFFunctions/TPS/TPSRBFFunction.C
-RBFInterpolation/RBFFunctions/IMQB/IMQBRBFFunction.C
-RBFInterpolation/RBFFunctions/Gauss/GaussRBFFunction.C
-RBFInterpolation/RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
-RBFInterpolation/RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
-RBFInterpolation/RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
-RBFInterpolation/RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
+RBFFunctions/RBFFunction/RBFFunction.C
+RBFFunctions/RBFFunction/RBFFunctionNew.C
+RBFFunctions/linear/linearRBFFunction.C
+RBFFunctions/W2/W2RBFFunction.C
+RBFFunctions/TPS/TPSRBFFunction.C
+RBFFunctions/IMQB/IMQBRBFFunction.C
+RBFFunctions/Gauss/GaussRBFFunction.C
+RBFFunctions/WendlandC0/WendlandC0RBFFunction.C
+RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
+RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
+RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
 
 LIB = $(BLAST_LIBBIN)/libblastNumerics

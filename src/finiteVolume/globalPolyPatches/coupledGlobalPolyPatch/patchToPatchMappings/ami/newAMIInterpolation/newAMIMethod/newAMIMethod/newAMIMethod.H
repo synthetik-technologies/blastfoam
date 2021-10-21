@@ -147,7 +147,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("newAMIMethod");
+    TypeName("AMIMethod");
 
 
     //- Declare runtime constructor selection table

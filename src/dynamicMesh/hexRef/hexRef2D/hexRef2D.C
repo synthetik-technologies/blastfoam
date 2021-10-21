@@ -912,6 +912,10 @@ Foam::labelListList Foam::hexRef2D::setRefinement
         // This needs doing for if people do not write binary and we slowly
         // get differences.
 
+        // Add split edges
+        labelList splitEdges(edgeMidPoint.size(), -1);
+        labelList newEdgePoints(edgeMidPoint.size(), -1);
+
         pointField edgeMids(mesh_.nEdges(), point(-GREAT, -GREAT, -GREAT));
 
         forAll(edgeMidPoint, edgeI)
@@ -938,7 +942,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
             {
                 // Edge marked to be split. Replace edgeMidPoint with actual
                 // point label.
-
                 const edge& e = mesh_.edges()[edgeI];
 
                 edgeMidPoint[edgeI] = meshMod.setAction
@@ -951,6 +954,8 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                         true                        // supports a cell
                     )
                 );
+                splitEdges[edgeI] = 12345;
+                newEdgePoints[edgeI] = edgeMidPoint[edgeI];
 
                 newPointLevel(edgeMidPoint[edgeI]) =
                     max
@@ -961,6 +966,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                   + 1;
             }
         }
+        locationMapper_.addSplitEdges(splitEdges, newEdgePoints);
     }
 
     if (debug)
@@ -1095,6 +1101,11 @@ Foam::labelListList Foam::hexRef2D::setRefinement
     {
         // Phase 1: determine mid points and sync. See comment for edgeMids
         // above
+
+        // Add split faces
+        labelList splitFaces(faceMidPoint.size(), -1);
+        labelList newFacePoints(faceMidPoint.size(), -1);
+
         pointField bFaceMids
         (
             mesh_.nFaces()-mesh_.nInternalFaces(),
@@ -1139,12 +1150,15 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                         true                        // supports a cell
                     )
                 );
+                splitFaces[facei] = 12345;
+                newFacePoints[facei] = faceMidPoint[facei];
 
                 // Determine the level of the corner points and midpoint will
                 // be one higher.
                 newPointLevel(faceMidPoint[facei]) = faceAnchorLevel[facei]+1;
             }
         }
+        locationMapper_.addSplitFaces(splitFaces, newFacePoints);
     }
 
     if (debug)
@@ -1164,7 +1178,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
         splitFaces.write();
     }
-
 
     // Information complete
     // ~~~~~~~~~~~~~~~~~~~~

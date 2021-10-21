@@ -90,7 +90,7 @@ class newDirectAMI
 public:
 
     //- Runtime type information
-    TypeName("newDirectAMI");
+    TypeName("direct");
 
 
     // Constructors

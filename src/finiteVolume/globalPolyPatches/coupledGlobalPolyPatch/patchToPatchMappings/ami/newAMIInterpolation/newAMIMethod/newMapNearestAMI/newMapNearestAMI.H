@@ -94,7 +94,7 @@ class newMapNearestAMI
 public:
 
     //- Runtime type information
-    TypeName("newMapNearestAMI");
+    TypeName("mapNearest");
 
 
     // Constructors

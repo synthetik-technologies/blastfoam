@@ -733,6 +733,10 @@ Foam::labelListList Foam::hexRef3D::setRefinement
     // >=0: label of mid point.
     labelList cellMidPoint(mesh_.nCells(), -1);
 
+    // Add split cells
+    labelList splitCells(cellMidPoint.size(), -1);
+    labelList newCellPoints(cellMidPoint.size(), -1);
+
     forAll(cellLabels, i)
     {
         label celli = cellLabels[i];
@@ -749,9 +753,12 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                 true                            // supports a cell
             )
         );
+        splitCells[celli] = 12345;
+        newCellPoints[celli] = cellMidPoint[celli];
 
         newPointLevel(cellMidPoint[celli]) = cellLevel_[celli]+1;
     }
+    locationMapper_.addSplitCells(splitCells, newCellPoints);
 
 
     if (debug)
@@ -836,6 +843,10 @@ Foam::labelListList Foam::hexRef3D::setRefinement
         // This needs doing for if people do not write binary and we slowly
         // get differences.
 
+        // Add split edges
+        labelList splitEdges(edgeMidPoint.size(), -1);
+        labelList newEdgePoints(edgeMidPoint.size(), -1);
+
         pointField edgeMids(mesh_.nEdges(), point(-GREAT, -GREAT, -GREAT));
 
         forAll(edgeMidPoint, edgeI)
@@ -875,6 +886,8 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                         true                        // supports a cell
                     )
                 );
+                splitEdges[edgeI] = 12345;
+                newEdgePoints[edgeI] = edgeMidPoint[edgeI];
 
                 newPointLevel(edgeMidPoint[edgeI]) =
                     max
@@ -885,6 +898,7 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                   + 1;
             }
         }
+        locationMapper_.addSplitEdges(splitEdges, newEdgePoints);
     }
 
     if (debug)
@@ -1019,6 +1033,11 @@ Foam::labelListList Foam::hexRef3D::setRefinement
     {
         // Phase 1: determine mid points and sync. See comment for edgeMids
         // above
+
+        // Add split edges
+        labelList splitFaces(faceMidPoint.size(), -1);
+        labelList newFacePoints(faceMidPoint.size(), -1);
+
         pointField bFaceMids
         (
             mesh_.nFaces()-mesh_.nInternalFaces(),
@@ -1064,12 +1083,15 @@ Foam::labelListList Foam::hexRef3D::setRefinement
                         true                        // supports a cell
                     )
                 );
+                splitFaces[facei] = 12345;
+                newFacePoints[facei] = faceMidPoint[facei];
 
                 // Determine the level of the corner points and midpoint will
                 // be one higher.
                 newPointLevel(faceMidPoint[facei]) = faceAnchorLevel[facei]+1;
             }
         }
+        locationMapper_.addSplitFaces(splitFaces, newFacePoints);
     }
 
     if (debug)

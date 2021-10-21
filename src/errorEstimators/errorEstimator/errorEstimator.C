@@ -207,7 +207,7 @@ void Foam::errorEstimator::normalize(volScalarField& error)
 
 Foam::labelList Foam::errorEstimator::maxRefinement() const
 {
-    if (maxLevel_ > 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
+    if (maxLevel_ >= 0 || !mesh_.foundObject<labelIOList>("cellLevel"))
     {
         return labelList(mesh_.nCells(), maxLevel_);
     }

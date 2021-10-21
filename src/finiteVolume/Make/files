@@ -35,13 +35,6 @@ fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
 
-ggi/GGIInterpolation/GGIInterpolationName.C
-ggi/lduInterfaces/ggiLduInterface/ggiLduInterface.C
-ggi/lduInterfaceFields/ggiLduInterfaceField/ggiLduInterfaceField.C
-ggi/polyPatches/basic/seperated/seperatedPolyPatch.C
-ggi/polyPatches/constraint/ggi/ggiPolyPatch.C
-ggi/pointPatches/constraint/ggi/ggiPointPatch.C
-
 globalPolyPatches/globalPolyPatch/globalPolyPatch.C
 globalPolyPatches/coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
 globalPolyPatches/globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
@@ -50,17 +43,24 @@ patchToPatchMappings = globalPolyPatches/coupledGlobalPolyPatch/patchToPatchMapp
 $(patchToPatchMappings)/patchToPatchMapping/patchToPatchMapping.C
 $(patchToPatchMappings)/primitive/primitivePatchToPatchMapping.C
 $(patchToPatchMappings)/directMap/directMapPatchToPatchMapping.C
-$(patchToPatchMappings)/rbf/rbfPatchToPatchMapping.C
-$(patchToPatchMappings)/ami/amiPatchToPatchMapping.C
-$(patchToPatchMappings)/ggi/ggiPatchToPatchMapping.C
 
 AMI = $(patchToPatchMappings)/ami
 $(AMI)/newAMIInterpolation/newAMIInterpolationName.C
 $(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
+$(AMI)/amiPatchToPatchMapping.C
 
+GGI = $(patchToPatchMappings)/ggi
+$(GGI)/ggiPatchToPatchMapping.C
+$(GGI)/GGIInterpolation/GGIInterpolationName.C
 
-pointPatchFields/derived/mapInterpolated/mapInterpolatedPointPatchFields.C
-pointPatchFields/derived/mapCoupled/mapCoupledPointPatchFields.C
+RBF = $(patchToPatchMappings)/rbf
+$(RBF)/RBFInterpolation/RBFInterpolation.C
+$(RBF)/rbfPatchToPatchMapping.C
+
+fvPatchFields/derived/globalMapped/globalMappedFvPatchFields.C
+
+pointPatchFields/derived/globalInterpolated/globalInterpolatedPointPatchFields.C
+pointPatchFields/derived/globalMapped/globalMappedPointPatchFields.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C

@@ -58,6 +58,7 @@ Authors
 #include "autoPtr.H"
 #include "runTimeSelectionTables.H"
 #include "volFields.H"
+#include "hexRefLocationMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -106,6 +107,9 @@ protected:
 
         //- Cell shapes when seen as split hexes
         mutable autoPtr<cellShapeList> cellShapesPtr_;
+
+        //- Mapper for locations
+        mutable hexRefLocationMapper locationMapper_;
 
 
     // Protected Member Functions
@@ -585,6 +589,12 @@ public:
                 const labelList& faceMap,
                 const labelList& cellMap
             );
+
+            //- Return the location mapper
+            hexRefLocationMapper& locationMapper() const
+            {
+                return locationMapper_;
+            }
 
             //- Update local numbering for mesh redistribution
             void distribute(const mapDistributePolyMesh&);

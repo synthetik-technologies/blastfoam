@@ -50,6 +50,7 @@ SourceFiles
 #define newAMIInterpolation_H
 
 #include "className.H"
+#include "NamedEnum.H"
 #include "searchableSurface.H"
 #include "treeBoundBoxList.H"
 #include "boolList.H"
@@ -67,7 +68,39 @@ namespace Foam
                     Class newAMIInterpolationName Declaration
 \*---------------------------------------------------------------------------*/
 
-TemplateName(newAMIInterpolation);
+class newAMIInterpolationName
+{
+public:
+
+    // Public enumerations
+
+        //- Enumeration specifying interpolation method
+        enum interpolationMethod
+        {
+            imDirect,
+            imMapNearest,
+            imFaceAreaWeight,
+            imPartialFaceAreaWeight,
+            imSweptFaceAreaWeight
+        };
+
+
+    // Static data
+
+        ClassName("newAMIInterpolation");
+
+        //- Interpolation method names
+        static const NamedEnum<interpolationMethod, 5>
+            interpolationMethodNames_;
+
+
+    // Constructors
+
+        //- Construct null
+        newAMIInterpolationName()
+        {}
+
+};
 
 
 /*---------------------------------------------------------------------------*\
@@ -91,28 +124,6 @@ public:
 
 
     // Public data types
-
-        //- Enumeration specifying interpolation method
-        enum interpolationMethod
-        {
-            imDirect,
-            imMapNearest,
-            imFaceAreaWeight,
-            imPartialFaceAreaWeight,
-            imSweptFaceAreaWeight
-        };
-
-        //- Convert interpolationMethod to word representation
-        static word interpolationMethodToWord
-        (
-            const interpolationMethod& method
-        );
-
-        //- Convert word to interpolationMethod
-        static interpolationMethod wordTointerpolationMethod
-        (
-            const word& method
-        );
 
         //- Calculate the patch face magnitudes for the given tri-mode
         template<class Patch>
@@ -339,7 +350,7 @@ public:
             const faceAreaIntersect::triangulationMode& triMode,
             const bool requireMatch = true,
             const word& methodName =
-                interpolationMethodToWord(imFaceAreaWeight),
+                interpolationMethodNames_[imFaceAreaWeight],
             const scalar lowWeightCorrection = -1,
             const bool reverseTarget = false,
             const bool useGlobalPolyPatch = false,
@@ -370,7 +381,7 @@ public:
             const faceAreaIntersect::triangulationMode& triMode,
             const bool requireMatch = true,
             const word& methodName =
-                interpolationMethodToWord(imFaceAreaWeight),
+                interpolationMethodNames_[imFaceAreaWeight],
             const scalar lowWeightCorrection = -1,
             const bool reverseTarget = false,
             const bool useGlobalPolyPatch = false,

@@ -73,7 +73,7 @@ void ggiPatchToPatchMapping::makeInterpolator() const
             SMALL,          // Non-overlapping face tolerances
             SMALL,
             true,           // Rescale weighting factors
-            ggiInterpolation::BB_OCTREE
+            dict_.lookup("rejectMethod")
         )
     );
 

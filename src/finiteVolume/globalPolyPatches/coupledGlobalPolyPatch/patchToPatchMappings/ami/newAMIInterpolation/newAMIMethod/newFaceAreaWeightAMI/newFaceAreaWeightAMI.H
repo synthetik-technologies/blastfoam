@@ -126,7 +126,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("newFaceAreaWeightAMI");
+    TypeName("faceAreaWeight");
 
 
     // Constructors

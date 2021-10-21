@@ -2,9 +2,13 @@
 
     forAll(fluidRegions, regionI)
     {
+        scalar regionCoNum = fluids[regionI].CoNum();
+
+        Info<< fluidRegions[regionI].name() << " max Courant Number = "
+            << regionCoNum << endl;
         CoNum = max
         (
-            fluids[regionI].CoNum(),
+            regionCoNum,
             CoNum
         );
     }

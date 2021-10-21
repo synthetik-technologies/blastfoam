@@ -29,6 +29,8 @@ License
 #include "motionSolver.H"
 #include "displacementMotionSolver.H"
 #include "componentDisplacementMotionSolver.H"
+#include "MapGeometricFields.H"
+#include "pointMapper.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -51,7 +53,9 @@ Foam::movingAdaptiveBlastFvMesh::movingAdaptiveBlastFvMesh(const IOobject& io)
     adaptiveBlastFvMesh(io),
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
     velocityMotionCorrection_(*this, dynamicMeshDict())
-{}
+{
+    this->meshCutter().locationMapper().needMap();
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -64,15 +68,84 @@ Foam::movingAdaptiveBlastFvMesh::~movingAdaptiveBlastFvMesh()
 
 void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
-    fvMesh::updateMesh(mpm);
+    adaptiveBlastFvMesh::updateMesh(mpm);
 
     // Do not update while balancing since the point0 class does not
     // support this
-    if (!isBalancing_)
+    if (isBalancing_)
+    {
+        return;
+    }
+
+    if (!isRefining_ && !isUnrefining_)
     {
         motionPtr_->updateMesh(mpm);
+        return;
+    }
+
+    if (isA<displacementMotionSolver>(motionPtr_()))
+    {
+        displacementMotionSolver& dispMS =
+            dynamicCast<displacementMotionSolver>(motionPtr_());
+        if (!isRefining_)
+        {
+            pointMapper(dispMS.pointDisplacement().mesh(), mpm)
+            (
+                dispMS.points0(),
+                dispMS.points0()
+            );
+        }
+        else
+        {
+            meshCutter().locationMapper().interpolateMidPoints
+            (
+                dispMS.points0()
+            );
+        }
+        if (Pstream::parRun())
+        {
+            this->pushUntransformedData(dispMS.points0());
+        }
+    }
+    else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
+    {
+        componentDisplacementMotionSolver& dispMS =
+            dynamicCast<componentDisplacementMotionSolver>
+            (
+                motionPtr_()
+            );
+        pointMapper(pointMesh::New(*this), mpm)(dispMS.points0());
+        if (Pstream::parRun())
+        {
+            this->pushUntransformedData(dispMS.points0());
+        }
     }
 }
+
+
+void Foam::movingAdaptiveBlastFvMesh::distribute
+(
+    const mapDistributePolyMesh& map
+)
+{
+    adaptiveBlastFvMesh::distribute(map);
+    if (isA<displacementMotionSolver>(motionPtr_()))
+    {
+        displacementMotionSolver& dispMS =
+            dynamicCast<displacementMotionSolver>(motionPtr_());
+        map.distributePointData(dispMS.points0());
+    }
+    else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
+    {
+        componentDisplacementMotionSolver& dispMS =
+            dynamicCast<componentDisplacementMotionSolver>
+            (
+                motionPtr_()
+            );
+         map.distributePointData(dispMS.points0());
+    }
+}
+
 
 const Foam::motionSolver& Foam::movingAdaptiveBlastFvMesh::motion() const
 {
@@ -84,29 +157,7 @@ bool Foam::movingAdaptiveBlastFvMesh::refine(const bool correctError)
 {
     if (adaptiveBlastFvMesh::refine(correctError))
     {
-        if (isA<displacementMotionSolver>(motionPtr_()))
-        {
-            displacementMotionSolver& dispMS =
-                dynamicCast<displacementMotionSolver>(motionPtr_());
-            pointField newPoints0
-            (
-                points() - dispMS.pointDisplacement().primitiveField()
-            );
-            this->pushUntransformedData(newPoints0);
-            dispMS.points0() = newPoints0;
-        }
-        else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
-        {
-            NotImplemented;
-//             componentDisplacementMotionSolver& dispMS =
-//                 dynamicCast<componentDisplacementMotionSolver>
-//                 (
-//                     motionPtr_()
-//                 );
-//             dispMS.points0() =
-//                 points().component(dispMS.cmpt())
-//               - dispMS.pointDisplacement().primitiveField();
-        }
+        meshCutter().locationMapper().clearOut();
         return true;
     }
 
@@ -129,6 +180,7 @@ bool Foam::movingAdaptiveBlastFvMesh::update()
     fvMesh::movePoints(pointsNew);
     velocityMotionCorrection_.update();
 
+
     return moving();
 }
 
@@ -146,7 +198,7 @@ bool Foam::movingAdaptiveBlastFvMesh::writeObject
     {
         const displacementMotionSolver& dispMS =
             dynamicCast<const displacementMotionSolver>(motionPtr_());
-        pointIOField
+        pointIOField points0
         (
             IOobject
             (
@@ -159,7 +211,26 @@ bool Foam::movingAdaptiveBlastFvMesh::writeObject
                 false
             ),
             dispMS.points0()
-        ).write();
+        );
+        pointVectorField ppoints0
+        (
+            IOobject
+            (
+                "points0",
+                this->time().timeName(),
+                *this,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            pointMesh::New(*this),
+            dimensionedVector(dimLength, Zero)
+        );
+        ppoints0.primitiveFieldRef() = points0;
+        ppoints0.write();
+        points0.write();
+
+
     }
     return adaptiveBlastFvMesh::writeObject(fmt, ver, cmp, write);
 }

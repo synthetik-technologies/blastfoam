@@ -240,7 +240,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("newSweptFaceAreaWeightAMI");
+    TypeName("sweptFaceAreaWeight");
 
 
     // Constructors

@@ -30,9 +30,7 @@ interfaces
             sampleRegion walls;
             samplePatch  walls_to_fluid;
             mappingType  AMI;
-            TPSCoeffs
-            {
-            }
+            interpolationMethod faceAreaWeight;
         }
     }
     walls
@@ -41,11 +39,7 @@ interfaces
         {
             sampleRegion fluid;
             samplePatch  fluid_to_walls;
-            displacementField pointD;
-            mappingType  AMI;
-            TPSCoeffs
-            {
-            }
+            displacementField D;
         }
     }
 );

@@ -45,10 +45,13 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
             << abort(FatalError);
     }
 
+
     patchToPatchInterpPtr_ =
         patchToPatchMapping::New
         (
-            dict_,
+            dict_.found("mappingType")
+          ? dict_
+          : samplePatch().dict_,
             patch(),
             samplePatch().patch(),
             *this,

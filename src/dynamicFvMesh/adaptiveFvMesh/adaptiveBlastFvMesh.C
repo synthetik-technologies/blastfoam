@@ -539,7 +539,7 @@ Foam::adaptiveBlastFvMesh::unrefine
         << endl;
 
     // Update fields
-    fvMesh::updateMesh(map);
+    updateMesh(map);
 
 
     // Move mesh
@@ -1183,6 +1183,60 @@ void Foam::adaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
     fvMesh::updateMesh(mpm);
 }
 
+
+void Foam::adaptiveBlastFvMesh::distribute
+(
+    const mapDistributePolyMesh& map
+)
+{
+    Info<< "Distribute the map ..." << endl;
+            meshCutter_->distribute(map);
+
+    //- The volume has been updated, so now we copy back
+    //  This also calls V() which will construct the volume
+    //  field.
+    //  Again, we cheat to access the volume field pointers
+    //  This is necessary because the V0 and V00 fields are
+    //  not created until the time has advanced and asking for
+    //  thermo though V0() or V00() results in a fatal error
+
+    if (V0OldPtr_)
+    {
+        map.distributeCellData(*V0OldPtr_);
+        if (this->V0Ptr_)
+        {
+            deleteDemandDrivenData(this->V0Ptr_);
+        }
+        this->V0Ptr_ = V0OldPtr_;
+        V0OldPtr_ = nullptr;
+    }
+    if (V00OldPtr_)
+    {
+        map.distributeCellData(*V00OldPtr_);
+        if (this->V00Ptr_)
+        {
+            deleteDemandDrivenData(this->V0Ptr_);
+        }
+        this->V00Ptr_ = V00OldPtr_;
+        V00OldPtr_ = nullptr;
+    }
+
+    if (returnReduce(nProtected_, sumOp<label>()) > 0)
+    {
+        boolList protectedCell(protectedCell_.size(), false);
+        forAll(protectedCell, i)
+        {
+            if (protectedCell_.get(i))
+            {
+                protectedCell[i] = true;
+            }
+        }
+        map.distributeCellData(protectedCell);
+        protectedCell_ = protectedCell;
+    }
+
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
@@ -1194,6 +1248,8 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
     nRefinementIterations_(0),
     nProtected_(0),
     protectedCell_(nCells(), 0),
+    isRefining_(false),
+    isUnrefining_(false),
     isBalancing_(false),
     decompositionDict_
     (
@@ -1215,30 +1271,6 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
 
     nProtected_ = 0;
 
-    const dictionary& refineDict
-    (
-        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
-    );
-
-    wordList protectedPatches
-    (
-        refineDict.lookupOrDefault("protectedPatches", wordList())
-    );
-    if (protectedPatches.size())
-    {
-        forAll(protectedPatches, patchi)
-        {
-            const polyPatch& p =
-                this->boundaryMesh()[protectedPatches[patchi]];
-            Info<< "Protecting " << p.faceCells(). size() << " cells "
-                << " on the " << protectedPatches[patchi] << " patch." << endl;
-            forAll(p.faceCells(), facei)
-            {
-                label own = faceOwner()[facei + p.start()];
-                protectedCell_.set(own, true);
-            }
-        }
-    }
     forAll(protectedCell_, celli)
     {
         if (protectedCell_.get(celli))
@@ -1823,6 +1855,8 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
 
             if (nCellsToRefine > 0)
             {
+                isRefining_ = true;
+
                 // Refine/update mesh and map fields
                 autoPtr<mapPolyMesh> map = refine(cellsToRefine);
 
@@ -1855,6 +1889,7 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                 }
 
                 hasChanged = true;
+                isRefining_ = false;
             }
         }
 
@@ -1868,6 +1903,27 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                     if (protectedCell_.get(celli))
                     {
                         refineCell.set(celli, true);
+                    }
+                }
+            }
+            wordList protectedPatches
+            (
+                refineDict.lookupOrDefault
+                (
+                    "protectedPatches",
+                    wordList()
+                )
+            );
+            if (protectedPatches.size())
+            {
+                forAll(protectedPatches, patchi)
+                {
+                    const polyPatch& p =
+                        this->boundaryMesh()[protectedPatches[patchi]];
+                    forAll(p.faceCells(), facei)
+                    {
+                        label own = faceOwner()[facei + p.start()];
+                        refineCell.set(own, true);
                     }
                 }
             }
@@ -1891,10 +1947,13 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
 
             if (nSplitElems > 0)
             {
+                isUnrefining_ = true;
+
                 // Refine/update mesh
                 unrefine(elemsToUnrefine);
 
                 hasChanged = true;
+                isUnrefining_ = false;
             }
         }
 
@@ -2074,29 +2133,15 @@ bool Foam::adaptiveBlastFvMesh::balance()
             //  resized
             //  We cheat because so we can check which fields
             //  actually need to be mapped
-            tmp<DimensionedField<scalar, volMesh>> V0OldTmp;
-            tmp<DimensionedField<scalar, volMesh>> V00OldTmp;
             if (this->V0Ptr_)
             {
-                V0OldTmp = tmp<DimensionedField<scalar, volMesh>>
-                (
-                    new DimensionedField<scalar, volMesh>
-                    (
-                        "V0_Old",
-                        this->V0()
-                    )
-                );
+                V0OldPtr_ = this->V0Ptr_;
+                this->V0Ptr_ = nullptr;
             }
             if (this->V00Ptr_)
             {
-                V00OldTmp = tmp<DimensionedField<scalar, volMesh>>
-                (
-                    new DimensionedField<scalar, volMesh>
-                    (
-                        "V00_Old",
-                        this->V00()
-                    )
-                );
+                V00OldPtr_ = this->V00Ptr_;
+                this->V00Ptr_ = nullptr;
             }
 
 
@@ -2190,38 +2235,8 @@ bool Foam::adaptiveBlastFvMesh::balance()
             autoPtr<mapDistributePolyMesh> map =
                 distributor.distribute(finalDecomp);
 
-            Info<< "Distribute the map ..." << endl;
-            meshCutter_->distribute(map);
-
-            //- The volume has been updated, so now we copy back
-            //  This also calls V() which will construct the volume
-            //  field.
-            //  Again, we cheat to access the volume field pointers
-            //  This is necessary because the V0 and V00 fields are
-            //  not created until the time has advanced and asking for
-            //  thermo though V0() or V00() results in a fatal error
-            if (V0OldTmp.valid())
-            {
-                this->V0Ptr_ = V0OldTmp.ptr();
-            }
-            if (V00OldTmp.valid())
-            {
-                this->V00Ptr_ = V00OldTmp.ptr();
-            }
-
-            if (returnReduce(nProtected_, sumOp<label>()) > 0)
-            {
-                boolList protectedCell(this->nCells(), false);
-                forAll(protectedCell, i)
-                {
-                    if (protectedCell_.get(i))
-                    {
-                        protectedCell[i] = true;
-                    }
-                }
-                map->distributeCellData(protectedCell);
-                protectedCell_ = protectedCell;
-            }
+            //- Distribute other data
+            distribute(map());
 
             Info << "Successfully distributed mesh" << endl;
 

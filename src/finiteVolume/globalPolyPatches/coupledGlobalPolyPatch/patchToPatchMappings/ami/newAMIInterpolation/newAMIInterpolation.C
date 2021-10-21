@@ -31,108 +31,6 @@ License
 
 // * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
 
-template<class SourcePatch, class TargetPatch>
-Foam::word
-Foam::newAMIInterpolation<SourcePatch, TargetPatch>::interpolationMethodToWord
-(
-    const interpolationMethod& im
-)
-{
-    word method = "unknown-interpolationMethod";
-
-    switch (im)
-    {
-        case imDirect:
-        {
-            method = "newDirectAMI";
-            break;
-        }
-        case imMapNearest:
-        {
-            method = "newMapNearestAMI";
-            break;
-        }
-        case imFaceAreaWeight:
-        {
-            method = "newFaceAreaWeightAMI";
-            break;
-        }
-        case imPartialFaceAreaWeight:
-        {
-            method = "newPartialFaceAreaWeightAMI";
-            break;
-        }
-        case imSweptFaceAreaWeight:
-        {
-            method = "newSweptFaceAreaWeightAMI";
-            break;
-        }
-        default:
-        {
-            FatalErrorInFunction
-                << "Unhandled interpolationMethod enumeration " << method
-                << abort(FatalError);
-        }
-    }
-
-    return method;
-}
-
-
-template<class SourcePatch, class TargetPatch>
-typename Foam::newAMIInterpolation<SourcePatch, TargetPatch>::interpolationMethod
-Foam::newAMIInterpolation<SourcePatch, TargetPatch>::wordTointerpolationMethod
-(
-    const word& im
-)
-{
-    interpolationMethod method = imDirect;
-
-    wordList methods
-    (
-        IStringStream
-        (
-            "("
-                "newDirectAMI "
-                "newMapNearestAMI "
-                "newFaceAreaWeightAMI "
-                "newPartialFaceAreaWeightAMI "
-                "newSweptFaceAreaWeightAMI"
-            ")"
-        )()
-    );
-
-    if (im == "newDirectAMI")
-    {
-        method = imDirect;
-    }
-    else if (im == "newMapNearestAMI")
-    {
-        method = imMapNearest;
-    }
-    else if (im == "newFaceAreaWeightAMI")
-    {
-        method = imFaceAreaWeight;
-    }
-    else if (im == "newPartialFaceAreaWeightAMI")
-    {
-        method = imPartialFaceAreaWeight;
-    }
-    else if (im == "newSweptFaceAreaWeightAMI")
-    {
-        method = imSweptFaceAreaWeight;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Invalid interpolationMethod " << im
-            << ".  Valid methods are:" << methods
-            << exit(FatalError);
-    }
-
-    return method;
-}
-
 
 template<class SourcePatch, class TargetPatch>
 template<class Patch>
@@ -681,7 +579,7 @@ Foam::newAMIInterpolation<SourcePatch, TargetPatch>::newAMIInterpolation
     const bool report
 )
 :
-    methodName_(interpolationMethodToWord(method)),
+    methodName_(interpolationMethodNames_[method]),
     reverseTarget_(reverseTarget),
     requireMatch_(requireMatch),
     singlePatchProc_(-999),
@@ -750,7 +648,7 @@ Foam::newAMIInterpolation<SourcePatch, TargetPatch>::newAMIInterpolation
     const bool report
 )
 :
-    methodName_(interpolationMethodToWord(method)),
+    methodName_(interpolationMethodNames_[method]),
     reverseTarget_(reverseTarget),
     requireMatch_(requireMatch),
     singlePatchProc_(-999),

@@ -55,10 +55,15 @@ namespace Foam
 
 class patchToPatchMapping
 {
-    // Private data
+protected:
+    // Protected data
 
         //- Copy of settings dictionary
         const dictionary dict_;
+
+
+private:
+    // Private data
 
         //- Const reference to the patchA
         const primitivePatch& patchA_;

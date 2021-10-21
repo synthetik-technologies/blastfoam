@@ -422,7 +422,7 @@ Foam::amiZoneInterpolation::amiZoneInterpolation
         tgtPatch,
         triMode,
         true,
-        imFaceAreaWeight,
+        method,
         -1,
         false,
         useGlobalPolyPatch

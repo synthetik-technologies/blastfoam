@@ -22,19 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::hexRef8Data
+    Foam::hexRefData
 
 Description
     Various for reading/decomposing/reconstructing/distributing refinement
     data.
 
 SourceFiles
-    hexRef8Data.C
+    hexRefData.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef hexRef8Data_H
-#define hexRef8Data_H
+#ifndef hexRefData_H
+#define hexRefData_H
 
 #include "labelIOList.H"
 #include "uniformDimensionedFields.H"
@@ -48,14 +48,14 @@ namespace Foam
 // Forward declaration of classes
 class mapPolyMesh;
 class mapDistributePolyMesh;
-class refinementHistory;
+class hexRefRefinementHistory;
 class fvMesh;
 
 /*---------------------------------------------------------------------------*\
-                           Class hexRef8Data Declaration
+                           Class hexRefData Declaration
 \*---------------------------------------------------------------------------*/
 
-class hexRef8Data
+class hexRefData
 {
 
 private:
@@ -68,16 +68,16 @@ private:
 
         autoPtr<uniformDimensionedScalarField> level0EdgePtr_;
 
-        autoPtr<refinementHistory> refHistoryPtr_;
+        autoPtr<hexRefRefinementHistory> refHistoryPtr_;
 
 
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
-        hexRef8Data(const hexRef8Data&);
+        hexRefData(const hexRefData&);
 
         //- Disallow default bitwise assignment
-        void operator=(const hexRef8Data&);
+        void operator=(const hexRefData&);
 
 
 public:
@@ -86,29 +86,29 @@ public:
 
         //- Construct read. Has special provision for only some processors
         //  having the files so can be used in redistribution.
-        hexRef8Data(const IOobject& io);
+        hexRefData(const IOobject& io);
 
         //- Construct as subset
-        hexRef8Data
+        hexRefData
         (
             const IOobject& io,
-            const hexRef8Data&,
+            const hexRefData&,
             const labelList& cellMap,
             const labelList& pointMap
         );
 
-        //- Construct from multiple hexRef8Data
-        hexRef8Data
+        //- Construct from multiple hexRefData
+        hexRefData
         (
             const IOobject& io,
             const UPtrList<const labelList>& cellMaps,
             const UPtrList<const labelList>& pointMaps,
-            const UPtrList<const hexRef8Data>&
+            const UPtrList<const hexRefData>&
         );
 
 
     //- Destructor
-    ~hexRef8Data();
+    ~hexRefData();
 
 
     // Member Functions
@@ -117,9 +117,6 @@ public:
         //  (even if they don't have a mesh). Used by redistributePar.
         void sync(const IOobject& io);
 
-        //- In-place update for topology changes
-        void updateMesh(const mapPolyMesh&);
-
         //- In-place distribute
         void distribute(const mapDistributePolyMesh&);
 
@@ -127,7 +124,7 @@ public:
         bool write() const;
 };
 
-typedef hexRef8Data hexRefData;
+typedef hexRefData hexRefData;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

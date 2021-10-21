@@ -71,7 +71,7 @@ class newPartialFaceAreaWeightAMI
 public:
 
     //- Runtime type information
-    TypeName("newPartialFaceAreaWeightAMI");
+    TypeName("partialFaceAreaWeight");
 
 
     // Constructors

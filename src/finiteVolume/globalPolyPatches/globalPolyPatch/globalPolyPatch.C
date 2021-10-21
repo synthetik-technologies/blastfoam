@@ -521,6 +521,7 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
                             ).boundaryField()[this->patch_.index()]
                         )
                     );
+                interpPtr_.clear();
             }
             else if
             (
@@ -548,23 +549,22 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
             }
             faceList faces(globalPatchPtr_);
             globalPatchPtr_.reset(new standAlonePatch(faces, pts));
-            if (debug)
+            if (debug && mesh_.time().outputTime())
             {
                 word name = patch_.name();
-                if (mesh_.time().outputTime())
-                {
-                    mkDir("postProcessing"/mesh_.time().timeName());
-                    vtkWritePolyData::write
-                    (
-                        "postProcessing" / mesh_.time().timeName() / name + ".vtk",
-                        "name",
-                        false,
-                        globalPatchPtr_->localPoints(),
-                        labelList(),
-                        edgeList(),
-                        globalPatchPtr_()
-                    );
-                }
+                mkDir("VTK");
+                vtkWritePolyData::write
+                (
+                    "VTK/"
+                    + name + '_'
+                    + Foam::name(mesh_.time().timeIndex()) + ".vtk",
+                    "name",
+                    false,
+                    globalPatchPtr_->localPoints(),
+                    labelList(),
+                    edgeList(),
+                    globalPatchPtr_()
+                );
             }
         }
     }
