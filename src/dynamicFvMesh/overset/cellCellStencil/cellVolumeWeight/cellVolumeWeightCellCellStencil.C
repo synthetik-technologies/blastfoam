@@ -744,6 +744,33 @@ Foam::cellCellStencils::cellVolumeWeight::~cellVolumeWeight()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::cellCellStencils::cellVolumeWeight::updateMesh
+(
+    const mapPolyMesh& map
+)
+{
+    // Map data
+    const labelList& cellMap = map.cellMap();
+
+    labelList newCellType(cellMap.size());
+    forAll(cellMap, newCelli)
+    {
+        label oldCelli = cellMap[newCelli];
+
+        if (oldCelli == -1)
+        {
+            newCellType[newCelli] = -1;
+        }
+        else
+        {
+            newCellType[newCelli] = cellTypes_[oldCelli];
+        }
+    }
+    cellTypes_.transfer(newCellType);
+    cellCellStencil::updateMesh(map);
+}
+
+
 bool Foam::cellCellStencils::cellVolumeWeight::update()
 {
     scalar layerRelax(dict_.lookupOrDefault("layerRelax", 1.0));

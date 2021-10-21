@@ -102,6 +102,24 @@ Foam::cellCellStencil::~cellCellStencil()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::cellCellStencil::updateMesh(const mapPolyMesh& map)
+{
+    if (mesh_.foundObject<labelIOList>("zoneID"))
+    {
+        const volScalarField& volZoneID =
+            mesh_.lookupObject<volScalarField>("volZoneID");
+        labelIOList& zoneID = mesh_.lookupObjectRef<labelIOList>("zoneID");
+
+        zoneID.resize(map.cellMap().size());
+        forAll(volZoneID, cellI)
+        {
+            zoneID[cellI] = round(volZoneID[cellI]);
+        }
+    }
+    update();
+}
+
+
 const Foam::labelIOList& Foam::cellCellStencil::zoneID(const fvMesh& mesh)
 {
     if (!mesh.foundObject<labelIOList>("zoneID"))
@@ -121,19 +139,26 @@ const Foam::labelIOList& Foam::cellCellStencil::zoneID(const fvMesh& mesh)
         );
         labelIOList& zoneID = *zoneIDPtr;
 
-        volScalarField volZoneID
+        volScalarField* volZoneIDPtr
         (
-            IOobject
+            new volScalarField
             (
-                "zoneID",
-                mesh.time().findInstance(mesh.dbDir(), "zoneID"),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::NO_WRITE,
-                false
-            ),
-            mesh
+                IOobject
+                (
+                    "zoneID",
+                    mesh.time().findInstance(mesh.dbDir(), "zoneID"),
+                    mesh,
+                    IOobject::MUST_READ,
+                    IOobject::NO_WRITE,
+                    false
+                ),
+                mesh
+            )
         );
+        volZoneIDPtr->rename("volZoneID");
+        volZoneIDPtr->checkIn();
+        volZoneIDPtr->store(volZoneIDPtr);
+        const volScalarField& volZoneID = *volZoneIDPtr;
         forAll(volZoneID, cellI)
         {
             zoneID[cellI] = label(volZoneID[cellI]);

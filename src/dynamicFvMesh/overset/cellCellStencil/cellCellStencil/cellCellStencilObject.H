@@ -47,7 +47,7 @@ class cellCellStencilObject;
 typedef MeshObject
 <
     fvMesh,
-    Foam::MoveableMeshObject,
+    Foam::UpdateableMeshObject,
     cellCellStencilObject
 > Stencil;
 
@@ -81,7 +81,7 @@ public:
             MeshObject
             <
                 fvMesh,
-                Foam::MoveableMeshObject,
+                Foam::UpdateableMeshObject,
                 cellCellStencilObject
             >(mesh),
             cellCellStencil(mesh),
@@ -110,6 +110,12 @@ public:
         virtual bool movePoints()
         {
             return stencilPtr_().update();
+        }
+
+        //- Callback for geometry motion
+        virtual void updateMesh(const mapPolyMesh& map)
+        {
+            stencilPtr_().updateMesh(map);
         }
 
         //- Update stencils. Return false if nothing changed.

@@ -69,7 +69,7 @@ bool Foam::dynamicMotionSolverBlastFvMesh::refine(const bool)
 
 bool Foam::dynamicMotionSolverBlastFvMesh::update()
 {
-    fvMesh::movePoints(motionPtr_->newPoints());
+    fvMesh::movePoints(pointField(motionPtr_->newPoints()));
     velocityMotionCorrection_.update();
 
     return true;

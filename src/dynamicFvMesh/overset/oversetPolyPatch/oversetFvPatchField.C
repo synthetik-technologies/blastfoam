@@ -168,7 +168,7 @@ void Foam::oversetFvPatchField<Type>::initEvaluate
             );
 
             const wordHashSet& suppress =
-                Stencil::New(mesh).nonInterpolatedFields();
+                Stencil::New(mesh, false).nonInterpolatedFields();
 
             bool skipInterpolate = suppress.found(fldName);
 

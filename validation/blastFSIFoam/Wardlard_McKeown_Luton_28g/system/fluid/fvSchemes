@@ -41,7 +41,7 @@ laplacianSchemes
     laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
 }
 
-scheme upwindMUSCL;
+scheme quadraticMUSCL vanAlbada;
 interpolationSchemes
 {
     default             linear;

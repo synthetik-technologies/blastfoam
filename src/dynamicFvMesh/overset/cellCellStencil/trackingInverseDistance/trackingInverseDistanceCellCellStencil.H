@@ -151,6 +151,9 @@ public:
         //- Update stencils. Return false if nothing changed.
         virtual bool update();
 
+        //- Callback for geometry motion
+        virtual void updateMesh(const mapPolyMesh& map);
+
 };
 
 

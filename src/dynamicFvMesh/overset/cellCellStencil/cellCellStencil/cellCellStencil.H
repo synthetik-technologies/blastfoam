@@ -45,6 +45,7 @@ SourceFiles
 
 #include "scalarList.H"
 #include "mapDistribute.H"
+#include "mapPolyMesh.H"
 #include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -96,6 +97,9 @@ protected:
 
         //- Set of fields that should not be interpolated
         wordHashSet nonInterpolatedFields_;
+
+        //- Is an update needed
+        mutable bool needUpdate_;
 
 
     // Protected Member Functions
@@ -169,6 +173,9 @@ public:
 
         //- Update stencils. Return false if nothing changed.
         virtual bool update() = 0;
+
+        //- Callback for geometry motion
+        virtual void updateMesh(const mapPolyMesh& map);
 
         //- Return the cell type list
         virtual const labelUList& cellTypes() const = 0;

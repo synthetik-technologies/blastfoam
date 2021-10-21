@@ -41,7 +41,8 @@ Foam::meshSizeObject::meshSizeObject(const fvMesh& mesh)
 :
     MeshSizeObject(mesh),
     mesh_(mesh),
-    dxPtr_(nullptr)
+    dxPtr_(nullptr),
+    dXPtr_(nullptr)
 {}
 
 
@@ -53,7 +54,7 @@ Foam::meshSizeObject::~meshSizeObject()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::meshSizeObject::updateMeshSize() const
+void Foam::meshSizeObject::calcDx() const
 {
     dxPtr_.set
     (
@@ -61,7 +62,7 @@ void Foam::meshSizeObject::updateMeshSize() const
         (
             IOobject
             (
-                "meshCellSize",
+                "dx",
                 mesh_.time().timeName(),
                 mesh_,
                 IOobject::NO_READ,
@@ -117,5 +118,71 @@ void Foam::meshSizeObject::updateMeshSize() const
     }
 }
 
+
+void Foam::meshSizeObject::calcDX() const
+{
+    dXPtr_.set
+    (
+        new volVectorField
+        (
+            IOobject
+            (
+                "dX",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            mesh_,
+            dimensionedVector(dimLength, Zero)
+        )
+    );
+    volVectorField& dX = dXPtr_();
+
+    const faceList& faces = mesh_.faces();
+    const cellList& cells = mesh_.cells();
+    const pointField& points = mesh_.points();
+    forAll(dX, celli)
+    {
+        const cell& c = cells[celli];
+        const edgeList cedges(c.edges(faces));
+        vector dx(Zero);
+        Vector<label> nEdges(Zero);
+        forAll(cedges, ei)
+        {
+            const edge& e = cedges[ei];
+            vector edx(cmptMag(e.vec(points)));
+            label cmpti = findMax(edx);
+            dx[cmpti] += edx[cmpti];
+            nEdges[cmpti]++;
+        }
+        nEdges = max(nEdges, Vector<label>::one);
+        dX[celli] = cmptDivide(dx, vector(nEdges));
+    }
+
+    for (label fi = mesh_.nInternalFaces(); fi < mesh_.nFaces(); fi++)
+    {
+        const label patchi = mesh_.boundaryMesh().whichPatch(fi);
+        const polyPatch& p = mesh_.boundaryMesh()[patchi];
+        const label facei = fi - p.start();
+
+        const face& f = faces[fi];
+        const edgeList& fedges = f.edges();
+        vector dx(Zero);
+        Vector<label> nEdges;
+        forAll(fedges, ei)
+        {
+            const edge& e = fedges[ei];
+            vector edx(cmptMag(e.vec(points)));
+            label cmpti = findMax(edx);
+            dx[cmpti] += edx[cmpti];
+            nEdges[cmpti]++;
+        }
+        nEdges = max(nEdges, Vector<label>::one);
+        dX.boundaryFieldRef()[patchi][facei] =
+            cmptDivide(dx, vector(nEdges));
+    }
+}
 
 // ************************************************************************* //

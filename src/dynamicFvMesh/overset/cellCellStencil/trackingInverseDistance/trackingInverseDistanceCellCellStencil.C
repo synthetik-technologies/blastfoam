@@ -571,6 +571,17 @@ Foam::cellCellStencils::trackingInverseDistance::~trackingInverseDistance()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+void Foam::cellCellStencils::trackingInverseDistance::updateMesh
+(
+    const mapPolyMesh& map
+)
+{
+    const labelList& cellMap = map.cellMap();
+    globalCells_ = globalIndex(cellMap.size());
+    globalDonor_.setSize(cellMap.size());
+    update();
+}
+
 bool Foam::cellCellStencils::trackingInverseDistance::update()
 {
     DebugInfo<< FUNCTION_NAME << " : Start of analysis" << endl;

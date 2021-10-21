@@ -192,6 +192,9 @@ public:
         //- Update stencils. Return false if nothing changed.
         virtual bool update();
 
+        //- Callback for geometry motion
+        virtual void updateMesh(const mapPolyMesh& map);
+
         //- Return the cell type list
         virtual const labelUList& cellTypes() const
         {
