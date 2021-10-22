@@ -35,8 +35,8 @@ Foam::scalarMultivariateEquation::scalarMultivariateEquation(const label n)
 
 Foam::scalarMultivariateEquation::scalarMultivariateEquation
 (
-    const scalarField& lowerLimits,
-    const scalarField& upperLimits
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits
 )
 :
     MultivariateEquation<scalar>(lowerLimits, upperLimits)
@@ -53,8 +53,8 @@ Foam::scalarMultivariateEquation::~scalarMultivariateEquation()
 
 bool Foam::scalarMultivariateEquation::containsRoot
 (
-    const scalarField& y0s,
-    const scalarField& y1s
+    const scalarList& y0s,
+    const scalarList& y1s
 ) const
 {
     forAll(y0s, i)

@@ -65,30 +65,14 @@ Foam::goodBroydenMultivariateRootSolver::goodBroydenMultivariateRootSolver
 Foam::tmp<Foam::scalarField>
 Foam::goodBroydenMultivariateRootSolver::findRoots
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
     scalarField xOld(x0);
-    scalarSquareMatrix J(x0.size());
-    forAll(x0, cmptj)
-    {
-        scalarField x1(x0);
-        scalarField x2(x0);
-        x1[cmptj] -= dx_[cmptj];
-        x2[cmptj] += dx_[cmptj];
-
-        scalarField f1(eqns_.f(x1, li));
-        scalarField f2(eqns_.f(x2, li));
-
-        forAll(x0, cmpti)
-        {
-            J(cmpti, cmptj) =
-                (f2[cmpti] - f1[cmpti])/(x2[cmptj] - x1[cmptj]);
-        }
-    }
+    scalarRectangularMatrix J(eqns_.calculateJacobian(x0, dx_, li));
 
     tmp<scalarField> xTmp(new scalarField(x0));
     scalarField& x = xTmp.ref();
@@ -111,7 +95,7 @@ Foam::goodBroydenMultivariateRootSolver::findRoots
 
         if (converged(delta))
         {
-            return xTmp;
+            break;
         }
 
         // update f
@@ -128,9 +112,10 @@ Foam::goodBroydenMultivariateRootSolver::findRoots
             Jinv
           + ((dx - Jinv*df)*(dx.T()*Jinv))
            /stabilise(((dx.T()*Jinv)*df)(0, 0), small);
+
+        printStepInformation(x);
     }
-    WarningInFunction
-        << "Could not converge. Final error=" << error_ << endl;
+    printFinalInformation();
 
     return xTmp;
 }

@@ -15,8 +15,8 @@ public:
     :
         scalarMultivariateEquation
         (
-            scalarField(2, 0.0),
-            scalarField(2, 2.0)
+            scalarList(2, 0.0),
+            scalarList(2, 2.0)
         )
     {}
 
@@ -34,9 +34,9 @@ public:
     }
     virtual void f
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx
+        scalarList& fx
     ) const
     {
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
@@ -44,10 +44,10 @@ public:
     }
     virtual void jacobian
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx,
-        scalarSquareMatrix& dfdx
+        scalarList& fx,
+        scalarRectangularMatrix& dfdx
     ) const
     {
         f(x, li, fx);
@@ -85,9 +85,9 @@ public:
     }
     virtual void f
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx
+        scalarList& fx
     ) const
     {
         fx[0] = x[1] - sqr(x[0]) + x[0];
@@ -95,10 +95,10 @@ public:
     }
     virtual void jacobian
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx,
-        scalarSquareMatrix& dfdx
+        scalarList& fx,
+        scalarRectangularMatrix& dfdx
     ) const
     {
         f(x, li, fx);

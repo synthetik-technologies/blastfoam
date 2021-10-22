@@ -58,9 +58,9 @@ Foam::NewtonRaphsonMultivariateRootSolver::NewtonRaphsonMultivariateRootSolver
 
 Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoots
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
@@ -68,7 +68,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoot
     tmp<scalarField> xNewTmp(new scalarField(x0));
     scalarField& xNew = xNewTmp.ref();
     scalarField f(xNew.size());
-    scalarSquareMatrix J(xNew.size());
+    RectangularMatrix<scalar> J(xNew.size());
 
     eqns_.jacobian(xOld, li, f, J);
 
@@ -78,7 +78,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoot
 
         if (converged(delta))
         {
-            return xNewTmp;
+            break;
         }
 
         // Relax delta
@@ -92,9 +92,10 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoot
 
         xOld = xNew;
         eqns_.jacobian(xOld, li, f, J);
+
+        printStepInformation(xNew);
     }
-    WarningInFunction
-        << "Could not converge. Final error=" << error_ << endl;
+    printFinalInformation();
 
     return xNewTmp;
 }

@@ -58,8 +58,8 @@ public:
         //- Construct with limits
         scalarMultivariateEquation
         (
-            const scalarField& upperLimits,
-            const scalarField& lowerLimits
+            const scalarList& upperLimits,
+            const scalarList& lowerLimits
         );
 
 
@@ -72,8 +72,8 @@ public:
         //- Check if the solution is bracketed
         bool containsRoot
         (
-            const scalarField& y0s,
-            const scalarField& y1s
+            const scalarList& y0s,
+            const scalarList& y1s
         ) const;
 
         //- Check if the solution is bracketed (compute bounds)

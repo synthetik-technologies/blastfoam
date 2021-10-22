@@ -78,8 +78,8 @@ public:
         //- Construct with limits
         MultivariateEquation
         (
-            const scalarField& lowerLimits,
-            const scalarField& upperLimits
+            const scalarList& lowerLimits,
+            const scalarList& upperLimits
         );
 
 
@@ -96,64 +96,80 @@ public:
         virtual label nDerivatives() const = 0;
 
         //- Return the lower limits
-        const scalarField& lower() const
+        const scalarList& lower() const
         {
             return lowerLimits_;
         }
 
         //- Access the lower limits
-        scalarField& lowerLimits()
+        scalarList& lowerLimits()
         {
             return lowerLimits_;
         }
 
         //- Return the upper limits
-        const scalarField upper() const
+        const scalarList upper() const
         {
             return upperLimits_;
         }
 
         //- Access the upper limits
-        scalarField& upper()
+        scalarList& upper()
         {
             return upperLimits_;
         }
 
         //- Limit the value of x to the range of the equation
-        inline void limit(scalarField& x) const
+        inline void limit(scalarList& x) const
         {
             x = min(upperLimits_, max(x, lowerLimits_));
         }
 
         //- Check if the coordinates are with in the range
-        bool checkBounds(const scalarField& xs) const;
+        bool checkBounds(const scalarList& xs) const;
 
         //- Return the function value
         tmp<Field<Type>> f
         (
-            const scalarField& x,
+            const scalarList& x,
             const label li
         ) const;
 
         //- Return the function value
         virtual void f
         (
-            const scalarField& x,
+            const scalarList& x,
             const label li,
-            Field<Type>& fx
+            List<Type>& fx
         ) const = 0;
 
         //- Calculate the Jacobian of the equation
         virtual void jacobian
         (
-            const scalarField& x,
+            const scalarList& x,
             const label li,
-            scalarField& fx,
-            SquareMatrix<Type>& dfdx
+            List<Type>& fx,
+            RectangularMatrix<Type>& dfdx
         ) const
         {
             NotImplemented;
         }
+
+        //- Create a Jacobian matrix given a list of dx
+        tmp<Field<Type>> calculateGradients
+        (
+            const scalarList& x0,
+            const scalarList& dx,
+            const label li
+        ) const;
+
+        //- Create a Jacobian matrix given a list of dx
+        RectangularMatrix<Type> calculateJacobian
+        (
+            const scalarList& x0,
+            const scalarList& dx,
+            const label li
+        ) const;
 };
 
 

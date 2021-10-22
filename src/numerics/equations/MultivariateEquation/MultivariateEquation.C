@@ -85,8 +85,8 @@ Foam::MultivariateEquation<Type>::MultivariateEquation(const label n)
 template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
-    const scalarField& lowerLimits,
-    const scalarField& upperLimits
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits
 )
 :
     lowerLimits_(lowerLimits),
@@ -128,7 +128,7 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 
 
 template<class Type>
-bool Foam::MultivariateEquation<Type>::checkBounds(const scalarField& xs) const
+bool Foam::MultivariateEquation<Type>::checkBounds(const scalarList& xs) const
 {
     checkLimits();
     forAll(xs, i)
@@ -154,7 +154,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::MultivariateEquation<Type>::f
 (
-    const scalarField& x,
+    const scalarList& x,
     const label li
 ) const
 {
@@ -163,4 +163,55 @@ Foam::MultivariateEquation<Type>::f
     return tmpFx;
 }
 
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::MultivariateEquation<Type>::calculateGradients
+(
+    const scalarList& x0,
+    const scalarList& dx,
+    const label li
+) const
+{
+    tmp<Field<Type>> tgrad(x0.size());
+    Field<Type>& grad = tgrad.ref();
+    forAll(x0, cmpti)
+    {
+        scalar x1 = x0[cmpti] - dx[cmpti]*0.5;
+        scalar x2 = x1 + dx[cmpti];
+
+        grad[cmpti] = (this->f(x2, li) - this->f(x1, li))/dx[cmpti];
+    }
+    return tgrad;
+}
+
+
+template<class Type>
+Foam::RectangularMatrix<Type>
+Foam::MultivariateEquation<Type>::calculateJacobian
+(
+    const scalarList& x0,
+    const scalarList& dx,
+    const label li
+) const
+{
+    RectangularMatrix<Type> J(x0.size());
+    forAll(x0, cmptj)
+    {
+        scalarList x1(x0);
+        scalarList x2(x0);
+        x1[cmptj] -= dx[cmptj]*0.5;
+        x2[cmptj] += dx[cmptj]*0.5;
+
+        scalarField f1(this->f(x1, li));
+        scalarField f2(this->f(x2, li));
+
+        forAll(x0, cmpti)
+        {
+            J(cmpti, cmptj) =
+                (f2[cmpti] - f1[cmpti])/(x2[cmptj] - x1[cmptj]);
+        }
+    }
+    return J;
+}
 // ************************************************************************* //

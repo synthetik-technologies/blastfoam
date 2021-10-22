@@ -35,7 +35,7 @@ inline Foam::label Foam::multivariateRootSolver::nSteps() const
 }
 
 
-inline const Foam::scalarField& Foam::multivariateRootSolver::errors() const
+inline const Foam::scalarList& Foam::multivariateRootSolver::errors() const
 {
     return errors_;
 }
