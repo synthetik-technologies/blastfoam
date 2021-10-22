@@ -62,15 +62,15 @@ const Foam::NamedEnum<Foam::cellCellStencil::cellType, 3>
 Foam::cellCellStencil::cellCellStencil(const fvMesh& mesh)
 :
     mesh_(mesh),
-    nonInterpolatedFields_({"zoneID"})
+    nonInterpolatedFields_({"zoneID"}),
+    needUpdate_(true)
 {}
 
 
 Foam::autoPtr<Foam::cellCellStencil> Foam::cellCellStencil::New
 (
     const fvMesh& mesh,
-    const dictionary& dict,
-    const bool update
+    const dictionary& dict
 )
 {
     DebugInFunction << "Constructing cellCellStencil" << endl;
@@ -90,7 +90,7 @@ Foam::autoPtr<Foam::cellCellStencil> Foam::cellCellStencil::New
             << exit(FatalError);
     }
 
-    return autoPtr<cellCellStencil>(cstrIter()(mesh, dict, update));
+    return autoPtr<cellCellStencil>(cstrIter()(mesh, dict));
 }
 
 
@@ -101,6 +101,12 @@ Foam::cellCellStencil::~cellCellStencil()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+bool Foam::cellCellStencil::update() const
+{
+    needUpdate_ = false;
+    return true;
+}
 
 void Foam::cellCellStencil::updateMesh(const mapPolyMesh& map)
 {
@@ -116,7 +122,7 @@ void Foam::cellCellStencil::updateMesh(const mapPolyMesh& map)
             zoneID[cellI] = round(volZoneID[cellI]);
         }
     }
-    update();
+    needUpdate_ = true;
 }
 
 

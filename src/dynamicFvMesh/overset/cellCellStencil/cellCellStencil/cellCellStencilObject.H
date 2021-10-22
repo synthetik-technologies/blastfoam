@@ -74,8 +74,7 @@ public:
         //- Construct with mesh
         explicit cellCellStencilObject
         (
-            const fvMesh& mesh,
-            const bool update = true
+            const fvMesh& mesh
         )
         :
             MeshObject
@@ -93,8 +92,7 @@ public:
                     mesh.schemesDict().subDict
                     (
                         "oversetInterpolation"
-                    ),
-                    update
+                    )
                 )
             )
         {}
@@ -119,7 +117,7 @@ public:
         }
 
         //- Update stencils. Return false if nothing changed.
-        virtual bool update()
+        virtual bool update() const
         {
             return stencilPtr_().update();
         }

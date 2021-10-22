@@ -1473,7 +1473,7 @@ void Foam::cellCellStencils::inverseDistance::stencilWeights
 void Foam::cellCellStencils::inverseDistance::createStencil
 (
     const globalIndex& globalCells
-)
+) const
 {
     // Send cell centre back to donor
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1661,8 +1661,7 @@ void Foam::cellCellStencils::inverseDistance::createStencil
 Foam::cellCellStencils::inverseDistance::inverseDistance
 (
     const fvMesh& mesh,
-    const dictionary& dict,
-    const bool doUpdate
+    const dictionary& dict
 )
 :
     cellCellStencil(mesh),
@@ -1729,11 +1728,6 @@ Foam::cellCellStencils::inverseDistance::inverseDistance
             cellTypes_[celli] = volCellTypes[celli];
         }
     }
-
-    if (doUpdate)
-    {
-        update();
-    }
 }
 
 
@@ -1768,9 +1762,10 @@ void Foam::cellCellStencils::inverseDistance::updateMesh
         }
     }
     cellTypes_.transfer(newCellType);
+    cellCellStencil::updateMesh(map);
 }
 
-bool Foam::cellCellStencils::inverseDistance::update()
+bool Foam::cellCellStencils::inverseDistance::update() const
 {
     scalar layerRelax(dict_.lookupOrDefault("layerRelax", 1.0));
 
@@ -2379,7 +2374,7 @@ bool Foam::cellCellStencils::inverseDistance::update()
     }
 
     // Tbd: detect if anything changed. Most likely it did!
-    return true;
+    return cellCellStencil::update();
 }
 
 

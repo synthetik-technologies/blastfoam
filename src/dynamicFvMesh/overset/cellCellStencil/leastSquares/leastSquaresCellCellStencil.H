@@ -78,7 +78,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        leastSquares(const fvMesh&, const dictionary&, const bool);
+        leastSquares(const fvMesh&, const dictionary&);
 
 
     //- Destructor

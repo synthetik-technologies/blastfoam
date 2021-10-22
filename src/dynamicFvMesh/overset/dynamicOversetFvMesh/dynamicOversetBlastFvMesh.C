@@ -553,7 +553,7 @@ bool Foam::dynamicOversetBlastFvMesh::init(const bool doInit)
     active_ = false;
 
     // Load stencil (but do not update)
-    (void) Stencil::New(dynamicCast<const fvMesh&>(*this), false);
+    (void) Stencil::New(*this);
 
     // Assume something changed
     return true;

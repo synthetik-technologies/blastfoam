@@ -143,10 +143,9 @@ public:
             mesh,
             (
                 const fvMesh& mesh,
-                const dictionary& dict,
-                const bool update
+                const dictionary& dict
             ),
-            (mesh, dict, update)
+            (mesh, dict)
         );
 
 
@@ -160,8 +159,7 @@ public:
         static autoPtr<cellCellStencil> New
         (
             const fvMesh&,
-            const dictionary& dict,
-            const bool update = true
+            const dictionary& dict
         );
 
 
@@ -172,7 +170,7 @@ public:
     // Member Functions
 
         //- Update stencils. Return false if nothing changed.
-        virtual bool update() = 0;
+        virtual bool update() const;
 
         //- Callback for geometry motion
         virtual void updateMesh(const mapPolyMesh& map);

@@ -73,22 +73,22 @@ protected:
         scalar overlapTolerance_;
 
         //- Per cell the cell type
-        labelList cellTypes_;
+        mutable labelList cellTypes_;
 
         //- Indices of interpolated cells
-        labelList interpolationCells_;
+        mutable labelList interpolationCells_;
 
         //- Fetch interpolated cells
-        autoPtr<mapDistribute> cellInterpolationMap_;
+        mutable autoPtr<mapDistribute> cellInterpolationMap_;
 
         //- Interpolation stencil
-        labelListList cellStencil_;
+        mutable labelListList cellStencil_;
 
         //- Interpolation weights
-        List<scalarList> cellInterpolationWeights_;
+        mutable List<scalarList> cellInterpolationWeights_;
 
         //- Amount of interpolation
-        volScalarField cellInterpolationWeight_;
+        mutable volScalarField cellInterpolationWeight_;
 
 
    // Protected Member Functions
@@ -174,7 +174,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        cellVolumeWeight(const fvMesh&, const dictionary&, const bool doUpdate);
+        cellVolumeWeight(const fvMesh&, const dictionary&);
 
 
     //- Destructor
@@ -190,7 +190,7 @@ public:
         }
 
         //- Update stencils. Return false if nothing changed.
-        virtual bool update();
+        virtual bool update() const;
 
         //- Callback for geometry motion
         virtual void updateMesh(const mapPolyMesh& map);
@@ -198,21 +198,29 @@ public:
         //- Return the cell type list
         virtual const labelUList& cellTypes() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellTypes_;
         }
 
         //- Indices of interpolated cells
         virtual const labelUList& interpolationCells() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return interpolationCells_;
         }
 
         //- Return a communication schedule
         virtual const mapDistribute& cellInterpolationMap() const
         {
-            if (!cellInterpolationMap_.valid())
+            if (!cellInterpolationMap_.valid() || needUpdate_)
             {
-                const_cast<cellVolumeWeight&>(*this).update();
+                update();
             }
             return cellInterpolationMap_();
         }
@@ -221,12 +229,20 @@ public:
         //  constructed by above cellInterpolationMap) to interpolate
         virtual const labelListList& cellStencil() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellStencil_;
         }
 
         //- Weights for cellStencil
         virtual const List<scalarList>& cellInterpolationWeights() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellInterpolationWeights_;
         }
 
@@ -234,6 +250,10 @@ public:
         //  calculated, 1 = use interpolated)
         virtual const scalarList& cellInterpolationWeight() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellInterpolationWeight_;
         }
 

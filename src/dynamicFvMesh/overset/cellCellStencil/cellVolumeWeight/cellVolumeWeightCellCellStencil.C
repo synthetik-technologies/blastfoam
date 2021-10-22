@@ -661,8 +661,7 @@ void Foam::cellCellStencils::cellVolumeWeight::combineCellTypes
 Foam::cellCellStencils::cellVolumeWeight::cellVolumeWeight
 (
     const fvMesh& mesh,
-    const dictionary& dict,
-    const bool doUpdate
+    const dictionary& dict
 )
 :
     cellCellStencil(mesh),
@@ -728,11 +727,6 @@ Foam::cellCellStencils::cellVolumeWeight::cellVolumeWeight
             cellTypes_[celli] = volCellTypes[celli];
         }
     }
-
-    if (doUpdate)
-    {
-        update();
-    }
 }
 
 
@@ -771,7 +765,7 @@ void Foam::cellCellStencils::cellVolumeWeight::updateMesh
 }
 
 
-bool Foam::cellCellStencils::cellVolumeWeight::update()
+bool Foam::cellCellStencils::cellVolumeWeight::update() const
 {
     scalar layerRelax(dict_.lookupOrDefault("layerRelax", 1.0));
     const labelIOList& zoneID = this->zoneID();
@@ -1299,7 +1293,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update()
     }
 
     // Tbd: detect if anything changed. Most likely it did!
-    return true;
+    return cellCellStencil::update();
 }
 
 

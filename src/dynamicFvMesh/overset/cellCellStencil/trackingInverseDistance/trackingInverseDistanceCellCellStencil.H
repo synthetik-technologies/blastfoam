@@ -63,13 +63,13 @@ protected:
     // Protected data
 
         //- Global indexing for cells
-        globalIndex globalCells_;
+        mutable globalIndex globalCells_;
 
         //- Current (global) donor cell
-        labelList globalDonor_;
+        mutable labelList globalDonor_;
 
         //- Subset according to zone
-        PtrList<fvMeshSubset> meshParts_;
+        mutable PtrList<fvMeshSubset> meshParts_;
 
 
 
@@ -139,7 +139,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        trackingInverseDistance(const fvMesh&, const dictionary&, const bool);
+        trackingInverseDistance(const fvMesh&, const dictionary&);
 
 
     //- Destructor
@@ -149,7 +149,7 @@ public:
     // Member Functions
 
         //- Update stencils. Return false if nothing changed.
-        virtual bool update();
+        virtual bool update() const;
 
         //- Callback for geometry motion
         virtual void updateMesh(const mapPolyMesh& map);

@@ -157,17 +157,11 @@ void Foam::cellCellStencils::leastSquares::stencilWeights
 Foam::cellCellStencils::leastSquares::leastSquares
 (
     const fvMesh& mesh,
-    const dictionary& dict,
-    const bool doUpdate
+    const dictionary& dict
 )
 :
-    inverseDistance(mesh, dict, false)
-{
-    if (doUpdate)
-    {
-        update();
-    }
-}
+    inverseDistance(mesh, dict)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

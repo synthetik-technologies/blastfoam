@@ -76,25 +76,25 @@ protected:
         const dictionary dict_;
 
         //- Small perturbation vector for geometric tests
-        vector smallVec_;
+        mutable vector smallVec_;
 
         //- Per cell the cell type
-        labelList cellTypes_;
+        mutable labelList cellTypes_;
 
         //- Indices of interpolated cells
-        labelList interpolationCells_;
+        mutable labelList interpolationCells_;
 
         //- Fetch interpolated cells
-        autoPtr<mapDistribute> cellInterpolationMap_;
+        mutable autoPtr<mapDistribute> cellInterpolationMap_;
 
         //- Interpolation stencil
-        labelListList cellStencil_;
+        mutable labelListList cellStencil_;
 
         //- Interpolation weights
-        scalarListList cellInterpolationWeights_;
+        mutable scalarListList cellInterpolationWeights_;
 
         //- Amount of interpolation
-        volScalarField cellInterpolationWeight_;
+        mutable volScalarField cellInterpolationWeight_;
 
 
    // Protected Member Functions
@@ -253,7 +253,7 @@ protected:
         ) const;
 
         //- Create stencil starting from the donor containing the acceptor
-        virtual void createStencil(const globalIndex&);
+        virtual void createStencil(const globalIndex&) const;
 
 
 private:
@@ -276,7 +276,7 @@ public:
     // Constructors
 
         //- Construct from fvMesh
-        inverseDistance(const fvMesh&, const dictionary&, const bool);
+        inverseDistance(const fvMesh&, const dictionary&);
 
 
     //- Destructor
@@ -286,7 +286,7 @@ public:
     // Member Functions
 
         //- Update stencils. Return false if nothing changed.
-        virtual bool update();
+        virtual bool update() const;
 
         //- Callback for geometry motion
         virtual void updateMesh(const mapPolyMesh& map);
@@ -294,21 +294,29 @@ public:
         //- Return the cell type list
         virtual const labelUList& cellTypes() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellTypes_;
         }
 
         //- Indices of interpolated cells
         virtual const labelUList& interpolationCells() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return interpolationCells_;
         }
 
         //- Return a communication schedule
         virtual const mapDistribute& cellInterpolationMap() const
         {
-            if (!cellInterpolationMap_.valid())
+            if (!cellInterpolationMap_.valid() || needUpdate_)
             {
-                const_cast<inverseDistance&>(*this).update();
+                update();
             }
             return cellInterpolationMap_();
         }
@@ -323,6 +331,10 @@ public:
         //- Weights for cellStencil
         virtual const scalarListList& cellInterpolationWeights() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellInterpolationWeights_;
         }
 
@@ -330,6 +342,10 @@ public:
         //  calculated, 1 = use interpolated)
         virtual const scalarList& cellInterpolationWeight() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellInterpolationWeight_;
         }
 

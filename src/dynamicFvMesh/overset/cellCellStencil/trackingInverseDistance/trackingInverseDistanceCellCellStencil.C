@@ -501,11 +501,10 @@ void Foam::cellCellStencils::trackingInverseDistance::markDonors
 Foam::cellCellStencils::trackingInverseDistance::trackingInverseDistance
 (
     const fvMesh& mesh,
-    const dictionary& dict,
-    const bool doUpdate
+    const dictionary& dict
 )
 :
-    inverseDistance(mesh, dict, false),
+    inverseDistance(mesh, dict),
     globalCells_(mesh_.nCells())
 {
     // Initialise donor cell
@@ -553,13 +552,6 @@ Foam::cellCellStencils::trackingInverseDistance::trackingInverseDistance
         }
         Info<< decrIndent;
     }
-
-
-    // Do geometry update
-    if (doUpdate)
-    {
-        update();
-    }
 }
 
 
@@ -579,10 +571,10 @@ void Foam::cellCellStencils::trackingInverseDistance::updateMesh
     const labelList& cellMap = map.cellMap();
     globalCells_ = globalIndex(cellMap.size());
     globalDonor_.setSize(cellMap.size());
-    update();
+    cellCellStencil::updateMesh(map);
 }
 
-bool Foam::cellCellStencils::trackingInverseDistance::update()
+bool Foam::cellCellStencils::trackingInverseDistance::update() const
 {
     DebugInfo<< FUNCTION_NAME << " : Start of analysis" << endl;
 
@@ -1151,7 +1143,7 @@ bool Foam::cellCellStencils::trackingInverseDistance::update()
     DebugInfo<< FUNCTION_NAME << " : Finished analysis" << endl;
 
     // Tbd: detect if anything changed. Most likely it did!
-    return true;
+    return cellCellStencil::update();
 }
 
 
