@@ -1507,7 +1507,7 @@ void Foam::cellCellStencils::inverseDistance::createStencil
 
     while (true)
     {
-        pointField samples(cellInterpolationMap().constructSize(), greatPoint);
+        pointField samples(cellInterpolationMap_->constructSize(), greatPoint);
 
         // Fill remote slots (override old content). We'll find out later
         // on which one has won and mark this one in doneAcceptor.
@@ -1551,9 +1551,9 @@ void Foam::cellCellStencils::inverseDistance::createStencil
             Pstream::commsTypes::nonBlocking,
             List<labelPair>(),
             mesh_.nCells(),
-            cellInterpolationMap().constructMap(),
+            cellInterpolationMap_->constructMap(),
             false,
-            cellInterpolationMap().subMap(),
+            cellInterpolationMap_->subMap(),
             false,
             samples,
             minMagSqrEqOp<point>(),
@@ -1606,9 +1606,9 @@ void Foam::cellCellStencils::inverseDistance::createStencil
         // Transfer the information back to the acceptor:
         // - donorCellCells : stencil (with first element the original donor)
         // - donorWeights : weights for donorCellCells
-        cellInterpolationMap().distribute(donorCellCells);
-        cellInterpolationMap().distribute(donorWeights);
-        cellInterpolationMap().distribute(samples);
+        cellInterpolationMap_->distribute(donorCellCells);
+        cellInterpolationMap_->distribute(donorWeights);
+        cellInterpolationMap_->distribute(samples);
 
         // Check which acceptor has won and transfer
         forAll(interpolationCells_, i)
@@ -1764,6 +1764,7 @@ void Foam::cellCellStencils::inverseDistance::updateMesh
     cellTypes_.transfer(newCellType);
     cellCellStencil::updateMesh(map);
 }
+
 
 bool Foam::cellCellStencils::inverseDistance::update() const
 {

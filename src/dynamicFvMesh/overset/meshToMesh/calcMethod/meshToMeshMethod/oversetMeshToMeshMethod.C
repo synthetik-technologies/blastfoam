@@ -93,9 +93,9 @@ bool Foam::oversetMeshToMeshMethod::intersect
     treeBoundBox bbTgtCell(tgt_.points(), tgt_.faces()[cellFaces[0]]);
     for (label i = 1; i < cellFaces.size(); ++i)
     {
-        boundBox tmpBb(tgt_.points(), tgt_.faces()[cellFaces[i]]);
+        boundBox tmpBb(tgt_.points(), tgt_.faces()[cellFaces[i]], false);
         bbTgtCell.min() = min(bbTgtCell.min(), tmpBb.min());
-        bbTgtCell.max() = min(bbTgtCell.max(), tmpBb.max());
+        bbTgtCell.max() = max(bbTgtCell.max(), tmpBb.max());
     }
 
     return overlapEngine.cellCellOverlapMinDecomp
@@ -124,7 +124,7 @@ Foam::scalar Foam::oversetMeshToMeshMethod::interVol
     treeBoundBox bbTgtCell(tgt_.points(), tgt_.faces()[cellFaces[0]]);
     for (label i = 1; i < cellFaces.size(); ++i)
     {
-        boundBox tmpBb(tgt_.points(), tgt_.faces()[cellFaces[i]]);
+        boundBox tmpBb(tgt_.points(), tgt_.faces()[cellFaces[i]], false);
         bbTgtCell.min() = min(bbTgtCell.min(), tmpBb.min());
         bbTgtCell.max() = min(bbTgtCell.max(), tmpBb.max());
     }

@@ -188,7 +188,6 @@ void Foam::AABBTree<Type>::createBoxes
         divide = bb.min()[maxDir] + 0.5*maxSpan;
     }
 
-
     scalar divMin = divide + tolerance_*maxSpan;
     scalar divMax = divide - tolerance_*maxSpan;
 
@@ -226,16 +225,16 @@ void Foam::AABBTree<Type>::createBoxes
         if (intoMin)
         {
             minBinObjectIDs.append(objI);
-            boundBox tmpBb(points, obj);
+            boundBox tmpBb(points, obj, false);
             minBb.min() = min(minBb.min(), tmpBb.min());
-            minBb.max() = min(minBb.max(), tmpBb.max());
+            minBb.max() = max(minBb.max(), tmpBb.max());
         }
         if (intoMax)
         {
             maxBinObjectIDs.append(objI);
-            boundBox tmpBb(points, obj);
+            boundBox tmpBb(points, obj, false);
             maxBb.min() = min(maxBb.min(), tmpBb.min());
-            maxBb.max() = min(maxBb.max(), tmpBb.max());
+            maxBb.max() = max(maxBb.max(), tmpBb.max());
         }
     }
 
@@ -251,6 +250,7 @@ void Foam::AABBTree<Type>::createBoxes
 
     minBinObjectIDs.shrink();
     maxBinObjectIDs.shrink();
+
 
 
     label minI;
@@ -317,6 +317,7 @@ void Foam::AABBTree<Type>::createBoxes
             addressing
         );
     }
+
 }
 
 

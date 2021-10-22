@@ -212,13 +212,10 @@ Foam::autoPtr<Foam::mapDistribute> Foam::oversetMeshToMesh::calcProcMap
                     forAll(c, facei)
                     {
                         const face& f = faces[c[facei]];
-                        forAll(f, fp)
-                        {
-                            boundBox tmpBb(points, f);
-                            cellBb.min() = min(cellBb.min(), tmpBb.min());
-                            cellBb.max() = min(cellBb.max(), tmpBb.max());
-//                             cellBb.add(points, f);
-                        }
+                        boundBox tmpBb(points, f, false);
+                        cellBb.min() = min(cellBb.min(), tmpBb.min());
+                        cellBb.max() = max(cellBb.max(), tmpBb.max());
+//                         cellBb.add(points, f);
                     }
 
                     // find the overlapping tgt cells on each src processor

@@ -325,6 +325,10 @@ public:
         //  constructed by above cellInterpolationMap) to interpolate
         virtual const labelListList& cellStencil() const
         {
+            if (needUpdate_)
+            {
+                update();
+            }
             return cellStencil_;
         }
 
