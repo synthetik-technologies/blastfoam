@@ -97,7 +97,7 @@ Foam::scalar Foam::RidderRootSolver::findRoot
 
         if (converged(xNew - x0) || converged(xNew - x1))
         {
-            return xNew;
+            break;
         }
         eqn_.limit(xNew);
 
@@ -124,10 +124,10 @@ Foam::scalar Foam::RidderRootSolver::findRoot
             x1 = xNew;
             y1 = yNew;
         }
+        printStepInformation(xNew);
     }
-    printNoConvergence();
 
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

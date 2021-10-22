@@ -66,7 +66,7 @@ Foam::bisectionMinimizationScheme::bisectionMinimizationScheme
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::bisectionMinimizationScheme::solve
+Foam::scalar Foam::bisectionMinimizationScheme::minimize
 (
     const scalar x,
     const scalar x1,
@@ -79,30 +79,40 @@ Foam::scalar Foam::bisectionMinimizationScheme::solve
     scalar xMean = 0.5*(x1 + x2);
     scalar yLow = eqn_.f(xLow, li);
     scalar yHigh = eqn_.f(xHigh, li);
+    scalar yMean;
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         if (converged(xHigh - xLow))
         {
-            return xMean;
+            break;
         }
 
         if (yHigh < yLow)
         {
             xLow = xMean;
             yLow = eqn_.f(xLow, li);
+            yMean = yHigh;
         }
         else
         {
             xHigh = xMean;
             yHigh = eqn_.f(xHigh, li);
+            yMean = yLow;
         }
-        xMean = (xLow + xHigh)*0.5;
-    }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
 
-    return xMean;
+        if (converged(yMean))
+        {
+            break;
+        }
+
+        xMean = (xLow + xHigh)*0.5;
+
+        printStepInformation(xMean);
+    }
+    converged(yMean);
+
+    return printFinalInformation(xMean);
 }
 
 // ************************************************************************* //

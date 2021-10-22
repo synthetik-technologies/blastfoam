@@ -85,14 +85,15 @@ Foam::scalar Foam::SteffensenRootSolver::findRoot
 
         if (converged(xNew - xOld))
         {
-            return xNew;
+            break;
         }
         xOld = xNew;
 
-    }
-    printNoConvergence();
+        printStepInformation(xNew);
 
-    return xNew;
+    }
+
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

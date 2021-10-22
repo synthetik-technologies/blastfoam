@@ -104,7 +104,7 @@ Foam::scalar Foam::BrentRootSolver::findRoot
     {
         if (converged(x1 - x0))
         {
-            return x1;
+            break;
         }
 
         if (mag(y0 - y2) > tolerance_ && mag(y1 - y2) > tolerance_)
@@ -146,7 +146,7 @@ Foam::scalar Foam::BrentRootSolver::findRoot
 
         if (converged(yNew))
         {
-            return xNew;
+            break;
         }
 
         x3 = x2;
@@ -172,10 +172,9 @@ Foam::scalar Foam::BrentRootSolver::findRoot
             x1 = xtmp;
             y1 = ytmp;
         }
+        printStepInformation(xNew);
     }
-    printNoConvergence();
-
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

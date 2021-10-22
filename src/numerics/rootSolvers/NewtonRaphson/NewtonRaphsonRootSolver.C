@@ -76,15 +76,14 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
         eqn_.limit(xNew);
         if (converged(xNew - xOld))
         {
-            return xNew;
+            break;
         }
 
         xOld = xNew;
-
+        printStepInformation(xNew);
     }
-    printNoConvergence();
 
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

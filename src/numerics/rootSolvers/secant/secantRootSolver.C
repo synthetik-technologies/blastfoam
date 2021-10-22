@@ -96,13 +96,13 @@ Foam::scalar Foam::secantRootSolver::findRoot
 
         if (converged(xHigh - xLow))
         {
-            return xNew;
+            break;
         }
+        printStepInformation(xNew);
 
     }
-    printNoConvergence();
 
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

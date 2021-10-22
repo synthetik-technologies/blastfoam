@@ -70,14 +70,14 @@ Foam::scalar Foam::HalleyRootSolver::findRoot
 
         if (converged(xNew - xOld))
         {
-            return xNew;
+            break;
         }
         xOld = xNew;
 
+        printStepInformation(xNew);
     }
-    printNoConvergence();
 
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

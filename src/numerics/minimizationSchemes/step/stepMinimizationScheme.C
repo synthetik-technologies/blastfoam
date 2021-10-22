@@ -23,120 +23,103 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "quadraticFitMinimizationScheme.H"
+#include "stepMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(quadraticFitMinimizationScheme, 0);
+    defineTypeNameAndDebug(stepMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        quadraticFitMinimizationScheme,
+        stepMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        quadraticFitMinimizationScheme,
+        stepMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
-        quadraticFitMinimizationScheme,
+        stepMinimizationScheme,
         dictionaryTwo
     );
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::quadraticFitMinimizationScheme::quadraticFitMinimizationScheme
+Foam::stepMinimizationScheme::stepMinimizationScheme
 (
     const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    minimizationScheme(eqn, dict)
+    minimizationScheme(eqn, dict),
+    dx_
+    (
+        dict.lookupOrDefault<scalar>
+        (
+            "dx",
+            (eqn_.upper() - eqn_.lower())
+           /ceil(maxSteps_/10)
+        )
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::quadraticFitMinimizationScheme::minimize
+Foam::scalar Foam::stepMinimizationScheme::minimize
 (
+    const scalar,
     const scalar x0,
     const scalar x1,
-    const scalar x2,
     const label li
 ) const
 {
-    scalar a = x1;
-    scalar b = x0;
-    scalar c = x2;
+    scalar xLower = x0;
+    scalar dx = dx_;
+    scalar xUpper = x0 + dx;
 
-    scalar ya = eqn_.f(a, li);
-    scalar yb = eqn_.f(b, li);
-    scalar yc = eqn_.f(c, li);
-
-    scalar x = b;
-    scalar yx = yb;
+    scalar yLower = eqn_.f(xLower, li);
+    scalar yUpper = eqn_.f(xUpper, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        x =
-            0.5
-           *(
-                ya*(sqr(b) - sqr(c))
-              + yb*(sqr(c) - sqr(a))
-              + yc*(sqr(a) - sqr(b))
-            )/stabilise
-            (
-                ya*(b - c) + yb*(c - a) + yc*(a - b),
-                tolerance_
-            );
-        if (converged(x - b))
+        if (yUpper > yLower)
         {
-            return x;
-        }
-
-        yx = eqn_.f(x, li);
-
-        if (x > b)
-        {
-            if (yx > yb)
-            {
-                c = x;
-                yc = yx;
-            }
-            else
-            {
-                a = b;
-                b = x;
-                ya = yb;
-                yb = yx;
-            }
+            dx /= 2.0;
+            xUpper  = xLower + dx;
+            yUpper = eqn_.f(xUpper, li);
         }
         else
         {
-            if (yx > yb)
-            {
-                a = x;
-                ya = yx;
-            }
-            else
-            {
-                c = b;
-                b = x;
-                yc = yb;
-                yb = yx;
-            }
+            xLower = xUpper;
+            xUpper += dx;
+            yLower = yUpper;
+            yUpper = eqn_.f(xUpper, li);
         }
-        printStepInformation(x);
+
+        eqn_.limit(xUpper);
+        if (converged(xUpper - xLower))
+        {
+            break;
+        }
+        if (converged(yLower))
+        {
+            break;
+        }
+        printStepInformation(xUpper);
     }
-    return x;
+
+    converged(yUpper);
+    return printFinalInformation(xLower);
 }
 
 // ************************************************************************* //

@@ -120,7 +120,7 @@ public:
         }
 
         //- Limit the value of x to the range of the equation
-        inline void limit(Field<Type>& x) const
+        inline void limit(scalarField& x) const
         {
             x = min(upperLimits_, max(x, lowerLimits_));
         }

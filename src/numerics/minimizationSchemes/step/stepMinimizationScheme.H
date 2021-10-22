@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::quadraticFitMinimizationScheme
+    Foam::stepMinimizationScheme
 
 Description
-    Find root using the quadraticFit method
+    Find root using the step method
 
 SourceFiles
-    quadraticFitMinimizationScheme.C
+    stepMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef quadraticFitMinimizationScheme_H
-#define quadraticFitMinimizationScheme_H
+#ifndef stepMinimizationScheme_H
+#define stepMinimizationScheme_H
 
 #include "minimizationScheme.H"
 #include "typeInfo.H"
@@ -45,29 +45,35 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class quadraticFitMinimizationScheme Declaration
+                        Class stepMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class quadraticFitMinimizationScheme
+class stepMinimizationScheme
 :
     public minimizationScheme
 {
+// Private data
+
+    //- Initial step size
+    scalar dx_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("quadraticFit");
+    TypeName("step");
 
     // Constructors
 
         //- Construct for given minimizationScheme
-        quadraticFitMinimizationScheme(const scalarEquation& eqn, const dictionary& dict);
+        stepMinimizationScheme(const scalarEquation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
-        quadraticFitMinimizationScheme(const minimizationScheme&) = delete;
+        stepMinimizationScheme(const minimizationScheme&) = delete;
 
 
     //- Destructor
-    virtual ~quadraticFitMinimizationScheme()
+    virtual ~stepMinimizationScheme()
     {}
 
 
@@ -85,7 +91,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const quadraticFitMinimizationScheme&) = delete;
+        void operator=(const stepMinimizationScheme&) = delete;
 };
 
 

@@ -73,6 +73,12 @@ protected:
         //- Is the solution converged
         bool converged(const scalar error) const;
 
+        //- Print information about the current step
+        void printStepInformation(const scalar val) const;
+
+        //- Print information about the current step
+        scalar printFinalInformation(const scalar val) const;
+
 
 public:
 
@@ -180,9 +186,6 @@ public:
             const scalar xHigh,
             const label li
         ) const = 0;
-
-        //- Print failure
-        virtual void printNoConvergence() const;
 
     // Member Operators
 

@@ -93,7 +93,7 @@ Foam::scalar Foam::falsePointRootSolver::findRoot
 
         if (converged(yNew) || converged(xHigh - xLow))
         {
-            return xNew;
+            break;
         }
 
         if (yNew*yLow > 0)
@@ -106,10 +106,10 @@ Foam::scalar Foam::falsePointRootSolver::findRoot
             xHigh = xNew;
             yHigh = yNew;
         }
+        printStepInformation(xNew);
     }
-    printNoConvergence();
 
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

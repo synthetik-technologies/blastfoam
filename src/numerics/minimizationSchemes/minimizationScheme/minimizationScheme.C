@@ -43,6 +43,67 @@ bool Foam::minimizationScheme::converged(const scalar error) const
     return error_ < tolerance_;
 }
 
+
+void Foam::minimizationScheme::printStepInformation(const scalar val) const
+{
+    if (debug > 2)
+    {
+        Info<< "Step " << stepi_
+            << ", error=" << error_
+            << ", value: " << val << nl<< endl;
+    }
+}
+
+
+Foam::scalar
+Foam::minimizationScheme::printFinalInformation(const scalar val) const
+{
+    if (stepi_ < maxSteps_ && debug > 1)
+    {
+        Info<< "Converged in " << stepi_ << " iterations"
+            << ", final error=" << error_ << endl;
+    }
+    else if (stepi_ >= maxSteps_ && debug)
+    {
+        WarningInFunction
+            << "Did not converge, final error= " << error_ << endl;
+    }
+    return val;
+}
+
+void Foam::minimizationScheme::sample
+(
+    scalar& x0,
+    scalar& x1,
+    const label li
+) const
+{
+    if (nSamples_ < 1)
+    {
+        return;
+    }
+    if (debug)
+    {
+        Info<<"Pre sampling interval" << endl;
+    }
+
+    scalar dx = (x1 - x0)/scalar(nSamples_ + 1);
+    label minI = 0;
+    scalar minY = great;
+    for (label i = 0; i < nSamples_; i++)
+    {
+        scalar y = eqn_.f(((scalar(i) + 0.5)*dx), li);
+        if (y < minY)
+        {
+            minY = y;
+            minI = i;
+        }
+    }
+    x0 = scalar(minI)*dx;
+    x1 = x0 + dx;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::minimizationScheme::minimizationScheme(const scalarEquation& eqn, const dictionary& dict)
@@ -50,6 +111,7 @@ Foam::minimizationScheme::minimizationScheme(const scalarEquation& eqn, const di
     eqn_(eqn),
     tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
+    nSamples_(dict.lookupOrDefault<label>("nSamples", 0)),
     stepi_(0),
     error_(great)
 {}
@@ -59,7 +121,7 @@ Foam::minimizationScheme::minimizationScheme(const scalarEquation& eqn, const di
 
 Foam::scalar Foam::minimizationScheme::solve() const
 {
-    return this->solve
+    return solve
     (
         (eqn_.lower() + eqn_.upper())*0.5,
         eqn_.lower(),
@@ -71,7 +133,7 @@ Foam::scalar Foam::minimizationScheme::solve() const
 
 Foam::scalar Foam::minimizationScheme::solve(const scalar x0) const
 {
-    return this->solve(x0, eqn_.lower(), eqn_.upper(), 0);
+    return solve(x0, eqn_.lower(), eqn_.upper(), 0);
 }
 
 
@@ -92,7 +154,22 @@ Foam::scalar Foam::minimizationScheme::solve
     const scalar xHigh
 ) const
 {
-    return this->solve(x0, xLow, xHigh, 0);
+    return solve(x0, xLow, xHigh, 0);
+}
+
+
+Foam::scalar Foam::minimizationScheme::solve
+(
+    const scalar x0,
+    const scalar xLow,
+    const scalar xHigh,
+    const label li
+) const
+{
+    scalar xMin = xLow;
+    scalar xMax = xHigh;
+    sample(xMin, xMax, li);
+    return minimize(x0, xMin, xMax, li);
 }
 
 

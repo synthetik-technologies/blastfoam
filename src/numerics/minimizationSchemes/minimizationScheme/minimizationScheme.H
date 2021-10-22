@@ -64,6 +64,9 @@ protected:
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
 
+        //- Number of location to pre sample
+        label nSamples_;
+
         //- Current step number
         mutable label stepi_;
 
@@ -72,6 +75,15 @@ protected:
 
         //- Is the solution converged
         bool converged(const scalar error) const;
+
+        //- Print information about the current step
+        void printStepInformation(const scalar val) const;
+
+        //- Print information about the current step
+        scalar printFinalInformation(const scalar val) const;
+
+        //- Sample and return the interval with the smallest value
+        void sample(scalar&, scalar&, const label) const;
 
 public:
 
@@ -164,6 +176,15 @@ public:
 
         //- Find the root of the equation between xHigh and xLow
         virtual scalar solve
+        (
+            const scalar x0,
+            const scalar xLow,
+            const scalar xHigh,
+            const label li
+        ) const;
+
+        //- Find the root of the equation between xHigh and xLow
+        virtual scalar minimize
         (
             const scalar x0,
             const scalar xLow,

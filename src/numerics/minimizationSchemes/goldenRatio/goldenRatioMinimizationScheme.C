@@ -74,7 +74,7 @@ Foam::goldenRatioMinimizationScheme::goldenRatioMinimizationScheme
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::goldenRatioMinimizationScheme::solve
+Foam::scalar Foam::goldenRatioMinimizationScheme::minimize
 (
     const scalar x,
     const scalar x1,
@@ -118,8 +118,9 @@ Foam::scalar Foam::goldenRatioMinimizationScheme::solve
             yd = eqn_.f(d, li);
         }
         converged(b - a);
+        printStepInformation(0.5*(a + b));
     }
-    return 0.5*(a + b);
+    return printFinalInformation(0.5*(a + b));
 }
 
 // ************************************************************************* //

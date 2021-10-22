@@ -111,13 +111,13 @@ Foam::scalar Foam::stepRootSolver::findRoot
         }
         if (converged(dx) || converged(y))
         {
-            return x;
+            break;
         }
+        printStepInformation(x);
 
     }
-    printNoConvergence();
 
-    return x;
+    return printFinalInformation(x);
 }
 
 // ************************************************************************* //

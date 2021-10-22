@@ -74,8 +74,7 @@ public:
     // Member Functions
 
         //- Solve the root
-        using minimizationScheme::solve;
-        virtual scalar solve
+        virtual scalar minimize
         (
             const scalar x0,
             const scalar x1,

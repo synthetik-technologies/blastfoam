@@ -97,16 +97,17 @@ Foam::scalar Foam::bisectionRootSolver::findRoot
 
         if (converged(y))
         {
-            return xMean;
+            break;
         }
 
         xMean = (xLow + xHigh)/2.0;
         y = eqn_.f(xMean, li);
 
-    }
-    printNoConvergence();
+        printStepInformation(xMean);
 
-    return xMean;
+    }
+
+    return printFinalInformation(xMean);
 }
 
 // ************************************************************************* //

@@ -77,8 +77,8 @@ void Foam::MultivariateEquation<Type>::checkLimits() const
 template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation(const label n)
 :
-    lowerLimits_(n, -great*pTraits<Type>::one),
-    upperLimits_(n, great*pTraits<Type>::one)
+    lowerLimits_(n, -great),
+    upperLimits_(n, great)
 {}
 
 

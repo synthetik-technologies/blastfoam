@@ -54,7 +54,7 @@ Foam::NewtonRaphsonMinimizationScheme::NewtonRaphsonMinimizationScheme
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::NewtonRaphsonMinimizationScheme::solve
+Foam::scalar Foam::NewtonRaphsonMinimizationScheme::minimize
 (
     const scalar x,
     const scalar xLow,
@@ -66,21 +66,20 @@ Foam::scalar Foam::NewtonRaphsonMinimizationScheme::solve
     scalar xNew = x;
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = xOld - eqn_.dfdx(xOld, li)/stabilise(eqn_.d2fdx2(xOld, li), small);
+        xNew =
+            xOld
+          - eqn_.dfdx(xOld, li)/stabilise(eqn_.d2fdx2(xOld, li), small);
 
-        error_ = mag(xNew - xOld);
         eqn_.limit(xNew);
-        if (error_ < tolerance_)
+        if (converged(xNew - xOld))
         {
-            return xNew;
+            break;
         }
         xOld = xNew;
 
+        printStepInformation(xNew);
     }
-    WarningInFunction
-        << "Could not converge to the given root." << endl;
-
-    return xNew;
+    return printFinalInformation(xNew);
 }
 
 // ************************************************************************* //

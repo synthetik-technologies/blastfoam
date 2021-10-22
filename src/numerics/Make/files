@@ -26,6 +26,7 @@ integrators/Integrator/Integrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C
 minimizationSchemes/minimizationScheme/minimizationSchemeNew.C
+minimizationSchemes/step/stepMinimizationScheme.C
 minimizationSchemes/bisection/bisectionMinimizationScheme.C
 minimizationSchemes/goldenRatio/goldenRatioMinimizationScheme.C
 minimizationSchemes/quadraticFit/quadraticFitMinimizationScheme.C

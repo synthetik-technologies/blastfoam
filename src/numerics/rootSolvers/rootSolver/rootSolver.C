@@ -43,6 +43,36 @@ bool Foam::rootSolver::converged(const scalar error) const
     return error_ < tolerance_;
 }
 
+
+
+void Foam::rootSolver::printStepInformation(const scalar val) const
+{
+    if (debug)
+    {
+        Info<< "Step " << stepi_
+            << ", error=" << error_
+            << ", value: " << val << endl;
+    }
+}
+
+
+Foam::scalar
+Foam::rootSolver::printFinalInformation(const scalar val) const
+{
+    if (stepi_ < maxSteps_ && debug)
+    {
+        Info<< "Converged in " << stepi_ << " iterations"
+            << ", final error=" << error_;
+    }
+    else if (stepi_ >= maxSteps_)
+    {
+        WarningInFunction
+            << "Did not converge, final error= " << error_ << endl;
+    }
+    return val;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
@@ -101,17 +131,6 @@ Foam::scalar Foam::rootSolver::solve
 ) const
 {
     return this->findRoot(x0, xLow, xHigh, li);
-}
-
-
-void Foam::rootSolver::printNoConvergence() const
-{
-    if (debug)
-    {
-        WarningInFunction
-            << "Did not converge with in " << stepi_ << " steps." << nl
-            << "Final error=" << error_ <<endl;
-    }
 }
 
 // ************************************************************************* //
