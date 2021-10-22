@@ -144,6 +144,18 @@ public:
         ) const = 0;
 
         //- Calculate the Jacobian of the equation
+        virtual void gradient
+        (
+            const scalarList& x,
+            const label li,
+            List<Type>& fx,
+            List<Type>& grad
+        ) const
+        {
+            NotImplemented;
+        }
+
+        //- Calculate the Jacobian of the equation
         virtual void jacobian
         (
             const scalarList& x,

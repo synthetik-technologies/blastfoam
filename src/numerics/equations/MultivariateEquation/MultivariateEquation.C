@@ -158,7 +158,7 @@ Foam::MultivariateEquation<Type>::f
     const label li
 ) const
 {
-    tmp<Field<Type>> tmpFx(new Field<Type>(x.size()));
+    tmp<Field<Type>> tmpFx(new Field<Type>(this->nEqns()));
     this->f(x, li, tmpFx.ref());
     return tmpFx;
 }
@@ -173,16 +173,9 @@ Foam::MultivariateEquation<Type>::calculateGradients
     const label li
 ) const
 {
-    tmp<Field<Type>> tgrad(x0.size());
-    Field<Type>& grad = tgrad.ref();
-    forAll(x0, cmpti)
-    {
-        scalar x1 = x0[cmpti] - dx[cmpti]*0.5;
-        scalar x2 = x1 + dx[cmpti];
-
-        grad[cmpti] = (this->f(x2, li) - this->f(x1, li))/dx[cmpti];
-    }
-    return tgrad;
+    scalarField x1(x0 - dx*0.5);
+    scalarField x2(x1 + dx);
+    return (this->f(x2, li) - this->f(x1, li))/dx;
 }
 
 
@@ -195,7 +188,7 @@ Foam::MultivariateEquation<Type>::calculateJacobian
     const label li
 ) const
 {
-    RectangularMatrix<Type> J(x0.size());
+    RectangularMatrix<Type> J(nEqns(), x0.size());
     forAll(x0, cmptj)
     {
         scalarList x1(x0);
@@ -206,7 +199,7 @@ Foam::MultivariateEquation<Type>::calculateJacobian
         scalarField f1(this->f(x1, li));
         scalarField f2(this->f(x2, li));
 
-        forAll(x0, cmpti)
+        for (label cmpti = 0; cmpti < nEqns(); cmpti++)
         {
             J(cmpti, cmptj) =
                 (f2[cmpti] - f1[cmpti])/(x2[cmptj] - x1[cmptj]);

@@ -33,6 +33,11 @@ minimizationSchemes/quadraticFit/quadraticFitMinimizationScheme.C
 minimizationSchemes/NewtonRaphson/NewtonRaphsonMinimizationScheme.C
 
 
+multivariateMinimizationSchemes/multivariateMinimizationScheme/multivariateMinimizationScheme.C
+multivariateMinimizationSchemes/multivariateMinimizationScheme/multivariateMinimizationSchemeNew.C
+multivariateMinimizationSchemes/gradientDescent/gradientDescentMultivariateMinimizationScheme.C
+
+
 algorithms/polygon/clipping/SutherlandHodgman.C
 algorithms/polygon/pointInPolygon/HormannAgathos.C
 algorithms/rotation/RodriguesRotation.C

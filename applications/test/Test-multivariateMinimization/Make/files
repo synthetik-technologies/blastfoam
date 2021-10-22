@@ -1,0 +1,3 @@
+Test-multivariateMinimization.C
+
+EXE = $(BLAST_APPBIN)/Test-multivariateMinimization

@@ -23,30 +23,42 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multivariateRootSolver.H"
+#include "multivariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(multivariateRootSolver, 0);
-    defineRunTimeSelectionTable(multivariateRootSolver, dictionaryZero);
-    defineRunTimeSelectionTable(multivariateRootSolver, dictionaryOne);
+    defineTypeNameAndDebug(multivariateMinimizationScheme, 0);
+    defineRunTimeSelectionTable(multivariateMinimizationScheme, dictionaryZero);
+    defineRunTimeSelectionTable(multivariateMinimizationScheme, dictionaryOne);
+    defineRunTimeSelectionTable(multivariateMinimizationScheme, dictionaryTwo);
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::multivariateRootSolver::converged(const scalarField& errors) const
+bool Foam::multivariateMinimizationScheme::converged
+(
+    const scalarList& errors
+) const
 {
     errors_ = mag(errors);
     error_ = max(errors_);
-    return error_ < tolerance_;
+
+    forAll(errors_, i)
+    {
+        if (errors_[i] > tolerances_[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 
-void Foam::multivariateRootSolver::printStepInformation
+void Foam::multivariateMinimizationScheme::printStepInformation
 (
-    const scalarField& vals
+    const scalarList& vals
 ) const
 {
     if (debug)
@@ -58,7 +70,7 @@ void Foam::multivariateRootSolver::printStepInformation
 }
 
 
-void Foam::multivariateRootSolver::printFinalInformation() const
+void Foam::multivariateMinimizationScheme::printFinalInformation() const
 {
     if (stepi_ < maxSteps_ && debug)
     {
@@ -75,34 +87,35 @@ void Foam::multivariateRootSolver::printFinalInformation() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::multivariateRootSolver::multivariateRootSolver
+Foam::multivariateMinimizationScheme::multivariateMinimizationScheme
 (
     const scalarMultivariateEquation& eqns,
     const dictionary& dict
 )
 :
     eqns_(eqns),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    tolerances_
+    (
+        dict.lookupOrDefault<scalarField>
+        (
+            "tolerances",
+            scalarField(eqns_.nEqns(), 1e-6)
+        )
+    ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
     errors_(eqns.nEqns(), great),
     error_(great)
-{
-    if (eqns_.nEqns() > 1)
-    {
-        FatalErrorInFunction
-            << "Only a single output is allowed" << abort(FatalError);
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve() const
+Foam::tmp<Foam::scalarField> Foam::multivariateMinimizationScheme::solve() const
 {
-    return this->findRoots
+    return solve
     (
-        ((eqns_.lower() + eqns_.upper())*0.5)(),
+        (eqns_.lower() + eqns_.upper())*0.5,
         eqns_.lower(),
         eqns_.upper(),
         0
@@ -110,37 +123,37 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve() const
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::multivariateMinimizationScheme::solve
 (
     const scalarList& x0
 ) const
 {
-    return this->findRoots(x0, eqns_.lower(), eqns_.upper(), 0);
+    return solve(x0, eqns_.lower(), eqns_.upper(), 0);
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::multivariateMinimizationScheme::solve
 (
     const scalarList& x0,
     const label li
 ) const
 {
-    return this->findRoots(x0, eqns_.lower(), eqns_.upper(), li);
+    return this->solve(x0, eqns_.lower(), eqns_.upper(), li);
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::multivariateMinimizationScheme::solve
 (
     const scalarList& x0,
     const scalarList& xLow,
     const scalarList& xHigh
 ) const
 {
-    return this->findRoots(x0, xLow, xHigh, 0);
+    return solve(x0, xLow, xHigh, 0);
 }
 
 
-Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::multivariateMinimizationScheme::solve
 (
     const scalarList& x0,
     const scalarList& xLow,
@@ -148,7 +161,7 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
     const label li
 ) const
 {
-    return this->findRoots(x0, xLow, xHigh, li);
+    return minimize(x0, xLow, xHigh, li);
 }
 
 
