@@ -36,7 +36,6 @@ namespace Foam
 
 template<class Point, class PointRef>
 inline triangleShape<Point, PointRef>::triangleShape
-<Point, PointRef>::triangleShape
 (
     const Point& a,
     const Point& b,
