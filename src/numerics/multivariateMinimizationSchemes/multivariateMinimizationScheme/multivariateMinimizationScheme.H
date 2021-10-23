@@ -59,7 +59,8 @@ protected:
         const scalarMultivariateEquation& eqns_;
 
         //- Convergence tolerance
-        scalarField tolerances_;
+        scalarField xTolerances_;
+        scalarField yTolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -68,13 +69,30 @@ protected:
         mutable label stepi_;
 
         //- Current errors
-        mutable scalarField errors_;
+        mutable scalarField xErrors_;
+        mutable scalarField yErrors_;
 
-        //- Current total error
-        mutable scalar error_;
+        //- Line search reduction coefficient
+        scalar tau_;
+
+        //- Line search
+        scalar lineSearch
+        (
+            const scalarList& x0,
+            const scalarList& grad,
+            const label li,
+            scalarList& fx
+        ) const;
+
+        //- Return the L2 norm the given list
+        scalar norm(const scalarList& lst) const;
 
         //- Is the solution converged
-        bool converged(const scalarList& error) const;
+        bool converged
+        (
+            const scalarList& xError, 
+            const scalarList& yError
+        ) const;
 
         //- Print information about the current step
         void printStepInformation(const scalarList& vals) const;
@@ -147,16 +165,15 @@ public:
     // Member Functions
 
         //- Return access to the tolerance
-        inline scalarList& tolerances();
+        inline scalarList& xTolerances();
+        inline scalarList& yTolerances();
 
         //- Return the step number
         inline label nSteps() const;
 
         //- Return the errors
-        inline scalarList& errors() const;
-
-        //- Return the error
-        inline scalar error() const;
+        inline scalarList& xErrors() const;
+        inline scalarList& yErrors() const;
 
         //- Find the root of the equation
         virtual tmp<scalarField> solve() const;

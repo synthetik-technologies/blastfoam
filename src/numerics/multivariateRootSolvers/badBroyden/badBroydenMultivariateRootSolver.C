@@ -55,9 +55,14 @@ Foam::badBroydenMultivariateRootSolver::badBroydenMultivariateRootSolver
     const dictionary& dict
 )
 :
-    multivariateRootSolver(eqns, dict),
-    dx_(dict.lookupOrDefault("dx", scalarField(eqns.nEqns(), 1e-3)))
-{}
+    multivariateRootSolver(eqns, dict)
+{
+    if (dict.found("dx"))
+    {
+        const_cast<scalarMultivariateEquation&>(eqns_).dx() = 
+            dict.lookup<scalarList>("dx");
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -71,18 +76,18 @@ Foam::badBroydenMultivariateRootSolver::findRoots
     const label li
 ) const
 {
-    scalarField xOld(x0);
-    scalarRectangularMatrix J(eqns_.calculateJacobian(x0, dx_, li));
-
     tmp<scalarField> xTmp(new scalarField(x0));
     scalarField& x = xTmp.ref();
-    scalarRectangularMatrix dx(x.size(), 1);
-    scalarRectangularMatrix df(x.size(), 1);
-
+    
+    scalarField xOld(x0);
+    scalarRectangularMatrix J(eqns_.nEqns(), x0.size());
+    scalarField fOld(eqns_.nEqns());
+    eqns_.jacobian(x0, li, fOld, J);
+    scalarField f(fOld);
     scalarRectangularMatrix Jinv(SVDinv(J));
 
-    scalarField fOld(eqns_.f(x0, li));
-    scalarField f(fOld);
+    scalarRectangularMatrix dx(x.size(), 1);
+    scalarRectangularMatrix df(x.size(), 1);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {

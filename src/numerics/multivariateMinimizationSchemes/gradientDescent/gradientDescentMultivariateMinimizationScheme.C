@@ -69,67 +69,47 @@ Foam::gradientDescentMultivariateMinimizationScheme::gradientDescentMultivariate
 Foam::tmp<Foam::scalarField>
 Foam::gradientDescentMultivariateMinimizationScheme::minimize
 (
-    const scalarList& x,
+    const scalarList& x0,
     const scalarList& xLow,
     const scalarList& xHigh,
     const label li
 ) const
 {
-    tmp<scalarField> txNew(new scalarField(x));
-    RectangularMatrix<scalar> J(eqns_.nEqns(), x.size());
+    tmp<scalarField> txNew(new scalarField(x0));
     scalarField& xNew = txNew.ref();
     scalarField xOld(xNew);
-
     scalarField fx(eqns_.nEqns());
+    eqns_.f(x0, li, fx);
+    const scalarList& dx(eqns_.dx());
 
-    scalarList dx(x.size(), 1e-3);
-    if (eqns_.nDerivatives() > 0)
+    scalarField grad(x0.size());
+    forAll(grad, cmpti)
     {
-        eqns_.jacobian(x, li, fx, J);
+        scalarField x1(x0);
+        x1[cmpti] += dx[cmpti];
+        grad[cmpti] = ((eqns_.f(x1, li) - fx)/(dx[cmpti]))()[0];
     }
-    else
-    {
-        J = eqns_.calculateJacobian(x, dx, li);
-        fx = eqns_.f(x, li);
-    }
-    scalarField grad(x.size());
-    for (label cmpti = 0; cmpti < x.size(); cmpti++)
-    {
-        grad[cmpti] = J[0][cmpti];
-    }
-    scalarField gradOld(grad);
 
-    scalar alpha(0.5);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xOld = xNew;
-        gradOld = grad;
 
-        xNew -= alpha*grad;
+        scalar alpha = lineSearch(xOld, grad, li, fx);
+
+        xNew = xOld - alpha*grad;
         eqns_.limit(xNew);
 
-        if (converged(xNew - xOld))
+        if (converged(xNew - xOld, fx))
         {
             break;
         }
 
-        if (eqns_.nDerivatives() > 0)
+        forAll(grad, cmpti)
         {
-            eqns_.jacobian(xNew, li, fx, J);
+            scalarField x1(xNew);
+            x1[cmpti] += dx[cmpti];        
+            grad[cmpti] = ((eqns_.f(x1, li) - fx)/(dx[cmpti]))()[0];
         }
-        else
-        {
-            J = eqns_.calculateJacobian(xNew, dx, li);
-            fx = eqns_.f(xNew, li);
-        }
-        for (label cmpti = 0; cmpti < x.size(); cmpti++)
-        {
-            grad[cmpti] = J[0][cmpti];
-        }
-        alpha =
-            mag(sum((xNew - xOld)*(grad - gradOld)))
-           /max(sqrt(sum(sqr(grad - gradOld))), small);
-
 
         printStepInformation(xNew);
     }

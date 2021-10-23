@@ -23,9 +23,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalarList& Foam::multivariateMinimizationScheme::tolerances()
+inline Foam::scalarList& Foam::multivariateMinimizationScheme::xTolerances()
 {
-    return tolerances_;
+    return xTolerances_;
+}
+
+
+inline Foam::scalarList& Foam::multivariateMinimizationScheme::yTolerances()
+{
+    return yTolerances_;
 }
 
 
@@ -35,15 +41,16 @@ inline Foam::label Foam::multivariateMinimizationScheme::nSteps() const
 }
 
 
-inline Foam::scalarList& Foam::multivariateMinimizationScheme::errors() const
+inline Foam::scalarList& Foam::multivariateMinimizationScheme::xErrors() const
 {
-    return errors_;
+    return xErrors_;
 }
 
 
-inline Foam::scalar Foam::multivariateMinimizationScheme::error() const
+inline Foam::scalarList& Foam::multivariateMinimizationScheme::yErrors() const
 {
-    return error_;
+    return yErrors_;
 }
+
 
 // ************************************************************************* //

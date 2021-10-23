@@ -57,6 +57,9 @@ protected:
         //- Upper limits
         scalarField upperLimits_;
 
+        //- Finite difference step size
+        scalarField dx_;
+
 
     // Protected member functions
 
@@ -67,6 +70,14 @@ protected:
         //- Make sure limits have been set
         void checkLimits() const;
 
+        //- Create a Jacobian matrix given a list of dx
+        void calculateJacobian
+        (
+            const scalarList& x0,
+            const label li,
+            const List<Type>& f0,
+            RectangularMatrix<Type>& J
+        ) const;
 
 public:
 
@@ -108,7 +119,7 @@ public:
         }
 
         //- Return the upper limits
-        const scalarList upper() const
+        const scalarList& upper() const
         {
             return upperLimits_;
         }
@@ -117,6 +128,18 @@ public:
         scalarList& upper()
         {
             return upperLimits_;
+        }
+
+        //- Return the finite difference step size
+        const scalarList& dx() const
+        {
+            return dx_;
+        }
+
+        //- Access the finite difference step size
+        scalarList& dx()
+        {
+            return dx_;
         }
 
         //- Limit the value of x to the range of the equation
@@ -129,13 +152,6 @@ public:
         bool checkBounds(const scalarList& xs) const;
 
         //- Return the function value
-        tmp<Field<Type>> f
-        (
-            const scalarList& x,
-            const label li
-        ) const;
-
-        //- Return the function value
         virtual void f
         (
             const scalarList& x,
@@ -143,17 +159,12 @@ public:
             List<Type>& fx
         ) const = 0;
 
-        //- Calculate the Jacobian of the equation
-        virtual void gradient
+        //- Return the function value
+        tmp<Field<Type>> f
         (
             const scalarList& x,
-            const label li,
-            List<Type>& fx,
-            List<Type>& grad
-        ) const
-        {
-            NotImplemented;
-        }
+            const label li
+        ) const;
 
         //- Calculate the Jacobian of the equation
         virtual void jacobian
@@ -162,25 +173,6 @@ public:
             const label li,
             List<Type>& fx,
             RectangularMatrix<Type>& dfdx
-        ) const
-        {
-            NotImplemented;
-        }
-
-        //- Create a Jacobian matrix given a list of dx
-        tmp<Field<Type>> calculateGradients
-        (
-            const scalarList& x0,
-            const scalarList& dx,
-            const label li
-        ) const;
-
-        //- Create a Jacobian matrix given a list of dx
-        RectangularMatrix<Type> calculateJacobian
-        (
-            const scalarList& x0,
-            const scalarList& dx,
-            const label li
         ) const;
 };
 

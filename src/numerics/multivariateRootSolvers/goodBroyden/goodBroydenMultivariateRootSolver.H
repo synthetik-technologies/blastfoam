@@ -52,12 +52,6 @@ class goodBroydenMultivariateRootSolver
 :
     public multivariateRootSolver
 {
-    // Private data
-
-        //- Finite difference value
-        scalarField dx_;
-
-
 public:
 
     //- Runtime type information

@@ -39,20 +39,32 @@ namespace Foam
 
 bool Foam::multivariateMinimizationScheme::converged
 (
-    const scalarList& errors
+    const scalarList& xErrors,
+    const scalarList& yErrors
 ) const
 {
-    errors_ = mag(errors);
-    error_ = max(errors_);
+    xErrors_ = mag(xErrors);
+    yErrors_ = mag(yErrors);
 
-    forAll(errors_, i)
+    bool convergedX = true;
+    bool convergedY = true;
+    forAll(xErrors_, i)
     {
-        if (errors_[i] > tolerances_[i])
+        if (xErrors_[i] > xTolerances_[i])
         {
-            return false;
+            convergedX = false;
+            break;
         }
     }
-    return true;
+    forAll(yErrors_, i)
+    {
+        if (yErrors_[i] > yTolerances_[i])
+        {
+            convergedY = false;
+            break;
+        }
+    }
+    return convergedX && convergedY;
 }
 
 
@@ -63,9 +75,10 @@ void Foam::multivariateMinimizationScheme::printStepInformation
 {
     if (debug)
     {
-        Info<< "Step " << stepi_
-            << ", errors=" << errors_
-            << ", values: " << vals << endl;
+        Info<< "Step " << stepi_ << ":" << nl
+            << "    xErrors=" << xErrors_ << nl
+            << "    yErrors=" << yErrors_ << nl
+            << "    values: " << vals << endl;
     }
 }
 
@@ -74,14 +87,56 @@ void Foam::multivariateMinimizationScheme::printFinalInformation() const
 {
     if (stepi_ < maxSteps_ && debug)
     {
-        Info<< "Converged in " << stepi_ << " iterations"
-            << ", final errors=" << errors_;
+        Info<< "Converged in " << stepi_ << " iterations" << nl
+            << "    Final xErrors=" << xErrors_ << nl
+            << "    Final yErrors=" << yErrors_ << endl;
     }
     else if (stepi_ >= maxSteps_)
     {
         WarningInFunction
-            << "Did not converge, final errors= " << errors_ << endl;
+            << "Did not converge in " << maxSteps_ << " iterations" << nl 
+            << "    Final xErrors= " << xErrors_ << nl
+            << "    Final yErrors= " << yErrors_ << endl;
     }
+}
+
+
+Foam::scalar Foam::multivariateMinimizationScheme::lineSearch
+(
+    const scalarList& x0,
+    const scalarList& grad,
+    const label li,
+    scalarList& fx
+) const
+{
+    if (debug > 3)
+    {
+        Info<< "Conducting line search" << endl;
+    }
+    scalar alpha = 2.0;
+    const scalarList fx0(fx);
+    scalarField x1(x0 - grad);
+
+    label iter = 0;
+    do
+    {
+        alpha *= tau_;
+        x1 = x0 - alpha*grad;
+        eqns_.limit(x1);
+        eqns_.f(x1, li, fx);
+    } while (fx[0] > fx0[0] && iter++ < maxSteps_);
+    return alpha;
+}
+
+
+Foam::scalar Foam::multivariateMinimizationScheme::norm(const scalarList& lst) const
+{
+    scalar sum = 0;
+    forAll(lst, i)
+    {
+        sum += magSqr(lst[i]);
+    }
+    return sum;
 }
 
 
@@ -94,19 +149,43 @@ Foam::multivariateMinimizationScheme::multivariateMinimizationScheme
 )
 :
     eqns_(eqns),
-    tolerances_
+    xTolerances_
     (
         dict.lookupOrDefault<scalarField>
         (
-            "tolerances",
+            "xTolerances",
+            scalarField(eqns_.lower().size(), 1e-6)
+        )
+    ),
+    yTolerances_
+    (
+        dict.lookupOrDefault<scalarField>
+        (
+            "yTolerances",
             scalarField(eqns_.nEqns(), 1e-6)
         )
     ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
-    errors_(eqns.nEqns(), great),
-    error_(great)
-{}
+    xErrors_(eqns.lower().size(), great),
+    yErrors_(eqns.nEqns(), great),
+    tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
+{
+    if (eqns_.nEqns() > 1)
+    {
+        FatalErrorInFunction
+            << "Only a single output is allowed" << abort(FatalError);
+    }
+
+    if (dict.found("xTolerance"))
+    {
+        xTolerances_ = dict.lookup<scalar>("xTolerance");
+    }
+    if (dict.found("yTolerance"))
+    {
+        yTolerances_ = dict.lookup<scalar>("yTolerance");
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //

@@ -72,13 +72,40 @@ void Foam::MultivariateEquation<Type>::checkLimits() const
     }
 }
 
+
+template<class Type>
+void Foam::MultivariateEquation<Type>::calculateJacobian
+(
+    const scalarList& x0,
+    const label li,
+    const List<Type>& f0,
+    RectangularMatrix<Type>& J
+) const
+{
+    J.setSize(nEqns(), x0.size());
+    forAll(x0, cmptj)
+    {
+        scalarList x1(x0);
+        x1[cmptj] += dx_[cmptj];
+
+        scalarField f1(this->f(x1, li));
+
+        for (label cmpti = 0; cmpti < nEqns(); cmpti++)
+        {
+            J(cmpti, cmptj) =
+                (f1[cmpti] - f0[cmpti])/(x1[cmptj] - x0[cmptj]);
+        }
+    }
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation(const label n)
 :
     lowerLimits_(n, -great),
-    upperLimits_(n, great)
+    upperLimits_(n, great),
+    dx_(n, 1e-6)
 {}
 
 
@@ -90,7 +117,8 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
 )
 :
     lowerLimits_(lowerLimits),
-    upperLimits_(upperLimits)
+    upperLimits_(upperLimits),
+    dx_(lowerLimits.size(), 1e-6)
 {}
 
 
@@ -165,46 +193,18 @@ Foam::MultivariateEquation<Type>::f
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::MultivariateEquation<Type>::calculateGradients
+void Foam::MultivariateEquation<Type>::jacobian
 (
-    const scalarList& x0,
-    const scalarList& dx,
-    const label li
+    const scalarList& x,
+    const label li,
+    List<Type>& fx,
+    RectangularMatrix<Type>& J
 ) const
 {
-    scalarField x1(x0 - dx*0.5);
-    scalarField x2(x1 + dx);
-    return (this->f(x2, li) - this->f(x1, li))/dx;
+    fx.resize(this->nEqns());
+    this->f(x, li, fx);
+    calculateJacobian(x, li, fx, J);
 }
 
 
-template<class Type>
-Foam::RectangularMatrix<Type>
-Foam::MultivariateEquation<Type>::calculateJacobian
-(
-    const scalarList& x0,
-    const scalarList& dx,
-    const label li
-) const
-{
-    RectangularMatrix<Type> J(nEqns(), x0.size());
-    forAll(x0, cmptj)
-    {
-        scalarList x1(x0);
-        scalarList x2(x0);
-        x1[cmptj] -= dx[cmptj]*0.5;
-        x2[cmptj] += dx[cmptj]*0.5;
-
-        scalarField f1(this->f(x1, li));
-        scalarField f2(this->f(x2, li));
-
-        for (label cmpti = 0; cmpti < nEqns(); cmpti++)
-        {
-            J(cmpti, cmptj) =
-                (f2[cmpti] - f1[cmpti])/(x2[cmptj] - x1[cmptj]);
-        }
-    }
-    return J;
-}
 // ************************************************************************* //

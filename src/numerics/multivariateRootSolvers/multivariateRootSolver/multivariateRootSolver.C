@@ -87,13 +87,7 @@ Foam::multivariateRootSolver::multivariateRootSolver
     stepi_(0),
     errors_(eqns.nEqns(), great),
     error_(great)
-{
-    if (eqns_.nEqns() > 1)
-    {
-        FatalErrorInFunction
-            << "Only a single output is allowed" << abort(FatalError);
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
