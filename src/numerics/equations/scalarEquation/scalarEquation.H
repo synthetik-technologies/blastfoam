@@ -77,9 +77,6 @@ public:
         //- Return the finite difference step size
         virtual tmp<scalarField> dX() const = 0;
 
-        //- Access the finite difference step size
-        virtual tmp<scalarField> dX() = 0;
-
         //- Return the finite difference step size
         virtual void setDX(const scalarField& newDx) const = 0;
 

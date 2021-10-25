@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::quadraticFitUnivariateMinimizationScheme
+    Foam::goldenRatioUnivariateMinimizationScheme
 
 Description
-    Find root using the quadraticFit method
+    Find root using the goldenRatio method
 
 SourceFiles
-    quadraticFitUnivariateMinimizationScheme.C
+    goldenRatioUnivariateMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef quadraticFitUnivariateMinimizationScheme_H
-#define quadraticFitUnivariateMinimizationScheme_H
+#ifndef goldenRatioUnivariateMinimizationScheme_H
+#define goldenRatioUnivariateMinimizationScheme_H
 
 #include "univariateMinimizationScheme.H"
 #include "typeInfo.H"
@@ -45,26 +45,34 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class quadraticFitUnivariateMinimizationScheme Declaration
+            Class goldenRatioUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class quadraticFitUnivariateMinimizationScheme
+class goldenRatioUnivariateMinimizationScheme
 :
     public univariateMinimizationScheme
 {
+    const static scalar goldenRatio;
+    const static scalar invPhi;
+    const static scalar invPhi2;
+
 public:
 
     //- Runtime type information
-    TypeName("quadraticFit");
+    TypeName("goldenRatio");
 
     // Constructors
 
-        //- Construct for given univariateMinimizationScheme
-        quadraticFitUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
+        //- Construct for given univariateUnivariateMinimizationScheme
+        goldenRatioUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
 
 
     //- Destructor
-    virtual ~quadraticFitUnivariateMinimizationScheme()
+    virtual ~goldenRatioUnivariateMinimizationScheme()
     {}
 
 
@@ -82,7 +90,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const quadraticFitUnivariateMinimizationScheme&) = delete;
+        void operator=(const goldenRatioUnivariateMinimizationScheme&) = delete;
 };
 
 

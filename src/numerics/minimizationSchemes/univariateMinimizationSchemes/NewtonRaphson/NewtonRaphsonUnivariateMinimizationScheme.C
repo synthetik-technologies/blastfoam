@@ -33,6 +33,12 @@ namespace Foam
     defineTypeNameAndDebug(NewtonRaphsonUnivariateMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
+        minimizationScheme,
+        NewtonRaphsonUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
+    addToRunTimeSelectionTable
+    (
         univariateMinimizationScheme,
         NewtonRaphsonUnivariateMinimizationScheme,
         dictionaryTwo
@@ -44,7 +50,7 @@ namespace Foam
 
 Foam::NewtonRaphsonUnivariateMinimizationScheme::NewtonRaphsonUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :

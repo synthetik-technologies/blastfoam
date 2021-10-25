@@ -27,24 +27,19 @@ License
 
 // * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
 
-namespace Foam
-{
-    template<class Type>
-    defineTypeNameAndDebug(univariateEquation<Type>
-}
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::UnivariateEquation<EquationType>::univariateEquation()
+Foam::univariateEquation<Type>::univariateEquation()
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class EquationType>
-Foam::UnivariateEquation<EquationType>::~UnivariateEquation()
+template<class Type>
+Foam::univariateEquation<Type>::~univariateEquation()
 {}
 
 

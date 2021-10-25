@@ -1,6 +1,7 @@
 #include "dictionary.H"
 #include "minimizationScheme.H"
 #include "equation.H"
+#include "ScalarEquation.H"
 #include "argList.H"
 
 using namespace Foam;
@@ -8,13 +9,13 @@ using namespace Foam;
 
 class testEqn1
 :
-    public ScalarEquation<scalarField>
+    public ScalarEquation
 {
 public:
     // Constructors
     testEqn1()
     :
-        ScalarEquation<scalarField>
+        ScalarEquation
         (
             3,
             scalarField(3, -30.0),
@@ -38,7 +39,6 @@ public:
     ) const
     {
         fx = sqr((x[0] + 2.0)*Foam::sin(x[0])) + sqr(x[1] + 2.0) + sqr(x[2] + 3.0);
-        // fx[0] = x[0]*sqr(x[1]);
     }
 };
 
@@ -59,7 +59,7 @@ public:
     {
         return 0;
     }
-    virtual scalar fx(const scalar& x, const label li) const
+    virtual scalar fx(const scalar x, const label li) const
     {
         return sqr(x - 2.0);
     }
@@ -78,12 +78,13 @@ int main(int argc, char *argv[])
         word("    f(x1) = (x1 - 2.0^2)\n");
 
     dictionary dict;
-    // dict.add("maxSteps", 10);
+//     dict.add("maxSteps", 10);
+    dict.add("nParticles", 1000);
 
     Info<< "Minimization" << endl;
     wordList multivariateMethods
     (
-        minimizationScheme::dictionaryOneConstructorTablePtr_->toc()
+        minimizationScheme::dictionaryUnivariateConstructorTablePtr_->toc()
     );
     minimizationScheme::debug = 1;
     forAll(multEqns, eqni)

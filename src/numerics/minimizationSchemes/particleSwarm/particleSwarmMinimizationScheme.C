@@ -35,19 +35,13 @@ namespace Foam
     (
         minimizationScheme,
         particleSwarmMinimizationScheme,
-        dictionaryZero
+        dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
         particleSwarmMinimizationScheme,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        particleSwarmMinimizationScheme,
-        dictionaryTwo
+        dictionaryMultivariate
     );
 }
 
@@ -140,8 +134,8 @@ Foam::particleSwarmMinimizationScheme::minimize
                 r2[cmpti] = rand_.sample01<scalar>();
             }
             p.x += p.v;
-            p.v = 
-                w_*p.v 
+            p.v =
+                w_*p.v
               + c1_*r1*(p.xBest - p.x)
               + c2_*r2*(xBest - p.x);
             eqns_.f(p.x, li, y);

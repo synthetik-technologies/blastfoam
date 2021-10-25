@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FibonacciUnivariateMinimizationScheme
+    Foam::NewtonRaphsonUnivariateMinimizationScheme
 
 Description
-    Find root using the Fibonacci method
+    Find root using the NewtonRaphson method
 
 SourceFiles
-    FibonacciUnivariateMinimizationScheme.C
+    NewtonRaphsonUnivariateMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FibonacciUnivariateMinimizationScheme_H
-#define FibonacciUnivariateMinimizationScheme_H
+#ifndef NewtonRaphsonUnivariateMinimizationScheme_H
+#define NewtonRaphsonUnivariateMinimizationScheme_H
 
 #include "univariateMinimizationScheme.H"
 #include "typeInfo.H"
@@ -45,28 +45,30 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class FibonacciUnivariateMinimizationScheme Declaration
+                          Class NewtonRaphsonUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class FibonacciUnivariateMinimizationScheme
+class NewtonRaphsonUnivariateMinimizationScheme
 :
     public univariateMinimizationScheme
 {
-    const static scalar goldenRatio;
-    const static scalar s;
-
 public:
 
     //- Runtime type information
-    TypeName("Fibonacci");
+    TypeName("NewtonRaphson");
 
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        FibonacciUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
+        NewtonRaphsonUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
+
 
     //- Destructor
-    virtual ~FibonacciUnivariateMinimizationScheme()
+    virtual ~NewtonRaphsonUnivariateMinimizationScheme()
     {}
 
 
@@ -84,7 +86,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const FibonacciUnivariateMinimizationScheme&) = delete;
+        void operator=(const NewtonRaphsonUnivariateMinimizationScheme&) = delete;
 };
 
 

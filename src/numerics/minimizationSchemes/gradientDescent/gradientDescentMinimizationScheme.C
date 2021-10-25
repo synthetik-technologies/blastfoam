@@ -35,19 +35,13 @@ namespace Foam
     (
         minimizationScheme,
         gradientDescentMinimizationScheme,
-        dictionaryZero
+        dictionaryUnivariate
     );
     addToRunTimeSelectionTable
     (
         minimizationScheme,
         gradientDescentMinimizationScheme,
-        dictionaryOne
-    );
-    addToRunTimeSelectionTable
-    (
-        minimizationScheme,
-        gradientDescentMinimizationScheme,
-        dictionaryTwo
+        dictionaryMultivariate
     );
 }
 
@@ -81,7 +75,7 @@ Foam::gradientDescentMinimizationScheme::minimize
     scalar fx(eqns_.nEqns());
     scalar fxp = fx;
     eqns_.f(x0, li, fx);
-    const scalarList dx(eqns_.dx());
+    const scalarList dx(eqns_.dX());
 
     scalarField grad(x0.size());
     forAll(grad, cmpti)
@@ -109,8 +103,8 @@ Foam::gradientDescentMinimizationScheme::minimize
         forAll(grad, cmpti)
         {
             scalarField x1(xNew);
-            x1[cmpti] += dx[cmpti]; 
-            eqns_.f(x1, li, fxp);       
+            x1[cmpti] += dx[cmpti];
+            eqns_.f(x1, li, fxp);
             grad[cmpti] = (fxp - fx)/(dx[cmpti]);
         }
 

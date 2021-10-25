@@ -57,11 +57,12 @@ void Foam::ScalarEquation::calculateGradient
     scalar fx1;
     scalarField x1(x0);
     const scalarField dx(this->dX());
+    const Equation<scalarField, scalar>& eqn(*this);
     for (label cmpti = 0; cmpti < this->nVar_; cmpti++)
     {
         x1 = x0;
         x1[cmpti] += dx[cmpti];
-        Equation<scalarField, scalar>::f(x1, li, fx1);
+        eqn.f(x1, li, fx1);
         grad[cmpti] = (fx1 - fx0)/dx[cmpti];
     }
 }
@@ -75,7 +76,8 @@ void Foam::ScalarEquation::gradient
     scalarField& grad
 ) const
 {
-    Equation<scalarField, scalar>::f(x0, li, fx0);
+    const Equation<scalarField, scalar>& eqn(*this);
+    eqn.f(x0, li, fx0);
     calculateGradient(x0, li, fx0, grad);
 }
 

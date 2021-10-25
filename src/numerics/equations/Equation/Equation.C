@@ -40,12 +40,14 @@ Foam::Equation<InType, OutType>::Equation
 :
     nVar_(nVar),
     nEqns_(nEqns),
-    lowerLimits_(nVar_),
-    upperLimits_(nVar_),
-    dx_(nVar_, 1e-6)
+    lowerLimits_(lowerLimits),
+    upperLimits_(upperLimits),
+    dx_(lowerLimits)
 {
-    lowerLimits_ = lowerLimits;
-    upperLimits_ = upperLimits;
+    for (label cmpti = 0; cmpti < nVar; cmpti++)
+    {
+        setComponent(dx_, cmpti) = 1e-6;
+    }
 }
 
 

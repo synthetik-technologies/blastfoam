@@ -33,6 +33,12 @@ namespace Foam
     defineTypeNameAndDebug(quadraticFitUnivariateMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
+        minimizationScheme,
+        quadraticFitUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
+    addToRunTimeSelectionTable
+    (
         univariateMinimizationScheme,
         quadraticFitUnivariateMinimizationScheme,
         dictionaryZero
@@ -55,7 +61,7 @@ namespace Foam
 
 Foam::quadraticFitUnivariateMinimizationScheme::quadraticFitUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -95,7 +101,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
             )/stabilise
             (
                 ya*(b - c) + yb*(c - a) + yc*(a - b),
-                tolerance_
+                tolerance()
             );
         if (converged(x - b))
         {

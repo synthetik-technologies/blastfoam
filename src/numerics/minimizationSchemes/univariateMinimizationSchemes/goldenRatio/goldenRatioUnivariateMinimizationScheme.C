@@ -33,6 +33,12 @@ namespace Foam
     defineTypeNameAndDebug(goldenRatioUnivariateMinimizationScheme, 0);
     addToRunTimeSelectionTable
     (
+        minimizationScheme,
+        goldenRatioUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
+    addToRunTimeSelectionTable
+    (
         univariateMinimizationScheme,
         goldenRatioUnivariateMinimizationScheme,
         dictionaryZero
@@ -64,7 +70,7 @@ const Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::invPhi2 =
 
 Foam::goldenRatioUnivariateMinimizationScheme::goldenRatioUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -85,11 +91,11 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
     scalar a = min(x1, x2);
     scalar b = max(x1, x2);
     scalar h = b - a;
-    if (h < tolerance_)
+    if (converged(h))
     {
         return x1;
     }
-    label n = ceil(log(tolerance_/h)/log(invPhi));
+    label n = ceil(log(tolerance()/h)/log(invPhi));
 
     scalar c = a + invPhi2*h;
     scalar d = a + invPhi*h;

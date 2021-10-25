@@ -36,6 +36,7 @@ SourceFiles
 #define univariateMinimizationScheme_H
 
 #include "equation.H"
+#include "minimizationScheme.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -49,6 +50,8 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class univariateMinimizationScheme
+:
+    public minimizationScheme
 {
 
 protected:
@@ -58,20 +61,11 @@ protected:
         //- Reference to scalarEquation
         const equation& eqn_;
 
-        //- Convergence tolerance
-        scalar tolerance_;
-
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
 
         //- Number of location to pre sample
         label nSamples_;
-
-        //- Current step number
-        mutable label stepi_;
-
-        //- Current error
-        mutable scalar error_;
 
         //- Is the solution converged
         bool converged(const scalar error) const;
@@ -97,7 +91,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryZero,
-            (const equation& eqn, const dictionary& dict),
+            (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -105,7 +99,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryOne,
-            (const equation& eqn, const dictionary& dict),
+            (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -113,7 +107,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryTwo,
-            (const equation& eqn, const dictionary& dict),
+            (const scalarEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
 
@@ -121,7 +115,11 @@ public:
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        univariateMinimizationScheme(const equation& eqn, const dictionary& dict);
+        univariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         univariateMinimizationScheme(const univariateMinimizationScheme&) = delete;
@@ -144,17 +142,16 @@ public:
 
     // Member Functions
 
-        //- Return access to the tolerance
-        inline scalar& tolerance();
+        //- Return the tolerance
+        inline scalar tolerance() const;
 
-        //- Return the step number
-        inline label nSteps() const;
+        //- Access to the tolerance
+        inline scalar& tolerance();
 
         //- Return the error
         inline scalar error() const;
 
-        //- Find the root of the equation
-        virtual scalar solve() const;
+        using minimizationScheme::solve;
 
         //- Find the root of the equation
         virtual scalar solve(const scalar x0) const;
@@ -191,6 +188,15 @@ public:
             const scalar xHigh,
             const label li
         ) const = 0;
+
+        //- Find the root of the equation between xHigh and xLow
+        virtual tmp<scalarField> minimize
+        (
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
+            const label li
+        ) const;
 
 
     // Member Operators

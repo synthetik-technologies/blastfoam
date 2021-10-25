@@ -33,7 +33,7 @@ Description
 #define equation_H
 
 #include "UnivariateEquation.H"
-#include "scalarEquation.H"
+#include "ScalarEquation.H"
 #include "univariateEquation.H"
 #include "dictionary.H"
 
@@ -66,43 +66,54 @@ public:
 
     // Member Functions
 
-        using Equation<scalar, scalar>::nDerivatives;
-        using Equation<scalar, scalar>::limit;
+        //- Return the number of input variables
+        inline label nVar() const;
 
-        //- Calulate the gradient
-        virtual void f
+        //- Return the number of equations
+        inline label nEqns() const;
+
+        using Equation<scalar, scalar>::nDerivatives;
+
+        //- Return the lower limit
+        inline tmp<scalarField> lowerLimits() const;
+
+        //- Return the upper limit
+        inline tmp<scalarField> upperLimits() const;
+
+        //- Return the finite difference step size
+        inline tmp<scalarField> dX() const;
+
+        //- Return the finite difference step size
+        inline void setDX(const scalarField& newDx) const;
+
+        //- Limit the value of x to the range of the equation
+        using scalarEquation::limit;
+        inline void limit(scalar& x) const;
+
+        //- Calulate the function at a point
+        inline void f
         (
             const scalar& x,
             const label li,
             scalar& fx
-        ) const
-        {
-            fx = this->fx(x, li);
-        }
+        ) const;
 
-        //- Calulate the gradient
-        virtual void f
+        //- Calulate the function at a set of points
+        inline void f
         (
             const scalarField& x,
             const label li,
             scalar& fx
-        ) const
-        {
-            fx = this->fx(x[0], li);
-        }
+        ) const;
 
-        //- Calulate the gradient
-        virtual void gradient
+        //- Calulate the gradient (dfdx)
+        inline void gradient
         (
             const scalarField& x,
             const label li,
             scalar& fx,
             scalarField& grad
-        ) const
-        {
-            fx = this->fx(x[0], li);
-            grad[0] = this->dfdx(x[0], li);
-        }
+        ) const;
 
         //- Check if the solution is bracketed
         bool containsRoot(const scalar y0, const scalar y1) const;
@@ -115,6 +126,10 @@ public:
 
 } // End namespace Foam
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "equationI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

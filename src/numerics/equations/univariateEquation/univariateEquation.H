@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::UnivariateEquation
+    Foam::univariateEquation
 
 Description
-    Abstract base class a Univariate equation
+    Abstract base class a univariate equation
 
 \*---------------------------------------------------------------------------*/
 
@@ -48,9 +48,6 @@ class univariateEquation
 {
 public:
 
-    //- Type name information
-    TypeName("univariateEquation<" + Type::typeName + ">")
-
     // Constructors
 
         //- Construct with limits
@@ -63,31 +60,31 @@ public:
 
     // Member Functions
 
-        virtual Type fx(const scalar& x, const label li) const = 0;
+        virtual Type fx(const scalar x, const label li) const = 0;
 
         //- Calculate the first derivative of the equation
-        virtual Type dfdx(const scalar& x, const label li) const
+        virtual Type dfdx(const scalar x, const label li) const
         {
             NotImplemented
             return this->fx(x, li);
         }
 
         //- Calculate the second derivative of the equation
-        virtual Type d2fdx2(const scalar& x, const label li) const
+        virtual Type d2fdx2(const scalar x, const label li) const
         {
             NotImplemented
             return this->fx(x, li);
         }
 
         //- Calculate the third derivative of the equation
-        virtual Type d3fdx3(const scalar& x, const label li) const
+        virtual Type d3fdx3(const scalar x, const label li) const
         {
             NotImplemented;
             return this->fx(x, li);
         }
 
         //- Calculate the fourth derivative of the equation
-        virtual Type d4fdx4(const scalar& x, const label li) const
+        virtual Type d4fdx4(const scalar x, const label li) const
         {
             NotImplemented;
             return this->fx(x, li);
@@ -99,6 +96,11 @@ public:
 
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "univariateEquation.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -23,46 +23,46 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "FibonacciUnivariateMinimizationScheme.H"
+#include "bisectionUnivariateMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(FibonacciUnivariateMinimizationScheme, 0);
+    defineTypeNameAndDebug(bisectionUnivariateMinimizationScheme, 0);
+    addToRunTimeSelectionTable
+    (
+        minimizationScheme,
+        bisectionUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        bisectionUnivariateMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        bisectionUnivariateMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        FibonacciUnivariateMinimizationScheme,
+        bisectionUnivariateMinimizationScheme,
         dictionaryTwo
     );
 }
 
-const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::goldenRatio =
-    (sqrt(5.0) + 1.0)/2.0;
-
-const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::s =
-    (1.0 - sqrt(5.0))/(1.0 + sqrt(5.0));
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationScheme
+Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
@@ -72,7 +72,7 @@ Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationSche
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 (
     const scalar x,
     const scalar x1,
@@ -80,52 +80,45 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
     const label li
 ) const
 {
-    scalar a = min(x1, x2);
-    scalar b = max(x1, x2);
-    if (mag(a - b) < tolerance_)
+    scalar xLow = x1;
+    scalar xHigh = x2;
+    scalar xMean = 0.5*(x1 + x2);
+    scalar yLow = eqn_.fx(xLow, li);
+    scalar yHigh = eqn_.fx(xHigh, li);
+    scalar yMean= yLow;
+
+    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        return x1;
-    }
-    label n = 20;
-
-    scalar rho = 1.0/(goldenRatio*(1.0 - pow(s, n + 1))/(1.0 - pow(s, n)));
-
-    scalar c, yc;
-    scalar d = rho*b + (1.0 - rho)*a;
-    scalar yd = eqn_.fx(d, li);
-
-    for (stepi_ = 0; stepi_ < n; stepi_++)
-    {
-        if (stepi_ == n - 1)
+        if (converged(xHigh - xLow))
         {
-            c = 0.01*a + 0.99*b;
+            break;
+        }
+
+        if (yHigh < yLow)
+        {
+            xLow = xMean;
+            yLow = eqn_.fx(xLow, li);
+            yMean = yHigh;
         }
         else
         {
-            c = rho*a + (1.0 - rho)*b;
+            xHigh = xMean;
+            yHigh = eqn_.fx(xHigh, li);
+            yMean = yLow;
         }
-        yc = eqn_.fx(c, li);
-        if (yc < yd)
+
+        if (converged(yMean))
         {
-            b = d;
-            d = c;
-            yd = yc;
+            break;
         }
-        else
-        {
-            a = b;
-            b = c;
-        }
-        converged(b - a);
-        rho = 
-            1.0
-           /(
-                goldenRatio
-               *(1.0 - pow(s, n + 1 - stepi_))
-               /(1.0 - pow(s, n - stepi_))
-            );
+
+        xMean = (xLow + xHigh)*0.5;
+
+        printStepInformation(xMean);
     }
-    return 0.5*(a + b);
+    converged(yMean);
+
+    return printFinalInformation(xMean);
 }
 
 // ************************************************************************* //

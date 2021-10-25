@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NewtonRaphsonUnivariateMinimizationScheme
+    Foam::stepUnivariateMinimizationScheme
 
 Description
-    Find root using the NewtonRaphson method
+    Find root using the step method
 
 SourceFiles
-    NewtonRaphsonUnivariateMinimizationScheme.C
+    stepUnivariateMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef NewtonRaphsonUnivariateMinimizationScheme_H
-#define NewtonRaphsonUnivariateMinimizationScheme_H
+#ifndef stepUnivariateMinimizationScheme_H
+#define stepUnivariateMinimizationScheme_H
 
 #include "univariateMinimizationScheme.H"
 #include "typeInfo.H"
@@ -45,26 +45,35 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class NewtonRaphsonUnivariateMinimizationScheme Declaration
+                        Class stepUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class NewtonRaphsonUnivariateMinimizationScheme
+class stepUnivariateMinimizationScheme
 :
     public univariateMinimizationScheme
 {
+// Private data
+
+    //- Initial step size
+    scalar dx_;
+
+
 public:
 
     //- Runtime type information
-    TypeName("NewtonRaphson");
+    TypeName("step");
 
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        NewtonRaphsonUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
-
+        stepUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
 
     //- Destructor
-    virtual ~NewtonRaphsonUnivariateMinimizationScheme()
+    virtual ~stepUnivariateMinimizationScheme()
     {}
 
 
@@ -82,7 +91,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const NewtonRaphsonUnivariateMinimizationScheme&) = delete;
+        void operator=(const stepUnivariateMinimizationScheme&) = delete;
 };
 
 

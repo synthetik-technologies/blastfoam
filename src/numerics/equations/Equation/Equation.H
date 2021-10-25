@@ -71,13 +71,13 @@ protected:
         const label nEqns_;
 
         //- Lower limits
-        InType lowerLimits_;
+        const InType lowerLimits_;
 
         //- Upper limit
-        InType upperLimits_;
+        const InType upperLimits_;
 
         //- Finite difference step size
-        mutable scalarField dx_;
+        mutable InType dx_;
 
 
 public:
@@ -112,14 +112,8 @@ public:
         //- Return the lower limits
         virtual const InType& lower() const;
 
-        //- Access the lower limits
-        inline InType& lower();
-
         //- Return the upper limits
         inline const InType& upper() const;
-
-        //- Return the upper limits
-        inline InType& upper();
 
         //- Return the finite difference step size
         inline const InType& dx() const;

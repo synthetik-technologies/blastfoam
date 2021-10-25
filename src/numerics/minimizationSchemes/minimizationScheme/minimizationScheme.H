@@ -106,7 +106,7 @@ public:
         (
             autoPtr,
             minimizationScheme,
-            dictionaryZero,
+            dictionaryUnivariate,
             (const scalarEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
@@ -114,15 +114,7 @@ public:
         (
             autoPtr,
             minimizationScheme,
-            dictionaryOne,
-            (const scalarEquation& eqns, const dictionary& dict),
-            (eqns, dict)
-        );
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            minimizationScheme,
-            dictionaryTwo,
+            dictionaryMultivariate,
             (const scalarEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );

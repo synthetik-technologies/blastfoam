@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::stepUnivariateMinimizationScheme
+    Foam::quadraticFitUnivariateMinimizationScheme
 
 Description
-    Find root using the step method
+    Find root using the quadraticFit method
 
 SourceFiles
-    stepUnivariateMinimizationScheme.C
+    quadraticFitUnivariateMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef stepUnivariateMinimizationScheme_H
-#define stepUnivariateMinimizationScheme_H
+#ifndef quadraticFitUnivariateMinimizationScheme_H
+#define quadraticFitUnivariateMinimizationScheme_H
 
 #include "univariateMinimizationScheme.H"
 #include "typeInfo.H"
@@ -45,31 +45,30 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class stepUnivariateMinimizationScheme Declaration
+                        Class quadraticFitUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class stepUnivariateMinimizationScheme
+class quadraticFitUnivariateMinimizationScheme
 :
     public univariateMinimizationScheme
 {
-// Private data
-
-    //- Initial step size
-    scalar dx_;
-
-
 public:
 
     //- Runtime type information
-    TypeName("step");
+    TypeName("quadraticFit");
 
     // Constructors
 
         //- Construct for given univariateMinimizationScheme
-        stepUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
+        quadraticFitUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
+
 
     //- Destructor
-    virtual ~stepUnivariateMinimizationScheme()
+    virtual ~quadraticFitUnivariateMinimizationScheme()
     {}
 
 
@@ -87,7 +86,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const stepUnivariateMinimizationScheme&) = delete;
+        void operator=(const quadraticFitUnivariateMinimizationScheme&) = delete;
 };
 
 

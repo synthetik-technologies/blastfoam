@@ -23,30 +23,36 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "bisectionUnivariateMinimizationScheme.H"
+#include "stepUnivariateMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(bisectionUnivariateMinimizationScheme, 0);
+    defineTypeNameAndDebug(stepUnivariateMinimizationScheme, 0);
+    addToRunTimeSelectionTable
+    (
+        minimizationScheme,
+        stepUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        stepUnivariateMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        stepUnivariateMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        bisectionUnivariateMinimizationScheme,
+        stepUnivariateMinimizationScheme,
         dictionaryTwo
     );
 }
@@ -54,65 +60,72 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationScheme
+Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict)
+    univariateMinimizationScheme(eqn, dict),
+    dx_
+    (
+        dict.lookupOrDefault<scalar>
+        (
+            "dx",
+            (eqn_.upper() - eqn_.lower())
+           /ceil(maxSteps_/10)
+        )
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
 (
-    const scalar x,
+    const scalar,
+    const scalar x0,
     const scalar x1,
-    const scalar x2,
     const label li
 ) const
 {
-    scalar xLow = x1;
-    scalar xHigh = x2;
-    scalar xMean = 0.5*(x1 + x2);
-    scalar yLow = eqn_.fx(xLow, li);
-    scalar yHigh = eqn_.fx(xHigh, li);
-    scalar yMean= yLow;
+    scalar xLower = x0;
+    scalar dx = dx_;
+    scalar xUpper = x0 + dx;
+
+    scalar yLower = eqn_.fx(xLower, li);
+    scalar yUpper = eqn_.fx(xUpper, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xHigh - xLow))
+        if (yUpper > yLower)
         {
-            break;
-        }
-
-        if (yHigh < yLow)
-        {
-            xLow = xMean;
-            yLow = eqn_.fx(xLow, li);
-            yMean = yHigh;
+            dx /= 2.0;
+            xUpper  = xLower + dx;
+            yUpper = eqn_.fx(xUpper, li);
         }
         else
         {
-            xHigh = xMean;
-            yHigh = eqn_.fx(xHigh, li);
-            yMean = yLow;
+            xLower = xUpper;
+            xUpper += dx;
+            yLower = yUpper;
+            yUpper = eqn_.fx(xUpper, li);
         }
 
-        if (converged(yMean))
+        eqn_.limit(xUpper);
+        if (converged(xUpper - xLower))
         {
             break;
         }
-
-        xMean = (xLow + xHigh)*0.5;
-
-        printStepInformation(xMean);
+        if (converged(yLower))
+        {
+            break;
+        }
+        printStepInformation(xUpper);
     }
-    converged(yMean);
 
-    return printFinalInformation(xMean);
+    converged(yUpper);
+    return printFinalInformation(xLower);
 }
 
 // ************************************************************************* //

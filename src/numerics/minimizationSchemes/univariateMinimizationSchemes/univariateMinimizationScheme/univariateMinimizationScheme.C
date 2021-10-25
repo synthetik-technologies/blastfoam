@@ -39,8 +39,8 @@ namespace Foam
 
 bool Foam::univariateMinimizationScheme::converged(const scalar error) const
 {
-    error_ = mag(error);
-    return error_ < tolerance_;
+    errors_[0] = mag(error);
+    return errors_[0] < tolerances_[0];
 }
 
 
@@ -49,7 +49,7 @@ void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) 
     if (debug > 2)
     {
         Info<< "Step " << stepi_
-            << ", error=" << error_
+            << ", error=" << errors_[0]
             << ", value: " << val << nl<< endl;
     }
 }
@@ -61,12 +61,12 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
     if (stepi_ < maxSteps_ && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations"
-            << ", final error=" << error_ << endl;
+            << ", final error=" << errors_[0] << endl;
     }
     else if (stepi_ >= maxSteps_ && debug)
     {
         WarningInFunction
-            << "Did not converge, final error= " << error_ << endl;
+            << "Did not converge, final error= " << errors_[0] << endl;
     }
     return val;
 }
@@ -108,32 +108,16 @@ void Foam::univariateMinimizationScheme::sample
 
 Foam::univariateMinimizationScheme::univariateMinimizationScheme
 (
-    const equation& eqn, 
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    eqn_(eqn),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
-    maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
-    nSamples_(dict.lookupOrDefault<label>("nSamples", 0)),
-    stepi_(0),
-    error_(great)
+    minimizationScheme(eqn, dict),
+    eqn_(dynamicCast<const equation>(eqn)),
+    nSamples_(dict.lookupOrDefault<label>("nSamples", 0))
 {}
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::scalar Foam::univariateMinimizationScheme::solve() const
-{
-    return solve
-    (
-        (eqn_.lower() + eqn_.upper())*0.5,
-        eqn_.lower(),
-        eqn_.upper(),
-        0
-    );
-}
-
 
 Foam::scalar Foam::univariateMinimizationScheme::solve(const scalar x0) const
 {
@@ -176,5 +160,19 @@ Foam::scalar Foam::univariateMinimizationScheme::solve
     return minimize(x0, xMin, xMax, li);
 }
 
+
+Foam::tmp<Foam::scalarField> Foam::univariateMinimizationScheme::minimize
+(
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
+    const label li
+) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField(1, solve(x0[0], xLow[0], xHigh[0], li))
+    );
+}
 
 // ************************************************************************* //

@@ -35,56 +35,35 @@ Foam::minimizationScheme::New
 )
 {
     word minimizationSchemeTypeName(dict.lookup("solver"));
-    label nDeriv = eqns.nDerivatives();
     Info<< "Selecting root solver " << minimizationSchemeTypeName << endl;
 
-    if (debug)
+    if (eqns.nVar() == 1)
     {
-        Info<< "    detected " << nDeriv << " implemented derivatives" << endl;
-    }
+        dictionaryUnivariateConstructorTable::iterator cstrIter =
+            dictionaryUnivariateConstructorTablePtr_->find(minimizationSchemeTypeName);
 
-    if (nDeriv <= 0)
-    {
-        dictionaryZeroConstructorTable::iterator cstrIter =
-            dictionaryZeroConstructorTablePtr_->find(minimizationSchemeTypeName);
-
-        if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
+        if (cstrIter == dictionaryUnivariateConstructorTablePtr_->end())
         {
             FatalErrorInFunction
                 << "Unknown minimizationScheme type "
                 << minimizationSchemeTypeName << nl << nl
                 << "Valid minimizationSchemes for no derivatives are : " << endl
-                << dictionaryZeroConstructorTablePtr_->sortedToc()
+                << dictionaryUnivariateConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
         return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
     }
-    else if (nDeriv == 1)
-    {
-        dictionaryOneConstructorTable::iterator cstrIter =
-            dictionaryOneConstructorTablePtr_->find(minimizationSchemeTypeName);
 
-        if (cstrIter == dictionaryOneConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown minimizationScheme type "
-                << minimizationSchemeTypeName << nl << nl
-                << "Valid minimizationSchemes for one derivative are : " << endl
-                << dictionaryOneConstructorTablePtr_->sortedToc()
-                << exit(FatalError);
-        }
-        return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
-    }
-    dictionaryTwoConstructorTable::iterator cstrIter =
-        dictionaryTwoConstructorTablePtr_->find(minimizationSchemeTypeName);
+    dictionaryMultivariateConstructorTable::iterator cstrIter =
+        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeTypeName);
 
-    if (cstrIter == dictionaryTwoConstructorTablePtr_->end())
+    if (cstrIter == dictionaryMultivariateConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown minimizationScheme type "
             << minimizationSchemeTypeName << nl << nl
-            << "Valid minimizationSchemes for are : " << endl
-            << dictionaryTwoConstructorTablePtr_->sortedToc()
+            << "Valid minimizationSchemes for one derivative are : " << endl
+            << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
     return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));

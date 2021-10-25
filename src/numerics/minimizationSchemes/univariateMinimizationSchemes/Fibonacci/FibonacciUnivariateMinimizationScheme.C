@@ -23,103 +23,118 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "stepUnivariateMinimizationScheme.H"
+#include "FibonacciUnivariateMinimizationScheme.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(stepUnivariateMinimizationScheme, 0);
+    defineTypeNameAndDebug(FibonacciUnivariateMinimizationScheme, 0);
+    addToRunTimeSelectionTable
+    (
+        minimizationScheme,
+        FibonacciUnivariateMinimizationScheme,
+        dictionaryUnivariate
+    );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        FibonacciUnivariateMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        FibonacciUnivariateMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
         univariateMinimizationScheme,
-        stepUnivariateMinimizationScheme,
+        FibonacciUnivariateMinimizationScheme,
         dictionaryTwo
     );
 }
 
+const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::goldenRatio =
+    (sqrt(5.0) + 1.0)/2.0;
+
+const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::s =
+    (1.0 - sqrt(5.0))/(1.0 + sqrt(5.0));
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
+Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationScheme
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 :
-    univariateMinimizationScheme(eqn, dict),
-    dx_
-    (
-        dict.lookupOrDefault<scalar>
-        (
-            "dx",
-            (eqn_.upper() - eqn_.lower())
-           /ceil(maxSteps_/10)
-        )
-    )
+    univariateMinimizationScheme(eqn, dict)
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
+Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 (
-    const scalar,
-    const scalar x0,
+    const scalar x,
     const scalar x1,
+    const scalar x2,
     const label li
 ) const
 {
-    scalar xLower = x0;
-    scalar dx = dx_;
-    scalar xUpper = x0 + dx;
-
-    scalar yLower = eqn_.fx(xLower, li);
-    scalar yUpper = eqn_.fx(xUpper, li);
-
-    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
+    scalar a = min(x1, x2);
+    scalar b = max(x1, x2);
+    if (converged(a - b))
     {
-        if (yUpper > yLower)
+        return x1;
+    }
+    label n = 20;
+
+    scalar rho = 1.0/(goldenRatio*(1.0 - pow(s, n + 1))/(1.0 - pow(s, n)));
+
+    scalar c, yc;
+    scalar d = rho*b + (1.0 - rho)*a;
+    scalar yd = eqn_.fx(d, li);
+
+    for (stepi_ = 0; stepi_ < n; stepi_++)
+    {
+        if (stepi_ == n - 1)
         {
-            dx /= 2.0;
-            xUpper  = xLower + dx;
-            yUpper = eqn_.fx(xUpper, li);
+            c = 0.01*a + 0.99*b;
         }
         else
         {
-            xLower = xUpper;
-            xUpper += dx;
-            yLower = yUpper;
-            yUpper = eqn_.fx(xUpper, li);
+            c = rho*a + (1.0 - rho)*b;
         }
-
-        eqn_.limit(xUpper);
-        if (converged(xUpper - xLower))
+        yc = eqn_.fx(c, li);
+        if (yc < yd)
+        {
+            b = d;
+            d = c;
+            yd = yc;
+        }
+        else
+        {
+            a = b;
+            b = c;
+        }
+        if (converged(b - a))
         {
             break;
         }
-        if (converged(yLower))
-        {
-            break;
-        }
-        printStepInformation(xUpper);
+        rho =
+            1.0
+           /(
+                goldenRatio
+               *(1.0 - pow(s, n + 1 - stepi_))
+               /(1.0 - pow(s, n - stepi_))
+            );
     }
-
-    converged(yUpper);
-    return printFinalInformation(xLower);
+    return 0.5*(a + b);
 }
 
 // ************************************************************************* //

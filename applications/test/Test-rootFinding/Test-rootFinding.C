@@ -22,15 +22,15 @@ public:
     {
         return 2;
     }
-    virtual scalar fx(const scalar& x, const label li) const
+    virtual scalar fx(const scalar x, const label li) const
     {
         return Foam::cos(x) - Foam::pow3(x);
     }
-    virtual scalar dfdx(const scalar& x, const label li) const
+    virtual scalar dfdx(const scalar x, const label li) const
     {
         return -Foam::sin(x) - 3.0*Foam::sqr(x);
     }
-    virtual scalar d2fdx2(const scalar& x, const label li) const
+    virtual scalar d2fdx2(const scalar x, const label li) const
     {
         return -Foam::cos(x) - 6.0*x;
     }
@@ -53,15 +53,15 @@ public:
     {
         return 2;
     }
-    virtual scalar fx(const scalar& x, const label li) const
+    virtual scalar fx(const scalar x, const label li) const
     {
         return Foam::exp(x) - 10.0*x;
     }
-    virtual scalar dfdx(const scalar& x, const label li) const
+    virtual scalar dfdx(const scalar x, const label li) const
     {
         return Foam::exp(x) - 10.0;
     }
-    virtual scalar d2fdx2(const scalar& x, const label li) const
+    virtual scalar d2fdx2(const scalar x, const label li) const
     {
         return Foam::exp(x);
     }

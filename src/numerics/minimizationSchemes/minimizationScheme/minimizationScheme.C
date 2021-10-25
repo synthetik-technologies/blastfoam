@@ -30,9 +30,8 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(minimizationScheme, 0);
-    defineRunTimeSelectionTable(minimizationScheme, dictionaryZero);
-    defineRunTimeSelectionTable(minimizationScheme, dictionaryOne);
-    defineRunTimeSelectionTable(minimizationScheme, dictionaryTwo);
+    defineRunTimeSelectionTable(minimizationScheme, dictionaryUnivariate);
+    defineRunTimeSelectionTable(minimizationScheme, dictionaryMultivariate);
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -79,7 +78,7 @@ void Foam::minimizationScheme::printFinalInformation() const
     else if (stepi_ >= maxSteps_)
     {
         WarningInFunction
-            << "Did not converge in " << maxSteps_ << " iterations" << nl 
+            << "Did not converge in " << maxSteps_ << " iterations" << nl
             << "    Final errors= " << errors_ << endl;
     }
 }

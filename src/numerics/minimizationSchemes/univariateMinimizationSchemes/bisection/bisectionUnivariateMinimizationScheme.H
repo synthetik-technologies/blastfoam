@@ -60,7 +60,11 @@ public:
     // Constructors
 
         //- Construct for given univariateUnivariateMinimizationScheme
-        bisectionUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
+        bisectionUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
 
 
     //- Destructor

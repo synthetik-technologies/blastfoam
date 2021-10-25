@@ -68,12 +68,12 @@ namespace Foam
         {
             return 1;
         }
-        virtual scalar fx(const scalar& e, const label li) const
+        virtual scalar fx(const scalar e, const label li) const
         {
             (*e_)[li] = e;
             return thermo_.cellpRhoT(li, false) - p_[li];
         }
-        virtual scalar dfdx(const scalar& e, const label li) const
+        virtual scalar dfdx(const scalar e, const label li) const
         {
             (*e_)[li] = e;
             return thermo_.celldpde(li);
@@ -111,7 +111,7 @@ namespace Foam
         {
             return 1;
         }
-        virtual scalar fx(const scalar& T, const label li) const
+        virtual scalar fx(const scalar T, const label li) const
         {
             return
                 patchi_ == -1
@@ -119,7 +119,7 @@ namespace Foam
               : thermo_.patchFaceHE(T, patchi_, li)
               - he_.boundaryField()[patchi_][li];
         }
-        virtual scalar dfdx(const scalar& T, const label li) const
+        virtual scalar dfdx(const scalar T, const label li) const
         {
             return
                 patchi_ == -1

@@ -35,7 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
-#include "univariateEquation.H"
+#include "UnivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "UautoPtr.H"

@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::goldenRatioUnivariateMinimizationScheme
+    Foam::FibonacciUnivariateMinimizationScheme
 
 Description
-    Find root using the goldenRatio method
+    Find root using the Fibonacci method
 
 SourceFiles
-    goldenRatioUnivariateMinimizationScheme.C
+    FibonacciUnivariateMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef goldenRatioUnivariateMinimizationScheme_H
-#define goldenRatioUnivariateMinimizationScheme_H
+#ifndef FibonacciUnivariateMinimizationScheme_H
+#define FibonacciUnivariateMinimizationScheme_H
 
 #include "univariateMinimizationScheme.H"
 #include "typeInfo.H"
@@ -45,30 +45,32 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-            Class goldenRatioUnivariateMinimizationScheme Declaration
+                        Class FibonacciUnivariateMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class goldenRatioUnivariateMinimizationScheme
+class FibonacciUnivariateMinimizationScheme
 :
     public univariateMinimizationScheme
 {
     const static scalar goldenRatio;
-    const static scalar invPhi;
-    const static scalar invPhi2;
+    const static scalar s;
 
 public:
 
     //- Runtime type information
-    TypeName("goldenRatio");
+    TypeName("Fibonacci");
 
     // Constructors
 
-        //- Construct for given univariateUnivariateMinimizationScheme
-        goldenRatioUnivariateMinimizationScheme(const equation& eqn, const dictionary& dict);
-
+        //- Construct for given univariateMinimizationScheme
+        FibonacciUnivariateMinimizationScheme
+        (
+            const scalarEquation& eqn,
+            const dictionary& dict
+        );
 
     //- Destructor
-    virtual ~goldenRatioUnivariateMinimizationScheme()
+    virtual ~FibonacciUnivariateMinimizationScheme()
     {}
 
 
@@ -86,7 +88,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const goldenRatioUnivariateMinimizationScheme&) = delete;
+        void operator=(const FibonacciUnivariateMinimizationScheme&) = delete;
 };
 
 

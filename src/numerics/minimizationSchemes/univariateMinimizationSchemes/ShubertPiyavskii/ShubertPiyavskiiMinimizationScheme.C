@@ -36,6 +36,12 @@ namespace Foam
     (
         minimizationScheme,
         ShubertPiyavskiiMinimizationScheme,
+        dictionaryUnivariate
+    );
+    addToRunTimeSelectionTable
+    (
+        minimizationScheme,
+        ShubertPiyavskiiMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
@@ -111,7 +117,7 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
         List<scalar> ptsyTmp = ptsy;
         ptsx.resize(ptsx.size() + 2);
         ptsy.resize(ptsx.size());
-        
+
         ptsx[i] = P_prev.x();
         ptsx[i+1] = P.x();
         ptsx[i+2] = P_next.x();
