@@ -53,7 +53,7 @@ class MidPointIntegrator
 :
     public Integrator<Type>
 {
-    typedef UnivariateEquation<Equation<scalar, Type>> equationType;
+        typedef univariateEquation<Type> equationType;
 
 public:
 

@@ -33,7 +33,8 @@ Description
 #define equation_H
 
 #include "UnivariateEquation.H"
-#include "ScalarEquation.H"
+#include "scalarEquation.H"
+#include "univariateEquation.H"
 #include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -47,7 +48,9 @@ namespace Foam
 
 class equation
 :
-    public UnivariateEquation<ScalarEquation<scalar>>
+    public Equation<scalar, scalar>,
+    public scalarEquation,
+    public univariateEquation<scalar>
 {
 public:
 
@@ -63,8 +66,21 @@ public:
 
     // Member Functions
 
+        using Equation<scalar, scalar>::nDerivatives;
+        using Equation<scalar, scalar>::limit;
+
         //- Calulate the gradient
-        using UnivariateEquation<ScalarEquation<scalar>>::f;
+        virtual void f
+        (
+            const scalar& x,
+            const label li,
+            scalar& fx
+        ) const
+        {
+            fx = this->fx(x, li);
+        }
+
+        //- Calulate the gradient
         virtual void f
         (
             const scalarField& x,

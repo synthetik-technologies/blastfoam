@@ -23,60 +23,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "UnivariateEquation.H"
+#include "univariateEquation.H"
 
 // * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
 
-// template<class Type>
-// bool Foam::UnivariateEquation<Type>::checkJacobian() const
-// {
-//     if
-//     (
-//         (void*)(this->*(&UnivariateEquation<Type>::jacobian))
-//      == (void*)(&UnivariateEquation<Type>::jacobian)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-//
-//
-// template<class Type>
-// bool Foam::UnivariateEquation<Type>::checkHessian() const
-// {
-//     return false;
-//     if
-//     (
-//         (void*)(this->*(&UnivariateEquation<Type>::hessian))
-//      == (void*)(&UnivariateEquation<Type>::hessian)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-
-
+namespace Foam
+{
+    template<class Type>
+    defineTypeNameAndDebug(univariateEquation<Type>
+}
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class EquationType>
-Foam::UnivariateEquation<EquationType>::UnivariateEquation
-(
-    const label nVar,
-    const inType& lowerLimit,
-    const inType& upperLimit
-)
-:
-    EquationType
-    (
-        nVar,
-        1,
-        lowerLimit,    
-        upperLimit
-    )
+template<class Type>
+Foam::UnivariateEquation<EquationType>::univariateEquation()
 {}
 
 
@@ -88,29 +49,5 @@ Foam::UnivariateEquation<EquationType>::~UnivariateEquation()
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-// template<class Type>
-// Foam::label Foam::UnivariateEquation<Type>::nDerivatives() const
-// {
-//     label nDeriv = 0;
-//
-//     // Check if Jacobian has been implemented
-//     if (checkJacobian())
-//     {
-//         nDeriv++;
-//     }
-//     else
-//     {
-//         return nDeriv;
-//     }
-//
-//     Check if Hessian has been implemented
-//     if (checkHessian())
-//     {
-//         nDeriv++;
-//     }
-//     return nDeriv;
-// }
-
 
 // ************************************************************************* //

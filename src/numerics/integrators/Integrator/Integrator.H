@@ -35,7 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
-#include "UnivariateEquation.H"
+#include "univariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "UautoPtr.H"
@@ -56,7 +56,7 @@ protected:
 
     // Protected data
 
-        typedef UnivariateEquation<Equation<scalar, Type>> equationType;
+        typedef univariateEquation<Type> equationType;
 
         //- Reference to Equation
         UautoPtr<const equationType> eqnPtr_;

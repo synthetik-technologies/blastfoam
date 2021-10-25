@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,22 +22,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::TrapezoidalIntegrator
+    Foam::UnivariateEquation
 
 Description
-    Trapezoidal integration method
-
-SourceFiles
-    TrapezoidalIntegrator.C
+    Abstract base class a Univariate equation
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef TrapezoidalIntegrator_H
-#define TrapezoidalIntegrator_H
+#ifndef univariateEquation_H
+#define univariateEquation_H
 
-#include "Integrator.H"
-#include "typeInfo.H"
-#include "autoPtr.H"
+#include "Equation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -45,53 +40,58 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class TrapezoidalIntegrator Declaration
+                          Class univariateEquation Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class TrapezoidalIntegrator
-:
-    public Integrator<Type>
+class univariateEquation
 {
-    typedef univariateEquation<Type> equationType;
-
 public:
 
-    //- Runtime type information
-    TypeName("Trapezoidal");
+    //- Type name information
+    TypeName("univariateEquation<" + Type::typeName + ">")
 
     // Constructors
 
-        //- Construct for given Equation
-        TrapezoidalIntegrator
-        (
-            const equationType& eqn,
-            const dictionary& dict
-        );
-
-        //- Disallow default bitwise copy construction
-        TrapezoidalIntegrator(const TrapezoidalIntegrator<Type>&) = delete;
+        //- Construct with limits
+        univariateEquation();
 
 
     //- Destructor
-    virtual ~TrapezoidalIntegrator()
-    {}
+    virtual ~univariateEquation();
 
 
     // Member Functions
 
-        //- Solve the root
-        virtual Type integrate
-        (
-            const scalar x0,
-            const scalar x1,
-            const label li
-        ) const;
+        virtual Type fx(const scalar& x, const label li) const = 0;
 
-    // Member Operators
+        //- Calculate the first derivative of the equation
+        virtual Type dfdx(const scalar& x, const label li) const
+        {
+            NotImplemented
+            return this->fx(x, li);
+        }
 
-        //- Disallow default bitwise assignment
-        void operator=(const TrapezoidalIntegrator<Type>&) = delete;
+        //- Calculate the second derivative of the equation
+        virtual Type d2fdx2(const scalar& x, const label li) const
+        {
+            NotImplemented
+            return this->fx(x, li);
+        }
+
+        //- Calculate the third derivative of the equation
+        virtual Type d3fdx3(const scalar& x, const label li) const
+        {
+            NotImplemented;
+            return this->fx(x, li);
+        }
+
+        //- Calculate the fourth derivative of the equation
+        virtual Type d4fdx4(const scalar& x, const label li) const
+        {
+            NotImplemented;
+            return this->fx(x, li);
+        }
 };
 
 
@@ -99,11 +99,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-#include "TrapezoidalIntegrator.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

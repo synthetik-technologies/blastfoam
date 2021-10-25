@@ -46,10 +46,9 @@ namespace Foam
                           Class scalarEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class InType>
 class ScalarEquation
 :
-    public Equation<InType, scalar>,
+    public Equation<scalarField, scalar>,
     public scalarEquation
 {
 protected:
@@ -58,36 +57,23 @@ protected:
     //- Calculate the gradient using a finite difference
     void calculateGradient
     (
-        const InType& x0,
+        const scalarField& x0,
         const label li,
         const scalar& fx0,
         scalarField& grad
     ) const;
 
-    
+
 public:
 
-    typedef Equation<InType, scalar> equationType;
-    typedef typename Equation<InType, scalar>::inType inType;
-    typedef typename Equation<InType, scalar>::outType outType;
-    
     // Constructors
 
         //- Construct given bounds
         ScalarEquation
         (
-            const label nVar, 
-            const InType& lowerLimit, 
-            const InType& upperLimit
-        );
-
-        //- Construct given bounds
-        ScalarEquation
-        (
             const label nVar,
-            const label nEqn, 
-            const InType& lowerLimit, 
-            const InType& upperLimit
+            const scalarField& lowerLimit,
+            const scalarField& upperLimit
         );
 
 
@@ -98,60 +84,31 @@ public:
     // Member Functions
 
         //- Return the number of input variables
-        virtual label nVar() const
-        {
-            return equationType::nVar();
-        }
+        inline label nVar() const;
 
         //- Return the number of equations
-        virtual label nEqns() const 
-        {
-            return equationType::nEqns();
-        }
-
-        //- Return the number of derivatives
-        virtual label nDerivatives() const = 0;
+        inline label nEqns() const;
 
         //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const
-        {
-            return equationType::lowerLimits();
-        }
+        inline tmp<scalarField> lowerLimits() const;
 
         //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const
-        {
-            return equationType::upperLimits();
-        }
-
-        //- Return the finite difference step size for a direction
-        virtual scalar dx(const label cmpti) const
-        {
-            return equationType::dx(cmpti);
-        }
-        
-        //- Return the finite difference step size for a direction
-        virtual scalar& dx(const label cmpti)
-        {
-            return equationType::dx(cmpti);
-        }
+        inline tmp<scalarField> upperLimits() const;
 
         //- Return the finite difference step size
-        virtual tmp<scalarField> dx() const
-        {
-            return equationType::dx();
-        }
+        inline tmp<scalarField> dX() const;
+
+        //- Return the finite difference step size
+        inline void setDX(const scalarField& newDx) const;
 
         //- Limit the value of x to the range of the equation
-        virtual  void limit(InType& x) const
-        {
-            equationType::limit(x);
-        }
+        inline void limit(scalarField& x) const;
 
         //- Calulate the gradient
+        using scalarEquation::gradient;
         virtual void gradient
         (
-            const InType& x,
+            const scalarField& x,
             const label li,
             scalar& fx,
             scalarField& grad
@@ -163,12 +120,9 @@ public:
 
 } // End namespace Foam
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#ifdef NoRepository
-    #include "ScalarEquation.C"
-#endif
+#include "ScalarEquationI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

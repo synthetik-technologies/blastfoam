@@ -74,31 +74,25 @@ public:
         //- Return the upper limit
         virtual tmp<scalarField> upperLimits() const = 0;
 
-        //- Return the finite difference step size for a direction
-        virtual scalar dx(const label) const = 0;
+        //- Return the finite difference step size
+        virtual tmp<scalarField> dX() const = 0;
 
-        //- Access the finite difference step size for a direction
-        virtual scalar& dx(const label) = 0;
+        //- Access the finite difference step size
+        virtual tmp<scalarField> dX() = 0;
 
         //- Return the finite difference step size
-        virtual tmp<scalarField> dx() const = 0;
+        virtual void setDX(const scalarField& newDx) const = 0;
 
         //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const 
+        virtual void limit(scalarField& x) const
         {
             x = max(lowerLimits(), min(x, upperLimits()));
-        }
-
-        //- Limit the value of x to the range of the equation
-        virtual void limit(scalar& x) const 
-        {
-            NotImplemented;
         }
 
         //- Return the function value
         virtual void f
         (
-            const scalarField& x, 
+            const scalarField& x,
             const label li,
             scalar& fx
         ) const = 0;
@@ -106,7 +100,7 @@ public:
         //- Return the function value
         virtual void gradient
         (
-            const scalarField& x, 
+            const scalarField& x,
             const label li,
             scalar& fx,
             scalarField& grad

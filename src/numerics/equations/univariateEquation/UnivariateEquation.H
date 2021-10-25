@@ -33,6 +33,7 @@ Description
 #define UnivariateEquation_H
 
 #include "Equation.H"
+#include "univariateEquation.H"
 #include "scalarField.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -44,24 +45,22 @@ namespace Foam
                           Class UnivariateEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class EquationType>
+template<class Type>
 class UnivariateEquation
 :
-    public EquationType
+    public Equation<scalar, Type>,
+    public univariateEquation<Type>
 {
 public:
 
-    typedef typename EquationType::inType inType;
-    typedef typename EquationType::outType outType;
-
     // Constructors
-    
+
         //- Construct with limits
         UnivariateEquation
         (
             const label nVar,
-            const inType& lowerLimit,
-            const inType& upperLimit
+            const scalar& lowerLimit,
+            const scalar& upperLimit
         );
 
 
@@ -72,45 +71,14 @@ public:
     // Member Functions
 
         //- Calculate the first derivative of the equation
-        using EquationType::equationType::f;
         virtual void f
         (
-            const inType& x,
+            const scalar& x,
             const label li,
-            outType& fx
+            Type& fx
         ) const
         {
             fx = this->fx(x, li);
-        }
-
-        virtual outType fx(const inType& x, const label li) const = 0;
-
-        //- Calculate the first derivative of the equation
-        virtual outType dfdx(const inType& x, const label li) const
-        {
-            NotImplemented
-            return this->fx(x, li);
-        }
-
-        //- Calculate the second derivative of the equation
-        virtual outType d2fdx2(const inType& x, const label li) const
-        {
-            NotImplemented
-            return this->fx(x, li);
-        }
-
-        //- Calculate the third derivative of the equation
-        virtual outType d3fdx3(const inType& x, const label li) const
-        {
-            NotImplemented;
-            return this->fx(x, li);
-        }
-
-        //- Calculate the fourth derivative of the equation
-        virtual outType d4fdx4(const inType& x, const label li) const
-        {
-            NotImplemented;
-            return this->fx(x, li);
         }
 };
 

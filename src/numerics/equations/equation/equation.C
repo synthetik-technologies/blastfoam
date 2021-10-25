@@ -33,12 +33,7 @@ Foam::equation::equation
     const scalar upperLimit
 )
 :
-    UnivariateEquation<ScalarEquation<scalar>>
-    (
-        1,
-        lowerLimit, 
-        upperLimit
-    )
+    Equation<scalar, scalar>(1, 1, lowerLimit, upperLimit)
 {}
 
 
@@ -52,7 +47,7 @@ Foam::equation::~equation()
 
 bool Foam::equation::containsRoot
 (
-    const scalar y0, 
+    const scalar y0,
     const scalar y1
 ) const
 {
@@ -75,7 +70,7 @@ bool Foam::equation::containsRoot(const label li) const
 {
     return containsRoot
     (
-        this->fx(lower(), li), 
+        this->fx(lower(), li),
         this->fx(upper(), li)
     );
 }

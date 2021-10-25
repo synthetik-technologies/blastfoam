@@ -23,40 +23,61 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Equation.H"
-
-// * * * * * * * * * * * * * Private member functions  * * * * * * * * * * * //
+#include "ScalarEquation.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class InType, class OutType>
-Foam::Equation<InType, OutType>::Equation
+Foam::ScalarEquation::ScalarEquation
 (
     const label nVar,
-    const label nEqns,
-    const InType& lowerLimits,
-    const InType& upperLimits
+    const scalarField& lowerLimit,
+    const scalarField& upperLimit
 )
 :
-    nVar_(nVar),
-    nEqns_(nEqns),
-    lowerLimits_(nVar_),
-    upperLimits_(nVar_),
-    dx_(nVar_, 1e-6)
-{
-    lowerLimits_ = lowerLimits;
-    upperLimits_ = upperLimits;
-}
+    Equation<scalarField, scalar>(nVar, 1, lowerLimit, upperLimit)
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class InType, class OutType>
-Foam::Equation<InType, OutType>::~Equation()
+Foam::ScalarEquation::~ScalarEquation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+void Foam::ScalarEquation::calculateGradient
+(
+    const scalarField& x0,
+    const label li,
+    const scalar& fx0,
+    scalarField& grad
+) const
+{
+    scalar fx1;
+    scalarField x1(x0);
+    const scalarField dx(this->dX());
+    for (label cmpti = 0; cmpti < this->nVar_; cmpti++)
+    {
+        x1 = x0;
+        x1[cmpti] += dx[cmpti];
+        Equation<scalarField, scalar>::f(x1, li, fx1);
+        grad[cmpti] = (fx1 - fx0)/dx[cmpti];
+    }
+}
+
+
+void Foam::ScalarEquation::gradient
+(
+    const scalarField& x0,
+    const label li,
+    scalar& fx0,
+    scalarField& grad
+) const
+{
+    Equation<scalarField, scalar>::f(x0, li, fx0);
+    calculateGradient(x0, li, fx0, grad);
+}
 
 
 // ************************************************************************* //

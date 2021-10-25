@@ -23,77 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "ScalarEquation.H"
+#include "UnivariateEquation.H"
+
+// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class InType>
-Foam::ScalarEquation<InType>::ScalarEquation
+template<class Type>
+Foam::UnivariateEquation<Type>::UnivariateEquation
 (
     const label nVar,
-    const InType& lowerLimit,
-    const InType& upperLimit
+    const scalar& lowerLimit,
+    const scalar& upperLimit
 )
 :
-    Equation<InType, scalar>(nVar, 1, lowerLimit, upperLimit)
-{}
-
-
-template<class InType>
-Foam::ScalarEquation<InType>::ScalarEquation
-(
-    const label nVar,
-    const label,
-    const InType& lowerLimit,
-    const InType& upperLimit
-)
-:
-    Equation<InType, scalar>(nVar, 1, lowerLimit, upperLimit)
+    Equation<scalar, Type>
+    (
+        nVar,
+        1,
+        lowerLimit,
+        upperLimit
+    )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class InType>
-Foam::ScalarEquation<InType>::~ScalarEquation()
+template<class Type>
+Foam::UnivariateEquation<Type>::~UnivariateEquation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-template<class InType>
-void Foam::ScalarEquation<InType>::calculateGradient
-(
-    const InType& x0,
-    const label li,
-    const scalar& fx0,
-    scalarField& grad
-) const
-{
-    scalar fx1;
-    scalarField x1(x0);
-    for (label cmpti = 0; cmpti < this->nVar_; cmpti++)
-    {
-        x1 = x0;
-        x1[cmpti] += this->dx(cmpti);
-        this->f(x1, li, fx1);
-        grad[cmpti] = (fx1 - fx0)/this->dx(cmpti);
-    }
-}
-
-
-template<class InType>
-void Foam::ScalarEquation<InType>::gradient
-(
-    const InType& x0,
-    const label li,
-    scalar& fx0,
-    scalarField& grad
-) const
-{
-    Equation<InType, scalar>::f(x0, li, fx0);
-    calculateGradient(x0, li, fx0, grad);
-}
-
 
 // ************************************************************************* //

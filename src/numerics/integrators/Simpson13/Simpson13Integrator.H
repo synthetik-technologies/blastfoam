@@ -53,8 +53,8 @@ class Simpson13Integrator
 :
     public Integrator<Type>
 {
-    typedef UnivariateEquation<Equation<scalar, Type>> equationType;
-    
+    typedef univariateEquation<Type> equationType;
+
 public:
 
     //- Runtime type information

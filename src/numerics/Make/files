@@ -3,6 +3,7 @@ lookupTables/lookupTable1D/scalarLookupTable1D.C
 
 equations/equation/equation.C
 equations/scalarEquation/scalarEquation.C
+equations/scalarEquation/ScalarEquation.C
 equations/scalarMultivariateEquation/scalarMultivariateEquation.C
 
 rootSolvers/rootSolver/rootSolver.C

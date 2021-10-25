@@ -77,23 +77,19 @@ protected:
         InType upperLimits_;
 
         //- Finite difference step size
-        InType dx_;
+        mutable scalarField dx_;
 
 
 public:
-
-    typedef Equation<InType, OutType> equationType;
-    typedef InType inType;
-    typedef OutType outType;
 
     // Constructors
 
         //- Construct given bounds
         Equation
         (
-            const label nVar, 
+            const label nVar,
             const label nEqns,
-            const InType& lowerLimit, 
+            const InType& lowerLimit,
             const InType& upperLimit
         );
 
@@ -105,87 +101,55 @@ public:
     // Member Functions
 
         //- Return the number of input variables
-        virtual label nVar() const
-        {
-            return nVar_;
-        }
+        inline label nVar() const;
 
         //- Return the number of equations
-        virtual label nEqns() const 
-        {
-            return nEqns_;
-        }
+        inline label nEqns() const;
 
         //- Return the number of derivatives
         virtual label nDerivatives() const = 0;
 
-        //- Return the lower limit
-        virtual const InType& lower() const
-        {
-            return lowerLimits_;
-        }
+        //- Return the lower limits
+        virtual const InType& lower() const;
 
         //- Access the lower limits
-        virtual tmp<scalarField> lowerLimits() const;
+        inline InType& lower();
 
-        //- Access the upper limits
-        virtual tmp<scalarField> upperLimits() const;
+        //- Return the upper limits
+        inline const InType& upper() const;
 
-        //- Access the lower limit
-        virtual InType& lower()
-        {
-            return lowerLimits_;
-        }
-
-        //- Return the upper limit
-        virtual const InType& upper() const
-        {
-            return upperLimits_;
-        }
-
-        //- Access the upper limit
-        virtual InType& upper()
-        {
-            return upperLimits_;
-        }
-
-        //- Return the finite difference step size for a direction
-        virtual scalar dx(const label cmpti) const
-        {
-            return component(dx_, cmpti);
-        }
-        
-        //- Return the finite difference step size for a direction
-        virtual scalar& dx(const label cmpti)
-        {
-            return setComponent(dx_, cmpti);
-        }
+        //- Return the upper limits
+        inline InType& upper();
 
         //- Return the finite difference step size
-        virtual tmp<scalarField> dx() const;
+        inline const InType& dx() const;
+
+        //- Access the finite difference step size
+        inline InType& dx();
+
+        //- Return the finite difference step size for a direction
+        inline scalar dx(const label cmpti) const;
 
         //- Limit the value of x to the range of the equation
-        virtual  void limit(InType& x) const
-        {
-            x = min(upperLimits_, max(x, lowerLimits_));
-        }
+        inline  void limit(InType& x) const;
 
         //- Return the function value
         virtual void f
         (
-            const InType& x, 
+            const InType& x,
             const label li,
             OutType& fx
-        ) const 
-        {
-            NotImplemented;
-        }
+        ) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "EquationI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
