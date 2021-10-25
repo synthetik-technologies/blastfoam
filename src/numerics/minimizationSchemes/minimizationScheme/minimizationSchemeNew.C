@@ -27,14 +27,15 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
+Foam::autoPtr<Foam::minimizationScheme>
+Foam::minimizationScheme::New
 (
-    const scalarEquation& eqn,
+    const scalarEquation& eqns,
     const dictionary& dict
 )
 {
     word minimizationSchemeTypeName(dict.lookup("solver"));
-    label nDeriv = eqn.nDerivatives();
+    label nDeriv = eqns.nDerivatives();
     Info<< "Selecting root solver " << minimizationSchemeTypeName << endl;
 
     if (debug)
@@ -56,7 +57,7 @@ Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
     }
     else if (nDeriv == 1)
     {
@@ -72,7 +73,7 @@ Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
                 << dictionaryOneConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+        return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
     }
     dictionaryTwoConstructorTable::iterator cstrIter =
         dictionaryTwoConstructorTablePtr_->find(minimizationSchemeTypeName);
@@ -86,7 +87,7 @@ Foam::autoPtr<Foam::minimizationScheme> Foam::minimizationScheme::New
             << dictionaryTwoConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
+    return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
 }
 
 

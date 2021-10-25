@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::SteffensenRootSolver::SteffensenRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -78,9 +78,9 @@ Foam::scalar Foam::SteffensenRootSolver::findRoot
     scalar xNew = x0;
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar fx = eqn_.f(xOld, li);
-        scalar gx = eqn_.f(xOld + fx, li)/stabilise(fx, small) - 1.0;
-        xNew = xOld - eqn_.f(xOld, li)/stabilise(gx, small);
+        scalar fx = eqn_.fx(xOld, li);
+        scalar gx = eqn_.fx(xOld + fx, li)/stabilise(fx, small) - 1.0;
+        xNew = xOld - eqn_.fx(xOld, li)/stabilise(gx, small);
         eqn_.limit(xNew);
 
         if (converged(xNew - xOld))

@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::MidPointIntegrator<Type>::MidPointIntegrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
@@ -52,18 +52,18 @@ Type Foam::MidPointIntegrator<Type>::integrate
     scalar dx = x1 - x0;
     if (mag(dx) < small)
     {
-        return dx*this->eqnPtr_->f(x0, li);
+        return dx*this->eqnPtr_->fx(x0, li);
     }
     dx /= scalar(this->nSteps_);
 
     scalar a = x0;
     scalar b = a + dx;
-    Type res(this->eqnPtr_->f(0.5*(a + b), li));
+    Type res(this->eqnPtr_->fx(0.5*(a + b), li));
     for (label i = 1; i < this->nSteps_; i++)
     {
         a += dx;
         b += dx;
-        res += this->eqnPtr_->f(0.5*(a + b), li);
+        res += this->eqnPtr_->fx(0.5*(a + b), li);
     }
     return dx*res;
 }

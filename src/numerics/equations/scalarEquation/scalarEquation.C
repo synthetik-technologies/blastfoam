@@ -31,16 +31,6 @@ Foam::scalarEquation::scalarEquation()
 {}
 
 
-Foam::scalarEquation::scalarEquation
-(
-    const scalar lowerLimit,
-    const scalar upperLimit
-)
-:
-    Equation<scalar>(lowerLimit, upperLimit)
-{}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::scalarEquation::~scalarEquation()
@@ -48,28 +38,5 @@ Foam::scalarEquation::~scalarEquation()
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-bool Foam::scalarEquation::containsRoot(const scalar y0, const scalar y1) const
-{
-    if (y0*y1 > 0)
-    {
-        #ifdef FULLDEBUG
-        FatalErrorInFunction
-            << "Solution is not bracked:" << nl
-            << "limits: (" << lowerLimit_ << ","<< upperLimit_ << ")" << endl
-            << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl
-            << abort(FatalError);
-        #endif
-        return false;
-    }
-    return true;
-}
-
-
-bool Foam::scalarEquation::containsRoot(const label li) const
-{
-    return containsRoot(f(lowerLimit_, li), f(upperLimit_, li));
-}
-
 
 // ************************************************************************* //

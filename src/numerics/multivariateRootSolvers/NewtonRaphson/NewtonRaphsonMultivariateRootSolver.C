@@ -58,9 +58,9 @@ Foam::NewtonRaphsonMultivariateRootSolver::NewtonRaphsonMultivariateRootSolver
 
 Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoots
 (
-    const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh,
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {
@@ -69,9 +69,9 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonMultivariateRootSolver::findRoot
     scalarField& xNew = xNewTmp.ref();
     scalarField f(xNew.size());
     RectangularMatrix<scalar> J(xNew.size());
-
+Info<<"f"<<endl;
     eqns_.jacobian(xOld, li, f, J);
-
+Info<<f<<endl;
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         scalarField delta(-(SVDinv(J)*f));

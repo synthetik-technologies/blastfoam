@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        BrentRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        BrentRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         BrentRootSolver(const rootSolver&) = delete;

@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::HalleyRootSolver::HalleyRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -61,7 +61,7 @@ Foam::scalar Foam::HalleyRootSolver::findRoot
     scalar xNew = x0;
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar f = eqn_.f(xOld, li);
+        scalar f = eqn_.fx(xOld, li);
         scalar fp = eqn_.dfdx(xOld, li);
         scalar fpp = eqn_.d2fdx2(xOld, li);
 

@@ -32,8 +32,9 @@ Description
 #ifndef MultivariateEquation_H
 #define MultivariateEquation_H
 
+#include "Equation.H"
 #include "scalarField.H"
-#include "SquareMatrix.H"
+#include "RectangularMatrix.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,20 +47,10 @@ namespace Foam
 
 template<class Type>
 class MultivariateEquation
+:
+    public Equation<scalarField, Field<Type>>
 {
 protected:
-
-    // Protected data
-
-        //- Lower limits
-        scalarField lowerLimits_;
-
-        //- Upper limits
-        scalarField upperLimits_;
-
-        //- Finite difference step size
-        scalarField dx_;
-
 
     // Protected member functions
 
@@ -67,15 +58,12 @@ protected:
 //         bool checkJacobian() const;
 //         bool checkHessian() const;
 
-        //- Make sure limits have been set
-        void checkLimits() const;
-
         //- Create a Jacobian matrix given a list of dx
         void calculateJacobian
         (
-            const scalarList& x0,
+            const scalarField& x0,
             const label li,
-            const List<Type>& f0,
+            const Field<Type>& f0,
             RectangularMatrix<Type>& J
         ) const;
 
@@ -89,8 +77,9 @@ public:
         //- Construct with limits
         MultivariateEquation
         (
-            const scalarList& lowerLimits,
-            const scalarList& upperLimits
+            const label nEqns,
+            const scalarField& lowerLimits,
+            const scalarField& upperLimits
         );
 
 
@@ -100,79 +89,28 @@ public:
 
     // Member Functions
 
-        //- Return the number of equations in the system
-        virtual label nEqns() const = 0;
-
-        //- Return the number of derivatives in the system
-        virtual label nDerivatives() const = 0;
-
-        //- Return the lower limits
-        const scalarList& lower() const
-        {
-            return lowerLimits_;
-        }
-
-        //- Access the lower limits
-        scalarList& lowerLimits()
-        {
-            return lowerLimits_;
-        }
-
-        //- Return the upper limits
-        const scalarList& upper() const
-        {
-            return upperLimits_;
-        }
-
-        //- Access the upper limits
-        scalarList& upper()
-        {
-            return upperLimits_;
-        }
-
-        //- Return the finite difference step size
-        const scalarList& dx() const
-        {
-            return dx_;
-        }
-
-        //- Access the finite difference step size
-        scalarList& dx()
-        {
-            return dx_;
-        }
-
-        //- Limit the value of x to the range of the equation
-        inline void limit(scalarList& x) const
-        {
-            x = min(upperLimits_, max(x, lowerLimits_));
-        }
-
-        //- Check if the coordinates are with in the range
-        bool checkBounds(const scalarList& xs) const;
-
         //- Return the function value
         virtual void f
         (
-            const scalarList& x,
+            const scalarField& x,
             const label li,
-            List<Type>& fx
+            Field<Type>& fx
         ) const = 0;
 
         //- Return the function value
         tmp<Field<Type>> f
         (
-            const scalarList& x,
+            const scalarField& x,
             const label li
         ) const;
 
         //- Calculate the Jacobian of the equation
         virtual void jacobian
         (
-            const scalarList& x,
+            const scalarField& x,
             const label li,
-            List<Type>& fx,
-            RectangularMatrix<Type>& dfdx
+            Field<Type>& fx,
+            RectangularMatrix<Type>& J
         ) const;
 };
 
@@ -185,7 +123,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "MultivariateEquation.C"
+    #include "MultivariateEquation.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

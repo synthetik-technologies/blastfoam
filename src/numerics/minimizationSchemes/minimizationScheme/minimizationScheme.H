@@ -45,7 +45,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class minimizationScheme Declaration
+                Class minimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
 class minimizationScheme
@@ -56,34 +56,44 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const scalarEquation& eqn_;
+        const scalarEquation& eqns_;
 
         //- Convergence tolerance
-        scalar tolerance_;
+        scalarField tolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
 
-        //- Number of location to pre sample
-        label nSamples_;
-
         //- Current step number
         mutable label stepi_;
 
-        //- Current error
-        mutable scalar error_;
+        //- Current errors
+        mutable scalarField errors_;
+
+        //- Line search reduction coefficient
+        scalar tau_;
+
+        //- Line search
+        scalar lineSearch
+        (
+            const scalarField& x0,
+            const scalarField& grad,
+            const label li,
+            scalar& fx
+        ) const;
+
+        //- Return the L2 norm the given list
+        scalar norm(const scalarList& lst) const;
 
         //- Is the solution converged
-        bool converged(const scalar error) const;
+        bool converged(const scalarList& error) const;
 
         //- Print information about the current step
-        void printStepInformation(const scalar val) const;
+        void printStepInformation(const scalarList& vals) const;
 
         //- Print information about the current step
-        scalar printFinalInformation(const scalar val) const;
+        void printFinalInformation() const;
 
-        //- Sample and return the interval with the smallest value
-        void sample(scalar&, scalar&, const label) const;
 
 public:
 
@@ -97,31 +107,35 @@ public:
             autoPtr,
             minimizationScheme,
             dictionaryZero,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             minimizationScheme,
             dictionaryOne,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             minimizationScheme,
             dictionaryTwo,
-            (const scalarEquation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const scalarEquation& eqns, const dictionary& dict),
+            (eqns, dict)
         );
 
 
     // Constructors
 
         //- Construct for given minimizationScheme
-        minimizationScheme(const scalarEquation& eqn, const dictionary& dict);
+        minimizationScheme
+        (
+            const scalarEquation& eqns,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         minimizationScheme(const minimizationScheme&) = delete;
@@ -145,55 +159,52 @@ public:
     // Member Functions
 
         //- Return access to the tolerance
-        inline scalar& tolerance();
+        inline scalarList& tolerances();
 
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the errors
+        inline scalarList& errors() const;
 
         //- Find the root of the equation
-        virtual scalar solve() const;
+        virtual tmp<scalarField> solve() const;
 
         //- Find the root of the equation
-        virtual scalar solve(const scalar x0) const;
+        virtual tmp<scalarField> solve(const scalarField& x0) const;
 
         //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh
         ) const;
 
         //- Find the root of the equation
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
+            const scalarField& x0,
             const label li
         ) const;
 
         //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const;
 
         //- Find the root of the equation between xHigh and xLow
-        virtual scalar minimize
+        virtual tmp<scalarField> minimize
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const = 0;
-
-        //- Print failure
-        virtual void printNoConvergence() const;
 
 
     // Member Operators

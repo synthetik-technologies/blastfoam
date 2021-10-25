@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::BrentRootSolver::BrentRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -77,8 +77,8 @@ Foam::scalar Foam::BrentRootSolver::findRoot
     scalar x0 = xLow;
     scalar x1 = xHigh;
     scalar xNew = x;
-    scalar y0 = eqn_.f(x0, li);
-    scalar y1 = eqn_.f(x1, li);
+    scalar y0 = eqn_.fx(x0, li);
+    scalar y1 = eqn_.fx(x1, li);
 
     if (!eqn_.containsRoot(y0, y1))
     {
@@ -142,7 +142,7 @@ Foam::scalar Foam::BrentRootSolver::findRoot
             bisection = false;
         }
 
-        scalar yNew = eqn_.f(xNew, li);
+        scalar yNew = eqn_.fx(xNew, li);
 
         if (converged(yNew))
         {

@@ -27,7 +27,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "multiphaseFluidBlastThermo.H"
-#include "scalarEquation.H"
+#include "equation.H"
 #include "NewtonRaphsonRootSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -51,7 +51,7 @@ namespace Foam
 {
     class multiphaseEEquation
     :
-        public scalarEquation
+        public equation
     {
         const multiphaseFluidBlastThermo& thermo_;
         const volScalarField& p_;
@@ -63,6 +63,7 @@ namespace Foam
             multiphaseFluidBlastThermo& thermo
         )
         :
+            equation(-great, great),
             thermo_(thermo),
             p_(thermo_.p()),
             e_(&thermo.he())
@@ -71,12 +72,12 @@ namespace Foam
         {
             return 1;
         }
-        virtual scalar f(const scalar e, const label li) const
+        virtual scalar fx(const scalar& e, const label li) const
         {
             (*e_)[li] = e;
             return thermo_.cellpRhoT(li, false) - p_[li];
         }
-        virtual scalar dfdx(const scalar e, const label li) const
+        virtual scalar dfdx(const scalar& e, const label li) const
         {
             (*e_)[li] = e;
             return thermo_.celldpde(li);
@@ -85,7 +86,7 @@ namespace Foam
 
     class multiphaseTHEEquation
     :
-        public scalarEquation
+        public equation
     {
         const multiphaseFluidBlastThermo& thermo_;
         const volScalarField& he_;
@@ -98,7 +99,7 @@ namespace Foam
             const scalar TLow
         )
         :
-            scalarEquation(TLow, great),
+            equation(TLow, great),
             thermo_(thermo),
             he_(thermo.he()),
             patchi_(-1)
@@ -113,7 +114,7 @@ namespace Foam
         {
             return 1;
         }
-        virtual scalar f(const scalar T, const label li) const
+        virtual scalar fx(const scalar& T, const label li) const
         {
             return
                 patchi_ == -1
@@ -121,7 +122,7 @@ namespace Foam
               : thermo_.patchFaceHE(T, patchi_, li)
               - he_.boundaryField()[patchi_][li];
         }
-        virtual scalar dfdx(const scalar T, const label li) const
+        virtual scalar dfdx(const scalar& T, const label li) const
         {
             return
                 patchi_ == -1

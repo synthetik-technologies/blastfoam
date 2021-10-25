@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        secantRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        secantRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         secantRootSolver(const rootSolver&) = delete;

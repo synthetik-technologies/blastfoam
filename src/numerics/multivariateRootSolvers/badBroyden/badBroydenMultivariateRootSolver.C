@@ -59,8 +59,11 @@ Foam::badBroydenMultivariateRootSolver::badBroydenMultivariateRootSolver
 {
     if (dict.found("dx"))
     {
-        const_cast<scalarMultivariateEquation&>(eqns_).dx() = 
-            dict.lookup<scalarList>("dx");
+        scalarList dx(dict.lookup<scalarList>("dx"));
+        for (label i = 0; i < eqns.nVar(); i++)
+        {
+            dx[i] = eqns.dx(i);
+        }
     }
 }
 
@@ -70,9 +73,9 @@ Foam::badBroydenMultivariateRootSolver::badBroydenMultivariateRootSolver
 Foam::tmp<Foam::scalarField>
 Foam::badBroydenMultivariateRootSolver::findRoots
 (
-    const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh,
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {

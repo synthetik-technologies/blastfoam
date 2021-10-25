@@ -53,6 +53,8 @@ class MidPointIntegrator
 :
     public Integrator<Type>
 {
+    typedef UnivariateEquation<Equation<scalar, Type>> equationType;
+
 public:
 
     //- Runtime type information
@@ -63,7 +65,7 @@ public:
         //- Construct for given Equation
         MidPointIntegrator
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
             const dictionary& dict
         );
 

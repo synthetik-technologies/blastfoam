@@ -83,9 +83,9 @@ public:
         //- Solve the multivariateMultivariateRoot
         virtual tmp<scalarField> findRoots
         (
-            const scalarList& x0,
-            const scalarList& xLow,
-            const scalarList& xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const;
 

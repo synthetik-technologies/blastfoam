@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::RidderRootSolver::RidderRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -77,8 +77,8 @@ Foam::scalar Foam::RidderRootSolver::findRoot
     scalar x0 = xLow;
     scalar x1 = xHigh;
     scalar xNew = x;
-    scalar y0 = eqn_.f(x0, li);
-    scalar y1 = eqn_.f(x1, li);
+    scalar y0 = eqn_.fx(x0, li);
+    scalar y1 = eqn_.fx(x1, li);
 
     if (!eqn_.containsRoot(y0, y1))
     {
@@ -88,7 +88,7 @@ Foam::scalar Foam::RidderRootSolver::findRoot
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         scalar xMean = 0.5*(x0 + x1);
-        scalar yMean = eqn_.f(xMean, li);
+        scalar yMean = eqn_.fx(xMean, li);
 
         xNew =
             xMean
@@ -101,7 +101,7 @@ Foam::scalar Foam::RidderRootSolver::findRoot
         }
         eqn_.limit(xNew);
 
-        scalar yNew = eqn_.f(xNew, li);
+        scalar yNew = eqn_.fx(xNew, li);
         if (converged(yNew))
         {
             return xNew;

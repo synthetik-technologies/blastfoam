@@ -156,38 +156,38 @@ public:
         virtual tmp<scalarField> solve() const;
 
         //- Find the roots of the equation
-        virtual tmp<scalarField> solve(const scalarList& x0) const;
+        virtual tmp<scalarField> solve(const scalarField& x0) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarList& x0,
-            const scalarList& xLow,
-            const scalarList& xHigh
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh
         ) const;
 
         //- Find the roots of the equation
         virtual tmp<scalarField> solve
         (
-            const scalarList& x0,
+            const scalarField& x0,
             const label li
         ) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarList& x0,
-            const scalarList& xLow,
-            const scalarList& xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> findRoots
         (
-            const scalarList& x0,
-            const scalarList& xLow,
-            const scalarList& xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const = 0;
 

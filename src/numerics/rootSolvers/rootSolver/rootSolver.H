@@ -35,7 +35,7 @@ SourceFiles
 #ifndef rootSolver_H
 #define rootSolver_H
 
-#include "scalarEquation.H"
+#include "equation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -56,7 +56,7 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const scalarEquation& eqn_;
+        const equation& eqn_;
 
         //- Convergence tolerance
         scalar tolerance_;
@@ -92,7 +92,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryZero,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const equation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -100,7 +100,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryOne,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const equation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -108,7 +108,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryTwo,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const equation& eqn, const dictionary& dict),
             (eqn, dict)
         );
 
@@ -116,7 +116,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        rootSolver(const scalarEquation& eqn, const dictionary& dict);
+        rootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
@@ -127,7 +127,7 @@ public:
         //- Select null constructed
         static autoPtr<rootSolver> New
         (
-            const scalarEquation& eqn,
+            const equation& eqn,
             const dictionary& dict
         );
 

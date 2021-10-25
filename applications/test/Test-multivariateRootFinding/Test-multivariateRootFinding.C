@@ -15,8 +15,9 @@ public:
     :
         scalarMultivariateEquation
         (
-            scalarList(2, 0.0),
-            scalarList(2, 2.0)
+            2,
+            scalarField(2, 0.0),
+            scalarField(2, 2.0)
         )
     {}
 
@@ -34,29 +35,28 @@ public:
     }
     virtual void f
     (
-        const scalarList& x,
+        const scalarField& x,
         const label li,
-        scalarList& fx
+        scalarField& fx
     ) const
     {
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
         fx[1] = sqr(x[0]) - x[1] + 1.0;
     }
-    virtual void jacobian
-    (
-        const scalarList& x,
-        const label li,
-        scalarList& fx,
-        scalarRectangularMatrix& dfdx
-    ) const
-    {
-        f(x, li, fx);
-
-        dfdx(0, 0) = stabilise(2.0*x[0], small);
-        dfdx(0, 1) = 2.0*x[1];
-        dfdx(1, 0) = 2.0*x[0];
-        dfdx(1, 1) = -1.0;
-    }
+    // virtual void jacobian
+    // (
+    //     const scalarField& x,
+    //     const label li,
+    //     scalarField& fx,
+    //     scalarRectangularMatrix& dfdx
+    // ) const
+    // {
+    //     f(x, li, fx);
+    //     dfdx(0, 0) = stabilise(2.0*x[0], small);
+    //     dfdx(0, 1) = 2.0*x[1];
+    //     dfdx(1, 0) = 2.0*x[0];
+    //     dfdx(1, 1) = -1.0;
+    // }
 };
 
 
@@ -68,7 +68,12 @@ public:
     // Constructors
     multivariateTestEqn2()
     :
-        scalarMultivariateEquation(2)
+        scalarMultivariateEquation
+        (
+            2,
+            scalarField(2, -10.0),
+            scalarField(2, 10.0)
+        )
     {}
 
     //- Destructor
@@ -85,9 +90,9 @@ public:
     }
     virtual void f
     (
-        const scalarList& x,
+        const scalarField& x,
         const label li,
-        scalarList& fx
+        scalarField& fx
     ) const
     {
         fx[0] = x[1] - sqr(x[0]) + x[0];
@@ -95,9 +100,9 @@ public:
     }
     virtual void jacobian
     (
-        const scalarList& x,
+        const scalarField& x,
         const label li,
-        scalarList& fx,
+        scalarField& fx,
         scalarRectangularMatrix& dfdx
     ) const
     {

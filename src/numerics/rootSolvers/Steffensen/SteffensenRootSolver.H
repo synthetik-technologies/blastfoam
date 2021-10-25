@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        SteffensenRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        SteffensenRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         SteffensenRootSolver(const rootSolver&) = delete;

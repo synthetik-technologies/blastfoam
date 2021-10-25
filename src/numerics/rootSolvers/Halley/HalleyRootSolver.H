@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        HalleyRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        HalleyRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         HalleyRootSolver(const rootSolver&) = delete;

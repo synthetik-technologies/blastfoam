@@ -35,7 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
-#include "Equation.H"
+#include "UnivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "UautoPtr.H"
@@ -52,13 +52,14 @@ namespace Foam
 template<class Type>
 class Integrator
 {
-
 protected:
 
     // Protected data
 
+        typedef UnivariateEquation<Equation<scalar, Type>> equationType;
+
         //- Reference to Equation
-        UautoPtr<const Equation<Type>> eqnPtr_;
+        UautoPtr<const equationType> eqnPtr_;
 
         //- Number of steps to integrate with
         label nSteps_;
@@ -78,7 +79,7 @@ public:
             autoPtr,
             Integrator,
             dictionary,
-            (const Equation<Type>& eqn, const dictionary& dict),
+            (const equationType& eqn, const dictionary& dict),
             (eqn, dict)
         );
 
@@ -86,7 +87,7 @@ public:
     // Constructors
 
         //- Construct for given Integrator
-        Integrator(const Equation<Type>& eqn, const dictionary& dict);
+        Integrator(const equationType& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         Integrator(const Integrator<Type>&) = delete;
@@ -97,14 +98,14 @@ public:
         //- Select null constructed
         static autoPtr<Integrator<Type>> New
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
             const dictionary& dict
         );
 
         //- Select null constructed
         static autoPtr<Integrator<Type>> New
         (
-            const Equation<Type>& eqn,
+            const equationType& eqn,
             const word& intType
         );
 
@@ -136,7 +137,7 @@ public:
         }
 
         //- Set the equation to integrate
-        void setEqn(const Equation<Type>& eqn)
+        void setEqn(const equationType& eqn)
         {
             eqnPtr_.reset(&eqn);
         }

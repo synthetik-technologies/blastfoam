@@ -37,150 +37,181 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::minimizationScheme::converged(const scalar error) const
-{
-    error_ = mag(error);
-    return error_ < tolerance_;
-}
-
-
-void Foam::minimizationScheme::printStepInformation(const scalar val) const
-{
-    if (debug > 2)
-    {
-        Info<< "Step " << stepi_
-            << ", error=" << error_
-            << ", value: " << val << nl<< endl;
-    }
-}
-
-
-Foam::scalar
-Foam::minimizationScheme::printFinalInformation(const scalar val) const
-{
-    if (stepi_ < maxSteps_ && debug > 1)
-    {
-        Info<< "Converged in " << stepi_ << " iterations"
-            << ", final error=" << error_ << endl;
-    }
-    else if (stepi_ >= maxSteps_ && debug)
-    {
-        WarningInFunction
-            << "Did not converge, final error= " << error_ << endl;
-    }
-    return val;
-}
-
-void Foam::minimizationScheme::sample
+bool Foam::minimizationScheme::converged
 (
-    scalar& x0,
-    scalar& x1,
-    const label li
+    const scalarList& errors
 ) const
 {
-    if (nSamples_ < 1)
-    {
-        return;
-    }
-    if (debug)
-    {
-        Info<<"Pre sampling interval" << endl;
-    }
+    errors_ = mag(errors);
 
-    scalar dx = (x1 - x0)/scalar(nSamples_ + 1);
-    label minI = 0;
-    scalar minY = great;
-    for (label i = 0; i < nSamples_; i++)
+    forAll(errors_, i)
     {
-        scalar y = eqn_.f(((scalar(i) + 0.5)*dx), li);
-        if (y < minY)
+        if (errors_[i] > tolerances_[i])
         {
-            minY = y;
-            minI = i;
+            return false;
         }
     }
-    x0 = scalar(minI)*dx;
-    x1 = x0 + dx;
+    return true;
+}
+
+
+void Foam::minimizationScheme::printStepInformation
+(
+    const scalarList& vals
+) const
+{
+    if (debug > 1)
+    {
+        Info<< "Step " << stepi_ << ":" << nl
+            << "    errors=" << errors_ << nl
+            << "    values: " << vals << endl;
+    }
+}
+
+
+void Foam::minimizationScheme::printFinalInformation() const
+{
+    if (stepi_ < maxSteps_ && debug)
+    {
+        Info<< "Converged in " << stepi_ << " iterations" << nl
+            << "    Final errors=" << errors_ << endl;
+    }
+    else if (stepi_ >= maxSteps_)
+    {
+        WarningInFunction
+            << "Did not converge in " << maxSteps_ << " iterations" << nl 
+            << "    Final errors= " << errors_ << endl;
+    }
+}
+
+
+Foam::scalar Foam::minimizationScheme::lineSearch
+(
+    const scalarField& x0,
+    const scalarField& grad,
+    const label li,
+    scalar& fx
+) const
+{
+    if (debug > 3)
+    {
+        Info<< "Conducting line search" << endl;
+    }
+    scalar alpha = 2.0;
+    const scalar fx0(fx);
+    scalarField x1(x0 - grad);
+
+    label iter = 0;
+    do
+    {
+        alpha *= tau_;
+        x1 = x0 - alpha*grad;
+        eqns_.limit(x1);
+        eqns_.f(x1, li, fx);
+    } while (fx > fx0 && iter++ < maxSteps_);
+    return alpha;
+}
+
+
+Foam::scalar Foam::minimizationScheme::norm(const scalarList& lst) const
+{
+    scalar sum = 0;
+    forAll(lst, i)
+    {
+        sum += magSqr(lst[i]);
+    }
+    return sum;
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::minimizationScheme::minimizationScheme(const scalarEquation& eqn, const dictionary& dict)
+Foam::minimizationScheme::minimizationScheme
+(
+    const scalarEquation& eqns,
+    const dictionary& dict
+)
 :
-    eqn_(eqn),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    eqns_(eqns),
+    tolerances_
+    (
+        dict.lookupOrDefault<scalarField>
+        (
+            "tolerances",
+            scalarField(eqns_.nVar(), 1e-6)
+        )
+    ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
-    nSamples_(dict.lookupOrDefault<label>("nSamples", 0)),
     stepi_(0),
-    error_(great)
-{}
+    errors_(eqns.nVar(), great),
+    tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
+{
+    if (eqns_.nEqns() > 1)
+    {
+        FatalErrorInFunction
+            << "Only a single output is allowed" << abort(FatalError);
+    }
+
+    if (dict.found("tolerance"))
+    {
+        tolerances_ = dict.lookup<scalar>("tolerance");
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::minimizationScheme::solve() const
+Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve() const
 {
     return solve
     (
-        (eqn_.lower() + eqn_.upper())*0.5,
-        eqn_.lower(),
-        eqn_.upper(),
+        (eqns_.lowerLimits() + eqns_.upperLimits())*0.5,
+        eqns_.lowerLimits(),
+        eqns_.upperLimits(),
         0
     );
 }
 
 
-Foam::scalar Foam::minimizationScheme::solve(const scalar x0) const
+Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
+(
+    const scalarField& x0
+) const
 {
-    return solve(x0, eqn_.lower(), eqn_.upper(), 0);
+    return solve(x0, eqns_.lowerLimits(), eqns_.upperLimits(), 0);
 }
 
 
-Foam::scalar Foam::minimizationScheme::solve
+Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalar x0,
+    const scalarField& x0,
     const label li
 ) const
 {
-    return this->solve(x0, eqn_.lower(), eqn_.upper(), li);
+    return this->solve(x0, eqns_.lowerLimits(), eqns_.upperLimits(), li);
 }
 
 
-Foam::scalar Foam::minimizationScheme::solve
+Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalar x0,
-    const scalar xLow,
-    const scalar xHigh
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh
 ) const
 {
     return solve(x0, xLow, xHigh, 0);
 }
 
 
-Foam::scalar Foam::minimizationScheme::solve
+Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalar x0,
-    const scalar xLow,
-    const scalar xHigh,
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {
-    scalar xMin = xLow;
-    scalar xMax = xHigh;
-    sample(xMin, xMax, li);
-    return minimize(x0, xMin, xMax, li);
-}
-
-
-void Foam::minimizationScheme::printNoConvergence() const
-{
-    if (debug)
-    {
-        WarningInFunction
-            << "Did not converge with in " << stepi_ << " steps." << nl
-            << "Final error=" << error_ <<endl;
-    }
+    return minimize(x0, xLow, xHigh, li);
 }
 
 

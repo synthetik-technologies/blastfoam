@@ -106,7 +106,7 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve() const
 
 Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 (
-    const scalarList& x0
+    const scalarField& x0
 ) const
 {
     return this->findRoots(x0, eqns_.lower(), eqns_.upper(), 0);
@@ -115,7 +115,7 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 (
-    const scalarList& x0,
+    const scalarField& x0,
     const label li
 ) const
 {
@@ -125,9 +125,9 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 (
-    const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh
 ) const
 {
     return this->findRoots(x0, xLow, xHigh, 0);
@@ -136,9 +136,9 @@ Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::multivariateRootSolver::solve
 (
-    const scalarList& x0,
-    const scalarList& xLow,
-    const scalarList& xHigh,
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
     const label li
 ) const
 {

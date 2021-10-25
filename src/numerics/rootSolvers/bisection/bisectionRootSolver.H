@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        bisectionRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        bisectionRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         bisectionRootSolver(const rootSolver&) = delete;

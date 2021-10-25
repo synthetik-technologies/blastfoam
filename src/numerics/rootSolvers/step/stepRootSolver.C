@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::stepRootSolver::stepRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -75,7 +75,7 @@ Foam::stepRootSolver::stepRootSolver
 
 Foam::stepRootSolver::stepRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const scalar dx
 )
 :
@@ -96,11 +96,11 @@ Foam::scalar Foam::stepRootSolver::findRoot
 {
     scalar x = x1;
     scalar dx = dx_;
-    scalar yLower = eqn_.f(x0, li);
+    scalar yLower = eqn_.fx(x0, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar y = eqn_.f(x + dx, li);
+        scalar y = eqn_.fx(x + dx, li);
         if (y*yLower < 0)
         {
             dx /= 2.0;

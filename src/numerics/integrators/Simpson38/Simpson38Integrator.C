@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::Simpson38Integrator<Type>::Simpson38Integrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
@@ -54,34 +54,34 @@ Type Foam::Simpson38Integrator<Type>::integrate
     scalar dx = x1 - x0;
     if (mag(dx) < small)
     {
-        return dx*this->eqnPtr_->f(x0, li);
+        return dx*this->eqnPtr_->fx(x0, li);
     }
     if (this->nSteps_ <= 1)
     {
         return
             dx/8.0
            *(
-                this->eqnPtr_->f(x0, li)
-              + 3.0*this->eqnPtr_->f((2.0*x0 + x1)/3.0, li)
-              + 3.0*this->eqnPtr_->f((x0 + 2.0*x1)/3.0, li)
-              + this->eqnPtr_->f(x1, li)
+                this->eqnPtr_->fx(x0, li)
+              + 3.0*this->eqnPtr_->fx((2.0*x0 + x1)/3.0, li)
+              + 3.0*this->eqnPtr_->fx((x0 + 2.0*x1)/3.0, li)
+              + this->eqnPtr_->fx(x1, li)
             );
     }
     dx /= scalar(this->nSteps_);
 
-    Type res(this->eqnPtr_->f(x0, li) + this->eqnPtr_->f(x1, li));
+    Type res(this->eqnPtr_->fx(x0, li) + this->eqnPtr_->fx(x1, li));
     for (label i = 1; i <= this->nIntervals_; i++)
     {
         res +=
             3.0
            *(
-                this->eqnPtr_->f(x0 + dx*(3*i-2), li)
-              + this->eqnPtr_->f(x0 + dx*(3*i-1), li)
+                this->eqnPtr_->fx(x0 + dx*(3*i-2), li)
+              + this->eqnPtr_->fx(x0 + dx*(3*i-1), li)
             );
     }
     for (label i = 1; i < this->nIntervals_; i++)
     {
-        res += 2.0*this->eqnPtr_->f(x0 + i*dx*3.0, li);
+        res += 2.0*this->eqnPtr_->fx(x0 + i*dx*3.0, li);
     }
 
     return dx*3.0/8.0*res;

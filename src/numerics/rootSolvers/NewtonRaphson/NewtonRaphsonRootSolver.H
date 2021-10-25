@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        NewtonRaphsonRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        NewtonRaphsonRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         NewtonRaphsonRootSolver(const rootSolver&) = delete;

@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 {
@@ -61,7 +61,7 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const word& integratorTypeName
 )
 {
@@ -86,7 +86,7 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 template<class Type>
 Foam::Integrator<Type>::Integrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :

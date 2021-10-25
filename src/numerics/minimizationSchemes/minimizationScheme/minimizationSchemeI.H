@@ -23,9 +23,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar& Foam::minimizationScheme::tolerance()
+inline Foam::scalarList& Foam::minimizationScheme::tolerances()
 {
-    return tolerance_;
+    return tolerances_;
 }
 
 
@@ -35,9 +35,9 @@ inline Foam::label Foam::minimizationScheme::nSteps() const
 }
 
 
-inline Foam::scalar Foam::minimizationScheme::error() const
+inline Foam::scalarList& Foam::minimizationScheme::errors() const
 {
-    return error_;
+    return errors_;
 }
 
 

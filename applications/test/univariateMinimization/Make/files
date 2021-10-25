@@ -1,0 +1,3 @@
+Test-univariateMinimization.C
+
+EXE = $(BLAST_APPBIN)/Test-univariateMinimization

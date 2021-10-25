@@ -61,36 +61,21 @@ License
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 template<class Type>
-void Foam::MultivariateEquation<Type>::checkLimits() const
-{
-    if (lowerLimits_.size() != nEqns() || upperLimits_.size() != nEqns())
-    {
-        FatalErrorInFunction
-            << "Limits have not been set, but are required for the " << nl
-            << "requested root solver." << endl
-            << abort(FatalError);
-    }
-}
-
-
-template<class Type>
 void Foam::MultivariateEquation<Type>::calculateJacobian
 (
-    const scalarList& x0,
+    const scalarField& x0,
     const label li,
-    const List<Type>& f0,
+    const Field<Type>& f0,
     RectangularMatrix<Type>& J
 ) const
 {
-    J.setSize(nEqns(), x0.size());
-    forAll(x0, cmptj)
+    J.setSize(this->nEqns_, this->nVar_);
+    for (label cmptj = 0; cmptj < this->nVar_; cmptj++)
     {
-        scalarList x1(x0);
-        x1[cmptj] += dx_[cmptj];
-
+        scalarField x1(x0);
+        x1[cmptj] += this->dx(cmptj);
         scalarField f1(this->f(x1, li));
-
-        for (label cmpti = 0; cmpti < nEqns(); cmpti++)
+        for (label cmpti = 0; cmpti < this->nEqns_; cmpti++)
         {
             J(cmpti, cmptj) =
                 (f1[cmpti] - f0[cmpti])/(x1[cmptj] - x0[cmptj]);
@@ -101,24 +86,20 @@ void Foam::MultivariateEquation<Type>::calculateJacobian
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::MultivariateEquation<Type>::MultivariateEquation(const label n)
-:
-    lowerLimits_(n, -great),
-    upperLimits_(n, great),
-    dx_(n, 1e-6)
-{}
-
-
-template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
-    const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const label nEqns,
+    const scalarField& lowerLimits,
+    const scalarField& upperLimits
 )
 :
-    lowerLimits_(lowerLimits),
-    upperLimits_(upperLimits),
-    dx_(lowerLimits.size(), 1e-6)
+    Equation<scalarField, Field<Type>>
+    (
+        lowerLimits.size(),
+        nEqns,
+        lowerLimits,    
+        upperLimits
+    )
 {}
 
 
@@ -154,39 +135,15 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 //     return nDeriv;
 // }
 
-
-template<class Type>
-bool Foam::MultivariateEquation<Type>::checkBounds(const scalarList& xs) const
-{
-    checkLimits();
-    forAll(xs, i)
-    {
-        if (xs[i] < lowerLimits_[i] || xs[i] > upperLimits_[i])
-        {
-            #ifdef FULLDEBUG
-            FatalErrorInFunction
-                << "Request function evaluation is out of bounds." << nl
-                << "lowerLimits: " << lowerLimits_ << endl
-                << "upperLimits: " << upperLimits_ << endl
-                << "x: " << xs << endl
-                << abort(FatalError);
-            #endif
-            return false;
-        }
-    }
-    return true;
-}
-
-
 template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::MultivariateEquation<Type>::f
 (
-    const scalarList& x,
+    const scalarField& x,
     const label li
 ) const
 {
-    tmp<Field<Type>> tmpFx(new Field<Type>(this->nEqns()));
+    tmp<Field<Type>> tmpFx(new Field<Type>(this->nEqns_));
     this->f(x, li, tmpFx.ref());
     return tmpFx;
 }
@@ -195,13 +152,13 @@ Foam::MultivariateEquation<Type>::f
 template<class Type>
 void Foam::MultivariateEquation<Type>::jacobian
 (
-    const scalarList& x,
+    const scalarField& x,
     const label li,
-    List<Type>& fx,
+    Field<Type>& fx,
     RectangularMatrix<Type>& J
 ) const
 {
-    fx.resize(this->nEqns());
+    fx.resize(this->nEqns_);
     this->f(x, li, fx);
     calculateJacobian(x, li, fx, J);
 }

@@ -50,7 +50,7 @@ namespace Foam
 
 Foam::NewtonRaphsonRootSolver::NewtonRaphsonRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -72,7 +72,7 @@ Foam::scalar Foam::NewtonRaphsonRootSolver::findRoot
     scalar xNew = x0;
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = xOld - eqn_.f(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
+        xNew = xOld - eqn_.fx(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
         eqn_.limit(xNew);
         if (converged(xNew - xOld))
         {

@@ -75,7 +75,7 @@ Foam::rootSolver::printFinalInformation(const scalar val) const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::rootSolver::rootSolver(const scalarEquation& eqn, const dictionary& dict)
+Foam::rootSolver::rootSolver(const equation& eqn, const dictionary& dict)
 :
     eqn_(eqn),
     tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),

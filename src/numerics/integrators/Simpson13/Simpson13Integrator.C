@@ -31,7 +31,7 @@ License
 template<class Type>
 Foam::Simpson13Integrator<Type>::Simpson13Integrator
 (
-    const Equation<Type>& eqn,
+    const equationType& eqn,
     const dictionary& dict
 )
 :
@@ -54,29 +54,29 @@ Type Foam::Simpson13Integrator<Type>::integrate
     scalar dx = x1 - x0;
     if (mag(dx) < small)
     {
-        return dx*this->eqnPtr_->f(x0, li);
+        return dx*this->eqnPtr_->fx(x0, li);
     }
     if (this->nSteps_ <= 2)
     {
         return
             dx/6.0
            *(
-                this->eqnPtr_->f(x0, li)
-              + 4.0*this->eqnPtr_->f(0.5*(x0 + x1), li)
-              + this->eqnPtr_->f(x1, li)
+                this->eqnPtr_->fx(x0, li)
+              + 4.0*this->eqnPtr_->fx(0.5*(x0 + x1), li)
+              + this->eqnPtr_->fx(x1, li)
             );
     }
     label n = this->nSteps_/2.0;
     dx /= scalar(this->nSteps_);
 
-    Type res(this->eqnPtr_->f(x0, li) + this->eqnPtr_->f(x1, li));
+    Type res(this->eqnPtr_->fx(x0, li) + this->eqnPtr_->fx(x1, li));
     for (label i = 1; i <= n; i++)
     {
-        res += 4.0*this->eqnPtr_->f(x0 + dx*(2*i - 1), li);
+        res += 4.0*this->eqnPtr_->fx(x0 + dx*(2*i - 1), li);
     }
     for (label i = 1; i < n; i++)
     {
-        res += 2.0*this->eqnPtr_->f(x0 + dx*2*i, li);
+        res += 2.0*this->eqnPtr_->fx(x0 + dx*2*i, li);
     }
     return dx/3.0*res;
 }

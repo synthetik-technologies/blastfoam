@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::secantRootSolver::secantRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -85,10 +85,10 @@ Foam::scalar Foam::secantRootSolver::findRoot
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar yHigh = eqn_.f(xHigh, li);
+        scalar yHigh = eqn_.fx(xHigh, li);
         xNew =
             xHigh - yHigh*(xHigh - xLow)
-           /stabilise(yHigh - eqn_.f(xLow, li), small);
+           /stabilise(yHigh - eqn_.fx(xLow, li), small);
         eqn_.limit(xNew);
 
         xLow = xHigh;

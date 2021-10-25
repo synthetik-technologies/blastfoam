@@ -32,7 +32,7 @@ Description
 #ifndef scalarEquation_H
 #define scalarEquation_H
 
-#include "Equation.H"
+#include "scalarField.H"
 #include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -45,31 +45,72 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class scalarEquation
-:
-    public Equation<scalar>
 {
 public:
 
     // Constructors
 
-        //- Construct null
-        scalarEquation();
-
         //- Construct given bounds
-        scalarEquation(const scalar lowerLimit, const scalar upperLimit);
+        scalarEquation();
 
 
     //- Destructor
     virtual ~scalarEquation();
 
+    //- Public member functions
 
-    // Member Functions
+        //- Return the number of input variables
+        virtual label nVar() const = 0;
 
-        //- Check if the solution is bracketed
-        bool containsRoot(const scalar y0, const scalar y1) const;
+        //- Return the number of equations
+        virtual label nEqns() const = 0;
 
-        //- Check if the solution is bracketed (compute bounds)
-        bool containsRoot(const label li) const;
+        //- Return the number of derivatives
+        virtual label nDerivatives() const = 0;
+
+        //- Return the lower limit
+        virtual tmp<scalarField> lowerLimits() const = 0;
+
+        //- Return the upper limit
+        virtual tmp<scalarField> upperLimits() const = 0;
+
+        //- Return the finite difference step size for a direction
+        virtual scalar dx(const label) const = 0;
+
+        //- Access the finite difference step size for a direction
+        virtual scalar& dx(const label) = 0;
+
+        //- Return the finite difference step size
+        virtual tmp<scalarField> dx() const = 0;
+
+        //- Limit the value of x to the range of the equation
+        virtual void limit(scalarField& x) const 
+        {
+            x = max(lowerLimits(), min(x, upperLimits()));
+        }
+
+        //- Limit the value of x to the range of the equation
+        virtual void limit(scalar& x) const 
+        {
+            NotImplemented;
+        }
+
+        //- Return the function value
+        virtual void f
+        (
+            const scalarField& x, 
+            const label li,
+            scalar& fx
+        ) const = 0;
+
+        //- Return the function value
+        virtual void gradient
+        (
+            const scalarField& x, 
+            const label li,
+            scalar& fx,
+            scalarField& grad
+        ) const = 0;
 };
 
 

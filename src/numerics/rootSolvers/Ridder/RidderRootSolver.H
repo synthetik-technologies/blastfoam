@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        RidderRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        RidderRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         RidderRootSolver(const rootSolver&) = delete;

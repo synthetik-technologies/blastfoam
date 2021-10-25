@@ -60,7 +60,7 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        falsePointRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        falsePointRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         falsePointRootSolver(const rootSolver&) = delete;

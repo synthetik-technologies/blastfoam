@@ -56,7 +56,7 @@ namespace Foam
 
 Foam::falsePointRootSolver::falsePointRootSolver
 (
-    const scalarEquation& eqn,
+    const equation& eqn,
     const dictionary& dict
 )
 :
@@ -77,8 +77,8 @@ Foam::scalar Foam::falsePointRootSolver::findRoot
     scalar xNew = x0;
     scalar xLow = x1;
     scalar xHigh = x2;
-    scalar yLow = eqn_.f(xLow, li);
-    scalar yHigh = eqn_.f(xHigh, li);
+    scalar yLow = eqn_.fx(xLow, li);
+    scalar yHigh = eqn_.fx(xHigh, li);
 
     if (!eqn_.containsRoot(yLow, yHigh))
     {
@@ -89,7 +89,7 @@ Foam::scalar Foam::falsePointRootSolver::findRoot
     {
         xNew = (xHigh*yLow - xLow*yHigh)/stabilise(yLow - yHigh, 1e-10);
         eqn_.limit(xNew);
-        scalar yNew = eqn_.f(xNew, li);
+        scalar yNew = eqn_.fx(xNew, li);
 
         if (converged(yNew) || converged(xHigh - xLow))
         {

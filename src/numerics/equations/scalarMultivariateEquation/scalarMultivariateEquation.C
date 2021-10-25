@@ -27,19 +27,19 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::scalarMultivariateEquation::scalarMultivariateEquation(const label n)
-:
-    MultivariateEquation<scalar>(n)
-{}
-
-
 Foam::scalarMultivariateEquation::scalarMultivariateEquation
 (
-    const scalarList& lowerLimits,
-    const scalarList& upperLimits
+    const label nEqns,
+    const scalarField& lowerLimits,
+    const scalarField& upperLimits
 )
 :
-    MultivariateEquation<scalar>(lowerLimits, upperLimits)
+    MultivariateEquation<scalar>
+    (
+        nEqns,
+        lowerLimits, 
+        upperLimits
+    )
 {}
 
 
@@ -53,8 +53,8 @@ Foam::scalarMultivariateEquation::~scalarMultivariateEquation()
 
 bool Foam::scalarMultivariateEquation::containsRoot
 (
-    const scalarList& y0s,
-    const scalarList& y1s
+    const scalarField& y0s,
+    const scalarField& y1s
 ) const
 {
     forAll(y0s, i)
@@ -76,7 +76,11 @@ bool Foam::scalarMultivariateEquation::containsRoot
 
 bool Foam::scalarMultivariateEquation::containsRoot(const label li) const
 {
-    return containsRoot(f(lowerLimits_, li), f(upperLimits_, li));
+    scalarField fxLow(nEqns());
+    scalarField fxHigh(nEqns());
+    this->f(lowerLimits_, li, fxLow);
+    this->f(upperLimits_, li, fxHigh);
+    return containsRoot(fxLow, fxHigh);
 }
 
 // ************************************************************************* //

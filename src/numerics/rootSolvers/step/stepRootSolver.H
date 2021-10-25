@@ -66,12 +66,12 @@ public:
     // Constructors
 
         //- Construct for given rootSolver
-        stepRootSolver(const scalarEquation& eqn, const dictionary& dict);
+        stepRootSolver(const equation& eqn, const dictionary& dict);
 
         //- Construct for given rootSolver, lower bound, and step size
         stepRootSolver
         (
-            const scalarEquation& eqn,
+            const equation& eqn,
             const scalar dx
         );
 

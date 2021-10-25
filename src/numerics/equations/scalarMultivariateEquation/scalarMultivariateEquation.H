@@ -29,10 +29,11 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scalarMultivariateRootSystem_H
-#define scalarMultivariateRootSystem_H
+#ifndef scalarMultivariateEquation_H
+#define scalarMultivariateEquation_H
 
 #include "MultivariateEquation.H"
+#include "scalarField.H"
 #include "scalarMatrices.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,14 +53,12 @@ public:
 
     // Constructors
 
-        //- Construct null
-        scalarMultivariateEquation(const label nEqns);
-
         //- Construct with limits
         scalarMultivariateEquation
         (
-            const scalarList& upperLimits,
-            const scalarList& lowerLimits
+            const label nEqns,
+            const scalarField& upperLimits,
+            const scalarField& lowerLimits
         );
 
 
@@ -72,8 +71,8 @@ public:
         //- Check if the solution is bracketed
         bool containsRoot
         (
-            const scalarList& y0s,
-            const scalarList& y1s
+            const scalarField& y0s,
+            const scalarField& y1s
         ) const;
 
         //- Check if the solution is bracketed (compute bounds)

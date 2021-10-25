@@ -27,156 +27,79 @@ License
 
 // * * * * * * * * * * * * * Private member functions  * * * * * * * * * * * //
 
-// template<class Type>
-// bool Foam::Equation<Type>::checkFirstDerivative() const
-// {
-//     if
-//     (
-//         (void*)(this->*(&Equation<Type>::dfdx))
-//      == (void*)(&Equation<Type>::dfdx)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-//
-//
-// template<class Type>
-// bool Foam::Equation<Type>::checkSecondDerivative() const
-// {
-//     if
-//     (
-//         (void*)(this->*(&Equation<Type>::d2fdx2))
-//      == (void*)(&Equation<Type>::d2fdx2)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-//
-//
-// template<class Type>
-// bool Foam::Equation<Type>::checkThirdDerivative() const
-// {
-//     if
-//     (
-//         (void*)(this->*(&Equation<Type>::d3fdx3))
-//      == (void*)(&Equation<Type>::d3fdx3)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-//
-//
-// template<class Type>
-// bool Foam::Equation<Type>::checkFourthDerivative() const
-// {
-//     if
-//     (
-//         (void*)(this->*(&Equation<Type>::d4fdx4))
-//      == (void*)(&Equation<Type>::d4fdx4)
-//     )
-//     {
-//         return false;
-//     }
-//     return true;
-// }
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::Equation<Type>::Equation()
-:
-    lowerLimit_(-great),
-    upperLimit_(great)
-{}
-
-
-template<class Type>
-Foam::Equation<Type>::Equation
+template<class InType, class OutType>
+Foam::Equation<InType, OutType>::Equation
 (
-    const scalar lowerLimit,
-    const scalar upperLimit
+    const label nVar,
+    const label nEqns,
+    const InType& lowerLimits,
+    const InType& upperLimits
 )
 :
-    lowerLimit_(lowerLimit),
-    upperLimit_(upperLimit)
-{}
+    nVar_(nVar), 
+    nEqns_(nEqns),
+    lowerLimits_(lowerLimits),
+    upperLimits_(upperLimits),
+    dx_(lowerLimits)
+{
+    for (label i = 0; i < nVar; i++)
+    {
+        setComponent(dx_, i) = 1e-6;
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::Equation<Type>::~Equation()
+template<class InType, class OutType>
+Foam::Equation<InType, OutType>::~Equation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
-// template<class Type>
-// Foam::label Foam::Equation<Type>::nDerivatives() const
-// {
-//     label nDeriv = 0;
-//     // Check if first derivative has been implemented
-//     if (checkFirstDerivative())
-//     {
-//         nDeriv++;
-//     }
-//     else
-//     {
-//         return nDeriv;
-//     }
-//
-//     // Check if second derivative has been implemented
-//     if (checkSecondDerivative())
-//     {
-//         nDeriv++;
-//     }
-//     else
-//     {
-//         return nDeriv;
-//     }
-//
-//     // Check if third derivative has been implemented
-//     if (checkThirdDerivative())
-//     {
-//         nDeriv++;
-//     }
-//     else
-//     {
-//         return nDeriv;
-//     }
-//
-//     // Check if fourth derivative has been implemented
-//     if (checkFourthDerivative())
-//     {
-//         nDeriv++;
-//     }
-//     return nDeriv;
-// }
-
-
-template<class Type>
-bool Foam::Equation<Type>::checkBounds(const scalar x) const
+template<class InType, class OutType>
+Foam::tmp<Foam::scalarField>
+Foam::Equation<InType, OutType>::lowerLimits() const 
 {
-    if (x < lowerLimit_ || x > upperLimit_)
+    tmp<scalarField> tlower(new scalarField(nVar_));
+    scalarField& lower = tlower.ref();
+    for (label i = 0; i < nVar_; i++)
     {
-        #ifdef FULLDEBUG
-        FatalErrorInFunction
-            << "Request function evaluation is out of bounds." << nl
-            << "lowerLimit: " << lowerLimit_ << endl
-            << "upperLimit: " << upperLimit_ << endl
-            << "x: " << x << endl
-            << abort(FatalError);
-        #endif
-        return false;
+        lower[i] = component(lowerLimits_, i);
     }
-    return false;
+    return tlower;
 }
+
+
+template<class InType, class OutType>
+Foam::tmp<Foam::scalarField>
+Foam::Equation<InType, OutType>::upperLimits() const 
+{
+    tmp<scalarField> tupper(new scalarField(nVar_));
+    scalarField& upper = tupper.ref();
+    for (label i = 0; i < nVar_; i++)
+    {
+        upper[i] = component(upperLimits_, i);
+    }
+    return tupper;
+}
+
+
+template<class InType, class OutType>
+Foam::tmp<Foam::scalarField>
+Foam::Equation<InType, OutType>::dx() const 
+{
+    tmp<scalarField> tdx(new scalarField(nVar_));
+    scalarField& dx = tdx.ref();
+    for (label i = 0; i < nVar_; i++)
+    {
+        dx[i] = component(dx_, i);
+    }
+    return tdx;
+}
+
 
 // ************************************************************************* //
