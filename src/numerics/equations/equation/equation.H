@@ -35,6 +35,7 @@ Description
 #include "UnivariateEquation.H"
 #include "ScalarEquation.H"
 #include "univariateEquation.H"
+#include "multivariateEquation.H"
 #include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,7 +51,8 @@ class equation
 :
     public Equation<scalar, scalar>,
     public scalarEquation,
-    public univariateEquation<scalar>
+    public univariateEquation<scalar>,
+    public multivariateEquation<scalar>
 {
 public:
 
@@ -67,31 +69,32 @@ public:
     // Member Functions
 
         //- Return the number of input variables
-        inline label nVar() const;
+        virtual label nVar() const;
 
         //- Return the number of equations
-        inline label nEqns() const;
+        virtual label nEqns() const;
 
         using Equation<scalar, scalar>::nDerivatives;
 
         //- Return the lower limit
-        inline tmp<scalarField> lowerLimits() const;
+        virtual tmp<scalarField> lowerLimits() const;
 
         //- Return the upper limit
-        inline tmp<scalarField> upperLimits() const;
+        virtual tmp<scalarField> upperLimits() const;
 
         //- Return the finite difference step size
-        inline tmp<scalarField> dX() const;
+        virtual tmp<scalarField> dX() const;
 
         //- Return the finite difference step size
-        inline void setDX(const scalarField& newDx) const;
+        virtual void setDX(const scalarField& newDx) const;
 
         //- Limit the value of x to the range of the equation
         using scalarEquation::limit;
-        inline void limit(scalar& x) const;
+        using multivariateEquation<scalar>::limit;
+        virtual void limit(scalar& x) const;
 
         //- Calulate the function at a point
-        inline void f
+        virtual void f
         (
             const scalar& x,
             const label li,
@@ -99,15 +102,23 @@ public:
         ) const;
 
         //- Calulate the function at a set of points
-        inline void f
+        virtual void f
         (
             const scalarField& x,
             const label li,
             scalar& fx
         ) const;
 
+        //- Calulate the function at a set of points
+        virtual void f
+        (
+            const scalarField& x,
+            const label li,
+            Field<scalar>& fx
+        ) const;
+
         //- Calulate the gradient (dfdx)
-        inline void gradient
+        virtual void gradient
         (
             const scalarField& x,
             const label li,
@@ -115,21 +126,32 @@ public:
             scalarField& grad
         ) const;
 
+        //- Calulate the Jacobian (dfdx)
+        virtual void jacobian
+        (
+            const scalarField& x,
+            const label li,
+            scalarField& fx,
+            RectangularMatrix<scalar>& J
+        ) const;
+
         //- Check if the solution is bracketed
-        bool containsRoot(const scalar y0, const scalar y1) const;
+        virtual bool containsRoot(const scalar y0, const scalar y1) const;
+
+        //- Check if the solution is bracketed
+        virtual bool containsRoot
+        (
+            const scalarField& y0s,
+            const scalarField& y1s
+        ) const;
 
         //- Check if the solution is bracketed (compute bounds)
-        bool containsRoot(const label li) const;
+        virtual bool containsRoot(const label li) const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "equationI.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

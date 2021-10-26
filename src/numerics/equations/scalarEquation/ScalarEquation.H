@@ -84,25 +84,25 @@ public:
     // Member Functions
 
         //- Return the number of input variables
-        inline label nVar() const;
+        virtual label nVar() const;
 
         //- Return the number of equations
-        inline label nEqns() const;
+        virtual label nEqns() const;
 
         //- Return the lower limit
-        inline tmp<scalarField> lowerLimits() const;
+        virtual tmp<scalarField> lowerLimits() const;
 
         //- Return the upper limit
-        inline tmp<scalarField> upperLimits() const;
+        virtual tmp<scalarField> upperLimits() const;
 
         //- Return the finite difference step size
-        inline tmp<scalarField> dX() const;
+        virtual tmp<scalarField> dX() const;
 
         //- Return the finite difference step size
-        inline void setDX(const scalarField& newDx) const;
+        virtual void setDX(const scalarField& newDx) const;
 
         //- Limit the value of x to the range of the equation
-        inline void limit(scalarField& x) const;
+        virtual void limit(scalarField& x) const;
 
         //- Calulate the gradient
         using scalarEquation::gradient;

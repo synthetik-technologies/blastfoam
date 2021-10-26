@@ -24,49 +24,50 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "minimizationScheme.H"
+#include "univariateMinimizationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 Foam::autoPtr<Foam::minimizationScheme>
 Foam::minimizationScheme::New
 (
-    const scalarEquation& eqns,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 {
-    word minimizationSchemeTypeName(dict.lookup("solver"));
-    Info<< "Selecting root solver " << minimizationSchemeTypeName << endl;
-
-    if (eqns.nVar() == 1)
+    word minimizationSchemeType(dict.lookup("solver"));
+    Info<< "Selecting minimization scheme: " << minimizationSchemeType << endl;
+    if (eqn.nVar() == 1)
     {
+
         dictionaryUnivariateConstructorTable::iterator cstrIter =
-            dictionaryUnivariateConstructorTablePtr_->find(minimizationSchemeTypeName);
+            dictionaryUnivariateConstructorTablePtr_->find(minimizationSchemeType);
 
         if (cstrIter == dictionaryUnivariateConstructorTablePtr_->end())
         {
             FatalErrorInFunction
-                << "Unknown minimizationScheme type "
-                << minimizationSchemeTypeName << nl << nl
-                << "Valid minimizationSchemes for no derivatives are : " << endl
+                << "Unknown univariate minimization scheme type "
+                << minimizationSchemeType << nl << nl
+                << "Valid univariate minimization schemes are : " << endl
                 << dictionaryUnivariateConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
         }
-        return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
+        return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
     }
 
     dictionaryMultivariateConstructorTable::iterator cstrIter =
-        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeTypeName);
+        dictionaryMultivariateConstructorTablePtr_->find(minimizationSchemeType);
 
     if (cstrIter == dictionaryMultivariateConstructorTablePtr_->end())
     {
         FatalErrorInFunction
-            << "Unknown minimizationScheme type "
-            << minimizationSchemeTypeName << nl << nl
-            << "Valid minimizationSchemes for one derivative are : " << endl
+            << "Unknown multivariate minimization scheme type "
+            << minimizationSchemeType << nl << nl
+            << "Valid multivariate minimization schemes : " << endl
             << dictionaryMultivariateConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
-    return autoPtr<minimizationScheme>(cstrIter()(eqns, dict));
+    return autoPtr<minimizationScheme>(cstrIter()(eqn, dict));
 }
 
 

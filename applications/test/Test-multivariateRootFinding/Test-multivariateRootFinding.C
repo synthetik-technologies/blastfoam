@@ -1,19 +1,19 @@
 #include "dictionary.H"
-#include "multivariateRootSolver.H"
+#include "rootSolver.H"
 #include "argList.H"
 
 using namespace Foam;
 
 
-class multivariateTestEqn1
+class testEqn1
 :
-    public scalarMultivariateEquation
+    public MultivariateEquation<scalar>
 {
 public:
     // Constructors
-    multivariateTestEqn1()
+    testEqn1()
     :
-        scalarMultivariateEquation
+        MultivariateEquation
         (
             2,
             scalarField(2, 0.0),
@@ -22,7 +22,7 @@ public:
     {}
 
     //- Destructor
-    virtual ~multivariateTestEqn1()
+    virtual ~testEqn1()
     {}
 
     virtual label nEqns() const
@@ -60,15 +60,15 @@ public:
 };
 
 
-class multivariateTestEqn2
+class testEqn2
 :
-    public scalarMultivariateEquation
+    public MultivariateEquation<scalar>
 {
 public:
     // Constructors
-    multivariateTestEqn2()
+    testEqn2()
     :
-        scalarMultivariateEquation
+        MultivariateEquation
         (
             2,
             scalarField(2, -10.0),
@@ -77,7 +77,7 @@ public:
     {}
 
     //- Destructor
-    virtual ~multivariateTestEqn2()
+    virtual ~testEqn2()
     {}
 
     virtual label nEqns() const
@@ -103,28 +103,28 @@ public:
         const scalarField& x,
         const label li,
         scalarField& fx,
-        scalarRectangularMatrix& dfdx
+        RectangularMatrix<scalar>& J
     ) const
     {
         f(x, li, fx);
 
-        dfdx(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
-        dfdx(0, 1) = 1.0;
-        dfdx(1, 0) = 2.0*x[0]/16.0;
-        dfdx(1, 1) = stabilise(2.0*x[1], small);
+        J(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
+        J(0, 1) = 1.0;
+        J(1, 0) = 2.0*x[0]/16.0;
+        J(1, 1) = stabilise(2.0*x[1], small);
     }
 };
 
 
 int main(int argc, char *argv[])
 {
-    PtrList<scalarMultivariateEquation> multEqns(2);
+    PtrList<multivariateEquation<scalar>> multEqns(2);
     wordList multiEqnStrs(2);
-    multEqns.set(0, new multivariateTestEqn1());
+    multEqns.set(0, new testEqn1());
     multiEqnStrs[0] =
         word("    f1(x1, x2) = x1^2 + x2^2 - 4.0\n")
       + word("    f2(x1, x2) = x1^2 - x2 + 1.0\n");
-    multEqns.set(1, new multivariateTestEqn2());
+    multEqns.set(1, new testEqn2());
     multiEqnStrs[1] =
         word("    f1(x1, x2) = x2^2 + x1^2 + x1\n")
       + word("    f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n");
@@ -134,23 +134,23 @@ int main(int argc, char *argv[])
     Info<< "Mulitvariate root finding" << endl;
     wordList multivariateMethods
     (
-        multivariateRootSolver::dictionaryOneConstructorTablePtr_->toc()
+        rootSolver::dictionaryOneConstructorTablePtr_->toc()
     );
     forAll(multEqns, eqni)
     {
         Info<< "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
         scalarField x0(2, 0.1);
-        const scalarMultivariateEquation& eqns = multEqns[eqni];
+        const multivariateEquation<scalar>& eqns = multEqns[eqni];
         forAll(multivariateMethods, i)
         {
             dict.set("solver", multivariateMethods[i]);
-            autoPtr<multivariateRootSolver> solver
+            autoPtr<rootSolver> solver
             (
-                multivariateRootSolver::New(eqns, dict)
+                rootSolver::New(eqns, dict)
             );
             Info<< "    roots=" << solver->solve(x0)
                 << ", nSteps=" << solver->nSteps()
-                << ", error=" << solver->error() << nl << endl;
+                << ", error=" << solver->errors() << nl << endl;
         }
     }
 

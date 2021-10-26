@@ -29,7 +29,7 @@ License
 
 Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
 (
-    const equation& eqn,
+    const scalarEquation& eqn,
     const dictionary& dict
 )
 {

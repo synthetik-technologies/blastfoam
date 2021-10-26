@@ -1,5 +1,5 @@
 #include "dictionary.H"
-#include "rootSolver.H"
+#include "univariateRootSolver.H"
 #include "argList.H"
 
 using namespace Foam;
@@ -82,7 +82,10 @@ int main(int argc, char *argv[])
 
     Info<< endl;
     Info<< "Univariate root finding" << endl;
-    wordList methods(rootSolver::dictionaryTwoConstructorTablePtr_->toc());
+    wordList methods
+    (
+        univariateRootSolver::dictionaryTwoConstructorTablePtr_->toc()
+    );
     forAll(uniEqns, eqni)
     {
         Info<< "Solving " << uniEqnStrs[eqni] << endl;
@@ -90,7 +93,10 @@ int main(int argc, char *argv[])
         forAll(methods, i)
         {
             dict.set("solver", methods[i]);
-            autoPtr<rootSolver> solver(rootSolver::New(eqn, dict));
+            autoPtr<univariateRootSolver> solver
+            (
+                univariateRootSolver::New(eqn, dict)
+            );
             Info<<"    root=" << solver->solve(0.5, 0)
                 << ", nSteps=" << solver->nSteps()
                 << ", error=" << solver->error() << nl << endl;

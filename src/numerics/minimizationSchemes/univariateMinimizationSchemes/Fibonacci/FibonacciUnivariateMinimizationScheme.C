@@ -133,8 +133,9 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
                *(1.0 - pow(s, n + 1 - stepi_))
                /(1.0 - pow(s, n - stepi_))
             );
+        printStepInformation(0.5*(a + b));
     }
-    return 0.5*(a + b);
+    return printFinalInformation(0.5*(a + b));
 }
 
 // ************************************************************************* //

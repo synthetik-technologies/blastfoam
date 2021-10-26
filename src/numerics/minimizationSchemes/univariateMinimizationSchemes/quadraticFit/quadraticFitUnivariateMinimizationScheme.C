@@ -105,7 +105,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
             );
         if (converged(x - b))
         {
-            return x;
+            break;
         }
 
         yx = eqn_.fx(x, li);
@@ -142,7 +142,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
         }
         printStepInformation(x);
     }
-    return x;
+    return printFinalInformation(x);
 }
 
 // ************************************************************************* //

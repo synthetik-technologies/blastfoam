@@ -30,107 +30,144 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(rootSolver, 0);
+    defineRunTimeSelectionTable(rootSolver, dictionaryUnivariate);
     defineRunTimeSelectionTable(rootSolver, dictionaryZero);
     defineRunTimeSelectionTable(rootSolver, dictionaryOne);
-    defineRunTimeSelectionTable(rootSolver, dictionaryTwo);
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::rootSolver::converged(const scalar error) const
+bool Foam::rootSolver::converged(const scalarField& errors) const
 {
-    error_ = mag(error);
-    return error_ < tolerance_;
+    errors_ = mag(errors);
+    forAll(errors_, i)
+    {
+        if (errors_[i] > tolerances_[i])
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 
-
-void Foam::rootSolver::printStepInformation(const scalar val) const
+void Foam::rootSolver::printStepInformation
+(
+    const scalarField& vals
+) const
 {
     if (debug)
     {
         Info<< "Step " << stepi_
-            << ", error=" << error_
-            << ", value: " << val << endl;
+            << ", errors=" << errors_
+            << ", values: " << vals << endl;
     }
 }
 
 
-Foam::scalar
-Foam::rootSolver::printFinalInformation(const scalar val) const
+void Foam::rootSolver::printFinalInformation() const
 {
     if (stepi_ < maxSteps_ && debug)
     {
         Info<< "Converged in " << stepi_ << " iterations"
-            << ", final error=" << error_;
+            << ", final errors=" << errors_;
     }
     else if (stepi_ >= maxSteps_)
     {
         WarningInFunction
-            << "Did not converge, final error= " << error_ << endl;
+            << "Did not converge, final errors= " << errors_ << endl;
     }
-    return val;
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::rootSolver::rootSolver(const equation& eqn, const dictionary& dict)
+Foam::rootSolver::rootSolver
+(
+    const multivariateEquation<scalar>& eqns,
+    const dictionary& dict
+)
 :
-    eqn_(eqn),
-    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    eqns_(eqns),
+    tolerances_
+    (
+        dict.lookupOrDefault<scalarField>
+        (
+            "tolerances",
+            scalarField(eqns_.nVar(), 1e-6)
+        )
+    ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
-    error_(great)
+    errors_(eqns.nEqns(), great)
+{
+    if (dict.found("tolerance"))
+    {
+        tolerances_ = dict.lookup<scalar>("tolerance");
+    }
+}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::rootSolver::~rootSolver()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::rootSolver::solve() const
+Foam::tmp<Foam::scalarField> Foam::rootSolver::solve() const
 {
-    return this->findRoot
+    return this->findRoots
     (
-        (eqn_.lower() + eqn_.upper())*0.5,
-        eqn_.lower(),
-        eqn_.upper(),
+        ((eqns_.lowerLimits() + eqns_.upperLimits())*0.5)(),
+        eqns_.lowerLimits(),
+        eqns_.upperLimits(),
         0
     );
 }
 
 
-Foam::scalar Foam::rootSolver::solve(const scalar x0) const
-{
-    return this->findRoot(x0, eqn_.lower(), eqn_.upper(), 0);
-}
-
-
-Foam::scalar Foam::rootSolver::solve(const scalar x0, const label li) const
-{
-    return this->findRoot(x0, eqn_.lower(), eqn_.upper(), li);
-}
-
-
-Foam::scalar Foam::rootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalar x0,
-    const scalar xLow,
-    const scalar xHigh
+    const scalarField& x0
 ) const
 {
-    return this->findRoot(x0, xLow, xHigh, 0);
+    return this->findRoots(x0, eqns_.lowerLimits(), eqns_.upperLimits(), 0);
 }
 
 
-Foam::scalar Foam::rootSolver::solve
+Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalar x0,
-    const scalar xLow,
-    const scalar xHigh,
+    const scalarField& x0,
     const label li
 ) const
 {
-    return this->findRoot(x0, xLow, xHigh, li);
+    return this->findRoots(x0, eqns_.lowerLimits(), eqns_.upperLimits(), li);
 }
+
+
+Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
+(
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh
+) const
+{
+    return this->findRoots(x0, xLow, xHigh, 0);
+}
+
+
+Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
+(
+    const scalarField& x0,
+    const scalarField& xLow,
+    const scalarField& xHigh,
+    const label li
+) const
+{
+    return this->findRoots(x0, xLow, xHigh, li);
+}
+
 
 // ************************************************************************* //

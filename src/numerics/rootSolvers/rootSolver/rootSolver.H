@@ -25,7 +25,7 @@ Class
     Foam::rootSolver
 
 Description
-    Abstract base-class for root system solvers
+    Abstract base-class for multivariateRoot system solvers
 
 SourceFiles
     rootSolver.C
@@ -35,7 +35,7 @@ SourceFiles
 #ifndef rootSolver_H
 #define rootSolver_H
 
-#include "equation.H"
+#include "MultivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -55,11 +55,11 @@ protected:
 
     // Protected data
 
-        //- Reference to scalarEquation
-        const equation& eqn_;
+        //- Reference to scalarMultivariateEquation
+        const multivariateEquation<scalar>& eqns_;
 
         //- Convergence tolerance
-        scalar tolerance_;
+        scalarField tolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -67,18 +67,17 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current error
-        mutable scalar error_;
+        //- Current errors
+        mutable scalarField errors_;
 
         //- Is the solution converged
-        bool converged(const scalar error) const;
+        bool converged(const scalarField& errors) const;
 
         //- Print information about the current step
-        void printStepInformation(const scalar val) const;
+        void printStepInformation(const scalarField& vals) const;
 
         //- Print information about the current step
-        scalar printFinalInformation(const scalar val) const;
-
+        void printFinalInformation() const;
 
 public:
 
@@ -91,106 +90,103 @@ public:
         (
             autoPtr,
             rootSolver,
+            dictionaryUnivariate,
+            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (eqns, dict)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            rootSolver,
             dictionaryZero,
-            (const equation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (eqns, dict)
         );
         declareRunTimeSelectionTable
         (
             autoPtr,
             rootSolver,
             dictionaryOne,
-            (const equation& eqn, const dictionary& dict),
-            (eqn, dict)
-        );
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            rootSolver,
-            dictionaryTwo,
-            (const equation& eqn, const dictionary& dict),
-            (eqn, dict)
+            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (eqns, dict)
         );
 
 
     // Constructors
 
         //- Construct for given rootSolver
-        rootSolver(const equation& eqn, const dictionary& dict);
+        rootSolver
+        (
+            const multivariateEquation<scalar>& eqns,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
-
 
     // Selectors
 
         //- Select null constructed
         static autoPtr<rootSolver> New
         (
-            const equation& eqn,
+            const multivariateEquation<scalar>& eqns,
             const dictionary& dict
         );
 
 
     //- Destructor
-    virtual ~rootSolver()
-    {}
+    virtual ~rootSolver();
 
 
     // Member Functions
 
         //- Return access to the tolerance
-        inline scalar& tolerance();
+        inline const scalarField& tolerances() const;
 
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the errors
+        inline const scalarList& errors() const;
 
-        //- Find the root of the equation
-        virtual scalar solve() const;
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve() const;
 
-        //- Find the root of the equation
-        virtual scalar solve(const scalar x0) const;
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve(const scalarField& x0) const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh
         ) const;
 
-        //- Find the root of the equation
-        virtual scalar solve
+        //- Find the roots of the equation
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
+            const scalarField& x0,
             const label li
         ) const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar solve
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> solve
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const;
 
-        //- Find the root of the equation between xHigh and xLow
-        virtual scalar findRoot
+        //- Find the roots of the equation between xHigh and xLow
+        virtual tmp<scalarField> findRoots
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const = 0;
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const rootSolver&) = delete;
 };
 
 

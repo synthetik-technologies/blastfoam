@@ -35,7 +35,7 @@ SourceFiles
 #ifndef minimizationScheme_H
 #define minimizationScheme_H
 
-#include "scalarEquation.H"
+#include "ScalarEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -70,8 +70,21 @@ protected:
         //- Current errors
         mutable scalarField errors_;
 
+        //- Number of pre-samples in each direction
+        labelList nSamples_;
+
         //- Line search reduction coefficient
         scalar tau_;
+
+        //- Line search
+        scalar lineSearch
+        (
+            const scalarField& x0,
+            const scalarField& grad,
+            const scalarField& gradOld,
+            const label li,
+            scalar& fx
+        ) const;
 
         //- Line search
         scalar lineSearch
@@ -85,6 +98,9 @@ protected:
         //- Return the L2 norm the given list
         scalar norm(const scalarList& lst) const;
 
+        //- Return lst^T * lst
+        scalar inner(const scalarList& lst1, const scalarList& lst2) const;
+
         //- Is the solution converged
         bool converged(const scalarList& error) const;
 
@@ -94,14 +110,30 @@ protected:
         //- Print information about the current step
         void printFinalInformation() const;
 
+        //- Sample and return the interval with the smallest value
+        void sample
+        (
+            scalarField&,
+            scalarField&,
+            labelList& xBest,
+            scalar& yBest,
+            labelList& indicies,
+            const label,
+            const label diri
+        ) const;
+
+        //- Name of the error
+        virtual word errorName() const
+        {
+            return "error";
+        }
 
 public:
 
     //- Runtime type information
     TypeName("minimizationScheme");
 
-    // Declare run-time constructor selection table
-
+    // Declare run-time constructor selection tables
         declareRunTimeSelectionTable
         (
             autoPtr,

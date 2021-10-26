@@ -51,11 +51,13 @@ public:
     // Constructors
 
         //- Construct with limits
-        univariateEquation();
+        univariateEquation()
+        {}
 
 
     //- Destructor
-    virtual ~univariateEquation();
+    virtual ~univariateEquation()
+    {}
 
 
     // Member Functions
@@ -96,11 +98,6 @@ public:
 
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "univariateEquation.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

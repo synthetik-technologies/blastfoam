@@ -61,8 +61,8 @@ void Foam::minimizationScheme::printStepInformation
 {
     if (debug > 1)
     {
-        Info<< "Step " << stepi_ << ":" << nl
-            << "    errors=" << errors_ << nl
+        Info<< "Step: " << stepi_ << ":" << nl
+            << "    " << errorName() << "s: " << errors_ << nl
             << "    values: " << vals << endl;
     }
 }
@@ -73,14 +73,53 @@ void Foam::minimizationScheme::printFinalInformation() const
     if (stepi_ < maxSteps_ && debug)
     {
         Info<< "Converged in " << stepi_ << " iterations" << nl
-            << "    Final errors=" << errors_ << endl;
+            << "    Final " << errorName() << "s=" << errors_ << endl;
     }
     else if (stepi_ >= maxSteps_)
     {
         WarningInFunction
             << "Did not converge in " << maxSteps_ << " iterations" << nl
-            << "    Final errors= " << errors_ << endl;
+            << "    Final " << errorName() << "s: " << errors_ << endl;
     }
+}
+
+
+Foam::scalar Foam::minimizationScheme::lineSearch
+(
+    const scalarField& x0,
+    const scalarField& grad,
+    const scalarField& gradOld,
+    const label li,
+    scalar& fx
+) const
+{
+    if (debug > 3)
+    {
+        Info<< "Conducting line search" << endl;
+    }
+
+    scalar alpha = norm(grad)/stabilise(norm(gradOld), small);
+//     scalar alpha =
+//         max
+//         (
+//             inner(grad, grad - gradOld)/stabilise(norm(gradOld), small),
+//             0.0
+//         );
+
+    const scalar fx0(fx);
+    scalarField x1(x0 - alpha*grad);
+    eqns_.limit(x1);
+    eqns_.f(x1, li, fx);
+
+    label iter = 0;
+    while (fx >= fx0 && iter++ < maxSteps_)
+    {
+        alpha *= tau_;
+        x1 = x0 - alpha*grad;
+        eqns_.limit(x1);
+        eqns_.f(x1, li, fx);
+    }
+    return alpha;
 }
 
 
@@ -96,18 +135,21 @@ Foam::scalar Foam::minimizationScheme::lineSearch
     {
         Info<< "Conducting line search" << endl;
     }
-    scalar alpha = 2.0;
+    scalar alpha = 10.0;
+
     const scalar fx0(fx);
-    scalarField x1(x0 - grad);
+    scalarField x1(x0 - alpha*grad);
+    eqns_.limit(x1);
+    eqns_.f(x1, li, fx);
 
     label iter = 0;
-    do
+    while (fx >= fx0 && iter++ < maxSteps_)
     {
         alpha *= tau_;
         x1 = x0 - alpha*grad;
         eqns_.limit(x1);
         eqns_.f(x1, li, fx);
-    } while (fx > fx0 && iter++ < maxSteps_);
+    }
     return alpha;
 }
 
@@ -119,7 +161,83 @@ Foam::scalar Foam::minimizationScheme::norm(const scalarList& lst) const
     {
         sum += magSqr(lst[i]);
     }
+    return sqrt(sum/scalar(lst.size()));
+}
+
+
+Foam::scalar Foam::minimizationScheme::inner
+(
+    const scalarList& lst1,
+    const scalarList& lst2
+) const
+{
+    scalar sum = 0;
+    forAll(lst1, i)
+    {
+        sum += lst1[i]*lst2[i];
+    }
     return sum;
+}
+
+
+void Foam::minimizationScheme::sample
+(
+    scalarField& xLow,
+    scalarField& xHigh,
+    labelList& xBest,
+    scalar& yBest,
+    labelList& indicies,
+    const label li,
+    const label diri
+) const
+{
+    if ((debug || minimizationScheme::debug) && diri == 0)
+    {
+        Info<<"Pre sampling interval" << endl;
+    }
+
+    if (diri >= xBest.size())
+    {
+        scalar y;
+        eqns_.f((xLow + xHigh)*0.5, li, y);
+
+        if (y < yBest)
+        {
+            yBest = y;
+            xBest = indicies;
+        }
+        return;
+    }
+
+
+    scalar dx = (xHigh[diri] - xLow[diri])/scalar(nSamples_[diri] + 1);
+    for (label i = 0; i < nSamples_[diri]; i++)
+    {
+        scalarField x0(xLow);
+        x0[diri] += dx*scalar(i);
+        scalarField x1(xHigh);
+        x1[diri] += dx;
+        indicies[diri] = i;
+        sample(x0, x1, xBest, yBest, indicies, li, diri + 1);
+    }
+
+    if (diri != 0)
+    {
+        return;
+    }
+
+    forAll(xLow, i)
+    {
+        scalar dx = (xHigh[i] - xLow[i])/scalar(nSamples_[i] + 1);
+        xLow[i] += scalar(xBest[i])*dx;
+        xHigh[i] = xLow[i] + dx;
+    }
+
+    if (debug || minimizationScheme::debug)
+    {
+        Info<< "Found minimum values in (" << xLow << "," << xHigh << ")"
+            << " yBest: " << yBest << endl;
+    }
 }
 
 
@@ -143,6 +261,14 @@ Foam::minimizationScheme::minimizationScheme
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
     errors_(eqns.nVar(), great),
+    nSamples_
+    (
+        dict.lookupOrDefault<labelList>
+        (
+            "nSamples",
+            labelList(eqns.nVar(), 0)
+        )
+    ),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
 {
     if (eqns_.nEqns() > 1)
@@ -210,8 +336,18 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
     const label li
 ) const
 {
-    return minimize(x0, xLow, xHigh, li);
+    scalarField x1(xLow);
+    scalarField x2(xHigh);
+    scalarField xStart(x0);
+    if (min(nSamples_) > 0)
+    {
+        labelList xBest(x1.size(), 0);
+        labelList indicies(xBest);
+        scalar yBest = great;
+        sample(x1, x2, xBest, yBest, indicies, li, 0);
+        xStart = 0.5*(x1 + x2);
+    }
+    return minimize(xStart, x1, x2, li);
 }
-
 
 // ************************************************************************* //

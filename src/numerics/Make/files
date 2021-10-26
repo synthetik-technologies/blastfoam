@@ -1,28 +1,28 @@
 lookupTables/lookupTable2D/scalarLookupTable2D.C
 lookupTables/lookupTable1D/scalarLookupTable1D.C
 
-equations/scalarEquation/scalarEquation.C
 equations/scalarEquation/ScalarEquation.C
 equations/equation/equation.C
-equations/scalarMultivariateEquation/scalarMultivariateEquation.C
 
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C
-rootSolvers/step/stepRootSolver.C
-rootSolvers/bisection/bisectionRootSolver.C
-rootSolvers/secant/secantRootSolver.C
-rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
-rootSolvers/Steffensen/SteffensenRootSolver.C
-rootSolvers/Ridder/RidderRootSolver.C
-rootSolvers/Brent/BrentRootSolver.C
-rootSolvers/falsePoint/falsePointRootSolver.C
-rootSolvers/Halley/HalleyRootSolver.C
 
-multivariateRootSolvers/multivariateRootSolver/multivariateRootSolver.C
-multivariateRootSolvers/multivariateRootSolver/multivariateRootSolverNew.C
-multivariateRootSolvers/NewtonRaphson/NewtonRaphsonMultivariateRootSolver.C
-multivariateRootSolvers/goodBroyden/goodBroydenMultivariateRootSolver.C
-multivariateRootSolvers/badBroyden/badBroydenMultivariateRootSolver.C
+univariateRootSolvers=rootSolvers/univariateRootSolvers
+$(univariateRootSolvers)/univariateRootSolver/univariateRootSolver.C
+$(univariateRootSolvers)/univariateRootSolver/univariateRootSolverNew.C
+$(univariateRootSolvers)/step/stepUnivariateRootSolver.C
+$(univariateRootSolvers)/bisection/bisectionUnivariateRootSolver.C
+$(univariateRootSolvers)/secant/secantUnivariateRootSolver.C
+$(univariateRootSolvers)/NewtonRaphson/NewtonRaphsonUnivariateRootSolver.C
+$(univariateRootSolvers)/Steffensen/SteffensenUnivariateRootSolver.C
+$(univariateRootSolvers)/Ridder/RidderUnivariateRootSolver.C
+$(univariateRootSolvers)/Brent/BrentUnivariateRootSolver.C
+$(univariateRootSolvers)/falsePoint/falsePointUnivariateRootSolver.C
+$(univariateRootSolvers)/Halley/HalleyUnivariateRootSolver.C
+
+rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
+rootSolvers/goodBroyden/goodBroydenRootSolver.C
+rootSolvers/badBroyden/badBroydenRootSolver.C
 
 integrators/Integrator/Integrators.C
 

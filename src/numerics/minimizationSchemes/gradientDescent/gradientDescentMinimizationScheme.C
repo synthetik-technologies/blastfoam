@@ -73,41 +73,33 @@ Foam::gradientDescentMinimizationScheme::minimize
     scalarField& xNew = txNew.ref();
     scalarField xOld(xNew);
     scalar fx(eqns_.nEqns());
-    scalar fxp = fx;
-    eqns_.f(x0, li, fx);
-    const scalarList dx(eqns_.dX());
-
     scalarField grad(x0.size());
-    forAll(grad, cmpti)
-    {
-        scalarField x1(x0);
-        x1[cmpti] += dx[cmpti];
-        eqns_.f(x1, li, fxp);
-        grad[cmpti] = (fxp - fx)/(dx[cmpti]);
-    }
+    eqns_.gradient(x0, li, fx, grad);
+    scalarField gradOld(grad);
+    scalar alpha;
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xOld = xNew;
-
-        scalar alpha = lineSearch(xOld, grad, li, fx);
-
+         if (stepi_ <= 1)
+         {
+            alpha = lineSearch(xOld, grad, li, fx);
+         }
+         else
+         {
+             alpha = lineSearch(xOld, grad, gradOld, li, fx);
+         }
         xNew = xOld - alpha*grad;
+
         eqns_.limit(xNew);
 
         if (converged(xNew - xOld))
         {
-            break;
+//             break;
         }
 
-        forAll(grad, cmpti)
-        {
-            scalarField x1(xNew);
-            x1[cmpti] += dx[cmpti];
-            eqns_.f(x1, li, fxp);
-            grad[cmpti] = (fxp - fx)/(dx[cmpti]);
-        }
-
+        gradOld = grad;
+        eqns_.gradient(xNew, li, fx, grad);
         printStepInformation(xNew);
     }
     printFinalInformation();

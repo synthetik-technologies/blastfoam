@@ -61,11 +61,8 @@ protected:
         //- Reference to scalarEquation
         const equation& eqn_;
 
-        //- The maximum number of sub-steps allowed for the integration step
-        label maxSteps_;
-
         //- Number of location to pre sample
-        label nSamples_;
+        label nSample_;
 
         //- Is the solution converged
         bool converged(const scalar error) const;
@@ -130,7 +127,7 @@ public:
         //- Select null constructed
         static autoPtr<univariateMinimizationScheme> New
         (
-            const equation& eqn,
+            const scalarEquation& eqn,
             const dictionary& dict
         );
 

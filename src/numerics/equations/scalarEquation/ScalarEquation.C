@@ -46,6 +46,50 @@ Foam::ScalarEquation::~ScalarEquation()
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+Foam::label Foam::ScalarEquation::nVar() const
+{
+    return Equation<scalarField, scalar>::nVar();
+}
+
+
+Foam::label Foam::ScalarEquation::nEqns() const
+{
+    return Equation<scalarField, scalar>::nEqns();
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::ScalarEquation::lowerLimits() const
+{
+    return Equation<scalarField, scalar>::lower();
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::ScalarEquation::upperLimits() const
+{
+    return Equation<scalarField, scalar>::upper();
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::ScalarEquation::dX() const
+{
+    return Equation<scalarField, scalar>::dx();
+}
+
+
+void Foam::ScalarEquation::setDX(const scalarField& newDx) const
+{
+    this->dx_ = newDx;
+}
+
+
+void Foam::ScalarEquation::limit(scalarField& x) const
+{
+    Equation<scalarField, scalar>::limit(x);
+}
+
 void Foam::ScalarEquation::calculateGradient
 (
     const scalarField& x0,

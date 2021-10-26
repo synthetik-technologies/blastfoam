@@ -23,9 +23,9 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar& Foam::rootSolver::tolerance()
+inline const Foam::scalarField& Foam::rootSolver::tolerances() const
 {
-    return tolerance_;
+    return tolerances_;
 }
 
 
@@ -35,9 +35,9 @@ inline Foam::label Foam::rootSolver::nSteps() const
 }
 
 
-inline Foam::scalar Foam::rootSolver::error() const
+inline const Foam::scalarList& Foam::rootSolver::errors() const
 {
-    return error_;
+    return errors_;
 }
 
 

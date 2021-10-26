@@ -46,7 +46,7 @@ bool Foam::univariateMinimizationScheme::converged(const scalar error) const
 
 void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) const
 {
-    if (debug > 2)
+    if (debug > 2 || minimizationScheme::debug > 2)
     {
         Info<< "Step " << stepi_
             << ", error=" << errors_[0]
@@ -58,15 +58,16 @@ void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) 
 Foam::scalar
 Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) const
 {
-    if (stepi_ < maxSteps_ && debug > 1)
+    if (stepi_ < maxSteps_ && (debug > 1 || minimizationScheme::debug > 1))
     {
         Info<< "Converged in " << stepi_ << " iterations"
-            << ", final error=" << errors_[0] << endl;
+            << ", final " << errorName() << "=" << errors_[0] << endl;
     }
-    else if (stepi_ >= maxSteps_ && debug)
+    else if (stepi_ >= maxSteps_)
     {
         WarningInFunction
-            << "Did not converge, final error= " << errors_[0] << endl;
+            << "Did not converge, "
+            << "final " << errorName() << "= " << errors_[0] << endl;
     }
     return val;
 }
@@ -78,29 +79,36 @@ void Foam::univariateMinimizationScheme::sample
     const label li
 ) const
 {
-    if (nSamples_ < 1)
+    if (nSample_ < 1)
     {
         return;
     }
-    if (debug)
+    if (debug || minimizationScheme::debug)
     {
         Info<<"Pre sampling interval" << endl;
     }
 
-    scalar dx = (x1 - x0)/scalar(nSamples_ + 1);
+    scalar dx = (x1 - x0)/scalar(nSample_ + 1);
     label minI = 0;
     scalar minY = great;
-    for (label i = 0; i < nSamples_; i++)
+    for (label i = 0; i < nSample_; i++)
     {
-        scalar y = eqn_.fx(((scalar(i) + 0.5)*dx), li);
+        scalar y = eqn_.fx(((scalar(i) + 0.5)*dx + x0), li);
         if (y < minY)
         {
             minY = y;
             minI = i;
         }
     }
-    x0 = scalar(minI)*dx;
+    x0 += scalar(minI)*dx;
     x1 = x0 + dx;
+
+    if (debug || minimizationScheme::debug)
+    {
+        Info<<"Found minimum values in (" << x0 << "," << x1 << ")"
+            << " minY = " << minY
+            << endl;
+    }
 }
 
 
@@ -114,8 +122,10 @@ Foam::univariateMinimizationScheme::univariateMinimizationScheme
 :
     minimizationScheme(eqn, dict),
     eqn_(dynamicCast<const equation>(eqn)),
-    nSamples_(dict.lookupOrDefault<label>("nSamples", 0))
-{}
+    nSample_(dict.lookupOrDefault<label>("nSample", 0))
+{
+    nSamples_ = 0;
+}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

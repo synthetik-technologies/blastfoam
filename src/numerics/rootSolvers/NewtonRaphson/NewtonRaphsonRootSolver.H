@@ -25,7 +25,7 @@ Class
     Foam::NewtonRaphsonRootSolver
 
 Description
-    Find root using the NewtonRaphson method
+    Find NewtonRaphsonRootSolver using the NewtonRaphson method
 
 SourceFiles
     NewtonRaphsonRootSolver.C
@@ -45,13 +45,19 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class NewtonRaphsonRootSolver Declaration
+                        Class NewtonRaphsonRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class NewtonRaphsonRootSolver
 :
     public rootSolver
 {
+// Private data
+
+    //- Damping factor
+    scalar beta_;
+
+
 public:
 
     //- Runtime type information
@@ -59,33 +65,34 @@ public:
 
     // Constructors
 
-        //- Construct for given rootSolver
-        NewtonRaphsonRootSolver(const equation& eqn, const dictionary& dict);
+        //- Construct for given multivariateMultivariateRootSolver
+        NewtonRaphsonRootSolver
+        (
+            const multivariateEquation<scalar>& eqn,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
-        NewtonRaphsonRootSolver(const rootSolver&) = delete;
+        NewtonRaphsonRootSolver
+        (
+            const NewtonRaphsonRootSolver&
+        ) = delete;
 
 
     //- Destructor
-    virtual ~NewtonRaphsonRootSolver()
-    {}
+    virtual ~NewtonRaphsonRootSolver();
 
 
     // Member Functions
 
-        //- Solve the root
-        virtual scalar findRoot
+        //- Solve the multivariateMultivariateRoot
+        virtual tmp<scalarField> findRoots
         (
-            const scalar x0,
-            const scalar xLow,
-            const scalar xHigh,
+            const scalarField& x0,
+            const scalarField& xLow,
+            const scalarField& xHigh,
             const label li
         ) const;
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const NewtonRaphsonRootSolver&) = delete;
 };
 
 

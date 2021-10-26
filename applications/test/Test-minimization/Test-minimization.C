@@ -18,8 +18,8 @@ public:
         ScalarEquation
         (
             3,
-            scalarField(3, -30.0),
-            scalarField(3, 30.0)
+            scalarField(3, 2.0),
+            scalarField(3, 4.0)
         )
     {}
 
@@ -49,7 +49,7 @@ class testEqn2
 public:
     testEqn2()
     :
-        equation(-10, 10)
+        equation(-3, 3)
     {}
 
     virtual ~testEqn2()
@@ -62,6 +62,10 @@ public:
     virtual scalar fx(const scalar x, const label li) const
     {
         return sqr(x - 2.0);
+    }
+    virtual scalar dfdx(const scalar x, const label li) const
+    {
+        return 2.0*(x - 2.0);
     }
 };
 
@@ -84,13 +88,13 @@ int main(int argc, char *argv[])
     Info<< "Minimization" << endl;
     wordList multivariateMethods
     (
-        minimizationScheme::dictionaryUnivariateConstructorTablePtr_->toc()
+        minimizationScheme::dictionaryMultivariateConstructorTablePtr_->toc()
     );
     minimizationScheme::debug = 1;
     forAll(multEqns, eqni)
     {
         Info<< nl << "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
-        scalarField x0Orig(scalarList({2, 2, 2}));
+        scalarField x0Orig(scalarList({0, 0, 0}));
         const scalarEquation& eqns = multEqns[eqni];
         forAll(multivariateMethods, i)
         {

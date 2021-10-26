@@ -57,9 +57,9 @@ Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
     minimizationScheme(eqns, dict),
     rand_(0),
     particles_(dict.lookupOrDefault<label>("nParticles", 100)),
-    c1_(dict.lookupOrDefault<scalar>("c1", 0.1)),
-    c2_(dict.lookupOrDefault<scalar>("c2", 0.1)),
-    w_(dict.lookupOrDefault<scalar>("w",0.8))
+    cLocal_(dict.lookupOrDefault<scalar>("cLocal", 1)),
+    cGlobal_(dict.lookupOrDefault<scalar>("cGlobal", 1)),
+    vWeight_(dict.lookupOrDefault<scalar>("vWeight", 1))
 
 {}
 
@@ -84,8 +84,7 @@ Foam::particleSwarmMinimizationScheme::minimize
     scalar y = yBest;
     scalarField xBest(xMean);
     scalarField xVar(n, 0.0);
-    const scalarList xMin(eqns_.lowerLimits());
-    const scalarList xMax(eqns_.upperLimits());
+    scalarField xStd(n, 0.0);
 
     forAll(particles_, i)
     {
@@ -94,7 +93,7 @@ Foam::particleSwarmMinimizationScheme::minimize
         for (label j = 0; j < n; j++)
         {
             p.x[j] =
-                rand_.sampleAB<scalar>(xMin[j], xMax[j]);
+                rand_.sampleAB<scalar>(xLow[j], xHigh[j]);
         }
         p.xBest = p.x;
         p.v.resize(n, 0.0);
@@ -114,12 +113,14 @@ Foam::particleSwarmMinimizationScheme::minimize
     {
         xVar += sqr(particles_[i].x - xMean);
     }
+    xVar /= scalar(np);
+    xStd = sqrt(xVar)/stabilise(xMean, small);
 
     scalarField r1(n);
     scalarField r2(n);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xVar))
+        if (converged(xStd))
         {
             break;
         }
@@ -133,11 +134,14 @@ Foam::particleSwarmMinimizationScheme::minimize
                 r1[cmpti] = rand_.sample01<scalar>();
                 r2[cmpti] = rand_.sample01<scalar>();
             }
+            scalarField xOld(p.x);
             p.x += p.v;
+            eqns_.limit(p.x);
+            p.v = p.x - xOld;
             p.v =
-                w_*p.v
-              + c1_*r1*(p.xBest - p.x)
-              + c2_*r2*(xBest - p.x);
+                vWeight_*p.v
+              + cLocal_*r1*(p.xBest - p.x)
+              + cGlobal_*r2*(xBest - p.x);
             eqns_.f(p.x, li, y);
             if (y < yBest)
             {
@@ -159,6 +163,7 @@ Foam::particleSwarmMinimizationScheme::minimize
             xVar += sqr(particles_[i].x - xMean);
         }
         xVar /= scalar(np);
+        xStd = sqrt(xVar)/stabilise(xMean, small);
 
         printStepInformation(xMean);
     }

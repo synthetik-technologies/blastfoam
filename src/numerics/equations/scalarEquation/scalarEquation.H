@@ -51,11 +51,13 @@ public:
     // Constructors
 
         //- Construct given bounds
-        scalarEquation();
+        scalarEquation()
+        {}
 
 
     //- Destructor
-    virtual ~scalarEquation();
+    virtual ~scalarEquation()
+    {}
 
     //- Public member functions
 

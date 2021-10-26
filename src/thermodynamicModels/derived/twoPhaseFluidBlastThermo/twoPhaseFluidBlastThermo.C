@@ -28,7 +28,7 @@ License
 
 #include "twoPhaseFluidBlastThermo.H"
 #include "equation.H"
-#include "NewtonRaphsonRootSolver.H"
+#include "NewtonRaphsonUnivariateRootSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -140,7 +140,7 @@ void Foam::twoPhaseFluidBlastThermo::calculate()
     volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
 
     twoPhaseTHEEquation eqn(*this, this->TLow_);
-    NewtonRaphsonRootSolver solver(eqn, dictionary());
+    NewtonRaphsonUnivariateRootSolver solver(eqn, dictionary());
     forAll(TCells, celli)
     {
         TCells[celli] = solver.solve(TCells[celli], celli);
@@ -413,7 +413,7 @@ Foam::twoPhaseFluidBlastThermo::calce(const volScalarField& p) const
     twoPhaseEEquation eqn(thermo);
     dictionary dict;
     dict.add("tolerance", 1e-6);
-    NewtonRaphsonRootSolver solver(eqn, dict);
+    NewtonRaphsonUnivariateRootSolver solver(eqn, dict);
     forAll(eInit, celli)
     {
         if (mag(celldpde(celli)) < small)

@@ -54,7 +54,7 @@ class particleSwarmMinimizationScheme
     public minimizationScheme
 {
 public:
-    struct particle 
+    struct particle
     {
         scalarField x;
         scalar y;
@@ -72,9 +72,15 @@ private:
     mutable List<particle> particles_;
 
     //- Coefficients
-    scalar c1_;
-    scalar c2_;
-    scalar w_;
+    scalar cLocal_;
+    scalar cGlobal_;
+    scalar vWeight_;
+
+    //- Name of the error
+    virtual word errorName() const
+    {
+        return "variance";
+    }
 
 public:
 
