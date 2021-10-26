@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ Class
     Foam::minimizationScheme
 
 Description
-    Abstract base-class for root system solvers
+    General class for minimizing multivariate, scalar equations
 
 SourceFiles
     minimizationScheme.C
@@ -36,6 +36,7 @@ SourceFiles
 #define minimizationScheme_H
 
 #include "ScalarEquation.H"
+#include "Switch.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -73,8 +74,18 @@ protected:
         //- Number of pre-samples in each direction
         labelList nSamples_;
 
+        //- Is the error normalized
+        Switch normalize_;
+
         //- Line search reduction coefficient
         scalar tau_;
+
+        //- Initial line search parameter
+        virtual scalar alpha
+        (
+            const scalarField& grad,
+            const scalarField& gradOld
+        ) const;
 
         //- Line search
         scalar lineSearch

@@ -22,10 +22,11 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::scalarEquation
+    Foam::ScalarEquation
 
 Description
-    Base class for the a scalar equation
+    An equation using a scalarField as input, but outputing only a single,
+    scalar value. Used in minimization.
 
 \*---------------------------------------------------------------------------*/
 

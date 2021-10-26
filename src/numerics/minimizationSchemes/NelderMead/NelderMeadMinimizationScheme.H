@@ -22,10 +22,10 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FibonacciUnivariateMinimizationScheme
+    Foam::NelderMeadMinimizationScheme
 
 Description
-    Univariate minimization using the Fibonacci method
+    Gradient free minimization scheme of Nelder-Mead
 
 References:
     \verbatim
@@ -35,15 +35,16 @@ References:
     \endverbatim
 
 SourceFiles
-    FibonacciUnivariateMinimizationScheme.C
+    NelderMeadMinimizationScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FibonacciUnivariateMinimizationScheme_H
-#define FibonacciUnivariateMinimizationScheme_H
+#ifndef NelderMeadMinimizationScheme_H
+#define NelderMeadMinimizationScheme_H
 
-#include "univariateMinimizationScheme.H"
+#include "minimizationScheme.H"
 #include "typeInfo.H"
+#include "Random.H"
 #include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -52,50 +53,103 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class FibonacciUnivariateMinimizationScheme Declaration
+        Class NelderMeadMinimizationScheme Declaration
 \*---------------------------------------------------------------------------*/
 
-class FibonacciUnivariateMinimizationScheme
+class NelderMeadMinimizationScheme
 :
-    public univariateMinimizationScheme
+    public minimizationScheme
 {
-    const static scalar goldenRatio;
-    const static scalar s;
+private:
+
+    //- Coefficients
+    scalar reflectionCoeff_;
+    scalar expansionCoeff_;
+    scalar contractionCoeff_;
+
+    //- Return the mean of a list of points
+    template<template <class> class ListListType, class ListType>
+    void mean
+    (
+        const ListListType<ListType>& lst,
+        ListType& avg,
+        const label n
+    ) const
+    {
+        if (n < 1)
+        {
+            return;
+        }
+        avg = lst[0];
+        for (label i = 1; i < n; i++)
+        {
+            avg += lst[i];
+        }
+        avg /= scalar(n);
+    }
+
+    //- Return the mean of a list of points
+    template<template <class> class ListListType, class ListType>
+    void mean(const ListListType<ListType>& lst, ListType& avg) const
+    {
+        mean(lst, avg, lst.size());
+    }
+
+
+    template<template <class> class ListListType, class ListType>
+    void variance
+    (
+        const ListListType<ListType>& lst,
+        const ListType& avg,
+        ListType& var
+    ) const
+    {
+        var = sqr(lst[0] - avg);
+        for (label i = 1; i < lst.size(); i++)
+        {
+            var += sqr(lst[i] - avg);
+        }
+        var /= scalar(lst.size());
+    }
+
+
+    //- Name of the error
+    virtual word errorName() const
+    {
+        return "variance";
+    }
+
 
 public:
 
     //- Runtime type information
-    TypeName("Fibonacci");
+    TypeName("NelderMead");
 
     // Constructors
 
-        //- Construct for given univariateMinimizationScheme
-        FibonacciUnivariateMinimizationScheme
+        //- Construct for given minimizationScheme
+        NelderMeadMinimizationScheme
         (
             const scalarEquation& eqn,
             const dictionary& dict
         );
 
     //- Destructor
-    virtual ~FibonacciUnivariateMinimizationScheme()
+    virtual ~NelderMeadMinimizationScheme()
     {}
 
 
     // Member Functions
 
         //- Solve the root
-        virtual scalar minimize
+        virtual tmp<scalarField> minimize
         (
-            const scalar x0,
-            const scalar x1,
-            const scalar x2,
+            const scalarField& x0,
+            const scalarField& x1,
+            const scalarField& x2,
             const label li
         ) const;
 
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const FibonacciUnivariateMinimizationScheme&) = delete;
 };
 
 

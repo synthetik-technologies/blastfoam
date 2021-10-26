@@ -25,7 +25,7 @@ Class
     Foam::UnivariateEquation
 
 Description
-    Abstract base class a Univariate equation
+    Templated equation for that uses a single input to return a Type.
 
 \*---------------------------------------------------------------------------*/
 

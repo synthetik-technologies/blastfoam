@@ -25,7 +25,8 @@ Class
     Foam::univariateEquation
 
 Description
-    Abstract base class a univariate equation
+    Abstract base class an equation with a single scalar input, and any type
+    as an output.
 
 \*---------------------------------------------------------------------------*/
 

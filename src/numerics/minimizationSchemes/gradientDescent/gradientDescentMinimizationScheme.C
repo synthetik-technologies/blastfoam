@@ -95,7 +95,7 @@ Foam::gradientDescentMinimizationScheme::minimize
 
         if (converged(xNew - xOld))
         {
-//             break;
+            break;
         }
 
         gradOld = grad;

@@ -18,8 +18,8 @@ public:
         ScalarEquation
         (
             3,
-            scalarField(3, 2.0),
-            scalarField(3, 4.0)
+            scalarField(scalarList{2, -4, -4}),
+            scalarField(scalarList{4, 4, 4})
         )
     {}
 
@@ -83,19 +83,23 @@ int main(int argc, char *argv[])
 
     dictionary dict;
 //     dict.add("maxSteps", 10);
-    dict.add("nParticles", 1000);
+    dict.add("nParticles", 100);
 
     Info<< "Minimization" << endl;
-    wordList multivariateMethods
-    (
-        minimizationScheme::dictionaryMultivariateConstructorTablePtr_->toc()
-    );
     minimizationScheme::debug = 1;
     forAll(multEqns, eqni)
     {
         Info<< nl << "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
         scalarField x0Orig(scalarList({0, 0, 0}));
         const scalarEquation& eqns = multEqns[eqni];
+
+        wordList multivariateMethods
+        (
+            eqns.nVar() == 1
+          ? minimizationScheme::dictionaryUnivariateConstructorTablePtr_->toc()
+          : minimizationScheme::dictionaryMultivariateConstructorTablePtr_->toc()
+        );
+
         forAll(multivariateMethods, i)
         {
             scalarField x0(x0Orig);
@@ -105,7 +109,7 @@ int main(int argc, char *argv[])
             (
                 minimizationScheme::New(eqns, dict)
             );
-            scalarField localMin(solver->solve(x0));
+            scalarField localMin(solver->solve());
             Info<< "    Local minimums=" << localMin << endl;
         }
     }

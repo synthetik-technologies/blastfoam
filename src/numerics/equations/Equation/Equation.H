@@ -25,7 +25,7 @@ Class
     Foam::Equation
 
 Description
-    Abstract base class for the an equation.
+    Abstract base class for an equation.
 
 \*---------------------------------------------------------------------------*/
 

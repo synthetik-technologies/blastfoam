@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@ Class
     Foam::stepUnivariateRootSolver
 
 Description
-    Find root using the step method
+    Simple method to find a root of an equation by starting at the lower
+    bound of an equation and stepping by the given distance until the the
+    sign has changed. The step size is the reduced by the given factor.
 
 SourceFiles
     stepUnivariateRootSolver.C
@@ -56,6 +58,9 @@ class stepUnivariateRootSolver
 
     //- Initial step size
     scalar dx_;
+
+    //- Reduction factor
+    scalar f_;
 
 
 public:

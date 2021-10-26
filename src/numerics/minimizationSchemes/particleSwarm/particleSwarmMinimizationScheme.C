@@ -84,8 +84,6 @@ Foam::particleSwarmMinimizationScheme::minimize
     scalar y = yBest;
     scalarField xBest(xMean);
     scalarField xVar(n, 0.0);
-    scalarField xStd(n, 0.0);
-
     forAll(particles_, i)
     {
         particle& p = particles_[i];
@@ -114,7 +112,11 @@ Foam::particleSwarmMinimizationScheme::minimize
         xVar += sqr(particles_[i].x - xMean);
     }
     xVar /= scalar(np);
-    xStd = sqrt(xVar)/stabilise(xMean, small);
+    scalarField xStd(sqrt(xVar));
+    if (normalize_)
+    {
+        xStd /= stabilise(xMean, small);
+    }
 
     scalarField r1(n);
     scalarField r2(n);
@@ -163,10 +165,15 @@ Foam::particleSwarmMinimizationScheme::minimize
             xVar += sqr(particles_[i].x - xMean);
         }
         xVar /= scalar(np);
-        xStd = sqrt(xVar)/stabilise(xMean, small);
+        xStd = sqrt(xVar);
+        if (normalize_)
+        {
+            xStd /= stabilise(xMean, small);
+        }
 
         printStepInformation(xMean);
     }
+    xMean = xBest;
     printFinalInformation();
     return txMean;
 }

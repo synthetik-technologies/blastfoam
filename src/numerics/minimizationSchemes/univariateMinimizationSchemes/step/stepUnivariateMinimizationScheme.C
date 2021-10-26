@@ -75,7 +75,8 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
             (eqn_.upper() - eqn_.lower())
            /ceil(maxSteps_/10)
         )
-    )
+    ),
+    f_(dict.lookupOrDefault<scalar>("f", 0.5))
 {}
 
 
@@ -100,7 +101,7 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
     {
         if (yUpper > yLower)
         {
-            dx /= 2.0;
+            dx *= f_;
             xUpper  = xLower + dx;
             yUpper = eqn_.fx(xUpper, li);
         }

@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -25,7 +25,9 @@ Class
     Foam::goodBroydenRootSolver
 
 Description
-    Find multivariateRoot using the goodBroyden method
+    Find multivariateRoot using the goodBroyden method. The inverse jacobian
+    is explicitly update so that only one evaluation of the jacobian matrix
+    and its inverse is needed
 
 SourceFiles
     multivariateRootSolver.C

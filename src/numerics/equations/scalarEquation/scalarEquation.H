@@ -25,7 +25,8 @@ Class
     Foam::scalarEquation
 
 Description
-    Base class for the a scalar equation
+    Abstract class for an equation that takes in a scalarList and outputs
+    a single scalar value.
 
 \*---------------------------------------------------------------------------*/
 

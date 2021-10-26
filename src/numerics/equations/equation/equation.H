@@ -25,7 +25,9 @@ Class
     Foam::equation
 
 Description
-    Base class for a scalar equation with a single input
+    Scalar equation with a single input. Derived from both scalarEquation
+    and multivariateEquation so that a scalar equation can be cast in either
+    form.
 
 \*---------------------------------------------------------------------------*/
 

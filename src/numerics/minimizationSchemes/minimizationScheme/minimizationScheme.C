@@ -84,6 +84,16 @@ void Foam::minimizationScheme::printFinalInformation() const
 }
 
 
+Foam::scalar Foam::minimizationScheme::alpha
+(
+    const scalarField& grad,
+    const scalarField& gradOld
+) const
+{
+    return 1.0;
+}
+
+
 Foam::scalar Foam::minimizationScheme::lineSearch
 (
     const scalarField& x0,
@@ -98,28 +108,28 @@ Foam::scalar Foam::minimizationScheme::lineSearch
         Info<< "Conducting line search" << endl;
     }
 
-    scalar alpha = norm(grad)/stabilise(norm(gradOld), small);
+//     scalar alpha = norm(grad)/stabilise(norm(gradOld), small);
 //     scalar alpha =
 //         max
 //         (
 //             inner(grad, grad - gradOld)/stabilise(norm(gradOld), small),
 //             0.0
 //         );
-
+    scalar a = alpha(grad, gradOld);
     const scalar fx0(fx);
-    scalarField x1(x0 - alpha*grad);
+    scalarField x1(x0 - a*grad);
     eqns_.limit(x1);
     eqns_.f(x1, li, fx);
 
     label iter = 0;
     while (fx >= fx0 && iter++ < maxSteps_)
     {
-        alpha *= tau_;
-        x1 = x0 - alpha*grad;
+        a *= tau_;
+        x1 = x0 - a*grad;
         eqns_.limit(x1);
         eqns_.f(x1, li, fx);
     }
-    return alpha;
+    return a;
 }
 
 
@@ -269,6 +279,7 @@ Foam::minimizationScheme::minimizationScheme
             labelList(eqns.nVar(), 0)
         )
     ),
+    normalize_(dict.lookupOrDefault("normalizeError", true)),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
 {
     if (eqns_.nEqns() > 1)

@@ -32,20 +32,33 @@ License
 #include "Simpson13Integrator.H"
 #include "Simpson38Integrator.H"
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Define all integrators for a given type
 #define makeIntegratorTypes(Type)                                              \
     makeIntegratorType(MidPointIntegrator, Type)                               \
     makeIntegratorType(TrapezoidalIntegrator, Type)                            \
     makeIntegratorType(Simpson13Integrator, Type)                              \
     makeIntegratorType(Simpson38Integrator, Type)
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Make the base integrator type along with the actual models
 #define makeIntegrators(Type)                                                  \
     makeIntegrator(Type)                                                       \
     makeIntegratorTypes(Type);
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Macro with a dummy first input for use with some macro based construction
 #define makeIntegratorsArg(Dummy, Type)                                        \
     makeIntegrator(Type)                                                       \
     makeIntegratorTypes(Type);
 
 #endif
+
 
 // ************************************************************************* //

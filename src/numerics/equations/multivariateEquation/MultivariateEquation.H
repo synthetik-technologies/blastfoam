@@ -25,7 +25,8 @@ Class
     Foam::MultivariateEquation
 
 Description
-    Abstract base class a multivariate equation
+    Abstract base class a multivariate equation. Uses a scalar field as
+    the input, but can output a list of any type.
 
 \*---------------------------------------------------------------------------*/
 

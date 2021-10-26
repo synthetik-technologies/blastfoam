@@ -25,7 +25,7 @@ Class
     Foam::scalarEquation
 
 Description
-    Base class for the a scalar equation
+    Abstract class for a multivariate equation
 
 \*---------------------------------------------------------------------------*/
 

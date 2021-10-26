@@ -25,7 +25,7 @@ Class
     Foam::Integrator
 
 Description
-    Abstract base-class for a integrator
+    Generic class for integrating a given univariate equation.
 
 SourceFiles
     Integrator.C
