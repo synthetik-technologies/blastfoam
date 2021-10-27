@@ -32,3 +32,37 @@ table2D
         delta       1.0;
     }
 }
+
+table3D
+{
+    fCoeffs
+    {
+        file        "table3D.csv";
+        mod         none;
+        delim       ",";
+        rowDelim    ";";
+        isReal      true;
+    }
+
+    xCoeffs
+    {
+        mod         none;
+        n           5;
+        delta       0.5;
+        min         0.0;
+    }
+    yCoeffs
+    {
+        mod         none;
+        n           7;
+        delta       0.5;
+        min         0.0;
+    }
+    zCoeffs
+    {
+        mod         none;
+        n           9;
+        delta       0.5;
+        min         0.0;
+    }
+}

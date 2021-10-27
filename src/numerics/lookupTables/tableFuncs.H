@@ -27,6 +27,7 @@ virtual void setMod
     }
 }
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Pointer to function to lookup
 typedef label (*findIndexFunc)(const scalar, const List<scalar>&);
@@ -71,6 +72,8 @@ inline static label findNonuniformIndexes
     return XY.size() - 2;
 }
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 //- Interpolation types
 typedef Type (*interp1DFuncType)
@@ -285,6 +288,8 @@ inline void setInterp
 }
 
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 //- Interpolation types
 typedef Type (*interp2DFuncType)
 (
@@ -424,3 +429,158 @@ inline void setInterp
     }
 }
 
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+//- Interpolation types
+typedef Type (*interp3DFuncType)
+(
+    const scalar,
+    const scalar,
+    const scalar,
+    const label,
+    const label,
+    const label,
+    const List<scalar>&,
+    const List<scalar>&,
+    const List<scalar>&,
+    const Field<Field<Field<Type>>>&
+);
+
+
+inline static Type trilinearClampInterp
+(
+    const scalar x,
+    const scalar y,
+    const scalar z,
+    const label i,
+    const label j,
+    const label k,
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const List<scalar>& zs,
+    const Field<Field<Field<Type>>>& fs
+)
+{
+    Field<Field<Type>> tf(2, Field<Type>(2, 0.0));
+    tf[0][0] = fs[i][j][k];
+    tf[0][1] = fs[i][j][k+1];
+    tf[1][0] = fs[i][j+1][k];
+    tf[1][1] = fs[i][j+1][k+1];
+    Type m
+    (
+        bilinearClampInterp
+        (
+            y,
+            z,
+            0,
+            0,
+            {ys[j], ys[j+1]},
+            {zs[k], zs[k+1]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+1][j][k];
+    tf[0][1] = fs[i+1][j][k+1];
+    tf[1][0] = fs[i+1][j+1][k];
+    tf[1][1] = fs[i+1][j+1][k+1];
+    Type p
+    (
+        bilinearClampInterp
+        (
+            y,
+            z,
+            0,
+            0,
+            {ys[j], ys[j+1]},
+            {zs[k], zs[k+1]},
+            tf
+        )
+    );
+
+    return linearClampInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
+}
+
+
+inline static Type trilinearExtrapolateInterp
+(
+    const scalar x,
+    const scalar y,
+    const scalar z,
+    const label i,
+    const label j,
+    const label k,
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const List<scalar>& zs,
+    const Field<Field<Field<Type>>>& fs
+)
+{
+    Field<Field<Type>> tf(2, Field<Type>(2));
+    tf[0][0] = fs[i][j][k];
+    tf[0][1] = fs[i][j][k+1];
+    tf[1][0] = fs[i][j+1][k];
+    tf[1][1] = fs[i][j+1][k+1];
+
+    Type m
+    (
+        bilinearExtrapolateInterp
+        (
+            y,
+            z,
+            0,
+            0,
+            {ys[j], ys[j+1]},
+            {zs[k], zs[k+1]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+1][j][k];
+    tf[0][1] = fs[i+1][j][k+1];
+    tf[1][0] = fs[i+1][j+1][k];
+    tf[1][1] = fs[i+1][j+1][k+1];
+
+    Type p
+    (
+        bilinearExtrapolateInterp
+        (
+            y,
+            z,
+            0,
+            0,
+            {ys[j], ys[j+1]},
+            {zs[k], zs[k+1]},
+            tf
+        )
+    );
+    return linearExtrapolateInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
+}
+
+
+inline void setInterp
+(
+    const word& interpolationScheme,
+    interp3DFuncType& interp
+)
+{
+    Info<< "Selecting " << interpolationScheme << " interpolation" << endl;
+    if (interpolationScheme == "linearClamp")
+    {
+        interp = &trilinearClampInterp;
+    }
+    else if (interpolationScheme == "linearExtrapolated")
+    {
+        interp = &trilinearExtrapolateInterp;
+    }
+    else
+    {
+        FatalErrorInFunction
+            << interpolationScheme << " is not a valid interpolation scheme" << nl
+            << "Options are: " << nl
+            << "    linearClamp" << nl
+            << "    linearExtrapolated" << nl
+            << abort(FatalError);
+    }
+}
