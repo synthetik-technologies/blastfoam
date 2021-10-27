@@ -131,12 +131,15 @@ inline static Type linearClampInterp
 inline static Type quadraticExtrapolatedInterp
 (
     const scalar x,
-    const label I,
+    const label i,
     const List<scalar>& xs,
     const List<Type>& ys
 )
 {
-    const label i = min(max(I, 1), xs.size() - 2);
+    if (i < 1 || i > xs.size() - 2)
+    {
+        return linearExtrapolatedInterp(x, i, xs, ys);
+    }
     const scalar x0 = xs[i-1];
     const scalar x1 = xs[i];
     const scalar x2 = xs[i+1];
@@ -172,22 +175,40 @@ inline static Type quadraticClampInterp
 inline static Type cubicExtrapolatedInterp
 (
     const scalar x,
-    const label I,
+    const label i,
     const List<scalar>& xs,
     const List<Type>& ys
 )
 {
-    const label i = min(max(I, 1), xs.size() - 3);
+    if (i < 1)
+    {
+        return linearExtrapolatedInterp(x, i, xs, ys);
+    }
+    if (i > xs.size() - 3)
+    {
+        return quadraticExtrapolatedInterp(x, i, xs, ys);
+    }
     const scalar x0 = xs[i-1];
     const scalar x1 = xs[i];
     const scalar x2 = xs[i+1];
     const scalar x3 = xs[i+2];
+    const scalar dx20 = x2 - x0;
+    const scalar dx31 = x3 - x1;
 
-    return
-        (x - x1)*(x - x2)*(x - x3)/(x0 - x1)/(x0 - x2)/(x0 - x3)*ys[i-1]
-      + (x - x2)*(x - x3)*(x - x0)/(x1 - x2)/(x1 - x3)/(x1 - x0)*ys[i]
-      + (x - x3)*(x - x0)*(x - x1)/(x2 - x3)/(x2 - x0)/(x2 - x1)*ys[i+1]
-      + (x - x0)*(x - x1)*(x - x2)/(x3 - x0)/(x3 - x1)/(x3 - x2)*ys[i+2];
+    const Type a =
+      - ys[i-1]/dx20
+      + ys[i]*(2.0 - 1.0/dx31)
+      + ys[i+1]*(1.0/dx20 - 2.0)
+      + ys[i+2]/dx31;
+    const Type b =
+        ys[i-1]*2.0/dx20
+      + ys[i]*(1.0/dx31 - 3.0)
+      + ys[i+1]*(3.0 - 2.0/dx20)
+      - ys[i+2]/dx31;
+    const Type c = (ys[i+1] - ys[i-1])/dx20;
+    const Type d = ys[i];
+
+    return a*pow3(x) + b*sqr(x) + c*x + d;
 }
 
 
