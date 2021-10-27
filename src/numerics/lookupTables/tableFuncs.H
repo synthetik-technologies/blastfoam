@@ -103,7 +103,7 @@ inline static Type linearExtrapolatedInterp
     const List<Type>& ys
 )
 {
-    const label i = min(max(I, 1), xs.size() - 2);
+    const label i = min(I, xs.size() - 2);
     return ys[i] + linearWeight(x, xs[i], xs[i+1])*(ys[i+1] - ys[i]);
 }
 
@@ -317,8 +317,8 @@ inline static Type bilinearClampInterp
     const Field<Field<Type>>& zs
 )
 {
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
+    const label i = min(I, xs.size() - 2);
+    const label j = min(J, ys.size() - 2);
     Type m(linearClampInterp(y, j, ys, zs[i]));
     Type p(linearClampInterp(y, j, ys, zs[i+1]));
     return linearClampInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
@@ -336,8 +336,8 @@ inline static Type bilinearExtrapolatedInterp
     const Field<Field<Type>>& zs
 )
 {
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
+    const label i = min(I, xs.size() - 2);
+    const label j = min(J, ys.size() - 2);
     Type m(linearExtrapolatedInterp(x, i, xs, zs[i]));
     Type p(linearExtrapolatedInterp(x, i+1, xs, zs[i+1]));
 
