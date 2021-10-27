@@ -101,15 +101,6 @@ protected:
     mutable scalar fx_;
     mutable scalar fy_;
 
-
-    //- Read the table
-    void readTable
-    (
-        const fileName& file,
-        const string& delim,
-        Field<Field<Type>>& data
-    );
-
     //- Check if spacing in a list is uniform
     bool checkUniform(const List<scalar>& xy) const;
 
@@ -352,6 +343,18 @@ public:
             const word& xName,
             const word& yName,
             const word& name
+        );
+
+        //- Read a set from a given dictionary
+        void readComponent
+        (
+            const dictionary& parentDict,
+            const word& name,
+            Field<scalar>& values,
+            Field<scalar>& modValues,
+            modFuncType& modFunc,
+            modFuncType& invModFunc,
+            findIndexFunc& findIndex
         );
 };
 

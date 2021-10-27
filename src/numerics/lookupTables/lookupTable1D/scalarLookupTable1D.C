@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "scalarLookupTable1D.H"
+#include "tableReader.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -119,6 +120,60 @@ Foam::scalarLookupTable1D::reverseLookup(const scalar yin) const
         xModValues_[index_]
       + f_*(xModValues_[index_+1] - xModValues_[index_])
     );
+}
+
+
+void Foam::scalarLookupTable1D::read
+(
+    const dictionary& dict,
+    const word& xName,
+    const word& name
+)
+{
+    Info<<"read"<<endl;
+    if (dict.found("file2D"))
+    {
+        word interpolationScheme
+        (
+            dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+        );
+        Field<Field<scalar>> tdata;
+        read2DTable
+        (
+            dict.lookup<fileName>("file2D"),
+            dict.lookupOrDefault<string>("delim", ","),
+            tdata,
+            dict.lookupOrDefault<Switch>("flipTable", true),
+            true
+        );
+
+        Field<scalar> xValues(tdata.size());
+        Field<scalar> yValues(tdata.size());
+        label xi = dict.lookupOrDefault<label>(xName + "Col", 0);
+        label yi = dict.lookupOrDefault<label>(name + "Col", 1);
+        forAll(tdata, coli)
+        {
+            xValues[coli] = tdata[coli][xi];
+            yValues[coli] = tdata[coli][yi];
+        }
+
+        Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+        word mod(dict.lookupOrDefault<word>(name + "Mod", "none"));
+        word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
+
+        set
+        (
+            xValues,
+            yValues,
+            mod,
+            xMod,
+            interpolationScheme,
+            isReal
+        );
+        return;
+    }
+
+    lookupTable1D<scalar>::read(dict, xName, name);
 }
 
 

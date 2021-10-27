@@ -24,66 +24,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lookupTable2D.H"
-#include "fileOperation.H"
+#include "tableReader.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
-
-template<class Type>
-void Foam::lookupTable2D<Type>::readTable
-(
-    const fileName& file,
-    const string& delim,
-    Field<Field<Type>>& data
-)
-{
-    fileName fNameExpanded(file);
-    fNameExpanded.expand();
-
-    // Open a stream and check it
-    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fNameExpanded));
-    ISstream& is = isPtr();
-    if (!is.good())
-    {
-        FatalIOErrorInFunction(is)
-            << "Cannot open file" << file << nl
-            << exit(FatalIOError);
-    }
-
-    DynamicList<Tuple2<scalar, scalar>> values;
-
-    label i = 0;
-    while (is.good())
-    {
-        string line;
-        is.getLine(line);
-
-        string lineEntry = line;
-        lineEntry.replaceAll(delim, " ");
-        lineEntry = '(' + lineEntry + ')';
-        IStringStream iss(lineEntry);
-
-        List<Type> vals(iss);
-
-        if (vals.size() <= 1)
-        {
-            break;
-        }
-
-        if (vals.size() != yValues_.size())
-        {
-            FatalErrorInFunction
-                << "Incompatible table rows" << endl
-                << line
-                << abort(FatalError);
-        }
-        forAll(vals, j)
-        {
-            data[i][j] = vals[j];
-        }
-        i++;
-    }
-}
-
 
 template<class Type>
 Type Foam::lookupTable2D<Type>::getValue
@@ -275,7 +218,7 @@ void Foam::lookupTable2D<Type>::setX
     const bool isReal
 )
 {
-    if (isReal)
+    if (!isReal)
     {
         forAll(xValues_, j)
         {
@@ -321,7 +264,7 @@ void Foam::lookupTable2D<Type>::setY
     const bool isReal
 )
 {
-    if (isReal)
+    if (!isReal)
     {
         forAll(yValues_, j)
         {
@@ -354,13 +297,9 @@ void Foam::lookupTable2D<Type>::setData
     const bool isReal
 )
 {
-    data_.resize(data.size());
-    forAll(data, i)
-    {
-        data_[i] = data[i];
-    }
+    data_ = data;
 
-    if (!isReal)
+    if (isReal)
     {
         forAll(data_, i)
         {
@@ -605,55 +544,26 @@ void Foam::lookupTable2D<Type>::read
     );
     setInterp(interpolationScheme, interpFunc_);
 
-    setMod(dict.lookup("mod"), modFunc_, invModFunc_);
-
-    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-
-    if (dict.found(xName))
-    {
-        xValues_ = dict.lookup<Field<scalar>>(xName);
-        setMod(dict.lookup(xName + "Mod"), modXFunc_, invModXFunc_);
-    }
-    else
-    {
-        const dictionary& xDict(dict.subDict(xName + "Coeffs"));
-        label nx = xDict.lookup<label>("n");
-        scalar dx = xDict.lookup<scalar>("delta");
-        scalar minx = xDict.lookup<scalar>("min");
-
-        setMod(xDict.lookup("mod"), modXFunc_, invModXFunc_);
-
-        xValues_.resize(nx);
-        forAll(xValues_, i)
-        {
-            xValues_[i] = minx + dx*i;
-        }
-    }
-
-    {
-        if (dict.found(yName))
-        {
-            yValues_ = dict.lookup<Field<scalar>>(yName);
-            yModValues_.resize(yValues_.size());
-
-            setMod(dict.lookup(yName + "Mod"), modYFunc_, invModYFunc_);
-        }
-        else
-        {
-            const dictionary& yDict(dict.subDict(yName + "Coeffs"));
-            label ny = yDict.lookup<label>("n");
-            scalar dy = yDict.lookup<scalar>("delta");
-            scalar miny = yDict.lookup<scalar>("min");
-
-            setMod(dict.lookup("mod"), modYFunc_, invModYFunc_);
-
-            yValues_.resize(ny);
-            forAll(yValues_, j)
-            {
-                yValues_[j] = miny + dy*j;
-            }
-        }
-    }
+    readComponent
+    (
+        dict,
+        xName,
+        xValues_,
+        xModValues_,
+        modXFunc_,
+        invModXFunc_,
+        findXIndex_
+    );
+    readComponent
+    (
+        dict,
+        yName,
+        yValues_,
+        yModValues_,
+        modYFunc_,
+        invModYFunc_,
+        findYIndex_
+    );
 
     data_.resize(xValues_.size());
     forAll(data_, i)
@@ -661,64 +571,98 @@ void Foam::lookupTable2D<Type>::read
         data_[i].resize(yValues_.size());
     }
 
+    const dictionary& fDict(dict.subDict(name + "Coeffs"));
+    setMod(fDict.lookup("mod"), modFunc_, invModFunc_);
+    Switch isReal(fDict.lookupOrDefault<Switch>("isReal", true));
 
-    fileName file(dict.lookup<word>("file"));
-    readTable
+    fileName file(fDict.lookup<word>("file"));
+    read2DTable
     (
         file,
-        dict.lookupOrDefault<string>("delim", ","),
-        data_
+        fDict.lookupOrDefault<string>("delim", ","),
+        data_,
+        fDict.lookupOrDefault<Switch>("flipTable", true)
     );
-
-    if (!isReal)
+    if (isReal)
     {
-        xModValues_ = xValues_;
-        yModValues_ = yValues_;
         forAll(xValues_, i)
         {
-            xValues_[i] = invModYFunc_(xValues_[i]);
-        }
-        forAll(yValues_, i)
-        {
-            yValues_[i] = invModYFunc_(yValues_[i]);
-        }
-    }
-    else
-    {
-        xModValues_.resize(xValues_.size());
-        yModValues_.resize(yValues_.size());
-        forAll(xValues_, i)
-        {
-            xModValues_[i] = modYFunc_(xValues_[i]);
             forAll(yValues_, j)
             {
                 data_[i][j] = modFunc_(data_[i][j]);
             }
         }
-        forAll(yValues_, i)
-        {
-            yModValues_[i] = modYFunc_(yValues_[i]);
-        }
-    }
-
-    if (checkUniform(xModValues_))
-    {
-
-        findXIndex_ = &lookupTable2D::findUniformIndexes;
-    }
-    else
-    {
-        findXIndex_ = &lookupTable2D::findNonuniformIndexes;
-    }
-
-    if (checkUniform(yModValues_))
-    {
-        findYIndex_ = &lookupTable2D::findUniformIndexes;
-    }
-    else
-    {
-        findYIndex_ = &lookupTable2D::findNonuniformIndexes;
     }
 }
+
+
+template<class Type>
+void Foam::lookupTable2D<Type>::readComponent
+(
+    const dictionary& parentDict,
+    const word& name,
+    Field<scalar>& values,
+    Field<scalar>& modValues,
+    modFuncType& modFunc,
+    modFuncType& invModFunc,
+    findIndexFunc& findIndex
+)
+{
+    const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+    setMod(dict.lookupOrDefault<word>("mod", "none"), modFunc, invModFunc);
+
+    if (dict.found(name))
+    {
+        values = dict.lookup<Field<scalar>>(name);
+    }
+    else if (dict.found("file"))
+    {
+        fileName file(dict.lookup("file"));
+        read1DTable
+        (
+            file,
+            dict.lookupOrDefault<string>("delim", ","),
+            values
+        );
+    }
+    else
+    {
+        label ny = dict.lookup<label>("n");
+        scalar dy = dict.lookup<scalar>("delta");
+        scalar miny = dict.lookup<scalar>("min");
+
+        values.resize(ny);
+        forAll(values, j)
+        {
+            values[j] = miny + dy*j;
+        }
+    }
+    if (!isReal)
+    {
+        modValues = values;
+        forAll(values, i)
+        {
+            values[i] = invModFunc(values[i]);
+        }
+    }
+    else
+    {
+        modValues.resize(values.size());
+        forAll(values, i)
+        {
+            modValues[i] = modFunc(values[i]);
+        }
+    }
+    if (checkUniform(modValues))
+    {
+        findIndex = &findUniformIndexes;
+    }
+    else
+    {
+        findIndex = &findNonuniformIndexes;
+    }
+}
+
 
 // ************************************************************************* //

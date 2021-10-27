@@ -1,3 +1,4 @@
+lookupTables/tableReader/tableReader.C
 lookupTables/lookupTable1D/scalarLookupTable1D.C
 lookupTables/lookupTable2D/scalarLookupTable2D.C
 lookupTables/lookupTable3D/scalarLookupTable3D.C

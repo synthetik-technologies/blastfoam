@@ -95,10 +95,19 @@ public:
     //- Destructor
     virtual ~scalarLookupTable1D();
 
+
     // Public functions
 
         //- Lookup X given f
         scalar reverseLookup(const scalar f) const;
+
+        //- Read from a given dictionary
+        virtual void read
+        (
+            const dictionary& dict,
+            const word& xName,
+            const word& yName
+        );
 };
 
 

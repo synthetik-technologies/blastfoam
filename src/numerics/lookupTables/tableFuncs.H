@@ -144,17 +144,6 @@ inline static Type cubicExtrapolateInterp
     const scalar dx21 = x2 - x1;
     const scalar dx32 = x3 - x2;
 
-//     if (mag(dx10 - dx21) < small && mag(dx21 - dx32) < small)
-//     {
-//         scalar x = linearWeight(X, x1, x2);
-//         Info<<"x: "<<x<<endl;
-//         return
-//             ys[i-1]*(-0.5*pow3(x) + sqr(x) - 0.5*x)
-//           + ys[i]*(1.5*pow3(x) - 2.5*sqr(x) + 1.0)
-//           + ys[i+1]*(-1.5*pow3(x) + 2.0*sqr(x) + 0.5*x)
-//           + ys[i+2]*(0.5*pow3(x) + 0.5*sqr(x));
-//     }
-
     const scalar x = X;
     const scalar dx20 = dx10 + dx21;
     const scalar dx31 = dx21 + dx32;
@@ -559,6 +548,304 @@ inline static Type trilinearExtrapolateInterp
 }
 
 
+inline static Type tricubicClampInterp
+(
+    const scalar x,
+    const scalar y,
+    const scalar z,
+    const label I,
+    const label J,
+    const label K,
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const List<scalar>& zs,
+    const Field<Field<Field<Type>>>& fs
+)
+{
+    const label i = min(max(I, 1), xs.size() - 3);
+    const label j = min(max(J, 1), ys.size() - 3);
+    const label k = min(max(K, 1), zs.size() - 3);
+
+    Field<Field<Type>> tf(4, Field<Type>(4, 0.0));
+    tf[0][0] = fs[i-1][j-1][k-1];
+    tf[0][1] = fs[i-1][j-1][k];
+    tf[0][2] = fs[i-1][j-1][k+1];
+    tf[0][3] = fs[i-1][j-1][k+2];
+    tf[1][0] = fs[i-1][j][k-1];
+    tf[1][1] = fs[i-1][j][k];
+    tf[1][2] = fs[i-1][j][k+1];
+    tf[1][3] = fs[i-1][j][k+2];
+    tf[2][0] = fs[i-1][j+1][k-1];
+    tf[2][1] = fs[i-1][j+1][k];
+    tf[2][2] = fs[i-1][j+1][k+1];
+    tf[2][3] = fs[i-1][j+1][k+2];
+    tf[3][0] = fs[i-1][j+2][k-1];
+    tf[3][1] = fs[i-1][j+2][k];
+    tf[3][2] = fs[i-1][j+2][k+1];
+    tf[3][3] = fs[i-1][j+2][k+2];
+    Type fim
+    (
+        bicubicClampInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i][j-1][k-1];
+    tf[0][1] = fs[i][j-1][k];
+    tf[0][2] = fs[i][j-1][k+1];
+    tf[0][3] = fs[i][j-1][k+2];
+    tf[1][0] = fs[i][j][k-1];
+    tf[1][1] = fs[i][j][k];
+    tf[1][2] = fs[i][j][k+1];
+    tf[1][3] = fs[i][j][k+2];
+    tf[2][0] = fs[i][j+1][k-1];
+    tf[2][1] = fs[i][j+1][k];
+    tf[2][2] = fs[i][j+1][k+1];
+    tf[2][3] = fs[i][j+1][k+2];
+    tf[3][0] = fs[i][j+2][k-1];
+    tf[3][1] = fs[i][j+2][k];
+    tf[3][2] = fs[i][j+2][k+1];
+    tf[3][3] = fs[i][j+2][k+2];
+    Type fi
+    (
+        bicubicClampInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+1][j-1][k-1];
+    tf[0][1] = fs[i+1][j-1][k];
+    tf[0][2] = fs[i+1][j-1][k+1];
+    tf[0][3] = fs[i+1][j-1][k+2];
+    tf[1][0] = fs[i+1][j][k-1];
+    tf[1][1] = fs[i+1][j][k];
+    tf[1][2] = fs[i+1][j][k+1];
+    tf[1][3] = fs[i+1][j][k+2];
+    tf[2][0] = fs[i+1][j+1][k-1];
+    tf[2][1] = fs[i+1][j+1][k];
+    tf[2][2] = fs[i+1][j+1][k+1];
+    tf[2][3] = fs[i+1][j+1][k+2];
+    tf[3][0] = fs[i+1][j+2][k-1];
+    tf[3][1] = fs[i+1][j+2][k];
+    tf[3][2] = fs[i+1][j+2][k+1];
+    tf[3][3] = fs[i+1][j+2][k+2];
+    Type fip
+    (
+        bicubicClampInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+2][j-1][k-1];
+    tf[0][1] = fs[i+2][j-1][k];
+    tf[0][2] = fs[i+2][j-1][k+1];
+    tf[0][3] = fs[i+2][j-1][k+2];
+    tf[1][0] = fs[i+2][j][k-1];
+    tf[1][1] = fs[i+2][j][k];
+    tf[1][2] = fs[i+2][j][k+1];
+    tf[1][3] = fs[i+2][j][k+2];
+    tf[2][0] = fs[i+2][j+1][k-1];
+    tf[2][1] = fs[i+2][j+1][k];
+    tf[2][2] = fs[i+2][j+1][k+1];
+    tf[2][3] = fs[i+2][j+1][k+2];
+    tf[3][0] = fs[i+2][j+2][k-1];
+    tf[3][1] = fs[i+2][j+2][k];
+    tf[3][2] = fs[i+2][j+2][k+1];
+    tf[3][3] = fs[i+2][j+2][k+2];
+    Type fipp
+    (
+        bicubicClampInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    return cubicClampInterp
+    (
+        x,
+        1,
+        {xs[i-1], xs[i], xs[i+1], xs[i+2]},
+        {fim, fi, fip, fipp}
+    );
+}
+
+
+inline static Type tricubicClampExtrapolated
+(
+    const scalar x,
+    const scalar y,
+    const scalar z,
+    const label I,
+    const label J,
+    const label K,
+    const List<scalar>& xs,
+    const List<scalar>& ys,
+    const List<scalar>& zs,
+    const Field<Field<Field<Type>>>& fs
+)
+{
+    const label i = min(max(I, 1), xs.size() - 3);
+    const label j = min(max(J, 1), ys.size() - 3);
+    const label k = min(max(K, 1), zs.size() - 3);
+
+    Field<Field<Type>> tf(4, Field<Type>(4, 0.0));
+    tf[0][0] = fs[i-1][j-1][k-1];
+    tf[0][1] = fs[i-1][j-1][k];
+    tf[0][2] = fs[i-1][j-1][k+1];
+    tf[0][3] = fs[i-1][j-1][k+2];
+    tf[1][0] = fs[i-1][j][k-1];
+    tf[1][1] = fs[i-1][j][k];
+    tf[1][2] = fs[i-1][j][k+1];
+    tf[1][3] = fs[i-1][j][k+2];
+    tf[2][0] = fs[i-1][j+1][k-1];
+    tf[2][1] = fs[i-1][j+1][k];
+    tf[2][2] = fs[i-1][j+1][k+1];
+    tf[2][3] = fs[i-1][j+1][k+2];
+    tf[3][0] = fs[i-1][j+2][k-1];
+    tf[3][1] = fs[i-1][j+2][k];
+    tf[3][2] = fs[i-1][j+2][k+1];
+    tf[3][3] = fs[i-1][j+2][k+2];
+    Type fim
+    (
+        bicubicExtrapolateInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i][j-1][k-1];
+    tf[0][1] = fs[i][j-1][k];
+    tf[0][2] = fs[i][j-1][k+1];
+    tf[0][3] = fs[i][j-1][k+2];
+    tf[1][0] = fs[i][j][k-1];
+    tf[1][1] = fs[i][j][k];
+    tf[1][2] = fs[i][j][k+1];
+    tf[1][3] = fs[i][j][k+2];
+    tf[2][0] = fs[i][j+1][k-1];
+    tf[2][1] = fs[i][j+1][k];
+    tf[2][2] = fs[i][j+1][k+1];
+    tf[2][3] = fs[i][j+1][k+2];
+    tf[3][0] = fs[i][j+2][k-1];
+    tf[3][1] = fs[i][j+2][k];
+    tf[3][2] = fs[i][j+2][k+1];
+    tf[3][3] = fs[i][j+2][k+2];
+    Type fi
+    (
+        bicubicExtrapolateInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+1][j-1][k-1];
+    tf[0][1] = fs[i+1][j-1][k];
+    tf[0][2] = fs[i+1][j-1][k+1];
+    tf[0][3] = fs[i+1][j-1][k+2];
+    tf[1][0] = fs[i+1][j][k-1];
+    tf[1][1] = fs[i+1][j][k];
+    tf[1][2] = fs[i+1][j][k+1];
+    tf[1][3] = fs[i+1][j][k+2];
+    tf[2][0] = fs[i+1][j+1][k-1];
+    tf[2][1] = fs[i+1][j+1][k];
+    tf[2][2] = fs[i+1][j+1][k+1];
+    tf[2][3] = fs[i+1][j+1][k+2];
+    tf[3][0] = fs[i+1][j+2][k-1];
+    tf[3][1] = fs[i+1][j+2][k];
+    tf[3][2] = fs[i+1][j+2][k+1];
+    tf[3][3] = fs[i+1][j+2][k+2];
+    Type fip
+    (
+        bicubicExtrapolateInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    tf[0][0] = fs[i+2][j-1][k-1];
+    tf[0][1] = fs[i+2][j-1][k];
+    tf[0][2] = fs[i+2][j-1][k+1];
+    tf[0][3] = fs[i+2][j-1][k+2];
+    tf[1][0] = fs[i+2][j][k-1];
+    tf[1][1] = fs[i+2][j][k];
+    tf[1][2] = fs[i+2][j][k+1];
+    tf[1][3] = fs[i+2][j][k+2];
+    tf[2][0] = fs[i+2][j+1][k-1];
+    tf[2][1] = fs[i+2][j+1][k];
+    tf[2][2] = fs[i+2][j+1][k+1];
+    tf[2][3] = fs[i+2][j+1][k+2];
+    tf[3][0] = fs[i+2][j+2][k-1];
+    tf[3][1] = fs[i+2][j+2][k];
+    tf[3][2] = fs[i+2][j+2][k+1];
+    tf[3][3] = fs[i+2][j+2][k+2];
+    Type fipp
+    (
+        bicubicExtrapolateInterp
+        (
+            y,
+            z,
+            1,
+            1,
+            {ys[i-1], ys[j], ys[j+1], ys[j+2]},
+            {zs[i-1], zs[k], zs[k+1], zs[k+2]},
+            tf
+        )
+    );
+
+    return cubicExtrapolateInterp
+    (
+        x,
+        1,
+        {xs[i-1], xs[i], xs[i+1], xs[i+2]},
+        {fim, fi, fip, fipp}
+    );
+}
+
+
 inline void setInterp
 (
     const word& interpolationScheme,
@@ -574,6 +861,14 @@ inline void setInterp
     {
         interp = &trilinearExtrapolateInterp;
     }
+    else if (interpolationScheme == "cubicClamp")
+    {
+        interp = &tricubicClampInterp;
+    }
+    else if (interpolationScheme == "cubicExtrapolated")
+    {
+        interp = &tricubicClampExtrapolated;
+    }
     else
     {
         FatalErrorInFunction
@@ -581,6 +876,8 @@ inline void setInterp
             << "Options are: " << nl
             << "    linearClamp" << nl
             << "    linearExtrapolated" << nl
+            << "    cubicClamp" << nl
+            << "    cubicExtrapolated" << nl
             << abort(FatalError);
     }
 }

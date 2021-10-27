@@ -24,115 +24,9 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lookupTable3D.H"
-#include "fileOperation.H"
+#include "tableReader.H"
 
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
-
-template<class Type>
-void Foam::lookupTable3D<Type>::readTable
-(
-    const fileName& file,
-    const string& delim,
-    const string& rowDelim,
-    Field<Field<Field<Type>>>& data
-)
-{
-    fileName fNameExpanded(file);
-    fNameExpanded.expand();
-
-    // Open a stream and check it
-    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fNameExpanded));
-    ISstream& is = isPtr();
-    if (!is.good())
-    {
-        FatalIOErrorInFunction(is)
-            << "Cannot open file" << file << nl
-            << exit(FatalIOError);
-    }
-
-    DynamicList<Tuple2<scalar, scalar>> values;
-
-    Field<Field<Field<Type>>> tdata;
-    label nz = 0;
-    label nx = -1;
-    label ny = -1;
-    while (is.good())
-    {
-        string line;
-        is.getLine(line);
-        label endSplit = line.find(rowDelim);
-        stringList strings;
-        while (line.size())
-        {
-            strings.append(line(0, endSplit));
-            line = line(endSplit+1, line.size());
-            endSplit = line.find(rowDelim);
-        }
-
-        if (ny < 0)
-        {
-            ny = strings.size();
-        }
-        else if (strings.size() > 0)
-        {
-            if (ny != strings.size())
-            {
-                FatalErrorInFunction
-                    << "Inconsisant size in the y direction" << endl
-                    << abort(FatalError);
-            }
-        }
-        else
-        {
-            break;
-        }
-        Field<Field<Type>> xyvals(strings.size());
-        forAll(strings, j)
-        {
-            string lineEntry = strings[j];
-            lineEntry.replaceAll(delim, " ");
-            lineEntry = '(' + lineEntry + ')';
-            IStringStream iss(lineEntry);
-
-            Field<Type> xvals(iss);
-            if (nx < 0)
-            {
-                nx = xvals.size();
-            }
-            else
-            {
-                if (nx != xvals.size())
-                {
-                    FatalErrorInFunction
-                        << "Inconsisant size in the x direction" << endl
-                        << abort(FatalError);
-                }
-            }
-
-            if (xyvals.size() <= 1)
-            {
-                break;
-            }
-            xyvals[j] = xvals;
-        }
-        tdata.append(xyvals);
-        nz++;
-    }
-    data.resize(nx);
-    forAll(data, i)
-    {
-        data[i].resize(ny);
-        forAll(data[i], j)
-        {
-            data[i][j].resize(nz);
-            forAll(data[i][j], k)
-            {
-                data[i][j][k] = tdata[k][j][i];
-            }
-        }
-    }
-}
-
 
 template<class Type>
 Type Foam::lookupTable3D<Type>::getValue
@@ -361,7 +255,7 @@ void Foam::lookupTable3D<Type>::setX
     const bool isReal
 )
 {
-    if (isReal)
+    if (!isReal)
     {
         forAll(xValues_, j)
         {
@@ -407,7 +301,7 @@ void Foam::lookupTable3D<Type>::setY
     const bool isReal
 )
 {
-    if (isReal)
+    if (!isReal)
     {
         forAll(yValues_, j)
         {
@@ -453,7 +347,7 @@ void Foam::lookupTable3D<Type>::setZ
     const bool isReal
 )
 {
-    if (isReal)
+    if (!isReal)
     {
         forAll(zValues_, j)
         {
@@ -496,7 +390,7 @@ void Foam::lookupTable3D<Type>::setData
         }
     }
 
-    if (!isReal)
+    if (isReal)
     {
         forAll(data_, i)
         {
@@ -665,7 +559,7 @@ void Foam::lookupTable3D<Type>::read
     setMod(fDict.lookup("mod"), modFunc_, invModFunc_);
     Switch isReal(fDict.lookupOrDefault<Switch>("isReal", true));
 
-    read
+    readComponent
     (
         dict,
         xName,
@@ -675,7 +569,7 @@ void Foam::lookupTable3D<Type>::read
         invModXFunc_,
         findXIndex_
     );
-    read
+    readComponent
     (
         dict,
         yName,
@@ -685,7 +579,7 @@ void Foam::lookupTable3D<Type>::read
         invModYFunc_,
         findYIndex_
     );
-    read
+    readComponent
     (
         dict,
         zName,
@@ -708,12 +602,13 @@ void Foam::lookupTable3D<Type>::read
 
 
     fileName file(fDict.lookup<word>("file"));
-    readTable
+    read3DTable
     (
         file,
         dict.lookupOrDefault<string>("delim", ","),
         dict.lookupOrDefault<string>("rowDelim", ";"),
-        data_
+        data_,
+        dict.lookupOrDefault<Switch>("flipTable", true)
     );
     if (isReal)
     {
@@ -732,7 +627,7 @@ void Foam::lookupTable3D<Type>::read
 
 
 template<class Type>
-void Foam::lookupTable3D<Type>::read
+void Foam::lookupTable3D<Type>::readComponent
 (
     const dictionary& parentDict,
     const word& name,
@@ -745,12 +640,21 @@ void Foam::lookupTable3D<Type>::read
 {
     const dictionary& dict(parentDict.subDict(name + "Coeffs"));
     Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-    setMod(dict.lookup("mod"), modFunc, invModFunc);
+    setMod(dict.lookupOrDefault<word>("mod", "none"), modFunc, invModFunc);
 
     if (dict.found(name))
     {
         values = dict.lookup<Field<scalar>>(name);
-        modValues.resize(values.size());
+    }
+    else if (dict.found("file"))
+    {
+        fileName file(dict.lookup("file"));
+        read1DTable
+        (
+            file,
+            dict.lookupOrDefault<string>("delim", ","),
+            values
+        );
     }
     else
     {
@@ -769,7 +673,7 @@ void Foam::lookupTable3D<Type>::read
         modValues = values;
         forAll(values, i)
         {
-            values[i] = invModYFunc_(values[i]);
+            values[i] = invModFunc(values[i]);
         }
     }
     else

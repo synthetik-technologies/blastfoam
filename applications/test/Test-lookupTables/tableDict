@@ -1,19 +1,36 @@
 
 table1D
 {
-    file "T.csv";
-    eMod ln;
-    TMod ln;
+//     TCoeffs
+//     {
+//         file    "T.csv";
+//         mod     ln;
+//         isReal  false;
+//     }
+//     eCoeffs
+//     {
+//         file    "e.csv";
+//         eMod    ln;
+//         isReal  false;
+//     }
+    file2D              "T.csv";
+    flipTable           no;
+    eMod                ln;
+    TMod                ln;
     interpolationScheme cubicClamp;
-    isReal false;
+    isReal              false;
 }
 
 table2D
 {
-    file        "p.csv";
-    mod          ln;
-    delim       ";";
-    isReal      false;
+    pCoeffs
+    {
+        file        "p.csv";
+        delim       ";";
+        mod          ln;
+        isReal      false;
+        flipTable   no;
+    }
 
     rhoCoeffs
     {
@@ -22,6 +39,7 @@ table2D
         n           7;
         delta       1.0;
         min         -3.0;
+        isReal      false;
     }
     eCoeffs
     {
@@ -30,39 +48,33 @@ table2D
         n           40;
         min         11.8748;
         delta       1.0;
+        isReal      false;
     }
 }
 
 table3D
 {
+    interpolationScheme cubicExtrapolated;
     fCoeffs
     {
         file        "table3D.csv";
         mod         none;
         delim       ",";
         rowDelim    ";";
-        isReal      true;
     }
 
     xCoeffs
     {
-        mod         none;
-        n           5;
-        delta       0.5;
-        min         0.0;
+        file        "x.csv";
+        delim       ";";
     }
     yCoeffs
     {
-        mod         none;
-        n           7;
-        delta       0.5;
-        min         0.0;
+        file        "y.csv";
+        delim       ";";
     }
     zCoeffs
     {
-        mod         none;
-        n           9;
-        delta       0.5;
-        min         0.0;
+        file        "z.csv";
     }
 }

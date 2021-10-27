@@ -26,6 +26,71 @@ License
 #include "lookupTable1D.H"
 
 
+// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
+
+template<class Type>
+template<class fType>
+void Foam::lookupTable1D<Type>::readComponent
+(
+    const dictionary& parentDict,
+    const word& name,
+    Field<fType>& values,
+    Field<fType>& modValues,
+    modFuncType& modFunc,
+    modFuncType& invModFunc
+)
+{
+    const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
+    setMod(dict.lookupOrDefault<word>("mod", "none"), modFunc, invModFunc);
+
+    if (dict.found(name))
+    {
+        values = dict.lookup<Field<fType>>(name);
+        modValues.resize(values.size());
+    }
+    else if (dict.found("file"))
+    {
+        fileName file(dict.lookup("file"));
+        read1DTable
+        (
+            file,
+            dict.lookupOrDefault<string>("delim", ","),
+            values
+        );
+    }
+    else
+    {
+        label ny = dict.lookup<label>("n");
+        fType dy = dict.lookup<fType>("delta");
+        fType miny = dict.lookup<fType>("min");
+
+        values.resize(ny);
+        forAll(values, j)
+        {
+            values[j] = miny + dy*j;
+        }
+    }
+
+    if (!isReal)
+    {
+        modValues = values;
+        forAll(values, i)
+        {
+            values[i] = invModFunc(values[i]);
+        }
+    }
+    else
+    {
+        modValues.resize(values.size());
+        forAll(values, i)
+        {
+            modValues[i] = modFunc(values[i]);
+        }
+    }
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

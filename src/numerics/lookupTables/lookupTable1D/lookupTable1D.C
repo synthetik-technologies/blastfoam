@@ -24,58 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "lookupTable1D.H"
-
-// * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
-
-template<class Type>
-void Foam::lookupTable1D<Type>::readTable
-(
-    const fileName& file,
-    const string& delim,
-    const label xi,
-    const label yi
-)
-{
-    fileName fNameExpanded(file);
-    fNameExpanded.expand();
-
-    // Open a stream and check it
-    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fNameExpanded));
-    ISstream& is = isPtr();
-    if (!is.good())
-    {
-        FatalIOErrorInFunction(is)
-            << "Cannot open file" << file << nl
-            << exit(FatalIOError);
-    }
-
-    scalarList xTmp;
-    scalarList xModTmp;
-    scalarList fTmp;
-    string line;
-    while (is.good())
-    {
-        is.getLine(line);
-        if (line[0] == '#')
-        {
-            continue;
-        }
-        line.replaceAll(delim, " ");
-        line = '(' + line + ')';
-
-        IStringStream isLine(line);
-
-        scalarList lineVals(isLine);
-        if (lineVals.size())
-        {
-            xTmp.append(lineVals[xi]);
-            fTmp.append(lineVals[yi]);
-        }
-    }
-    xValues_ = xTmp;
-    data_ = fTmp;
-}
-
+#include "tableReader.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -97,7 +46,8 @@ Foam::lookupTable1D<Type>::lookupTable1D
 (
     const dictionary& dict,
     const word& xName,
-    const word& name
+    const word& name,
+    bool canRead
 )
 :
     modFunc_(nullptr),
@@ -108,7 +58,10 @@ Foam::lookupTable1D<Type>::lookupTable1D
     index_(0),
     f_(0.0)
 {
-    read(dict, xName, name);
+    if (canRead)
+    {
+        read(dict, xName, name);
+    }
 }
 
 
@@ -251,13 +204,12 @@ void Foam::lookupTable1D<Type>::setData
 )
 {
     data_ = data;
-
-    if (!isReal)
+    if (isReal)
     {
         data_ = data;
         forAll(data_, i)
         {
-            data_[i] = invModFunc_(data[i]);
+            data_[i] = modFunc_(data[i]);
         }
     }
 }
@@ -405,51 +357,31 @@ void Foam::lookupTable1D<Type>::read
     const word& name
 )
 {
-    word mod(dict.lookupOrDefault<word>(name + "Mod", "none"));
-    word xMod(dict.lookupOrDefault<word>(xName + "Mod", "none"));
     word interpolationScheme
     (
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
     );
-    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-
-    setMod(mod, modFunc_, invModFunc_);
-    setMod(xMod, modXFunc_, invModXFunc_);
     setInterp(interpolationScheme, interpFunc_);
 
-    if (dict.found("file"))
-    {
-        readTable
-        (
-            dict.lookup<fileName>("file"),
-            dict.lookupOrDefault<string>("delim", ","),
-            dict.lookupOrDefault<label>(xName + "Col", 0),
-            dict.lookupOrDefault<label>(name + "Col", 1)
-        );
-    }
-    else
-    {
-        xValues_ = dict.lookup<scalarList>(xName);
-        data_ = dict.lookup<scalarList>(name);
-
-    }
-
-    xModValues_ = xValues_;
-    if (!isReal)
-    {
-        forAll(xValues_, i)
-        {
-            xValues_[i] = invModXFunc_(xValues_[i]);
-        }
-    }
-    else
-    {
-        forAll(xValues_, i)
-        {
-            xModValues_[i] = modXFunc_(xValues_[i]);
-            data_[i] = modFunc_(data_[i]);
-        }
-    }
+    readComponent<scalar>
+    (
+        dict,
+        xName,
+        xValues_,
+        xModValues_,
+        modXFunc_,
+        invModXFunc_
+    );
+    Field<Type> data;
+    readComponent<Type>
+    (
+        dict,
+        name,
+        data,
+        data_,
+        modFunc_,
+        invModFunc_
+    );
 }
 
 // ************************************************************************* //

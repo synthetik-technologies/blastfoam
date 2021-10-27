@@ -84,15 +84,6 @@ protected:
     //- Current interpolation weight
     mutable scalar f_;
 
-    //- Read the table
-    void readTable
-    (
-        const fileName& file,
-        const string& delim,
-        const label xi,
-        const label yi
-    );
-
 
 public:
 
@@ -106,7 +97,8 @@ public:
         (
             const dictionary& dict,
             const word& xName,
-            const word& name
+            const word& name,
+            bool canRead = true
         );
 
         //- Construct from data given list of x and data
@@ -261,6 +253,18 @@ public:
         const dictionary& dict,
         const word& xName,
         const word& yName
+    );
+
+    //- Read a set from a given dictionary
+    template<class fType>
+    void readComponent
+    (
+        const dictionary& parentDict,
+        const word& name,
+        Field<fType>& values,
+        Field<fType>& modValues,
+        modFuncType& modFunc,
+        modFuncType& invModFunc
     );
 };
 
