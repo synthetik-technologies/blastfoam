@@ -572,7 +572,12 @@ void Foam::lookupTable2D<Type>::read
     }
 
     const dictionary& fDict(dict.subDict(name + "Coeffs"));
-    setMod(fDict.lookup("mod"), modFunc_, invModFunc_);
+    setMod
+    (
+        fDict.lookupOrDefault<word>("mod", "none"),
+        modFunc_,
+        invModFunc_
+    );
     Switch isReal(fDict.lookupOrDefault<Switch>("isReal", true));
 
     fileName file(fDict.lookup<word>("file"));
@@ -608,36 +613,62 @@ void Foam::lookupTable2D<Type>::readComponent
     findIndexFunc& findIndex
 )
 {
-    const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-    setMod(dict.lookupOrDefault<word>("mod", "none"), modFunc, invModFunc);
-
-    if (dict.found(name))
+    Switch isReal = true;
+    if (parentDict.found(name))
     {
-        values = dict.lookup<Field<scalar>>(name);
-    }
-    else if (dict.found("file"))
-    {
-        fileName file(dict.lookup("file"));
-        read1DTable
+        values = parentDict.lookup<Field<Type>>(name);
+        modValues.resize(values.size());
+        isReal =
+            parentDict.lookupOrDefault<Switch>(name + "isReal", true);
+        setMod
         (
-            file,
-            dict.lookupOrDefault<string>("delim", ","),
-            values
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            modFunc,
+            invModFunc
         );
+    }
+    else if (parentDict.found(name + "Coeffs"))
+    {
+        const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+        isReal = dict.lookupOrDefault<Switch>("isReal", true);
+        setMod
+        (
+            dict.lookupOrDefault<word>("mod", "none"),
+            modFunc,
+            invModFunc
+        );
+
+        if (dict.found("file"))
+        {
+            fileName file(dict.lookup("file"));
+            read1DTable
+            (
+                file,
+                dict.lookupOrDefault<string>("delim", ","),
+                values
+            );
+        }
+        else
+        {
+            label ny = dict.lookup<label>("n");
+            Type dy = dict.lookup<Type>("delta");
+            Type miny = dict.lookup<Type>("min");
+
+            values.resize(ny);
+            forAll(values, j)
+            {
+                values[j] = miny + dy*j;
+            }
+        }
     }
     else
     {
-        label ny = dict.lookup<label>("n");
-        scalar dy = dict.lookup<scalar>("delta");
-        scalar miny = dict.lookup<scalar>("min");
-
-        values.resize(ny);
-        forAll(values, j)
-        {
-            values[j] = miny + dy*j;
-        }
+        FatalErrorInFunction
+            << "Either a list of values or " << name << "Coeffs must" << nl
+            << "be provided for " << name << endl
+            << abort(FatalError);
     }
+
     if (!isReal)
     {
         modValues = values;

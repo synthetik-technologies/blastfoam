@@ -78,7 +78,7 @@ inline void setInterp
     }
     else if (interpolationScheme == "linearExtrapolated")
     {
-        interp = &bilinearExtrapolateInterp;
+        interp = &bilinearExtrapolatedInterp;
     }
     else
     {

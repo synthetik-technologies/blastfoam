@@ -40,36 +40,59 @@ void Foam::lookupTable1D<Type>::readComponent
     modFuncType& invModFunc
 )
 {
-    const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-    Switch isReal(dict.lookupOrDefault<Switch>("isReal", true));
-    setMod(dict.lookupOrDefault<word>("mod", "none"), modFunc, invModFunc);
-
-    if (dict.found(name))
+    Switch isReal = true;
+    if (parentDict.found(name))
     {
-        values = dict.lookup<Field<fType>>(name);
+        values = parentDict.lookup<Field<fType>>(name);
         modValues.resize(values.size());
-    }
-    else if (dict.found("file"))
-    {
-        fileName file(dict.lookup("file"));
-        read1DTable
+        isReal = parentDict.lookupOrDefault<Switch>(name + "isReal", true);
+        setMod
         (
-            file,
-            dict.lookupOrDefault<string>("delim", ","),
-            values
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            modFunc,
+            invModFunc
         );
+    }
+    else if (parentDict.found(name + "Coeffs"))
+    {
+        const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+        isReal = dict.lookupOrDefault<Switch>("isReal", true);
+        setMod
+        (
+            dict.lookupOrDefault<word>("mod", "none"),
+            modFunc,
+            invModFunc
+        );
+
+        if (dict.found("file"))
+        {
+            fileName file(dict.lookup("file"));
+            read1DTable
+            (
+                file,
+                dict.lookupOrDefault<string>("delim", ","),
+                values
+            );
+        }
+        else
+        {
+            label ny = dict.lookup<label>("n");
+            fType dy = dict.lookup<fType>("delta");
+            fType miny = dict.lookup<fType>("min");
+
+            values.resize(ny);
+            forAll(values, j)
+            {
+                values[j] = miny + dy*j;
+            }
+        }
     }
     else
     {
-        label ny = dict.lookup<label>("n");
-        fType dy = dict.lookup<fType>("delta");
-        fType miny = dict.lookup<fType>("min");
-
-        values.resize(ny);
-        forAll(values, j)
-        {
-            values[j] = miny + dy*j;
-        }
+        FatalErrorInFunction
+            << "Either a list of values or " << name << "Coeffs must" << nl
+            << "be provided for " << name << endl
+            << abort(FatalError);
     }
 
     if (!isReal)

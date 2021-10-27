@@ -202,7 +202,6 @@ Foam::scalarLookupTable2D::reverseLookupX
     updateY(y);
     labelList Is(boundi(f));
     updateYWeight(y);
-
     if (Is.size() == 1)
     {
         i_ = Is[0];
@@ -210,6 +209,7 @@ Foam::scalarLookupTable2D::reverseLookupX
         const scalar pm(data_[i_+1][j_]);
         const scalar mp(data_[i_][j_+1]);
         const scalar pp(data_[i_+1][j_+1]);
+
         fx_ =
             (f + fy_*(mm - mp) - mm)
            /(fy_*(mm - mp - pm + pp) - mm + pm);
