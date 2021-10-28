@@ -171,7 +171,7 @@ void Foam::globalInterpolatedPointPatchField<Type>::updateCoeffs()
 template<class Type>
 void Foam::globalInterpolatedPointPatchField<Type>::write(Ostream& os) const
 {
-    pointPatchField<Type>::write(os);
+    fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
 }
 
