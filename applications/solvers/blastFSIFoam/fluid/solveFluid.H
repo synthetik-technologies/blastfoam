@@ -1,5 +1,3 @@
-fluids[i].encode();
-
 Info<< "Calculating Fluxes" << endl;
 timeIntegrators[i].integrate();
 
