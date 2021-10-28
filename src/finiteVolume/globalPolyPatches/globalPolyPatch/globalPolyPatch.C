@@ -87,8 +87,58 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
     if (!mesh_.boundaryMesh()[patchID.index()].empty())
     {
         // Insert my points
-        procPatchPoints[Pstream::myProcNo()] =
-            mesh_.boundaryMesh()[patchID.index()].localPoints();
+        pointField pts
+        (
+            mesh_.boundaryMesh()[patchID.index()].localPoints()
+        );
+        if (displacementField_ != "none")
+        {
+            if (this->mesh_.foundObject<volVectorField>(displacementField_))
+            {
+                PrimitivePatchInterpolation<polyPatch> patchInterp
+                (
+                    this->patch_
+                );
+                pts +=
+                    patchInterp.faceToPointInterpolate
+                    (
+                        this->mesh_.lookupObject<volVectorField>
+                        (
+                            displacementField_
+                        ).boundaryField()[this->patch_.index()]
+                    );
+            }
+            else if
+            (
+                this->mesh_.foundObject<pointVectorField>(displacementField_)
+            )
+            {
+                const pointPatchVectorField& disp =
+                    this->mesh_.lookupObject<pointVectorField>
+                    (
+                        displacementField_
+                    ).boundaryField()[this->patch_.index()];
+                if (isA<valuePointPatchVectorField>(disp))
+                {
+                    pts +=
+                        dynamicCast<const valuePointPatchVectorField>(disp);
+                }
+                else
+                {
+                    pts += disp.patchInternalField();
+                }
+            }
+            else
+            {
+                FatalErrorInFunction
+                    << "Could not find " << displacementField_
+                    << "in " << mesh_.name() << " region." << endl
+                    << abort(FatalError);
+            }
+        }
+
+        // Insert my points
+        procPatchPoints[Pstream::myProcNo()].transfer(pts);
 
         // Insert my faces
         procPatchFaces[Pstream::myProcNo()] =
@@ -504,51 +554,6 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
 
         if (displacementField_ != "none")
         {
-            pointField pts
-            (
-                const_cast<pointField&>(globalPatchPtr_->localPoints())
-            );
-            if (this->mesh_.foundObject<volVectorField>(displacementField_))
-            {
-                pts +=
-                    this->interpolator().faceToPointInterpolate
-                    (
-                        this->patchFaceToGlobal
-                        (
-                            this->mesh_.lookupObject<volVectorField>
-                            (
-                                displacementField_
-                            ).boundaryField()[this->patch_.index()]
-                        )
-                    );
-                interpPtr_.clear();
-            }
-            else if
-            (
-                this->mesh_.foundObject<pointVectorField>(displacementField_)
-            )
-            {
-                const pointPatchVectorField& disp =
-                    this->mesh_.lookupObject<pointVectorField>
-                    (
-                        displacementField_
-                    ).boundaryField()[this->patch_.index()];
-
-                if (isA<valuePointPatchVectorField>(disp))
-                {
-                    pts +=
-                        patchPointToGlobal
-                        (
-                            dynamicCast<const valuePointPatchVectorField>(disp)
-                        );
-                }
-                else
-                {
-                    pts += patchPointToGlobal(disp.patchInternalField());
-                }
-            }
-            faceList faces(globalPatchPtr_);
-            globalPatchPtr_.reset(new standAlonePatch(faces, pts));
             if (debug && mesh_.time().outputTime())
             {
                 word name = patch_.name();
