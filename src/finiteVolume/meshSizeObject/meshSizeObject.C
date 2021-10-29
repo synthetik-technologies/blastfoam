@@ -37,10 +37,9 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::meshSizeObject::meshSizeObject(const fvMesh& mesh)
+Foam::meshSizeObject::meshSizeObject(const polyMesh& mesh)
 :
     MeshSizeObject(mesh),
-    mesh_(mesh),
     dxPtr_(nullptr),
     dXPtr_(nullptr)
 {}
@@ -56,6 +55,7 @@ Foam::meshSizeObject::~meshSizeObject()
 
 void Foam::meshSizeObject::calcDx() const
 {
+    const fvMesh& mesh(dynamicCast<const fvMesh&>(this->mesh_));
     dxPtr_.set
     (
         new volScalarField
@@ -63,28 +63,28 @@ void Foam::meshSizeObject::calcDx() const
             IOobject
             (
                 "dx",
-                mesh_.time().timeName(),
-                mesh_,
+                mesh.time().timeName(),
+                mesh,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 false
             ),
-            mesh_,
+            mesh,
             dimensionedScalar(dimLength, 0.0)
         )
     );
     volScalarField& dx = dxPtr_();
 
-    if (mesh_.nGeometricD() != 3)
+    if (mesh.nGeometricD() != 3)
     {
 
-        scalarField faceLength(sqrt(mesh_.magFaceAreas()));
-        const labelList& own = mesh_.faceOwner();
+        scalarField faceLength(sqrt(mesh.magFaceAreas()));
+        const labelList& own = mesh.faceOwner();
         labelList nFaces(dxPtr_->size(), 0);
 
-        forAll(mesh_.boundaryMesh(), patchi)
+        forAll(mesh.boundaryMesh(), patchi)
         {
-            const polyPatch& patch = mesh_.boundaryMesh()[patchi];
+            const polyPatch& patch = mesh.boundaryMesh()[patchi];
             if (isA<wedgePolyPatch>(patch) || isA<emptyPolyPatch>(patch))
             {
                 forAll(patch, fi)
@@ -100,7 +100,7 @@ void Foam::meshSizeObject::calcDx() const
         {
             dx[celli] /= scalar(nFaces[celli]);
         }
-        forAll(mesh_.magSf().boundaryField(), patchi)
+        forAll(mesh.magSf().boundaryField(), patchi)
         {
             dx.boundaryFieldRef()[patchi] =
                 dx.boundaryField()[patchi].patchInternalField();
@@ -108,19 +108,21 @@ void Foam::meshSizeObject::calcDx() const
     }
     else
     {
-        dx.primitiveFieldRef() = fvc::surfaceSum(mesh_.magSf())/mesh_.V();
+        dx.primitiveFieldRef() =
+            fvc::surfaceSum(mesh.magSf())/mesh.V();
     }
 
-    forAll(mesh_.magSf().boundaryField(), patchi)
+    forAll(mesh.magSf().boundaryField(), patchi)
     {
         dx.boundaryFieldRef()[patchi] =
-            sqrt(mesh_.magSf().boundaryField()[patchi]);
+            sqrt(mesh.magSf().boundaryField()[patchi]);
     }
 }
 
 
 void Foam::meshSizeObject::calcDX() const
 {
+    const fvMesh& mesh(dynamicCast<const fvMesh&>(this->mesh_));
     dXPtr_.set
     (
         new volVectorField
@@ -128,21 +130,21 @@ void Foam::meshSizeObject::calcDX() const
             IOobject
             (
                 "dX",
-                mesh_.time().timeName(),
-                mesh_,
+                this->mesh_.time().timeName(),
+                this->mesh_,
                 IOobject::NO_READ,
                 IOobject::NO_WRITE,
                 false
             ),
-            mesh_,
+            mesh,
             dimensionedVector(dimLength, Zero)
         )
     );
     volVectorField& dX = dXPtr_();
 
-    const faceList& faces = mesh_.faces();
-    const cellList& cells = mesh_.cells();
-    const pointField& points = mesh_.points();
+    const faceList& faces = this->mesh_.faces();
+    const cellList& cells = this->mesh_.cells();
+    const pointField& points = this->mesh_.points();
     forAll(dX, celli)
     {
         const cell& c = cells[celli];
@@ -161,10 +163,15 @@ void Foam::meshSizeObject::calcDX() const
         dX[celli] = cmptDivide(dx, vector(nEdges));
     }
 
-    for (label fi = mesh_.nInternalFaces(); fi < mesh_.nFaces(); fi++)
+    for
+    (
+        label fi = this->mesh_.nInternalFaces();
+        fi < this->mesh_.nFaces();
+        fi++
+    )
     {
-        const label patchi = mesh_.boundaryMesh().whichPatch(fi);
-        const polyPatch& p = mesh_.boundaryMesh()[patchi];
+        const label patchi = this->mesh_.boundaryMesh().whichPatch(fi);
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
         const label facei = fi - p.start();
 
         const face& f = faces[fi];

@@ -43,137 +43,12 @@ SourceFiles
 #include "mapDistribute.H"
 #include "DynamicList.H"
 #include "volFields.H"
+#include "cellStencil.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-class cellStencil;
-Ostream& operator<<(Ostream&, const cellStencil&);
-Istream& operator>>(Istream&, cellStencil&);
-
-class cellStencil
-:
-    public labelList
-{
-    //- Owner cell (global index)
-    label owner_;
-
-    //- Location of cell centre
-    vector centre_;
-
-    //- Level of each neighbour cell
-    labelList levels_;
-
-    //- Local cells
-    mutable labelList localStencil_;
-
-    //- Local levels
-    mutable labelList localLevels_;
-
-
-public:
-
-    cellStencil()
-    :
-        owner_(-1)
-    {}
-
-    cellStencil(const cellStencil& stencil)
-    :
-        labelList(stencil),
-        owner_(stencil.owner_),
-        centre_(stencil.centre_),
-        levels_(stencil.levels_)
-    {}
-
-    cellStencil
-    (
-        const label own,
-        const labelList& stencil,
-        const labelList& levels,
-        const vector& centre = vector::zero
-    )
-    :
-        labelList(stencil),
-        owner_(own),
-        centre_(centre),
-        levels_(levels)
-    {}
-
-    cellStencil
-    (
-        const label own,
-        const labelList&& stencil,
-        const Map<label>& levelMap,
-        const vector& centre = vector::zero
-    )
-    :
-        labelList(stencil),
-        owner_(own),
-        centre_(centre),
-        levels_(stencil.size(), 0)
-    {
-        labelList& st(*this);
-        forAll(st, i)
-        {
-            levels_[i] = levelMap[st[i]];
-        }
-    }
-
-    void updateLocalStencil(const globalIndex&);
-
-    label owner() const
-    {
-        return owner_;
-    }
-
-    label& owner()
-    {
-        return owner_;
-    }
-
-    const vector& centre() const
-    {
-        return centre_;
-    }
-
-    vector& centre()
-    {
-        return centre_;
-    }
-
-    const labelList& levels() const
-    {
-        return levels_;
-    }
-
-    labelList& levels()
-    {
-        return levels_;
-    }
-
-
-    const labelList& localStencil() const
-    {
-        return localStencil_;
-    }
-
-    labelList localStencil(const label level) const;
-
-    void operator=(const cellStencil& stencil)
-    {
-        labelList::operator=(stencil);
-        owner_ = stencil.owner_;
-        centre_ = stencil.centre_;
-        levels_ = stencil.levels_;
-    }
-
-    friend Ostream& operator<<(Ostream& os, const cellStencil&);
-
-    friend Istream& operator>>(Istream& is, cellStencil&);
-};
-
 
 /*---------------------------------------------------------------------------*\
         Class extendedNLevelGlobalCellToCellStencil Declaration
@@ -345,11 +220,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-//
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "extendedNLevelGlobalCellToCellStencil.C"
-#include "extendedNLevelGlobalCellToCellStencilTemplates.C"
+    #include "extendedNLevelGlobalCellToCellStencil.C"
+    #include "extendedNLevelGlobalCellToCellStencilTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

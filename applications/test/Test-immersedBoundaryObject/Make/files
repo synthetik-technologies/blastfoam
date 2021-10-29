@@ -1,0 +1,3 @@
+Test-immersedBoundaryObject.C
+
+EXE = $(BLAST_APPBIN)/Test-immersedBoundaryObject

@@ -25,72 +25,7 @@ License
 
 #include "extendedNLevelGlobalCellToCellStencil.H"
 
-// * * * * * * * * * * * cellStencil Member Functions  * * * * * * * * * * * //
-
-void Foam::cellStencil::updateLocalStencil
-(
-    const globalIndex& idx
-)
-{
-    const labelList& stencil(*this);
-    localStencil_ = stencil;
-    if (!levels_.size())
-    {
-        levels_.setSize(stencil.size(), 0);
-    }
-    localLevels_ = levels_;
-    label ni = 0;
-    forAll(stencil, i)
-    {
-        if (idx.isLocal(stencil[i]))
-        {
-            localStencil_[ni] = idx.toLocal(stencil[i]);
-            localLevels_[ni] = levels_[i];
-            ni++;
-        }
-    }
-    localStencil_.resize(ni);
-    localLevels_.resize(ni);
-}
-
-
-Foam::labelList Foam::cellStencil::localStencil(const label level) const
-{
-    labelList st(localStencil_);
-    label i = 0;
-    forAll(st, I)
-    {
-        if (localLevels_[I] == level)
-        {
-            st[i++] = st[I];
-        }
-    }
-    st.resize(i);
-    return st;
-}
-
-
-Foam::Ostream& Foam::operator<<(Ostream& os, const cellStencil& c)
-{
-    const labelList& lst(c);
-    os  << lst << " "
-        << c.levels() << " "
-        << c.owner() << " "
-        << c.centre() << " ";
-    return os;
-}
-
-
-Foam::Istream& Foam::operator>>(Istream& is, cellStencil& c)
-{
-    labelList& lst(c);
-    is >> lst;
-    is >> c.levels();
-    is >> c.owner();
-    is >> c.centre();
-    return is;
-}
-
+// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 template<class StencilType>
 void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::unionEqOp::
@@ -118,8 +53,6 @@ operator()
     }
 }
 
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
 template<class StencilType>
 void

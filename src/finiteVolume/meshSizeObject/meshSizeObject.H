@@ -46,7 +46,7 @@ namespace Foam
 class meshSizeObject;
 typedef MeshObject
 <
-    fvMesh,
+    polyMesh,
     Foam::MoveableMeshObject,
     meshSizeObject
 > MeshSizeObject;
@@ -62,9 +62,6 @@ class meshSizeObject
 public:
 
     // Private Data
-
-        //- Const reference to the mesh
-        const fvMesh& mesh_;
 
         //- Mesh size (scalar)
         mutable autoPtr<volScalarField> dxPtr_;
@@ -85,8 +82,8 @@ public:
 
     // Constructors
 
-        //- Construct from fvMesh and dictionary
-        meshSizeObject(const fvMesh&);
+        //- Construct from polyMesh
+        meshSizeObject(const polyMesh&);
 
     //- Destructor
     virtual ~meshSizeObject();

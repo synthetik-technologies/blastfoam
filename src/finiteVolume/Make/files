@@ -35,6 +35,7 @@ fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
 finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
 
+globalPolyPatches/standAlonePatch/standAlonePatch.C
 globalPolyPatches/globalPolyPatch/globalPolyPatch.C
 globalPolyPatches/coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
 globalPolyPatches/globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
@@ -70,6 +71,7 @@ MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
 RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
+extendedNLevelGlobalCellToCellStencil/cellStencil.C
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencils.C
 meshSizeObject/meshSizeObject.C
 

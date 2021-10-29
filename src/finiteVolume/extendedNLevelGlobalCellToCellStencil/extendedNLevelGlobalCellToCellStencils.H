@@ -37,22 +37,7 @@ SourceFiles
 #define extendedNLevelGlobalCellToCellStencils_H
 
 #include "extendedNLevelGlobalCellToCellStencil.H"
-#include "CFCCellToCellStencil.H"
-#include "CECCellToCellStencil.H"
-#include "CPCCellToCellStencil.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
-
-typedef extendedNLevelGlobalCellToCellStencil<CFCCellToCellStencil>
-    extendedNLevelCFCCellToCellStencil;
-typedef extendedNLevelGlobalCellToCellStencil<CECCellToCellStencil>
-    extendedNLevelCECCellToCellStencil;
-typedef extendedNLevelGlobalCellToCellStencil<CPCCellToCellStencil>
-    extendedNLevelCPCCellToCellStencil;
-}
+#include "extendedNLevelGlobalCellToCellStencilsFwd.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

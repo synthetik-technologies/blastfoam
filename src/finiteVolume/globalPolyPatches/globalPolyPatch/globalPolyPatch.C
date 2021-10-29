@@ -632,11 +632,10 @@ void Foam::globalPolyPatch::updateMesh()
 
 void Foam::globalPolyPatch::movePoints()
 {
-    clearOut();
-//     if (globalPatchPtr_.valid())
-//     {
-//         globalPatchPtr_->movePoints();
-//     }
+    if (globalPatchPtr_.valid())
+    {
+        globalPatchPtr_->movePoints(patch_.points());
+    }
 }
 
 
