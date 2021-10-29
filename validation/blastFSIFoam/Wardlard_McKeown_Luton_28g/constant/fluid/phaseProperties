@@ -86,7 +86,7 @@ c4
         }
     }
 
-    activationModel none;
+    activationModel linear;
     initiation
     {
         E0          10.1e9;

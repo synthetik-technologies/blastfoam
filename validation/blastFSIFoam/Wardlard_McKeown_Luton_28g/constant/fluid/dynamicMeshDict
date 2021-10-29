@@ -14,12 +14,37 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   dynamicMotionSolverFvMesh;
+// dynamicFvMesh     dynamicMotionSolverFvMesh;
+dynamicFvMesh   movingAdaptiveFvMesh;
+
+errorEstimator scaledDelta;      // Model used to estimate error
+scaledDeltaField p;               // Field used to estimate error
 
 motionSolver      displacementLaplacian;
 displacementLaplacianCoeffs
 {
     diffusivity quadratic inverseDistance (fluid_to_walls);
 }
+
+beginUnrefine 1;         // At what time does unrefinement start (default is 0)
+
+// How often to refine
+refineInterval  1;
+
+// Refine field in between lower..upper (varies based on errorEstimator)
+lowerRefineLevel 0.1;
+
+// If value < unrefineLevel unrefine
+unrefineLevel   0.1;
+
+// Number of cells refined around high error cells
+nBufferLayers   3;
+
+// Refine cells only up to maxRefinement levels
+maxRefinement   1;
+
+
+// Write the refinement level as a volScalarField
+dumpLevel       true;
 
 // ************************************************************************* //

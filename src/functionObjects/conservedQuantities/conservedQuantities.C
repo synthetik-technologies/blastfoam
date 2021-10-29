@@ -142,7 +142,7 @@ bool Foam::functionObjects::conservedQuantities::execute()
             scalars_[name] = sum(f()*V);
             scalar s = scalars_[name].value();
             scalar s0 = scalar0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
+            Info << name << " " << f.dimensions() << " :" << nl
                 <<"    Original = " << s0 << nl
                 <<"    Current = " << s << nl
                 <<"    difference (abs/rel) = " << (s - s0) << ", "
@@ -155,7 +155,7 @@ bool Foam::functionObjects::conservedQuantities::execute()
             vectors_[name] = sum(f()*V);
             vector v = vectors_[name].value();
             vector v0 = vector0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
+            Info << name << " " << f.dimensions() << " :" << nl
                 <<"    Original = " << v0 << nl
                 <<"    Current = " << v << nl
                 <<"    difference (abs/rel) = "<< (v - v0) << ", "
@@ -169,7 +169,7 @@ bool Foam::functionObjects::conservedQuantities::execute()
             symmTensors_[name] = sum(f()*V);
             symmTensor st = symmTensors_[name].value();
             symmTensor st0 = symmTensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
+            Info << name << " " << f.dimensions() << " :" << nl
                 <<"    Original = " << st0 << nl
                 <<"    Current = " << st << nl
                 <<"    difference (abs/rel) = " << (st - st0) << ", "
@@ -183,7 +183,7 @@ bool Foam::functionObjects::conservedQuantities::execute()
             sphTensors_[name] = sum(f()*V);
             symmTensor st = sphTensors_[name].value();
             symmTensor st0 = sphTensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
+            Info << name << " " << f.dimensions() << " :" << nl
                 <<"    Original = " << st0 << nl
                 <<"    Current = " << st << nl
                 <<"    difference (abs/rel) = " << (st - st0) << ", "
@@ -197,7 +197,7 @@ bool Foam::functionObjects::conservedQuantities::execute()
             tensors_[name] = sum(f()*V);
             tensor t = tensors_[name].value();
             tensor t0 = tensor0s_[name].value();
-            Log << name << " " << f.dimensions() << " :" << nl
+            Info << name << " " << f.dimensions() << " :" << nl
                 <<"    Original = " << t0 << nl
                 <<"    Current = " << t << nl
                 <<"    difference (abs/rel) = " << (t - t0) << ", "

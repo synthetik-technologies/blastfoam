@@ -25,7 +25,7 @@ stopAt          endTime;
 
 endTime         400e-6;
 
-deltaT          1e-10;
+deltaT          1e-8;
 
 writeControl    adjustableRunTime;
 
@@ -51,6 +51,10 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
+// DebugSwitches
+// {
+//     globalPolyPatch 1;
+// }
 // ************************************************************************* //
 
 functions
@@ -60,11 +64,19 @@ functions
         type probes;
         region walls;
         fixLocations yes;
+        append yes;
         probeLocations
         (
-            (0.045 0.115 0)
+            (0.047625 0.115 0)
         );
         fields (D U);
+    }
+    conservedQuantities
+    {
+        type    conservedQuantities;
+        fields  (rhoE);
+        region  fluid;
+        writeControl timeStep;
     }
 }
 

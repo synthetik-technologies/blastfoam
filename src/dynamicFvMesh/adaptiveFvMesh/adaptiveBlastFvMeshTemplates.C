@@ -98,55 +98,55 @@ void Foam::adaptiveBlastFvMesh::pushUntransformedData
     Field<Type>& pointData
 ) const
 {
-    Field<scalar> nSharedPoints(pointData.size(), 1);
-    this->globalData().syncPointData
-    (
-        pointData,
-        plusEqOp<Type>(),
-        mapDistribute::transform()
-    );
-    this->globalData().syncPointData
-    (
-        nSharedPoints,
-        plusEqOp<scalar>(),
-        mapDistribute::transform()
-    );
-    pointData /= nSharedPoints;
+//     Field<scalar> nSharedPoints(pointData.size(), 1);
+//     this->globalData().syncPointData
+//     (
+//         pointData,
+//         plusEqOp<Type>(),
+//         mapDistribute::transform()
+//     );
+//     this->globalData().syncPointData
+//     (
+//         nSharedPoints,
+//         plusEqOp<scalar>(),
+//         mapDistribute::transform()
+//     );
+//     pointData /= nSharedPoints;
 
     // Transfer onto coupled patch
-//     const globalMeshData& gmd = this->globalData();
-//     const indirectPrimitivePatch& cpp = gmd.coupledPatch();
-//     const labelList& meshPoints = cpp.meshPoints();
-//
-//     const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
-//     const labelListList& slaves = gmd.globalCoPointSlaves();
-//
-//     List<Type> elems(slavesMap.constructSize());
-//     forAll(meshPoints, i)
-//     {
-//         elems[i] = pointData[meshPoints[i]];
-//     }
-//
-//     // Combine master data with slave data
-//     forAll(slaves, i)
-//     {
-//         const labelList& slavePoints = slaves[i];
-//
-//         // Copy master data to slave slots
-//         forAll(slavePoints, j)
-//         {
-//             elems[slavePoints[j]] = elems[i];
-//         }
-//     }
-//
-//     // Push slave-slot data back to slaves
-//     slavesMap.reverseDistribute(elems.size(), elems, false);
-//
-//     // Extract back onto mesh
-//     forAll(meshPoints, i)
-//     {
-//         pointData[meshPoints[i]] = elems[i];
-//     }
+    const globalMeshData& gmd = this->globalData();
+    const indirectPrimitivePatch& cpp = gmd.coupledPatch();
+    const labelList& meshPoints = cpp.meshPoints();
+
+    const mapDistribute& slavesMap = gmd.globalCoPointSlavesMap();
+    const labelListList& slaves = gmd.globalCoPointSlaves();
+
+    List<Type> elems(slavesMap.constructSize());
+    forAll(meshPoints, i)
+    {
+        elems[i] = pointData[meshPoints[i]];
+    }
+
+    // Combine master data with slave data
+    forAll(slaves, i)
+    {
+        const labelList& slavePoints = slaves[i];
+
+        // Copy master data to slave slots
+        forAll(slavePoints, j)
+        {
+            elems[slavePoints[j]] = elems[i];
+        }
+    }
+
+    // Push slave-slot data back to slaves
+    slavesMap.reverseDistribute(elems.size(), elems, false);
+
+    // Extract back onto mesh
+    forAll(meshPoints, i)
+    {
+        pointData[meshPoints[i]] = elems[i];
+    }
 }
 
 // ************************************************************************* //

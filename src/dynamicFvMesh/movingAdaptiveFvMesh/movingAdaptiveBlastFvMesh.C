@@ -68,26 +68,33 @@ Foam::movingAdaptiveBlastFvMesh::~movingAdaptiveBlastFvMesh()
 
 void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
 {
-    adaptiveBlastFvMesh::updateMesh(mpm);
 
-    // Do not update while balancing since the point0 class does not
-    // support this
+
+
+//     if (!isRefining_ && !isUnrefining_)
+//     {
+//         motionPtr_->updateMesh(mpm);
+//         return;
+//     }
+
+    // Do not update while balancing this is handled in the
+    // distribute function
     if (isBalancing_)
     {
-        return;
+//         return;
     }
-
-    if (!isRefining_ && !isUnrefining_)
-    {
-        motionPtr_->updateMesh(mpm);
-        return;
-    }
-
-    if (isA<displacementMotionSolver>(motionPtr_()))
+    else if (isA<displacementMotionSolver>(motionPtr_()))
     {
         displacementMotionSolver& dispMS =
             dynamicCast<displacementMotionSolver>(motionPtr_());
-        if (!isRefining_)
+        if (isRefining_)
+        {
+            meshCutter().locationMapper().interpolateMidPoints
+            (
+                dispMS.points0()
+            );
+        }
+        else
         {
             pointMapper(dispMS.pointDisplacement().mesh(), mpm)
             (
@@ -95,17 +102,13 @@ void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
                 dispMS.points0()
             );
         }
-        else
-        {
-            meshCutter().locationMapper().interpolateMidPoints
-            (
-                dispMS.points0()
-            );
-        }
-        if (Pstream::parRun())
-        {
-            this->pushUntransformedData(dispMS.points0());
-        }
+
+//         if (Pstream::parRun())
+//         {
+//             this->pushUntransformedData(dispMS.points0());
+//         }
+//         dispMS.pointDisplacement().primitiveFieldRef() =
+//             this->points() - dispMS.points0();
     }
     else if (isA<componentDisplacementMotionSolver>(motionPtr_()))
     {
@@ -115,11 +118,13 @@ void Foam::movingAdaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
                 motionPtr_()
             );
         pointMapper(pointMesh::New(*this), mpm)(dispMS.points0());
-        if (Pstream::parRun())
-        {
-            this->pushUntransformedData(dispMS.points0());
-        }
+//         if (Pstream::parRun())
+//         {
+//             this->pushUntransformedData(dispMS.points0());
+//         }
     }
+
+    adaptiveBlastFvMesh::updateMesh(mpm);
 }
 
 
@@ -171,10 +176,10 @@ bool Foam::movingAdaptiveBlastFvMesh::update()
     pointField pointsNew(motionPtr_->newPoints());
 
     //- Sync points across boundaries
-    if (Pstream::parRun())
-    {
-       this->pushUntransformedData(pointsNew);
-    }
+//     if (Pstream::parRun())
+//     {
+//        this->pushUntransformedData(pointsNew);
+//     }
 
     //- Move mesh
     fvMesh::movePoints(pointsNew);

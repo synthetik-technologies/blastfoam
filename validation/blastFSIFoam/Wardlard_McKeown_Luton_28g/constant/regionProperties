@@ -39,7 +39,7 @@ interfaces
         {
             sampleRegion fluid;
             samplePatch  fluid_to_walls;
-            displacementField D;
+            displacementField pointD;
         }
     }
 );

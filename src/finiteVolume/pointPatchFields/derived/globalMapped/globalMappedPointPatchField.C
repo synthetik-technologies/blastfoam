@@ -154,19 +154,11 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         (
             nbrName_
         ).boundaryField()[samplePatchi];
-    Field<Type> pnbr(nbr.size());
-
-    if (isA<valuePointPatchField<Type>>(nbr))
-    {
-        pnbr = dynamicCast<const valuePointPatchField<Type>>(nbr);
-    }
-    else
-    {
-        pnbr = nbr.patchInternalField();
-    }
-
-
-    Field<Type>::operator=(samplePatch.pointInterpolate(pnbr));
+    Field<Type>::operator=
+    (
+        samplePatch.pointInterpolate(nbr.patchInternalField())
+    );
+    fixedValuePointPatchField<Type>::updateCoeffs();
 }
 
 

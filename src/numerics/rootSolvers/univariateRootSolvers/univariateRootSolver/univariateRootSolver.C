@@ -59,12 +59,12 @@ void Foam::univariateRootSolver::printStepInformation(const scalar val) const
 Foam::scalar
 Foam::univariateRootSolver::printFinalInformation(const scalar val) const
 {
-    if (stepi_ < maxSteps_ && debug)
+    if (stepi_ < maxSteps_ && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations"
             << ", final error=" << errors_[0];
     }
-    else if (stepi_ >= maxSteps_)
+    else if (stepi_ >= maxSteps_ && debug)
     {
         WarningInFunction
             << "Did not converge, final error= " << errors_[0] << endl;

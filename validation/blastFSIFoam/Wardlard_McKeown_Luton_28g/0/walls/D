@@ -29,7 +29,7 @@ boundaryField
     {
         type            solidTraction;
         traction        uniform (0 0 0);
-        pressure        uniform 0.0;
+        pressure        uniform 1e5;
         value           uniform (0 0 0);
     }
     walls_to_fluid
@@ -37,7 +37,7 @@ boundaryField
         type            coupledSolidTraction;
         traction        uniform (0 0 0);
         pressure        uniform 0;
-        pRef            1e5;
+        pRef            0;
         value           uniform (0 0 0);
     }
     front

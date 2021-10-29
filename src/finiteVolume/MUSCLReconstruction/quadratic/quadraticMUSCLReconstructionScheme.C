@@ -45,7 +45,7 @@ Foam::quadraticMUSCLReconstructionScheme<Type>::quadraticMUSCLReconstructionSche
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("grad(" + this->phi_.name() + ")")
+            this->mesh_.gradScheme("gradMUSCL")
         )
     );
     tmp<fv::gradScheme<scalar>> lgradientScheme
@@ -53,7 +53,7 @@ Foam::quadraticMUSCLReconstructionScheme<Type>::quadraticMUSCLReconstructionSche
         fv::gradScheme<scalar>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
+            this->mesh_.gradScheme("limitedGradMUSCL")
         )
     );
     tmp<fv::gradScheme<vector>> hgradientScheme
@@ -61,7 +61,7 @@ Foam::quadraticMUSCLReconstructionScheme<Type>::quadraticMUSCLReconstructionSche
         fv::gradScheme<vector>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedGrad(" + this->phi_.name() + ")")
+            this->mesh_.gradScheme("limitedHessMUSCL)")
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)

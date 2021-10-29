@@ -16,7 +16,18 @@ FoamFile
 
 convertToMeters 1; // feet to meters
 
-// theta   #calc "5.0*Foam::constant::mathematical::pi/180.0";
+// Ri      0.04445;
+//
+// x0      0;
+// x1      4.444323005e-2;
+//
+//
+// y1      0;
+// y2      0.2286;
+//
+// z0      0;
+// z1      7.757594661e-4;
+// nz1    -7.757594661e-4;
 
 x0      0;
 x1      0.0442808543;
@@ -28,7 +39,6 @@ y2      0.2286;
 z0      0;
 z1      0.0038740728;
 nz1    -0.0038740728;
-
 
 vertices
 (
@@ -43,7 +53,7 @@ vertices
 
 blocks
 (
-    hex (0 1 2 3 0 4 5 3) fluid (200 400 1) simpleGrading (1 1 1)
+    hex (0 1 2 3 0 4 5 3) fluid (50 200 1) simpleGrading (1 1 1)
  );
 
 edges

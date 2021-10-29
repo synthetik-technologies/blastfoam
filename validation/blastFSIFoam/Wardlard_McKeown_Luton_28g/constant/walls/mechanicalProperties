@@ -33,11 +33,17 @@ mechanical
 
         type            nonLinearPowerLawPlastic;
 
+//         E               71e9;
+//         nu              0.33;
+//         k               355.6e6;
+//         n               0.1798;
+//         sigmaY          131e6;
+
         E               71e9;
         nu              0.33;
-        k               355.6e6;
-        n               0.1798;
-        sigmaY          131e6;
+        k               319087034;
+        n               0.0788;
+        sigmaY          210e6;
 
 //         E               70e9;
 //         nu              0.33;
