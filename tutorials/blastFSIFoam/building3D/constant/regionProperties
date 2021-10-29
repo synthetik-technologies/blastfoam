@@ -21,4 +21,28 @@ regions
     solid       (building)
 );
 
+interfaces
+(
+    air
+    {
+        air_to_building
+        {
+            sampleRegion    building;
+            samplePatch     building_to_air;
+            mappingType     AMI;
+            interpolationMethod faceAreaWeight;
+        }
+    }
+    building
+    {
+        building_to_air
+        {
+            sampleRegion    air;
+            samplePatch     air_to_building;
+            displacementField pointD;
+        }
+    }
+);
+
+
 // ************************************************************************* //

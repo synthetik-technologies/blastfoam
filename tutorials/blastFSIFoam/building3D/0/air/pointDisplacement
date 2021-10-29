@@ -22,8 +22,8 @@ boundaryField
 {
     air_to_building
     {
-        type            mapInterpolated;
-        volField        "D";
+        type            globalMapped;
+        nbrName         pointD;
         value           uniform (0 0 0);
     }
     ground
