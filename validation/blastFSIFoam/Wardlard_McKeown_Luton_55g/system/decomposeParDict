@@ -15,11 +15,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 32; //4; // 20;
+numberOfSubdomains 16; //4; // 20;
 
 // preservePatches (patch0 patch1 patch2);
 
-method          simple; //simple;
+method          scotch; //simple;
 
 simpleCoeffs
 {

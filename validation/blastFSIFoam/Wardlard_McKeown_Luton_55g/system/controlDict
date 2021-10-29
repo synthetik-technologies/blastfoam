@@ -25,11 +25,11 @@ stopAt          endTime;
 
 endTime         400e-6;
 
-deltaT          1e-10;
+deltaT          1e-8;
 
 writeControl    adjustableRunTime;
 
-writeInterval   1e-6;
+writeInterval   1e-5;
 
 cycleWrite      0;
 
@@ -51,20 +51,33 @@ maxCo           0.5;
 
 maxDeltaT       1;
 
+// DebugSwitches
+// {
+//     globalPolyPatch 1;
+// }
 // ************************************************************************* //
 
 functions
 {
     solidProbes
     {
-        type probes;
+        type blastProbes;
         region walls;
         fixLocations yes;
+        append yes;
+        adjustLocations yes;
         probeLocations
         (
-            (0.045 0.115 0)
+            (0.0508 0.115 0)
         );
         fields (D U);
+    }
+    conservedQuantities
+    {
+        type    conservedQuantities;
+        fields  (rhoE);
+        region  fluid;
+        writeControl timeStep;
     }
 }
 

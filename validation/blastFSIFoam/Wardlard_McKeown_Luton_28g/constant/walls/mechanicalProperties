@@ -24,32 +24,17 @@ mechanical
 (
     aluminum
     {
-        // Aluminum 5086
-        // Yield strength: 131e6 Pa
-        // Ultimate yield strength: 305e6
-        // Elongation: 22%
-        // Strain hardening exponent and strength coefficient calculated using
-        // Ramberg-Osgood equations
-
+        // Aluminum 5086-H116
         type            nonLinearPowerLawPlastic;
-
-//         E               71e9;
-//         nu              0.33;
-//         k               355.6e6;
-//         n               0.1798;
-//         sigmaY          131e6;
 
         E               71e9;
         nu              0.33;
-        k               319087034;
-        n               0.0788;
-        sigmaY          210e6;
+        sigmaY          190e6;  // Yield strength
+        sigmaUT         290e6;  // Ultimate tensile strength
+        elongation      0.12;   // Elongation
 
-//         E               70e9;
-//         nu              0.33;
-//         k               284559562;
-//         n               0.1543;
-//         sigmaY          120e6;
+        // Strain hardening exponent and strength coefficient calculated using
+        // Ramberg-Osgood equations
 
         solvePressureEqn no;
     }

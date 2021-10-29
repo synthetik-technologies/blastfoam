@@ -61,13 +61,14 @@ functions
 {
     solidProbes
     {
-        type probes;
+        type blastProbes;
         region walls;
         fixLocations yes;
+        adjustLocations yes;
         append yes;
         probeLocations
         (
-            (0.047625 0.115 0)
+            (0.0508 0.115 0)
         );
         fields (D U);
     }

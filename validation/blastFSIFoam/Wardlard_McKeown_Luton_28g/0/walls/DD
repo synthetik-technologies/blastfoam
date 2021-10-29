@@ -36,7 +36,7 @@ boundaryField
     {
         type            coupledSolidTraction;
         traction        uniform (0 0 0);
-        pressure        uniform 0;
+        pressure        uniform 1e5;
         pRef            0;
         value           uniform (0 0 0);
     }

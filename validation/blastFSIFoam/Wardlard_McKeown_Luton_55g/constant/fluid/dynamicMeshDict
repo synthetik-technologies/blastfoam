@@ -14,7 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh   dynamicMotionSolverFvMesh;
+dynamicFvMesh     dynamicMotionSolverFvMesh;
 
 motionSolver      displacementLaplacian;
 displacementLaplacianCoeffs

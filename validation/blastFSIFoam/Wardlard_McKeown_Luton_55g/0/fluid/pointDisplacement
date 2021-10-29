@@ -22,13 +22,14 @@ boundaryField
 {
     fixedWalls
     {
-        type            slip;
+        type            fixedNormalSlip;
+        n               (0 1 0);
     }
 
     fluid_to_walls
     {
-        type            globalInterpolated;
-        nbrName         D;
+        type            globalMapped;
+        nbrName         pointD;
         value           uniform (0 0 0);
     }
 

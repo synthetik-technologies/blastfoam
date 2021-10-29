@@ -41,13 +41,14 @@ laplacianSchemes
     laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
 }
 
-scheme upwindMUSCL;
+scheme vanLeer;
+vScheme vanLeerV;
 interpolationSchemes
 {
     default             linear;
     reconstruct(alpha)  $scheme;
     reconstruct(rho)    $scheme;
-    reconstruct(U)      $scheme;
+    reconstruct(U)      $vScheme;
     reconstruct(e)      $scheme;
     reconstruct(p)      $scheme;
     reconstruct(speedOfSound) $scheme;
@@ -55,7 +56,7 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         corrected;
+    default         uncorrected;
 }
 
 
