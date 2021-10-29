@@ -52,20 +52,54 @@ Foam::powerLawPlastic<PlasticType>::powerLawPlastic
 )
 :
     PlasticType(name, mesh, dict, nonLinGeom),
-    k_("k", dimPressure, dict),
-    n_("n", dimless, dict),
+    k_("k", dimPressure, -1.0),
+    n_("n", dimless, -1.0),
     epsilonY_("epsilonY", dimless, 0.0)
 {
-    if (dict.found("sigmaY"))
+    scalar sigmaY(dict.lookupOrDefault<scalar>("sigmaY", -1.0));
+    scalar sigmaUT(dict.lookupOrDefault<scalar>("sigmaUT", -1.0));
+    scalar elongation(dict.lookupOrDefault<scalar>("elongation", -1.0));
+
+    k_.readIfPresent(dict);
+    n_.readIfPresent(dict);
+
+    if (n_.value() > 0)
+    {}
+    else if (sigmaY > 0 && sigmaUT > 0 && elongation > 0)
     {
-        dimensionedScalar sigmaY("sigmaY", dimPressure, dict);
-        epsilonY_ = pow(sigmaY/k_, 1.0/n_);
+        n_.value() = log(sigmaUT/sigmaY)/log(elongation/0.002);
     }
     else
     {
-        epsilonY_ = pow(this->E_/k_, 1.0/(n_ - 1.0));
+        FatalErrorInFunction
+            << "Strain hardening coefficient could not be determined." << nl
+            << "Either provide n or sigmaY, sigmaUT, and elongation." << nl
+            << abort(FatalError);
     }
 
+    if (k_.value() > 0)
+    {}
+    else if (sigmaUT > 0 && sigmaY > 0)
+    {
+        k_.value() = sigmaY/pow(sigmaY/this->E_.value() + 0.002, n_.value());
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Strength coefficient could not be determined." << nl
+            << "Either provide k or sigmaY." << nl
+            << abort(FatalError);
+    }
+
+    if (sigmaY > 0)
+    {
+        epsilonY_.value() = pow(sigmaY/k_.value(), 1.0/n_.value());
+    }
+    else
+    {
+        epsilonY_.value() =
+            pow(this->E_.value()/k_.value(), 1.0/(n_.value() - 1.0));
+    }
 
     this->sigmaY_ = k_*pow(epsilonY_, n_);
     this->sigmaYf_ = k_*pow(epsilonY_, n_);

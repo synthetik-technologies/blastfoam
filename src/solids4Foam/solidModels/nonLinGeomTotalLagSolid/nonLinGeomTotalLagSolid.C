@@ -216,7 +216,6 @@ bool nonLinGeomTotalLagSolid::evolve()
             DD()
         ) && ++iCorr < nCorr()
     );
-    SolverPerformance<vector>::debug = 1;
 
     // Interpolate cell displacements to vertices
     mechanical().interpolate(DD(), pointDD());
