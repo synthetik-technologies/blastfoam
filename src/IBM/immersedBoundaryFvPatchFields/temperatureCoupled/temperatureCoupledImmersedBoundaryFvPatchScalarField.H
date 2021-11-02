@@ -89,6 +89,15 @@ public:
             const immersedBoundaryObject&
         );
 
+        //- Construct from patch and internal field
+        temperatureCoupledImmersedBoundaryFvPatchScalarField
+        (
+            volScalarField&,
+            const dictionary&,
+            const immersedBoundaryObject&,
+            const word&
+        );
+
 
     // Member Functions
 

@@ -93,6 +93,7 @@ Foam::immersedCircle::immersedCircle
         }
     }
     patchPtr_.set(new standAlonePatch(faces, points0_));
+    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -126,7 +127,7 @@ Foam::immersedCircle::calcInside(const pointField& points) const
 
 bool Foam::immersedCircle::inside(const point& pt) const
 {
-    scalar R(mag(pt - object_.centreOfRotation()));
+    scalar R(mag(zeroDir(pt - object_.centreOfRotation())));
     if (R <= radius_)
     {
         return true;

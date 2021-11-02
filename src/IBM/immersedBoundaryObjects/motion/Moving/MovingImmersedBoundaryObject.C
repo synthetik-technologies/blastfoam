@@ -407,6 +407,7 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::status() const
         << "    Centre of mass: " << this->centreOfMass() << nl
         << "    Orientation: " << orientation() << nl
         << "    Linear velocity: " << v() << nl
+        << "    Linear acceleration: " << (tConstraints_ & a()) << nl
         << "    Angular velocity: " << omega()
         << endl;
 }

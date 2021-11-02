@@ -88,4 +88,11 @@ derivedFvPatchFields/solidTractionCoupledImmersedFvPatchVectorField/solidTractio
 
 immersedBoundaryObjectListSolver/immersedBoundaryObjectListSolver.C
 
+immersedPolyPatch/immersedPolyPatch.C
+#immersedPointPatch/immersedPointPatch.C
+immersedFvPatch/immersedFvPatch.C
+#immersedFvPatchField/immersedFvPatchFields.C
+
+fvModel/IBMFvModel.C
+
 LIB = $(BLAST_LIBBIN)/libblastIBM

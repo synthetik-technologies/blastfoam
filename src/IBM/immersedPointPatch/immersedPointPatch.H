@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technology
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,21 +22,21 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fixedValueImmersedBoundaryFvPatchField
+    Foam::immersedPointPatch
 
 Description
-
+    Foam::immersedPointPatch
 
 SourceFiles
-    fixedValueImmersedBoundaryFvPatchField.C
+    immersedPointPatch.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fixedValueImmersedBoundaryFvPatchField_H
-#define fixedValueImmersedBoundaryFvPatchField_H
+#ifndef immersedPointPatch_H
+#define immersedPointPatch_H
 
-#include "volFields.H"
-#include "immersedBoundaryFvPatchField.H"
+#include "facePointPatch.H"
+#include "immersedPolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,63 +44,33 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                   Class fixedValueImmersedBoundaryFvPatchField Declaration
+                       Class immersedPointPatch Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
-class fixedValueImmersedBoundaryFvPatchField
+class immersedPointPatch
 :
-    public immersedBoundaryFvPatchField<Type>
+    public facePointPatch
 {
-protected:
-
-    //- Value
-    Type value_;
-
 
 public:
 
     //- Runtime type information
-    TypeName("fixedValue");
-
-    // Constructor
-    fixedValueImmersedBoundaryFvPatchField
-    (
-        GeometricField<Type, fvPatchField, volMesh>&,
-        const dictionary&,
-        const immersedBoundaryObject&
-    );
-
-    fixedValueImmersedBoundaryFvPatchField
-    (
-        GeometricField<Type, fvPatchField, volMesh>&,
-        const dictionary&,
-        const immersedBoundaryObject&,
-        const word&
-    );
-
-    // Destructor
-    virtual ~fixedValueImmersedBoundaryFvPatchField()
-    {}
+    TypeName(immersedPolyPatch::typeName_());
 
 
-    // Member Functions
+    // Constructors
 
-
-        // Evaluation functions
-
-            //- Update size and values
-            virtual void updateCoeffs() const;
-
-            //- Add forcing to the given field
-            virtual void setValues();
+        //- Construct from polyPatch
+        immersedPointPatch
+        (
+            const polyPatch& patch,
+            const pointBoundaryMesh& bm
+        )
+        :
+            facePointPatch(patch, bm)
+        {}
 };
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "fixedValueImmersedBoundaryFvPatchField.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -60,7 +60,7 @@ class extendedNLevelGlobalCellToCellStencil
     public MeshObject
     <
         polyMesh,
-        Foam::MoveableMeshObject,
+        PatchMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >
 {
@@ -75,7 +75,7 @@ public:
         mutable label nLevels_;
 
         //- Global indexing
-        mutable globalIndex gIndex_;
+        mutable autoPtr<globalIndex> gIndexPtr_;
 
         //- Map of neighbours (global indexing)
         mutable Map<cellStencil> stencilMap_;
@@ -146,26 +146,28 @@ public:
         }
 
         //- Callback for geometry motion
-        virtual bool movePoints()
-        {
-            mapPtr_.clear();
-            return true;
-        }
+        virtual bool movePoints();
 
-        //- Update stencils. Return false if nothing changed.
-        virtual bool update()
-        {
-            mapPtr_.clear();
-            return true;
-        }
+        virtual void updateMesh(const mapPolyMesh& mpm);
+
+        //- Reordered/removed trailing patches. If validBoundary call is parallel
+        //  synced and all add the same patch with same settings
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        );
+
+        //- Inserted patch at patchi
+        virtual void addPatch(const label patchi);
 
         inline const globalIndex& globalNumbering() const
         {
-            if (!mapPtr_.valid())
+            if (!gIndexPtr_.valid())
             {
                 updateStencil();
             }
-            return gIndex_;
+            return gIndexPtr_();
         }
 
         inline const Map<cellStencil>& cellCellMap() const
@@ -183,7 +185,7 @@ public:
             {
                 updateStencil();
             }
-            return stencilMap_[gIndex_.toGlobal(celli)];
+            return stencilMap_[gIndexPtr_->toGlobal(celli)];
         }
 
         //- Collect data across all processors

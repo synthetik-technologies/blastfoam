@@ -37,6 +37,12 @@ inline bool Foam::immersedBoundaryObject::report() const
 }
 
 
+inline Foam::word Foam::immersedBoundaryObject::keyword() const
+{
+    return shape_->name();
+}
+
+
 inline const Foam::word& Foam::immersedBoundaryObject::name() const
 {
     return shape_->name();

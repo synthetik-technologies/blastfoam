@@ -153,6 +153,7 @@ Foam::immersedTriangle::immersedTriangle
     points0_ = this->orientation_.T() & points0_;
 
     patchPtr_.set(new standAlonePatch(faces, points0_));
+    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

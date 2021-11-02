@@ -175,6 +175,9 @@ protected:
         //- Read centre of mass and orientation if needed
         void read(const dictionary&);
 
+        //- Correct the centre of mass for 2D cases
+        void correctCentreOfMass();
+
 
 public:
 
@@ -268,7 +271,7 @@ public:
             //- Return points
             const pointField& points() const
             {
-                return patchPtr_->localPoints();
+                return patchPtr_->points();
             }
 
             //- Return old points

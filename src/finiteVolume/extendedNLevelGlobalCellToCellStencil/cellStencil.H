@@ -158,6 +158,8 @@ public:
 
     labelList localStencil(const label level) const;
 
+    labelList localStencil(const label level0, const label level1) const;
+
     void operator=(const cellStencil& stencil)
     {
         labelList::operator=(stencil);

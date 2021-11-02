@@ -167,6 +167,23 @@ temperatureCoupledImmersedBoundaryFvPatchScalarField
 {}
 
 
+Foam::temperatureCoupledImmersedBoundaryFvPatchScalarField::
+temperatureCoupledImmersedBoundaryFvPatchScalarField
+(
+    volScalarField& f,
+    const dictionary& dict,
+    const immersedBoundaryObject& ibo,
+    const word&
+)
+:
+    immersedBoundaryScalarPatchField(f, dict, ibo),
+    mesh_(f.mesh()),
+    immersedMesh_(ibm_.immersedMesh()),
+    immersedT_(immersedMesh_.lookupObject<volScalarField>("T")),
+    mapper_(*(ibm_.mapper()))
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::temperatureCoupledImmersedBoundaryFvPatchScalarField::updateCoeffs() const

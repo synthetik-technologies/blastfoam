@@ -40,7 +40,7 @@ SourceFiles
 
 #include "immersedBoundaryObject.H"
 #include "volFields.H"
-#include "RefineBalanceMeshObject.H"
+#include "MeshObject.H"
 #include "PtrListDictionary.H"
 #include "collisionModel.H"
 
@@ -50,13 +50,21 @@ SourceFiles
 namespace Foam
 {
 
+class immersedBoundaryObjectListSolver;
+
+typedef MeshObject
+<
+    fvMesh,
+    UpdateableMeshObject,
+    immersedBoundaryObjectListSolver
+> ImmersedBoundaryObjectListSolverObject;
 /*---------------------------------------------------------------------------*\
         Class immersedBoundaryObjectListSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class immersedBoundaryObjectListSolver
 :
-    public RefineMeshObject
+    public ImmersedBoundaryObjectListSolverObject
 {
     friend immersedBoundaryObject;
 
@@ -100,7 +108,7 @@ class immersedBoundaryObjectListSolver
 public:
 
     //- Runtime type information
-    TypeName("immersedBoundaryObjectMotion");
+    TypeName("immersedBoundaryObjectListSolver");
 
 
     // Constructors
@@ -115,7 +123,7 @@ public:
         immersedBoundaryObjectListSolver
         (
             const immersedBoundaryObjectListSolver&
-        );
+        ) = delete;
 
 
     //- Destructor
@@ -136,8 +144,11 @@ public:
         //- Solve for motion
         virtual void solve();
 
-        //- Update after refining and balancing
-        virtual void updateObject();
+        //- Move points
+        virtual bool movePoints();
+
+        //- Update
+        virtual void updateMesh(const mapPolyMesh& mpm);
 
         //- Add fields to correct
         template<class Type>

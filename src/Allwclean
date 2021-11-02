@@ -15,5 +15,6 @@ wclean $targetType errorEstimators
 wclean $targetType functionObjects
 wclean $targetType atmosphereModels
 wclean $targetType solids4Foam
+wclean $targetType IBM
 
 #------------------------------------------------------------------------------

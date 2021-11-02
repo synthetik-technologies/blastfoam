@@ -95,6 +95,7 @@ Foam::immersedEllipse::immersedEllipse
         extrude2D(points0_, faces);
     }
     patchPtr_.set(new standAlonePatch(faces, points0_));
+    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

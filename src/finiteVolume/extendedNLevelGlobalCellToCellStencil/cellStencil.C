@@ -70,6 +70,26 @@ Foam::labelList Foam::cellStencil::localStencil(const label level) const
 }
 
 
+Foam::labelList Foam::cellStencil::localStencil
+(
+    const label level0,
+    const label level1
+) const
+{
+    labelList st(localStencil_);
+    label i = 0;
+    forAll(st, I)
+    {
+        if (localLevels_[I] >= level0 && localLevels_[I] <= level1)
+        {
+            st[i++] = st[I];
+        }
+    }
+    st.resize(i);
+    return st;
+}
+
+
 Foam::Ostream& Foam::operator<<(Ostream& os, const cellStencil& c)
 {
     const labelList& lst(c);

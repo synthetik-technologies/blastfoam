@@ -111,12 +111,17 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
     const fvMesh& mesh
 )
 :
-    RefineMeshObject
+    ImmersedBoundaryObjectListSolverObject
     (
-        "immersedBoundaryObjectListSolver",
         mesh,
-        IOobject::NO_READ,
-        IOobject::AUTO_WRITE
+        IOobject
+        (
+            typeName,
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        )
     ),
     mesh_(mesh),
     ibmDict_
@@ -175,9 +180,10 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
     {
         stateDict = objectDict;
     }
-
+Info<<objects<<endl;
     forAll(objects, i)
     {
+        Info<<i<<endl;
         objects_.set
         (
             i,
@@ -195,6 +201,8 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
         thermalForcingNeeded_ =
             thermalForcingNeeded_ || objects_[i].temperatureDependent();
         moving = moving || objects_[i].moving();
+        Info<<i<<endl;
+        Info<<objects_[i].name()<<endl;
     }
     if (moving)
     {
@@ -227,6 +235,7 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
             )
         );
     }
+    Info<<objects_[0].name()<<endl;
 }
 
 
@@ -241,6 +250,7 @@ Foam::immersedBoundaryObjectListSolver::~immersedBoundaryObjectListSolver()
 const Foam::PtrListDictionary<Foam::immersedBoundaryObject>&
 Foam::immersedBoundaryObjectListSolver::objects() const
 {
+    Info<<objects_[0].name()<<endl;
     return objects_;
 }
 
@@ -284,8 +294,8 @@ void Foam::immersedBoundaryObjectListSolver::solve()
         objects_[i].momentExt() = Zero;
 
         objects_[i].force() +=
-            objects_[i].Sf()*objects_[i].interpolateTo(p)
-          + (objects_[i].Sf() & objects_[i].interpolateTo(sigma));
+            objects_[i].Sf()*objects_[i].patchExternalField(p)
+          + (objects_[i].Sf() & objects_[i].patchExternalField(sigma));
 
         objects_[i].update();
 
@@ -320,7 +330,7 @@ void Foam::immersedBoundaryObjectListSolver::solve()
         }
     }
 
-    correctBoundaryConditions();
+//     correctBoundaryConditions();
 }
 
 
@@ -333,7 +343,17 @@ void Foam::immersedBoundaryObjectListSolver::correctBoundaryConditions()
 }
 
 
-void Foam::immersedBoundaryObjectListSolver::updateObject()
+bool Foam::immersedBoundaryObjectListSolver::movePoints()
+{
+    forAll(objects_, i)
+    {
+        objects_[i].clearOut();
+    }
+    return true;
+}
+
+
+void Foam::immersedBoundaryObjectListSolver::updateMesh(const mapPolyMesh&)
 {
     forAll(objects_, i)
     {
@@ -407,6 +427,7 @@ bool Foam::immersedBoundaryObjectListSolver::writeObject
 
 bool Foam::immersedBoundaryObjectListSolver::write(const bool write) const
 {
+    Info<<"write"<<endl;
     IOdictionary dict
     (
         IOobject

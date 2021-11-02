@@ -40,7 +40,7 @@ energyImmersedBoundaryFvPatchScalarField
     const immersedBoundaryObject& ibo
 )
 :
-    BaseType(f, dict, ibo),
+    BaseType(f, dict, ibo, "T"),
     mesh_(f.mesh())
 {}
 
@@ -61,24 +61,36 @@ void Foam::energyImmersedBoundaryFvPatchScalarField<BaseType>::updateCoeffs() co
             )
         );
 
-    const labelListList& interpToCells(this->ibm_.interpToCells());
-    labelList cells(interpToCells.size());
+    const labelList patchCells(this->ibm_.patchExternalCells());
+    labelList cells(patchCells.size());
+    Field<scalar> values(this->values_);
+    labelList map(patchCells.size(), -1);
 
     label I = 0;
-    forAll(interpToCells, i)
+    forAll(patchCells, i)
     {
-        label celli = interpToCells[i][0];
+        label celli = patchCells[i];
         if (celli >= 0)
         {
-            cells[I++] = celli;
+            map[I] = i;
+            values[I] = values[i];
+            cells[I] = celli;
+            I++;
         }
     }
     if (I == 0)
     {
         return;
     }
+    map.resize(I);
     cells.resize(I);
-    this->values_ = thermo.he(this->values_, cells);
+    values.resize(I);
+    values = thermo.he(values, cells);
+    this->values_ = Zero;
+    forAll(map, i)
+    {
+        this->values_[map[i]] = values[i];
+    }
 }
 
 
@@ -86,23 +98,23 @@ template<class BaseType>
 void Foam::energyImmersedBoundaryFvPatchScalarField<BaseType>::setValues()
 {
     BaseType::updateCoeffs();
-    const basicThermo& thermo =
-        mesh_.lookupObject<basicThermo>
-        (
-            IOobject::groupName
-            (
-                basicThermo::dictName,
-                this->field_.group()
-            )
-        );
-    scalar avg(sum(this->values_*this->ibm_.magSf())/sum(this->ibm_.magSf()));
-
-    const labelList& faceCells(this->ibm_.patchInternalCells());
-    this->ibm_.setInternal
-    (
-        this->field_,
-        thermo.he(Field<scalar>(faceCells.size(), avg), faceCells)()
-    );
+//     const basicThermo& thermo =
+//         mesh_.lookupObject<basicThermo>
+//         (
+//             IOobject::groupName
+//             (
+//                 basicThermo::dictName,
+//                 this->field_.group()
+//             )
+//         );
+//     scalar avg(sum(this->values_*this->ibm_.magSf())/sum(this->ibm_.magSf()));
+//
+//     const labelList& faceCells(this->ibm_.patchExternalCells());
+//     this->ibm_.setInternal
+//     (
+//         this->field_,
+//         thermo.he(Field<scalar>(faceCells.size(), avg), faceCells)()
+//     );
 }
 
 // ************************************************************************* //

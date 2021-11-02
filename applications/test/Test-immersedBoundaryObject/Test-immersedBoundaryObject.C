@@ -63,25 +63,25 @@ int main(int argc, char *argv[])
             ).ptr()
         );
         ibmObjects[i].initialize();
-        ibmObjects[i].setInternal(cellType, 1.0, maxEqOp<scalar>());
-        ibmObjects[i].setShell(cellType, 2.0, maxEqOp<scalar>());
-        ibmObjects[i].setBoundary(cellType, 3.0, maxEqOp<scalar>());
-//         labelList pI(ibmObjects[i].patchInternalCells());
-//         labelList pE(ibmObjects[i].patchExternalCells());
-//         forAll(pI, j)
-//         {
-//             if (pI[j] >= 0)
-//             {
-//                 cellType[pI[j]] = 1.0;
-//             }
-//         }
-//         forAll(pE, j)
-//         {
-//             if (pE[j] >= 0)
-//             {
-//                 cellType[pE[j]] = 2.0;
-//             }
-//         }
+//         ibmObjects[i].setInternal(cellType, 1.0, maxEqOp<scalar>());
+//         ibmObjects[i].setShell(cellType, 2.0, maxEqOp<scalar>());
+//         ibmObjects[i].setBoundary(cellType, 3.0, maxEqOp<scalar>());
+        labelList pI(ibmObjects[i].patchInternalCells());
+        labelList pE(ibmObjects[i].patchExternalCells());
+        forAll(pI, j)
+        {
+            if (pI[j] >= 0)
+            {
+                cellType[pI[j]] = 1.0;
+            }
+        }
+        forAll(pE, j)
+        {
+            if (pE[j] >= 0)
+            {
+                cellType[pE[j]] = 2.0;
+            }
+        }
 
         ibmObjects[i].shape().writeVTK();
 

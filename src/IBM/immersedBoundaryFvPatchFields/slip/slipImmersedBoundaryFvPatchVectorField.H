@@ -83,15 +83,15 @@ public:
 
         // Evaluation functions
 
-            //- Add forcing to the given field
-            virtual void addForcing
-            (
-                Field<vector>& f,
-                const Field<scalar>& alphaRho,
-                const Field<vector>& old,
-                const Field<vector>& RHS,
-                const scalar& dt
-            ) const;
+//             //- Add forcing to the given field
+//             virtual void addForcing
+//             (
+//                 Field<vector>& f,
+//                 const Field<scalar>& alphaRho,
+//                 const Field<vector>& old,
+//                 const Field<vector>& RHS,
+//                 const scalar& dt
+//             ) const;
 
             //- Update size and values
             virtual void updateCoeffs() const;

@@ -129,9 +129,9 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::makeGlobal
     {
         label proci = oldGlobalIndex.whichProcID(indices[i]);
         label idx = oldGlobalIndex.toLocal(proci, indices[i]);
-        if (idx < gIndex_.localSize(proci))
+        if (idx < gIndexPtr_().localSize(proci))
         {
-            indices[ni++] = gIndex_.toGlobal(proci, idx);
+            indices[ni++] = gIndexPtr_().toGlobal(proci, idx);
         }
     }
     indices.resize(ni);
@@ -151,14 +151,14 @@ extendedNLevelGlobalCellToCellStencil
     MeshObject
     <
         polyMesh,
-        Foam::MoveableMeshObject,
+        PatchMeshObject,
         extendedNLevelGlobalCellToCellStencil<StencilType>
     >(mesh),
     mesh_(mesh),
     nLevels_(nLevels),
-    gIndex_(mesh.nCells()),
+    gIndexPtr_(),
     stencilMap_(),
-    cellCells_(mesh.nCells())
+    cellCells_()
 {}
 
 
@@ -171,6 +171,51 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class StencilType>
+bool Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::movePoints()
+{
+    mapPtr_.clear();
+    return true;
+}
+
+
+template<class StencilType>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateMesh
+(
+    const mapPolyMesh& mpm
+)
+{
+    mapPtr_.clear();
+    gIndexPtr_.clear();
+}
+
+
+template<class StencilType>
+void
+Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::reorderPatches
+(
+    const labelUList& newToOld,
+    const bool validBoundary
+)
+{
+    // Assuming balancing
+    mapPtr_.clear();
+    gIndexPtr_.clear();
+}
+
+
+template<class StencilType>
+void Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::addPatch
+(
+    const label patchi
+)
+{
+    // Assuming balancing
+    mapPtr_.clear();
+    gIndexPtr_.clear();
+}
+
 
 template<class StencilType>
 Foam::autoPtr<Foam::mapDistribute> Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::buildMap
@@ -259,7 +304,7 @@ template<class StencilType>
 void
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
 {
-    gIndex_ = globalIndex(mesh_.nCells());
+    gIndexPtr_.reset(new globalIndex(mesh_.nCells()));
     cellCells_.resize(mesh_.nCells());
     stencilMap_.clear();
 
@@ -272,7 +317,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
         forAll(stencil, i)
         {
             makeGlobal(ctcStencil.globalNumbering(), stencil[i]);
-            singleLevelMap.insert(gIndex_.toGlobal(i), stencil[i]);
+            singleLevelMap.insert(gIndexPtr_->toGlobal(i), stencil[i]);
         }
     }
 
@@ -291,7 +336,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
             forAll(iter(), j)
             {
                 label cellj = iter()[j];
-                if (!gIndex_.isLocal(cellj))
+                if (!gIndexPtr_->isLocal(cellj))
                 {
                     missingCells.insert(cellj);
                 }
@@ -312,7 +357,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
             )
             {
                 label celli = iter.key();
-                requests.append(gIndex_.whichProcID(celli));
+                requests.append(gIndexPtr_->whichProcID(celli));
                 requestedCells[idx++] = celli;
             }
 
@@ -366,7 +411,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
         Map<label> levels;
         DynamicList<label> neighbors;
 
-        const label gCelli = gIndex_.toGlobal(celli);
+        const label gCelli = gIndexPtr_->toGlobal(celli);
         addCellNeighbours
         (
             singleLevelMap,
@@ -399,7 +444,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
         // Check if local stencil
         forAll(cellCells_, i)
         {
-            label celli = gIndex_.toGlobal(i);
+            label celli = gIndexPtr_->toGlobal(i);
             boolList added(Pstream::nProcs(), false);
             bool oneAdded = false;
             const cellStencil& lStencil(stencilMap_[celli]);
@@ -407,7 +452,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
             forAll(lStencil, j)
             {
                 label cellj = lStencil[j];
-                label proci = gIndex_.whichProcID(cellj);
+                label proci = gIndexPtr_->whichProcID(cellj);
                 if (proci != Pstream::myProcNo() && !added[proci])
                 {
                     sendMap[proci].append(idx);
@@ -478,7 +523,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
         iter
     )
     {
-        iter().updateLocalStencil(gIndex_);
+        iter().updateLocalStencil(gIndexPtr_());
         if (!iter().localStencil().size())
         {
             stencilMap_.erase(iter);
@@ -491,7 +536,7 @@ Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
     (
         new mapDistribute
         (
-            gIndex_,
+            gIndexPtr_(),
             cellCells_,
             compactMap
         )

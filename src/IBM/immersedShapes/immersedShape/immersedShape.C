@@ -185,6 +185,15 @@ void Foam::immersedShape::read(const dictionary& dict)
 }
 
 
+void Foam::immersedShape::correctCentreOfMass()
+{
+    if (ei_ != -1 || ai_ != -1)
+    {
+        this->centreOfMass_[ei_] = 0.0;
+    }
+}
+
+
 void Foam::immersedShape::writeVTK() const
 {
     if (write_ && Pstream::master())
@@ -514,7 +523,6 @@ void Foam::immersedShape::movePoints()
 {
     faceCentresOld_ = patchPtr_->faceCentres();
     patchPtr_->movePoints(object_.transform(points0_));
-
     point mp(min(patchPtr_->points()));
     point Mp(max(patchPtr_->points()));
     if (ai_ != -1)

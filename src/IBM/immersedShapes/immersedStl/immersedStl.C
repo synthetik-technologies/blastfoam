@@ -321,6 +321,7 @@ Foam::immersedStl::immersedStl
     (
         new standAlonePatch(immersedMesh_.faces(), immersedMesh_.points())
     );
+    correctCentreOfMass();
 
 }
 

@@ -234,8 +234,7 @@ public:
     // Member Functions
 
         //- Initialize
-        virtual void initialize()
-        {}
+        virtual void initialize();
 
         //- Clear mapping
         void clearOut();
@@ -321,6 +320,9 @@ public:
 
 
         // Access IBM mapping variable
+
+            //- Return the name of the object
+            inline word keyword() const;
 
             //- Return the name of the object
             inline const word& name() const;
@@ -571,6 +573,10 @@ public:
 
             //- Set values inside the object using the boundary conditions
             void setValues();
+
+            //- Set boundary vales
+            template<class Type>
+            void setValues(DimensionedField<Type, volMesh>& field);
 
             //- Return momentum forcing
             template<class Type>

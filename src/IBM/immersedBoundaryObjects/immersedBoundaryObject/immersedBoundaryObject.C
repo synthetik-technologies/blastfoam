@@ -288,16 +288,20 @@ void Foam::immersedBoundaryObject::calcMapping() const
     const vectorField& Sf(this->Sf());
     scalarField magSf(this->magSf());
 
-    scalarList maxIntNDotN(nFaces(), 0.0);
-    scalarList maxExtNDotN(nFaces(), 0.0);
-    labelList intCell(ownerCell);
-    labelList extCell(ownerCell);
+    scalarList minInt(nFaces(), great);
+    scalarList minExt(nFaces(), great);
+    labelList intCell(ownerCell.size(), -1);
+    labelList extCell(ownerCell.size(), -1);
     scalarList sumWs(nFaces(), 0.0);
     forAll(patch_, facei)
     {
-        const point& fc = patch_.faceCentres()[facei];
+        const point fc = patch_.faceCentres()[facei];
         const label gCelli = ownerCell[facei];
-        if (!cellNeighbours_.cellCellMap().found(ownerCell[facei]) || gCelli == -1)
+        if
+        (
+            !cellNeighbours_.cellCellMap().found(ownerCell[facei])
+         || gCelli == -1
+        )
         {
             interpToCells_[facei].clear();
             interpToWeights_[facei].clear();
@@ -311,7 +315,7 @@ void Foam::immersedBoundaryObject::calcMapping() const
             cellNeighbours_.cellCellMap()[gCelli]
         );
         const vector& cci = stencil.centre();
-        const List<label>& neighbors = stencil.localStencil();
+        const List<label> neighbors(stencil.localStencil(0, 2));
 
         label celli = gIndex.isLocal(gCelli) ? gIndex.toLocal(gCelli) : -1;
         List<label> interpToCells(neighbors.size(), -1);
@@ -327,22 +331,17 @@ void Foam::immersedBoundaryObject::calcMapping() const
 
         const bool in(shape_->inside(cci));
         setCells.insert(gCelli);
-        vector n(Sf[facei]/magSf[facei]);
         vector diff(fc - cci);
-        diff /= mag(diff);
-        scalar nDotN(mag(diff & n));
         if (in)
         {
             insideCells.set(gCelli);
             intCell[facei] = celli;
-            extCell[facei] = -1;
-            maxIntNDotN[facei] = nDotN;
+            minInt[facei] = mag(diff);
         }
         else
         {
-            intCell[facei] = -1;
             extCell[facei] = celli;
-            maxExtNDotN[facei] = nDotN;
+            minExt[facei] = mag(diff);
         }
 
         //- If the cell is not inside the object set as the internal cells
@@ -364,10 +363,14 @@ void Foam::immersedBoundaryObject::calcMapping() const
             }
 
             bool inj;
-            if (!setCells.found(gCelli))
+            if (!setCells.found(gCellj))
             {
                 inj = shape_->inside(ccj);
                 setCells.insert(gCellj);
+                if (inj)
+                {
+                    insideCells.insert(gCellj);
+                }
             }
             else
             {
@@ -375,24 +378,16 @@ void Foam::immersedBoundaryObject::calcMapping() const
             }
 
             diff = fc - ccj;
-            diff /= mag(diff);
-            nDotN = mag(diff & n);
-            if (inj && !in)
+            scalar magDiff(mag(diff));
+            if (inj && magDiff < minInt[facei])
             {
-                insideCells.insert(gCellj);
-                if (nDotN > maxIntNDotN[facei])
-                {
-                    intCell[facei] = cellj;
-                    maxIntNDotN[facei] = nDotN;
-                }
+                intCell[facei] = cellj;
+                minInt[facei] = magDiff;
             }
-            else if (!inj && in)
+            else if (!inj && magDiff < minExt[facei])
             {
-                if (nDotN > maxExtNDotN[facei])
-                {
-                    extCell[facei] = cellj;
-                    maxExtNDotN[facei] = nDotN;
-                }
+                extCell[facei] = cellj;
+                minExt[facei] = magDiff;
             }
 
         }
@@ -403,12 +398,12 @@ void Foam::immersedBoundaryObject::calcMapping() const
         interpToWeights_[facei].transfer(interpToWeights);
     }
 
+    scalarList minIntG(returnReduce(minInt, minOp<scalarList>()));
+    scalarList minExtG(returnReduce(minExt, minOp<scalarList>()));
 
-    scalarList maxIntD(returnReduce(maxIntNDotN, maxOp<scalarList>()));
-    scalarList maxExtD(returnReduce(maxExtNDotN, maxOp<scalarList>()));
     forAll(patch_, facei)
     {
-        if (maxIntD[facei] == maxIntNDotN[facei])
+        if (minIntG[facei] == minInt[facei])
         {
             patchInternalCells_[facei] = intCell[facei];
         }
@@ -417,7 +412,7 @@ void Foam::immersedBoundaryObject::calcMapping() const
             patchInternalCells_[facei] = -1;
         }
 
-        if (maxExtD[facei] == maxExtNDotN[facei])
+        if (minExtG[facei] == minExt[facei])
         {
             patchExternalCells_[facei] = extCell[facei];
         }
@@ -621,35 +616,8 @@ Foam::immersedBoundaryObject::immersedBoundaryObject
     scalarBoundaries_(0),
     vectorBoundaries_(0)
 {
-    // Find largest grid spacing
-    scalar maxEdgeLength =
-        max(meshSizeObject::New(pMesh).dx()).value();
-
-    // Scale by 1.5 for weighting
-    maxEdgeLength *= 1.5;
-
-    // Add face centers within the maxEdgeLength to the map
-    const pointField& faceCentres(patch_.faceCentres());
-    forAll(nearestNeighbours_, fi)
-    {
-        List<label> nn(10, -1);
-        label ni = 0;
-        scalarList diff(mag(faceCentres[fi] - faceCentres));
-        forAll(diff, fj)
-        {
-            if (ni == nn.size())
-            {
-                nn.resize(nn.size()*2);
-            }
-            if (diff[fj] < maxEdgeLength)
-            {
-                nn[ni++] = fj;
-            }
-        }
-        nn.resize(ni);
-        nearestNeighbours_[fi].transfer(nn);
-    }
-
+    //- Set the stencil to be 2 levels deep
+    extendedNLevelCPCCellToCellStencil::New(pMesh).setNLevel(2);
 }
 
 
@@ -670,6 +638,83 @@ void Foam::immersedBoundaryObject::clearOut()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::immersedBoundaryObject::initialize()
+{
+    // Find largest grid spacing
+    scalar maxEdgeLength =
+        max(meshSizeObject::New(pMesh_).dx()).value();
+
+    // Scale by 1.5 for weighting
+    maxEdgeLength *= 1.5;
+
+    // Add face centers within the maxEdgeLength to the map
+    const pointField& faceCentres(patch_.faceCentres());
+    forAll(nearestNeighbours_, fi)
+    {
+        DynamicList<label> nn;
+        scalarList diff(mag(faceCentres[fi] - faceCentres));
+        forAll(diff, fj)
+        {
+            if (diff[fj] < maxEdgeLength)
+            {
+                nn.append(fj);
+            }
+        }
+        nearestNeighbours_[fi].transfer(nn);
+    }
+}
+
+
+template<>
+void Foam::immersedBoundaryObject::setValues
+(
+    volScalarField::Internal& field
+)
+{
+    scalarBoundaries_[field.name()].setValues();
+}
+
+
+template<>
+void Foam::immersedBoundaryObject::setValues
+(
+    volVectorField::Internal& field
+)
+{
+    vectorBoundaries_[field.name()].setValues();
+}
+
+
+template<>
+void Foam::immersedBoundaryObject::setValues
+(
+    volSymmTensorField::Internal& field
+)
+{
+    NotImplemented;
+}
+
+
+template<>
+void Foam::immersedBoundaryObject::setValues
+(
+    volSphericalTensorField::Internal& field
+)
+{
+    NotImplemented;
+}
+
+
+template<>
+void Foam::immersedBoundaryObject::setValues
+(
+    volTensorField::Internal& field
+)
+{
+    NotImplemented;
+}
+
 
 void Foam::immersedBoundaryObject::setValues()
 {

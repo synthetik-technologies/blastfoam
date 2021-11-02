@@ -30,37 +30,38 @@ objects
 //         centreOfMass (7.13736e-3 0 0);
 //         velocity (500 0 0);
 
-//     ellipse
-//     {
-//         type stationary;
-//         shape ellipse;
-//         centreOfMass (0.25 0 0);
-//         orientation $rotation;
-//         a 0.5;
-//         b 0.1;
-//         dx 0.005;
-//         write yes;
-//     }
-//     circle
-//     {
-//         type stationary;
-//         shape circle;
-//         offset (0 0 0);
-//         radius 0.5;
-//         b 0.1;
-//         dx 0.01;
-//         write yes;
-//     }
+    ellipse
+    {
+        type stationary;
+        shape ellipse;
+        centreOfMass (0.25 0 0);
+        orientation $rotation;
+        a 0.5;
+        b 0.1;
+        dx 0.005;
+        write yes;
+    }
+    circle
+    {
+        type stationary;
+        shape circle;
+        centreOfMass (0.5 0.5 0.5);
+        offset (0 0 -0.5);
+        radius 0.25;
+        b 0.1;
+        dx 0.01;
+        write yes;
+    }
 
-//     box1
-//     {
-//         type stationary;
-//         shape rectangle;
-//         L 2.0;
-//         H 2.0;
-//         centreOfMass (2.0 1.0 0.0);
-//         dx $dx;
-//     }
+    box1
+    {
+        type stationary;
+        shape rectangle;
+        L 2.0;
+        H 2.0;
+        centreOfMass (2.0 1.0 0.0);
+        dx $dx;
+    }
 //     box2
 //     {
 //         type stationary;
@@ -79,16 +80,16 @@ objects
 //         centreOfMass (2.5 5.2 0.0);
 //         dx $dx;
 //     }
-    cone
-    {
-        type stationary;
-        shape triangle;
-        dx 0.005;
-        p1 (0.1 0 0);
-        p2 (1.1 0.1763269807 0.0);
-        p3 (1.1 0 0);
-        write  yes;
-    }
+//     cone
+//     {
+//         type stationary;
+//         shape triangle;
+//         dx 0.005;
+//         p1 (0.1 0 0);
+//         p2 (1.1 0.1763269807 0.0);
+//         p3 (1.1 0 0);
+//         write  yes;
+//     }
 
     //3d shapes
 //     ellipsoid

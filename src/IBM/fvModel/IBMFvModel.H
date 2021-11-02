@@ -22,33 +22,32 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::fv::buoyancyForce
+    Foam::fv::IBMForce
 
 Description
-    Calculates and applies the buoyancy force rho*g to the momentum equation
-    corresponding to the specified velocity field.
+    Adds immersed boundary forcing
 
 Usage
     Example usage:
     \verbatim
     buoyancyForce1
     {
-        type        buoyancyForce;
-
-        U           U;  // Name of the velocity field
+        type        IBM;
     }
     \endverbatim
 
 SourceFiles
-    buoyancyForce.C
+    IBMForce.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef buoyancyForce_H
-#define buoyancyForce_H
+#ifndef IBMForce_H
+#define IBMForce_H
 
 #include "fvModel.H"
-#include "uniformDimensionedFields.H"
+#include "fvConstraint.H"
+#include "immersedBoundaryObjectListSolver.H"
+#include "hashedWordList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -58,23 +57,24 @@ namespace fv
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class buoyancyForce Declaration
+                        Class IBMForce Declaration
 \*---------------------------------------------------------------------------*/
 
-class buoyancyForce
+class IBMForce
 :
-    public fvModel
+    public fvModel,
+    public fvConstraint
 {
     // Private Data
 
-        //- Optional phase name
-        word phaseName_;
+        //- Optional phases
+        wordList phaseNames_;
 
-        //- Name of the velocity field
-        word UName_;
+        //- Immersed objects
+        mutable immersedBoundaryObjectListSolver ibm_;
 
-        //- Gravitational acceleration
-        uniformDimensionedVectorField g_;
+        //- Fields added to the ibm object
+        mutable hashedWordList addedFields_;
 
 
     // Private Member Functions
@@ -82,17 +82,37 @@ class buoyancyForce
         //- Non-virtual read
         void readCoeffs();
 
+        //- Return the phase density (alpha*rho)
+        tmp<volScalarField> alphaRho(const word& phase) const;
+
+        //- Return the old phase density (alpha_0*rho_0)
+        tmp<volScalarField> alphaRhoOld(const word& phase) const;
+
+        //- Add a field to the ibm model
+        template<class Type>
+        void addField(const VolField<Type> field) const;
+
+        using fvModel::mesh;
+
+        //- Add source terms to a phase equation
+        template<class Type>
+        bool constrainType
+        (
+            fvMatrix<Type>& eqn,
+            const word& fieldName
+        ) const;
+
 
 public:
 
     //- Runtime type information
-    TypeName("buoyancyForce");
+    TypeName("IBM");
 
 
     // Constructors
 
         //- Construct from explicit source name and mesh
-        buoyancyForce
+        IBMForce
         (
             const word& name,
             const word& modelType,
@@ -101,7 +121,7 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        buoyancyForce(const buoyancyForce&) = delete;
+        IBMForce(const IBMForce&) = delete;
 
 
     // Member Functions
@@ -110,34 +130,19 @@ public:
 
             //- Return the list of fields for which the fvModel adds source term
             //  to the transport equation
-            virtual wordList addSupFields() const;
+            virtual wordList constrainedFields() const;
 
 
         // Evaluate
 
             //- Add explicit contribution to incompressible momentum equation
-            virtual void addSup
-            (
-                fvMatrix<vector>& eqn,
-                const word& fieldName
-            ) const;
+//             FOR_ALL_FIELD_TYPES(DEFINE_FV_CONSTRAINT_CONSTRAIN);
+            DEFINE_FV_CONSTRAINT_CONSTRAIN(scalar, null);
+            DEFINE_FV_CONSTRAINT_CONSTRAIN(vector, null);
 
-            //- Add explicit contribution to compressible momentum equation
-            virtual void addSup
-            (
-                const volScalarField& rho,
-                fvMatrix<vector>& eqn,
-                const word& fieldName
-            ) const;
-
-            //- Add explicit contribution to phase momentum equation
-            virtual void addSup
-            (
-                const volScalarField& alpha,
-                const volScalarField& rho,
-                fvMatrix<vector>& eqn,
-                const word& fieldName
-            ) const;
+        //- Correct the fvModel
+        //  e.g. solve equations, update model, for film, Lagrangian etc.
+        virtual void correct();
 
 
         // IO
@@ -149,7 +154,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const buoyancyForce&) = delete;
+        void operator=(const IBMForce&) = delete;
 };
 
 
@@ -157,6 +162,12 @@ public:
 
 } // End namespace fv
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "IBMFvModelTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

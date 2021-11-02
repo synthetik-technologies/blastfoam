@@ -19,6 +19,7 @@ wmake $targetType dynamicFvMesh
 
 wmake $targetType atmosphereModels
 wmake $targetType solids4Foam
+wmake $targetType IBM
 
 # -----------------------------------------------------------------------------
 

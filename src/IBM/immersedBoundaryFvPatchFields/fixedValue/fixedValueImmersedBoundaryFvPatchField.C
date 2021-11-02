@@ -40,6 +40,20 @@ Foam::fixedValueImmersedBoundaryFvPatchField<Type>::fixedValueImmersedBoundaryFv
 {}
 
 
+template<class Type>
+Foam::fixedValueImmersedBoundaryFvPatchField<Type>::fixedValueImmersedBoundaryFvPatchField
+(
+    GeometricField<Type, fvPatchField, volMesh>& f,
+    const dictionary& dict,
+    const immersedBoundaryObject& ibo,
+    const word& valueName
+)
+:
+    immersedBoundaryFvPatchField<Type>(f, dict, ibo),
+    value_(dict.lookup<Type>(valueName))
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technology
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,51 +23,27 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "noSlipImmersedBoundaryFvPatchVectorField.H"
-#include "fvPatchFieldMapper.H"
-#include "addToRunTimeSelectionTable.H"
+#ifndef immersedPointPatchFields_H
+#define immersedPointPatchFields_H
 
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::noSlipImmersedBoundaryFvPatchVectorField::
-noSlipImmersedBoundaryFvPatchVectorField
-(
-    volVectorField& f,
-    const dictionary& dict,
-    const immersedBoundaryObject& ibo
-)
-:
-    immersedBoundaryVectorPatchField(f, dict, ibo)
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::noSlipImmersedBoundaryFvPatchVectorField::updateCoeffs() const
-{
-    values_ = ibm_.velocity();
-}
-
-
-void Foam::noSlipImmersedBoundaryFvPatchVectorField::setValues()
-{
-//     this->setSmoothInternal();
-//     this->ibm_.setInternal
-//     (
-//         field_,
-//         this->ibm_.velocity(ibm_.internalC())()
-//     );
-}
+#include "immersedPointPatchField.H"
+#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    makeImmersedPatchTypeField
-    (
-        immersedBoundaryVectorPatchField,
-        noSlipImmersedBoundaryFvPatchVectorField
-    );
-}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+makePointPatchFieldTypedefs(immersed);
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+} // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
+
 // ************************************************************************* //

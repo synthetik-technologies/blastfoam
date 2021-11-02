@@ -44,31 +44,31 @@ slipImmersedBoundaryFvPatchVectorField
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void
-Foam::slipImmersedBoundaryFvPatchVectorField::addForcing
-(
-    Field<vector>& F,
-    const Field<scalar>& alphaRho,
-    const Field<vector>& old,
-    const Field<vector>& RHS,
-    const scalar& dt
-) const
-{
-    //- Only add forcing in the normal direction
-    vectorField normal(this->ibm_.Sf()/this->ibm_.magSf());
-    vectorField wallU(ibm_.velocity(ibm_.faceCentres()));
-    tmp<Field<vector>> interpF
-    (
-        (
-            wallU*ibm_.interpolateTo(alphaRho)
-          - ibm_.interpolateTo(old)
-        )/dt
-      + ibm_.interpolateTo(RHS)
-
-    );
-    interpF.ref() = (interpF() & normal)*normal;
-    ibm_.interpolateFrom(interpF(), F);
-}
+// void
+// Foam::slipImmersedBoundaryFvPatchVectorField::addForcing
+// (
+//     Field<vector>& F,
+//     const Field<scalar>& alphaRho,
+//     const Field<vector>& old,
+//     const Field<vector>& RHS,
+//     const scalar& dt
+// ) const
+// {
+//     //- Only add forcing in the normal direction
+//     vectorField normal(this->ibm_.Sf()/this->ibm_.magSf());
+//     vectorField wallU(ibm_.velocity(ibm_.faceCentres()));
+//     tmp<Field<vector>> interpF
+//     (
+//         (
+//             wallU*ibm_.interpolateTo(alphaRho)
+//           - ibm_.interpolateTo(old)
+//         )/dt
+//       + ibm_.interpolateTo(RHS)
+//
+//     );
+//     interpF.ref() = (interpF() & normal)*normal;
+//     ibm_.interpolateFrom(interpF(), F);
+// }
 
 
 void Foam::slipImmersedBoundaryFvPatchVectorField::updateCoeffs() const

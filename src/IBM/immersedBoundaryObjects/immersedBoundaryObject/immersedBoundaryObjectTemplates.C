@@ -67,6 +67,7 @@ Foam::immersedBoundaryObject::patchInternalField(const Field<Type>& vf) const
             f[i] = vf[celli];
         }
     }
+    reduce(f, sumOp<List<Type>>());
     return tmpF;
 }
 
@@ -89,6 +90,7 @@ Foam::immersedBoundaryObject::patchExternalField(const Field<Type>& vf) const
             f[i] = vf[celli];
         }
     }
+    reduce(f, sumOp<List<Type>>());
     return tmpF;
 }
 
@@ -107,6 +109,7 @@ Foam::immersedBoundaryObject::boundaryValues(const Field<Type>& vf) const
     {
         f[i] = vf[(*boundaryCellsPtr_)[i]];
     }
+    reduce(f, sumOp<List<Type>>());
     return tmpF;
 
 }
