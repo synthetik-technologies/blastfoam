@@ -119,18 +119,19 @@ void Foam::fluidPhaseModel::solve()
 
 void Foam::fluidPhaseModel::postUpdate()
 {
-    if (solveAlpha_ && solveFields_.found(name()))
+    volScalarField& alpha(*this);
+    if (solveAlpha_ && needSolve(alpha.name()))
     {
-        volScalarField& alpha(*this);
         fvScalarMatrix alphaEqn
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
         ==
-            modelsPtr_->source(alpha)
+            models().source(alpha)
         );
-        constraintsPtr_->constrain(alphaEqn);
+        constraints().constrain(alphaEqn);
         alphaEqn.solve();
-        constraintsPtr_->constrain(alpha);
+        constraints().constrain(alpha);
+        alphaRho_ = alpha*rho();
     }
 
     phaseModel::postUpdate();
@@ -208,12 +209,7 @@ void Foam::fluidPhaseModel::decode()
     // Update total energy because e may have changed
     alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
 
-    const fvConstraints& constraints(this->fluid_.constraints());
-    if (constraints.constrainsField(p_.name()))
-    {
-        constraints.constrain(p_);
-        p_.correctBoundaryConditions();
-    }
+    constraints().constrain(p_);
 }
 
 

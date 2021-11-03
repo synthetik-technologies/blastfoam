@@ -258,32 +258,26 @@ void Foam::twoPhaseCompressibleSystem::solve()
 
 void Foam::twoPhaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     this->decode();
 
     // Solve volume fraction
-    if (solveFields_.found(alpha1_.name()))
+    if (needSolve(alpha1_.name()))
     {
         fvScalarMatrix alphaEqn
         (
             fvm::ddt(alpha1_) - fvc::ddt(alpha1_)
         ==
-            modelsPtr_->source(alpha1_)
+            models().source(alpha1_)
         );
-        constraintsPtr_->constrain(alphaEqn);
+        constraints().constrain(alphaEqn);
         alphaEqn.solve();
-        constraintsPtr_->constrain(alpha1_);
+        constraints().constrain(alpha1_);
 
         alpha1_.maxMin(0.0, 1.0);
         alpha2_ = 1.0 - alpha1_;
     }
     // Solve phase 1 mass
-    if (solveFields_.found(rho1_.name()))
+    if (needSolve(rho1_.name()))
     {
         fvScalarMatrix alphaRho1Eqn
         (
@@ -291,14 +285,14 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho1_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho1_)
         ==
-            modelsPtr_->source(alpha1_, rho1_)
+            models().source(alpha1_, rho1_)
         );
-        constraintsPtr_->constrain(alphaRho1Eqn);
+        constraints().constrain(alphaRho1Eqn);
         alphaRho1Eqn.solve();
-        constraintsPtr_->constrain(rho1_);
+        constraints().constrain(rho1_);
     }
     // Solve phase 2 mass
-    if (solveFields_.found(rho2_.name()))
+    if (needSolve(rho2_.name()))
     {
         fvScalarMatrix alphaRho2Eqn
         (
@@ -306,11 +300,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
           + fvm::ddt(thermoPtr_->residualAlpha(), rho2_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho2_)
         ==
-            modelsPtr_->source(alpha2_, rho2_)
+            models().source(alpha2_, rho2_)
         );
-        constraintsPtr_->constrain(alphaRho2Eqn);
+        constraints().constrain(alphaRho2Eqn);
         alphaRho2Eqn.solve();
-        constraintsPtr_->constrain(rho2_);
+        constraints().constrain(rho2_);
     }
 
     // Update phase masses

@@ -556,19 +556,12 @@ const Foam::standAlonePatch& Foam::globalPolyPatch::globalPatch() const
         {
             if (debug && mesh_.time().outputTime())
             {
-                word name = patch_.name();
                 mkDir("VTK");
-                vtkWritePolyData::write
+                globalPatchPtr_->writeVTK
                 (
                     "VTK/"
-                    + name + '_'
-                    + Foam::name(mesh_.time().timeIndex()) + ".vtk",
-                    "name",
-                    false,
-                    globalPatchPtr_->localPoints(),
-                    labelList(),
-                    edgeList(),
-                    globalPatchPtr_()
+                    + patch_.name() + '_'
+                    + Foam::name(mesh_.time().timeIndex())
                 );
             }
         }

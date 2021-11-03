@@ -42,6 +42,10 @@ SourceFiles
 #include "PtrList.H"
 #include "HashPtrTable.H"
 #include "volFields.H"
+#include "UautoPtr.H"
+#include "fvModels.H"
+#include "fvConstraints.H"
+#include "hashedWordList.H"
 
 
 namespace Foam
@@ -95,6 +99,15 @@ protected:
 
     //- Number of stored deltas
     label nDelta_;
+
+    //- FvModels
+    mutable UautoPtr<fvModels> modelsPtr_;
+
+    //- fvConstraints
+    mutable UautoPtr<const fvConstraints> constraintsPtr_;
+
+    //- List of fields that have models or constraints
+    mutable hashedWordList solveFields_;
 
     //- Stored old fields
     mutable HashPtrTable<PtrList<volScalarField>> oldScalarFields_;
@@ -214,51 +227,94 @@ public:
         //- Clear all ODE fields (old/delta)
         void clearODEFields();
 
+        //- Create/lookup fvModels/fvConstraints
+        void createModels() const;
+
+        //- Return the fvModels
+        inline const fvModels& models() const
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return modelsPtr_();
+        }
+
+        //- Access the fvModels
+        inline fvModels& models()
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return modelsPtr_();
+        }
+
+        //- Return the fvConstraints
+        inline const fvConstraints& constraints() const
+        {
+            if (!constraintsPtr_.valid())
+            {
+                createModels();
+            }
+            return constraintsPtr_();
+        }
+
+        //- Is a field modified by fvModels or fvConstraints
+        inline bool needSolve(const word& field) const
+        {
+            if (!modelsPtr_.valid())
+            {
+                createModels();
+            }
+            return solveFields_.found(field);
+        }
+
         //- Return old coefficients for the current step
-        scalarList a() const
+        inline scalarList a() const
         {
             return as_[stepi_ - 1];
         }
 
         //- Return delta coefficients for the current step
-        scalarList b() const
+        inline scalarList b() const
         {
             return bs_[stepi_ - 1];
         }
 
 
         //- Return the number of steps
-        label nSteps() const
+        inline label nSteps() const
         {
             return as_.size();
         }
 
         //- Return old field indexes
-        const labelList& oldIs() const
+        inline const labelList& oldIs() const
         {
             return oldIs_;
         }
 
         //- Return number of stored fields
-        label nOld() const
+        inline label nOld() const
         {
             return nOld_;
         }
 
         //- Return stored delta indexes
-        const labelList& deltaIs() const
+        inline const labelList& deltaIs() const
         {
             return deltaIs_;
         }
 
         //- Return number of stored deltas
-        label nDelta() const
+        inline label nDelta() const
         {
             return nDelta_;
         }
 
         //- Return current step
-        label step() const
+        inline label step() const
         {
             return stepi_;
         }

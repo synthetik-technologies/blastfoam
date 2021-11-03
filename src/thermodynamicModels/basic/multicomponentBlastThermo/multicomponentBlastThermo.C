@@ -137,9 +137,7 @@ Foam::multicomponentBlastThermo::integrator::integrator
     implicitSources_(implicitSources),
     active_(active),
     alphaRho_(mesh_.lookupObject<volScalarField>(alphaRhoName)),
-    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName)),
-    models_(fvModels::New(mesh)),
-    constraints_(fvConstraints::New(mesh))
+    alphaRhoPhi_(mesh_.lookupObject<surfaceScalarField>(alphaRhoPhiName))
 {}
 
 
@@ -226,12 +224,73 @@ void Foam::multicomponentBlastThermo::update()
 void Foam::multicomponentBlastThermo::solve()
 {
     integratorPtr_->solve();
+
+    if (species_.size())
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0],
+                calculatedFvPatchScalarField::typeName
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (mag(max(Yt).value()) < rootVSmall)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+        }
+    }
 }
 
 
 void Foam::multicomponentBlastThermo::postUpdate()
 {
     integratorPtr_->postUpdate();
+    if (species_.size())
+    {
+        tmp<volScalarField> tYt
+        (
+            volScalarField::New
+            (
+                IOobject::groupName("Yt", phaseName_),
+                Y_[0],
+                calculatedFvPatchScalarField::typeName
+            )
+        );
+        volScalarField& Yt = tYt.ref();
+
+        for (label i=1; i<Y_.size(); i++)
+        {
+            Yt += Y_[i];
+        }
+
+        if (mag(max(Yt).value()) < rootVSmall)
+        {
+            FatalErrorInFunction
+                << "Sum of mass fractions is zero for species " << species()
+                << exit(FatalError);
+        }
+
+        forAll(Y_, i)
+        {
+            Y_[i] /= Yt;
+        }
+    }
 }
 
 
@@ -320,14 +379,21 @@ void Foam::multicomponentBlastThermo::integrator::solve()
 
 void Foam::multicomponentBlastThermo::integrator::postUpdate()
 {
-    const dimensionedScalar& dT(mesh_.time().deltaT());
     dimensionedScalar residualAlphaRho(dimDensity, 1e-10);
 
     forAll(Y_, i)
     {
-        if (active_[i] && implicitSources_.PtrList<fvScalarMatrix>::set(i))
+        volScalarField& Yi(Y_[i]);
+
+        bool needUpdate =
+            (
+                active_[i]
+            && implicitSources_.PtrList<fvScalarMatrix>::set(i)
+            )
+         || this->needSolve(Yi.name());
+
+        if (needUpdate)
         {
-            volScalarField& Yi(Y_[i]);
             fvScalarMatrix YEqn
             (
                 fvm::ddt(alphaRho_, Yi)
@@ -335,18 +401,19 @@ void Foam::multicomponentBlastThermo::integrator::postUpdate()
               + fvc::ddt(residualAlphaRho, Yi)
               - fvm::ddt(residualAlphaRho, Yi)
              ==
-                implicitSources_[i]
-              + models_.source(alphaRho_, Yi)
+                models().source(alphaRho_, Yi)
             );
+            if (implicitSources_.PtrList<fvScalarMatrix>::set(i))
+            {
+                YEqn -= implicitSources_[i];
+                implicitSources_[i].negate();
+            }
 
             YEqn.relax();
 
-            constraints_.constrain(YEqn);
-
+            constraints().constrain(YEqn);
             YEqn.solve("Yi");
-            implicitSources_[i].negate();
-
-            constraints_.constrain(Yi);
+            constraints().constrain(Yi);
         }
     }
 }

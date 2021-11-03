@@ -686,9 +686,6 @@ Foam::phaseSystem::phaseSystem
 
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
 
-    fvModelsPtr_(nullptr),
-    fvConstraintsPtr_(nullptr),
-
     phaseModels_(lookup("phases"), phaseModel::iNew(*this)),
 
     kineticTheoryPtr_(nullptr),
@@ -883,13 +880,6 @@ Foam::phaseSystem::phaseSystem
     }
 
     calcMixtureVariables();
-
-    fvModelsPtr_.set(&fvModels::New(const_cast<fvMesh&>(mesh)));
-    fvConstraintsPtr_.set(&fvConstraints::New(mesh));
-    forAll(phaseModels_, phasei)
-    {
-        phaseModels_[phasei].setFvModelsConstraints();
-    }
 }
 
 
@@ -1106,13 +1096,13 @@ void Foam::phaseSystem::postUpdate()
         decrIndent(Info);
     }
 
+    decode();
+
     const dimensionedScalar& deltaT(mesh_.time().deltaT());
     relaxVelocity(deltaT);
     relaxTemperature(deltaT);
-    decode();
 
-    //- Update fvModels
-    fvModelsPtr_->correct();
+    decode();
 }
 
 

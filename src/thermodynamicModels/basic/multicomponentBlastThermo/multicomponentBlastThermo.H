@@ -95,8 +95,6 @@ protected:
         const List<bool>& active_;
         const volScalarField& alphaRho_;
         const surfaceScalarField& alphaRhoPhi_;
-        const fvModels& models_;
-        const fvConstraints& constraints_;
 
     public:
         integrator

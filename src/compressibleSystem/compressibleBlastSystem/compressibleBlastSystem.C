@@ -45,7 +45,6 @@ void Foam::compressibleBlastSystem::setModels()
     );
     if (radPropertiesIO.typeHeaderOk<IOdictionary>(true))
     {
-        needPostUpdate_ = true;
         radiation_.set(blastRadiationModel::New(this->T()).ptr());
     }
 }
@@ -136,13 +135,6 @@ void Foam::compressibleBlastSystem::solve()
 
 void Foam::compressibleBlastSystem::postUpdate()
 {
-    this->thermo().postUpdate();
-
-    if (!needPostUpdate_)
-    {
-        return;
-    }
-
     if (radiation_.valid())
     {
         radiation_->correct();
@@ -157,14 +149,14 @@ void Foam::compressibleBlastSystem::postUpdate()
             );
     }
 
-    if (solveFields_.found(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || turbulence_.valid())
     {
         // Solve momentum
         fvVectorMatrix UEqn
         (
             fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
          ==
-            modelsPtr_->source(rho_, U_)
+            models().source(rho_, U_)
         );
 
         if (dragSource_.valid())
@@ -183,22 +175,22 @@ void Foam::compressibleBlastSystem::postUpdate()
                   & fluxScheme_->Uf()
                 );
         }
-        constraintsPtr_->constrain(UEqn);
+        constraints().constrain(UEqn);
         UEqn.solve();
-        constraintsPtr_->constrain(U_);
+        constraints().constrain(U_);
 
         // Update internal energy
         e_ = rhoE_/rho_ - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
-    if (solveFields_.found(e_.name()) || turbulence_.valid())
+    if (needSolve(e_.name()) || turbulence_.valid())
     {
         fvScalarMatrix eEqn
         (
             fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
          ==
-            modelsPtr_->source(rho_, e_)
+            models().source(rho_, e_)
         );
         if (extESource_.valid())
         {
@@ -208,9 +200,9 @@ void Foam::compressibleBlastSystem::postUpdate()
         {
             eEqn += thermophysicalTransport_->divq(e_);
         }
-        constraintsPtr_->constrain(eEqn);
+        constraints().constrain(eEqn);
         eEqn.solve();
-        constraintsPtr_->constrain(e_);
+        constraints().constrain(e_);
     }
 
     if (turbulence_.valid())
@@ -219,8 +211,9 @@ void Foam::compressibleBlastSystem::postUpdate()
     }
 
     encode();
+    this->thermo().postUpdate();
     this->thermo().correct();
-    constraintsPtr_->constrain(p_);
+    constraints().constrain(p_);
 }
 
 

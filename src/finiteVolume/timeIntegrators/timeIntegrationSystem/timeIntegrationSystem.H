@@ -268,6 +268,30 @@ public:
         //- Solve sub-step stepi
         virtual void solve() = 0;
 
+        //- Return the fvModels
+        inline const fvModels& models() const
+        {
+            return timeInt_->models();
+        }
+
+        //- Access the fvModels
+        inline fvModels& models()
+        {
+            return timeInt_->models();
+        }
+
+        //- Return the fvConstraints
+        inline const fvConstraints& constraints() const
+        {
+            return timeInt_->constraints();
+        }
+
+        //- Is a field modified by fvModels or fvConstraints
+        inline bool needSolve(const word& field) const
+        {
+            return timeInt_->needSolve(field);
+        }
+
         //- Return the current step
         label step() const;
 

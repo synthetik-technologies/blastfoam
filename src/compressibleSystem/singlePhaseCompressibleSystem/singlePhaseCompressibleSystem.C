@@ -81,26 +81,20 @@ void Foam::singlePhaseCompressibleSystem::solve()
 
 void Foam::singlePhaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     this->decode();
 
     // Solve mass
-    if (solveFields_.found(rho_.name()))
+    if (needSolve(rho_.name()))
     {
         fvScalarMatrix rhoEqn
         (
             fvm::ddt(rho_) - fvc::ddt(rho_)
          ==
-            modelsPtr_->source(rho_)
+            models().source(rho_)
         );
-        constraintsPtr_->constrain(rhoEqn);
+        constraints().constrain(rhoEqn);
         rhoEqn.solve();
-        constraintsPtr_->constrain(rho_);
+        constraints().constrain(rho_);
     }
 
     compressibleBlastSystem::postUpdate();

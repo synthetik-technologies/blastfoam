@@ -107,18 +107,6 @@ protected:
         //- Solution directions
         vector solutionDs_;
 
-        //- FvModels
-        UautoPtr<const fvModels> modelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> constraintsPtr_;
-
-        //- List of fields that have models or constraints
-        hashedWordList solveFields_;
-
-        //- Does postUpdate need to be calles
-        bool needPostUpdate_;
-
         //- Allocate models
         virtual void setModels();
 

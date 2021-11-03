@@ -73,7 +73,10 @@ Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh, const label)
     mesh_(mesh),
     stepi_(0),
     f_(0),
-    f0_(0)
+    f0_(0),
+    modelsPtr_(nullptr),
+    constraintsPtr_(nullptr),
+    solveFields_()
 {}
 
 
@@ -169,6 +172,39 @@ void Foam::timeIntegrator::addSystem(timeIntegrationSystem& system)
 }
 
 
+void Foam::timeIntegrator::createModels() const
+{
+    modelsPtr_.set(&fvModels::New(const_cast<fvMesh&>(mesh_)));
+    constraintsPtr_.set(&fvConstraints::New(mesh_));
+
+    const PtrList<fvModel>& models(modelsPtr_());
+    forAll(models, modeli)
+    {
+        wordList fields(models[modeli].addSupFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+
+    const PtrList<fvConstraint>& constraints(constraintsPtr_());
+    forAll(constraints, modeli)
+    {
+        wordList fields(constraints[modeli].constrainedFields());
+        forAll(fields, fieldi)
+        {
+            if (!solveFields_.found(fields[fieldi]))
+            {
+                solveFields_.append(fields[fieldi]);
+            }
+        }
+    }
+}
+
+
 void Foam::timeIntegrator::integrate()
 {
     // Update and store original fields
@@ -186,6 +222,10 @@ void Foam::timeIntegrator::integrate()
 
 
     this->postUpdateAll();
+    if (modelsPtr_.valid())
+    {
+        modelsPtr_->correct();
+    }
     stepi_ = 0;
 }
 

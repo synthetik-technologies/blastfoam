@@ -237,12 +237,6 @@ protected:
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
-        //- fvModels
-        UautoPtr<fvModels> fvModelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> fvConstraintsPtr_;
-
         //- Phase models
         phaseModelList phaseModels_;
 
@@ -561,12 +555,6 @@ public:
             //- Return the phase not given as an argument in a two-phase system
             //  An error is generated if the system is not two-phase
             inline const phaseModel& otherPhase(const phaseModel& phase) const;
-
-            //- Return fvOptions
-            inline const fvModels& models() const;
-
-            //- Return fvOptions
-            inline const fvConstraints& constraints() const;
 };
 
 

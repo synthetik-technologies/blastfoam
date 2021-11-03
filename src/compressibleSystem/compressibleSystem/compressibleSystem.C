@@ -44,7 +44,6 @@ void Foam::compressibleSystem::setModels()
 {
     if (Foam::max(this->thermo().mu()).value() > small)
     {
-        needPostUpdate_ = true;
         turbulence_ =
         (
             compressible::momentumTransportModel::New
@@ -66,37 +65,6 @@ void Foam::compressibleSystem::setModels()
             ).ptr()
         );
     }
-
-
-    modelsPtr_.set(&fvModels::New(mesh()));
-    constraintsPtr_.set(&fvConstraints::New(mesh()));
-
-    const PtrList<fvModel>& models(modelsPtr_());
-    forAll(models, modeli)
-    {
-        wordList fields(models[modeli].addSupFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-
-    const PtrList<fvConstraint>& constraints(constraintsPtr_());
-    forAll(constraints, modeli)
-    {
-        wordList fields(constraints[modeli].constrainedFields());
-        forAll(fields, fieldi)
-        {
-            if (!solveFields_.found(fields[fieldi]))
-            {
-                solveFields_.append(fields[fieldi]);
-            }
-        }
-    }
-    needPostUpdate_ = solveFields_.size();
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -203,9 +171,7 @@ Foam::compressibleSystem::compressibleSystem
     ),
     fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
-    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0),
-    solveFields_(),
-    needPostUpdate_(false)
+    solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
     scalar emptyDirV
     (
@@ -286,13 +252,13 @@ void Foam::compressibleSystem::solve()
 void Foam::compressibleSystem::postUpdate()
 {
     // Solve momentum
-    if (solveFields_.found(U_.name()) || turbulence_.valid())
+    if (needSolve(U_.name()) || turbulence_.valid())
     {
         fvVectorMatrix UEqn
         (
             fvm::ddt(rho(), U_) - fvc::ddt(rho(), U_)
         ==
-            modelsPtr_->source(rho(), U_)
+            models().source(rho(), U_)
         );
         if (turbulence_.valid())
         {
@@ -302,33 +268,33 @@ void Foam::compressibleSystem::postUpdate()
                 *fvc::div
                 (
                     fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-                    & fluxScheme_->Uf()
+                  & fluxScheme_->Uf()
                 );
         }
-        constraintsPtr_->constrain(UEqn);
+        constraints().constrain(UEqn);
         UEqn.solve();
-        constraintsPtr_->constrain(U_);
+        constraints().constrain(U_);
 
         //- Update internal energy
         he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
-    if (solveFields_.found(he().name()) || turbulence_.valid())
+    if (needSolve(he().name()) || turbulence_.valid())
     {
         fvScalarMatrix eEqn
         (
             fvm::ddt(rho(), he()) - fvc::ddt(rho(), he())
         ==
-            modelsPtr_->source(rho(), he())
+            models().source(rho(), he())
         );
         if (turbulence_.valid())
         {
             eEqn += thermophysicalTransport_->divq(he());
         }
-        constraintsPtr_->constrain(eEqn);
+        constraints().constrain(eEqn);
         eEqn.solve();
-        constraintsPtr_->constrain(he());
+        constraints().constrain(he());
     }
 
     if (turbulence_.valid())

@@ -299,7 +299,9 @@ void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::solve()
 
 template<class BasicThermo, class ThermoType>
 void Foam::mixtureBlastThermo<BasicThermo, ThermoType>::postUpdate()
-{}
+{
+    multicomponentBlastThermo::postUpdate();
+}
 
 
 template<class BasicThermo, class ThermoType>

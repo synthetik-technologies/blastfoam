@@ -187,28 +187,22 @@ void Foam::multiphaseCompressibleSystem::solve()
 
 void Foam::multiphaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     // Solve volume fraction and phase mass transports
     bool needUpdate = false;
     forAll(alphas_, phasei)
     {
-        if (solveFields_.found(alphas_[phasei].name()))
+        if (needSolve(alphas_[phasei].name()))
         {
             needUpdate = true;
             fvScalarMatrix alphaEqn
             (
                 fvm::ddt(alphas_[phasei]) - fvc::ddt(alphas_[phasei])
              ==
-                modelsPtr_->source(alphas_[phasei])
+                models().source(alphas_[phasei])
             );
-            constraintsPtr_->constrain(alphaEqn);
+            constraints().constrain(alphaEqn);
             alphaEqn.solve();
-            constraintsPtr_->constrain(alphas_[phasei]);
+            constraints().constrain(alphas_[phasei]);
         }
     }
     if (needUpdate)
@@ -224,7 +218,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
     forAll(rhos_, phasei)
     {
         volScalarField& rho(rhos_[phasei]);
-        if (solveFields_.found(rho.name()))
+        if (needSolve(rho.name()))
         {
             const volScalarField& alpha(alphas_[phasei]);
             dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
@@ -233,11 +227,11 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
                 fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
             + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
             ==
-                modelsPtr_->source(alpha, rho)
+                models().source(alpha, rho)
             );
-            constraintsPtr_->constrain(alphaRhoEqn);
+            constraints().constrain(alphaRhoEqn);
             alphaRhoEqn.solve();
-            constraintsPtr_->constrain(rho);
+            constraints().constrain(rho);
 
             alphaRhos_[phasei] = alpha*rho;
         }

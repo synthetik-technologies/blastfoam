@@ -175,12 +175,6 @@ void Foam::coupledMultiphaseCompressibleSystem::solve()
 
 void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
 {
-    if (!needPostUpdate_)
-    {
-        compressibleBlastSystem::postUpdate();
-        return;
-    }
-
     this->decode();
 
     //- Store value of density so volume fraction can be included

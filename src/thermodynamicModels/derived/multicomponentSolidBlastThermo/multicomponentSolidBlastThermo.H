@@ -101,7 +101,9 @@ public:
 
         //- Pre update step
         virtual void update()
-        {}
+        {
+            multicomponentBlastThermo::update();
+        }
 
         //- Solve sub-step stepi
         virtual void solve()
@@ -111,7 +113,9 @@ public:
 
         //- Post update
         virtual void postUpdate()
-        {}
+        {
+            multicomponentBlastThermo::postUpdate();
+        }
 
     //- Thermodynamic and transport functions
 

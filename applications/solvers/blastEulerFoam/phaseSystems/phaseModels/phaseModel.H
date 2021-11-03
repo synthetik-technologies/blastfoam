@@ -181,18 +181,6 @@ protected:
         //- Solution vector
         vector solutionDs_;
 
-        //- fvModels
-        UautoPtr<const fvModels> modelsPtr_;
-
-        //- fvConstraints
-        UautoPtr<const fvConstraints> constraintsPtr_;
-
-        //- List of fields that have models or constraints
-        hashedWordList solveFields_;
-
-        //- Does postUpdate need to be calles
-        bool needPostUpdate_;
-
         // Protected functions
         virtual tmp<volScalarField> ESource() const = 0;
 
@@ -277,9 +265,6 @@ public:
 
     //- Initialize models
     virtual void initializeModels();
-
-    //- Set fvModels and fvConstraints
-    void setFvModelsConstraints();
 
 
     //- Destructor
