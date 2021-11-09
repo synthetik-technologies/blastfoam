@@ -1264,7 +1264,9 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                 IOobject::NO_WRITE
             )
         )
-    )
+    ),
+    V0OldPtr_(nullptr),
+    V00OldPtr_(nullptr)
 {
     // Read static part of dictionary
     readDict();
@@ -2034,7 +2036,7 @@ bool Foam::adaptiveBlastFvMesh::balance()
         dynamicMeshDict().optionalSubDict("loadBalance")
     );
 
-    scalar beginBalance = balanceDict.lookupOrDefault("beginBalance", 0.0);
+    scalar beginBalance = balanceDict.lookupOrDefault("beginBalance", small);
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
