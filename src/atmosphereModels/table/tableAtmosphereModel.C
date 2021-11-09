@@ -83,13 +83,13 @@ void Foam::atmosphereModels::table::createAtmosphere
         thermo.T()[celli] = TTable_.lookup(h_[celli]);
     }
 
-    thermo.calce(thermo.p());
-    thermo.updateRho();
     hydrostaticInitialisation
     (
         thermo,
         dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
     );
+    thermo.p().write();
+    thermo.T().write();
 }
 
 // ************************************************************************* //

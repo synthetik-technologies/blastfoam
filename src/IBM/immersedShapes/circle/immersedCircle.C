@@ -39,8 +39,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-//- Make list of points axisymmetric and create face indexing
-void Foam::immersedCircle::get2DPoints()
+Foam::tmp<Foam::pointField> Foam::immersedCircle::get2DPoints() const
 {
     scalar pi = Foam::constant::mathematical::pi;
 
@@ -52,17 +51,19 @@ void Foam::immersedCircle::get2DPoints()
     label nPoints = (fullRotation*radius_)/dx_ + 1;
     scalar dTheta = fullRotation/scalar(nPoints);
 
-    points0_.resize(nPoints + 1);
-    forAll(points0_, i)
+    tmp<pointField> tpoints(new pointField(nPoints + 1));
+    pointField& points = tpoints.ref();
+    forAll(points, i)
     {
         scalar theta = scalar(i)*dTheta;
         scalar x = radius_*cos(theta);
         scalar y = radius_*sin(theta);
 
-        points0_[i][xi_] = x;
-        points0_[i][yi_] = y;
-        points0_[i][ei_] = 0;
+        points[i][xi_] = x;
+        points[i][yi_] = y;
+        points[i][ei_] = 0;
     }
+    return tpoints;
 }
 
 // * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
@@ -78,22 +79,6 @@ Foam::immersedCircle::immersedCircle
     radius_(dict.lookup<scalar>("radius"))
 {
     read(dict);
-
-    List<face> faces;
-    if (ei_ != -1)
-    {
-        get2DPoints();
-        if (ai_ != -1)
-        {
-            extrudeAxi(points0_, faces);
-        }
-        else
-        {
-            extrude2D(points0_, faces);
-        }
-    }
-    patchPtr_.set(new standAlonePatch(faces, points0_));
-    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -105,16 +90,36 @@ Foam::immersedCircle::~immersedCircle()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedCircle::createPatch() const
+{
+    faceList faces;
+    pointField points(get2DPoints());
+    if (ai_ != -1)
+    {
+        extrudeAxi(points, faces);
+    }
+    else
+    {
+        extrude2D(points, faces);
+    }
+
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(faces, points)
+    );
+}
+
+
 Foam::labelList
 Foam::immersedCircle::calcInside(const pointField& points) const
 {
     labelList insidePoints(points.size(), -1);
-    scalarList R(mag(points - object_.centreOfRotation()));
 
     label pi = 0;
     forAll(insidePoints, i)
     {
-        if (R[i] <= radius_)
+        if (mag(zeroDir(points[i] - object_.centre())) <= radius_)
         {
             insidePoints[pi++] = i;
         }
@@ -127,12 +132,18 @@ Foam::immersedCircle::calcInside(const pointField& points) const
 
 bool Foam::immersedCircle::inside(const point& pt) const
 {
-    scalar R(mag(zeroDir(pt - object_.centreOfRotation())));
+    scalar R(mag(zeroDir(pt - object_.centre())));
     if (R <= radius_)
     {
         return true;
     }
     return false;
+}
+
+
+void Foam::immersedCircle::write(Ostream& os) const
+{
+    writeEntry(os, "radius", radius_);
 }
 
 

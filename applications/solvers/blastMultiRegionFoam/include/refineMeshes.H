@@ -1,6 +1,7 @@
 //- Update internal error fields of all regions
 forAll(fluidRegions, i)
 {
+    timeIntegrators[i].preUpdateMesh();
     fluidRegions[i].updateError();
 }
 forAll(solidRegions, i)

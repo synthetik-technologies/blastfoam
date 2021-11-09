@@ -41,8 +41,8 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef IBMForce_H
-#define IBMForce_H
+#ifndef IBMForceModel_H
+#define IBMForceModel_H
 
 #include "fvModel.H"
 #include "fvConstraint.H"
@@ -60,47 +60,14 @@ namespace fv
                         Class IBMForce Declaration
 \*---------------------------------------------------------------------------*/
 
-class IBMForce
+class IBMForceModel
 :
-    public fvModel,
-    public fvConstraint
+    public fvModel
 {
     // Private Data
 
-        //- Optional phases
-        wordList phaseNames_;
-
         //- Immersed objects
-        mutable immersedBoundaryObjectListSolver ibm_;
-
-        //- Fields added to the ibm object
-        mutable hashedWordList addedFields_;
-
-
-    // Private Member Functions
-
-        //- Non-virtual read
-        void readCoeffs();
-
-        //- Return the phase density (alpha*rho)
-        tmp<volScalarField> alphaRho(const word& phase) const;
-
-        //- Return the old phase density (alpha_0*rho_0)
-        tmp<volScalarField> alphaRhoOld(const word& phase) const;
-
-        //- Add a field to the ibm model
-        template<class Type>
-        void addField(const VolField<Type> field) const;
-
-        using fvModel::mesh;
-
-        //- Add source terms to a phase equation
-        template<class Type>
-        bool constrainType
-        (
-            fvMatrix<Type>& eqn,
-            const word& fieldName
-        ) const;
+        immersedBoundaryObjectListSolver& ibm_;
 
 
 public:
@@ -112,7 +79,7 @@ public:
     // Constructors
 
         //- Construct from explicit source name and mesh
-        IBMForce
+        IBMForceModel
         (
             const word& name,
             const word& modelType,
@@ -121,40 +88,20 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        IBMForce(const IBMForce&) = delete;
+        IBMForceModel(const IBMForceModel&) = delete;
 
 
     // Member Functions
-
-        // Checks
-
-            //- Return the list of fields for which the fvModel adds source term
-            //  to the transport equation
-            virtual wordList constrainedFields() const;
-
-
-        // Evaluate
-
-            //- Add explicit contribution to incompressible momentum equation
-//             FOR_ALL_FIELD_TYPES(DEFINE_FV_CONSTRAINT_CONSTRAIN);
-            DEFINE_FV_CONSTRAINT_CONSTRAIN(scalar, null);
-            DEFINE_FV_CONSTRAINT_CONSTRAIN(vector, null);
 
         //- Correct the fvModel
         //  e.g. solve equations, update model, for film, Lagrangian etc.
         virtual void correct();
 
 
-        // IO
-
-            //- Read source dictionary
-            virtual bool read(const dictionary& dict);
-
-
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const IBMForce&) = delete;
+        void operator=(const IBMForceModel&) = delete;
 };
 
 
@@ -163,11 +110,6 @@ public:
 } // End namespace fv
 } // End namespace Foam
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "IBMFvModelTemplates.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

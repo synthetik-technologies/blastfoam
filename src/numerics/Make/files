@@ -71,4 +71,41 @@ RBFFunctions/WendlandC2/WendlandC2RBFFunction.C
 RBFFunctions/WendlandC4/WendlandC4RBFFunction.C
 RBFFunctions/WendlandC6/WendlandC6RBFFunction.C
 
+
+objectMotion/movingObject/movingObject.C
+objectMotion/objectMotionState/objectMotionState.C
+objectMotion/objectMotionState/objectMotionStateIO.C
+
+
+restraints = objectMotion/restraints
+
+$(restraints)/objectMotionRestraint/objectMotionRestraint.C
+$(restraints)/objectMotionRestraint/objectMotionRestraintNew.C
+$(restraints)/linearAxialAngularSpring/linearAxialAngularSpringObjectMotionRestraint.C
+$(restraints)/linearSpring/linearSpringObjectMotionRestraint.C
+$(restraints)/sphericalAngularSpring/sphericalAngularSpringObjectMotionRestraint.C
+$(restraints)/axialAngularSpring/axialAngularSpringObjectMotionRestraint.C
+$(restraints)/linearDamper/linearDamperObjectMotionRestraint.C
+$(restraints)/sphericalAngularDamper/sphericalAngularDamperObjectMotionRestraint.C
+
+constraints = objectMotion/constraints
+
+$(constraints)/objectMotionConstraint/objectMotionConstraint.C
+$(constraints)/objectMotionConstraint/objectMotionConstraintNew.C
+$(constraints)/axis/axisObjectMotionConstraint.C
+$(constraints)/line/lineObjectMotionConstraint.C
+$(constraints)/orientation/orientationObjectMotionConstraint.C
+$(constraints)/plane/planeObjectMotionConstraint.C
+$(constraints)/point/pointObjectMotionConstraint.C
+
+
+solvers = objectMotion/motionSolvers
+$(solvers)/objectMotionSolver/objectMotionSolver.C
+$(solvers)/objectMotionSolver/objectMotionSolverNew.C
+$(solvers)/Euler/EulerObjectMotionSolver.C
+$(solvers)/symplectic/symplecticObjectMotionSolver.C
+$(solvers)/CrankNicolson/CrankNicolsonObjectMotionSolver.C
+$(solvers)/Newmark/NewmarkObjectMotionSolver.C
+
+
 LIB = $(BLAST_LIBBIN)/libblastNumerics

@@ -147,13 +147,13 @@ void Foam::wallCollisionData::calcMapping()
             patch_.faceAreas()[patchFacei]
            /mag(patch_.faceAreas()[patchFacei])
         );
-        vector v(object_.velocity(p));
+        vector v(object_.v(p));
 
          area += magSf;
         hitPoint_ += magSf*p;
         normal_ += normal*magSf;
 
-        scalar r(mag(fc - object_.centreOfRotation()));
+        scalar r(mag(fc - object_.centre()));
         if (r < minR)
         {
             minR = r;
@@ -195,7 +195,7 @@ void Foam::wallCollisionData::calcMapping()
 
     hitPoint_ /= area;
     normal_ /= area;
-    v_ = object_.velocity(hitPoint_);
+    v_ = object_.v(hitPoint_);
 
     // Return the true weights across all processors
     reducedWeights_.resize(wi);

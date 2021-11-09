@@ -1,8 +1,6 @@
 #include "fvCFD.H"
 #include "fvMesh.H"
-#include "immersedBoundaryObjects.H"
-#include "emptyPolyPatch.H"
-#include "wedgePolyPatch.H"
+#include "immersedBoundaryObjectListSolver.H"
 
 using namespace Foam;
 
@@ -23,16 +21,31 @@ int main(int argc, char *argv[])
         mesh,
         -1
     );
-    volVectorField normals
+    volScalarField internalExternal
     (
         IOobject
         (
-            "normals",
+            "internalExternal",
             runTime.timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
         ),
         mesh,
-        dimensionedVector(dimless, Zero)
+        0.0
+    );
+    volScalarField shell
+    (
+        IOobject
+        (
+            "shell",
+            runTime.timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::AUTO_WRITE
+        ),
+        mesh,
+        0.0
     );
 
     IOdictionary ibmDict
@@ -47,52 +60,38 @@ int main(int argc, char *argv[])
     );
 
     const dictionary& objectDict(ibmDict.subDict("objects"));
-    wordList objects(objectDict.toc());
+    immersedBoundaryObjectListSolver& ibm =
+        immersedBoundaryObjectListSolver::New(mesh);
+    const PtrList<immersedBoundaryObject>& objects(ibm.objects());
+    ibm.setCellTypes();
+    ibm.setObjectIDs();
 
-    PtrList<immersedBoundaryObject> ibmObjects(objects.size());
     forAll(objects, i)
     {
-        ibmObjects.set
-        (
-            i,
-            immersedBoundaryObject::New
-            (
-                mesh,
-                objectDict.subDict(objects[i]),
-                objectDict.subDict(objects[i])
-            ).ptr()
-        );
-        ibmObjects[i].initialize();
-//         ibmObjects[i].setInternal(cellType, 1.0, maxEqOp<scalar>());
-//         ibmObjects[i].setShell(cellType, 2.0, maxEqOp<scalar>());
-//         ibmObjects[i].setBoundary(cellType, 3.0, maxEqOp<scalar>());
-        labelList pI(ibmObjects[i].patchInternalCells());
-        labelList pE(ibmObjects[i].patchExternalCells());
+        const labelList& pI = objects[i].patchInternalCells();
+        const labelList& pE = objects[i].patchExternalCells();
         forAll(pI, j)
         {
-            if (pI[j] >= 0)
+            label celli = pI[j];
+            if (celli > -1)
             {
-                cellType[pI[j]] = 1.0;
+                internalExternal[celli] = 1.0;
             }
         }
         forAll(pE, j)
         {
-            if (pE[j] >= 0)
+            label celli = pE[j];
+            if (celli > -1)
             {
-                cellType[pE[j]] = 2.0;
+                internalExternal[celli] = 2.0;
             }
         }
-
-        ibmObjects[i].shape().writeVTK();
-
-        vectorField n(ibmObjects[i].Sf());
-        ibmObjects[i].interpolateFrom(n, normals.primitiveFieldRef());
+        objects[i].setShell(shell, 1.0);
+        objects[i].writeVTK(objects[i].name());
     }
 
 //     runTime++;
-    runTime.write();
-    normals.write();
-    cellType.write();
+    runTime.writeNow();
     Info<<"done"<<endl;
 
     return 0;

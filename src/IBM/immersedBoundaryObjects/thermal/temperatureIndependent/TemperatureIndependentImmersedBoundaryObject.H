@@ -60,7 +60,7 @@ public:
         //- Construct from constant and state dictionaries
         TemperatureIndependentImmersedBoundaryObject
         (
-            const polyMesh& mesh,
+            const polyPatch& mesh,
             const dictionary& dict,
             const dictionary& stateDict
         );
@@ -76,26 +76,6 @@ public:
         {
             return false;
         }
-
-        // Update state
-
-            //- Report the status of the motion
-            virtual void status() const;
-
-
-        // Transformations
-
-            //- Move boundary points
-            virtual void movePoints();
-
-
-        //- Write
-        virtual void write(Ostream&) const;
-        virtual void write(dictionary&) const;
-
-        //- Read coefficients dictionary and update system parameters,
-        //  constraints and restraints but not the current state
-        virtual bool read(const dictionary& dict);
 };
 
 

@@ -126,9 +126,6 @@ protected:
     //- Gravitational acceleration
     const uniformDimensionedVectorField& g_;
 
-    UautoPtr<const fvModels> modelsPtr_;
-    UautoPtr<const fvConstraints> constraintsPtr_;
-
 
 public:
 

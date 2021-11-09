@@ -36,8 +36,10 @@ Description
 #include "fvMesh.H"
 #include "volFields.H"
 #include "atmosphereModel.H"
+#include "hydrostaticAtmosphereModel.H"
 #include "fvc.H"
 #include "fluidBlastThermo.H"
+#include "thermodynamicConstants.H"
 
 
 using namespace Foam;
@@ -46,6 +48,9 @@ using namespace Foam;
 
 int main(int argc, char *argv[])
 {
+    argList::addOption("pRef", "Reference pressure [Pa]");
+    argList::addOption("elevation", "Elevation of the lowest point [m]");
+    argList::addOption("phase", "Name of the phase");
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -53,20 +58,12 @@ int main(int argc, char *argv[])
     #include "createTime.H"
     #include "createNamedMesh.H"
 
-    IOdictionary atmosphereProperties
+    IOobject atmospherePropertiesIO
     (
-        IOobject
-        (
-            "atmosphereProperties",
-            mesh.time().system(),
-            mesh,
-            IOobject::MUST_READ
-        )
-    );
-
-    autoPtr<atmosphereModel> atmosphere
-    (
-        atmosphereModel::New(mesh, atmosphereProperties)
+        "atmosphereProperties",
+        mesh.time().system(),
+        mesh,
+        IOobject::MUST_READ
     );
 
     IOdictionary phaseProperties
@@ -80,23 +77,57 @@ int main(int argc, char *argv[])
         )
     );
 
-    //- Name of phase (Default = word::null)
-    word phaseName
-    (
-        atmosphereProperties.lookupOrDefault("phaseName", word::null)
-    );
+    word phaseName = word::null;
+    wordList phases(1, phaseName);
+    autoPtr<atmosphereModel> atmosphere;
+    if (!atmospherePropertiesIO.typeHeaderOk<IOdictionary>(true))
+    {
+        scalar pRef = args.optionLookupOrDefault<scalar>
+        (
+            "pRef",
+            Foam::constant::thermodynamic::Pstd
+        );
+        scalar elevation = args.optionLookupOrDefault<scalar>
+        (
+            "elevation",
+            0
+        );
 
-    //- Shared switches
-    Switch sharedPressure
-    (
-        atmosphereProperties.lookupOrDefault("sharedPressure", true)
-    );
-    Switch sharedTemperature
-    (
-        atmosphereProperties.lookupOrDefault("sharedTemperature", true)
-    );
+        if (args.optionFound("phase"))
+        {
+            phases = args.optionRead<word>("phase");
+        }
+        else if (phaseProperties.found("phases"))
+        {
+            phases = phaseProperties.lookup<wordList>("phases");
+        }
+        atmosphere.set
+        (
+            new atmosphereModels::hydrostatic
+            (
+                mesh,
+                pRef,
+                elevation
+            )
+        );
+    }
+    else
+    {
+        IOdictionary atmosphereProperties(atmospherePropertiesIO);
+        atmosphere =
+            atmosphereModel::New(mesh, atmosphereProperties);
 
-    wordList phases(phaseProperties.lookupOrDefault("phases", wordList(1,word::null)));
+        if (atmosphereProperties.found("phase"))
+        {
+            phases = atmosphereProperties.lookup<word>("phase");
+        }
+        else if (phaseProperties.found("phases"))
+        {
+            phases = phaseProperties.lookup<wordList>("phases");
+        }
+
+    }
+
     autoPtr<fluidBlastThermo> thermo
     (
         fluidBlastThermo::New
@@ -109,15 +140,6 @@ int main(int argc, char *argv[])
 
     Info<< "Initializing atmosphere." << endl;
     atmosphere->createAtmosphere(thermo());
-
-    forAll(thermo->p().boundaryField(), patchi)
-    {
-        thermo->p().boundaryFieldRef()[patchi] =
-            thermo->p().boundaryField()[patchi].patchInternalField();
-    }
-    thermo->T().write();
-    thermo->rho().write();
-    thermo->p().write();
 
     Info<< "Done" << nl << endl;
 }

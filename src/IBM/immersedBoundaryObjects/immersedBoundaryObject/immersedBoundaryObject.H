@@ -40,7 +40,6 @@ SourceFiles
 #include "PtrListDictionary.H"
 #include "volFields.H"
 #include "primitiveFieldsFwd.H"
-#include "immersedBoundaryFvPatchFieldsFwd.H"
 #include "extendedNLevelGlobalCellToCellStencils.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,13 +47,13 @@ SourceFiles
 namespace Foam
 {
 
-class immersedMeshMapper;
-
 /*---------------------------------------------------------------------------*\
                        Class immersedBoundaryObject Declaration
 \*---------------------------------------------------------------------------*/
 
 class immersedBoundaryObject
+:
+    public standAlonePatch
 {
     // Private member functions
 
@@ -85,29 +84,26 @@ protected:
 
     // Protected data
 
+        //- Reference to the associated polyPatch
+        const polyPatch& patch_;
+
         //- Name of stl file
         const polyMesh& pMesh_;
-
-        //- Reference to cell neighbours
-        const extendedNLevelCPCCellToCellStencil& cellNeighbours_;
 
         //- Dictionary
         const dictionary& dict_;
 
-        //- Used geometric dimensions
-        vector geometricD_;
-
-        //- Immersed shape
-        autoPtr<immersedShape> shape_;
-
         //- What to sample
         const interpolationMethod mode_;
 
-        //- Shape of immersed object
-        standAlonePatch& patch_;
+        //- Immersed shape
+        mutable autoPtr<immersedShape> shape_;
 
         //- Cells on the immersed boundary
         mutable labelList* boundaryCellsPtr_;
+
+        //- Cells within the immersed boundary
+        mutable labelList* allInternalCellsPtr_;
 
         //- Cells within the immersed boundary
         mutable labelList* internalCellsPtr_;
@@ -121,8 +117,12 @@ protected:
         //- Closest cells to the faces on the outside of the object
         mutable labelList patchExternalCells_;
 
-        //- Internal cell centres
-        mutable Field<vector> internalC_;
+        //- Closest cells to the object
+        //  patchExternal cells unless one does not exist
+        mutable  labelList patchCells_;
+
+        //- Map from patch cells to the face index
+        mutable  labelListList patchMap_;
 
         //- Cells containing each surface point
         mutable List<labelList> interpToCells_;
@@ -140,14 +140,13 @@ protected:
         //  Inverse distance from closest cell to face centre
         mutable scalarField deltaCoeffs_;
 
-        //- Nearest neighbours of immersed mesh
-        labelListList nearestNeighbours_;
+        mutable scalarField* magSfPtr_;
 
-        //- Mass of object
-        scalar mass_;
+        //- Nearest neighbours of immersed mesh
+        mutable labelListList nearestNeighbours_;
 
         //- Forces acting on the object
-        vectorField force_;
+        mutable vectorField force_;
 
         //- Effective force
         vector forceEff_;
@@ -161,29 +160,18 @@ protected:
         //- Moment due to external motion (i.e. fluid and gravity)
         vector momentExt_;
 
-        //- Gravitational acceleration
-        vector g_;
-
-        //- Switch to turn reporting of motion data on and off
-        Switch report_;
-
-        // Boundary conditions
-
-            //- Scalar boundary conditions
-            PtrListDictionary<immersedBoundaryScalarPatchField> scalarBoundaries_;
-
-            //- Vector boundary conditions
-            PtrListDictionary<immersedBoundaryVectorPatchField> vectorBoundaries_;
-
 
 
     // Protected Member Functions
+
+        //- Initialize
+        virtual void initialize() const;
 
         //- Calculate mapping
         void calcMapping() const;
 
         //- Update weights
-        void updateWeights() const;
+//         void updateWeights() const;
 
 
 public:
@@ -199,11 +187,11 @@ public:
             immersedBoundaryObject,
             dictionary,
             (
-                const polyMesh& pMesh,
+                const polyPatch& patch,
                 const dictionary& dict,
                 const dictionary& stateDict
             ),
-            (pMesh, dict, stateDict)
+            (patch, dict, stateDict)
         );
 
     // Constructors
@@ -211,7 +199,7 @@ public:
         //- Construct from dictionary
         immersedBoundaryObject
         (
-            const polyMesh&,
+            const polyPatch&,
             const dictionary&,
             const dictionary&
         );
@@ -221,7 +209,7 @@ public:
 
         static autoPtr<immersedBoundaryObject> New
         (
-            const polyMesh& pMesh,
+            const polyPatch& patch,
             const dictionary& dict,
             const dictionary& stateDict
         );
@@ -233,14 +221,17 @@ public:
 
     // Member Functions
 
-        //- Initialize
-        virtual void initialize();
-
         //- Clear mapping
         void clearOut();
 
         //- Return the global polyMesh
-        const polyMesh& pMesh() const;
+        inline const polyMesh& pMesh() const;
+
+        //- Return the polyPatch
+        inline const polyPatch& patch() const;
+
+        //- Return the patch index
+        inline label index() const;
 
         //- Is the object moving
         virtual bool moving() const = 0;
@@ -248,52 +239,24 @@ public:
         //- Does the object have a temperature dependency
         virtual bool temperatureDependent() const = 0;
 
-        //- Return a pointer to the immersedMesh if it exists
-        virtual const fvMesh& immersedMesh() const;
+        //- Update
+        virtual void update()
+        {}
 
-        //- Return a pointer to the immersedMeshMapper if it exists
-        virtual const immersedMeshMapper* mapper() const;
+        //- Solve
+        virtual void solve()
+        {}
 
-        // Update state
-
-            //- Update objects
-            virtual bool update
-            (
-                bool firstIter,
-                const vector& fGlobal,
-                const vector& tauGlobal,
-                scalar deltaT,
-                scalar deltaT0
-            )
-            {
-                return false;
-            }
-
-            //- Update
-            virtual void update()
-            {}
-
-            //- Solve
-            virtual void solve()
-            {}
-
-            //- Report the status of the motion
-            virtual void status() const;
-
-            //- Apply the restraints to the object
-            virtual void applyRestraints() = 0;
-
-            //- Update and relax accelerations from the force and torque
-            virtual void updateAcceleration
-            (
-                const vector& fGlobal,
-                const vector& tauGlobal
-            ) = 0;
-
-            virtual void newTime() = 0;
+        //- Report the status of the motion
+        virtual void status(const bool print = true) const;
 
 
         // Transformations
+
+            //- Return the orientation tensor, Q.
+            //  globalVector = Q & bodyLocalVector
+            //  bodyLocalVector = Q.T() & globalVector
+            virtual tensor orientation() const = 0;
 
             //- Transform the given initial state point by the current motion
             //  state
@@ -309,50 +272,20 @@ public:
             //- Inverse of transform
             virtual tmp<pointField> inverseTransform(const pointField&) const = 0;
 
-            //- Apply rotation tensors to Q0 for the given torque (pi) and deltaT
-            //  and return the rotated Q and pi as a tuple
-            virtual Tuple2<tensor, vector> rotate
-            (
-                const tensor& Q0,
-                const vector& pi,
-                const scalar deltaT
-            ) const = 0;
-
 
         // Access IBM mapping variable
 
             //- Return the name of the object
-            inline word keyword() const;
-
-            //- Return the name of the object
             inline const word& name() const;
 
-            //- Return the report Switch
-            inline bool report() const;
-
-            //- Return the number of faces
-            inline label nFaces() const;
-
-            //- Return the triSurfaceMesh
-            inline const standAlonePatch& patch() const;
-
-            //- Return face centres
-            inline const vectorField& faceCentres() const;
-
-            //- Return points
-            inline const pointField& points() const;
-
-            //- Return old points
-            inline const pointField& faceCentresOld() const;
-
-            //- Return face areas * face normals
-            inline const vectorField& Sf() const;
-
-            //- Return face areas
-            inline tmp<scalarField> magSf() const;
+            //- Return the name of the object
+            inline const word& keyword() const;
 
             //- Return face areas
             inline const scalarField& deltaCoeffs() const;
+
+            //- Return all the internal cells
+            inline const labelList& allInternalCells() const;
 
             //- Return the internal cells
             inline const labelList& internalCells() const;
@@ -363,8 +296,11 @@ public:
             //- Return the face-to-cell mapping
             inline const labelList& patchExternalCells() const;
 
-            //- Return the internal cell centres
-            inline const vectorField& internalC() const;
+            //- Return the face-to-cell mapping
+            inline const labelList& patchCells() const;
+
+            //- Return the map from the patch cells to the face
+            inline const labelListList& patchMap() const;
 
             //- Return the boundary cells
             inline const labelList& boundaryCells() const;
@@ -378,44 +314,33 @@ public:
             //- Return weights used to interpolate
             inline const scalarListList& interpToWeights() const;
 
+            //- Return the number of faces
+            inline label nFaces() const;
+
+            //- Return the face area vector
+            inline const vectorField& Sf() const;
+
+            //- Return the face area
+            inline const scalarField& magSf() const;
+
+            //- Return the face normals
+            inline tmp<vectorField> nf() const;
+
             //- Return the shape
             inline const immersedShape& shape() const;
 
-            //- Return the patch name if an immersedFvMesh is used
-            virtual word patchName() const
-            {
-                NotImplemented;
-                return word::null;
-            }
+            //- Store the motion state at the beginning of the time-step
+            virtual void newTime()
+            {}
 
 
         // Access physical properties
 
             //- Return the mass of the object
-            inline scalar mass() const;
+            virtual scalar mass() const = 0;
 
-            //- Return the current centre of rotation
-            virtual point centreOfRotation() const = 0;
-
-            //- Return the current centre of mass
-            inline point initialCentreOfMass() const;
-
-            //- Return the current centre of mass
-            virtual point centreOfMass() const = 0;
-
-            //- Return the translational constraint tensor
-            virtual tensor tConstraints() const = 0;
-
-            //- Return the rotational constraint tensor
-            virtual tensor rConstraints() const = 0;
-
-            //- Return the orientation tensor, Q.
-            //  globalVector = Q & bodyLocalVector
-            //  bodyLocalVector = Q.T() & globalVector
-            virtual tensor orientation() const = 0;
-
-            //- Return the velocity of the center of rotation
-            virtual vector v() const = 0;
+            //- Return the current centre
+            virtual point centre() const = 0;
 
             //- Return the rotated inertia tensor
             inline tensor invMomentOfInertia() const;
@@ -423,22 +348,15 @@ public:
             //- Return the rotated inertia tensor
             virtual diagTensor momentOfInertia() const = 0;
 
-            //- Return the velocity at a list of position
-            virtual vector velocity(const point& pt) const = 0;
+            //- Return the velocity at a location
+            virtual vector v(const point& pt) const = 0;
 
             //- Return the velocity at a list of position
             virtual tmp<vectorField> velocity(const pointField& pt) const = 0;
 
             //- Return the velocity at the faces using the previous
             //  face centres
-            virtual tmp<vectorField> velocity() const;
-
-            //- Return the velocity at the faces using the previous
-            //  face centres
-            virtual vector velocity(const label) const;
-
-            //- Return the angular velocity in the global frame
-            virtual vector omega() const = 0;
+            virtual tmp<vectorField> velocity() const = 0;
 
             //- Return the force
             inline const vectorField& force() const;
@@ -470,9 +388,6 @@ public:
             //- Access the external moment
             inline vector& momentExt();
 
-            //- Return the gravitation acceleration vector
-            inline const vector& g() const;
-
             //- Return the current Courant number
             virtual scalar CoNum() const
             {
@@ -500,6 +415,10 @@ public:
             template<class Type>
             tmp<Field<Type>> patchExternalField(const Field<Type>&) const;
 
+            //- Boundary values using the closest cell (outside)
+            template<class Type>
+            tmp<Field<Type>> patchField(const Field<Type>&) const;
+
             //- Interpolate using weights
             template<class Type>
             tmp<Field<Type>> boundaryValues(const Field<Type>&) const;
@@ -515,7 +434,12 @@ public:
 
             //- Set internal cells to the given value
             template<class Type>
-            void setInternal(Field<Type>& vf, const Type& val) const;
+            void setInternal
+            (
+                Field<Type>& vf,
+                const Type& val,
+                const bool all = false
+            ) const;
 
             //- Set internal cells to the given value
             template<class Type, class CombineOp>
@@ -523,12 +447,18 @@ public:
             (
                 Field<Type>& vf,
                 const Type& val,
-                const CombineOp& cop
+                const CombineOp& cop,
+                const bool all = false
             ) const;
 
             //- Set internal cells to the given value
             template<class Type>
-            void setInternal(Field<Type>& vf, const Field<Type>& vals) const;
+            void setInternal
+            (
+                Field<Type>& vf,
+                const Field<Type>& vals,
+                const bool all = false
+            ) const;
 
             //- Set internal cells to the given value
             template<class Type, class CombineOp>
@@ -536,7 +466,8 @@ public:
             (
                 Field<Type>& vf,
                 const Field<Type>& vals,
-                const CombineOp& cop
+                const CombineOp& cop,
+                const bool all = false
             ) const;
 
             //- Set forcing cells to the given value
@@ -582,28 +513,21 @@ public:
             template<class Type>
             void addForcing
             (
-                const word& name,
-                GeometricField<Type, fvPatchField, volMesh>& F,
-                const volScalarField& alphaRho,
-                const GeometricField<Type, fvPatchField, volMesh>& alphaRhoFOld,
-                const GeometricField<Type, fvPatchField, volMesh>& RHS,
-                const dimensionedScalar& dT
+                Field<Type>& F,
+                const Field<Type>& pF,
+                const Field<scalar>& alphaRho,
+                const Field<Type>& alphaRhoFOld,
+                const Field<Type>& RHS,
+                const scalar dT
             ) const;
-
-            //- Add boundaries
-            template<class Type>
-            void addField
-            (
-                GeometricField<Type, fvPatchField, volMesh>&,
-                const dictionary&
-            );
 
 
         // Edit
 
+            using standAlonePatch::movePoints;
+
             //- Move points
-            virtual void movePoints()
-            {}
+            virtual void movePoints();
 
 
         // I/O

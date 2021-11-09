@@ -28,6 +28,8 @@ License
 #undef checkTimeIndex_
 
 #include "IBMFvModel.H"
+#include "IBMFvConstraint.H"
+
 #include "fvMatrices.H"
 #include "basicThermo.H"
 #include "addToRunTimeSelectionTable.H"
@@ -38,12 +40,12 @@ namespace Foam
 {
 namespace fv
 {
-    defineTypeNameAndDebug(IBMForce, 0);
+    defineTypeNameAndDebug(IBMForceModel, 0);
 
     addToRunTimeSelectionTable
     (
         fvModel,
-        IBMForce,
+        IBMForceModel,
         dictionary
     );
 }
@@ -52,78 +54,9 @@ namespace fv
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::fv::IBMForce::readCoeffs()
-{
-    phaseNames_ =
-        fvModel::coeffs().lookupOrDefault<wordList>
-        (
-            "phases",
-            wordList(1, word::null)
-        );
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::fv::IBMForce::alphaRho(const word& phase) const
-{
-    if (phase == word::null)
-    {
-        // Assuming incompressible
-        if (!mesh().foundObject<volScalarField>("rho"))
-        {
-            return volScalarField::New
-            (
-                "rho",
-                mesh(),
-                dimensionedScalar(dimless, 1.0)
-            );
-        }
-
-        return mesh().lookupObject<volScalarField>("rho");
-    }
-    else
-    {
-        word alphaName(IOobject::groupName("alpha", phase));
-        word rhoName(IOobject::groupName("rho", phase));
-        return
-            mesh().lookupObject<volScalarField>(alphaName)
-          * mesh().lookupObject<volScalarField>(rhoName);
-    }
-}
-
-
-Foam::tmp<Foam::volScalarField>
-Foam::fv::IBMForce::alphaRhoOld(const word& phase) const
-{
-    if (phase == word::null)
-    {
-        // Assuming incompressible
-        if (mesh().foundObject<volScalarField>("rho"))
-        {
-            return volScalarField::New
-            (
-                "rho",
-                mesh(),
-                dimensionedScalar(dimless, 1.0)
-            );
-        }
-
-        return mesh().lookupObject<volScalarField>("rho").oldTime();
-    }
-    else
-    {
-        word alphaName(IOobject::groupName("alpha", phase));
-        word rhoName(IOobject::groupName("rho", phase));
-        return
-            mesh().lookupObject<volScalarField>(alphaName).oldTime()
-          * mesh().lookupObject<volScalarField>(rhoName).oldTime();
-    }
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::fv::IBMForce::IBMForce
+Foam::fv::IBMForceModel::IBMForceModel
 (
     const word& name,
     const word& modelType,
@@ -132,79 +65,53 @@ Foam::fv::IBMForce::IBMForce
 )
 :
     fvModel(name, modelType, dict, mesh),
-    fvConstraint(name, modelType, dict, mesh),
-    phaseNames_(),
-    ibm_(mesh)
+    ibm_
+    (
+        immersedBoundaryObjectListSolver::New
+        (
+            const_cast<fvMesh&>(mesh)
+        )
+    )
 {
-    readCoeffs();
+    // Check if the fvConstraint exists for the IBM forcing and
+    // add it if it does not
     fvConstraints& constraints =
         fvConstraints::New(const_cast<fvMesh&>(mesh));
     dictionary& constraintDict(constraints);
-    constraintDict.add(name, fvModel::coeffs());
-    PtrListDictionary<fvConstraint>& constraintList(constraints);
-    constraints.constrainedFields_.setSize(constraintList.size() + 1);
-    constraintList.setSize(constraintList.size() + 1);
-    constraintList.set
-    (
-        constraintList.size() - 1,
-        name,
-        this
-    );
-    constraints.constrainedFields_.set
-    (
-        constraintList.size() - 1,
-        new wordHashSet()
-    );
+    if (!constraintDict.found(name))
+    {
+        constraintDict.add(name, coeffs());
+        PtrListDictionary<fvConstraint>& constraintList(constraints);
+        const label ci = constraintList.size();
+        constraints.constrainedFields_.setSize(ci + 1);
+        constraintList.setSize(ci + 1);
+        constraintList.set
+        (
+            ci,
+            name,
+            new IBMForceConstraint
+            (
+                name,
+                modelType,
+                coeffs(),
+                mesh
+            )
+        );
+        constraints.constrainedFields_.set
+        (
+            ci,
+            new wordHashSet()
+        );
+    }
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::wordList Foam::fv::IBMForce::constrainedFields() const
-{
-    wordList fields;
-    forAll(phaseNames_, i)
-    {
-        const word& phase = phaseNames_[i];
-        if (ibm_.thermalForcingNeeded())
-        {
-            const basicThermo& thermo =
-                mesh().lookupObject<basicThermo>
-                (
-                    IOobject::groupName(basicThermo::dictName, phase)
-                );
-            fields.append(thermo.he().name());
-        }
-        fields.append(IOobject::groupName("U", phase));
-    }
-    return fields;
-}
 
-// FOR_ALL_FIELD_TYPES
-// (
-//     IMPLEMENT_FV_CONSTRAINT_CONSTRAIN,
-//     fv::IBMForce
-// );
-IMPLEMENT_FV_CONSTRAINT_CONSTRAIN(scalar, fv::IBMForce);
-IMPLEMENT_FV_CONSTRAINT_CONSTRAIN(vector, fv::IBMForce);
-
-void Foam::fv::IBMForce::correct()
+void Foam::fv::IBMForceModel::correct()
 {
     ibm_.solve();
-}
-
-
-bool Foam::fv::IBMForce::read(const dictionary& dict)
-{
-    if (fvConstraint::read(dict))
-    {
-        readCoeffs();
-        return true;
-    }
-    else
-    {
-        return false;
-    }
 }
 
 

@@ -57,6 +57,8 @@ int main(int argc, char *argv[])
     Info<< "\nStarting time loop\n" << endl;
     while (runTime.run())
     {
+        integrator->preUpdateMesh();
+
         //- Refine mesh
         mesh.refine();
 
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
 
         fluid.printInfo();
 
-        integrator->clearODEFields();
+        integrator->clear();
 
         Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
             << "  ClockTime = " << runTime.elapsedClockTime() << " s"

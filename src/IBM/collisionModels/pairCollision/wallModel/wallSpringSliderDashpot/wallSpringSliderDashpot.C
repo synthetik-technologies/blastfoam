@@ -111,7 +111,7 @@ void Foam::wallSpringSliderDashpot::evaluateWall
 
     const scalar dT = object.pMesh().time().deltaTValue();
     const tensor invI = object.invMomentOfInertia();
-    const vector& x = object.centreOfRotation();
+    const vector& x = object.centre();
     scalar area = 0;
     forAll(map, facej)
     {
@@ -205,7 +205,7 @@ void Foam::wallSpringSliderDashpot::evaluateWall
 //     scalar dT = object.pMesh().time().deltaTValue();
 //     scalar mass = object.mass();
 //     tensor invI = object.invMomentOfInertia();
-//     vector xc = object.centreOfRotation();
+//     vector xc = object.centre();
 //
 //     forAll(map, pairi)
 //     {

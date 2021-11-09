@@ -64,19 +64,7 @@ class immersedEllipsoid
         scalar c_;
 
         //- Move points to the surface of the sphere
-        virtual bool adjustPoints(pointField& points);
-
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
-        {
-            return true;
-        }
-
-        //- Does the orientation need to be read
-        virtual bool needOrientation() const
-        {
-            return true;
-        }
+        virtual bool adjustPoints(pointField& points) const;
 
 
 public:
@@ -103,6 +91,9 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
 
@@ -119,6 +110,9 @@ public:
                 1.0/5.0*(sqr(a_) + sqr(b_))
             );
         }
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

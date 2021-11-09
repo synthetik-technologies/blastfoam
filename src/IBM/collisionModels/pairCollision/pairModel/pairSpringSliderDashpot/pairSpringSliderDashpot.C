@@ -96,8 +96,8 @@ void Foam::pairSpringSliderDashpot::evaluatePair
     tensor invIA = objectA.invMomentOfInertia();
     tensor invIB = objectB.invMomentOfInertia();
 
-    vector xcA = objectA.centreOfRotation();
-    vector xcB = objectB.centreOfRotation();
+    vector xcA = objectA.centre();
+    vector xcB = objectB.centre();
 
     forAll(map, pairi)
     {
@@ -122,7 +122,7 @@ void Foam::pairSpringSliderDashpot::evaluatePair
             delta = mag(delta);
 
             // Particles in collision
-            vector vAB(objectA.velocity(hitPoint) - objectB.velocity(hitPoint));
+            vector vAB(objectA.v(hitPoint) - objectB.v(hitPoint));
 
             // Effective mass
             vector rA(xA - xcA);

@@ -39,59 +39,61 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::immersedTriangle::get2DPoints()
+Foam::tmp<Foam::pointField> Foam::immersedTriangle::get2DPoints() const
 {
-    points0_.clear();
+    tmp<pointField> tpoints(new pointField());
+    pointField& points = tpoints.ref();
     if (ai_ != -1)
     {
-        bool onAxis1 = mag(vertices_[0][ri_]) < small;
-        bool onAxis2 = mag(vertices_[1][ri_]) < small;
-        bool onAxis3 = mag(vertices_[2][ri_]) < small;
+        bool onAxis1 = mag(origVertices_[0][ri_]) < small;
+        bool onAxis2 = mag(origVertices_[1][ri_]) < small;
+        bool onAxis3 = mag(origVertices_[2][ri_]) < small;
 
         if (!onAxis1 || !onAxis2)
         {
             bool addFinal = onAxis2 && onAxis3;
-            points0_.append
+            points.append
             (
-                discretizeLine(vertices_[0], vertices_[1], addFinal)
+                discretizeLine(origVertices_[0], origVertices_[1], addFinal)
             );
         }
         if (!onAxis2 || !onAxis3)
         {
             bool addFinal = onAxis3 && onAxis1;
-            points0_.append
+            points.append
             (
-                discretizeLine(vertices_[1], vertices_[2], addFinal)
+                discretizeLine(origVertices_[1], origVertices_[2], addFinal)
             );
         }
         if (!onAxis3 || !onAxis1)
         {
             bool addFinal = onAxis1 && onAxis2;
-            points0_.append
+            points.append
             (
-                discretizeLine(vertices_[2], vertices_[0], addFinal)
+                discretizeLine(origVertices_[2], origVertices_[0], addFinal)
             );
         }
-        if (onAxis1)
-        {
-            vertices_[0][ri_] -= 1e-10;
-        }
-        if (onAxis2)
-        {
-            vertices_[1][ri_] -= 1e-10;
-        }
-        if (onAxis3)
-        {
-            vertices_[2][ri_] -= 1e-10;
-        }
+//         if (onAxis1)
+//         {
+//             vertices_[0][ri_] -= 1e-10;
+//         }
+//         if (onAxis2)
+//         {
+//             vertices_[1][ri_] -= 1e-10;
+//         }
+//         if (onAxis3)
+//         {
+//             vertices_[2][ri_] -= 1e-10;
+//         }
     }
     else
     {
-        points0_.append(discretizeLine(vertices_[0], vertices_[1]));
-        points0_.append(discretizeLine(vertices_[1], vertices_[2]));
-        points0_.append(discretizeLine(vertices_[2], vertices_[0]));
+        points.append(discretizeLine(origVertices_[0], origVertices_[1]));
+        points.append(discretizeLine(origVertices_[1], origVertices_[2]));
+        points.append(discretizeLine(origVertices_[2], origVertices_[0]));
     }
-    sortPointsPolar(points0_);
+    sortPointsPolar(points);
+    return tpoints;
 }
 
 
@@ -105,16 +107,29 @@ Foam::immersedTriangle::immersedTriangle
 )
 :
     immersedShape(pMesh, ibo, dict),
-    vertices_
+    origVertices_
     (
-        {
-            dict.lookup<vector>("p1"),
-            dict.lookup<vector>("p2"),
-            dict.lookup<vector>("p3")
-        }
-    )
+        dict.found("vertices")
+      ? dict.lookup<List<vector>>("vertices")
+      : List<vector>
+        (
+            {
+                dict.lookup<vector>("p1"),
+                dict.lookup<vector>("p2"),
+                dict.lookup<vector>("p3")
+            }
+        )
+    ),
+    vertices_(origVertices_)
 {
     read(dict);
+
+    if (vertices_.size() != 3)
+    {
+        FatalErrorInFunction
+            << "Only 3 points can be provided" <<endl
+            << abort(FatalError);
+    }
 
     vector com(Zero);
     forAll(vertices_, i)
@@ -123,21 +138,11 @@ Foam::immersedTriangle::immersedTriangle
         com += vertices_[i];
     }
     com /= scalar(3);
-    this->centreOfMass_[xi_] = com[xi_];
-    this->centreOfMass_[yi_] = com[yi_];
+    this->centre_[xi_] = com[xi_];
+    this->centre_[yi_] = com[yi_];
+    correctCentre();
 
-    List<face> faces;
-    get2DPoints();
-    if (ai_ != -1)
-    {
-        extrudeAxi(points0_, faces);
-    }
-    else
-    {
-        extrude2D(points0_, faces);
-    }
-    vertices_ -= centreOfMass_;
-    points0_ -= centreOfMass_;
+    vertices_ -= this->centre_;
 
     //- Compute original orientation
     vector x(vertices_[0] - vertices_[1]);
@@ -148,12 +153,7 @@ Foam::immersedTriangle::immersedTriangle
         sin(theta), cos(theta), 0.0,
         0.0, 0.0, 1.0
     );
-
     vertices_ = this->orientation_.T() & vertices_;
-    points0_ = this->orientation_.T() & points0_;
-
-    patchPtr_.set(new standAlonePatch(faces, points0_));
-    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -164,6 +164,24 @@ Foam::immersedTriangle::~immersedTriangle()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedTriangle::createPatch() const
+{
+    List<face> faces;
+    pointField points(get2DPoints());
+    if (ai_ != -1)
+    {
+        extrudeAxi(points, faces);
+    }
+    else
+    {
+        extrude2D(points, faces);
+    }
+    points = object_.inverseTransform(points);
+    return autoPtr<standAlonePatch>(new standAlonePatch(faces, points));
+}
+
 
 Foam::labelList
 Foam::immersedTriangle::calcInside(const pointField& points) const
@@ -229,7 +247,6 @@ Foam::immersedTriangle::calcInside(const pointField& points) const
         }
     }
     insidePoints.resize(pi);
-
     return insidePoints;
 }
 
@@ -280,5 +297,10 @@ bool Foam::immersedTriangle::inside(const point& pt) const
     return false;
 }
 
+
+void Foam::immersedTriangle::write(Ostream& os) const
+{
+    writeEntry(os, "vertices", vertices_);
+}
 
 // ************************************************************************* //

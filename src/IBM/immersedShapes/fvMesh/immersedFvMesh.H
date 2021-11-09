@@ -58,27 +58,20 @@ class immersedFvMesh
         autoPtr<dynamicBlastFvMesh> fvMeshPtr_;
         dynamicBlastFvMesh& fvMesh_;
 
-        //- Patch name
         word patchName_;
-
-        //- Full (non parallel) triangulated mesh that includes all patches
-        //  except for processor patches
-        //  Used to check if a point is internal
-        triSurface* fullTriMeshPtr_;
-
-        autoPtr<triSurfaceSearch> tssPtr_;
 
 
     // Private member functions
 
-        //- Coarsen mesh given a upper and lower values of dx (2-D)
-//         void coarsenRefine2D(pointField& points);
-
-        //- Return 2D points
-//         void get2DPoints(List<labelledTri>& faces);
 
         //- Does the centre of mass need to be read
         virtual bool needCentreOfMass() const
+        {
+            return false;
+        }
+
+        //- Does the orientation need to be read
+        virtual bool needOrientation() const
         {
             return false;
         }
@@ -89,12 +82,6 @@ class immersedFvMesh
             const polyBoundaryMesh& bMesh,
             const labelHashSet& patches
         ) const;
-
-        //- Does the orientation need to be read
-        virtual bool needOrientation() const
-        {
-            return false;
-        }
 
 public:
 
@@ -144,8 +131,11 @@ public:
             return fvMesh_;
         }
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Move the triMesh
-        virtual void movePoints();
+        virtual void movePoints(const pointField& points);
 
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
@@ -154,19 +144,10 @@ public:
         virtual bool inside(const point& pt) const;
 
         //- Return moment of inertia
-        virtual diagTensor momentOfInertia() const
-        {
-//             if (ei_ == -1)
-//             {
-//                 return dict_.lookup<diagTensor>("momentOfInertia");
-//             }
-            diagTensor dt(great, great, great);
-//             dt[ei_] = diagTensor
-//             (
-//                 dict_.lookup<diagTensor>("momentOfInertia")
-//             )[ei_];
-            return dt;
-        }
+        virtual diagTensor momentOfInertia() const;
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

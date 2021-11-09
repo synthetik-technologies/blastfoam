@@ -57,10 +57,19 @@ class immersedTriangle
     // Private data
 
         //- List of points
+        pointField origVertices_;
+
+        //- List of points
         pointField vertices_;
 
         //- Return 2D points
-        virtual void get2DPoints();
+        virtual tmp<pointField> get2DPoints() const;
+
+        //- Does the centre of mass need to be read
+        virtual bool needCentre() const
+        {
+            return false;
+        }
 
 
 public:
@@ -86,6 +95,9 @@ public:
 
 
     // Member Functions
+
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
 
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
@@ -125,6 +137,9 @@ public:
         {
             return false;
         }
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

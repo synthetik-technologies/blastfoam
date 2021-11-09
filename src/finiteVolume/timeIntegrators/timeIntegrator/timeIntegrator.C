@@ -205,6 +205,20 @@ void Foam::timeIntegrator::createModels() const
 }
 
 
+void Foam::timeIntegrator::preUpdateMesh()
+{
+    forAll(systems_, i)
+    {
+        systems_[i].preUpdateMesh();
+    }
+
+    if (modelsPtr_.valid())
+    {
+        modelsPtr_->preUpdateMesh();
+    }
+}
+
+
 void Foam::timeIntegrator::integrate()
 {
     // Update and store original fields
@@ -230,8 +244,13 @@ void Foam::timeIntegrator::integrate()
 }
 
 
-void Foam::timeIntegrator::clearODEFields()
+void Foam::timeIntegrator::clear()
 {
+    forAll(systems_, i)
+    {
+        systems_[i].clear();
+    }
+
     clearFields(oldScalarFields_);
     clearFields(oldVectorFields_);
     clearFields(oldSphTensorFields_);

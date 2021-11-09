@@ -53,7 +53,7 @@ bool Foam::immersedStl::intersectSurfaces
 (
     triSurface& surf,
     edgeIntersections& edgeCuts
-)
+) const
 {
     bool hasMoved = false;
 
@@ -115,7 +115,7 @@ bool Foam::immersedStl::intersectSurfaces
     edgeIntersections& edgeCuts1,
     triSurface& surf2,
     edgeIntersections& edgeCuts2
-)
+) const
 {
     bool hasMoved1 = false;
     bool hasMoved2 = false;
@@ -222,7 +222,7 @@ void Foam::immersedStl::calcEdgeCuts
     const bool perturb,
     edgeIntersections& edge1Cuts,
     edgeIntersections& edge2Cuts
-)
+) const
 {
     if (perturb)
     {
@@ -267,13 +267,11 @@ Foam::immersedStl::immersedStl
 )
 :
     immersedShape(pMesh, ibo, dict),
-    dict_(dict),
-    fileName_(dict.lookup("file")),
-    immersedMesh_
+    stlMesh_
     (
         IOobject
         (
-            fileName_,
+            dict.lookup<fileName>("file"),
             pMesh.time().constant(), // instance
             "triSurface", // local
             pMesh, // read from parent registry
@@ -284,45 +282,28 @@ Foam::immersedStl::immersedStl
 {
     read(dict);
 
-    List<face> faces;
-    immersedMesh_.movePoints(immersedMesh_.points() - this->centreOfMass_);
-    vector cor(dict.lookupOrDefault<vector>("centreOfRotation", Zero));
-    if (ei_ != -1)
+    // Center the stl about the centre of mass
+    stlMesh_.movePoints(stlMesh_.points() - this->centre_);
+    if (ei_ == -1)
     {
-        //- Move to the initial location of the
-        immersedMesh_.movePoints
-        (
-            immersedMesh_.points() + cor
-        );
-        get2DPoints(faces); // extrusion is done here
-        points0_ -= cor;
-
-        immersedMesh_.movePoints(immersedMesh_.points() - cor);
-
-        //- Correct orientation of the original mesh
-        orientedSurface::orient
-        (
-            immersedMesh_,
-            vector::zero,
-            true
-        );
+        refine3D(stlMesh_);
     }
-    else
-    {
-        refine3D(immersedMesh_);
-    }
-    immersedMesh_.cleanup(false);
-    points0_ = immersedMesh_.points();
+
+//     // Correct orientation of the original mesh
+//     orientedSurface::orient
+//     (
+//         stlMesh_,
+//         vector::zero,
+//         true
+//     );
+
+    //- Move the stl back to the original location
+    stlMesh_.cleanup(false);
+
     tssPtr_.set
     (
-        new triSurfaceSearch(refCast<const triSurface>(immersedMesh_))
+        new triSurfaceSearch(refCast<const triSurface>(stlMesh_))
     );
-    patchPtr_.set
-    (
-        new standAlonePatch(immersedMesh_.faces(), immersedMesh_.points())
-    );
-    correctCentreOfMass();
-
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -331,13 +312,55 @@ Foam::immersedStl::~immersedStl()
 {}
 
 
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-//- Make list of points axisymmetric and create face indexing
-void Foam::immersedStl::get2DPoints(List<face>& faces)
+
+//- Return a patch created with the given geometry
+Foam::autoPtr<Foam::standAlonePatch> Foam::immersedStl::createPatch() const
 {
-    points0_.clear();
+    if (ei_ != -1)
+    {
+        pointField points;
+        List<face> faces;
+
+        // Remove outputs from warnings since there may be alot
+        if (!debug)
+        {
+            std::streambuf* warnbuf = Warning().stdStream().rdbuf();
+            std::ofstream fout("/dev/null");
+            Warning().stdStream().rdbuf(fout.rdbuf());
+
+            get2DPoints(points, faces); // extrusion is done here
+
+            Warning().stdStream().rdbuf(warnbuf);
+        }
+        else
+        {
+            get2DPoints(points, faces); // extrusion is done here
+        }
+
+        return autoPtr<standAlonePatch>
+        (
+            new standAlonePatch(faces, points)
+        );
+
+    }
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(stlMesh_.faces(), stlMesh_.points())
+    );
+}
+
+
+
+//- Make list of points axisymmetric and create face indexing
+void Foam::immersedStl::get2DPoints
+(
+    pointField& points0,
+    List<face>& faces
+) const
+{
+    points0.clear();
     faces.clear();
     const polyBoundaryMesh& bMesh = pMesh_.boundaryMesh();
     List<wordRe> names(bMesh.names());
@@ -346,7 +369,7 @@ void Foam::immersedStl::get2DPoints(List<face>& faces)
     triSurface bTriMesh(triSurfaceTools::triangulate(bMesh, patches));
 
     PtrList<triSurface> regionTriSurfaces(1);
-    regionTriSurfaces.set(0, new triSurface(immersedMesh_));
+    regionTriSurfaces.set(0, new triSurface(stlMesh_));
     boolList onAxis(1, true);
 //     createRegionTriSurfaces(immersedMesh_, regionTriSurfaces, onAxis);
 
@@ -448,7 +471,7 @@ void Foam::immersedStl::get2DPoints(List<face>& faces)
             extrude2D(points, subFaces);
         }
 
-        label startI = points0_.size();
+        label startI = points0.size();
         forAll(subFaces, facei)
         {
             subFaces[facei][2] += startI;
@@ -456,7 +479,7 @@ void Foam::immersedStl::get2DPoints(List<face>& faces)
             subFaces[facei][0] += startI;
         }
 
-        points0_.append(points);
+        points0.append(points);
         faces.append(subFaces);
     }
 }
@@ -597,7 +620,7 @@ void Foam::immersedStl::createRegionTriSurfaces
 }
 
 
-void Foam::immersedStl::coarsenRefine2D(pointField& points)
+void Foam::immersedStl::coarsenRefine2D(pointField& points) const
 {
     //- Add points to meet goal mesh size
     pointField newPoints;
@@ -750,34 +773,29 @@ Foam::immersedStl::calcInside(const pointField& points) const
     {
         if (bb_.contains(points[i]))
         {
-            validPoints[pi] = points[i];
+            validPoints[pi] = object_.inverseTransform(points[i]);
             insidePoints[pi++] = i;
         }
     }
-    validPoints.resize(pi);
-    insidePoints.resize(pi);
     if (!pi)
     {
-        return insidePoints;
+        return labelList();
     }
+    validPoints.resize(pi);
+    insidePoints.resize(pi);
     pi = 0;
 
-    boolList inside;
-    if (ei_ != -1)
-    {
-        inside = tssPtr_->calcInside(object_.inverseTransform(validPoints));
-    }
-    else
-    {
-        inside = tssPtr_->calcInside(validPoints);
-    }
-
+    boolList inside(tssPtr_->calcInside(validPoints));
     forAll(inside, i)
     {
-        if(!inside[i]) // Flipped orientation
+        if (inside[i])
         {
             insidePoints[pi++] = insidePoints[i];
         }
+    }
+    if (!pi)
+    {
+        return labelList();
     }
     insidePoints.resize(pi);
     return insidePoints;
@@ -789,16 +807,17 @@ bool Foam::immersedStl::inside(const point& pt) const
 {
     if (bb_.contains(pt))
     {
-        pointField pts(1, pt);
-        if (ei_ != -1)
-        {
-            return tssPtr_->calcInside(object_.inverseTransform(pts))[0];
-        }
-        else
-        {
-            return tssPtr_->calcInside(pts)[0];
-        }
+        pointField pts(1, object_.inverseTransform(pt));
+        return tssPtr_->calcInside(pts)[0];
     }
     return false;
 }
+
+
+void Foam::immersedStl::write(Ostream& os) const
+{
+    const searchableSurface& ss(stlMesh_);
+    writeEntry(os, "file", fileName(ss.name()));
+}
+
 // ************************************************************************* //

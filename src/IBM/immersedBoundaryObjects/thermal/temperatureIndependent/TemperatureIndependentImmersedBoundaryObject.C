@@ -33,12 +33,12 @@ template<class ImmersedType>
 Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::
 TemperatureIndependentImmersedBoundaryObject
 (
-    const polyMesh& mesh,
+    const polyPatch& patch,
     const dictionary& dict,
     const dictionary& stateDict
 )
 :
-    ImmersedType(mesh, dict, stateDict)
+    ImmersedType(patch, dict, stateDict)
 {}
 
 
@@ -51,48 +51,5 @@ Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-template<class ImmersedType>
-void Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::status() const
-{
-    ImmersedType::status();
-}
-
-
-template<class ImmersedType>
-void Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::movePoints()
-{
-    ImmersedType::movePoints();
-}
-
-
-template<class ImmersedType>
-bool Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::read
-(
-    const dictionary& dict
-)
-{
-    return ImmersedType::read(dict);
-}
-
-
-template<class ImmersedType>
-void Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::write
-(
-    Ostream& os
-) const
-{
-    ImmersedType::write(os);
-}
-
-
-template<class ImmersedType>
-void Foam::TemperatureIndependentImmersedBoundaryObject<ImmersedType>::write
-(
-    dictionary& dict
-) const
-{
-    ImmersedType::write(dict);
-}
 
 // ************************************************************************* //

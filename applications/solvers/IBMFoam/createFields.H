@@ -86,13 +86,10 @@ volScalarField K("K", 0.5*magSqr(U));
 
 dimensionedScalar initialMass = fvc::domainIntegrate(rho);
 
-immersedBoundaryObjectListSolver IBM(mesh);
-IBM.add(U);
-
-if (IBM.thermalForcingNeeded())
-{
-    IBM.add(thermo.he());
-}
+immersedBoundaryObjectListSolver& IBM
+(
+    immersedBoundaryObjectListSolver::New(mesh)
+);
 
 #include "createMRF.H"
 #include "createFvModels.H"

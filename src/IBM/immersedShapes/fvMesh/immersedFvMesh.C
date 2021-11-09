@@ -29,6 +29,7 @@ License
 #include "wedgePolyPatch.H"
 #include "emptyPolyPatch.H"
 #include "processorPolyPatch.H"
+#include "globalPolyPatch.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -67,70 +68,31 @@ Foam::immersedFvMesh::immersedFvMesh
         )
     ),
     fvMesh_(fvMeshPtr_()),
-    fullTriMeshPtr_(nullptr)
+    patchName_(dict.lookupOrDefault<word>("patchName", this->name_))
 {
     read(dict);
-
-    const polyBoundaryMesh& bMesh = fvMesh_.boundaryMesh();
-    List<wordRe> names;
-    List<wordRe> allNames(bMesh.names());
-    if (dict.found("patchName"))
-    {
-        names.append(dict.lookup<wordRe>("patchName"));
-    }
-    else
-    {
-        names.append(List<wordRe>(bMesh.names()));
-    }
-
-    labelHashSet patches(bMesh.patchSet(names));
-    labelHashSet allPatches(bMesh.patchSet(allNames));
-    forAll(bMesh, patchi)
-    {
-        const polyPatch& patch = bMesh[patchi];
-        if
-        (
-            isA<emptyPolyPatch>(patch)
-         || isA<wedgePolyPatch>(patch)
-        )
-        {
-            patches.unset(patch.index());
-        }
-        else if (isA<processorPolyPatch>(patch))
-        {
-            allPatches.unset(patch.index());
-            patches.unset(patch.index());
-        }
-    }
-
-    fullTriMeshPtr_ = new triSurface(triangulate(bMesh, allPatches));
-    tssPtr_.set(new triSurfaceSearch(*fullTriMeshPtr_));
-
-    autoPtr<triSurface> tri(new triSurface(triangulate(bMesh, patches)));
-    patchPtr_.set
-    (
-        new standAlonePatch
-        (
-            move(tri->faces()),
-            move(tri->points())
-        )
-    );
-
-    //- points0_ are not used
-    points0_.clear();
-    writeVTK();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::immersedFvMesh::~immersedFvMesh()
-{
-    deleteDemandDrivenData(fullTriMeshPtr_);
-}
+{}
 
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedFvMesh::createPatch() const
+{
+    const polyBoundaryMesh& bMesh = fvMesh_.boundaryMesh();
+    globalPolyPatch gpp(dictionary(), bMesh[patchName_]);
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(gpp.globalPatch())
+    );
+}
+
 
 Foam::autoPtr<Foam::triSurface> Foam::immersedFvMesh::triangulate
 (
@@ -184,36 +146,18 @@ Foam::autoPtr<Foam::triSurface> Foam::immersedFvMesh::triangulate
 }
 
 
-void Foam::immersedFvMesh::movePoints()
+void Foam::immersedFvMesh::movePoints(const pointField& points)
 {
-    faceCentresOld_ = patchPtr_->faceCentres();
-
-    List<wordRe> names(1, wordRe(this->object_.patchName()));
-    const polyBoundaryMesh& bMesh(fvMesh_.boundaryMesh());
-    labelHashSet patches(bMesh.patchSet(names));
-
-    List<wordRe> allNames(bMesh.names());
-    labelHashSet allPatches(bMesh.patchSet(allNames));
-    forAll(bMesh, patchi)
-    {
-        const polyPatch& patch = bMesh[patchi];
-        if (isA<processorPolyPatch>(patch))
-        {
-            allPatches.unset(patch.index());
-        }
-    }
-
-    fullTriMeshPtr_ = triangulate(bMesh, allPatches).ptr();
-    tssPtr_.reset(new triSurfaceSearch(*fullTriMeshPtr_));
-    autoPtr<triSurface> tri(triangulate(bMesh, patches));
-    patchPtr_() =
-        PrimitivePatch<faceList, const pointField&>
+    const polyBoundaryMesh& bMesh = fvMesh_.boundaryMesh();
+    globalPolyPatch gpp(dictionary(), bMesh[patchName_]);
+    const_cast<pointField&>(points) = gpp.globalPatch().points();
+    this->centre_ = sum
         (
-            tri->faces(),
-            tri->points()
-        );
+            fvMesh_.C().primitiveField()
+           *fvMesh_.V().field()
+        )/sum(fvMesh_.V().field());
 
-    bb_ = boundBox(fullTriMeshPtr_->points());
+    bb_ = boundBox(fvMesh_.points());
     if (ai_ != -1)
     {
         bb_.min()[ai_] = -great;
@@ -247,14 +191,19 @@ Foam::immersedFvMesh::calcInside(const pointField& points) const
     {
         return insidePoints;
     }
-    pi = 0;
 
-
-    boolList inside(tssPtr_->calcInside(validPoints));
+    boolList inside(validPoints.size());
 
     forAll(inside, i)
     {
-        if(inside[i]) // Flipped orientation
+        inside[i] = fvMesh_.findCell(validPoints[i]) >= 0;
+    }
+    reduce(inside, sumOp<boolList>());
+
+    pi = 0;
+    forAll(inside, i)
+    {
+        if (inside[i])
         {
             insidePoints[pi++] = insidePoints[i];
         }
@@ -264,13 +213,25 @@ Foam::immersedFvMesh::calcInside(const pointField& points) const
 }
 
 
+Foam::diagTensor Foam::immersedFvMesh::momentOfInertia() const
+{
+    NotImplemented;
+    return diagTensor(great, great, great);
+}
+
+
 bool Foam::immersedFvMesh::inside(const point& pt) const
 {
     if (bb_.contains(pt))
     {
-        pointField pts(1, pt);
-        return tssPtr_->calcInside(pts)[0];
+        return returnReduce(fvMesh_.findCell(pt) >= 0, orOp<bool>());
     }
     return false;
 }
+
+
+void Foam::immersedFvMesh::write(Ostream& os) const
+{}
+
+
 // ************************************************************************* //

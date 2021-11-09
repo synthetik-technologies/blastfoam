@@ -67,6 +67,7 @@ Foam::immersedRectangle::immersedRectangle
 
     p4[xi_] = -L_/2.0;
     p4[yi_] = H_/2.0;
+    points_ = List<point>({p1, p2, p3, p4});
 
     boundBox bb(pMesh_.points());
     scalar minE(returnReduce(bb.min()[ei_], minOp<scalar>()));
@@ -76,23 +77,6 @@ Foam::immersedRectangle::immersedRectangle
     origBb_.max()[ei_] = maxE;
     origBb_.min() = p1;
     origBb_.min()[ei_] = minE;
-
-    points0_.append(discretizeLine(p1, p2));
-    points0_.append(discretizeLine(p2, p3));
-    points0_.append(discretizeLine(p3, p4));
-    points0_.append(discretizeLine(p4, p1));
-
-    List<face> faces;
-    if (ai_ != -1)
-    {
-        extrudeAxi(points0_, faces);
-    }
-    else
-    {
-        extrude2D(points0_, faces);
-    }
-    patchPtr_.set(new standAlonePatch(faces, points0_));
-    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -103,6 +87,28 @@ Foam::immersedRectangle::~immersedRectangle()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedRectangle::createPatch() const
+{
+    pointField points;
+    points.append(discretizeLine(points_[0], points_[1]));
+    points.append(discretizeLine(points_[1], points_[2]));
+    points.append(discretizeLine(points_[2], points_[3]));
+    points.append(discretizeLine(points_[3], points_[0]));
+
+    List<face> faces;
+    if (ai_ != -1)
+    {
+        extrudeAxi(points, faces);
+    }
+    else
+    {
+        extrude2D(points, faces);
+    }
+    return autoPtr<standAlonePatch>(new standAlonePatch(faces, points));
+}
+
 
 Foam::labelList
 Foam::immersedRectangle::calcInside(const pointField& points) const
@@ -150,6 +156,13 @@ bool Foam::immersedRectangle::inside(const point& pt) const
         }
     }
     return false;
+}
+
+
+void Foam::immersedRectangle::write(Ostream& os) const
+{
+    writeEntry(os, "L", L_);
+    writeEntry(os, "H", H_);
 }
 
 

@@ -54,8 +54,8 @@ class immersedBoundaryObjectListSolver;
 
 typedef MeshObject
 <
-    fvMesh,
-    UpdateableMeshObject,
+    polyMesh,
+    PatchMeshObject,
     immersedBoundaryObjectListSolver
 > ImmersedBoundaryObjectListSolverObject;
 /*---------------------------------------------------------------------------*\
@@ -71,17 +71,16 @@ class immersedBoundaryObjectListSolver
     // Private Data
 
         //- Const reference to mesh
-        const fvMesh& mesh_;
-
-        //- Maximum number of times to expand cell neighbours
-        label maxLevel_ = 2;
+        const polyMesh& mesh_;
 
         //- Immersed boundary dictionary
-        IOdictionary ibmDict_;
+        const dictionary& ibmDict_;
 
-        //- Six DoF motion object
+        //- Current state dictionary
+        dictionary stateDict_;
+
+        //- Immersed objects
         PtrListDictionary<immersedBoundaryObject> objects_;
-
 
         //- Switch for test-mode in which only the
         //  gravitational body-force is applied
@@ -91,7 +90,7 @@ class immersedBoundaryObjectListSolver
         label curTimeIndex_;
 
         //- Cell Types
-        volScalarField cellTypes_;
+        autoPtr<volScalarField> cellTypesPtr_;
 
         //- Cell Types
         autoPtr<volScalarField> objectIDPtr_;
@@ -105,6 +104,15 @@ class immersedBoundaryObjectListSolver
         //- Return the effective viscous stress (laminar + turbulent).
         tmp<volSymmTensorField> devTau(const word& phaseName) const;
 
+        //- Return the cell type field
+        volScalarField& cellTypes();
+
+        //- Return the objectID field
+        volScalarField& objectIDs();
+
+        //- Lookup or create the ibmProperties dictionary
+        const dictionary& ibmProperties(const polyMesh& mesh) const;
+
 public:
 
     //- Runtime type information
@@ -116,7 +124,7 @@ public:
         //- Construct from polyMesh and dictionary
         immersedBoundaryObjectListSolver
         (
-            const fvMesh&
+            const polyMesh&
         );
 
         //- Disallow default bitwise copy construction
@@ -132,8 +140,14 @@ public:
 
     // Member Functions
 
-        //- Return the six DoF motion object
-        const PtrListDictionary<immersedBoundaryObject>& objects() const;
+        //- Add object by name and return a reference
+        const immersedBoundaryObject& addObject(const polyPatch& patch);
+
+        //- Return the list of immersed objects
+        const PtrListDictionary<immersedBoundaryObject>& objects() const
+        {
+            return objects_;
+        }
 
         //- Return if thermal forcing is needed
         bool thermalForcingNeeded() const
@@ -150,12 +164,25 @@ public:
         //- Update
         virtual void updateMesh(const mapPolyMesh& mpm);
 
-        //- Add fields to correct
-        template<class Type>
-        void add(GeometricField<Type, fvPatchField, volMesh>& f);
+        //- Reordered/removed trailing patches. If validBoundary call is parallel
+        //  synced and all add the same patch with same settings
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        )
+        {}
 
-        //- Update boundaries
-        void correctBoundaryConditions();
+        //- Inserted patch at patchi
+        virtual void addPatch(const label patchi)
+        {}
+
+
+        //- Set the cellTypes field
+        void setCellTypes();
+
+        //- Set the objectID field
+        void setObjectIDs();
 
         //- Return momentum forcing
         template<class Type>
@@ -217,7 +244,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "immersedBoundaryObjectListSolverTemplates.C"
+    #include "immersedBoundaryObjectListSolverTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

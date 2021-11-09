@@ -57,12 +57,6 @@ class immersedBox
         // Lengths of sides
         vector L_;
 
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
-        {
-            return true;
-        }
-
         //- Does the orientation need to be read
         virtual bool needOrientation() const
         {
@@ -94,6 +88,9 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
 
@@ -116,8 +113,11 @@ public:
         (
             const vector& L,
             pointField& points,
-            List<labelledTri>& faces
+            List<face>& faces
         );
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

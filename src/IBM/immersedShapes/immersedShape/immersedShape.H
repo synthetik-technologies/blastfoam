@@ -65,14 +65,14 @@ protected:
         //- Reference to the immersed boundary object
         const immersedBoundaryObject& object_;
 
+        //- Name of shape
+        word name_;
+
+        //- Dictionary used to construct the object
+        dictionary dict_;
+
         //- Desired mesh size
         scalar dx_;
-
-        //- Points
-        pointField points0_;
-
-        //- Old face centres
-        pointField faceCentresOld_;
 
         //- Used geometric dimensions
         vector geometricD_;
@@ -88,9 +88,6 @@ protected:
             //- Angle of wedge
             scalar angle_;
 
-            //- Scale factor used to scale mass
-            scalar scale_;
-
 
         //- Empty geometric directions index
         label ei_;
@@ -101,20 +98,14 @@ protected:
         //- "y" direction
         label yi_;
 
-        //- Centre of mass
-        vector centreOfMass_;
+        //- Centre of shape
+        vector centre_;
 
         //- Orientation of shape
         tensor orientation_;
 
-        //- Name of shape
-        word name_;
-
         //- Write sample when mesh has been created
         Switch write_;
-
-        //- Immersed boundary trisurface mesh created from shape
-        autoPtr<standAlonePatch> patchPtr_;
 
         //- Bounding boundBox
         boundBox bb_;
@@ -158,25 +149,28 @@ protected:
             ) const;
 
             //- Refine a 3-D triMesh
-            void refine3D(triSurface& triMesh);
+            void refine3D(triSurface& triMesh) const;
 
             //- Adjust points
-            virtual bool adjustPoints(pointField& points)
+            virtual bool adjustPoints(pointField& points) const
             {
                 return false;
             }
 
-            //- Does the centre of mass need to be read
-            virtual bool needCentreOfMass() const = 0;
+            //- Does the centre need to be read
+            virtual bool needCentre() const
+            {
+                return true;
+            }
 
             //- Does the orientation need to be read
-            virtual bool needOrientation() const = 0;
-
-        //- Read centre of mass and orientation if needed
-        void read(const dictionary&);
+            virtual bool needOrientation() const
+            {
+                return true;
+            }
 
         //- Correct the centre of mass for 2D cases
-        void correctCentreOfMass();
+        void correctCentre();
 
 
 public:
@@ -262,38 +256,8 @@ public:
                 return name_;
             }
 
-            //- Return the scale factor
-            const scalar& scale() const
-            {
-                return scale_;
-            }
-
-            //- Return points
-            const pointField& points() const
-            {
-                return patchPtr_->points();
-            }
-
-            //- Return old points
-            const pointField& faceCentresOld() const
-            {
-                return faceCentresOld_;
-            }
-
             //- Return moment of inertia
             virtual diagTensor momentOfInertia() const = 0;
-
-            //- Return the triSurface
-            const standAlonePatch& patch() const
-            {
-                return patchPtr_();
-            }
-
-            //- Access to the triSurface
-            standAlonePatch& patch()
-            {
-                return patchPtr_();
-            }
 
             //- Return the bounding box
             const boundBox& bounds() const
@@ -301,10 +265,10 @@ public:
                 return bb_;
             }
 
-            //- Return the shapes centre of mass
-            virtual vector centreOfMass() const
+            //- Return the shapes centre
+            virtual vector centre() const
             {
-                return centreOfMass_;
+                return centre_;
             }
 
             //- Return the initial orientation of the shape
@@ -312,6 +276,9 @@ public:
             {
                 return orientation_;
             }
+
+            //- Return a patch created with the given geometry
+            virtual autoPtr<standAlonePatch> createPatch() const = 0;
 
 
         //- Return bool list if list of points is inside the object
@@ -321,10 +288,10 @@ public:
         virtual bool inside(const point& pt) const = 0;
 
         //- Move the triMesh
-        virtual void movePoints();
+        virtual void movePoints(const pointField& points);
 
         //- Zero empty direction
-        vector zeroDir(const vector& v) const
+        inline vector zeroDir(const vector& v) const
         {
             vector vNew(v);
             if (ei_ != -1)
@@ -395,8 +362,12 @@ public:
             const bool addEnd = false
         ) const;
 
-        //-  Write the mesh VTK
-        void writeVTK() const;
+
+        //- Read centre of mass and orientation if needed
+        virtual void read(const dictionary&);
+
+        //- Read centre of mass and orientation if needed
+        virtual void write(Ostream&) const = 0;
 };
 
 

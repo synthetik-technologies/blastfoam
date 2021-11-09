@@ -31,12 +31,6 @@ const Foam::fluxScheme& Foam::compressibleSystem::flux() const
 }
 
 
-Foam::fluxScheme& Foam::compressibleSystem::flux()
-{
-    return fluxScheme_();
-}
-
-
 const Foam::momentumTransportModel&
 Foam::compressibleSystem::turbulence() const
 {

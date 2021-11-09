@@ -56,7 +56,7 @@ class atmosphereModel
 protected:
 
     //- Reference to atmosphereProperties
-    const dictionary& dict_;
+    dictionary dict_;
 
     //- Const reference to mesh
     const fvMesh& mesh_;
@@ -68,7 +68,7 @@ protected:
     vector normal_;
 
     //- Elevation of lowest point in mesh
-    dimensionedScalar groundElevation_;
+    dimensionedScalar baseElevation_;
 
     //- Height field
     volScalarField h_;
@@ -102,6 +102,9 @@ public:
 
     // Constructor
     atmosphereModel(const fvMesh& mesh, const dictionary& dict);
+
+    // Constructor
+    atmosphereModel(const fvMesh& mesh, const scalar elevation);
 
 
     //- Destructor

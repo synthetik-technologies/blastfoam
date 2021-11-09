@@ -59,6 +59,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        integrator->preUpdateMesh();
+
         //- Refine the mesh
         mesh.refine();
 
@@ -74,13 +76,8 @@ int main(int argc, char *argv[])
         mesh.update();
 
         integrator->integrate();
-        integrator->clearODEFields();
 
-        //- Clear the flux scheme
-        fluid.flux().clear();
-
-        //- Update the fvModels
-        models.correct();
+        integrator->clear();
 
         Info<< "max(p): " << max(p).value()
             << ", min(p): " << min(p).value() << endl;

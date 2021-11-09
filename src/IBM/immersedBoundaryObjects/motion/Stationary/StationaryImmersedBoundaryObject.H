@@ -57,33 +57,6 @@ class StationaryImmersedBoundaryObject
 :
     public ImmersedType
 {
-    // Private data
-
-        //- Orientation of the object
-        tensor orientation_;
-
-    // Private Functions
-
-        //- Apply rotation tensors to Q0 for the given torque (pi) and deltaT
-        //  and return the rotated Q and pi as a tuple
-        virtual Tuple2<tensor, vector> rotate
-        (
-            const tensor& Q0,
-            const vector& pi,
-            const scalar deltaT
-        ) const;
-
-        //- Apply the restraints to the object
-        virtual void applyRestraints();
-
-        //- Update and relax accelerations from the force and torque
-        virtual void updateAcceleration
-        (
-            const vector& fGlobal,
-            const vector& tauGlobal
-        );
-
-
 public:
 
     // Constructors
@@ -91,7 +64,7 @@ public:
         //- Construct from constant and state dictionaries
         StationaryImmersedBoundaryObject
         (
-            const polyMesh& mesh,
+            const polyPatch& patch,
             const dictionary& dict,
             const dictionary& stateDict
         );
@@ -104,61 +77,43 @@ public:
 
         // Access
 
-            //- Finish setting up the object
-            virtual void initialize();
-
             //- Is the object moving
             virtual bool moving() const
             {
                 return false;
             }
 
-            //- Return the current centre of rotation
-            virtual point centreOfRotation() const;
+            //- Return the centre
+            virtual point centre() const;
 
-            //- Return the current centre of mass
-            virtual point centreOfMass() const;
+            //- Return the mass of the object
+            virtual scalar mass() const;
 
-            //- Return the translational constraint tensor
-            virtual tensor tConstraints() const;
-
-            //- Return the rotational constraint tensor
-            virtual tensor rConstraints() const;
-
-            //- Return the orientation tensor, Q.
-            //  globalVector = Q & bodyLocalVector
-            //  bodyLocalVector = Q.T() & globalVector
-            virtual tensor orientation() const;
-
-            //- Return the angular velocity in the global frame
-            virtual vector omega() const;
-
-            virtual vector momentArm() const;
-
-            //- Return the current velocity
-            virtual vector v() const;
-
-            //- Return the inertia tensor
+            //- Return the rotated inertia tensor
             virtual diagTensor momentOfInertia() const;
 
 
         // Update state
 
             //- Report the status of the motion
-            virtual void status() const;
-
-            //- Store the motion state at the beginning of the time-step
-            virtual void newTime()
-            {}
+            virtual void status(const bool print = true) const;
 
 
         // Transformations
 
             //- Return the velocity at a position
-            virtual vector velocity(const vector& pt) const;
+            virtual vector v(const vector& pt) const;
 
             //- Return the velocity at a list of position
             virtual tmp<vectorField> velocity(const pointField& pt) const;
+
+            //- Return the velocity at a list of position
+            virtual tmp<vectorField> velocity() const;
+
+            //- Return the orientation tensor, Q.
+            //  globalVector = Q & bodyLocalVector
+            //  bodyLocalVector = Q.T() & globalVector
+            virtual tensor orientation() const;
 
             //- Transform the given initial state point by the current motion
             //  state
@@ -175,9 +130,6 @@ public:
             //- Transform the given initial state pointField by the current
             //  motion state
             virtual tmp<pointField> inverseTransform(const pointField&) const;
-
-            //- Move boundary points
-            virtual void movePoints();
 
 
         //- Write

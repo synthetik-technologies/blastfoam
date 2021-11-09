@@ -74,7 +74,7 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::rotationTensorZ
 
 
 template<class ImmersedType>
-inline const Foam::PtrList<Foam::immersedBoundaryObjectRestraint>&
+inline const Foam::PtrList<Foam::objectMotionRestraint>&
 Foam::MovingImmersedBoundaryObject<ImmersedType>::restraints() const
 {
     return restraints_;
@@ -82,7 +82,7 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::restraints() const
 
 
 template<class ImmersedType>
-inline const Foam::PtrList<Foam::immersedBoundaryObjectConstraint>&
+inline const Foam::PtrList<Foam::objectMotionConstraint>&
 Foam::MovingImmersedBoundaryObject<ImmersedType>::constraints() const
 {
     return constraints_;
@@ -162,10 +162,19 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::centreOfRotation()
     return motionState_.centreOfRotation();
 }
 
+
+template<class ImmersedType>
+inline bool
+Foam::MovingImmersedBoundaryObject<ImmersedType>::report() const
+{
+    return report_;
+}
+
+
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class ImmersedType>
-inline const Foam::movingImmersedBoundaryObjectState&
+inline const Foam::objectMotionState&
 Foam::MovingImmersedBoundaryObject<ImmersedType>::state() const
 {
     return motionState_;
@@ -176,14 +185,6 @@ template<class ImmersedType>
 inline void Foam::MovingImmersedBoundaryObject<ImmersedType>::newTime()
 {
     motionState0_ = motionState_;
-}
-
-
-template<class ImmersedType>
-inline const Foam::pointField&
-Foam::MovingImmersedBoundaryObject<ImmersedType>::points0() const
-{
-    return points0_;
 }
 
 // ************************************************************************* //

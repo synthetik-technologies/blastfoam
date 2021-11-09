@@ -275,6 +275,8 @@ void Foam::compressibleSystem::postUpdate()
         UEqn.solve();
         constraints().constrain(U_);
 
+        rhoU_ = rho()*U_;
+
         //- Update internal energy
         he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
@@ -295,15 +297,23 @@ void Foam::compressibleSystem::postUpdate()
         constraints().constrain(eEqn);
         eEqn.solve();
         constraints().constrain(he());
+
+        rhoE_ = rho()*(he() + 0.5*magSqr(U_));
     }
 
     if (turbulence_.valid())
     {
         turbulence_->correct();
     }
-
-    encode();
     this->thermo().correct();
+    constraints().constrain(thermo().p());
+    thermo().p().correctBoundaryConditions();
+}
+
+
+void Foam::compressibleSystem::clear()
+{
+    fluxScheme_->clear();
 }
 
 

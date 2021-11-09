@@ -98,9 +98,88 @@ Foam::immersedBoundaryObjectListSolver::devTau(const word& phaseName) const
     return volSymmTensorField::New
     (
         "devTau",
-        mesh_,
+        dynamicCast<const fvMesh&>(mesh_),
         dimensionedSymmTensor(dimViscosity*dimVelocity/dimLength, Zero)
     );
+}
+
+
+Foam::volScalarField& Foam::immersedBoundaryObjectListSolver::cellTypes()
+{
+    if (!cellTypesPtr_.valid())
+    {
+        cellTypesPtr_.set
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "cellTypes",
+                    mesh_.time().timeName(),
+                    mesh_,
+                    IOobject::NO_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                dynamicCast<const fvMesh&>(mesh_),
+                0.0
+            )
+        );
+    }
+    return cellTypesPtr_();
+}
+
+
+Foam::volScalarField& Foam::immersedBoundaryObjectListSolver::objectIDs()
+{
+    if (!objectIDPtr_.valid())
+    {
+        objectIDPtr_.set
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "objectIDs",
+                    mesh_.time().timeName(),
+                    mesh_,
+                    IOobject::NO_READ,
+                    IOobject::AUTO_WRITE
+                ),
+                dynamicCast<const fvMesh&>(mesh_),
+                -1
+            )
+        );
+    }
+    return objectIDPtr_();
+}
+
+
+const Foam::dictionary&
+Foam::immersedBoundaryObjectListSolver::ibmProperties
+(
+    const polyMesh& mesh
+) const
+{
+    const Time& runTime = mesh.time();
+    if (!runTime.foundObject<IOdictionary>("immersedBoundaryProperties"))
+    {
+        IOdictionary* ibmPropertiesPtr =
+            new IOdictionary
+            (
+                IOobject
+                (
+                    "immersedBoundaryProperties",
+                    mesh.time().constant(),
+                    runTime,
+                    IOobject::MUST_READ,
+                    IOobject::NO_WRITE // Handles internally
+                )
+            );
+        ibmPropertiesPtr->store(ibmPropertiesPtr);
+    }
+
+    return
+        runTime.lookupObject<IOdictionary>("immersedBoundaryProperties");
 }
 
 
@@ -108,7 +187,7 @@ Foam::immersedBoundaryObjectListSolver::devTau(const word& phaseName) const
 
 Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
 (
-    const fvMesh& mesh
+    const polyMesh& mesh
 )
 :
     ImmersedBoundaryObjectListSolverObject
@@ -124,33 +203,11 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
         )
     ),
     mesh_(mesh),
-    ibmDict_
-    (
-        IOobject
-        (
-            "immersedBoundaryProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE // Handles internally
-        )
-    ),
+    ibmDict_(ibmProperties(mesh)),
     objects_(0),
     test_(false),
     curTimeIndex_(-1),
-    cellTypes_
-    (
-        IOobject
-        (
-            "cellType",
-            mesh_.time().timeName(),
-            mesh_,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh_,
-        0.0
-    ),
+    cellTypesPtr_(),
     objectIDPtr_(),
     thermalForcingNeeded_(false),
     collision_()
@@ -165,77 +222,11 @@ Foam::immersedBoundaryObjectListSolver::immersedBoundaryObjectListSolver
         IOobject::NO_WRITE,
         false
     );
-
-    const dictionary& objectDict(ibmDict_.subDict("objects"));
-    wordList objects(objectDict.toc());
-    objects_.resize(objects.size());
-    bool moving = false;
-
-    dictionary stateDict;
     if (stateDictIO.typeHeaderOk<IOdictionary>(true))
     {
-        stateDict = IOdictionary(stateDictIO);
+        stateDict_ = IOdictionary(stateDictIO);
     }
-    else
-    {
-        stateDict = objectDict;
-    }
-Info<<objects<<endl;
-    forAll(objects, i)
-    {
-        Info<<i<<endl;
-        objects_.set
-        (
-            i,
-            objects[i],
-            immersedBoundaryObject::New
-            (
-                mesh,
-                objectDict.subDict(objects[i]),
-                stateDict.subDict(objects[i])
-            ).ptr()
-        );
-        objects_[i].initialize();
-        objects_[i].setInternal(cellTypes_, 2.0);
-        objects_[i].setBoundary(cellTypes_, 1.0);
-        thermalForcingNeeded_ =
-            thermalForcingNeeded_ || objects_[i].temperatureDependent();
-        moving = moving || objects_[i].moving();
-        Info<<i<<endl;
-        Info<<objects_[i].name()<<endl;
-    }
-    if (moving)
-    {
-        collision_.set
-        (
-            collisionModel::New
-            (
-                mesh_,
-                objects_,
-                ibmDict_.subDict("collisionModel")
-            ).ptr()
-        );
-    }
-    if (objects_.size() > 1)
-    {
-        objectIDPtr_.set
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "objectID",
-                    mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh,
-                dimensionedScalar("0", dimless, 0.0)
-            )
-        );
-    }
-    Info<<objects_[0].name()<<endl;
+
 }
 
 
@@ -247,22 +238,82 @@ Foam::immersedBoundaryObjectListSolver::~immersedBoundaryObjectListSolver()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::PtrListDictionary<Foam::immersedBoundaryObject>&
-Foam::immersedBoundaryObjectListSolver::objects() const
+const Foam::immersedBoundaryObject&
+Foam::immersedBoundaryObjectListSolver::addObject(const polyPatch& patch)
 {
-    Info<<objects_[0].name()<<endl;
-    return objects_;
+    const word name = patch.name();
+
+    // If the object in the time object registry, using the same name
+    // is not the same data as the owner mesh, look up that mesh,
+    // and return the given object.
+    // This removes duplicate objects when temporary meshes are created
+    if (mesh_.time().foundObject<polyMesh>(mesh_.name()))
+    {
+        if (&mesh_ != &mesh_.time().lookupObject<polyMesh>(mesh_.name()))
+        {
+            const polyMesh& mesh =
+                mesh_.time().lookupObject<polyMesh>(mesh_.name());
+            return
+                immersedBoundaryObjectListSolver::New(mesh).objects()[name];
+        }
+    }
+
+    // Return and existing object
+    if (objects_.found(name))
+    {
+        return objects_[name];
+    }
+
+    // No existing object was found so create one
+    const dictionary& objectDict
+    (
+        ibmDict_.subDict("objects").subDict(name)
+    );
+
+    if (stateDict_.empty())
+    {
+        stateDict_ = ibmDict_.subDict("objects");
+    }
+
+    label i = objects_.size();
+    objects_.resize(i + 1);
+
+    objects_.set
+    (
+        i,
+        name,
+        immersedBoundaryObject::New
+        (
+            patch,
+            objectDict,
+            stateDict_.subDict(name)
+        ).ptr()
+    );
+
+    thermalForcingNeeded_ =
+        thermalForcingNeeded_ || objects_[i].temperatureDependent();
+
+    bool moving = objects_[i].moving();
+
+    if (moving && !collision_.valid())
+    {
+        collision_.set
+        (
+            collisionModel::New
+            (
+                mesh_,
+                objects_,
+                ibmDict_.subDict("collisionModel")
+            ).ptr()
+        );
+    }
+    return objects_[i];
 }
+
 
 
 void Foam::immersedBoundaryObjectListSolver::solve()
 {
-    cellTypes_ = Zero;
-    if (objectIDPtr_.valid())
-    {
-        objectIDPtr_() = -1.0;
-    }
-
     const Time& t = mesh_.time();
 
     // Store the motion state at the beginning of the time-stepbool
@@ -278,24 +329,19 @@ void Foam::immersedBoundaryObjectListSolver::solve()
     const volScalarField& p = mesh_.lookupObject<volScalarField>("p");
     volSymmTensorField sigma(devTau(word::null));
 
+
     forAll(objects_, i)
     {
-        objects_[i].setInternal(cellTypes_, 2.0);
-        objects_[i].setBoundary(cellTypes_, 1.0);
-        if (objectIDPtr_.valid())
-        {
-            objects_[i].setInternal(objectIDPtr_(), scalar(i + 1));
-            objects_[i].setBoundary(objectIDPtr_(), scalar(i + 1));
-        }
-
         // Zero forces
-        objects_[i].force() = Zero;
         objects_[i].forceExt() = Zero;
         objects_[i].momentExt() = Zero;
 
-        objects_[i].force() +=
+        objects_[i].force() =
             objects_[i].Sf()*objects_[i].patchExternalField(p)
-          + (objects_[i].Sf() & objects_[i].patchExternalField(sigma));
+          + (
+                objects_[i].Sf()
+              & objects_[i].patchExternalField(sigma)
+            );
 
         objects_[i].update();
 
@@ -322,23 +368,40 @@ void Foam::immersedBoundaryObjectListSolver::solve()
 
         objects_[i].solve();
 
-        objects_[i].movePoints();
-
-        if (objects_[i].report())
+        if (Pstream::master())
         {
             objects_[i].status();
         }
     }
-
-//     correctBoundaryConditions();
+    setCellTypes();
+    setObjectIDs();
 }
 
 
-void Foam::immersedBoundaryObjectListSolver::correctBoundaryConditions()
+void Foam::immersedBoundaryObjectListSolver::setCellTypes()
 {
+    volScalarField& cellT(cellTypes());
+    cellT == Zero;
     forAll(objects_, i)
     {
-        objects_[i].setValues();
+        objects_[i].setInternal(cellT, 2.0, true);
+        objects_[i].setBoundary(cellT, 1.0);
+    }
+}
+
+
+void Foam::immersedBoundaryObjectListSolver::setObjectIDs()
+{
+    if (objects_.size() < 2)
+    {
+        return;
+    }
+    volScalarField& objectID(objectIDs());
+    objectID == -1;
+    forAll(objects_, i)
+    {
+        objects_[i].setInternal(objectID, scalar(i + 1), true);
+        objects_[i].setBoundary(objectID, scalar(i + 1));
     }
 }
 
@@ -427,7 +490,6 @@ bool Foam::immersedBoundaryObjectListSolver::writeObject
 
 bool Foam::immersedBoundaryObjectListSolver::write(const bool write) const
 {
-    Info<<"write"<<endl;
     IOdictionary dict
     (
         IOobject

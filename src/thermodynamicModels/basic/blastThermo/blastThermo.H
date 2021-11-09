@@ -240,6 +240,11 @@ public:
             return residualRho_;
         }
 
+        virtual dimensionedScalar residualAlphaRho() const
+        {
+            return residualAlpha()*residualRho();
+        }
+
         // Access functions
 
             const word& phaseName() const

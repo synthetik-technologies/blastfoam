@@ -221,6 +221,11 @@ public:
             return residualRho_;
         }
 
+        virtual dimensionedScalar residualAlphaRho() const
+        {
+            return residualAlpha()*residualRho();
+        }
+
         //- Return constant reference to density field
         const volScalarField& rho() const
         {

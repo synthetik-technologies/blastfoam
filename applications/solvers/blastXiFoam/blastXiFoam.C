@@ -97,10 +97,7 @@ int main(int argc, char *argv[])
         #include "ftEqn.H"
         #include "bEqn.H"
 
-        integrator->clearODEFields();
-
-        //- Clear the flux scheme
-        fluid.flux().clear();
+        integrator->clear();
 
         runTime.write();
 

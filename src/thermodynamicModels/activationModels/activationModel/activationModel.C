@@ -397,15 +397,30 @@ void Foam::activationModel::initializeModels()
       ? "rhoPhi"
       : IOobject::groupName("alphaRhoPhi", phaseName);
 
-    alphaRhoPtr_.set(&lambda_.mesh().lookupObject<volScalarField>(alphaRhoName));
-    alphaRhoPhiPtr_.set
-    (
-        &lambda_.mesh().lookupObject<surfaceScalarField>(alphaRhoPhiName)
-    );
-
-    forAll(detonationPoints_, i)
+    if (lambda_.mesh().foundObject<volScalarField>(alphaRhoName))
     {
-        detonationPoints_[i].check(alphaRhoPtr_());
+        alphaRhoPtr_.set
+        (
+            &lambda_.mesh().lookupObject<volScalarField>
+            (
+                alphaRhoName
+            )
+        );
+
+        forAll(detonationPoints_, i)
+        {
+            detonationPoints_[i].check(alphaRhoPtr_());
+        }
+    }
+    if (lambda_.mesh().foundObject<surfaceScalarField>(alphaRhoPhiName))
+    {
+        alphaRhoPhiPtr_.set
+        (
+            &lambda_.mesh().lookupObject<surfaceScalarField>
+            (
+                alphaRhoPhiName
+            )
+        );
     }
 }
 
@@ -417,6 +432,7 @@ Foam::vector Foam::activationModel::centerOfMass
     const fvMesh& mesh = alpha.mesh();
     scalarField Vtot(mesh.V()*alpha.primitiveField());
     vectorField m1(Vtot*mesh.C().primitiveField());
+
     scalar V(gSum(Vtot));
     if (V < small)
     {

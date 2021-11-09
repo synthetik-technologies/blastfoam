@@ -53,15 +53,15 @@ objects
         write yes;
     }
 
-    box1
-    {
-        type stationary;
-        shape rectangle;
-        L 2.0;
-        H 2.0;
-        centreOfMass (2.0 1.0 0.0);
-        dx $dx;
-    }
+//     box1
+//     {
+//         type stationary;
+//         shape rectangle;
+//         L 2.0;
+//         H 2.0;
+//         centreOfMass (2.0 1.0 0.0);
+//         dx $dx;
+//     }
 //     box2
 //     {
 //         type stationary;
@@ -80,16 +80,16 @@ objects
 //         centreOfMass (2.5 5.2 0.0);
 //         dx $dx;
 //     }
-//     cone
-//     {
-//         type stationary;
-//         shape triangle;
-//         dx 0.005;
-//         p1 (0.1 0 0);
-//         p2 (1.1 0.1763269807 0.0);
-//         p3 (1.1 0 0);
-//         write  yes;
-//     }
+    cone
+    {
+        type stationary;
+        shape triangle;
+        dx 0.005;
+        p1 (0.1 0 0);
+        p2 (1.1 0.1763269807 0.0);
+        p3 (1.1 0 0);
+        write  yes;
+    }
 
     //3d shapes
 //     ellipsoid

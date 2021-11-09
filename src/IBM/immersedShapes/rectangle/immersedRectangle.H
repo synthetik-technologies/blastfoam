@@ -60,20 +60,11 @@ class immersedRectangle
         //- Height
         scalar H_;
 
+        //- List of points
+        pointField points_;
+
         //- Bounding box of unmoved rectangle
         boundBox origBb_;
-
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
-        {
-            return true;
-        }
-
-        //- Does the orientation need to be read
-        virtual bool needOrientation() const
-        {
-            return true;
-        }
 
 
 public:
@@ -100,6 +91,9 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
 
@@ -115,6 +109,9 @@ public:
             dt[ei_] = 1.0/12.0*L_*H_*(sqr(L_) + sqr(H_));
             return dt;
         }
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

@@ -24,10 +24,13 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "MovingImmersedBoundaryObject.H"
-#include "immersedBoundaryObjectMotionSolver.H"
 #include "uniformDimensionedFields.H"
 #include "septernion.H"
 #include "IOstreams.H"
+#include "calcAngleFraction.H"
+#include "OFstream.H"
+#include "IOmanip.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -71,63 +74,46 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::applyRestraints()
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
 template<class ImmersedType>
-Foam::MovingImmersedBoundaryObject<ImmersedType>::
-MovingImmersedBoundaryObject
-(
-    const polyMesh& mesh,
-    const dictionary& dict,
-    const dictionary& stateDict
-)
-:
-    ImmersedType(mesh, dict, stateDict),
-    motionState_(stateDict),
-    motionState0_(),
-    restraints_(),
-    constraints_(),
-    tConstraints_(tensor::I),
-    rConstraints_(tensor::I),
-    initialCentreOfRotation_
-    (
-        dict.lookupOrDefault<vector>
+void
+Foam::MovingImmersedBoundaryObject<ImmersedType>::initializeState()
+{
+    if (!needToInitialize_)
+    {
+        return;
+    }
+
+    // Geometry scale factor (for wedges)
+    scale_ = calcAngleFraction(this->pMesh_);
+
+    // Scale the mass by the scale factor (axisymmetic)
+    mass_ *= scale_;
+
+    initialCentreOfRotation_ =
+        this->dict_.template lookupOrDefault<vector>
         (
             "initialCentreOfRotation",
-            this->initialCentreOfMass()
-        )
-    ),
-    momentOfInertia_(this->shape_->momentOfInertia()),
-    aRelax_(dict.lookupOrDefault<scalar>("accelerationRelaxation", 1.0)),
-    solver_(),
-    points0_(this->points())
-{
-    // Scale the mass by the scale factor (axisymmetic)
-    this->mass_ = readScalar(dict.lookup("mass"))*this->shape_->scale();
-    momentOfInertia_ *= this->mass();
+            this->shape_->centre()
+        );
+    initialCentreOfMass_ =
+        this->dict_.template lookupOrDefault<vector>
+        (
+            "initialCentreOfMass",
+            this->shape_->centre()
+        );
+    momentOfInertia_ = this->shape_->momentOfInertia()*mass_;
+    points0_ = this->points();
+    g_ =
+        this->pMesh_.template foundObject<uniformDimensionedVectorField>("g")
+      ? this->pMesh_.template lookupObject<uniformDimensionedVectorField>("g").value()
+      : Zero;
 
     Q() &= this->shape_->orientation();
 
-    if (!dict.found("centreOfRotation"))
+    if (!this->dict_.found("centreOfRotation"))
     {
-        centreOfRotation() = this->initialCentreOfMass();
+        centreOfRotation() = this->shape_->centre();
     }
-    solver_.set
-    (
-        immersedBoundaryObjectMotionSolver::New
-        (
-            dict.subDict("solver"),
-            *this,
-            motionState_,
-            motionState0_
-        ).ptr()
-    );
-
-    addRestraints(dict);
-
-    // Set constraints and initial centre of rotation
-    // if different to the centre of mass
-    addConstraints(dict);
 
     // If the centres of mass and rotation are different ...
 //     vector R(this->initialCentreOfMass() - this->initialCentreOfRotation());
@@ -144,17 +130,77 @@ MovingImmersedBoundaryObject
 //         }
 //     }
 
-    // Save the old-time motion state
-    motionState0_ = motionState_;
+    needToInitialize_ = false;
 }
 
 
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
 template<class ImmersedType>
-void Foam::MovingImmersedBoundaryObject<ImmersedType>::initialize()
+Foam::MovingImmersedBoundaryObject<ImmersedType>::
+MovingImmersedBoundaryObject
+(
+    const polyPatch& patch,
+    const dictionary& dict,
+    const dictionary& stateDict
+)
+:
+    ImmersedType(patch, dict, stateDict),
+    motionState_(stateDict),
+    motionState0_(),
+    restraints_(),
+    constraints_(),
+    tConstraints_(tensor::I),
+    rConstraints_(tensor::I),
+    initialCentreOfRotation_(Zero),
+    initialCentreOfMass_(Zero),
+    momentOfInertia_(great, great, great),
+    aRelax_
+    (
+        dict.lookupOrDefault<scalar>("accelerationRelaxation", 1.0)
+    ),
+    solver_(),
+    points0_(),
+    mass_(dict.lookup<scalar>("mass")),
+    g_(Zero),
+    scale_(-1),
+    report_(dict.lookupOrDefault<Switch>("report", true)),
+    needToInitialize_(true),
+    outputPtr_()
 {
-    ImmersedType::initialize();
-    movePoints();
-    this->shape_->writeVTK();
+    solver_.set
+    (
+        objectMotionSolver::New
+        (
+            dict.subDict("solver"),
+            *this,
+            motionState_,
+            motionState0_
+        ).ptr()
+    );
+
+    addRestraints(dict);
+
+    // Set constraints and initial centre of rotation
+    // if different to the centre of mass
+    addConstraints(dict);
+
+    // Save the old-time motion state
+    motionState0_ = motionState_;
+
+    if (dict.lookupOrDefault<Switch>("log", false))
+    {
+        fileName logFile
+        (
+            dict.lookupOrDefault<fileName>
+            (
+                "logFile",
+                IOobject::groupName(this->name(), "log")
+            )
+        );
+        outputPtr_.set(new OFstream(logFile));
+        logHeader(outputPtr_());
+    }
 }
 
 
@@ -167,6 +213,19 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+template<class ImmersedType>
+Foam::scalar Foam::MovingImmersedBoundaryObject<ImmersedType>::scale() const
+{
+    return scale_;
+}
+
+template<class ImmersedType>
+Foam::scalar Foam::MovingImmersedBoundaryObject<ImmersedType>::mass() const
+{
+    return mass_;
+}
+
 
 template<class ImmersedType>
 void Foam::MovingImmersedBoundaryObject<ImmersedType>::addRestraints
@@ -189,9 +248,8 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::addRestraints
                 restraints_.set
                 (
                     i++,
-                    immersedBoundaryObjectRestraint::New
+                    objectMotionRestraint::New
                     (
-                        this->pMesh_,
                         iter().keyword(),
                         iter().dict()
                     )
@@ -228,7 +286,7 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::addConstraints
                 constraints_.set
                 (
                     i,
-                    immersedBoundaryObjectConstraint::New
+                    objectMotionConstraint::New
                     (
                         iter().keyword(),
                         iter().dict(),
@@ -252,8 +310,13 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::addConstraints
         tConstraints_ = pct.constraintTransformation();
         rConstraints_ = pcr.constraintTransformation();
 
-        Info<< "Translational constraint tensor " << tConstraints_ << nl
-            << "Rotational constraint tensor " << rConstraints_ << endl;
+        if (debug)
+        {
+            Info<< "Translational constraint tensor "
+                << tConstraints_ << nl
+                << "Rotational constraint tensor "
+                << rConstraints_ << endl;
+        }
     }
 }
 
@@ -271,7 +334,8 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::rotate
     tensor& Q = Qpi.first();
     vector& pi = Qpi.second();
 
-    tensor R = rotationTensorX(0.5*deltaT*pi.x()/momentOfInertia_.xx());
+    tensor R =
+        rotationTensorX(0.5*deltaT*pi.x()/momentOfInertia_.xx());
     pi = pi & R;
     Q = Q & R;
 
@@ -329,19 +393,25 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::updateAcceleration
 template<class ImmersedType>
 void Foam::MovingImmersedBoundaryObject<ImmersedType>::update()
 {
-    vectorField normal(this->Sf()/this->magSf());
+    initializeState();
+
+    vectorField Sf(this->faceAreas());
+    scalarField magSf(mag(Sf));
+    vectorField normal(Sf/magSf);
+
+    Pstream::listCombineGather
+    (
+        this->force(),
+        maxMagSqrEqOp<vector>()
+    );
+    Pstream::listCombineScatter(this->force());
+
     vectorField fN((this->force() & normal)*normal);
     vectorField fT(this->force() - fN);
 
-    Pstream::listCombineGather(fN, maxMagSqrEqOp<vector>());
-    Pstream::listCombineGather(fT, maxMagSqrEqOp<vector>());
-    Pstream::listCombineScatter(fN);
-    Pstream::listCombineScatter(fT);
-
     // This is the same on all processors, no need to distribute
     vectorField Md(this->faceCentres() - centreOfRotation());
-
-    this->forceEff() = sum(fN) + sum(fT) + this->mass()*this->g_;
+    this->forceEff() = sum(fN) + this->mass()*this->g_;
     this->momentEff() =
         sum(Md ^ fN) + sum(Md ^ fT)
       + this->mass()*(momentArm() ^ this->g_);
@@ -353,6 +423,8 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::update()
 template<class ImmersedType>
 void Foam::MovingImmersedBoundaryObject<ImmersedType>::solve()
 {
+    initializeState();
+
     bool firstIter = true;
 
     update
@@ -365,15 +437,7 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::solve()
     );
 
     ImmersedType::solve();
-
-    if (Pstream::master())
-    {
-        if (report_)
-        {
-            status();
-        }
-    }
-
+    movePoints();
 }
 
 
@@ -399,9 +463,12 @@ bool Foam::MovingImmersedBoundaryObject<ImmersedType>::update
 
 
 template<class ImmersedType>
-void Foam::MovingImmersedBoundaryObject<ImmersedType>::status() const
+void Foam::MovingImmersedBoundaryObject<ImmersedType>::status
+(
+    const bool print
+) const
 {
-    ImmersedType::status();
+    ImmersedType::status(true);
 
     Info<< "    Centre of rotation: " << centreOfRotation() << nl
         << "    Centre of mass: " << this->centreOfMass() << nl
@@ -410,6 +477,18 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::status() const
         << "    Linear acceleration: " << (tConstraints_ & a()) << nl
         << "    Angular velocity: " << omega()
         << endl;
+
+    if (outputPtr_.valid())
+    {
+        log(outputPtr_());
+    }
+}
+
+
+template<class ImmersedType>
+Foam::point Foam::MovingImmersedBoundaryObject<ImmersedType>::initialCentreOfRotation() const
+{
+    return initialCentreOfRotation_;
 }
 
 
@@ -417,6 +496,14 @@ template<class ImmersedType>
 Foam::point Foam::MovingImmersedBoundaryObject<ImmersedType>::centreOfRotation() const
 {
     return motionState_.centreOfRotation();
+}
+
+
+template<class ImmersedType>
+Foam::point
+Foam::MovingImmersedBoundaryObject<ImmersedType>::initialCentreOfMass() const
+{
+    return initialCentreOfMass_;
 }
 
 
@@ -454,7 +541,7 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::v() const
 
 template<class ImmersedType>
 Foam::vector
-Foam::MovingImmersedBoundaryObject<ImmersedType>::velocity
+Foam::MovingImmersedBoundaryObject<ImmersedType>::v
 (
     const point& pt
 ) const
@@ -471,6 +558,14 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::velocity
 ) const
 {
     return (omega() ^ (points - centreOfRotation())) + v();
+}
+
+
+template<class ImmersedType>
+Foam::tmp<Foam::vectorField>
+Foam::MovingImmersedBoundaryObject<ImmersedType>::velocity() const
+{
+    return (omega() ^ (this->faceCentres() - centreOfRotation())) + v();
 }
 
 
@@ -558,8 +653,9 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::tConstraints() const
 template<class ImmersedType>
 void Foam::MovingImmersedBoundaryObject<ImmersedType>::movePoints()
 {
-    ImmersedType::movePoints();
-    this->shape_->movePoints();
+    pointField newPoints(transform(points0_));
+    this->shape_->movePoints(newPoints);
+    standAlonePatch::movePoints(newPoints);
     this->clearOut();
 }
 
@@ -573,7 +669,7 @@ bool Foam::MovingImmersedBoundaryObject<ImmersedType>::read
     this->mass_ = readScalar(dict.lookup("mass"));
 
     // Scale the mass by the scale factor (axisymmetic)
-    this->mass_ *= this->shape_->scale();
+    this->mass_ *= scale();
 
     aRelax_ = dict.lookupOrDefault<scalar>("accelerationRelaxation", 1.0);
 
@@ -597,7 +693,8 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::write
 {
     motionState_.write(os);
 
-    writeEntry(os, "mass", this->mass_/this->shape_->scale());
+    writeEntry(os, "report", report_);
+    writeEntry(os, "mass", this->mass_/scale());
     writeEntry(os, "centreOfMass", this->centreOfMass());
 //     writeEntry(os, "initialOrientation", initialQ_);
     writeEntry(os, "orientation", this->shape_->orientation().T() & Q());
@@ -640,8 +737,6 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::write
 
             writeEntry(os, "type", constraintType);
 
-            constraints_[rI].immersedBoundaryObjectConstraint::write(os);
-
             constraints_[rI].write(os);
 
             os  << decrIndent << indent << token::END_BLOCK << endl;
@@ -658,8 +753,49 @@ void Foam::MovingImmersedBoundaryObject<ImmersedType>::write
     dictionary& dict
 ) const
 {
+    dict.add("report", report_);
     motionState_.write(dict);
     ImmersedType::write(dict);
 }
+
+
+
+template<class ImmersedType>
+void Foam::MovingImmersedBoundaryObject<ImmersedType>::log
+(
+    Ostream& os
+) const
+{
+    os
+        << "\t" << this->pMesh_.time().value()
+        << "\t" << centreOfRotation()
+        << "\t" << centreOfMass()
+        << "\t" << orientation()
+        << "\t" << v()
+        << "\t" << (tConstraints_ & a())
+        << "\t" << omega()
+        << endl;
+}
+
+
+template<class ImmersedType>
+void Foam::MovingImmersedBoundaryObject<ImmersedType>::logHeader
+(
+    Ostream& os
+) const
+{
+    os
+        << '#' << ' '
+        << setf(ios_base::left)
+        << "\t" << "Time[s]"
+        << "\t" << "centreOfRotation[m]"
+        << "\t" << "centreOfMass[m]"
+        << "\t" << "orientation[ ]"
+        << "\t" << "veclocity[m/s]"
+        << "\t" << "acceleration[m/s^2]"
+        << "\t" << "angularVelocity[1/s]"
+        << endl;
+}
+
 
 // ************************************************************************* //

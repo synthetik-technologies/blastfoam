@@ -47,8 +47,19 @@ Foam::atmosphereModels::hydrostatic::hydrostatic
 )
 :
     atmosphereModel(mesh, dict),
-    rhoRef_("rhoRef", dimDensity, dict_),
     pRef_("pRef", dimPressure, dict_)
+{}
+
+
+Foam::atmosphereModels::hydrostatic::hydrostatic
+(
+    const fvMesh& mesh,
+    const scalar pRef,
+    const scalar elevation
+)
+:
+    atmosphereModel(mesh, elevation),
+    pRef_("pRef", dimPressure, pRef)
 {}
 
 
@@ -66,6 +77,7 @@ void Foam::atmosphereModels::hydrostatic::createAtmosphere
 ) const
 {
     hydrostaticInitialisation(thermo, pRef_);
+    thermo.p().write();
 }
 
 // ************************************************************************* //

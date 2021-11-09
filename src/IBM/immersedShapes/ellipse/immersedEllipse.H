@@ -61,19 +61,7 @@ class immersedEllipse
         scalar b_;
 
         //- Return 2D points
-        virtual void get2DPoints();
-
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
-        {
-            return true;
-        }
-
-        //- Does the orientation need to be read
-        virtual bool needOrientation() const
-        {
-            return true;
-        }
+        tmp<pointField> get2DPoints() const;
 
 
 public:
@@ -100,6 +88,9 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
 
@@ -116,6 +107,9 @@ public:
             dt[ei_] = dt[xi_] + dt[yi_];
             return dt;
         }
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

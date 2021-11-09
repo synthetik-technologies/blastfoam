@@ -32,11 +32,11 @@ License
 #include "StationaryImmersedBoundaryObject.H"
 
 #include "TemperatureIndependentImmersedBoundaryObject.H"
-#include "IsothermalImmersedBoundaryObject.H"
-#include "AnisothermalImmersedBoundaryObject.H"
+// #include "IsothermalImmersedBoundaryObject.H"
+// #include "AnisothermalImmersedBoundaryObject.H"
 
-#include "NondeformableImmersedMesh.H"
-#include "DeformableImmersedMesh.H"
+// #include "NondeformableImmersedMesh.H"
+// #include "DeformableImmersedMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 namespace Foam
@@ -59,59 +59,59 @@ namespace Foam
             >
         > movingImmersedBoundaryObject;
 
-    typedef
-        StationaryImmersedBoundaryObject
-        <
-            IsothermalImmersedBoundaryObject
-            <
-                immersedBoundaryObject
-            >
-        > isothermalStationaryImmersedBoundaryObject;
-
-    typedef
-        MovingImmersedBoundaryObject
-        <
-            IsothermalImmersedBoundaryObject
-            <
-                immersedBoundaryObject
-            >
-        > isothermalMovingImmersedBoundaryObject;
-
-    typedef
-        StationaryImmersedBoundaryObject
-        <
-            AnisothermalImmersedBoundaryObject
-            <
-                NondeformableImmersedMesh
-                <
-                    immersedBoundaryObject
-                >
-            >
-        > anisothermalStationaryImmersedBoundaryObject;
-
-    typedef
-        MovingImmersedBoundaryObject
-        <
-            AnisothermalImmersedBoundaryObject
-            <
-                NondeformableImmersedMesh
-                <
-                    immersedBoundaryObject
-                >
-            >
-        > anisothermalMovingImmersedBoundaryObject;
-
-    typedef
-        StationaryImmersedBoundaryObject
-        <
-            AnisothermalImmersedBoundaryObject
-            <
-                DeformableImmersedMesh
-                <
-                    immersedBoundaryObject
-                >
-            >
-        > deformableImmersedBoundaryObject;
+//     typedef
+//         StationaryImmersedBoundaryObject
+//         <
+//             IsothermalImmersedBoundaryObject
+//             <
+//                 immersedBoundaryObject
+//             >
+//         > isothermalStationaryImmersedBoundaryObject;
+//
+//     typedef
+//         MovingImmersedBoundaryObject
+//         <
+//             IsothermalImmersedBoundaryObject
+//             <
+//                 immersedBoundaryObject
+//             >
+//         > isothermalMovingImmersedBoundaryObject;
+//
+//     typedef
+//         StationaryImmersedBoundaryObject
+//         <
+//             AnisothermalImmersedBoundaryObject
+//             <
+//                 NondeformableImmersedMesh
+//                 <
+//                     immersedBoundaryObject
+//                 >
+//             >
+//         > anisothermalStationaryImmersedBoundaryObject;
+//
+//     typedef
+//         MovingImmersedBoundaryObject
+//         <
+//             AnisothermalImmersedBoundaryObject
+//             <
+//                 NondeformableImmersedMesh
+//                 <
+//                     immersedBoundaryObject
+//                 >
+//             >
+//         > anisothermalMovingImmersedBoundaryObject;
+//
+//     typedef
+//         StationaryImmersedBoundaryObject
+//         <
+//             AnisothermalImmersedBoundaryObject
+//             <
+//                 DeformableImmersedMesh
+//                 <
+//                     immersedBoundaryObject
+//                 >
+//             >
+//         > deformableImmersedBoundaryObject;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

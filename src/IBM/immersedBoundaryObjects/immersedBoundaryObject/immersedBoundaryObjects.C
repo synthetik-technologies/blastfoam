@@ -44,46 +44,46 @@ namespace Foam
         dictionary,
         moving
     );
-
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        isothermalStationaryImmersedBoundaryObject,
-        dictionary,
-        isothermalStationary
-    );
-
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        isothermalMovingImmersedBoundaryObject,
-        dictionary,
-        isothermalMoving
-    );
-
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        anisothermalStationaryImmersedBoundaryObject,
-        dictionary,
-        anisothermalStationary
-    );
-
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        anisothermalMovingImmersedBoundaryObject,
-        dictionary,
-        anisothermalMoving
-    );
-
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        deformableImmersedBoundaryObject,
-        dictionary,
-        deformable
-    );
+//
+//     addNamedToRunTimeSelectionTable
+//     (
+//         immersedBoundaryObject,
+//         isothermalStationaryImmersedBoundaryObject,
+//         dictionary,
+//         isothermalStationary
+//     );
+//
+//     addNamedToRunTimeSelectionTable
+//     (
+//         immersedBoundaryObject,
+//         isothermalMovingImmersedBoundaryObject,
+//         dictionary,
+//         isothermalMoving
+//     );
+//
+//     addNamedToRunTimeSelectionTable
+//     (
+//         immersedBoundaryObject,
+//         anisothermalStationaryImmersedBoundaryObject,
+//         dictionary,
+//         anisothermalStationary
+//     );
+//
+//     addNamedToRunTimeSelectionTable
+//     (
+//         immersedBoundaryObject,
+//         anisothermalMovingImmersedBoundaryObject,
+//         dictionary,
+//         anisothermalMoving
+//     );
+//
+//     addNamedToRunTimeSelectionTable
+//     (
+//         immersedBoundaryObject,
+//         deformableImmersedBoundaryObject,
+//         dictionary,
+//         deformable
+//     );
 
 }
 // ************************************************************************* //

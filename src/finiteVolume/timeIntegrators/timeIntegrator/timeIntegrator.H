@@ -221,11 +221,14 @@ public:
         //- Add a system to the
         void addSystem(timeIntegrationSystem& system);
 
+        //- Update anything that needs to be done before mesh updates
+        void preUpdateMesh();
+
         //- Integrate fluxes in time
         virtual void integrate();
 
         //- Clear all ODE fields (old/delta)
-        void clearODEFields();
+        void clear();
 
         //- Create/lookup fvModels/fvConstraints
         void createModels() const;

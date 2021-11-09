@@ -13,11 +13,29 @@ immersedShapes/fvMesh/immersedFvMesh.C
 immersedBoundaryObjects/immersedBoundaryObject/immersedBoundaryObject.C
 immersedBoundaryObjects/immersedBoundaryObject/newImmersedBoundaryObject.C
 immersedBoundaryObjects/immersedBoundaryObject/immersedBoundaryObjects.C
-immersedMeshMapper/immersedMeshMapper.C
 
-immersedBoundaryObjects/motion/Moving/movingImmersedBoundaryObjectState.C
-immersedBoundaryObjects/motion/Moving/movingImmersedBoundaryObjectStateIO.C
+immersedBoundaryObjectListSolver/immersedBoundaryObjectListSolver.C
 
+immersedPolyPatch/immersedPolyPatch.C
+immersedPointPatch/immersedPointPatch.C
+immersedFvPatch/immersedFvPatch.C
+
+basicBCs=derivedFvPatchFields/basic
+$(basicBCs)/immersedFvPatchField/immersedFvPatchFields.C
+$(basicBCs)/immersedZeroGradient/immersedZeroGradientFvPatchFields.C
+$(basicBCs)/immersedFixedGradient/immersedFixedGradientFvPatchFields.C
+$(basicBCs)/immersedMixed/immersedMixedFvPatchFields.C
+$(basicBCs)/immersedFixedValue/immersedFixedValueFvPatchFields.C
+
+derivedBCs=derivedFvPatchFields/derived
+$(derivedBCs)/immersedSlip/immersedSlipFvPatchFields.C
+$(derivedBCs)/immersedNoSlip/immersedNoSlipFvPatchVectorField.C
+$(derivedBCs)/immersedMovingWallVelocity/immersedMovingWallVelocityFvPatchVectorField.C
+$(derivedBCs)/immersedTemperature/immersedTemperatureFvPatchScalarField.C
+$(derivedBCs)/immersedFixedTemperature/immersedFixedTemperatureFvPatchScalarField.C
+$(derivedBCs)/immersedZeroGradientTemperature/immersedZeroGradientTemperatureFvPatchScalarField.C
+
+# immersedMeshMapper/immersedMeshMapper.C
 
 collisionModels/collisionModel/collisionModel.C
 collisionModels/collisionModel/collisionModelNew.C
@@ -39,60 +57,24 @@ collisionModels/pairCollision/pairModel/pairSpringSliderDashpot/pairSpringSlider
 collisionModels/pairCollision/wallModel/wallSpringSliderDashpot/wallSpringSliderDashpot.C
 
 # collisionModels/pairCollision/wallModel/wallLocalSpringSliderDashpot/wallLocalSpringSliderDashpot.C
-
-restraints = immersedBoundaryObjects/restraints
-
-$(restraints)/immersedBoundaryObjectRestraint/immersedBoundaryObjectRestraint.C
-$(restraints)/immersedBoundaryObjectRestraint/immersedBoundaryObjectRestraintNew.C
-$(restraints)/linearAxialAngularSpring/immersedBoundaryObjectLinearAxialAngularSpring.C
-$(restraints)/linearSpring/immersedBoundaryObjectLinearSpring.C
-$(restraints)/sphericalAngularSpring/immersedBoundaryObjectSphericalAngularSpring.C
-$(restraints)/axialAngularSpring/immersedBoundaryObjectAxialAngularSpring.C
-$(restraints)/linearDamper/immersedBoundaryObjectLinearDamper.C
-$(restraints)/sphericalAngularDamper/immersedBoundaryObjectSphericalAngularDamper.C
-
-constraints = immersedBoundaryObjects/constraints
-
-$(constraints)/immersedBoundaryObjectConstraint/immersedBoundaryObjectConstraint.C
-$(constraints)/immersedBoundaryObjectConstraint/immersedBoundaryObjectConstraintNew.C
-$(constraints)/axis/immersedBoundaryObjectAxisConstraint.C
-$(constraints)/line/immersedBoundaryObjectLineConstraint.C
-$(constraints)/orientation/immersedBoundaryObjectOrientationConstraint.C
-$(constraints)/plane/immersedBoundaryObjectPlaneConstraint.C
-$(constraints)/point/immersedBoundaryObjectPointConstraint.C
-
-
-solvers = immersedBoundaryObjects/motion/Moving/motionSolvers
-$(solvers)/immersedBoundaryObjectMotionSolver/immersedBoundaryObjectMotionSolver.C
-$(solvers)/immersedBoundaryObjectMotionSolver/newImmersedBoundaryObjectMotionSolver.C
-$(solvers)/Euler/Euler.C
-$(solvers)/symplectic/symplectic.C
-$(solvers)/CrankNicolson/CrankNicolson.C
-$(solvers)/Newmark/Newmark.C
-
-
-BCs = immersedBoundaryFvPatchFields
-$(BCs)/immersedBoundaryFvPatchField/immersedBoundaryFvPatchFields.C
-$(BCs)/fixedValue/fixedValueImmersedBoundaryFvPatchFields.C
-$(BCs)/calculated/calculatedImmersedBoundaryFvPatchFields.C
-$(BCs)/zeroGradient/zeroGradientImmersedBoundaryFvPatchFields.C
-$(BCs)/slip/slipImmersedBoundaryFvPatchVectorField.C
-$(BCs)/noSlip/noSlipImmersedBoundaryFvPatchVectorField.C
-$(BCs)/movingWall/movingWallImmersedBoundaryFvPatchVectorField.C
-$(BCs)/energy/energyImmersedBoundaryFvPatchScalarFields.C
-$(BCs)/temperatureCoupled/temperatureCoupledImmersedBoundaryFvPatchScalarField.C
-
-derivedFvPatchFields/coupledImmersedFvPatchField/coupledImmersedFvPatchFields.C
-derivedFvPatchFields/temperatureCoupledImmersedMixedFvPatchScalarField/temperatureCoupledImmersedMixedFvPatchScalarField.C
-derivedFvPatchFields/solidTractionCoupledImmersedFvPatchVectorField/solidTractionCoupledImmersedFvPatchVectorField.C
-
-immersedBoundaryObjectListSolver/immersedBoundaryObjectListSolver.C
-
-immersedPolyPatch/immersedPolyPatch.C
-#immersedPointPatch/immersedPointPatch.C
-immersedFvPatch/immersedFvPatch.C
-#immersedFvPatchField/immersedFvPatchFields.C
+#
+# BCs = immersedBoundaryFvPatchFields
+# $(BCs)/immersedBoundaryFvPatchField/immersedBoundaryFvPatchFields.C
+# $(BCs)/fixedValue/fixedValueImmersedBoundaryFvPatchFields.C
+# $(BCs)/calculated/calculatedImmersedBoundaryFvPatchFields.C
+# $(BCs)/zeroGradient/zeroGradientImmersedBoundaryFvPatchFields.C
+# $(BCs)/slip/slipImmersedBoundaryFvPatchVectorField.C
+# $(BCs)/noSlip/noSlipImmersedBoundaryFvPatchVectorField.C
+# $(BCs)/movingWall/movingWallImmersedBoundaryFvPatchVectorField.C
+# $(BCs)/energy/energyImmersedBoundaryFvPatchScalarFields.C
+# $(BCs)/temperatureCoupled/temperatureCoupledImmersedBoundaryFvPatchScalarField.C
+#
+# derivedFvPatchFields/coupledImmersedFvPatchField/coupledImmersedFvPatchFields.C
+# derivedFvPatchFields/temperatureCoupledImmersedMixedFvPatchScalarField/temperatureCoupledImmersedMixedFvPatchScalarField.C
+# derivedFvPatchFields/solidTractionCoupledImmersedFvPatchVectorField/solidTractionCoupledImmersedFvPatchVectorField.C
+#
 
 fvModel/IBMFvModel.C
+fvConstraint/IBMFvConstraint.C
 
 LIB = $(BLAST_LIBBIN)/libblastIBM

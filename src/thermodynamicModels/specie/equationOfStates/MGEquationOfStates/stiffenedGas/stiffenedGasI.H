@@ -245,7 +245,7 @@ Foam::scalar Foam::stiffenedGas<Specie>::E
     const scalar T
 ) const
 {
-    return a_/max(rho, 1.0e-10);
+    return a_/max(rho, minRho_);
 }
 
 

@@ -259,6 +259,10 @@ public:
             return meshPtr_();
         }
 
+        //- Optional update before changes to the mesh
+        virtual void preUpdateMesh()
+        {}
+
         //- Update before each ode step
         virtual void update() = 0;
 
@@ -267,6 +271,10 @@ public:
 
         //- Solve sub-step stepi
         virtual void solve() = 0;
+
+        //- Optional clearing step
+        virtual void clear()
+        {}
 
         //- Return the fvModels
         inline const fvModels& models() const

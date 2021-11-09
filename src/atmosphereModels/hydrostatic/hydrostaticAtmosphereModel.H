@@ -56,9 +56,6 @@ class hydrostatic
 {
 // Private data
 
-    //- Density value
-    dimensionedScalar rhoRef_;
-
     //- Pressure at reference height
     dimensionedScalar pRef_;
 
@@ -70,6 +67,14 @@ public:
 
     // Constructor
     hydrostatic(const fvMesh& mesh, const dictionary& dict);
+
+    // Constructor
+    hydrostatic
+    (
+        const fvMesh& mesh,
+        const scalar pRef,
+        const scalar elevation
+    );
 
 
     //- Destructor

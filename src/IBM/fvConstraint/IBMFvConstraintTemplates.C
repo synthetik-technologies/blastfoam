@@ -1,0 +1,60 @@
+/*---------------------------------------------------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2015-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+License
+    This file is part of OpenFOAM.
+
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
+
+\*---------------------------------------------------------------------------*/
+
+#include "IBMFvModel.H"
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
+
+template<class Type>
+bool Foam::fv::IBMForceConstraint::constrainType
+(
+    fvMatrix<Type>& eqn,
+    const word& fieldName
+) const
+{
+    const GeometricField<Type, fvPatchField, volMesh>& psi = eqn.psi();
+    const word phase = psi.group();
+    const volScalarField& aRho = alphaRho(phase)();
+    tmp<GeometricField<Type, fvPatchField, volMesh>> F
+    (
+        ibm_.forcing
+        (
+            psi,
+            aRho,
+            (aRho.oldTime()*psi.oldTime())(),
+            (eqn & psi)(),
+            mesh().time().deltaT()
+        )
+    );
+//     if (psi.mesh().time().outputTime())
+//     {
+//         F().write();
+//     }
+//     eqn -= F;
+    return true;
+}
+
+
+// ************************************************************************* //

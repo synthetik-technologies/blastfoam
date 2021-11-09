@@ -74,8 +74,7 @@ Foam::immersedCylinder::immersedCylinder
 )
 :
     immersedShape(pMesh, ibo, dict),
-    radius_(dict.lookup<scalar>("radius")),
-    centre_(dict.lookup("centreOfMass"))
+    radius_(dict.lookup<scalar>("radius"))
 {
     read(dict);
 
@@ -120,5 +119,12 @@ bool Foam::immersedCylinder::inside(const point& pt) const
 {
     return false;
 }
+
+
+void Foam::immersedCylinder::write(Ostream& os) const
+{
+    writeEntry(os, "radius", radius_);
+}
+
 
 // ************************************************************************* //

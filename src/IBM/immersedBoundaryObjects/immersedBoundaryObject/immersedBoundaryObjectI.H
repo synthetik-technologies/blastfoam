@@ -25,78 +25,33 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
+inline const Foam::word& Foam::immersedBoundaryObject::name() const
+{
+    return patch_.name();
+}
+
+
+inline const Foam::word& Foam::immersedBoundaryObject::keyword() const
+{
+    return patch_.name();
+}
+
+
 inline const Foam::polyMesh& Foam::immersedBoundaryObject::pMesh() const
 {
     return pMesh_;
 }
 
 
-inline bool Foam::immersedBoundaryObject::report() const
-{
-    return report_;
-}
-
-
-inline Foam::word Foam::immersedBoundaryObject::keyword() const
-{
-    return shape_->name();
-}
-
-
-inline const Foam::word& Foam::immersedBoundaryObject::name() const
-{
-    return shape_->name();
-}
-
-
-inline Foam::scalar Foam::immersedBoundaryObject::mass() const
-{
-    return mass_;
-}
-
-
-inline Foam::label Foam::immersedBoundaryObject::nFaces() const
-{
-    return shape_->patch().size();
-}
-
-
-inline const Foam::standAlonePatch&
-Foam::immersedBoundaryObject::patch() const
+inline const Foam::polyPatch& Foam::immersedBoundaryObject::patch() const
 {
     return patch_;
 }
 
 
-inline const Foam::vectorField&
-Foam::immersedBoundaryObject::faceCentres() const
+inline Foam::label Foam::immersedBoundaryObject::index() const
 {
-    return patch_.faceCentres();
-}
-
-
-inline const Foam::pointField& Foam::immersedBoundaryObject::points() const
-{
-    return patch_.localPoints();
-}
-
-
-inline const Foam::pointField&
-Foam::immersedBoundaryObject::faceCentresOld() const
-{
-    return shape_->faceCentresOld();
-}
-
-
-inline const Foam::vectorField& Foam::immersedBoundaryObject::Sf() const
-{
-    return patch_.faceAreas();
-}
-
-
-inline Foam::tmp<Foam::scalarField> Foam::immersedBoundaryObject::magSf() const
-{
-    return mag(Sf());
+    return patch_.index();
 }
 
 
@@ -108,6 +63,17 @@ Foam::immersedBoundaryObject::deltaCoeffs() const
         calcMapping();
     }
     return deltaCoeffs_;
+}
+
+
+inline const Foam::labelList&
+Foam::immersedBoundaryObject::allInternalCells() const
+{
+    if (!allInternalCellsPtr_)
+    {
+        calcMapping();
+    }
+    return *allInternalCellsPtr_;
 }
 
 
@@ -144,14 +110,25 @@ Foam::immersedBoundaryObject::patchExternalCells() const
 }
 
 
-inline const Foam::vectorField&
-Foam::immersedBoundaryObject::internalC() const
+inline const Foam::labelList&
+Foam::immersedBoundaryObject::patchCells() const
 {
     if (!internalCellsPtr_)
     {
         calcMapping();
     }
-    return internalC_;
+    return patchCells_;
+}
+
+
+inline const Foam::labelListList&
+Foam::immersedBoundaryObject::patchMap() const
+{
+    if (!internalCellsPtr_)
+    {
+        calcMapping();
+    }
+    return patchMap_;
 }
 
 
@@ -200,15 +177,61 @@ Foam::immersedBoundaryObject::interpToWeights() const
 }
 
 
+inline Foam::label Foam::immersedBoundaryObject::nFaces() const
+{
+    if (!shape_.valid())
+    {
+        initialize();
+    }
+    return this->size();
+}
+
+
+inline const Foam::vectorField& Foam::immersedBoundaryObject::Sf() const
+{
+    if (!shape_.valid())
+    {
+        initialize();
+    }
+    return this->faceAreas();
+}
+
+
+inline const Foam::scalarField&
+Foam::immersedBoundaryObject::magSf() const
+{
+    if (!magSfPtr_)
+    {
+        magSfPtr_ = new scalarField(mag(this->Sf()));
+    }
+    return *magSfPtr_;
+}
+
+
+inline Foam::tmp<Foam::vectorField>
+Foam::immersedBoundaryObject::nf() const
+{
+    return Sf()/magSf();
+}
+
+
 inline const Foam::immersedShape& Foam::immersedBoundaryObject::shape() const
 {
+    if (!shape_.valid())
+    {
+        initialize();
+    }
     return shape_();
 }
 
 
-inline Foam::point Foam::immersedBoundaryObject::initialCentreOfMass() const
+inline const Foam::boundBox& Foam::immersedBoundaryObject::bounds() const
 {
-    return shape_->centreOfMass();
+    if (!shape_.valid())
+    {
+        initialize();
+    }
+    return shape_->bounds();
 }
 
 
@@ -278,16 +301,5 @@ inline Foam::vector& Foam::immersedBoundaryObject::momentExt()
     return momentExt_;
 }
 
-
-inline const Foam::vector& Foam::immersedBoundaryObject::g() const
-{
-    return g_;
-}
-
-
-inline const Foam::boundBox& Foam::immersedBoundaryObject::bounds() const
-{
-    return shape_->bounds();
-}
 
 // ************************************************************************* //

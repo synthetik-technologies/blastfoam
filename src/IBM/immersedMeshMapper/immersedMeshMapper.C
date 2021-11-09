@@ -181,9 +181,9 @@ void Foam::immersedMeshMapper::calcMapping()
 
     immersedObjectToMeshPoints_ = labelListList(patch.size());
     immersedObjectToMeshWeights_ = List<scalarList>(patch.size());
-    immersedMeshToObjectPoints_ = labelListList(immersedObjectPtr_->nFaces());
+    immersedMeshToObjectPoints_ = labelListList(immersedObjectPtr_->size());
     immersedMeshToObjectWeights_ =
-        List<scalarList>(immersedObjectPtr_->nFaces());
+        List<scalarList>(immersedObjectPtr_->size());
 
     scalarList sumMeshWeights(globalImmersedMeshFaceMapPtr_->size(), 0.0);
     scalarList sumObjectWeights(objectFaceCentres.size(), 0.0);
@@ -282,8 +282,8 @@ Foam::immersedMeshMapper::immersedMeshMapper
     patchName_(patchName),
     immersedObjectToMeshPoints_(),
     immersedObjectToMeshWeights_(),
-    immersedMeshToObjectPoints_(immersedObjectPtr_->nFaces()),
-    immersedMeshToObjectWeights_(immersedObjectPtr_->nFaces()),
+    immersedMeshToObjectPoints_(immersedObjectPtr_->size()),
+    immersedMeshToObjectWeights_(immersedObjectPtr_->size()),
     globalImmersedMeshFaceMapPtr_(nullptr),
     pointDPtr_(nullptr),
     DPtr_(nullptr)

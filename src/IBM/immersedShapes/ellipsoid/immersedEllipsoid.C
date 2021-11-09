@@ -52,17 +52,6 @@ Foam::immersedEllipsoid::immersedEllipsoid
     c_(dict.lookup<scalar>("c"))
 {
     read(dict);
-
-    List<labelledTri> faces;
-    immersedBox::makeBox(vector(a_, b_, c_), points0_, faces);
-    triSurface tri(triSurface(faces, points0_));
-
-    refine3D(tri);
-
-    patchPtr_.set(new standAlonePatch(tri.faces(), tri.points()));
-
-    // Update original points
-    points0_ = patchPtr_->points();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -74,7 +63,24 @@ Foam::immersedEllipsoid::~immersedEllipsoid()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::immersedEllipsoid::adjustPoints(pointField& points)
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedEllipsoid::createPatch() const
+{
+    List<face> faces;
+    pointField points;
+    immersedBox::makeBox(vector(a_, b_, c_), points, faces);
+    triSurface tri(triSurface(triFaceList(faces), points));
+
+    refine3D(tri);
+
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(tri.faces(), tri.points())
+    );
+}
+
+
+bool Foam::immersedEllipsoid::adjustPoints(pointField& points) const
 {
     forAll(points, i)
     {
@@ -103,6 +109,7 @@ bool Foam::immersedEllipsoid::adjustPoints(pointField& points)
     return true;
 }
 
+
 Foam::labelList
 Foam::immersedEllipsoid::calcInside(const pointField& points) const
 {
@@ -113,21 +120,18 @@ Foam::immersedEllipsoid::calcInside(const pointField& points) const
     {
         if (bb_.contains(points[i]))
         {
-            validPoints[pi] = points[i];
+            validPoints[pi] = object_.inverseTransform(points[i]);
             insidePoints[pi++] = i;
         }
     }
-    validPoints.resize(pi);
-    insidePoints.resize(pi);
     if (!pi)
     {
-        return insidePoints;
+        return labelList();
     }
-    pi = 0;
 
-    validPoints =
-        object_.orientation().T()
-      & (validPoints - object_.centreOfRotation());
+    validPoints.resize(pi);
+    insidePoints.resize(pi);
+    pi = 0;
 
     forAll(insidePoints, i)
     {
@@ -152,6 +156,11 @@ Foam::immersedEllipsoid::calcInside(const pointField& points) const
             insidePoints[pi++] = insidePoints[i];
         }
     }
+    if (!pi)
+    {
+        return labelList();
+    }
+
     insidePoints.resize(pi);
     return insidePoints;
 }
@@ -183,6 +192,14 @@ bool Foam::immersedEllipsoid::inside(const point& pt) const
         }
     }
     return false;
+}
+
+
+void Foam::immersedEllipsoid::write(Ostream& os) const
+{
+    writeEntry(os, "a", a_);
+    writeEntry(os, "b", b_);
+    writeEntry(os, "c", c_);
 }
 
 

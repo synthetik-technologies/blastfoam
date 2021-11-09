@@ -107,9 +107,12 @@ void Foam::AnisothermalImmersedBoundaryObject<ImmersedType>::solve()
 
 
 template<class ImmersedType>
-void Foam::AnisothermalImmersedBoundaryObject<ImmersedType>::status() const
+void Foam::AnisothermalImmersedBoundaryObject<ImmersedType>::status
+(
+    const bool print
+) const
 {
-    ImmersedType::status();
+    ImmersedType::status(true);
     const volScalarField& T(thermo_->T());
 
     Info<< "    Temperature (min, max, avg): "

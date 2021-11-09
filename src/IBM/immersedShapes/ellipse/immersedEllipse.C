@@ -39,8 +39,7 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-//- Make list of points axisymmetric and create face indexing
-void Foam::immersedEllipse::get2DPoints()
+Foam::tmp<Foam::pointField> Foam::immersedEllipse::get2DPoints() const
 {
     scalar pi = Foam::constant::mathematical::pi;
 
@@ -55,17 +54,20 @@ void Foam::immersedEllipse::get2DPoints()
     label nPoints = fullRotation*L/dx_ + 1;
     scalar dTheta = fullRotation/scalar(nPoints);
 
-    points0_.resize(nPoints + 1);
-    forAll(points0_, i)
+    tmp<pointField> tpoints(new pointField(nPoints + 1));
+    pointField& points = tpoints.ref();
+
+    forAll(points, i)
     {
         scalar theta = scalar(i)*dTheta;
         scalar x = a_*cos(theta);
         scalar y = b_*sin(theta);
 
-        points0_[i][xi_] = x;
-        points0_[i][yi_] = y;
-        points0_[i][ei_] = 0;
+        points[i][xi_] = x;
+        points[i][yi_] = y;
+        points[i][ei_] = 0;
     }
+    return tpoints;
 }
 
 
@@ -83,19 +85,6 @@ Foam::immersedEllipse::immersedEllipse
     b_(dict.lookup<scalar>("b"))
 {
     read(dict);
-
-    List<face> faces;
-    get2DPoints();
-    if (ai_ != -1)
-    {
-        extrudeAxi(points0_, faces);
-    }
-    else
-    {
-        extrude2D(points0_, faces);
-    }
-    patchPtr_.set(new standAlonePatch(faces, points0_));
-    correctCentreOfMass();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -106,6 +95,26 @@ Foam::immersedEllipse::~immersedEllipse()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedEllipse::createPatch() const
+{
+    faceList faces;
+    pointField points(get2DPoints());
+    if (ai_ != -1)
+    {
+        extrudeAxi(points, faces);
+    }
+    else
+    {
+        extrude2D(points, faces);
+    }
+
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(faces, points)
+    );
+}
 
 
 Foam::labelList
@@ -118,7 +127,7 @@ Foam::immersedEllipse::calcInside(const pointField& points) const
     {
         if (bb_.contains(points[i]))
         {
-            validPoints[pi] = points[i];
+            validPoints[pi] = object_.inverseTransform(points[i]);
             insidePoints[pi++] = i;
         }
     }
@@ -129,8 +138,6 @@ Foam::immersedEllipse::calcInside(const pointField& points) const
         return insidePoints;
     }
     pi = 0;
-
-    validPoints = object_.inverseTransform(validPoints);
 
     forAll(insidePoints, i)
     {
@@ -163,5 +170,11 @@ bool Foam::immersedEllipse::inside(const point& pt) const
     return false;
 }
 
+
+void Foam::immersedEllipse::write(Ostream& os) const
+{
+    writeEntry(os, "a", a_);
+    writeEntry(os, "b", b_);
+}
 
 // ************************************************************************* //

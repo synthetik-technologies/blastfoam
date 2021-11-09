@@ -57,23 +57,8 @@ class immersedCylinder
         //- Radius
         scalar radius_;
 
-        //- Center
-        point centre_;
-
         //- Return 2D points
         virtual void get2DPoints();
-
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
-        {
-            return true;
-        }
-
-        //- Does the orientation need to be read
-        virtual bool needOrientation() const
-        {
-            return true;
-        }
 
 
 public:
@@ -100,11 +85,17 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual boolList calcInside(const pointField& points) const;
 
         //- Return if point is inside the object
         virtual bool inside(const point& pt) const;
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

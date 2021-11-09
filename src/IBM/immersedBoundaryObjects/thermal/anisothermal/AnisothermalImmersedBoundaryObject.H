@@ -92,7 +92,7 @@ public:
             virtual void solve();
 
             //- Report the status of the motion
-            virtual void status() const;
+            virtual void status(const bool print = true) const;
 
 
         // Transformations

@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "immersedBoundaryObjectListSolver.H"
+#include "immersedFvPatchField.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -58,31 +59,21 @@ Foam::immersedBoundaryObjectListSolver::forcing
     GeometricField<Type, fvPatchField, volMesh>& force = tmpForce.ref();
     forAll(objects_, i)
     {
-        objects_[i].addForcing
+        const immersedFvPatchField<Type>& patch
         (
-            F.name(), force, alphaRho, alphaRhoFOld, RHS, dt.value()
+            dynamicCast<const immersedFvPatchField<Type>>
+            (
+                F.boundaryField()[objects_[i].index()]
+            )
+        );
+        patch.addForcing
+        (
+            force, alphaRho, alphaRhoFOld, RHS, dt.value()
         );
     }
     return tmpForce;
 }
 
-
-template<class Type>
-void Foam::immersedBoundaryObjectListSolver::add
-(
-    GeometricField<Type, fvPatchField, volMesh>& f
-)
-{
-    const dictionary& defaultDict
-    (
-        ibmDict_.subDict("defaultBoundaries")
-    );
-
-    forAll(objects_, i)
-    {
-        objects_[i].addField(f, defaultDict);
-    }
-}
 
 
 // ************************************************************************* //

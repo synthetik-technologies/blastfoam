@@ -25,9 +25,7 @@ License
 
 #include "immersedBoundaryObject.H"
 #include "addToRunTimeSelectionTable.H"
-#include "immersedBoundaryFvPatchFields.H"
 #include "uniformDimensionedFields.H"
-#include "immersedBoundaryFvPatchFields.H"
 #include "meshSizeObject.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -139,11 +137,15 @@ Foam::scalar Foam::immersedBoundaryObject::delta
 
 void Foam::immersedBoundaryObject::calcMapping() const
 {
+    if (!shape_.valid())
+    {
+        initialize();
+    }
     const pointField& points = pMesh_.points();
 
-    interpToCells_.resize(nFaces());
-    interpToWeights_.resize(nFaces());
-    deltaCoeffs_.resize(nFaces());
+    interpToCells_.resize(this->size());
+    interpToWeights_.resize(this->size());
+    deltaCoeffs_.resize(this->size());
 
     boundBox meshBb(points, false); // local
     meshBb.inflate(1e-4);
@@ -153,20 +155,22 @@ void Foam::immersedBoundaryObject::calcMapping() const
      && !shape_->bounds().contains(meshBb);
     if (notFound)
     {
+        allInternalCellsPtr_ = new labelList();
         internalCellsPtr_ = new labelList();
         boundaryCellsPtr_ = new labelList();
         shellCellsPtr_ = new labelList();
 
         interpFromPoints_.clear();
         interpFromWeights_.clear();
-        internalC_.clear();
 
         patchInternalCells_ = -1;
         patchExternalCells_ = -1;
+        patchCells_.clear();
+        patchMap_.clear();
 
         interpToCells_ = labelList();
         interpToWeights_ = scalarList();
-        deltaCoeffs_ = 0.0;
+        deltaCoeffs_ = great;
     }
 
     if (returnReduce(notFound, andOp<bool>()))
@@ -182,17 +186,14 @@ void Foam::immersedBoundaryObject::calcMapping() const
     {
         inside[insidePoints[i]] = true;
     }
-
-    internalCellsPtr_ = new labelList(pMesh_.nCells());
     boundaryCellsPtr_ = new labelList(pMesh_.nCells());
 
 
-    labelList& internalCells = *internalCellsPtr_;
+    labelHashSet internalCells;
     labelList& boundaryCells = *boundaryCellsPtr_;
 
     PackedBoolList pbShellCells(pMesh_.nCells(), false);
 
-    label ii = 0;
     label bi = 0;
     forAll(pMesh_.cells(), celli)
     {
@@ -206,7 +207,7 @@ void Foam::immersedBoundaryObject::calcMapping() const
         }
         if (allIn)
         {
-            internalCells[ii++] = celli;
+            internalCells.insert(celli);
         }
         else if (!allIn && !allOut)
         {
@@ -214,8 +215,11 @@ void Foam::immersedBoundaryObject::calcMapping() const
             pbShellCells.set(celli, true);
         }
     }
-    internalCells.resize(ii);
+    allInternalCellsPtr_ = new labelList(internalCells.toc());
     boundaryCells.resize(bi);
+
+    const extendedNLevelCPCCellToCellStencil& cellNeighbours =
+        extendedNLevelCPCCellToCellStencil::New(pMesh_);
 
     PackedBoolList pbShellCellsOrig(pbShellCells);
     forAll(pbShellCellsOrig, celli)
@@ -223,7 +227,7 @@ void Foam::immersedBoundaryObject::calcMapping() const
         if (pbShellCellsOrig.get(celli))
         {
             const List<label>& neighbours =
-                cellNeighbours_.cellCell(celli).localStencil();
+                cellNeighbours.cellCell(celli).localStencil(2);
             forAll(neighbours, cellj)
             {
                 pbShellCells.set(neighbours[cellj], true);
@@ -246,18 +250,19 @@ void Foam::immersedBoundaryObject::calcMapping() const
     labelHashSet insideCells;
     labelHashSet setCells;
 
-    patchInternalCells_ = labelList(nFaces(), -1);
-    patchExternalCells_ = labelList(nFaces(), -1);
+    patchInternalCells_ = labelList(this->size(), -1);
+    patchExternalCells_ = labelList(this->size(), -1);
     Map<label> shellCellOwners;
 
-    const globalIndex& gIndex(cellNeighbours_.globalNumbering());
+    const globalIndex& gIndex(cellNeighbours.globalNumbering());
 
     //- Find global owner of the face centre
-    labelList ownerCell(nFaces(), -1);
-    scalarList eL(nFaces(), great);
-    forAll(patch_, facei)
+    labelList ownerCell(this->size(), -1);
+    scalarList eL(this->size(), great);
+    const vectorField& faceCentres(this->faceCentres());
+    forAll(*this, facei)
     {
-        const point& fc = patch_.faceCentres()[facei];
+        const point& fc = faceCentres[facei];
         label celli = -1;
 //         if (interpToCells_[facei].size())
 //         {
@@ -285,21 +290,21 @@ void Foam::immersedBoundaryObject::calcMapping() const
     reduce(ownerCell, maxOp<labelList>());
     reduce(eL, minOp<scalarList>());
 
-    const vectorField& Sf(this->Sf());
-    scalarField magSf(this->magSf());
+    const vectorField& Sf(this->faceAreas());
+    scalarField magSf(mag(Sf));
 
-    scalarList minInt(nFaces(), great);
-    scalarList minExt(nFaces(), great);
+    scalarList minInt(this->size(), great);
+    scalarList minExt(this->size(), great);
     labelList intCell(ownerCell.size(), -1);
     labelList extCell(ownerCell.size(), -1);
-    scalarList sumWs(nFaces(), 0.0);
-    forAll(patch_, facei)
+    scalarList sumWs(this->size(), 0.0);
+    forAll(*this, facei)
     {
-        const point fc = patch_.faceCentres()[facei];
+        const point& fc = faceCentres[facei];
         const label gCelli = ownerCell[facei];
         if
         (
-            !cellNeighbours_.cellCellMap().found(ownerCell[facei])
+            !cellNeighbours.cellCellMap().found(ownerCell[facei])
          || gCelli == -1
         )
         {
@@ -307,12 +312,12 @@ void Foam::immersedBoundaryObject::calcMapping() const
             interpToWeights_[facei].clear();
             patchInternalCells_[facei] = -1;
             patchExternalCells_[facei] = -1;
-            deltaCoeffs_[facei] = 0.0;
+            deltaCoeffs_[facei] = great;
             continue;
         }
         const cellStencil& stencil
         (
-            cellNeighbours_.cellCellMap()[gCelli]
+            cellNeighbours.cellCellMap()[gCelli]
         );
         const vector& cci = stencil.centre();
         const List<label> neighbors(stencil.localStencil(0, 2));
@@ -401,11 +406,13 @@ void Foam::immersedBoundaryObject::calcMapping() const
     scalarList minIntG(returnReduce(minInt, minOp<scalarList>()));
     scalarList minExtG(returnReduce(minExt, minOp<scalarList>()));
 
-    forAll(patch_, facei)
+    Map<DynamicList<label>> patchMap;
+    forAll(*this, facei)
     {
         if (minIntG[facei] == minInt[facei])
         {
             patchInternalCells_[facei] = intCell[facei];
+            internalCells.erase(intCell[facei]);
         }
         else
         {
@@ -430,18 +437,47 @@ void Foam::immersedBoundaryObject::calcMapping() const
                     shape().zeroDir
                     (
                         pMesh_.cellCentres()[patchExternalCells_[facei]]
-                      - patch_.faceCentres()[facei]
+                      - this->faceCentres()[facei]
                     )
                 );
         }
         else
         {
-            deltaCoeffs_[facei] = 0.0;
+            deltaCoeffs_[facei] = great;
         }
+
+        label celli = -1;
+        if (patchExternalCells_[facei] >= 0)
+        {
+            celli = patchExternalCells_[facei];
+        }
+        else if (patchInternalCells_[facei] >= 0)
+        {
+            celli = patchInternalCells_[facei];
+        }
+        if (celli >= 0)
+        {
+            if (!patchMap.found(celli))
+            {
+                patchMap.insert(celli, DynamicList<label>(1, facei));
+            }
+            else
+            {
+                patchMap[celli].append(facei);
+            }
+        }
+    }
+    patchCells_.resize(patchMap.size());
+    patchMap_.resize(patchMap.size());
+    label pci = 0;
+    forAllIter(Map<DynamicList<label>>, patchMap, iter)
+    {
+        patchCells_[pci] = iter.key();
+        patchMap_[pci++].transfer(iter());
     }
 
     reduce(sumWs, sumOp<scalarList>());
-    forAll(patch_, facei)
+    forAll(*this, facei)
     {
         forAll(interpToWeights_[facei], j)
         {
@@ -454,8 +490,8 @@ void Foam::immersedBoundaryObject::calcMapping() const
 
     forAll(shellCells, i)
     {
-        labelList interpFromPoints(nFaces(), -1);
-        scalarList interpFromWeights(nFaces(), 0.0);
+        labelList interpFromPoints(this->size(), -1);
+        scalarField interpFromWeights(this->size(), 0.0);
         const label celli = shellCells[i];
         const vector& x = pMesh_.cellCentres()[celli];
         label nPts = 0;
@@ -463,184 +499,134 @@ void Foam::immersedBoundaryObject::calcMapping() const
 
         if (!shellCellOwners.found(celli))
         {
+            interpFromPoints_[i].clear();
+            interpFromWeights_[i].clear();
             continue;
         }
         const labelList& nearest = nearestNeighbours_[shellCellOwners[celli]];
         forAll(nearest, fi)
         {
             label facei = nearest[fi];
-            if (!interpToCells_[facei].size())
-            {
-                continue;
-            }
 
-            const vector& fc = patch_.faceCentres()[facei];
-            if (mag(fc - x) < 1.5*edgeLength[celli])
+            const vector& fc = this->faceCentres()[facei];
+            if (mag(fc - x) < 1.5*eL[facei])
             {
                 interpFromPoints[nPts] = facei;
                 scalar d = delta(x, fc, eL[facei]);
-                scalar invD(1.0/max(mag(x - fc), small));
-                interpFromWeights[nPts] = d*invD;
-                sumW += invD;
+                interpFromWeights[nPts] = d;
+                sumW += d;
                 nPts++;
             }
         }
         interpFromPoints.resize(nPts);
         interpFromWeights.resize(nPts);
-        forAll(interpFromWeights, j)
-        {
-            interpFromWeights[j] /= max(sumW, small);
-        }
+        interpFromWeights /= max(sumW, small);
+
         interpFromPoints_[i].transfer(interpFromPoints);
         interpFromWeights_[i].transfer(interpFromWeights);
     }
 
-    internalC_.resize(internalCells.size());
-    forAll(internalC_, i)
-    {
-        internalC_[i] = pMesh_.cellCentres()[internalCells[i]];
-    }
+    internalCellsPtr_ = new labelList(internalCells.toc());
 }
 
-void Foam::immersedBoundaryObject::updateWeights() const
-{
-    const volScalarField& edgeLength = meshSizeObject::New(pMesh_).dx();
-    forAll(patch_, facei)
-    {
-        const point& fc = patch_.faceCentres()[facei];
 
-        if (!interpToCells_[facei].size())
-        {
-            continue;
-        }
-        label celli = interpToCells_[facei][0];
+// void Foam::immersedBoundaryObject::updateWeights() const
+// {
+//     const volScalarField& edgeLength = meshSizeObject::New(pMesh_).dx();
+//     forAll(*this, facei)
+//     {
+//         const point& fc = this->faceCentres()[facei];
+//
+//         if (!interpToCells_[facei].size())
+//         {
+//             continue;
+//         }
+//         label celli = interpToCells_[facei][0];
+//
+//         scalar sumW = 0.0;
+//
+//         const labelList& neighbours = interpToCells_[facei];
+//         forAll(neighbours, j)
+//         {
+//             const label cellj = neighbours[j];
+//             scalar w =
+//                 delta
+//                 (
+//                     fc,
+//                     pMesh_.cellCentres()[cellj],
+//                     edgeLength[celli]
+//                 );
+//             interpToWeights_[facei][j] = w;
+//             sumW += w;
+//         }
+//         forAll(interpToWeights_[facei], j)
+//         {
+//             interpToWeights_[facei][j] /= max(sumW, small);
+//         }
+//         deltaCoeffs_[facei] =
+//             1.0
+//             /mag
+//             (
+//                 shape().zeroDir
+//                 (
+//                     pMesh_.cellCentres()[patchExternalCells_[facei]] - fc
+//                 )
+//             );
+//     }
+//
+//     forAll(interpFromPoints_, i)
+//     {
+//         const label celli = (*shellCellsPtr_)[i];
+//         const vector& x = pMesh_.cellCentres()[celli];
+//
+//         const labelList& nearest = interpFromPoints_[i];
+//         scalar sumW = 0.0;
+//         forAll(nearest, fi)
+//         {
+//             const label own = interpToCells_[fi][0];
+//             const vector& fc = this->faceCentres()[fi];
+//             if (mag(fc - x) < 1.5*edgeLength[celli])
+//             {
+//                 scalar d = delta(x, fc, edgeLength[own]);
+//                 scalar invD(1.0/max(mag(x - fc), small));
+//                 interpFromWeights_[i][fi] = d*invD;
+//                 sumW += d*invD;
+//             }
+//         }
+//         forAll(interpFromWeights_[i], j)
+//         {
+//             interpFromWeights_[i][j] /= max(sumW, small);
+//         }
+//     }
+// }
 
-        scalar sumW = 0.0;
 
-        const labelList& neighbours = interpToCells_[facei];
-        forAll(neighbours, j)
-        {
-            const label cellj = neighbours[j];
-            scalar w =
-                delta
-                (
-                    fc,
-                    pMesh_.cellCentres()[cellj],
-                    edgeLength[celli]
-                );
-            interpToWeights_[facei][j] = w;
-            sumW += w;
-        }
-        forAll(interpToWeights_[facei], j)
-        {
-            interpToWeights_[facei][j] /= max(sumW, small);
-        }
-        deltaCoeffs_[facei] =
-            1.0
-            /mag
-            (
-                shape().zeroDir
-                (
-                    pMesh_.cellCentres()[patchExternalCells_[facei]] - fc
-                )
-            );
-    }
-
-    forAll(interpFromPoints_, i)
-    {
-        const label celli = (*shellCellsPtr_)[i];
-        const vector& x = pMesh_.cellCentres()[celli];
-
-        const labelList& nearest = interpFromPoints_[i];
-        scalar sumW = 0.0;
-        forAll(nearest, fi)
-        {
-            const label own = interpToCells_[fi][0];
-            const vector& fc = patch_.faceCentres()[fi];
-            if (mag(fc - x) < 1.5*edgeLength[celli])
-            {
-                scalar d = delta(x, fc, edgeLength[own]);
-                scalar invD(1.0/max(mag(x - fc), small));
-                interpFromWeights_[i][fi] = d*invD;
-                sumW += invD;
-            }
-        }
-        forAll(interpFromWeights_[i], j)
-        {
-            interpFromWeights_[i][j] /= max(sumW, small);
-        }
-    }
-}
-
-// * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
-
-Foam::immersedBoundaryObject::immersedBoundaryObject
-(
-    const polyMesh& pMesh,
-    const dictionary& dict,
-    const dictionary& stateDict
-)
-:
-    pMesh_(pMesh),
-    cellNeighbours_(extendedNLevelCPCCellToCellStencil::New(pMesh)),
-    dict_(dict),
-    geometricD_(1, 1, 1),
-    shape_(immersedShape::New(pMesh, *this, dict)),
-    mode_(INVERSE_DISTANCE),
-    patch_(shape_->patch()),
-    boundaryCellsPtr_(nullptr),
-    internalCellsPtr_(nullptr),
-    shellCellsPtr_(nullptr),
-    patchInternalCells_(nFaces(), -1),
-    patchExternalCells_(nFaces(), -1),
-    internalC_(),
-    interpToCells_(nFaces()),
-    interpToWeights_(nFaces()),
-    interpFromPoints_(nFaces()),
-    interpFromWeights_(nFaces()),
-    deltaCoeffs_(nFaces()),
-    nearestNeighbours_(nFaces()),
-    mass_(great),
-    force_(nFaces()),
-    forceEff_(Zero),
-    momentEff_(Zero),
-    forceExt_(Zero),
-    momentExt_(Zero),
-    g_
-    (
-        pMesh_.template foundObject<uniformDimensionedVectorField>("g")
-      ? pMesh_.template lookupObject<uniformDimensionedVectorField>("g").value()
-      : Zero
-    ),
-    report_(dict.lookupOrDefault<Switch>("report", true)),
-    scalarBoundaries_(0),
-    vectorBoundaries_(0)
+void Foam::immersedBoundaryObject::initialize() const
 {
     //- Set the stencil to be 2 levels deep
-    extendedNLevelCPCCellToCellStencil::New(pMesh).setNLevel(2);
-}
+    extendedNLevelCPCCellToCellStencil::New(pMesh_).setNLevel(2);
 
+    shape_ = immersedShape::New(pMesh_, *this, dict_);
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+    const standAlonePatch& csap(*this);
+    standAlonePatch& sap(const_cast<standAlonePatch&>(csap));
 
-Foam::immersedBoundaryObject::~immersedBoundaryObject()
-{
-    clearOut();
-}
+    sap = move(shape_->createPatch()());
 
+    sap.movePoints(this->transform(this->points()));
+    shape_->movePoints(this->points());
 
-void Foam::immersedBoundaryObject::clearOut()
-{
-    deleteDemandDrivenData(boundaryCellsPtr_);
-    deleteDemandDrivenData(internalCellsPtr_);
-    deleteDemandDrivenData(shellCellsPtr_);
-}
+    patchInternalCells_.resize(this->size(), -1);
+    patchExternalCells_.resize(this->size(), -1);
+    interpToCells_.resize(this->size());
+    interpToWeights_.resize(this->size());
+    interpFromPoints_.resize(this->size());
+    interpFromWeights_.resize(this->size());
+    deltaCoeffs_.resize(this->size());
+    nearestNeighbours_.resize(this->size());
+    force_.setSize(this->size());
+    force_ = Zero;
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::immersedBoundaryObject::initialize()
-{
     // Find largest grid spacing
     scalar maxEdgeLength =
         max(meshSizeObject::New(pMesh_).dx()).value();
@@ -649,7 +635,7 @@ void Foam::immersedBoundaryObject::initialize()
     maxEdgeLength *= 1.5;
 
     // Add face centers within the maxEdgeLength to the map
-    const pointField& faceCentres(patch_.faceCentres());
+    const pointField& faceCentres(sap.faceCentres());
     forAll(nearestNeighbours_, fi)
     {
         DynamicList<label> nn;
@@ -666,190 +652,69 @@ void Foam::immersedBoundaryObject::initialize()
 }
 
 
-template<>
-void Foam::immersedBoundaryObject::setValues
+// * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * * * * //
+
+Foam::immersedBoundaryObject::immersedBoundaryObject
 (
-    volScalarField::Internal& field
+    const polyPatch& patch,
+    const dictionary& dict,
+    const dictionary& stateDict
 )
+:
+    standAlonePatch(faceList(), pointField()),
+    patch_(patch),
+    pMesh_(patch.boundaryMesh().mesh()),
+    dict_(dict),
+    mode_(INVERSE_DISTANCE),
+    shape_(nullptr),
+    boundaryCellsPtr_(nullptr),
+    allInternalCellsPtr_(nullptr),
+    internalCellsPtr_(nullptr),
+    shellCellsPtr_(nullptr),
+    patchInternalCells_(),
+    patchExternalCells_(),
+    interpToCells_(),
+    interpToWeights_(),
+    interpFromPoints_(),
+    interpFromWeights_(),
+    deltaCoeffs_(),
+    magSfPtr_(nullptr),
+    nearestNeighbours_(),
+    force_(),
+    forceEff_(Zero),
+    momentEff_(Zero),
+    forceExt_(Zero),
+    momentExt_(Zero)
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::immersedBoundaryObject::~immersedBoundaryObject()
 {
-    scalarBoundaries_[field.name()].setValues();
+    clearOut();
 }
 
 
-template<>
-void Foam::immersedBoundaryObject::setValues
-(
-    volVectorField::Internal& field
-)
+void Foam::immersedBoundaryObject::clearOut()
 {
-    vectorBoundaries_[field.name()].setValues();
+    deleteDemandDrivenData(boundaryCellsPtr_);
+    deleteDemandDrivenData(allInternalCellsPtr_);
+    deleteDemandDrivenData(internalCellsPtr_);
+    deleteDemandDrivenData(shellCellsPtr_);
+    deleteDemandDrivenData(magSfPtr_);
 }
 
 
-template<>
-void Foam::immersedBoundaryObject::setValues
-(
-    volSymmTensorField::Internal& field
-)
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+void Foam::immersedBoundaryObject::status(const bool print) const
 {
-    NotImplemented;
-}
-
-
-template<>
-void Foam::immersedBoundaryObject::setValues
-(
-    volSphericalTensorField::Internal& field
-)
-{
-    NotImplemented;
-}
-
-
-template<>
-void Foam::immersedBoundaryObject::setValues
-(
-    volTensorField::Internal& field
-)
-{
-    NotImplemented;
-}
-
-
-void Foam::immersedBoundaryObject::setValues()
-{
-    forAll(scalarBoundaries_, i)
+    if (!print)
     {
-        scalarBoundaries_[i].setValues();
+        return;
     }
-    forAll(vectorBoundaries_, i)
-    {
-        vectorBoundaries_[i].setValues();
-    }
-}
-
-
-template<>
-void Foam::immersedBoundaryObject::addField
-(
-    volScalarField& f,
-    const dictionary& defaultDict
-)
-{
-    dictionary dict(f.name());
-    bool found = false;
-    if (this->dict_.found("boundaries"))
-    {
-        if (this->dict_.subDict("boundaries").found(f.name()))
-        {
-            dict = this->dict_.subDict("boundaries").subDict(f.name());
-            found = true;
-        }
-    }
-    if (!found)
-    {
-        dict = defaultDict.subDict(f.name());
-    }
-    scalarBoundaries_.resize(scalarBoundaries_.size() + 1);
-    scalarBoundaries_.set
-    (
-        scalarBoundaries_.size() - 1,
-        f.name(),
-        immersedBoundaryScalarPatchField::New(f, dict, *this).ptr()
-    );
-}
-
-
-template<>
-void Foam::immersedBoundaryObject::addForcing
-(
-    const word& name,
-    volScalarField& F,
-    const volScalarField& alphaRho,
-    const volScalarField& alphaRhoFOld,
-    const volScalarField& RHS,
-    const dimensionedScalar& dt
-) const
-{
-    scalarBoundaries_[name].addForcing
-    (
-        F,
-        alphaRho,
-        alphaRhoFOld,
-        RHS,
-        dt.value()
-    );
-}
-
-template<>
-void Foam::immersedBoundaryObject::addField
-(
-    volVectorField& f,
-    const dictionary& defaultDict
-)
-{
-    dictionary dict(f.name());
-    bool found = false;
-    if (this->dict_.found("boundaries"))
-    {
-        if (this->dict_.subDict("boundaries").found(f.name()))
-        {
-            dict = this->dict_.subDict("boundaries").subDict(f.name());
-            found = true;
-        }
-    }
-    if (!found)
-    {
-        dict = defaultDict.subDict(f.name());
-    }
-    vectorBoundaries_.resize(vectorBoundaries_.size() + 1);
-    vectorBoundaries_.set
-    (
-        vectorBoundaries_.size() - 1,
-        f.name(),
-        immersedBoundaryVectorPatchField::New(f, dict, *this).ptr()
-    );
-}
-
-
-template<>
-void Foam::immersedBoundaryObject::addForcing
-(
-    const word& name,
-    volVectorField& F,
-    const volScalarField& alphaRho,
-    const volVectorField& alphaRhoFOld,
-    const volVectorField& RHS,
-    const dimensionedScalar& dt
-) const
-{
-    vectorBoundaries_[name].addForcing
-    (
-        F,
-        alphaRho,
-        alphaRhoFOld,
-        RHS,
-        dt.value()
-    );
-}
-
-
-const Foam::fvMesh& Foam::immersedBoundaryObject::immersedMesh() const
-{
-    NotImplemented;
-    return dynamic_cast<const fvMesh&>(pMesh_);
-}
-
-
-const Foam::immersedMeshMapper* Foam::immersedBoundaryObject::mapper() const
-{
-    NotImplemented;
-    return nullptr;
-}
-
-
-void Foam::immersedBoundaryObject::status() const
-{
     Info<< name() << ":" <<endl;
 }
 
@@ -863,40 +728,26 @@ Foam::labelList Foam::immersedBoundaryObject::calcInside
 }
 
 
-
-Foam::tmp<Foam::vectorField>
-Foam::immersedBoundaryObject::velocity() const
+void Foam::immersedBoundaryObject::movePoints()
 {
-    return
-        (faceCentres() - faceCentresOld())
-       /pMesh_.time().deltaTValue();
-}
-
-
-Foam::vector
-Foam::immersedBoundaryObject::velocity(const label facei) const
-{
-    return
-        (faceCentres()[facei] - faceCentresOld()[facei])
-       /pMesh_.time().deltaTValue();
+    standAlonePatch::movePoints(this->transform(this->points()));
+    shape_->movePoints(this->points());
+    clearOut();
 }
 
 
 bool Foam::immersedBoundaryObject::read(const dictionary& dict)
 {
-    report_ = dict.lookupOrDefault<Switch>("report", false);
     return true;
 }
 
 
 void Foam::immersedBoundaryObject::write(Ostream& os) const
-{
-    writeEntry(os, "report", report_);
-}
+{}
+
 
 void Foam::immersedBoundaryObject::write(dictionary& dict) const
-{
-    dict.add("report", report_);
-}
+{}
+
 
 // ************************************************************************* //

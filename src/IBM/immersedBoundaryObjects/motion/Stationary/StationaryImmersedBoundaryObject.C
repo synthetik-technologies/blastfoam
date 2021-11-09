@@ -32,27 +32,14 @@ template<class ImmersedType>
 Foam::StationaryImmersedBoundaryObject<ImmersedType>::
 StationaryImmersedBoundaryObject
 (
-    const polyMesh& mesh,
+    const polyPatch& patch,
     const dictionary& dict,
     const dictionary& stateDict
 )
 :
-    ImmersedType(mesh, dict, stateDict),
-    orientation_
-    (
-        dict.lookupOrDefault<tensor>("orientation", tensor::I)
-      & this->shape().orientation()
-    )
+    ImmersedType(patch, dict, stateDict)
 {}
 
-
-template<class ImmersedType>
-void Foam::StationaryImmersedBoundaryObject<ImmersedType>::initialize()
-{
-    ImmersedType::initialize();
-    this->shape_->movePoints();
-    this->shape_->writeVTK();
-}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
@@ -65,86 +52,42 @@ Foam::StationaryImmersedBoundaryObject<ImmersedType>::
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class ImmersedType>
-Foam::Tuple2<Foam::tensor, Foam::vector>
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::rotate
+void Foam::StationaryImmersedBoundaryObject<ImmersedType>::status
 (
-    const tensor& Q0,
-    const vector& pi0,
-    const scalar deltaT
+    const bool print
 ) const
 {
-    return Tuple2<tensor, vector>(Q0, pi0);
-}
-
-
-template<class ImmersedType>
-void Foam::StationaryImmersedBoundaryObject<ImmersedType>::updateAcceleration
-(
-    const vector& fGlobal,
-    const vector& tauGlobal
-)
-{
-    return;
-}
-
-
-template<class ImmersedType>
-void Foam::StationaryImmersedBoundaryObject<ImmersedType>::applyRestraints()
-{
-    return;
-}
-
-
-template<class ImmersedType>
-void Foam::StationaryImmersedBoundaryObject<ImmersedType>::status() const
-{
-    ImmersedType::status();
+    ImmersedType::status(false);
 }
 
 
 template<class ImmersedType>
 Foam::point
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::centreOfRotation() const
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::centre() const
 {
-    return this->initialCentreOfMass();
+    return this->shape_->centre();
 }
 
 
 template<class ImmersedType>
-Foam::point
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::centreOfMass() const
+Foam::scalar
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::mass() const
 {
-    return this->initialCentreOfMass();
+    return great;
 }
 
 
 template<class ImmersedType>
-Foam::tensor
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::orientation() const
+Foam::diagTensor
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::momentOfInertia() const
 {
-    return orientation_;
-}
-
-
-template<class ImmersedType>
-Foam::vector
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::momentArm() const
-{
-    return Zero;
+    return diagTensor(great, great, great);
 }
 
 
 template<class ImmersedType>
 Foam::vector
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::v() const
-{
-    return Zero;
-}
-
-
-template<class ImmersedType>
-Foam::vector
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::velocity
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::v
 (
     const point& pt
 ) const
@@ -165,18 +108,18 @@ Foam::StationaryImmersedBoundaryObject<ImmersedType>::velocity
 
 
 template<class ImmersedType>
-Foam::vector
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::omega() const
+Foam::tmp<Foam::vectorField>
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::velocity() const
 {
-    return Zero;
+    return tmp<vectorField>(new vectorField(this->size(), Zero));
 }
 
 
 template<class ImmersedType>
-Foam::diagTensor
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::momentOfInertia() const
+Foam::tensor
+Foam::StationaryImmersedBoundaryObject<ImmersedType>::orientation() const
 {
-    return diagTensor(great, great, great);
+    return this->shape_->orientation();
 }
 
 
@@ -187,7 +130,7 @@ Foam::StationaryImmersedBoundaryObject<ImmersedType>::transform
     const point& initialPoint
 ) const
 {
-    return centreOfRotation() + (orientation() & initialPoint);
+    return centre() + (orientation() & initialPoint);
 }
 
 
@@ -198,7 +141,7 @@ Foam::StationaryImmersedBoundaryObject<ImmersedType>::transform
     const pointField& initialPoints
 ) const
 {
-    return centreOfRotation() + (orientation() & initialPoints);
+    return centre() + (orientation() & initialPoints);
 }
 
 
@@ -208,7 +151,7 @@ Foam::point Foam::StationaryImmersedBoundaryObject<ImmersedType>::inverseTransfo
     const point& pt
 ) const
 {
-    return (orientation().inv() & (pt - centreOfRotation()));
+    return (orientation().T() & (pt - centre()));
 }
 
 
@@ -218,30 +161,7 @@ Foam::tmp<Foam::pointField> Foam::StationaryImmersedBoundaryObject<ImmersedType>
     const pointField& points
 ) const
 {
-    return (orientation().inv() & (points - centreOfRotation()));
-}
-
-
-template<class ImmersedType>
-Foam::tensor
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::rConstraints() const
-{
-    return tensor::I;
-}
-
-
-template<class ImmersedType>
-Foam::tensor
-Foam::StationaryImmersedBoundaryObject<ImmersedType>::tConstraints() const
-{
-    return tensor::I;
-}
-
-
-template<class ImmersedType>
-void Foam::StationaryImmersedBoundaryObject<ImmersedType>::movePoints()
-{
-    ImmersedType::movePoints();
+    return (orientation().T() & (points - centre()));
 }
 
 

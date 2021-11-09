@@ -53,9 +53,12 @@ Foam::IsothermalImmersedBoundaryObject<ImmersedType>::
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class ImmersedType>
-void Foam::IsothermalImmersedBoundaryObject<ImmersedType>::status() const
+void Foam::IsothermalImmersedBoundaryObject<ImmersedType>::status
+(
+    const bool print
+) const
 {
-    ImmersedType::status();
+    ImmersedType::status(print);
 }
 
 

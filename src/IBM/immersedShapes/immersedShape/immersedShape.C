@@ -51,20 +51,17 @@ Foam::immersedShape::immersedShape
 :
     pMesh_(pMesh),
     object_(ibo),
+    name_(dict.dictName()),
+    dict_(dict),
     dx_(dict.lookup<scalar>("dx")),
-    points0_(),
-    faceCentresOld_(),
     geometricD_(Zero),
     ri_(-1),
     ai_(-1),
     angle_(0.0),
-    scale_(1.0),
     ei_(-1),
-    centreOfMass_(Zero),
+    centre_(Zero),
     orientation_(tensor::I),
-    name_(dict.dictName()),
     write_(dict.lookupOrDefault("write", false)),
-    patchPtr_(nullptr),
     bb_(Zero, Zero)
 {
     if (pMesh.nGeometricD() == 3)
@@ -97,9 +94,9 @@ Foam::immersedShape::immersedShape
         scalar maxE(returnReduce(bb.max()[ei_], maxOp<scalar>()));
 
         //- Remove any offset added in the empty direction
-        centreOfMass_[ei_] = 0.5*(minE + maxE);
-        bb_.min()[ei_] = minE;
-        bb_.max()[ei_] = maxE;
+        centre_[ei_] = 0.5*(minE + maxE);
+        bb_.min()[ei_] = -great;
+        bb_.max()[ei_] = great;
 
         if (pMesh.nSolutionD() == 3) // Axisymmetric
         {
@@ -113,8 +110,6 @@ Foam::immersedShape::immersedShape
                         refCast<const wedgePolyPatch>(patch);
                     vector axis(wedge.axis());
                     angle_ = acos(wedge.cosAngle());
-
-                    scale_ = angle_/Foam::constant::mathematical::pi;
 
                     ai_ = 0;
                     forAll(axis, i)
@@ -160,55 +155,59 @@ Foam::immersedShape::~immersedShape()
 
 void Foam::immersedShape::read(const dictionary& dict)
 {
-    if (needCentreOfMass())
+    vector centre(Zero);
+    if (needCentre())
     {
-        vector com(dict.lookup<vector>("centreOfMass"));
-        if (ei_ != -1)
+        if (dict.found("initialCentreOfRotation"))
         {
-            this->centreOfMass_[xi_] = com[xi_];
-            this->centreOfMass_[yi_] = com[yi_];
+            centre = dict.lookup<vector>("initialCentreOfRotation");
+        }
+        else if (dict.found("initialCentreOfMass"))
+        {
+            centre = dict.lookup<vector>("initialCentreOfMass");
+        }
+        else if (dict.found("centreOfRotation"))
+        {
+            centre = dict.lookup<vector>("centreOfRotation");
+        }
+        else if (dict.found("centreOfMass"))
+        {
+            centre = dict.lookup<vector>("centreOfMass");
         }
         else
         {
-            this->centreOfMass_ = com;
+            FatalErrorInFunction
+                << "centreOfMass of centreOfRotation was not provided"
+                << abort(FatalError);
+        }
+
+        if (ei_ != -1)
+        {
+            this->centre_[xi_] = centre[xi_];
+            this->centre_[yi_] = centre[yi_];
+        }
+        else
+        {
+            this->centre_ = centre;
         }
     }
 
-//     if (needOrientation())
-//     {
-//         orientation_ =
-//             tensor
-//             (
-//                 dict.lookupOrDefault<tensor>("orientation", tensor::I)
-//             );
-//     }
-}
-
-
-void Foam::immersedShape::correctCentreOfMass()
-{
-    if (ei_ != -1 || ai_ != -1)
+    if (needOrientation())
     {
-        this->centreOfMass_[ei_] = 0.0;
+        orientation_ =
+            tensor
+            (
+                dict.lookupOrDefault<tensor>("orientation", tensor::I)
+            );
     }
 }
 
 
-void Foam::immersedShape::writeVTK() const
+void Foam::immersedShape::correctCentre()
 {
-    if (write_ && Pstream::master())
+    if (ei_ != -1 || ai_ != -1)
     {
-        Info<<"writing "<< name_ << ".vtk" << endl;
-        vtkWritePolyData::write
-        (
-            name_ + ".vtk",
-            name_,
-            false,
-            patchPtr_->points(),
-            labelList(),
-            edgeList(),
-            patchPtr_()
-        );
+        this->centre_[ei_] = 0.0;
     }
 }
 
@@ -413,15 +412,16 @@ void Foam::immersedShape::extrude2D
     boundBox bb(pMesh_.points());
     scalar minE(returnReduce(bb.min()[ei_], minOp<scalar>()));
     scalar maxE(returnReduce(bb.max()[ei_], maxOp<scalar>()));
+    scalar spanE(0.5*(maxE - minE));
 
-    offset[ei_] = minE;
+    offset[ei_] = -spanE;
     forAll(origPoints, i)
     {
         points[pi++] = origPoints[i] + offset;
     }
 
     //- Add points at front
-    offset[ei_] = maxE;
+    offset[ei_] = spanE;
     forAll(origPoints, i)
     {
         points[pi++] = origPoints[i] + offset;
@@ -457,7 +457,7 @@ void Foam::immersedShape::extrude2D
 }
 
 
-void Foam::immersedShape::refine3D(triSurface& triMesh)
+void Foam::immersedShape::refine3D(triSurface& triMesh) const
 {
     bool changing = true;
     label iter = 0;
@@ -519,13 +519,11 @@ void Foam::immersedShape::refine3D(triSurface& triMesh)
 }
 
 
-void Foam::immersedShape::movePoints()
+void Foam::immersedShape::movePoints(const pointField& points)
 {
-    faceCentresOld_ = patchPtr_->faceCentres();
-    patchPtr_->movePoints(object_.transform(points0_));
-    point mp(min(patchPtr_->points()));
-    point Mp(max(patchPtr_->points()));
-    if (ai_ != -1)
+    point mp(min(points));
+    point Mp(max(points));
+    if (ei_ != -1)
     {
         bb_.min()[xi_] = mp[xi_];
         bb_.min()[yi_] = mp[yi_];

@@ -36,14 +36,18 @@ SourceFiles
 #ifndef MovingImmersedBoundaryObject_H
 #define MovingImmersedBoundaryObject_H
 
-#include "movingImmersedBoundaryObjectState.H"
+#include "objectMotionState.H"
+#include "objectMotionSolver.H"
 #include "pointField.H"
 #include "immersedBoundaryObject.H"
-#include "immersedBoundaryObjectRestraint.H"
-#include "immersedBoundaryObjectConstraint.H"
+#include "movingObject.H"
+#include "objectMotionState.H"
+#include "objectMotionRestraint.H"
+#include "objectMotionConstraint.H"
 #include "Tuple2.H"
 #include "dictionaryEntry.H"
 #include "PtrListDictionary.H"
+#include "OFstream.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,7 +55,7 @@ namespace Foam
 {
 
 // Forward declarations
-class immersedBoundaryObjectMotionSolver;
+class objectMotionSolver;
 
 /*---------------------------------------------------------------------------*\
                       Class MovingImmersedBoundaryObject Declaration
@@ -60,21 +64,22 @@ class immersedBoundaryObjectMotionSolver;
 template<class ImmersedType>
 class MovingImmersedBoundaryObject
 :
+    public movingObject,
     public ImmersedType
 {
     // Private Data
 
         //- Motion state data object
-        movingImmersedBoundaryObjectState motionState_;
+        objectMotionState motionState_;
 
         //- Motion state data object for previous time-step
-        movingImmersedBoundaryObjectState motionState0_;
+        objectMotionState motionState0_;
 
         //- Motion restraints
-        PtrList<immersedBoundaryObjectRestraint> restraints_;
+        PtrList<objectMotionRestraint> restraints_;
 
         //- Motion constraints
-        PtrList<immersedBoundaryObjectConstraint> constraints_;
+        PtrList<objectMotionConstraint> constraints_;
 
         //- Translational constraint tensor
         tensor tConstraints_;
@@ -85,24 +90,44 @@ class MovingImmersedBoundaryObject
         //- Orientation of centre of rotation
         vector initialCentreOfRotation_;
 
+        //- Orientation of centre of mass
+        vector initialCentreOfMass_;
+
         //- Moment of inertia of the body in reference configuration
         //  (Q = I)
-        diagTensor momentOfInertia_;
+        mutable diagTensor momentOfInertia_;
 
         //- Acceleration relaxation coefficient
         scalar aRelax_;
 
-        //- Switch to turn reporting of motion data on and off
-        Switch report_;
-
         //- Motion solver
-        autoPtr<immersedBoundaryObjectMotionSolver> solver_;
+        autoPtr<objectMotionSolver> solver_;
 
         //- Initial points
         pointField points0_;
 
+        //- Mass of object
+        scalar mass_;
+
+        //- Gravitational acceleration
+        vector g_;
+
+        //- Scale factor for the mesh
+        scalar scale_;
+
+        //- Switch to turn reporting of motion data on and off
+        Switch report_;
+
+        //- Does this object need to be initialized
+        bool needToInitialize_;
+
+        //- Optional log file
+        mutable autoPtr<OFstream> outputPtr_;
 
     // Private Member Functions
+
+        //- Initialize the variables based on the mesh shape
+        void initializeState();
 
         //- Calculate the rotation tensor around the body reference
         //  frame x-axis by the given angle
@@ -135,6 +160,8 @@ class MovingImmersedBoundaryObject
             const vector& tauGlobal
         );
 
+        //- Return the scale factor for the mesh
+        scalar scale() const;
 
         // Access functions retained as private because of the risk of
         // confusion over what is a body local frame vector and what is global
@@ -142,12 +169,10 @@ class MovingImmersedBoundaryObject
         // Access
 
             //- Return the restraints
-            inline const PtrList<immersedBoundaryObjectRestraint>&
-                restraints() const;
+            inline const PtrList<objectMotionRestraint>& restraints() const;
 
             //- Return the constraints
-            inline const PtrList<immersedBoundaryObjectConstraint>&
-                constraints() const;
+            inline const PtrList<objectMotionConstraint>& constraints() const;
 
             //- Return the orientation
             inline const tensor& Q() const;
@@ -160,6 +185,9 @@ class MovingImmersedBoundaryObject
 
             //- Return the current torque
             inline const vector& tau() const;
+
+            //- Return the report Switch
+            inline bool report() const;
 
 
         // Edit
@@ -187,7 +215,7 @@ public:
         //- Construct from constant and state dictionaries
         MovingImmersedBoundaryObject
         (
-            const polyMesh& mesh,
+            const polyPatch& patch,
             const dictionary& dict,
             const dictionary& stateDict
         );
@@ -200,25 +228,31 @@ public:
 
         // Access
 
-            //- Finish setting up the object
-            virtual void initialize();
-
             //- Is the object moving
             virtual bool moving() const
             {
                 return true;
             }
 
+            //- Return the mass of the object
+            virtual scalar mass() const;
+
             //- Return the motion state
-            inline const movingImmersedBoundaryObjectState& state() const;
+            inline const objectMotionState& state() const;
 
             virtual vector momentArm() const;
 
             //- Return the initial points
             inline const pointField& points0() const;
 
+            //- Return the initial centre of rotation
+            virtual point initialCentreOfRotation() const;
+
             //- Return the current centre of rotation
             virtual point centreOfRotation() const;
+
+            //- Return the initial centre of mass
+            virtual point initialCentreOfMass() const;
 
             //- Return the current centre of mass
             virtual point centreOfMass() const;
@@ -237,6 +271,9 @@ public:
             //- Return the angular velocity in the global frame
             virtual vector omega() const;
 
+            //- Return the current velocity at a point
+            virtual vector v(const point& pt) const;
+
             //- Return the current velocity
             virtual vector v() const;
 
@@ -251,6 +288,12 @@ public:
 
             //- Return non-const access to the centre of rotation
             inline point& centreOfRotation();
+
+            //- Return non-const access to the centre of rotation
+            virtual point centre() const
+            {
+                return centreOfRotation();
+            }
 
 
         // Constraints and Restraints
@@ -284,16 +327,16 @@ public:
             virtual void solve();
 
             //- Report the status of the motion
-            virtual void status() const;
+            virtual void status(const bool print = true) const;
 
 
         // Transformations
 
-            //- Return the velocity at a position
-            virtual vector velocity(const vector& pt) const;
-
             //- Return the velocity at a list of position
             virtual tmp<vectorField> velocity(const pointField& pt) const;
+
+            //- Return the velocity at the faceCentres
+            virtual tmp<vectorField> velocity() const;
 
             //- Transform the given initial state point by the current motion
             //  state
@@ -318,6 +361,9 @@ public:
         //- Write
         virtual void write(Ostream&) const;
         virtual void write(dictionary&) const;
+
+        virtual void logHeader(Ostream&) const;
+        virtual void log(Ostream&) const;
 
         //- Read coefficients dictionary and update system parameters,
         //  constraints and restraints but not the current state

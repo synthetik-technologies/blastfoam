@@ -82,7 +82,7 @@ void Foam::wallInelastic::evaluateWall
 
     const scalar dT = object.pMesh().time().deltaTValue();
     const tensor invI = object.invMomentOfInertia();
-    const vector& x = object.centreOfRotation();
+    const vector& x = object.centre();
 
     vector hitPoint(map.hitPoint());
     vector normal(map.normal());
@@ -144,7 +144,7 @@ void Foam::wallInelastic::evaluateExternalForce
 
     const label facei = map.hitPointIndex();
     const scalarField& weights(map.weights());
-    const vector x = object.centreOfRotation();
+    const vector x = object.centre();
     const scalar dT = object.pMesh().time().deltaTValue();
 
     vector r(map.hitPoint() - x);
@@ -177,7 +177,6 @@ void Foam::wallInelastic::evaluateExternalForce
         -max(Fstop + FeffN, 0.0)*normal
     );
 
-    Info<<((object.omega() ^ r) & normal)<<" "<<(map.v() & normal)<<endl;
     object.force()[map.hitPointIndex()] += Fext;
     object.forceEff() += Fext;
     object.momentEff() += r ^ Fext;

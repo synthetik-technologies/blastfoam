@@ -50,17 +50,6 @@ Foam::immersedSphere::immersedSphere
     radius_(dict.lookup<scalar>("radius"))
 {
     read(dict);
-
-    List<labelledTri> faces;
-    immersedBox::makeBox(vector::one*radius_, points0_, faces);
-    triSurface tri(triSurface(faces, points0_));
-
-    refine3D(tri);
-
-    patchPtr_.set(new standAlonePatch(tri.faces(), tri.points()));
-
-    // Update original points
-    points0_ = patchPtr_->points();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -72,7 +61,22 @@ Foam::immersedSphere::~immersedSphere()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::immersedSphere::adjustPoints(pointField& points)
+Foam::autoPtr<Foam::standAlonePatch>
+Foam::immersedSphere::createPatch() const
+{
+    pointField points;
+    List<face> faces;
+    immersedBox::makeBox(vector::one*radius_, points, faces);
+    triSurface tri(triFaceList(faces), points);
+    refine3D(tri);
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(tri.faces(), tri.points())
+    );
+}
+
+
+bool Foam::immersedSphere::adjustPoints(pointField& points) const
 {
     forAll(points, i)
     {
@@ -94,7 +98,7 @@ bool Foam::immersedSphere::adjustPoints(pointField& points)
 Foam::labelList
 Foam::immersedSphere::calcInside(const pointField& points) const
 {
-    scalarList R(mag(points - object_.centreOfRotation()));
+    scalarList R(mag(points - object_.centre()));
     labelList insidePoints(points.size(), -1);
     label pi = 0;
     forAll(insidePoints, i)
@@ -111,8 +115,13 @@ Foam::immersedSphere::calcInside(const pointField& points) const
 
 bool Foam::immersedSphere::inside(const point& pt) const
 {
-    return (mag(pt - object_.centreOfRotation()) <= radius_);
+    return (mag(pt - object_.centre()) <= radius_);
 }
 
+
+void Foam::immersedSphere::write(Ostream& os) const
+{
+    writeEntry(os, "radius", radius_);
+}
 
 // ************************************************************************* //

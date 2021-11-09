@@ -103,6 +103,9 @@ class stiffenedGas
         //- Specific heat ratio
         scalar gamma_;
 
+        //- Minimum density used for internal energy contribution
+        scalar minRho_;
+
 
         //- Return deviation from ideal gas pressure
         inline scalar Pi

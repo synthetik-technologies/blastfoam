@@ -36,6 +36,8 @@ SourceFiles
 #define immersedPolyPatch_H
 
 #include "polyPatch.H"
+#include "UautoPtr.H"
+#include "immersedBoundaryObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,6 +52,11 @@ class immersedPolyPatch
 :
     public polyPatch
 {
+protected:
+
+    //- Immersed object
+    mutable UautoPtr<const immersedBoundaryObject> immersedObject_;
+
 public:
 
     //- Runtime type information
@@ -140,6 +147,12 @@ public:
                 new immersedPolyPatch(*this, bm, index, mapAddressing, newStart)
             );
         }
+
+
+    // Member function
+
+        //- Return the immersed object
+        const immersedBoundaryObject& immersedObject() const;
 };
 
 

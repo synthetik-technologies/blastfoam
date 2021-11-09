@@ -63,11 +63,39 @@ Foam::atmosphereModel::atmosphereModel
         )
     ),
     normal_(-g_.value()/max(mag(g_).value(), small)),
-    groundElevation_("groundElevation", dimLength, dict_),
+    baseElevation_("baseElevation", dimLength, dict_),
     h_("h", normal_ & mesh.C())
 {
-    h_ += groundElevation_ - min(h_);
+    h_ += baseElevation_ - min(h_);
 }
+
+
+Foam::atmosphereModel::atmosphereModel
+(
+    const fvMesh& mesh,
+    const scalar elevation
+)
+:
+    dict_(),
+    mesh_(mesh),
+    g_
+    (
+        IOobject
+        (
+            "g",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ,
+            IOobject::NO_WRITE
+        )
+    ),
+    normal_(-g_.value()/max(mag(g_).value(), small)),
+    baseElevation_("baseElevation", dimLength, elevation),
+    h_("h", normal_ & mesh.C())
+{
+    h_ += baseElevation_ - min(h_);
+}
+
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -157,11 +185,19 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         ph_rghEqn.solve(solverDict);
 
         p = ph_rgh + rho*gh + pRef;
-        thermo.updateRho();
-        thermo.calce(p);
-
+        forAll(p.boundaryField(), patchi)
+        {
+            p.boundaryFieldRef()[patchi] ==
+                p.boundaryField()[patchi].patchInternalField();
+        }
         Info<< "Hydrostatic pressure variation "
             << (max(ph_rgh) - min(ph_rgh)).value() << endl;
+    }
+
+    forAll(p.boundaryField(), patchi)
+    {
+        p.boundaryFieldRef()[patchi] =
+            p.boundaryField()[patchi].patchInternalField();
     }
 }
 

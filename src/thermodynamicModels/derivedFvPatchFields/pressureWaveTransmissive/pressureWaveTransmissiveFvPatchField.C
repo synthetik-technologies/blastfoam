@@ -95,34 +95,61 @@ template<class Type>
 Foam::tmp<Foam::scalarField>
 Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
 {
-    const surfaceScalarField& phi =
-        this->db().template lookupObject<surfaceScalarField>(this->phiName_);
-
-    Field<scalar> phip
+    Field<scalar> phip(this->size(), Zero);
+    if
     (
-        this->patch().template
-            lookupPatchField<surfaceScalarField, scalar>(this->phiName_)
-    );
-
-    if (phi.dimensions() == dimDensity*dimVelocity*dimArea)
+        this->db().template foundObject<surfaceScalarField>
+        (
+            this->phiName_
+        )
+    )
     {
-        const fvPatchScalarField& rhop =
-            this->patch().template
-                lookupPatchField<volScalarField, scalar>(this->rhoName_);
+        const surfaceScalarField& phi =
+            this->db().template
+            lookupObject<surfaceScalarField>(this->phiName_);
 
-        phip /= rhop;
+
+        phip =
+            this->patch().template
+            lookupPatchField<surfaceScalarField, scalar>
+            (
+                this->phiName_
+            );
+        if (phi.dimensions() == dimDensity*dimVelocity*dimArea)
+        {
+            const fvPatchScalarField& rhop =
+                this->patch().template
+                lookupPatchField<volScalarField, scalar>
+                (
+                    this->rhoName_
+                );
+
+            phip /= rhop;
+        }
     }
 
-   const fluidBlastThermo& thermo =
-        this->db().template lookupObject<fluidBlastThermo>
+    Field<scalar> cp(this->size(), Zero);
+    if
+    (
+        this->db().template foundObject<fluidBlastThermo>
         (
             IOobject::groupName(basicThermo::dictName, phaseName_)
-        );
-    // Lookup the velocity and compressibility of the patch
-    tmp<scalarField> cp
-    (
-        thermo.speedOfSound().boundaryField()[this->patch().index()]
-    );
+        )
+    )
+    {
+        const fluidBlastThermo& thermo =
+            this->db().template lookupObject<fluidBlastThermo>
+            (
+                IOobject::groupName
+                (
+                    basicThermo::dictName,
+                    phaseName_
+                )
+            );
+        // Lookup the velocity and compressibility of the patch
+        cp =
+            thermo.speedOfSound().boundaryField()[this->patch().index()];
+    }
     // Calculate the speed of the field wave w
     // by summing the component of the velocity normal to the boundary
     // and the speed of sound (sqrt(cp)).

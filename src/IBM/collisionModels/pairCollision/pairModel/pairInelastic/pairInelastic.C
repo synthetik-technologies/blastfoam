@@ -80,8 +80,8 @@ void Foam::pairInelastic::evaluatePair
     tensor invIA = objectA.invMomentOfInertia();
     tensor invIB = objectB.invMomentOfInertia();
 
-    vector xA = objectA.centreOfRotation();
-    vector xB = objectB.centreOfRotation();
+    vector xA = objectA.centre();
+    vector xB = objectB.centre();
 
     vector hitPoint(map.hitPoint());
     vector normal(map.normalA());

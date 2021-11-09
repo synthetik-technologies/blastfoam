@@ -49,13 +49,6 @@ Foam::immersedBox::immersedBox
     L_(dict.lookup<vector>("L"))
 {
     read(dict);
-
-    List<labelledTri> faces;
-    makeBox(L_, points0_, faces);
-    triSurface tri(faces, points0_);
-    refine3D(tri);
-    patchPtr_.set(new standAlonePatch(tri.faces(), tri.points()));
-    points0_ = patchPtr_->localPoints();
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -66,6 +59,20 @@ Foam::immersedBox::~immersedBox()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+Foam::autoPtr<Foam::standAlonePatch> Foam::immersedBox::createPatch() const
+{
+    pointField points;
+    List<face> faces;
+    makeBox(L_, points, faces);
+    triSurface tri(triFaceList(faces), points);
+    refine3D(tri);
+    return autoPtr<standAlonePatch>
+    (
+        new standAlonePatch(tri.faces(), tri.points())
+    );
+}
 
 
 Foam::labelList
@@ -123,7 +130,7 @@ void Foam::immersedBox::makeBox
 (
     const vector& L,
     pointField& points,
-    List<labelledTri>& faces
+    List<face>& faces
 )
 {
     scalar x = L[0]/2.0;
@@ -142,22 +149,30 @@ void Foam::immersedBox::makeBox
             vector(-x, y, z)
         }
     );
-    faces = List<labelledTri>
+    faces = List<face>
     (
         {
-            labelledTri(1, 3, 0, 0),
-            labelledTri(2, 3, 1, 0),
-            labelledTri(0, 3, 7, 0),
-            labelledTri(4, 0, 7, 0),
-            labelledTri(6, 5, 4, 0),
-            labelledTri(7, 6, 4, 0),
-            labelledTri(5, 2, 1, 0),
-            labelledTri(5, 6, 2, 0),
-            labelledTri(4, 5, 0, 0),
-            labelledTri(0, 5, 1, 0),
-            labelledTri(2, 6, 7, 0),
-            labelledTri(3, 2, 7, 0)
+            triFace(1, 3, 0),
+            triFace(2, 3, 1),
+            triFace(0, 3, 7),
+            triFace(4, 0, 7),
+            triFace(6, 5, 4),
+            triFace(7, 6, 4),
+            triFace(5, 2, 1),
+            triFace(5, 6, 2),
+            triFace(4, 5, 0),
+            triFace(0, 5, 1),
+            triFace(2, 6, 7),
+            triFace(3, 2, 7)
         }
     );
 }
+
+
+void Foam::immersedBox::write(Ostream& os) const
+{
+    writeEntry(os, "L", L_);
+}
+
+
 // ************************************************************************* //

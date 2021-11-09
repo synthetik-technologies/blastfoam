@@ -143,9 +143,6 @@ public:
         //- Return the flux scheme
         inline const fluxScheme& flux() const;
 
-        //- Access the flux scheme
-        inline fluxScheme& flux();
-
     // Member Access Functions
 
         //- Return turbulence class
@@ -204,6 +201,9 @@ public:
 
         //- Post update
         virtual void postUpdate();
+
+        //- Clear the flux scheme
+        virtual void clear();
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;

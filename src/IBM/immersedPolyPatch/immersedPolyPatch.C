@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "immersedPolyPatch.H"
+#include "immersedBoundaryObjectListSolver.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -113,4 +114,23 @@ Foam::immersedPolyPatch::immersedPolyPatch
 {}
 
 
+// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+
+const Foam::immersedBoundaryObject&
+Foam::immersedPolyPatch::immersedObject() const
+{
+    if (!immersedObject_.valid())
+    {
+        const immersedBoundaryObjectListSolver& ibm =
+            immersedBoundaryObjectListSolver::New
+            (
+                this->boundaryMesh().mesh()
+            );
+        immersedObject_.set
+        (
+            &const_cast<immersedBoundaryObjectListSolver&>(ibm).addObject(*this)
+        );
+    }
+    return immersedObject_();
+}
 // ************************************************************************* //

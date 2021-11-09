@@ -24,10 +24,35 @@ License
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
+void Foam::immersedBoundaryObject::addForcing
+(
+    Field<Type>& F,
+    const Field<Type>& pF,
+    const scalarField& alphaRho,
+    const Field<Type>& alphaRhoFOld,
+    const Field<Type>& RHS,
+    const scalar dt
+) const
+{
+    // (alphaRho*F - alphaRhoOld*FOld)/dt = RHS + forcing
+    tmp<Field<Type>> interpF
+    (
+        (
+            pF*interpolateTo(alphaRho)
+          - interpolateTo(alphaRhoFOld)
+        )/dt
+      + interpolateTo(RHS)
+
+    );
+    interpolateFrom(interpF(), F);
+}
+
+
+template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::immersedBoundaryObject::interpolateTo(const Field<Type>& vf) const
 {
-    tmp<Field<Type>> tmpF(new Field<Type>(nFaces(), Zero));
+    tmp<Field<Type>> tmpF(new Field<Type>(this->size(), Zero));
     Field<Type>& f(tmpF.ref());
     if (!internalCellsPtr_)
     {
@@ -53,7 +78,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::immersedBoundaryObject::patchInternalField(const Field<Type>& vf) const
 {
-    tmp<Field<Type>> tmpF(new Field<Type>(nFaces(), Zero));
+    tmp<Field<Type>> tmpF(new Field<Type>(this->size(), Zero));
     Field<Type>& f(tmpF.ref());
     if (!internalCellsPtr_)
     {
@@ -66,8 +91,15 @@ Foam::immersedBoundaryObject::patchInternalField(const Field<Type>& vf) const
         {
             f[i] = vf[celli];
         }
+        else
+        {
+            celli = patchExternalCells_[i];
+            if (celli >= 0)
+            {
+                f[i] = vf[celli];
+            }
+        }
     }
-    reduce(f, sumOp<List<Type>>());
     return tmpF;
 }
 
@@ -76,21 +108,37 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::immersedBoundaryObject::patchExternalField(const Field<Type>& vf) const
 {
-    tmp<Field<Type>> tmpF(new Field<Type>(nFaces(), Zero));
+    tmp<Field<Type>> tmpF(new Field<Type>(this->size(), Zero));
     Field<Type>& f(tmpF.ref());
     if (!internalCellsPtr_)
     {
         calcMapping();
     }
-    forAll(patchExternalCells_, i)
+    forAll(patchMap_, i)
     {
-        label celli = patchExternalCells_[i];
-        if (celli >= 0)
+        forAll(patchMap_[i], j)
         {
-            f[i] = vf[celli];
+            f[patchMap_[i][j]] = vf[patchCells_[i]];
         }
     }
-    reduce(f, sumOp<List<Type>>());
+    return tmpF;
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>>
+Foam::immersedBoundaryObject::patchField(const Field<Type>& vf) const
+{
+    tmp<Field<Type>> tmpF(new Field<Type>(patchCells_.size(), Zero));
+    Field<Type>& f(tmpF.ref());
+    if (!internalCellsPtr_)
+    {
+        calcMapping();
+    }
+    forAll(patchCells_, i)
+    {
+        f[i] = vf[patchCells_[i]];
+    }
     return tmpF;
 }
 
@@ -99,7 +147,7 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::immersedBoundaryObject::boundaryValues(const Field<Type>& vf) const
 {
-    tmp<Field<Type>> tmpF(new Field<Type>(nFaces(), Zero));
+    tmp<Field<Type>> tmpF(new Field<Type>(this->size(), Zero));
     Field<Type>& f(tmpF.ref());
     if (!internalCellsPtr_)
     {
@@ -148,16 +196,27 @@ template<class Type>
 void Foam::immersedBoundaryObject::setInternal
 (
     Field<Type>& vf,
-    const Type& val
+    const Type& val,
+    const bool all
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!allInternalCellsPtr_)
     {
         calcMapping();
     }
-    forAll(*internalCellsPtr_, i)
+    const labelList* internalCellsPtr;
+    if (all)
     {
-        vf[(*internalCellsPtr_)[i]] = val;
+        internalCellsPtr = allInternalCellsPtr_;
+    }
+    else
+    {
+        internalCellsPtr = internalCellsPtr_;
+    }
+
+    forAll(*internalCellsPtr, i)
+    {
+        vf[(*internalCellsPtr)[i]] = val;
     }
 }
 
@@ -167,16 +226,26 @@ void Foam::immersedBoundaryObject::setInternal
 (
     Field<Type>& vf,
     const Type& val,
-    const CombineOp& cop
+    const CombineOp& cop,
+    const bool all
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!allInternalCellsPtr_)
     {
         calcMapping();
     }
-    forAll(*internalCellsPtr_, i)
+    const labelList* internalCellsPtr;
+    if (all)
     {
-        cop(vf[(*internalCellsPtr_)[i]], val);
+        internalCellsPtr = allInternalCellsPtr_;
+    }
+    else
+    {
+        internalCellsPtr = internalCellsPtr_;
+    }
+    forAll(*internalCellsPtr, i)
+    {
+        cop(vf[(*internalCellsPtr)[i]], val);
     }
 }
 
@@ -185,16 +254,27 @@ template<class Type>
 void Foam::immersedBoundaryObject::setInternal
 (
     Field<Type>& vf,
-    const Field<Type>& vals
+    const Field<Type>& vals,
+    const bool all
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!allInternalCellsPtr_)
     {
         calcMapping();
     }
-    forAll(*internalCellsPtr_, i)
+    const labelList* internalCellsPtr;
+    if (all)
     {
-        vf[(*internalCellsPtr_)[i]] = vals[i];
+        internalCellsPtr = allInternalCellsPtr_;
+    }
+    else
+    {
+        internalCellsPtr = internalCellsPtr_;
+    }
+
+    forAll(*internalCellsPtr, i)
+    {
+        vf[(*internalCellsPtr)[i]] = vals[i];
     }
 }
 
@@ -204,16 +284,27 @@ void Foam::immersedBoundaryObject::setInternal
 (
     Field<Type>& vf,
     const Field<Type>& vals,
-    const CombineOp& cop
+    const CombineOp& cop,
+    const bool all
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!allInternalCellsPtr_)
     {
         calcMapping();
     }
-    forAll(*internalCellsPtr_, i)
+    const labelList* internalCellsPtr;
+    if (all)
     {
-        cop(vf[(*internalCellsPtr_)[i]], vals[i]);
+        internalCellsPtr = allInternalCellsPtr_;
+    }
+    else
+    {
+        internalCellsPtr = internalCellsPtr_;
+    }
+
+    forAll(*internalCellsPtr, i)
+    {
+        cop(vf[(*internalCellsPtr)[i]], vals[i]);
     }
 }
 
@@ -244,7 +335,7 @@ void Foam::immersedBoundaryObject::setShell
     const CombineOp& cop
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!shellCellsPtr_)
     {
         calcMapping();
     }
@@ -262,7 +353,7 @@ void Foam::immersedBoundaryObject::setBoundary
     const Type& val
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!boundaryCellsPtr_)
     {
         calcMapping();
     }
@@ -281,7 +372,7 @@ void Foam::immersedBoundaryObject::setBoundary
     const CombineOp& cop
 ) const
 {
-    if (!internalCellsPtr_)
+    if (!boundaryCellsPtr_)
     {
         calcMapping();
     }

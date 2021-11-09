@@ -1106,15 +1106,22 @@ void Foam::phaseSystem::postUpdate()
 }
 
 
-void Foam::phaseSystem::printInfo()
+void Foam::phaseSystem::clear()
+{
+    // Clear flux schemes
+    forAll(phaseModels_, phasei)
+    {
+        phaseModels_[phasei].flux().clear();
+    }
+}
+
+
+void Foam::phaseSystem::printInfo() const
 {
     Info<< "Phase statistics:"<<endl;
     forAll(phaseModels_, phasei)
     {
         Info<< phaseModels_[phasei].name() << ":" << endl;
-
-        // Clear flux schemes
-        phaseModels_[phasei].flux().clear();
 
         const volScalarField& alpha(phaseModels_[phasei]);
         const volScalarField& T(phaseModels_[phasei].T());

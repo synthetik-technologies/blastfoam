@@ -48,7 +48,7 @@ Foam::immersedMeshMapper::mapImmersedToBoundary(const Field<Type>& fDist) const
 
     tmp<Field<Type>> tmpF
     (
-        new Field<Type>(immersedObjectPtr_->nFaces(), Zero)
+        new Field<Type>(immersedObjectPtr_->size(), Zero)
     );
     Field<Type>& F(tmpF.ref());
 

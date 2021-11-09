@@ -153,21 +153,21 @@ void Foam::pairCollisionData::calcMapping()
         normalA_ += SfA;
         normalB_ += SfB;
 
-        scalar rA(mag(pB - objectA_.centreOfRotation()));
+        scalar rA(mag(pB - objectA_.centre()));
         if (rA < minRA)
         {
             minRA = rA;
             hitPointIndexA_ = facei;
         }
 
-        scalar rB(mag(pA - objectB_.centreOfRotation()));
+        scalar rB(mag(pA - objectB_.centre()));
         if (rB < minRB)
         {
             minRB = rB;
             hitPointIndexB_ = facej;
         }
 
-        vector vAB(objectA_.velocity(pA) - objectB_.velocity(pB));
+        vector vAB(objectA_.v(pA) - objectB_.v(pB));
 
         if ((vAB & SfA) < 0 || (vAB & SfB) > 0)
         {
@@ -221,7 +221,7 @@ void Foam::pairCollisionData::calcMapping()
     hitPoint_ /= areaAB;
     normalA_ /= areaA;
     normalB_ /= areaB;
-    vAB_ = objectA_.velocity(hitPoint_) - objectB_.velocity(hitPoint_);
+    vAB_ = objectA_.v(hitPoint_) - objectB_.v(hitPoint_);
 
     // Return the true weights across all processors
     reducedWeights_.resize(wi);

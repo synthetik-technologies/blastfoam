@@ -407,8 +407,11 @@ public:
         //- Solve viscous terms
         virtual void postUpdate();
 
+        //- Clear flux schemes
+        virtual void clear();
+
         //- Print statistics
-        virtual void printInfo();
+        virtual void printInfo() const;
 
         //- Return the mixture density
         const volScalarField& rho() const

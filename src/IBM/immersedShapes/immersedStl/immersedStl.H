@@ -57,14 +57,8 @@ class immersedStl
 {
     // Private data
 
-        //- Save the constructing dictionary
-        const dictionary dict_;
-
-        //- Name of stl file
-        word fileName_;
-
         //- Immersed boundary trisurface mesh
-        triSurfaceMesh immersedMesh_;
+        triSurfaceMesh stlMesh_;
 
         //- Class used to search original triMesh
         autoPtr<triSurfaceSearch> tssPtr_;
@@ -73,17 +67,17 @@ class immersedStl
     // Private member functions
 
         //- Coarsen mesh given a upper and lower values of dx (2-D)
-        void coarsenRefine2D(pointField& points);
+        void coarsenRefine2D(pointField& points) const;
 
         //- Return 2D points
-        void get2DPoints(List<face>& faces);
+        void get2DPoints(pointField& points, List<face>& faces) const;
 
         // Functions for calculating intersections with mesh
         bool intersectSurfaces
         (
             triSurface& surf,
             edgeIntersections& edgeCuts
-        );
+        ) const;
 
         bool intersectSurfaces
         (
@@ -91,7 +85,7 @@ class immersedStl
             edgeIntersections& edgeCuts1,
             triSurface& surf2,
             edgeIntersections& edgeCuts2
-        );
+        ) const;
 
         void calcEdgeCuts
         (
@@ -100,7 +94,7 @@ class immersedStl
             const bool perturb,
             edgeIntersections& edge1Cuts,
             edgeIntersections& edge2Cuts
-        );
+        ) const;
 
         void addAxisPoints(pointField& points) const;
 
@@ -111,8 +105,8 @@ class immersedStl
             boolList& onAxis
         ) const;
 
-        //- Does the centre of mass need to be read
-        virtual bool needCentreOfMass() const
+        //- Does the centre need to be read
+        virtual bool needCentre() const
         {
             return true;
         }
@@ -120,7 +114,7 @@ class immersedStl
         //- Does the orientation need to be read
         virtual bool needOrientation() const
         {
-            return true;
+            return false;
         }
 
 public:
@@ -147,6 +141,9 @@ public:
 
     // Member Functions
 
+        //- Return a patch created with the given geometry
+        virtual autoPtr<standAlonePatch> createPatch() const;
+
         //- Return bool list if list of points is inside the object
         virtual labelList calcInside(const pointField& points) const;
 
@@ -167,6 +164,9 @@ public:
             )[ei_];
             return dt;
         }
+
+        // Write
+        virtual void write(Ostream&) const;
 };
 
 

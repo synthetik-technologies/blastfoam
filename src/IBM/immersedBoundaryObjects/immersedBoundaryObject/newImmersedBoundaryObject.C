@@ -29,7 +29,7 @@ License
 
 Foam::autoPtr<Foam::immersedBoundaryObject> Foam::immersedBoundaryObject::New
 (
-    const polyMesh& pMesh,
+    const polyPatch& patch,
     const dictionary& dict,
     const dictionary& stateDict
 )
@@ -52,7 +52,7 @@ Foam::autoPtr<Foam::immersedBoundaryObject> Foam::immersedBoundaryObject::New
             << exit(FatalError);
     }
 
-    return cstrIter()(pMesh, dict, stateDict);
+    return cstrIter()(patch, dict, stateDict);
 }
 
 // ************************************************************************* //
