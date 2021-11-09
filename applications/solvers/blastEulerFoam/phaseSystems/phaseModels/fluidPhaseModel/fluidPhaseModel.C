@@ -120,17 +120,35 @@ void Foam::fluidPhaseModel::solve()
 void Foam::fluidPhaseModel::postUpdate()
 {
     volScalarField& alpha(*this);
-    if (solveAlpha_ && needSolve(alpha.name()))
+    if (needSolve(alpha.name()) && solveAlpha_)
     {
+        //- Solve momentum equation (implicit stresses)
         fvScalarMatrix alphaEqn
         (
             fvm::ddt(alpha) - fvc::ddt(alpha)
-        ==
+         ==
             models().source(alpha)
         );
         constraints().constrain(alphaEqn);
         alphaEqn.solve();
         constraints().constrain(alpha);
+    }
+
+    if (needSolve(rho().name()))
+    {
+        //- Solve momentum equation (implicit stresses)
+        fvScalarMatrix rhoEqn
+        (
+            fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
+          + fvm::ddt(residualAlpha(), rho())
+          - fvc::ddt(residualAlpha(), rho())
+         ==
+            models().source(alpha, rho())
+        );
+        constraints().constrain(rhoEqn);
+        rhoEqn.solve();
+        constraints().constrain(rho());
+
         alphaRho_ = alpha*rho();
     }
 

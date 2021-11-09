@@ -174,11 +174,36 @@ void Foam::granularPhaseModel::postUpdate()
     dimensionedScalar smallAlphaRho(dimDensity, 1e-6);
     volScalarField& alpha(*this);
 
+    if (needSolve(alpha.name()))
+    {
+        //- Solve momentum equation (implicit stresses)
+        fvScalarMatrix alphaEqn
+        (
+            fvm::ddt(alpha) - fvc::ddt(alpha)
+         ==
+            models().source(alpha)
+        );
+        constraints().constrain(alphaEqn);
+        alphaEqn.solve();
+        constraints().constrain(alpha);
+    }
+
     if (needSolve(rho().name()))
     {
-        alphaRho_ +=
-            mesh().time().deltaT()
-           *(models().source(alpha, rho())&rho());
+        //- Solve momentum equation (implicit stresses)
+        fvScalarMatrix rhoEqn
+        (
+            fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
+          + fvm::ddt(residualAlpha(), rho())
+          - fvc::ddt(residualAlpha(), rho())
+         ==
+            models().source(alpha, rho())
+        );
+        constraints().constrain(rhoEqn);
+        rhoEqn.solve();
+        constraints().constrain(rho());
+
+        alphaRho_ = alpha*rho();
     }
 
     // Solve momentum

@@ -200,20 +200,64 @@ void Foam::multiPhaseModel::solve()
 void Foam::multiPhaseModel::postUpdate()
 {
     // Solve phase mass
-    rho_ = dimensionedScalar(dimDensity, 0.0);
+    bool needUpdate = false;
     forAll(rhos_, phasei)
     {
+        bool alphaRhoUpdate = false;
+        volScalarField& alpha(alphas_[phasei]);
+        if (needSolve(alpha.name()))
+        {
+            //- Solve momentum equation (implicit stresses)
+            fvScalarMatrix alphaEqn
+            (
+                fvm::ddt(alpha) - fvc::ddt(alpha)
+             ==
+                models().source(alpha)
+            );
+            constraints().constrain(alphaEqn);
+            alphaEqn.solve();
+            constraints().constrain(alpha);
+
+            alphaRhoUpdate = true;
+        }
+
         volScalarField& rho(rhos_[phasei]);
         if (needSolve(rho.name()))
         {
-            alphaRhos_[phasei] +=
-                mesh().time().deltaT()
-               *(models().source(alphas_[phasei], rho)&rho);
-        }
-        rho_ += alphaRhos_[phasei];
-    }
-    rho_ /= Foam::max(*this, residualAlpha());
+            dimensionedScalar rAlpha
+            (
+                thermo_.thermo(phasei).residualAlpha()
+            );
+            //- Solve momentum equation (implicit stresses)
+            fvScalarMatrix rhoEqn
+            (
+                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+              + fvm::ddt(rAlpha, rho)
+              - fvc::ddt(rAlpha, rho)
+             ==
+                models().source(alpha, rho)
+            );
+            constraints().constrain(rhoEqn);
+            rhoEqn.solve();
+            constraints().constrain(rho);
 
+            alphaRhoUpdate = true;
+        }
+        if (alphaRhoUpdate)
+        {
+            alphaRhos_[phasei] = alpha*rho;
+            needUpdate = true;
+        }
+    }
+    if (needUpdate)
+    {
+        alphaRho_ = alphaRhos_[0];
+        for (label phasei = 1; phasei < alphaRhos_.size(); phasei++)
+        {
+            alphaRho_ += alphaRhos_[phasei];
+        }
+        rho_ = alphaRho_/Foam::max(*this, residualAlpha());
+    }
     phaseModel::postUpdate();
 }
 

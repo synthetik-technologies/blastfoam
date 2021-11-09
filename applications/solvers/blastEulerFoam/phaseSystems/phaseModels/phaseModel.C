@@ -378,17 +378,6 @@ void Foam::phaseModel::solve()
 void Foam::phaseModel::postUpdate()
 {
     dimensionedScalar smallAlphaRho(residualAlphaRho());
-    volScalarField& alpha(*this);
-
-    // Solve momentum
-    if (needSolve(rho().name()))
-    {
-        volScalarField alphaRhoOld(alphaRho_);
-        alphaRho_ +=
-            mesh().time().deltaT()
-           *(models().source(alpha, rho())&rho());
-    }
-
     if (needSolve(U_.name()) || turbulence_.valid())
     {
         fvVectorMatrix UEqn
@@ -401,13 +390,17 @@ void Foam::phaseModel::postUpdate()
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-            alphaRhoE_ +=
-                rho().time().deltaT()
-               *fvc::div
-                (
-                    fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-                  & flux().Uf()
-                );
+//             alphaRhoE_ +=
+//                 rho().time().deltaT()
+//                *fvc::div
+//                 (
+//                     fvc::dotInterpolate
+//                     (
+//                         rho().mesh().Sf(),
+//                         turbulence_->devTau()
+//                     )
+//                   & flux().Uf()
+//                 );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
@@ -415,7 +408,7 @@ void Foam::phaseModel::postUpdate()
 
         alphaRhoU_ = alphaRho_*U_;
 
-        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
+//         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
