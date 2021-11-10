@@ -276,7 +276,12 @@ Foam::activationModel::activationModel
         (
             "rho0",
             dimDensity,
-            dict.parent().subDict("products").subDict("equationOfState")
+            dict.parent().subDict("products").subDict
+            (
+                "equationOfState"
+            ).found("rho0")
+          ? dict.parent().subDict("products").subDict("equationOfState")
+          : dict.parent().subDict("reactants").subDict("equationOfState")
         )
       : dimensionedScalar("e0", dimEnergy/dimMass, dict)
     ),
