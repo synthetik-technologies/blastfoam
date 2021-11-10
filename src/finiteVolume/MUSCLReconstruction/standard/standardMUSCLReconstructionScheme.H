@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::noneMUSCLReconstructionScheme
+    Foam::standardMUSCLReconstructionScheme
 
 Description
     Replaces MUSCL reconstruction with standard interpolation
 
 SourceFiles
-    noneMUSCLReconstructionScheme.C
+    standardMUSCLReconstructionScheme.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noneMUSCLReconstructionScheme_H
-#define noneMUSCLReconstructionScheme_H
+#ifndef standardMUSCLReconstructionScheme_H
+#define standardMUSCLReconstructionScheme_H
 
 #include "MUSCLReconstructionScheme.H"
 
@@ -43,16 +43,32 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                Class noneMUSCLReconstructionScheme Declaration
+                Class standardMUSCLReconstructionScheme Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class noneMUSCLReconstructionScheme
+class standardMUSCLReconstructionScheme
 :
     public MUSCLReconstructionScheme<Type>
 {
 protected:
 // Protected data
+
+    //- Name of interpolation scheme
+    word name_;
+
+    //- Owner interpolation field
+    const surfaceScalarField& own_;
+
+    //- Neighbour interpolation field
+    const surfaceScalarField& nei_;
+
+    //- Return reference to field if found in db
+    const surfaceScalarField& lookupOrConstruct
+    (
+        const word& fieldName,
+        const scalar& value
+    ) const;
 
     //- Calculate the limiter
     virtual tmp<GeometricField<Type, fvsPatchField, surfaceMesh>>
@@ -66,20 +82,20 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("none");
+    TypeName("standard");
 
 
     // Constructors
 
         //- Construct from mesh interpolation scheme name (provided in New)
-        noneMUSCLReconstructionScheme
+        standardMUSCLReconstructionScheme
         (
             const GeometricField<Type, fvPatchField, volMesh>& phi,
             Istream& is
         );
 
     //- Destructor
-    virtual ~noneMUSCLReconstructionScheme();
+    virtual ~standardMUSCLReconstructionScheme();
 
     // Member Functions
 
@@ -101,7 +117,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "noneMUSCLReconstructionScheme.C"
+    #include "standardMUSCLReconstructionScheme.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

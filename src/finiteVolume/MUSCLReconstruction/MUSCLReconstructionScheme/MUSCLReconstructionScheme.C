@@ -108,7 +108,18 @@ Foam::MUSCLReconstructionScheme<Type>::New
 
     if (debug)
     {
-        Info<< "selecting " << order << " MUSCL interpolation scheme." << endl;
+        Info<< "selecting " << order << " interpolation scheme "
+            << "for " << phi.name() << endl;
+    }
+
+
+    // No upwinding scheme
+    if (order == "none")
+    {
+        return autoPtr<MUSCLReconstructionScheme<Type>>
+        (
+            new noneMUSCLReconstructionScheme<Type>(phi, is)
+        );
     }
 
     // Upwind scheme

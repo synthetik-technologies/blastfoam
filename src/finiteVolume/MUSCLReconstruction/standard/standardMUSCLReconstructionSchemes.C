@@ -23,45 +23,31 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "noneMUSCLReconstructionScheme.H"
-#include "fvc.H"
+#include "MUSCLReconstructionScheme.H"
+#include "MUSCLReconstruction.H"
+#include "standardMUSCLReconstructionScheme.H"
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
+namespace Foam
+{
 
-template<class Type>
-Foam::noneMUSCLReconstructionScheme<Type>::noneMUSCLReconstructionScheme
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+defineNamedTemplateTypeNameAndDebug(standardMUSCLReconstructionScheme<scalar>, 0);
+defineNamedTemplateTypeNameAndDebug(standardMUSCLReconstructionScheme<vector>, 0);
+defineNamedTemplateTypeNameAndDebug(standardMUSCLReconstructionScheme<symmTensor>, 0);
+defineNamedTemplateTypeNameAndDebug
 (
-    const GeometricField<Type, fvPatchField, volMesh>& phi,
-    Istream& is
-)
-:
-    MUSCLReconstructionScheme<Type>(phi, is)
-{}
+    standardMUSCLReconstructionScheme<sphericalTensor>,
+    0
+);
+defineNamedTemplateTypeNameAndDebug(standardMUSCLReconstructionScheme<tensor>, 0);
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+} // End namespace Foam
 
-template<class Type>
-Foam::noneMUSCLReconstructionScheme<Type>::~noneMUSCLReconstructionScheme()
-{}
-
-// * * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * //
-
-
-template<class Type>
-Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
-Foam::noneMUSCLReconstructionScheme<Type>::interpolateOwn() const
-{
-    return fvc::interpolate(this->phi_);
-}
-
-template<class Type>
-Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
-Foam::noneMUSCLReconstructionScheme<Type>::interpolateNei() const
-{
-    return fvc::interpolate(this->phi_);
-}
-
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // ************************************************************************* //

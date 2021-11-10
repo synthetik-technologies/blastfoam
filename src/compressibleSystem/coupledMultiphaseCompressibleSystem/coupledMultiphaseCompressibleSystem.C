@@ -36,7 +36,7 @@ namespace Foam
     (
         compressibleSystem,
         coupledMultiphaseCompressibleSystem,
-        dictionary
+        multiphase
     );
 }
 

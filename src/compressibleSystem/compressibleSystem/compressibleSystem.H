@@ -120,7 +120,27 @@ public:
         (
             autoPtr,
             compressibleSystem,
-            dictionary,
+            singlePhase,
+            (
+                const fvMesh& mesh
+            ),
+            (mesh)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            twoPhase,
+            (
+                const fvMesh& mesh
+            ),
+            (mesh)
+        );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            compressibleSystem,
+            multiphase,
             (
                 const fvMesh& mesh
             ),
@@ -133,6 +153,15 @@ public:
 
     // Selector
         static autoPtr<compressibleSystem> New(const fvMesh& mesh);
+
+        template<class SelectionTable>
+        static autoPtr<compressibleSystem> New
+        (
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const word& defaultType,
+            SelectionTable* table
+        );
 
     //- Destructor
     virtual ~compressibleSystem();
@@ -223,6 +252,10 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "compressibleSystemI.H"
+
+#ifdef NoRepository
+#include "compressibleSystemTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -35,7 +35,7 @@ namespace Foam
     (
         compressibleSystem,
         singlePhaseCompressibleSystem,
-        dictionary
+        singlePhase
     );
 }
 

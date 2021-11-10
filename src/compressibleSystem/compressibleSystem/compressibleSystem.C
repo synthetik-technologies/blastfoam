@@ -34,7 +34,9 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(compressibleSystem, 0);
-    defineRunTimeSelectionTable(compressibleSystem, dictionary);
+    defineRunTimeSelectionTable(compressibleSystem, singlePhase);
+    defineRunTimeSelectionTable(compressibleSystem, twoPhase);
+    defineRunTimeSelectionTable(compressibleSystem, multiphase);
 }
 
 

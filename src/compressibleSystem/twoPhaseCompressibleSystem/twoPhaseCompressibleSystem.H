@@ -39,7 +39,6 @@ SourceFiles
 
 #include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
-#include "interfaceProperties.H"
 
 
 namespace Foam
@@ -92,9 +91,6 @@ class twoPhaseCompressibleSystem
 
         //- Phase 2 mass flux
         surfaceScalarField alphaRhoPhi2_;
-
-    //- Surface tension model
-    autoPtr<interfaceProperties> interfacePropertiesPtr_;
 
     //- Allocate models
     virtual void setModels();

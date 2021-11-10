@@ -49,48 +49,38 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
         )
     );
 
-    if (phaseProperties.found("systemType"))
-    {
-        compressibleSystemType =
-            phaseProperties.lookup<word>("systemType");
-    }
+    wordList phases
+    (
+        phaseProperties.lookupOrDefault("phases", wordList())
+    );
 
-    if (compressibleSystemType == word::null)
+    if (phases.size() < 2)
     {
-        wordList phases
+        return New
         (
-            phaseProperties.lookupOrDefault("phases", wordList())
+            mesh,
+            phaseProperties,
+            "singlePhaseCompressibleSystem",
+            singlePhaseConstructorTablePtr_
         );
-        if (phases.size() == 2)
-        {
-            compressibleSystemType = "twoPhaseCompressibleSystem";
-        }
-        else if (phases.size() > 2)
-        {
-            compressibleSystemType = "multiphaseCompressibleSystem";
-        }
-        else
-        {
-            compressibleSystemType = "singlePhaseCompressibleSystem";
-        }
     }
-    Info<< "Selecting compressibleSystem: "
-        << compressibleSystemType << endl;
-
-    dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(compressibleSystemType);
-
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    else if (phases.size() > 2)
     {
-        FatalErrorInFunction
-            << "Unknown compressibleSystem type "
-            << compressibleSystemType << endl << endl
-            << "Valid compressibleSystem types are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
-            << exit(FatalError);
+        return New
+        (
+            mesh,
+            phaseProperties,
+            "multiphaseCompressibleSystem",
+            multiphaseConstructorTablePtr_
+        );
     }
-
-    return cstrIter()(mesh);
+    return New
+        (
+            mesh,
+            phaseProperties,
+            "twoPhaseCompressibleSystem",
+            twoPhaseConstructorTablePtr_
+        );
 }
 
 

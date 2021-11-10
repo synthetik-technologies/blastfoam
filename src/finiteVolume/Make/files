@@ -65,6 +65,7 @@ pointPatchFields/derived/globalMapped/globalMappedPointPatchFields.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C
+MUSCLReconstruction/standard/standardMUSCLReconstructionSchemes.C
 MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
 MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
 MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
