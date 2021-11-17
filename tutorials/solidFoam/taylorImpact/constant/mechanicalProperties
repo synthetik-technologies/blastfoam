@@ -1,0 +1,33 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.1                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress no;
+mechanical
+(
+    linearElastic
+    {
+        type    neoHookeanElasticMisesPlastic;
+        E       117e9;
+        nu      0.35;
+        Hp      0.1e9;
+        sigmaY  0.4e9;
+
+        solvePressureEqn no;
+    }
+);
+
+// ************************************************************************* //
