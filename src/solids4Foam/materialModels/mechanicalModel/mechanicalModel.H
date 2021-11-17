@@ -90,6 +90,7 @@ class mechanicalModel
         mutable surfaceScalarField* impKfcorrPtr_;
 
 
+
     // Private Member Functions
 
         //- Make material sub-meshes
@@ -151,8 +152,18 @@ public:
             //  This is the diffusivity for the Laplacian term
             tmp<surfaceScalarField> impKf() const;
 
+            //- Return the implicit stiffness for a patch
+            //  This is the diffusivity for the Laplacian term
+            tmp<scalarField> impK(const label) const;
+
             //- Return bulk modulus
             tmp<volScalarField> bulkModulus() const;
+
+            //- Return elastic modulus
+            tmp<volScalarField> elasticModulus() const;
+
+            //- Return shear modulus
+            tmp<volScalarField> shearModulus() const;
 
             //- Return material residual i.e. a measured of how convergence of
             //  the material model
@@ -230,6 +241,9 @@ public:
 
             //- Move subMeshes
             void moveSubMeshes();
+
+            //- Tell laws to use solid deformation
+            void setUseSolidDeformation();
 };
 
 

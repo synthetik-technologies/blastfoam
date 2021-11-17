@@ -189,21 +189,15 @@ Foam::mechanicalModel::mechanicalModel
         }
         else
         {
-            FatalErrorIn
-            (
-                "Foam::mechanicalModel::mechanicalModel\n"
-                "(\n"
-                "    const fvMesh& mesh,\n"
-                "    const nonLinearGeometry::nonLinearType& nonLinGeom\n"
-                ")"
-            )   << "It is not clear what type of mechanical law should be "
+            FatalErrorInFunction
+                << "It is not clear what type of mechanical law should be "
                 << "created for a solidModel with nonLinGeom = " << nonLinGeom
                 << abort(FatalError);
         }
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -246,27 +240,16 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::impK() const
     }
     else
     {
-        // Accumulate data for all fields
-        tmp<volScalarField> tresult
+        FatalErrorInFunction
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
+
+        return volScalarField::New
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                dimensionedScalar("zero", dimForce/dimArea, 0),
-                calculatedFvPatchScalarField::typeName
-            )
+            "impK",
+            mesh_,
+            dimForce/dimArea
         );
-        FatalErrorIn(type())
-            << "Not implemented for this version of OpenFOAM" << abort(FatalError);
-        return tresult;
     }
 }
 
@@ -280,6 +263,29 @@ Foam::tmp<Foam::surfaceScalarField> Foam::mechanicalModel::impKf() const
 }
 
 
+Foam::tmp<Foam::scalarField>
+Foam::mechanicalModel::impK(const label patchi) const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].impK(patchi);
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
+
+        return tmp<scalarField>
+        (
+            new scalarField(mesh_.C().boundaryField()[patchi].size())
+        );
+    }
+}
+
+
 Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::bulkModulus() const
 {
     const PtrList<mechanicalLaw>& laws = *this;
@@ -290,27 +296,64 @@ Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::bulkModulus() const
     }
     else
     {
-        // Accumulate data for all fields
-        tmp<volScalarField> tresult
+        FatalErrorInFunction
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
+
+        return volScalarField::New
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "bulkModulusLaw",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh(),
-                dimensionedScalar("zero", dimPressure, 0),
-                calculatedFvPatchScalarField::typeName
-            )
+            "bulkModulusLaw",
+            mesh_,
+            dimPressure
         );
-        FatalErrorIn(type())
-            << "Not implemented for this version of OpenFOAM" << abort(FatalError);
-        return tresult;
+    }
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::elasticModulus() const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].elasticModulus();
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
+
+        return volScalarField::New
+        (
+            "elasticModulusLaw",
+            mesh_,
+            dimPressure
+        );
+    }
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::mechanicalModel::shearModulus() const
+{
+    const PtrList<mechanicalLaw>& laws = *this;
+
+    if (laws.size() == 1)
+    {
+        return laws[0].shearModulus();
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Not implemented for this version of OpenFOAM"
+            << abort(FatalError);
+
+        return volScalarField::New
+        (
+            "shearModulusLaw",
+            mesh_,
+            dimPressure
+        );
     }
 }
 
@@ -325,7 +368,7 @@ void Foam::mechanicalModel::correct(volSymmTensorField& sigma)
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -341,7 +384,7 @@ void Foam::mechanicalModel::correct(surfaceSymmTensorField& sigma)
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -361,7 +404,7 @@ void Foam::mechanicalModel::grad
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -382,7 +425,7 @@ void Foam::mechanicalModel::grad
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -403,7 +446,7 @@ void Foam::mechanicalModel::grad
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -426,7 +469,7 @@ void Foam::mechanicalModel::grad
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM" << abort(FatalError);
     }
 }
@@ -448,7 +491,7 @@ void Foam::mechanicalModel::interpolate
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Not implemented for this version of OpenFOAM"
             << abort(FatalError);
     }
@@ -562,6 +605,16 @@ Foam::scalar Foam::mechanicalModel::newDeltaT()
 
 void Foam::mechanicalModel::moveSubMeshes()
 {
+}
+
+
+void Foam::mechanicalModel::setUseSolidDeformation()
+{
+    PtrList<mechanicalLaw>& laws = *this;
+    forAll(laws, lawI)
+    {
+        laws[lawI].setUseSolidDeformation();
+    }
 }
 
 // ************************************************************************* //

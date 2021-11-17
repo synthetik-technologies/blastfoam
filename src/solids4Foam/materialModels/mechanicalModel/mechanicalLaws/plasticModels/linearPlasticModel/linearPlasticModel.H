@@ -93,10 +93,14 @@ protected:
             const surfaceScalarField& trEpsilon
         );
 
-        //- Return the stain
+        //- Return the strain
         virtual tmp<volSymmTensorField> epsilon() const;
 
+        //- Return the face strain
         virtual tmp<surfaceSymmTensorField> epsilonf() const;
+
+        //- Return the strain for a patch
+        virtual tmp<symmTensorField> epsilon(const label) const;
 
 public:
 
@@ -128,6 +132,10 @@ public:
         //- Return the implicit stiffness
         //  This is the diffusivity for the Laplacian term
         virtual tmp<volScalarField> impK() const;
+
+        //- Return the implicit stiffness for a patch
+        //  This is the diffusivity for the Laplacian term
+        virtual tmp<scalarField> impK(const label) const;
 
         //- Update the stress
         virtual void correct(volSymmTensorField& sigma);

@@ -33,90 +33,6 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::nonLinearPlastic::makeJ()
-{
-    if (JPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set"
-            << abort(FatalError);
-    }
-
-    JPtr_.set
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "lawJ",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JPtr_().oldTime();
-}
-
-
-Foam::volScalarField& Foam::nonLinearPlastic::J()
-{
-    if (JPtr_.empty())
-    {
-        makeJ();
-    }
-
-    return JPtr_();
-}
-
-
-void Foam::nonLinearPlastic::makeJf()
-{
-    if (JfPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set"
-            << abort(FatalError);
-    }
-
-    JfPtr_.set
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "lawJf",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JfPtr_().oldTime();
-}
-
-
-Foam::surfaceScalarField& Foam::nonLinearPlastic::Jf()
-{
-    if (JfPtr_.empty())
-    {
-        makeJf();
-    }
-
-    return JfPtr_();
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::Ibar
 (
     const volSymmTensorField& devBEbar
@@ -402,6 +318,13 @@ Foam::nonLinearPlastic::epsilonf() const
 }
 
 
+Foam::tmp<Foam::symmTensorField> Foam::nonLinearPlastic::epsilon(const label patchi) const
+{
+    const tensorField& pF(F().boundaryField()[patchi]);
+    return 0.5*log(symm(pF.T() & pF));
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from dictionary
@@ -414,8 +337,6 @@ Foam::nonLinearPlastic::nonLinearPlastic
 )
 :
     plasticModel(name, mesh, dict, nonLinGeom),
-    JPtr_(),
-    JfPtr_(),
     bEbarTrial_
     (
         IOobject
@@ -512,24 +433,41 @@ Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::impK() const
     // Calculate scaling factor
     const volScalarField scaleFactor(1.0 - (2.0*muBar*DLambda_/magSTrial));
 
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            //mesh(),
-            //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
-            //zeroGradientFvPatchScalarField::typeName
-            scaleFactor*(4.0/3.0)*mu_ + K_
-        )
+        "impK",
+        //mesh(),
+        //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
+        //zeroGradientFvPatchScalarField::typeName
+        scaleFactor*(4.0/3.0)*mu_ + K_
     );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::nonLinearPlastic::impK(const label patchi) const
+{
+    const symmTensorField& pbEbarTrial
+    (
+        bEbarTrial_.boundaryField()[patchi]
+    );
+    // Calculate deviatoric trial stress
+    const symmTensorField sTrial(mu_.value()*dev(pbEbarTrial));
+
+    const scalarField Ibar(tr(pbEbarTrial)/3.0);
+    const scalarField muBar(Ibar*mu_.value());
+
+    // Magnitude of the deviatoric trial stress
+    const scalarField magSTrial(max(mag(sTrial), small));
+
+    // Calculate scaling factor
+    const scalarField scaleFactor
+    (
+        1.0
+      - (2.0*muBar*DLambda_.boundaryField()[patchi]/magSTrial)
+    );
+
+    return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
 }
 
 
@@ -544,10 +482,10 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    J() = det(F());
+    const volScalarField& J = mechanicalLaw::J();
 
     // Calculate the relative Jacobian
-    const volScalarField relJ(J()/J().oldTime());
+    const volScalarField relJ(J/J.oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
@@ -576,7 +514,7 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
 
     // Trial yield function
     // sigmaY is the Cauchy yield stress so we scale it by J
-    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J()*sigmaY_);
+    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J*sigmaY_);
 
     // Take references to the old fields
     const volScalarField& sigmaYOld = sigmaY_.oldTime();
@@ -598,7 +536,7 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
             epsilonPEqOld[cellI],
             muBar[cellI],
             maxMagBE,
-            J()[cellI]
+            J[cellI]
         );
     }
 
@@ -616,7 +554,7 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
             sigmaY_.oldTime().boundaryField()[patchI];
         const scalarField& pepsilonPEqOld =
             epsilonPEq_.oldTime().boundaryField()[patchI];
-        const scalarField& pJ = J().boundaryField()[patchI];
+        const scalarField& pJ = J.boundaryField()[patchI];
 
         forAll(pfTrial, faceI)
         {
@@ -661,12 +599,12 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
     // Update hydrostatic stress (negative of pressure)
     updateSigmaHyd
     (
-        0.5*K_*(sqr(J()) - 1.0),
+        0.5*K_*(sqr(J) - 1.0),
         (4.0/3.0)*mu_ + K_
     );
 
     // Update the Cauchy stress
-    sigma = (1.0/J())*(sigmaHyd()*I + s);
+    sigma = (1.0/J)*(sigmaHyd()*I + s);
 
     epsilonPEq_ += DEpsilonPEq_;
     epsilonP_ += DEpsilonP_;
@@ -684,10 +622,10 @@ void Foam::nonLinearPlastic::correct(surfaceSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    Jf() = det(Ff());
+    const surfaceScalarField& Jf = mechanicalLaw::Jf();
 
     // Calculate the relative Jacobian
-    const surfaceScalarField relJ(Jf()/Jf().oldTime());
+    const surfaceScalarField relJ(Jf/Jf.oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
@@ -717,7 +655,7 @@ void Foam::nonLinearPlastic::correct(surfaceSymmTensorField& sigma)
     // sigmaY is the Cauchy yield stress so we scale it by J
     const surfaceScalarField fTrial
     (
-        mag(sTrial) - sqrtTwoOverThree_*Jf()*sigmaYf_
+        mag(sTrial) - sqrtTwoOverThree_*Jf*sigmaYf_
     );
 
     // Take references to the old fields for efficiency
@@ -798,7 +736,7 @@ void Foam::nonLinearPlastic::correct(surfaceSymmTensorField& sigma)
 
     // Update the Cauchy stress
     // Note: updayeSigmaHyd is not implemented for surface fields
-    sigma = (1.0/Jf())*(0.5*K_*(sqr(Jf()) - 1)*I + s);
+    sigma = (1.0/Jf)*(0.5*K_*(sqr(Jf) - 1)*I + s);
 
     epsilonPEqf_ += DEpsilonPEqf_;
     epsilonPf_ += DEpsilonPf_;

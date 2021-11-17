@@ -284,6 +284,19 @@ public:
         //  This is the diffusivity for the Laplacian term
         virtual tmp<volScalarField> impK() const;
 
+        //- Return the implicit stiffness for a patch
+        //  This is the diffusivity for the Laplacian term
+        virtual tmp<scalarField> impK(const label) const;
+
+        //- Return bulk modulus
+        virtual tmp<volScalarField> bulkModulus() const;
+
+        //- Return elastic modulus
+        virtual tmp<volScalarField> elasticModulus() const;
+
+        //- Return shear modulus
+        virtual tmp<volScalarField> shearModulus() const;
+
         //- Update the stress
         virtual void correct(volSymmTensorField& sigma);
 

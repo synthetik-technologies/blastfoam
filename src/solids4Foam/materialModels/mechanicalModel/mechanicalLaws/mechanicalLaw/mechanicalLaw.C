@@ -197,17 +197,10 @@ bool Foam::mechanicalLaw::planeStress() const
 
 const Foam::volTensorField& Foam::mechanicalLaw::F() const
 {
-    if (FPtr_.empty())
+    if (useSolidDeformation_)
     {
-        makeF();
+        return mesh_.lookupObject<volTensorField>("F");
     }
-
-    return FPtr_();
-}
-
-
-Foam::volTensorField& Foam::mechanicalLaw::F()
-{
     if (FPtr_.empty())
     {
         makeF();
@@ -219,18 +212,11 @@ Foam::volTensorField& Foam::mechanicalLaw::F()
 
 const Foam::surfaceTensorField& Foam::mechanicalLaw::Ff() const
 {
-    if (FfPtr_.empty())
+    if (useSolidDeformation_)
     {
-        makeFf();
+        return mesh_.lookupObject<surfaceTensorField>("Ff");
     }
 
-    return FfPtr_();
-}
-
-
-
-Foam::surfaceTensorField& Foam::mechanicalLaw::Ff()
-{
     if (FfPtr_.empty())
     {
         makeFf();
@@ -284,6 +270,99 @@ Foam::surfaceTensorField& Foam::mechanicalLaw::relFf()
 }
 
 
+void Foam::mechanicalLaw::makeJ() const
+{
+    if (JPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set"
+            << abort(FatalError);
+    }
+
+    JPtr_.set
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "lawJ",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh(),
+            dimensionedScalar("one", dimless, 1.0)
+        )
+    );
+
+    // Store the old-time
+    JPtr_().oldTime();
+}
+
+
+const Foam::volScalarField& Foam::mechanicalLaw::J() const
+{
+    if (useSolidDeformation_)
+    {
+        return mesh_.lookupObject<volScalarField>("J");
+    }
+
+    if (JPtr_.empty())
+    {
+        makeJ();
+    }
+
+    return JPtr_();
+}
+
+
+void Foam::mechanicalLaw::makeJf() const
+{
+    if (JfPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    JfPtr_.set
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "lawJf",
+                mesh().time().timeName(),
+                mesh(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            mesh(),
+            dimensionedScalar("one", dimless, 1.0)
+        )
+    );
+
+    // Store the old-time
+    JfPtr_().oldTime();
+}
+
+
+const Foam::surfaceScalarField&
+Foam::mechanicalLaw::Jf() const
+{
+    if (useSolidDeformation_)
+    {
+        return mesh_.lookupObject<surfaceScalarField>("Jf");
+    }
+
+    if (JfPtr_.empty())
+    {
+        makeJf();
+    }
+
+    return JfPtr_();
+}
+
 Foam::volScalarField& Foam::mechanicalLaw::sigmaHyd()
 {
     if (sigmaHydPtr_.empty())
@@ -328,7 +407,7 @@ Foam::volVectorField& Foam::mechanicalLaw::gradSigmaHyd()
                     IOobject::AUTO_WRITE
                 ),
                 mesh(),
-                dimensionedVector("zero", dimPressure, Zero),
+                dimensionedVector("zero", dimPressure/dimLength, Zero),
                 zeroGradientFvPatchScalarField::typeName
             )
         );
@@ -345,6 +424,39 @@ bool Foam::mechanicalLaw::updateF
     const dimensionedScalar& K
 )
 {
+    if (useSolidDeformation_)
+    {
+        const volTensorField& F =
+            mesh_.lookupObject<volTensorField>("F");
+
+        // Check if the mathematical model is in total or updated Lagrangian form
+        if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
+        {
+            FatalErrorInFunction
+                << "Not implemented for non-incremental updated Lagrangian"
+                << abort(FatalError);
+            return false;
+        }
+        else
+        {
+            // Update the relative deformation gradient: not needed
+            relF() = F & inv(F.oldTime());
+            return false;
+        }
+    }
+
+    if (!FPtr_.valid())
+    {
+        makeF();
+    }
+    volTensorField& F = FPtr_();
+
+    if (!JPtr_.valid())
+    {
+        makeJ();
+    }
+    volScalarField& J = JPtr_();
+
     // Check if the mathematical model is in total or updated Lagrangian form
     if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
     {
@@ -363,7 +475,10 @@ bool Foam::mechanicalLaw::updateF
         relF() = I + gradDD.T();
 
         // Update the total deformation gradient
-        F() = relF() & F().oldTime();
+        F = relF() & F.oldTime();
+
+        //- Calculate Jacobian
+        J = det(F);
 
         if (enforceLinear())
         {
@@ -391,10 +506,13 @@ bool Foam::mechanicalLaw::updateF
 
             // Update the total deformation gradient
             // Note: grad is wrt reference configuration
-            F() = F().oldTime() + gradDD.T();
+            F = F.oldTime() + gradDD.T();
 
             // Update the relative deformation gradient: not needed
-            relF() = F() & inv(F().oldTime());
+            relF() = F & inv(F.oldTime());
+
+            //- Calculate Jacobian
+            J = det(F);
 
             if (enforceLinear())
             {
@@ -418,10 +536,13 @@ bool Foam::mechanicalLaw::updateF
                 mesh().lookupObject<volTensorField>("grad(D)");
 
             // Update the total deformation gradient
-            F() = I + gradD.T();
+            F = I + gradD.T();
 
             // Update the relative deformation gradient: not needed
-            relF() = F() & inv(F().oldTime());
+            relF() = F & inv(F.oldTime());
+
+            //- Calculate Jacobian
+            J = det(F);
 
             if (enforceLinear())
             {
@@ -457,6 +578,87 @@ bool Foam::mechanicalLaw::updateFf
     const dimensionedScalar& K
 )
 {
+    if (useSolidDeformation_)
+    {
+        const surfaceTensorField& Ff =
+            mesh_.lookupObject<surfaceTensorField>("Ff");
+
+        // Check if the mathematical model is in total or updated Lagrangian form
+        if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
+        {
+            FatalErrorInFunction
+                << "Not implemented for non-incremental updated Lagrangian"
+                << abort(FatalError);
+            return false;
+        }
+        else if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
+        {
+            if (incremental())
+            {
+                // Update the relative deformation gradient: not needed
+                relFf() = Ff & inv(Ff.oldTime());
+
+                if (enforceLinear())
+                {
+                    WarningInFunction
+                        << "Material linearity enforced for stability!"
+                        << endl;
+
+                    // Lookup gradient of displacement increment
+                    const surfaceTensorField& gradDD =
+                        mesh().lookupObject<surfaceTensorField>("grad(DD)");
+
+                    // Calculate stress using Hooke's law
+                    sigma =
+                        sigma.oldTime()
+                    + 2.0*mu*dev(symm(gradDD)) + K*tr(gradDD)*I;
+
+                    return true;
+                }
+            }
+            else
+            {
+                // Update the relative deformation gradient: not needed
+                relFf() = Ff & inv(Ff.oldTime());
+
+                if (enforceLinear())
+                {
+                    WarningInFunction
+                        << "Material linearity enforced for stability!"
+                        << endl;
+
+                    // Lookup gradient of displacement
+                    const surfaceTensorField& gradD =
+                        mesh().lookupObject<surfaceTensorField>("grad(D)");
+
+                    // Calculate stress using Hooke's law
+                    sigma = 2.0*mu*dev(symm(gradD)) + K*tr(gradD)*I;
+
+                    return true;
+                }
+            }
+        }
+        else
+        {
+            FatalErrorInFunction
+                << "Unknown nonLinGeom type: " << nonLinGeom()
+                << abort(FatalError);
+            return false;
+        }
+    }
+
+    if (!FfPtr_.valid())
+    {
+        makeFf();
+    }
+    surfaceTensorField& Ff = FfPtr_();
+
+    if (!JfPtr_.valid())
+    {
+        makeJf();
+    }
+    surfaceScalarField& Jf = JfPtr_();
+
     // Check if the mathematical model is in total or updated Lagrangian form
     if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
     {
@@ -475,7 +677,10 @@ bool Foam::mechanicalLaw::updateFf
         relFf() = I + gradDD.T();
 
         // Update the total deformation gradient
-        Ff() = relFf() & Ff().oldTime();
+        Ff = relFf() & Ff.oldTime();
+
+        //- Calculate Jacobian
+        Jf = det(Ff);
 
         if (enforceLinear())
         {
@@ -501,10 +706,13 @@ bool Foam::mechanicalLaw::updateFf
 
             // Update the total deformation gradient
             // Note: grad is wrt reference configuration
-            Ff() = Ff().oldTime() + gradDD.T();
+            Ff = Ff.oldTime() + gradDD.T();
 
             // Update the relative deformation gradient: not needed
-            relFf() = Ff() & inv(Ff().oldTime());
+            relFf() = Ff & inv(Ff.oldTime());
+
+            //- Calculate Jacobian
+            Jf = det(Ff);
 
             if (enforceLinear())
             {
@@ -529,10 +737,13 @@ bool Foam::mechanicalLaw::updateFf
                 mesh().lookupObject<surfaceTensorField>("grad(D)f");
 
             // Update the total deformation gradient
-            Ff() = I + gradD.T();
+            Ff = I + gradD.T();
 
             // Update the relative deformation gradient: not needed
-            relFf() = Ff() & inv(Ff().oldTime());
+            relFf() = Ff & inv(Ff.oldTime());
+
+            //- Calculate Jacobian
+            Jf = det(Ff);
 
             if (enforceLinear())
             {
@@ -544,6 +755,8 @@ bool Foam::mechanicalLaw::updateFf
 
                 // Calculate stress using Hooke's law
                 sigma = 2.0*mu*dev(symm(gradD)) + K*tr(gradD)*I;
+
+
 
                 return true;
             }
@@ -678,6 +891,7 @@ Foam::mechanicalLaw::mechanicalLaw
     relFfPtr_(),
     sigmaHydPtr_(),
     gradSigmaHydPtr_(),
+    useSolidDeformation_(false),
     solvePressureEqn_
     (
         dict.lookupOrDefault<Switch>("solvePressureEqn", false)

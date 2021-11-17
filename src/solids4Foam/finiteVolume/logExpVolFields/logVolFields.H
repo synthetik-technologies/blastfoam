@@ -43,8 +43,11 @@ Author
 
 namespace Foam
 {
-    // Natural log of a symmTensor field
+    // Natural log of a volSymmTensor field
     tmp<volSymmTensorField> log(const volSymmTensorField& vf);
+
+    // Natural log of a symmTensor field
+    tmp<symmTensorField> log(const symmTensorField& vf);
 
 } // End namespace Foam
 

@@ -51,45 +51,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::neoHookeanElasticMisesPlasticRubin::makeJ()
-{
-    if (JPtr_)
-    {
-        FatalErrorIn("void Foam::neoHookeanElasticMisesPlasticRubin::makeJ()")
-            << "pointer already set" << abort(FatalError);
-    }
-
-    JPtr_ =
-        new volScalarField
-        (
-            IOobject
-            (
-                "lawJ",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        );
-
-    // Store the old-time
-    JPtr_->oldTime();
-}
-
-
-Foam::volScalarField& Foam::neoHookeanElasticMisesPlasticRubin::J()
-{
-    if (!JPtr_)
-    {
-        makeJ();
-    }
-
-    return *JPtr_;
-}
-
-
 Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlasticRubin::Ibar
 (
     const volSymmTensorField& devBEbar
@@ -254,7 +215,6 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
         dimensionedScalar(dict.lookup("initialYieldStress"))
     ),
     K_(dict.lookup("hardeningModulus")),
-    JPtr_(NULL),
     P_
     (
         IOobject
@@ -382,9 +342,7 @@ Foam::neoHookeanElasticMisesPlasticRubin::neoHookeanElasticMisesPlasticRubin
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::neoHookeanElasticMisesPlasticRubin::~neoHookeanElasticMisesPlasticRubin()
-{
-    deleteDemandDrivenData(JPtr_);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -392,22 +350,60 @@ Foam::neoHookeanElasticMisesPlasticRubin::~neoHookeanElasticMisesPlasticRubin()
 Foam::tmp<Foam::volScalarField>
 Foam::neoHookeanElasticMisesPlasticRubin::impK() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        "impK",
+        mesh(),
+        (4.0/3.0)*mu_ + k_
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::neoHookeanElasticMisesPlasticRubin::impK(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            (4.0/3.0)*mu_ + k_, // == 2*mu + lambda
-            zeroGradientFvPatchScalarField::typeName
+            mesh().C().boundaryField()[patchi].size(),
+            (4.0/3.0)*mu_.value() + k_.value()
         )
+    );
+}
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlasticRubin::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        k_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlasticRubin::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        (4.0/3.0)*mu_ + k_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlasticRubin::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 
@@ -426,10 +422,10 @@ void Foam::neoHookeanElasticMisesPlasticRubin::correct
     }
 
     // Update the Jacobian of the total deformation gradient
-    J() = det(F());
+    const volScalarField& J = mechanicalLaw::J();
 
     // Calculate the relative Jacobian
-    const volScalarField relJ(J()/J().oldTime());
+    const volScalarField relJ(J/J.oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
@@ -487,7 +483,7 @@ void Foam::neoHookeanElasticMisesPlasticRubin::correct
     }
 
     // Reciprocal of J
-    const volScalarField rJ(1.0/J());
+    const volScalarField rJ(1.0/J);
 
     // Calculate the deviatoric Cauchy stress
     const volSymmTensorField devT(rJ*mu_*dev(bEbar_));

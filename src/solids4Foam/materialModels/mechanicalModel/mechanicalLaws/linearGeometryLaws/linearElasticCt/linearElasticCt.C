@@ -501,23 +501,52 @@ Foam::linearElasticCt::~linearElasticCt()
 
 Foam::tmp<Foam::volScalarField> Foam::linearElasticCt::impK() const
 {
-    tmp<volScalarField> tresult
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "impKcopy",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            2*mu_ + lambda_
-        )
+        "impK",
+        2.0*mu_ + lambda_
     );
+}
 
-    return tresult;
+
+Foam::tmp<Foam::scalarField>
+Foam::linearElasticCt::impK(const label patchi) const
+{
+    return
+        2.0*mu_.boundaryField()[patchi]
+      + lambda_.boundaryField()[patchi];
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::linearElasticCt::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        lambda_ + 2.0/3.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElasticCt::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        lambda_ + 2.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElasticCt::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mu_
+    );
 }
 
 

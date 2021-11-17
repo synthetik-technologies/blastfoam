@@ -227,6 +227,54 @@ Foam::linearPlasticModel::epsilonf() const
 }
 
 
+Foam::tmp<Foam::symmTensorField>
+Foam::linearPlasticModel::epsilon(const label patchi) const
+{
+    // Lookup gradient of displacement
+    const tensorField& gradD =
+        mesh().lookupObject<volTensorField>
+        (
+            "grad(D)"
+        ).boundaryField()[patchi];
+    const symmTensorField& sigma =
+        mesh().lookupObject<volSymmTensorField>
+        (
+            "sigma"
+        ).boundaryField()[patchi];
+
+    tmp<symmTensorField> te(symm(gradD));
+
+    // For planeStress, correct strain in the out of plane direction
+    if (planeStress())
+    {
+        symmTensorField& e(te.ref());
+
+        if (mesh().solutionD()[vector::Z] > -1)
+        {
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
+                << "direction is the Z direction!" << abort(FatalError);
+        }
+        const symmTensorField& pepsilonP =
+            epsilonP_.boundaryField()[patchi];
+
+        e.replace
+        (
+            symmTensor::ZZ,
+           -(nu_.value()/E_.value())
+           *(
+               sigma.component(symmTensor::XX)
+             + sigma.component(symmTensor::YY)
+            )
+          - (
+                pepsilonP.component(symmTensor::XX)
+              + pepsilonP.component(symmTensor::YY)
+            )
+        );
+    }
+    return te;
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -272,26 +320,47 @@ Foam::linearPlasticModel::impK() const
     // Calculate scaling factor
     const volScalarField scaleFactor(1.0 - (2.0*mu_*DLambda_/magSTrial));
 
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            //mesh(),
-            //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
-            //zeroGradientFvPatchScalarField::typeName
-            scaleFactor*(4.0/3.0)*mu_ + K_
-        )
+        "impK",
+        //mesh(),
+        //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
+        //zeroGradientFvPatchScalarField::typeName
+        scaleFactor*(4.0/3.0)*mu_ + K_
     );
 }
 
+
+Foam::tmp<Foam::scalarField>
+Foam::linearPlasticModel::impK(const label patchi) const
+{
+    // Calculate scaling factor to ensure optimal convergence
+    // This is similar to the tangent matrix in FE procedures
+
+    // Calculate deviatoric strain
+    const symmTensorField e(dev(epsilon()));
+
+    // Calculate deviatoric trial stress
+    const symmTensorField sTrial
+    (
+        2.0*mu_.value()
+       *(e - dev(epsilonP_.oldTime().boundaryField()[patchi]))
+    );
+
+    // Magnitude of the deviatoric trial stress
+    const scalarField magSTrial(max(mag(sTrial), small));
+
+    // Calculate scaling factor
+    const scalarField scaleFactor
+    (
+        1.0
+      - 2.0*mu_.value()
+       *DLambda_.boundaryField()[patchi]
+       /magSTrial
+    );
+
+    return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
+}
 
 void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
 {

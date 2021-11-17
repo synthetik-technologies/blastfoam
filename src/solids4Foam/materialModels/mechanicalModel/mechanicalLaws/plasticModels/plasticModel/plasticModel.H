@@ -162,6 +162,12 @@ protected:
         //- Return the strain
         virtual tmp<volSymmTensorField> epsilon() const = 0;
 
+        //- Return the face strain
+        virtual tmp<surfaceSymmTensorField> epsilonf() const = 0;
+
+        //- Return the strain for a patch
+        virtual tmp<symmTensorField> epsilon(const label) const = 0;
+
         //- Disallow default bitwise copy construct
         plasticModel(const plasticModel&);
 
@@ -261,6 +267,15 @@ public:
 
 
     // Member Functions
+
+        //- Return bulk modulus
+        virtual tmp<volScalarField> bulkModulus() const;
+
+        //- Return elastic modulus
+        virtual tmp<volScalarField> elasticModulus() const;
+
+        //- Return shear modulus
+        virtual tmp<volScalarField> shearModulus() const;
 
         //- Return material residual i.e. a measured of how convergence of
         //  the material model

@@ -636,7 +636,8 @@ Foam::solidModel::solidModel
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        volPointInterpolation::New(mesh).interpolate(D_)
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
     ),
     pointDD_
     (
@@ -648,7 +649,8 @@ Foam::solidModel::solidModel
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        volPointInterpolation::New(mesh).interpolate(DD_)
+        pMesh(),
+        dimensionedVector("0", dimLength, Zero)
     ),
     gradD_
     (

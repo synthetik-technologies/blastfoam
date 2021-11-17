@@ -73,23 +73,63 @@ Foam::GentElastic::~GentElastic()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::GentElastic::impK() const
+Foam::tmp<Foam::volScalarField>
+Foam::GentElastic::impK() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        "impK",
+        mesh(),
+        (4.0/3.0)*mu_ + K_
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::GentElastic::impK(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            ((4.0/3.0)*mu_ + K_)
+            mesh().C().boundaryField().size(),
+            (4.0/3.0)*mu_.value() + K_.value()
         )
+    );
+}
+
+Foam::tmp<Foam::volScalarField>
+Foam::GentElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::GentElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        (4.0/3.0)*mu_ + K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::GentElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

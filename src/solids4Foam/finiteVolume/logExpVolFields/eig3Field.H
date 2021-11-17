@@ -48,7 +48,17 @@ namespace Foam
 
 void eig3Field
 (
+    const tensorField& A, tensorField& V, vectorField& d
+);
+
+void eig3Field
+(
     const volTensorField& A, volTensorField& V, volVectorField& d
+);
+
+void eig3Field
+(
+    const symmTensorField& A, tensorField& V, vectorField& d
 );
 
 void eig3Field

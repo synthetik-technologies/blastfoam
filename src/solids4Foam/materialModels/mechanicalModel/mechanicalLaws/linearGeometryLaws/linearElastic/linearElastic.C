@@ -384,73 +384,66 @@ Foam::linearElastic::~linearElastic()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-
-Foam::tmp<Foam::volScalarField> Foam::linearElastic::bulkModulus() const
+Foam::tmp<Foam::volScalarField> Foam::linearElastic::impK() const
 {
-    tmp<volScalarField> tresult
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "bulkModulus",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            K_,
-            zeroGradientFvPatchScalarField::typeName
-        )
+        "impK",
+        mesh(),
+        nu_.value() == 0.5
+      ? 2.0*mu_
+      : 2.0*mu_ + lambda_
     );
-    tresult.ref().correctBoundaryConditions();
-
-    return tresult;
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::linearElastic::impK() const
+Foam::tmp<Foam::scalarField>
+Foam::linearElastic::impK(const label patchi) const
 {
-    if (nu_.value() == 0.5)
-    {
-        return tmp<volScalarField>
+    return tmp<scalarField>
+    (
+        new scalarField
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                2.0*mu_
-            )
-        );
-    }
-    else
-    {
-        return tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                2.0*mu_ + lambda_
-            )
-        );
-    }
+            mesh().C().boundaryField()[patchi].size(),
+            nu_.value() == 0.5
+          ? 2.0*mu_.value()
+          : 2.0*mu_.value() + lambda_.value()
+        )
+    );
+}
 
+
+Foam::tmp<Foam::volScalarField> Foam::linearElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        lambda_ + 2.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::linearElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
+    );
 }
 
 

@@ -72,12 +72,6 @@ class nonLinearPlastic
 {
     // Private data
 
-        //- Jacobian of the toal deformation gradient volField
-        autoPtr<volScalarField> JPtr_;
-
-        //- Jacobian of the toal deformation gradient surfaceField
-        autoPtr<surfaceScalarField> JfPtr_;
-
         //- Elastic left Cauchy-Green trial strain tensor with volumetric term
         //  removed. Trial means that plasticity is neglected.
         volSymmTensorField bEbarTrial_;
@@ -100,18 +94,6 @@ class nonLinearPlastic
 
     // Private Member Functions
 
-        //- Make the J field
-        void makeJ();
-
-        //- Return a reference to the J field
-        volScalarField& J();
-
-        //- Make the Jf field
-        void makeJf();
-
-        //- Return a reference to the Jf field
-        surfaceScalarField& Jf();
-
         //- Calcualte Ibar such that det(bEbar) == 1
         tmp<volScalarField> Ibar
         (
@@ -124,10 +106,14 @@ class nonLinearPlastic
             const surfaceSymmTensorField& devBEbar
         );
 
-        //- Return the stain
+        //- Return the strain
         virtual tmp<volSymmTensorField> epsilon() const;
 
+        //- Return the face strain
         virtual tmp<surfaceSymmTensorField> epsilonf() const;
+
+        //- Return the strain for a patch
+        virtual tmp<symmTensorField> epsilon(const label) const;
 
 public:
 
@@ -156,6 +142,10 @@ public:
         //- Return the implicit stiffness
         //  This is the diffusivity for the Laplacian term
         virtual tmp<volScalarField> impK() const;
+
+        //- Return the implicit stiffness for a patch
+        //  This is the diffusivity for the Laplacian term
+        virtual tmp<scalarField> impK(const label) const;
 
         //- Update the stress
         virtual void correct(volSymmTensorField& sigma);

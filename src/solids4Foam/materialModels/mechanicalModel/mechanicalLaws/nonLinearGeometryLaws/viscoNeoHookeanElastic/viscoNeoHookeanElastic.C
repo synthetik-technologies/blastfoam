@@ -443,73 +443,74 @@ Foam::viscoNeoHookeanElastic::~viscoNeoHookeanElastic()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::viscoNeoHookeanElastic::impK() const
+Foam::tmp<Foam::volScalarField>
+Foam::viscoNeoHookeanElastic::impK() const
 {
-    if (nu_.value() == 0.5 || mesh().foundObject<volScalarField>("p"))
-    {
-        return tmp<volScalarField>
+    return volScalarField::New
+    (
+        "impK",
+        mesh(),
         (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                //K_      // Previous:  (2.0*mu_)
-                // PC: this is for convergence and does/should not affect
-                // the results
-                2.0*mu_
-            )
-        );
-    }
-    else
-    {
-        return tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                //K_        // Previous : (2.0*mu_ + lambda_)
-                // PC: this is for convergence and does/should not affect
-                // the results
-                2.0*mu_ + (4.0/3.0)*K_
-            )
-        );
-    }
-
+            nu_.value() == 0.5
+         || mesh().foundObject<volScalarField>("p")
+        )
+      ? 2.0*mu_
+      : 2.0*mu_ + lambda_
+    );
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::viscoNeoHookeanElastic::K() const
+Foam::tmp<Foam::scalarField>
+Foam::viscoNeoHookeanElastic::impK(const label patchi) const
 {
-    return tmp<volScalarField>
+    return tmp<scalarField>
     (
-        new volScalarField
+        new scalarField
         (
-            IOobject
+            mesh().C().boundaryField().size(),
             (
-                "K",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            K_
+                nu_.value() == 0.5
+             || mesh().foundObject<volScalarField>("p")
+            )
+          ? 2.0*mu_.value()
+          : 2.0*mu_.value() + (4.0/3.0)*K_.value()
         )
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscoNeoHookeanElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscoNeoHookeanElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        K_ + 4.0/3.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscoNeoHookeanElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

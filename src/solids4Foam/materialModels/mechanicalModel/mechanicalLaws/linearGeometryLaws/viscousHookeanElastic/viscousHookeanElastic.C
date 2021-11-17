@@ -295,7 +295,8 @@ Foam::viscousHookeanElastic::~viscousHookeanElastic()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::viscousHookeanElastic::impK() const
+Foam::tmp<Foam::volScalarField>
+Foam::viscousHookeanElastic::impK() const
 {
     // Calculate scaling factor to ensure optimal convergence
     // This is similar to the tangent matrix in FE procedures
@@ -304,68 +305,86 @@ Foam::tmp<Foam::volScalarField> Foam::viscousHookeanElastic::impK() const
     forAll(gamma_, i)
     {
         scaleFactor +=
-            gamma_[i]*Foam::exp(-mesh().time().deltaTValue()/(2.0*tau_[i]));
+            gamma_[i]
+           *Foam::exp
+            (
+              - mesh().time().deltaTValue()/(2.0*tau_[i])
+            );
     }
 
-    if (nu_.value() == 0.5 || mesh().foundObject<volScalarField>("p"))
-    {
-        return tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                scaleFactor*2.0*mu_
-            )
-        );
-    }
-    else
-    {
-        return tmp<volScalarField>
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "impK",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                mesh(),
-                scaleFactor*2.0*mu_ + lambda_
-            )
-        );
-    }
-
+    return volScalarField::New
+    (
+        "impK",
+        mesh(),
+        nu_.value() == 0.5
+      ? scaleFactor*2.0*mu_
+      : scaleFactor*2.0*mu_ + lambda_
+    );
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::viscousHookeanElastic::K() const
+Foam::tmp<Foam::scalarField>
+Foam::viscousHookeanElastic::impK(const label patchi) const
 {
-    return tmp<volScalarField>
-    (
-        new volScalarField
-        (
-            IOobject
+    // Calculate scaling factor to ensure optimal convergence
+    // This is similar to the tangent matrix in FE procedures
+    scalar scaleFactor = gammaInf_.value();
+
+    forAll(gamma_, i)
+    {
+        scaleFactor +=
+            gamma_[i]
+           *Foam::exp
             (
-                "K",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            k_
+              - mesh().time().deltaTValue()/(2.0*tau_[i])
+            );
+    }
+
+    return tmp<scalarField>
+    (
+        new scalarField
+        (
+            mesh().C().boundaryField().size(),
+            nu_.value() == 0.5
+          ? scaleFactor*2.0*mu_.value()
+          : scaleFactor*2.0*mu_.value() + lambda_.value()
         )
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscousHookeanElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        k_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscousHookeanElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        lambda_ + 2.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::viscousHookeanElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

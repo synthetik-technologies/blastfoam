@@ -494,6 +494,40 @@ Foam::plasticModel::~plasticModel()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+Foam::tmp<Foam::volScalarField> Foam::plasticModel::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::plasticModel::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        K_ + (4.0/3.0)*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::plasticModel::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
+    );
+}
+
+
 Foam::scalar Foam::plasticModel::residual()
 {
     // Calculate residual based on change in plastic strain increment

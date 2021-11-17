@@ -44,31 +44,51 @@ namespace Foam
 
 void eig3Field
 (
+    const tensorField& A, tensorField& V, vectorField& d
+)
+{
+    forAll(A, i)
+    {
+        eig3().eigen_decomposition(A[i], V[i], d[i]);
+    }
+}
+
+
+void eig3Field
+(
     const volTensorField& A, volTensorField& V, volVectorField& d
 )
 {
-    const tensorField& AI = A.internalField();
-    tensorField& VI = V.primitiveFieldRef();
-    vectorField& dI = d.primitiveFieldRef();
+    eig3Field
+    (
+        A.primitiveField(),
+        V.primitiveFieldRef(),
+        d.primitiveFieldRef()
+    );
 
-    forAll(AI, cellI)
+    forAll(A.boundaryField(), patchi)
     {
-        eig3().eigen_decomposition(AI[cellI], VI[cellI], dI[cellI]);
-    }
-
-    forAll(A.boundaryField(), patchI)
-    {
-        if (A.boundaryField()[patchI].type() != "empty")
+        if (A.boundaryField()[patchi].type() != "empty")
         {
-            const tensorField& AB = A.boundaryField()[patchI];
-            tensorField& VB = V.boundaryFieldRef()[patchI];
-            vectorField& dB = d.boundaryFieldRef()[patchI];
-
-            forAll(AB, faceI)
-            {
-                eig3().eigen_decomposition(AB[faceI], VB[faceI], dB[faceI]);
-            }
+            eig3Field
+            (
+                A.boundaryField()[patchi],
+                V.boundaryFieldRef()[patchi],
+                d.boundaryFieldRef()[patchi]
+            );
         }
+    }
+}
+
+
+void eig3Field
+(
+    const symmTensorField& A, tensorField& V, vectorField& d
+)
+{
+    forAll(A, i)
+    {
+        eig3().eigen_decomposition(A[i], V[i], d[i]);
     }
 }
 
@@ -78,27 +98,23 @@ void eig3Field
     const volSymmTensorField& A, volTensorField& V, volVectorField& d
 )
 {
-    const symmTensorField& AI = A.internalField();
-    tensorField& VI = V.primitiveFieldRef();
-    vectorField& dI = d.primitiveFieldRef();
+    eig3Field
+    (
+        A.primitiveField(),
+        V.primitiveFieldRef(),
+        d.primitiveFieldRef()
+    );
 
-    forAll(AI, cellI)
+    forAll(A.boundaryField(), patchi)
     {
-        eig3().eigen_decomposition(AI[cellI], VI[cellI], dI[cellI]);
-    }
-
-    forAll(A.boundaryField(), patchI)
-    {
-        if (A.boundaryField()[patchI].type() != "empty")
+        if (A.boundaryField()[patchi].type() != "empty")
         {
-            const symmTensorField& AB = A.boundaryField()[patchI];
-            tensorField& VB = V.boundaryFieldRef()[patchI];
-            vectorField& dB = d.boundaryFieldRef()[patchI];
-
-            forAll(AB, faceI)
-            {
-                eig3().eigen_decomposition(AB[faceI], VB[faceI], dB[faceI]);
-            }
+            eig3Field
+            (
+                A.boundaryField()[patchi],
+                V.boundaryFieldRef()[patchi],
+                d.boundaryFieldRef()[patchi]
+            );
         }
     }
 }

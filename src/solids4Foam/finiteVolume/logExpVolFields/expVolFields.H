@@ -48,6 +48,9 @@ namespace Foam
     // Exponetial of a symmTensor field
     tmp<volSymmTensorField> exp(const volSymmTensorField& vf);
 
+    // Exponetial of a symmTensor field
+    tmp<symmTensorField> exp(const symmTensorField& vf);
+
 } // End namespace Foam
 
 

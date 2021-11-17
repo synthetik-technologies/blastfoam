@@ -87,11 +87,20 @@ class mechanicalLaw
         //- Relative deformation gradient surfaceField
         mutable autoPtr<surfaceTensorField> relFfPtr_;
 
+        //- Jacobian of the toal deformation gradient volField
+        mutable autoPtr<volScalarField> JPtr_;
+
+        //- Jacobian of the toal deformation gradient surfaceField
+        mutable autoPtr<surfaceScalarField> JfPtr_;
+
         // Hydrostatic stress (negative of hydrostatic pressure) volField
         autoPtr<volScalarField> sigmaHydPtr_;
 
         // Gradient of the hydrostatic stress field
         autoPtr<volVectorField> gradSigmaHydPtr_;
+
+        //- Is the deformation of the solid model used
+        bool useSolidDeformation_;
 
 
     // Private Member Functions
@@ -107,6 +116,12 @@ class mechanicalLaw
 
         //- Make the relFf field
         void makeRelFf() const;
+
+        //- Make the J field
+        void makeJ() const;
+
+        //- Make the Jf field
+        void makeJf() const;
 
         //- Disallow copy construct
         mechanicalLaw(const mechanicalLaw&);
@@ -168,14 +183,8 @@ protected:
         //- Return a reference to the F field
         const volTensorField& F() const;
 
-        //- Return a reference to the F field
-        volTensorField& F();
-
         //- Return a reference to the Ff field
         const surfaceTensorField& Ff() const;
-
-        //- Return a reference to the Ff field
-        surfaceTensorField& Ff();
 
         //- Return a reference to the relF field
         const volTensorField& relF() const;
@@ -188,6 +197,12 @@ protected:
 
         //- Return a reference to the relFf field
         surfaceTensorField& relFf();
+
+        //- Return a reference to the J field
+        const volScalarField& J() const;
+
+        //- Return a reference to the Jf field
+        const surfaceScalarField& Jf() const;
 
         //- Return a reference to the sigmaHyd field
         volScalarField& sigmaHyd();
@@ -342,14 +357,18 @@ public:
         //  This is the diffusivity for the Laplacian term
         virtual tmp<surfaceScalarField> impKf() const;
 
-        //- Return bulk modulus
-        virtual tmp<volScalarField> bulkModulus() const
-        {
-            notImplemented("Not yet implemented for this mechanical law");
+        //- Return the implicit stiffness for a patch
+        //  This is the diffusivity for the Laplacian term
+        virtual tmp<scalarField> impK(const label) const = 0;
 
-            // Keep compiler happy
-            return rho();
-        }
+        //- Return bulk modulus
+        virtual tmp<volScalarField> bulkModulus() const = 0;
+
+        //- Return elastic modulus
+        virtual tmp<volScalarField> elasticModulus() const = 0;
+
+        //- Return shear modulus
+        virtual tmp<volScalarField> shearModulus() const = 0;
 
         //- Calculate the stress
         virtual void correct(volSymmTensorField& sigma) = 0;
@@ -367,6 +386,11 @@ public:
 
         //- Return the desired new time-step
         virtual scalar newDeltaT();
+
+        void setUseSolidDeformation()
+        {
+            useSolidDeformation_ = true;
+        }
 };
 
 

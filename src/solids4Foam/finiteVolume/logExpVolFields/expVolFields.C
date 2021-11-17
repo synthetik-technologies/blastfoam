@@ -46,21 +46,14 @@ namespace Foam
 tmp<volSymmTensorField> exp(const volSymmTensorField& vf)
 {
     tmp<volSymmTensorField> tresult
+    (
+        volSymmTensorField::New
         (
-            new volSymmTensorField
-            (
-                IOobject
-                (
-                    "exp("+vf.name()+")",
-                    vf.time().timeName(),
-                    vf.db(),
-                    IOobject::NO_READ,
-                    IOobject::NO_WRITE
-                ),
-                vf.mesh(),
-                dimensionedSymmTensor("zero", vf.dimensions(), symmTensor::zero)
-            )
-        );
+            "exp("+vf.name()+")",
+            vf.mesh(),
+            dimensionedSymmTensor("zero", vf.dimensions(), symmTensor::zero)
+        )
+    );
 
     volSymmTensorField& result = tresult.ref();
 
@@ -77,32 +70,24 @@ tmp<volSymmTensorField> exp(const volSymmTensorField& vf)
     // boundary
     volVectorField eigenVal
     (
-        IOobject
+        volVectorField::New
         (
             "eigenVal(" + vf.name() + ")",
-            vf.time().timeName(),
-            vf.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        vf.mesh(),
-        dimensionedVector("zero", vf.dimensions(), vector::zero)
+            vf.mesh(),
+            dimensionedVector("zero", vf.dimensions(), vector::zero)
+        )
     );
 
     // Eigen vectors will be store in the rows i.e. the first eigen vector
     // is (eigenVec.xx() eigenVec.xy() eigenVec.xz())
     volTensorField eigenVec
     (
-        IOobject
+        volTensorField::New
         (
             "eigenVec(" + vf.name() + ")",
-            vf.time().timeName(),
-            vf.db(),
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        vf.mesh(),
-        dimensionedTensor("zero", dimless, tensor::zero)
+            vf.mesh(),
+            dimensionedTensor("zero", dimless, tensor::zero)
+        )
     );
 
     // Calculate eigen values and eigen vectors of vf
@@ -111,8 +96,8 @@ tmp<volSymmTensorField> exp(const volSymmTensorField& vf)
     // Now we will calculate the exp of the eigenValues and then rotate the
     // tensor back to the physcial configuration
 
-    const vectorField& eigenValI = eigenVal.internalField();
-    const tensorField& eigenVecI = eigenVec.internalField();
+    const vectorField& eigenValI = eigenVal.primitiveField();
+    const tensorField& eigenVecI = eigenVec.primitiveField();
     symmTensor expEigenVal = symmTensor::zero;
 
     symmTensorField& resultI = result.primitiveFieldRef();
@@ -162,6 +147,53 @@ tmp<volSymmTensorField> exp(const volSymmTensorField& vf)
     return tresult;
 }
 
+
+tmp<symmTensorField> exp(const symmTensorField& stf)
+{
+    tmp<symmTensorField> tresult(new symmTensorField(stf));
+    symmTensorField& result = tresult.ref();
+
+    // Calculate eigen values and eigen vectors
+    // The OpenFOAM eigenValues/eigenVectors sometimes gives wrong results, when
+    // eigenValues are repeated or zero, so I will use my own implementation.
+    // The efficiency of the implementation may need to be revisited, however,
+    // it is fine for creation of post processing fields e.g calculate true
+    // strain etc.
+
+    // Eigen value field
+    // We will store the eigen values in a vector instead of a diagTensor
+    // because the tranform function is not definite for diagTensors on a wedge
+    // boundary
+    vectorField eigenVal(stf.size(), Zero);
+
+    // Eigen vectors will be store in the rows i.e. the first eigen vector
+    // is (eigenVec.xx() eigenVec.xy() eigenVec.xz())
+    tensorField eigenVec(stf.size(), Zero);
+
+    // Calculate eigen values and eigen vectors of stf
+    eig3Field(stf, eigenVec, eigenVal);
+
+    // Now we will calculate the exp of the eigenValues and then rotate the
+    // tensor back to the physcial configuration
+
+    symmTensor expEigenVal = symmTensor::zero;
+
+    forAll(eigenVal, i)
+    {
+        // Calculate exp
+        expEigenVal[symmTensor::XX] =
+            Foam::exp(eigenVal[i][vector::X]);
+        expEigenVal[symmTensor::YY] =
+            Foam::exp(eigenVal[i][vector::Y]);
+        expEigenVal[symmTensor::ZZ] =
+            Foam::exp(eigenVal[i][vector::Z]);
+
+        // Rotate back
+        result[i] = transform(eigenVec[i].T(), expEigenVal);
+    }
+
+    return tresult;
+}
 
 } // End namespace Foam
 

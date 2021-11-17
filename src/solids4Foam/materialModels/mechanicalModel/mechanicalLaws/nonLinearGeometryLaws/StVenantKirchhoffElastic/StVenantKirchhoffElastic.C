@@ -110,23 +110,63 @@ Foam::StVenantKirchhoffElastic::~StVenantKirchhoffElastic()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::StVenantKirchhoffElastic::impK() const
+Foam::tmp<Foam::volScalarField>
+Foam::StVenantKirchhoffElastic::impK() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        "impK",
+        mesh(),
+        2.0*mu_ + lambda_
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::StVenantKirchhoffElastic::impK(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            2.0*mu_ + lambda_
+            mesh().C().boundaryField()[patchi].size(),
+            2.0*mu_.value() + lambda_.value()
         )
+    );
+}
+
+Foam::tmp<Foam::volScalarField>
+Foam::StVenantKirchhoffElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::StVenantKirchhoffElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        lambda_ + 2.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::StVenantKirchhoffElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

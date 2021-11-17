@@ -29,6 +29,24 @@ solidModels/unsNonLinGeomUpdatedLagSolid/unsNonLinGeomUpdatedLagSolid.C
 solidModels/unsNonLinGeomTotalLagSolid/unsNonLinGeomTotalLagSolid.C
 solidModels/weakThermalLinGeomSolid/weakThermalLinGeomSolid.C
 
+explicit=solidModels/explicitNonLinGeomTotalLagSolid
+$(explicit)/explicitNonLinGeomTotalLagSolid.C
+$(explicit)/angularMomentum/angularMomentum.C
+$(explicit)/gradientSchemes/gradientSchemes.C
+$(explicit)/interpolationSchemes/interpolationSchemes.C
+$(explicit)/mechanics/mechanics.C
+$(explicit)/operations/operations.C
+$(explicit)/plasticityModel/plasticityModel.C
+
+explicitBCs=$(explicit)/boundaryConditions
+$(explicitBCs)/calculated/calculatedTraction/calculatedTractionFvPatchVectorField.C
+$(explicitBCs)/calculated/calculatedLinearMomentum/calculatedLinearMomentumFvPatchVectorField.C
+$(explicitBCs)/symmetric/symmetricTraction/symmetricTractionFvPatchVectorField.C
+$(explicitBCs)/symmetric/symmetricLinearMomentum/symmetricLinearMomentumFvPatchVectorField.C
+$(explicitBCs)/traction/tractionTraction/tractionTractionFvPatchVectorField.C
+$(explicitBCs)/traction/tractionLinearMomentum/tractionLinearMomentumFvPatchVectorField.C
+
+
 materialModels/mechanicalModel/mechanicalModel.C
 mechanicalLaws = materialModels/mechanicalModel/mechanicalLaws
 $(mechanicalLaws)/mechanicalLaw/mechanicalLaw.C

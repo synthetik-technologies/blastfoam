@@ -756,7 +756,10 @@ Foam::linearElasticMisesPlastic::impK() const
     const volSymmTensorField e(dev(epsilon_));
 
     // Calculate deviatoric trial stress
-    const volSymmTensorField sTrial(2.0*mu_*(e - dev(epsilonP_.oldTime())));
+    const volSymmTensorField sTrial
+    (
+        2.0*mu_*(e - dev(epsilonP_.oldTime()))
+    );
 
     // Magnitude of the deviatoric trial stress
     const volScalarField magSTrial
@@ -765,25 +768,80 @@ Foam::linearElasticMisesPlastic::impK() const
     );
 
     // Calculate scaling factor
-    const volScalarField scaleFactor(1.0 - (2.0*mu_*DLambda_/magSTrial));
-
-    return tmp<volScalarField>
+    const volScalarField scaleFactor
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            //mesh(),
-            //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
-            //zeroGradientFvPatchScalarField::typeName
-            scaleFactor*(4.0/3.0)*mu_ + K_
-        )
+        1.0 - (2.0*mu_*DLambda_/magSTrial)
+    );
+
+    return volScalarField::New
+    (
+        "impK",
+        scaleFactor*(4.0/3.0)*mu_ + K_
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::linearElasticMisesPlastic::impK(const label patchi) const
+{
+    // Calculate scaling factor to ensure optimal convergence
+    // This is similar to the tangent matrix in FE procedures
+
+    // Calculate deviatoric strain
+    const symmTensorField e(dev(epsilon_.boundaryField()[patchi]));
+
+    // Calculate deviatoric trial stress
+    const symmTensorField sTrial
+    (
+        2.0*mu_.value()
+       *(e - dev(epsilonP_.oldTime().boundaryField()[patchi]))
+    );
+
+    // Magnitude of the deviatoric trial stress
+    const scalarField magSTrial(max(mag(sTrial), small));
+
+    // Calculate scaling factor
+    const scalarField scaleFactor
+    (
+        1.0
+      - (2.0*mu_.value()*DLambda_.boundaryField()[patchi]/magSTrial)
+    );
+    return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElasticMisesPlastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElasticMisesPlastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        K_ + (4.0/3.0)*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::linearElasticMisesPlastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

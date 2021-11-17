@@ -101,21 +101,61 @@ Foam::neoHookeanElastic::~neoHookeanElastic()
 
 Foam::tmp<Foam::volScalarField> Foam::neoHookeanElastic::impK() const
 {
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
+        "impK",
+        mesh(),
+        (4.0/3.0)*mu_ + K_ // == 2*mu + lambda
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::neoHookeanElastic::impK(const label patchi) const
+{
+    return tmp<scalarField>
+    (
+        new scalarField
         (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            (4.0/3.0)*mu_ + K_ // == 2*mu + lambda
+            mesh().C().boundaryField()[patchi].size(),
+            (4.0/3.0)*mu_.value() + K_.value()
         )
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        K_ + 4.0/3.0*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 

@@ -163,6 +163,56 @@ tmp<volSymmTensorField> log(const volSymmTensorField& vf)
 }
 
 
+tmp<symmTensorField> log(const symmTensorField& stf)
+{
+    // Prepare the result field
+    tmp<symmTensorField>  tresult(new symmTensorField(stf));
+    symmTensorField& result = tresult.ref();
+
+    // Calculate eigen values and eigen vectors
+    // The OpenFOAM eigenValues/eigenVectors sometimes give wrong results when
+    // eigenValues are repeated or zero, so I will use my own implementation.
+    // The efficiency of the implementation may need to be revisited, however,
+    // it is fine for creation of post processing fields e.g calculate true
+    // strain
+
+    // Eigen value field
+    // We will store the eigen values in a vector instead of a diagTensor
+    // because the tranform function is not definite for diagTensors on a wedge
+    // boundary
+    vectorField eigenVal(stf.size(), Zero);
+
+    // Eigen vectors will be store in the rows i.e. the first eigen vector
+    // is (eigenVec.xx() eigenVec.xy() eigenVec.xz())
+    tensorField eigenVec(stf.size(), Zero);
+
+    // Calculate eigen values and eigen vectors of vf and populate the eigenVec
+    // and eigenVal fields
+    eig3Field(stf, eigenVec, eigenVal);
+
+    // Now we will calculate the log of the eigenValues and then rotate the
+    // tensor back to the physcial configuration
+
+
+    symmTensor logEigenVal = symmTensor::zero;
+
+    forAll(eigenVal, i)
+    {
+        logEigenVal[symmTensor::XX] =
+            Foam::log(eigenVal[i][vector::X]);
+        logEigenVal[symmTensor::YY] =
+            Foam::log(eigenVal[i][vector::Y]);
+        logEigenVal[symmTensor::ZZ] =
+            Foam::log(eigenVal[i][vector::Z]);
+
+        // Rotate back
+        result[i] = transform(eigenVec[i].T(), logEigenVal);
+    }
+
+    return tresult;
+}
+
+
 } // End namespace Foam
 
 

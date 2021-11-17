@@ -60,88 +60,6 @@ namespace Foam
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-void Foam::neoHookeanElasticMisesPlastic::makeJ()
-{
-    if (JPtr_.valid())
-    {
-        FatalErrorIn("void Foam::neoHookeanElasticMisesPlastic::makeJ()")
-            << "pointer already set" << abort(FatalError);
-    }
-
-    JPtr_.set
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "lawJ",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JPtr_().oldTime();
-}
-
-
-Foam::volScalarField& Foam::neoHookeanElasticMisesPlastic::J()
-{
-    if (JPtr_.empty())
-    {
-        makeJ();
-    }
-
-    return JPtr_();
-}
-
-
-void Foam::neoHookeanElasticMisesPlastic::makeJf()
-{
-    if (JfPtr_.valid())
-    {
-        FatalErrorIn("void Foam::neoHookeanElasticMisesPlastic::makeJf()")
-            << "pointer already set" << abort(FatalError);
-    }
-
-    JfPtr_.set
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "lawJf",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JfPtr_().oldTime();
-}
-
-
-Foam::surfaceScalarField& Foam::neoHookeanElasticMisesPlastic::Jf()
-{
-    if (JfPtr_.empty())
-    {
-        makeJf();
-    }
-
-    return JfPtr_();
-}
-
-
 Foam::scalar Foam::neoHookeanElasticMisesPlastic::curYieldStress
 (
     const scalar curEpsilonPEq,    // Current equivalent plastic strain
@@ -537,16 +455,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
     mechanicalLaw(name, mesh, dict, nonLinGeom),
     mu_("zero", dimPressure, 0.0),
     K_("zero", dimPressure, 0.0),
-    JPtr_(),
-    JfPtr_(),
-    stressPlasticStrainSeries_
-    (
-        Function1<scalar>::New
-        (
-            "stressPlasticStrainSeries",
-            dict
-        )
-    ),
+    stressPlasticStrainSeries_(),
     sigmaY_
     (
         IOobject
@@ -562,7 +471,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         (
             "initialYieldStress",
             dimPressure,
-            stressPlasticStrainSeries_->value(0.0)
+            0.0
         )
     ),
     sigmaYf_
@@ -580,7 +489,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         (
            "initialYieldStress",
             dimPressure,
-            stressPlasticStrainSeries_->value(0.0)
+            0.0
         )
     ),
     DSigmaY_
@@ -830,7 +739,7 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
         mesh,
         dimensionedSymmTensor("zero", dimless, symmTensor::zero)
     ),
-    nonLinearPlasticity_(true),//stressPlasticStrainSeries_.x()().size() > 2),
+    nonLinearPlasticity_(!dict.found("Hp")),
     updateBEbarConsistent_
     (
         dict.lookupOrDefault<Switch>
@@ -856,10 +765,10 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
     if (dict.found("E") && dict.found("nu"))
     {
         // Read the Young's modulus
-        const dimensionedScalar E = dimensionedScalar(dict.lookup("E"));
+        const dimensionedScalar E("E", dimPressure, dict);
 
         // Read the Poisson's ratio
-        const dimensionedScalar nu = dimensionedScalar(dict.lookup("nu"));
+        const dimensionedScalar nu("nu", dimless, dict);
 
         // Set the shear modulus
         mu_ = E/(2.0*(1.0 + nu));
@@ -876,8 +785,8 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
     }
     else if (dict.found("mu") && dict.found("K"))
     {
-        mu_ = dimensionedScalar(dict.lookup("mu"));
-        K_ = dimensionedScalar(dict.lookup("K"));
+        mu_.read(dict);
+        K_.read(dict);
     }
     else
     {
@@ -891,15 +800,33 @@ Foam::neoHookeanElasticMisesPlastic::neoHookeanElasticMisesPlastic
     if (nonLinearPlasticity_)
     {
         Info<< "    Plasticity is nonlinear" << endl;
+        stressPlasticStrainSeries_ =
+            Function1<scalar>::New
+            (
+                "stressPlasticStrainSeries",
+                dict
+            );
+        dimensionedScalar sigmaY
+        (
+            "sigmaY",
+            dimPressure,
+            stressPlasticStrainSeries_->value(0.0)
+        );
+        sigmaY_ == sigmaY;
+        sigmaYf_ == sigmaY;
     }
     else
     {
         // Define linear plastic modulus
-        Hp_ =
-            (
-                stressPlasticStrainSeries_->value(-0.0005)
-              - stressPlasticStrainSeries_->value(0.0005)
-            )*1000.0;
+        Hp_ = dict.lookup<scalar>("Hp");
+        dimensionedScalar sigmaY
+        (
+            "sigmaY",
+            dimPressure,
+            dict
+        );
+        sigmaY_ == sigmaY;
+        sigmaYf_ == sigmaY;
     }
 
     if (updateBEbarConsistent_)
@@ -938,23 +865,76 @@ Foam::neoHookeanElasticMisesPlastic::impK() const
     // Calculate scaling factor
     const volScalarField scaleFactor(1.0 - (2.0*muBar*DLambda_/magSTrial));
 
-    return tmp<volScalarField>
+    return volScalarField::New
     (
-        new volScalarField
-        (
-            IOobject
-            (
-                "impK",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            //mesh(),
-            //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
-            //zeroGradientFvPatchScalarField::typeName
-            scaleFactor*(4.0/3.0)*mu_ + K_
-        )
+        "impK",
+        //mesh(),
+        //(4.0/3.0)*mu_ + K_, // == 2*mu + lambda
+        //zeroGradientFvPatchScalarField::typeName
+        scaleFactor*(4.0/3.0)*mu_ + K_
+    );
+}
+
+
+Foam::tmp<Foam::scalarField>
+Foam::neoHookeanElasticMisesPlastic::impK(const label patchi) const
+{
+    const symmTensorField& pbEbarTrial
+    (
+        bEbarTrial_.boundaryField()[patchi]
+    );
+    // Calculate deviatoric trial stress
+    const symmTensorField sTrial(mu_.value()*dev(pbEbarTrial));
+
+    const scalarField Ibar(tr(pbEbarTrial)/3.0);
+    const scalarField muBar(Ibar*mu_.value());
+
+    // Magnitude of the deviatoric trial stress
+    const scalarField magSTrial(max(mag(sTrial), small));
+
+    // Calculate scaling factor
+    const scalarField scaleFactor
+    (
+        1.0
+      - (2.0*muBar*DLambda_.boundaryField()[patchi]/magSTrial)
+    );
+
+    return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlastic::bulkModulus() const
+{
+    return volScalarField::New
+    (
+        "bulkModulus",
+        mesh(),
+        K_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlastic::elasticModulus() const
+{
+    return volScalarField::New
+    (
+        "elasticModulus",
+        mesh(),
+        K_ + (4.0/3.0)*mu_
+    );
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::neoHookeanElasticMisesPlastic::shearModulus() const
+{
+    return volScalarField::New
+    (
+        "shearModulus",
+        mesh(),
+        mu_
     );
 }
 
@@ -970,10 +950,10 @@ void Foam::neoHookeanElasticMisesPlastic::correct(volSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    J() = det(F());
+    const volScalarField& J = mechanicalLaw::J();
 
     // Calculate the relative Jacobian
-    const volScalarField relJ(J()/J().oldTime());
+    const volScalarField relJ(J/J.oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
@@ -1001,7 +981,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(volSymmTensorField& sigma)
 
     // Trial yield function
     // sigmaY is the Cauchy yield stress so we scale it by J
-    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J()*sigmaY_);
+    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J*sigmaY_);
 
     // Magnitude of hardening slope
     const scalar magHp = mag(Hp_);
@@ -1013,7 +993,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(volSymmTensorField& sigma)
     scalarField& DSigmaYI = DSigmaY_.primitiveFieldRef();
     scalarField& DLambdaI = DLambda_.primitiveFieldRef();
     const scalarField& muBarI = muBar.primitiveField();
-    const scalarField& JI = J().primitiveField();
+    const scalarField& JI = J.primitiveField();
     const scalarField& sigmaYI = sigmaY_.primitiveField();
     const scalarField& epsilonPEqOldI = epsilonPEq_.oldTime().primitiveField();
 
@@ -1081,7 +1061,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(volSymmTensorField& sigma)
         scalarField& DSigmaYP = DSigmaY_.boundaryFieldRef()[patchI];
         scalarField& DLambdaP = DLambda_.boundaryFieldRef()[patchI];
         const scalarField& muBarP = muBar.boundaryField()[patchI];
-        const scalarField& JP = J().boundaryField()[patchI];
+        const scalarField& JP = J.boundaryField()[patchI];
         const scalarField& sigmaYP = sigmaY_.boundaryField()[patchI];
         const scalarField& epsilonPEqOldP =
             epsilonPEq_.oldTime().boundaryField()[patchI];
@@ -1163,12 +1143,12 @@ void Foam::neoHookeanElasticMisesPlastic::correct(volSymmTensorField& sigma)
     // Update hydrostatic stress (negative of pressure)
     updateSigmaHyd
     (
-        0.5*K_*(sqr(J()) - 1.0),
+        0.5*K_*(sqr(J) - 1.0),
         (4.0/3.0)*mu_ + K_
     );
 
     // Update the Cauchy stress
-    sigma = (1.0/J())*(sigmaHyd()*I + s);
+    sigma = (1.0/J)*(sigmaHyd()*I + s);
 }
 
 
@@ -1183,10 +1163,10 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    Jf() = det(Ff());
+    const surfaceScalarField& Jf = mechanicalLaw::Jf();
 
     // Calculate the relative Jacobian
-    const surfaceScalarField relJ(Jf()/Jf().oldTime());
+    const surfaceScalarField relJ(Jf/Jf.oldTime());
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
@@ -1216,7 +1196,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
     // sigmaY is the Cauchy yield stress so we scale it by J
     const surfaceScalarField fTrial
     (
-        mag(sTrial) - sqrtTwoOverThree_*Jf()*sigmaYf_
+        mag(sTrial) - sqrtTwoOverThree_*Jf*sigmaYf_
     );
 
     // Magnitude of hardening slope
@@ -1229,7 +1209,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
     scalarField& DSigmaYI = DSigmaYf_.primitiveFieldRef();
     scalarField& DLambdaI = DLambdaf_.primitiveFieldRef();
     const scalarField& muBarI = muBar.primitiveField();
-    const scalarField& JI = Jf().primitiveField();
+    const scalarField& JI = Jf.primitiveField();
     const scalarField& sigmaYI = sigmaYf_.primitiveField();
     const scalarField& epsilonPEqOldI = epsilonPEqf_.oldTime().primitiveField();
 
@@ -1300,7 +1280,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
             scalarField& DSigmaYP = DSigmaYf_.boundaryFieldRef()[patchI];
             scalarField& DLambdaP = DLambdaf_.boundaryFieldRef()[patchI];
             const scalarField& muBarP = muBar.boundaryField()[patchI];
-            const scalarField& JP = Jf().boundaryField()[patchI];
+            const scalarField& JP = Jf.boundaryField()[patchI];
             const scalarField& sigmaYP = sigmaYf_.boundaryField()[patchI];
             const scalarField& epsilonPEqOldP =
                 epsilonPEq_.oldTime().boundaryField()[patchI];
@@ -1382,7 +1362,7 @@ void Foam::neoHookeanElasticMisesPlastic::correct(surfaceSymmTensorField& sigma)
 
     // Update the Cauchy stress
     // Note: updayeSigmaHyd is not implemented for surface fields
-    sigma = (1.0/Jf())*(0.5*K_*(sqr(Jf()) - 1)*I + s);
+    sigma = (1.0/Jf)*(0.5*K_*(sqr(Jf) - 1)*I + s);
 }
 
 

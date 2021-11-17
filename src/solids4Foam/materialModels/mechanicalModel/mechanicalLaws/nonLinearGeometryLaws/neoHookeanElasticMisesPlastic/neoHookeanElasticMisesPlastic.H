@@ -79,12 +79,6 @@ class neoHookeanElasticMisesPlastic
         //- Bulk modulus
         dimensionedScalar K_;
 
-        //- Jacobian of the toal deformation gradient volField
-        autoPtr<volScalarField> JPtr_;
-
-        //- Jacobian of the toal deformation gradient surfaceField
-        autoPtr<surfaceScalarField> JfPtr_;
-
         //- Table of post-yield stress versus plastic strain
         //  For large strain total Lagrangian models, it expects
         //  the true stress and true plastic strain.
@@ -194,18 +188,6 @@ class neoHookeanElasticMisesPlastic
         //- Disallow default bitwise assignment
         void operator=(const neoHookeanElasticMisesPlastic&);
 
-        //- Make the J field
-        void makeJ();
-
-        //- Return a reference to the J field
-        volScalarField& J();
-
-        //- Make the Jf field
-        void makeJf();
-
-        //- Return a reference to the Jf field
-        surfaceScalarField& Jf();
-
         //- Return the current Kirchhoff yield stress
         scalar curYieldStress
         (
@@ -275,9 +257,21 @@ public:
 
     // Member Functions
 
-        //- Return the implicit stiffness
-        //  This is the diffusivity for the Laplacian term
+        //- Return density
         virtual tmp<volScalarField> impK() const;
+
+        //- Return the implicit stiffness for a patch
+        //  This is the diffusivity for the Laplacian term
+        virtual tmp<scalarField> impK(const label) const;
+
+        //- Return bulk modulus
+        virtual tmp<volScalarField> bulkModulus() const;
+
+        //- Return elastic modulus
+        virtual tmp<volScalarField> elasticModulus() const;
+
+        //- Return shear modulus
+        virtual tmp<volScalarField> shearModulus() const;
 
         //- Update the stress
         virtual void correct(volSymmTensorField& sigma);
