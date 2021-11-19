@@ -1,0 +1,47 @@
+ /*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  dev
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      regionProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+regions
+(
+    fluid       (air)
+    solid       (plate)
+);
+
+interfaces
+(
+    air
+    {
+        air_to_plate
+        {
+            sampleRegion plate;
+            samplePatch  plate_to_air;
+            mappingType  AMI;
+            interpolationMethod faceAreaWeight;
+        }
+    }
+    plate
+    {
+        plate_to_air
+        {
+            sampleRegion air;
+            samplePatch  air_to_plate;
+            displacementField pointD;
+        }
+    }
+);
+
+// ************************************************************************* //

@@ -1,0 +1,95 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+phases (water air);
+systemType interface;
+epsilon 0.25;
+sigma
+{
+    type constant;
+    sigma 0.0;
+}
+air
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;
+        a               0;
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        Cv          718;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-6;
+}
+
+water
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState stiffenedGas;
+    }
+    equationOfState
+    {
+        gamma           4.4;
+//         a               0;
+        a               6e8;
+    }
+    specie
+    {
+        molWeight       18.30;
+    }
+    transport
+    {
+        mu              0;              // Viscosity
+        Pr              1;              // Prandtl number
+    }
+    thermodynamics
+    {
+        Cv          4186;           // Heat capacity
+        Hf          0.0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-6;
+}
+
+
+
+// ************************************************************************* //

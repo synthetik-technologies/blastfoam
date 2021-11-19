@@ -1,0 +1,57 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      D;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    plate_to_air
+    {
+        type            coupledSolidTraction;
+        pName           p;
+        pRef            101325;
+        traction        uniform (0 0 0);
+        value           uniform (0 0 0);
+        pressure        uniform 0;
+    }
+    plateEnd
+    {
+        type            fixedDisplacement;
+        value           uniform (0 0 0);
+    }
+    plateFree
+    {
+        type            solidTractionFree;
+        value           uniform (0 0 0);
+    }
+    wedge
+    {
+        type            solidWedge;
+        patchType       wedge;
+        value           $internalField;
+    }
+
+    symmetry
+    {
+        type            symmetry;
+        patchType       symmetry;
+        value           $internalField;
+    }
+}
+
+// ************************************************************************* //

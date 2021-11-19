@@ -1,0 +1,136 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      phaseProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "../../geometry"
+
+phases (tnt air);                // List of phases
+
+tnt
+{
+    type detonating;
+    reactants
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState Murnaghan;
+        }
+        equationOfState
+        {
+            Gamma           0.35;
+            pRef            101325;
+            rho0            1630;
+            K0              0;
+        }
+        specie
+        {
+            molWeight       55.0;
+        }
+        transport
+        {
+            mu              0;              // Viscosity
+            Pr              1;              // Prandtl number
+        }
+        thermodynamics
+        {
+            Cv              1400;           // Heat capacity
+            Hf              0.0;
+        }
+    }
+    products
+    {
+        thermoType
+        {
+            transport   const;
+            thermo      eConst;
+            equationOfState JWL;
+        }
+        equationOfState
+        {
+            rho0      1630;
+            A         3.738e11;
+            B         0.03747e10;
+            R1        4.15;
+            R2        0.9;
+            omega     0.35;
+        }
+        specie
+        {
+            molWeight       55.0;
+        }
+        transport
+        {
+            mu              0;              // Viscosity
+            Pr              1;              // Prandtl number
+        }
+        thermodynamics
+        {
+            Cv              1400;           // Heat capacity
+            Hf              0.0;
+        }
+    }
+
+    activationModel     linear;
+    initiation
+    {
+        E0              6.0e9;
+        points          (($R 0 0));
+
+        vDet            6930;            // Detonation velocity [m/s]
+        Pcj             2.1e10;
+        burnModel       programmedBeta;
+    }
+
+    residualRho     1e-6;           // Minimum density of the phase
+    residualAlpha   1e-10;          // Minimum volume fraction used for division
+}
+
+air
+{
+    type basic;
+    thermoType
+    {
+        transport   const;
+        thermo      eConst;
+        equationOfState idealGas;
+    }
+    equationOfState
+    {
+        gamma           1.4;            // Heat capactiy ratio
+    }
+    specie
+    {
+        molWeight       28.97;
+    }
+    transport
+    {
+        mu              0;
+        Pr              1;
+    }
+    thermodynamics
+    {
+        type        eConst;
+        Cv          718;
+        Hf          0;
+    }
+
+    residualRho     1e-6;
+    residualAlpha   1e-10;
+}
+
+// ************************************************************************* //
