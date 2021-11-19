@@ -30,17 +30,19 @@ regions
 (
     sphericalMassToCell
     {
-        centre  ($R 0 0);
+//         centre  ($R 0 0);
+        centre  (0 $R 0);
         mass    $W;
         rho     1630;
 
         backup
         {
-            centre ($R 0 0);
+//             centre ($R 0 0);
+            centre  (0 $R 0);
             radius 0.25;
         }
-        refineInternal yes;
-        level 4;
+        refineInternal no;
+        level 3;
 
         fieldValues
         (

@@ -89,7 +89,8 @@ tnt
     initiation
     {
         E0              6.0e9;
-        points          (($R 0 0));
+        points          ((0 $R 0));
+//         points          (($R 0 0));
 
         vDet            6930;            // Detonation velocity [m/s]
         Pcj             2.1e10;
