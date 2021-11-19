@@ -338,6 +338,22 @@ Foam::basicFluidBlastThermo<Thermo>::initESource() const
 
 
 template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::Gamma() const
+{
+    return Thermo::volScalarFieldProperty
+    (
+        "Gamma",
+        dimless,
+        &Thermo::thermoType::Gamma,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class Thermo>
 Foam::scalar
 Foam::basicFluidBlastThermo<Thermo>::cellGamma(const label celli) const
 {
@@ -401,12 +417,51 @@ Foam::basicFluidBlastThermo<Thermo>::calce(const volScalarField& p) const
     (
         "e",
         dimEnergy/dimMass,
-        &Thermo::initializeEnergy,
+        &Thermo::thermoType::initializeEnergy,
         p,
         this->rho_,
         this->e_,
         this->T_
     );
 }
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::calcp() const
+{
+    return Thermo::volScalarFieldProperty
+    (
+        "p",
+        dimPressure,
+        &Thermo::thermoType::pRhoT,
+        this->rho_,
+        this->e_,
+        this->T_
+    );
+}
+
+
+template<class Thermo>
+Foam::tmp<Foam::volScalarField>
+Foam::basicFluidBlastThermo<Thermo>::calcSpeedOfSound() const
+{
+    tmp<volScalarField> tcSqr
+    (
+        Thermo::volScalarFieldProperty
+        (
+            "cSqr",
+            sqr(dimVelocity),
+            &Thermo::thermoType::cSqr,
+            this->p_,
+            this->rho_,
+            this->e_,
+            this->T_
+        )
+    );
+    tcSqr.ref().max(small);
+    return sqrt(tcSqr);
+}
+
 
 // ************************************************************************* //

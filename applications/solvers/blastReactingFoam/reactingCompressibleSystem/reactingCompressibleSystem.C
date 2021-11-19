@@ -142,7 +142,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         mesh,
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
-    fluxScheme_(fluxScheme::New(mesh)),
+    fluxScheme_(fluxScheme::NewSingle(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
 {
     thermo_->validate("compressibleSystem", "e");

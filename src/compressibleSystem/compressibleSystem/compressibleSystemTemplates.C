@@ -43,6 +43,9 @@ Foam::autoPtr<Foam::compressibleSystem> Foam::compressibleSystem::New
             dict.lookupOrDefault<word>("systemType", defaultType)
         );
 
+        Info<< "Selecting " << compressibleSystemType
+            << " compressibleSystem" << endl;
+
         cstrIter = tablePtr->find(compressibleSystemType);
 
         if (cstrIter == tablePtr->end())

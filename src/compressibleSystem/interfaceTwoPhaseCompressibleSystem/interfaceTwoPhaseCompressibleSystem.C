@@ -25,6 +25,8 @@ License
 
 #include "interfaceTwoPhaseCompressibleSystem.H"
 #include "meshSizeObject.H"
+#include "fvcCellReduce.H"
+#include "upwind.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -45,48 +47,47 @@ namespace Foam
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfaceTwoPhaseCompressibleSystem::H
+Foam::interfaceTwoPhaseCompressibleSystem::Psi
 (
-    const volScalarField& levelSet
+    const volScalarField& alpha
 ) const
 {
-    const volScalarField& h = meshSizeObject::New(mesh()).dx();
-    return 0.5*(1.0 + tanh(levelSet_/(h*epsilon_)));
+    scalar a = 0.1;
+    volScalarField alphaA(pow(alpha, a));
+    return alphaA/(alphaA + pow(1.0 - alpha, a));
+}
 
 
-//     scalar pi = Foam::constant::mathematical::pi;
-//     volScalarField e(h*epsilon_);
-//     tmp<volScalarField> talpha
-//     (
-//         0.5
-//       + levelSet/2.0*e
-//       + 1.0/2.0/pi*sin(pi*levelSet/e)
-//     );
-//     volScalarField& alpha = talpha.ref();
-//     forAll(alpha, celli)
-//     {
-//         if (levelSet[celli] > e[celli])
-//         {
-//             alpha[celli] = 1.0;
-//         }
-//         else if (levelSet[celli] < -e[celli]
-//         {
-//             alpha[celli] = 0.0;
-//         }
-//     }
-//     return talpha;
+Foam::tmp<Foam::volVectorField>
+Foam::interfaceTwoPhaseCompressibleSystem::GradPhi
+(
+    const volScalarField& alpha
+) const
+{
+    scalar a = 0.01;
+    volScalarField alpha2(1.0 - alpha);
+    return
+        fvc::grad(Psi(alpha))/a
+       *pow(alpha*alpha2, 1.0 - a)
+       *sqr(pow(alpha, a) + pow(alpha2, a));
 }
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfaceTwoPhaseCompressibleSystem::Hinv
+Foam::interfaceTwoPhaseCompressibleSystem::D
 (
     const volScalarField& alpha
 ) const
 {
     const volScalarField& h = meshSizeObject::New(mesh()).dx();
-//     volScalarField e(h*epsilon_);
     return h*epsilon_*atanh(2.0*min(0.999, max(0.001, alpha)) - 1.0);
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::interfaceTwoPhaseCompressibleSystem::H() const
+{
+    return tanh(sqr(alpha1_*alpha2_/0.01));
 }
 
 
@@ -136,7 +137,7 @@ Foam::interfaceTwoPhaseCompressibleSystem::interfaceTwoPhaseCompressibleSystem
             IOobject::READ_IF_PRESENT,
             IOobject::AUTO_WRITE
         ),
-        Hinv(alpha1_)
+        D(alpha1_)
     ),
     alphaRho1_
     (
@@ -158,11 +159,22 @@ Foam::interfaceTwoPhaseCompressibleSystem::interfaceTwoPhaseCompressibleSystem
         ),
         alpha2_*rho2_
     ),
-    alphaPhi_
+    alphaPhi1_
     (
         IOobject
         (
             IOobject::groupName("alphaPhi", alphaRho1_.group()),
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar("0", dimensionSet(0, 3, -1, 0, 0), 0.0)
+    ),
+    alphaPhi2_
+    (
+        IOobject
+        (
+            IOobject::groupName("alphaPhi", alphaRho2_.group()),
             mesh.time().timeName(),
             mesh
         ),
@@ -199,6 +211,8 @@ Foam::interfaceTwoPhaseCompressibleSystem::interfaceTwoPhaseCompressibleSystem
         *this
     )
 {
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
     rho_ = alphaRho1_ + alphaRho2_;
 
     thermo_.initializeModels();
@@ -219,37 +233,49 @@ Foam::interfaceTwoPhaseCompressibleSystem::~interfaceTwoPhaseCompressibleSystem(
 void Foam::interfaceTwoPhaseCompressibleSystem::update()
 {
     decode();
+    thermo_.update();
 
     fluxScheme_->update
     (
-        alpha1_,
-        rho1_,
-        rho2_,
+        rho_,
         U_,
         e_,
         p_,
-        speedOfSound()(),
+        thermo_.speedOfSound(),
         phi_,
-        alphaPhi_,
-        alphaRhoPhi1_,
-        alphaRhoPhi2_,
         rhoPhi_,
         rhoUPhi_,
         rhoEPhi_
     );
+
     interfaceProperties_.correct();
-    thermo_.update();
+
+    surfaceScalarField alpha1f
+    (
+        fvc::interpolate
+        (
+            alpha1_,
+            phi_,
+            "reconstruct(" + alpha1_.name() + ")"
+        )
+    );
+    surfaceScalarField alpha2f(1.0 - alpha1f);
+    alphaPhi1_ = phi_*alpha1f;
+    alphaPhi2_ = phi_ - alphaPhi1_;//phi_*alpha2f;
+
+    alphaRhoPhi1_ = fluxScheme_->interpolate(rho1_)*alphaPhi1_;
+    alphaRhoPhi2_ = rhoPhi_ - alphaRhoPhi1_;//fluxScheme_->interpolate(rho2_)*alphaPhi2_;
 }
 
 
 void Foam::interfaceTwoPhaseCompressibleSystem::solve()
 {
+    dimensionedScalar dT = rho_.time().deltaT();
 
     //- Update changes in volume fraction and phase mass
     volScalarField deltaAlpha
     (
-        fvc::div(alphaPhi_)
-      - alpha1_*fvc::div(phi_)
+        fvc::div(alphaPhi1_) - alpha1_*fvc::div(phi_)
     );
     volScalarField deltaAlphaRho1(fvc::div(alphaRhoPhi1_));
     volScalarField deltaAlphaRho2(fvc::div(alphaRhoPhi2_));
@@ -258,90 +284,42 @@ void Foam::interfaceTwoPhaseCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaAlphaRho1);
     this->storeAndBlendDelta(deltaAlphaRho2);
 
+    // Volume fraction is not scaled by change in volume because it is not
+    // conserved
+    this->storeAndBlendOld(alpha1_, false);
 
-    dimensionedScalar dT = rho_.time().deltaT();
-
-    // Update conservative quantities
-    this->storeAndBlendOld(alpha1_);
     this->storeAndBlendOld(alphaRho1_);
+    alphaRho1_.storePrevIter();
+
     this->storeAndBlendOld(alphaRho2_);
+    alphaRho2_.storePrevIter();
+
     rho_ = alphaRho1_ + alphaRho2_;
     rho_.storePrevIter();
 
-    alpha1_ -= dT*deltaAlpha;
-    alpha1_.correctBoundaryConditions();
+    volScalarField alpha1Old(alpha1_);
+    volScalarField alphaRho1Old(alphaRho1_);
+    volScalarField alphaRho2Old(alphaRho2_);
+    volVectorField rhoUOld(rhoU_);
+    volScalarField rhoEOld(rhoE_);
 
-    alphaRho1_.storePrevIter();
+    alpha1_ -= dT*deltaAlpha;
+    alpha1_.maxMin(0, 1);
+    alpha1_.correctBoundaryConditions();
+    alpha2_ = 1.0 - alpha1_;
+
+
     alphaRho1_ -= dT*deltaAlphaRho1;
     alphaRho1_.correctBoundaryConditions();
 
-    alphaRho2_.storePrevIter();
     alphaRho2_ -= dT*deltaAlphaRho2;
     alphaRho2_.correctBoundaryConditions();
 
     rho_ = alphaRho1_ + alphaRho2_;
 
-    // Solve level set transport and correct volume fraction
-//     const volScalarField& h = meshSizeObject::New(mesh()).dx();
-//     for (label i = 0; i < 2; i++)
-//     {
-// //         volScalarField Gamma
-// //         (
-// //             2.0*h*epsilon_/sqr(max(2.0*alpha1_ - 1.0, thermo_.residualAlpha()))
-// //            *(
-// //                 1.0
-// //                /max
-// //                 (
-// //                     1.0 - sqr(2.0*alpha1_ - 1.0),
-// //                     thermo_.residualAlpha()
-// //                 ) - 1.0
-// //              )
-// //         );
-// //         Gamma.max(small);
-// //         surfaceScalarField levelSetf
-// //         (
-// //             fluxScheme_->interpolate(levelSet_, "levelSet")
-// //         );
-// //         volScalarField deltaLevelSet
-// //         (
-// //             "deltaLevelSet",
-// //             fvc::div(levelSetf*phi_) - levelSet_*fvc::div(phi_)
-// //         );
-// //
-// //         this->storeAndBlendDelta(deltaLevelSet);
-// //         this->storeAndBlendOld(levelSet_, false);
-// //         levelSet_ -= dT*deltaLevelSet;
-// //
-// //         levelSet_ += sign(levelSet_)*(1.0 - mag(fvc::grad(levelSetf)));
-// //         volScalarField magGradAlpha
-// //         (
-// //             mag(fvc::grad(alpha1_))//fluxScheme_->interpolate(alpha1_, "alpha")))
-// //         );
-// //
-// //         forAll(alpha1_, celli)
-// //         {
-// //             if (alpha1_[celli] < 0.99 && alpha1_[celli] > 0.01)
-// //             {
-// //                 alpha1_[celli] +=
-// //                     (2.0*alpha1_[celli] - 1.0)
-// //                 *(1.0/Gamma[celli] - magGradAlpha[celli]);
-// //             }
-// //         }
-// //         alpha1_.maxMin(0.0, 1.0);
-//
-//         scalar fr = 0.5;
-//         alpha1_ = alpha1_*fr + (1.0 - fr)*sharpen(alpha1_);//H(levelSet_);
-//     }
-    alpha1_.correctBoundaryConditions();
-    alpha2_ = 1.0 - alpha1_;
-
-
-
-
-    // Update thermo
     thermo_.solve();
 
-    // Surface tension force
+    //- Calculate deltas for momentum and energy
     volVectorField sTF
     (
         fvc::reconstruct
@@ -350,21 +328,19 @@ void Foam::interfaceTwoPhaseCompressibleSystem::solve()
            *rho_.mesh().magSf()
         )
     );
-
-    //- Calculate deltas for momentum and energy
     volVectorField deltaRhoU
     (
         "deltaRhoU",
-        fvc::div(rhoUPhi_) - g_*rho_ + sTF
+        fvc::div(rhoUPhi_)// - g_*rho_ + sTF
     );
 
     volScalarField deltaRhoE
     (
         "deltaRhoE",
         fvc::div(rhoEPhi_)
-      - ESource()
-      - (rhoU_ & g_)
-      + (U_ & sTF)
+//       - ESource()
+//       - (rhoU_ & g_)
+//       + (U_ & sTF)
     );
 
     //- Store old values
@@ -457,19 +433,21 @@ void Foam::interfaceTwoPhaseCompressibleSystem::decode()
         max(alpha2_, thermo_.thermo(1).residualAlpha())
     );
 
+    volScalarField a1Pos(alpha1_ - thermo_.thermo(0).residualAlpha());
+    volScalarField a2Pos(1.0 - a1Pos);
     alphaRho1_.max(0);
-    rho1_.ref() = alphaRho1_()/alpha1();
-    rho1_.max(small);
+    rho1_.ref() = (alphaRho1_()/alpha1())*a1Pos() + a2Pos()*rho1_();
+    rho1_.max(thermo_.thermo(0).residualRho());
     rho1_.correctBoundaryConditions();
     alphaRho1_.boundaryFieldRef() = alpha1_.boundaryField()*rho1_.boundaryField();
 
     alphaRho2_.max(0);
-    rho2_.ref() = alphaRho2_()/alpha2();
-    rho2_.max(small);
+    rho2_.ref() = (alphaRho2_()/alpha2())*a2Pos() + a1Pos()*rho2_();
+    rho2_.max(thermo_.thermo(1).residualRho());
     rho2_.correctBoundaryConditions();
     alphaRho2_.boundaryFieldRef() = alpha2_.boundaryField()*rho2_.boundaryField();
 
-    rho_ = alphaRho1_ + alphaRho2_;
+    rho_ == alphaRho1_ + alphaRho2_;
 
     compressibleBlastSystem::decode();
 }

@@ -31,6 +31,7 @@ License
 #include "addToRunTimeSelectionTable.H"
 
 #include "wedgeFvPatch.H"
+#include "wedgeFvPatchField.H"
 #include "symmetryPolyPatch.H"
 #include "symmetryPlanePolyPatch.H"
 #include "solidTractionFvPatchVectorField.H"
@@ -87,11 +88,14 @@ explicitNonLinGeomTotalLagSolid::linearMomentumBoundaryTypes() const
         (
             isA<symmetryPolyPatch>(patch)
          || isA<symmetryPlanePolyPatch>(patch)
-         || isA<wedgePolyPatch>(patch)
         )
         {
             bTypes[patchi] =
                 symmetricLinearMomentumFvPatchVectorField::typeName;
+        }
+        else if (polyPatch::constraintType(patch.type()))
+        {
+            bTypes[patchi] = patch.type();
         }
     }
 
@@ -121,11 +125,14 @@ explicitNonLinGeomTotalLagSolid::tractionBoundaryTypes() const
         (
             isA<symmetryPolyPatch>(patch)
          || isA<symmetryPlanePolyPatch>(patch)
-         || isA<wedgePolyPatch>(patch)
         )
         {
             bTypes[patchi] =
                 symmetricTractionFvPatchVectorField::typeName;
+        }
+        else if (polyPatch::constraintType(patch.type()))
+        {
+            bTypes[patchi] = patch.type();
         }
     }
 
@@ -135,17 +142,8 @@ explicitNonLinGeomTotalLagSolid::tractionBoundaryTypes() const
 
 void explicitNonLinGeomTotalLagSolid::updateStress()
 {
-    // Correct traction and pressure on the boundary
-    D().correctBoundaryConditions();
-
-    // Update true displacement
-    D() == x_ - mesh().C();
-
     // Update increment of displacement
-    DD() == D() - D().oldTime();
-
-    // Update gradient of displacement
-    gradD() = gradSchemes_.gradient(D());
+    DD() = D() - D().oldTime();
 
     // Update gradient of displacement increment
     gradDD() = gradD() - gradD().oldTime();
@@ -181,15 +179,39 @@ void explicitNonLinGeomTotalLagSolid::solveGEqns
     U() = rhoU_/rho();
 
     // Update coordinates
-    Uf_ = rhoUf_/fvc::interpolate(rho());
-    pointU_ = pointRhoU_/mechanical().volToPoint().interpolate(rho());
+    surfaceScalarField rhof(fvc::interpolate(rho()));
+    Uf_ = rhoUf_/rhof;
 
-    x_ += deltaT*U();
-    xf_ += deltaT*Uf_;
-    pointx_ += deltaT*pointU_;
+    volVectorField DOld(D());
+    D() += deltaT*U();
+    D().correctBoundaryConditions();
+    forAll(D().boundaryField(), patchi)
+    {
+        fvPatchVectorField& pD(D().boundaryFieldRef()[patchi]);
+        if (pD.fixesValue())
+        {
+            pD.evaluate();
+            fvPatchVectorField& pU(U().boundaryFieldRef()[patchi]);
+            const fvPatchVectorField& pDOld
+            (
+                DOld.boundaryFieldRef()[patchi]
+            );
+            pU = (pD - pDOld)/deltaT.value();
+        }
+    }
+    rhoU_.boundaryFieldRef() =
+        rho().boundaryField()*U().boundaryField();
 
     // Update deformation gradient tensor
     F_ += deltaT*fvc::div(Uf_*mesh().Sf());
+
+    x_ = mesh().C() + D();
+    xf_ = fvc::interpolate(x_);
+
+    mech_.correctN(F_);
+
+    // Update gradient of displacement
+    gradD() = gradSchemes_.gradient(D());
 }
 
 
@@ -205,6 +227,7 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
     sWaveSpeed_ =
         sqrt(mechanical().shearModulus()/rho())*beta_/mech_.stretch();
     P_ = J_*(sigma() & ops_.invT(F_));
+    P_.correctBoundaryConditions();
 
     // Cell gradients
     const surfaceVectorField& N = mech_.N();
@@ -273,21 +296,16 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
         0.5*(rhoUOwn + rhoUNei)
       + (0.5*stabTraction & (tractionNei - tractionOwn));
 
-
-    if (Pstream::parRun())
-    {
-        ops_.decomposeTensor(P_, Px, Py, Pz);
-        mech_.correctN(F_);
-    }
-
+    D().correctBoundaryConditions();
     traction_.correctBoundaryConditions();
     rhoU_.correctBoundaryConditions();
 
-    const volVectorField& C(mesh().C());
-    forAll(mesh().boundary(), patchi)
+    forAll(rhoU_.boundaryField(), patchi)
     {
+        const fvPatch& patch = mesh().boundary()[patchi];
+        const fvPatchVectorField& pRhoU(rhoU_.boundaryField()[patchi]);
         // Riemann solver for inter-processor boundaries
-        if (mesh().boundary()[patchi].coupled())
+        if (patch.coupled())
         {
             const vectorField prhoUNei
             (
@@ -334,16 +352,19 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
                 gradPz.boundaryField()[patchi].patchNeighbourField()
             );
 
-            const vectorField pCNei
+            const vectorField pdeltaOwn
             (
-                C.boundaryField()[patchi].patchNeighbourField()
+                patch.fvPatch::delta()
+            );
+            const vectorField pdeltaNei
+            (
+                patch.fvPatch::delta() - patch.delta()
             );
 
             const scalarField ppWaveSpeedNei
             (
                 pWaveSpeed_.boundaryField()[patchi].patchNeighbourField()
             );
-
             const scalarField psWaveSpeedNei
             (
                 sWaveSpeed_.boundaryField()[patchi].patchNeighbourField()
@@ -351,13 +372,9 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
 
             forAll(mesh().boundary()[patchi], facei)
             {
-                const label celli =
-                    mesh().boundaryMesh()[patchi].faceCells()[facei];
-                const vector& Cfi =
-                    mesh().Cf().boundaryField()[patchi][facei];
-
-                const vector dOwn(Cfi - C[celli]);
-                const vector dNei(Cfi - pCNei[facei]);
+                const label celli = patch.faceCells()[facei];
+                const vector& dOwn(pdeltaOwn[facei]);
+                const vector& dNei(pdeltaNei[facei]);
 
                 const vector rhoUOwni =
                     rhoU_[celli] + (gradRhoU[celli] & dOwn);
@@ -383,9 +400,9 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
                 const tensor PNeii = tensor(PxNeii, PyNeii, PzNeii);
 
                 const scalar pWSi =
-                    (pWaveSpeed_[celli] + ppWaveSpeedNei[facei])/2.0;
+                    0.5*(pWaveSpeed_[celli] + ppWaveSpeedNei[facei]);
                 const scalar sWSi =
-                    (sWaveSpeed_[celli] + psWaveSpeedNei[facei])/2.0;
+                    0.5*(sWaveSpeed_[celli] + psWaveSpeedNei[facei]);
 
                 const vector& Ni = N.boundaryField()[patchi][facei];
                 const vector& ni = n.boundaryField()[patchi][facei];
@@ -409,8 +426,7 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
             tractionf_.boundaryFieldRef()[patchi] =
                 traction_.boundaryField()[patchi];
 
-            rhoUf_.boundaryFieldRef()[patchi] =
-                rhoU_.boundaryField()[patchi];
+            rhoUf_.boundaryFieldRef()[patchi] = pRhoU;
         }
     }
 
@@ -424,43 +440,12 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
 
     // Symmetric boundary patch
     pointRhoU_.correctBoundaryConditions();
-//     forAll(mesh().boundaryMesh(), patchi)
-//     {
-//         const polyPatch& patch = mesh().boundaryMesh()[patchi];
-//         if
-//         (
-//             isA<symmetryPolyPatch>(patch)
-//          || isA<symmetryPlanePolyPatch>(patch)
-//          || isA<wedgePolyPatch>(patch)
-//         )
-//         {
-//             forAll(patch, facei)
-//             {
-//                 const label faceID =
-//                     mesh().boundary()[patchi].start() + facei;
-//
-//                 forAll(mesh().faces()[faceID], node)
-//                 {
-//                     const label nodeID = mesh().faces()[faceID][node];
-//                     pointRhoU_[nodeID] =
-//                         (
-//                             tensor::I
-//                           - (
-//                                 N.boundaryField()[patchi][facei]
-//                                *N.boundaryField()[patchi][facei]
-//                             )
-//                         ) & pointRhoU_[nodeID];
-//                 }
-//             }
-//         }
-//     }
 
     // Constrained fluxes
     rhoUf_ = interpSchemes_.pointToSurface(pointRhoU_);
 
     // Update coordinates
     Uf_ = rhoUf_/fvc::interpolate(rho());
-    pointU_ = pointRhoU_/mechanical().volToPoint().interpolate(rho());
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -497,10 +482,16 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
         det(F_)
     ),
     ops_(mesh),
-    beta_(this->lookup<scalar>("incompressiblilityCoefficient")),
+    beta_
+    (
+        solidModelDict().lookup<scalar>
+        (
+            "incompressiblilityCoefficient"
+        )
+     ),
     angularMomentumConservation_
     (
-        this->lookup("angularMomentumConservation")
+        solidModelDict().lookup("angularMomentumConservation")
     ),
     x_
     (
@@ -539,19 +530,6 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
         pMesh(),
         dimensionedVector("0", dimLength, Zero)
     ),
-    pointx_
-    (
-        IOobject
-        (
-            "pointx",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        pMesh(),
-        dimensionedVector("0", dimLength, Zero)
-    ),
     Uf_
     (
         IOobject
@@ -563,18 +541,6 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
             IOobject::AUTO_WRITE
         ),
         fvc::interpolate(U())
-    ),
-    pointU_
-    (
-        IOobject
-        (
-            "pointU",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mechanical().volToPoint().interpolate(U())
     ),
     rhoU_
     (
@@ -634,7 +600,7 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
     (
         IOobject
         (
-            "pointRhoU",
+            "tractionf",
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
@@ -643,7 +609,6 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
         mesh,
         dimensionedVector(traction_.dimensions(), Zero)
     ),
-    model_(F_, *this),
     mech_(F_, ops_),
     interpSchemes_(mesh),
     gradSchemes_(mesh),
@@ -689,10 +654,7 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
     mechanical().setUseSolidDeformation();
 
     pointX_.primitiveFieldRef() = mesh.points();
-    if (!pointx_.typeHeaderOk<pointVectorField>(true))
-    {
-        pointx_.primitiveFieldRef() = mesh.points();
-    }
+
     DisRequired();
 
     // Nodal linear momentum
@@ -703,47 +665,14 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
     );
     interpSchemes_.volToPoint(rhoUAvg, gradRhoUAvg, pointRhoU_);
 
-    const surfaceVectorField& N(mech_.N());
-
     // Symmetric boundary patch
     pointRhoU_.correctBoundaryConditions();
-    forAll(mesh.boundaryMesh(), patchi)
-    {
-        const polyPatch& patch = mesh.boundaryMesh()[patchi];
-        if
-        (
-            isA<symmetryPolyPatch>(patch)
-         || isA<symmetryPlanePolyPatch>(patch)
-         || isA<wedgePolyPatch>(patch)
-        )
-        {
-            forAll(patch, facei)
-            {
-                const label faceID =
-                    mesh.boundary()[patchi].start() + facei;
-
-                forAll(mesh.faces()[faceID], node)
-                {
-                    const label nodeID = mesh.faces()[faceID][node];
-                    pointRhoU_[nodeID] =
-                        (
-                            tensor::I
-                          - (
-                                N.boundaryField()[patchi][facei]
-                               *N.boundaryField()[patchi][facei]
-                            )
-                        ) & pointRhoU_[nodeID];
-                }
-            }
-        }
-    }
 
     // Constrained fluxes
     rhoUf_ = interpSchemes_.pointToSurface(pointRhoU_);
 
     // Update coordinates
     Uf_ = rhoUf_/fvc::interpolate(rho());
-    pointU_ = pointRhoU_/mechanical().volToPoint().interpolate(rho());
 }
 
 
@@ -788,9 +717,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
 
     rhoU_.oldTime();
     F_.oldTime();
-    x_.oldTime();
-    xf_.oldTime();
-    pointx_.oldTime();
+    D().oldTime();
 
     volVectorField rhoURHS
     (
@@ -803,23 +730,20 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
     );
     volVectorField rhoURHS1(rhoURHS);
 
-    solveGEqns(rhoURHS, rhoURHS1, 0);
     updateFluxes();
 
+    solveGEqns(rhoURHS, rhoURHS1, 0);
+
+    updateFluxes();
     solveGEqns(rhoURHS, rhoURHS1, 1);
 
     rhoU_ = 0.5*(rhoU_.oldTime() + rhoU_);
     F_ = 0.5*(F_.oldTime() + F_);
-    x_ = 0.5*(x_.oldTime() + x_);
-    xf_ = 0.5*(xf_.oldTime() + xf_);
-    pointx_ = 0.5*(pointx_.oldTime() + pointx_);
-
-    updateFluxes();
+    D() = 0.5*(D().oldTime() + D());
 
     // Update displacements
-    D() == x_ - mesh().C();
     DD() == D() - D().oldTime();
-    pointD() = pointx_ - pointX_;
+    mechanical().interpolate(D(), pointD());
     pointDD() = pointD() - pointD().oldTime();
 
         // Check energies
@@ -853,7 +777,7 @@ tmp<vectorField> explicitNonLinGeomTotalLagSolid::tractionBoundarySnGrad
     const symmTensorField& pSigma = sigma().boundaryField()[patchID];
 
     // Patch unit normals
-    const vectorField n(patch.nf());
+    const vectorField& n(mech_.n().boundaryField()[patchID]);
 
     // Return patch snGrad
     return tmp<vectorField>

@@ -35,7 +35,8 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(Tadmor, 0);
-    addToRunTimeSelectionTable(fluxScheme, Tadmor, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, Tadmor, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, Tadmor, multiphase);
 }
 }
 
@@ -65,6 +66,7 @@ void Foam::fluxSchemes::Tadmor::clear()
     aPhivOwn_.clear();
     aPhivNei_.clear();
     aSf_.clear();
+    f_.clear();
 }
 
 
@@ -118,6 +120,20 @@ void Foam::fluxSchemes::Tadmor::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
+    f_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::f",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimless, 0.0)
+        )
+    );
 }
 
 
@@ -162,10 +178,12 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
+    scalar f = aphivOwn/stabilise(aphivOwn + aphivNei, small);
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aSf, aSf_);
+    this->save(facei, patchi, f, f_);
 
     this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
     phi = aphivOwn + aphivNei;
@@ -231,10 +249,12 @@ void Foam::fluxSchemes::Tadmor::calculateFluxes
 
     scalar aphivOwn(phivOwn - aSf);
     scalar aphivNei(phivNei + aSf);
+    scalar f = aphivOwn/stabilise(aphivOwn + aphivNei, small);
 
     this->save(facei, patchi, aphivOwn, aPhivOwn_);
     this->save(facei, patchi, aphivNei, aPhivNei_);
     this->save(facei, patchi, aSf, aSf_);
+    this->save(facei, patchi, f, f_);
 
     this->save(facei, patchi, 0.5*(UOwn + UNei), Uf_);
 
@@ -299,6 +319,8 @@ Foam::scalar Foam::fluxSchemes::Tadmor::interpolate
     const label facei, const label patchi
 ) const
 {
+//     scalar f = getValue(facei, patchi, f_);
+//     return f*fOwn + (1.0 - f)*fNei;
     return 0.5*(fOwn + fNei);
 }
 

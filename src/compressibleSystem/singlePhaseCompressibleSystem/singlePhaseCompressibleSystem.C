@@ -48,6 +48,8 @@ Foam::singlePhaseCompressibleSystem::singlePhaseCompressibleSystem
 :
     compressibleBlastSystem(1, mesh)
 {
+    this->fluxScheme_ = fluxScheme::NewSingle(mesh);
+
     thermoPtr_->initializeModels();
     this->setModels();
     encode();

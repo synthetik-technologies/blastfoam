@@ -24,8 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "MUSCLReconstructionScheme.H"
-#include "upwindMUSCLReconstructionScheme.H"
-#include "noneMUSCLReconstructionScheme.H"
+#include "standardMUSCLReconstructionScheme.H"
 #include "fvc.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -105,67 +104,29 @@ Foam::MUSCLReconstructionScheme<Type>::New
 
     Istream& is(phi.mesh().interpolationScheme(name));
     word order(is);
-
-    if (debug)
+    word scheme(order);
+    if (is.good() && scheme != "none" && scheme != "upwindMUSCL")
     {
-        Info<< "selecting " << order << " interpolation scheme "
-            << "for " << phi.name() << endl;
-    }
-
-
-    // No upwinding scheme
-    if (order == "none")
-    {
-        return autoPtr<MUSCLReconstructionScheme<Type>>
-        (
-            new noneMUSCLReconstructionScheme<Type>(phi, is)
-        );
-    }
-
-    // Upwind scheme
-    if (order == "upwindMUSCL")
-    {
-        return autoPtr<MUSCLReconstructionScheme<Type>>
-        (
-            new upwindMUSCLReconstructionScheme<Type>(phi, is)
-        );
-    }
-
-    // Linear MUSCL
-    if (order == "linearMUSCL")
-    {
-        word limiterName(is);
-        typename linearMeshConstructorTable::iterator cstrIter =
-            linearMeshConstructorTablePtr_->find(limiterName);
-
-        if (cstrIter == linearMeshConstructorTablePtr_->end())
+        token t(is);
+        if (t.isWord())
         {
-            FatalErrorInFunction
-                << "Unknown linear MUSCL limiter type "
-                << limiterName << " for " << phi.name() << endl << endl
-                << "Valid linear MUSCL limiters types are : " << endl
-                << linearMeshConstructorTablePtr_->sortedToc()
-                << exit(FatalError);
+            scheme = scheme + '<' + t.wordToken() + '>';
         }
-
-        return cstrIter()(phi, is);
+        else
+        {
+            is.putBack(t);
+        }
     }
 
-    // Quadratic MUSCL
-    if (order == "quadraticMUSCL")
-    {
-        word limiterName(is);
-        typename quadraticMeshConstructorTable::iterator cstrIter =
-            quadraticMeshConstructorTablePtr_->find(limiterName);
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(scheme);
 
-        if (cstrIter == quadraticMeshConstructorTablePtr_->end())
+    if (cstrIter != dictionaryConstructorTablePtr_->end())
+    {
+        if (debug)
         {
-            FatalErrorInFunction
-                << "Unknown quadratic MUSCL limiter type "
-                << limiterName << " for " << phi.name() << endl << endl
-                << "Valid quadratic MUSCL limiters are : " << endl
-                << quadraticMeshConstructorTablePtr_->sortedToc()
-                << exit(FatalError);
+            Info<< "selecting " << scheme << " interpolation scheme "
+                << "for " << phi.name() << endl;
         }
 
         return cstrIter()(phi, is);
@@ -173,16 +134,156 @@ Foam::MUSCLReconstructionScheme<Type>::New
 
     if (debug)
     {
-        Info<< "No MUSCL scheme named " << name << ". Using standard " << nl
+        Info<< "No MUSCL scheme named " << order << ". Using standard " << nl
             << "interpolation schemes instead." << endl;
     }
 
     // Standard OpenFOAM interpolation
-    IStringStream nameIS(name);
     return autoPtr<MUSCLReconstructionScheme<Type>>
     (
-        new noneMUSCLReconstructionScheme<Type>(phi, nameIS)
+        new standardMUSCLReconstructionScheme<Type>(phi, IStringStream(name)())
     );
 }
+
+
+// template<class Type>
+// Foam::autoPtr<Foam::MUSCLReconstructionScheme<Type>>
+// Foam::MUSCLReconstructionScheme<Type>::New
+// (
+//     const GeometricField<Type, fvPatchField, volMesh>& phi,
+//     const word& fieldName,
+//     const word& phaseName
+// )
+// {
+//     word name
+//     (
+//         "reconstruct("
+//       + fieldName
+//       + ")"
+//     );
+//     word namePhase
+//     (
+//         "reconstruct("
+//       + IOobject::groupName(fieldName, phaseName)
+//       + ")"
+//     );
+//
+//     if
+//     (
+//         phi.mesh().schemesDict().subDict
+//         (
+//             "interpolationSchemes"
+//         ).found(namePhase)
+//     )
+//     {
+//         name = namePhase;
+//     }
+//     else if
+//     (
+//         !phi.mesh().schemesDict().subDict
+//         (
+//             "interpolationSchemes"
+//         ).found(name)
+//     )
+//     {
+//         //- Default to lookup of density scheme
+//         if
+//         (
+//             debug
+//          || !phi.mesh().schemesDict().subDict
+//             (
+//                 "interpolationSchemes"
+//             ).found("reconstruct(rho)")
+//         )
+//         {
+//             WarningInFunction
+//                 << "Riemann fluxes are used, but no limiter is " << nl
+//                 << "specified for " << name << "." << nl
+//                 << "This may result in unstable solutions." << endl;
+//         }
+//         name = "reconstruct(rho)";
+//     }
+//
+//     Istream& is(phi.mesh().interpolationScheme(name));
+//     word order(is);
+//
+//     if (debug)
+//     {
+//         Info<< "selecting " << order << " interpolation scheme "
+//             << "for " << phi.name() << endl;
+//     }
+//
+//
+//     // No upwinding scheme
+//     if (order == "none")
+//     {
+//         return autoPtr<MUSCLReconstructionScheme<Type>>
+//         (
+//             new noneMUSCLReconstructionScheme<Type>(phi, is)
+//         );
+//     }
+//
+//     // Upwind scheme
+//     if (order == "upwindMUSCL")
+//     {
+//         return autoPtr<MUSCLReconstructionScheme<Type>>
+//         (
+//             new upwindMUSCLReconstructionScheme<Type>(phi, is)
+//         );
+//     }
+//
+//     // Linear MUSCL
+//     if (order == "linearMUSCL")
+//     {
+//         word limiterName(is);
+//         typename linearMeshConstructorTable::iterator cstrIter =
+//             linearMeshConstructorTablePtr_->find(limiterName);
+//
+//         if (cstrIter == linearMeshConstructorTablePtr_->end())
+//         {
+//             FatalErrorInFunction
+//                 << "Unknown linear MUSCL limiter type "
+//                 << limiterName << " for " << phi.name() << endl << endl
+//                 << "Valid linear MUSCL limiters types are : " << endl
+//                 << linearMeshConstructorTablePtr_->sortedToc()
+//                 << exit(FatalError);
+//         }
+//
+//         return cstrIter()(phi, is);
+//     }
+//
+//     // Quadratic MUSCL
+//     if (order == "quadraticMUSCL")
+//     {
+//         word limiterName(is);
+//         typename quadraticMeshConstructorTable::iterator cstrIter =
+//             quadraticMeshConstructorTablePtr_->find(limiterName);
+//
+//         if (cstrIter == quadraticMeshConstructorTablePtr_->end())
+//         {
+//             FatalErrorInFunction
+//                 << "Unknown quadratic MUSCL limiter type "
+//                 << limiterName << " for " << phi.name() << endl << endl
+//                 << "Valid quadratic MUSCL limiters are : " << endl
+//                 << quadraticMeshConstructorTablePtr_->sortedToc()
+//                 << exit(FatalError);
+//         }
+//
+//         return cstrIter()(phi, is);
+//     }
+//
+//     if (debug)
+//     {
+//         Info<< "No MUSCL scheme named " << name << ". Using standard " << nl
+//             << "interpolation schemes instead." << endl;
+//     }
+//
+//     // Standard OpenFOAM interpolation
+//     IStringStream nameIS(name);
+//     return autoPtr<MUSCLReconstructionScheme<Type>>
+//     (
+//         new standardMUSCLReconstructionScheme<Type>(phi, nameIS)
+//     );
+// }
 
 // ************************************************************************* //

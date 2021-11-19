@@ -162,6 +162,9 @@ public:
             const bool limit = true
         ) const;
 
+        //- Calculate Gamma = dpde
+        virtual tmp<volScalarField> Gamma() const;
+
         //- Gamma = dpde for cell []
         virtual scalar cellGamma(const label celli) const;
 
@@ -173,6 +176,13 @@ public:
 
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
+
+        //- Calculate the pressure
+        virtual tmp<volScalarField> calcp() const;
+
+        //- Calculate the speed of sound
+        virtual tmp<volScalarField> calcSpeedOfSound() const;
+
 };
 
 

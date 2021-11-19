@@ -128,7 +128,25 @@ public:
         (
             autoPtr,
             fluxScheme,
-            dictionary,
+            singlePhase,
+            (const fvMesh& mesh),
+            (mesh)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fluxScheme,
+            multiphase,
+            (const fvMesh& mesh),
+            (mesh)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fluxScheme,
+            interface,
             (const fvMesh& mesh),
             (mesh)
         );
@@ -143,7 +161,9 @@ public:
 
     // Selectors
 
-        static autoPtr<fluxScheme> New(const fvMesh& e);
+        static autoPtr<fluxScheme> NewSingle(const fvMesh& mesh);
+        static autoPtr<fluxScheme> NewMulti(const fvMesh& mesh);
+        static autoPtr<fluxScheme> NewInterface(const fvMesh& mesh);
 
 
     // Member Functions
@@ -154,7 +174,7 @@ public:
         //- Allocate saved fields
         virtual void createSavedFields();
 
-        //- Update
+        //- Single phase flux
         void update
         (
             const volScalarField& rho,
@@ -168,7 +188,7 @@ public:
             surfaceScalarField& rhoEPhi
         );
 
-        //- Update
+        //- Multiphase fluxes
         void update
         (
             const PtrList<volScalarField>& alphas,
@@ -185,7 +205,7 @@ public:
             surfaceScalarField& rhoEPhi
         );
 
-        //- Update
+        //- Two phase fluxes
         void update
         (
             const volScalarField& alpha,
@@ -215,6 +235,19 @@ public:
 
         //- Return interpolated U field
         tmp<surfaceVectorField> Uf() const;
+
+        //- Return Anti-diffustion coefficient for a given volume fraction
+        //  and update anti-diffusion flux
+        virtual tmp<surfaceScalarField> snGradAlpha
+        (
+            const volScalarField& alpha
+        ) const;
+
+        //- Return Anti-diffustion coefficient for a given volume fraction
+        virtual tmp<surfaceScalarField> AD
+        (
+            const volScalarField& alpha
+        ) const;
 };
 
 

@@ -17,25 +17,11 @@ FoamFile
 
 solidModel explicitNonLinearGeometryTotalLagrangian;
 
-incompressiblilityCoefficient 1.0;
-angularMomentumConservation yes;
+
 explicitNonLinearGeometryTotalLagrangianCoeffs
 {
-
-    maxIter               10000;
-    tolerance             1e-08;
-    divSigmaExpMethod     surface;
-    predictor             yes;
-    aitkenRelaxation      yes;
-    rho a;
+    incompressiblilityCoefficient 1.0;
+    angularMomentumConservation yes;
 };
-
-plasticityModel     vonMisesPlasticity;
-
-rho     rho [1 -3 0 0 0 0 0]  8930;
-E       E 	[1 -1 -2 0 0 0 0] 117e9;
-nu      nu  [0 0 0 0 0 0 0]   0.35;
-Hm      Hm  [1 -1 -2 0 0 0 0] 0.1e9;
-Ys      Ys  [1 -1 -2 0 0 0 0] 0.4e9;
 
 // ************************************************************************* //

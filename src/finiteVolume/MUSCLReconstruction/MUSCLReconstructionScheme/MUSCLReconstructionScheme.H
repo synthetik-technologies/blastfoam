@@ -99,6 +99,18 @@ public:
         (
             autoPtr,
             MUSCLReconstructionScheme,
+            dictionary,
+            (
+                const GeometricField<Type, fvPatchField, volMesh>& phi,
+                Istream& is
+            ),
+            (phi, is)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            MUSCLReconstructionScheme,
             linearMesh,
             (
                 const GeometricField<Type, fvPatchField, volMesh>& phi,
@@ -201,8 +213,10 @@ defineTemplateRunTimeSelectionTable                                            \
                                                                                \
 defineNamedTemplateTypeNameAndDebug(SS<Type>, 0);                              \
                                                                                \
-MUSCLReconstructionScheme<Type>::add##ORDER##MeshConstructorToTable<SS<Type>>           \
-    add##ORDER##SS##Type##ORDER##MeshConstructorToTable_;                             \
+MUSCLReconstructionScheme<Type>::add##ORDER##MeshConstructorToTable<SS<Type>>  \
+    add##ORDER##SS##Type##ORDER##MeshConstructorToTable_;                      \
+MUSCLReconstructionScheme<Type>::adddictionaryConstructorToTable<SS<Type>>     \
+    add##ORDER##SS##Type##dictionaryConstructorToTable_;                             \
                                                                                \
 
 #define makeMUSCLReconstructionSchemes(ORDER, SS)                              \

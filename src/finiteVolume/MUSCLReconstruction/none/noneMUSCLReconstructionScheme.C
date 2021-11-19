@@ -36,7 +36,16 @@ Foam::noneMUSCLReconstructionScheme<Type>::noneMUSCLReconstructionScheme
     Istream& is
 )
 :
-    MUSCLReconstructionScheme<Type>(phi, is)
+    MUSCLReconstructionScheme<Type>(phi, is),
+    interp_
+    (
+        surfaceInterpolationScheme<Type>::New
+        (
+            phi.mesh(),
+            phi.mesh().template lookupObject<surfaceScalarField>(word(is)),
+            is
+        )
+    )
 {}
 
 
@@ -53,14 +62,14 @@ template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::noneMUSCLReconstructionScheme<Type>::interpolateOwn() const
 {
-    return fvc::interpolate(this->phi_);
+    return interp_().interpolate(this->phi_);
 }
 
 template<class Type>
 Foam::tmp<Foam::GeometricField<Type, Foam::fvsPatchField, Foam::surfaceMesh>>
 Foam::noneMUSCLReconstructionScheme<Type>::interpolateNei() const
 {
-    return fvc::interpolate(this->phi_);
+    return interp_().interpolate(this->phi_);
 }
 
 

@@ -171,7 +171,6 @@ Foam::compressibleSystem::compressibleSystem
         mesh,
         dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
     ),
-    fluxScheme_(fluxScheme::New(mesh)),
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
     solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {

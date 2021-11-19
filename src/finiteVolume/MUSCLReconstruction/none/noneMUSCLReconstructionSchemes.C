@@ -23,8 +23,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "MUSCLReconstructionScheme.H"
-#include "MUSCLReconstruction.H"
 #include "noneMUSCLReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -35,14 +33,38 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 defineNamedTemplateTypeNameAndDebug(noneMUSCLReconstructionScheme<scalar>, 0);
+MUSCLReconstructionScheme<scalar>::adddictionaryConstructorToTable
+    <
+        noneMUSCLReconstructionScheme<scalar>
+    > addnoneMUSCLscalardictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(noneMUSCLReconstructionScheme<vector>, 0);
+MUSCLReconstructionScheme<vector>::adddictionaryConstructorToTable
+    <
+        noneMUSCLReconstructionScheme<vector>
+    > addnoneMUSCLvectordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(noneMUSCLReconstructionScheme<symmTensor>, 0);
+MUSCLReconstructionScheme<symmTensor>::adddictionaryConstructorToTable
+    <
+        noneMUSCLReconstructionScheme<symmTensor>
+    > addnoneMUSCLsymmTensordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug
 (
     noneMUSCLReconstructionScheme<sphericalTensor>,
     0
 );
+MUSCLReconstructionScheme<sphericalTensor>::adddictionaryConstructorToTable
+    <
+        noneMUSCLReconstructionScheme<sphericalTensor>
+    > addnoneMUSCLsphericalTensordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(noneMUSCLReconstructionScheme<tensor>, 0);
+MUSCLReconstructionScheme<tensor>::adddictionaryConstructorToTable
+    <
+        noneMUSCLReconstructionScheme<tensor>
+    > addnoneMUSCLtensordictinoaryConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -33,7 +33,8 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(AUSMPlusUp, 0);
-    addToRunTimeSelectionTable(fluxScheme, AUSMPlusUp, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, AUSMPlusUp, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, AUSMPlusUp, multiphase);
 }
 }
 

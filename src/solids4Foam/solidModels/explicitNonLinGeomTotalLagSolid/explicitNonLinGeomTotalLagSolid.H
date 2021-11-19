@@ -64,7 +64,6 @@ SourceFiles
 #include "gradientSchemes.H"
 #include "interpolationSchemes.H"
 #include "angularMomentum.H"
-#include "plasticityModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -110,14 +109,8 @@ class explicitNonLinGeomTotalLagSolid
         //- Material nodal locations
         pointVectorField pointX_;
 
-        //- Spatial nodal locations
-        pointVectorField pointx_;
-
         //- Face velocities
         surfaceVectorField Uf_;
-
-        //- Nodal velocities
-        pointVectorField pointU_;
 
         //- linear momentum
         volVectorField rhoU_;
@@ -133,9 +126,6 @@ class explicitNonLinGeomTotalLagSolid
 
         //- Wave speed field
         surfaceVectorField tractionf_;
-
-        //- Plasticity model
-        plasticityModel model_;
 
         //- Mechanics
         mechanics mech_;

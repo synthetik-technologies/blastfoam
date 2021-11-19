@@ -55,6 +55,8 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
     alphaPhis_(alphas_.size()),
     alphaRhoPhis_(alphas_.size())
 {
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
     forAll(alphas_, phasei)
     {
         word phaseName = alphas_[phasei].group();

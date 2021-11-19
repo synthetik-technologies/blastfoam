@@ -192,6 +192,15 @@ public:
 
         //- Templated interpolation
         template<class Type>
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolate
+        (
+            const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+            const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
+            const word& name
+        ) const;
+
+        //- Templated interpolation
+        template<class Type>
         tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> interpolateField
         (
             const GeometricField<Type, fvPatchField, volMesh>& f,

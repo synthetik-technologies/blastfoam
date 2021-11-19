@@ -67,6 +67,13 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
 
         #include "compressibleMultiRegionCourantNo.H"
+        forAll(solidRegions, i)
+        {
+            scalar regionCoNum = solidModels[i].CoNum();
+            Info<< solidRegions[i].name() << " max Courant Number = "
+            << regionCoNum << endl;
+            CoNum = max(CoNum, regionCoNum);
+        }
         #include "setMultiRegionDeltaT.H"
 
         runTime++;

@@ -80,6 +80,19 @@ Foam::tabulatedThermoEOS<Specie>::New
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+
+template<class Specie>
+Foam::scalar Foam::tabulatedThermoEOS<Specie>::pRhoT
+(
+    const scalar rho,
+    const scalar e,
+    const scalar T
+) const
+{
+    return p(rho, e, T, true);
+}
+
+
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::p
 (

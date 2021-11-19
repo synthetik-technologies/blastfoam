@@ -35,7 +35,8 @@ namespace Foam
 namespace fluxSchemes
 {
     defineTypeNameAndDebug(Kurganov, 0);
-    addToRunTimeSelectionTable(fluxScheme, Kurganov, dictionary);
+    addToRunTimeSelectionTable(fluxScheme, Kurganov, singlePhase);
+    addToRunTimeSelectionTable(fluxScheme, Kurganov, multiphase);
 }
 }
 
@@ -67,6 +68,7 @@ void Foam::fluxSchemes::Kurganov::clear()
     aOwn_.clear();
     aNei_.clear();
     aSf_.clear();
+    f_.clear();
 }
 
 
@@ -149,6 +151,20 @@ void Foam::fluxSchemes::Kurganov::createSavedFields()
             dimensionedScalar("0", dimVelocity*dimArea, 0.0)
         )
     );
+    f_ = tmp<surfaceScalarField>
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                "Kurganov::f",
+                mesh_.time().timeName(),
+                mesh_
+            ),
+            mesh_,
+            dimensionedScalar("0", dimless, 0.0)
+        )
+    );
 }
 
 
@@ -206,6 +222,7 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
     this->save(facei, patchi, aSf, aSf_);
+    this->save(facei, patchi, aphivOwn/(aphivOwn + aphivNei), f_);
 
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
     phi = aphivOwn + aphivNei;
@@ -284,6 +301,7 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
     this->save(facei, patchi, aSf, aSf_);
+    this->save(facei, patchi, aphivOwn/stabilise(aphivOwn + aphivNei, small), f_);
 
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
 
@@ -353,8 +371,9 @@ Foam::scalar Foam::fluxSchemes::Kurganov::interpolate
 {
     scalar aOwn = getValue(facei, patchi, aOwn_);
     scalar aNei = getValue(facei, patchi, aNei_);
-
-   return aOwn*fOwn + aNei*fNei;
+    return aOwn*fOwn + aNei*fNei;
+//     scalar f = getValue(facei, patchi, f_);
+//     return f*fOwn + (1.0 - f)*fNei;
 }
 
 // ************************************************************************* //

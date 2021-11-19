@@ -146,6 +146,14 @@ public:
 
     // Member Functions
 
+        //- Return limited pressure
+        inline scalar pRhoT
+        (
+            const scalar rho,
+            const scalar e,
+            const scalar T
+        ) const;
+
         //- Return Mie Gruniesen coefficient
         inline scalar Gamma
         (

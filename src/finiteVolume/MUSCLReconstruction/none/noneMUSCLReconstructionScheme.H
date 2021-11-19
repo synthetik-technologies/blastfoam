@@ -36,6 +36,7 @@ SourceFiles
 #define noneMUSCLReconstructionScheme_H
 
 #include "MUSCLReconstructionScheme.H"
+#include "surfaceInterpolationScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,6 +52,10 @@ class noneMUSCLReconstructionScheme
 :
     public MUSCLReconstructionScheme<Type>
 {
+    //- Surface interpolation scheme
+    tmp<surfaceInterpolationScheme<Type>> interp_;
+
+
 protected:
 // Protected data
 

@@ -41,7 +41,7 @@ laplacianSchemes
 interpolationSchemes
 {
     default             linear;
-    reconstruct(alpha)  quadraticMUSCL SuperBee;
+    reconstruct(alpha)  linearUpwind SuperBee;
     reconstruct(rho)    quadraticMUSCL SuperBee;
     reconstruct(U)      quadraticMUSCL SuperBee;
     reconstruct(e)      quadraticMUSCL SuperBee;

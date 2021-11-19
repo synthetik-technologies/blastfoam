@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2020
-     \\/     M anipulation  | Synthetik Applied Technology
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,8 +23,11 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "MUSCLReconstructionScheme.H"
-#include "MUSCLReconstruction.H"
+#ifndef fixedSlipPointPatchFields_H
+#define fixedSlipPointPatchFields_H
+
+#include "fixedSlipPointPatchField.H"
+#include "fieldTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -32,46 +35,15 @@ namespace Foam
 {
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-defineNamedTemplateTypeNameAndDebug(MUSCLReconstructionScheme<scalar>, 0);
-defineTemplateRunTimeSelectionTable
-(
-    MUSCLReconstructionScheme<scalar>,
-    dictionary
-);
 
-defineNamedTemplateTypeNameAndDebug(MUSCLReconstructionScheme<vector>, 0);
-defineTemplateRunTimeSelectionTable
-(
-    MUSCLReconstructionScheme<vector>,
-    dictionary
-)
-
-defineNamedTemplateTypeNameAndDebug(MUSCLReconstructionScheme<symmTensor>, 0);
-defineTemplateRunTimeSelectionTable
-(
-    MUSCLReconstructionScheme<symmTensor>,
-    dictionary
-)
-
-defineNamedTemplateTypeNameAndDebug(MUSCLReconstructionScheme<sphericalTensor>, 0);
-defineTemplateRunTimeSelectionTable
-(
-    MUSCLReconstructionScheme<sphericalTensor>,
-    dictionary
-)
-
-defineNamedTemplateTypeNameAndDebug(MUSCLReconstructionScheme<tensor>, 0);
-defineTemplateRunTimeSelectionTable
-(
-    MUSCLReconstructionScheme<tensor>,
-    dictionary
-)
-
+makePointPatchFieldTypedefs(fixedSlip);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#endif
 
 // ************************************************************************* //

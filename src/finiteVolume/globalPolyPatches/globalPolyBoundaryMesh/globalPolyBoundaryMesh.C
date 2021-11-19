@@ -45,14 +45,21 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
 )
 :
     GlobalPolyBoundaryMesh(mesh),
-    interfacesDicts_
-    (
-        mesh.time().db().lookupObject<IOdictionary>("regionProperties").lookup
-        (
-            "interfaces"
-        )
-    )
-{}
+    interfacesDicts_()
+{
+    if (mesh.time().db().foundObject<IOdictionary>("regionProperties"))
+    {
+        interfacesDicts_ =
+            HashTable<dictionary>
+            (
+                mesh.time().db().lookupObject<IOdictionary>
+                (
+                    "regionProperties"
+                ).lookup("interfaces")
+            );
+    }
+
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

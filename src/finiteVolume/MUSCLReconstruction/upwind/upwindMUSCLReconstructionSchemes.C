@@ -23,11 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "MUSCLReconstructionScheme.H"
-#include "MUSCLReconstruction.H"
 #include "upwindMUSCLReconstructionScheme.H"
-#include "linearMUSCLReconstructionScheme.H"
-#include "quadraticMUSCLReconstructionScheme.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -37,14 +33,39 @@ namespace Foam
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 defineNamedTemplateTypeNameAndDebug(upwindMUSCLReconstructionScheme<scalar>, 0);
+MUSCLReconstructionScheme<scalar>::adddictionaryConstructorToTable
+    <
+        upwindMUSCLReconstructionScheme<scalar>
+    > addupwindMUSCLscalardictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(upwindMUSCLReconstructionScheme<vector>, 0);
+MUSCLReconstructionScheme<vector>::adddictionaryConstructorToTable
+    <
+        upwindMUSCLReconstructionScheme<vector>
+    > addupwindMUSCLvectordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(upwindMUSCLReconstructionScheme<symmTensor>, 0);
+MUSCLReconstructionScheme<symmTensor>::adddictionaryConstructorToTable
+    <
+        upwindMUSCLReconstructionScheme<symmTensor>
+    > addupwindMUSCLsymmTensordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug
 (
     upwindMUSCLReconstructionScheme<sphericalTensor>,
     0
 );
+MUSCLReconstructionScheme<sphericalTensor>::adddictionaryConstructorToTable
+    <
+        upwindMUSCLReconstructionScheme<sphericalTensor>
+    > addupwindMUSCLsphericalTensordictinoaryConstructorToTable_;
+
 defineNamedTemplateTypeNameAndDebug(upwindMUSCLReconstructionScheme<tensor>, 0);
+MUSCLReconstructionScheme<tensor>::adddictionaryConstructorToTable
+    <
+        upwindMUSCLReconstructionScheme<tensor>
+    > addupwindMUSCLtensordictinoaryConstructorToTable_;
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

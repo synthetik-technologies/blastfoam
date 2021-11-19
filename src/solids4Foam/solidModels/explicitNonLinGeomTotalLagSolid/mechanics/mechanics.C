@@ -43,6 +43,7 @@ mechanics::mechanics
     const operations& ops
 )
 :
+    MeshObject<fvMesh, MoveableMeshObject, mechanics>(F.mesh()),
     mesh_(F.mesh()),
 
     ops_(ops),
@@ -108,6 +109,13 @@ mechanics::~mechanics()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+
+bool mechanics::movePoints()
+{
+    N_ = mesh_.Sf()/mesh_.magSf();
+    return true;
+}
 
 void mechanics::correctN(const volTensorField& F)
 {

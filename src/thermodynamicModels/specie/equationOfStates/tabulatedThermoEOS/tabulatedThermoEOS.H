@@ -145,6 +145,14 @@ public:
 
         // Equation of state functions
 
+            //- Return limited pressure
+            scalar pRhoT
+            (
+                const scalar rho,
+                const scalar e,
+                const scalar T
+            ) const;
+
             //- Return pressure
             scalar p
             (

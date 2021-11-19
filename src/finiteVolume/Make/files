@@ -60,6 +60,7 @@ $(RBF)/rbfPatchToPatchMapping.C
 
 fvPatchFields/derived/globalMapped/globalMappedFvPatchFields.C
 
+pointPatchFields/derived/fixedSlip/fixedSlipPointPatchFields.C
 pointPatchFields/derived/globalInterpolated/globalInterpolatedPointPatchFields.C
 pointPatchFields/derived/globalMapped/globalMappedPointPatchFields.C
 

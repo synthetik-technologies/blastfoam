@@ -72,7 +72,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("MUSCLReconstruction");
+    TypeName(MUSCLType::typeName + "<" + Limiter::typeName + ">");
 
 
     // Constructors
@@ -129,7 +129,11 @@ typedef MUSCLReconstruction                                                    \
     > ORDER##MUSCLReconstruction##TYPE##LIMITER##NVDTVD##LIMFUNC##_;           \
                                                                                \
 defineTemplateTypeNameAndDebugWithName                                         \
-    (ORDER##MUSCLReconstruction##TYPE##LIMITER##NVDTVD##LIMFUNC##_, #SS, 0);   \
+    (                                                                          \
+        ORDER##MUSCLReconstruction##TYPE##LIMITER##NVDTVD##LIMFUNC##_,         \
+        #ORDER "MUSCL<" #SS ">",                                               \
+        0                                                                      \
+    );                                                                         \
                                                                                \
 MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
     <                                                                          \
@@ -140,7 +144,17 @@ MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
             LIMITER<NVDTVD>,                                                   \
             limitFuncs::LIMFUNC                                                \
         >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;
+    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;                  \
+MUSCLReconstructionScheme<TYPE>::adddictionaryConstructorToTable               \
+    <                                                                          \
+        MUSCLReconstruction                                                    \
+        <                                                                      \
+            TYPE,                                                              \
+            ORDER##MUSCLReconstructionScheme##TYPE,                            \
+            LIMITER<NVDTVD>,                                                   \
+            limitFuncs::LIMFUNC                                                \
+        >                                                                      \
+    > add##ORDER##SS##LIMFUNC##TYPE##dictionaryConstructorToTable_;
 
 
 #define makeMUSCLReconstruction(ORDER, SS, LIMITER)\
@@ -182,7 +196,7 @@ typedef MUSCLReconstruction                                                    \
 defineTemplateTypeNameAndDebugWithName                                         \
     (                                                                          \
         ORDER##MUSCLReconstruction##TYPE##LLIMITER##LIMITER##NVDTVD##LIMFUNC##_,\
-        #SS,                                                                   \
+        #ORDER "MUSCL<" #SS ">",                                               \
         0                                                                      \
     );                                                                         \
                                                                                \
@@ -195,7 +209,17 @@ MUSCLReconstructionScheme<TYPE>::add##ORDER##MeshConstructorToTable            \
             LLIMITER<LIMITER<NVDTVD>>,                                         \
             limitFuncs::LIMFUNC                                                \
         >                                                                      \
-    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;
+    > add##SS##LIMFUNC##TYPE##ORDER##MeshConstructorToTable_;                  \
+MUSCLReconstructionScheme<TYPE>::adddictionaryConstructorToTable            \
+    <                                                                          \
+        MUSCLReconstruction                                                    \
+        <                                                                      \
+            TYPE,                                                              \
+            ORDER##MUSCLReconstructionScheme##TYPE,                            \
+            LLIMITER<LIMITER<NVDTVD>>,                                         \
+            limitFuncs::LIMFUNC                                                \
+        >                                                                      \
+    > add##ORDER##SS##LIMFUNC##TYPE##dictinoaryConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -31,7 +31,9 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(fluxScheme, 0);
-    defineRunTimeSelectionTable(fluxScheme, dictionary);
+    defineRunTimeSelectionTable(fluxScheme, singlePhase);
+    defineRunTimeSelectionTable(fluxScheme, multiphase);
+    defineRunTimeSelectionTable(fluxScheme, interface);
 }
 
 
@@ -89,6 +91,120 @@ Foam::tmp<Foam::surfaceVectorField> Foam::fluxScheme::Uf() const
         mesh_,
         dimensionedVector("0", dimVelocity, Zero)
     );
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::fluxScheme::AD(const volScalarField& alpha) const
+{
+    return mag((this->Uf_() & alpha.mesh().Sf())/alpha.mesh().magSf());
+}
+
+
+Foam::tmp<Foam::surfaceScalarField>
+Foam::fluxScheme::snGradAlpha
+(
+    const volScalarField& alpha
+) const
+{
+    const fvMesh& mesh = alpha.mesh();
+    const labelList& own = mesh.owner();
+    const labelList& nei = mesh.neighbour();
+    const surfaceVectorField& Sf = mesh.Sf();
+    const surfaceScalarField& magSf = mesh.magSf();
+    surfaceVectorField n(Sf/magSf);
+
+    surfaceScalarField alphaf
+    (
+        surfaceInterpolationScheme<scalar>::New
+        (
+            mesh,
+            IStringStream("linear vanLeer")()
+        )->interpolate(alpha)
+    );
+    volVectorField gradAlpha(fvc::grad(alphaf));
+    tmp<surfaceScalarField> tsnGradAlpha
+    (
+        surfaceScalarField::New
+        (
+            IOobject::groupName("snGradAlpha", alpha.group()),
+            fvc::snGrad(alpha)
+        )
+    );
+    surfaceScalarField& snGradAlpha = tsnGradAlpha.ref();
+    forAll(alphaf, facei)
+    {
+        if
+        (
+            ((gradAlpha[own[facei]] & n[facei])*snGradAlpha[facei]) > 0
+         && mag(gradAlpha[own[facei]] & n[facei])
+          < mag(snGradAlpha[facei])
+        )
+        {
+            alphaf[facei] = alpha[nei[facei]];
+        }
+        else if
+        (
+            mag
+            (
+                mag(gradAlpha[own[facei]] & n[facei])
+              - mag(snGradAlpha[facei])
+            ) < small
+        )
+        {
+            alphaf[facei] = 0.5*(alpha[own[facei]] + alpha[nei[facei]]);
+        }
+        else
+        {
+            alphaf[facei] = alpha[own[facei]];
+        }
+    }
+    gradAlpha = fvc::grad(alphaf);
+
+    forAll(snGradAlpha, facei)
+    {
+        snGradAlpha[facei] =
+            minMagSqrOp<vector>()
+            (
+                gradAlpha[own[facei]],
+                gradAlpha[nei[facei]]
+            ) & Sf[facei];
+    }
+    surfaceScalarField::Boundary& bsnGradAlpha
+    (
+        snGradAlpha.boundaryFieldRef()
+    );
+    forAll(bsnGradAlpha, patchi)
+    {
+        const fvPatch& patch = mesh.boundary()[patchi];
+        const fvPatchField<vector>& pgradAlpha
+        (
+            gradAlpha.boundaryField()[patchi]
+        );
+        const vectorField& pSf(Sf.boundaryField()[patchi]);
+        scalarField& psnGradAlpha(bsnGradAlpha[patchi]);
+
+        if (patch.coupled())
+        {
+            vectorField gradAlphaOwn(pgradAlpha.patchInternalField());
+            vectorField gradAlphaNei(pgradAlpha.patchNeighbourField());
+            forAll(gradAlphaOwn, facei)
+            {
+                snGradAlpha[facei] =
+                    minMagSqrOp<vector>()
+                    (
+                        gradAlphaOwn[facei],
+                        gradAlphaNei[facei]
+                    ) & pSf[facei];
+            }
+        }
+        else
+        {
+            psnGradAlpha = pgradAlpha & pSf;
+        }
+    }
+    snGradAlpha.dimensions().reset(snGradAlpha.dimensions()*dimVolume);
+    return tsnGradAlpha;
 }
 
 
@@ -254,13 +370,24 @@ void Foam::fluxScheme::update
 
     forAll(alphas, phasei)
     {
+        const word phaseName(alphas[phasei].group());
         autoPtr<MUSCLReconstructionScheme<scalar>> alphaLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(alphas[phasei], "alpha")
+            MUSCLReconstructionScheme<scalar>::New
+            (
+                alphas[phasei],
+                "alpha",
+                phaseName
+            )
         );
         autoPtr<MUSCLReconstructionScheme<scalar>> rhoLimiter
         (
-            MUSCLReconstructionScheme<scalar>::New(rhos[phasei], "rho")
+            MUSCLReconstructionScheme<scalar>::New
+            (
+                rhos[phasei],
+                "rho",
+                phaseName
+            )
         );
         alphasOwn.set
         (
@@ -447,15 +574,15 @@ void Foam::fluxScheme::update
     // Interpolate fields
     autoPtr<MUSCLReconstructionScheme<scalar>> alpha1Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(alpha1, "alpha")
+        MUSCLReconstructionScheme<scalar>::New(alpha1, "alpha", alpha1.group())
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> rho1Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho1, "rho")
+        MUSCLReconstructionScheme<scalar>::New(rho1, "rho", rho1.group())
     );
     autoPtr<MUSCLReconstructionScheme<scalar>> rho2Limiter
     (
-        MUSCLReconstructionScheme<scalar>::New(rho2, "rho")
+        MUSCLReconstructionScheme<scalar>::New(rho2, "rho", rho2.group())
     );
     autoPtr<MUSCLReconstructionScheme<vector>> ULimiter
     (

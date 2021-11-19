@@ -17,7 +17,7 @@ FoamFile
 
 phases (air water);
 systemType interface;
-epsilon 0.01;
+epsilon 0.25;
 sigma
 {
     type constant;
@@ -69,9 +69,9 @@ water
     }
     equationOfState
     {
-        gamma           7.0;
+        gamma           4.4;
 //         a               0;
-        a               3.0e8;
+        a               6e6;
     }
     specie
     {

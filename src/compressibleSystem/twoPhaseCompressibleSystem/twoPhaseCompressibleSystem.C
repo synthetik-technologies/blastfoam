@@ -117,6 +117,8 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
         dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
     )
 {
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
     rho_ = alphaRho1_ + alphaRho2_;
 
     thermo_.initializeModels();

@@ -165,6 +165,15 @@ public:
             //- Calculate internal energy given a pressure
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
 
+            //- Calculate Gamma = dpde
+            virtual tmp<volScalarField> Gamma() const = 0;
+
+            //- Calculate the pressure
+            virtual tmp<volScalarField> calcp() const = 0;
+
+            //- Calculate the speed of sound
+            virtual tmp<volScalarField> calcSpeedOfSound() const = 0;
+
             //- Pressure [Pa]
             const volScalarField& p() const;
 

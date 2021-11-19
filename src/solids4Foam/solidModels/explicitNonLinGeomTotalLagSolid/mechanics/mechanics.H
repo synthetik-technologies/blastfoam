@@ -37,6 +37,7 @@ SourceFiles
 
 #include "fvc.H"
 #include "operations.H"
+#include "MeshObject.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,6 +45,8 @@ namespace Foam
 {
 
 class mechanics
+:
+    public MeshObject<fvMesh, MoveableMeshObject, mechanics>
 {
     // Private data
 
@@ -146,6 +149,8 @@ public:
 
             //- Print centroid of geometry
             void printCentroid() const;
+
+            virtual bool movePoints();
 
 };
 

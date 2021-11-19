@@ -44,38 +44,29 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
 
 
 template<class Type>
-tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolateField
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolate
 (
-    const GeometricField<Type, fvPatchField, volMesh>& f,
+    const GeometricField<Type, fvsPatchField, surfaceMesh>& fOwn,
+    const GeometricField<Type, fvsPatchField, surfaceMesh>& fNei,
     const word& name
 ) const
 {
     typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
     label nCmpts = pTraits<Type>::nComponents;
 
-    autoPtr<MUSCLReconstructionScheme<Type>> fLimiter
-    (
-        MUSCLReconstructionScheme<Type>::New(f, name)
-    );
-
-    tmp<fieldType> tfOwn(fLimiter->interpolateOwn());
-    const fieldType& fOwn = tfOwn();
-    tmp<fieldType> tfNei(fLimiter->interpolateNei());
-    const fieldType& fNei = tfNei();
-
     tmp<fieldType> tmpf
     (
         fieldType::New
         (
-            f.name() + "f",
+            name + "f",
             mesh_,
-            dimensioned<Type>("0", f.dimensions(), pTraits<Type>::zero)
+            dimensioned<Type>("0", fOwn.dimensions(), pTraits<Type>::zero)
         )
     );
     fieldType& ff = tmpf.ref();
-    const bool isDensity = (f.dimensions() == dimDensity);
+    const bool isDensity = (fOwn.dimensions() == dimDensity);
 
-    forAll(fOwn(), facei)
+    forAll(fOwn, facei)
     {
         Type& fi = ff[facei];
         const Type& fiOwn = fOwn[facei];
@@ -92,7 +83,7 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
         }
     }
 
-    forAll(f.boundaryField(), patchi)
+    forAll(fOwn.boundaryField(), patchi)
     {
         Field<Type>& pff = ff.boundaryFieldRef()[patchi];
         const Field<Type>& pfOwn = fOwn.boundaryField()[patchi];
@@ -118,6 +109,28 @@ tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolat
     }
     return tmpf;
 }
+
+
+template<class Type>
+tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> fluxSchemeBase::interpolateField
+(
+    const GeometricField<Type, fvPatchField, volMesh>& f,
+    const word& name
+) const
+{
+    typedef GeometricField<Type, fvsPatchField, surfaceMesh> fieldType;
+
+    autoPtr<MUSCLReconstructionScheme<Type>> fLimiter
+    (
+        MUSCLReconstructionScheme<Type>::New(f, name)
+    );
+
+    tmp<fieldType> tfOwn(fLimiter->interpolateOwn());
+    tmp<fieldType> tfNei(fLimiter->interpolateNei());
+
+    return interpolate(tfOwn(), tfNei(), name);
+}
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
