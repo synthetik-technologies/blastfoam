@@ -22,7 +22,7 @@ createDEps()
     set yrange [0:2.2]
     set mxtic 4
     set mytic 4
-    plot'<sed -e "s/[(,)]//g" $1/D' using (ms(\$1)):(D(\$2)) title 'blastFoam' \
+    plot'<sed -e "s/[(,)]//g" $1/D' using (ms(\$1)):(D(\$3)) title 'blastFoam' \
         with lines lt 1 linewidth 2 lc rgb 'black', \
          '$2/D.csv' using 1:2 title 'Neuberg et al'
 

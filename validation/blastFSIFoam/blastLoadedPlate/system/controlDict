@@ -53,7 +53,8 @@ functions
 {
     plateProbes
     {
-        type probes;
+        type blastProbes;
+        adjustLocations yes;
         region plate;
 
         probeLocations ((0 0 0));
