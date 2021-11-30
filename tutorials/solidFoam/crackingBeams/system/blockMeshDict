@@ -1,0 +1,137 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.2                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant/polyMesh";
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Model Description
+// Plane strain 2-D model of simple DCB
+// two beams adhered together
+// thickness of each beam can be set
+// or the material of each beam could be set using setFields
+
+// Setup m4 stuff
+
+//define(VCOUNT, 0)
+//define(vlabel, [[// ]Vertex $1 = VCOUNT define($1, VCOUNT)define([VCOUNT], incr(VCOUNT))])
+
+// define geometry in mm
+ // beams length
+ // individual beam height
+ // pre-notch length
+ // out of plane thickness
+
+// define mesh density
+ // number of cells in beam length direction before notch
+ // number of cells in beam length direction after notch
+  // number of cells in beam height direction
+
+// start of blockMeshDict
+
+convertToMeters 0.001;
+
+vertices
+(
+ //- dimension in mm
+ (0 -10 0)
+ (10 -10 0)
+ (60 -10 0)
+ (60 0 0)
+ (60 10 0)
+ (10 10 0)
+ (0 10 0)
+ (0 0 0)
+ (10 0 0)
+ (0 0 0) // 9
+
+ (0 -10 1)
+ (10 -10 1)
+ (60 -10 1)
+ (60 0 1)
+ (60 10 1)
+ (10 10 1)
+ (0 10 1)
+ (0 0 1)
+ (10 0 1)
+ (0 0 1) // 19
+
+);
+
+blocks
+(
+//  hex (0 1 8 9 10 11 18 19) sheet (meshPn meshBh 1) simpleGrading (1 1 1)
+//  hex (1 2 3 8 11 12 13 18) sheet (meshBl meshBh 1) simpleGrading (1 1 1)
+//  hex (7 8 5 6 17 18 15 16) sheet (meshPn meshBh 1) simpleGrading (1 1 1)
+//  hex (8 3 4 5 18 13 14 15) sheet (meshBl meshBh 1) simpleGrading (1 1 1)
+ hex (0 1 8 9 10 11 18 19) (10 10 1) simpleGrading (1 1 1)
+ hex (1 2 3 8 11 12 13 18) (60 10 1) simpleGrading (1 1 1)
+ hex (7 8 5 6 17 18 15 16) (10 10 1) simpleGrading (1 1 1)
+ hex (8 3 4 5 18 13 14 15) (60 10 1) simpleGrading (1 1 1)
+ );
+
+edges
+(
+);
+
+patches
+(
+ patch tractionFree
+ (
+  (15 16 6 5)
+  (14 15 5 4)
+
+  (0 1 11 10)
+  (1 2 12 11)
+
+  (2 3 13 12)
+  (3 4 14 13)
+
+  (7 8 18 17)
+  (19 18 8 9)
+  )
+
+ patch topLoading
+ (
+  (17 16 6 7)
+  )
+
+ patch bottomLoading
+ (
+  (10 19 9 0)
+  )
+
+ empty back
+ (
+  (7 6 5 8)
+  (8 5 4 3)
+  (0 9 8 1)
+  (1 8 3 2)
+  )
+
+ empty front
+ (
+  (10 11 18 19)
+  (11 12 13 18)
+  (17 18 15 16)
+  (18 13 14 15)
+  )
+
+ cohesive crack ()
+ );
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //

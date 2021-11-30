@@ -1,0 +1,38 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.2                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  | For copyright notice see file Copyright         |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      dynamicMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dynamicFvMesh   crackerFvMesh;
+
+// crackerFvMeshCoeffs
+// {
+    crackPatch    crack;
+    law
+    {
+        type      cohesiveZoneInitiation;
+
+        crackPathLimiter
+        {
+            type        boundingBoxes;
+            boundingBoxes
+            (
+                (0 -0.0001 0) (0.06 0.0001 0.001)
+            );
+        }
+//     }
+}
+
+// ************************************************************************* //

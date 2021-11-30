@@ -1,0 +1,89 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.0                                |
+|   \\  /    A nd           | Web:         http://www.extend-project.de       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       volVectorField;
+    object      D;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 1 0 0 0 0 0];
+
+internalField   uniform (0 0 0);
+
+boundaryField
+{
+    crack
+    {
+        type                       solidCohesive;
+        relaxationFactor           0.01;
+        cohesiveZoneModel
+        {
+            //type        modeI;
+            //type        fixedMixedMode;
+            //sigmaMax    10e6;
+            //GIc         50;
+
+            type        variableMixedMode;
+            sigmaMax    10e6;
+            tauMax      10e6;
+            GIc         50;
+            GIIc        50;
+        }
+        value                      uniform ( 0 0 0 );
+    }
+    topLoading
+    {
+        type            fixedDisplacement;
+        displacementSeries
+        {
+            type table;
+            values
+            (
+                ( 0    (0 0 0) )
+                ( 100  (0 1e-4 0) )
+            );
+            outOfBounds clamp;
+        }
+        value           uniform (0 0 0);
+    }
+    bottomLoading
+    {
+        type            fixedDisplacement;
+        displacementSeries
+        {
+            type table;
+            values
+            (
+                ( 0    (0 0 0) )
+                ( 100  (0 -1e-4 0) )
+            );
+            outOfBounds clamp;
+        }
+        value           uniform (0 0 0);
+    }
+    tractionFree
+    {
+        type            solidTraction;
+        traction        uniform ( 0 0 0 );
+        pressure        uniform 0;
+        value           uniform (0 0 0);
+    }
+    back
+    {
+        type            empty;
+    }
+    front
+    {
+        type            empty;
+    }
+}
+
+// ************************************************************************* //

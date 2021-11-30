@@ -1,0 +1,46 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM Extend Project: Open Source CFD        |
+|  \\    /   O peration     | Version:  1.6-ext                               |
+|   \\  /    A nd           | Web:      www.extend-project.de                 |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    D
+    {
+        solver          PCG;
+        preconditioner  FDIC;
+        tolerance       1e-09;
+        relTol          0.1;
+    }
+}
+
+relaxationFactors
+{
+    // Under-relaxating the D equation by 0.99-0.9999 can improve convergence in
+    // some cases, in particular when there are solidContact boundaries
+    equations
+    {
+        //D       0.999;
+    }
+
+    // Under-relaxating the D field by 0.1-0.9 can improve convergence in some
+    // cases
+    fields
+    {
+        D       0.7;
+    }
+}
+
+// ************************************************************************* //

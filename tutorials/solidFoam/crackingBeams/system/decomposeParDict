@@ -1,0 +1,91 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     3.0                                |
+|   \\  /    A nd           | Web:         http://www.extend-project.de       |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      decomposeParDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+numberOfSubdomains  4;
+
+//- Keep owner and neighbour on same processor for faces in zones:
+// preserveFaceZones (heater solid1 solid3);
+
+// Face zones which need to be present on all CPUs in its entirety
+// globalFaceZones (ggiInside ggiOutside);
+
+//- Keep owner and neighbour on same processor for faces in patches:
+//  (makes sense only for cyclic patches)
+//preservePatches (cyclic_left_right);
+
+
+// method          scotch;
+// method          hierarchical;
+method          simple;
+// method          scotch;
+// method          manual;
+
+simpleCoeffs
+{
+    n           (2 2 1);
+    delta       0.001;
+}
+
+hierarchicalCoeffs
+{
+    n           (2 2 1);
+    delta       0.001;
+    order       xyz;
+}
+
+metisCoeffs
+{
+ /*
+    processorWeights
+    (
+        1
+        1
+        1
+        1
+    );
+  */
+}
+
+scotchCoeffs
+{
+    //processorWeights
+    //(
+    //    1
+    //    1
+    //    1
+    //    1
+    //);
+    //writeGraph  true;
+    //strategy "b";
+}
+
+manualCoeffs
+{
+    dataFile    "cellDecomposition";
+}
+
+
+//// Is the case distributed
+//distributed     yes;
+//// Per slave (so nProcs-1 entries) the directory above the case.
+//roots
+//(
+//    "/tmp"
+//    "/tmp"
+//);
+
+
+// ************************************************************************* //
