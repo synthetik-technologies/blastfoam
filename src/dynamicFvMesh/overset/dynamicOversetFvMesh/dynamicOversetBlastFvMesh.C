@@ -37,7 +37,12 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dynamicOversetBlastFvMesh, 0);
-    addToRunTimeSelectionTable(dynamicBlastFvMesh, dynamicOversetBlastFvMesh, dictionary);
+    addToRunTimeSelectionTable
+    (
+        dynamicFvMesh,
+        dynamicOversetBlastFvMesh,
+        IOobject
+    );
 //     addToRunTimeSelectionTable(dynamicBlastFvMesh, dynamicOversetBlastFvMesh, doInit);
 }
 

@@ -78,7 +78,7 @@ public:
         (
             autoPtr,
             dynamicBlastFvMesh,
-            dictionary,
+            IOobject,
             (const IOobject& io),
             (io)
         );
@@ -181,6 +181,11 @@ public:
         {}
 };
 
+
+#ifndef dynamicFvMesh_H
+#define dynamicFvMesh_H
+typedef dynamicBlastFvMesh dynamicFvMesh;
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

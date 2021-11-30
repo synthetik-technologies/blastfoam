@@ -73,11 +73,10 @@ Description
 #include "hexRef8.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
-#include "decompositionMethod.H"
-#include "fvMeshDistribute.H"
 #include "mapDistributePolyMesh.H"
 #include "PtrDictionary.H"
 #include "dictionaryEntry.H"
+#include "fvMeshBalance.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -102,11 +101,7 @@ private:
         //- Disallow default bitwise assignment
         void operator=(const dynamicRefineBalancedBlastFvMesh&);
 
-        //-
-        label topParentID(label p);
-
-        //-
-        bool rebalance_;
+        fvMeshBalance balancer_;
 
 public:
 
@@ -131,15 +126,6 @@ public:
 
         //- Refine the mesh
         virtual bool refine(const bool correctError = true);
-
-        //- Template to update all volField boundaries
-        template<class Type> void correctBoundaries();
-
-        //-
-        bool rebalance()
-        {
-            return rebalance_;
-        }
 };
 
 
@@ -148,10 +134,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-    #include "dynamicRefineBalancedBlastFvMeshTemplates.C"
-#endif
 
 #endif
 

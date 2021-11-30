@@ -7,9 +7,9 @@ dynamicRefineFvMesh/multiCritRefinement.C
 dynamicRefineFvMesh/dynamicRefineBlastFvMesh.C
 dynamicRefineBalancedFvMesh/dynamicRefineBalancedBlastFvMesh.C
 adaptiveFvMesh/adaptiveBlastFvMesh.C
+topoChangerFvMesh/topoChangerBlastFvMesh.C
 
 movingAdaptiveFvMesh/movingAdaptiveBlastFvMesh.C
-
 
 overset/processorLOD/processorLOD/processorLOD.C
 overset/processorLOD/box/box.C

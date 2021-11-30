@@ -41,7 +41,7 @@ namespace Foam
     (
         dynamicBlastFvMesh,
         movingAdaptiveBlastFvMesh,
-        dictionary
+        IOobject
     );
 }
 

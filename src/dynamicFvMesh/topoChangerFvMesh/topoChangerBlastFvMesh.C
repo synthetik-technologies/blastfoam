@@ -1,8 +1,8 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2011 OpenFOAM Foundation
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2018 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,49 +23,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "staticBlastFvMesh.H"
-#include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "topoChangerBlastFvMesh.H"
+#include "Time.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(staticBlastFvMesh, 0);
-    addToRunTimeSelectionTable
-    (
-        dynamicBlastFvMesh,
-        staticBlastFvMesh,
-        IOobject
-    );
+    defineTypeNameAndDebug(topoChangerBlastFvMesh, 0);
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::staticBlastFvMesh::staticBlastFvMesh(const IOobject& io)
+Foam::topoChangerBlastFvMesh::topoChangerBlastFvMesh(const IOobject& io)
 :
-    dynamicBlastFvMesh(io, true)
+    dynamicBlastFvMesh(io),
+    topoChanger_(*this)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::staticBlastFvMesh::~staticBlastFvMesh()
+Foam::topoChangerBlastFvMesh::~topoChangerBlastFvMesh()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-bool Foam::staticBlastFvMesh::update()
-{
-    return false;
-}
-
-
-bool Foam::staticBlastFvMesh::refine(const bool)
-{
-    return false;
-}
 // ************************************************************************* //

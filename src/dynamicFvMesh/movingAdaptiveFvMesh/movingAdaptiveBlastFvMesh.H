@@ -47,9 +47,6 @@ Additional files
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
-#include "decompositionMethod.H"
-#include "fvMeshDistribute.H"
-#include "mapDistributePolyMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

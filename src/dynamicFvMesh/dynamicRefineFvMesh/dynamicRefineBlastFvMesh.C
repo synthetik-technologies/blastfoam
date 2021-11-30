@@ -45,7 +45,7 @@ namespace Foam
     (
         dynamicBlastFvMesh,
         dynamicRefineBlastFvMesh,
-        dictionary
+        IOobject
     );
 
 

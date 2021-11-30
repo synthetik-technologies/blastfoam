@@ -62,7 +62,7 @@ namespace Foam
     (
         dynamicBlastFvMesh,
         adaptiveBlastFvMesh,
-        dictionary
+        IOobject
     );
 
     // Helper class for accessing max cell level of faces accross processor patches
@@ -75,26 +75,6 @@ namespace Foam
             x = max(x, y);
         }
     };
-}
-
-
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
-
-Foam::label Foam::adaptiveBlastFvMesh::topParentID(const label p) const
-{
-    if (p >= meshCutter().history().splitCells().size())
-    {
-        return p;
-    }
-    label nextP = meshCutter().history().splitCells()[p].parent_;
-    if( nextP < 0 )
-    {
-        return p;
-    }
-    else
-    {
-        return topParentID(nextP);
-    }
 }
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
@@ -1248,23 +1228,14 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
     nRefinementIterations_(0),
     nProtected_(0),
     protectedCell_(nCells(), 0),
+    balancer_
+    (
+        *this,
+        dynamicMeshDict().optionalSubDict("loadBalance")
+    ),
     isRefining_(false),
     isUnrefining_(false),
     isBalancing_(false),
-    decompositionDict_
-    (
-        IOdictionary
-        (
-            IOobject
-            (
-                "decomposeParDict",
-                time().system(),
-                *this,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            )
-        )
-    ),
     V0OldPtr_(nullptr),
     V00OldPtr_(nullptr)
 {
@@ -1640,51 +1611,6 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
         Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
             << " cells that are protected from refinement." << endl;
     }
-
-    //- 2D refinment does not currently work
-    //  Refinement history is not compatable with the current method of
-    //  tracking parent cells
-    const dictionary& balanceDict =
-        dynamicMeshDict().optionalSubDict("loadBalance");
-    balance_ = balanceDict.lookupOrDefault("balance", true);
-
-    if (!Pstream::parRun())
-    {
-        balance_ = false;
-    }
-
-    if (balance_)
-    {
-        // Change decomposition method if entry is present
-        if (balanceDict.found("method"))
-        {
-            decompositionDict_.set
-            (
-                "method",
-                balanceDict.lookup("method")
-            );
-        }
-
-        // Add refinementHistory constraint
-        {
-            dictionary refinementHistoryDict;
-            refinementHistoryDict.add("type", "refinementHistory");
-            dictionary constraintsDict;
-            constraintsDict.add("refinementHistory", refinementHistoryDict);
-            decompositionDict_.add("constraints", constraintsDict);
-        }
-
-        decomposer_ = decompositionMethod::New(decompositionDict_);
-        if (!decomposer_->parallelAware())
-        {
-            FatalErrorInFunction
-                << "You have selected decomposition method "
-                << decomposer_->typeName
-                << " which is not parallel aware." << endl
-                << "Please select one that is (hierarchical, ptscotch)"
-                << exit(FatalError);
-        }
-    }
 }
 
 
@@ -2035,51 +1961,15 @@ bool Foam::adaptiveBlastFvMesh::balance()
     (
         dynamicMeshDict().optionalSubDict("loadBalance")
     );
+    balancer_.read(balanceDict);
 
     scalar beginBalance = balanceDict.lookupOrDefault("beginBalance", small);
     label balanceInterval =
         balanceDict.lookupOrDefault("balanceInterval", 1);
 
-    balance_ =
-        balanceDict.lookupOrDefault("balance", true)
-     && Pstream::parRun();
-
-    if (!balance_ || time().value() < beginBalance)
+    if (!balancer_.balance() || time().value() < beginBalance)
     {
         return false;
-    }
-
-    if (balance_ && !decomposer_.valid())
-    {
-        // Change decomposition method if entry is present
-        if (balanceDict.found("method"))
-        {
-            decompositionDict_.set
-            (
-                "method",
-                balanceDict.lookup("method")
-            );
-        }
-
-        // Add refinementHistory constraint
-        {
-            dictionary refinementHistoryDict;
-            refinementHistoryDict.add("type", "refinementHistory");
-            dictionary constraintsDict;
-            constraintsDict.add("refinementHistory", refinementHistoryDict);
-            decompositionDict_.add("constraints", constraintsDict);
-        }
-
-        decomposer_ = decompositionMethod::New(decompositionDict_);
-        if (!decomposer_->parallelAware())
-        {
-            FatalErrorInFunction
-                << "You have selected decomposition method "
-                << decomposer_->typeName
-                << " which is not parallel aware." << endl
-                << "Please select one that is (scotch, hierarchical, ptscotch)"
-                << exit(FatalError);
-        }
     }
 
     if
@@ -2091,190 +1981,52 @@ bool Foam::adaptiveBlastFvMesh::balance()
         return false;
     }
 
-    //Correct values on all coupled patches
-    correctBoundaries<volScalarField>();
-    correctBoundaries<volVectorField>();
-    correctBoundaries<volSphericalTensorField>();
-    correctBoundaries<volSymmTensorField>();
-    correctBoundaries<volTensorField>();
-
-    correctBoundaries<pointScalarField>();
-    correctBoundaries<pointVectorField>();
-    correctBoundaries<pointSphericalTensorField>();
-    correctBoundaries<pointSymmTensorField>();
-    correctBoundaries<pointTensorField>();
-
     // Part 2 - Load Balancing
+    if (balancer_.canBalance())
     {
-        const scalar allowableImbalance =
-            balanceDict.lookupOrDefault
-            (
-                "allowableImbalance",
-                0.2
-            );
 
-        //First determine current level of imbalance - do this for all
-        // parallel runs with a changing mesh, even if balancing is disabled
-        label nGlobalCells = globalData().nTotalCells();
-        scalar idealNCells = scalar(nGlobalCells)/scalar(Pstream::nProcs());
-        scalar localImbalance = mag(scalar(nCells()) - idealNCells);
-        Foam::reduce(localImbalance, maxOp<scalar>());
-        scalar maxImbalance = localImbalance/idealNCells;
+        isBalancing_ = true;
 
-        Info<<"Maximum imbalance = " << 100*maxImbalance << " %" << endl;
-
-        //If imbalanced, construct weighted coarse graph (level 0) with node
-        // weights equal to their number of subcells. This partitioning works
-        // as long as the number of level 0 cells is several times greater than
-        // the number of processors.
-        if (maxImbalance > allowableImbalance)
+        //- Save the old volumes so it will be distributed and
+        //  resized
+        //  We cheat because so we can check which fields
+        //  actually need to be mapped
+        if (this->V0Ptr_)
         {
-            isBalancing_ = true;
-
-            //- Save the old volumes so it will be distributed and
-            //  resized
-            //  We cheat because so we can check which fields
-            //  actually need to be mapped
-            if (this->V0Ptr_)
-            {
-                V0OldPtr_ = this->V0Ptr_;
-                this->V0Ptr_ = nullptr;
-            }
-            if (this->V00Ptr_)
-            {
-                V00OldPtr_ = this->V00Ptr_;
-                this->V00Ptr_ = nullptr;
-            }
-
-
-            const labelIOList& cellLevel = meshCutter().cellLevel();
-            Map<label> coarseIDmap(100);
-            labelList uniqueIndex(nCells(),0);
-
-            label nCoarse = 0;
-
-            forAll(cells(), cellI)
-            {
-                if
-                (
-                    cellLevel[cellI] > 0
-                 && meshCutter().history().visibleCells()[cellI] >= 0
-                )
-                {
-                    //YO- 2D refinement uses fixed lists with unset parents;
-                    //    we need to check that the parentIndex is set
-                    label parentI = meshCutter().history().parentIndex(cellI);
-
-                    if (parentI >= 0)
-                    {
-                        uniqueIndex[cellI] = nCells() + topParentID
-                        (
-                            meshCutter().history().parentIndex(cellI)
-                        );
-                    }
-                    else
-                    {
-                        uniqueIndex[cellI] = cellI;
-                    }
-                    //-YO
-                }
-                else
-                {
-                    uniqueIndex[cellI] = cellI;
-                }
-
-                if( coarseIDmap.insert(uniqueIndex[cellI], nCoarse) )
-                {
-                    ++nCoarse;
-                }
-            }
-
-            // Convert to local sequential indexing and calculate coarse
-            // points and weights
-            labelList localIndex(nCells(),0);
-            pointField coarsePoints(nCoarse,vector::zero);
-            scalarField coarseWeights(nCoarse,0.0);
-            label nRefinementDimensions(nGeometricD());
-
-            forAll(uniqueIndex, cellI)
-            {
-                localIndex[cellI] = coarseIDmap[uniqueIndex[cellI]];
-
-                // If 2D refinement (quadtree) is ever implemented, this '3'
-                // should be set in general as the number of refinement
-                // dimensions.
-                label w = (1 << (nRefinementDimensions*cellLevel[cellI]));
-
-                coarseWeights[localIndex[cellI]] += 1.0;
-                coarsePoints[localIndex[cellI]] += C()[cellI]/w;
-            }
-
-            labelList finalDecomp = decomposer_().decompose
-            (
-                *this,
-                localIndex,
-                coarsePoints,
-                coarseWeights
-            );
-
-            //- Only clear old volumes if balancing is occurring
-            //- Clear V, V0, and V00 since they are not
-            //  registered, and therefore are not resized and the
-            //  normal mapping does not work.
-            //  Instead we save V0/V00 and reset it.
-
-            // The actual fix to this is in progress
-
-            //  THIS IS A PRIVATE FUNCTION OF fvMesh,
-            //  but we use a MACRO hack to make it accessible
-            this->clearGeom();
-
-
-            Info<< "Distributing the mesh ..." << endl;
-            fvMeshDistribute distributor(*this);
-
-            Info<< "Mapping the fields ..." << endl;
-            autoPtr<mapDistributePolyMesh> map =
-                distributor.distribute(finalDecomp);
-
-            //- Distribute other data
-            distribute(map());
-
-            Info << "Successfully distributed mesh" << endl;
-
-            scalarList procLoadNew (Pstream::nProcs(), 0.0);
-            procLoadNew[Pstream::myProcNo()] = this->nCells();
-
-            reduce(procLoadNew, sumOp<List<scalar> >());
-
-            scalar overallLoadNew = sum(procLoadNew);
-            scalar averageLoadNew = overallLoadNew/double(Pstream::nProcs());
-
-            Info << "Max deviation: " << max(Foam::mag(procLoadNew-averageLoadNew)/averageLoadNew)*100.0 << " %" << endl;
-
-            isBalancing_ = false;
-            balanced_ = true;
+            V0OldPtr_ = this->V0Ptr_;
+            this->V0Ptr_ = nullptr;
         }
-        else
+        if (this->V00Ptr_)
         {
-            return false;
+            V00OldPtr_ = this->V00Ptr_;
+            this->V00Ptr_ = nullptr;
         }
+
+        //- Only clear old volumes if balancing is occurring
+        //- Clear V, V0, and V00 since they are not
+        //  registered, and therefore are not resized and the
+        //  normal mapping does not work.
+        //  Instead we save V0/V00 and reset it.
+
+        // The actual fix to this is in progress
+
+        //  THIS IS A PRIVATE FUNCTION OF fvMesh,
+        //  but we use a MACRO hack to make it accessible
+        this->clearGeom();
+
+        Info<< "Mapping the fields ..." << endl;
+        autoPtr<mapDistributePolyMesh> map = balancer_.distribute();
+
+        //- Distribute other data
+        distribute(map());
+
+        isBalancing_ = false;
+        balanced_ = true;
+
+        return true;
     }
 
-    //Correct values on all coupled patches
-    correctBoundaries<volScalarField>();
-    correctBoundaries<volVectorField>();
-    correctBoundaries<volSphericalTensorField>();
-    correctBoundaries<volSymmTensorField>();
-    correctBoundaries<volTensorField>();
-
-    correctBoundaries<pointScalarField>();
-    correctBoundaries<pointVectorField>();
-    correctBoundaries<pointSphericalTensorField>();
-    correctBoundaries<pointSymmTensorField>();
-    correctBoundaries<pointTensorField>();
-
-    return true;
+    return false;
 }
 
 
@@ -2321,7 +2073,7 @@ bool Foam::adaptiveBlastFvMesh::writeObject
 
         writeOk = writeOk && scalarCellLevel.write();
     }
-    if (returnReduce(nProtected_, sumOp<label>()) > 0 && balance_)
+    if (returnReduce(nProtected_, sumOp<label>()) > 0)
     {
         cellSet protectedCells(*this, "protectedCells", nProtected_);
         forAll(protectedCell_, celli)

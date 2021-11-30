@@ -86,9 +86,8 @@ Description
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
-#include "decompositionMethod.H"
-#include "fvMeshDistribute.H"
 #include "mapDistributePolyMesh.H"
+#include "fvMeshBalance.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -125,8 +124,8 @@ protected:
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
-        //- Does the mesh get balanced
-        bool balance_;
+        //- Balancer
+        fvMeshBalance balancer_;
 
         //- Has the mesh been balanced this step
         mutable bool balanced_;
@@ -137,15 +136,8 @@ protected:
         //- Is the mesh in the process of being unrefined
         mutable bool isUnrefining_;
 
-
         //- Is the mesh in the process of being balanced
         mutable bool isBalancing_;
-
-        //- Static dictionary for runTime balancing
-        dictionary decompositionDict_;
-
-        //- Decomposition method
-        autoPtr<decompositionMethod> decomposer_;
 
         // Saved fields for mapping
 
@@ -155,8 +147,6 @@ protected:
 
 
     // Protected Member Functions
-
-        label topParentID(const label p) const;
 
         //- Count set/unset elements in packedlist.
         static label count(const PackedBoolList&, const unsigned int);
@@ -242,11 +232,6 @@ protected:
             //- Distribute additional information
             virtual void distribute(const mapDistributePolyMesh& map);
 
-            //- Helper: push master point data to collocated points
-            template<class Type>
-            void pushUntransformedData(Field<Type>&) const;
-
-
 
 public:
 
@@ -302,9 +287,6 @@ public:
         //- Update error field boundaries
         virtual void updateErrorBoundaries();
 
-        //- Template to update all volField boundaries
-        template<class GeoField> void correctBoundaries();
-
         //- Balance the mesh
         bool balance();
 
@@ -335,11 +317,6 @@ public:
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-
-#ifdef NoRepository
-    #include "adaptiveBlastFvMeshTemplates.C"
-#endif
 
 #endif
 
