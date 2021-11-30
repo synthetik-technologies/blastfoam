@@ -192,7 +192,7 @@ class solidModel
         volVectorField unrelaxedDRef_;
 
         //- Reference to globalPolyBoundaryMesh
-        const globalPolyBoundaryMesh& globalPatches_;
+        globalPolyBoundaryMesh& globalPatches_;
 
         //- Optional: set displacement at internal cells
         mutable autoPtr<setCellDisplacements> setCellDispsPtr_;

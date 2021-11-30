@@ -54,7 +54,7 @@ gradientSchemes::gradientSchemes
     (
         IOobject("Ainv", mesh_),
         mesh_,
-        dimensionedTensor("Ainv", dimensionSet(0,2,0,0,0,0,0), tensor::zero)
+        dimensionedTensor("Ainv", dimensionSet(0,2,0,0,0,0,0), Zero)
     ),
 
     AinvLocal_
@@ -65,7 +65,7 @@ gradientSchemes::gradientSchemes
         (
             "AinvLocal",
             dimensionSet(0,2,0,0,0,0,0),
-            tensor::zero
+            Zero
         )
     )
 {
@@ -98,7 +98,7 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
         (
             "Ainv",
             mesh_,
-            dimensioned<tensor>("0", sqr(dimLength), pTraits<tensor>::zero)
+            dimensioned<tensor>("0", sqr(dimLength), Zero)
         )
     );
     volTensorField& Ainv = tAinv.ref();
@@ -107,10 +107,11 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
     {
         const label own = own_[facei];
         const label nei = nei_[facei];
-        const tensor dSqr = (C_[nei] - C_[own])*(C_[nei] - C_[own]);
+        const vector dOwn = C_[nei] - C_[own];
+        const vector dNei  = C_[own] - C_[nei];
 
-        Ainv[own] += dSqr;
-        Ainv[nei] += dSqr;
+        Ainv[own] += dOwn*dOwn;
+        Ainv[nei] += dNei*dNei;
     }
 
     forAll(mesh_.boundary(), patchi)
@@ -133,9 +134,64 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
     {
         Ainv.correctBoundaryConditions();
     }
+    scalar scale = magSqr(Ainv[0]);
+    Vector<bool> removeCmpts
+    (
+        magSqr(Ainv[0].xx())/scale < small,
+        magSqr(Ainv[0].yy())/scale < small,
+        magSqr(Ainv[0].zz())/scale < small
+    );
 
-    Ainv.primitiveFieldRef() = inv(Ainv.primitiveField());
+    forAll(Ainv, celli)
+    {
+        scale = magSqr(Ainv[celli]);
+        if (scale < small)
+        {
+            Ainv[celli] = Zero;
+            continue;
+        }
 
+        if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
+        {
+            tensor AinvPlus(Ainv[celli]);
+
+            if (removeCmpts.x())
+            {
+                AinvPlus += tensor(1,0,0,0,0,0,0,0,0);
+            }
+
+            if (removeCmpts.y())
+            {
+                AinvPlus += tensor(0,0,0,0,1,0,0,0,0);
+            }
+
+            if (removeCmpts.z())
+            {
+                AinvPlus += tensor(0,0,0,0,0,0,0,0,1);
+            }
+
+            Ainv[celli] = inv(AinvPlus);
+
+            if (removeCmpts.x())
+            {
+                Ainv[celli] -= tensor(1,0,0,0,0,0,0,0,0);
+            }
+
+            if (removeCmpts.y())
+            {
+                Ainv[celli] -= tensor(0,0,0,0,1,0,0,0,0);
+            }
+
+            if (removeCmpts.z())
+            {
+                Ainv[celli] -= tensor(0,0,0,0,0,0,0,0,1);
+            }
+        }
+        else
+        {
+            Ainv[celli] = inv(Ainv[celli]);
+        }
+    }
     return tAinv;
 }
 
@@ -144,8 +200,6 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
 
 tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
 {
-    const volVectorField& rhoU = mesh_.lookupObject<volVectorField> ("rhoU");
-
     tmp<GeometricField<tensor, fvPatchField, volMesh> > tAinv
     (
         GeometricField<tensor, fvPatchField, volMesh>::New
@@ -157,17 +211,6 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
     );
     GeometricField<tensor, fvPatchField, volMesh>& Ainv = tAinv.ref();
 
-    tmp<GeometricField<tensor, fvPatchField, volMesh> > tdCd
-    (
-        GeometricField<tensor, fvPatchField, volMesh>::New
-        (
-            "distanceMatrixLocal",
-            mesh_,
-            dimensioned<tensor>("0", sqr(dimLength), pTraits<tensor>::zero)
-        )
-    );
-    GeometricField<tensor, fvPatchField, volMesh>& dCd = tdCd.ref();
-
     forAll(own_, facei)
     {
         const label own = own_[facei];
@@ -175,59 +218,126 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
         const vector dOwn = Cf_[facei] - C_[own];
         const vector dNei = Cf_[facei] - C_[nei];
 
-        dCd[own] += dOwn*dOwn;
-        dCd[nei] += dNei*dNei;
+        Ainv[own] += dOwn*dOwn;
+        Ainv[nei] += dNei*dNei;
     }
+
+    const pointVectorField& pU = mesh_.lookupObject<pointVectorField> ("pointRhoU");
 
     forAll(mesh_.boundary(), patchi)
     {
-        const fvPatch& patch = mesh_.boundary()[patchi];
-        if
-        (
-            rhoU.boundaryField()[patchi].fixesValue()
-         || polyPatch::constraintType(patch.type())
-        )
+        if (!pU.boundaryField()[patchi].fixesValue())
         {
-            const vectorField pd(patch.fvPatch::delta());
-            forAll(mesh_.boundary()[patchi], facei)
+            continue;
+        }
+        const fvPatch& patch = mesh_.boundary()[patchi];
+        const vectorField pd(patch.fvPatch::delta());
+        forAll(mesh_.boundary()[patchi], facei)
+        {
+            const label celli =
+                mesh_.boundaryMesh()[patchi].faceCells()[facei];
+            const label mfacei =
+                mesh_.boundary()[patchi].start() + facei;
+
+            Ainv[celli] += pd[facei]*pd[facei];
+
+            forAll(mesh_.faces()[mfacei], nodei)
             {
-                const label celli =
-                    mesh_.boundaryMesh()[patchi].faceCells()[facei];
-                const label mfacei =
-                    mesh_.boundary()[patchi].start() + facei;
+                const label pti = mesh_.faces()[mfacei][nodei];
 
-                dCd[celli] += pd[facei]*pd[facei];
+                vector d = points_[pti] - C_[celli];
+                Ainv[celli] += d*d;
 
-                forAll(mesh_.faces()[mfacei], nodei)
+                for (label i = 0; i < 7; i++)
                 {
-                    const label pti = mesh_.faces()[mfacei][nodei];
-
-                    vector d = points_[pti] - C_[celli];
-                    dCd[celli] += d*d;
-
-                    for (label i = 0; i < 7; i++)
-                    {
-                        scalar si(i);
-                        d =
+                    scalar si(i);
+                    d =
+                        (
                             (
-                                (
-                                    (si + 1.0)*points_[pti]
-                                  + (
-                                        (7.0 - si)
-                                       *Cf_.boundaryField()[patchi][facei]
-                                     )
+                                (si + 1.0)*points_[pti]
+                              + (
+                                    (7.0 - si)
+                                   *Cf_.boundaryField()[patchi][facei]
                                 )
-                            )/8.0 - C_[celli];
-                        dCd[celli] += d*d;
-                    }
+                            )
+                        )/8.0 - C_[celli];
+                    Ainv[celli] += d*d;
                 }
             }
         }
     }
+
+    if (Pstream::parRun())
+    {
+        Ainv.correctBoundaryConditions();
+    }
+    scalar scale = magSqr(Ainv[0]);
+    Vector<bool> removeCmpts
+    (
+        magSqr(Ainv[0].xx())/scale < small,
+        magSqr(Ainv[0].yy())/scale < small,
+        magSqr(Ainv[0].zz())/scale < small
+    );
+
     forAll(Ainv, celli)
     {
-        Ainv[celli] = inv(dCd[celli]);
+        scale = magSqr(Ainv[celli]);
+        if (scale < small)
+        {
+            Ainv[celli] = Zero;
+            continue;
+        }
+        Vector<bool> removeCmpts
+        (
+            magSqr(Ainv[celli].xx())/scale < small,
+            magSqr(Ainv[celli].yy())/scale < small,
+            magSqr(Ainv[celli].zz())/scale < small
+        );
+
+        if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
+        {
+            Info<<celli<<endl;
+            tensor AinvPlus(Ainv[celli]);
+
+            if (removeCmpts.x())
+            {
+                AinvPlus += tensor(1,0,0,0,0,0,0,0,0);
+            }
+
+            if (removeCmpts.y())
+            {
+                AinvPlus += tensor(0,0,0,0,1,0,0,0,0);
+            }
+
+            if (removeCmpts.z())
+            {
+                AinvPlus += tensor(0,0,0,0,0,0,0,0,1);
+            }
+
+            Ainv[celli] = inv(AinvPlus);
+
+            if (removeCmpts.x())
+            {
+                Ainv[celli] -= tensor(1,0,0,0,0,0,0,0,0);
+            }
+
+            if (removeCmpts.y())
+            {
+                Ainv[celli] -= tensor(0,0,0,0,1,0,0,0,0);
+            }
+
+            if (removeCmpts.z())
+            {
+                Ainv[celli] -= tensor(0,0,0,0,0,0,0,0,1);
+            }
+        }
+        else
+        {
+            Ainv[celli] = inv(Ainv[celli]);
+        }
     }
+//     Ainv.primitiveFieldRef() = inv(Ainv.primitiveField());
+
     return tAinv;
 }
 
@@ -259,10 +369,11 @@ tmp<volVectorField> gradientSchemes::gradient
     {
         const label own = own_[faceID];
         const label nei = nei_[faceID];
-        const vector d = C_[nei] - C_[own];
+        const vector dOwn = C_[nei] - C_[own];
+        const vector dNei = C_[own] - C_[nei];
 
-        gradU[own] += Ainv_[own] & ((U[nei] - U[own])*d);
-        gradU[nei] -= Ainv_[nei] & ((U[own] - U[nei])*d);
+        gradU[own] += Ainv_[own] & ((U[nei] - U[own])*dOwn);
+        gradU[nei] += Ainv_[nei] & ((U[own] - U[nei])*dNei);
     }
 
 
@@ -404,12 +515,10 @@ void gradientSchemes::gradient
 tmp<volTensorField> gradientSchemes::localGradient
 (
     const GeometricField<vector, fvPatchField, volMesh>& U,
-    const GeometricField<vector, fvsPatchField, surfaceMesh>& Uf
+    const GeometricField<vector, fvsPatchField, surfaceMesh>& Uf,
+    const GeometricField<vector, pointPatchField, pointMesh>& pU
 ) const
 {
-    const objectRegistry& db = mesh_.thisDb();
-    const pointVectorField& pointRhoU = db.lookupObject<pointVectorField> ("pointRhoU");
-
     tmp<GeometricField<tensor, fvPatchField, volMesh> > tgradU
     (
         GeometricField<tensor, fvPatchField, volMesh>::New
@@ -446,13 +555,16 @@ tmp<volTensorField> gradientSchemes::localGradient
         gradUz[nei] += AinvLocal_[nei] & ((Uf[facei].z() - U[nei].z())*dNei);
     }
 
-    forAll(mesh_.boundary(), patchi)
+    forAll(U.boundaryField(), patchi)
     {
-        forAll(mesh_.boundary()[patchi], facei)
+        if (!U.boundaryField()[patchi].fixesValue())
+        {
+            continue;
+        }
+        forAll(C_.boundaryField()[patchi], facei)
         {
             const label celli =
                 mesh_.boundaryMesh()[patchi].faceCells()[facei];
-
             vector d = Cf_.boundaryField()[patchi][facei] - C_[celli];
 
             gradUx[celli] +=
@@ -467,54 +579,48 @@ tmp<volTensorField> gradientSchemes::localGradient
                 AinvLocal_[celli]
               & ((Uf.boundaryField()[patchi][facei].z() - U[celli].z())*d);
 
-            if (pointRhoU.boundaryField()[patchi].fixesValue())
-            {
-                const label mfacei =
-                    mesh_.boundary()[patchi].start() + facei;
+            const label fi =
+                mesh_.boundary()[patchi].start() + facei;
 
-                forAll(mesh_.faces()[mfacei], pti)
+            forAll(mesh_.faces()[fi], pti)
+            {
+                const label pi = mesh_.faces()[fi][pti];
+                vector d = points_[pi] - C_[celli];
+
+                gradUx[celli] +=
+                    AinvLocal_[celli] & ((pU[pi].x() - U[celli].x())*d);
+
+                gradUy[celli] +=
+                    AinvLocal_[celli] & ((pU[pi].y() - U[celli].y())*d);
+
+                gradUz[celli] +=
+                    AinvLocal_[celli] & ((pU[pi].z() - U[celli].z())*d);
+
+                for (label i = 0; i < 7; i++)
                 {
-                    const label mpti = mesh_.faces()[mfacei][pti];
-                    vector d = points_[mpti] - C_[celli];
+                    scalar si(i);
+                    d =
+                        (
+                            (
+                                (si + 1.0)*points_[pi]
+                                + (
+                                    (7.0 - si)
+                                    *Cf_.boundaryField()[patchi][facei]
+                                )
+                            )/8.0
+                        ) - C_[celli];
 
                     gradUx[celli] +=
                         AinvLocal_[celli]
-                      & ((pointRhoU[mpti].x() - U[celli].x())*d);
+                      & ((pU[pi].x() - U[celli].x())*d);
 
                     gradUy[celli] +=
                         AinvLocal_[celli]
-                      & ((pointRhoU[mpti].y() - U[celli].y())*d);
+                      & ((pU[pi].y() - U[celli].y())*d);
 
                     gradUz[celli] +=
                         AinvLocal_[celli]
-                      & ((pointRhoU[mpti].z() - U[celli].z())*d);
-
-                    for (label i = 0; i < 7; i++)
-                    {
-                        scalar si(i);
-                        d =
-                            (
-                                (
-                                    (si + 1.0)*points_[mpti]
-                                  + (
-                                        (7.0 - si)
-                                       *Cf_.boundaryField()[patchi][facei]
-                                    )
-                                )/8.0
-                            ) - C_[celli];
-
-                        gradUx[celli] +=
-                            AinvLocal_[celli]
-                          & ((pointRhoU[mpti].x() - U[celli].x())*d);
-
-                        gradUy[celli] +=
-                            AinvLocal_[celli]
-                          & ((pointRhoU[mpti].y() - U[celli].y())*d);
-
-                        gradUz[celli] +=
-                            AinvLocal_[celli]
-                          & ((pointRhoU[mpti].z() - U[celli].z())*d);
-                    }
+                      & ((pU[pi].z() - U[celli].z())*d);
                 }
             }
         }
@@ -522,7 +628,8 @@ tmp<volTensorField> gradientSchemes::localGradient
 
     forAll(gradU, celli)
     {
-        gradU[celli] = tensor(gradUx[celli], gradUy[celli], gradUz[celli]);
+        gradU[celli] =
+            tensor(gradUx[celli], gradUy[celli], gradUz[celli]);
     }
 
     return tgradU;
@@ -570,7 +677,7 @@ void gradientSchemes::reconstruct
                 gradU.boundaryField()[patchi].patchNeighbourField()
             );
 
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pdOwn, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
@@ -585,16 +692,16 @@ void gradientSchemes::reconstruct
         else
         {
             const vectorField pd(patch.delta());
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pd, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
 
-                UOwn.boundaryFieldRef()[patchi][facei] =
+                UNei.boundaryFieldRef()[patchi][facei] =
                     U[celli] + (gradU[celli] & pd[facei]);
             }
-            UNei.boundaryFieldRef()[patchi] =
-                UOwn.boundaryField()[patchi];
+            UOwn.boundaryFieldRef()[patchi] =
+                UNei.boundaryField()[patchi];
         }
     }
 }
@@ -641,7 +748,7 @@ void gradientSchemes::reconstruct
                 gradU.boundaryField()[patchi].patchNeighbourField()
             );
 
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pdOwn, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
@@ -656,16 +763,16 @@ void gradientSchemes::reconstruct
         else
         {
             const vectorField pd(patch.delta());
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pd, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
 
-                UOwn.boundaryFieldRef()[patchi][facei] =
+                UNei.boundaryFieldRef()[patchi][facei] =
                     U[celli] + (gradU[celli] & pd[facei]);
             }
-            UNei.boundaryFieldRef()[patchi] =
-                UOwn.boundaryField()[patchi];
+            UOwn.boundaryFieldRef()[patchi] =
+                UNei.boundaryField()[patchi];
         }
     }
 }
@@ -766,7 +873,7 @@ void gradientSchemes::reconstruct
                 gradUz.boundaryField()[patchi].patchNeighbourField()
             );
 
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pdOwn, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
@@ -793,12 +900,12 @@ void gradientSchemes::reconstruct
         else
         {
             const vectorField pd(patch.delta());
-            forAll(mesh_.boundaryMesh()[patchi], facei)
+            forAll(pd, facei)
             {
                 const label& celli =
                     mesh_.boundaryMesh()[patchi].faceCells()[facei];
 
-                UOwn.boundaryFieldRef()[patchi][facei] =
+                UNei.boundaryFieldRef()[patchi][facei] =
                     tensor
                     (
                         Ux[celli] + (gradUx[celli] & pd[facei]),
@@ -806,8 +913,8 @@ void gradientSchemes::reconstruct
                         Uz[celli] + (gradUz[celli] & pd[facei])
                     );
             }
-            UNei.boundaryFieldRef()[patchi] =
-                UOwn.boundaryField()[patchi];
+            UOwn.boundaryFieldRef()[patchi] =
+                UNei.boundaryField()[patchi];
         }
     }
 }

@@ -80,7 +80,6 @@ $(nonLinGeomLaws)/viscoNeoHookeanElastic/viscoNeoHookeanElastic.C
 
 materialModels/thermalModel/thermalModel.C
 
-fvPatchFields = fvPatchFields
 fvPatchFields/analyticalPlateHoleTraction/analyticalPlateHoleTractionFvPatchVectorField.C
 fvPatchFields/displacementOrTraction/displacementOrTractionFvPatchVectorField.C
 fvPatchFields/fixedDisplacement/fixedDisplacementFvPatchVectorField.C
@@ -100,6 +99,23 @@ fvPatchFields/solidDirectionMixed/solidDirectionMixedFvPatchVectorField.C
 fvPatchFields/thermalConvection/thermalConvectionFvPatchScalarField.C
 fvPatchFields/convectiveFlux/convectiveFluxFvPatchScalarField.C
 
+fvPatchFields/solidContact/solidContactFvPatchVectorField.C
+fvPatchFields/solidContact/solidContactFvPatchVectorFieldCalcContact.C
+
+contactModels = fvPatchFields/solidContact/contactModels
+normalContactModels = $(contactModels)/normalContactModels
+$(normalContactModels)/normalContactModel/normalContactModel.C
+$(normalContactModels)/normalContactModel/newNormalContactModel.C
+$(normalContactModels)/standardPenalty/standardPenalty.C
+frictionContactModels = $(contactModels)/frictionContactModels
+$(frictionContactModels)/frictionContactModel/frictionContactModel.C
+$(frictionContactModels)/frictionContactModel/newFrictionContactModel.C
+$(frictionContactModels)/frictionless/frictionless.C
+$(frictionContactModels)/standardPenaltyFriction/standardPenaltyFriction.C
+$(frictionContactModels)/frictionLaws/frictionLaw/frictionLaw.C
+$(frictionContactModels)/frictionLaws/frictionLaw/newFrictionLaw.C
+$(frictionContactModels)/frictionLaws/coulombFriction/coulombFriction.C
+
 functionObjects/hotCylinderAnalyticalSolution/hotCylinderAnalyticalSolution.C
 functionObjects/setInletVelocity/setInletVelocity.C
 functionObjects/solidForces/solidForces.C
@@ -116,5 +132,47 @@ functionObjects/solidTractions/solidTractions.C
 functionObjects/centrifugalBodyForce/centrifugalBodyForce.C
 functionObjects/patchAvgTractionHistory/patchAvgTractionHistory.C
 functionObjects/pointHistory/pointHistory.C
+
+dynamicFvMesh/simpleCrackerFvMesh/simpleCrackerFvMesh.C
+dynamicFvMesh/crackerFvMesh/crackerFvMesh.C
+
+dynamicFvMesh/simpleCrackerFvMesh/simpleCohesiveZone/simpleCohesiveZoneFvPatchVectorField.C
+
+simpleCohesiveZones = dynamicFvMesh/simpleCrackerFvMesh/simpleCohesiveZone/simpleCohesiveZoneLaws
+$(simpleCohesiveZones)/simpleCohesiveZoneLaw/simpleCohesiveZoneLaw.C
+$(simpleCohesiveZones)/Dugdale/DugdaleSimpleCohesiveZoneLaw.C
+$(simpleCohesiveZones)/linear/linearSimpleCohesiveZoneLaw.C
+
+dynamicFvMesh/crackerFvMesh/cohesivePolyPatch/cohesivePolyPatch.C
+dynamicFvMesh/crackerFvMesh/cohesivePointPatch/cohesivePointPatch.C
+dynamicFvMesh/crackerFvMesh/cohesiveFvPatch/cohesiveFvPatch.C
+dynamicFvMesh/crackerFvMesh/faceCracker/faceCracker.C
+dynamicFvMesh/crackerFvMesh/faceCracker/detachFaceCracker.C
+
+dynamicFvMesh/crackerFvMesh/solidCohesive/solidCohesiveFvPatchVectorField.C
+
+cohesiveZoneModels = dynamicFvMesh/crackerFvMesh/solidCohesive/cohesiveZoneModels
+$(cohesiveZoneModels)/cohesiveZoneModel/cohesiveZoneModel.C
+$(cohesiveZoneModels)/cohesiveZoneModel/newCohesiveZoneModel.C
+$(cohesiveZoneModels)/modeICohesiveZoneModel/modeICohesiveZoneModel.C
+$(cohesiveZoneModels)/fixedMixedModeCohesiveZoneModel/fixedMixedModeCohesiveZoneModel.C
+$(cohesiveZoneModels)/variableMixedModeCohesiveZoneModel/variableMixedModeCohesiveZoneModel.C
+
+faceBreakerLaws = dynamicFvMesh/crackerFvMesh/faceBreakerLaws
+$(faceBreakerLaws)/faceBreakerLaw/faceBreakerLaw.C
+$(faceBreakerLaws)/faceBreakerLaw/newFaceBreakerLaw.C
+$(faceBreakerLaws)/cohesiveZoneInitiation/cohesiveZoneInitiation.C
+
+crackPathLimiters = $(faceBreakerLaws)/faceBreakerLaw/crackPathLimiters
+$(crackPathLimiters)/crackPathLimiter/crackPathLimiter.C
+$(crackPathLimiters)/crackPathLimiter/newCrackPathLimiter.C
+$(crackPathLimiters)/boundingBoxLimiter/boundingBoxLimiter.C
+
+dynamicFvMesh/cellRemovalFvMesh/cellRemovalFvMesh.C
+
+cellRemovalLaws = dynamicFvMesh/cellRemovalFvMesh/cellRemovalLaws
+$(cellRemovalLaws)/cellRemovalLaw/cellRemovalLaw.C
+$(cellRemovalLaws)/cellRemovalLaw/newCellRemovalLaw.C
+$(cellRemovalLaws)/epsilonPEqCellRemovalLaw/epsilonPEqCellRemovalLaw.C
 
 LIB = $(BLAST_LIBBIN)/libsolids4Foam

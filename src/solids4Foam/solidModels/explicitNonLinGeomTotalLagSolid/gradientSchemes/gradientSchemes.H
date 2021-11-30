@@ -137,7 +137,8 @@ public:
             tmp<volTensorField> localGradient
             (
                 const GeometricField<vector, fvPatchField, volMesh>&,
-                const GeometricField<vector, fvsPatchField, surfaceMesh>&
+                const GeometricField<vector, fvsPatchField, surfaceMesh>&,
+                const GeometricField<vector, pointPatchField, pointMesh>&
             ) const;
 
             //- Reconstruction of a volScalarField to surfaceScalarField

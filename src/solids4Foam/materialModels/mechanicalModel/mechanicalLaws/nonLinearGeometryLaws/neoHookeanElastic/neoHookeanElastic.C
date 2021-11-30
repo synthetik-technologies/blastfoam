@@ -53,14 +53,10 @@ Foam::neoHookeanElastic::neoHookeanElastic
     K_("K", dimPressure, 0.0)
 {
     // Read mechanical properties
-    if
-    (
-        dict.found("E") && dict.found("nu")
-     && !dict.found("mu") && !dict.found("K")
-    )
+    if (dict.found("E") && dict.found("nu"))
     {
-        const dimensionedScalar E = dimensionedScalar(dict.lookup("E"));
-        const dimensionedScalar nu = dimensionedScalar(dict.lookup("nu"));
+        const dimensionedScalar E("E", dimPressure, dict);
+        const dimensionedScalar nu("nu", dimless, dict);
 
         mu_ = (E/(2.0*(1.0 + nu)));
 
@@ -73,18 +69,14 @@ Foam::neoHookeanElastic::neoHookeanElastic
             K_ = (nu*E/((1.0 + nu)*(1.0 - 2.0*nu))) + (2.0/3.0)*mu_;
         }
     }
-    else if
-    (
-        dict.found("mu") && dict.found("K")
-     && !dict.found("E") && !dict.found("nu")
-    )
+    else if (dict.found("mu") && dict.found("K"))
     {
-        mu_ = dimensionedScalar(dict.lookup("mu"));
-        K_ = dimensionedScalar(dict.lookup("K"));
+        mu_ = dimensionedScalar("mu", dimless, dict);
+        K_ = dimensionedScalar("K", dimPressure, dict);
     }
     else
     {
-        FatalErrorIn(type())
+        FatalErrorInFunction
             << "Either E and nu or mu and K should be specified"
             << abort(FatalError);
     }
@@ -171,7 +163,7 @@ void Foam::neoHookeanElastic::correct(volSymmTensorField& sigma)
     }
 
     // Calculate the Jacobian of the deformation gradient
-    const volScalarField J(det(F()));
+    const volScalarField& J(this->J());
 
     // Calculate the volume preserving left Cauchy Green strain
     const volSymmTensorField bEbar(pow(J, -2.0/3.0)*symm(F() & F().T()));
@@ -180,7 +172,7 @@ void Foam::neoHookeanElastic::correct(volSymmTensorField& sigma)
     const volSymmTensorField s(mu_*dev(bEbar));
 
     // Calculate the Cauchy stress
-    sigma = (1.0/J)*(0.5*K_*(pow(J, 2) - 1)*I + s);
+    sigma = (1.0/J)*(0.5*K_*(sqr(J) - 1.0)*I + s);
 }
 
 
@@ -195,7 +187,7 @@ void Foam::neoHookeanElastic::correct(surfaceSymmTensorField& sigma)
     }
 
     // Calculate the Jacobian of the deformation gradient
-    const surfaceScalarField J(det(Ff()));
+    const surfaceScalarField& J(this->Jf());
 
     // Calculate left Cauchy Green strain tensor with volumetric term removed
     const surfaceSymmTensorField bEbar(pow(J, -2.0/3.0)*symm(Ff() & Ff().T()));
@@ -204,7 +196,7 @@ void Foam::neoHookeanElastic::correct(surfaceSymmTensorField& sigma)
     const surfaceSymmTensorField s(mu_*dev(bEbar));
 
     // Calculate the Cauchy stress
-    sigma = (1.0/J)*(0.5*K_*(pow(J, 2) - 1)*I + s);
+    sigma = (1.0/J)*(0.5*K_*(sqr(J) - 1.0)*I + s);
 }
 
 

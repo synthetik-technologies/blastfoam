@@ -93,15 +93,8 @@ void Foam::linearElastic::calculateHydrostaticStress
         }
         else
         {
-            FatalErrorIn
-            (
-                "void Foam::linearElasticMisesPlastic::"
-                "calculateHydrostaticStress\n"
-                "(\n"
-                "    volScalarField& sigmaHyd,\n"
-                "    const volScalarField& trEpsilon\n"
-                ")"
-            )   << "Cannot find the DEqnA or DDEqnA field: this should be "
+            FatalErrorInFunction
+                << "Cannot find the DEqnA or DDEqnA field: this should be "
                 << "stored in the solidModel" << abort(FatalError);
         }
         const volScalarField& AD = *ADPtr;
@@ -158,14 +151,8 @@ void Foam::linearElastic::calculateHydrostaticStress
 {
     if (solvePressureEqn_)
     {
-        FatalErrorIn
-        (
-            "void Foam::linearElastic::calculateHydrostaticStress\n"
-            "(\n"
-            "    surfaceScalarField& sigmaHyd,\n"
-            "    const surfaceScalarField& trEpsilon\n"
-            ")"
-        )   << "'solvePressureEqn' option only implemented for volField stress "
+        FatalErrorInFunction
+            << "'solvePressureEqn' option only implemented for volField stress "
             << "calculation" << abort(FatalError);
     }
     else
@@ -232,7 +219,7 @@ Foam::linearElastic::linearElastic
     (
         IOobject
         (
-            "epsilon",
+            type() + ":epsilon",
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
@@ -245,7 +232,7 @@ Foam::linearElastic::linearElastic
     (
         IOobject
         (
-            "epsilonf",
+            type() + ":epsilonf",
             mesh.time().timeName(),
             mesh,
             IOobject::READ_IF_PRESENT,
@@ -275,6 +262,7 @@ Foam::linearElastic::linearElastic
 {
     // Force storage of strain old time
     epsilon_.oldTime();
+    epsilonf_.oldTime();
 
     // Read elastic parameters
     // The user can specify E and nu or mu and K
@@ -315,10 +303,8 @@ Foam::linearElastic::linearElastic
     }
     else
     {
-        FatalErrorIn
-        (
-            "linearElasticMisesPlastic::linearElasticMisesPlastic::()"
-        )   << "Either E and nu or mu and K elastic parameters should be "
+        FatalErrorInFunction
+            << "Either E and nu or mu and K elastic parameters should be "
             << "specified" << abort(FatalError);
     }
 
@@ -335,22 +321,15 @@ Foam::linearElastic::linearElastic
     // Check for physical Poisson's ratio
     if (nu_.value() < -1.0 || nu_.value() > 0.5)
     {
-        FatalErrorIn
-        (
-            "Foam::linearElastic::linearElastic\n"
-            "(\n"
-            "    const word& name,\n"
-            "    const fvMesh& mesh,\n"
-            "    const dictionary& dict\n"
-            ")"
-        )   << "Unphysical Poisson's ratio: nu should be >= -1.0 and <= 0.5"
+        FatalErrorInFunction
+            << "Unphysical Poisson's ratio: nu should be >= -1.0 and <= 0.5"
             << abort(FatalError);
     }
 
     // Check for incompressibility or quasi-incompressibility
     if (nu_.value() > 0.49 && !solvePressureEqn_)
     {
-        WarningIn(type() + "::" + type())
+        WarningInFunction
             << "Poisson's ratio is greater than 0.49: "
             << "consider setting 'solvePressureEqn' to 'yes'!" << endl;
     }
@@ -553,11 +532,8 @@ void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
     {
         if (mesh().solutionD()[vector::Z] > -1)
         {
-            FatalErrorIn
-            (
-                "void Foam::linearElasticMisesPlastic::"
-                "correct(surfaceSymmTensorField& sigma)"
-            )   << "For planeStress, this material law assumes the empty "
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
                 << "direction is the Z direction!" << abort(FatalError);
         }
 

@@ -462,7 +462,7 @@ bool Foam::mechanicalLaw::updateF
     {
         if (!incremental())
         {
-            FatalErrorIn(type() + "::correct(volSymmTensorField& sigma)")
+            FatalErrorInFunction
                 << "Not implemented for non-incremental updated Lagrangian"
                 << abort(FatalError);
         }
@@ -482,11 +482,8 @@ bool Foam::mechanicalLaw::updateF
 
         if (enforceLinear())
         {
-            WarningIn
-            (
-                "void Foam::MooneyRivlinThreeParametersElastic::"
-                "correct(volSymmTensorField& sigma)"
-            )   << "Material linearity enforced for stability!" << endl;
+            WarningInFunction
+                << "Material linearity enforced for stability!" << endl;
 
             // Calculate stress using Hooke's law
             sigma =
@@ -516,10 +513,9 @@ bool Foam::mechanicalLaw::updateF
 
             if (enforceLinear())
             {
-                WarningIn
-                (
-                    "void " + type() + "::correct(volSymmTensorField& sigma)"
-                )   << "Material linearity enforced for stability!" << endl;
+                WarningInFunction
+                    << "Material linearity enforced for stability!"
+                    << endl;
 
                 // Calculate stress using Hooke's law
                 sigma =
@@ -560,10 +556,9 @@ bool Foam::mechanicalLaw::updateF
     }
     else
     {
-        FatalErrorIn
-        (
-            "void " + type() + "::correct(volSymmTensorField& sigma)"
-        )   << "Unknown nonLinGeom type: " << nonLinGeom() << abort(FatalError);
+        FatalErrorInFunction
+            << "Unknown nonLinGeom type: " << nonLinGeom()
+            << abort(FatalError);
     }
 
     // linearised elasticity was not enforced

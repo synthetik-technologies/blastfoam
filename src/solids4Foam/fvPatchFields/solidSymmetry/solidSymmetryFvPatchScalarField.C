@@ -56,22 +56,13 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 {
     if (!isType<symmetryFvPatch>(this->patch()))
     {
-        FatalErrorIn
-        (
-            "solidSymmetryFvPatchScalarField::"
-            "solidSymmetryFvPatchScalarField\n"
-            "(\n"
-            "    const solidSymmetryFvPatchScalarField& ptf,\n"
-            "    const fvPatch& p,\n"
-            "    const DimensionedField<scalar, volMesh>& iF,\n"
-            "    const fvPatchFieldMapper& mapper\n"
-            ")\n"
-        )   << "\n    patch type '" << p.type()
+        FatalErrorInFunction
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << this->internalField().name()
             << " in file " << this->internalField().objectPath()
-            << exit(FatalIOError);
+            << exit(FatalError);
     }
 }
 
@@ -90,22 +81,13 @@ solidSymmetryFvPatchScalarField::solidSymmetryFvPatchScalarField
 
     if (!isType<symmetryFvPatch>(p))
     {
-        FatalIOErrorIn
-        (
-            "solidSymmetryFvPatchScalarField::"
-            "solidSymmetryFvPatchScalarField\n"
-            "(\n"
-            "    const fvPatch& p,\n"
-            "    const Field<scalar>& field,\n"
-            "    const dictionary& dict\n"
-            ")\n",
-            dict
-        )   << "\n    patch type '" << p.type()
+        FatalErrorInFunction
+            << "\n    patch type '" << p.type()
             << "' not constraint type '" << typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << this->internalField().name()
             << " in file " << this->internalField().objectPath()
-            << exit(FatalIOError);
+            << exit(FatalError);
     }
 }
 

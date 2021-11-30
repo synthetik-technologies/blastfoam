@@ -142,6 +142,9 @@ explicitNonLinGeomTotalLagSolid::tractionBoundaryTypes() const
 
 void explicitNonLinGeomTotalLagSolid::updateStress()
 {
+    // Update gradient of displacement
+    gradD() = gradSchemes_.gradient(D());
+
     // Update increment of displacement
     DD() = D() - D().oldTime();
 
@@ -150,6 +153,11 @@ void explicitNonLinGeomTotalLagSolid::updateStress()
 
     // Calculate the stress using run-time selectable mechanical law
     mechanical().correct(sigma());
+
+    P_ = J_*(sigma() & ops_.invT(F_));
+
+    impK_ = mechanical().impK();
+    impKf_ = mechanical().impKf();
 }
 
 
@@ -177,30 +185,30 @@ void explicitNonLinGeomTotalLagSolid::solveGEqns
     // Update linear momentum
     rhoU_ += deltaT*rhoURHS;
     U() = rhoU_/rho();
+    U().correctBoundaryConditions();
 
     // Update coordinates
     surfaceScalarField rhof(fvc::interpolate(rho()));
     Uf_ = rhoUf_/rhof;
 
-    volVectorField DOld(D());
     D() += deltaT*U();
     D().correctBoundaryConditions();
     forAll(D().boundaryField(), patchi)
     {
+        const polyPatch& patch = mesh().boundaryMesh()[patchi];
         fvPatchVectorField& pD(D().boundaryFieldRef()[patchi]);
-        if (pD.fixesValue())
+        if (!polyPatch::constraintType(patch.type()))
         {
-            pD.evaluate();
             fvPatchVectorField& pU(U().boundaryFieldRef()[patchi]);
             const fvPatchVectorField& pDOld
             (
-                DOld.boundaryFieldRef()[patchi]
+                D().oldTime().boundaryFieldRef()[patchi]
             );
             pU = (pD - pDOld)/deltaT.value();
+            rhoU_.boundaryFieldRef()[patchi] =
+                rho().boundaryField()[patchi]*U().boundaryField()[patchi];
         }
     }
-    rhoU_.boundaryFieldRef() =
-        rho().boundaryField()*U().boundaryField();
 
     // Update deformation gradient tensor
     F_ += deltaT*fvc::div(Uf_*mesh().Sf());
@@ -209,25 +217,20 @@ void explicitNonLinGeomTotalLagSolid::solveGEqns
     xf_ = fvc::interpolate(x_);
 
     mech_.correctN(F_);
-
-    // Update gradient of displacement
-    gradD() = gradSchemes_.gradient(D());
 }
 
 
 void explicitNonLinGeomTotalLagSolid::updateFluxes()
 {
     J_ = det(F_);
-    updateStress();
-
     mech_.correct(pWaveSpeed_, sWaveSpeed_, F_);
 
     pWaveSpeed_ =
         sqrt(mechanical().elasticModulus()/rho())/beta_/mech_.stretch();
     sWaveSpeed_ =
         sqrt(mechanical().shearModulus()/rho())*beta_/mech_.stretch();
-    P_ = J_*(sigma() & ops_.invT(F_));
-    P_.correctBoundaryConditions();
+
+    updateStress();
 
     // Cell gradients
     const surfaceVectorField& N = mech_.N();
@@ -291,10 +294,10 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
     // Acoustic Riemann solver
     tractionf_ =
         0.5*(tractionOwn + tractionNei)
-      + (0.5*stabRhoU & (rhoUNei - rhoUOwn));
+      + 0.5*(stabRhoU & (rhoUNei - rhoUOwn));
     rhoUf_ =
         0.5*(rhoUOwn + rhoUNei)
-      + (0.5*stabTraction & (tractionNei - tractionOwn));
+      + 0.5*(stabTraction & (tractionNei - tractionOwn));
 
     D().correctBoundaryConditions();
     traction_.correctBoundaryConditions();
@@ -431,10 +434,13 @@ void explicitNonLinGeomTotalLagSolid::updateFluxes()
     }
 
     // Nodal linear momentum
-    volVectorField rhoUAvg(interpSchemes_.surfaceToVol(rhoUf_));
+    volVectorField rhoUAvg
+    (
+        interpSchemes_.surfaceToVol(rhoUf_, pointRhoU_)
+    );
     volTensorField gradRhoUAvg
     (
-        gradSchemes_.localGradient(rhoUAvg, rhoUf_)
+        gradSchemes_.localGradient(rhoUAvg, rhoUf_, pointRhoU_)
     );
     interpSchemes_.volToPoint(rhoUAvg, gradRhoUAvg, pointRhoU_);
 
@@ -477,7 +483,7 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
             mesh.time().timeName(),
             mesh,
             IOobject::NO_READ,
-            IOobject::NO_WRITE
+            IOobject::AUTO_WRITE
         ),
         det(F_)
     ),
@@ -648,8 +654,9 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
             IOobject::NO_WRITE
         ),
         sqrt(mechanical().shearModulus()/rho())*beta_/mech_.stretch()
-    )
-
+    ),
+    impK_(mechanical().impK()),
+    impKf_(mechanical().impKf())
 {
     mechanical().setUseSolidDeformation();
 
@@ -658,10 +665,13 @@ explicitNonLinGeomTotalLagSolid::explicitNonLinGeomTotalLagSolid
     DisRequired();
 
     // Nodal linear momentum
-    volVectorField rhoUAvg(interpSchemes_.surfaceToVol(rhoUf_));
+    volVectorField rhoUAvg
+    (
+        interpSchemes_.surfaceToVol(rhoUf_, pointRhoU_)
+    );
     volTensorField gradRhoUAvg
     (
-        gradSchemes_.localGradient(rhoUAvg, rhoUf_)
+        gradSchemes_.localGradient(rhoUAvg, rhoUf_, pointRhoU_)
     );
     interpSchemes_.volToPoint(rhoUAvg, gradRhoUAvg, pointRhoU_);
 

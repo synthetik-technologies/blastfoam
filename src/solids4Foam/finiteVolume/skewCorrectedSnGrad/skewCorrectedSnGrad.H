@@ -37,8 +37,6 @@ SourceFiles
 
 \*---------------------------------------------------------------------------*/
 
-#ifdef OPENFOAMESIORFOUNDATION
-
 #ifndef skewCorrectedSnGrad_H
 #define skewCorrectedSnGrad_H
 
@@ -160,7 +158,5 @@ tmp<surfaceVectorField> skewCorrectedSnGrad<vector>::correction
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif
-
-#endif // end of #ifdef OPENFOAMESIORFOUNDATION
 
 // ************************************************************************* //

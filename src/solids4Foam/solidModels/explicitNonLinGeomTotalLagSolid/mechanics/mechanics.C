@@ -139,11 +139,11 @@ void mechanics::correct
 
     // Stretch
     volTensorField C(F.T() & F);
-    forAll(mesh_.cells(), cell)
+    forAll(mesh_.cells(), celli)
     {
-        ops_.eigenStructure(C[cell]);
-        vector eigVal_ = ops_.eigenValue();
-        stretch_[cell] = sqrt(cmptMin(eigVal_));
+        ops_.eigenStructure(C[celli]);
+        vector eigVal = ops_.eigenValue();
+        stretch_[celli] = sqrt(cmptMin(eigVal));
     }
 
     if (Pstream::parRun())

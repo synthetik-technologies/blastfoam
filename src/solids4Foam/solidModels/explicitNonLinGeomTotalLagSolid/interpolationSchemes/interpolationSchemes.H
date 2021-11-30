@@ -58,13 +58,14 @@ class interpolationSchemes
         const labelUList& own_;
 
         //- Material cell centre coordinates
-        const volVectorField& X_;
+        const volVectorField& C_;
 
         //- Material face centre coordinates
-        const surfaceVectorField& XF_;
+        const surfaceVectorField& Cf_;
 
         //- Material nodal coordinates
-        const pointField& XN_;
+        const pointField& points_;
+
 
 private:
 
@@ -97,7 +98,8 @@ public:
             //- Surface to volume interpolation
             tmp<volVectorField> surfaceToVol
             (
-                const GeometricField<vector, fvsPatchField, surfaceMesh>&
+                const GeometricField<vector, fvsPatchField, surfaceMesh>&,
+                const GeometricField<vector, pointPatchField, pointMesh>&
             ) const;
 
             //- Helper: push master point data to collocated points
@@ -117,8 +119,8 @@ public:
             void volToPoint
             (
                 const GeometricField<vector, fvPatchField, volMesh>& U,
-                const GeometricField<tensor, fvPatchField, volMesh>& Ugrad,
-                GeometricField<vector, pointPatchField, pointMesh>& Un
+                const GeometricField<tensor, fvPatchField, volMesh>& gradU,
+                GeometricField<vector, pointPatchField, pointMesh>& pU
             ) const;
 
             //- Point to surface interpolation

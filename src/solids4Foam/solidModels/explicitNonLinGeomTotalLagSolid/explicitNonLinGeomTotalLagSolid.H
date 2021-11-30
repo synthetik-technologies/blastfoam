@@ -148,6 +148,14 @@ class explicitNonLinGeomTotalLagSolid
         //- Shear wave speed field
         volScalarField sWaveSpeed_;
 
+        //- Implicit stiffness; coefficient of the Laplacian term
+        //  The value of this term only affects convergence and not the answer
+        //  In the case of Hookean elasticity, (2*mu + lambda) is the optimum
+        volScalarField impK_;
+
+        //- Implicit stiffness surface field
+        surfaceScalarField impKf_;
+
         //- Energy calculation
 //         mechanicalEnergies energies_;
 

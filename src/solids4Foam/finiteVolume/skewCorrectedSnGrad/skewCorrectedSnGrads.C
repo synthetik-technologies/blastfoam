@@ -25,8 +25,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifdef OPENFOAMESIORFOUNDATION
-
 #include "skewCorrectedSnGrad.H"
 #include "fvMesh.H"
 
@@ -58,7 +56,5 @@ Foam::fv::skewCorrectedSnGrad<Foam::vector>::correction
     return fullGradCorrection(vvf);
 }
 
-
-#endif // end of #ifdef OPENFOAMESIORFOUNDATION
 
 // ************************************************************************* //

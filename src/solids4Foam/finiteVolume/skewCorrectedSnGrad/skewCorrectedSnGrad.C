@@ -25,8 +25,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifdef OPENFOAMESIORFOUNDATION
-
 #include "skewCorrectedSnGrad.H"
 #include "volFields.H"
 #include "surfaceFields.H"
@@ -62,10 +60,6 @@ Foam::fv::skewCorrectedSnGrad<Type>::fullGradCorrection
         )
     );
     GeometricField<Type, fvsPatchField, surfaceMesh>& ssf = tssf.ref();
-
-#ifdef OPENFOAMESI
-    ssf.setOriented();
-#endif
     ssf = dimensioned<Type>(ssf.dimensions(), Zero);
 
 
@@ -250,9 +244,6 @@ Foam::fv::skewCorrectedSnGrad<Type>::correction
         )
     );
     GeometricField<Type, fvsPatchField, surfaceMesh>& ssf = tssf.ref();
-#ifdef OPENFOAMESI
-    ssf.setOriented();
-#endif
 
     for (direction cmpt = 0; cmpt < pTraits<Type>::nComponents; ++cmpt)
     {
@@ -268,6 +259,5 @@ Foam::fv::skewCorrectedSnGrad<Type>::correction
 }
 
 
-#endif // end of #ifdef OPENFOAMESIORFOUNDATION
 
 // ************************************************************************* //

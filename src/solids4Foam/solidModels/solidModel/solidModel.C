@@ -795,6 +795,10 @@ Foam::solidModel::solidModel
     ),
     globalPatches_(globalPolyBoundaryMesh::New(mesh))
 {
+    if (nonlinear == nonLinearGeometry::UPDATED_LAGRANGIAN)
+    {
+        globalPatches_.setDisplacementField(mesh.name(), "D");
+    }
     // Force old time fields to be stored
     D_.oldTime().oldTime();
     DD_.oldTime().oldTime();
@@ -979,6 +983,9 @@ Foam::tmp<Foam::vectorField> Foam::solidModel::faceZoneAcceleration
 void Foam::solidModel::updateTotalFields()
 {
     mechanical().updateTotalFields();
+
+    //- Clear global Patches since displacement may have changed
+    globalPatches_.movePoints();
 }
 
 
