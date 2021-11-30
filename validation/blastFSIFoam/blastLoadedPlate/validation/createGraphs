@@ -5,7 +5,7 @@ createDEps()
     echo "creating wall velocity plot"
     gnuplot<<EOF
 
-    D(x)=abs(x/$3);
+    D(x)=abs(x/$3/$4);
     ms(t)=$4*t*1000;
     stats '<sed -e "s/[(,)]//g" $1/D' using (D(\$2))
     show variables STATS_max
@@ -19,7 +19,7 @@ createDEps()
     set size 2,2
     set autoscale
     set xrange [0:4]
-    set yrange [0:2.2]
+#     set yrange [0:2.2]
     set mxtic 4
     set mytic 4
     plot'<sed -e "s/[(,)]//g" $1/D' using (ms(\$1)):(D(\$3)) title 'blastFoam' \
@@ -68,8 +68,8 @@ fi
 BLASTFOAM="../postProcessing/plateProbes/plate/0"
 VALIDATION="validationData"
 
-th=0.02
-S=2
+th=$(foamDictionary ../properties -entry thickness -value)
+S=$(foamDictionary ../properties -entry S -value)
 
 createDEps $BLASTFOAM $VALIDATION $th $S
 # createDEps $BLASTFOAM $VALIDATION

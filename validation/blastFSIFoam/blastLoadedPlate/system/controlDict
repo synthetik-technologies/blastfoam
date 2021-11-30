@@ -49,6 +49,8 @@ maxCo 0.5;
 
 adjustTimeStep yes;
 
+#include "../properties"
+
 functions
 {
     plateProbes
@@ -57,7 +59,7 @@ functions
         adjustLocations yes;
         region plate;
 
-        probeLocations ((0 0 0));
+        probeLocations ((0 $nthickness 0));
         fields (U D);
     }
 }

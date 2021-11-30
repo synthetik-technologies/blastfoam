@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../../geometry"
+#include "../../properties"
 
 fields (alpha.tnt);
 nBufferLayers 1;
@@ -30,14 +30,12 @@ regions
 (
     sphericalMassToCell
     {
-//         centre  ($R 0 0);
         centre  (0 $R 0);
         mass    $W;
         rho     1630;
 
         backup
         {
-//             centre ($R 0 0);
             centre  (0 $R 0);
             radius 0.25;
         }

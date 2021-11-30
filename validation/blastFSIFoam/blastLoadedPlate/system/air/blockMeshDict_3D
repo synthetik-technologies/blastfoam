@@ -13,13 +13,14 @@ FoamFile
     object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "../../geometry"
+#include "../../geometry_3D"
 
 blocks
 (
-//     hex (0 1 4 3 0 1 9 8) ($nxPlate $nyPlate 1) simpleGrading (1 1 1)
-    hex (0 1 3 2 8 9 11 10) ($nxPlate $nyPlate $nxPlate) simpleGrading (1 1 1)
+    hex (2 3 6 5 10 11 14 13) ($nx0 $ny $nx0 ) simpleGrading (1 1 1)
+    hex (3 4 7 6 11 12 15 14) ($nx1 $ny $nx0) simpleGrading (1 1 1)
+    hex (10 11 14 13 16 17 20 19) ($nx0 $ny $nx1) simpleGrading (1 1 1)
+    hex (11 12 15 14 17 18 21 20) ($nx1 $ny $nx1) simpleGrading (1 1 1)
 );
 
 edges
@@ -28,35 +29,40 @@ edges
 
 boundary
 (
-    plate_to_air
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (5 6 14 13)
+            (6 7 15 14)
+            (13 14 19 20)
+            (14 15 21 20)
+            (4 12 15 7)
+            (12 18 21 15)
+            (17 18 21 20)
+            (16 17 20 19)
+        );
+    }
+    ground
+    {
+        type wall;
+        faces
+        (
+            (3 4 12 11)
+            (11 12 18 17)
+            (10 11 17 16)
+        );
+    }
+    air_to_plate
     {
         type patch;
         sampleMode nearestPatchFace;
-        sampleRegion air;
-        samplePatch air_to_plate;
+        sampleRegion plate;
+        samplePatch plate_to_air;
         faces
         (
-//             (1 4 9 1)
             (2 3 11 10)
-        );
-    }
-    plateEnd
-    {
-        type patch;
-        faces
-        (
-//              (3 4 9 8)
-            (1 3 11 9)
-            (8 9 11 10)
-        );
-    }
-    plateFree
-    {
-        type patch;
-        faces
-        (
-//              (0 3 8 0)
-            (0 1 9 8)
         );
     }
     symmetry0
@@ -64,7 +70,8 @@ boundary
         type symmetry;
         faces
         (
-             (0 1 3 2)
+            (2 3 6 5)
+            (3 4 7 6)
         );
     }
     symmetry1
@@ -72,25 +79,10 @@ boundary
         type symmetry;
         faces
         (
-             (0 8 10 2)
+            (2 10 13 5)
+            (10 16 19 13)
         );
     }
-//     wedge0
-//     {
-//         type wedge;
-//         faces
-//         (
-//              (0 1 4 3)
-//         );
-//     }
-//     wedge1
-//     {
-//         type wedge;
-//         faces
-//         (
-//              (0 1 9 8)
-//         );
-//     }
 );
 
 mergePatchPairs
