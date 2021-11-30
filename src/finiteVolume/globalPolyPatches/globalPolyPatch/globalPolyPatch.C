@@ -486,7 +486,6 @@ void Foam::globalPolyPatch::clearOut() const
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-// Construct from components
 Foam::globalPolyPatch::globalPolyPatch
 (
     const dictionary& dict,
@@ -510,13 +509,33 @@ Foam::globalPolyPatch::globalPolyPatch
 }
 
 
+Foam::globalPolyPatch::globalPolyPatch
+(
+    const polyPatch& patch,
+    const word& displacementField
+)
+:
+    mesh_(patch.boundaryMesh().mesh()),
+    patchName_(patch.name()),
+    patch_(mesh_.boundaryMesh()[mesh_.boundaryMesh().findPatchID(patchName_)]),
+    displacementField_(displacementField),
+    globalPatchPtr_(NULL),
+    pointToGlobalAddrPtr_(NULL),
+    faceToGlobalAddrPtr_(NULL),
+    globalMasterToCurrentProcPointAddrPtr_(NULL),
+    interpPtr_(NULL)
+{
+    check();
+}
+
+
 Foam::autoPtr<Foam::globalPolyPatch> Foam::globalPolyPatch::New
 (
     const dictionary& dict,
     const polyPatch& patch
 )
 {
-    if (!dict.found(patch.name()))
+    if (!patch.coupled())
     {
         return autoPtr<globalPolyPatch>
         (
@@ -628,6 +647,15 @@ void Foam::globalPolyPatch::movePoints()
     if (globalPatchPtr_.valid())
     {
         globalPatchPtr_->movePoints(patch_.points());
+    }
+}
+
+
+void Foam::globalPolyPatch::movePoints(const pointField& pts)
+{
+    if (globalPatchPtr_.valid())
+    {
+        globalPatchPtr_->movePoints(pts);
     }
 }
 

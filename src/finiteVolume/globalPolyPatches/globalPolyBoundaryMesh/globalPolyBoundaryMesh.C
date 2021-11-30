@@ -112,25 +112,28 @@ void Foam::globalPolyBoundaryMesh::addPatch(const label patchi)
 {}
 
 
+void Foam::globalPolyBoundaryMesh::setDisplacementField
+(
+    const word& region,
+    const word& name
+)
+{
+    if (displacementFields_.found(region))
+    {
+        displacementFields_[region] = name;
+    }
+    else
+    {
+        displacementFields_.insert(region, name);
+    }
+}
+
 // * * * * * * * * * * * * * * * * * Operators * * * * * * * * * * * * * * * //
 
 const Foam::globalPolyPatch&
 Foam::globalPolyBoundaryMesh::operator[](const word& patchName) const
 {
-    if (!patches_.found(patchName))
-    {
-        patches_.insert
-        (
-            patchName,
-            globalPolyPatch::New
-            (
-                interfacesDicts_[mesh_.name()],
-                mesh_.boundaryMesh()[patchName]
-            ).ptr()
-        );
-    }
-
-    return *patches_[patchName];
+    return this->operator[](mesh().boundaryMesh()[patchName]);
 }
 
 const Foam::globalPolyPatch&
@@ -138,10 +141,30 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
 {
     if (!patches_.found(pp.name()))
     {
+        dictionary dict;
+        if (interfacesDicts_.found(mesh_.name()))
+        {
+            const dictionary& mDict = interfacesDicts_[mesh().name()];
+            if (mDict.found(pp.name()))
+            {
+                dict = mDict.subDict(pp.name());
+            }
+        }
+        if (displacementFields_.found(mesh_.name()))
+        {
+            if (!dict.found("displacementField"))
+            {
+                dict.add
+                (
+                    "displacementField",
+                    displacementFields_[mesh_.name()]
+                );
+            }
+        }
         patches_.insert
         (
             pp.name(),
-            globalPolyPatch::New(interfacesDicts_[mesh_.name()], pp).ptr()
+            globalPolyPatch::New(dict, pp).ptr()
         );
     }
 
@@ -152,66 +175,61 @@ Foam::globalPolyBoundaryMesh::operator[](const polyPatch& pp) const
 const Foam::globalPolyPatch&
 Foam::globalPolyBoundaryMesh::operator[](const pointPatch& pp) const
 {
-    if (!patches_.found(pp.name()))
-    {
-        patches_.insert
-        (
-            pp.name(),
-            globalPolyPatch::New
-            (
-                interfacesDicts_[mesh_.name()],
-                dynamicCast<const polyMesh>
-                (
-                    pp.boundaryMesh().mesh().thisDb()
-                ).boundaryMesh()[pp.index()]
-            ).ptr()
-        );
-    }
-
-    return *patches_[pp.name()];
+    return this->operator[](mesh().boundaryMesh()[pp.name()]);
 }
 
 
 const Foam::coupledGlobalPolyPatch&
 Foam::globalPolyBoundaryMesh::operator()(const word& patchName) const
 {
-    const globalPolyPatch& gpp = this->operator[](patchName);
-    if (!isA<coupledGlobalPolyPatch>(gpp))
-    {
-        FatalErrorInFunction
-            << patchName << " is not a coupled patch, it is type "
-            << gpp.patch().type() << endl
-            << abort(FatalError);
-    }
-    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+    return this->operator()(mesh().boundaryMesh()[patchName]);
 }
 
 const Foam::coupledGlobalPolyPatch&
 Foam::globalPolyBoundaryMesh::operator()(const polyPatch& pp) const
 {
-    const globalPolyPatch& gpp = this->operator[](pp);
-    if (!isA<coupledGlobalPolyPatch>(gpp))
+    if (patches_.found(pp.name()))
     {
-        FatalErrorInFunction
-            << pp.name() << " is not a coupled patch, it is type "
-            << gpp.patch().type() << endl
-            << abort(FatalError);
+        HashPtrTable<globalPolyPatch>::iterator iter = patches_.find(pp.name());
+        if (!isA<coupledGlobalPolyPatch>(*iter()))
+        {
+            patches_.erase(iter);
+        }
     }
-    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+
+    if (!patches_.found(pp.name()))
+    {
+        dictionary& dict =
+            const_cast<dictionary&>
+            (
+                interfacesDicts_[mesh_.name()].subDict(pp.name())
+            );
+        if (displacementFields_.found(mesh_.name()))
+        {
+            if (!dict.found("displacementField"))
+            {
+                dict.add
+                (
+                    "displacementField",
+                    displacementFields_[mesh_.name()]
+                );
+            }
+        }
+        patches_.insert
+        (
+            pp.name(),
+            new coupledGlobalPolyPatch(dict, pp)
+        );
+    }
+
+
+    return dynamicCast<const coupledGlobalPolyPatch>(*patches_[pp.name()]);
 }
 
 
 const Foam::coupledGlobalPolyPatch&
 Foam::globalPolyBoundaryMesh::operator()(const pointPatch& pp) const
 {
-    const globalPolyPatch& gpp = this->operator[](pp);
-    if (!isA<coupledGlobalPolyPatch>(gpp))
-    {
-        FatalErrorInFunction
-            << pp.name() << " is not a coupled patch, it is type "
-            << gpp.patch().type() << endl
-            << abort(FatalError);
-    }
-    return dynamicCast<const coupledGlobalPolyPatch>(gpp);
+    return this->operator()(mesh().boundaryMesh()[pp.name()]);
 }
 // ************************************************************************* //

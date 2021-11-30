@@ -127,6 +127,13 @@ public:
             const polyPatch& patch
         );
 
+        //- Construct from components
+        globalPolyPatch
+        (
+            const polyPatch& patch,
+            const word& displacementField = "none"
+        );
+
 
     //- Return a new globalPolyPatch
     static autoPtr<globalPolyPatch> New
@@ -160,6 +167,12 @@ public:
         const polyPatch& patch() const
         {
             return patch_;
+        }
+
+        //- Set displacement field name
+        void setDisplacementField(const word& f)
+        {
+            displacementField_ = f;
         }
 
         //- Return reference to global patch
@@ -236,6 +249,9 @@ public:
 
         //- Correct patch after moving points
         virtual void movePoints();
+
+        //- Move points
+        virtual void movePoints(const pointField& pts);
 
         //- Update for changes in topology
         virtual void updateMesh();

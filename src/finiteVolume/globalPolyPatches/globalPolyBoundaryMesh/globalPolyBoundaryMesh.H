@@ -74,6 +74,9 @@ class globalPolyBoundaryMesh
     // Table of mapped patch selectors
     mutable HashPtrTable<globalPolyPatch> patches_;
 
+    //- Displacement Field names
+    HashTable<word> displacementFields_;
+
 
 public:
 
@@ -103,6 +106,9 @@ public:
         const labelUList& newToOld,
         const bool validBoundary
     );
+
+    //- Set the displacement field name for a region
+    void setDisplacementField(const word&, const word&);
 
     //- Inserted patch at patchi
     virtual void addPatch(const label patchi);
