@@ -45,7 +45,8 @@ $(explicitBCs)/symmetric/symmetricTraction/symmetricTractionFvPatchVectorField.C
 $(explicitBCs)/symmetric/symmetricLinearMomentum/symmetricLinearMomentumFvPatchVectorField.C
 $(explicitBCs)/traction/tractionTraction/tractionTractionFvPatchVectorField.C
 $(explicitBCs)/traction/tractionLinearMomentum/tractionLinearMomentumFvPatchVectorField.C
-
+$(explicitBCs)/wedge/wedgeLinearMomentum/wedgeLinearMomentumFvPatchVectorField.C
+$(explicitBCs)/wedge/wedgeTraction/wedgeTractionFvPatchVectorField.C
 
 materialModels/mechanicalModel/mechanicalModel.C
 mechanicalLaws = materialModels/mechanicalModel/mechanicalLaws

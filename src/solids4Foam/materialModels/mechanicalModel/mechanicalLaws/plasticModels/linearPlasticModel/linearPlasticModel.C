@@ -64,15 +64,8 @@ Foam::linearPlasticModel::hydrostaticStress
         }
         else
         {
-            FatalErrorIn
-            (
-                "void Foam::linearPlasticModel::"
-                "calculateHydrostaticStress\n"
-                "(\n"
-                "    volScalarField& sigmaHyd,\n"
-                "    const volScalarField& trEpsilon\n"
-                ")"
-            )   << "Cannot find the DEqnA or DDEqnA field: this should be "
+            FatalErrorInFunction
+                << "Cannot find the DEqnA or DDEqnA field: this should be "
                 << "stored in the solidModel" << abort(FatalError);
         }
         const volScalarField& AD = *ADPtr;
@@ -127,14 +120,8 @@ Foam::linearPlasticModel::hydrostaticStress
 {
     if (solvePressureEqn_)
     {
-        FatalErrorIn
-        (
-            "void Foam::linearPlasticModel::calculateHydrostaticStress\n"
-            "(\n"
-            "    surfaceScalarField& sigmaHyd,\n"
-            "    const surfaceScalarField& trEpsilon\n"
-            ")"
-        )   << "'solvePressureEqn' option only implemented for volField stress "
+        FatalErrorInFunction
+            << "'solvePressureEqn' option only implemented for volField stress "
             << "calculation" << abort(FatalError);
     }
     // Directly calculate hydrostatic stress from displacement field
@@ -160,11 +147,8 @@ Foam::tmp<Foam::volSymmTensorField> Foam::linearPlasticModel::epsilon() const
 
         if (mesh().solutionD()[vector::Z] > -1)
         {
-            FatalErrorIn
-            (
-                "void Foam::linearPlasticModel::"
-                "correct(surfaceSymmTensorField& sigma)"
-            )   << "For planeStress, this material law assumes the empty "
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
                 << "direction is the Z direction!" << abort(FatalError);
         }
 
@@ -204,11 +188,8 @@ Foam::linearPlasticModel::epsilonf() const
 
         if (mesh().solutionD()[vector::Z] > -1)
         {
-            FatalErrorIn
-            (
-                "void Foam::linearPlasticModel::"
-                "correct(surfaceSymmTensorField& sigma)"
-            )   << "For planeStress, this material law assumes the empty "
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes the empty "
                 << "direction is the Z direction!" << abort(FatalError);
         }
 
@@ -454,7 +435,7 @@ void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
     epsilonPEq_ = epsilonPEq_.oldTime() + DEpsilonPEq_;
 
     // Calculate deviatoric stress
-    const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP_);
+    const volSymmTensorField s(sTrial - 2.0*mu_*DEpsilonP_);
 
     // Calculate the hydrostatic pressure
     const volScalarField trEpsilon(tr(eps));

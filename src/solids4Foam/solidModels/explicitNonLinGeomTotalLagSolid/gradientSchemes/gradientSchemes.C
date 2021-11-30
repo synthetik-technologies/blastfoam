@@ -296,7 +296,6 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
 
         if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
         {
-            Info<<celli<<endl;
             tensor AinvPlus(Ainv[celli]);
 
             if (removeCmpts.x())
@@ -353,7 +352,7 @@ tmp<volVectorField> gradientSchemes::gradient
     (
         GeometricField<vector, fvPatchField, volMesh>::New
         (
-            "gradient("+U.name()+')',
+            "grad("+U.name()+')',
             mesh_,
             dimensioned<vector>
             (
@@ -431,7 +430,7 @@ tmp<volTensorField> gradientSchemes::gradient
     (
         GeometricField<tensor, fvPatchField, volMesh>::New
         (
-            "gradient(" + U.name() + ')',
+            "grad(" + U.name() + ')',
             mesh_,
             dimensioned<tensor>
             (
@@ -523,7 +522,7 @@ tmp<volTensorField> gradientSchemes::localGradient
     (
         GeometricField<tensor, fvPatchField, volMesh>::New
         (
-            "gradient("+U.name()+')',
+            "grad("+U.name()+')',
             mesh_,
             dimensioned<tensor>
             (

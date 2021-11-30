@@ -66,7 +66,7 @@ namespace Foam
                          Class nonLinearPlastic Declaration
 \*---------------------------------------------------------------------------*/
 
-class nonLinearPlastic
+class nonLinearPlasticModel
 :
     public plasticModel
 {
@@ -123,7 +123,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        nonLinearPlastic
+        nonLinearPlasticModel
         (
             const word& name,
             const fvMesh& mesh,
@@ -134,7 +134,7 @@ public:
 
     // Destructor
 
-        virtual ~nonLinearPlastic();
+        virtual ~nonLinearPlasticModel();
 
 
     // Member Functions

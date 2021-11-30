@@ -33,7 +33,7 @@ License
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::Ibar
+Foam::tmp<Foam::volScalarField> Foam::nonLinearPlasticModel::Ibar
 (
     const volSymmTensorField& devBEbar
 )
@@ -169,7 +169,7 @@ Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::Ibar
 }
 
 
-Foam::tmp<Foam::surfaceScalarField> Foam::nonLinearPlastic::Ibar
+Foam::tmp<Foam::surfaceScalarField> Foam::nonLinearPlasticModel::Ibar
 (
     const surfaceSymmTensorField& devBEbar
 )
@@ -304,21 +304,22 @@ Foam::tmp<Foam::surfaceScalarField> Foam::nonLinearPlastic::Ibar
 }
 
 
-Foam::tmp<Foam::volSymmTensorField> Foam::nonLinearPlastic::epsilon() const
+Foam::tmp<Foam::volSymmTensorField> Foam::nonLinearPlasticModel::epsilon() const
 {
     return 0.5*log(symm(F().T() & F()));
 }
 
 
 Foam::tmp<Foam::surfaceSymmTensorField>
-Foam::nonLinearPlastic::epsilonf() const
+Foam::nonLinearPlasticModel::epsilonf() const
 {
     NotImplemented;
     return bEbarf_;
 }
 
 
-Foam::tmp<Foam::symmTensorField> Foam::nonLinearPlastic::epsilon(const label patchi) const
+Foam::tmp<Foam::symmTensorField>
+Foam::nonLinearPlasticModel::epsilon(const label patchi) const
 {
     const tensorField& pF(F().boundaryField()[patchi]);
     return 0.5*log(symm(pF.T() & pF));
@@ -328,7 +329,7 @@ Foam::tmp<Foam::symmTensorField> Foam::nonLinearPlastic::epsilon(const label pat
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from dictionary
-Foam::nonLinearPlastic::nonLinearPlastic
+Foam::nonLinearPlasticModel::nonLinearPlasticModel
 (
     const word& name,
     const fvMesh& mesh,
@@ -407,13 +408,13 @@ Foam::nonLinearPlastic::nonLinearPlastic
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::nonLinearPlastic::~nonLinearPlastic()
+Foam::nonLinearPlasticModel::~nonLinearPlasticModel()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::impK() const
+Foam::tmp<Foam::volScalarField> Foam::nonLinearPlasticModel::impK() const
 {
     // Calculate scaling factor to ensure optimal convergence
     // This is similar to the tangent matrix in FE procedures
@@ -445,7 +446,7 @@ Foam::tmp<Foam::volScalarField> Foam::nonLinearPlastic::impK() const
 
 
 Foam::tmp<Foam::scalarField>
-Foam::nonLinearPlastic::impK(const label patchi) const
+Foam::nonLinearPlasticModel::impK(const label patchi) const
 {
     const symmTensorField& pbEbarTrial
     (
@@ -471,7 +472,7 @@ Foam::nonLinearPlastic::impK(const label patchi) const
 }
 
 
-void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
+void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
 {
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was
@@ -611,7 +612,7 @@ void Foam::nonLinearPlastic::correct(volSymmTensorField& sigma)
 }
 
 
-void Foam::nonLinearPlastic::correct(surfaceSymmTensorField& sigma)
+void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
 {
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was

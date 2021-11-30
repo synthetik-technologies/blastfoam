@@ -41,7 +41,8 @@ namespace Foam
         linGeomMechLaw,
         linearPowerLawPlastic
     );
-    typedef powerLawPlastic<linearPlasticModel> nonLinearPowerLawPlastic;
+    typedef powerLawPlastic<nonLinearPlasticModel>
+        nonLinearPowerLawPlastic;
     addNamedToRunTimeSelectionTable
     (
         mechanicalLaw,

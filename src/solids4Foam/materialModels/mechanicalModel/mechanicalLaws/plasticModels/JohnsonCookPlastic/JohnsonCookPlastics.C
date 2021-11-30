@@ -41,7 +41,7 @@ namespace Foam
         linGeomMechLaw,
         linearJohnsonCookPlastic
     );
-    typedef JohnsonCookPlastic<linearPlasticModel> nonLinearJohnsonCookPlastic;
+    typedef JohnsonCookPlastic<nonLinearPlasticModel> nonLinearJohnsonCookPlastic;
     addNamedToRunTimeSelectionTable
     (
         mechanicalLaw,

@@ -202,7 +202,7 @@ tmp<volVectorField> operations::decomposeTensorX
     (
         GeometricField<vector, fvPatchField, volMesh>::New
         (
-            "decomposeTensorX("+T.name()+')',
+            T.name() + ".x",
             mesh_,
             dimensioned<vector>("0", T.dimensions(), pTraits<vector>::zero)
         )
@@ -234,7 +234,7 @@ tmp<volVectorField> operations::decomposeTensorY
     (
         GeometricField<vector, fvPatchField, volMesh>::New
         (
-            "decomposeTensorY("+T.name()+')',
+            T.name() + ".y",
             mesh_,
             dimensioned<vector>("0", T.dimensions(), pTraits<vector>::zero)
         )
@@ -266,7 +266,7 @@ tmp<volVectorField> operations::decomposeTensorZ
     (
         GeometricField<vector, fvPatchField, volMesh>::New
         (
-            "decomposeTensorZ("+T.name()+')',
+            T.name() + ".z",
             mesh_,
             dimensioned<vector>("0", T.dimensions(), pTraits<vector>::zero)
         )

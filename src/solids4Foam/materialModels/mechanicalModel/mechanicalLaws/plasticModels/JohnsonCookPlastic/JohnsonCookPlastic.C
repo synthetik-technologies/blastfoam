@@ -164,6 +164,7 @@ Foam::JohnsonCookPlastic<PlasticType>::~JohnsonCookPlastic()
 template<class PlasticType>
 void Foam::JohnsonCookPlastic<PlasticType>::correct(volSymmTensorField& sigma)
 {
+    Info<<"here"<<endl;
     // Compute effective strain rate
     const volTensorField& gradD
     (
