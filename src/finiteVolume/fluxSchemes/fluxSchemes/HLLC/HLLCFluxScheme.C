@@ -259,9 +259,8 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     }
     else if (SStar > 0)
     {
-//         phi = SStar;
         scalar f = (SOwn - UvOwn)/(SOwn - SStar);
-        rhoPhi = phi*rhoOwn*(UvOwn + SOwn*(f - 1.0));
+        rhoPhi = rhoOwn*(UvOwn + SOwn*(f - 1.0));
 
         p = 0.5*(pStarNei + pStarOwn);
 
@@ -282,9 +281,8 @@ void Foam::fluxSchemes::HLLC::calculateFluxes
     }
     else if (SNei > 0)
     {
-//         phi = SStar;
         scalar f = (SNei - UvNei)/(SNei - SStar);
-        rhoPhi = phi*rhoNei*(UvNei + SNei*(f - 1.0));
+        rhoPhi = rhoNei*(UvNei + SNei*(f - 1.0));
         p = 0.5*(pStarNei + pStarOwn);
 
         vector rhoUStar = f*rhoNei*(UNei - (UvNei - SStar)*normal);
