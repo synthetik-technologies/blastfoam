@@ -53,7 +53,11 @@ int main(int argc, char *argv[])
     #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
-    solid.setDeltaT(runTime);
+    {
+        scalar dTOld(runTime.deltaTValue());
+        solid.setDeltaT(runTime);
+        runTime.setDeltaT(min(runTime.deltaTValue(), dTOld));
+    }
     scalar CoNum = solid.CoNum();
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -65,6 +69,7 @@ int main(int argc, char *argv[])
         #include "readTimeControls.H"
 
         CoNum = solid.CoNum();
+        maxCo = min(maxCo, solid.maxCoNum());
         Info<< "Max Courant Number = " << CoNum << endl;
         #include "setDeltaT.H"
 //         solid.setDeltaT(runTime);
