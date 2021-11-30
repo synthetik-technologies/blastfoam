@@ -83,7 +83,7 @@ public:
 
     virtual void updateObject() = 0;
 
-    static void updateObjects(objectRegistry&);
+    static void updateObjects(const objectRegistry&);
 };
 
 
@@ -117,7 +117,7 @@ public:
 
     virtual void updateObject() = 0;
 
-    static void updateObjects(objectRegistry&);
+    static void updateObjects(const objectRegistry&);
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -35,11 +35,15 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * Static Functions  * * * * * * * * * * * * * //
 
-void Foam::RefineMeshObject::updateObjects(objectRegistry& obr)
+void Foam::RefineMeshObject::updateObjects(const objectRegistry& obr)
 {
+
     HashTable<RefineMeshObject*> meshObjects
     (
-        obr.lookupClass<RefineMeshObject>()
+        const_cast<objectRegistry&>
+        (
+            obr
+        ).lookupClass<RefineMeshObject>()
     );
 
     if (debug)
@@ -67,11 +71,14 @@ void Foam::RefineMeshObject::updateObjects(objectRegistry& obr)
 }
 
 
-void Foam::BalanceMeshObject::updateObjects(objectRegistry& obr)
+void Foam::BalanceMeshObject::updateObjects(const objectRegistry& obr)
 {
     HashTable<BalanceMeshObject*> meshObjects
     (
-        obr.lookupClass<BalanceMeshObject>()
+        const_cast<objectRegistry&>
+        (
+            obr
+        ).lookupClass<BalanceMeshObject>()
     );
 
     if (debug)
