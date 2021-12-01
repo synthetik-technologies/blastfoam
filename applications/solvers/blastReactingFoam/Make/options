@@ -2,6 +2,7 @@ EXE_INC= \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
@@ -28,6 +29,7 @@ EXE_LIBS = \
     -lchemistryModel \
     -lcombustionModels \
     -lradiationModels \
+    -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastDynamicFvMesh

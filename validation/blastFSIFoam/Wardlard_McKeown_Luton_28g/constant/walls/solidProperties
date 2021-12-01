@@ -19,6 +19,12 @@ FoamFile
 
 solidModel nonLinearGeometryTotalLagrangian;
 
+explicitNonLinearGeometryTotalLagrangianCoeffs
+{
+    incompressiblilityCoefficient   1.0;
+    angularMomentumConservation     yes;
+}
+
 
 nonLinearGeometryTotalLagrangianCoeffs
 {

@@ -50,6 +50,11 @@ maxCo 0.5;
 adjustTimeStep yes;
 
 #include "../properties"
+DebugSwitches
+{
+    meshSizeObject 1;
+    errorEstimator 1;
+}
 
 functions
 {

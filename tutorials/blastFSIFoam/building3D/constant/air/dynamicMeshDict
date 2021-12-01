@@ -30,7 +30,7 @@ displacementLaplacianCoeffs
 // beginUnrefine 1e-5;
 
 // How often to refine
-refineInterval  3;
+refineInterval  1;
 
 // Refine field in between lower..upper (varies based on errorEstimator)
 lowerRefineLevel 0.01;

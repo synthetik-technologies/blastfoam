@@ -6,7 +6,7 @@ cd ${0%/*} || exit 1    # run from this directory
 
 paraFoam -builtin -touch
 
-nDims=2
+nDims=3
 blockMeshDict="blockMeshDict_${nDims}D"
 
 runApplication -s air blockMesh -region air -dict system/air/$blockMeshDict

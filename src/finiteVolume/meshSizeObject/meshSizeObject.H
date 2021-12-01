@@ -92,12 +92,7 @@ public:
     // Member Functions
 
         //- Callback for geometry motion
-        virtual bool movePoints()
-        {
-            dxPtr_.clear();
-            dXPtr_.clear();
-            return true;
-        }
+        virtual bool movePoints();
 
         //- Return the mesh size
         inline const volScalarField& dx() const
@@ -121,7 +116,7 @@ public:
 
         virtual bool writeData(Ostream&) const
         {
-            return false;
+            return true;
         }
 };
 

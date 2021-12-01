@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     #include "setRootCaseLists.H"
 
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
 
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         integrator->preUpdateMesh();
 
         //- Refine the mesh
-        mesh.refine();
+        refineMesh(mesh);
 
         #include "eigenvalueCourantNo.H"
         #include "readTimeControls.H"

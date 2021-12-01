@@ -240,14 +240,29 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
         return labelList(mesh_.nCells(), maxLevel_);
     }
 
-    const labelIOList& cellLevel(mesh_.lookupObject<labelIOList>("cellLevel"));
-    labelList maxLevel(mesh_.nCells(), 0);
-    const volScalarField& dx = meshSizeObject::New(mesh_).dx();
+    const labelIOList& cellLevel
+    (
+        mesh_.lookupObject<labelIOList>("cellLevel")
+    );
+    labelList maxLevel(cellLevel);
+    vector validD(mesh_.geometricD());
+    for (label cmpti = 0; cmpti < 3; cmpti++)
+    {
+        if (validD[cmpti] < 0)
+        {
+            validD[cmpti] = great;
+        }
+    }
+    const volScalarField& dx
+    (
+        meshSizeObject::New(mesh_).dx()
+    );
+
     forAll(dx, celli)
     {
-        if (dx[celli] > minDx_)
+        if (dx[celli] > minDx_ && error_[celli] > 0)
         {
-            maxLevel[celli] = cellLevel[celli] + 1;
+            maxLevel[celli]++;
         }
     };
     return maxLevel;
@@ -258,7 +273,31 @@ bool Foam::errorEstimator::writeData(Ostream&) const
 {
     if (debug)
     {
-        const_cast<errorEstimator&>(*this).update(false);
+        const_cast<errorEstimator&>(*this).update();
+        volScalarField maxLevel
+        (
+            volScalarField::New
+            (
+                "maxLevel",
+                mesh_,
+                0.0
+            )
+        );
+        labelList mr(maxRefinement());
+        forAll(mr, celli)
+        {
+            maxLevel[celli] = mr[celli];
+        }
+        maxLevel.write();
+
+        if (minDx_ > 0)
+        {
+            const meshSizeObject& mso = meshSizeObject::New(mesh_);
+            const_cast<meshSizeObject&>(mso).movePoints();
+            mso.dx().write();
+            mso.dX().write();
+        }
+
         return error_.write();
     }
     return true;

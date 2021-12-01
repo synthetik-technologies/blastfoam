@@ -162,9 +162,11 @@ Foam::JohnsonCookPlastic<PlasticType>::~JohnsonCookPlastic()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class PlasticType>
-void Foam::JohnsonCookPlastic<PlasticType>::correct(volSymmTensorField& sigma)
+void Foam::JohnsonCookPlastic<PlasticType>::correct
+(
+    volSymmTensorField& sigma
+)
 {
-    Info<<"here"<<endl;
     // Compute effective strain rate
     const volTensorField& gradD
     (
@@ -182,7 +184,10 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct(volSymmTensorField& sigma)
 
 
 template<class PlasticType>
-void Foam::JohnsonCookPlastic<PlasticType>::correct(surfaceSymmTensorField& sigma)
+void Foam::JohnsonCookPlastic<PlasticType>::correct
+(
+    surfaceSymmTensorField& sigma
+)
 {
     Tf_ = fvc::interpolate(T_);
 

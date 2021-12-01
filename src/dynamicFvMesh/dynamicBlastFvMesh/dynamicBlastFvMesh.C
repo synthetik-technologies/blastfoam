@@ -69,8 +69,7 @@ Foam::IOobject Foam::dynamicBlastFvMesh::dynamicMeshDictIOobject
           ? IOobject::MUST_READ_IF_MODIFIED
           : IOobject::NO_READ
         ),
-        IOobject::NO_WRITE,
-        false
+        IOobject::NO_WRITE
     );
 }
 

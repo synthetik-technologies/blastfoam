@@ -53,6 +53,34 @@ Foam::meshSizeObject::~meshSizeObject()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
+bool Foam::meshSizeObject::movePoints()
+{
+    dxPtr_.clear();
+    dXPtr_.clear();
+    return true;
+}
+
+void Foam::meshSizeObject::updateMesh(const mapPolyMesh& mpm)
+{
+    movePoints();
+}
+
+
+void Foam::meshSizeObject::reorderPatches
+(
+    const labelUList& newToOld,
+    const bool validBoundary
+)
+{
+    movePoints();
+}
+
+
+void Foam::meshSizeObject::addPatch(const label patchi)
+{
+    movePoints();
+}
+
 void Foam::meshSizeObject::calcDx() const
 {
     const fvMesh& mesh(dynamicCast<const fvMesh&>(this->mesh_));
@@ -108,8 +136,7 @@ void Foam::meshSizeObject::calcDx() const
     }
     else
     {
-        dx.primitiveFieldRef() =
-            fvc::surfaceSum(mesh.magSf())/mesh.V();
+        dx.primitiveFieldRef() = cbrt(mesh_.cellVolumes());
     }
 
     forAll(mesh.magSf().boundaryField(), patchi)
@@ -117,6 +144,7 @@ void Foam::meshSizeObject::calcDx() const
         dx.boundaryFieldRef()[patchi] =
             sqrt(mesh.magSf().boundaryField()[patchi]);
     }
+    dx.correctBoundaryConditions();
 }
 
 
@@ -190,6 +218,7 @@ void Foam::meshSizeObject::calcDX() const
         dX.boundaryFieldRef()[patchi][facei] =
             cmptDivide(dx, vector(nEdges));
     }
+    dX.correctBoundaryConditions();
 }
 
 // ************************************************************************* //

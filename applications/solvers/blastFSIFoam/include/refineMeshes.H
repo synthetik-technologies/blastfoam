@@ -1,33 +1,11 @@
-//- Update internal error fields of all regions
-forAll(fluidRegions, i)
-{
-    timeIntegrators[i].preUpdateMesh();
-    fluidRegions[i].updateError();
-}
-forAll(solidRegions, i)
-{
-    solidRegions[i].updateError();
-}
-
-//- Update error field boundaries
-//  Done after all region errors have been updated to make sure
-//  all fields are up to date
-forAll(fluidRegions, i)
-{
-    fluidRegions[i].updateErrorBoundaries();
-}
-forAll(solidRegions, i)
-{
-    solidRegions[i].updateErrorBoundaries();
-}
-
 //- Update Meshes and check if balancing has occurred
 forAll(fluidRegions, i)
 {
-    fluidRegions[i].refine(false);
+    timeIntegrators[i].preUpdateMesh();
+    refineMesh(fluidRegions[i]);
 }
 forAll(solidRegions, i)
 {
-    solidRegions[i].refine(false);
+    refineMesh(solidRegions[i]);
 }
 

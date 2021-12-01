@@ -2,6 +2,7 @@ EXE_INC = \
     -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/triSurface/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
@@ -13,6 +14,7 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
     -ltriSurface \
+    -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
     -lblastIBM \
     -lblastThermodynamics \

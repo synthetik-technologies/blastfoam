@@ -84,9 +84,14 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
     {
         return;
     }
+
     fixedValueFvPatchField<scalar>::updateCoeffs();
     Field<scalar>::operator=(this->patchInternalField());
 
+    if (!isA<mappedPatchBase>(this->patch().patch()))
+    {
+        return;
+    }
     patch().boundaryMesh().mesh().lookupObjectRef<errorEstimator>
     (
         errorEstimator::typeName

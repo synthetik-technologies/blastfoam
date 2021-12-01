@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
 
     uniformDimensionedVectorField g
     (
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
-        mesh.refine();
+        refineMesh(mesh);
         Info<<"Time: " << runTime.timeName() << endl;
         ibm.solve();
         runTime.write();

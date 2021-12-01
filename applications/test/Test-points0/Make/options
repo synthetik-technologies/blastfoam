@@ -2,6 +2,7 @@ EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicMesh/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
@@ -10,6 +11,7 @@ EXE_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
     -ldynamicMesh \
+    -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
     -lblastDynamicMesh \

@@ -18,11 +18,18 @@ FoamFile
 
 blocks
 (
-    hex (0 1 3 2 8 9 11 10) ($nxPlate $nyPlate $nxPlate) simpleGrading (1 1 1)
+    hex (0 1 8 7 3 4 12 11) ($nwPlate $nyPlate $nwPlate) simpleGrading (1 1 1)
+    hex (1 2 9 8 4 5 13 12) ($nrPlate $nyPlate $nwPlate) simpleGrading (1 1 1)
+    hex (3 4 12 11 6 5 13 15) ($nwPlate $nyPlate $nrPlate) simpleGrading (1 1 1)
 );
 
 edges
 (
+    arc 2 5 ($xRm $y0 $xRp)
+    arc 9 13 ($xRm $y1 $xRp)
+
+    arc 5 6 ($xRp $y0 $xRm)
+    arc 13 15 ($xRp $y1 $xRm)
 );
 
 boundary
@@ -35,7 +42,9 @@ boundary
         samplePatch air_to_plate;
         faces
         (
-            (2 3 11 10)
+            (7 8 12 11)
+            (8 9 13 12)
+            (11 12 13 15)
         );
     }
     plateEnd
@@ -43,8 +52,8 @@ boundary
         type patch;
         faces
         (
-            (1 3 11 9)
-            (8 9 11 10)
+            (2 5 13 9)
+            (5 6 15 13)
         );
     }
     plateFree
@@ -52,7 +61,9 @@ boundary
         type patch;
         faces
         (
-            (0 1 9 8)
+            (0 1 4 3)
+            (1 2 5 4)
+            (3 4 5 6)
         );
     }
     symmetry0
@@ -60,7 +71,8 @@ boundary
         type symmetry;
         faces
         (
-             (0 1 3 2)
+            (0 1 8 7)
+            (1 2 9 8)
         );
     }
     symmetry1
@@ -68,7 +80,8 @@ boundary
         type symmetry;
         faces
         (
-             (0 8 10 2)
+             (0 3 11 7)
+             (3 6 15 11)
         );
     }
 );

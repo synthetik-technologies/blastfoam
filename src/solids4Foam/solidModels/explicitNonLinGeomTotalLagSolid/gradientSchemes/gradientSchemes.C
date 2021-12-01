@@ -134,7 +134,7 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
     {
         Ainv.correctBoundaryConditions();
     }
-    scalar scale = magSqr(Ainv[0]);
+    scalar scale = max(magSqr(Ainv[0]), small);
     Vector<bool> removeCmpts
     (
         magSqr(Ainv[0].xx())/scale < small,
@@ -148,10 +148,8 @@ tmp<volTensorField> gradientSchemes::distanceMatrix() const
         if (scale < small)
         {
             Ainv[celli] = Zero;
-            continue;
         }
-
-        if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
+        else if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
         {
             tensor AinvPlus(Ainv[celli]);
 
@@ -271,7 +269,7 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
     {
         Ainv.correctBoundaryConditions();
     }
-    scalar scale = magSqr(Ainv[0]);
+    scalar scale = max(magSqr(Ainv[0]), small);
     Vector<bool> removeCmpts
     (
         magSqr(Ainv[0].xx())/scale < small,
@@ -282,18 +280,17 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
     forAll(Ainv, celli)
     {
         scale = magSqr(Ainv[celli]);
-        if (scale < small)
+        if (scale < small || det(Ainv[celli]) < small)
         {
             Ainv[celli] = Zero;
             continue;
         }
-        Vector<bool> removeCmpts
+        removeCmpts = Vector<bool>
         (
             magSqr(Ainv[celli].xx())/scale < small,
             magSqr(Ainv[celli].yy())/scale < small,
             magSqr(Ainv[celli].zz())/scale < small
         );
-
         if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
         {
             tensor AinvPlus(Ainv[celli]);
@@ -335,8 +332,6 @@ tmp<volTensorField> gradientSchemes::distanceMatrixLocal() const
             Ainv[celli] = inv(Ainv[celli]);
         }
     }
-//     Ainv.primitiveFieldRef() = inv(Ainv.primitiveField());
-
     return tAinv;
 }
 

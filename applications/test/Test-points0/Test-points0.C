@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
 
     runTime.setDeltaT(1);
     runTime.setWriteInterval(1);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
     Info<<"Time = " << runTime.timeName() << nl <<endl;
     runTime.write();
 
-    mesh.refine();
+    refineMesh(mesh);
     forAll(pointDisplacement.boundaryField(), patchi)
     {
         pointPatchField<vector>& ppd =
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     Info<<"Time = " << runTime.timeName() << nl <<endl;
     runTime.write();
 
-    mesh.refine();
+    refineMesh(mesh);
     forAll(pointDisplacement.boundaryField(), patchi)
     {
         pointPatchField<vector>& ppd =
@@ -204,13 +204,13 @@ int main(int argc, char *argv[])
     e = 0;
     e[0] = 1;
 
-    mesh.refine();
+    refineMesh(mesh);
 
     runTime++;
     Info<<"Time = " << runTime.timeName() << nl <<endl;
     runTime.write();
 
-    mesh.refine();
+    refineMesh(mesh);
 
     runTime++;
     Info<<"Time = " << runTime.timeName() << nl <<endl;

@@ -42,6 +42,7 @@ Author
 \*---------------------------------------------------------------------------*/
 
 #include "fvCFD.H"
+#include "dynamicBlastFvMesh.H"
 #include "solidModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 {
     #include "setRootCase.H"
     #include "createTime.H"
-    #include "createDynamicBlastFvMesh.H"
+    #include "createDynamicFvMesh.H"
     #include "createFields.H"
     #include "createTimeControls.H"
     {
@@ -67,6 +68,8 @@ int main(int argc, char *argv[])
     while (runTime.run())
     {
         #include "readTimeControls.H"
+
+        refineMesh(mesh);
 
         CoNum = solid.CoNum();
         maxCo = min(maxCo, solid.maxCoNum());
