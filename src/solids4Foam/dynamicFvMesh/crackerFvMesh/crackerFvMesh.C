@@ -35,7 +35,7 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(crackerFvMesh, 0);
-    addToRunTimeSelectionTable(topoChangerBlastFvMesh, crackerFvMesh, IOobject);
+    addToRunTimeSelectionTable(topoChangerFvMesh, crackerFvMesh, IOobject);
 }
 
 
@@ -512,7 +512,7 @@ Foam::crackerFvMesh::crackerFvMesh
     const IOobject& io
 )
 :
-    topoChangerBlastFvMesh(io),
+    topoChangerFvMesh(io),
     dict_(dynamicMeshDict().optionalSubDict(type() + "Coeffs")),
     topoChangeMap_(),
     crackPatchID_

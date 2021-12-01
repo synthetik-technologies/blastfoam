@@ -37,7 +37,7 @@ SourceFiles
 
 #include "immersedShape.H"
 #include "triSurfaceMesh.H"
-#include "dynamicBlastFvMesh.H"
+#include "dynamicFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,8 +55,8 @@ class immersedFvMesh
     // Private data
 
         //- Immersed fvMesh
-        autoPtr<dynamicBlastFvMesh> fvMeshPtr_;
-        dynamicBlastFvMesh& fvMesh_;
+        autoPtr<dynamicFvMesh> fvMeshPtr_;
+        dynamicFvMesh& fvMesh_;
 
         word patchName_;
 
@@ -120,13 +120,13 @@ public:
         }
 
         //- Return the fvMesh
-        const dynamicBlastFvMesh& immersedDyMesh() const
+        const dynamicFvMesh& immersedDyMesh() const
         {
             return fvMesh_;
         }
 
         //- Access the fvMesh
-        dynamicBlastFvMesh& immersedDyMesh()
+        dynamicFvMesh& immersedDyMesh()
         {
             return fvMesh_;
         }

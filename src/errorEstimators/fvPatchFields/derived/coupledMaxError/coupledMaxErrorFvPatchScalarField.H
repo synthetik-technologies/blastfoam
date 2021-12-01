@@ -35,7 +35,6 @@ SourceFiles
 #ifndef coupledMaxErrorFvPatchScalarField_H
 #define coupledMaxErrorFvPatchScalarField_H
 
-#include "Random.H"
 #include "fixedValueFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -44,7 +43,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class coupledCellMotionFvPatchVectorField Declaration
+            Class coupledMaxErrorFvPatchScalarField Declaration
 \*---------------------------------------------------------------------------*/
 
 class coupledMaxErrorFvPatchScalarField

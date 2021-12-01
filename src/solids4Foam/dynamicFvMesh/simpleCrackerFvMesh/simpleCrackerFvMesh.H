@@ -41,7 +41,7 @@ Author
 #ifndef simpleCrackerFvMesh_H
 #define simpleCrackerFvMesh_H
 
-#include "dynamicBlastFvMesh.H"
+#include "dynamicFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

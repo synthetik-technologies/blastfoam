@@ -55,7 +55,7 @@ Foam::immersedFvMesh::immersedFvMesh
     immersedShape(pMesh, ibo, dict),
     fvMeshPtr_
     (
-        dynamicBlastFvMesh::New
+        dynamicFvMesh::New
         (
             IOobject
             (

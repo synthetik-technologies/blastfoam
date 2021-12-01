@@ -28,11 +28,10 @@ License
 
 
 Class
-    Foam::adaptiveBlastFvMesh
+    Foam::adaptiveFvMesh
 
 SourceFiles
-    adaptiveBlastFvMesh.C
-    adaptiveBlastFvMeshTemplates.C
+    adaptiveFvMesh.C
 
 Authors
     T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
@@ -78,8 +77,8 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef adaptiveBlastFvMesh_H
-#define adaptiveBlastFvMesh_H
+#ifndef adaptiveFvMesh_H
+#define adaptiveFvMesh_H
 
 #include "dynamicBlastFvMesh.H"
 #include "errorEstimator.H"
@@ -95,10 +94,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class adaptiveBlastFvMesh Declaration
+                     Class adaptiveFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class adaptiveBlastFvMesh
+class adaptiveFvMesh
 :
     public dynamicBlastFvMesh
 {
@@ -242,14 +241,14 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit adaptiveBlastFvMesh(const IOobject& io);
+        explicit adaptiveFvMesh(const IOobject& io);
 
         //- Disallow default bitwise copy construction
-        adaptiveBlastFvMesh(const adaptiveBlastFvMesh&) = delete;
+        adaptiveFvMesh(const adaptiveFvMesh&) = delete;
 
 
     //- Destructor
-    virtual ~adaptiveBlastFvMesh();
+    virtual ~adaptiveFvMesh();
 
 
     // Member Functions
@@ -279,13 +278,7 @@ public:
         virtual bool update();
 
         //- Refine the mesh
-        virtual bool refine(const bool correctError = true);
-
-        //- Update error field
-        virtual void updateError();
-
-        //- Update error field boundaries
-        virtual void updateErrorBoundaries();
+        virtual bool refine();
 
         //- Balance the mesh
         bool balance();
@@ -308,7 +301,7 @@ public:
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const adaptiveBlastFvMesh&) = delete;
+        void operator=(const adaptiveFvMesh&) = delete;
 };
 
 

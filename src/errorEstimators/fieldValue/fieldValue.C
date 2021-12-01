@@ -64,6 +64,11 @@ Foam::errorEstimators::fieldValue::~fieldValue()
 
 void Foam::errorEstimators::fieldValue::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     volScalarField& errorCells(error_);
     this->getFieldValue(fieldName_, errorCells);
 

@@ -1,42 +1,40 @@
+
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
     This file is part of OpenFOAM.
-
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
     ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
     FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
     for more details.
-
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
-
 Class
-    Foam::topoChangerBlastFvMesh
+    Foam::dynamicBlastFvMesh
 
 Description
-    Abstract base class for a topology changing fvMesh
+    Abstract base class for geometry and/or topology changing fvMesh.
 
 SourceFiles
-    topoChangerBlastFvMesh.C
+    dynamicBlastFvMesh.C
+    dynamicBlastFvMeshNew.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef topoChangerFvMesh_H
-#define topoChangerFvMesh_H
+#ifndef dynamicBlastFvMesh_H
+#define dynamicBlastFvMesh_H
 
-#include "dynamicBlastFvMesh.H"
-#include "polyTopoChanger.H"
+#include "fvMesh.H"
+#include "dynamicFvMesh.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,50 +42,76 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class topoChangerBlastFvMesh Declaration
+                           Class dynamicBlastFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class topoChangerBlastFvMesh
+class dynamicBlastFvMesh
 :
-    public dynamicBlastFvMesh
+    virtual public dynamicFvMesh
 {
-protected:
+    // Private data
 
-    // Protected Data
+        //- The dynamicMeshDict
+        IOdictionary dynamicMeshDict_;
 
-        polyTopoChanger topoChanger_;
-
+        //- Return the dynamicMeshDict IOobject
+        static IOobject dynamicMeshDictIOobject(const IOobject& io);
 
 public:
 
     //- Runtime type information
-    TypeName("topoChangerFvMesh");
-
+    TypeName("dynamicBlastFvMesh");
 
     // Constructors
 
         //- Construct from objectRegistry, and read/write options
-        explicit topoChangerBlastFvMesh(const IOobject& io);
+        explicit dynamicBlastFvMesh(const IOobject& io);
+
+        //- Construct from components without boundary.
+        //  Boundary is added using addFvPatches() member function
+        dynamicBlastFvMesh
+        (
+            const IOobject& io,
+            pointField&& points,
+            faceList&& faces,
+            labelList&& allOwner,
+            labelList&& allNeighbour,
+            const bool syncPar = true
+        );
+
+        //- Construct without boundary from cells rather than owner/neighbour.
+        //  Boundary is added using addPatches() member function
+        dynamicBlastFvMesh
+        (
+            const IOobject& io,
+            pointField&& points,
+            faceList&& faces,
+            cellList&& cells,
+            const bool syncPar = true
+        );
 
         //- Disallow default bitwise copy construction
-        topoChangerBlastFvMesh(const topoChangerBlastFvMesh&) = delete;
+        dynamicBlastFvMesh(const dynamicBlastFvMesh&) = delete;
 
 
     //- Destructor
-    virtual ~topoChangerBlastFvMesh();
+    virtual ~dynamicBlastFvMesh();
 
 
     // Member Functions
 
-        //- Update the mesh for both mesh motion and topology change
-        virtual bool update() = 0;
+        //- Return the dynamicMeshDict
+        const dictionary& dynamicMeshDict() const
+        {
+            return dynamicMeshDict_;
+        }
 
-
-    // Member Operators
-
-        //- Disallow default bitwise assignment
-        void operator=(const topoChangerBlastFvMesh&) = delete;
+        //- Refine the mesh
+        virtual bool refine() = 0;
 };
+
+//- Refine is type is a dynamicBlastFvMesh
+bool refineMesh(dynamicFvMesh&);
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

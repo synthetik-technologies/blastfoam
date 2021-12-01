@@ -37,7 +37,7 @@ License
 // * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * //
 
 template<class T>
-void Foam::dynamicOversetBlastFvMesh::interpolate(Field<T>& psi) const
+void Foam::dynamicOversetFvMesh::interpolate(Field<T>& psi) const
 {
     const cellCellStencil& overlap = Stencil::New(*this);
     const labelListList& stencil = overlap.cellStencil();
@@ -77,7 +77,7 @@ void Foam::dynamicOversetBlastFvMesh::interpolate(Field<T>& psi) const
 
 
 template<class GeoField>
-void Foam::dynamicOversetBlastFvMesh::interpolate(GeoField& psi) const
+void Foam::dynamicOversetFvMesh::interpolate(GeoField& psi) const
 {
     interpolate(psi.primitiveFieldRef());
     psi.correctBoundaryConditions();
@@ -85,7 +85,7 @@ void Foam::dynamicOversetBlastFvMesh::interpolate(GeoField& psi) const
 
 
 template<class GeoField>
-void Foam::dynamicOversetBlastFvMesh::interpolate(const wordHashSet& suppressed)
+void Foam::dynamicOversetFvMesh::interpolate(const wordHashSet& suppressed)
 {
     HashTable<GeoField*> flds(this->objectRegistry::lookupClass<GeoField>());
     forAllIter(typename HashTable<GeoField*>, flds, iter)
@@ -95,7 +95,7 @@ void Foam::dynamicOversetBlastFvMesh::interpolate(const wordHashSet& suppressed)
         {
             if (debug)
             {
-                Pout<< "dynamicOversetBlastFvMesh::interpolate: interpolating : "
+                Pout<< "dynamicOversetFvMesh::interpolate: interpolating : "
                     << name << endl;
             }
             interpolate(iter()->primitiveFieldRef());
@@ -104,7 +104,7 @@ void Foam::dynamicOversetBlastFvMesh::interpolate(const wordHashSet& suppressed)
         {
             if (debug)
             {
-                Pout<< "dynamicOversetBlastFvMesh::interpolate: skipping : " << name
+                Pout<< "dynamicOversetFvMesh::interpolate: skipping : " << name
                     << endl;
             }
         }
@@ -113,7 +113,7 @@ void Foam::dynamicOversetBlastFvMesh::interpolate(const wordHashSet& suppressed)
 
 
 template<class GeoField, class PatchType>
-void Foam::dynamicOversetBlastFvMesh::correctBoundaryConditions
+void Foam::dynamicOversetFvMesh::correctBoundaryConditions
 (
     typename GeoField::Boundary& bfld,
     const bool typeOnly
@@ -146,7 +146,7 @@ void Foam::dynamicOversetBlastFvMesh::correctBoundaryConditions
 
 
 template<class Type>
-Foam::tmp<Foam::scalarField> Foam::dynamicOversetBlastFvMesh::normalisation
+Foam::tmp<Foam::scalarField> Foam::dynamicOversetFvMesh::normalisation
 (
     const fvMatrix<Type>& m
 ) const
@@ -327,7 +327,7 @@ Foam::tmp<Foam::scalarField> Foam::dynamicOversetBlastFvMesh::normalisation
 
 
 template<class Type>
-void Foam::dynamicOversetBlastFvMesh::addInterpolation
+void Foam::dynamicOversetFvMesh::addInterpolation
 (
     fvMatrix<Type>& m,
     const scalarField& normalisation
@@ -374,7 +374,7 @@ void Foam::dynamicOversetBlastFvMesh::addInterpolation
 
 
     //const label nOldInterfaces = dynamicMotionSolverFvMesh::interfaces().size();
-    const label nOldInterfaces = dynamicBlastFvMesh::interfaces().size();
+    const label nOldInterfaces = fvMesh::interfaces().size();
 
 
     if (interfaces.size() > nOldInterfaces)
@@ -643,7 +643,7 @@ void Foam::dynamicOversetBlastFvMesh::addInterpolation
 
 
 template<class Type>
-Foam::SolverPerformance<Type> Foam::dynamicOversetBlastFvMesh::solve
+Foam::SolverPerformance<Type> Foam::dynamicOversetFvMesh::solve
 (
     fvMatrix<Type>& m,
     const dictionary& dict
@@ -668,7 +668,7 @@ Foam::SolverPerformance<Type> Foam::dynamicOversetBlastFvMesh::solve
     {
         if (debug)
         {
-            Pout<< "dynamicOversetBlastFvMesh::solve() :"
+            Pout<< "dynamicOversetFvMesh::solve() :"
                 << " bypassing matrix adjustment for field " << m.psi().name()
                 << endl;
         }
@@ -678,7 +678,7 @@ Foam::SolverPerformance<Type> Foam::dynamicOversetBlastFvMesh::solve
 
     if (debug)
     {
-        Pout<< "dynamicOversetBlastFvMesh::solve() :"
+        Pout<< "dynamicOversetFvMesh::solve() :"
             << " adjusting matrix for interpolation for field "
             << m.psi().name() << endl;
     }
@@ -712,7 +712,7 @@ Foam::SolverPerformance<Type> Foam::dynamicOversetBlastFvMesh::solve
 
         if (debug)
         {
-            Pout<< "dynamicOversetBlastFvMesh::solve() :"
+            Pout<< "dynamicOversetFvMesh::solve() :"
                 << " writing matrix normalisation for field " << m.psi().name()
                 << " to " << scale.name() << endl;
         }
@@ -769,7 +769,7 @@ Foam::SolverPerformance<Type> Foam::dynamicOversetBlastFvMesh::solve
 
 
 template<class Type>
-void Foam::dynamicOversetBlastFvMesh::write
+void Foam::dynamicOversetFvMesh::write
 (
     Ostream& os,
     const fvMatrix<Type>& m,
@@ -896,7 +896,7 @@ void Foam::dynamicOversetBlastFvMesh::write
 
 
 template<class GeoField>
-void Foam::dynamicOversetBlastFvMesh::correctCoupledBoundaryConditions(GeoField& fld)
+void Foam::dynamicOversetFvMesh::correctCoupledBoundaryConditions(GeoField& fld)
 {
     typename GeoField::Boundary& bfld = fld.boundaryFieldRef();
 
@@ -929,7 +929,7 @@ void Foam::dynamicOversetBlastFvMesh::correctCoupledBoundaryConditions(GeoField&
 
 
 template<class GeoField>
-void Foam::dynamicOversetBlastFvMesh::checkCoupledBC(const GeoField& fld)
+void Foam::dynamicOversetFvMesh::checkCoupledBC(const GeoField& fld)
 {
     Pout<< "** starting checking of " << fld.name() << endl;
 

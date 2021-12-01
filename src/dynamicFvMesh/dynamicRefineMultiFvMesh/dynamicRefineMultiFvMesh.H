@@ -22,7 +22,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicRefineBlastFvMesh
+    Foam::dynamicRefineMultiFvMesh
 
 Description
     A fvMesh with built-in multi-criteria refinement.
@@ -77,7 +77,7 @@ Description
 
 
 SourceFiles
-    dynamicRefineBlastFvMesh.C
+    dynamicRefineMultiFvMesh.C
 
 Authors:
     File adapted in 2018 by:
@@ -89,8 +89,8 @@ Authors:
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicRefineBlastFvMesh_H
-#define dynamicRefineBlastFvMesh_H
+#ifndef dynamicRefineMultiFvMesh_H
+#define dynamicRefineMultiFvMesh_H
 
 #include "dynamicBlastFvMesh.H"
 #include "hexRef.H"
@@ -105,10 +105,10 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class dynamicRefineBlastFvMesh Declaration
+                     Class dynamicRefineMultiFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicRefineBlastFvMesh
+class dynamicRefineMultiFvMesh
 :
     public dynamicBlastFvMesh
 {
@@ -230,10 +230,10 @@ protected:
 private:
 
         //- Disallow default bitwise copy construct
-        dynamicRefineBlastFvMesh(const dynamicRefineBlastFvMesh&);
+        dynamicRefineMultiFvMesh(const dynamicRefineMultiFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicRefineBlastFvMesh&);
+        void operator=(const dynamicRefineMultiFvMesh&);
 
 public:
 
@@ -244,11 +244,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit dynamicRefineBlastFvMesh(const IOobject& io);
+        explicit dynamicRefineMultiFvMesh(const IOobject& io);
 
 
     //- Destructor
-    virtual ~dynamicRefineBlastFvMesh();
+    virtual ~dynamicRefineMultiFvMesh();
 
 
     // Member Functions
@@ -275,7 +275,7 @@ public:
         virtual bool update();
 
         //- Refine the mesh
-        virtual bool refine(const bool correctError = true);
+        virtual bool refine();
 
 
     // Writing

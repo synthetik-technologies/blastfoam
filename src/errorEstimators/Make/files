@@ -1,5 +1,5 @@
 errorEstimator/errorEstimator.C
-errorEstimator/newErrorEstimator.C
+errorEstimator/errorEstimatorNew.C
 
 fieldValue/fieldValue.C
 densityGradient/densityGradient.C

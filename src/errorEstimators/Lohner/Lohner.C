@@ -67,6 +67,11 @@ Foam::errorEstimators::Lohner::~Lohner()
 
 void Foam::errorEstimators::Lohner::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     const volScalarField& x = mesh_.lookupObject<volScalarField>(fieldName_);
     surfaceScalarField xf
     (

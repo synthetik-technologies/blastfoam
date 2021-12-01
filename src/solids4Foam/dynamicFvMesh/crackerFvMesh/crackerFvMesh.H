@@ -42,7 +42,7 @@ Author
 #ifndef crackerFvMesh_H
 #define crackerFvMesh_H
 
-#include "topoChangerBlastFvMesh.H"
+#include "topoChangerFvMesh.H"
 #include "regionSplit.H"
 #include "mapPolyMesh.H"
 #include "faceCracker.H"
@@ -59,7 +59,7 @@ namespace Foam
 
 class crackerFvMesh
 :
-    public topoChangerBlastFvMesh
+    public topoChangerFvMesh
 {
     // Private data
 

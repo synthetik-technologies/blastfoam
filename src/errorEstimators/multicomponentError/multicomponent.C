@@ -97,6 +97,11 @@ void Foam::errorEstimators::multicomponent::read(const dictionary& dict)
 
 void Foam::errorEstimators::multicomponent::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     volScalarField error
     (
         IOobject

@@ -37,7 +37,7 @@ License
 #include "oversetFvPatch.H"
 #include "zeroGradientFvPatchFields.H"
 #include "syncTools.H"
-#include "dynamicOversetBlastFvMesh.H"
+#include "dynamicOversetFvMesh.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -1142,7 +1142,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update() const
             patchTypes[cellI] = allPatchTypes[cellI];
         }
         //patchTypes.correctBoundaryConditions();
-        dynamicOversetBlastFvMesh::correctBoundaryConditions
+        dynamicOversetFvMesh::correctBoundaryConditions
         <
             volScalarField,
             oversetFvPatchField<scalar>
@@ -1172,7 +1172,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update() const
             volTypes[cellI] = allCellTypes[cellI];
         }
         //volTypes.correctBoundaryConditions();
-        dynamicOversetBlastFvMesh::correctBoundaryConditions
+        dynamicOversetFvMesh::correctBoundaryConditions
         <
             volScalarField,
             oversetFvPatchField<scalar>
@@ -1221,7 +1221,7 @@ bool Foam::cellCellStencils::cellVolumeWeight::update() const
     cellInterpolationWeights_.transfer(allWeights);
     cellInterpolationWeight_.transfer(allWeight);
     //cellInterpolationWeight_.correctBoundaryConditions();
-    dynamicOversetBlastFvMesh::correctBoundaryConditions
+    dynamicOversetFvMesh::correctBoundaryConditions
     <
         volScalarField,
         oversetFvPatchField<scalar>

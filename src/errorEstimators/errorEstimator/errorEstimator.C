@@ -40,7 +40,7 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * Protected Member Function * * * * * * * * * * * //
 
 Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
 (
@@ -75,9 +75,7 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
                 (
                     errorName,
                     mesh.time().timeName(),
-                    mesh,
-                    IOobject::NO_READ,
-                    debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE
+                    mesh
                 ),
                 mesh,
                 0.0,
@@ -88,6 +86,23 @@ Foam::volScalarField& Foam::errorEstimator::lookupOrConstructError
     return mesh.lookupObjectRef<volScalarField>(errorName);
 }
 
+bool Foam::errorEstimator::updateCurTimeIndex(const bool unset) const
+{
+    if (unset)
+    {
+        curTimeIndex_--;
+        return false;
+    }
+    if (curTimeIndex_ != mesh_.time().timeIndex())
+    {
+        curTimeIndex_ = mesh_.time().timeIndex();
+        return false;
+    }
+    return true;
+}
+
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::errorEstimator::errorEstimator
 (
@@ -96,6 +111,18 @@ Foam::errorEstimator::errorEstimator
     const word& name
 )
 :
+    regIOobject
+    (
+        IOobject
+        (
+            IOobject::groupName(typeName, name),
+            mesh.time().timeName(),
+            mesh,
+            IOobject::NO_READ,
+            debug ? IOobject::AUTO_WRITE : IOobject::NO_WRITE,
+            name == word::null ? true : false
+        )
+    ),
     mesh_(mesh),
     name_(name),
     error_(lookupOrConstructError(mesh)),
@@ -105,7 +132,8 @@ Foam::errorEstimator::errorEstimator
     upperUnrefine_(0.0),
     maxLevel_(-1),
     minDx_(-1),
-    refineProbes_(dict.lookupOrDefault("refineProbes", true))
+    refineProbes_(dict.lookupOrDefault("refineProbes", true)),
+    curTimeIndex_(-1)
 {}
 
 
@@ -225,5 +253,15 @@ Foam::labelList Foam::errorEstimator::maxRefinement() const
     return maxLevel;
 }
 
+
+bool Foam::errorEstimator::writeData(Ostream&) const
+{
+    if (debug)
+    {
+        const_cast<errorEstimator&>(*this).update(false);
+        return error_.write();
+    }
+    return true;
+}
 
 // ************************************************************************* //

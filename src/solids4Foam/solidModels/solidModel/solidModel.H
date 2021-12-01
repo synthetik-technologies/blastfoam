@@ -41,7 +41,7 @@ SourceFiles
 #ifndef solidModel_H
 #define solidModel_H
 
-#include "dynamicBlastFvMesh.H"
+#include "dynamicFvMesh.H"
 #include "IOdictionary.H"
 #include "scalarIOField.H"
 #include "autoPtr.H"
@@ -61,7 +61,6 @@ SourceFiles
 namespace Foam
 {
 
-typedef dynamicBlastFvMesh dynamicFvMesh;
 /*---------------------------------------------------------------------------*\
                            Class solidModel Declaration
 \*---------------------------------------------------------------------------*/

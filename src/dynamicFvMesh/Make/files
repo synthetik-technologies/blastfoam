@@ -1,15 +1,11 @@
-dynamicFvMesh/dynamicBlastFvMesh.C
-dynamicFvMesh/dynamicBlastFvMeshNew.C
-staticFvMesh/staticBlastFvMesh.C
-dynamicMotionSolverFvMesh/dynamicMotionSolverBlastFvMesh.C
+dynamicBlastFvMesh/dynamicBlastFvMesh.C
 
-dynamicRefineFvMesh/multiCritRefinement.C
-dynamicRefineFvMesh/dynamicRefineBlastFvMesh.C
-dynamicRefineBalancedFvMesh/dynamicRefineBalancedBlastFvMesh.C
-adaptiveFvMesh/adaptiveBlastFvMesh.C
-topoChangerFvMesh/topoChangerBlastFvMesh.C
+dynamicRefineMultiFvMesh/multiCritRefinement.C
+dynamicRefineMultiFvMesh/dynamicRefineMultiFvMesh.C
+dynamicRefineBalancedFvMesh/dynamicRefineBalancedFvMesh.C
+adaptiveFvMesh/adaptiveFvMesh.C
 
-movingAdaptiveFvMesh/movingAdaptiveBlastFvMesh.C
+movingAdaptiveFvMesh/movingAdaptiveFvMesh.C
 
 overset/processorLOD/processorLOD/processorLOD.C
 overset/processorLOD/box/box.C
@@ -36,7 +32,7 @@ overset/cellCellStencil/trackingInverseDistance/voxelMeshSearch.C
 overset/cellCellStencil/trackingInverseDistance/trackingInverseDistanceCellCellStencil.C
 overset/cellCellStencil/leastSquares/leastSquaresCellCellStencil.C
 
-overset/dynamicOversetFvMesh/dynamicOversetBlastFvMesh.C
+overset/dynamicOversetFvMesh/dynamicOversetFvMesh.C
 
 overset/fvMeshPrimitiveLduAddressing/fvMeshPrimitiveLduAddressing.C
 

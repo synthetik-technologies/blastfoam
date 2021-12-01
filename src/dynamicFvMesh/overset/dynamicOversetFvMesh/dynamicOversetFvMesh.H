@@ -24,20 +24,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::dynamicOversetBlastFvMesh
+    Foam::dynamicOversetFvMesh
 
 Description
     dynamicFvMesh with support for overset meshes.
 
 SourceFiles
-    dynamicOversetBlastFvMesh.C
+    dynamicOversetFvMesh.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicOversetBlastFvMesh_H
-#define dynamicOversetBlastFvMesh_H
+#ifndef dynamicOversetFvMesh_H
+#define dynamicOversetFvMesh_H
 
-#include "dynamicMotionSolverBlastFvMesh.H"
+#include "dynamicMotionSolverFvMesh.H"
 #include "labelIOList.H"
 #include "fvMeshPrimitiveLduAddressing.H"
 #include "lduInterfaceFieldPtrsList.H"
@@ -55,12 +55,12 @@ class lduPrimitiveProcessorInterface;
 class GAMGAgglomeration;
 
 /*---------------------------------------------------------------------------*\
-                   Class dynamicOversetBlastFvMesh Declaration
+                   Class dynamicOversetFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicOversetBlastFvMesh
+class dynamicOversetFvMesh
 :
-    public dynamicMotionSolverBlastFvMesh
+    public dynamicMotionSolverFvMesh
 {
 protected:
 
@@ -173,10 +173,10 @@ private:
     // Private Member Functions
 
         //- No copy construct
-        dynamicOversetBlastFvMesh(const dynamicOversetBlastFvMesh&) = delete;
+        dynamicOversetFvMesh(const dynamicOversetFvMesh&) = delete;
 
         //- No copy assignment
-        void operator=(const dynamicOversetBlastFvMesh&) = delete;
+        void operator=(const dynamicOversetFvMesh&) = delete;
 
 
 public:
@@ -188,11 +188,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        dynamicOversetBlastFvMesh(const IOobject& io);//, const bool doInit=true);
+        dynamicOversetFvMesh(const IOobject& io);//, const bool doInit=true);
 
 
     //- Destructor
-    virtual ~dynamicOversetBlastFvMesh();
+    virtual ~dynamicOversetFvMesh();
 
 
     // Member Functions
@@ -386,7 +386,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#   include "dynamicOversetBlastFvMeshTemplates.C"
+#   include "dynamicOversetFvMeshTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

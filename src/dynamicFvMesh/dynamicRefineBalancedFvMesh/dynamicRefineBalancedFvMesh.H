@@ -23,11 +23,11 @@ License
 
 
 Class
-    Foam::dynamicRefineBalancedBlastFvMesh
+    Foam::dynamicRefineBalancedFvMesh
 
 SourceFiles
-    dynamicRefineBalancedBlastFvMesh.C
-    dynamicRefineBalancedBlastFvMeshTemplates.C
+    dynamicRefineBalancedFvMesh.C
+    dynamicRefineBalancedFvMeshTemplates.C
 
 Authors
     T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
@@ -64,12 +64,11 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef dynamicRefineBalancedBlastFvMesh_H
-#define dynamicRefineBalancedBlastFvMesh_H
+#ifndef dynamicRefineBalancedFvMesh_H
+#define dynamicRefineBalancedFvMesh_H
 
 
-#include "dynamicBlastFvMesh.H"
-#include "dynamicRefineBlastFvMesh.H"
+#include "dynamicRefineMultiFvMesh.H"
 #include "hexRef8.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
@@ -84,22 +83,21 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                           Class dynamicRefineBalancedBlastFvMesh Declaration
+                           Class dynamicRefineBalancedFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
-class dynamicRefineBalancedBlastFvMesh
+class dynamicRefineBalancedFvMesh
 :
-    public dynamicRefineBlastFvMesh
+    public dynamicRefineMultiFvMesh
 {
 
 private:
 
-
         //- Disallow default bitwise copy construct
-        dynamicRefineBalancedBlastFvMesh(const dynamicRefineBalancedBlastFvMesh&);
+        dynamicRefineBalancedFvMesh(const dynamicRefineBalancedFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const dynamicRefineBalancedBlastFvMesh&);
+        void operator=(const dynamicRefineBalancedFvMesh&);
 
         fvMeshBalance balancer_;
 
@@ -112,11 +110,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        explicit dynamicRefineBalancedBlastFvMesh(const IOobject& io);
+        explicit dynamicRefineBalancedFvMesh(const IOobject& io);
 
 
     //- Destructor
-    virtual ~dynamicRefineBalancedBlastFvMesh();
+    virtual ~dynamicRefineBalancedFvMesh();
 
 
     // Member Functions
@@ -125,7 +123,7 @@ public:
         virtual bool update();
 
         //- Refine the mesh
-        virtual bool refine(const bool correctError = true);
+        virtual bool refine();
 };
 
 

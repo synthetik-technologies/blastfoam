@@ -65,6 +65,11 @@ Foam::errorEstimators::densityGradient::~densityGradient()
 
 void Foam::errorEstimators::densityGradient::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     const volScalarField& rho = mesh_.lookupObject<volScalarField>("rho");
 
     volVectorField gradRho(fvc::grad(rho));

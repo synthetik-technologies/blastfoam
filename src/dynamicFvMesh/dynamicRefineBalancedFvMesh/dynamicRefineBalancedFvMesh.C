@@ -24,7 +24,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicRefineBalancedBlastFvMesh.H"
+#include "dynamicRefineBalancedFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceInterpolate.H"
 #include "volFields.H"
@@ -41,23 +41,24 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicRefineBalancedBlastFvMesh, 0);
+    defineTypeNameAndDebug(dynamicRefineBalancedFvMesh, 0);
     addToRunTimeSelectionTable
     (
         dynamicBlastFvMesh,
-        dynamicRefineBalancedBlastFvMesh,
+        dynamicRefineBalancedFvMesh,
         IOobject
     );
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineBalancedBlastFvMesh::dynamicRefineBalancedBlastFvMesh
+Foam::dynamicRefineBalancedFvMesh::dynamicRefineBalancedFvMesh
 (
     const IOobject& io
 )
 :
-    dynamicRefineBlastFvMesh(io),
+    dynamicFvMesh(io),
+    dynamicRefineMultiFvMesh(io),
     balancer_
     (
         *this,
@@ -68,7 +69,7 @@ Foam::dynamicRefineBalancedBlastFvMesh::dynamicRefineBalancedBlastFvMesh
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicRefineBalancedBlastFvMesh::~dynamicRefineBalancedBlastFvMesh()
+Foam::dynamicRefineBalancedFvMesh::~dynamicRefineBalancedFvMesh()
 {
 
 }
@@ -76,15 +77,15 @@ Foam::dynamicRefineBalancedBlastFvMesh::~dynamicRefineBalancedBlastFvMesh()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::dynamicRefineBalancedBlastFvMesh::update()
+bool Foam::dynamicRefineBalancedFvMesh::update()
 {
     return false;
 }
 
 
-bool Foam::dynamicRefineBalancedBlastFvMesh::refine(const bool)
+bool Foam::dynamicRefineBalancedFvMesh::refine()
 {
-    bool hasChanged = dynamicRefineBlastFvMesh::refine();
+    bool hasChanged = dynamicRefineMultiFvMesh::refine();
     balancer_.read(dynamicMeshDict().optionalSubDict("loadBalance"));
 
     if (balancer_.canBalance() && hasChanged)

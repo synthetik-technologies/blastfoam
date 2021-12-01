@@ -26,24 +26,25 @@ License
 
 
 Class
-    Foam::movingAdaptiveBlastFvMesh
+    Foam::movingAdaptiveFvMesh
 
 SourceFiles
-    movingAdaptiveBlastFvMesh.C
+    movingAdaptiveFvMesh.C
 
 Description
     Mesh movement is solved with motion solvers, and adaptive mesh refinement
     is also included.
 
 Additional files
-    adaptiveBlastFvMesh.H
+    adaptiveFvMesh.H
+    movingAdaptiveFvMesh.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef movingAdaptiveBlastFvMesh_H
-#define movingAdaptiveBlastFvMesh_H
+#ifndef movingAdaptiveFvMesh_H
+#define movingAdaptiveFvMesh_H
 
-#include "adaptiveBlastFvMesh.H"
+#include "adaptiveFvMesh.H"
 #include "hexRef.H"
 #include "PackedBoolList.H"
 #include "Switch.H"
@@ -54,14 +55,14 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class movingAdaptiveBlastFvMesh Declaration
+                     Class movingAdaptiveFvMesh Declaration
 \*---------------------------------------------------------------------------*/
 
 class motionSolver;
 
-class movingAdaptiveBlastFvMesh
+class movingAdaptiveFvMesh
 :
-    public adaptiveBlastFvMesh
+    public adaptiveFvMesh
 {
     // Private data
 
@@ -82,10 +83,10 @@ class movingAdaptiveBlastFvMesh
         virtual void distribute(const mapDistributePolyMesh& map);
 
         //- Disallow default bitwise copy construct
-        movingAdaptiveBlastFvMesh(const movingAdaptiveBlastFvMesh&);
+        movingAdaptiveFvMesh(const movingAdaptiveFvMesh&);
 
         //- Disallow default bitwise assignment
-        void operator=(const movingAdaptiveBlastFvMesh&);
+        void operator=(const movingAdaptiveFvMesh&);
 
 
 
@@ -99,11 +100,11 @@ public:
     // Constructors
 
         //- Construct from IOobject
-        movingAdaptiveBlastFvMesh(const IOobject& io);
+        movingAdaptiveFvMesh(const IOobject& io);
 
 
     //- Destructor
-    ~movingAdaptiveBlastFvMesh();
+    ~movingAdaptiveFvMesh();
 
 
     // Member Functions
@@ -112,7 +113,7 @@ public:
         const motionSolver& motion() const;
 
         //- Refine the mesh
-        virtual bool refine(const bool correctError = true);
+        virtual bool refine();
 
         //- Update the mesh for both mesh motion and topology change
         virtual bool update();

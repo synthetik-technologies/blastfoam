@@ -39,7 +39,7 @@ License
 #include "waveMethod.H"
 
 #include "regionSplit.H"
-#include "dynamicOversetBlastFvMesh.H"
+#include "dynamicOversetFvMesh.H"
 #include "OSspecific.H"
 //#include "minData.H"
 //#include "FaceCellWave.H"
@@ -2184,7 +2184,7 @@ bool Foam::cellCellStencils::inverseDistance::update() const
         new mapDistribute(globalCells, cellStencil_, compactMap)
     );
     cellInterpolationWeight_.transfer(allWeight);
-    dynamicOversetBlastFvMesh::correctBoundaryConditions
+    dynamicOversetFvMesh::correctBoundaryConditions
     <
         volScalarField,
         oversetFvPatchField<scalar>
@@ -2262,7 +2262,7 @@ bool Foam::cellCellStencils::inverseDistance::update() const
             (
                 createField(mesh_, "maxMagWeight", maxMagWeight)
             );
-            dynamicOversetBlastFvMesh::correctBoundaryConditions
+            dynamicOversetFvMesh::correctBoundaryConditions
             <
                 volScalarField,
                 oversetFvPatchField<scalar>
@@ -2277,7 +2277,7 @@ bool Foam::cellCellStencils::inverseDistance::update() const
                 createField(mesh_, "cellTypes", cellTypes_)
             );
             //tfld.ref().correctBoundaryConditions();
-            dynamicOversetBlastFvMesh::correctBoundaryConditions
+            dynamicOversetFvMesh::correctBoundaryConditions
             <
                 volScalarField,
                 oversetFvPatchField<scalar>

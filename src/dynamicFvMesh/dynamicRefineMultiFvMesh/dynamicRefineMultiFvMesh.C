@@ -2,16 +2,11 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
+    \\  /    A nd           | Copyright (C) 2011-2016 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
-21-05-2020 Synthetik Applied Technologies: |    Modified original
-                            dynamicRefineBalanceBlastFvMesh class
-                            to be more appilcable to compressible flows.
-                            Improved compatibility with snappyHexMesh.
--------------------------------------------------------------------------------
 License
-    This file is a derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -28,16 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-// THIS IS BAD
-// The volumes need to be cleared when balancing, but there is no
-// public or protected way to do this without using clearOut() which
-// will the pointMesh if it exists, so pointFields become invalid.
-// This is a work around
-#define curTimeIndex_ curTimeIndex_; protected:
-#include "fvMesh.H"
-#undef curTimeIndex_
-
-#include "adaptiveBlastFvMesh.H"
+#include "dynamicRefineMultiFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "surfaceInterpolate.H"
 #include "volFields.H"
@@ -45,25 +31,17 @@ License
 #include "surfaceFields.H"
 #include "syncTools.H"
 #include "pointFields.H"
-#include "fvCFD.H"
-#include "volPointInterpolation.H"
-#include "pointMesh.H"
+#include "sigFpe.H"
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
-#include "RefineBalanceMeshObject.H"
-#include "parcelCloud.H"
+#include "emptyPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(adaptiveBlastFvMesh, 0);
-    addToRunTimeSelectionTable
-    (
-        dynamicBlastFvMesh,
-        adaptiveBlastFvMesh,
-        IOobject
-    );
+    defineTypeNameAndDebug(dynamicRefineMultiFvMesh, 0);
+
 
     // Helper class for accessing max cell level of faces accross processor patches
     template<class Type>
@@ -79,7 +57,7 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-Foam::label Foam::adaptiveBlastFvMesh::count
+Foam::label Foam::dynamicRefineMultiFvMesh::count
 (
     const PackedBoolList& l,
     const unsigned int val
@@ -105,7 +83,7 @@ Foam::label Foam::adaptiveBlastFvMesh::count
 }
 
 
-void Foam::adaptiveBlastFvMesh::calculateProtectedCells
+void Foam::dynamicRefineMultiFvMesh::calculateProtectedCells
 (
     PackedBoolList& unrefineableCell
 ) const
@@ -211,18 +189,23 @@ void Foam::adaptiveBlastFvMesh::calculateProtectedCells
 }
 
 
-void Foam::adaptiveBlastFvMesh::readDict()
+void Foam::dynamicRefineMultiFvMesh::readDict()
 {
-    const dictionary refineDict
+    dictionary refineDict
     (
-        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+        IOdictionary
+        (
+            IOobject
+            (
+                "dynamicMeshDict",
+                time().constant(),
+                *this,
+                IOobject::MUST_READ_IF_MODIFIED,
+                IOobject::NO_WRITE,
+                false
+            )
+        ).subDict(typeName + "Coeffs")
     );
-    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
-
-    if (!refineDict.found("correctFluxes"))
-    {
-        return;
-    }
 
     List<Pair<word>> fluxVelocities = List<Pair<word>>
     (
@@ -233,13 +216,29 @@ void Foam::adaptiveBlastFvMesh::readDict()
     forAll(fluxVelocities, i)
     {
         correctFluxes_.insert(fluxVelocities[i][0], fluxVelocities[i][1]);
+    };
+
+    if (refineDict.found("mapSurfaceFields"))
+    {
+        List<word> surfFlds = List<word>
+        (
+            refineDict.lookup("mapSurfaceFields")
+        );
+        // Rework into hashtable.
+        correctFluxes_.resize(surfFlds.size());
+        forAll(surfFlds, i)
+        {
+            mapSurfaceFields_.insert(surfFlds[i], surfFlds[i]);
+        };
     }
+
+    dumpLevel_ = Switch(refineDict.lookup("dumpLevel"));
 }
 
 
 // Refines cells, maps fields and recalculates (an approximate) flux
 Foam::autoPtr<Foam::mapPolyMesh>
-Foam::adaptiveBlastFvMesh::refine
+Foam::dynamicRefineMultiFvMesh::refine
 (
     const labelList& cellsToRefine
 )
@@ -282,7 +281,7 @@ Foam::adaptiveBlastFvMesh::refine
     //    cellTreePtr_.clear();
 
     // Update fields
-    this->updateMesh(map);
+    updateMesh(map);
 
 
     // Move mesh
@@ -344,6 +343,15 @@ Foam::adaptiveBlastFvMesh::refine
         {
             if (!correctFluxes_.found(iter.key()))
             {
+                WarningInFunction
+                    << "Cannot find surfaceScalarField " << iter.key()
+                    << " in user-provided flux mapping table "
+                    << correctFluxes_ << endl
+                    << "    The flux mapping table is used to recreate the"
+                    << " flux on newly created faces." << endl
+                    << "    Either add the entry if it is a flux or use ("
+                    << iter.key() << " none) to suppress this warning."
+                    << endl;
                 continue;
             }
 
@@ -488,7 +496,7 @@ Foam::adaptiveBlastFvMesh::refine
 
 
 Foam::autoPtr<Foam::mapPolyMesh>
-Foam::adaptiveBlastFvMesh::unrefine
+Foam::dynamicRefineMultiFvMesh::unrefine
 (
     const labelList& splitElems
 )
@@ -536,21 +544,6 @@ Foam::adaptiveBlastFvMesh::unrefine
     movePoints(newPoints);
     */
 
-
-    // Move mesh
-    /*
-    pointField newPoints;
-    if (map().hasMotionPoints())
-    {
-        newPoints = map().preMotionPoints();
-    }
-    else
-    {
-        newPoints = points();
-    }
-    movePoints(newPoints);
-    */
-
     // Correct the flux for modified faces.
     {
         const labelList& reversePointMap = map().reversePointMap();
@@ -564,6 +557,15 @@ Foam::adaptiveBlastFvMesh::unrefine
         {
             if (!correctFluxes_.found(iter.key()))
             {
+                WarningInFunction
+                    << "Cannot find surfaceScalarField " << iter.key()
+                    << " in user-provided flux mapping table "
+                    << correctFluxes_ << endl
+                    << "    The flux mapping table is used to recreate the"
+                    << " flux on newly created faces." << endl
+                    << "    Either add the entry if it is a flux or use ("
+                    << iter.key() << " none) to suppress this warning."
+                    << endl;
                 continue;
             }
 
@@ -659,7 +661,7 @@ Foam::adaptiveBlastFvMesh::unrefine
 
 
 Foam::scalarField
-Foam::adaptiveBlastFvMesh::maxPointField(const scalarField& pFld) const
+Foam::dynamicRefineMultiFvMesh::maxPointField(const scalarField& pFld) const
 {
     scalarField vFld(nCells(), -GREAT);
 
@@ -676,7 +678,7 @@ Foam::adaptiveBlastFvMesh::maxPointField(const scalarField& pFld) const
 }
 
 Foam::scalarField
-Foam::adaptiveBlastFvMesh::maxCellField(const volScalarField& vFld) const
+Foam::dynamicRefineMultiFvMesh::maxCellField(const volScalarField& vFld) const
 {
     scalarField pFld(nPoints(), -GREAT);
 
@@ -694,7 +696,7 @@ Foam::adaptiveBlastFvMesh::maxCellField(const volScalarField& vFld) const
 
 /*
 Foam::scalarField
-Foam::adaptiveBlastFvMesh::minCellField(const volScalarField& vFld) const
+Foam::dynamicRefineMultiFvMesh::minCellField(const volScalarField& vFld) const
 {
     scalarField pFld(nPoints(), -GREAT);
 
@@ -713,7 +715,7 @@ Foam::adaptiveBlastFvMesh::minCellField(const volScalarField& vFld) const
 
 // Simple (non-parallel) interpolation by averaging.
 Foam::scalarField
-Foam::adaptiveBlastFvMesh::cellToPoint(const scalarField& vFld) const
+Foam::dynamicRefineMultiFvMesh::cellToPoint(const scalarField& vFld) const
 {
     scalarField pFld(nPoints());
 
@@ -732,7 +734,7 @@ Foam::adaptiveBlastFvMesh::cellToPoint(const scalarField& vFld) const
 }
 
 
-Foam::scalarField Foam::adaptiveBlastFvMesh::error
+Foam::scalarField Foam::dynamicRefineMultiFvMesh::error
 (
     const scalarField& fld,
     const scalar minLevel,
@@ -754,7 +756,7 @@ Foam::scalarField Foam::adaptiveBlastFvMesh::error
 }
 
 
-void Foam::adaptiveBlastFvMesh::selectRefineCandidates
+void Foam::dynamicRefineMultiFvMesh::selectRefineCandidates
 (
     const scalar lowerRefineLevel,
     const scalar upperRefineLevel,
@@ -798,18 +800,17 @@ void Foam::adaptiveBlastFvMesh::selectRefineCandidates
             candidateCell.set(cellI, 1);
         }
     }
+////////////////////////////////////////////////////////////////////////
 }
 
 
-Foam::labelList Foam::adaptiveBlastFvMesh::selectRefineCells
+Foam::labelList Foam::dynamicRefineMultiFvMesh::selectRefineCells
 (
     const label maxCells,
-    const labelList& maxRefinement,
+    const label maxRefinement,
     const PackedBoolList& candidateCell
 ) const
 {
-    label maxLevel(error_->maxLevel());
-
     // Every refined cell causes 7 extra cells
     label nTotToRefine = (maxCells - globalData().nTotalCells()) / 7;
 
@@ -833,7 +834,7 @@ Foam::labelList Foam::adaptiveBlastFvMesh::selectRefineCells
         {
             if
             (
-                cellLevel[celli] < maxRefinement[celli]
+                cellLevel[celli] < maxRefinement
              && candidateCell.get(celli)
              && (
                     unrefineableCell.empty()
@@ -848,7 +849,7 @@ Foam::labelList Foam::adaptiveBlastFvMesh::selectRefineCells
     else
     {
         // Sort by error? For now just truncate.
-        for (label level = 0; level < maxLevel; level++)
+        for (label level = 0; level < maxRefinement; level++)
         {
             forAll(candidateCell, celli)
             {
@@ -890,11 +891,10 @@ Foam::labelList Foam::adaptiveBlastFvMesh::selectRefineCells
     return consistentSet;
 }
 
-
 // YO- This is here only to preserve compatibility with the official release.
 //     It is not used by the refinement procedure, but some utilities such as
 //     decomposePar rely on it.
-Foam::labelList Foam::adaptiveBlastFvMesh::selectUnrefinePoints
+Foam::labelList Foam::dynamicRefineMultiFvMesh::selectUnrefinePoints
 (
     const scalar unrefineLevel,
     const PackedBoolList& markedCell,
@@ -954,7 +954,7 @@ Foam::labelList Foam::adaptiveBlastFvMesh::selectUnrefinePoints
 }
 //-YO
 
-void Foam::adaptiveBlastFvMesh::extendMarkedCells
+void Foam::dynamicRefineMultiFvMesh::extendMarkedCells
 (
     PackedBoolList& markedCell
 ) const
@@ -996,7 +996,7 @@ void Foam::adaptiveBlastFvMesh::extendMarkedCells
 }
 
 
-void Foam::adaptiveBlastFvMesh::checkEightAnchorPoints
+void Foam::dynamicRefineMultiFvMesh::checkEightAnchorPoints
 (
     PackedBoolList& protectedCell,
     label& nProtected
@@ -1046,212 +1046,149 @@ void Foam::adaptiveBlastFvMesh::checkEightAnchorPoints
 }
 
 
-void Foam::adaptiveBlastFvMesh::setProtectedCells()
-{
-    const labelList& cellLevel = meshCutter_->cellLevel();
-    const labelList& pointLevel = meshCutter_->pointLevel();
-
-    labelList neiLevel(nFaces());
-
-    for (label facei = 0; facei < nInternalFaces(); facei++)
-    {
-        neiLevel[facei] = cellLevel[faceNeighbour()[facei]];
-    }
-    for (label facei = nInternalFaces(); facei < nFaces(); facei++)
-    {
-        neiLevel[facei] = cellLevel[faceOwner()[facei]];
-    }
-    syncTools::swapFaceList(*this, neiLevel);
-
-    // Protect cells that will cause a failure (from snappyHexMesh)
-    boolList protectedFaces(nFaces(), false);
-
-    forAll(faceOwner(), facei)
-    {
-        label faceLevel = max
-        (
-            cellLevel[faceOwner()[facei]],
-            neiLevel[facei]
-        );
-
-        const face& f = faces()[facei];
-
-        label nAnchors = 0;
-
-        forAll(f, fp)
-        {
-            if (pointLevel[f[fp]] <= faceLevel)
-            {
-                nAnchors++;
-            }
-        }
-        if (nAnchors == 2)
-        {
-            protectedFaces[facei] = true;
-        }
-    }
-
-    syncTools::syncFaceList(*this, protectedFaces, orEqOp<bool>());
-
-    for (label facei = 0; facei < nInternalFaces(); facei++)
-    {
-        if (protectedFaces[facei])
-        {
-            protectedCell_.set(faceOwner()[facei], 1);
-            nProtected_++;
-            protectedCell_.set(faceNeighbour()[facei], 1);
-            nProtected_++;
-        }
-    }
-    for (label facei = nInternalFaces(); facei < nFaces(); facei++)
-    {
-        if (protectedFaces[facei])
-        {
-            protectedCell_.set(faceOwner()[facei], 1);
-            nProtected_++;
-        }
-    }
-
-    if (nGeometricD() == nSolutionD())
-    {
-        checkEightAnchorPoints(protectedCell_, nProtected_);
-    }
-
-    if (returnReduce(nProtected_, sumOp<label>()) == 0)
-    {
-        protectedCell_.clear();
-    }
-}
-
-
-template<class T>
-void Foam::adaptiveBlastFvMesh::mapNewInternalFaces
+template <class T>
+void Foam::dynamicRefineMultiFvMesh::mapNewInternalFaces
 (
     const labelList& faceMap
 )
 {
-    return;
-}
+    typedef GeometricField<T, fvsPatchField, surfaceMesh> GeoField;
+    HashTable< GeoField*> sFlds(this->objectRegistry::lookupClass<GeoField>());
 
+    const unallocLabelList& owner = this->owner();
+    const unallocLabelList& neighbour = this->neighbour();
+    const dimensionedScalar deltaN = 1e-8 / pow(average(this->V()), 1.0 / 3.0);
 
-void Foam::adaptiveBlastFvMesh::updateMesh(const mapPolyMesh& mpm)
-{
-
-    if
-    (
-        this->foundObject<volScalarField::Internal>("V0_Old")
-     || this->foundObject<volScalarField::Internal>("V00_Old")
-    )
+    forAllIter(typename HashTable<GeoField*>, sFlds, iter)
     {
-        //- Only clear old volumes if balancing is occurring
-        //- Clear V, V0, and V00 since they are not
-        //  registered, and therefore are not resized and the
-        //  normal mapping does not work.
-        //  Instead we save V0/V00 and reset it.
 
-        // The actual fix to this is in progress
-
-        //  THIS IS A PRIVATE FUNCTION OF fvMesh,
-        //  but we use a MACRO hack to make it accessible
-        this->clearGeom();
-    }
-    else
-    {
-        this->clearGeomNotOldVol();
-    }
-
-    fvMesh::updateMesh(mpm);
-}
-
-
-void Foam::adaptiveBlastFvMesh::distribute
-(
-    const mapDistributePolyMesh& map
-)
-{
-    Info<< "Distribute the map ..." << endl;
-            meshCutter_->distribute(map);
-
-    //- The volume has been updated, so now we copy back
-    //  This also calls V() which will construct the volume
-    //  field.
-    //  Again, we cheat to access the volume field pointers
-    //  This is necessary because the V0 and V00 fields are
-    //  not created until the time has advanced and asking for
-    //  thermo though V0() or V00() results in a fatal error
-
-    if (V0OldPtr_)
-    {
-        map.distributeCellData(*V0OldPtr_);
-        if (this->V0Ptr_)
+        GeoField& sFld = *iter();
+        if (mapSurfaceFields_.found(iter.key()))
         {
-            deleteDemandDrivenData(this->V0Ptr_);
-        }
-        this->V0Ptr_ = V0OldPtr_;
-        V0OldPtr_ = nullptr;
-    }
-    if (V00OldPtr_)
-    {
-        map.distributeCellData(*V00OldPtr_);
-        if (this->V00Ptr_)
-        {
-            deleteDemandDrivenData(this->V0Ptr_);
-        }
-        this->V00Ptr_ = V00OldPtr_;
-        V00OldPtr_ = nullptr;
-    }
-
-    if (returnReduce(nProtected_, sumOp<label>()) > 0)
-    {
-        boolList protectedCell(protectedCell_.size(), false);
-        forAll(protectedCell, i)
-        {
-            if (protectedCell_.get(i))
+            if (debug)
             {
-                protectedCell[i] = true;
+                Info << "dynamicRefineMultiFvMesh::mapNewInternalFaces(): " <<iter.key()<< endl;
+            }
+
+            Field<T> tsFld(this->nFaces(), pTraits<T>::zero);
+            forAll(sFld.internalField(), iFace)
+            {
+                tsFld[iFace] = sFld.internalField()[iFace];
+            }
+            forAll(sFld.boundaryField(), iPatch)
+            {
+                label globalIdx = this->boundaryMesh()[iPatch].start();
+                forAll(sFld.boundaryField()[iPatch], facei)
+                {
+                    tsFld[facei+globalIdx] = sFld.boundaryField()[iPatch][facei];
+                }
+            }
+
+            //- loop over all faces
+            for (label facei = 0; facei < nInternalFaces(); facei++)
+            {
+                label oldFacei = faceMap[facei];
+
+                //- map surface field on newly generated faces
+                if (oldFacei == -1)
+                {
+                    //- find owner and neighbour cell
+                    cell faceOwner = this->cells()[owner[facei]];
+                    cell faceNeighbour = this->cells()[neighbour[facei]];
+
+                    //- loop over all owner/neighbour cell faces
+                    //- and find already mapped ones (master-faces):
+                    T tmpValue = pTraits<T>::zero;
+                    scalar magFld = 0;
+                    label counter = 0;
+
+                    //- simple averaging of all neighbour master-faces
+                    forAll(faceOwner, iFace)
+                    {
+                        //- faces on empty patches are not counted
+                        label facePatchId = boundaryMesh().whichPatch(faceOwner[iFace]);
+                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceOwner[iFace]
+                                                 && isA<emptyPolyPatch>(boundaryMesh()[facePatchId]));
+
+                        //- is master face and not on empty boundary
+                        if ( faceMap[faceOwner[iFace]] != -1 && isNonEmptyBoundFace)
+                        {
+
+                            tmpValue += tsFld[faceOwner[iFace]];
+                            magFld += mag(tsFld[faceOwner[iFace]]);
+                            counter++;
+                        }
+                    }
+
+                    forAll(faceNeighbour, iFace)
+                    {
+                        //- faces on empty patches are not counted
+                        label facePatchId = boundaryMesh().whichPatch(faceNeighbour[iFace]);
+                        bool isNonEmptyBoundFace = !( this->boundaryMesh()[0].start() < faceNeighbour[iFace]
+                                                 && isA<emptyPolyPatch>(boundaryMesh()[facePatchId]));
+
+                        //- is master face and not on empty boundary
+                        if ( faceMap[faceNeighbour[iFace]] != -1 && isNonEmptyBoundFace)
+                        {
+
+                            tmpValue = tmpValue + tsFld[faceNeighbour[iFace]];
+                            magFld += mag(tsFld[faceNeighbour[iFace]]);
+                            counter++;
+                        }
+                    }
+
+                    if(counter > 0)
+                    {
+                        if
+                        (
+                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName
+                                == "surfaceScalarField"
+                        )
+                        {
+                            tmpValue /= counter;
+                        }
+                        else if
+                        (
+                            GeometricField<T, fvsPatchField, surfaceMesh>::typeName
+                                == "surfaceVectorField"
+                        )
+                        {
+                            magFld /= counter;
+                            tmpValue *= magFld/(mag(tmpValue)+deltaN.value());
+                        }
+                        else
+                        {
+                            FatalErrorInFunction
+                                << "mapping implementation only valid for"
+                                << " scalar and vector fields! \n Field "
+                                << sFld.name() << " is of type: "
+                                << GeometricField<T, fvsPatchField, surfaceMesh>::typeName
+                                << abort(FatalError);
+                        }
+                    }
+
+                    sFld[facei] = tmpValue;
+                }
             }
         }
-        map.distributeCellData(protectedCell);
-        protectedCell_ = protectedCell;
     }
-
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
+Foam::dynamicRefineMultiFvMesh::dynamicRefineMultiFvMesh(const IOobject& io)
 :
+    dynamicFvMesh(io),
     dynamicBlastFvMesh(io),
-    error_(errorEstimator::New(*this, dynamicMeshDict())),
     meshCutter_(hexRef::New(*this)),
     dumpLevel_(false),
     nRefinementIterations_(0),
-    nProtected_(0),
     protectedCell_(nCells(), 0),
-    balancer_
-    (
-        *this,
-        dynamicMeshDict().optionalSubDict("loadBalance")
-    ),
-    isRefining_(false),
-    isUnrefining_(false),
-    isBalancing_(false),
-    V0OldPtr_(nullptr),
-    V00OldPtr_(nullptr)
+    multiCritRefinement_(Foam::multiCritRefinement(meshCutter_->cellLevel(), *this))
 {
     // Read static part of dictionary
     readDict();
-
-    nProtected_ = 0;
-
-    forAll(protectedCell_, celli)
-    {
-        if (protectedCell_.get(celli))
-        {
-            nProtected_++;
-        }
-    }
-
 
     const labelList& cellLevel = meshCutter_->cellLevel();
     const labelList& pointLevel = meshCutter_->pointLevel();
@@ -1260,11 +1197,14 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
     // This is currently any cell which does not have 8 anchor points or
     // uses any face which does not have 4 anchor points.
     // Note: do not use cellPoint addressing
+    // Note: Axisymmetric meshes are handled differently!
 
     // Count number of points <= cellLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     labelList nAnchors(nCells(), 0);
+
+    label nProtected = 0;
 
     forAll(pointCells(), pointi)
     {
@@ -1283,12 +1223,13 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                     if (nAnchors[celli] > 8)
                     {
                         protectedCell_.set(celli, 1);
-                        nProtected_++;
+                        nProtected++;
                     }
                 }
             }
         }
     }
+
 
     // Count number of points <= faceLevel
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1336,7 +1277,6 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                     }
                 }
             }
-
         }
 
         syncTools::syncFaceList(*this, protectedFace, orEqOp<bool>());
@@ -1346,9 +1286,9 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected_++;
+                nProtected++;
                 protectedCell_.set(faceNeighbour()[facei], 1);
-                nProtected_++;
+                nProtected++;
             }
         }
         for (label facei = nInternalFaces(); facei < nFaces(); facei++)
@@ -1356,7 +1296,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
             if (protectedFace[facei])
             {
                 protectedCell_.set(faceOwner()[facei], 1);
-                nProtected_++;
+                nProtected++;
             }
         }
 
@@ -1373,7 +1313,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                 {
                     if (protectedCell_.set(celli, 1))
                     {
-                        nProtected_++;
+                        nProtected++;
                     }
                 }
                 else
@@ -1384,7 +1324,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                         {
                             if (protectedCell_.set(celli, 1))
                             {
-                                nProtected_++;
+                                nProtected++;
                             }
                             break;
                         }
@@ -1393,7 +1333,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
             }
 
             // Check cells for 8 corner points
-            checkEightAnchorPoints(protectedCell_, nProtected_);
+            checkEightAnchorPoints(protectedCell_, nProtected);
         }
         else
         {
@@ -1421,7 +1361,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                             {
                                 if (protectedCell_.set(celli, 1))
                                 {
-                                    nProtected_++;
+                                    nProtected++;
                                     break;
                                 }
                             }
@@ -1437,17 +1377,17 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                 {
                     if (protectedCell_.set(celli, 1))
                     {
-                        nProtected_++;
+                        nProtected++;
                     }
                 }
             }
 
             // Check cells for 8 corner points
-            checkEightAnchorPoints(protectedCell_, nProtected_);
+            checkEightAnchorPoints(protectedCell_, nProtected);
 
             // Unprotect prism cells on the axis
             protectedCell_ -= cellIsAxisPrism;
-            nProtected_ -= nAxisPrims;
+            nProtected -= nAxisPrims;
 
 
 
@@ -1461,7 +1401,7 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                     if (protectedCell_.get(celli))
                     {
                         protectedCell_.unset(celli);
-                        nProtected_--;
+                        nProtected--;
                     }
                 }
             }
@@ -1587,19 +1527,27 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
                             if (2*(cellFaces.size()-5) == numNeighboursWithHigherLevel)
                             {
                                 protectedCell_.unset(celli);
-                                nProtected_--;
+                                nProtected--;
                             }
                         }
                     }
                 }
             }
         }
-    }
-    setProtectedCells();
 
-    if (returnReduce(nProtected_, sumOp<label>()))
+        //-YO
+    }
+
+
+
+    if (returnReduce(nProtected, sumOp<label>()) == 0)
     {
-        cellSet protectedCells(*this, "protectedCells", nProtected_);
+        protectedCell_.clear();
+    }
+    else
+    {
+
+        cellSet protectedCells(*this, "protectedCells", nProtected);
         forAll(protectedCell_, celli)
         {
             if (protectedCell_.get(celli))
@@ -1608,61 +1556,55 @@ Foam::adaptiveBlastFvMesh::adaptiveBlastFvMesh(const IOobject& io)
             }
         }
 
-        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
-            << " cells that are protected from refinement." << endl;
+        Info<< "Detected " << returnReduce(nProtected, sumOp<label>())
+            << " cells that are protected from refinement."
+            << " Writing these to cellSet "
+            << protectedCells.name()
+            << "." << endl;
+
+        protectedCells.write();
     }
 }
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::adaptiveBlastFvMesh::~adaptiveBlastFvMesh()
+Foam::dynamicRefineMultiFvMesh::~dynamicRefineMultiFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::adaptiveBlastFvMesh::mapFields(const mapPolyMesh& mpm)
-{
-    dynamicBlastFvMesh::mapFields(mpm);
-
-    // Correct surface fields on introduced internal faces. These get
-    // created out-of-nothing so get an interpolated value.
-    mapNewInternalFaces<scalar>(mpm.faceMap());
-    mapNewInternalFaces<vector>(mpm.faceMap());
-    mapNewInternalFaces<sphericalTensor>(mpm.faceMap());
-    mapNewInternalFaces<symmTensor>(mpm.faceMap());
-    mapNewInternalFaces<tensor>(mpm.faceMap());
-}
-
-bool Foam::adaptiveBlastFvMesh::update()
+bool Foam::dynamicRefineMultiFvMesh::update()
 {
     return false;
 }
 
 
-bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
+bool Foam::dynamicRefineMultiFvMesh::refine()
 {
-    //- Correct error
-    if (correctError)
-    {
-        updateError();
-        updateErrorBoundaries();
-    }
-
-    // Re-read dictionary. Chosen since usually -small so trivial amount
+    // Re-read dictionary. Choosen since usually -small so trivial amount
     // of time compared to actual refinement. Also very useful to be able
     // to modify on-the-fly.
-    const dictionary& refineDict
+    dictionary refineDict
     (
-        dynamicMeshDict().optionalSubDict(typeName + "Coeffs")
+        IOdictionary
+        (
+            IOobject
+            (
+                "dynamicMeshDict",
+                time().constant(),
+                *this,
+                IOobject::MUST_READ_IF_MODIFIED,
+                IOobject::NO_WRITE,
+                false
+            )
+        ).subDict(typeName + "Coeffs")
     );
 
     label refineInterval = readLabel(refineDict.lookup("refineInterval"));
-    scalar beginUnrefine = refineDict.lookupOrDefault("beginUnrefine", 0.0);
 
     bool hasChanged = false;
-    bool balanced = false;
 
     if (refineInterval == 0)
     {
@@ -1679,21 +1621,24 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
             << exit(FatalError);
     }
 
+
+
+
     // Note: cannot refine at time 0 since no V0 present since mesh not
     //       moved yet.
 
-    if (time().timeIndex() % refineInterval == 0)
+    if (time().timeIndex() > 0 && time().timeIndex() % refineInterval == 0)
     {
-        HashTable<parcelCloud*> clouds(this->objectRegistry::lookupClass<parcelCloud>());
-        forAllIter(HashTable<parcelCloud*>, clouds, iter)
+
         {
-            iter()->storeGlobalPositions();
+            // reads multiple refinement criteria if subdict multiCritRefinementControls
+            // in dynamicMeshDict is present or else does nothing
+            // calculates the multiCritRefinementField which needs to be set as field in
+            // dynamicRefineMultiFvMeshCoeffs.field multiCritRefinementField;
+            multiCritRefinement_.updateRefinementField();
         }
 
-        label maxCells
-        (
-            refineDict.lookupOrDefault("maxCells", labelMax)
-        );
+        label maxCells = readLabel(refineDict.lookup("maxCells"));
 
         if (maxCells <= 0)
         {
@@ -1704,30 +1649,30 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                 << exit(FatalError);
         }
 
-        //- Update coefficients
-        error_->read(refineDict);
+        label maxRefinement = readLabel(refineDict.lookup("maxRefinement"));
 
-        labelList maxRefinement(error_->maxRefinement());
-        label maxLevel(gMax(maxRefinement));
-        if (maxLevel == 0)
-        {
-            topoChanging(hasChanged);
-
-            return false;
-        }
-        else if (maxLevel < 0)
+        if (maxRefinement <= 0)
         {
             FatalErrorInFunction
-                << "Illegal maximum refinement level " << maxLevel << nl
-                << "The maxRefinement setting in the dynamicMeshDict should"
+                << "Illegal maximum refinement level " << maxRefinement << nl
+                << "The maxCells setting in the dynamicMeshDict should"
                 << " be > 0." << nl
                 << exit(FatalError);
         }
 
-        const scalar lowerRefineLevel = small;
-        const scalar upperRefineLevel = great;
-        const scalar unrefineLevel = -small;
+        const word fieldName(refineDict.lookup("field"));
 
+        const volScalarField& vFld = lookupObject<volScalarField>(fieldName);
+
+        const scalar lowerRefineLevel =
+            readScalar(refineDict.lookup("lowerRefineLevel"));
+        const scalar upperRefineLevel =
+            readScalar(refineDict.lookup("upperRefineLevel"));
+        const scalar unrefineLevel = refineDict.lookupOrDefault<scalar>
+        (
+            "unrefineLevel",
+            GREAT
+        );
         const label nBufferLayers =
             readLabel(refineDict.lookup("nBufferLayers"));
 
@@ -1739,31 +1684,12 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
         (
             lowerRefineLevel,
             upperRefineLevel,
-            error_->error(),
+            vFld,
             refineCell
         );
 
-        // Extend with a buffer layer to prevent neighbouring points
-        // being unrefined.
-        for (label i = 0; i < nBufferLayers; i++)
-        {
-            extendMarkedCells(refineCell);
-        }
-
-        if (nProtected_ > 0)
-        {
-            forAll(protectedCell_, celli)
-            {
-                if (protectedCell_.get(celli))
-                {
-                    refineCell.set(celli, false);
-                }
-            }
-        }
-
         if (globalData().nTotalCells() < maxCells)
         {
-
             // Select subset of candidates. Take into account max allowable
             // cells, refinement level, protected cells.
             labelList cellsToRefine
@@ -1783,8 +1709,6 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
 
             if (nCellsToRefine > 0)
             {
-                isRefining_ = true;
-
                 // Refine/update mesh and map fields
                 autoPtr<mapPolyMesh> map = refine(cellsToRefine);
 
@@ -1816,46 +1740,19 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                     refineCell.transfer(newRefineCell);
                 }
 
+                // Extend with a buffer layer to prevent neighbouring points
+                // being unrefined.
+                for (label i = 0; i < nBufferLayers; i++)
+                {
+                    extendMarkedCells(refineCell);
+                }
+
                 hasChanged = true;
-                isRefining_ = false;
             }
         }
 
 
-        if (time().value() > beginUnrefine)
         {
-            if (nProtected_ > 0)
-            {
-                forAll(protectedCell_, celli)
-                {
-                    if (protectedCell_.get(celli))
-                    {
-                        refineCell.set(celli, true);
-                    }
-                }
-            }
-            wordList protectedPatches
-            (
-                refineDict.lookupOrDefault
-                (
-                    "protectedPatches",
-                    wordList()
-                )
-            );
-            if (protectedPatches.size())
-            {
-                forAll(protectedPatches, patchi)
-                {
-                    const polyPatch& p =
-                        this->boundaryMesh()[protectedPatches[patchi]];
-                    forAll(p.faceCells(), facei)
-                    {
-                        label own = faceOwner()[facei + p.start()];
-                        refineCell.set(own, true);
-                    }
-                }
-            }
-
             // Select unrefineable points that are not marked in refineCell
             labelList elemsToUnrefine
             (
@@ -1863,7 +1760,7 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
                 (
                     unrefineLevel,
                     refineCell,
-                    maxCellField(error_->error())
+                    maxCellField(vFld)
                 )
             );
 
@@ -1875,162 +1772,38 @@ bool Foam::adaptiveBlastFvMesh::refine(const bool correctError)
 
             if (nSplitElems > 0)
             {
-                isUnrefining_ = true;
-
                 // Refine/update mesh
                 unrefine(elemsToUnrefine);
 
                 hasChanged = true;
-                isUnrefining_ = false;
             }
         }
 
         if ((nRefinementIterations_ % 10) == 0)
         {
-            // Compact refinement history occasionally (how often?).
+            // Compact refinement history occassionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
             const_cast<hexRefRefinementHistory&>
             (
-                meshCutter().history()
+                meshCutter()->history()
             ).compact();
-        }
-
-        reduce(hasChanged, orOp<bool>());
-        topoChanging(hasChanged);
-        balanced = balance();
-        if (balanced)
-        {
-            //- Update objects stored on the mesh db
-            BalanceMeshObject::updateObjects(*this);
-
-            //- Update objects stores on the time db
-            BalanceMeshObject::updateObjects
-            (
-                const_cast<Time&>(this->time())
-            );
-            hasChanged = true;
-        }
-        else if (hasChanged)
-        {
-            //- Update objects stored on the mesh db
-            RefineMeshObject::updateObjects(*this);
-
-            //- Update objects stores on the time db
-            RefineMeshObject::updateObjects
-            (
-                const_cast<Time&>(this->time())
-            );
-        }
-
-        if (hasChanged)
-        {
-            // Reset moving flag (if any). If not using inflation we'll not
-            // move, if are using inflation any follow on movePoints will set
-            // it.
-            moving(false);
         }
         nRefinementIterations_++;
     }
 
-    return hasChanged || balanced;
-}
-
-
-void Foam::adaptiveBlastFvMesh::updateError()
-{
-//     if (this->time().outputTime() && errorEstimator::debug)
-//     {
-//         error_->update(false);
-//         error_->error().write();
-//     }
-    //- Update error field
-    error_->update();
-}
-
-void Foam::adaptiveBlastFvMesh::updateErrorBoundaries()
-{
-    //- Update error field
-    error_->error().correctBoundaryConditions();
-}
-
-
-bool Foam::adaptiveBlastFvMesh::balance()
-{
-    //Part 1 - Call normal update from dynamicRefineBlastFvMesh
-    const dictionary& balanceDict
-    (
-        dynamicMeshDict().optionalSubDict("loadBalance")
-    );
-    balancer_.read(balanceDict);
-
-    scalar beginBalance = balanceDict.lookupOrDefault("beginBalance", small);
-    label balanceInterval =
-        balanceDict.lookupOrDefault("balanceInterval", 1);
-
-    if (!balancer_.balance() || time().value() < beginBalance)
+    topoChanging(hasChanged);
+    if (hasChanged)
     {
-        return false;
+        // Reset moving flag (if any). If not using inflation we'll not move,
+        // if are using inflation any follow on movePoints will set it.
+        moving(false);
     }
 
-    if
-    (
-        (nRefinementIterations_ % balanceInterval != 0)
-     && (nRefinementIterations_ != 1)
-    )
-    {
-        return false;
-    }
-
-    // Part 2 - Load Balancing
-    if (balancer_.canBalance())
-    {
-
-        isBalancing_ = true;
-
-        //- Save the old volumes so it will be distributed and
-        //  resized
-        //  We cheat because so we can check which fields
-        //  actually need to be mapped
-        if (this->V0Ptr_)
-        {
-            V0OldPtr_ = this->V0Ptr_;
-            this->V0Ptr_ = nullptr;
-        }
-        if (this->V00Ptr_)
-        {
-            V00OldPtr_ = this->V00Ptr_;
-            this->V00Ptr_ = nullptr;
-        }
-
-        //- Only clear old volumes if balancing is occurring
-        //- Clear V, V0, and V00 since they are not
-        //  registered, and therefore are not resized and the
-        //  normal mapping does not work.
-        //  Instead we save V0/V00 and reset it.
-
-        // The actual fix to this is in progress
-
-        //  THIS IS A PRIVATE FUNCTION OF fvMesh,
-        //  but we use a MACRO hack to make it accessible
-        this->clearGeom();
-
-        Info<< "Mapping the fields ..." << endl;
-        autoPtr<mapDistributePolyMesh> map = balancer_.distribute();
-
-        //- Distribute other data
-        distribute(map());
-
-        isBalancing_ = false;
-        balanced_ = true;
-
-        return true;
-    }
-
-    return false;
+    return hasChanged;
 }
 
 
-bool Foam::adaptiveBlastFvMesh::writeObject
+bool Foam::dynamicRefineMultiFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,
@@ -2043,7 +1816,7 @@ bool Foam::adaptiveBlastFvMesh::writeObject
 
     bool writeOk =
     (
-        dynamicBlastFvMesh::writeObject(fmt, ver, cmp, write)
+        dynamicBlastFvMesh::writeObject(fmt, ver, cmp)
      && meshCutter_->write()
     );
 
@@ -2061,7 +1834,7 @@ bool Foam::adaptiveBlastFvMesh::writeObject
                 false
             ),
             *this,
-            dimensionedScalar(dimless, 0)
+            dimensionedScalar("level", dimless, 0)
         );
 
         const labelList& cellLevel = meshCutter_->cellLevel();
@@ -2072,25 +1845,6 @@ bool Foam::adaptiveBlastFvMesh::writeObject
         }
 
         writeOk = writeOk && scalarCellLevel.write();
-    }
-    if (returnReduce(nProtected_, sumOp<label>()) > 0)
-    {
-        cellSet protectedCells(*this, "protectedCells", nProtected_);
-        forAll(protectedCell_, celli)
-        {
-            if (protectedCell_.get(celli))
-            {
-                protectedCells.insert(celli);
-            }
-        }
-
-        Info<< "Detected " << returnReduce(nProtected_, sumOp<label>())
-            << " cells that are protected from refinement."
-            << " Writing these to cellSet "
-            << protectedCells.name()
-            << "." << endl;
-
-        protectedCells.write();
     }
 
     return writeOk;

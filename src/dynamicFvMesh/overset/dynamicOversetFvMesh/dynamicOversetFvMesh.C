@@ -25,7 +25,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "dynamicOversetBlastFvMesh.H"
+#include "dynamicOversetFvMesh.H"
 #include "addToRunTimeSelectionTable.H"
 #include "cellCellStencilObject.H"
 #include "zeroGradientFvPatchFields.H"
@@ -36,20 +36,20 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(dynamicOversetBlastFvMesh, 0);
+    defineTypeNameAndDebug(dynamicOversetFvMesh, 0);
     addToRunTimeSelectionTable
     (
         dynamicFvMesh,
-        dynamicOversetBlastFvMesh,
+        dynamicOversetFvMesh,
         IOobject
     );
-//     addToRunTimeSelectionTable(dynamicBlastFvMesh, dynamicOversetBlastFvMesh, doInit);
+//     addToRunTimeSelectionTable(dynamicBlastFvMesh, dynamicOversetFvMesh, doInit);
 }
 
 
 // * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::dynamicOversetBlastFvMesh::updateAddressing() const
+bool Foam::dynamicOversetFvMesh::updateAddressing() const
 {
     const cellCellStencilObject& overlap = Stencil::New(*this);
 
@@ -59,7 +59,7 @@ bool Foam::dynamicOversetBlastFvMesh::updateAddressing() const
 
     // Get the base addressing
     //const lduAddressing& baseAddr = dynamicMotionSolverFvMesh::lduAddr();
-    const lduAddressing& baseAddr = dynamicBlastFvMesh::lduAddr();
+    const lduAddressing& baseAddr = fvMesh::lduAddr();
 
     // Add to the base addressing
     labelList lowerAddr;
@@ -94,7 +94,7 @@ bool Foam::dynamicOversetBlastFvMesh::updateAddressing() const
 
     if (debug)
     {
-        Pout<< "dynamicOversetBlastFvMesh::update() : extended addressing from"
+        Pout<< "dynamicOversetFvMesh::update() : extended addressing from"
             << " nFaces:" << baseAddr.lowerAddr().size()
             << " to nFaces:" << lowerAddr.size()
             << " nExtraFaces:" << nExtraFaces << endl;
@@ -287,7 +287,7 @@ bool Foam::dynamicOversetBlastFvMesh::updateAddressing() const
         patchAddr.setSize(fvp.size() + remoteStencilInterfaces_.size());
 
         //allInterfaces_ = dynamicMotionSolverFvMesh::interfaces();
-        allInterfaces_ = dynamicBlastFvMesh::interfaces();
+        allInterfaces_ = fvMesh::interfaces();
         allInterfaces_.setSize(patchAddr.size());
 
         forAll(fvp, patchI)
@@ -365,7 +365,7 @@ bool Foam::dynamicOversetBlastFvMesh::updateAddressing() const
 }
 
 
-Foam::scalar Foam::dynamicOversetBlastFvMesh::cellAverage
+Foam::scalar Foam::dynamicOversetFvMesh::cellAverage
 (
     const labelList& types,
     const labelList& nbrTypes,
@@ -430,7 +430,7 @@ Foam::scalar Foam::dynamicOversetBlastFvMesh::cellAverage
 }
 
 
-void Foam::dynamicOversetBlastFvMesh::writeAgglomeration
+void Foam::dynamicOversetFvMesh::writeAgglomeration
 (
     const GAMGAgglomeration& agglom
 ) const
@@ -532,13 +532,13 @@ void Foam::dynamicOversetBlastFvMesh::writeAgglomeration
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicOversetBlastFvMesh::dynamicOversetBlastFvMesh
+Foam::dynamicOversetFvMesh::dynamicOversetFvMesh
 (
     const IOobject& io//,
 //     const bool doInit
 )
 :
-    dynamicMotionSolverBlastFvMesh(io)//, doInit)
+    dynamicMotionSolverFvMesh(io)//, doInit)
 {
 //     if (doInit)
     {
@@ -548,7 +548,7 @@ Foam::dynamicOversetBlastFvMesh::dynamicOversetBlastFvMesh
 }
 
 
-bool Foam::dynamicOversetBlastFvMesh::init(const bool doInit)
+bool Foam::dynamicOversetFvMesh::init(const bool doInit)
 {
 //     if (doInit)
 //     {
@@ -567,18 +567,18 @@ bool Foam::dynamicOversetBlastFvMesh::init(const bool doInit)
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::dynamicOversetBlastFvMesh::~dynamicOversetBlastFvMesh()
+Foam::dynamicOversetFvMesh::~dynamicOversetFvMesh()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-const Foam::lduAddressing& Foam::dynamicOversetBlastFvMesh::lduAddr() const
+const Foam::lduAddressing& Foam::dynamicOversetFvMesh::lduAddr() const
 {
     if (!active_)
     {
         //return dynamicMotionSolverBlastFvMesh::lduAddr();
-        return dynamicBlastFvMesh::lduAddr();
+        return fvMesh::lduAddr();
     }
     if (!lduPtr_.valid())
     {
@@ -589,12 +589,12 @@ const Foam::lduAddressing& Foam::dynamicOversetBlastFvMesh::lduAddr() const
 }
 
 
-Foam::lduInterfacePtrsList Foam::dynamicOversetBlastFvMesh::interfaces() const
+Foam::lduInterfacePtrsList Foam::dynamicOversetFvMesh::interfaces() const
 {
     if (!active_)
     {
         //return dynamicMotionSolverBlastFvMesh::interfaces();
-        return dynamicBlastFvMesh::interfaces();
+        return fvMesh::interfaces();
     }
     if (!lduPtr_.valid())
     {
@@ -606,7 +606,7 @@ Foam::lduInterfacePtrsList Foam::dynamicOversetBlastFvMesh::interfaces() const
 
 
 const Foam::fvMeshPrimitiveLduAddressing&
-Foam::dynamicOversetBlastFvMesh::primitiveLduAddr() const
+Foam::dynamicOversetFvMesh::primitiveLduAddr() const
 {
     if (!lduPtr_.valid())
     {
@@ -618,10 +618,10 @@ Foam::dynamicOversetBlastFvMesh::primitiveLduAddr() const
 }
 
 
-bool Foam::dynamicOversetBlastFvMesh::update()
+bool Foam::dynamicOversetFvMesh::update()
 {
     //if (dynamicMotionSolverBlastFvMesh::update())
-    if (dynamicMotionSolverBlastFvMesh::update())
+    if (dynamicMotionSolverFvMesh::update())
     {
         // Calculate the local extra faces for the interpolation. Note: could
         // let demand-driven lduAddr() trigger it but just to make sure.
@@ -638,7 +638,7 @@ bool Foam::dynamicOversetBlastFvMesh::update()
 }
 
 
-Foam::word Foam::dynamicOversetBlastFvMesh::baseName(const word& name)
+Foam::word Foam::dynamicOversetFvMesh::baseName(const word& name)
 {
     if (label(name.find("_0", name.size() - 2)) >= 0)
     {
@@ -649,7 +649,7 @@ Foam::word Foam::dynamicOversetBlastFvMesh::baseName(const word& name)
 }
 
 
-bool Foam::dynamicOversetBlastFvMesh::interpolateFields()
+bool Foam::dynamicOversetFvMesh::interpolateFields()
 {
     // Add the stencil suppression list
     wordHashSet suppressed(Stencil::New(*this).nonInterpolatedFields());
@@ -675,7 +675,7 @@ bool Foam::dynamicOversetBlastFvMesh::interpolateFields()
 
 
 
-bool Foam::dynamicOversetBlastFvMesh::writeObject
+bool Foam::dynamicOversetFvMesh::writeObject
 (
     IOstream::streamFormat fmt,
     IOstream::versionNumber ver,
@@ -683,7 +683,7 @@ bool Foam::dynamicOversetBlastFvMesh::writeObject
     const bool write
 ) const
 {
-    bool ok = dynamicMotionSolverBlastFvMesh::writeObject(fmt, ver, cmp, write);
+    bool ok = dynamicMotionSolverFvMesh::writeObject(fmt, ver, cmp, write);
 
     // For postprocessing : write cellTypes and zoneID
     {

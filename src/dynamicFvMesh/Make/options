@@ -4,6 +4,7 @@ EXE_INC = \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/fileFormats/lnInclude \
     -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/fvMotionSolver/lnInclude \
     -I$(LIB_SRC)/lagrangian/parcel/lnInclude \
     -I$(LIB_SRC)/mesh/blockMesh/lnInclude \
@@ -17,6 +18,7 @@ LIB_LIBS = \
     -lfiniteVolume \
     -lfileFormats \
     -ldynamicMesh \
+    -ldynamicFvMesh \
     -lblockMesh \
     -lfvMotionSolvers \
     -llagrangianParcel \

@@ -34,18 +34,17 @@ License
 namespace Foam
 {
     defineTypeNameAndDebug(dynamicBlastFvMesh, 0);
-    defineRunTimeSelectionTable(dynamicBlastFvMesh, IOobject);
 }
 
 
 // * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
 
-Foam::IOobject Foam::dynamicBlastFvMesh::dynamicMeshDictIOobject(const IOobject& io)
+Foam::IOobject Foam::dynamicBlastFvMesh::dynamicMeshDictIOobject
+(
+    const IOobject& io
+)
 {
-    // defaultRegion (region0) gets loaded from constant, other ones get loaded
-    // from constant/<regionname>. Normally we'd use polyMesh::dbDir() but we
-    // haven't got a polyMesh yet ...
-    return IOobject
+    IOobject dictHeader
     (
         "dynamicMeshDict",
         io.time().constant(),
@@ -55,25 +54,33 @@ Foam::IOobject Foam::dynamicBlastFvMesh::dynamicMeshDictIOobject(const IOobject&
         IOobject::NO_WRITE,
         false
     );
+
+    // defaultRegion (region0) gets loaded from constant, other ones get loaded
+    // from constant/<regionname>. Normally we'd use polyMesh::dbDir() but we
+    // haven't got a polyMesh yet ...
+    return IOobject
+    (
+        "dynamicMeshDict",
+        io.time().constant(),
+        (io.name() == polyMesh::defaultRegion ? "" : io.name()),
+        io.db(),
+        (
+            dictHeader.typeHeaderOk<IOdictionary>(true)
+          ? IOobject::MUST_READ_IF_MODIFIED
+          : IOobject::NO_READ
+        ),
+        IOobject::NO_WRITE,
+        false
+    );
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::dynamicBlastFvMesh::dynamicBlastFvMesh(const IOobject& io, const bool canModify)
+Foam::dynamicBlastFvMesh::dynamicBlastFvMesh(const IOobject& io)
 :
-    fvMesh(io),
-    dynamicMeshDict_
-    (
-        IOobject
-        (
-            "dynamicMeshDict",
-            this->time().constant(),
-            *this,
-            (canModify ? IOobject::NO_READ : IOobject::MUST_READ_IF_MODIFIED),
-            IOobject::NO_WRITE
-        )
-    )
+    dynamicFvMesh(io),
+    dynamicMeshDict_(dynamicMeshDictIOobject(io))
 {}
 
 
@@ -87,7 +94,7 @@ Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
     const bool syncPar
 )
 :
-    fvMesh
+    dynamicFvMesh
     (
         io,
         move(points),
@@ -96,17 +103,7 @@ Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
         move(allNeighbour),
         syncPar
     ),
-    dynamicMeshDict_
-    (
-        IOobject
-        (
-            "dynamicMeshDict",
-            this->time().constant(),
-            *this,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    )
+    dynamicMeshDict_(dynamicMeshDictIOobject(io))
 {}
 
 
@@ -119,7 +116,7 @@ Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
     const bool syncPar
 )
 :
-    fvMesh
+    dynamicFvMesh
     (
         io,
         move(points),
@@ -127,28 +124,7 @@ Foam::dynamicBlastFvMesh::dynamicBlastFvMesh
         move(cells),
         syncPar
     ),
-    dynamicMeshDict_
-    (
-        IOobject
-        (
-            "dynamicMeshDict",
-            this->time().constant(),
-            *this,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    )
-{}
-
-
-Foam::dynamicBlastFvMesh::velocityMotionCorrection::velocityMotionCorrection
-(
-    const dynamicBlastFvMesh& mesh,
-    const dictionary& dict
-)
-:
-    mesh_(mesh),
-    velocityFields_(dict.lookupOrDefault("velocityFields", wordList()))
+    dynamicMeshDict_(dynamicMeshDictIOobject(io))
 {}
 
 
@@ -157,21 +133,15 @@ Foam::dynamicBlastFvMesh::velocityMotionCorrection::velocityMotionCorrection
 Foam::dynamicBlastFvMesh::~dynamicBlastFvMesh()
 {}
 
+// * * * * * * * * * * * * *  Public Static Functions  * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::dynamicBlastFvMesh::velocityMotionCorrection::update() const
+bool Foam::refineMesh(dynamicFvMesh& mesh)
 {
-    forAll(velocityFields_, i)
+    if (isA<dynamicBlastFvMesh>(mesh))
     {
-        if (mesh_.foundObject<volVectorField>(velocityFields_[i]))
-        {
-            mesh_.lookupObjectRef<volVectorField>
-            (
-                velocityFields_[i]
-            ).correctBoundaryConditions();
-        }
+        return dynamicCast<dynamicBlastFvMesh>(mesh).refine();
     }
+    return false;
 }
 
 // ************************************************************************* //

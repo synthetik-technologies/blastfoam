@@ -66,6 +66,11 @@ Foam::errorEstimators::scaledDelta::~scaledDelta()
 
 void Foam::errorEstimators::scaledDelta::update(const bool scale)
 {
+    if (updateCurTimeIndex(!scale))
+    {
+        return;
+    }
+
     volScalarField x
     (
         IOobject

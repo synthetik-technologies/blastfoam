@@ -28,7 +28,7 @@ License
 #include "volFields.H"
 #include "cellCellStencil.H"
 #include "cellCellStencilObject.H"
-#include "dynamicOversetBlastFvMesh.H"
+#include "dynamicOversetFvMesh.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -146,7 +146,7 @@ void Foam::oversetFvPatchField<Type>::initEvaluate
                 // The only problem is bcs that use the new cell values
                 // (e.g. zeroGradient, processor). These need to appear -after-
                 // the 'overset' bc.
-                dynamicCast<const dynamicOversetBlastFvMesh>(mesh).interpolate
+                dynamicCast<const dynamicOversetFvMesh>(mesh).interpolate
                 (
                     const_cast<Field<Type>&>
                     (
@@ -194,7 +194,7 @@ void Foam::oversetFvPatchField<Type>::initEvaluate
                     Info<< "Interpolating non-suppressed field " << fldName
                         << endl;
                 }
-                dynamicCast<const dynamicOversetBlastFvMesh>(mesh).interpolate
+                dynamicCast<const dynamicOversetFvMesh>(mesh).interpolate
                 (
                     const_cast<Field<Type>&>
                     (

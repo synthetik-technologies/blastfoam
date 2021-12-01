@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     errorEstimator.C
-    newErrorEstimator.C
+    errorEstimatorNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -53,6 +53,8 @@ class probes;
 \*---------------------------------------------------------------------------*/
 
 class errorEstimator
+:
+    public regIOobject
 {
 protected:
     // Protected data
@@ -87,6 +89,8 @@ protected:
         //- Are probes refined
         Switch refineProbes_;
 
+        mutable label curTimeIndex_;
+
 
         //- Create or lookup error field
         //  Useful when multiple error estimators are used
@@ -107,6 +111,9 @@ protected:
         //- Lookup and return the scalar value of the field
         template<class Type>
         void getFieldValueType(const word& name, volScalarField& f) const;
+
+        //- Update the time index
+        bool updateCurTimeIndex(const bool unset) const;
 
 
 public:
@@ -180,6 +187,16 @@ public:
 
         //- Read level values
         virtual void read(const dictionary& dict);
+
+        //- regIOobject read
+        virtual bool read()
+        {
+            return true;
+        }
+
+        //- Write error field if in debug
+        virtual bool writeData(Ostream&) const;
+
 };
 
 

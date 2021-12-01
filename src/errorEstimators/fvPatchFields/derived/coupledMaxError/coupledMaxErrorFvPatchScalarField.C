@@ -28,6 +28,7 @@ License
 #include "fvMesh.H"
 #include "volMesh.H"
 #include "volFields.H"
+#include "errorEstimator.H"
 #include "mappedPatchBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -51,14 +52,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 )
 :
     fixedValueFvPatchField<scalar>(p, iF)
-{
-    // For unmapped faces set to internal field value (zero-gradient)
-    if (notNull(iF) && mapper.hasUnmapped())
-    {
-        fvPatchField<scalar>::operator=(this->patchInternalField());
-    }
-    mapper(*this, ptf);
-}
+{}
 
 
 Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
@@ -68,7 +62,7 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
     const dictionary& dict
 )
 :
-    fixedValueFvPatchField<scalar>(p, iF, dict)
+    fixedValueFvPatchField<scalar>(p, iF)
 {}
 
 
@@ -86,10 +80,18 @@ Foam::coupledMaxErrorFvPatchScalarField::coupledMaxErrorFvPatchScalarField
 
 void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
 {
-//     if (this->updated())
-//     {
-//         return;
-//     }
+    if (this->updated())
+    {
+        return;
+    }
+    fixedValueFvPatchField<scalar>::updateCoeffs();
+    Field<scalar>::operator=(this->patchInternalField());
+
+    patch().boundaryMesh().mesh().lookupObjectRef<errorEstimator>
+    (
+        errorEstimator::typeName
+    ).update();
+
 
     // Since we're inside initEvaluate/evaluate there might be processor
     // comms underway. Change the tag we use.
@@ -103,38 +105,44 @@ void Foam::coupledMaxErrorFvPatchScalarField::updateCoeffs()
 
     scalarField::operator=(this->patchInternalField());
 
-    if (nbrMesh.foundObject<volScalarField>("error"))
+    if (nbrMesh.foundObject<errorEstimator>(errorEstimator::typeName))
     {
-        const label samplePatchi = mpp.samplePolyPatch().index();
-        const fvPatchField<scalar>& nbrPatchField =
-            nbrMesh.template lookupObject<volScalarField>
+        errorEstimator& nbrErrorEst =
+            nbrMesh.lookupObjectRef<errorEstimator>
             (
-                "error"
-            ).boundaryField()[samplePatchi];
-        scalarField errorp(nbrPatchField.patchInternalField());
+                errorEstimator::typeName
+            );
 
-        mpp.distribute(errorp);
+        nbrErrorEst.update();
 
-        scalarField::operator=(max(errorp, *this));
-
-        volScalarField& error
+        const label samplePatchi = mpp.samplePolyPatch().index();
+        scalarField nbrError
         (
-            this->db().lookupObjectRef<volScalarField>(this->internalField().name())
+            nbrErrorEst.error().boundaryField()
+            [
+                samplePatchi
+            ].patchInternalField()
+        );
+
+        mpp.distribute(nbrError);
+
+        scalarField::operator=(max(nbrError, *this));
+
+        volScalarField::Internal& iF
+        (
+            const_cast<volScalarField::Internal&>(this->internalField())
         );
         forAll(*this, facei)
         {
-            error[patch().faceCells()[facei]] = this->operator[](facei);
+            iF[patch().faceCells()[facei]] = this->operator[](facei);
         }
     }
-
-    fixedValueFvPatchField<scalar>::updateCoeffs();
 }
 
 
 void Foam::coupledMaxErrorFvPatchScalarField::write(Ostream& os) const
 {
-    fvPatchField<scalar>::write(os);
-    writeEntry(os, "value", *this);
+    fixedValueFvPatchField<scalar>::write(os);
 }
 
 

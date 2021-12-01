@@ -96,11 +96,11 @@ explicitNonLinGeomTotalLagSolid::linearMomentumBoundaryTypes() const
             bTypes[patchi] =
                 symmetricLinearMomentumFvPatchVectorField::typeName;
         }
-        else if (isA<wedgePolyPatch>(patch))
-        {
-            bTypes[patchi] =
-                wedgeLinearMomentumFvPatchVectorField::typeName;
-        }
+//         else if (isA<wedgePolyPatch>(patch))
+//         {
+//             bTypes[patchi] =
+//                 wedgeLinearMomentumFvPatchVectorField::typeName;
+//         }
         else if (polyPatch::constraintType(patch.type()))
         {
             bTypes[patchi] = patch.type();
@@ -138,11 +138,11 @@ explicitNonLinGeomTotalLagSolid::tractionBoundaryTypes() const
             bTypes[patchi] =
                 symmetricTractionFvPatchVectorField::typeName;
         }
-        else if (isA<wedgePolyPatch>(patch))
-        {
-            bTypes[patchi] =
-                wedgeTractionFvPatchVectorField::typeName;
-        }
+//         else if (isA<wedgePolyPatch>(patch))
+//         {
+//             bTypes[patchi] =
+//                 wedgeTractionFvPatchVectorField::typeName;
+//         }
         else if (polyPatch::constraintType(patch.type()))
         {
             bTypes[patchi] = patch.type();

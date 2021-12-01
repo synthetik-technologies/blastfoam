@@ -38,7 +38,7 @@ Author
 #ifndef cellRemovalFvMesh_H
 #define cellRemovalFvMesh_H
 
-#include "dynamicBlastFvMesh.H"
+#include "dynamicFvMesh.H"
 #include "surfaceFields.H"
 #include "mapPolyMesh.H"
 #include "cellRemovalLaw.H"
