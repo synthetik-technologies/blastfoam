@@ -204,6 +204,10 @@ void explicitNonLinGeomTotalLagSolid::solveGEqns
     surfaceScalarField rhof(fvc::interpolate(rho()));
     Uf_ = rhoUf_/rhof;
 
+    // Update deformation gradient tensor
+    F_ += deltaT*fvc::div(Uf_*mesh().Sf());
+    F_.correctBoundaryConditions();
+
     D() += deltaT*U();
     D().correctBoundaryConditions();
     forAll(D().boundaryField(), patchi)
@@ -213,18 +217,19 @@ void explicitNonLinGeomTotalLagSolid::solveGEqns
         if (!polyPatch::constraintType(patch.type()))
         {
             fvPatchVectorField& pU(U().boundaryFieldRef()[patchi]);
+            fvsPatchVectorField& pUf(Uf_.boundaryFieldRef()[patchi]);
             const fvPatchVectorField& pDOld
             (
                 D().oldTime().boundaryFieldRef()[patchi]
             );
             pU = (pD - pDOld)/deltaT.value();
+            pUf = pU;
             rhoU_.boundaryFieldRef()[patchi] =
                 rho().boundaryField()[patchi]*U().boundaryField()[patchi];
+            rhoUf_.boundaryFieldRef()[patchi] =
+                rhoU_.boundaryField()[patchi];
         }
     }
-
-    // Update deformation gradient tensor
-    F_ += deltaT*fvc::div(Uf_*mesh().Sf());
 
     x_ = mesh().C() + D();
     xf_ = fvc::interpolate(x_);
