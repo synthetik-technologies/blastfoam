@@ -201,6 +201,7 @@ void Foam::multiPhaseModel::postUpdate()
 {
     // Solve phase mass
     bool needUpdate = false;
+    alphaRho_.storePrevIter();
     forAll(rhos_, phasei)
     {
         bool alphaRhoUpdate = false;
@@ -231,7 +232,7 @@ void Foam::multiPhaseModel::postUpdate()
             //- Solve momentum equation (implicit stresses)
             fvScalarMatrix rhoEqn
             (
-                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+                fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
               + fvm::ddt(rAlpha, rho)
               - fvc::ddt(rAlpha, rho)
              ==

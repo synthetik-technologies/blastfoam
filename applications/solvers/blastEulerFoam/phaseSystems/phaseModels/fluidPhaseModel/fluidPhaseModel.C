@@ -134,12 +134,13 @@ void Foam::fluidPhaseModel::postUpdate()
         constraints().constrain(alpha);
     }
 
+    alphaRho_.storePrevIter();
     if (needSolve(rho().name()))
     {
         //- Solve momentum equation (implicit stresses)
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
+            fvm::ddt(alpha, rho()) - fvc::ddt(alphaRho_)
           + fvm::ddt(residualAlpha(), rho())
           - fvc::ddt(residualAlpha(), rho())
          ==

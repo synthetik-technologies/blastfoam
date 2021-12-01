@@ -382,7 +382,7 @@ void Foam::phaseModel::postUpdate()
     {
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
           + fvc::ddt(smallAlphaRho, U_) - fvm::ddt(smallAlphaRho, U_)
          ==
             models().source(alphaRho_, U_)
@@ -416,8 +416,10 @@ void Foam::phaseModel::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRho_, he())
-          + fvc::ddt(smallAlphaRho, he()) - fvm::ddt(smallAlphaRho, he())
+            fvm::ddt(alphaRho_, he())
+          - fvc::ddt(alphaRho_.prevIter(), he())
+          + fvc::ddt(smallAlphaRho, he())
+          - fvm::ddt(smallAlphaRho, he())
          ==
             models().source(alphaRho_, he())
         );

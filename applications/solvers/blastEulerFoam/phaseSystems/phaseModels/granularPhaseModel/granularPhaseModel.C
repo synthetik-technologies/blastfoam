@@ -188,12 +188,13 @@ void Foam::granularPhaseModel::postUpdate()
         constraints().constrain(alpha);
     }
 
+    alphaRho_.storePrevIter();
     if (needSolve(rho().name()))
     {
         //- Solve momentum equation (implicit stresses)
         fvScalarMatrix rhoEqn
         (
-            fvm::ddt(alpha, rho()) - fvc::ddt(alpha, rho())
+            fvm::ddt(alpha, rho()) - fvc::ddt(alphaRho_)
           + fvm::ddt(residualAlpha(), rho())
           - fvc::ddt(residualAlpha(), rho())
          ==
@@ -212,7 +213,7 @@ void Foam::granularPhaseModel::postUpdate()
         //- Solve momentum equation (implicit stresses)
         fvVectorMatrix UEqn
         (
-            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRho_, U_)
+            fvm::ddt(alphaRho_, U_) - fvc::ddt(alphaRhoU_)
           + fvm::ddt(smallAlphaRho, U_) - fvc::ddt(smallAlphaRho, U_)
          ==
             models().source(alphaRho_, U_)
@@ -236,7 +237,7 @@ void Foam::granularPhaseModel::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRho_, he())
+            fvm::ddt(alphaRho_, he()) - fvc::ddt(alphaRhoE_)
           + fvm::ddt(smallAlphaRho, he()) - fvc::ddt(smallAlphaRho, he())
         ==
             models().source(alphaRho_, he())
@@ -257,7 +258,7 @@ void Foam::granularPhaseModel::postUpdate()
             1.5
            *(
                 fvm::ddt(alpha, rho(), Theta_)
-              - fvc::ddt(alpha, rho(), Theta_)
+              - fvc::ddt(alphaRho_.prevIter(), Theta_)
               + fvm::ddt(smallAlphaRho, Theta_)
               - fvc::ddt(smallAlphaRho, Theta_)
             )
