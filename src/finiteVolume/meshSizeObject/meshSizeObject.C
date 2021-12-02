@@ -60,26 +60,6 @@ bool Foam::meshSizeObject::movePoints()
     return true;
 }
 
-void Foam::meshSizeObject::updateMesh(const mapPolyMesh& mpm)
-{
-    movePoints();
-}
-
-
-void Foam::meshSizeObject::reorderPatches
-(
-    const labelUList& newToOld,
-    const bool validBoundary
-)
-{
-    movePoints();
-}
-
-
-void Foam::meshSizeObject::addPatch(const label patchi)
-{
-    movePoints();
-}
 
 void Foam::meshSizeObject::calcDx() const
 {

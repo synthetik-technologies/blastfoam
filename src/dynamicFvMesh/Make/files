@@ -7,6 +7,8 @@ adaptiveFvMesh/adaptiveFvMesh.C
 
 movingAdaptiveFvMesh/movingAdaptiveFvMesh.C
 
+noneMotionSolver/noneMotionSolver.C
+
 overset/processorLOD/processorLOD/processorLOD.C
 overset/processorLOD/box/box.C
 overset/processorLOD/cellBox/cellBox.C
