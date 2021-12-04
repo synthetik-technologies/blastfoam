@@ -216,6 +216,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
     this->decode();
 
     // Solve phase 1 mass
+    rho_.storePrevIter();
     rho_ = dimensionedScalar(dimDensity, 0.0);
     forAll(rhos_, phasei)
     {
@@ -226,7 +227,7 @@ void Foam::multiphaseCompressibleSystem::postUpdate()
             dimensionedScalar rAlpha(thermo_.thermo(phasei).residualAlpha());
             fvScalarMatrix alphaRhoEqn
             (
-                fvm::ddt(alpha, rho) - fvc::ddt(alpha, rho)
+                fvm::ddt(alpha, rho) - fvc::ddt(alphaRhos_[phasei])
             + fvm::ddt(rAlpha, rho) - fvc::ddt(rAlpha, rho)
             ==
                 models().source(alpha, rho)

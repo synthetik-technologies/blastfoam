@@ -86,6 +86,7 @@ void Foam::singlePhaseCompressibleSystem::postUpdate()
     this->decode();
 
     // Solve mass
+    rho_.storePrevIter();
     if (needSolve(rho_.name()))
     {
         fvScalarMatrix rhoEqn

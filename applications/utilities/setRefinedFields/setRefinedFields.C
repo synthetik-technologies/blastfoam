@@ -682,7 +682,7 @@ int main(int argc, char *argv[])
             PtrList<setCellField> defaultFieldValues
             (
                 setFieldsDict.lookup("defaultFieldValues"),
-                setCellField::iNew(mesh, cells, end || debug)
+                setCellField::iNew(mesh, cells, write)
             );
             Info<< endl;
         }

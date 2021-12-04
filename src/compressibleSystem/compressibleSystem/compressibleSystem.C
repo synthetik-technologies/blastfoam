@@ -257,20 +257,20 @@ void Foam::compressibleSystem::postUpdate()
     {
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho(), U_) - fvc::ddt(rho(), U_)
+            fvm::ddt(rho(), U_) - fvc::ddt(rhoU_)
         ==
             models().source(rho(), U_)
         );
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-            rhoE_ +=
-                rho().mesh().time().deltaT()
-                *fvc::div
-                (
-                    fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-                  & fluxScheme_->Uf()
-                );
+//             rhoE_ +=
+//                 rho().mesh().time().deltaT()
+//                 *fvc::div
+//                 (
+//                     fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
+//                   & fluxScheme_->Uf()
+//                 );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
@@ -279,7 +279,7 @@ void Foam::compressibleSystem::postUpdate()
         rhoU_ = rho()*U_;
 
         //- Update internal energy
-        he() = rhoE_/rho() - 0.5*magSqr(U_);
+//         he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
@@ -287,7 +287,7 @@ void Foam::compressibleSystem::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(rho(), he()) - fvc::ddt(rho(), he())
+            fvm::ddt(rho(), he()) - fvc::ddt(rho().prevIter(), he())
         ==
             models().source(rho(), he())
         );

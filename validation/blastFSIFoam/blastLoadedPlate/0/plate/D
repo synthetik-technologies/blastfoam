@@ -48,7 +48,7 @@ boundaryField
 
     symmetry
     {
-        type            symmetry;
+        type            solidSymmetry;
         patchType       symmetry;
         value           $internalField;
     }

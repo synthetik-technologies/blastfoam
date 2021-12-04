@@ -170,6 +170,8 @@ void Foam::coupledMultiphaseCompressibleSystem::postUpdate()
 {
     this->decode();
 
+    alphaRho_.storePrevIter();
+
     compressibleBlastSystem::postUpdate();
 }
 

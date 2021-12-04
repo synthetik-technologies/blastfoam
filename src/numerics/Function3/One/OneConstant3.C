@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2020 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -21,36 +21,42 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::FunctionOperations
-
-Description
-    Classes to handle simple function operations
-    Linear combination of x, y, and z equations i.e. a(x) + b(y) + c(z) = f
-
-SourceFiles
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef FunctionOperators_H
-#define FunctionOperators_H
+#include "OneConstant3.H"
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-#include "Function1.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-namespace Foam
-{
+template<class Type>
+Foam::Function3s::OneConstant<Type>::OneConstant(const word& name)
+:
+    FieldFunction3<Type, OneConstant<Type>>(name)
+{}
 
 
+template<class Type>
+Foam::Function3s::OneConstant<Type>::OneConstant
+(
+    const word& name,
+    const dictionary& dict
+)
+:
+    FieldFunction3<Type, OneConstant<Type>>(name)
+{}
 
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-} // End namespace Foam
+template<class Type>
+Foam::Function3s::OneConstant<Type>::~OneConstant()
+{}
 
 
-#endif
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::Function3s::OneConstant<Type>::write(Ostream& os) const
+{}
+
+
 // ************************************************************************* //

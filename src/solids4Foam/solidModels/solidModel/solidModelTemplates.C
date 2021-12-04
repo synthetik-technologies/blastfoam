@@ -54,25 +54,17 @@ bool Foam::solidModel::converged
             mag(vf.internalField() - vf.oldTime().internalField())
         )
     );
-    if (denom < SMALL)
+    scalar residualvf = 0;
+    if (denom > SMALL)
     {
-        denom = max
-        (
-            gMax
-            (
-                DimensionedField<scalar, volMesh>(mag(vf.internalField()))
-            ),
-            SMALL
-        );
-    }
-    const scalar residualvf =
-        gMax
+        residualvf = gMax
         (
             DimensionedField<scalar, volMesh>
             (
                 mag(vf.internalField() - vf.prevIter().internalField())
             )
         )/denom;
+    }
 
     // Calculate material residual
     const scalar materialResidual = mechanical().residual();

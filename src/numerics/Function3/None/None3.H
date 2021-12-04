@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 3030 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is derivative work of OpenFOAM.
+    This file is part of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,85 +22,88 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::FieldSetTypes::Function
+    Foam::Function3s::None
 
 Description
-    Linear combination of x, y, and z equations used by specifying an equation
-    and the used coefficient functions i.e. f = a(x) + b(y)*d(x) + c(z)
-
-
-Usage:
-     volScalarFieldFunction p
-    {
-        type constant;
-        value 1.0
-    }
-
-
-SourceFiles
-    FunctionFieldSetType.C
-    FunctionFieldSetType.C
+    Undefined Function3 which returns an error when called.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef FunctionFieldSetType_H
-#define FunctionFieldSetType_H
+#ifndef None3_H
+#define None3_H
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#include "FieldSetType.H"
 #include "Function3.H"
-#include "PtrListDictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-namespace FieldSetTypes
+namespace Function3s
 {
+
 /*---------------------------------------------------------------------------*\
-                          Class Function Declaration
+                            Class None Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
-class Function
+template<class Type>
+class None
 :
-    public FieldSetType<Type, Patch, Mesh>
+    public FieldFunction3<Type, None<Type>>
 {
-    //- List of Function1s, indexed by the coefficient name
-    autoPtr<Function3<Type>> func_;
+    // Private member data
 
-    //- Set the selected cells
-    virtual void setField();
+        //- Name of dictionary from which this function is instantiated
+        fileName dictName_;
 
 
 public:
 
-    TypeName("Function");
+    //- Runtime type information
+    TypeName("none");
 
-    // Constructor
-    Function
-    (
-        const fvMesh& mesh,
-        const word& fieldName,
-        const labelList& selectedCells,
-        Istream& is,
-        const bool write
-    );
+
+    // Constructors
+
+        //- Construct from name and dictionary
+        None(const word& name, const dictionary& dict);
+
 
     //- Destructor
-    virtual ~Function();
+    virtual ~None();
+
+
+    // Member Functions
+
+        //- Generates an error
+        virtual inline Type value
+        (
+            const scalar x,
+            const scalar y,
+            const scalar z
+        ) const;
+
+        //- Write in dictionary format
+        virtual void write(Ostream& os) const;
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const None<Type>&) = delete;
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace FieldSetTypes
+} // End namespace Function3
 } // End namespace Foam
 
 #ifdef NoRepository
-    #include "FunctionFieldSetType.C"
+    #include "None3.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
 // ************************************************************************* //

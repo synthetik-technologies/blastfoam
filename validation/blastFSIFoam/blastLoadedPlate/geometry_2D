@@ -44,7 +44,7 @@ vertices
 dx          0.025;
 nx0         #calc "ceil( $D / 2.0 / $dx )";
 nx1         #calc "ceil( ($OR - $D / 2.0) / $dx )";
-ny          #calc "ceil( $OR / $dx )";
+ny          #calc "ceil( ($OR + $R) / $dx )";
 
 dxPlate     #calc "$dx / 4.0";     // level 2;
 dyPlate     #calc "$thickness / 20.0";

@@ -21,24 +21,35 @@ defaultFieldValues
 (
     volScalarFieldValue     test0 0
     volScalarFieldFunction  test1
-    "a(y)"
     {
-        a
+        type coded;
+        sine
         {
-            type sine;
-            amplitude 1;
-            frequency 2;
-            level 0;
+            type        sine;
+            amplitude   1.0;
+            frequency   2.0;
+            level       0.0;
         }
+        code
+        #{
+            return Func1(sine).value(y);
+        #};
     }
     volScalarFieldFunction  test2
-    "a(x)*a(y)"
     {
-        a
+        type coded;
+
+        polynomial
         {
             type polynomial;
             coeffs ((1 1) (2 1));
         }
+
+        code
+        #{
+            Func1(polynomial, f);
+            return f.value(y)*f.value(x);
+        #};
     }
 );
 

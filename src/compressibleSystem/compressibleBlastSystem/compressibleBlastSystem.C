@@ -162,7 +162,7 @@ void Foam::compressibleBlastSystem::postUpdate()
         // Solve momentum
         fvVectorMatrix UEqn
         (
-            fvm::ddt(rho(), U_) - fvc::ddt(rho(), U_)
+            fvm::ddt(rho(), U_) - fvc::ddt(rhoU_)
          ==
             models().source(rho(), U_)
         );
@@ -195,7 +195,7 @@ void Foam::compressibleBlastSystem::postUpdate()
     {
         fvScalarMatrix eEqn
         (
-            fvm::ddt(rho(), e_) - fvc::ddt(rho(), e_)
+            fvm::ddt(rho(), e_) - fvc::ddt(rho().prevIter(), e_)
          ==
             models().source(rho(), e_)
         );

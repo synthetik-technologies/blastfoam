@@ -107,5 +107,7 @@ $(solvers)/symplectic/symplecticObjectMotionSolver.C
 $(solvers)/CrankNicolson/CrankNicolsonObjectMotionSolver.C
 $(solvers)/Newmark/NewmarkObjectMotionSolver.C
 
+Function3/makeFunction3s.C
+
 
 LIB = $(BLAST_LIBBIN)/libblastNumerics

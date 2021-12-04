@@ -255,7 +255,7 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     {
         fvScalarMatrix alphaRho1Eqn
         (
-            fvm::ddt(alpha1_, rho1_) - fvc::ddt(alpha1_, rho1_)
+            fvm::ddt(alpha1_, rho1_) - fvc::ddt(alphaRho1_)
           + fvm::ddt(thermoPtr_->residualAlpha(), rho1_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho1_)
         ==
@@ -270,7 +270,7 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     {
         fvScalarMatrix alphaRho2Eqn
         (
-            fvm::ddt(alpha2_, rho2_) - fvc::ddt(alpha2_, rho2_)
+            fvm::ddt(alpha2_, rho2_) - fvc::ddt(alphaRho2_)
           + fvm::ddt(thermoPtr_->residualAlpha(), rho2_)
           - fvc::ddt(thermoPtr_->residualAlpha(), rho2_)
         ==
@@ -284,6 +284,8 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
     // Update phase masses
     alphaRho1_ = alpha1_*rho1_;
     alphaRho2_ = alpha2_*rho2_;
+
+    rho_.storePrevIter();
     rho_ = alphaRho1_ + alphaRho2_;
 
     compressibleBlastSystem::postUpdate();

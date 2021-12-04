@@ -5,7 +5,7 @@ createDEps()
     echo "creating wall velocity plot"
     gnuplot<<EOF
 
-    D(x)=abs(x/$3/$4);
+    D(x)=abs(x/$3);
     ms(t)=$4*t*1000;
     stats '<sed -e "s/[(,)]//g" $1/D' using (D(\$2))
     show variables STATS_max
