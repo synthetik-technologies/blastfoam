@@ -130,7 +130,6 @@ void Foam::scalarLookupTable1D::read
     const word& name
 )
 {
-    Info<<"read"<<endl;
     if (dict.found("file2D"))
     {
         word interpolationScheme
