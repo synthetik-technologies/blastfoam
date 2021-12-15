@@ -110,8 +110,9 @@ void Foam::FieldSetTypes::InitialValue<Type, FSType>::getBoundaryField
     UIndirectList<Type>& f
 )
 {
-//     forAll(indices, i)
-//     {
-//         f[i] = origFieldPtr_().boundaryField()[patchi][indices[i]];
-//     }
+    Field<Type> pOrig(this->getBoundary(patchi, origFieldPtr_()));
+    forAll(indices, i)
+    {
+        f[i] = pOrig[indices[i]];
+    }
 }

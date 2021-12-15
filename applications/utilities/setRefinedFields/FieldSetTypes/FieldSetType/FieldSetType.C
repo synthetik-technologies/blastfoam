@@ -27,6 +27,8 @@ License
 #include "volFields.H"
 #include "surfaceFields.H"
 #include "pointFields.H"
+#include "valuePointPatchField.H"
+#include "fieldSetOptions.H"
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
@@ -47,7 +49,39 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     selectedIndices_(selectedIndices),
     write_(write),
     good_(fieldPtr_.valid())
-{}
+{
+    token t;
+    while (true)
+    {
+        t = token(is);
+        if (!t.isPunctuation())
+        {
+            break;
+        }
+        if (t.pToken() != '-')
+        {
+            break;
+        }
+        fieldSetOptions::options opt = fieldSetOptions::optionNames[word(is)];
+        switch (opt)
+        {
+            case fieldSetOptions::SetBoundaries:
+                boundaries_ = wordHashSet(is);
+                break;
+            case fieldSetOptions::SetAllBoundaries:
+                boundaries_ = wordHashSet(mesh_.boundaryMesh().names());
+                break;
+            default:
+                FatalErrorInFunction
+                    << "Unknown option \"" << opt << "\""<< nl
+                    << "valid options are " << nl
+                    << fieldSetOptions::optionNames.toc() << endl
+                    << abort(FatalError);
+        }
+    }
+    is.putBack(t);
+
+}
 
 
 template<class Type, template<class> class Patch, class Mesh>
@@ -293,17 +327,50 @@ void Foam::FieldSetType<Type, Patch, Mesh>::getBoundaryField
 
 
 template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::VolFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, fvPatchField, volMesh>& f
+) const
+{
+    return f.boundaryField()[patchi];
+}
+
+
+template<class Type>
 void Foam::VolFieldSetType<Type>::setField()
 {
     const UIndirectList<vector> CInt(this->mesh_.C(), this->selectedIndices_);
     UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
     this->getInternalField(this->selectedIndices_, CInt, fInt);
 
+    labelHashSet cells(this->selectedIndices_);
+
     typename GeometricField<Type, fvPatchField, volMesh>::
         Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
     forAll(this->fieldPtr_->boundaryField(), patchi)
     {
-        fieldBf[patchi] = fieldBf[patchi].patchInternalField();
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
+        {
+            const labelList& fCells = p.faceCells();
+            labelHashSet faces;
+            forAll(fCells, fi)
+            {
+                if (cells.found(fCells[fi]))
+                {
+                    faces.insert(fi);
+                }
+            }
+            labelList indices(faces.toc());
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.C().boundaryField()[patchi],
+                indices
+            );
+            UIndirectList<Type> pf(fieldBf[patchi], indices);
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
     }
 
     if (this->write_)
@@ -316,13 +383,69 @@ void Foam::VolFieldSetType<Type>::setField()
         }
     }
 }
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::SurfaceFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, fvsPatchField, surfaceMesh>& f
+) const
+{
+    return f.boundaryField()[patchi];
+}
+
 
 template<class Type>
 void Foam::SurfaceFieldSetType<Type>::setField()
 {
-    const UIndirectList<vector> CfInt(this->mesh_.Cf(), this->selectedIndices_);
-    UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
-    this->getInternalField(this->selectedIndices_, CfInt, fInt);
+    labelHashSet faces(this->selectedIndices_);
+    labelList indices(this->selectedIndices_);
+    label I = 0;
+    forAll(indices, i)
+    {
+        if (indices[i] < this->mesh_.nInternalFaces())
+        {
+            indices[I++] = indices[i];
+        }
+    }
+    indices.resize(I);
+
+    const UIndirectList<vector> CfInt(this->mesh_.Cf(), indices);
+    UIndirectList<Type> fInt(this->fieldPtr_(), indices);
+    this->getInternalField(indices, CfInt, fInt);
+
+    typename GeometricField<Type, fvsPatchField, surfaceMesh>::
+        Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
+
+    forAll(this->fieldPtr_->boundaryField(), patchi)
+    {
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if (this->boundaries_.found(p.name()) && fieldBf[patchi].fixesValue())
+        {
+            indices = identity(p.size());
+            I = 0;
+            forAll(p, fi)
+            {
+                if (faces.found(fi + p.start()))
+                {
+                    indices[I++] = fi;
+                }
+            }
+            if (!I)
+            {
+                continue;
+            }
+            indices.resize(I);
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.Cf().boundaryField()[patchi],
+                indices
+            );
+            UIndirectList<Type> pf(fieldBf[patchi], indices);
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
+    }
 
     if (this->write_)
     {
@@ -334,6 +457,25 @@ void Foam::SurfaceFieldSetType<Type>::setField()
         }
     }
 }
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type>> Foam::PointFieldSetType<Type>::getBoundary
+(
+    const label patchi,
+    const GeometricField<Type, pointPatchField, pointMesh>& f
+) const
+{
+    if (isA<valuePointPatchField<Type>>(f.boundaryField()[patchi]))
+    {
+        return dynamicCast<const valuePointPatchField<Type>>
+        (
+            f.boundaryField()[patchi]
+        );
+    }
+    return f.boundaryField()[patchi].patchInternalField();
+}
+
 
 template<class Type>
 void Foam::PointFieldSetType<Type>::setField()
@@ -341,6 +483,47 @@ void Foam::PointFieldSetType<Type>::setField()
     const UIndirectList<vector> pts(this->mesh_.points(), this->selectedIndices_);
     UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
     this->getInternalField(this->selectedIndices_, pts, fInt);
+
+    labelHashSet points(this->selectedIndices_);
+
+    typename GeometricField<Type, pointPatchField, pointMesh>::
+        Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
+
+    forAll(this->fieldPtr_->boundaryField(), patchi)
+    {
+        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if
+        (
+            this->boundaries_.found(p.name())
+         && isA<valuePointPatchField<Type>>(fieldBf[patchi])
+        )
+        {
+            const labelList& meshPoints = p.meshPoints();
+            labelList indices(meshPoints.size(), -1);
+            labelList gIndices(meshPoints.size(), -1);
+            label I = 0;
+            forAll(meshPoints, pi)
+            {
+                if (points.found(meshPoints[pi]))
+                {
+                    gIndices[I] = meshPoints[pi];
+                    indices[I++] = pi;
+                }
+            }
+            indices.resize(I);
+            const UIndirectList<vector> pC
+            (
+                this->mesh_.points(),
+                gIndices
+            );
+            UIndirectList<Type> pf
+            (
+                dynamicCast<valuePointPatchField<Type>>(fieldBf[patchi]),
+                indices
+            );
+            this->getBoundaryField(patchi, indices, pC, pf);
+        }
+    }
 
     if (this->write_)
     {

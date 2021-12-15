@@ -22,7 +22,8 @@ boundaryField
 {
     patches
     {
-        type            zeroGradient;
+        type            fixedValue;
+        value           $internalField;
     }
     defaultFaces
     {

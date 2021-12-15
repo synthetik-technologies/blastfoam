@@ -1,3 +1,4 @@
+FieldSetType/fieldSetOptions.C
 FieldSetType/FieldSetTypes.C
 Uniform/UniformFieldSetTypes.C
 InitialValue/InitialValueFieldSetTypes.C

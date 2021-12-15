@@ -150,13 +150,19 @@ void Foam::FieldSetTypes::Sum<Type, FSType>::getBoundaryField
     UIndirectList<Type>& f
 )
 {
+    Field<Type> psum(this->getBoundary(patchi, sumFld_()));
+    List<List<Type>> pflds(flds_.size());
+    forAll(flds_, fldi)
+    {
+        pflds[fldi] = this->getBoundary(patchi, flds_[fldi]);
+    }
     forAll(indices, i)
     {
         label facei = indices[i];
-        Type res(sumFld_().boundaryField()[patchi][facei]);
+        Type res(psum[facei]);
         forAll(flds_, fldi)
         {
-            res -= flds_[fldi].boundaryField()[patchi][facei];
+            res -= pflds[fldi][facei];
         }
         f[i] = res;
     }

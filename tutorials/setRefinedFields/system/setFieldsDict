@@ -14,41 +14,29 @@ FoamFile
     object      setFieldsDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "$FOAM_CASE/parameters";
 
 fields (test0);
 
 defaultFieldValues
 (
-    volScalarFieldValue     test0 0
-    volScalarFieldFunction  test1
+    volScalarFieldValue     test0 -setAllBoundaries 0
+    surfaceScalarFieldValue test0f 0
+    pointScalarFieldValue   pointtest0 0
+    volVectorFieldValue     test1 (0 0 0)
+    volScalarFieldFunction  test2
     {
         type coded;
         sine
         {
             type        sine;
-            amplitude   1.0;
+            amplitude   $s;
             frequency   2.0;
             level       0.0;
         }
         code
         #{
             return Func1(sine).value(y);
-        #};
-    }
-    volScalarFieldFunction  test2
-    {
-        type coded;
-
-        polynomial
-        {
-            type polynomial;
-            coeffs ((1 1) (2 1));
-        }
-
-        code
-        #{
-            Func1(polynomial, f);
-            return f.value(y)*f.value(x);
         #};
     }
 );
@@ -67,12 +55,46 @@ regions
             p2 (0.5 0.5 1);
             radius 0.2;
         }
-        refineInternal yes;
+        refine yes;
         level 3;
 
         fieldValues
         (
-            volScalarFieldValue test0   1
+            volScalarFieldValue test0   2
+        );
+    }
+    boxToCell // Use cylinder for 3D
+    {
+        boxes ((0 0 0) (0.5 0.5 1));
+        refine yes;
+        level 3;
+
+        fieldValues
+        (
+            volScalarFieldValue test0 -setBoundaries (patches)  1
+            volVectorFieldValue test1 -setBoundaries (patches)  $v1
+        );
+    }
+    boxToFace // Use cylinder for 3D
+    {
+        boxes ((0 0 0) (0.5 0.5 1));
+        refine yes;
+        level 3;
+
+        fieldValues
+        (
+            surfaceScalarFieldValue test0f -setBoundaries (patches)  1
+        );
+    }
+    boxToPoint // Use cylinder for 3D
+    {
+        boxes ((0 0 0) (0.5 0.5 1.1));
+        refine yes;
+        level 3;
+
+        fieldValues
+        (
+            pointScalarFieldValue pointtest0 -setBoundaries (patches)  1
         );
     }
 );

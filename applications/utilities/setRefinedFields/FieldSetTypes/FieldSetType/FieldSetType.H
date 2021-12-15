@@ -71,6 +71,9 @@ protected:
     //- Indices to set
     const labelList& selectedIndices_;
 
+    //- Boundaries to set
+    wordHashSet boundaries_;
+
     //- Write after setting fields
     bool write_;
 
@@ -113,6 +116,13 @@ protected:
         const UIndirectList<vector>& pts,
         UIndirectList<Type>& f
     );
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const FieldType&
+    ) const = 0;
 
 
 public:
@@ -210,8 +220,16 @@ class VolFieldSetType
 {
 protected:
 
+
     //- Set the selected cells
     virtual void setField();
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, fvPatchField, volMesh>&
+    ) const;
 
 public:
 
@@ -255,6 +273,14 @@ protected:
     //- Set the selected cells
     virtual void setField();
 
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, fvsPatchField, surfaceMesh>&
+    ) const;
+
+
 public:
 
     TypeName(fvsPatchField<Type>::typeName_());
@@ -296,6 +322,14 @@ protected:
 
     //- Set the selected cells
     virtual void setField();
+
+    //- Return the boundary field value of a field
+    virtual tmp<Field<Type>> getBoundary
+    (
+        const label,
+        const GeometricField<Type, pointPatchField, pointMesh>&
+    ) const;
+
 
 public:
 
