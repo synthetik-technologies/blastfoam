@@ -68,6 +68,7 @@ regions
         boxes ((0 0 0) (0.5 0.5 1));
         refine yes;
         level 3;
+        setName test;
 
         fieldValues
         (
@@ -77,9 +78,10 @@ regions
     }
     boxToFace // Use cylinder for 3D
     {
-        boxes ((0 0 0) (0.5 0.5 1));
+        boxes ((0 0 -1) (0.5 0.5 1.1));
         refine yes;
         level 3;
+        setName test;
 
         fieldValues
         (
@@ -91,6 +93,7 @@ regions
         boxes ((0 0 0) (0.5 0.5 1.1));
         refine yes;
         level 3;
+        setName test;
 
         fieldValues
         (

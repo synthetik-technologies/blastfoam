@@ -1173,7 +1173,7 @@ int main(int argc, char *argv[])
                                 ).ptr()
                             );
                         }
-                        topoSet& set = *faceSets[setName];
+                        topoSet& set = *pointSets[setName];
                         forAll(selectedPoints, i)
                         {
                             set.insert(selectedPoints[i]);
