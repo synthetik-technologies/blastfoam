@@ -29,24 +29,59 @@ SourceFiles
 #include "FieldSetTypesFwd.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
-makeFieldSetType(scalar, VolFieldSetType);
-makeFieldSetType(vector, VolFieldSetType);
-makeFieldSetType(sphericalTensor, VolFieldSetType);
-makeFieldSetType(symmTensor, VolFieldSetType);
-makeFieldSetType(tensor, VolFieldSetType);
+makeFieldSetType(scalarVolFieldSetType);
+makeFieldSetType(vectorVolFieldSetType);
+makeFieldSetType(sphericalTensorVolFieldSetType);
+makeFieldSetType(symmTensorVolFieldSetType);
+makeFieldSetType(tensorVolFieldSetType);
 
+makeFieldSetType(scalarSurfaceFieldSetType);
+makeFieldSetType(vectorSurfaceFieldSetType);
+makeFieldSetType(sphericalTensorSurfaceFieldSetType);
+makeFieldSetType(symmTensorSurfaceFieldSetType);
+makeFieldSetType(tensorSurfaceFieldSetType);
 
-// makeFieldSetType(scalar, SurfaceFieldSetType);
-// makeFieldSetType(vector, SurfaceFieldSetType);
-// makeFieldSetType(sphericalTensor, SurfaceFieldSetType);
-// makeFieldSetType(symmTensor, SurfaceFieldSetType);
-// makeFieldSetType(tensor, SurfaceFieldSetType);
+makeFieldSetType(scalarPointFieldSetType);
+makeFieldSetType(vectorPointFieldSetType);
+makeFieldSetType(sphericalTensorPointFieldSetType);
+makeFieldSetType(symmTensorPointFieldSetType);
+makeFieldSetType(tensorPointFieldSetType);
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+template<class Type>
+using VolFieldSet = VolFieldSetType<Type>;
+
+template<class Type>
+using SurfaceFieldSet = SurfaceFieldSetType<Type>;
+
+template<class Type>
+using PointFieldSet = PointFieldSetType<Type>;
+
+makeEmptyFieldSetType(scalar, VolFieldSet);
+makeEmptyFieldSetType(vector, VolFieldSet);
+makeEmptyFieldSetType(sphericalTensor, VolFieldSet);
+makeEmptyFieldSetType(symmTensor, VolFieldSet);
+makeEmptyFieldSetType(tensor, VolFieldSet);
+
+makeEmptyFieldSetType(scalar, SurfaceFieldSet);
+makeEmptyFieldSetType(vector, SurfaceFieldSet);
+makeEmptyFieldSetType(sphericalTensor, SurfaceFieldSet);
+makeEmptyFieldSetType(symmTensor, SurfaceFieldSet);
+makeEmptyFieldSetType(tensor, SurfaceFieldSet);
+
+makeEmptyFieldSetType(scalar, PointFieldSet);
+makeEmptyFieldSetType(vector, PointFieldSet);
+makeEmptyFieldSetType(sphericalTensor, PointFieldSet);
+makeEmptyFieldSetType(symmTensor, PointFieldSet);
+makeEmptyFieldSetType(tensor, PointFieldSet);
 
 }
 // ************************************************************************* //

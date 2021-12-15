@@ -28,17 +28,26 @@ License
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Sum<Type, Patch, Mesh>::Sum
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Sum<Type, FSType>::Sum
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write)
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    )
 {
     if (this->good_)
     {
@@ -98,33 +107,59 @@ Foam::FieldSetTypes::Sum<Type, Patch, Mesh>::Sum
             flds_.set (i, this->lookupOrRead(fldNames[i]));
         }
 
-        setField();
+        this->setField();
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Sum<Type, Patch, Mesh>::~Sum()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Sum<Type, FSType>::~Sum()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::Sum<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Sum<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    forAll(this->selectedCells_, i)
+    forAll(indices, i)
     {
-        label celli = this->selectedCells_[i];
+        label celli = indices[i];
         Type res(sumFld_()[celli]);
         forAll(flds_, fldi)
         {
             res -= flds_[fldi][celli];
         }
-        (*this->fieldPtr_)[celli] = res;
+        f[i] = res;
     }
-    FieldSetType<Type, Patch, Mesh>::setField();
+}
+
+
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Sum<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    forAll(indices, i)
+    {
+        label facei = indices[i];
+        Type res(sumFld_().boundaryField()[patchi][facei]);
+        forAll(flds_, fldi)
+        {
+            res -= flds_[fldi].boundaryField()[patchi][facei];
+        }
+        f[i] = res;
+    }
 }
 
 

@@ -61,12 +61,12 @@ namespace FieldSetTypes
                           Class Sum Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type, template<class> class Patch, class Mesh>
+template<class Type, template<class> class FSType>
 class Sum
 :
-    public FieldSetType<Type, Patch, Mesh>
+    public FSType<Type>
 {
-    typedef GeometricField<Type, Patch, Mesh> FieldType;
+    typedef typename FSType<Type>::FieldType FieldType;
 
     //- Sum field
     UautoPtr<const FieldType> sumFld_;
@@ -77,8 +77,22 @@ class Sum
     //- List of fields to sum
     UPtrList<const FieldType> flds_;
 
-    //- Set the selected cells
-    virtual void setField();
+    //- Return the subset of values given indices and positions
+    virtual void getInternalField
+    (
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
+
+    //- Return the subset of values given indices and positions
+    virtual void getBoundaryField
+    (
+        const label patchi,
+        const labelList& indices,
+        const UIndirectList<vector>& pts,
+        UIndirectList<Type>& f
+    );
 
 
 public:
@@ -89,8 +103,9 @@ public:
     Sum
     (
         const fvMesh& mesh,
+        const dictionary& dict,
         const word& fieldName,
-        const labelList& selectedCells,
+        const labelList& selectedIndices,
         Istream& is,
         const bool write
     );
@@ -104,9 +119,14 @@ public:
 } // End namespace FieldSetTypes
 } // End namespace Foam
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #ifdef NoRepository
     #include "SumFieldSetType.C"
 #endif
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 #endif
+
 // ************************************************************************* //

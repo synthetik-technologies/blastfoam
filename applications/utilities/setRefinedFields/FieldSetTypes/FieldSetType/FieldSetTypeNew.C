@@ -27,21 +27,42 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::autoPtr<Foam::FieldSetType<Type, Patch, Mesh>>
 Foam::FieldSetType<Type, Patch, Mesh>::New
 (
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const labelList& selectedCells
+)
+{
+    typename emptyConstructorTable::iterator cstrIter =
+        emptyConstructorTablePtr_->find
+        (
+            Patch<Type>::typeName
+        );
+
+    return cstrIter()(mesh, dict, selectedCells);
+}
+
+
+template<class Type, template<class> class Patch, class Mesh>
+Foam::autoPtr<Foam::FieldSetType<Type, Patch, Mesh>>
+Foam::FieldSetType<Type, Patch, Mesh>::New
+(
     const word& fieldDesc,
     const fvMesh& mesh,
+    const dictionary& dict,
     const labelList& selectedCells,
     Istream& is,
     const bool write
 )
 {
+    if (fieldDesc.find(GeometricField<Type, Patch, Mesh>::typeName) < 0)
+    {
+        return FieldSetType<Type, Patch, Mesh>::New(mesh, dict, selectedCells);
+    }
     token t(is);
     if (!t.isWord())
     {
         is.putBack(t);
-        return autoPtr<FieldSetType<Type, Patch, Mesh>>
-        (
-            new FieldSetType<Type, Patch, Mesh>(mesh, selectedCells)
-        );
+        return FieldSetType<Type, Patch, Mesh>::New(mesh, dict, selectedCells);
     }
 
     word fieldName(t.wordToken());
@@ -54,10 +75,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::New
     if (fieldType != FieldType::typeName)
     {
         is.putBack(t);
-        return autoPtr<FieldSetType<Type, Patch, Mesh>>
-        (
-            new FieldSetType<Type, Patch, Mesh>(mesh, selectedCells)
-        );
+        return New(mesh, dict, selectedCells);
     }
 
     typename dictionaryConstructorTable::iterator cstrIter =
@@ -73,5 +91,5 @@ Foam::FieldSetType<Type, Patch, Mesh>::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, fieldName, selectedCells, is, write);
+    return cstrIter()(mesh, dict, fieldName, selectedCells, is, write);
 }

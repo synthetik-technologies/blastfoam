@@ -39,17 +39,32 @@ namespace FieldSetTypes
 {
 
 template<class Type>
-using SumVol = Sum<Type, fvPatchField, volMesh>;
+using SumVol = Sum<Type, VolFieldSetType>;
 
 template<class Type>
-using SumSurface = Sum<Type, fvsPatchField, surfaceMesh>;
+using SumSurface = Sum<Type, SurfaceFieldSetType>;
+
+// template<class Type>
+// using SumPoint = Sum<Type, PointFieldSetType>;
 }
+
 makeFieldSetTypeType(SumVol, scalar, VolFieldSetType);
 makeFieldSetTypeType(SumVol, vector, VolFieldSetType);
 makeFieldSetTypeType(SumVol, sphericalTensor, VolFieldSetType);
 makeFieldSetTypeType(SumVol, symmTensor, VolFieldSetType);
 makeFieldSetTypeType(SumVol, tensor, VolFieldSetType);
 
+makeFieldSetTypeType(SumSurface, scalar, SurfaceFieldSetType);
+makeFieldSetTypeType(SumSurface, vector, SurfaceFieldSetType);
+makeFieldSetTypeType(SumSurface, sphericalTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(SumSurface, symmTensor, SurfaceFieldSetType);
+makeFieldSetTypeType(SumSurface, tensor, SurfaceFieldSetType);
+
+// makeFieldSetTypeType(SumPoint, scalar, PointFieldSetType);
+// makeFieldSetTypeType(SumPoint, vector, PointFieldSetType);
+// makeFieldSetTypeType(SumPoint, sphericalTensor, PointFieldSetType);
+// makeFieldSetTypeType(SumPoint, symmTensor, PointFieldSetType);
+// makeFieldSetTypeType(SumPoint, tensor, PointFieldSetType);
 }
 
 // ************************************************************************* //

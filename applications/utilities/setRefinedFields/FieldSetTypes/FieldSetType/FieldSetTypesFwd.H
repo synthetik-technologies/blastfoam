@@ -34,6 +34,7 @@ SourceFiles
 #include "FieldSetType.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "pointFields.H"
 #include "typeInfo.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -41,24 +42,32 @@ SourceFiles
 namespace Foam
 {
 
-template<class Type>
-using VolFieldSetType = FieldSetType<Type, fvPatchField, volMesh>;
+typedef FieldSetType<scalar, fvPatchField, volMesh> scalarVolFieldSetType;
+typedef FieldSetType<vector, fvPatchField, volMesh> vectorVolFieldSetType;
+typedef FieldSetType<symmTensor, fvPatchField, volMesh>
+    symmTensorVolFieldSetType;
+typedef FieldSetType<sphericalTensor, fvPatchField, volMesh>
+    sphericalTensorVolFieldSetType;
+typedef FieldSetType<tensor, fvPatchField, volMesh> tensorVolFieldSetType;
 
-template<class Type>
-using SurfaceFieldSetType = FieldSetType<Type, fvsPatchField, surfaceMesh>;
+typedef FieldSetType<scalar, fvsPatchField, surfaceMesh>
+    scalarSurfaceFieldSetType;
+typedef FieldSetType<vector, fvsPatchField, surfaceMesh>
+    vectorSurfaceFieldSetType;
+typedef FieldSetType<symmTensor, fvsPatchField, surfaceMesh>
+    symmTensorSurfaceFieldSetType;
+typedef FieldSetType<sphericalTensor, fvsPatchField, surfaceMesh>
+    sphericalTensorSurfaceFieldSetType;
+typedef FieldSetType<tensor, fvsPatchField, surfaceMesh>
+    tensorSurfaceFieldSetType;
 
-typedef VolFieldSetType<scalar> scalarVolFieldSetType;
-typedef VolFieldSetType<vector> vectorVolFieldSetType;
-typedef VolFieldSetType<symmTensor> symmTensorVolFieldSetType;
-typedef VolFieldSetType<sphericalTensor> sphericalTensorVolFieldSetType;
-typedef VolFieldSetType<tensor> tensorVolFieldSetType;
-
-
-// typedef SurfaceFieldSetType<scalar> scalarSurfaceFieldSetType;
-// typedef SurfaceFieldSetType<vector> vectorSurfaceFieldSetType;
-// typedef SurfaceFieldSetType<symmTensor> symmTensorSurfaceFieldSetType;
-// typedef SurfaceFieldSetType<sphericalTensor> sphericalTensorSurfaceFieldSetType;
-// typedef SurfaceFieldSetType<tensor> tensorSurfaceFieldSetType;
+typedef FieldSetType<scalar, pointPatchField, pointMesh> scalarPointFieldSetType;
+typedef FieldSetType<vector, pointPatchField, pointMesh> vectorPointFieldSetType;
+typedef FieldSetType<symmTensor, pointPatchField, pointMesh>
+    symmTensorPointFieldSetType;
+typedef FieldSetType<sphericalTensor, pointPatchField, pointMesh>
+    sphericalTensorPointFieldSetType;
+typedef FieldSetType<tensor, pointPatchField, pointMesh> tensorPointFieldSetType;
 
 }
 

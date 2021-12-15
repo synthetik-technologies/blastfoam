@@ -28,56 +28,86 @@ License
 
 // * * * * * * * * * * * * * * * * Constructor * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Function<Type, Patch, Mesh>::Function
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Function<Type, FSType>::Function
 (
     const fvMesh& mesh,
+    const dictionary& dict,
     const word& fieldName,
-    const labelList& selectedCells,
+    const labelList& selectedIndices,
     Istream& is,
     const bool write
 )
 :
-    FieldSetType<Type, Patch, Mesh>(mesh, fieldName, selectedCells, is, write),
+    FSType<Type>
+    (
+        mesh,
+        dict,
+        fieldName,
+        selectedIndices,
+        is,
+        write
+    ),
     func_()
 {
-    dictionary dict;
-    dict.add(fieldName, dictionary(is));
+    dictionary funcDict(dict, dictionary());
+    funcDict.add(fieldName, dictionary(is));
 
-    func_ = Function3<Type>::New(fieldName, dict);
+    func_ = Function3<Type>::New(fieldName, funcDict);
 
     if (this->good_)
     {
-        setField();
+        this->setField();
     }
 }
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-Foam::FieldSetTypes::Function<Type, Patch, Mesh>::~Function()
+template<class Type, template<class> class FSType>
+Foam::FieldSetTypes::Function<Type, FSType>::~Function()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class Type, template<class> class Patch, class Mesh>
-void Foam::FieldSetTypes::Function<Type, Patch, Mesh>::setField()
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Function<Type, FSType>::getInternalField
+(
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
 {
-    Info<<(*this->fieldPtr_).name()<<endl;
-    const vectorField& C = this->mesh_.C();
-    forAll(this->selectedCells_, i)
+    forAll(indices, i)
     {
-        label celli = this->selectedCells_[i];
-        (*this->fieldPtr_)[celli] =
+        f[i] =
             func_->value
             (
-                C[celli].x(),
-                C[celli].y(),
-                C[celli].z()
+                pts[i].x(),
+                pts[i].y(),
+                pts[i].z()
             );
     }
-
-    FieldSetType<Type, Patch, Mesh>::setField();
 }
 
+
+template<class Type, template<class> class FSType>
+void Foam::FieldSetTypes::Function<Type, FSType>::getBoundaryField
+(
+    const label patchi,
+    const labelList& indices,
+    const UIndirectList<vector>& pts,
+    UIndirectList<Type>& f
+)
+{
+    forAll(indices, i)
+    {
+        f[i] =
+            func_->value
+            (
+                pts[i].x(),
+                pts[i].y(),
+                pts[i].z()
+            );
+    }
+}
