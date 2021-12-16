@@ -128,7 +128,8 @@ class ${typeName}Function3${TemplateType}
 {
 
     //- Saved dictionary
-    dictionary dict_;
+    const dictionary topDict_;
+    const dictionary dict_;
 
 public:
 

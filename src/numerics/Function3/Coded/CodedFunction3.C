@@ -98,7 +98,7 @@ Foam::Function3s::Coded<Type>::compileNew()
 
     this->updateLibrary();
 
-    dictionary redirectDict(codeDict());
+    dictionary redirectDict(dict_, codeDict());
     redirectDict.set(codeName(), codeName());
 
     return Function3<Type>::New(codeName(), redirectDict);

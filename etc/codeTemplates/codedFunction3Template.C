@@ -75,7 +75,8 @@ ${typeName}Function3${TemplateType}
     (
         entryName
     ),
-    dict_(dict)
+    topDict_(dict.topDict()),
+    dict_(topDict_, dict)
 {
     if (${verbose:-false})
     {
@@ -87,13 +88,14 @@ ${typeName}Function3${TemplateType}
 Foam::Function3s::${typeName}Function3${TemplateType}::
 ${typeName}Function3${TemplateType}
 (
-    const ${typeName}Function3${TemplateType}& f1
+    const ${typeName}Function3${TemplateType}& f3
 )
 :
     FieldFunction3<${TemplateType}, ${typeName}Function3${TemplateType}>
     (
-        f1
-    )
+        f3
+    ),
+    dict_(f3.dict_)
 {
     if (${verbose:-false})
     {
