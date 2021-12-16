@@ -71,6 +71,9 @@ protected:
     //- Indices to set
     const labelList& selectedIndices_;
 
+    //- Only set patch values
+    bool noInternal_;
+
     //- Boundaries to set
     wordHashSet boundaries_;
 

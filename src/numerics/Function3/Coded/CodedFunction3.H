@@ -29,7 +29,8 @@ Description
     Helper functions have been added to easily create helper function1
     or function2 classes using Func1(Name, var) and Func2(Name, var).
     the macros will return a non-constant reference to a runTime
-    selectable function of the type specified in the Name dictionary
+    selectable function of the type specified in the Name dictionary.
+    Variables in the code dictionary are updated when the object is made.
 
 See also
     Foam::dynamicCode
@@ -78,6 +79,9 @@ class Coded
 {
     // Private Data
 
+        //- Saved dictionary
+        const dictionary& dict_;
+
         //- The dynamically generated Function3 pointer
         mutable autoPtr<Function3<Type>> redirectFunction3Ptr_;
 
@@ -95,6 +99,9 @@ class Coded
 
         //- Compile, link and return the now coded Function3
         autoPtr<Function3<Type>> compileNew();
+
+        //- Expand strings in the code entry
+        const dictionary& expandCodeDict(const dictionary& dict) const;
 
 
 public:

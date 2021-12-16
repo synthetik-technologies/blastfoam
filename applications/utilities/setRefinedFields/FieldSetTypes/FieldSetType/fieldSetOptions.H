@@ -52,9 +52,10 @@ public:
     enum options
     {
         SetBoundaries,
-        SetAllBoundaries
+        SetAllBoundaries,
+        NoInternal
     };
-    static const NamedEnum<options, 2> optionNames;
+    static const NamedEnum<options, 3> optionNames;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

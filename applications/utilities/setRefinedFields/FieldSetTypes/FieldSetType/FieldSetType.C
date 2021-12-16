@@ -47,6 +47,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     dict_(dict),
     fieldPtr_(lookupOrRead(fieldName)),
     selectedIndices_(selectedIndices),
+    noInternal_(false),
     write_(write),
     good_(fieldPtr_.valid())
 {
@@ -71,12 +72,22 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
             case fieldSetOptions::SetAllBoundaries:
                 boundaries_ = wordHashSet(mesh_.boundaryMesh().names());
                 break;
+            case fieldSetOptions::NoInternal:
+                noInternal_ = true;
+                break;
             default:
                 FatalErrorInFunction
                     << "Unknown option \"" << opt << "\""<< nl
                     << "valid options are " << nl
                     << fieldSetOptions::optionNames.toc() << endl
                     << abort(FatalError);
+        }
+        if (noInternal_ && !boundaries_.size())
+        {
+            FatalErrorInFunction
+                << "Internal field is not set and no boundaries were "
+                << "specified" << endl
+                << abort(FatalError);
         }
     }
     is.putBack(t);
@@ -340,9 +351,12 @@ Foam::tmp<Foam::Field<Type>> Foam::VolFieldSetType<Type>::getBoundary
 template<class Type>
 void Foam::VolFieldSetType<Type>::setField()
 {
-    const UIndirectList<vector> CInt(this->mesh_.C(), this->selectedIndices_);
-    UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
-    this->getInternalField(this->selectedIndices_, CInt, fInt);
+    if (!this->noInternal_)
+    {
+        const UIndirectList<vector> CInt(this->mesh_.C(), this->selectedIndices_);
+        UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
+        this->getInternalField(this->selectedIndices_, CInt, fInt);
+    }
 
     labelHashSet cells(this->selectedIndices_);
 
@@ -411,9 +425,12 @@ void Foam::SurfaceFieldSetType<Type>::setField()
     }
     indices.resize(I);
 
-    const UIndirectList<vector> CfInt(this->mesh_.Cf(), indices);
-    UIndirectList<Type> fInt(this->fieldPtr_(), indices);
-    this->getInternalField(indices, CfInt, fInt);
+    if (!this->noInternal_)
+    {
+        const UIndirectList<vector> CfInt(this->mesh_.Cf(), indices);
+        UIndirectList<Type> fInt(this->fieldPtr_(), indices);
+        this->getInternalField(indices, CfInt, fInt);
+    }
 
     typename GeometricField<Type, fvsPatchField, surfaceMesh>::
         Boundary& fieldBf = this->fieldPtr_->boundaryFieldRef();
@@ -480,9 +497,16 @@ Foam::tmp<Foam::Field<Type>> Foam::PointFieldSetType<Type>::getBoundary
 template<class Type>
 void Foam::PointFieldSetType<Type>::setField()
 {
-    const UIndirectList<vector> pts(this->mesh_.points(), this->selectedIndices_);
-    UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
-    this->getInternalField(this->selectedIndices_, pts, fInt);
+    if (!this->noInternal_)
+    {
+        const UIndirectList<vector> pts
+        (
+            this->mesh_.points(),
+            this->selectedIndices_
+        );
+        UIndirectList<Type> fInt(this->fieldPtr_(), this->selectedIndices_);
+        this->getInternalField(this->selectedIndices_, pts, fInt);
+    }
 
     labelHashSet points(this->selectedIndices_);
 

@@ -27,6 +27,7 @@ License
 #include "dynamicCode.H"
 #include "dynamicCodeContext.H"
 #include "OSspecific.H"
+#include "stringOps.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
@@ -94,13 +95,28 @@ template<class Type>
 Foam::autoPtr<Foam::Function3<Type>>
 Foam::Function3s::Coded<Type>::compileNew()
 {
+
     this->updateLibrary();
 
     dictionary redirectDict(codeDict());
-
     redirectDict.set(codeName(), codeName());
 
     return Function3<Type>::New(codeName(), redirectDict);
+}
+
+
+template<class Type>
+const Foam::dictionary& Foam::Function3s::Coded<Type>::expandCodeDict
+(
+    const dictionary& cDict
+) const
+{
+    dictionary& dict = const_cast<dictionary&>(cDict);
+
+    verbatimString str(dict["code"]);
+    stringOps::inplaceExpand(str, cDict, true, true);
+    dict.set(primitiveEntry("code", str));
+    return cDict;
 }
 
 
@@ -114,7 +130,8 @@ Foam::Function3s::Coded<Type>::Coded
 )
 :
     Function3<Type>(name),
-    codedBase(name, dict)
+    codedBase(name, expandCodeDict(dict)),
+    dict_(dict)
 {
     const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
     fileName tempDir(getEnv("BLAST_DIR")/"etc/codeTemplates");
@@ -134,7 +151,8 @@ template<class Type>
 Foam::Function3s::Coded<Type>::Coded(const Coded<Type>& cf1)
 :
     Function3<Type>(cf1),
-    codedBase(cf1)
+    codedBase(cf1),
+    dict_(cf1.dict_)
 {
     const fileName origCODE_TEMPLATE_DIR(getEnv("FOAM_CODE_TEMPLATES"));
     fileName tempDir(getEnv("BLAST_DIR")/"etc/codeTemplates");
