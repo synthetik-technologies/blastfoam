@@ -1510,11 +1510,8 @@ Foam::scalar Foam::neoHookeanElasticMisesPlastic::newDeltaT()
 
         if (maxMagDEpsilonPErr > 50*maxDeltaErr_)
         {
-            WarningIn
-            (
-                "Foam::scalar Foam::neoHookeanElasticMisesPlastic::newDeltaT()"
-                " const"
-            )   << "The error in the plastic strain is lover 50 times larger "
+            WarningInFunction
+                << "The error in the plastic strain is lover 50 times larger "
                 << "than the desired value!\n    Consider starting the "
                 << "simulation with a smaller initial time-step" << endl;
         }

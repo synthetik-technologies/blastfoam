@@ -75,6 +75,11 @@ class powerLawPlastic
             const scalar J = 1.0            // Current Jacobian
         ) const;
 
+        virtual dimensionedScalar sigmaY0() const
+        {
+            return k_*pow(epsilonY_, n_);
+        }
+
         virtual bool nonLinearPlasticity() const
         {
             return true;

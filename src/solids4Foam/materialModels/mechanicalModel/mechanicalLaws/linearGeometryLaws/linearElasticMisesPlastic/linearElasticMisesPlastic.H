@@ -87,7 +87,7 @@ class linearElasticMisesPlastic
         dimensionedScalar nu_;
 
         //- Table of post-yield stress versus plastic strain
-        Function1s::Table<scalar> stressPlasticStrainSeries_;
+        autoPtr<Function1<scalar>> stressPlasticStrainSeries_;
 
         //- Switch to enable solution of pressure Laplacian equation
         //  This can help quell oscillations in the hydrostatic stress

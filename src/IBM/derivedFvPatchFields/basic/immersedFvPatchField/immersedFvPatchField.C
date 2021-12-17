@@ -267,7 +267,7 @@ Foam::immersedFvPatchField<Type>::immersedFvPatchField
         ).immersedObject()
     ),
     setPatchInternal_(false),
-    setInternal_(false),
+    setInternal_(true),
     internalValue_(Zero),
     nSmooth_(0)
 {}
@@ -290,7 +290,7 @@ Foam::immersedFvPatchField<Type>::immersedFvPatchField
         ).immersedObject()
     ),
     setPatchInternal_(dict.lookupOrDefault("setPatchInternal", false)),
-    setInternal_(dict.lookupOrDefault("setInternal", false)),
+    setInternal_(dict.lookupOrDefault("setInternal", true)),
     internalValue_(Zero),
     nSmooth_(dict.lookupOrDefault<label>("nSmooth", 0))
 {

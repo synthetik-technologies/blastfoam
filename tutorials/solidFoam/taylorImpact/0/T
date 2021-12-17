@@ -40,6 +40,21 @@ boundaryField
     {
         type            zeroGradient;
     }
+
+    billetContact
+    {
+        type            zeroGradient;
+    }
+
+    left
+    {
+        type            zeroGradient;
+    }
+
+    wedge
+    {
+        type            wedge;
+    }
 }
 
 

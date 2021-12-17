@@ -303,29 +303,6 @@ Foam::tmp<Foam::surfaceScalarField> Foam::nonLinearPlasticModel::Ibar
     return tIbar;
 }
 
-
-Foam::tmp<Foam::volSymmTensorField> Foam::nonLinearPlasticModel::epsilon() const
-{
-    return 0.5*log(symm(F().T() & F()));
-}
-
-
-Foam::tmp<Foam::surfaceSymmTensorField>
-Foam::nonLinearPlasticModel::epsilonf() const
-{
-    NotImplemented;
-    return bEbarf_;
-}
-
-
-Foam::tmp<Foam::symmTensorField>
-Foam::nonLinearPlasticModel::epsilon(const label patchi) const
-{
-    const tensorField& pF(F().boundaryField()[patchi]);
-    return 0.5*log(symm(pF.T() & pF));
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from dictionary
@@ -338,58 +315,6 @@ Foam::nonLinearPlasticModel::nonLinearPlasticModel
 )
 :
     plasticModel(name, mesh, dict, nonLinGeom),
-    bEbarTrial_
-    (
-        IOobject
-        (
-            "bEbarTrial",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("I", dimless, I)
-    ),
-    bEbarTrialf_
-    (
-        IOobject
-        (
-            "bEbarTrialf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("I", dimless, I)
-    ),
-    bEbar_
-    (
-        IOobject
-        (
-            "bEbar",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("I", dimless, I)
-    ),
-    bEbarf_
-    (
-        IOobject
-        (
-            "bEbarf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("I", dimless, I)
-    ),
     updateBEbarConsistent_
     (
         dict.lookupOrDefault<Switch>
@@ -420,9 +345,9 @@ Foam::tmp<Foam::volScalarField> Foam::nonLinearPlasticModel::impK() const
     // This is similar to the tangent matrix in FE procedures
 
     // Calculate deviatoric trial stress
-    const volSymmTensorField sTrial(mu_*dev(bEbarTrial_));
+    const volSymmTensorField sTrial(mu_*dev(bEbarTrial()));
 
-    const volScalarField Ibar(tr(bEbarTrial_)/3.0);
+    const volScalarField Ibar(tr(bEbarTrial())/3.0);
     const volScalarField muBar(Ibar*mu_);
 
     // Magnitude of the deviatoric trial stress
@@ -432,7 +357,7 @@ Foam::tmp<Foam::volScalarField> Foam::nonLinearPlasticModel::impK() const
     );
 
     // Calculate scaling factor
-    const volScalarField scaleFactor(1.0 - (2.0*muBar*DLambda_/magSTrial));
+    const volScalarField scaleFactor(1.0 - (2.0*muBar*DLambda()/magSTrial));
 
     return volScalarField::New
     (
@@ -450,7 +375,7 @@ Foam::nonLinearPlasticModel::impK(const label patchi) const
 {
     const symmTensorField& pbEbarTrial
     (
-        bEbarTrial_.boundaryField()[patchi]
+        bEbarTrial().boundaryField()[patchi]
     );
     // Calculate deviatoric trial stress
     const symmTensorField sTrial(mu_.value()*dev(pbEbarTrial));
@@ -465,7 +390,7 @@ Foam::nonLinearPlasticModel::impK(const label patchi) const
     const scalarField scaleFactor
     (
         1.0
-      - (2.0*muBar*DLambda_.boundaryField()[patchi]/magSTrial)
+      - (2.0*muBar*DLambda().boundaryField()[patchi]/magSTrial)
     );
 
     return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
@@ -483,7 +408,14 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    const volScalarField& J = mechanicalLaw::J();
+    const volScalarField& J = this->J();
+    volSymmTensorField& bEbar = this->bEbarRef();
+    volSymmTensorField& bEbarTrial = this->bEbarTrialRef();
+    volSymmTensorField& plasticN = this->plasticNRef();
+    volScalarField& DLambda = this->DLambdaRef();
+    volScalarField& sigmaY = this->sigmaYRef();
+    const volScalarField& sigmaYOld = sigmaY.oldTime();
+    const volScalarField& epsilonPEqOld = epsilonPEq().oldTime();
 
     // Calculate the relative Jacobian
     const volScalarField relJ(J/J.oldTime());
@@ -493,12 +425,12 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     const volTensorField relFbar(1.0/cbrt(relJ)*relF());
 
     // Update bE trial
-    bEbarTrial_ = transform(relFbar, bEbar_.oldTime());
+    bEbarTrial = transform(relFbar, bEbar.oldTime());
 
     // Calculate trial deviatoric stress
-    const volSymmTensorField sTrial(mu_*dev(bEbarTrial_));
+    const volSymmTensorField sTrial(mu_*dev(bEbarTrial));
 
-    const volScalarField Ibar(tr(bEbarTrial_)/3.0);
+    const volScalarField Ibar(tr(bEbarTrial)/3.0);
     const volScalarField muBar(Ibar*mu_);
 
     // Check for plastic loading
@@ -507,19 +439,16 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
 
     // Store previous iteration for under-relaxation and calculation of plastic
     // residual in the solver
-    DEpsilonP_.storePrevIter();
+    DEpsilonPRef().storePrevIter();
 
     // Normalise residual in Newton method with respect to mag(bE)
     const scalar maxMagBE =
-        max(gMax(mag(bEbarTrial_.primitiveField())), SMALL);
+        max(gMax(mag(bEbarTrial.primitiveField())), SMALL);
 
     // Trial yield function
     // sigmaY is the Cauchy yield stress so we scale it by J
-    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J*sigmaY_);
+    const volScalarField fTrial(mag(sTrial) - sqrtTwoOverThree_*J*sigmaY);
 
-    // Take references to the old fields
-    const volScalarField& sigmaYOld = sigmaY_.oldTime();
-    const volScalarField& epsilonPEqOld = epsilonPEq_.oldTime();
 
     forAll(fTrial, cellI)
     {
@@ -528,9 +457,9 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
         // Update plasticN, DLambda, DSigmaY and sigmaY for this cell
         this->updatePlasticity
         (
-            plasticN_[cellI],
-            DLambda_[cellI],
-            sigmaY_[cellI],
+            plasticN[cellI],
+            DLambda[cellI],
+            sigmaY[cellI],
             sigmaYOld[cellI],
             fTrial[cellI],
             sTrial[cellI],
@@ -546,15 +475,15 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
         // Take references to the boundary patch fields for efficiency
         const scalarField& pfTrial = fTrial.boundaryField()[patchI];
         const symmTensorField& psTrial = sTrial.boundaryField()[patchI];
-        symmTensorField& pN = plasticN_.boundaryFieldRef()[patchI];
-        scalarField& pDLambda = DLambda_.boundaryFieldRef()[patchI];
-        scalarField& psigmaY = sigmaY_.boundaryFieldRef()[patchI];
+        symmTensorField& pN = plasticN.boundaryFieldRef()[patchI];
+        scalarField& pDLambda = DLambda.boundaryFieldRef()[patchI];
+        scalarField& psigmaY = sigmaY.boundaryFieldRef()[patchI];
         const scalarField& pmuBar = muBar.boundaryField()[patchI];
 
         const scalarField& psigmaYOld =
-            sigmaY_.oldTime().boundaryField()[patchI];
+            sigmaYOld.boundaryField()[patchI];
         const scalarField& pepsilonPEqOld =
-            epsilonPEq_.oldTime().boundaryField()[patchI];
+            epsilonPEqOld.boundaryField()[patchI];
         const scalarField& pJ = J.boundaryField()[patchI];
 
         forAll(pfTrial, faceI)
@@ -579,22 +508,22 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     }
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPEq_ = sqrtTwoOverThree_*DLambda_;
-    DEpsilonP_ = Ibar*DLambda_*plasticN_;
-    DEpsilonP_.relax();
+    DEpsilonPEqRef() = sqrtTwoOverThree_*DLambda;
+    DEpsilonPRef() = Ibar*DLambda*plasticN;
+    DEpsilonPRef().relax();
 
     // Calculate deviatoric stress
-    const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP_);
+    const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP());
 
     // Update bEbar
     if (updateBEbarConsistent_)
     {
         const volSymmTensorField devBEbar(s/mu_);
-        bEbar_ = devBEbar + this->Ibar(devBEbar)*I;
+        bEbar = devBEbar + this->Ibar(devBEbar)*I;
     }
     else
     {
-        bEbar_ = (s/mu_) + Ibar*I;
+        bEbar = (s/mu_) + Ibar*I;
     }
 
     // Update hydrostatic stress (negative of pressure)
@@ -607,8 +536,8 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     // Update the Cauchy stress
     sigma = (1.0/J)*(sigmaHyd()*I + s);
 
-    epsilonPEq_ += DEpsilonPEq_;
-    epsilonP_ += DEpsilonP_;
+    epsilonPEqRef() += DEpsilonPEqRef();
+    epsilonPRef() += DEpsilonPRef();
 }
 
 
@@ -623,7 +552,14 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
     }
 
     // Update the Jacobian of the total deformation gradient
-    const surfaceScalarField& Jf = mechanicalLaw::Jf();
+    const surfaceScalarField& Jf = this->Jf();
+    surfaceSymmTensorField& bEbarf = this->bEbarfRef();
+    surfaceSymmTensorField& bEbarTrialf = this->bEbarTrialfRef();
+    surfaceSymmTensorField& plasticNf = this->plasticNfRef();
+    surfaceScalarField& DLambdaf = this->DLambdafRef();
+    surfaceScalarField& sigmaYf = this->sigmaYfRef();
+    const surfaceScalarField& sigmaYfOld = sigmaYf.oldTime();
+    const surfaceScalarField& epsilonPEqfOld = epsilonPEqf().oldTime();
 
     // Calculate the relative Jacobian
     const surfaceScalarField relJ(Jf/Jf.oldTime());
@@ -633,12 +569,12 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
     surfaceTensorField relFbar(1.0/cbrt(relJ)*relFf());
 
     // Update bE trial
-    bEbarTrialf_ = transform(relFbar, bEbarf_.oldTime());
+    bEbarTrialf = transform(relFbar, bEbarf.oldTime());
 
     // Calculate trial deviatoric stress
-    surfaceSymmTensorField sTrial(mu_*dev(bEbarTrialf_));
+    surfaceSymmTensorField sTrial(mu_*dev(bEbarTrialf));
 
-    const surfaceScalarField Ibar(tr(bEbarTrialf_)/3.0);
+    const surfaceScalarField Ibar(tr(bEbarTrialf)/3.0);
     const surfaceScalarField muBar(Ibar*mu_);
 
     // Check for plastic loading
@@ -647,21 +583,17 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
 
     // Store previous iteration for under-relaxation and calculation of plastic
     // residual in the solver
-    DEpsilonPf_.storePrevIter();
+    DEpsilonPfRef().storePrevIter();
 
     // Normalise residual in Newton method with respect to mag(bE)
-    const scalar maxMagBE = max(gMax(mag(bEbarTrialf_.primitiveField())), SMALL);
+    const scalar maxMagBE = max(gMax(mag(bEbarTrialf.primitiveField())), SMALL);
 
     // Trial yield function
     // sigmaY is the Cauchy yield stress so we scale it by J
     const surfaceScalarField fTrial
     (
-        mag(sTrial) - sqrtTwoOverThree_*Jf*sigmaYf_
+        mag(sTrial) - sqrtTwoOverThree_*Jf*sigmaYf
     );
-
-    // Take references to the old fields for efficiency
-    const surfaceScalarField& sigmaYOld = sigmaYf_.oldTime();
-    const surfaceScalarField& epsilonPEqOld = epsilonPEqf_.oldTime();
 
     // Calculate DLambdaf_ and plasticNf_
     forAll(fTrial, faceI)
@@ -671,13 +603,13 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
         // Update plasticN, DLambda, DSigmaY and sigmaY for this face
         updatePlasticity
         (
-            plasticNf_[faceI],
-            DLambdaf_[faceI],
-            sigmaYf_[faceI],
-            sigmaYOld[faceI],
+            plasticNf[faceI],
+            DLambdaf[faceI],
+            sigmaYf[faceI],
+            sigmaYfOld[faceI],
             fTrial[faceI],
             sTrial[faceI],
-            epsilonPEqOld[faceI],
+            epsilonPEqfOld[faceI],
             muBar[faceI],
             maxMagBE
         );
@@ -688,13 +620,13 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
         // Take references to the boundary patch fields for efficiency
         const scalarField& pfTrial = fTrial.boundaryField()[patchI];
         const symmTensorField& psTrial = sTrial.boundaryField()[patchI];
-        symmTensorField& pN = plasticNf_.boundaryFieldRef()[patchI];
-        scalarField& pDLambda = DLambdaf_.boundaryFieldRef()[patchI];
-        scalarField& psigmaY = sigmaYf_.boundaryFieldRef()[patchI];
+        symmTensorField& pN = plasticNf.boundaryFieldRef()[patchI];
+        scalarField& pDLambda = DLambdaf.boundaryFieldRef()[patchI];
+        scalarField& psigmaY = sigmaYf.boundaryFieldRef()[patchI];
         const scalarField& pmuBar = muBar.boundaryField()[patchI];
-        const scalarField& psigmaYOld = sigmaYOld.boundaryField()[patchI];
+        const scalarField& psigmaYOld = sigmaYfOld.boundaryField()[patchI];
         const scalarField& pepsilonPEqOld =
-            epsilonPEqOld.boundaryField()[patchI];
+            epsilonPEqfOld.boundaryField()[patchI];
 
         forAll(pfTrial, faceI)
         {
@@ -717,30 +649,30 @@ void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
     }
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPEqf_ = sqrtTwoOverThree_*DLambdaf_;
-    DEpsilonPf_ = Ibar*DLambdaf_*plasticNf_;
-    DEpsilonPf_.relax();
+    DEpsilonPEqfRef() = sqrtTwoOverThree_*DLambdaf;
+    DEpsilonPfRef() = Ibar*DLambdaf*plasticNf;
+    DEpsilonPfRef().relax();
 
     // Calculate deviatoric stress
-    const surfaceSymmTensorField s(sTrial - 2*mu_*DEpsilonPf_);
+    const surfaceSymmTensorField s(sTrial - 2*mu_*DEpsilonPf());
 
     // Update bEbar
     if (updateBEbarConsistent_)
     {
         const surfaceSymmTensorField devBEbar(s/mu_);
-        bEbarf_ = devBEbar + this->Ibar(devBEbar)*I;
+        bEbarf = devBEbar + this->Ibar(devBEbar)*I;
     }
     else
     {
-        bEbarf_ = (s/mu_) + Ibar*I;
+        bEbarf = (s/mu_) + Ibar*I;
     }
 
     // Update the Cauchy stress
     // Note: updayeSigmaHyd is not implemented for surface fields
     sigma = (1.0/Jf)*(0.5*K_*(sqr(Jf) - 1)*I + s);
 
-    epsilonPEqf_ += DEpsilonPEqf_;
-    epsilonPf_ += DEpsilonPf_;
+    epsilonPEqfRef() += DEpsilonPEqf();
+    epsilonPfRef() += DEpsilonPf();
 }
 
 

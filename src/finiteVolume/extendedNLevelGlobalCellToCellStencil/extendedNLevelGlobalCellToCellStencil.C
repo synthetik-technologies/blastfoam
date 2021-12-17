@@ -176,6 +176,7 @@ template<class StencilType>
 bool Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::movePoints()
 {
     mapPtr_.clear();
+    gIndexPtr_.clear();
     return true;
 }
 
@@ -304,7 +305,10 @@ template<class StencilType>
 void
 Foam::extendedNLevelGlobalCellToCellStencil<StencilType>::updateStencil() const
 {
-    gIndexPtr_.reset(new globalIndex(mesh_.nCells()));
+    if (!gIndexPtr_.valid())
+    {
+        gIndexPtr_.set(new globalIndex(mesh_.nCells()));
+    }
     cellCells_.resize(mesh_.nCells());
     stencilMap_.clear();
 

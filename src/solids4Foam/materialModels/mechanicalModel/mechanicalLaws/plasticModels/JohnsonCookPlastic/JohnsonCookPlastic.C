@@ -146,10 +146,7 @@ Foam::JohnsonCookPlastic<PlasticType>::JohnsonCookPlastic
     (
         dict.lookupOrDefault<Switch>("temperatureEffects", true)
     )
-{
-    this->sigmaY_ = A_;
-    this->sigmaYf_ = A_;
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -175,11 +172,13 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     tmp<volSymmTensorField> eDot(symm(fvc::ddt(gradD)));
     const volSymmTensorField eElasticDot
     (
-        dev(eDot) - dev(fvc::ddt(this->epsilonP_))
+        dev(eDot) - dev(fvc::ddt(this->epsilonP()))
     );
     epsilonElasticEffDot_ = sqrt(2.0/3.0*(eElasticDot && eElasticDot));
 
     PlasticType::correct(sigma);
+
+    epsilonElasticEffDot_.clear();
 }
 
 
@@ -197,11 +196,13 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     tmp<surfaceSymmTensorField> eDot(symm(fvc::ddt(gradD)));
     const surfaceSymmTensorField eElasticDot
     (
-        dev(eDot) - dev(fvc::ddt(this->epsilonPf_))
+        dev(eDot) - dev(fvc::ddt(this->epsilonPf()))
     );
     epsilonElasticEffDotf_ = sqrt(2.0/3.0*(eElasticDot && eElasticDot));
 
     PlasticType::correct(sigma);
+
+    epsilonElasticEffDotf_.clear();
 }
 
 // ************************************************************************* //

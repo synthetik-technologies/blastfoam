@@ -1,0 +1,52 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.1                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      thermophysicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type basic;
+
+thermoType
+{
+    transport constIso;
+    thermo eConst;
+    equationOfState rhoConst;
+}
+
+specie
+{
+    molWeight 100;
+}
+equationOfState
+{
+    rho0    7800;
+}
+thermodynamics
+{
+    Cv      434;
+    Hf      0;
+}
+transport
+{
+    kappa   250;
+}
+
+alpha
+{
+    type    uniform;
+    value   1e-5;
+}
+
+
+// ************************************************************************* //

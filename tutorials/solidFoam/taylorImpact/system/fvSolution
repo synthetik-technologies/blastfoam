@@ -15,6 +15,14 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+solvers
+{
+    ".*"
+    {
+        solver diagonal;
+    }
+}
+
 angularMomentumConservation     yes;
 incompressiblilityCoefficient   1.0;
 

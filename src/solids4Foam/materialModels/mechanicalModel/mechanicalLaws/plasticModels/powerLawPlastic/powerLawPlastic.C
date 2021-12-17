@@ -100,9 +100,6 @@ Foam::powerLawPlastic<PlasticType>::powerLawPlastic
         epsilonY_.value() =
             pow(this->E_.value()/k_.value(), 1.0/(n_.value() - 1.0));
     }
-
-    this->sigmaY_ = k_*pow(epsilonY_, n_);
-    this->sigmaYf_ = k_*pow(epsilonY_, n_);
 }
 
 

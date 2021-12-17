@@ -487,7 +487,7 @@ void Foam::mechanicalModel::interpolate
     if (laws.size() == 1)
     {
         volToPoint().interpolateDisplacement(D, pointD);
-//         pointD.correctBoundaryConditions();
+        pointD.correctBoundaryConditions();
     }
     else
     {

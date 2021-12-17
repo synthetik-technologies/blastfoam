@@ -1,0 +1,41 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | foam-extend: Open Source CFD                    |
+|  \\    /   O peration     | Version:     4.1                                |
+|   \\  /    A nd           | Web:         http://www.foam-extend.org         |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      mechanicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+planeStress off;
+
+mechanical
+(
+    steel
+    {
+        type            nonLinearJohnsonCookPlastic;
+        E               210e9;
+        nu              0.28;
+        A               950e6;
+        B               560e6;
+        C               0.014;
+        n               0.26;
+        m               1.0;
+
+        Tref            296;
+        Tm              1700;
+        totalStrainRate false;
+
+        solvePressureEqn no;
+    }
+);
+
+// ************************************************************************* //

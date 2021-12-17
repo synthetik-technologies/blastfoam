@@ -131,6 +131,10 @@ class JohnsonCookPlastic
             return true;
         }
 
+        virtual dimensionedScalar sigmaY0() const
+        {
+            return A_;
+        }
 public:
 
 

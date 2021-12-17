@@ -98,7 +98,8 @@ solidTractionFvPatchVectorField
     if (dict.found("tractionSeries"))
     {
         Info<< "    traction is time-varying" << endl;
-        tractionSeries_ = Function1<vector>::New("timeSeries", dict);
+        tractionSeries_ = Function1<vector>::New("tractionSeries", dict);
+        traction_ = tractionSeries_->value(this->db().time().value());
     }
     else
     {
@@ -110,6 +111,7 @@ solidTractionFvPatchVectorField
     {
         Info<< "    pressure is time-varying" << endl;
         pressureSeries_ = Function1<scalar>::New("pressureSeries", dict);
+        pressure_ = pressureSeries_->value(this->db().time().value());
     }
     else
     {
@@ -145,8 +147,8 @@ solidTractionFvPatchVectorField
     fixedGradientFvPatchVectorField(stpvf, p, iF, mapper),
     traction_(mapper(stpvf.traction_)),
     pressure_(mapper(stpvf.pressure_)),
-    tractionSeries_(stpvf.tractionSeries_),
-    pressureSeries_(stpvf.pressureSeries_),
+    tractionSeries_(stpvf.tractionSeries_, false),
+    pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
     limitCoeff_(stpvf.limitCoeff_),
     relaxFac_(stpvf.relaxFac_)
@@ -163,8 +165,8 @@ solidTractionFvPatchVectorField
     fixedGradientFvPatchVectorField(stpvf, iF),
     traction_(stpvf.traction_),
     pressure_(stpvf.pressure_),
-    tractionSeries_(stpvf.tractionSeries_),
-    pressureSeries_(stpvf.pressureSeries_),
+    tractionSeries_(stpvf.tractionSeries_, false),
+    pressureSeries_(stpvf.pressureSeries_, false),
     secondOrder_(stpvf.secondOrder_),
     limitCoeff_(stpvf.limitCoeff_),
     relaxFac_(stpvf.relaxFac_)
@@ -211,12 +213,12 @@ void solidTractionFvPatchVectorField::updateCoeffs()
 
     if (tractionSeries_.valid())
     {
-        traction_ = tractionSeries_->value(this->db().time().timeOutputValue());
+        traction_ = tractionSeries_->value(this->db().time().value());
     }
 
     if (pressureSeries_.valid())
     {
-        pressure_ = pressureSeries_->value(this->db().time().timeOutputValue());
+        pressure_ = pressureSeries_->value(this->db().time().value());
     }
 
     // Lookup the solidModel object

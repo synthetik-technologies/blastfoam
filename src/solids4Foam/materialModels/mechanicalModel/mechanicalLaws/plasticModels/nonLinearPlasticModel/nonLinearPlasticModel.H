@@ -74,18 +74,20 @@ class nonLinearPlasticModel
 
         //- Elastic left Cauchy-Green trial strain tensor with volumetric term
         //  removed. Trial means that plasticity is neglected.
-        volSymmTensorField bEbarTrial_;
-
-        //- Elastic left Cauchy-Green trial strain tensor with volumetric term
-        //  removed surface field
-        surfaceSymmTensorField bEbarTrialf_;
-
-        //- Elastic left Cauchy-Green strain tensor with volumetric term removed
-        volSymmTensorField bEbar_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            bEbarTrial,
+            symmTensor,
+            dimensionedSymmTensor("bEbarTrial", dimless, Zero)
+        );
 
         //- Elastic left Cauchy-Green strain tensor with volumetric term removed
-        //  surface field
-        surfaceSymmTensorField bEbarf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            bEbar,
+            symmTensor,
+            dimensionedSymmTensor("bEbar", dimless, Zero)
+        );
 
         //- Update bEbar consistently with the assumption that det(bEbar) == 1
         //  defaults to off
@@ -106,14 +108,6 @@ class nonLinearPlasticModel
             const surfaceSymmTensorField& devBEbar
         );
 
-        //- Return the strain
-        virtual tmp<volSymmTensorField> epsilon() const;
-
-        //- Return the face strain
-        virtual tmp<surfaceSymmTensorField> epsilonf() const;
-
-        //- Return the strain for a patch
-        virtual tmp<symmTensorField> epsilon(const label) const;
 
 public:
 

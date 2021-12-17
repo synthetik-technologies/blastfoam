@@ -106,6 +106,8 @@ Foam::solidContactFvPatchVectorField::moveZonesToDeformedConfiguration()
 
     // Remove zone weights
     zone().movePoints(zoneNewPoints);
+    Info<<patch().name()<<" "<<max(zone().globalPatch().points())<<endl;
+    Info<<patch().name()<<" "<<min(zone().globalPatch().points())<<endl;
 
     // We need to use const_cast to move the standAlonePatch points as the
     // movePoints function only clears weights
@@ -153,7 +155,6 @@ Foam::solidContactFvPatchVectorField::moveZonesToDeformedConfiguration()
             // Take a reference to the patch face total displacement field
             const vectorField& shadowPatchD =
                 D.boundaryField()[shadowPatchIndices()[shadPatchI]];
-
             shadowZoneD = shadowZones()[shadPatchI].patchFaceToGlobal
             (
                 shadowPatchD

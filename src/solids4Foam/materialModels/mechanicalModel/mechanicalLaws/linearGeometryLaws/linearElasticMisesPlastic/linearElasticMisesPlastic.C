@@ -141,7 +141,7 @@ Foam::scalar Foam::linearElasticMisesPlastic::curYieldStress
     const scalar curEpsilonPEq    // Current equivalent plastic strain
 ) const
 {
-    return stressPlasticStrainSeries_.value(max(curEpsilonPEq, small));
+    return stressPlasticStrainSeries_->value(max(curEpsilonPEq, small));
 }
 
 
@@ -359,7 +359,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
     K_("zero", dimPressure, 0.0),
     E_("zero", dimPressure, 0.0),
     nu_("zero", dimless, 0.0),
-    stressPlasticStrainSeries_("stressPlasticStrainSeries", dict),
+    stressPlasticStrainSeries_(),
     solvePressureEqn_(dict.lookup("solvePressureEqn")),
     pressureSmoothingCoeff_
     (
@@ -405,7 +405,9 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         mesh,
         dimensionedScalar
         (
-            "initialYieldStress", dimPressure, stressPlasticStrainSeries_.value(0)
+           "initialYieldStress",
+            dimPressure,
+            0.0
         )
     ),
     sigmaYf_
@@ -421,7 +423,9 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         mesh,
         dimensionedScalar
         (
-           "initialYieldStress", dimPressure, stressPlasticStrainSeries_.value(0)
+           "initialYieldStress",
+            dimPressure,
+            0.0
         )
     ),
     DSigmaY_
@@ -645,7 +649,7 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
         mesh,
         dimensionedSymmTensor("zero", dimless, symmTensor::zero)
     ),
-    nonLinearPlasticity_(stressPlasticStrainSeries_.x()().size() > 2),
+    nonLinearPlasticity_(!dict.found("Hp")),
     Hp_(0.0),
     maxDeltaErr_
     (
@@ -704,29 +708,31 @@ Foam::linearElasticMisesPlastic::linearElasticMisesPlastic
     // Check if plasticity is a nonlinear function of plastic strain
     if (nonLinearPlasticity_)
     {
-        Info<< "    Plasticity is nonlinear" << endl;
+        Info<< "    Reading plastic stress strain series" << endl;
+        stressPlasticStrainSeries_ =
+            Function1<scalar>::New
+            (
+                "stressPlasticStrainSeries",
+                dict
+            );
+        dimensionedScalar sigmaY
+        (
+            "sigmaY",
+            dimPressure,
+            stressPlasticStrainSeries_->value(0.0)
+        );
+        sigmaY_ == sigmaY;
+        sigmaYf_ == sigmaY;
     }
     else
     {
-        if (stressPlasticStrainSeries_.x()().size() == 1)
-        {
-            Info<< "    Perfect Plasticity" << endl;
-        }
-        else
-        {
-            Info<< "    Plasticity is linear" << endl;
+        Info<< "    Using linear plastic Hardening modulus" << endl;
 
-            // Define linear plastic modulus
-            Hp_ =
-                (
-                    stressPlasticStrainSeries_.y()()[1]
-                  - stressPlasticStrainSeries_.y()()[0]
-                )
-               /(
-                    stressPlasticStrainSeries_.x()()[1]
-                  - stressPlasticStrainSeries_.x()()[0]
-                );
-        }
+        // Define linear plastic modulus
+        Hp_ = dict.lookup<scalar>("Hp");
+        dimensionedScalar sigmaY("sigmaY", dimPressure, dict);
+        sigmaY_ == sigmaY;
+        sigmaYf_ == sigmaY;
     }
 
     if (solvePressureEqn_)

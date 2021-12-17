@@ -73,13 +73,13 @@ class solidTractionFvPatchVectorField
         autoPtr<Function1<scalar>> pressureSeries_;
 
         //- Second order accuracy correction
-        const Switch secondOrder_;
+        Switch secondOrder_;
 
         //- Limiter coefficient for snGrad correction
-        const scalar limitCoeff_;
+        scalar limitCoeff_;
 
         //- Optional: under-relaxation factor
-        const scalar relaxFac_;
+        scalar relaxFac_;
 
 
 public:

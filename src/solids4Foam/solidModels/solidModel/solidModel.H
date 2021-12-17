@@ -303,6 +303,13 @@ protected:
             return stabilisationPtr_();
         }
 
+        //- Set the displacement fields if a velocity was read
+        void displacementFromVelocity
+        (
+            volVectorField& disp,
+            volVectorField& ddisp,
+            const label nOld = 2
+        );
 
 public:
 
@@ -394,6 +401,13 @@ public:
             {
                 return mesh_.time();
             }
+
+            //- Return the global polyPatches
+            const globalPolyBoundaryMesh& globalPatches() const
+            {
+                return globalPatches_;
+            }
+
 
             //- Return const-reference to the density
             const volScalarField& rho() const;

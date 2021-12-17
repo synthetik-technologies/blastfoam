@@ -46,6 +46,9 @@ namespace Foam
     // Natural log of a volSymmTensor field
     tmp<volSymmTensorField> log(const volSymmTensorField& vf);
 
+    // Natural log of a surfaceSymmTensor field
+    tmp<surfaceSymmTensorField> log(const surfaceSymmTensorField& vf);
+
     // Natural log of a symmTensor field
     tmp<symmTensorField> log(const symmTensorField& vf);
 

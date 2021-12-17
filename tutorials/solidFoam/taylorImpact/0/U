@@ -39,7 +39,24 @@ boundaryField
     free
     {
         type            calculated;
-        value           uniform (0 -227 0);
+        value           $internalField;
+    }
+
+    billetContact
+    {
+        type            displacementVelocity;
+        value           uniform (0 0 0);
+    }
+
+    left
+    {
+        type            calculated;
+        value           $internalField;
+    }
+
+    wedge
+    {
+        type wedge;
     }
 }
 

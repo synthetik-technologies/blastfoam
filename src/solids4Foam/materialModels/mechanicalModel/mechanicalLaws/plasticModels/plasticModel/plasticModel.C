@@ -245,162 +245,6 @@ Foam::plasticModel::plasticModel
     K_("zero", dimPressure, 0.0),
     E_("zero", dimPressure, 0.0),
     nu_("zero", dimless, 0.0),
-    sigmaY_
-    (
-        IOobject
-        (
-            "sigmaY",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimPressure, 0.0)
-    ),
-    sigmaYf_
-    (
-        IOobject
-        (
-            "sigmaYf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimPressure, 0.0)
-    ),
-    epsilonP_
-    (
-        IOobject
-        (
-            "epsilonP",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    epsilonPf_
-    (
-        IOobject
-        (
-            "epsilonPf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    DEpsilonP_
-    (
-        IOobject
-        (
-            "DEpsilonP",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    DEpsilonPf_
-    (
-        IOobject
-        (
-            "DEpsilonPf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    DEpsilonPEq_
-    (
-        IOobject
-        (
-            "DEpsilonPEq",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
-    DEpsilonPEqf_
-    (
-        IOobject
-        (
-            "DEpsilonPEqf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
-    DLambda_
-    (
-        IOobject
-        (
-            "DLambda",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
-    DLambdaf_
-    (
-        IOobject
-        (
-            "DLambdaf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
-    epsilonPEq_
-    (
-        IOobject
-        (
-            "epsilonPEq",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
-    epsilonPEqf_
-    (
-        IOobject
-        (
-            "epsilonPEqf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimless, 0.0)
-    ),
     activeYield_
     (
         IOobject
@@ -413,32 +257,6 @@ Foam::plasticModel::plasticModel
         ),
         mesh,
         dimensionedScalar("0", dimless, 0)
-    ),
-    plasticN_
-    (
-        IOobject
-        (
-            "plasticN",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    plasticNf_
-    (
-        IOobject
-        (
-            "plasticNf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
     ),
     maxDeltaErr_
     (
@@ -477,10 +295,8 @@ Foam::plasticModel::plasticModel
     }
     else
     {
-        FatalErrorIn
-        (
-            "linearPlasticModel::linearPlasticModel::()"
-        )   << "Either E and nu or mu and K elastic parameters should be "
+        FatalErrorInFunction
+            << "Either E and nu or mu and K elastic parameters should be "
             << "specified" << abort(FatalError);
     }
 }
@@ -542,10 +358,10 @@ Foam::scalar Foam::plasticModel::residual()
             (
                 mag
                 (
-                    DEpsilonPf_.primitiveField()
-                  - DEpsilonPf_.prevIter().primitiveField()
+                    DEpsilonPf().primitiveField()
+                  - DEpsilonPf().prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonPf_.prevIter().primitiveField()));
+            )/gMax(SMALL + mag(DEpsilonPf().prevIter().primitiveField()));
     }
     else
     {
@@ -554,10 +370,10 @@ Foam::scalar Foam::plasticModel::residual()
             (
                 mag
                 (
-                    DEpsilonP_.primitiveField()
-                  - DEpsilonP_.prevIter().primitiveField()
+                    DEpsilonP().primitiveField()
+                  - DEpsilonP().prevIter().primitiveField()
                 )
-            )/gMax(SMALL + mag(DEpsilonP_.prevIter().primitiveField()));
+            )/gMax(SMALL + mag(DEpsilonP().prevIter().primitiveField()));
     }
 }
 
@@ -569,7 +385,7 @@ void Foam::plasticModel::updateTotalFields()
 
     forAll(activeYield_.primitiveField(), celli)
     {
-        if (DEpsilonPEq_.primitiveField()[celli] > SMALL)
+        if (DEpsilonPEq().primitiveField()[celli] > SMALL)
         {
             activeYield_.primitiveFieldRef()[celli] = 1.0;
             numCellsYielding++;
@@ -588,7 +404,7 @@ void Foam::plasticModel::updateTotalFields()
         {
             forAll(activeYield_.boundaryField()[patchi], facei)
             {
-                if (DEpsilonPEq_.boundaryField()[patchi][facei] > SMALL)
+                if (DEpsilonPEq().boundaryField()[patchi][facei] > SMALL)
                 {
                     activeYield_.boundaryFieldRef()[patchi][facei] = 1.0;
                 }
@@ -604,7 +420,7 @@ void Foam::plasticModel::updateTotalFields()
 
     const int nTotalCells = returnReduce(mesh().nCells(), sumOp<int>());
 
-    Info<< "    Max DEpsilonPEq is " << gMax(DEpsilonPEq_) << nl
+    Info<< "    Max DEpsilonPEq is " << max(DEpsilonPEq()) << nl
         << "    " << numCellsYielding << " cells ("
         << 100.0*scalar(numCellsYielding)/scalar(nTotalCells)
         << "% of the cells in this material) are actively yielding"
@@ -645,13 +461,13 @@ Foam::scalar Foam::plasticModel::newDeltaT()
     // Analysis and Design 16 (1994) 99-139.
 
     // Calculate equivalent strain, for normalisation of the error
-    tmp<volSymmTensorField> e(epsilon());
+    tmp<volSymmTensorField> e(calcEpsilon(epsilonP()));
     const volScalarField epsilonEq(sqrt((2.0/3.0)*magSqr(dev(e))));
 
     // Take reference to internal fields
-    const symmTensorField& DEpsilonPI = DEpsilonP_.primitiveField();
-    const symmTensorField& plasticNI = plasticN_.primitiveField();
-    const symmTensorField& plasticNIold = plasticN_.oldTime().primitiveField();
+    const symmTensorField& DEpsilonPI = DEpsilonP().primitiveField();
+    const symmTensorField& plasticNI = plasticN().primitiveField();
+    const symmTensorField& plasticNIold = plasticN().oldTime().primitiveField();
     const scalarField& epsilonEqI = epsilonEq.primitiveField();
 
     // Calculate error field
@@ -672,11 +488,8 @@ Foam::scalar Foam::plasticModel::newDeltaT()
 
         if (maxMagDEpsilonPErr > 50*maxDeltaErr_)
         {
-            WarningIn
-            (
-                "Foam::scalar Foam::plasticModel::newDeltaT()"
-                " const"
-            )   << "The error in the plastic strain is over 50 times larger "
+            WarningInFunction
+                << "The error in the plastic strain is over 50 times larger "
                 << "than the desired value!\n    Consider starting the "
                 << "simulation with a smaller initial time-step" << endl;
         }

@@ -42,34 +42,6 @@ namespace Foam
 
 // * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * * //
 
-void Foam::linearElastic::makeSigma0f() const
-{
-    if (sigma0fPtr_)
-    {
-        FatalErrorIn("void Foam::linearElastic::makeSigma0f() const")
-            << "pointer already set" << abort(FatalError);
-    }
-
-    sigma0fPtr_ =
-        new surfaceSymmTensorField
-        (
-            "sigma0f",
-            fvc::interpolate(sigma0_)
-        );
-}
-
-
-const Foam::surfaceSymmTensorField& Foam::linearElastic::sigma0f() const
-{
-    if (!sigma0fPtr_)
-    {
-        makeSigma0f();
-    }
-
-    return *sigma0fPtr_;
-}
-
-
 void Foam::linearElastic::calculateHydrostaticStress
 (
     volScalarField& sigmaHyd,
@@ -106,7 +78,7 @@ void Foam::linearElastic::calculateHydrostaticStress
         const surfaceScalarField rDAf
         (
             "rDAf",
-            pressureSmoothingCoeff_
+            pressureSmoothingScaleFactor_
            *fvc::interpolate
             (
                 ((4.0/3.0)*mu_ + K_)/AD, "interpolate(grad(sigmaHyd))"
@@ -179,91 +151,8 @@ Foam::linearElastic::linearElastic
     K_("K", dimPressure, 0.0),
     E_("E", dimPressure, 0.0),
     nu_("nu", dimless, 0.0),
-    lambda_("lambda", dimPressure, 0.0),
-    solvePressureEqn_
-    (
-        dict.lookupOrDefault<Switch>("solvePressureEqn", false)
-    ),
-    pressureSmoothingCoeff_
-    (
-        dict.lookupOrDefault<scalar>("pressureSmoothingCoeff", 1.0)
-    ),
-    sigmaHyd_
-    (
-        IOobject
-        (
-            "sigmaHyd",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("zero", dimPressure, 0.0),
-        zeroGradientFvPatchScalarField::typeName
-    ),
-    sigmaHydf_
-    (
-        IOobject
-        (
-            "sigmaHydf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("zero", dimPressure, 0.0)
-    ),
-    epsilon_
-    (
-        IOobject
-        (
-            type() + ":epsilon",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    epsilonf_
-    (
-        IOobject
-        (
-            type() + ":epsilonf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimless, symmTensor::zero)
-    ),
-    sigma0_
-    (
-        IOobject
-        (
-            "sigma0",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dict.lookupOrDefault<dimensionedSymmTensor>
-        (
-            "sigma0",
-            dimensionedSymmTensor("zero", dimPressure, symmTensor::zero)
-        )
-    ),
-    sigma0fPtr_(NULL)
+    lambda_("lambda", dimPressure, 0.0)
 {
-    // Force storage of strain old time
-    epsilon_.oldTime();
-    epsilonf_.oldTime();
-
     // Read elastic parameters
     // The user can specify E and nu or mu and K
     if (dict.found("E") && dict.found("nu"))
@@ -337,18 +226,8 @@ Foam::linearElastic::linearElastic
     if (solvePressureEqn_)
     {
         Info<< "    Laplacian equation will be solved for pressure" << nl
-            << "    pressureSmoothingCoeff: " << pressureSmoothingCoeff_
+            << "    pressureSmoothingCoeff: " << pressureSmoothingScaleFactor_
             << endl;
-    }
-
-    if (gMax(mag(sigma0_)()) > SMALL)
-    {
-        Info<< "Reading sigma0 initial/residual stress field" << endl;
-    }
-
-    if (gMax(mag(sigma0_)()) > SMALL)
-    {
-        Info<< "Reading sigma0 initial/residual stress field" << endl;
     }
 }
 
@@ -356,9 +235,7 @@ Foam::linearElastic::linearElastic
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::linearElastic::~linearElastic()
-{
-    deleteDemandDrivenData(sigma0fPtr_);
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -369,9 +246,7 @@ Foam::tmp<Foam::volScalarField> Foam::linearElastic::impK() const
     (
         "impK",
         mesh(),
-        nu_.value() == 0.5
-      ? 2.0*mu_
-      : 2.0*mu_ + lambda_
+        nu_.value() == 0.5 ? 2.0*mu_ : 2.0*mu_ + lambda_
     );
 }
 
@@ -458,6 +333,8 @@ const Foam::dimensionedScalar& Foam::linearElastic::lambda() const
 
 void Foam::linearElastic::correct(volSymmTensorField& sigma)
 {
+//     updateEpsilon(epsilonRef(), nu_/E_, sigma);
+
     // Calculate total strain
     if (incremental())
     {
@@ -465,7 +342,7 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
         const volTensorField& gradDD =
             mesh().lookupObject<volTensorField>("grad(DD)");
 
-        epsilon_ = epsilon_.oldTime() + symm(gradDD);
+        epsilonRef() = epsilon().oldTime() + symm(gradDD);
     }
     else
     {
@@ -473,7 +350,7 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
         const volTensorField& gradD =
             mesh().lookupObject<volTensorField>("grad(D)");
 
-        epsilon_ = symm(gradD);
+        epsilonRef() = symm(gradD);
     }
 
     // For planeStress, correct strain in the out of plane direction
@@ -489,7 +366,7 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
                 << "direction is the Z direction!" << abort(FatalError);
         }
 
-        epsilon_.replace
+        epsilonRef().replace
         (
             symmTensor::ZZ,
            -(nu_/E_)
@@ -497,61 +374,25 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
         );
     }
 
-    // Hooke's law : standard form
-    //sigma = 2.0*mu_*epsilon_ + lambda_*tr(epsilon_)*I + sigma0_;
-
     // Hooke's law : partitioned deviatoric and dilation form
-    const volScalarField trEpsilon(tr(epsilon_));
-    calculateHydrostaticStress(sigmaHyd_, trEpsilon);
-    sigma = 2.0*mu_*dev(epsilon_) + sigmaHyd_*I + sigma0_;
+    const volScalarField trEpsilon(tr(epsilon()));
+    calculateHydrostaticStress(sigmaHydRef(), trEpsilon);
+    sigma = 2.0*mu_*dev(epsilon()) + sigmaHyd()*I + sigma0();
 }
 
 
 void Foam::linearElastic::correct(surfaceSymmTensorField& sigma)
 {
     // Calculate total strain
-    if (incremental())
-    {
-        // Lookup gradient of displacement increment
-        const surfaceTensorField& gradDD =
-            mesh().lookupObject<surfaceTensorField>("grad(DD)f");
-
-        epsilonf_ = epsilonf_.oldTime() + symm(gradDD);
-    }
-    else
-    {
-        // Lookup gradient of displacement
-        const surfaceTensorField& gradD =
-            mesh().lookupObject<surfaceTensorField>("grad(D)f");
-
-        epsilonf_ = symm(gradD);
-    }
-
-    // For planeStress, correct strain in the out of plane direction
-    if (planeStress())
-    {
-        if (mesh().solutionD()[vector::Z] > -1)
-        {
-            FatalErrorInFunction
-                << "For planeStress, this material law assumes the empty "
-                << "direction is the Z direction!" << abort(FatalError);
-        }
-
-        epsilonf_.replace
-        (
-            symmTensor::ZZ,
-           -(nu_/E_)
-           *(sigma.component(symmTensor::XX) + sigma.component(symmTensor::YY))
-        );
-    }
+    updateEpsilon(epsilonfRef(), nu_/E_, sigma);
 
     // Hooke's law : standard form
     //sigma = 2.0*mu_*epsilonf_ + lambda_*tr(epsilonf_)*I + sigma0f();
 
     // Hooke's law : partitioned deviatoric and dilation form
-    const surfaceScalarField trEpsilon(tr(epsilonf_));
-    calculateHydrostaticStress(sigmaHydf_, trEpsilon);
-    sigma = 2.0*mu_*dev(epsilonf_) + sigmaHydf_*I + sigma0f();
+    const surfaceScalarField trEpsilon(tr(epsilonf()));
+    calculateHydrostaticStress(sigmaHydfRef(), trEpsilon);
+    sigma = 2.0*mu_*dev(epsilonf()) + sigmaHydf()*I + sigma0f();
 }
 
 

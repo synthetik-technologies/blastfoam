@@ -72,42 +72,24 @@ class linearElastic
         //- First Lame parameter
         dimensionedScalar lambda_;
 
-        //- Switch to enable solution of pressure Laplacian equation
-        //  This can help quell oscillations in the hydrostatic stress
-        Switch solvePressureEqn_;
-
-        //- Optional: it is possible to scale the amount of smoothing in the
-        //  pressure equation with this coefficient
-        scalar pressureSmoothingCoeff_;
-
-        //- Hydrostatic stress
-        //  Note: sigmaHyd_ == tr(sigma)/3.0 == -p,
-        //  where p is the hydrostatic pressure
-        volScalarField sigmaHyd_;
-
-        //- Hydrostatic stress surface field
-        surfaceScalarField sigmaHydf_;
-
-        //- Total strain
-        volSymmTensorField epsilon_;
-
-        //- Total strain surface field
-        surfaceSymmTensorField epsilonf_;
+        //- Total strain (vol)
+        defineVolSurfaceFieldFuncs
+        (
+            epsilon,
+            symmTensor,
+            dimensionedSymmTensor("zero", dimless, symmTensor::zero)
+        );
 
         //- Initial (residual) stress field
         //  Defaults to zero if not specified
-        const volSymmTensorField sigma0_;
-
-        //- Initial (residual) stress surface field
-        mutable surfaceSymmTensorField* sigma0fPtr_;
+        defineVolSurfaceFieldFuncs
+        (
+            sigma0,
+            symmTensor,
+            dimensionedSymmTensor("zero", dimPressure, symmTensor::zero)
+        );
 
     // Private Member Functions
-
-        //- Make the initial stress surface field
-        void makeSigma0f() const;
-
-        //- Return a reference to the initial stress surface field
-        const surfaceSymmTensorField& sigma0f() const;
 
         //- Calculate hydrostatic component of the stress tensor
         void calculateHydrostaticStress

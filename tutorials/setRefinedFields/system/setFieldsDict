@@ -23,7 +23,37 @@ defaultFieldValues
     volScalarFieldValue     test0 -setAllBoundaries 0
     surfaceScalarFieldValue test0f 0
     pointScalarFieldValue   pointtest0 0
-    volVectorFieldValue     test1 (0 0 0)
+    volVectorFieldFunction  test1
+    {
+        type coded;
+        codeOptions
+        #{
+            -I$(FOAM_SRC)/finiteVolume/lnInclude \
+            -I$(FOAM_SRC)/atmosphericModels/lnInclude
+        #};
+        codeLibs
+        #{
+            -latmosphericModels
+        #};
+        codeInclude
+        #{
+            #include "atmBoundaryLayer.H"
+        #};
+        code
+        #{
+            atmBoundaryLayer atmbl
+            (
+                dict_.topDict().lookup<vector>("uDir"),   // flowDir
+                dict_.topDict().lookup<vector>("zDir"),   // zDir
+                $uRef,   // Uref
+                $zRef,   // Zref
+                scalarField(1, $z0), // z0
+                scalarField(1, $zg)  // zGround
+            );
+
+            return atmbl.U(vectorField(1, vector(x,y,z)))()[0];
+        #};
+    }
     volScalarFieldFunction  test2
     {
         type coded;
@@ -72,31 +102,9 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue test0 -setBoundaries (patches)  1
+            volScalarFieldValue test0 -setBoundaries (patches) -noInternal 1
             volVectorFieldValue test1 -setBoundaries (patches)  $v1
-        );
-    }
-    boxToFace // Use cylinder for 3D
-    {
-        boxes ((0 0 -1) (0.5 0.5 1.1));
-        refine yes;
-        level 3;
-        setName test;
-
-        fieldValues
-        (
             surfaceScalarFieldValue test0f -setBoundaries (patches)  1
-        );
-    }
-    boxToPoint // Use cylinder for 3D
-    {
-        boxes ((0 0 0) (0.5 0.5 1.1));
-        refine yes;
-        level 3;
-        setName test;
-
-        fieldValues
-        (
             pointScalarFieldValue pointtest0 -setBoundaries (patches)  1
         );
     }

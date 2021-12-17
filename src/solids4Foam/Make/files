@@ -29,14 +29,15 @@ solidModels/unsNonLinGeomUpdatedLagSolid/unsNonLinGeomUpdatedLagSolid.C
 solidModels/unsNonLinGeomTotalLagSolid/unsNonLinGeomTotalLagSolid.C
 solidModels/weakThermalLinGeomSolid/weakThermalLinGeomSolid.C
 
-explicit=solidModels/explicitNonLinGeomTotalLagSolid
-$(explicit)/explicitNonLinGeomTotalLagSolid.C
+explicit=solidModels/explicitTotalLagSolid
+$(explicit)/explicitTotalLagSolid.C
+$(explicit)/explicitLinGeomTotalLagSolid/explicitLinGeomTotalLagSolid.C
+$(explicit)/explicitNonLinGeomTotalLagSolid/explicitNonLinGeomTotalLagSolid.C
 $(explicit)/angularMomentum/angularMomentum.C
 $(explicit)/gradientSchemes/gradientSchemes.C
 $(explicit)/interpolationSchemes/interpolationSchemes.C
 $(explicit)/mechanics/mechanics.C
 $(explicit)/operations/operations.C
-$(explicit)/plasticityModel/plasticityModel.C
 
 explicitBCs=$(explicit)/boundaryConditions
 $(explicitBCs)/calculated/calculatedTraction/calculatedTractionFvPatchVectorField.C
@@ -99,6 +100,8 @@ fvPatchFields/solidWedge/solidWedgeFvPatchScalarField.C
 fvPatchFields/solidDirectionMixed/solidDirectionMixedFvPatchVectorField.C
 fvPatchFields/thermalConvection/thermalConvectionFvPatchScalarField.C
 fvPatchFields/convectiveFlux/convectiveFluxFvPatchScalarField.C
+fvPatchFields/displacementVelocity/displacementVelocityFvPatchVectorField.C
+
 
 fvPatchFields/solidContact/solidContactFvPatchVectorField.C
 fvPatchFields/solidContact/solidContactFvPatchVectorFieldCalcContact.C

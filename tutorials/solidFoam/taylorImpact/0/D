@@ -47,6 +47,24 @@ boundaryField
         type            solidTractionFree;
         value           uniform (0 0 0);
     }
+
+    billetContact
+    {
+        type            slipDisplacement;
+        value           uniform (0 0 0);
+    }
+
+    left
+    {
+        type            solidTractionFree;
+        value           $internalField;
+    }
+
+    wedge
+    {
+        type            wedge;
+        patchType       wedge;
+    }
 }
 
 // ************************************************************************* //

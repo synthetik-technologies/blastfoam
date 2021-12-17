@@ -1,0 +1,36 @@
+#include "properties"
+
+angle   #calc "degToRad(1.0)";
+cosAngle #calc "cos($angle)";
+sinAngle #calc "sin($angle)";
+
+x0  0;
+x1  #calc "$cosAngle * $D  / 2.0";
+x2  #calc "$cosAngle * $OR";
+
+y0  #calc "-$thickness";
+y1  0.0;
+y2  #calc "$OR + $D / 2.0";
+
+z0  0;
+z1  #calc "$sinAngle * $D / 2.0";
+z2  #calc "$sinAngle * $OR";
+
+nz0  0;
+nz1  #calc "-$sinAngle * $D / 2.0";
+nz2  #calc "-$sinAngle * $OR";
+
+
+dx          0.025;
+nx0         #calc "ceil( $D / 2.0 / $dx )";
+nx1         #calc "ceil( ($OR - $D / 2.0) / $dx )";
+ny          #calc "ceil( ($OR + $R) / $dx )";
+
+dxPlate     #calc "$dx / 4.0";     // level 2;
+dyPlate     #calc "$thickness / 20.0";
+
+nxPlate     #calc "ceil( $D / 2.0 / $dxPlate )";
+nyPlate     #calc "ceil( $thickness / $dyPlate )";
+
+
+

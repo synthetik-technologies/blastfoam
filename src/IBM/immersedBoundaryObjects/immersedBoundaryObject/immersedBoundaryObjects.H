@@ -30,6 +30,7 @@ License
 
 #include "MovingImmersedBoundaryObject.H"
 #include "StationaryImmersedBoundaryObject.H"
+#include "SlaveLinearVelocityImmersedBoundaryObject.H"
 
 #include "TemperatureIndependentImmersedBoundaryObject.H"
 // #include "IsothermalImmersedBoundaryObject.H"
@@ -58,6 +59,15 @@ namespace Foam
                 immersedBoundaryObject
             >
         > movingImmersedBoundaryObject;
+
+    typedef
+        SlaveLinearVelocityImmersedBoundaryObject
+        <
+            TemperatureIndependentImmersedBoundaryObject
+            <
+                immersedBoundaryObject
+            >
+        > slaveLinearVelocityImmersedBoundaryObject;
 
 //     typedef
 //         StationaryImmersedBoundaryObject

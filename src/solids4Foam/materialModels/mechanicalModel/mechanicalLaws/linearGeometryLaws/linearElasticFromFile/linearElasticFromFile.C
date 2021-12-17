@@ -94,7 +94,13 @@ Foam::linearElasticFromFile::linearElasticFromFile
     muf_(fvc::interpolate(mu_)),
     lambdaf_(fvc::interpolate(lambda_))
 {
-    if (planeStress())
+    if (incremental())
+    {
+        FatalErrorInFunction
+            << "Not implemented for incremental solid solver"
+            << abort(FatalError);
+    }
+    if (usePlaneStress())
     {
         lambda_ = nu_*E_/((1.0 + nu_)*(1.0 - nu_));
         lambdaf_ = fvc::interpolate(lambda_);
@@ -163,15 +169,6 @@ Foam::linearElasticFromFile::shearModulus() const
 
 void Foam::linearElasticFromFile::correct(volSymmTensorField& sigma)
 {
-    if (incremental())
-    {
-        FatalErrorIn
-        (
-            type() + "::correct(volSymmTensorField& sigma)"
-        )   << "Not implemented for incremental solid solver"
-            << abort(FatalError);
-    }
-
     // Lookup gradient of displacment from the solver
     const volTensorField& gradD =
         mesh().lookupObject<volTensorField>("grad(D)");
@@ -183,15 +180,6 @@ void Foam::linearElasticFromFile::correct(volSymmTensorField& sigma)
 
 void Foam::linearElasticFromFile::correct(surfaceSymmTensorField& sigma)
 {
-    if (incremental())
-    {
-        FatalErrorIn
-        (
-            type() + "::correct(surfaceSymmTensorField& sigma)"
-        )   << "Not implemented for incremental solid solver"
-            << abort(FatalError);
-    }
-
     // Lookup gradient of displacment from the solver
     const surfaceTensorField& gradD =
         mesh().lookupObject<surfaceTensorField>("grad(D)f");

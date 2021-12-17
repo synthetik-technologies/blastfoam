@@ -1,0 +1,131 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  7
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "$FOAM_CASE/properties"
+
+x0  0;
+x1  #calc "$D / 2.0";
+w   #calc "$x1 / 4.0";
+
+y0  0;
+y1  $thickness;
+
+xR   #calc "$x1 * cos(Foam::constant::mathematical::pi / 4.0)";
+xRm  #calc "$x1 * cos(Foam::constant::mathematical::pi / 8.0)";
+xRp  #calc "$x1 * cos(Foam::constant::mathematical::pi * 3.0 / 8.0)";
+
+dxPlate     0.01;
+dyPlate     0.00125;
+
+nwPlate     #calc "ceil( $w / $dxPlate )";
+nrPlate     #calc "ceil( ($x1 - $w) / $dxPlate )";
+nyPlate     #calc "ceil( $thickness / $dyPlate )";
+
+vertices
+(
+    ($x0  $y0  $x0)         // 0
+    ($w   $y0  $x0)         // 1
+    ($x1  $y0  $x0)         // 2
+
+    ($x0  $y0  $w)          // 3
+    ($w   $y0  $w)          // 4
+    ($xR  $y0  $xR)         // 5
+
+    ($x0  $y0  $x1)         // 6
+
+    ($x0  $y1  $x0)         // 7
+    ($w   $y1  $x0)         // 8
+    ($x1  $y1  $x0)         // 9
+
+    ($x0  $y1  $w)          // 10
+    ($w   $y1  $w)          // 11
+    ($xR  $y1  $xR)         // 12
+
+    ($x0  $y1  $x1)         // 13
+);
+
+blocks
+(
+    hex (0 1 8 7 3 4 11 10) ($nwPlate $nyPlate $nwPlate) simpleGrading (1 1 1)
+    hex (1 2 9 8 4 5 12 11) ($nrPlate $nyPlate $nwPlate) simpleGrading (1 1 1)
+    hex (3 4 11 10 6 5 12 13) ($nwPlate $nyPlate $nrPlate) simpleGrading (1 1 1)
+);
+
+edges
+(
+    arc 2 5 ($xRm $y0 $xRp)
+    arc 9 12 ($xRm $y1 $xRp)
+
+    arc 5 6 ($xRp $y0 $xRm)
+    arc 12 13 ($xRp $y1 $xRm)
+);
+
+boundary
+(
+    plate_to_air
+    {
+        type patch;
+        faces
+        (
+            (7 8 11 10)
+            (8 9 12 11)
+            (10 11 12 13)
+        );
+    }
+    plateEnd
+    {
+        type patch;
+        faces
+        (
+            (2 5 12 9)
+            (5 6 13 12)
+        );
+    }
+    plateFree
+    {
+        type patch;
+        faces
+        (
+            (1 0 4 3)
+            (1 2 5 4)
+            (3 4 5 6)
+        );
+    }
+    symmetry0
+    {
+        type symmetry;
+        faces
+        (
+            (0 1 8 7)
+            (1 2 9 8)
+        );
+    }
+    symmetry1
+    {
+        type symmetry;
+        faces
+        (
+            (0 7 10 3)
+            (3 6 13 10)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+
+// ************************************************************************* //

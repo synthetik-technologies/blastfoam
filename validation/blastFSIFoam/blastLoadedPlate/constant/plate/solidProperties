@@ -15,8 +15,8 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// solidModel explicitNonLinearGeometryTotalLagrangian;
-solidModel nonLinearGeometryTotalLagrangian;
+solidModel explicitNonLinearGeometryTotalLagrangian;
+// solidModel nonLinearGeometryTotalLagrangian;
 
 explicitNonLinearGeometryTotalLagrangianCoeffs
 {

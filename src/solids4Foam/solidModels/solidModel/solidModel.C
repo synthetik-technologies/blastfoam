@@ -558,6 +558,31 @@ Foam::dictionary& Foam::solidModel::solidModelDict()
 }
 
 
+void Foam::solidModel::displacementFromVelocity
+(
+    volVectorField& disp,
+    volVectorField& ddisp,
+    const label nOld
+)
+{
+    if (mesh_.time().restart() || !nOld)
+    {
+        return;
+    }
+    IOobject Uheader(U());
+    if (!Uheader.typeHeaderOk<volVectorField>(true))
+    {
+        ddisp = U()*mesh_.time().deltaT();
+        disp.oldTime() = -ddisp;
+        displacementFromVelocity
+        (
+            disp.oldTime(),
+            ddisp.oldTime(),
+            nOld - 1
+        );
+    }
+}
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::solidModel::solidModel
@@ -799,19 +824,6 @@ Foam::solidModel::solidModel
     {
         globalPatches_.setDisplacementField(mesh.name(), "D");
     }
-    // Force old time fields to be stored
-    D_.oldTime().oldTime();
-    DD_.oldTime().oldTime();
-    pointD_.oldTime();
-    pointDD_.oldTime();
-    gradD_.oldTime();
-    gradDD_.oldTime();
-    sigma_.oldTime();
-
-    // There is an issue where old-old fields are not being written so we will
-    // reset the write flag here
-    D_.oldTime().oldTime().writeOpt() = IOobject::AUTO_WRITE;
-    DD_.oldTime().oldTime().writeOpt() = IOobject::AUTO_WRITE;
 
     // Print out the relaxation factor
     Info<< "    under-relaxation method: " << relaxationMethod_ << endl;
@@ -1225,7 +1237,8 @@ void Foam::solidModel::moveMesh
     vectorField newPoints(oldPoints);
 
     // Correct symmetryPlane points
-
+    vector validD((vector(mesh().geometricD()) + vector::one)/2.0);
+    vector invalidD(vector::one - validD);
     forAll(mesh().boundaryMesh(), patchI)
     {
         if (isA<symmetryPolyPatch>(mesh().boundaryMesh()[patchI]))
@@ -1275,23 +1288,20 @@ void Foam::solidModel::moveMesh
             const labelList& meshPoints =
                 mesh().boundaryMesh()[patchI].meshPoints();
 
-            if
-            (
-                returnReduce(mesh().boundaryMesh()[patchI].size(), sumOp<int>())
-            )
+            if (!returnReduce(meshPoints.size(), sumOp<int>()))
             {
                 continue;
             }
 
             const vector avgN =
                 gAverage(mesh().boundaryMesh()[patchI].pointNormals());
-            const vector k(0, 0, 1);
 
-            if (mag(avgN & k) > 0.95)
+            if (mag(avgN & invalidD) > 0.95)
             {
                 forAll(meshPoints, pI)
                 {
-                    pointDDI[meshPoints[pI]].z() = 0;
+                    pointDDI[meshPoints[pI]] =
+                        cmptMultiply(pointDDI[meshPoints[pI]], validD);
                 }
             }
         }

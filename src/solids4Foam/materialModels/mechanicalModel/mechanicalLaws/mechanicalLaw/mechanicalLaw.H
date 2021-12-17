@@ -37,6 +37,8 @@ SourceFiles
 #define mechanicalLaw_H
 
 #include "IOdictionary.H"
+#include "surfaceFields.H"
+#include "volFields.H"
 #include "typeInfo.H"
 #include "runTimeSelectionTables.H"
 #include "volFields.H"
@@ -49,6 +51,101 @@ SourceFiles
 namespace Foam
 {
 
+#define MacroStr(Name) #Name
+
+#define defineVolSurfaceField(fieldName, Type)                                 \
+    mutable autoPtr<GeometricField<Type, fvPatchField, volMesh>>               \
+        fieldName##Ptr_;                                                       \
+    mutable autoPtr<GeometricField<Type, fvsPatchField, surfaceMesh>>          \
+        fieldName##fPtr_;
+
+#define volSurfaceFieldFuncs(fieldName, makeFieldFunc, Type, dimType, rOpt, wOpt)\
+    const GeometricField<Type, fvPatchField, volMesh>& fieldName() const       \
+    {                                                                          \
+        if (!fieldName##Ptr_.valid())                                          \
+        {                                                                      \
+            fieldName##Ptr_ =                                                  \
+                makeFieldFunc<Type, fvPatchField, volMesh>                     \
+                (                                                              \
+                    #fieldName,                                                \
+                    dimType,                                                   \
+                    rOpt,                                                      \
+                    wOpt                                                       \
+                );                                                             \
+        }                                                                      \
+        return fieldName##Ptr_();                                              \
+    }                                                                          \
+    GeometricField<Type, fvPatchField, volMesh>& fieldName##Ref()              \
+    {                                                                          \
+        if (!fieldName##Ptr_.valid())                                          \
+        {                                                                      \
+            fieldName##Ptr_ =                                                  \
+                makeFieldFunc<Type, fvPatchField, volMesh>                     \
+                (                                                              \
+                    #fieldName,                                                \
+                    dimType,                                                   \
+                    rOpt,                                                      \
+                    wOpt                                                       \
+                );                                                             \
+        }                                                                      \
+        return fieldName##Ptr_();                                              \
+    }                                                                          \
+                                                                               \
+    const GeometricField<Type, fvsPatchField, surfaceMesh>&                    \
+    fieldName##f() const                                                       \
+    {                                                                          \
+        if (!fieldName##fPtr_.valid())                                         \
+        {                                                                      \
+            fieldName##fPtr_ =                                                 \
+                makeFieldFunc<Type, fvsPatchField, surfaceMesh>                \
+                (                                                              \
+                    #fieldName "f",                                            \
+                    dimType,                                                   \
+                    rOpt,                                                      \
+                    wOpt                                                       \
+                );                                                             \
+        }                                                                      \
+        return fieldName##fPtr_();                                             \
+    }                                                                          \
+    GeometricField<Type, fvsPatchField, surfaceMesh>& fieldName##fRef()        \
+    {                                                                          \
+        if (!fieldName##fPtr_.valid())                                         \
+        {                                                                      \
+            fieldName##fPtr_ =                                                 \
+                makeFieldFunc<Type, fvsPatchField, surfaceMesh>                \
+                (                                                              \
+                    #fieldName "f",                                            \
+                    dimType,                                                   \
+                    rOpt,                                                      \
+                    wOpt                                                       \
+                );                                                             \
+        }                                                                      \
+        return fieldName##fPtr_();                                             \
+    }
+
+#define defineVolSurfaceFieldFuncs(fieldName, Type, dimType)                   \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeField,                                                             \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::READ_IF_PRESENT,                                             \
+        IOobject::AUTO_WRITE                                                   \
+    );
+
+#define defineVolSurfaceFieldTypeFuncs(fieldName, Type, dimType)               \
+    defineVolSurfaceField(fieldName, Type);                                    \
+    volSurfaceFieldFuncs                                                       \
+    (                                                                          \
+        fieldName,                                                             \
+        makeTypeField,                                                         \
+        Type,                                                                  \
+        dimType,                                                               \
+        IOobject::READ_IF_PRESENT,                                             \
+        IOobject::AUTO_WRITE                                                   \
+    );
 /*---------------------------------------------------------------------------*\
                          Class mechanicalLaw Declaration
 \*---------------------------------------------------------------------------*/
@@ -75,32 +172,42 @@ class mechanicalLaw
         //- Reference to density field
         const volScalarField& rho_;
 
-        // Total deformation gradient volField
-        mutable autoPtr<volTensorField> FPtr_;
+        // Optional pointers used for general fields
 
-        // Total deformation gradient surfaceField
-        mutable autoPtr<surfaceTensorField> FfPtr_;
+            // Total deformation gradient (vol)
+            mutable autoPtr<volTensorField> FPtr_;
 
-        //- Relative deformation gradient volField
-        mutable autoPtr<volTensorField> relFPtr_;
+            // Total deformation gradient (surface)
+            mutable autoPtr<surfaceTensorField> FfPtr_;
 
-        //- Relative deformation gradient surfaceField
-        mutable autoPtr<surfaceTensorField> relFfPtr_;
+            //- Relative deformation gradient (vol)
+            mutable autoPtr<volTensorField> relFPtr_;
 
-        //- Jacobian of the toal deformation gradient volField
-        mutable autoPtr<volScalarField> JPtr_;
+            //- Relative deformation gradient (surface)
+            mutable autoPtr<surfaceTensorField> relFfPtr_;
 
-        //- Jacobian of the toal deformation gradient surfaceField
-        mutable autoPtr<surfaceScalarField> JfPtr_;
+            //- Jacobian of the toal deformation gradient (vol)
+            mutable autoPtr<volScalarField> JPtr_;
 
-        // Hydrostatic stress (negative of hydrostatic pressure) volField
-        autoPtr<volScalarField> sigmaHydPtr_;
+            //- Jacobian of the toal deformation gradient (surface)
+            mutable autoPtr<surfaceScalarField> JfPtr_;
 
-        // Gradient of the hydrostatic stress field
-        autoPtr<volVectorField> gradSigmaHydPtr_;
+            // Hydrostatic stress (negative of hydrostatic pressure) (vol)
+            mutable autoPtr<volScalarField> sigmaHydPtr_;
+
+            // Hydrostatic stress (negative of hydrostatic pressure) (surface)
+            mutable autoPtr<surfaceScalarField> sigmaHydfPtr_;
+
+            // Gradient of the hydrostatic stress field (vol)
+            mutable autoPtr<volVectorField> gradSigmaHydPtr_;
 
         //- Is the deformation of the solid model used
         bool useSolidDeformation_;
+
+        // Direction of plane stress
+        bool usePlaneStress_;
+        direction planeStressDir_;
+        Pair<direction> nonPlaneStressDirs_;
 
 
     // Private Member Functions
@@ -123,6 +230,15 @@ class mechanicalLaw
         //- Make the Jf field
         void makeJf() const;
 
+        //- Make the sigmaHyd field
+        void makeSigmaHyd() const;
+
+        //- Make the sigmaHydf field
+        void makeSigmaHydf() const;
+
+        //- Make the gradSigmaHyd field
+        void makeGradSigmaHyd() const;
+
         //- Disallow copy construct
         mechanicalLaw(const mechanicalLaw&);
 
@@ -139,6 +255,11 @@ protected:
         //- Optional: it is possible to scale the amount of smoothing in the
         //  pressure equation with this coefficient
         const scalar pressureSmoothingScaleFactor_;
+
+        bool usePlaneStress() const
+        {
+            return usePlaneStress_;
+        }
 
         //- Return const reference to mesh
         const fvMesh& mesh() const
@@ -190,13 +311,13 @@ protected:
         const volTensorField& relF() const;
 
         //- Return a reference to the relF field
-        volTensorField& relF();
+        volTensorField& relFRef();
 
         //- Return a reference to the relFf field
         const surfaceTensorField& relFf() const;
 
         //- Return a reference to the relFf field
-        surfaceTensorField& relFf();
+        surfaceTensorField& relFfRef();
 
         //- Return a reference to the J field
         const volScalarField& J() const;
@@ -204,44 +325,194 @@ protected:
         //- Return a reference to the Jf field
         const surfaceScalarField& Jf() const;
 
+        //- Return a const reference to the sigmaHyd field
+        const volScalarField& sigmaHyd() const;
+
         //- Return a reference to the sigmaHyd field
-        volScalarField& sigmaHyd();
+        volScalarField& sigmaHydRef();
+
+        //- Return a const reference to the sigmaHydf field
+        const surfaceScalarField& sigmaHydf() const;
+
+        //- Return a reference to the sigmaHydf field
+        surfaceScalarField& sigmaHydfRef();
+
+        //- Return a const reference to the gradSigmaHyd field
+        const volVectorField& gradSigmaHyd() const;
 
         //- Return a reference to the gradSigmaHyd field
-        volVectorField& gradSigmaHyd();
+        volVectorField& gradSigmaHydRef();
 
-        //- Update the deformation gradient
-        //  The lienarised shear and bulk modulii are used to enforce linear
-        //  elasticity in the case that the enforceLinear flag is tripped by the
-        //  solid model
-        //  true is returned if enforceLinear is true (linear elasticity is
-        //  enforced)
-        bool updateF
-        (
-            volSymmTensorField& sigma,
-            const dimensionedScalar& mu,
-            const dimensionedScalar& K
-        );
 
-        //- Equivalent to the updateF function, except instead for the Ff
-        //  surface field
-        bool updateFf
-        (
-            surfaceSymmTensorField& sigma,
-            const dimensionedScalar& mu,
-            const dimensionedScalar& K
-        );
+        // Update functions
 
-        //- Update the hydrostatic stress field by solving a diffusion equation.
-        //  An explicit calculation of sigmaHyd is passed as an argument.
-        //  Passing a zero will enforce incompressibility, although for
-        //  covergence it may be better to pass a penalty calculation of
-        //  sigmaHyd
-        void updateSigmaHyd
-        (
-            const volScalarField& sigmaHydExplicit,
-            const dimensionedScalar& impK
-        );
+            //- Update the deformation gradient
+            //  The linearised shear and bulk modulii are used to enforce
+            //  linear elasticity in the case that the enforceLinear flag is
+            //  tripped by the solid model
+            // true is returned if enforceLinear is true (linear elasticity is
+            //  enforced)
+            bool updateF
+            (
+                volSymmTensorField& sigma,
+                const dimensionedScalar& mu,
+                const dimensionedScalar& K
+            );
+
+            //- Equivalent to the updateF function, except instead for the Ff
+            //  surface field
+            bool updateFf
+            (
+                surfaceSymmTensorField& sigma,
+                const dimensionedScalar& mu,
+                const dimensionedScalar& K
+            );
+
+            //- Update the hydrostatic stress field by solving a diffusion equation.
+            //  An explicit calculation of sigmaHyd is passed as an argument.
+            //  Passing a zero will enforce incompressibility, although for
+            //  covergence it may be better to pass a penalty calculation of
+            //  sigmaHyd
+            void updateSigmaHyd
+            (
+                const volScalarField& sigmaHydExplicit,
+                const dimensionedScalar& impK
+            );
+
+
+            //- Replace plane stress components
+            template<class FieldType, class CoeffType>
+            void replacePlaneStress
+            (
+                FieldType& epsilon,
+                const CoeffType& coeff,
+                const FieldType& sigma,
+                const FieldType& epsilonP
+            ) const;
+            template<class FieldType, class CoeffType>
+            void replacePlaneStress
+            (
+                FieldType& epsilon,
+                const CoeffType& coeff,
+                const FieldType& sigma
+            ) const;
+
+
+            //- Update epsilon field
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            void updateEpsilon
+            (
+                GeometricField<symmTensor, PatchField, Mesh>& epsilon,
+                const CoeffType& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
+                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            void updateEpsilon
+            (
+                GeometricField<symmTensor, PatchField, Mesh>& epsilon,
+                const CoeffType& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            void updateEpsilon
+            (
+                GeometricField<symmTensor, PatchField, Mesh>& epsilon,
+                const tmp<CoeffType>& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            void updateEpsilon
+            (
+                GeometricField<symmTensor, PatchField, Mesh>& epsilon,
+                const tmp<CoeffType>& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
+                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
+            ) const;
+
+
+            //- Calculate strain field
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            tmp<GeometricField<symmTensor, PatchField, Mesh>>
+            calcEpsilon
+            (
+                const CoeffType& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
+                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            tmp<GeometricField<symmTensor, PatchField, Mesh>>
+            calcEpsilon
+            (
+                const CoeffType& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            tmp<GeometricField<symmTensor, PatchField, Mesh>>
+            calcEpsilon
+            (
+                const tmp<CoeffType>& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
+                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
+            ) const;
+
+            template<template<class> class PatchField, class Mesh, class CoeffType>
+            tmp<GeometricField<symmTensor, PatchField, Mesh>>
+            calcEpsilon
+            (
+                const tmp<CoeffType>& coeff,
+                const GeometricField<symmTensor, PatchField, Mesh>& sigma
+            ) const;
+
+            template<class CoeffType>
+            tmp<Field<symmTensor>> calcEpsilon
+            (
+                const CoeffType& coeff,
+                const Field<symmTensor>& sigma,
+                const Field<symmTensor>& epsilonP,
+                const label patchi
+            ) const;
+
+            template<class CoeffType>
+            tmp<Field<symmTensor>> calcEpsilon
+            (
+                const CoeffType& coeff,
+                const Field<symmTensor>& sigma,
+                const label patchi
+            ) const;
+
+            template<class CoeffType>
+            tmp<Field<symmTensor>> calcEpsilon
+            (
+                const tmp<CoeffType>& coeff,
+                const Field<symmTensor>& sigma,
+                const Field<symmTensor>& epsilonP,
+                const label patchi
+            ) const;
+
+            template<class CoeffType>
+            tmp<Field<symmTensor>> calcEpsilon
+            (
+                const tmp<CoeffType>& coeff,
+                const Field<symmTensor>& sigma,
+                const label patchi
+            ) const;
+
+            // Calculate strain with no correction for plane stress
+            tmp<volSymmTensorField> calcEpsilon(const volSymmTensorField&) const;
+
+            tmp<surfaceSymmTensorField> calcEpsilon
+            (
+                const surfaceSymmTensorField&
+            ) const;
+
+            tmp<Field<symmTensor>> calcEpsilon(const label) const;
+
 
         //- Lookup the enforceLinear Switch in the solidModel
         const Switch& enforceLinear() const;
@@ -255,6 +526,43 @@ protected:
         {
             return nonLinGeom_;
         }
+
+        //- Functions used to return autoPtrs to fields
+        //  this replaces the makeFieldName functions
+
+            // Return field given name, initial value and optional read/write
+            // options
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            makeField
+            (
+                const word& name,
+                const dimensioned<Type>& dt,
+                const IOobject::readOption rOpt = IOobject::READ_IF_PRESENT,
+                const IOobject::writeOption wOpt = IOobject::AUTO_WRITE
+            ) const;
+
+            // Return field given name, initial value and optional read/write
+            // options
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            inline autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            makeTypeField
+            (
+                const word& name,
+                const dimensioned<Type>& dt,
+                const IOobject::readOption rOpt = IOobject::READ_IF_PRESENT,
+                const IOobject::writeOption wOpt = IOobject::AUTO_WRITE
+            ) const;
+
+            // Return field given IOobject and initial value
+            template<class Type, template<class> class PatchField, class GeoMesh>
+            autoPtr<GeometricField<Type, PatchField, GeoMesh>>
+            makeField
+            (
+                const IOobject& io,
+                const dimensioned<Type>& dt
+            ) const;
+
 
 public:
 
@@ -397,6 +705,12 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+#include "mechanicalLawTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

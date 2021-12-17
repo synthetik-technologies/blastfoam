@@ -15,9 +15,14 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+ddtSchemes
+{
+    default Euler;
+}
+
 gradSchemes
 {
-	default    leastSquares;
+	default    leastSquares 1;
 }
 
 divSchemes

@@ -93,14 +93,6 @@ protected:
             const surfaceScalarField& trEpsilon
         );
 
-        //- Return the strain
-        virtual tmp<volSymmTensorField> epsilon() const;
-
-        //- Return the face strain
-        virtual tmp<surfaceSymmTensorField> epsilonf() const;
-
-        //- Return the strain for a patch
-        virtual tmp<symmTensorField> epsilon(const label) const;
 
 public:
 

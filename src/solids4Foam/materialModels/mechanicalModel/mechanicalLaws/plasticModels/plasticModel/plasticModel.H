@@ -87,41 +87,55 @@ protected:
         //- Poisson's ratio
         dimensionedScalar nu_;
 
-        //- Yield stress
-        volScalarField sigmaY_;
+        virtual dimensionedScalar sigmaY0() const = 0;
 
-        //- Yield stress surface field
-        surfaceScalarField sigmaYf_;
+        //- Yield stress
+        defineVolSurfaceFieldTypeFuncs
+        (
+            sigmaY,
+            scalar,
+            this->sigmaY0()
+        );
 
         //- Total plastic strain
-        volSymmTensorField epsilonP_;
-
-        //- Total plastic strain surface field
-        surfaceSymmTensorField epsilonPf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            epsilonP,
+            symmTensor,
+            dimensionedSymmTensor("epsilonP", dimless, Zero)
+        );
 
         //- Incremental change of plastic strain
-        volSymmTensorField DEpsilonP_;
-
-        //- Incremental change of plastic strain surface field
-        surfaceSymmTensorField DEpsilonPf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            DEpsilonP,
+            symmTensor,
+            dimensionedSymmTensor("DEpsilonP", dimless, Zero)
+        );
 
         //- Equivalent plastic strain increment
-        volScalarField DEpsilonPEq_;
-
-        //- Equivalent plastic strain increment surface field
-        surfaceScalarField DEpsilonPEqf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            DEpsilonPEq,
+            scalar,
+            dimensionedScalar("DEpsilonPEq", dimless, Zero)
+        );
 
         //- Plastic multiplier increment - plastric strain scaled by sqrt(2/3)
-        volScalarField DLambda_;
-
-        //- Plastic multiplier increment - surface field
-        surfaceScalarField DLambdaf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            DLambda,
+            scalar,
+            dimensionedScalar("DLambda", dimless, Zero)
+        );
 
         //- Equivalent plastic strain
-        volScalarField epsilonPEq_;
-
-        //- Equivalent plastic strain surface field
-        surfaceScalarField epsilonPEqf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            epsilonPEq,
+            scalar,
+            dimensionedScalar("epsilonPEq", dimless, Zero)
+        );
 
         //- Active yielding flag
         //     1.0 for active yielding
@@ -129,10 +143,12 @@ protected:
         volScalarField activeYield_;
 
         //- plasticN is the return direction to the yield surface
-        volSymmTensorField plasticN_;
-
-        //- plasticN surface field
-        surfaceSymmTensorField plasticNf_;
+        defineVolSurfaceFieldTypeFuncs
+        (
+            plasticN,
+            symmTensor,
+            dimensionedSymmTensor("plasticN", dimless, Zero)
+        );
 
         //- Linear plastic modulus. It is only used if plasticity is linear,
         //  defined by two points on the stress-plastic strain curve
@@ -158,15 +174,6 @@ protected:
 
         //- Does the model have nonlinear plasticity
         virtual bool nonLinearPlasticity() const = 0;
-
-        //- Return the strain
-        virtual tmp<volSymmTensorField> epsilon() const = 0;
-
-        //- Return the face strain
-        virtual tmp<surfaceSymmTensorField> epsilonf() const = 0;
-
-        //- Return the strain for a patch
-        virtual tmp<symmTensorField> epsilon(const label) const = 0;
 
         //- Disallow default bitwise copy construct
         plasticModel(const plasticModel&);

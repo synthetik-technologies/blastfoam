@@ -31,6 +31,7 @@ InClass
 #include "fvc.H"
 #include "IOdictionary.H"
 #include "lookupSolidModel.H"
+#include "logVolFields.H"
 #include "solidModel.H"
 #include "fvm.H"
 #include "fvc.H"
@@ -54,25 +55,13 @@ void Foam::mechanicalLaw::makeF() const
 {
     if (FPtr_.valid())
     {
-        FatalErrorIn("void " + type() + "::makeF()")
+        FatalErrorInFunction
             << "pointer already set" << abort(FatalError);
     }
 
-    FPtr_.set
+    FPtr_ = makeTypeField<tensor, fvPatchField, volMesh>
     (
-        new volTensorField
-        (
-            IOobject
-            (
-                "F+" + type(),
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedTensor("I", dimless, I)
-        )
+        "F", dimensionedTensor("I", dimless, I)
     );
 }
 
@@ -81,25 +70,13 @@ void Foam::mechanicalLaw::makeFf() const
 {
     if (FfPtr_.valid())
     {
-        FatalErrorIn("void " + type() + "::makeFf()")
+        FatalErrorInFunction
             << "pointer already set" << abort(FatalError);
     }
 
-    FfPtr_.set
+    FfPtr_ = makeTypeField<tensor, fvsPatchField, surfaceMesh>
     (
-        new surfaceTensorField
-        (
-            IOobject
-            (
-                "Ff_" + type(),
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedTensor("I", dimless, I)
-        )
+        "Ff", dimensionedTensor("I", dimless, I)
     );
 }
 
@@ -107,25 +84,13 @@ void Foam::mechanicalLaw::makeRelF() const
 {
     if (relFPtr_.valid())
     {
-        FatalErrorIn("void " + type() + "::makeRelF()")
+        FatalErrorInFunction
             << "pointer already set" << abort(FatalError);
     }
 
-    relFPtr_.set
+    relFPtr_ = makeTypeField<tensor, fvPatchField, volMesh>
     (
-        new volTensorField
-        (
-            IOobject
-            (
-                "relF_" + type(),
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedTensor("I", dimless, I)
-        )
+        "relF", dimensionedTensor("I", dimless, I)
     );
 }
 
@@ -134,28 +99,126 @@ void Foam::mechanicalLaw::makeRelFf() const
 {
     if (relFfPtr_.valid())
     {
-        FatalErrorIn("void " + type() + "::makeRelFf()")
+        FatalErrorInFunction
             << "pointer already set" << abort(FatalError);
     }
 
-    relFfPtr_.set
+    relFfPtr_ = makeTypeField<tensor, fvsPatchField, surfaceMesh>
     (
-        new surfaceTensorField
+        "relFf", dimensionedTensor("I", dimless, I)
+    );
+}
+
+void Foam::mechanicalLaw::makeJ() const
+{
+    if (JPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    JPtr_ = makeTypeField<scalar, fvPatchField, volMesh>
+    (
+        "J", dimensionedScalar("J", dimless, 1.0)
+    );
+}
+
+
+void Foam::mechanicalLaw::makeJf() const
+{
+    if (JfPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    JfPtr_ = makeTypeField<scalar, fvsPatchField, surfaceMesh>
+    (
+        "Jf", dimensionedScalar("J", dimless, 1.0)
+    );
+}
+
+
+void Foam::mechanicalLaw::makeSigmaHyd() const
+{
+    if (sigmaHydPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    sigmaHydPtr_.set
+    (
+        new volScalarField
         (
             IOobject
             (
-                "relFf_" + type(),
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
+                name_ + ":sigmaHyd",
+                mesh_.time().timeName(mesh_.time().startTime().value()),
+                mesh_,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
             ),
-            mesh(),
-            dimensionedTensor("I", dimless, I)
+            mesh_,
+            dimensionedScalar("zero", dimPressure, 0.0),
+            zeroGradientFvPatchScalarField::typeName
         )
     );
 }
 
+
+void Foam::mechanicalLaw::makeSigmaHydf() const
+{
+    if (sigmaHydfPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    sigmaHydfPtr_.set
+    (
+        new surfaceScalarField
+        (
+            IOobject
+            (
+                name_ + ":sigmaHydf",
+                mesh_.time().timeName(mesh_.time().startTime().value()),
+                mesh_,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            mesh_,
+            dimensionedScalar("zero", dimPressure, 0.0)
+        )
+    );
+}
+
+void Foam::mechanicalLaw::makeGradSigmaHyd() const
+{
+    if (gradSigmaHydPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set" << abort(FatalError);
+    }
+
+    gradSigmaHydPtr_.set
+    (
+        new volVectorField
+        (
+            IOobject
+            (
+                name_ + ":grad(sigmaHyd)",
+                mesh_.time().timeName(mesh_.time().startTime().value()),
+                mesh_,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            mesh_,
+            dimensionedVector("zero", dimPressure/dimLength, Zero),
+            zeroGradientFvPatchScalarField::typeName
+        )
+    );
+}
 
 // * * * * * * * * * * * * * * Protected Members * * * * * * * * * * * * * * //
 
@@ -228,6 +291,10 @@ const Foam::surfaceTensorField& Foam::mechanicalLaw::Ff() const
 
 const Foam::volTensorField& Foam::mechanicalLaw::relF() const
 {
+    if (useSolidDeformation_)
+    {
+        return mesh_.lookupObject<volTensorField>("relF");
+    }
     if (relFPtr_.empty())
     {
         makeRelF();
@@ -237,8 +304,13 @@ const Foam::volTensorField& Foam::mechanicalLaw::relF() const
 }
 
 
-Foam::volTensorField& Foam::mechanicalLaw::relF()
+Foam::volTensorField& Foam::mechanicalLaw::relFRef()
 {
+    if (useSolidDeformation_)
+    {
+        NotImplemented;
+        return mesh_.lookupObjectRef<volTensorField>("relF");
+    }
     if (relFPtr_.empty())
     {
         makeRelF();
@@ -250,6 +322,10 @@ Foam::volTensorField& Foam::mechanicalLaw::relF()
 
 const Foam::surfaceTensorField& Foam::mechanicalLaw::relFf() const
 {
+    if (useSolidDeformation_)
+    {
+        return mesh_.lookupObject<surfaceTensorField>("relFf");
+    }
     if (relFfPtr_.empty())
     {
         makeRelFf();
@@ -259,45 +335,19 @@ const Foam::surfaceTensorField& Foam::mechanicalLaw::relFf() const
 }
 
 
-Foam::surfaceTensorField& Foam::mechanicalLaw::relFf()
+Foam::surfaceTensorField& Foam::mechanicalLaw::relFfRef()
 {
+    if (useSolidDeformation_)
+    {
+        NotImplemented;
+        return mesh_.lookupObjectRef<surfaceTensorField>("relFf");
+    }
     if (relFfPtr_.empty())
     {
         makeRelFf();
     }
 
     return relFfPtr_();
-}
-
-
-void Foam::mechanicalLaw::makeJ() const
-{
-    if (JPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set"
-            << abort(FatalError);
-    }
-
-    JPtr_.set
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "lawJ",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JPtr_().oldTime();
 }
 
 
@@ -317,36 +367,6 @@ const Foam::volScalarField& Foam::mechanicalLaw::J() const
 }
 
 
-void Foam::mechanicalLaw::makeJf() const
-{
-    if (JfPtr_.valid())
-    {
-        FatalErrorInFunction
-            << "pointer already set" << abort(FatalError);
-    }
-
-    JfPtr_.set
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "lawJf",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::NO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("one", dimless, 1.0)
-        )
-    );
-
-    // Store the old-time
-    JfPtr_().oldTime();
-}
-
-
 const Foam::surfaceScalarField&
 Foam::mechanicalLaw::Jf() const
 {
@@ -363,54 +383,67 @@ Foam::mechanicalLaw::Jf() const
     return JfPtr_();
 }
 
-Foam::volScalarField& Foam::mechanicalLaw::sigmaHyd()
+
+const Foam::volScalarField& Foam::mechanicalLaw::sigmaHyd() const
 {
     if (sigmaHydPtr_.empty())
     {
-        sigmaHydPtr_.set
-        (
-            new volScalarField
-            (
-                IOobject
-                (
-                    "sigmaHyd",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh(),
-                dimensionedScalar("zero", dimPressure, 0.0),
-                zeroGradientFvPatchScalarField::typeName
-            )
-        );
+        makeSigmaHyd();
     }
 
     return sigmaHydPtr_();
 }
 
 
-Foam::volVectorField& Foam::mechanicalLaw::gradSigmaHyd()
+Foam::volScalarField& Foam::mechanicalLaw::sigmaHydRef()
+{
+    if (sigmaHydPtr_.empty())
+    {
+        makeSigmaHyd();
+    }
+
+    return sigmaHydPtr_();
+}
+
+
+const Foam::surfaceScalarField& Foam::mechanicalLaw::sigmaHydf() const
+{
+    if (sigmaHydfPtr_.empty())
+    {
+        makeSigmaHydf();
+    }
+
+    return sigmaHydfPtr_();
+}
+
+
+Foam::surfaceScalarField& Foam::mechanicalLaw::sigmaHydfRef()
+{
+    if (sigmaHydfPtr_.empty())
+    {
+        makeSigmaHydf();
+    }
+
+    return sigmaHydfPtr_();
+}
+
+
+const Foam::volVectorField& Foam::mechanicalLaw::gradSigmaHyd() const
 {
     if (gradSigmaHydPtr_.empty())
     {
-        gradSigmaHydPtr_.set
-        (
-            new volVectorField
-            (
-                IOobject
-                (
-                    "grad(sigmaHyd)",
-                    mesh().time().timeName(),
-                    mesh(),
-                    IOobject::READ_IF_PRESENT,
-                    IOobject::AUTO_WRITE
-                ),
-                mesh(),
-                dimensionedVector("zero", dimPressure/dimLength, Zero),
-                zeroGradientFvPatchScalarField::typeName
-            )
-        );
+        makeGradSigmaHyd();
+    }
+
+    return gradSigmaHydPtr_();
+}
+
+
+Foam::volVectorField& Foam::mechanicalLaw::gradSigmaHydRef()
+{
+    if (gradSigmaHydPtr_.empty())
+    {
+        makeGradSigmaHyd();
     }
 
     return gradSigmaHydPtr_();
@@ -426,23 +459,21 @@ bool Foam::mechanicalLaw::updateF
 {
     if (useSolidDeformation_)
     {
-        const volTensorField& F =
-            mesh_.lookupObject<volTensorField>("F");
-
-        // Check if the mathematical model is in total or updated Lagrangian form
-        if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
-        {
-            FatalErrorInFunction
-                << "Not implemented for non-incremental updated Lagrangian"
-                << abort(FatalError);
-            return false;
-        }
-        else
-        {
-            // Update the relative deformation gradient: not needed
-            relF() = F & inv(F.oldTime());
-            return false;
-        }
+//         const volTensorField& F =
+//             mesh_.lookupObject<volTensorField>("F");
+//
+//         // Check if the mathematical model is in total or updated Lagrangian form
+//         if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
+//         {
+//             FatalErrorInFunction
+//                 << "Not implemented for non-incremental updated Lagrangian"
+//                 << abort(FatalError);
+//             return false;
+//         }
+//
+//         // Update the relative deformation gradient: not needed
+//         relFRef() = F & inv(F.oldTime());
+        return false;
     }
 
     if (!FPtr_.valid())
@@ -472,7 +503,7 @@ bool Foam::mechanicalLaw::updateF
             mesh().lookupObject<volTensorField>("grad(DD)");
 
         // Calculate the relative deformation gradient
-        relF() = I + gradDD.T();
+        relFRef() = I + gradDD.T();
 
         // Update the total deformation gradient
         F = relF() & F.oldTime();
@@ -506,7 +537,7 @@ bool Foam::mechanicalLaw::updateF
             F = F.oldTime() + gradDD.T();
 
             // Update the relative deformation gradient: not needed
-            relF() = F & inv(F.oldTime());
+            relFRef() = F & inv(F.oldTime());
 
             //- Calculate Jacobian
             J = det(F);
@@ -535,7 +566,7 @@ bool Foam::mechanicalLaw::updateF
             F = I + gradD.T();
 
             // Update the relative deformation gradient: not needed
-            relF() = F & inv(F.oldTime());
+            relFRef() = F & inv(F.oldTime());
 
             //- Calculate Jacobian
             J = det(F);
@@ -575,71 +606,19 @@ bool Foam::mechanicalLaw::updateFf
 {
     if (useSolidDeformation_)
     {
-        const surfaceTensorField& Ff =
-            mesh_.lookupObject<surfaceTensorField>("Ff");
-
-        // Check if the mathematical model is in total or updated Lagrangian form
-        if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
-        {
-            FatalErrorInFunction
-                << "Not implemented for non-incremental updated Lagrangian"
-                << abort(FatalError);
-            return false;
-        }
-        else if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
-        {
-            if (incremental())
-            {
-                // Update the relative deformation gradient: not needed
-                relFf() = Ff & inv(Ff.oldTime());
-
-                if (enforceLinear())
-                {
-                    WarningInFunction
-                        << "Material linearity enforced for stability!"
-                        << endl;
-
-                    // Lookup gradient of displacement increment
-                    const surfaceTensorField& gradDD =
-                        mesh().lookupObject<surfaceTensorField>("grad(DD)");
-
-                    // Calculate stress using Hooke's law
-                    sigma =
-                        sigma.oldTime()
-                    + 2.0*mu*dev(symm(gradDD)) + K*tr(gradDD)*I;
-
-                    return true;
-                }
-            }
-            else
-            {
-                // Update the relative deformation gradient: not needed
-                relFf() = Ff & inv(Ff.oldTime());
-
-                if (enforceLinear())
-                {
-                    WarningInFunction
-                        << "Material linearity enforced for stability!"
-                        << endl;
-
-                    // Lookup gradient of displacement
-                    const surfaceTensorField& gradD =
-                        mesh().lookupObject<surfaceTensorField>("grad(D)");
-
-                    // Calculate stress using Hooke's law
-                    sigma = 2.0*mu*dev(symm(gradD)) + K*tr(gradD)*I;
-
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            FatalErrorInFunction
-                << "Unknown nonLinGeom type: " << nonLinGeom()
-                << abort(FatalError);
-            return false;
-        }
+//         const surfaceTensorField& Ff =
+//             mesh_.lookupObject<surfaceTensorField>("Ff");
+//
+//         // Check if the mathematical model is in total or updated Lagrangian form
+//         if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
+//         {
+//             FatalErrorInFunction
+//                 << "Not implemented for non-incremental updated Lagrangian"
+//                 << abort(FatalError);
+//             return false;
+//         }
+//         relFfRef() = Ff & inv(Ff.oldTime());
+        return false;
     }
 
     if (!FfPtr_.valid())
@@ -669,7 +648,7 @@ bool Foam::mechanicalLaw::updateFf
             mesh().lookupObject<surfaceTensorField>("grad(DD)f");
 
         // Update the relative deformation gradient: not needed
-        relFf() = I + gradDD.T();
+        relFfRef() = I + gradDD.T();
 
         // Update the total deformation gradient
         Ff = relFf() & Ff.oldTime();
@@ -704,7 +683,7 @@ bool Foam::mechanicalLaw::updateFf
             Ff = Ff.oldTime() + gradDD.T();
 
             // Update the relative deformation gradient: not needed
-            relFf() = Ff & inv(Ff.oldTime());
+            relFfRef() = Ff & inv(Ff.oldTime());
 
             //- Calculate Jacobian
             Jf = det(Ff);
@@ -735,7 +714,7 @@ bool Foam::mechanicalLaw::updateFf
             Ff = I + gradD.T();
 
             // Update the relative deformation gradient: not needed
-            relFf() = Ff & inv(Ff.oldTime());
+            relFfRef() = Ff & inv(Ff.oldTime());
 
             //- Calculate Jacobian
             Jf = det(Ff);
@@ -759,10 +738,9 @@ bool Foam::mechanicalLaw::updateFf
     }
     else
     {
-        FatalErrorIn
-        (
-            "void " + type() + "::correct(surfaceSymmTensorField& sigma)"
-        )   << "Unknown nonLinGeom type: " << nonLinGeom() << abort(FatalError);
+        FatalErrorInFunction
+            << "Unknown nonLinGeom type: " << nonLinGeom()
+            << abort(FatalError);
     }
 
     // linearised elasticity was not enforced
@@ -781,7 +759,7 @@ void Foam::mechanicalLaw::updateSigmaHyd
         SolverPerformance<scalar>::debug = 0;
 
         // Store previous iteration to allow relaxation, if needed
-        sigmaHyd().storePrevIter();
+        sigmaHydRef().storePrevIter();
 
         // Lookup the momentum equation inverse diagonal field
         const volScalarField* ADPtr = NULL;
@@ -795,11 +773,10 @@ void Foam::mechanicalLaw::updateSigmaHyd
         }
         else
         {
-            FatalErrorIn
-            (
-                "void " + type() + "updateSigmaHyd(...)\n"
-            )   << "Cannot find the DEqnA or DDEqnA field: this should be "
-                << "stored in the solidModel" << abort(FatalError);
+            FatalErrorInFunction
+                << "Cannot find the DEqnA or DDEqnA field: this should be "
+                << "stored in the solidModel"
+                << abort(FatalError);
         }
         const volScalarField& AD = *ADPtr;
 
@@ -831,18 +808,63 @@ void Foam::mechanicalLaw::updateSigmaHyd
         sigmaHydEqn.solve();
 
         // Relax the pressure field
-        sigmaHyd().relax();
+        sigmaHydRef().relax();
     }
     else
     {
         // Explicitly calculate hydrostatic stress
         // We use 1.0* to overwritting the field IOobject attributes e.g. its
         // name and writeOpt
-        sigmaHyd() = 1.0*sigmaHydExplicit;
+        sigmaHydRef() = 1.0*sigmaHydExplicit;
     }
 
     // Update the gradient
-    gradSigmaHyd() = fvc::grad(sigmaHyd());
+    gradSigmaHydRef() = fvc::grad(sigmaHyd());
+}
+
+
+Foam::tmp<Foam::volSymmTensorField> Foam::mechanicalLaw::calcEpsilon
+(
+    const volSymmTensorField&
+) const
+{
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
+    {
+        return 0.5*log(symm(F().T() & F()));
+    }
+    return symm(mesh().lookupObject<volTensorField>("grad(D)"));
+}
+
+
+Foam::tmp<Foam::surfaceSymmTensorField> Foam::mechanicalLaw::calcEpsilon
+(
+    const surfaceSymmTensorField&
+) const
+{
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
+    {
+        return 0.5*log(symm(Ff().T() & Ff()));
+    }
+    return symm(mesh().lookupObject<surfaceTensorField>("grad(D)f"));
+}
+
+
+Foam::tmp<Foam::Field<Foam::symmTensor>>
+Foam::mechanicalLaw::calcEpsilon(const label patchi) const
+{
+    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
+    {
+        const tensorField& pF(F().boundaryField()[patchi]);
+        return 0.5*log(symm(pF.T() & pF));
+    }
+    return
+        symm
+        (
+            mesh().lookupObject<volTensorField>
+            (
+                "grad(D)"
+            ).boundaryField()[patchi]
+        );
 }
 
 
@@ -887,13 +909,16 @@ Foam::mechanicalLaw::mechanicalLaw
     sigmaHydPtr_(),
     gradSigmaHydPtr_(),
     useSolidDeformation_(false),
+    usePlaneStress_(planeStress()),
+    planeStressDir_(-1),
+    nonPlaneStressDirs_(-1, -1),
     solvePressureEqn_
     (
         dict.lookupOrDefault<Switch>("solvePressureEqn", false)
     ),
     pressureSmoothingScaleFactor_
     (
-        dict.lookupOrDefault<scalar>("pressureSmoothingScaleFactor", 100.0)
+        dict.lookupOrDefault<scalar>("pressureSmoothingScaleFactor", 1.0)
     )
 {
     // Set the base mesh region name
@@ -926,6 +951,42 @@ Foam::mechanicalLaw::mechanicalLaw
             << "    pressureSmoothingScaleFactor: "
             << pressureSmoothingScaleFactor_
             << endl;
+    }
+
+    if (usePlaneStress_)
+    {
+        const Vector<label>& solutionD(mesh_.solutionD());
+        label nD = 0;
+        if (solutionD[0] < 0)
+        {
+            nD++;
+            planeStressDir_ = symmTensor::XX;
+            nonPlaneStressDirs_[0] = direction(symmTensor::YY);
+            nonPlaneStressDirs_[1] = direction(symmTensor::ZZ);
+        }
+        if (solutionD[1] < 0)
+        {
+            nD++;
+            nonPlaneStressDirs_[0] = direction(symmTensor::XX);
+            planeStressDir_ = symmTensor::YY;
+            nonPlaneStressDirs_[1] = direction(symmTensor::ZZ);
+        }
+        if (solutionD[2] < 0)
+        {
+            nD++;
+            nonPlaneStressDirs_[0] = direction(symmTensor::XX);
+            nonPlaneStressDirs_[1] = direction(symmTensor::YY);
+            planeStressDir_ = symmTensor::ZZ;
+        }
+        if (nD != 1)
+        {
+            FatalErrorInFunction
+                << "For planeStress, this material law assumes one empty "
+                << "direction, but " << nD << "  empty directions were found."
+                << abort(FatalError);
+        }
+        Info<<planeStressDir_<<" "<<nonPlaneStressDirs_<<endl;
+        Info<<symmTensor::XX<<" "<<symmTensor::YY<<" "<<symmTensor::ZZ<<endl;
     }
 }
 

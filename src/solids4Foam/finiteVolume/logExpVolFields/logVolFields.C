@@ -34,6 +34,7 @@ Author
 \*---------------------------------------------------------------------------*/
 
 #include "logVolFields.H"
+#include "surfaceFields.H"
 #include "emptyFvPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -132,30 +133,138 @@ tmp<volSymmTensorField> log(const volSymmTensorField& vf)
 
     forAll(eigenVal.boundaryField(), patchI)
     {
-        if
-        (
-            vf.boundaryField()[patchI].type()
-         != emptyFvPatchField<symmTensor>::typeName
-        )
+        // Take references
+        const vectorField& eigenValB = eigenVal.boundaryField()[patchI];
+        const tensorField& eigenVecB = eigenVec.boundaryField()[patchI];
+        symmTensorField& resultB = result.boundaryFieldRef()[patchI];
+
+        forAll(eigenValB, faceI)
         {
-            // Take references
-            const vectorField& eigenValB = eigenVal.boundaryField()[patchI];
-            const tensorField& eigenVecB = eigenVec.boundaryField()[patchI];
-            symmTensorField& resultB = result.boundaryFieldRef()[patchI];
+            // Calculate log
+            logEigenVal[symmTensor::XX] =
+                Foam::log(eigenValB[faceI][vector::X]);
+            logEigenVal[symmTensor::YY] =
+                Foam::log(eigenValB[faceI][vector::Y]);
+            logEigenVal[symmTensor::ZZ] =
+                Foam::log(eigenValB[faceI][vector::Z]);
 
-            forAll(eigenValB, faceI)
-            {
-                // Calculate log
-                logEigenVal[symmTensor::XX] =
-                    Foam::log(eigenValB[faceI][vector::X]);
-                logEigenVal[symmTensor::YY] =
-                    Foam::log(eigenValB[faceI][vector::Y]);
-                logEigenVal[symmTensor::ZZ] =
-                    Foam::log(eigenValB[faceI][vector::Z]);
+            // Rotate back
+            resultB[faceI] = transform(eigenVecB[faceI].T(), logEigenVal);
+        }
+    }
 
-                // Rotate back
-                resultB[faceI] = transform(eigenVecB[faceI].T(), logEigenVal);
-            }
+    return tresult;
+}
+
+
+tmp<surfaceSymmTensorField> log(const surfaceSymmTensorField& vf)
+{
+    // Prepare the result field
+    tmp<surfaceSymmTensorField> tresult
+    (
+        new surfaceSymmTensorField
+        (
+            IOobject
+            (
+                "log("+vf.name()+")",
+                vf.time().timeName(),
+                vf.db(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE
+            ),
+            vf
+        )
+    );
+    surfaceSymmTensorField& result = tresult.ref();
+
+    // Calculate eigen values and eigen vectors
+    // The OpenFOAM eigenValues/eigenVectors sometimes give wrong results when
+    // eigenValues are repeated or zero, so I will use my own implementation.
+    // The efficiency of the implementation may need to be revisited, however,
+    // it is fine for creation of post processing fields e.g calculate true
+    // strain
+
+    // Eigen value field
+    // We will store the eigen values in a vector instead of a diagTensor
+    // because the tranform function is not definite for diagTensors on a wedge
+    // boundary
+    surfaceVectorField eigenVal
+    (
+        IOobject
+        (
+            "eigenVal(" + vf.name() + ")",
+            vf.time().timeName(),
+            vf.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        vf.mesh(),
+        dimensionedVector("zero", vf.dimensions(), vector::zero)
+    );
+
+    // Eigen vectors will be store in the rows i.e. the first eigen vector
+    // is (eigenVec.xx() eigenVec.xy() eigenVec.xz())
+    surfaceTensorField eigenVec
+    (
+        IOobject
+        (
+            "eigenVec("+vf.name()+")",
+            vf.time().timeName(),
+            vf.db(),
+            IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        vf.mesh(),
+        dimensionedTensor("zero", dimless, tensor::zero)
+    );
+
+    // Calculate eigen values and eigen vectors of vf and populate the eigenVec
+    // and eigenVal fields
+    eig3Field(vf, eigenVec, eigenVal);
+
+    // Now we will calculate the log of the eigenValues and then rotate the
+    // tensor back to the physcial configuration
+
+    // Take references
+    const vectorField& eigenValI = eigenVal.internalField();
+    const tensorField& eigenVecI = eigenVec.internalField();
+    symmTensor logEigenVal = symmTensor::zero;
+
+    symmTensorField& resultI = result.primitiveFieldRef();
+
+    forAll(eigenValI, cellI)
+    {
+        logEigenVal[symmTensor::XX] =
+            Foam::log(eigenValI[cellI][vector::X]);
+        logEigenVal[symmTensor::YY] =
+            Foam::log(eigenValI[cellI][vector::Y]);
+        logEigenVal[symmTensor::ZZ] =
+            Foam::log(eigenValI[cellI][vector::Z]);
+
+        // Rotate back
+        resultI[cellI] = transform(eigenVecI[cellI].T(), logEigenVal);
+    }
+
+    forAll(eigenVal.boundaryField(), patchI)
+    {
+
+        // Take references
+        const vectorField& eigenValB = eigenVal.boundaryField()[patchI];
+        const tensorField& eigenVecB = eigenVec.boundaryField()[patchI];
+        symmTensorField& resultB = result.boundaryFieldRef()[patchI];
+
+        forAll(eigenValB, faceI)
+        {
+            // Calculate log
+            logEigenVal[symmTensor::XX] =
+                Foam::log(eigenValB[faceI][vector::X]);
+            logEigenVal[symmTensor::YY] =
+                Foam::log(eigenValB[faceI][vector::Y]);
+            logEigenVal[symmTensor::ZZ] =
+                Foam::log(eigenValB[faceI][vector::Z]);
+
+            // Rotate back
+            resultB[faceI] = transform(eigenVecB[faceI].T(), logEigenVal);
         }
     }
 

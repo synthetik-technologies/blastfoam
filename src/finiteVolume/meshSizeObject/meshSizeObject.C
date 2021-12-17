@@ -155,20 +155,22 @@ void Foam::meshSizeObject::calcDX() const
     const pointField& points = this->mesh_.points();
     forAll(dX, celli)
     {
-        const cell& c = cells[celli];
-        const edgeList cedges(c.edges(faces));
-        vector dx(Zero);
-        Vector<label> nEdges(Zero);
-        forAll(cedges, ei)
-        {
-            const edge& e = cedges[ei];
-            vector edx(cmptMag(e.vec(points)));
-            label cmpti = findMax(edx);
-            dx[cmpti] += edx[cmpti];
-            nEdges[cmpti]++;
-        }
-        nEdges = max(nEdges, Vector<label>::one);
-        dX[celli] = cmptDivide(dx, vector(nEdges));
+        dX[celli] =
+            boundBox(points, this->mesh_.cellPoints()[celli]).span();
+//         const cell& c = cells[celli];
+//         const edgeList cedges(c.edges(faces));
+//         vector dx(Zero);
+//         Vector<label> nEdges(Zero);
+//         forAll(cedges, ei)
+//         {
+//             const edge& e = cedges[ei];
+//             vector edx(cmptMag(e.vec(points)));
+//             label cmpti = findMax(edx);
+//             dx[cmpti] += edx[cmpti];
+//             nEdges[cmpti]++;
+//         }
+//         nEdges = max(nEdges, Vector<label>::one);
+//         dX[celli] = cmptDivide(dx, vector(nEdges));
     }
 
     for
