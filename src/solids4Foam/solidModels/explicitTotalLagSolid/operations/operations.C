@@ -309,6 +309,62 @@ void operations::eigenStructure(const tensor& ten) const
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+tensor stabInv(const tensor& t)
+{
+    if (magSqr(t) < small)
+    {
+        return tensor::zero;
+    }
+
+    scalar scale = magSqr(t);
+    Vector<bool> removeCmpts
+    (
+        magSqr(t.xx())/scale < small,
+        magSqr(t.yy())/scale < small,
+        magSqr(t.zz())/scale < small
+    );
+    if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
+    {
+        tensor tPlus(t);
+
+        if (removeCmpts.x())
+        {
+            tPlus += tensor(1,0,0,0,0,0,0,0,0);
+        }
+
+        if (removeCmpts.y())
+        {
+            tPlus += tensor(0,0,0,0,1,0,0,0,0);
+        }
+
+        if (removeCmpts.z())
+        {
+            tPlus += tensor(0,0,0,0,0,0,0,0,1);
+        }
+
+        tensor tInv = inv(tPlus);
+
+        if (removeCmpts.x())
+        {
+            tInv -= tensor(1,0,0,0,0,0,0,0,0);
+        }
+
+        if (removeCmpts.y())
+        {
+            tInv -= tensor(0,0,0,0,1,0,0,0,0);
+        }
+
+        if (removeCmpts.z())
+        {
+            tInv -= tensor(0,0,0,0,0,0,0,0,1);
+        }
+        return tInv;
+    }
+    return inv(t);
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
 } // End namespace Foam
 
 // ************************************************************************* //

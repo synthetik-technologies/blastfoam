@@ -119,9 +119,9 @@ GeoType getGeoType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine geometry type from " << type << endl
-        << abort(FatalError);
+//     FatalErrorInFunction
+//         << "Could not determine geometry type from " << type << endl
+//         << abort(FatalError);
     return UNKNOWN_GEO;
 }
 
@@ -135,9 +135,9 @@ PrimitiveType getPrimitiveType(const word& type)
             return iter();
         }
     }
-    FatalErrorInFunction
-        << "Could not determine primitive type from " << type << endl
-        << abort(FatalError);
+//     FatalErrorInFunction
+//         << "Could not determine primitive type from " << type << endl
+//         << abort(FatalError);
     return UNKNOWN_PRIM;
 }
 
@@ -287,79 +287,102 @@ public:
         const bool force_;
 
         template<class Type, template<class> class Patch, class Mesh>
-        bool createTopoSetType
+        void createTopoSetType
         (
-            const word& fieldTypeDesc,
+            const word& fieldSetTypeDesc,
             const labelList& elms,
-            Istream& fieldValueStream
+            Istream& is
         ) const
         {
-            return FieldSetType<Type, Patch, Mesh>::New
+            token t(is);
+            if (!t.isWord())
+            {
+                return;
+            }
+            const word fieldName(t.wordToken());
+            autoPtr<FieldSetType<Type, Patch, Mesh>> fieldSet
             (
-                fieldTypeDesc,
-                mesh_,
-                dict_,
-                elms,
-                fieldValueStream,
-                write_
-            )->good();
+                FieldSetType<Type, Patch, Mesh>::New
+                (
+                    fieldSetTypeDesc,
+                    fieldName,
+                    mesh_,
+                    dict_,
+                    elms,
+                    is,
+                    write_
+                )
+            );
+            if (fieldSet->good())
+            {
+                Info<< "    Setting " << fieldName << endl;
+            }
+            else
+            {
+                WarningInFunction
+                    << "Field " << fieldName << " not found" << endl;
+            }
         }
 
         template<template<class> class Patch, class Mesh>
-        bool createTopoSet
+        void createTopoSet
         (
-            const word& fieldType,
+            const word& fieldSetType,
             const labelList& elms,
             Istream& is
         ) const
         {
             if (!elms.size() && !force_)
             {
-                return true;
+                return;
             }
 
-            PrimitiveType prim(getPrimitiveType(fieldType));
+            PrimitiveType prim(getPrimitiveType(fieldSetType));
             switch (prim)
             {
                 case SCALAR:
-                    return createTopoSetType<scalar, Patch, Mesh>
+                    createTopoSetType<scalar, Patch, Mesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         elms,
                         is
                     );
+                    break;
                 case VECTOR:
-                    return createTopoSetType<vector, Patch, Mesh>
+                    createTopoSetType<vector, Patch, Mesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         elms,
                         is
                     );
+                    break;
                 case SYMMTENSOR:
-                    return createTopoSetType<symmTensor, Patch, Mesh>
+                    createTopoSetType<symmTensor, Patch, Mesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         elms,
                         is
                     );
+                    break;
                 case SPHERICALTENSOR:
-                    return createTopoSetType<sphericalTensor, Patch, Mesh>
+                    createTopoSetType<sphericalTensor, Patch, Mesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         elms,
                         is
                     );
+                    break;
                 case TENSOR:
-                    return createTopoSetType<tensor, Patch, Mesh>
+                    createTopoSetType<tensor, Patch, Mesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         elms,
                         is
                     );
+                    break;
                 default:
                     break;
             }
-            return false;
         }
 
 
@@ -400,52 +423,43 @@ public:
 
         autoPtr<topoSetList> operator()(Istream& is) const
         {
-            word fieldType(is);
-            GeoType geo(getGeoType(fieldType));
+            token t(is);
+            if (!t.isWord())
+            {
+                return autoPtr<topoSetList>();
+            }
 
-            // Extract the field name for the istream and put is back
-            word fieldName(is);
-            is.putBack(fieldName);
+            word fieldSetType(t.wordToken());
+            GeoType geo(getGeoType(fieldSetType));
 
-            bool good = true;
             switch (geo)
             {
                 case VOL:
-                    good = createTopoSet<fvPatchField, volMesh>
+                    createTopoSet<fvPatchField, volMesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         selectedCells_,
                         is
                     );
                     break;
                 case SURFACE:
-                    good = createTopoSet<fvsPatchField, surfaceMesh>
+                    createTopoSet<fvsPatchField, surfaceMesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         selectedFaces_,
                         is
                     );
                     break;
                 case POINT:
-                    good = createTopoSet<pointPatchField, pointMesh>
+                    createTopoSet<pointPatchField, pointMesh>
                     (
-                        fieldType,
+                        fieldSetType,
                         selectedPoints_,
                         is
                     );
                     break;
                 default:
                     break;
-            }
-
-            if (!good)
-            {
-                WarningInFunction
-                    << "Field " << fieldName << " not found" << endl;
-            }
-            else
-            {
-                Info<< "    Setting " << fieldName << endl;
             }
 
             return autoPtr<topoSetList>(new topoSetList());
@@ -979,6 +993,7 @@ int main(int argc, char *argv[])
                 selectedCells.size()
              || selectedFaces.size()
              || selectedPoints.size();
+            reduce(set, orOp<bool>());
 
             if (regionDict.found("fieldValues") && set)
             {
@@ -988,7 +1003,7 @@ int main(int argc, char *argv[])
                     << selectedPoints.size() << " points" << endl;
 
                 // Print the volume of the cells set
-                scalar V = 0;
+                scalar V = 0.0;
                 forAll(selectedCells, celli)
                 {
                     V += mesh.V()[selectedCells[celli]];

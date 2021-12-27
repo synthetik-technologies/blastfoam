@@ -65,6 +65,9 @@ protected:
     //- Reference to the parent dictionary
     const dictionary& dict_;
 
+    //- Name of the field to set
+    const word fName_;
+
     //- Pointer to the field to be set
     UautoPtr<FieldType> fieldPtr_;
 
@@ -149,18 +152,6 @@ public:
             ),
             (mesh, dict, fieldName, selectedIndices, is, write)
         );
-        declareRunTimeSelectionTable
-        (
-            autoPtr,
-            FieldSetType,
-            empty,
-            (
-                const fvMesh& mesh,
-                const dictionary& dict,
-                const labelList& selectedIndices
-            ),
-            (mesh, dict, selectedIndices)
-        );
 
     // Constructor
     FieldSetType
@@ -187,18 +178,12 @@ public:
         static autoPtr<FieldSetType> New
         (
             const word& fieldDesc,
+            const word& fieldName,
             const fvMesh& mesh,
             const dictionary& dict,
             const labelList& selectedIndices,
             Istream& is,
             const bool write
-        );
-
-        static autoPtr<FieldSetType> New
-        (
-            const fvMesh& mesh,
-            const dictionary& dict,
-            const labelList& selectedIndices
         );
 
     //- Destructor
@@ -208,6 +193,12 @@ public:
     bool good() const
     {
         return good_;
+    }
+
+    //- Return the field to set
+    const word& fieldName() const
+    {
+        return fName_;
     }
 };
 
@@ -376,25 +367,7 @@ public:
     (                                                                          \
         FieldSet,                                                              \
         dictionary                                                             \
-    );                                                                         \
-    defineTemplateRunTimeSelectionTable                                        \
-    (                                                                          \
-        FieldSet,                                                              \
-        empty                                                                  \
     );
-
-#define makeEmptyFieldSetType(Type, FieldSet)                                  \
-                                                                               \
-    defineNamedTemplateTypeNameAndDebug                                        \
-    (                                                                          \
-        FieldSet<Type>,                                                        \
-        0                                                                      \
-    );                                                                         \
-                                                                               \
-    FieldSet<Type>::addemptyConstructorToTable                                 \
-    <                                                                          \
-        FieldSet<Type>                                                         \
-    >  add##Type##FieldSet##ConstructorToTable_;
 
 #define makeFieldSetTypeType(SS, Type, FieldSet)                               \
                                                                                \

@@ -25,15 +25,15 @@ boundaryField
     plate_to_air
     {
         type            KBSolidTraction;
-        pRef            uniform 101325;
+        pRef            uniform 0;
         traction        uniform (0 0 0);
-        pressure        uniform 101325;
+        pressure        uniform 0;
         value           uniform (0 0 0);
 
         KBSolver        cubicNegativePhase;
         centre          (0 $R 0);
         mass            $W;
-        b               0.771;
+        b               1;//0.771;
     }
     plateEnd
     {
@@ -43,7 +43,7 @@ boundaryField
     plateFree
     {
         type            solidTractionFree;
-        pressure        uniform 101325;
+        pressure        uniform 0;
         value           uniform (0 0 0);
     }
     wedge

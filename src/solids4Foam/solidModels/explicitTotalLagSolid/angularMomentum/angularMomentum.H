@@ -52,6 +52,9 @@ class angularMomentum
         //- Material density
         const volScalarField& rho_;
 
+        //- Rotation axis
+        vector rotationAxes_;
+
 private:
 
     // Private Member Functions

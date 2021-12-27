@@ -109,9 +109,6 @@ public:
 
         // Edit
 
-            //- Stabilised tensor inverse
-            static tensor stabInv(const tensor&);
-
             //- Inverse distance matrix for gradient
             tmp<tensorField> distanceMatrix() const;
 

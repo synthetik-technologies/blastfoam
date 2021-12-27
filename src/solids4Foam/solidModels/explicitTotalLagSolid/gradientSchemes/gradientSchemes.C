@@ -72,61 +72,6 @@ gradientSchemes::~gradientSchemes()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-tensor gradientSchemes::stabInv(const tensor& t)
-{
-    if (magSqr(t) < small)
-    {
-        return tensor::zero;
-    }
-
-    scalar scale = magSqr(t);
-    Vector<bool> removeCmpts
-    (
-        magSqr(t.xx())/scale < small,
-        magSqr(t.yy())/scale < small,
-        magSqr(t.zz())/scale < small
-    );
-    if (removeCmpts.x() || removeCmpts.y() || removeCmpts.z())
-    {
-        tensor tPlus(t);
-
-        if (removeCmpts.x())
-        {
-            tPlus += tensor(1,0,0,0,0,0,0,0,0);
-        }
-
-        if (removeCmpts.y())
-        {
-            tPlus += tensor(0,0,0,0,1,0,0,0,0);
-        }
-
-        if (removeCmpts.z())
-        {
-            tPlus += tensor(0,0,0,0,0,0,0,0,1);
-        }
-
-        tensor tInv = inv(tPlus);
-
-        if (removeCmpts.x())
-        {
-            tInv -= tensor(1,0,0,0,0,0,0,0,0);
-        }
-
-        if (removeCmpts.y())
-        {
-            tInv -= tensor(0,0,0,0,1,0,0,0,0);
-        }
-
-        if (removeCmpts.z())
-        {
-            tInv -= tensor(0,0,0,0,0,0,0,0,1);
-        }
-        return tInv;
-    }
-    return inv(t);
-}
-
-
 tmp<tensorField> gradientSchemes::distanceMatrix() const
 {
     tmp<tensorField> tAinv(new tensorField(mesh_.nCells(), Zero));
@@ -230,6 +175,10 @@ tmp<tensorField> gradientSchemes::distanceMatrixLocal() const
             }
         }
     }
+    forAll(Ainv, celli)
+    {
+        Ainv[celli] = stabInv(Ainv[celli]);
+    }
 
     return tAinv;
 }
@@ -274,6 +223,8 @@ tmp<volVectorField> gradientSchemes::gradient
     forAll(mesh_.boundary(), patchi)
     {
         const fvPatch& patch = mesh_.boundary()[patchi];
+        pgradU[patchi] = pU[patchi].snGrad()*patch.nf();
+
         if (mesh_.boundary()[patchi].coupled())
         {
             const vectorField pd(mesh_.boundary()[patchi].delta());
@@ -281,11 +232,6 @@ tmp<volVectorField> gradientSchemes::gradient
             (
                 pU[patchi].patchNeighbourField()
             );
-            pgradU[patchi] =
-                patch.deltaCoeffs()
-               *patch.nf()
-               *(UNei - pU[patchi].patchInternalField());
-
 
             forAll(mesh_.boundary()[patchi], facei)
             {
@@ -296,18 +242,6 @@ tmp<volVectorField> gradientSchemes::gradient
                     Ainv_[celli] & ((UNei[facei] - U[celli])*pd[facei]);
             }
         }
-        else
-        {
-            pgradU[patchi] =
-                patch.deltaCoeffs()
-               *patch.nf()
-               *(pU[patchi] - pU[patchi].patchInternalField());
-        }
-    }
-
-    if (Pstream::parRun())
-    {
-        gradU.correctBoundaryConditions();
     }
 
     return tgradU;
@@ -571,10 +505,6 @@ tmp<volTensorField> gradientSchemes::localGradient
                     gradUz.boundaryField()[patchi][facei]
                 );
         }
-    }
-    if (Pstream::parRun())
-    {
-        gradU.correctBoundaryConditions();
     }
     return tgradU;
 }

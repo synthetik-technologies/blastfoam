@@ -1,12 +1,18 @@
-scale 1;
-
-thickness   0.02;
-nthickness  #calc "-$thickness";
-R           0.2;
-D           1.0;
-OR          #calc "2.0 * $D";
-Wp          30; //kg
 S           2.0; // scale factor
+Wp          70; //kg
+th0         0.04;
+R0          0.26;
+D0          2.0;
+
+thickness   #calc "$th0 / $S";
+nthickness  #calc "-$thickness";
+R           #calc "$R0 / $S";
+D           #calc "$D0 / $S";
+OR          #calc "2.0 * $D";
+
 W           #calc "$Wp / pow3($S)";
 
-endTime     #calc "4.0 * $S / 1000.0";
+endTime     #calc "4.0 / $S / 1000.0";
+
+thOpt #calc "$thickness <= 0.02 ? 0 : ( $thickness <= 0.04 ? 1 : 2 )";
+

@@ -37,6 +37,7 @@ boundaryField
     plateFree
     {
         type            solidTractionFree;
+        pressure        uniform 101325;
         value           uniform (0 0 0);
     }
     wedge

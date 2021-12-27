@@ -27,26 +27,8 @@ template<class Type, template<class> class Patch, class Mesh>
 Foam::autoPtr<Foam::FieldSetType<Type, Patch, Mesh>>
 Foam::FieldSetType<Type, Patch, Mesh>::New
 (
-    const fvMesh& mesh,
-    const dictionary& dict,
-    const labelList& selectedCells
-)
-{
-    typename emptyConstructorTable::iterator cstrIter =
-        emptyConstructorTablePtr_->find
-        (
-            Patch<Type>::typeName
-        );
-
-    return cstrIter()(mesh, dict, selectedCells);
-}
-
-
-template<class Type, template<class> class Patch, class Mesh>
-Foam::autoPtr<Foam::FieldSetType<Type, Patch, Mesh>>
-Foam::FieldSetType<Type, Patch, Mesh>::New
-(
     const word& fieldDesc,
+    const word& fieldName,
     const fvMesh& mesh,
     const dictionary& dict,
     const labelList& selectedCells,
@@ -54,29 +36,10 @@ Foam::FieldSetType<Type, Patch, Mesh>::New
     const bool write
 )
 {
-    if (fieldDesc.find(GeometricField<Type, Patch, Mesh>::typeName) < 0)
-    {
-        return FieldSetType<Type, Patch, Mesh>::New(mesh, dict, selectedCells);
-    }
-    token t(is);
-    if (!t.isWord())
-    {
-        is.putBack(t);
-        return FieldSetType<Type, Patch, Mesh>::New(mesh, dict, selectedCells);
-    }
-
-    word fieldName(t.wordToken());
     word fieldSetType(fieldDesc);
-    word fieldType(fieldDesc);
+    word fieldType(FieldType::typeName);
 
-    fieldSetType.replaceAll(FieldType::typeName, word::null);
-    fieldType.replaceAll(fieldSetType, word::null);
-
-    if (fieldType != FieldType::typeName)
-    {
-        is.putBack(t);
-        return New(mesh, dict, selectedCells);
-    }
+    fieldSetType.replaceAll(fieldType, word::null);
 
     typename dictionaryConstructorTable::iterator cstrIter =
             dictionaryConstructorTablePtr_->find(fieldSetType);

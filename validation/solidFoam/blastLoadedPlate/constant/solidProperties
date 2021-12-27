@@ -21,7 +21,7 @@ solidModel explicitNonLinearGeometryTotalLagrangian;
 explicitNonLinearGeometryTotalLagrangianCoeffs
 {
     incompressiblilityCoefficient   1.0;
-    angularMomentumConservation     no;
+    angularMomentumConservation     yes;
 }
 
 
@@ -31,7 +31,7 @@ nonLinearGeometryTotalLagrangianCoeffs
     nCorrectors             2000;
 
     // Solution tolerance for displacement
-    solutionTolerance       1e-06;
+    solutionTolerance       1e-04;
 
     // Alternative solution tolerance for displacement
     alternativeTolerance    1e-06;

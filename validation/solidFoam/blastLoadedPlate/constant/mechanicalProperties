@@ -14,6 +14,7 @@ FoamFile
     object      mechanicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+#include "$FOAM_CASE/properties"
 
 planeStress off;
 
@@ -24,8 +25,8 @@ mechanical
         type            nonLinearJohnsonCookPlastic;
         E               210e9;
         nu              0.28;
-        A               950e6;
-        B               560e6;
+        A #calc "$thOpt == 0 ? 950e6 : ( $thOpt == 1 ? 900e6 : 850e6 )";
+        B #calc "$thOpt == 0 ? 560e6 : ( $thOpt == 1 ? 545e6 : 355e6 )";
         C               0.014;
         n               0.26;
         m               1.0;

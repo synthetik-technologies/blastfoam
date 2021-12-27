@@ -77,7 +77,7 @@ mechanicalLaw::makeTypeField
         (
             IOobject
             (
-                name_ + ":" + name,
+                IOobject::groupName(name, name_),
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 rOpt,

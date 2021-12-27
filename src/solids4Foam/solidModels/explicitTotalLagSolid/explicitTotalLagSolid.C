@@ -63,7 +63,7 @@ void explicitTotalLagSolid::updateStress()
     mechanical().grad(D_, gradD());
 
     // Update gradient of displacement increment
-    mechanical().grad(DD(), gradDD());
+    gradDD() = gradD() - gradD().oldTime();
 
     // Calculate the stress using run-time selectable mechanical law
     mechanical().correct(sigma());
@@ -498,8 +498,8 @@ void explicitTotalLagSolid::updateFluxes()
     // Nodal linear momentum
     volVectorField rhoUAvg
     (
-        fvc::average(rhoUC_)
-//         interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
+//         fvc::average(rhoUC_)
+        interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
     );
     volTensorField gradRhoUAvg
     (
@@ -508,11 +508,11 @@ void explicitTotalLagSolid::updateFluxes()
     );
 //     pointRhoU_ = volPointInterpolation::New(mesh()).interpolate(rhoUAvg);
     interpSchemes_.volToPoint(rhoUAvg, gradRhoUAvg, pointRhoU_);
-    volPointInterpolation::New(mesh()).interpolateBoundaryField
-    (
-        rhoUAvg,
-        pointRhoU_
-    );
+//     volPointInterpolation::New(mesh()).interpolateBoundaryField
+//     (
+//         rhoUAvg,
+//         pointRhoU_
+//     );
 
     // Symmetric boundary patch
     pointRhoU_.correctBoundaryConditions();
@@ -772,8 +772,8 @@ bool explicitTotalLagSolid::evolve()
     pointD_ = 0.5*(pointD_.oldTime() + pointD_);
 
     // Apply displacement constraints
-    const pointConstraints& pcs = pointConstraints::New(pointD_.mesh());
-    pcs.constrainDisplacement(pointD_, false);
+//     const pointConstraints& pcs = pointConstraints::New(pointD_.mesh());
+//     pcs.constrainDisplacement(pointD_, false);
 
 
     // Update displacements
@@ -781,10 +781,10 @@ bool explicitTotalLagSolid::evolve()
     DD() = D_ - D_.oldTime();
     pointDD() = pointD_ - pointD_.oldTime();
 
-    U_.ref() = rhoU_()/rho()();
-    U_.boundaryFieldRef() =
-        DD().boundaryField()/mesh().time().deltaTValue();
-    rhoU_.boundaryFieldRef() = rho().boundaryField()*U_.boundaryField();
+//     U_.ref() = rhoU_()/rho()();
+//     U_.boundaryFieldRef() =
+//         DD().boundaryField()/mesh().time().deltaTValue();
+//     rhoU_.boundaryFieldRef() = rho().boundaryField()*U_.boundaryField();
 
     return true;
 }

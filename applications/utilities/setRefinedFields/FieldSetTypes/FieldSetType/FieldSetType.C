@@ -45,6 +45,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
 :
     mesh_(mesh),
     dict_(dict),
+    fName_(fieldName),
     fieldPtr_(lookupOrRead(fieldName)),
     selectedIndices_(selectedIndices),
     noInternal_(false),
@@ -105,6 +106,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
 :
     mesh_(mesh),
     dict_(dict),
+    fName_(word::null),
     fieldPtr_(nullptr),
     selectedIndices_(selectedIndices),
     write_(false),

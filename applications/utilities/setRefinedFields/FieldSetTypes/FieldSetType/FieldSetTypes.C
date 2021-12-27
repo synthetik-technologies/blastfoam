@@ -54,34 +54,6 @@ makeFieldSetType(sphericalTensorPointFieldSetType);
 makeFieldSetType(symmTensorPointFieldSetType);
 makeFieldSetType(tensorPointFieldSetType);
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-template<class Type>
-using VolFieldSet = VolFieldSetType<Type>;
-
-template<class Type>
-using SurfaceFieldSet = SurfaceFieldSetType<Type>;
-
-template<class Type>
-using PointFieldSet = PointFieldSetType<Type>;
-
-makeEmptyFieldSetType(scalar, VolFieldSet);
-makeEmptyFieldSetType(vector, VolFieldSet);
-makeEmptyFieldSetType(sphericalTensor, VolFieldSet);
-makeEmptyFieldSetType(symmTensor, VolFieldSet);
-makeEmptyFieldSetType(tensor, VolFieldSet);
-
-makeEmptyFieldSetType(scalar, SurfaceFieldSet);
-makeEmptyFieldSetType(vector, SurfaceFieldSet);
-makeEmptyFieldSetType(sphericalTensor, SurfaceFieldSet);
-makeEmptyFieldSetType(symmTensor, SurfaceFieldSet);
-makeEmptyFieldSetType(tensor, SurfaceFieldSet);
-
-makeEmptyFieldSetType(scalar, PointFieldSet);
-makeEmptyFieldSetType(vector, PointFieldSet);
-makeEmptyFieldSetType(sphericalTensor, PointFieldSet);
-makeEmptyFieldSetType(symmTensor, PointFieldSet);
-makeEmptyFieldSetType(tensor, PointFieldSet);
 
 }
 // ************************************************************************* //

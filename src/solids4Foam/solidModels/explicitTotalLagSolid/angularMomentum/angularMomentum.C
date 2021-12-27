@@ -24,6 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "angularMomentum.H"
+#include "operations.H"
+#include "wedgePolyPatch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,8 +46,28 @@ angularMomentum::angularMomentum
 )
 :
     mesh_(vm),
-    rho_(vm.lookupObject<volScalarField>("rho"))
-{}
+    rho_(vm.lookupObject<volScalarField>("rho")),
+    rotationAxes_(Zero)
+{
+    forAll(mesh_.boundaryMesh(), patchi)
+    {
+        if (isA<wedgePolyPatch>(mesh_.boundaryMesh()[patchi]))
+        {
+            const wedgePolyPatch& wp = dynamicCast<const wedgePolyPatch>
+            (
+                mesh_.boundaryMesh()[patchi]
+            );
+            vector a(cmptMag(wp.axis()));
+            forAll(a, cmpti)
+            {
+                if (mag(a[cmpti]) > 0.5)
+                {
+                    rotationAxes_[cmpti] = 1.0;
+                }
+            }
+        }
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * * //
@@ -80,7 +102,7 @@ void angularMomentum::AMconservation
         (
             "xAM",
             mesh_,
-            dimensioned<vector>("x", x.dimensions(), pTraits<vector>::zero)
+            dimensioned<vector>("x", x.dimensions(), Zero)
         )
     );
     GeometricField<vector, fvPatchField, volMesh>& xAM = tvf_x.ref();
@@ -91,7 +113,7 @@ void angularMomentum::AMconservation
         (
             "rhoUAM",
             mesh_,
-            dimensioned<vector>("0", rhoU.dimensions(), pTraits<vector>::zero)
+            dimensioned<vector>("0", rhoU.dimensions(), Zero)
         )
     );
     GeometricField<vector, fvPatchField, volMesh>& rhoUAM = trhoUAM.ref();
@@ -113,21 +135,25 @@ void angularMomentum::AMconservation
     scalar K_BB = 0.0;
     vector R_L = vector::zero;
 
-    forAll(mesh_.cells(), cellID)
+    forAll(mesh_.cells(), celli)
     {
-        K_LL +=
-            V[cellID]
-           *((xAM[cellID] & xAM[cellID])*tensor::I - (xAM[cellID]*xAM[cellID]));
+        vector xAMi(cmptMultiply(xAM[celli], rotationAxes_));
+        vector rhsAMi(cmptMultiply(rhsAm[celli], rotationAxes_));
+        vector rhsRhoUi(cmptMultiply(rhsRhoU[celli], rotationAxes_));
+        K_LL += V[celli]*((xAMi & xAMi)*tensor::I - (xAMi*xAMi));
 
-        K_LB += V[cellID]
-           *tensor(0, -xAM[cellID].z(), xAM[cellID].y(), xAM[cellID].z(), 0,
-           -xAM[cellID].x(), -xAM[cellID].y(), xAM[cellID].x(), 0);
+        K_LB +=
+            V[celli]
+           *tensor
+            (
+                0, -xAMi.z(), xAMi.y(),
+                xAMi.z(), 0, -xAMi.x(),
+                -xAMi.y(), xAMi.x(), 0
+            );
 
-        K_BB += -V[cellID];
+        K_BB += -V[celli];
 
-        R_L +=
-            (V[cellID]*rhsAm[cellID])
-          + ((V[cellID]*rhsRhoU[cellID]) ^ xAM[cellID]);
+        R_L += (V[celli]*rhsAMi) + ((V[celli]*rhsRhoUi) ^ xAMi);
     }
 
     if (Pstream::parRun())
@@ -141,19 +167,24 @@ void angularMomentum::AMconservation
     tensor LHS = K_LL - ((K_LB & K_LB)/K_BB);
     vector RHS = R_L;
 
-    vector lambda = inv(LHS) & RHS;
+    vector lambda = stabInv(LHS) & RHS;
     vector beta = (-K_LB & lambda)/K_BB;
 
     forAll(rhsRhoU, celli)
     {
-        rhsRhoU[celli] += (lambda ^ xAM[celli]) + beta;
+        vector xAMi(cmptMultiply(xAM[celli], rotationAxes_));
+        rhsRhoU[celli] +=
+            (lambda ^ xAMi) + beta;
     }
 
     volVectorField::Boundary& prhsRhoU(rhsRhoU.boundaryFieldRef());
     forAll(prhsRhoU, patchi)
     {
         prhsRhoU[patchi] +=
-            (lambda ^ xAM.boundaryField()[patchi]) + beta;
+            (
+                lambda
+              ^ cmptMultiply(xAM.boundaryField()[patchi], rotationAxes_)
+            ) + beta;
     }
     if (RKstage == 0)
     {

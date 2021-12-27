@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../../properties"
+#include "$FOAM_CASE/properties"
 
 fields (alpha.tnt);
 nBufferLayers 1;
@@ -44,7 +44,7 @@ regions
 
         fieldValues
         (
-            volScalarFieldValue alpha.tnt    1
+            volScalarFieldValue alpha.tnt 1.0
         );
     }
 );

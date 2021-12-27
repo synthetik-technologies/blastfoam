@@ -13,6 +13,7 @@ FoamFile
     object      blockMeshDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+scale 1.0;
 
 #include "../../geometry_3D"
 

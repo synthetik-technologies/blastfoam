@@ -36,16 +36,16 @@ boundaryField
     tip
     {
         type            solidTraction;
-        traction        uniform (0 10000 0);
-//         tractionSeries
-//         {
-//             type table;
-//             values
-//             (
-//                 (0 (0 0 0))
-//                 (0.5 (0 100 0))
-//             );
-//         }
+//         traction        uniform (0 10000 0);
+        tractionSeries
+        {
+            type table;
+            values
+            (
+                (0 (0 0 0))
+                (0.1 (0 100 0))
+            );
+        }
         pressure        uniform 0;
         value           uniform (0 0 0);
     }

@@ -5,10 +5,8 @@ createDEps()
     echo "creating wall velocity plot"
     gnuplot<<EOF
 
-    D(x)=abs(x/$3);
+    D(x)=abs(x/($3/$4));
     ms(t)=$4*t*1000;
-    stats '<sed -e "s/[(,)]//g" $1/D' using (D(\$2))
-    show variables STATS_max
     set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
         dl 8.0
     set output "blastFoam_wallD_validation.eps"
@@ -68,9 +66,10 @@ fi
 BLASTFOAM="../postProcessing/plateProbes/0"
 VALIDATION="validationData"
 
-th=$(foamDictionary ../properties -entry thickness -value)
+th=$(foamDictionary ../properties -entry th0 -value)
 S=$(foamDictionary ../properties -entry S -value)
 
+echo $th $S
 createDEps $BLASTFOAM $VALIDATION $th $S
 # createDEps $BLASTFOAM $VALIDATION
 
