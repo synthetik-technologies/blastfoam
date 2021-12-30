@@ -164,6 +164,209 @@ labelList cellsToPoints(const fvMesh& mesh, const labelList& cells)
     return selectedPoints.toc();
 }
 
+enum SelectionType
+{
+    ALL,
+    INTERNAL,
+    INTERFACE,
+    BOUNDARY,
+    INTERFACE_AND_BOUNDARY
+};
+HashTable<SelectionType> selectionTypeNames
+(
+    {
+        {"all", ALL},
+        {"internal", INTERNAL},
+        {"interface", INTERFACE},
+        {"boundary", BOUNDARY},
+        {"interfaceAndBoundary", INTERFACE_AND_BOUNDARY},
+    }
+);
+
+//- Remove faces without an owner and a neighbour
+labelList removeSelectedFaces
+(
+    const dictionary dict,
+    const fvMesh& mesh,
+    const labelList& cells,
+    const labelList& faces
+)
+{
+    const SelectionType sType =
+        selectionTypeNames[dict.lookup("selectionMode")];
+
+    if (!faces.size() || sType == ALL)
+    {
+        return faces;
+    }
+
+
+    labelList newFaces(faces);
+
+    label fI = 0;
+    if (sType == INTERNAL)
+    {
+        forAll(faces, fi)
+        {
+            const label facei = faces[fi];
+            if (facei >= mesh.nInternalFaces())
+            {
+                const label patchi = mesh.boundaryMesh().whichPatch(facei);
+                if (mesh.boundaryMesh()[patchi].coupled())
+                {
+                    newFaces[fI++] = faces[fi];
+                }
+            }
+            else
+            {
+                newFaces[fI++] = faces[fi];
+            }
+        }
+        newFaces.resize(fI);
+        return newFaces;
+    }
+
+    const labelList& owner = mesh.owner();
+    const labelList& neighbour = mesh.neighbour();
+    labelHashSet selectedCells(cells);
+
+    labelHashSet patchIDs;
+    bool setBoundary = sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY;
+    if (setBoundary)
+    {
+        patchIDs =
+            mesh.boundaryMesh().patchSet
+            (
+                List<wordRe>(dict.lookup("patches"))
+            );
+    }
+
+    bool setInternal = sType == INTERFACE || sType == INTERFACE_AND_BOUNDARY;
+    forAll(faces, fi)
+    {
+        const label facei = faces[fi];
+        if (facei >= mesh.nInternalFaces())
+        {
+            if (setBoundary)
+            {
+                const label patchi = mesh.boundaryMesh().whichPatch(facei);
+                if  (patchIDs.found(patchi))
+                {
+                    newFaces[fI++] = faces[fi];
+                }
+            }
+        }
+        else if
+        (
+            selectedCells.found(owner[facei])
+         != selectedCells.found(neighbour[facei])
+         && setInternal
+        )
+        {
+            newFaces[fI++] = faces[fi];
+        }
+    }
+    newFaces.resize(fI);
+    return newFaces;
+}
+
+
+//- Remove faces without an cellPoints included and not included
+labelList removeSelectedPoints
+(
+    const dictionary& dict,
+    const fvMesh& mesh,
+    const labelList& cells,
+    const labelList& points
+)
+{
+    const SelectionType sType =
+        selectionTypeNames[dict.lookup("selectionMode")];
+
+    if (!points.size() || sType == ALL)
+    {
+        return points;
+    }
+
+    // Remove boundary points
+    labelHashSet boundaryPoints;
+    if (sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY)
+    {
+        labelHashSet patchIDs
+        (
+            mesh.boundaryMesh().patchSet
+            (
+                List<wordRe>(dict.lookup("patches"))
+            )
+        );
+
+        forAll(mesh.boundaryMesh(), patchi)
+        {
+            if (!patchIDs.found(patchi))
+            {
+                continue;
+            }
+
+            const labelList& ppoints
+            (
+                mesh.boundaryMesh()[patchi].meshPoints()
+            );
+            forAll(ppoints, pi)
+            {
+                boundaryPoints.insert(ppoints[pi]);
+            }
+        }
+
+        if (sType == BOUNDARY)
+        {
+            return (labelHashSet(points) & boundaryPoints).toc();
+        }
+    }
+
+    // Return after removing boundary points
+    if (sType == INTERNAL)
+    {
+        labelHashSet selectedPoints(points);
+        selectedPoints -= boundaryPoints;
+        return selectedPoints.toc();
+    }
+
+
+    const labelListList& pointCells = mesh.pointCells();
+    labelHashSet interfacePoints;
+    labelHashSet selectedCells(cells);
+    forAll(points, pi)
+    {
+        const label pointi = points[pi];
+        const labelList& cp = pointCells[pointi];
+
+        bool check = selectedCells.found(cp[0]);
+        bool add = false;;
+        for (label i = 1; i < cp.size(); i++)
+        {
+            if (check != selectedCells.found(cp[i]))
+            {
+                add = true;
+                break;
+            }
+        }
+        if (add)
+        {
+            interfacePoints.insert(pointi);
+        }
+    }
+
+    if (sType == INTERFACE)
+    {
+        return interfacePoints.toc();
+    }
+    else
+    {
+        return (interfacePoints | boundaryPoints).toc();
+    }
+}
+
+
 //- Select Cells based on selected faces
 labelList facesToCells(const fvMesh& mesh, const labelList& faces)
 {
@@ -517,6 +720,233 @@ void readAndAddAllFields(const fvMesh& mesh)
     readAndAddFields<volTensorField>(mesh, objects);
 }
 
+
+autoPtr<topoSet> NewTopoSet
+(
+    const word& setName,
+    const fvMesh& mesh,
+    const word& setType,
+    const IOobject::readOption read = IOobject::NO_READ
+)
+{
+    return topoSet::New
+    (
+        setType,
+        mesh,
+        setName,
+        read
+    );
+}
+
+
+void modifyTopoSet
+(
+    const fvMesh& mesh,
+    const word& setType,
+    HashPtrTable<topoSet>& topoSets,
+    wordHashSet& zones,
+    wordHashSet& sets,
+    const labelList& selected,
+    const dictionary& dict
+)
+{
+    const word setName(dict.lookup("name"));
+    const bool isZone(label(dict.name().find("Zone")) >= 0);
+    const bool isSet(label(dict.name().find("Set")) >= 0);
+
+    topoSetSource::setAction action = topoSetSource::toAction
+    (
+        dict.lookup<word>("action")
+    );
+
+    if (action == topoSetSource::NEW)
+    {
+        topoSets.set
+        (
+            setName,
+            topoSet::New(setType, mesh, setName, selected.size()).ptr()
+        );
+    }
+    else if (action == topoSetSource::CLEAR)
+    {
+        topoSets.set
+        (
+            setName,
+            topoSet::New(setType, mesh, setName, 0).ptr()
+        );
+    }
+    else if (action == topoSetSource::REMOVE)
+    {}
+    else
+    {
+        if (!topoSets.found(setName))
+        {
+            if (dict.found("source"))
+            {
+                const word sourceName(dict.lookup("source"));
+                if (!topoSets.found(sourceName))
+                {
+                    topoSets.set
+                    (
+                        sourceName,
+                        topoSet::New
+                        (
+                            setType,
+                            mesh,
+                            sourceName,
+                            IOobject::MUST_READ
+                        ).ptr()
+                    );
+                }
+                topoSets.set
+                (
+                    setName,
+                    topoSet::New
+                    (
+                        setType,
+                        mesh,
+                        setName,
+                        *topoSets[sourceName]
+                    ).ptr()
+                );
+            }
+            else
+            {
+                topoSets.set
+                (
+                    setName,
+                    topoSet::New
+                    (
+                        setType,
+                        mesh,
+                        setName,
+                        IOobject::MUST_READ
+                    ).ptr()
+                );
+                sets.insert(setName);
+            }
+        }
+    }
+    topoSet& currentSet = *topoSets[setName];
+
+    // Handle special actions (clear, invert) locally, rest through
+    // sources.
+    switch (action)
+    {
+        case topoSetSource::NEW:
+        case topoSetSource::ADD:
+        {
+            forAll(selected, i)
+            {
+                currentSet.insert(selected[i]);
+            }
+            if (isZone)
+            {
+                zones.insert(setName);
+            }
+            else if (isSet)
+            {
+                sets.insert(setName);
+            }
+        }
+        break;
+
+        case topoSetSource::DELETE:
+        {
+            HashPtrTable<topoSet>::iterator iter = topoSets.find(setName);
+            topoSets.erase(iter);
+        }
+        break;
+
+        case topoSetSource::SUBSET:
+        {
+            // Backup current set.
+            autoPtr<topoSet> oldSet
+            (
+                topoSet::New
+                (
+                    setType,
+                    mesh,
+                    currentSet.name() + "_old2",
+                    selected.size()
+                )
+            );
+            forAll(selected, i)
+            {
+                oldSet().insert(selected[i]);
+            }
+
+            const word sourceName(dict.lookup("source"));
+            const topoSet* sourcePtr = nullptr;
+            if (!topoSets.found(sourceName))
+            {
+                sourcePtr = topoSet::New
+                (
+                    setType,
+                    mesh,
+                    sourceName,
+                    IOobject::MUST_READ
+                ).ptr();
+            }
+            else
+            {
+                sourcePtr = topoSets[sourceName];
+            }
+            currentSet = *sourcePtr;
+
+            if (!topoSets.found(sourceName))
+            {
+                deleteDemandDrivenData(sourcePtr);
+            }
+
+            // Combine new value of currentSet with old one.
+            currentSet.subset(oldSet);
+
+            // Synchronise for coupled patches.
+            currentSet.sync(mesh);
+
+            if (isZone)
+            {
+                zones.insert(setName);
+            }
+            else if (isSet)
+            {
+                sets.insert(setName);
+            }
+        }
+        break;
+
+        case topoSetSource::CLEAR:
+        break;
+
+        case topoSetSource::INVERT:
+            topoSets[setName]->invert(topoSets[setName]->maxSize(mesh));
+            if (isZone)
+            {
+                zones.insert(setName);
+            }
+            else if (isSet)
+            {
+                sets.insert(setName);
+            }
+        break;
+
+        case topoSetSource::REMOVE:
+        {
+            HashPtrTable<topoSet>::iterator iter = topoSets.find(setName);
+            topoSets.erase(iter);
+        }
+        break;
+
+
+        default:
+            WarningInFunction
+                << "Unhandled action " << action << endl;
+        break;
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 int main(int argc, char *argv[])
@@ -546,13 +976,13 @@ int main(int argc, char *argv[])
     );
     argList::addBoolOption
     (
-        "noZones",
-        "Do not create zones"
+        "noRefine",
+        "Do not refine"
     );
     argList::addBoolOption
     (
-        "noRefine",
-        "Do not refine"
+        "overwrite",
+        "Write the mesh to constant"
     );
 
     #include "addDictOption.H"
@@ -576,8 +1006,20 @@ int main(int argc, char *argv[])
     // Usefull if a refined mesh is needed before mesh manipulation
     bool noWrite(args.optionFound("noWrite"));
 
-    bool noZones(args.optionFound("noZones"));
     bool noRefine(args.optionFound("noRefine"));
+    bool overwrite(args.optionFound("overwrite"));
+    bool debug(args.optionFound("debug"));
+
+    if (overwrite && debug)
+    {
+        FatalErrorInFunction
+            << "Cannot overwrite mesh in debug mode" << endl
+            << abort(FatalError);
+    }
+    if (overwrite)
+    {
+        mesh.setInstance(runTime.constant());
+    }
 
     autoPtr<hexRef> meshCutter;
     bool refine = true;
@@ -596,7 +1038,6 @@ int main(int argc, char *argv[])
     }
     refine = refine && !noRefine;
 
-    Switch debug(args.optionFound("debug"));
 
     label nBufferLayers(setFieldsDict.lookupOrDefault("nBufferLayers", 0));
 
@@ -672,9 +1113,68 @@ int main(int argc, char *argv[])
     // Stored to reduce the number of reads
     PtrList<topoSetSource> sources(regions.size());
     PtrList<topoSetSource> backupSources(regions.size());
-    HashPtrTable<topoSet> cellSets;
-    HashPtrTable<topoSet> faceSets;
-    HashPtrTable<topoSet> pointSets;
+    HashPtrTable<topoSet> cellTopoSets;
+    wordHashSet isCellZone;
+    wordHashSet isCellSet;
+
+    HashPtrTable<topoSet> faceTopoSets;
+    wordHashSet isFaceZone;
+    wordHashSet isFaceSet;
+
+    HashPtrTable<topoSet> pointTopoSets;
+    wordHashSet isPointZone;
+    wordHashSet isPointSet;
+
+    //- Copy existing zones to the sets
+    {
+        wordList names = mesh.cellZones().names();
+        forAll(mesh.cellZones(), czi)
+        {
+            cellTopoSets.insert
+            (
+                names[czi],
+                new cellSet
+                (
+                    mesh,
+                    names[czi],
+                    labelHashSet(mesh.cellZones()[czi])
+                )
+            );
+            isCellZone.insert(names[czi]);
+        }
+
+        names = mesh.faceZones().names();
+        forAll(mesh.faceZones(), fzi)
+        {
+            faceTopoSets.insert
+            (
+                names[fzi],
+                new faceSet
+                (
+                    mesh,
+                    names[fzi],
+                    labelHashSet(mesh.faceZones()[fzi])
+                )
+            );
+            isFaceZone.insert(names[fzi]);
+        }
+
+        names = mesh.pointZones().names();
+        forAll(mesh.pointZones(), pzi)
+        {
+            pointTopoSets.insert
+            (
+                names[pzi],
+                new pointSet
+                (
+                    mesh,
+                    names[pzi],
+                    labelHashSet(mesh.pointZones()[pzi])
+                )
+            );
+            isPointZone.insert(names[pzi]);
+        }
+    }
 
     labelList levels(regions.size(), 0);
     forAll(regions, regionI)
@@ -789,7 +1289,7 @@ int main(int argc, char *argv[])
             end = true;
         }
 
-        bool writeSets = !noZones && (end || debug);
+        bool writeSets = (end || debug);
         bool write = !noWrite && (end || debug);
 
         // Read default values and set fields
@@ -1025,69 +1525,155 @@ int main(int argc, char *argv[])
                         end || debug
                     )
                 );
+            }
 
-                if (writeSets)
+            if (writeSets)
+            {
+                // Sets
+                if (regionDict.found("cellSets"))
                 {
-                    if (regionDict.found("setName"))
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("cellSets")
+                    );
+                    forAll(setDicts, seti)
                     {
-                        word setName = regionDict.lookup<word>("setName");
-                        if (!cellSets.found(setName))
-                        {
-                            cellSets.insert
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "cellSet",
+                            cellTopoSets,
+                            isCellZone,
+                            isCellSet,
+                            selectedCells,
+                            setDicts[seti]
+                        );
+                    }
+                }
+                if (regionDict.found("faceSets"))
+                {
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("faceSets")
+                    );
+                    forAll(setDicts, seti)
+                    {
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "faceSet",
+                            faceTopoSets,
+                            isFaceZone,
+                            isFaceSet,
+                            removeSelectedFaces
                             (
-                                setName,
-                                topoSet::New
-                                (
-                                    "cellSet",
-                                    mesh,
-                                    setName,
-                                    IOobject::NO_READ
-                                ).ptr()
-                            );
-                        }
-                        if (!faceSets.found(setName))
-                        {
-                            faceSets.insert
+                                setDicts[seti],
+                                mesh,
+                                selectedCells,
+                                selectedFaces
+                            ),
+                            setDicts[seti]
+                        );
+                    }
+                }
+                if (regionDict.found("pointSets"))
+                {
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("pointSets")
+                    );
+                    forAll(setDicts, seti)
+                    {
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "pointSet",
+                            pointTopoSets,
+                            isPointZone,
+                            isPointSet,
+                            removeSelectedPoints
                             (
-                                setName,
-                                topoSet::New
-                                (
-                                    "faceSet",
-                                    mesh,
-                                    setName,
-                                    IOobject::NO_READ
-                                ).ptr()
-                            );
-                        }
-                        if (!pointSets.found(setName))
-                        {
-                            pointSets.insert
+                                setDicts[seti],
+                                mesh,
+                                selectedCells,
+                                selectedPoints
+                            ),
+                            setDicts[seti]
+                        );
+                    }
+                }
+
+                // Zones
+                if (regionDict.found("cellZones"))
+                {
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("cellZones")
+                    );
+                    forAll(setDicts, seti)
+                    {
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "cellSet",
+                            cellTopoSets,
+                            isCellZone,
+                            isCellSet,
+                            selectedCells,
+                            setDicts[seti]
+                        );
+                    }
+                }
+                if (regionDict.found("faceZones"))
+                {
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("faceZones")
+                    );
+                    forAll(setDicts, seti)
+                    {
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "faceSet",
+                            faceTopoSets,
+                            isFaceZone,
+                            isFaceSet,
+                            removeSelectedFaces
                             (
-                                setName,
-                                topoSet::New
-                                (
-                                    "pointSet",
-                                    mesh,
-                                    setName,
-                                    IOobject::NO_READ
-                                ).ptr()
-                            );
-                        }
-                        topoSet& cSet = *cellSets[setName];
-                        topoSet& fSet = *faceSets[setName];
-                        topoSet& pSet = *pointSets[setName];
-                        forAll(selectedCells, i)
-                        {
-                            cSet.insert(selectedCells[i]);
-                        }
-                        forAll(selectedFaces, i)
-                        {
-                            fSet.insert(selectedFaces[i]);
-                        }
-                        forAll(selectedPoints, i)
-                        {
-                            pSet.insert(selectedPoints[i]);
-                        }
+                                setDicts[seti],
+                                mesh,
+                                selectedCells,
+                                selectedFaces
+                            ),
+                            setDicts[seti]
+                        );
+                    }
+                }
+                if (regionDict.found("pointZones"))
+                {
+                    PtrList<dictionary> setDicts
+                    (
+                        regionDict.lookup("pointZones")
+                    );
+                    forAll(setDicts, seti)
+                    {
+                        modifyTopoSet
+                        (
+                            mesh,
+                            "pointSet",
+                            pointTopoSets,
+                            isPointZone,
+                            isPointSet,
+                            removeSelectedPoints
+                            (
+                                setDicts[seti],
+                                mesh,
+                                selectedCells,
+                                selectedPoints
+                            ),
+                            setDicts[seti]
+                        );
                     }
                 }
             }
@@ -1139,7 +1725,7 @@ int main(int argc, char *argv[])
 
                 // Do not use the max level, use current
                 // Order is important in the definitions of regions
-                Switch overwrite =
+                Switch overwriteLevel =
                     regions[regionI].dict().lookupOrDefault<Switch>
                     (
                         "overwriteLevel",
@@ -1149,7 +1735,7 @@ int main(int argc, char *argv[])
                 // Set actual max cell level
                 forAll(savedCells[regionI], celli)
                 {
-                    if (overwrite)
+                    if (overwriteLevel)
                     {
                         maxCellLevel[savedCells[regionI][celli]] = levels[regionI];
                     }
@@ -1287,69 +1873,115 @@ int main(int argc, char *argv[])
         runTime.write();
     }
 
-    if ((cellSets.size() || faceSets.size()) && !noZones)
+    if ((cellTopoSets.size() || faceTopoSets.size()) || pointTopoSets.size())
     {
-        List<cellZone*> cellZones(cellSets.size());
-        List<faceZone*> faceZones(faceSets.size());
-        List<pointZone*> pointZones(pointSets.size());
+        List<cellZone*> meshCellZones;
+        List<faceZone*> meshFaceZones;
+        List<pointZone*> meshPointZones;
         label i = 0;
         forAllConstIter
         (
             HashPtrTable<topoSet>,
-            cellSets,
+            cellTopoSets,
             iter
         )
         {
-            cellZones[i] = new cellZone
-            (
-                iter()->name(),
-                iter()->toc(),
-                i,
-                mesh.cellZones()
-            );
+            if (isCellZone.found(iter()->name()))
+            {
+                Info<< "Adding cell zone " << iter()->name() << endl;
+                meshCellZones.append
+                (
+                    new cellZone
+                    (
+                        iter()->name(),
+                        iter()->toc(),
+                        i++,
+                        mesh.cellZones()
+                    )
+                );
+            }
+            else if (isCellSet.found(iter()->name()))
+            {
+                Info<< "Writing cell set " << iter()->name() << endl;
+                if (overwrite)
+                {
+                    iter()->instance() = runTime.constant();
+                }
+                iter()->write();
+            }
         }
 
         i = 0;
         forAllConstIter
         (
             HashPtrTable<topoSet>,
-            faceSets,
+            faceTopoSets,
             iter
         )
         {
-            faceZones[i] = new faceZone
-            (
-                iter()->name(),
-                iter()->toc(),
-                boolList(iter()->size(), false),
-                i,
-                mesh.faceZones()
-            );
-            i++;
+            if (isFaceZone.found(iter()->name()))
+            {
+                Info<< "Adding face zone " << iter()->name() << endl;
+                meshFaceZones.append
+                (
+                    new faceZone
+                    (
+                        iter()->name(),
+                        iter()->toc(),
+                        boolList(iter()->size(), false),
+                        i++,
+                        mesh.faceZones()
+                    )
+                );
+            }
+            else if (isFaceSet.found(iter()->name()))
+            {
+                Info<< "Writing face set " << iter()->name() << endl;
+                if (overwrite)
+                {
+                    iter()->instance() = runTime.constant();
+                }
+                iter()->write();
+            }
         }
 
         i = 0;
         forAllConstIter
         (
             HashPtrTable<topoSet>,
-            pointSets,
+            pointTopoSets,
             iter
         )
         {
-            pointZones[i] = new pointZone
-            (
-                iter()->name(),
-                iter()->toc(),
-                i,
-                mesh.pointZones()
-            );
-            i++;
+            if (isPointZone.found(iter()->name()))
+            {
+                Info<< "Adding point zone " << iter()->name() << endl;
+                meshPointZones.append
+                (
+                    new pointZone
+                    (
+                        iter()->name(),
+                        iter()->toc(),
+                        i++,
+                        mesh.pointZones()
+                    )
+                );
+            }
+            else if (isPointSet.found(iter()->name()))
+            {
+                Info<< "Writing point set " << iter()->name() << endl;
+                if (overwrite)
+                {
+                    iter()->instance() = runTime.constant();
+                }
+                iter()->write();
+            }
         }
         mesh.pointZones().clear();
         mesh.faceZones().clear();
         mesh.cellZones().clear();
 
-        mesh.addZones(pointZones, faceZones, cellZones);
+        mesh.addZones(meshPointZones, meshFaceZones, meshCellZones);
     }
 
     if (refine)
@@ -1388,6 +2020,11 @@ int main(int argc, char *argv[])
         }
 
         // Write mesh and cell levels
+        if (overwrite)
+        {
+            mesh.setInstance(runTime.constant());
+            meshCutter->setInstance(runTime.constant());
+        }
         meshCutter->write();
         mesh.write();
 
@@ -1397,7 +2034,7 @@ int main(int argc, char *argv[])
             IOobject
             (
                 "points0",
-                runTime.timeName(),
+                overwrite ? runTime.constant() : runTime.timeName(),
                 polyMesh::meshSubDir,
                 mesh
             ),
