@@ -1,0 +1,37 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# -- Create paraview file
+paraFoam -builtin -touch
+
+# -- Create the mesh for the fluid
+runApplication blockMesh
+
+# -- Create outlet patch face set
+runApplication -s patch setRefinedFields -noFields -overwrite -noRefine
+
+# -- Create outlet patch
+runApplication createPatch -overwrite
+
+# -- Create face zone for the window
+# runApplication -s windows setRefinedFields -noFields -overwrite -noRefine
+
+# -- Create baffles
+# runApplication createBaffles -overwrite
+
+# -- Select cells to remove ("walls")
+runApplication -s cells setRefinedFields -noFields -overwrite -noRefine
+
+# -- Remove walls
+runApplication subsetMesh -patch walls internalCells -overwrite
+
+# -- Set the initial conditions for the fluid
+runApplication setRefinedFields
+
+# -- Run the calc
+runApplication $(getApplication)
+
+# ----------------------------------------------------------------- end-of-file
