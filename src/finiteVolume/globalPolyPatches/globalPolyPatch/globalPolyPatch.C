@@ -461,6 +461,29 @@ void Foam::globalPolyPatch::calcInterp() const
 }
 
 
+void Foam::globalPolyPatch::calcLocalInterp() const
+{
+    if (debug)
+    {
+        InfoInFunction
+            << "Calculating local patch interpolator"
+            << endl;
+    }
+
+    if (localInterpPtr_.valid())
+    {
+        FatalErrorInFunction
+            << "pointer already set"
+            << abort(FatalError);
+    }
+
+    localInterpPtr_.reset
+    (
+        new primitivePatchInterpolation(patch())
+    );
+}
+
+
 void Foam::globalPolyPatch::check() const
 {
     label patchIndex = mesh_.boundaryMesh().findPatchID(patchName_);
@@ -481,6 +504,7 @@ void Foam::globalPolyPatch::clearOut() const
     faceToGlobalAddrPtr_.clear();
     globalMasterToCurrentProcPointAddrPtr_.clear();
     interpPtr_.clear();
+    localInterpPtr_.clear();
 }
 
 
@@ -503,7 +527,8 @@ Foam::globalPolyPatch::globalPolyPatch
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
     globalMasterToCurrentProcPointAddrPtr_(NULL),
-    interpPtr_(NULL)
+    interpPtr_(NULL),
+    localInterpPtr_(NULL)
 {
     check();
 }
@@ -523,7 +548,8 @@ Foam::globalPolyPatch::globalPolyPatch
     pointToGlobalAddrPtr_(NULL),
     faceToGlobalAddrPtr_(NULL),
     globalMasterToCurrentProcPointAddrPtr_(NULL),
-    interpPtr_(NULL)
+    interpPtr_(NULL),
+    localInterpPtr_(NULL)
 {
     check();
 }
@@ -599,6 +625,18 @@ Foam::globalPolyPatch::interpolator() const
     }
 
     return interpPtr_();
+}
+
+
+const Foam::primitivePatchInterpolation&
+Foam::globalPolyPatch::localInterpolator() const
+{
+    if (!localInterpPtr_.valid())
+    {
+        calcLocalInterp();
+    }
+
+    return localInterpPtr_();
 }
 
 

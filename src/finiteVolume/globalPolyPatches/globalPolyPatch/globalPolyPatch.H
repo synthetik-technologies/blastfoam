@@ -45,6 +45,7 @@ SourceFiles
 #include "standAlonePatch.H"
 #include "polyMesh.H"
 #include "PrimitivePatchInterpolation.H"
+#include "primitivePatchInterpolation.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -90,6 +91,9 @@ protected:
             //- Patch interpolator
             mutable autoPtr<PrimitivePatchInterpolation<standAlonePatch>> interpPtr_;
 
+            //- Local patch interpolator
+            mutable autoPtr<primitivePatchInterpolation> localInterpPtr_;
+
 
     // Private Member Functions
 
@@ -107,6 +111,9 @@ protected:
 
         //- Make the interpolator
         void calcInterp() const;
+
+        //- Make the local interpolator
+        void calcLocalInterp() const;
 
         //- Check
         void check() const;
@@ -182,6 +189,9 @@ public:
         const PrimitivePatchInterpolation<standAlonePatch>&
         interpolator() const;
 
+        //- Return reference to the local interpolator
+        const primitivePatchInterpolation& localInterpolator() const;
+
         //- Return patch point to global point addressing
         const labelList& pointToGlobalAddr() const;
 
@@ -244,6 +254,34 @@ public:
             tmp<Field<Type> > globalFaceToPatch
             (
                 const tmp<Field<Type>>& gField
+            ) const;
+
+            //- Interpolate patch faces to points
+            //  local face -> global face -> global point -> local point
+            template<class Type>
+            tmp<Field<Type> > faceToPoint
+            (
+                const Field<Type>& fField
+            ) const;
+
+            template<class Type>
+            tmp<Field<Type> > faceToPoint
+            (
+                const tmp<Field<Type>>& fField
+            ) const;
+
+            //- Interpolate patch points to faces
+            //  points do not need to be made global
+            template<class Type>
+            tmp<Field<Type> > pointToFace
+            (
+                const Field<Type>& pField
+            ) const;
+
+            template<class Type>
+            tmp<Field<Type> > pointToFace
+            (
+                const tmp<Field<Type>>& pField
             ) const;
 
 

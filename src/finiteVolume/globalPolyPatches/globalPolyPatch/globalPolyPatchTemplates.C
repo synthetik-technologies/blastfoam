@@ -238,4 +238,71 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalFaceToPatch
 }
 
 
+template<class Type>
+Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
+(
+    const Field<Type>& fField
+) const
+{
+    if (fField.size() != patch().size())
+    {
+        FatalErrorInFunction
+            << "Patch field does not correspond to patch faces.  Patch size: "
+            << patch().size() << " field size: " << fField.size()
+            << abort(FatalError);
+    }
+
+    if (Pstream::parRun())
+    {
+        return
+            globalPointToPatch
+            (
+                interpPtr_->faceToPointInterpolate
+                (
+                    patchFaceToGlobal(fField)
+                )
+            );
+    }
+    return interpPtr_->faceToPointInterpolate(fField);
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
+(
+    const tmp<Field<Type>>& fField
+) const
+{
+    return faceToPoint(fField());
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::pointToFace
+(
+    const Field<Type>& pField
+) const
+{
+    if (pField.size() != patch().nPoints())
+    {
+        FatalErrorInFunction
+            << "Patch field does not correspond to patch points.  Patch size: "
+            << patch().nPoints() << " field size: " << pField.size()
+            << abort(FatalError);
+    }
+
+    return localInterpolator().pointToFaceInterpolate(pField());
+}
+
+
+template<class Type>
+Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::pointToFace
+(
+    const tmp<Field<Type>>& pField
+) const
+{
+    return pointToFace(pField());
+}
+
+
 // ************************************************************************* //
