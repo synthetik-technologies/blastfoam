@@ -50,6 +50,8 @@ $(explicitBCs)/wedge/wedgeLinearMomentum/wedgeLinearMomentumFvPatchVectorField.C
 $(explicitBCs)/wedge/wedgeTraction/wedgeTractionFvPatchVectorField.C
 
 materialModels/mechanicalModel/mechanicalModel.C
+materialModels/mechanicalModel/solidSubMeshes/solidSubMeshes.C
+
 mechanicalLaws = materialModels/mechanicalModel/mechanicalLaws
 $(mechanicalLaws)/mechanicalLaw/mechanicalLaw.C
 $(mechanicalLaws)/mechanicalLaw/newMechanicalLaw.C

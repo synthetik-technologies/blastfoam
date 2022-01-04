@@ -39,6 +39,7 @@ SourceFiles
 #define JohnsonCookPlastic_H
 
 #include "plasticModel.H"
+#include "UautoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -57,7 +58,7 @@ class JohnsonCookPlastic
     // Private data
 
         //- Const reference to temperature
-        const volScalarField& T_;
+        UautoPtr<const volScalarField> T_;
 
         //- Saved temporary interpolated temperature
         tmp<surfaceScalarField> Tf_;
@@ -101,6 +102,7 @@ class JohnsonCookPlastic
 
         mutable scalar Ti_;
         mutable scalar eDoti_;
+
 
     // Private Member Functions
 

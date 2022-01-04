@@ -51,6 +51,8 @@ SourceFiles
 namespace Foam
 {
 
+class solidSubMeshes;
+
 /*---------------------------------------------------------------------------*\
                          Class thermalModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -62,8 +64,14 @@ class thermalModel
         //- Const reference to the mesh
         const fvMesh& mesh_;
 
+        //- Optional solidSubMeshes
+        UautoPtr<solidSubMeshes> subsetMeshes_;
+
         //- Thermal law
         autoPtr<solidBlastThermo> thermoPtr_;
+
+        //- Sub thermo models
+        PtrList<solidBlastThermo> thermoModels_;
 
 
     // Private Member Functions
@@ -88,8 +96,7 @@ public:
 
     // Destructor
 
-        virtual ~thermalModel()
-        {}
+        virtual ~thermalModel();
 
 
     // Member Functions
@@ -112,17 +119,20 @@ public:
             return thermoPtr_();
         }
 
+        //- Correct thermo models
+        void correct();
+
+        //- Access density
+        volScalarField& rho();
+
+        //- Return density
+        const volScalarField& rho() const;
+
         //- Return specific heat capacity
-        tmp<volScalarField> C() const
-        {
-            return thermoPtr_->Cp();
-        }
+        tmp<volScalarField> C() const;
 
         //- Return thermal conductivity
-        tmp<volScalarField> k() const
-        {
-            return thermoPtr_->kappa();
-        }
+        tmp<volScalarField> k() const;
 };
 
 

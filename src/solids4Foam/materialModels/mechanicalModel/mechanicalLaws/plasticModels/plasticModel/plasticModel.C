@@ -461,7 +461,7 @@ Foam::scalar Foam::plasticModel::newDeltaT()
     // Analysis and Design 16 (1994) 99-139.
 
     // Calculate equivalent strain, for normalisation of the error
-    tmp<volSymmTensorField> e(calcEpsilon(epsilonP()));
+    tmp<volSymmTensorField> e(this->epsilon());
     const volScalarField epsilonEq(sqrt((2.0/3.0)*magSqr(dev(e))));
 
     // Take reference to internal fields

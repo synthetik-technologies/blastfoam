@@ -89,6 +89,14 @@ protected:
 
         virtual dimensionedScalar sigmaY0() const = 0;
 
+        //- Total strain
+        defineVolSurfaceFieldTypeFuncs
+        (
+            epsilon,
+            symmTensor,
+            dimensionedSymmTensor("epsilon", dimless, Zero)
+        );
+
         //- Yield stress
         defineVolSurfaceFieldTypeFuncs
         (

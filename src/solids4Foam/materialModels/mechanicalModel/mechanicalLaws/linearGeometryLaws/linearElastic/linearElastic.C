@@ -333,9 +333,7 @@ const Foam::dimensionedScalar& Foam::linearElastic::lambda() const
 
 void Foam::linearElastic::correct(volSymmTensorField& sigma)
 {
-//     updateEpsilon(epsilonRef(), nu_/E_, sigma);
-
-    // Calculate total strain
+     // Calculate total strain
     if (incremental())
     {
         // Lookup gradient of displacement increment
@@ -352,7 +350,6 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
 
         epsilonRef() = symm(gradD);
     }
-
     // For planeStress, correct strain in the out of plane direction
     if (planeStress())
     {
@@ -373,6 +370,8 @@ void Foam::linearElastic::correct(volSymmTensorField& sigma)
            *(sigma.component(symmTensor::XX) + sigma.component(symmTensor::YY))
         );
     }
+
+//     updateEpsilon(epsilonRef(), nu_/E_, sigma);
 
     // Hooke's law : partitioned deviatoric and dilation form
     const volScalarField trEpsilon(tr(epsilon()));

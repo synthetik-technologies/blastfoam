@@ -169,8 +169,6 @@ class mechanicalLaw
         //- Nonlinear geometry enumerator
         const nonLinearGeometry::nonLinearType nonLinGeom_;
 
-        //- Reference to density field
-        const volScalarField& rho_;
 
         // Optional pointers used for general fields
 
@@ -276,21 +274,6 @@ protected:
         //- If the case is plane stress
         bool planeStress() const;
 
-        //- Return the base mesh region name
-        const word& baseMeshRegionName() const
-        {
-            return baseMeshRegionName_;
-        }
-
-        //- Return const access to the base mesh
-        const fvMesh& baseMesh() const
-        {
-            return mesh().time().lookupObject<fvMesh>
-            (
-                baseMeshRegionName()
-            );
-        }
-
 //         //- Read a field from the starting directory, or construct
 //         template<class Type, class Mesh, class Patch>
 //         tmp<GeometricField<Type, Mesh, Patch>> readIfPresent
@@ -300,12 +283,17 @@ protected:
 //             const dimensioned<Type>& initVal
 //         ) const;
 
-
         //- Return a reference to the F field
         const volTensorField& F() const;
 
+        //- Return a Non-const reference to the F field
+        volTensorField& FRef();
+
         //- Return a reference to the Ff field
         const surfaceTensorField& Ff() const;
+
+        //- Return a non-const reference to the Ff field
+        surfaceTensorField& FfRef();
 
         //- Return a reference to the relF field
         const volTensorField& relF() const;
@@ -322,8 +310,14 @@ protected:
         //- Return a reference to the J field
         const volScalarField& J() const;
 
+        //- Return a non-const reference to the J field
+        volScalarField& JRef();
+
         //- Return a reference to the Jf field
         const surfaceScalarField& Jf() const;
+
+        //- Return a non-const reference to the Jf field
+        surfaceScalarField& JfRef();
 
         //- Return a const reference to the sigmaHyd field
         const volScalarField& sigmaHyd() const;
@@ -432,86 +426,6 @@ protected:
                 const GeometricField<symmTensor, PatchField, Mesh>& sigma,
                 const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
             ) const;
-
-
-            //- Calculate strain field
-            template<template<class> class PatchField, class Mesh, class CoeffType>
-            tmp<GeometricField<symmTensor, PatchField, Mesh>>
-            calcEpsilon
-            (
-                const CoeffType& coeff,
-                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
-                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
-            ) const;
-
-            template<template<class> class PatchField, class Mesh, class CoeffType>
-            tmp<GeometricField<symmTensor, PatchField, Mesh>>
-            calcEpsilon
-            (
-                const CoeffType& coeff,
-                const GeometricField<symmTensor, PatchField, Mesh>& sigma
-            ) const;
-
-            template<template<class> class PatchField, class Mesh, class CoeffType>
-            tmp<GeometricField<symmTensor, PatchField, Mesh>>
-            calcEpsilon
-            (
-                const tmp<CoeffType>& coeff,
-                const GeometricField<symmTensor, PatchField, Mesh>& sigma,
-                const GeometricField<symmTensor, PatchField, Mesh>& epsilonP
-            ) const;
-
-            template<template<class> class PatchField, class Mesh, class CoeffType>
-            tmp<GeometricField<symmTensor, PatchField, Mesh>>
-            calcEpsilon
-            (
-                const tmp<CoeffType>& coeff,
-                const GeometricField<symmTensor, PatchField, Mesh>& sigma
-            ) const;
-
-            template<class CoeffType>
-            tmp<Field<symmTensor>> calcEpsilon
-            (
-                const CoeffType& coeff,
-                const Field<symmTensor>& sigma,
-                const Field<symmTensor>& epsilonP,
-                const label patchi
-            ) const;
-
-            template<class CoeffType>
-            tmp<Field<symmTensor>> calcEpsilon
-            (
-                const CoeffType& coeff,
-                const Field<symmTensor>& sigma,
-                const label patchi
-            ) const;
-
-            template<class CoeffType>
-            tmp<Field<symmTensor>> calcEpsilon
-            (
-                const tmp<CoeffType>& coeff,
-                const Field<symmTensor>& sigma,
-                const Field<symmTensor>& epsilonP,
-                const label patchi
-            ) const;
-
-            template<class CoeffType>
-            tmp<Field<symmTensor>> calcEpsilon
-            (
-                const tmp<CoeffType>& coeff,
-                const Field<symmTensor>& sigma,
-                const label patchi
-            ) const;
-
-            // Calculate strain with no correction for plane stress
-            tmp<volSymmTensorField> calcEpsilon(const volSymmTensorField&) const;
-
-            tmp<surfaceSymmTensorField> calcEpsilon
-            (
-                const surfaceSymmTensorField&
-            ) const;
-
-            tmp<Field<symmTensor>> calcEpsilon(const label) const;
 
 
         //- Lookup the enforceLinear Switch in the solidModel
@@ -651,10 +565,10 @@ public:
             return name_;
         }
 
-        //- Return density
-        virtual tmp<volScalarField> rho() const
+        //- Is this model stored on the master model mesh
+        bool isBaseRegion() const
         {
-            return rho_;
+            return mesh().name() == baseMeshRegionName_;
         }
 
         //- Return the implicit stiffness
@@ -698,6 +612,27 @@ public:
         void setUseSolidDeformation()
         {
             useSolidDeformation_ = true;
+        }
+
+        //- Access the base mesh region name
+        word& baseMeshRegionName()
+        {
+            return baseMeshRegionName_;
+        }
+
+        //- Return the base mesh region name
+        const word& baseMeshRegionName() const
+        {
+            return baseMeshRegionName_;
+        }
+
+        //- Return const access to the base mesh
+        const fvMesh& baseMesh() const
+        {
+            return mesh().time().lookupObject<fvMesh>
+            (
+                baseMeshRegionName_
+            );
         }
 };
 

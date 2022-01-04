@@ -58,6 +58,9 @@ Author
 
 namespace Foam
 {
+
+class solidSubMeshes;
+
 /*---------------------------------------------------------------------------*\
                         Class mechanicalModel Declaration
 \*---------------------------------------------------------------------------*/
@@ -82,6 +85,9 @@ class mechanicalModel
 
         //- Name of the cellZone for each material
         mutable wordList cellZoneNames_;
+
+        //- Sub-meshes for each mechanicalLaw
+        mutable autoPtr<solidSubMeshes> solSubMeshes_;
 
         //- Volume field to point field interpolator for the base mesh
         mutable volPointInterpolation* volToPointPtr_;
@@ -143,6 +149,12 @@ public:
             //- Return a const reference to the vol-to-point base mesh
             //  interpolator
             const volPointInterpolation& volToPoint() const;
+
+            //- Return a const reference to the solidSubMeshes
+            const solidSubMeshes& solSubMeshes() const;
+
+            //- Return a const reference to the solidSubMeshes
+            solidSubMeshes& solSubMeshes();
 
             //- Return the implicit stiffness
             //  This is the diffusivity for the Laplacian term

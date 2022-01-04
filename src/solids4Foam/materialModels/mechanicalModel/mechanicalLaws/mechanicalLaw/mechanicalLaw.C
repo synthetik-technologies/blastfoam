@@ -36,6 +36,7 @@ InClass
 #include "fvm.H"
 #include "fvc.H"
 #include "zeroGradientFvPatchFields.H"
+#include "solidSubMeshes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -153,7 +154,7 @@ void Foam::mechanicalLaw::makeSigmaHyd() const
         (
             IOobject
             (
-                name_ + ":sigmaHyd",
+                IOobject::groupName("sigmaHyd", name_),
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
@@ -181,7 +182,7 @@ void Foam::mechanicalLaw::makeSigmaHydf() const
         (
             IOobject
             (
-                name_ + ":sigmaHydf",
+                IOobject::groupName("sigmaHydf", name_),
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
@@ -207,7 +208,7 @@ void Foam::mechanicalLaw::makeGradSigmaHyd() const
         (
             IOobject
             (
-                name_ + ":grad(sigmaHyd)",
+                IOobject::groupName("grad(sigmaHyd)", name_),
                 mesh_.time().timeName(mesh_.time().startTime().value()),
                 mesh_,
                 IOobject::READ_IF_PRESENT,
@@ -260,7 +261,7 @@ bool Foam::mechanicalLaw::planeStress() const
 
 const Foam::volTensorField& Foam::mechanicalLaw::F() const
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         return mesh_.lookupObject<volTensorField>("F");
     }
@@ -273,9 +274,24 @@ const Foam::volTensorField& Foam::mechanicalLaw::F() const
 }
 
 
+Foam::volTensorField& Foam::mechanicalLaw::FRef()
+{
+    if (useSolidDeformation_ && isBaseRegion())
+    {
+        return mesh_.lookupObjectRef<volTensorField>("F");
+    }
+    if (FPtr_.empty())
+    {
+        makeF();
+    }
+
+    return FPtr_();
+}
+
+
 const Foam::surfaceTensorField& Foam::mechanicalLaw::Ff() const
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         return mesh_.lookupObject<surfaceTensorField>("Ff");
     }
@@ -289,9 +305,25 @@ const Foam::surfaceTensorField& Foam::mechanicalLaw::Ff() const
 }
 
 
+Foam::surfaceTensorField& Foam::mechanicalLaw::FfRef()
+{
+    if (useSolidDeformation_ && isBaseRegion())
+    {
+        return mesh_.lookupObjectRef<surfaceTensorField>("Ff");
+    }
+
+    if (FfPtr_.empty())
+    {
+        makeFf();
+    }
+
+    return FfPtr_();
+}
+
+
 const Foam::volTensorField& Foam::mechanicalLaw::relF() const
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         return mesh_.lookupObject<volTensorField>("relF");
     }
@@ -306,7 +338,7 @@ const Foam::volTensorField& Foam::mechanicalLaw::relF() const
 
 Foam::volTensorField& Foam::mechanicalLaw::relFRef()
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         NotImplemented;
         return mesh_.lookupObjectRef<volTensorField>("relF");
@@ -337,7 +369,7 @@ const Foam::surfaceTensorField& Foam::mechanicalLaw::relFf() const
 
 Foam::surfaceTensorField& Foam::mechanicalLaw::relFfRef()
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         NotImplemented;
         return mesh_.lookupObjectRef<surfaceTensorField>("relFf");
@@ -353,9 +385,25 @@ Foam::surfaceTensorField& Foam::mechanicalLaw::relFfRef()
 
 const Foam::volScalarField& Foam::mechanicalLaw::J() const
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         return mesh_.lookupObject<volScalarField>("J");
+    }
+
+    if (JPtr_.empty())
+    {
+        makeJ();
+    }
+
+    return JPtr_();
+}
+
+
+Foam::volScalarField& Foam::mechanicalLaw::JRef()
+{
+    if (useSolidDeformation_ && isBaseRegion())
+    {
+        return mesh_.lookupObjectRef<volScalarField>("J");
     }
 
     if (JPtr_.empty())
@@ -370,9 +418,25 @@ const Foam::volScalarField& Foam::mechanicalLaw::J() const
 const Foam::surfaceScalarField&
 Foam::mechanicalLaw::Jf() const
 {
-    if (useSolidDeformation_)
+    if (useSolidDeformation_ && isBaseRegion())
     {
         return mesh_.lookupObject<surfaceScalarField>("Jf");
+    }
+
+    if (JfPtr_.empty())
+    {
+        makeJf();
+    }
+
+    return JfPtr_();
+}
+
+
+Foam::surfaceScalarField& Foam::mechanicalLaw::JfRef()
+{
+    if (useSolidDeformation_ && isBaseRegion())
+    {
+        return mesh_.lookupObjectRef<surfaceScalarField>("Jf");
     }
 
     if (JfPtr_.empty())
@@ -459,21 +523,37 @@ bool Foam::mechanicalLaw::updateF
 {
     if (useSolidDeformation_)
     {
-//         const volTensorField& F =
-//             mesh_.lookupObject<volTensorField>("F");
-//
-//         // Check if the mathematical model is in total or updated Lagrangian form
-//         if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
-//         {
-//             FatalErrorInFunction
-//                 << "Not implemented for non-incremental updated Lagrangian"
-//                 << abort(FatalError);
-//             return false;
-//         }
-//
-//         // Update the relative deformation gradient: not needed
-//         relFRef() = F & inv(F.oldTime());
-        return false;
+        if (isBaseRegion())
+        {
+            return false;
+        }
+        else
+        {
+            const fvMesh& baseMesh = this->baseMesh();
+            const fvMeshSubset& subsetter =
+                baseMesh.lookupObject<solidSubMeshes>
+                (
+                    solidSubMeshes::typeName
+                )[mesh().name()];
+            relFRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<volTensorField>("relF")
+            );
+            FRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<volTensorField>("F")
+            );
+            JRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<volScalarField>("J")
+            );
+
+            // Internal patches are not set when interpolated
+            relFRef().correctBoundaryConditions();
+            FRef().correctBoundaryConditions();
+            JRef().correctBoundaryConditions();
+            return false;
+        }
     }
 
     if (!FPtr_.valid())
@@ -606,19 +686,33 @@ bool Foam::mechanicalLaw::updateFf
 {
     if (useSolidDeformation_)
     {
-//         const surfaceTensorField& Ff =
-//             mesh_.lookupObject<surfaceTensorField>("Ff");
-//
-//         // Check if the mathematical model is in total or updated Lagrangian form
-//         if (nonLinGeom() == nonLinearGeometry::UPDATED_LAGRANGIAN)
-//         {
-//             FatalErrorInFunction
-//                 << "Not implemented for non-incremental updated Lagrangian"
-//                 << abort(FatalError);
-//             return false;
-//         }
-//         relFfRef() = Ff & inv(Ff.oldTime());
-        return false;
+        if (isBaseRegion())
+        {
+            return false;
+        }
+        else
+        {
+            const fvMesh& baseMesh = this->baseMesh();
+            const fvMeshSubset& subsetter =
+                baseMesh.lookupObject<solidSubMeshes>
+                (
+                    solidSubMeshes::typeName
+                )[mesh().name()];
+
+            relFfRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<surfaceTensorField>("relFf")
+            );
+            FfRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<surfaceTensorField>("Ff")
+            );
+            JfRef() = subsetter.interpolate
+            (
+                baseMesh.lookupObject<surfaceScalarField>("Jf")
+            );
+            return false;
+        }
     }
 
     if (!FfPtr_.valid())
@@ -823,51 +917,6 @@ void Foam::mechanicalLaw::updateSigmaHyd
 }
 
 
-Foam::tmp<Foam::volSymmTensorField> Foam::mechanicalLaw::calcEpsilon
-(
-    const volSymmTensorField&
-) const
-{
-    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
-    {
-        return 0.5*log(symm(F().T() & F()));
-    }
-    return symm(mesh().lookupObject<volTensorField>("grad(D)"));
-}
-
-
-Foam::tmp<Foam::surfaceSymmTensorField> Foam::mechanicalLaw::calcEpsilon
-(
-    const surfaceSymmTensorField&
-) const
-{
-    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
-    {
-        return 0.5*log(symm(Ff().T() & Ff()));
-    }
-    return symm(mesh().lookupObject<surfaceTensorField>("grad(D)f"));
-}
-
-
-Foam::tmp<Foam::Field<Foam::symmTensor>>
-Foam::mechanicalLaw::calcEpsilon(const label patchi) const
-{
-    if (nonLinGeom() == nonLinearGeometry::TOTAL_LAGRANGIAN)
-    {
-        const tensorField& pF(F().boundaryField()[patchi]);
-        return 0.5*log(symm(pF.T() & pF));
-    }
-    return
-        symm
-        (
-            mesh().lookupObject<volTensorField>
-            (
-                "grad(D)"
-            ).boundaryField()[patchi]
-        );
-}
-
-
 const Foam::Switch& Foam::mechanicalLaw::enforceLinear() const
 {
     // Lookup the solideModel
@@ -901,7 +950,6 @@ Foam::mechanicalLaw::mechanicalLaw
     dict_(dict),
     baseMeshRegionName_(mesh.name()),
     nonLinGeom_(nonLinGeom),
-    rho_(mesh.lookupObject<volScalarField>("rho")),
     FPtr_(),
     FfPtr_(),
     relFPtr_(),
@@ -921,30 +969,6 @@ Foam::mechanicalLaw::mechanicalLaw
         dict.lookupOrDefault<scalar>("pressureSmoothingScaleFactor", 1.0)
     )
 {
-    // Set the base mesh region name
-    // For an FSI case, the region will be called solid, else it will be called
-    // region0.
-//     if (mesh.time().foundObject<fvMesh>("solid"))
-//     {
-//         baseMeshRegionName_ = "solid";
-//     }
-//     else if (mesh.time().foundObject<fvMesh>("region0"))
-//     {
-//         baseMeshRegionName_ = "region0";
-//     }
-//     else
-//     {
-//         FatalErrorIn
-//         (
-//             "Foam::mechanicalLaw::mechanicalLaw\n"
-//             "(\n"
-//             "    const word& name,\n"
-//             "    const fvMesh& mesh,\n"
-//             "    const dictionary& dict\n"
-//             ")"
-//         ) << "solid region name not found" << abort(FatalError);
-//     }
-
     if (solvePressureEqn_)
     {
         Info<< "    Laplacian equation will be solved for pressure" << nl
@@ -985,8 +1009,6 @@ Foam::mechanicalLaw::mechanicalLaw
                 << "direction, but " << nD << "  empty directions were found."
                 << abort(FatalError);
         }
-        Info<<planeStressDir_<<" "<<nonPlaneStressDirs_<<endl;
-        Info<<symmTensor::XX<<" "<<symmTensor::YY<<" "<<symmTensor::ZZ<<endl;
     }
 }
 

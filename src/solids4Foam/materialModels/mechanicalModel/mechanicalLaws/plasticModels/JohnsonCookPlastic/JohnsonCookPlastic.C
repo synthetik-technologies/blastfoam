@@ -65,7 +65,7 @@ Foam::scalar Foam::JohnsonCookPlastic<PlasticType>::curYieldStress
 template<class PlasticType>
 void Foam::JohnsonCookPlastic<PlasticType>::setCellValues(const label celli) const
 {
-    Ti_ = T_[celli];
+    Ti_ = T_()[celli];
     eDoti_ = epsilonElasticEffDot_()[celli];
 }
 
@@ -77,7 +77,7 @@ void Foam::JohnsonCookPlastic<PlasticType>::setVolPatchFaceValues
     const label facei
 ) const
 {
-    Ti_ = T_.boundaryField()[patchi][facei];
+    Ti_ = T_().boundaryField()[patchi][facei];
     eDoti_ = epsilonElasticEffDot_().boundaryField()[patchi][facei];
 }
 
@@ -113,7 +113,7 @@ Foam::JohnsonCookPlastic<PlasticType>::JohnsonCookPlastic
 )
 :
     PlasticType(name, mesh, dict, nonLinGeom),
-    T_(mesh.lookupObject<volScalarField>("T")),
+    T_(),
     A_("A", dimPressure, dict),
     B_("B", dimPressure, dict),
     C_("C", dimless, dict),
@@ -164,12 +164,13 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     volSymmTensorField& sigma
 )
 {
+    if (!T_.valid())
+    {
+        T_.set(&this->mesh().template lookupObject<volScalarField>("T"));
+    }
+
     // Compute effective strain rate
-    const volTensorField& gradD
-    (
-        this->mesh().template lookupObject<volTensorField>("grad(D)")
-    );
-    tmp<volSymmTensorField> eDot(symm(fvc::ddt(gradD)));
+    tmp<volSymmTensorField> eDot(fvc::ddt(this->epsilon()));
     const volSymmTensorField eElasticDot
     (
         dev(eDot) - dev(fvc::ddt(this->epsilonP()))
@@ -188,7 +189,11 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     surfaceSymmTensorField& sigma
 )
 {
-    Tf_ = fvc::interpolate(T_);
+    if (!T_.valid())
+    {
+        T_.set(&this->mesh().template lookupObject<volScalarField>("T"));
+    }
+    Tf_ = fvc::interpolate(T_());
 
     // Compute effective strain rate
     const surfaceTensorField& gradD =

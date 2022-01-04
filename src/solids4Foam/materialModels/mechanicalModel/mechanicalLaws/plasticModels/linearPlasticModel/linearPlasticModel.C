@@ -160,7 +160,7 @@ Foam::linearPlasticModel::impK() const
     // This is similar to the tangent matrix in FE procedures
 
     // Calculate deviatoric strain
-    const volSymmTensorField e(dev(calcEpsilon(epsilonP())));
+    const volSymmTensorField e(dev(this->epsilon()));
 
     // Calculate deviatoric trial stress
     const volSymmTensorField sTrial(2.0*mu_*(e - dev(epsilonP().oldTime())));
@@ -189,7 +189,7 @@ Foam::linearPlasticModel::impK(const label patchi) const
     // This is similar to the tangent matrix in FE procedures
 
     // Calculate deviatoric strain
-    const symmTensorField e(dev(calcEpsilon(patchi)));
+    const symmTensorField e(dev(this->epsilon().boundaryField()[patchi]));
 
     // Calculate deviatoric trial stress
     const symmTensorField sTrial
@@ -215,7 +215,9 @@ Foam::linearPlasticModel::impK(const label patchi) const
 
 void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
 {
-    volSymmTensorField eps(calcEpsilon((nu_/E_), sigma, epsilonP()));
+    this->updateEpsilon(epsilonRef(), nu_/E_, sigma, epsilonP());
+
+    const volSymmTensorField eps(this->epsilon());
 
     // Calculate deviatoric strain
     const volSymmTensorField e(dev(eps));
@@ -320,7 +322,9 @@ void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
 
 void Foam::linearPlasticModel::correct(surfaceSymmTensorField& sigma)
 {
-    surfaceSymmTensorField eps(calcEpsilon((nu_/E_), sigma, epsilonPf()));
+    this->updateEpsilon(this->epsilonfRef(), nu_/E_, sigma, epsilonPf());
+
+    const surfaceSymmTensorField& eps(this->epsilonf());
 
     // Calculate deviatoric strain
     const surfaceSymmTensorField e(dev(eps));
