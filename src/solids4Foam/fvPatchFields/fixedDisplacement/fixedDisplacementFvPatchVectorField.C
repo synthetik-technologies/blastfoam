@@ -31,7 +31,7 @@ License
 #include "fvcMeshPhi.H"
 #include "pointMesh.H"
 #include "pointFields.H"
-#include "fixedValuePointPatchFields.H"
+#include "valuePointPatchFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -89,22 +89,25 @@ void fixedDisplacementFvPatchVectorField::setPointDisplacement
         // Check if the boundary is fixedValue
         if
         (
-            pointD.boundaryField()[patch().index()].type()
-         == fixedValuePointPatchVectorField::typeName
+            isA<valuePointPatchVectorField>
+            (
+                pointD.boundaryField()[patch().index()]
+            )
         )
         {
             // Use const_cast to set boundary condition
-            fixedValuePointPatchVectorField& patchPointD =
-                refCast<fixedValuePointPatchVectorField>
+            valuePointPatchVectorField& patchPointD =
+                refCast<valuePointPatchVectorField>
                 (
                     const_cast<pointVectorField&>
                     (
                         pointD
                     ).boundaryFieldRef()[patch().index()]
                 );
+            Field<vector>& pD(patchPointD);
 
             // Interpolate face values to the points
-            patchPointD == interp().faceToPointInterpolate(faceDisp);
+            pD = interp().faceToPointInterpolate(faceDisp);
         }
     }
 }

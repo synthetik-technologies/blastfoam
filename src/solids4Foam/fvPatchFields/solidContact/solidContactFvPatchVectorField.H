@@ -113,6 +113,9 @@ class solidContactFvPatchVectorField
         //- Is the contact boundary active
         Switch rigidMaster_;
 
+        //- Is point displacement used
+        Switch usePointD_;
+
         //- Normal contact model pointers
         mutable PtrList<normalContactModel> normalModels_;
 
