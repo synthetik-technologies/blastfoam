@@ -42,7 +42,7 @@ const solidModel& lookupSolidModel(const objectRegistry& obReg)
 const solidModel& lookupSolidModel
 (
     const objectRegistry& obReg,
-    const word& obName
+    const word& baseMeshRegionName
 )
 {
     if (obReg.foundObject<solidModel>("solidProperties"))
@@ -59,11 +59,37 @@ const solidModel& lookupSolidModel
             "solidProperties"
         );
     }
+    else
+    {
+        HashTable<const objectRegistry*> obrs
+        (
+            obReg.parent().lookupClass<objectRegistry>()
+        );
 
-    FatalErrorIn
-    (
-        "const solidModel& lookupSolidModel(const objectRegistry& obReg)"
-    )   << "Could not find " << word("solidModel_" + obName) << nl << nl
+        forAllConstIter
+        (
+            HashTable<const objectRegistry*>,
+            obrs,
+            iter
+        )
+        {
+            if
+            (
+                iter.key() == baseMeshRegionName
+             && iter()->foundObject<solidModel>("solidProperties")
+            )
+            {
+                return iter()->lookupObject<solidModel>
+                (
+                    "solidProperties"
+                );
+            }
+        }
+    }
+
+    FatalErrorInFunction
+        << "Could not find " << solidModel::typeName
+        << "for region " << obReg.name() << nl << nl
         << "solidModels in the objectRegistry: "
         << obReg.names<solidModel>() << nl << nl
         << "solidModels in the parent objectRegistry:"

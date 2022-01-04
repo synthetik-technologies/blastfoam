@@ -35,6 +35,7 @@ License
 #include "calculatedPointPatchFields.H"
 #include "fixedValuePointPatchFields.H"
 #include "fixedValueFvPatchFields.H"
+#include "fvm.H"
 
 #include "fvcGradf.H"
 #include "wedgePolyPatch.H"
@@ -561,24 +562,31 @@ Foam::dictionary& Foam::solidModel::solidModelDict()
 void Foam::solidModel::displacementFromVelocity
 (
     volVectorField& disp,
-    volVectorField& ddisp,
-    const label nOld
+    volVectorField& ddisp
 )
 {
+    // Get the number of stored times
+    // We don't care if D or DD is used since both need to be consistent
+    label nOld = max(disp.nOldTimes(), ddisp.nOldTimes());
+
+    // Return if no old times are present or we are continuing a simulation
     if (mesh_.time().restart() || !nOld)
     {
         return;
     }
+
+    // If U is found calculate D and DD
     IOobject Uheader(U());
     if (!Uheader.typeHeaderOk<volVectorField>(true))
     {
-        ddisp = U()*mesh_.time().deltaT();
-        disp.oldTime() = -ddisp;
+        ddisp.ref() = U()*mesh_.time().deltaT();
+        disp.oldTime().ref() = -ddisp;
+
+        // Call this function on the old times
         displacementFromVelocity
         (
             disp.oldTime(),
-            ddisp.oldTime(),
-            nOld - 1
+            ddisp.oldTime()
         );
     }
 }
@@ -607,8 +615,8 @@ Foam::solidModel::solidModel
     ),
     mesh_(mesh),
     type_(type),
-    thermal_(mesh),
     mechanical_(mesh, nonlinear, incremental),
+    thermal_(mesh),
     Dheader_("D", mesh.time().timeName(), mesh, IOobject::MUST_READ),
     DDheader_("DD", mesh.time().timeName(), mesh, IOobject::MUST_READ),
     D_
@@ -662,7 +670,8 @@ Foam::solidModel::solidModel
             IOobject::AUTO_WRITE
         ),
         pMesh(),
-        dimensionedVector("0", dimLength, Zero)
+        dimensionedVector("0", dimLength, Zero),
+        pointDBoundaryTypes(D_)
     ),
     pointDD_
     (
@@ -675,7 +684,8 @@ Foam::solidModel::solidModel
             IOobject::AUTO_WRITE
         ),
         pMesh(),
-        dimensionedVector("0", dimLength, Zero)
+        dimensionedVector("0", dimLength, Zero),
+        pointDBoundaryTypes(DD_)
     ),
     gradD_
     (
@@ -683,9 +693,7 @@ Foam::solidModel::solidModel
         (
             "grad(" + D_.name() + ")",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            mesh
         ),
         mesh,
         dimensionedTensor("0", dimless, tensor::zero)
@@ -696,9 +704,7 @@ Foam::solidModel::solidModel
         (
             "grad(" + DD_.name() + ")",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
+            mesh
         ),
         mesh,
         dimensionedTensor("0", dimless, tensor::zero)
@@ -716,7 +722,7 @@ Foam::solidModel::solidModel
         mesh,
         dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
     ),
-    rho_(thermal_.thermo().rho()),
+    rho_(thermal_.rho()),
     g_
     (
         IOobject
@@ -825,6 +831,9 @@ Foam::solidModel::solidModel
         globalPatches_.setDisplacementField(mesh.name(), "D");
     }
 
+    mechanical().grad(D_, gradD_);
+    mechanical().grad(DD_, gradDD_);
+
     // Print out the relaxation factor
     Info<< "    under-relaxation method: " << relaxationMethod_ << endl;
     if (relaxationMethod_ == "QuasiNewton")
@@ -906,6 +915,10 @@ void Foam::solidModel::DisRequired()
             << "This solidModel requires the 'D' field to be specified!"
             << abort(FatalError);
     }
+
+    // Call a dummy fvm::ddt so we call the necessary old times
+    fvm::d2dt2(D_);
+    displacementFromVelocity(D_, DD_);
 }
 
 
@@ -917,6 +930,9 @@ void Foam::solidModel::DDisRequired()
             << "This solidModel requires the 'DD' field to be specified!"
             << abort(FatalError);
     }
+    // Call a dummy fvm::ddt so we call the necessary old times
+    fvm::d2dt2(DD_);
+    displacementFromVelocity(D_, DD_);
 }
 
 

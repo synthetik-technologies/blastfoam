@@ -78,11 +78,11 @@ class solidModel
         //- Derived solidModel type
         const word type_;
 
-        //- Thermal model
-        thermalModel thermal_;
-
         //- Mechanical model
         mechanicalModel mechanical_;
+
+        //- Thermal model
+        thermalModel thermal_;
 
         //- Total displacement field header
         IOobject Dheader_;
@@ -214,9 +214,6 @@ class solidModel
         //- Make setCellDisplacements
         void makeSetCellDisps() const;
 
-        //- Return boundary types for pointD/pointDD fields
-        wordList pointDBoundaryTypes(const volVectorField& D) const;
-
         //- Return a reference to setCellDisplacements
         const setCellDisplacements& setCellDisps() const;
 
@@ -307,9 +304,11 @@ protected:
         void displacementFromVelocity
         (
             volVectorField& disp,
-            volVectorField& ddisp,
-            const label nOld = 2
+            volVectorField& ddisp
         );
+
+        //- Return boundary types for pointD/pointDD fields
+        wordList pointDBoundaryTypes(const volVectorField& D) const;
 
 public:
 
