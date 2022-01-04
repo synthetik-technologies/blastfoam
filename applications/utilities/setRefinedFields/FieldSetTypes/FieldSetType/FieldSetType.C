@@ -389,6 +389,9 @@ void Foam::VolFieldSetType<Type>::setField()
         }
     }
 
+    //- Evaluate boundary conditions
+    this->fieldPtr_().boundaryFieldRef().evaluate();
+
     if (this->write_)
     {
         if (!this->fieldPtr_->write())
@@ -550,6 +553,9 @@ void Foam::PointFieldSetType<Type>::setField()
             this->getBoundaryField(patchi, indices, pC, pf);
         }
     }
+
+    //- Evaluate boundary conditions
+    this->fieldPtr_().boundaryFieldRef().evaluate();
 
     if (this->write_)
     {

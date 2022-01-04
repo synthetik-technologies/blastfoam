@@ -189,17 +189,19 @@ labelList removeSelectedFaces
     const dictionary dict,
     const fvMesh& mesh,
     const labelList& cells,
-    const labelList& faces
+    const labelList& faces,
+    const bool defaultAll = false
 )
 {
     const SelectionType sType =
-        selectionTypeNames[dict.lookup("selectionMode")];
+        defaultAll
+      ? selectionTypeNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+      : selectionTypeNames[dict.lookup<word>("selectionMode")];
 
-    if (!faces.size() || sType == ALL)
+    if (!returnReduce(faces.size(), sumOp<label>()) || sType == ALL)
     {
         return faces;
     }
-
 
     labelList newFaces(faces);
 
@@ -228,17 +230,17 @@ labelList removeSelectedFaces
 
     const labelList& owner = mesh.owner();
     const labelList& neighbour = mesh.neighbour();
+
     labelHashSet selectedCells(cells);
 
     labelHashSet patchIDs;
     bool setBoundary = sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY;
     if (setBoundary)
     {
-        patchIDs =
-            mesh.boundaryMesh().patchSet
-            (
-                List<wordRe>(dict.lookup("patches"))
-            );
+        patchIDs = mesh.boundaryMesh().patchSet
+        (
+            dict.lookup<wordReList>("patches")
+        );
     }
 
     bool setInternal = sType == INTERFACE || sType == INTERFACE_AND_BOUNDARY;
@@ -277,13 +279,16 @@ labelList removeSelectedPoints
     const dictionary& dict,
     const fvMesh& mesh,
     const labelList& cells,
-    const labelList& points
+    const labelList& points,
+    const bool defaultAll = false
 )
 {
     const SelectionType sType =
-        selectionTypeNames[dict.lookup("selectionMode")];
+        defaultAll
+      ? selectionTypeNames[dict.lookupOrDefault<word>("selectionMode", "all")]
+      : selectionTypeNames[dict.lookup("selectionMode")];
 
-    if (!points.size() || sType == ALL)
+    if (!returnReduce(points.size(), sumOp<label>()) || sType == ALL)
     {
         return points;
     }
@@ -296,7 +301,7 @@ labelList removeSelectedPoints
         (
             mesh.boundaryMesh().patchSet
             (
-                List<wordRe>(dict.lookup("patches"))
+                dict.lookup<wordReList>("patches")
             )
         );
 
@@ -497,12 +502,7 @@ public:
             Istream& is
         ) const
         {
-            token t(is);
-            if (!t.isWord())
-            {
-                return;
-            }
-            const word fieldName(t.wordToken());
+            const word fieldName(is);
             autoPtr<FieldSetType<Type, Patch, Mesh>> fieldSet
             (
                 FieldSetType<Type, Patch, Mesh>::New
@@ -535,7 +535,7 @@ public:
             Istream& is
         ) const
         {
-            if (!elms.size() && !force_)
+            if (!returnReduce(elms.size(), sumOp<label>()) && !force_)
             {
                 return;
             }
@@ -626,13 +626,7 @@ public:
 
         autoPtr<topoSetList> operator()(Istream& is) const
         {
-            token t(is);
-            if (!t.isWord())
-            {
-                return autoPtr<topoSetList>();
-            }
-
-            word fieldSetType(t.wordToken());
+            word fieldSetType(is);
             GeoType geo(getGeoType(fieldSetType));
 
             switch (geo)
@@ -1068,7 +1062,9 @@ int main(int argc, char *argv[])
 
     autoPtr<hexRef> meshCutter;
     bool refine = true;
-    if (args.optionFound("force3D"))
+    if (noRefine)
+    {}
+    else if (args.optionFound("force3D"))
     {
         meshCutter.set(new hexRef3D(mesh));
     }
@@ -1761,6 +1757,60 @@ int main(int argc, char *argv[])
             labelList maxCellLevel(mesh.nCells(), -1);
             forAll(regions, regionI)
             {
+                // Set specified cells to be refined
+                labelList refineCells;
+                labelList refineFaces;
+                labelList refinePoints;
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refineInternal",
+                        false
+                    )
+                )
+                {
+                    refineCells = savedCells[regionI];
+                }
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refineFaces",
+                        false
+                    )
+                )
+                {
+                    refineFaces =
+                        removeSelectedFaces
+                        (
+                            regions[regionI].dict(),
+                            mesh,
+                            savedCells[regionI],
+                            savedFaces[regionI],
+                            true
+                        );
+                }
+                if
+                (
+                    regions[regionI].dict().lookupOrDefault
+                    (
+                        "refinePoints",
+                        false
+                    )
+                )
+                {
+                    refinePoints =
+                        removeSelectedPoints
+                        (
+                            regions[regionI].dict(),
+                            mesh,
+                            savedCells[regionI],
+                            savedPoints[regionI],
+                            true
+                        );
+                }
+
                 // Do not use the max level, use current
                 // Order is important in the definitions of regions
                 Switch overwriteLevel =
@@ -1776,23 +1826,23 @@ int main(int argc, char *argv[])
                 const labelListList& pointCells = mesh.pointCells();
                 if (overwriteLevel)
                 {
-                    forAll(savedCells[regionI], celli)
+                    forAll(refineCells, celli)
                     {
-                        maxCellLevel[savedCells[regionI][celli]] = levels[regionI];
+                        maxCellLevel[refineCells[celli]] = levels[regionI];
                     }
 
-                    forAll(savedFaces[regionI], fi)
+                    forAll(refineFaces, fi)
                     {
-                        const label facei = savedFaces[regionI][fi];
+                        const label facei = refineFaces[fi];
                         maxCellLevel[owner[facei]] = levels[regionI];
                         if (facei < mesh.nInternalFaces())
                         {
                             maxCellLevel[neighbour[facei]] = levels[regionI];
                         }
                     }
-                    forAll(savedPoints[regionI], pi)
+                    forAll(refinePoints, pi)
                     {
-                        const label pointi = savedPoints[regionI][pi];
+                        const label pointi = refinePoints[pi];
                         const labelList& pc = pointCells[pointi];
                         forAll(pc, ci)
                         {
@@ -1802,18 +1852,18 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    forAll(savedCells[regionI], celli)
+                    forAll(refineCells, celli)
                     {
-                        maxCellLevel[savedCells[regionI][celli]] =
+                        maxCellLevel[refineCells[celli]] =
                             max
                             (
-                                maxCellLevel[savedCells[regionI][celli]],
+                                maxCellLevel[refineCells[celli]],
                                 levels[regionI]
                             );
                     }
-                    forAll(savedFaces[regionI], fi)
+                    forAll(refineFaces, fi)
                     {
-                        const label facei = savedFaces[regionI][fi];
+                        const label facei = refineFaces[fi];
                         maxCellLevel[owner[facei]] =
                             max
                             (
@@ -1830,9 +1880,9 @@ int main(int argc, char *argv[])
                                 );
                         }
                     }
-                    forAll(savedPoints[regionI], pi)
+                    forAll(refinePoints, pi)
                     {
-                        const label pointi = savedPoints[regionI][pi];
+                        const label pointi = refinePoints[pi];
                         const labelList& pc = pointCells[pointi];
                         forAll(pc, ci)
                         {
@@ -1846,59 +1896,29 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                // Set specified cells to be refined
-                bool refineAll =
-                    regions[regionI].dict().lookupOrDefault("refine", false);
-                bool refineCells =
-                    regions[regionI].dict().lookupOrDefault
-                    (
-                        "refineInternal",
-                        false
-                    ) || refineAll;
-                bool refineFaces =
-                    regions[regionI].dict().lookupOrDefault
-                    (
-                        "refineFaces",
-                        false
-                    ) || refineAll;
-                bool refinePoints =
-                    regions[regionI].dict().lookupOrDefault
-                    (
-                        "refinePoints",
-                        false
-                    ) || refineAll;
                 if (!EE.valid())
                 {
-                    if (refineCells)
+                    forAll(refineCells, celli)
                     {
-                        forAll(savedCells[regionI], celli)
-                        {
-                            error[savedCells[regionI][celli]] = 1.0;
-                        }
+                        error[refineCells[celli]] = 1.0;
                     }
-                    if (refineFaces)
+                    forAll(refineFaces, fi)
                     {
-                        forAll(savedFaces[regionI], fi)
-                        {
-                            const label facei = savedFaces[regionI][fi];
-                            error[owner[facei]] = 1.0;
+                        const label facei = refineFaces[fi];
+                        error[owner[facei]] = 1.0;
 
-                            if (facei < mesh.nInternalFaces())
-                            {
-                                error[neighbour[facei]] = 1.0;
-                            }
+                        if (facei < mesh.nInternalFaces())
+                        {
+                            error[neighbour[facei]] = 1.0;
                         }
                     }
-                    if (refinePoints)
+                    forAll(refinePoints, pi)
                     {
-                        forAll(savedPoints[regionI], pi)
+                        const label pointi = refinePoints[pi];
+                        const labelList& pc = pointCells[pointi];
+                        forAll(pc, ci)
                         {
-                            const label pointi = savedPoints[regionI][pi];
-                            const labelList& pc = pointCells[pointi];
-                            forAll(pc, ci)
-                            {
-                                error[pc[ci]] = 1.0;
-                            }
+                            error[pc[ci]] = 1.0;
                         }
                     }
                 }

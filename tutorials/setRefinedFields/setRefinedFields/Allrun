@@ -11,4 +11,5 @@ paraFoam -builtin -touch
 runApplication blockMesh
 
 # -- run the calc
+# the debug flag writes each intermediate refinement set
 runApplication $(getApplication) -debug
