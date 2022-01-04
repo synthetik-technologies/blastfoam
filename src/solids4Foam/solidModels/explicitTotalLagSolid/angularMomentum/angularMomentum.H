@@ -52,8 +52,17 @@ class angularMomentum
         //- Material density
         const volScalarField& rho_;
 
-        //- Rotation axis
+        //- Radial axes
+        vector radialAxes_;
+
+        //- Rotation axes
         vector rotationAxes_;
+
+        //- Valid directions (geometricD)
+        vector validD_;
+
+        //- Ignored directions (inverse of geometricD)
+        vector invalidD_;
 
 private:
 

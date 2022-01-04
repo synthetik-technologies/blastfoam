@@ -47,24 +47,51 @@ angularMomentum::angularMomentum
 :
     mesh_(vm),
     rho_(vm.lookupObject<volScalarField>("rho")),
-    rotationAxes_(Zero)
+    radialAxes_(vector::one),
+    rotationAxes_(vector::one),
+    validD_(max(mesh_.geometricD(), Vector<label>::zero)),
+    invalidD_(vector::one - validD_)
 {
-    forAll(mesh_.boundaryMesh(), patchi)
+    if (mesh_.nGeometricD() < 3)
     {
-        if (isA<wedgePolyPatch>(mesh_.boundaryMesh()[patchi]))
+        radialAxes_ = vector::one;
+        rotationAxes_ = vector::zero;
+
+        List<vector> foundAxis;
+        forAll(mesh_.boundaryMesh(), patchi)
         {
-            const wedgePolyPatch& wp = dynamicCast<const wedgePolyPatch>
-            (
-                mesh_.boundaryMesh()[patchi]
-            );
-            vector a(cmptMag(wp.axis()));
-            forAll(a, cmpti)
+            if (isA<wedgePolyPatch>(mesh_.boundaryMesh()[patchi]))
             {
-                if (mag(a[cmpti]) > 0.5)
+                const wedgePolyPatch& wp = dynamicCast<const wedgePolyPatch>
+                (
+                    mesh_.boundaryMesh()[patchi]
+                );
+
+                bool found = false;
+                vector a = cmptMag(wp.axis());
+                forAll(foundAxis, ai)
                 {
-                    rotationAxes_[cmpti] = 1.0;
+                    if (mag(a - foundAxis[ai]) < 1e-6)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    foundAxis.append(a);
+                    radialAxes_ -= cmptMag(wp.centreNormal()) + a;
+                    rotationAxes_ += a;
                 }
             }
+        }
+        forAll(rotationAxes_, cmpti)
+        {
+            radialAxes_[cmpti] =
+                min(radialAxes_[cmpti]*pos(radialAxes_[cmpti] - 1e-6), 1.0);
+            rotationAxes_[cmpti] =
+                min(rotationAxes_[cmpti]*pos(rotationAxes_[cmpti] - 1e-6), 1.0);
         }
     }
 }
@@ -135,11 +162,12 @@ void angularMomentum::AMconservation
     scalar K_BB = 0.0;
     vector R_L = vector::zero;
 
-    forAll(mesh_.cells(), celli)
+    forAll(xAM, celli)
     {
-        vector xAMi(cmptMultiply(xAM[celli], rotationAxes_));
-        vector rhsAMi(cmptMultiply(rhsAm[celli], rotationAxes_));
-        vector rhsRhoUi(cmptMultiply(rhsRhoU[celli], rotationAxes_));
+        const vector& xAMi(xAM[celli]);
+        const vector& rhsAMi(rhsAm[celli]);
+        const vector& rhsRhoUi(rhsRhoU[celli]);
+
         K_LL += V[celli]*((xAMi & xAMi)*tensor::I - (xAMi*xAMi));
 
         K_LB +=
@@ -165,26 +193,22 @@ void angularMomentum::AMconservation
     }
 
     tensor LHS = K_LL - ((K_LB & K_LB)/K_BB);
-    vector RHS = R_L;
+
+    // Only include axes that are not geometricD
+    vector RHS = cmptMultiply(R_L, invalidD_);
 
     vector lambda = stabInv(LHS) & RHS;
     vector beta = (-K_LB & lambda)/K_BB;
 
     forAll(rhsRhoU, celli)
     {
-        vector xAMi(cmptMultiply(xAM[celli], rotationAxes_));
-        rhsRhoU[celli] +=
-            (lambda ^ xAMi) + beta;
+        rhsRhoU[celli] += (lambda ^ xAM[celli]) + beta;
     }
 
     volVectorField::Boundary& prhsRhoU(rhsRhoU.boundaryFieldRef());
     forAll(prhsRhoU, patchi)
     {
-        prhsRhoU[patchi] +=
-            (
-                lambda
-              ^ cmptMultiply(xAM.boundaryField()[patchi], rotationAxes_)
-            ) + beta;
+        prhsRhoU[patchi] += (lambda ^ xAM.boundaryField()[patchi]) + beta;
     }
     if (RKstage == 0)
     {
