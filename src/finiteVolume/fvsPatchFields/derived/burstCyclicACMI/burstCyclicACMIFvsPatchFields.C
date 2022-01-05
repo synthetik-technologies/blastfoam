@@ -25,6 +25,7 @@ License
 
 #include "burstCyclicACMIFvsPatchFields.H"
 #include "fvsPatchFields.H"
+#include "surfaceMesh.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
