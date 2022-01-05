@@ -27,12 +27,13 @@ ddtSchemes
 
 gradSchemes
 {
-    default                 leastSquares;
+    default                 cellMDLimited extendedLeastSquares 0 1;
 }
 
 divSchemes
 {
     default                 none;
+    div(sigma)              Gauss linear;
 }
 
 laplacianSchemes
@@ -44,6 +45,7 @@ laplacianSchemes
 snGradSchemes
 {
     default                 none;
+    snGrad(D)               corrected;
 }
 
 interpolationSchemes

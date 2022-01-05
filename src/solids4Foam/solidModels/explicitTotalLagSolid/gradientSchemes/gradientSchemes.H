@@ -79,6 +79,213 @@ class gradientSchemes
         //- Inverse of local distance matrix
         tensorField AinvLocal_;
 
+
+        //- Return the scalar limiter
+        scalar limiter
+        (
+            const scalar& deltaMax,
+            const scalar& deltaMin,
+            const scalar& delta
+        ) const
+        {
+            if (mag(delta) < small)
+            {
+                return 1.0;
+            }
+            return min
+            (
+                max
+                (
+                    max(deltaMax/delta, 0.0),
+                    max(deltaMin/delta, 0.0)
+                ),
+                1.0
+            );
+        }
+
+
+        //- Return the vector limiter
+        vector limiter
+        (
+            const vector& deltaMax,
+            const vector& deltaMin,
+            const vector& delta
+        ) const
+        {
+            return vector
+            (
+                limiter(deltaMax[0], deltaMin[0], delta[0]),
+                limiter(deltaMax[1], deltaMin[1], delta[1]),
+                limiter(deltaMax[2], deltaMin[2], delta[2])
+            );
+        }
+
+        template<class Type>
+        tmp<GeometricField<Type, fvPatchField, volMesh>> calcLimiter
+        (
+            const GeometricField<Type, fvPatchField, volMesh>& phi,
+            const GeometricField
+            <
+                typename outerProduct<vector, Type>::type,
+                fvPatchField,
+                volMesh
+            >& gradPhi
+        ) const
+        {
+            typedef Field<Type> FieldType;
+            typedef GeometricField<Type, fvPatchField, volMesh> GeoFieldType;
+
+            typedef Field<typename outerProduct<vector, Type>::type>
+                GradFieldType;
+
+            tmp<GeoFieldType> tphiLimiter
+            (
+                GeoFieldType::New
+                (
+                    "phiLimiter",
+                    mesh_,
+                    dimensioned<Type>("pLimiter", dimless, pTraits<Type>::one)
+                )
+            );
+            GeoFieldType& phiLimiter(tphiLimiter.ref());
+
+            // Collect min and max values from neighbourhood
+            GeoFieldType phiMin("phiMin", phi);
+            GeoFieldType phiMax("phiMax", phi);
+
+            const labelUList& owner = mesh_.owner();
+            const labelUList& neighbour = mesh_.neighbour();
+
+            forAll (owner, facei)
+            {
+                const label own = owner[facei];
+                const label nei = neighbour[facei];
+
+                // min values
+                phiMin[own] = min(phiMin[own], phi[nei]);
+                phiMin[nei] = min(phiMin[nei], phi[own]);
+
+                // max values
+                phiMax[own] = max(phiMax[own], phi[nei]);
+                phiMax[nei] = max(phiMax[nei], phi[own]);
+            }
+
+            // Coupled boundaries
+            forAll (phi.boundaryField(), patchi)
+            {
+                if (phi.boundaryField()[patchi].coupled())
+                {
+                    const Field<Type> pNei
+                    (
+                        phi.boundaryField()[patchi].patchNeighbourField()
+                    );
+
+                    const labelList& fc =
+                        phi.boundaryField()[patchi].patch().faceCells();
+
+                    forAll (fc, facei)
+                    {
+                        const label celli = fc[facei];
+
+                        // min value
+                        phiMin[celli] = min(phiMin[celli], pNei[facei]);
+
+                        // max value
+                        phiMax[celli] = max(phiMax[celli], pNei[facei]);
+                    }
+                }
+            }
+
+            // Calculate limiter
+
+            // Get geometrical information
+
+            const volVectorField& C = mesh_.C();
+            const surfaceVectorField& Cf = mesh_.Cf();
+
+            // Compute limiter values, internal faces
+            forAll (owner, facei)
+            {
+                const label own = owner[facei];
+                const label nei = neighbour[facei];
+
+                vector deltaOwn(Cf[facei] - C[own]);
+                vector deltaNei(Cf[facei] - C[nei]);
+
+                phiLimiter[own] =
+                    min
+                    (
+                        phiLimiter[own],
+                        limiter
+                        (
+                            phiMax[own] - phi[own],
+                            phiMin[own] - phi[own],
+                            gradPhi[own] & deltaOwn
+                        )
+                    );
+
+                phiLimiter[nei] =
+                    min
+                    (
+                        phiLimiter[nei],
+                        limiter
+                        (
+                            phiMax[nei] - phi[nei],
+                            phiMin[nei] - phi[nei],
+                            gradPhi[nei] & deltaNei
+                        )
+                    );
+            }
+
+            // Coupled boundaries
+            forAll (phi.boundaryField(), patchi)
+            {
+                if (phi.boundaryField()[patchi].coupled())
+                {
+                    // Get patch
+                    const fvPatch& p = phi.boundaryField()[patchi].patch();
+
+                    const FieldType pNei
+                    (
+                        phi.boundaryField()[patchi].patchNeighbourField()
+                    );
+
+                    const labelList& fc = p.faceCells();
+
+                    const vectorField deltaOwn(p.Cf() - p.Cn());
+
+                    // Get gradients
+                    const GradFieldType gradPhiOwn
+                    (
+                        gradPhi.boundaryField()[patchi].patchInternalField()
+                    );
+
+                    forAll (fc, facei)
+                    {
+                        const label& celli = fc[facei];
+
+                        phiLimiter[celli] =
+                            min
+                            (
+                                phiLimiter[celli],
+                                limiter
+                                (
+                                    phiMax[celli] - phi[celli],
+                                    phiMin[celli] - phi[celli],
+                                    gradPhiOwn[facei] & deltaOwn[facei]
+                                )
+                            );
+                    }
+                }
+            }
+
+            // Do parallel communication to correct limiter on
+            // coupled boundaries
+            phiLimiter.correctBoundaryConditions();
+
+            return tphiLimiter;
+        }
+
 private:
 
     // Private member functions

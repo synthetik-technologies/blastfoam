@@ -6,15 +6,9 @@ cd ${0%/*} || exit 1    # run from this directory
 
 paraFoam -builtin -touch
 
-nDims=2
-blockMeshDict="blockMeshDict_${nDims}D"
+runApplication blockMesh
 
-runApplication -s air blockMesh -region air -dict system/air/$blockMeshDict
-runApplication -s plate blockMesh -region plate -dict system/plate/$blockMeshDict
-
-runApplication decomposePar -allRegions
-
-runParallel setRefinedFields -region air
+runApplication decomposePar
 
 runParallel $(getApplication)
 

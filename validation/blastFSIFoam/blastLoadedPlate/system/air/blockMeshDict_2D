@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 scale 1.0;
 
-#include "../../geometry_2D"
+#include "$FOAM_CASE/geometry_2D"
 
 blocks
 (

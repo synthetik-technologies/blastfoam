@@ -111,6 +111,9 @@ class explicitTotalLagSolid
         //- Point displacement
         pointVectorField& pointD_;
 
+        //- Density
+        const volScalarField& rho_;
+
         //- Cell velocities
         volVectorField& U_;
 
@@ -147,6 +150,12 @@ class explicitTotalLagSolid
         //- Shear wave speed field
         volScalarField sWaveSpeed_;
 
+        //- Interpolated fields
+        surfaceVectorField rhoUOwn_;
+        surfaceVectorField rhoUNei_;
+        surfaceVectorField tractionOwn_;
+        surfaceVectorField tractionNei_;
+
         // Scale factor for Jameson-Schmidt-Turkel smoothing term
         const scalar JSTScaleFactor_;
 
@@ -167,7 +176,6 @@ class explicitTotalLagSolid
         void solveGEqns
         (
             volVectorField& rhoURHS,
-            volVectorField& rhoURHS1,
             const label stage
         );
 

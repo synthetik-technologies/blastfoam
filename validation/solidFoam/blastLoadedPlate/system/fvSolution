@@ -20,17 +20,23 @@ solvers
     "(D|DD|T)"
     {
         solver          PBiCGStab;
+        preconditioner  DIC;
         tolerance       1e-9;
         relTol          0.1;
-        preconditioner  DIC;
+        minIter         1;
     }
 }
 
 relaxationFactors
 {
-//     D  0.5;
-//     DD 0.5;
-//     T  1;
+    equations
+    {
+        DD              0.9;
+    }
+    fields
+    {
+        DD              0.5;
+    }
 }
 
 // ************************************************************************* //

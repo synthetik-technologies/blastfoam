@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../../properties"
+#include "$FOAM_CASE/properties"
 
 phases (tnt air);                // List of phases
 

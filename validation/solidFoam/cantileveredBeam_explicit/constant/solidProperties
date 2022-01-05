@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// solidModel linearGeometryTotalDisplacement;
+// solidModel explicitUnsNonLinearGeometryTotalLagrangianTotalDisplacement;
 solidModel explicitLinearGeometryTotalLagrangian;
 
 linearGeometryTotalDisplacementCoeffs
@@ -35,6 +35,11 @@ linearGeometryTotalDisplacementCoeffs
     // Write frequency for the residuals
     infoFrequency   100;
 }
+"explicitUnsLinearGeometryTotalDisplacementCoeffs|explicitUnsNonLinearGeometryTotalLagrangianTotalDisplacementCoeffs"
+{
+    JSTScaleFactor 0.027;
+}
+
 "explicit.*"
 {
     incompressiblilityCoefficient 1;

@@ -5,15 +5,15 @@ createDEps()
     echo "creating wall velocity plot"
     gnuplot<<EOF
 
-    D(x)=abs(x/($3/$4));
-    ms(t)=$4*t*1000;
+    D(x)=-(x/($3/$4))
+    ms(t)=$4*t*1000.0;
     set terminal postscript eps enhanced color font 'Helvetica,40' linewidth 2\
         dl 8.0
     set output "blastFoam_wallD_validation.eps"
     set xlabel "Time [{/Symbol t} ms]"
     set ylabel "Normalized deflection [ {/Symbol d} / th ]"
     set grid
-    set key right top box
+    set key left top box
     set size 2,2
     set autoscale
     set xrange [0:4]
@@ -22,7 +22,9 @@ createDEps()
     set mytic 4
     plot'<sed -e "s/[(,)]//g" $1/D' using (ms(\$1)):(D(\$3)) title 'blastFoam' \
         with lines lt 1 linewidth 2 lc rgb 'black', \
-         '$2/D.csv' using 1:2 title 'Neuberg et al'
+        '<sed -e "s/[(,)]//g" $2/D_implicit' using (ms(\$1)):(D(\$3)) title 'Implicit' \
+        with lines lt 1 linewidth 2 lc rgb 'red', \
+        '$2/D.csv' using 1:2 title 'Neuberg et al'
 
 
 EOF

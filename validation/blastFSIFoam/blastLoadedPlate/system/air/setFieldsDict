@@ -39,7 +39,7 @@ regions
             centre  (0 $R 0);
             radius 0.25;
         }
-        refineInternal no;
+        refineInternal yes;
         level 3;
 
         fieldValues

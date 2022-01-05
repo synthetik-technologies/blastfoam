@@ -101,7 +101,8 @@ public:
             //- Angular momentum conservation
             void AMconservation
             (
-                GeometricField<vector, fvPatchField, volMesh>&,
+                const volVectorField& x,
+                const volVectorField& rhoU,
                 GeometricField<vector, fvPatchField, volMesh>&,
                 const GeometricField<vector, fvPatchField, volMesh>&,
                 const label

@@ -30,10 +30,11 @@ boundaryField
         pressure        uniform 0;
         value           uniform (0 0 0);
 
-        KBSolver        cubicNegativePhase;
+        KBSolver        Friedlander;
         centre          (0 $R 0);
         mass            $W;
-        b               1;//0.771;
+        b               1.25;
+        useIntegratedPressure yes;
     }
     plateEnd
     {

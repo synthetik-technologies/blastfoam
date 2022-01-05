@@ -31,13 +31,13 @@ nonLinearGeometryTotalLagrangianCoeffs
     nCorrectors             2000;
 
     // Solution tolerance for displacement
-    solutionTolerance       1e-06;
+    solutionTolerance       1e-04;
 
     // Alternative solution tolerance for displacement
     alternativeTolerance    1e-06;
 
     // Material law solution tolerance
-    materialTolerance       1e-06;
+    materialTolerance       1e-04;
 
     // Write frequency for the residuals
     infoFrequency           100;

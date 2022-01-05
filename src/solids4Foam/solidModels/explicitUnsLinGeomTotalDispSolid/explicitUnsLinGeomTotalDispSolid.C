@@ -250,7 +250,7 @@ bool explicitUnsLinGeomTotalDispSolid::evolve()
                     (
                         rho(), waveSpeed_, gradD()
                     )
-                )().internalField()
+                )().primitiveField()
               - JSTScaleFactor_*fvc::laplacian
                 (
                     mesh().magSf(),
@@ -259,8 +259,8 @@ bool explicitUnsLinGeomTotalDispSolid::evolve()
                         0.5*(deltaT + deltaT0)*impKf_, U(), "laplacian(DU,U)"
                     ),
                     "laplacian(DU,U)"
-                )().internalField()
-            )/rho().internalField()
+                )().primitiveField()
+            )/rho().primitiveField()
           + g().value();
         a_.correctBoundaryConditions();
 

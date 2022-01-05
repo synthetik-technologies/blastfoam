@@ -106,22 +106,15 @@ angularMomentum::~angularMomentum()
 
 void angularMomentum::AMconservation
 (
+    const volVectorField& x,
+    const volVectorField& rhoU,
     GeometricField<vector, fvPatchField, volMesh>& rhsRhoU,
-    GeometricField<vector, fvPatchField, volMesh>& rhsRhoU1,
     const GeometricField<vector, fvPatchField, volMesh>& rhsAm,
     const label RKstage
 ) const
 {
     const scalarField& V = mesh_.V();
-    const volVectorField& x(mesh_.lookupObject<volVectorField>("x"));
-    const volVectorField& rhoU = mesh_.lookupObject<volVectorField>("rhoU");
-
-    const dimensionedScalar deltaT
-    (
-        "deltaT",
-        dimensionSet(0,0,1,0,0,0,0),
-        mesh_.time().deltaTValue()
-    );
+    const dimensionedScalar deltaT(mesh_.time().deltaT());
 
     tmp<GeometricField<vector, fvPatchField, volMesh> > tvf_x
     (
@@ -153,7 +146,7 @@ void angularMomentum::AMconservation
     else if (RKstage == 1)
     {
         xAM = x.oldTime() + (deltaT/2.0)*(rhoU.oldTime()/rho_);
-        rhoUAM = rhoU.oldTime() + (deltaT*rhsRhoU1);
+        rhoUAM = rhoU.oldTime() + (deltaT*rhsRhoU.prevIter());
         xAM = xAM + ((deltaT*(rhoUAM/rho_))/2.0);
     }
 
@@ -212,13 +205,12 @@ void angularMomentum::AMconservation
     }
     if (RKstage == 0)
     {
-        rhsRhoU1 = rhsRhoU;
+        rhsRhoU.storePrevIter();
     }
 
     if (Pstream::parRun())
     {
         rhsRhoU.correctBoundaryConditions();
-        rhsRhoU1.correctBoundaryConditions();
     }
 }
 

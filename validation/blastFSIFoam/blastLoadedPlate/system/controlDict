@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../properties";
+#include "$FOAM_CASE/properties";
 
 application     blastFSIFoam;
 
@@ -25,7 +25,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         #calc "4.0 * $S / 1000.0";
+endTime         $endTime;
 
 deltaT          1e-7;
 
@@ -51,8 +51,6 @@ maxCo 0.5;
 
 adjustTimeStep yes;
 
-#include "../properties"
-
 functions
 {
     plateProbes
@@ -61,7 +59,7 @@ functions
         adjustLocations yes;
         region plate;
 
-        probeLocations ((0 $nthickness 0));
+        probeLocations ((0 0 0));
         fields (U D);
     }
 }

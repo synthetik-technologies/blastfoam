@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 scale 1.0;
 
-#include "../../geometry_3D"
+#include "$FOAM_CASE/geometry_3D"
 
 blocks
 (

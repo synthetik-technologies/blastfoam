@@ -15,11 +15,11 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 scale 1.0;
 
-#include "../../geometry_2D"
+#include "$FOAM_CASE/geometry_2D"
 
 blocks
 (
-    hex (0 1 3 2 0 8 9 2) ($nxPlate $nyPlate 1) simpleGrading (10 1 1)
+    hex (0 1 3 2 0 8 9 2) ($nxPlate $nyPlate 1) simpleGrading (1 1 1)
 );
 
 edges

@@ -65,6 +65,9 @@ class mechanics
         //- Relative deformation tensor
         volTensorField relF_;
 
+        //- Relative Jacobian of total deformation gradient
+        volScalarField relJ_;
+
         //- Cofactor of deformation
         volTensorField H_;
 

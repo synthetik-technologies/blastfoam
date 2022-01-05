@@ -24,7 +24,7 @@ boundaryField
     {
         type            coupledSolidTraction;
         pName           p;
-        pRef            101325;
+        pRef            0;
         traction        uniform (0 0 0);
         value           uniform (0 0 0);
         pressure        uniform 0;
@@ -42,7 +42,7 @@ boundaryField
     }
     wedge
     {
-        type            solidWedge;
+        type            wedge;
         patchType       wedge;
         value           $internalField;
     }

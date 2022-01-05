@@ -56,6 +56,9 @@ linGeomSolid::linGeomSolid(dynamicFvMesh& mesh)
     rImpK_(1.0/impK_)
 {
     DDisRequired();
+
+    //- Dummy Call to make sure the necessary old fields are initialized
+    fvc::d2dt2(rho().oldTime(), D().oldTime());
 }
 
 

@@ -210,6 +210,9 @@ unsNonLinGeomUpdatedLagSolid::unsNonLinGeomUpdatedLagSolid(dynamicFvMesh& mesh)
     impKf_(mechanical().impKf()),
     rImpK_(1.0/impK_)
 {
+    //- Dummy Call to make sure the necessary old fields are initialized
+    fvc::d2dt2(rho().oldTime(), D().oldTime());
+
     DDisRequired();
 }
 

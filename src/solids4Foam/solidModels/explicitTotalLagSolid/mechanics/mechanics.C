@@ -74,6 +74,17 @@ mechanics::mechanics
         F & inv(F.oldTime())
     ),
 
+    relJ_
+    (
+        IOobject
+        (
+            "relJ",
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        det(relF_)
+    ),
+
     H_
     (
         IOobject
@@ -202,6 +213,7 @@ void mechanics::correct
     J_ = det(F_);
     H_ = J_*ops_.invT(F_);
     relF_ = F_ & inv(F_.oldTime());
+    relJ_ = det(relF_);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

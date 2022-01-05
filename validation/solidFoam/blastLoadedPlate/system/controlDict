@@ -17,7 +17,7 @@ FoamFile
 
 #include "$FOAM_CASE/properties";
 
-application     blastFSIFoam;
+application     solidFoam;
 
 startFrom       startTime;
 
@@ -27,7 +27,7 @@ stopAt          endTime;
 
 endTime         $endTime;
 
-deltaT          1e-7;
+deltaT          2e-7;
 
 writeControl    adjustableRunTime;
 
@@ -51,6 +51,8 @@ maxCo 0.5;
 
 adjustTimeStep yes;
 
+maxDeltaT       2e-7;
+
 libs ("libblastFoamControlled.so");
 
 functions
@@ -59,6 +61,7 @@ functions
     {
         type blastProbes;
         adjustLocations yes;
+        patchName "plate_to_air";
 
         probeLocations ((0 0 0));
         fields (U D);

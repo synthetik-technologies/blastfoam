@@ -187,7 +187,7 @@ bool explicitLinGeomTotalDispSolid::evolve()
     Info<< "Evolving solid solver" << endl;
 
     // Mesh update loop
-//     do
+    do
     {
         Info<< "Solving the momentum equation for D" << endl;
 
@@ -224,21 +224,21 @@ bool explicitLinGeomTotalDispSolid::evolve()
                     )
                 )().primitiveField()
                 // This corresponds to Lax–Friedrichs smoothing
-                + JSTScaleFactor_*fvc::laplacian
-                  (
-                      0.5*(deltaT + deltaT0)*impKf_,
-                      U(),
-                      "laplacian(DU,U)"
-                  )().primitiveField()
-//               - JSTScaleFactor_*fvc::laplacian
-//                 (
-//                     mesh().magSf(),
-//                     fvc::laplacian
-//                     (
-//                         0.5*(deltaT + deltaT0)*impKf_, U(), "laplacian(DU,U)"
-//                     ),
-//                     "laplacian(DU,U)"
-//                 )().primitiveField()
+//                 + JSTScaleFactor_*fvc::laplacian
+//                   (
+//                       0.5*(deltaT + deltaT0)*impKf_,
+//                       U(),
+//                       "laplacian(DU,U)"
+//                   )().primitiveField()
+              - JSTScaleFactor_*fvc::laplacian
+                (
+                    mesh().magSf(),
+                    fvc::laplacian
+                    (
+                        0.5*(deltaT + deltaT0)*impKf_, U(), "laplacian(DU,U)"
+                    ),
+                    "laplacian(DU,U)"
+                )().primitiveField()
             )/rho().primitiveField()
           + g().value();
         a_.correctBoundaryConditions();
@@ -250,7 +250,7 @@ bool explicitLinGeomTotalDispSolid::evolve()
             0.0, impKf_
         );
     }
-//     while (mesh().update());
+    while (mesh().update());
 
     return true;
 }

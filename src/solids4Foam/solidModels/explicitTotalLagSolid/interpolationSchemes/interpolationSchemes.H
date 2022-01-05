@@ -120,13 +120,20 @@ public:
             (
                 const volVectorField& U,
                 const volTensorField& gradU,
-                pointVectorField& pU
+                pointVectorField& pU,
+                const bool interpBoundaries
             ) const;
 
             //- Point to surface interpolation
             tmp<surfaceVectorField> pointToSurface
             (
                 const pointVectorField& U
+            ) const;
+
+            //- Point to volume interpolation
+            tmp<volVectorField> pointToVol
+            (
+                const pointVectorField&
             ) const;
 };
 

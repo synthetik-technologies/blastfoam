@@ -15,8 +15,8 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 16; // this is number of proc
-method         simple; // automatic
+numberOfSubdomains 32; // this is number of proc
+method         scotch; // automatic
 
 simpleCoeffs // not auto
 {

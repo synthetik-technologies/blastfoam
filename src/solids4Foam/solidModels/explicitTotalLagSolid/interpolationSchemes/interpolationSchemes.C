@@ -236,10 +236,16 @@ void interpolationSchemes::volToPoint
 (
     const volVectorField& U,
     const volTensorField& gradU,
-    pointVectorField& pointU
+    pointVectorField& pointU,
+    const bool interpBoundaries
 ) const
 {
 
+    tmp<pointVectorField> tpointUOld;
+    if (!interpBoundaries)
+    {
+        tpointUOld = pointVectorField::New("pointUOld", pointU);
+    }
     if (Pstream::parRun())
     {
         pointScalarField sum
@@ -312,6 +318,42 @@ void interpolationSchemes::volToPoint
             pointU[nodei] = sum/scalar(weights);
         }
     }
+    if (!interpBoundaries)
+    {
+        const pointVectorField& pointUOld = tpointUOld();
+        pointVectorField::Boundary& bpointU = pointU.boundaryFieldRef();
+        forAll(mesh_.boundaryMesh(), patchi)
+        {
+            if (!mesh_.boundaryMesh()[patchi].coupled())
+            {
+                bpointU[patchi].setInInternalField
+                (
+                    pointU.primitiveFieldRef(),
+                    pointUOld.boundaryField()[patchi].patchInternalField()()
+                );
+            }
+        }
+    }
+//     else
+//     {
+//         const faceList& faces = mesh_.faces();
+//         forAll(mesh_.boundaryMesh(), patchi)
+//         {
+//             const polyPatch& patch = mesh_.boundaryMesh()[patchi];
+//             vectorField sum(patch.nPoints(), Zero);
+//             scalarField weights(patch.nPoints(), 0.0);
+//             forAll(patch, fi)
+//             {
+//                 const label facei = patch.start() + fi;
+//                 const labelList& fp = faces[facei];
+//                 forAll(fp, ni)
+//                 {
+//                     const label nodei = fp[ni];
+//                     const vector d = points_[nodei] - _[celli];
+//                     const vector recons = U[celli] + (gradU[celli] & d);
+//
+//                     sum += recons;
+//                     weights++;
 }
 
 
@@ -325,7 +367,7 @@ tmp<surfaceVectorField> interpolationSchemes::pointToSurface
     vector sum(Zero);
     scalar weights = 0.0;
 
-    tmp<surfaceVectorField > tsf_v
+    tmp<surfaceVectorField > tUf
     (
         surfaceVectorField::New
         (
@@ -334,7 +376,7 @@ tmp<surfaceVectorField> interpolationSchemes::pointToSurface
             dimensioned<vector>("0", pointU.dimensions(), Zero)
         )
     );
-    surfaceVectorField& Uf = tsf_v.ref();
+    surfaceVectorField& Uf = tUf.ref();
 
     forAll(own_, facei)
     {
@@ -345,7 +387,7 @@ tmp<surfaceVectorField> interpolationSchemes::pointToSurface
         {
             const label pointi = mesh_.faces()[facei][ni];
             scalar w = 1.0;
-//             scalar w(1.0/mag(mesh_.points[pointi] - mesh.Cf()[facei]));
+//             scalar w(1.0/mag(mesh_.points()[pointi] - mesh_.Cf()[facei]));
             sum += pointU[pointi]*w;
             weights += w;
         }
@@ -371,7 +413,7 @@ tmp<surfaceVectorField> interpolationSchemes::pointToSurface
 //                     1.0
 //                    /mag
 //                     (
-//                         mesh_.points[pointi] - mesh.faceCentres()[facei]
+//                         mesh_.points()[pointi] - mesh_.faceCentres()[facei]
 //                     )
 //                 );
                 sum += pointU[pointi]*w;
@@ -382,7 +424,78 @@ tmp<surfaceVectorField> interpolationSchemes::pointToSurface
         }
     }
 
-    return tsf_v;
+    return tUf;
+}
+
+
+tmp<volVectorField> interpolationSchemes::pointToVol
+(
+    const pointVectorField& pointU
+) const
+{
+    vector sum(Zero);
+    scalar weights = 0.0;
+
+    tmp<volVectorField > tU
+    (
+        volVectorField::New
+        (
+            "pointToVol(" + pointU.name() + ")",
+            mesh_,
+            dimensioned<vector>("0", pointU.dimensions(), Zero)
+        )
+    );
+    volVectorField& U = tU.ref();
+
+    forAll(mesh_.cells(), celli)
+    {
+        sum = vector::zero;
+        weights = 0.0;
+
+        labelList points(mesh_.cells()[celli].labels(mesh_.faces()));
+
+        forAll(points, pI)
+        {
+            const label pointi = points[pI];
+            scalar w = 1.0;
+//             scalar w(1.0/mag(mesh_.points()[pointi] - mesh_.C()[celli]));
+            sum += pointU[pointi]*w;
+            weights += w;
+        }
+
+        U[celli] = sum/weights;
+    }
+
+    volVectorField::Boundary& pU(U.boundaryFieldRef());
+    forAll(pU, patchi)
+    {
+        forAll(pU[patchi], fi)
+        {
+            const label& facei = mesh_.boundary()[patchi].start() + fi;
+            sum = vector::zero;
+            weights = 0.0;
+
+            forAll(mesh_.faces()[facei], ni)
+            {
+                const label pointi = mesh_.faces()[facei][ni];
+                scalar w = 1.0;
+//                 scalar w
+//                 (
+//                     1.0
+//                    /mag
+//                     (
+//                         mesh_.points()[pointi] - mesh_.faceCentres()[facei]
+//                     )
+//                 );
+                sum += pointU[pointi]*w;
+                weights += w;
+            }
+
+            pU[patchi][fi] = sum/weights;
+        }
+    }
+
+    return tU;
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
