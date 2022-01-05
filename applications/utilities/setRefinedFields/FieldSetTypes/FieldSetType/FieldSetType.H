@@ -227,7 +227,7 @@ protected:
 
 public:
 
-    TypeName(fvPatchField<Type>::typeName_());
+    TypeName("volFieldSet");
 
     // Constructor
     VolFieldSetType
@@ -277,7 +277,7 @@ protected:
 
 public:
 
-    TypeName(fvsPatchField<Type>::typeName_());
+    TypeName("surfaceFieldSet");
 
     // Constructor
     SurfaceFieldSetType
@@ -327,7 +327,7 @@ protected:
 
 public:
 
-    TypeName(pointPatchField<Type>::typeName_());
+    TypeName("pointFieldSet");
 
     // Constructor
     PointFieldSetType
