@@ -257,13 +257,13 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::faceToPoint
         return
             globalPointToPatch
             (
-                interpPtr_->faceToPointInterpolate
+                interpolator().faceToPointInterpolate
                 (
                     patchFaceToGlobal(fField)
                 )
             );
     }
-    return interpPtr_->faceToPointInterpolate(fField);
+    return localInterpolator().faceToPointInterpolate(fField);
 }
 
 
