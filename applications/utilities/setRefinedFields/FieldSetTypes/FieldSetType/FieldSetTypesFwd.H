@@ -42,13 +42,16 @@ SourceFiles
 namespace Foam
 {
 
-typedef FieldSetType<scalar, fvPatchField, volMesh> scalarVolFieldSetType;
-typedef FieldSetType<vector, fvPatchField, volMesh> vectorVolFieldSetType;
+typedef FieldSetType<scalar, fvPatchField, volMesh>
+    scalarVolFieldSetType;
+typedef FieldSetType<vector, fvPatchField, volMesh>
+    vectorVolFieldSetType;
 typedef FieldSetType<symmTensor, fvPatchField, volMesh>
     symmTensorVolFieldSetType;
 typedef FieldSetType<sphericalTensor, fvPatchField, volMesh>
     sphericalTensorVolFieldSetType;
-typedef FieldSetType<tensor, fvPatchField, volMesh> tensorVolFieldSetType;
+typedef FieldSetType<tensor, fvPatchField, volMesh>
+    tensorVolFieldSetType;
 
 typedef FieldSetType<scalar, fvsPatchField, surfaceMesh>
     scalarSurfaceFieldSetType;
@@ -61,13 +64,16 @@ typedef FieldSetType<sphericalTensor, fvsPatchField, surfaceMesh>
 typedef FieldSetType<tensor, fvsPatchField, surfaceMesh>
     tensorSurfaceFieldSetType;
 
-typedef FieldSetType<scalar, pointPatchField, pointMesh> scalarPointFieldSetType;
-typedef FieldSetType<vector, pointPatchField, pointMesh> vectorPointFieldSetType;
+typedef FieldSetType<scalar, pointPatchField, pointMesh>
+    scalarPointFieldSetType;
+typedef FieldSetType<vector, pointPatchField, pointMesh>
+    vectorPointFieldSetType;
 typedef FieldSetType<symmTensor, pointPatchField, pointMesh>
     symmTensorPointFieldSetType;
 typedef FieldSetType<sphericalTensor, pointPatchField, pointMesh>
     sphericalTensorPointFieldSetType;
-typedef FieldSetType<tensor, pointPatchField, pointMesh> tensorPointFieldSetType;
+typedef FieldSetType<tensor, pointPatchField, pointMesh>
+    tensorPointFieldSetType;
 
 }
 

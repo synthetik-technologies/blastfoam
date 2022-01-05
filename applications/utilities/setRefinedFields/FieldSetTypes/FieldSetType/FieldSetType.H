@@ -227,8 +227,6 @@ protected:
 
 public:
 
-    TypeName("volFieldSet");
-
     // Constructor
     VolFieldSetType
     (
@@ -277,8 +275,6 @@ protected:
 
 public:
 
-    TypeName("surfaceFieldSet");
-
     // Constructor
     SurfaceFieldSetType
     (
@@ -326,8 +322,6 @@ protected:
 
 
 public:
-
-    TypeName("pointFieldSet");
 
     // Constructor
     PointFieldSetType
