@@ -247,7 +247,7 @@ void Foam::burstFvPatchField<Type>::autoMap
     const fvPatchFieldMapper& m
 )
 {
-    coupledFvPatchField<Type>::autoMap(m);
+    fvPatchField<Type>::autoMap(m);
     intactPatchField_->autoMap(m);
     burstPatchField_->autoMap(m);
     burstPatch_.autoMap(m);
@@ -261,7 +261,7 @@ void Foam::burstFvPatchField<Type>::rmap
     const labelList& addr
 )
 {
-    coupledFvPatchField<Type>::rmap(ptf, addr);
+    fvPatchField<Type>::rmap(ptf, addr);
 
     const burstFvPatchField<Type>& bpf =
         refCast<const burstFvPatchField<Type>>(ptf);
