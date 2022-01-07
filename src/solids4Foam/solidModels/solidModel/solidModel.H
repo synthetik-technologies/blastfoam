@@ -132,22 +132,22 @@ class solidModel
         autoPtr<momentumStabilisation> stabilisationPtr_;
 
         //- Solution standard tolerance
-        const scalar solutionTol_;
+        scalar solutionTol_;
 
         //- Solution tighter tolerance
-        const scalar alternativeTol_;
+        scalar alternativeTol_;
 
         //- Material law tolerance
-        const scalar materialTol_;
+        scalar materialTol_;
 
         //- Write frequency for residuals information
-        const int infoFrequency_;
+        int infoFrequency_;
 
         //- Maximum number of momentum correctors
-        const int nCorr_;
+        int nCorr_;
 
         //- Minium number of momentum correctors
-        const int minCorr_;
+        int minCorr_;
 
         //- Number of times the maximum number of correctors was reached in the
         //  momentum equation
@@ -157,7 +157,7 @@ class solidModel
         autoPtr<OFstream> residualFilePtr_;
 
         //- Switch to write the residual field
-        const Switch writeResidualField_;
+        Switch writeResidualField_;
 
         //- Switch to enable/disable enforce linear to help convergence
         Switch enforceLinear_;
@@ -641,6 +641,9 @@ public:
 
             //- End of the program
             virtual void end();
+
+            //- Read object
+            virtual bool readIfModified();
 
             //- Write function must be defined for regIOobjects
             virtual bool writeData(Ostream&) const

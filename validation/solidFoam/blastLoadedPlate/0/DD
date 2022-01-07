@@ -30,10 +30,10 @@ boundaryField
         pressure        uniform 0;
         value           uniform (0 0 0);
 
-        KBSolver        cubicNegativePhase;
+        KBSolver        CONWEP;
+        burstType       free;
         centre          (0 $R 0);
         mass            $W;
-        b               0.771;
     }
     plateEnd
     {

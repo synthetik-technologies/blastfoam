@@ -36,7 +36,7 @@ divSchemes
 
 gradSchemes
 {
-    default         extendedLeastSquares 0;
+    default         leastSquares 0;
 //     default         cellMDLimited leastSquares 1.0;
 }
 

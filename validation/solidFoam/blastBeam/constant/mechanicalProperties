@@ -22,7 +22,7 @@ mechanical
     {
         type            linearElastic;
         E               28e9;
-        nu              0.28;
+        nu              0.3;
         sigmaY          3.4667e7;
 
         solvePressureEqn no;

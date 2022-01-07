@@ -1349,4 +1349,26 @@ const Foam::dictionary& Foam::solidModel::solidModelDict() const
     return this->subDict(type_ + "Coeffs");
 }
 
+bool Foam::solidModel::readIfModified()
+{
+    if (regIOobject::readIfModified())
+    {
+        const dictionary& dict = solidModelDict();
+        solutionTol_ =
+            dict.lookupOrDefault<scalar>("solutionTolerance", 1e-06);
+        alternativeTol_ =
+            dict.lookupOrDefault<scalar>("alternativeTolerance", 1e-07);
+        materialTol_ =
+            dict.lookupOrDefault<scalar>("materialTolerance", 1e-05);
+        infoFrequency_ =
+            dict.lookupOrDefault<int>("infoFrequency", 100);
+        nCorr_ = dict.lookupOrDefault<int>("nCorrectors", 10000);
+        minCorr_ = dict.lookupOrDefault<int>("minCorrectors", 1);
+        writeResidualField_ =
+            dict.lookupOrDefault<Switch>("writeResidualField", false);
+        return true;
+    }
+    return false;
+}
+
 // ************************************************************************* //

@@ -29,10 +29,10 @@ boundaryField
         pressure        uniform 0;
         value           uniform (0 0 0);
 
-        KBSolver        Friedlander;
+        KBSolver        CONWEP;
+        burstType       free;
         centre          (0 0.5 0);
         mass            50;
-        b               1;//0.771;
     }
     fixed
     {

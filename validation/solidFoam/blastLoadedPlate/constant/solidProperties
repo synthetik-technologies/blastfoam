@@ -27,7 +27,7 @@ explicitUnsLinearGeometryTotalDisplacementCoeffs
 
 "explicitNonLinearGeometryTotalLagrangianCoeffs|explicitLinearGeometryTotalLagrangianCoeffs"
 {
-    incompressiblilityCoefficient   1.0;
+    incompressiblilityCoefficient   0.2;
     angularMomentumConservation     yes;
 }
 
@@ -35,7 +35,7 @@ explicitUnsLinearGeometryTotalDisplacementCoeffs
 nonLinearGeometryTotalLagrangianCoeffs
 {
     // Maximum number of momentum correctors
-    nCorrectors             2000;
+    nCorrectors             1000;
 
     // Solution tolerance for displacement
     solutionTolerance       1e-04;

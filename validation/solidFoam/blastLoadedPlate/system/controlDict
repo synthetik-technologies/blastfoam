@@ -27,7 +27,7 @@ stopAt          endTime;
 
 endTime         $endTime;
 
-deltaT          2e-7;
+deltaT          2e-9;
 
 writeControl    adjustableRunTime;
 
@@ -51,7 +51,7 @@ maxCo 0.5;
 
 adjustTimeStep yes;
 
-maxDeltaT       2e-7;
+// maxDeltaT       2e-7;
 
 libs ("libblastFoamControlled.so");
 

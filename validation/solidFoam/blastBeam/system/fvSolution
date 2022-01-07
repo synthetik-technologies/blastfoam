@@ -45,7 +45,7 @@ solvers
       tolerance             1e-10;
       relTol                0.1;
       minIter               1;
-      solver                PCG;
+      solver                PBiCGStab;
       preconditioner        DIC;
     }
 }

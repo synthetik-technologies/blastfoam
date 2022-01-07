@@ -145,10 +145,8 @@ void operations::eigenStructure(const tensor& ten) const
     vector zw = vector::zero;
     tensor v1 = tensor::I;
 
-    while (it_num < it_max)
+    while (it_num++ < it_max)
     {
-        it_num += 1;
-
         // The convergence threshold is based on the size of the elements in
         // the strict upper triangle of the matrix.
         thresh = 0.0;
@@ -157,13 +155,13 @@ void operations::eigenStructure(const tensor& ten) const
         {
             for (i = 0; i < j; i++)
             {
-                thresh = thresh + t[i + j*size] * t[i + j*size];
+                thresh += sqr(t[i + j*size]);
             }
         }
 
-        thresh = ::sqrt(thresh)/(4*size);
+        thresh = sqrt(thresh)/(4.0*size);
 
-        if ( thresh == 0.0 )
+        if ( thresh < small )
         {
           break;
         }
@@ -172,30 +170,30 @@ void operations::eigenStructure(const tensor& ten) const
         {
             for (q = p1 + 1; q < size; q++)
             {
-                gapq = 10.0 * fabs(t[p1 + q*size]);
-                termp = gapq + fabs(d[p1]);
-                termq = gapq + fabs(d[q]);
+                gapq = 10.0*mag(t[p1 + q*size]);
+                termp = gapq + mag(d[p1]);
+                termq = gapq + mag(d[q]);
 
                 // Annihilate tiny off-diagonal elements
-                if (4 < it_num && termp == fabs(d[p1]) && termq == fabs(d[q]))
+                if (4 < it_num && termp == mag(d[p1]) && termq == mag(d[q]))
                 {
                   t[p1+q*size] = 0.0;
                 }
 
                 //  Otherwise, apply a rotation
-                else if (thresh <= fabs(t[p1 + q*size]))
+                else if (thresh <= mag(t[p1 + q*size]))
                 {
                     h = d[q] - d[p1];
-                    term = fabs(h) + gapq;
+                    term = mag(h) + gapq;
 
-                    if (term == fabs(h))
+                    if (term == mag(h))
                     {
                         t1 = t[p1 + q*size]/h;
                     }
                     else
                     {
                         theta = 0.5 * h/t[p1 + q*size];
-                        t1 = 1.0/(fabs(theta) + ::sqrt(1.0 + theta*theta));
+                        t1 = 1.0/(mag(theta) + sqrt(1.0 + theta*theta));
 
                         if (theta < 0.0)
                         {
@@ -203,7 +201,7 @@ void operations::eigenStructure(const tensor& ten) const
                         }
                     }
 
-                    c = 1.0/::sqrt(1.0 + t1*t1);
+                    c = 1.0/sqrt(1.0 + t1*t1);
                     s = t1*c;
                     tau1 = s/(1.0 + c);
                     h = t1*t[p1 + q*size];
@@ -292,14 +290,15 @@ void operations::eigenStructure(const tensor& ten) const
     // Corrections for calculating inverse
     tensor sub(tensor::zero);
 
-    for (i=0; i<3; i++)
+    for (i = 0; i < 3; i++)
     {
         if (d[i] < SMALL)
         {
             d[i] = 1;
             sub +=
-                d[i] * vector(v1[3*i],v1[3*i+1],v1[3*i+2])
-               *vector(v1[3*i],v1[3*i+1],v1[3*i+2]);
+                d[i]
+               *vector(v1[3*i], v1[3*i + 1], v1[3*i + 2])
+               *vector(v1[3*i], v1[3*i + 1], v1[3*i + 2]);
         }
     }
 

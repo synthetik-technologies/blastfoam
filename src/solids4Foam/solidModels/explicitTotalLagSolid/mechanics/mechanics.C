@@ -182,6 +182,11 @@ void mechanics::correct
     surfaceTensorField FcInv(inv(fvc::interpolate(F_)));
     n_ = (FcInv.T() & N_)/(mag(FcInv.T() & N_));
 
+    J_ = det(F_);
+    H_ = J_*ops_.invT(F_);
+    relF_ = F_ & inv(F_.oldTime());
+    relJ_ = det(relF_);
+
     // Stretch
     volTensorField C(F_.T() & F_);
     forAll(C, celli)
@@ -202,18 +207,14 @@ void mechanics::correct
     stretch_.correctBoundaryConditions();
 
     // Stabilisation matrices
+    surfaceTensorField nn(n_*n_);
     stabRhoU_ =
-        fvc::interpolate(pWaveSpeed)*n_*n_
-      + fvc::interpolate(sWaveSpeed)*(I - (n_*n_));
+        fvc::interpolate(pWaveSpeed)*nn
+      + fvc::interpolate(sWaveSpeed)*(I - nn);
 
     stabTraction_ =
-        (n_*n_)/fvc::interpolate(pWaveSpeed)
-      + (I - (n_*n_))/fvc::interpolate(sWaveSpeed);
-
-    J_ = det(F_);
-    H_ = J_*ops_.invT(F_);
-    relF_ = F_ & inv(F_.oldTime());
-    relJ_ = det(relF_);
+        nn/fvc::interpolate(pWaveSpeed)
+      + (I - nn)/fvc::interpolate(sWaveSpeed);
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

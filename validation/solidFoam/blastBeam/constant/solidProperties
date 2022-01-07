@@ -20,7 +20,7 @@ solidModel explicitLinearGeometryTotalLagrangian;
 
 "explicitNonLinearGeometryTotalLagrangianCoeffs|explicitLinearGeometryTotalLagrangianCoeffs"
 {
-    incompressiblilityCoefficient   1.0;
+    incompressiblilityCoefficient   0.1;
     angularMomentumConservation     yes;
 }
 

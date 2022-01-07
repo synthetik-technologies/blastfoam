@@ -6,7 +6,7 @@ cd ${0%/*} || exit 1    # run from this directory
 
 paraFoam -builtin -touch
 
-runApplication blockMesh
+runApplication blockMesh -dict system/blockMeshDict_3D
 
 runApplication decomposePar
 

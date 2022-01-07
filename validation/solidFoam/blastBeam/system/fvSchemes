@@ -27,7 +27,7 @@ ddtSchemes
 
 gradSchemes
 {
-    default                 leastSquares;
+    default                 cellMDLimited leastSquares 1;
 }
 
 divSchemes
@@ -36,7 +36,7 @@ divSchemes
     div(sigma)              Gauss skewCorrected linear;
     div(threeKalphaDeltaT)  Gauss skewCorrected linear;
     div((impK*grad(D)))     Gauss skewCorrected linear;
-    div((impK*grad(DD)))     Gauss skewCorrected linear;
+    div((impK*grad(DD)))    Gauss skewCorrected linear;
 }
 
 laplacianSchemes

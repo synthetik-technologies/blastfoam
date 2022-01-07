@@ -492,6 +492,8 @@ void explicitTotalLagSolid::updateFluxes()
 //         }
     }
     pointRhoU_.correctBoundaryConditions();
+
+    rhoUC_ = interpSchemes_.pointToSurface(pointRhoU_);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -796,14 +798,13 @@ scalar explicitTotalLagSolid::CoNum() const
     // For safety, we should use a time-step smaller than this e.g. Abaqus uses
     // 1/sqrt(2)*stableTimeStep: we will default to this value
 
-    surfaceScalarField amaxSf
-    (
-        fvc::interpolate
-        (
-            sqrt(mechanical().elasticModulus()/rho())
-           /mech_.stretch()
-        )*mesh().magSf()
-    );
+//     return max
+//     (
+//         pWaveSpeed_
+//        *mesh().time().deltaT()
+//        /meshSizeObject::New(mesh()).dx()
+//     ).value();
+    surfaceScalarField amaxSf(fvc::interpolate(pWaveSpeed_)*mesh().magSf());
 
     // Remove wave speed from wedge boundaries
     forAll(amaxSf.boundaryField(), patchi)
