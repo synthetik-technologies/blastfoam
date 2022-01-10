@@ -575,7 +575,18 @@ void Foam::phaseSystem::calcMixtureVariables()
         return;
     }
 
+    volScalarField sumAlpha(volScalarField::New("sumAlpha", mesh_, 0));
+    volScalarField sumAlphaRho
+    (
+        volScalarField::New
+        (
+            "sumAlphaRho",
+            mesh_,
+            dimensionedScalar("0", dimDensity, 0)
+        )
+    );
     p_ =  Zero;
+    kappa_ = Zero;
     if (PIPtr_.valid())
     {
         PIPtr_() = Zero;
@@ -583,13 +594,18 @@ void Foam::phaseSystem::calcMixtureVariables()
     forAll(fluidPhaseModels_, phasei)
     {
         const phaseModel& phase(fluidPhaseModels_[phasei]);
+        sumAlpha += phase;
+        sumAlphaRho += phase.alphaRho();
         p_ += phase*phase.p();
+        kappa_ += phase.alphaRho()*phase.kappa();
         if (PIPtr_.valid())
         {
             PIPtr_() +=
                 phase*(phase.p() + phase.rho()*magSqr(phase.U() - U_));
         }
     }
+    p_ /= sumAlpha;
+    kappa_ /= sumAlphaRho;
 }
 
 
@@ -682,6 +698,23 @@ Foam::phaseSystem::phaseSystem
         ),
         mesh,
         dimensionedScalar("0", dimTemperature, 0.0)
+    ),
+
+    kappa_
+    (
+        IOobject
+        (
+            "kappa",
+            mesh.time().timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar
+        (
+            "kappa",
+            dimPower/dimLength/dimTemperature,
+            1.0
+        )
     ),
 
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),

@@ -234,6 +234,9 @@ protected:
         //- Mixture temperature
         volScalarField T_;
 
+        //- Mixture thermal diffusivity
+        volScalarField kappa_;
+
         //- Gravitational acceleration
         const uniformDimensionedVectorField& g_;
 
