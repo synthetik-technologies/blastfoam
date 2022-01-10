@@ -222,7 +222,13 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
     this->save(facei, patchi, aSf, aSf_);
-    this->save(facei, patchi, aphivOwn/(aphivOwn + aphivNei), f_);
+    this->save
+    (
+        facei,
+        patchi,
+        aphivOwn/stabilise(aphivOwn + aphivNei, small),
+        f_
+    );
 
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
     phi = aphivOwn + aphivNei;
@@ -301,7 +307,13 @@ void Foam::fluxSchemes::Kurganov::calculateFluxes
     this->save(facei, patchi, aOwn, aOwn_);
     this->save(facei, patchi, aNei, aNei_);
     this->save(facei, patchi, aSf, aSf_);
-    this->save(facei, patchi, aphivOwn/stabilise(aphivOwn + aphivNei, small), f_);
+    this->save
+    (
+        facei,
+        patchi,
+        aphivOwn/stabilise(aphivOwn + aphivNei, small),
+        f_
+    );
 
     this->save(facei, patchi, aOwn*UOwn + aNei*UNei, Uf_);
 
