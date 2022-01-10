@@ -421,7 +421,7 @@ Foam::amiZoneInterpolation::amiZoneInterpolation
         srcPatch,
         tgtPatch,
         triMode,
-        true,
+        requireMatch,
         method,
         -1,
         false,

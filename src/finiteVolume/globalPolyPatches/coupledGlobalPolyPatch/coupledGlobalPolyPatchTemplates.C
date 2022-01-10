@@ -204,4 +204,72 @@ Foam::coupledGlobalPolyPatch::pointToFaceInterpolate
 }
 
 
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedFace
+(
+    Field<Type>& ff,
+    const Type& unmapped
+) const
+{
+    UIndirectList<Type>(ff, unmappedFaces_) = unmapped;
+}
+
+
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedFace
+(
+    Field<Type>& ff,
+    const Field<Type>& unmapped
+) const
+{
+    UIndirectList<Type>(ff, unmappedFaces_) =
+        UIndirectList<Type>(unmapped, unmappedFaces_);
+}
+
+
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedFace
+(
+    Field<Type>& ff,
+    const tmp<Field<Type>>& tunmapped
+) const
+{
+    setUnmappedFace(ff, tunmapped());
+}
+
+
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedPoint
+(
+    Field<Type>& pf,
+    const Type& unmapped
+) const
+{
+    UIndirectList<Type>(pf, unmappedPoints_) = unmapped;
+}
+
+
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedPoint
+(
+    Field<Type>& pf,
+    const Field<Type>& unmapped
+) const
+{
+    UIndirectList<Type>(pf, unmappedPoints_) =
+        UIndirectList<Type>(unmapped, unmappedPoints_);
+}
+
+
+template<class Type>
+void Foam::coupledGlobalPolyPatch::setUnmappedPoint
+(
+    Field<Type>& pf,
+    const tmp<Field<Type>>& tunmapped
+) const
+{
+    setUnmappedFace(pf, tunmapped());
+}
+
+
 // ************************************************************************* //

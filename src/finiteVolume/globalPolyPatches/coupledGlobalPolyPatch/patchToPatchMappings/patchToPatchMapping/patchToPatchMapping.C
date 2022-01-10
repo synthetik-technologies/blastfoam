@@ -48,6 +48,7 @@ Foam::patchToPatchMapping::patchToPatchMapping
 )
 :
     dict_(dict.optionalSubDict(type + "Coeffs")),
+    requireMatch_(dict.lookupOrDefault("requireMatch", true)),
     patchA_(patchA),
     patchB_(patchB),
     globalPatchA_(globalPatchA),

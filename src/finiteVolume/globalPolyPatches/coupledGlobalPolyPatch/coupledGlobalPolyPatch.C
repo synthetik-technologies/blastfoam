@@ -45,6 +45,62 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
             << abort(FatalError);
     }
 
+    const pointField& pts = this->globalPatch().points();
+    const pointField& samplePts = samplePatch().globalPatch().points();
+    boundBox bb(pts, false);
+    boundBox sampleBb(samplePts, false);
+
+    boundBox inflatedBb(bb);
+    boundBox inflatedSampleBb(sampleBb);
+    inflatedBb.inflate(1e-4);
+    inflatedSampleBb.inflate(1e-4);
+
+    if (!inflatedBb.contains(sampleBb))
+    {
+        labelHashSet unmapped;
+        forAll(samplePts, pti)
+        {
+            if (!inflatedBb.contains(samplePts[pti]))
+            {
+                unmapped.insert(pti);
+            }
+        }
+        samplePatch().unmappedPoints_ = unmapped.toc();
+
+        unmapped.clear();
+        const pointField& fc = samplePatch().globalPatch().faceCentres();
+        forAll(fc, fi)
+        {
+            if (!inflatedBb.contains(fc[fi]))
+            {
+                unmapped.insert(fi);
+            }
+        }
+        samplePatch().unmappedFaces_ = unmapped.toc();
+    }
+    if (!inflatedSampleBb.contains(bb))
+    {
+        labelHashSet unmapped;
+        forAll(pts, pti)
+        {
+            if (!inflatedSampleBb.contains(pts[pti]))
+            {
+                unmapped.insert(pti);
+            }
+        }
+        unmappedPoints_ = unmapped.toc();
+
+        unmapped.clear();
+        const pointField& fc = this->globalPatch().faceCentres();
+        forAll(fc, fi)
+        {
+            if (!inflatedSampleBb.contains(fc[fi]))
+            {
+                unmapped.insert(fi);
+            }
+        }
+        unmappedFaces_ = unmapped.toc();
+    }
 
     patchToPatchInterpPtr_ =
         patchToPatchMapping::New
@@ -85,7 +141,12 @@ void Foam::coupledGlobalPolyPatch::clearInterp(const bool top) const
         (
             patchToPatchInterpPtr_
         );
+        unmappedFaces_.clear();
+        unmappedPoints_.clear();
+
         samplePatch().setPatchToPatchInterp(nullptr);
+        samplePatch().unmappedFaces_.clear();
+        samplePatch().unmappedPoints_.clear();
     }
 
 }

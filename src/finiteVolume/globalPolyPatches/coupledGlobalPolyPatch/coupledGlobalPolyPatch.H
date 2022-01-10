@@ -71,6 +71,10 @@ private:
         //- Patch to sample
         word samplePatch_;
 
+        //- Unmapped faces
+        mutable labelList unmappedFaces_;
+        mutable labelList unmappedPoints_;
+
 
         // Demand-driven private data
 
@@ -134,6 +138,18 @@ public:
         //- Return reference to the interpolator
         const patchToPatchMapping& patchToPatchInterpolator() const;
 
+        //- Does the patch have unmapped faces
+        bool hasUnmappedFaces() const
+        {
+            return unmappedFaces_.size();
+        }
+
+        //- Does the patch have unmapped points
+        bool hasUnmappedPoints() const
+        {
+            return unmappedPoints_.size();
+        }
+
 
         // Interpolation (from sample patch to this patch)
         // All return a field the size of this patch (face or points)
@@ -176,6 +192,50 @@ public:
             tmp<Field<Type>> pointToFaceInterpolate
             (
                 const tmp<Field<Type>>& tpf
+            ) const;
+
+            //- Set the unmapped values on field corresponding to faces
+            template<class Type>
+            void setUnmappedFace
+            (
+                Field<Type>& ff,
+                const Type& unmapped
+            ) const;
+
+            template<class Type>
+            void setUnmappedFace
+            (
+                Field<Type>& ff,
+                const Field<Type>& unmapped
+            ) const;
+
+            template<class Type>
+            void setUnmappedFace
+            (
+                Field<Type>& ff,
+                const tmp<Field<Type>>& tunmapped
+            ) const;
+
+            //- Set the unmapped values on field corresponding to points
+            template<class Type>
+            void setUnmappedPoint
+            (
+                Field<Type>& pf,
+                const Type& unmapped
+            ) const;
+
+            template<class Type>
+            void setUnmappedPoint
+            (
+                Field<Type>& pf,
+                const Field<Type>& unmapped
+            ) const;
+
+            template<class Type>
+            void setUnmappedPoint
+            (
+                Field<Type>& pf,
+                const tmp<Field<Type>>& tunmapped
             ) const;
 
         //- Correct patch after moving points

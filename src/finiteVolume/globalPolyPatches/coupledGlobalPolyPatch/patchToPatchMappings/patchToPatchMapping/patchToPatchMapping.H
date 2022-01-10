@@ -61,6 +61,9 @@ protected:
         //- Copy of settings dictionary
         const dictionary dict_;
 
+        //- Is it required that the patches match
+        bool requireMatch_;
+
 
 private:
     // Private data
