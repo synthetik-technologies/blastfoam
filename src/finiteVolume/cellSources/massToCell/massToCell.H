@@ -51,9 +51,6 @@ class massToCell
 
     // Private Data
 
-        //- Reference to the mesh
-        const polyMesh& mesh_;
-
         //- Should the dictionary be read
         bool mustRead_;
 
@@ -79,11 +76,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        massToCell
-        (
-            const polyMesh& mesh,
-            const dictionary& dict
-        );
+        massToCell(const dictionary& dict);
 
 
     //- Destructor

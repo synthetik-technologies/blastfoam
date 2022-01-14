@@ -58,9 +58,18 @@ Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
                 ).lookup("interfaces")
             );
     }
-
 }
 
+
+Foam::globalPolyBoundaryMesh::globalPolyBoundaryMesh
+(
+    const polyMesh& mesh,
+    const dictionary& dict
+)
+:
+    GlobalPolyBoundaryMesh(mesh),
+    interfacesDicts_(dict.lookup("interfaces"))
+{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

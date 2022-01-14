@@ -43,7 +43,7 @@ Foam::sphericalMassToCell::sphericalMassToCell
     const dictionary& dict
 )
 :
-    massToCell(mesh, dict),
+    massToCell(dict),
     sphereToCell
     (
         mesh,

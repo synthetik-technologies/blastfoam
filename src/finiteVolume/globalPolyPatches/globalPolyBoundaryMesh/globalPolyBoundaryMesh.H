@@ -86,8 +86,11 @@ public:
 
     // Constructors
 
-        //- Construct from patch
+        //- Construct from mesh
         globalPolyBoundaryMesh(const polyMesh&);
+
+        //- Construct from mesh and dictionary
+        globalPolyBoundaryMesh(const polyMesh&, const dictionary&);
 
 
     //- Destructor

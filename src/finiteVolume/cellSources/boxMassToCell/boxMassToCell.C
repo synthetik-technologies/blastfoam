@@ -23,42 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "cylindericalMassToCell.H"
+#include "boxMassToCell.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(cylindericalMassToCell, 0);
-    addToRunTimeSelectionTable(topoSetSource, cylindericalMassToCell, word);
+    defineTypeNameAndDebug(boxMassToCell, 0);
+    addToRunTimeSelectionTable(topoSetSource, boxMassToCell, word);
 }
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::cylindericalMassToCell::cylindericalMassToCell
+Foam::boxMassToCell::boxMassToCell
 (
     const polyMesh& mesh,
     const dictionary& dict
 )
 :
-    massToCell(mesh, dict),
-    cylinderToCell
+    massToCell(dict),
+    boxToCell
     (
         mesh,
-        p1(dict),
-        p2(dict),
-        R(dict)
+        bounds(dict)
     )
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::cylindericalMassToCell::~cylindericalMassToCell()
+Foam::boxMassToCell::~boxMassToCell()
 {}
 
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 // ************************************************************************* //

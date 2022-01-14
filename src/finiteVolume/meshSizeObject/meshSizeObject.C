@@ -182,6 +182,10 @@ void Foam::meshSizeObject::calcDX() const
     {
         const label patchi = this->mesh_.boundaryMesh().whichPatch(fi);
         const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
+        if (!p.size())
+        {
+            continue;
+        }
         const label facei = fi - p.start();
 
         const face& f = faces[fi];
@@ -196,6 +200,7 @@ void Foam::meshSizeObject::calcDX() const
             dx[cmpti] += edx[cmpti];
             nEdges[cmpti]++;
         }
+
         nEdges = max(nEdges, Vector<label>::one);
         dX.boundaryFieldRef()[patchi][facei] =
             cmptDivide(dx, vector(nEdges));

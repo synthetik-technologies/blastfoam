@@ -115,4 +115,16 @@ pointPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicPointPatchFiel
 pointPatchFields/derived/burstCyclicAMI/burstCyclicAMIPointPatchFields.C
 pointPatchFields/derived/burstCyclicACMI/burstCyclicACMIPointPatchFields.C
 
+cellSources/cylinderListToCell/cylinderListToCell.C
+cellSources/sphereListToCell/sphereListToCell.C
+
+cellSources/massToCell/massToCell.C
+cellSources/sphericalMassToCell/sphericalMassToCell.C
+cellSources/cylindericalMassToCell/cylindericalMassToCell.C
+cellSources/boxMassToCell/boxMassToCell.C
+cellSources/surfacesToCell/surfacesToCell.C
+
+topoSetList/topoSetList.C
+backupTopoSetSource/backupTopoSetSource.C
+
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

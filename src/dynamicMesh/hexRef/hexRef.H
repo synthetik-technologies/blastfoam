@@ -489,6 +489,11 @@ public:
                 return history_;
             }
 
+            hexRefRefinementHistory& history()
+            {
+                return history_;
+            }
+
             //- Typical edge length between unrefined points
             scalar level0EdgeLength() const
             {

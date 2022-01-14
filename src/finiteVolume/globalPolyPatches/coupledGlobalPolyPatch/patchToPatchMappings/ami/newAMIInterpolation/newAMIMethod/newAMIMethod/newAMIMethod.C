@@ -348,7 +348,7 @@ Foam::newAMIMethod<SourcePatch, TargetPatch>::newAMIMethod
 template<class SourcePatch, class TargetPatch>
 bool Foam::newAMIMethod<SourcePatch, TargetPatch>::conformal() const
 {
-    return true;
+    return requireMatch_;
 }
 
 

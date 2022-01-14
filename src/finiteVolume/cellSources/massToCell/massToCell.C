@@ -30,13 +30,8 @@ License
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::massToCell::massToCell
-(
-    const polyMesh& mesh,
-    const dictionary& dict
-)
+Foam::massToCell::massToCell(const dictionary& dict)
 :
-    mesh_(mesh),
     mustRead_(dict.dictName() != "backup"),
     rho_(1.0),
     mass_(0.0),

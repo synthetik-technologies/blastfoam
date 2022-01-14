@@ -175,7 +175,6 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
     if (nZoneFaces == 0)
     {
-        return;
         FatalErrorInFunction
             << "Patch " << patchID.name()
             << " appears to be globally empty.  "

@@ -58,6 +58,7 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
     if (!inflatedBb.contains(sampleBb))
     {
         labelHashSet unmapped;
+        labelList& unmappedPoints = samplePatch().unmappedPoints_;
         forAll(samplePts, pti)
         {
             if (!inflatedBb.contains(samplePts[pti]))
@@ -65,9 +66,28 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
                 unmapped.insert(pti);
             }
         }
-        samplePatch().unmappedPoints_ = unmapped.toc();
+        if (Pstream::parRun())
+        {
+            const labelList& addr = samplePatch().pointToGlobalAddr();
+            label pI = 0;
+            unmappedPoints.resize(addr.size());
+            forAll(addr, pi)
+            {
+                label gpI = addr[pi];
+                if (unmapped.found(gpI))
+                {
+                    unmappedPoints[pI++] = pi;
+                }
+            }
+            unmappedPoints.resize(pI);
+        }
+        else
+        {
+            unmappedPoints = unmapped.toc();
+        }
 
         unmapped.clear();
+        labelList& unmappedFaces = samplePatch().unmappedFaces_;
         const pointField& fc = samplePatch().globalPatch().faceCentres();
         forAll(fc, fi)
         {
@@ -76,8 +96,27 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
                 unmapped.insert(fi);
             }
         }
-        samplePatch().unmappedFaces_ = unmapped.toc();
+        if (Pstream::parRun())
+        {
+            const labelList& addr = samplePatch().faceToGlobalAddr();
+            label fI = 0;
+            unmappedFaces.resize(addr.size());
+            forAll(addr, fi)
+            {
+                label gfI = addr[fi];
+                if (unmapped.found(gfI))
+                {
+                    unmappedFaces[fI++] = fi;
+                }
+            }
+            unmappedFaces.resize(fI);
+        }
+        else
+        {
+            unmappedFaces = unmapped.toc();
+        }
     }
+
     if (!inflatedSampleBb.contains(bb))
     {
         labelHashSet unmapped;
@@ -88,7 +127,25 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
                 unmapped.insert(pti);
             }
         }
-        unmappedPoints_ = unmapped.toc();
+        if (Pstream::parRun())
+        {
+            const labelList& addr = pointToGlobalAddr();
+            label pI = 0;
+            unmappedPoints_.resize(addr.size());
+            forAll(addr, pi)
+            {
+                label gpI = addr[pi];
+                if (unmapped.found(gpI))
+                {
+                    unmappedPoints_[pI++] = pi;
+                }
+            }
+            unmappedPoints_.resize(pI);
+        }
+        else
+        {
+            unmappedPoints_ = unmapped.toc();
+        }
 
         unmapped.clear();
         const pointField& fc = this->globalPatch().faceCentres();
@@ -99,7 +156,25 @@ void Foam::coupledGlobalPolyPatch::calcPatchToPatchInterp() const
                 unmapped.insert(fi);
             }
         }
-        unmappedFaces_ = unmapped.toc();
+        if (Pstream::parRun())
+        {
+            const labelList& addr = faceToGlobalAddr();
+            label fI = 0;
+            unmappedFaces_.resize(addr.size());
+            forAll(addr, fi)
+            {
+                label gfI = addr[fi];
+                if (unmapped.found(gfI))
+                {
+                    unmappedFaces_[fI++] = fi;
+                }
+            }
+            unmappedFaces_.resize(fI);
+        }
+        else
+        {
+            unmappedFaces_ = unmapped.toc();
+        }
     }
 
     patchToPatchInterpPtr_ =
