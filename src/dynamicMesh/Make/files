@@ -12,7 +12,12 @@ $(hexRef)/hexRef3D/hexRef3D.C
 $(hexRef)/hexRef2D/hexRef2D.C
 $(hexRef)/hexRef2DAxi/hexRef2DAxi.C
 
+newCellCuts/newCellCuts.C
+newRefinementIterator/newRefinementIterator.C
 fvMeshBalance/fvMeshBalance.C
 fvMeshRefiner/fvMeshRefiner.C
+fvMeshRefiner/fvMeshRefinerNew.C
+fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
+fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

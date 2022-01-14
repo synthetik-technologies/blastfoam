@@ -127,17 +127,18 @@ void Foam::topoSetList::updateCells
     const bool isZone
 )
 {
-    word setType = "cell" + word(isZone ? "ZoneSet" : "Set");
-    if (!dict.found(setType + "s"))
+    word setType = "cell" + word(isZone ? "Zones" : "Sets");
+    if (!dict.found(setType))
     {
         return;
     }
-    PtrList<dictionary> setDicts(dict.lookup(setType + "s"));
+    PtrList<dictionary> setDicts(dict.lookup(setType));
     forAll(setDicts, seti)
     {
         modifyTopoSet
         (
-            setType,
+            "cell",
+            isZone,
             cellTopoSets_,
             cellZones_,
             cellSets_,
@@ -155,17 +156,18 @@ void Foam::topoSetList::updateFaces
     const bool isZone
 )
 {
-    word setType = "face" + word(isZone ? "ZoneSet" : "Set");
-    if (!dict.found(setType + "s"))
+    word setType = "face" + word(isZone ? "Zones" : "Sets");
+    if (!dict.found(setType))
     {
         return;
     }
-    PtrList<dictionary> setDicts(dict.lookup(setType + "s"));
+    PtrList<dictionary> setDicts(dict.lookup(setType));
     forAll(setDicts, seti)
     {
         modifyTopoSet
         (
-            setType,
+            "face",
+            isZone,
             faceTopoSets_,
             faceZones_,
             faceSets_,
@@ -183,17 +185,18 @@ void Foam::topoSetList::updatePoints
     const bool isZone
 )
 {
-    word setType = "point" + word(isZone ? "ZoneSet" : "Set");
-    if (!dict.found(setType + "s"))
+    word setType = "point" + word(isZone ? "Zones" : "Sets");
+    if (!dict.found(setType))
     {
         return;
     }
-    PtrList<dictionary> setDicts(dict.lookup(setType + "s"));
+    PtrList<dictionary> setDicts(dict.lookup(setType));
     forAll(setDicts, seti)
     {
         modifyTopoSet
         (
-            setType,
+            "point",
+            isZone,
             pointTopoSets_,
             pointZones_,
             pointSets_,
@@ -226,7 +229,8 @@ void Foam::topoSetList::update
 
 void Foam::topoSetList::modifyTopoSet
 (
-    const word& setType,
+    const word& type,
+    const bool isZone,
     HashPtrTable<topoSet>& topoSets,
     wordHashSet& zones,
     wordHashSet& sets,
@@ -235,8 +239,8 @@ void Foam::topoSetList::modifyTopoSet
 )
 {
     const word setName(dict.lookup("name"));
-    const bool isZone(label(dict.name().find("ZoneSet")) >= 0);
-    const bool isSet(label(dict.name().find("Set")) >= 0 && !isZone);
+    const bool isSet(!isZone);
+    const word setType = type + (isZone ? "ZoneSet" : "Set");
 
     topoSetSource::setAction action = topoSetSource::toAction
     (
@@ -260,6 +264,8 @@ void Foam::topoSetList::modifyTopoSet
         );
     }
     else if (action == topoSetSource::REMOVE)
+    {}
+    else if (action == topoSetSource::ADD)
     {}
     else
     {
@@ -856,7 +862,7 @@ bool Foam::topoSetList::writeSets() const
         }
         else if (cellSets_.found(iter()->name()))
         {
-            Info<< "Writing cell set " << iter()->name() << endl;
+            DebugInfo<< "Writing cell set " << iter()->name() << endl;
             iter()->instance() = mesh_.polyMesh::instance();
             iter()->write();
         }
@@ -872,7 +878,6 @@ bool Foam::topoSetList::writeSets() const
     {
         if (faceZones_.found(iter()->name()))
         {
-            Info<< "Adding face zone " << iter()->name() << endl;
             meshFaceZones.append
             (
                 new faceZone
@@ -887,7 +892,7 @@ bool Foam::topoSetList::writeSets() const
         }
         else if (faceSets_.found(iter()->name()))
         {
-            Info<< "Writing face set " << iter()->name() << endl;
+            DebugInfo<< "Writing face set " << iter()->name() << endl;
             iter()->instance() = mesh_.polyMesh::instance();
             iter()->write();
         }
@@ -903,7 +908,6 @@ bool Foam::topoSetList::writeSets() const
     {
         if (pointZones_.found(iter()->name()))
         {
-            Info<< "Adding point zone " << iter()->name() << endl;
             meshPointZones.append
             (
                 new pointZone
@@ -917,22 +921,22 @@ bool Foam::topoSetList::writeSets() const
         }
         else if (pointSets_.found(iter()->name()))
         {
-            Info<< "Writing point set " << iter()->name() << endl;
+            DebugInfo<< "Writing point set " << iter()->name() << endl;
             iter()->instance() = mesh_.polyMesh::instance();
             iter()->write();
         }
     }
     if (cellZonei || faceZonei || pointZonei)
     {
-        if (cellZonei)
+        if (cellZonei && debug)
         {
             Info << "Adding cellZones " << cellZones_ << endl;
         }
-        if (faceZonei)
+        if (faceZonei && debug)
         {
             Info << "Adding faceZones " << faceZones_ << endl;
         }
-        if (pointZonei)
+        if (pointZonei && debug)
         {
             Info << "Adding pointZones " << pointZones_ << endl;
         }

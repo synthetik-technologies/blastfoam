@@ -80,8 +80,11 @@ public:
 
     // Constructors
 
+        //- Construct from mesh
+        explicit fvMeshBalance(fvMesh& mesh);
+
         //- Construct from IOobject
-        explicit fvMeshBalance(fvMesh& mesh, const dictionary& dict);
+        fvMeshBalance(fvMesh& mesh, const dictionary& dict);
 
         //- Disallow default bitwise copy construction
         fvMeshBalance(const fvMeshBalance&) = delete;

@@ -116,17 +116,8 @@ protected:
         //- Dictionary used to read parameters
         dictionary dict_;
 
-        //- Mesh cutting engine
-        autoPtr<hexRef> meshCutter_;
-
         //- Balancer
         fvMeshBalance balancer_;
-
-        //- Number of protected cells
-        label nProtected_;
-
-        //- Protected cells (usually since not hexes)
-        PackedBoolList protectedCell_;
 
         //- Number of refinement/unrefinement steps done so far.
         label nRefinementIterations_;
@@ -163,12 +154,6 @@ protected:
         //- Has the mesh been balanced this step
         mutable bool balanced_;
 
-        //- Is the mesh in the process of being refined
-        mutable bool isRefining_;
-
-        //- Is the mesh in the process of being unrefined
-        mutable bool isUnrefining_;
-
         //- Is the mesh in the process of being balanced
         mutable bool isBalancing_;
 
@@ -184,72 +169,45 @@ protected:
         //- Count set/unset elements in packedlist.
         static label count(const PackedBoolList&, const unsigned int);
 
-        //- Calculate cells that cannot be refined since would trigger
-        //  refinement of protectedCell_ (since 2:1 refinement cascade)
-        void calculateProtectedCells(PackedBoolList& unrefineableCell) const;
+        //- Select candidate cells for refinement
+        virtual void selectRefineCandidates
+        (
+            const scalar lowerRefineLevel,
+            const scalar upperRefineLevel,
+            const scalarField& vFld,
+            PackedBoolList& candidateCell
+        ) const;
 
+        //- Subset candidate cells for refinement
+        virtual labelList selectRefineCells
+        (
+            const label maxCells,
+            const labelList& maxRefinement,
+            const PackedBoolList& candidateCell
+        ) const;
 
-        //- Refine cells. Update mesh and fields.
-        autoPtr<mapPolyMesh> refine(const labelList&);
+        //- Extend markedCell with cell-face-cell.
+        void extendMarkedCells
+        (
+            PackedBoolList& markedCell,
+            const labelList& maxRefinement,
+            const bool top
+        ) const;
 
-        //- Unrefine cells. Gets passed in centre points of cells to combine.
-        autoPtr<mapPolyMesh> unrefine(const labelList&);
+        //- Get per cell max of connected point
+        scalarField maxPointField(const scalarField&) const;
 
+        //- Get point max of connected cell
+        scalarField maxCellField(const scalarField&) const;
 
-        // Selection of cells to un/refine
+        scalarField cellToPoint(const scalarField& vFld) const;
 
-            //- Get per cell max of connected point
-            scalarField maxPointField(const scalarField&) const;
-
-            //- Get point max of connected cell
-            scalarField maxCellField(const scalarField&) const;
-
-            scalarField cellToPoint(const scalarField& vFld) const;
-
-            scalarField error
-            (
-                const scalarField& fld,
-                const scalar minLevel,
-                const scalar maxLevel
-            ) const;
-
-            //- Select candidate cells for refinement
-            virtual void selectRefineCandidates
-            (
-                const scalar lowerRefineLevel,
-                const scalar upperRefineLevel,
-                const scalarField& vFld,
-                PackedBoolList& candidateCell
-            ) const;
-
-            //- Subset candidate cells for refinement
-            virtual labelList selectRefineCells
-            (
-                const label maxCells,
-                const labelList& maxRefinement,
-                const PackedBoolList& candidateCell
-            ) const;
-
-            //- Extend markedCell with cell-face-cell.
-            void extendMarkedCells
-            (
-                PackedBoolList& markedCell,
-                const labelList& maxRefinement,
-                const bool top
-            ) const;
-
-            //- Check all cells have 8 anchor points
-            void checkEightAnchorPoints
-            (
-                PackedBoolList& protectedCell,
-                label& nProtected
-            ) const;
-
-            //- Set protected cells
-            void setProtectedCells();
-
-            //- Distribute additional information
-            virtual void distribute(const mapDistributePolyMesh& map);
+        scalarField error
+        (
+            const scalarField& fld,
+            const scalar minLevel,
+            const scalar maxLevel
+        ) const;
 
 
 public:
@@ -258,10 +216,33 @@ public:
     TypeName("fvMeshRefiner");
 
 
+        // Declare run-time constructor selection table
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fvMeshRefiner,
+            fvMesh,
+            (fvMesh& mesh),
+            (mesh)
+        );
+
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            fvMeshRefiner,
+            dictionary,
+            (fvMesh& mesh, const dictionary dict, const bool force, const bool read),
+            (mesh, dict, force, read)
+        );
+
+
     // Constructors
 
-        //- Construct from IOobject
-        explicit fvMeshRefiner
+        //- Construct from mesh
+        explicit fvMeshRefiner(fvMesh& mesh);
+
+        //- Construct from mesh and dictionary
+        fvMeshRefiner
         (
             fvMesh& mesh,
             const dictionary& dict,
@@ -271,6 +252,20 @@ public:
 
         //- Disallow default bitwise copy construction
         fvMeshRefiner(const fvMeshRefiner&) = delete;
+
+
+    // Selectors
+
+        //- Select, construct and return the fvMeshRefiner
+        static autoPtr<fvMeshRefiner> New(fvMesh&);
+
+        static autoPtr<fvMeshRefiner> New
+        (
+            fvMesh& mesh,
+            const dictionary& dict,
+            const bool force = false,
+            const bool read = true
+        );
 
 
     //- Destructor
@@ -293,24 +288,12 @@ public:
                 force_ = force;
             }
 
+            //- Return the cell level
+            virtual const labelList& cellLevel() const = 0;
+
 
         //- Read the projection parameters from dictionary
-        void readDict(const dictionary& parentDict);
-
-        //- Map all fields in time using given map
-        virtual void mapFields(const mapPolyMesh& mpm);
-
-        //- Direct access to the refinement engine
-        const hexRef& meshCutter() const
-        {
-            return meshCutter_();
-        }
-
-        //- Direct access to the refinement engine
-        hexRef& meshCutter()
-        {
-            return meshCutter_();
-        }
+        virtual void readDict(const dictionary& parentDict);
 
         //- Refine the mesh
         virtual bool refine
@@ -320,10 +303,10 @@ public:
             const scalar lowerRefineLevel = small,
             const scalar upperRefineLevel = great,
             const scalar unrefineLevel = -small
-        );
+        ) = 0;
 
         //- Balance the mesh
-        bool balance();
+        virtual bool balance();
 
         //- Overload update mesh to include other methods
         virtual void updateMesh(const mapPolyMesh& mpm);
@@ -334,6 +317,9 @@ public:
             return false;
         }
 
+        //- Distribute additional information
+        virtual void distribute(const mapDistributePolyMesh& map);
+
         static void extendMaxCellLevel
         (
             const fvMesh& mesh,
@@ -342,17 +328,6 @@ public:
             const label level
         );
 
-    // Writing
-
-        //- Write using given format, version and compression
-        virtual bool writeObject
-        (
-            IOstream::streamFormat fmt,
-            IOstream::versionNumber ver,
-            IOstream::compressionType cmp,
-            const bool write = true
-        ) const;
-
 
     // Member Operators
 
@@ -360,6 +335,17 @@ public:
         void operator=(const fvMeshRefiner&) = delete;
 };
 
+
+// Helper class for accessing max cell level of faces accross processor patches
+template<class Type>
+class combineMaxOp
+{
+    public:
+    void operator()(Type& x, const Type& y) const
+    {
+        x = max(x, y);
+    }
+};
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

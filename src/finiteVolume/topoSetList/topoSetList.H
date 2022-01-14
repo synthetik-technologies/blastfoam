@@ -165,6 +165,7 @@ public:
         void modifyTopoSet
         (
             const word& setType,
+            const bool isZone,
             HashPtrTable<topoSet>& topoSets,
             wordHashSet& zones,
             wordHashSet& sets,

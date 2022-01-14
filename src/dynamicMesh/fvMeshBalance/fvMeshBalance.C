@@ -38,6 +38,31 @@ namespace Foam
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
+Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
+:
+    mesh_(mesh),
+    decompositionDict_
+    (
+        IOdictionary
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                mesh.time().system(),
+                mesh,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            )
+        )
+    ),
+    distributor_(mesh_),
+    balance_(false),
+    allowableImbalance_(0.2)
+{
+    read(decompositionDict_);
+}
+
+
 Foam::fvMeshBalance::fvMeshBalance
 (
     fvMesh& mesh,

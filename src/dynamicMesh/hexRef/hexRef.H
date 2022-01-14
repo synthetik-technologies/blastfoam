@@ -78,6 +78,19 @@ class mapDistributePolyMesh;
 
 class hexRef
 {
+public:
+    // Public static functions
+
+        //- Reorder according to map.
+        static void reorder
+        (
+            const labelList& map,
+            const label len,
+            const label null,
+            labelList& elems
+        );
+
+
 protected:
     // Protected data
 
@@ -113,15 +126,6 @@ protected:
 
 
     // Protected Member Functions
-
-        //- Reorder according to map.
-        static void reorder
-        (
-            const labelList& map,
-            const label len,
-            const label null,
-            labelList& elems
-        );
 
         //- Get patch and zone info
         void getFaceInfo

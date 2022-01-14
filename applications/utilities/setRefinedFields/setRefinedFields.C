@@ -38,7 +38,7 @@ Description
 #include "volFields.H"
 #include "systemDict.H"
 
-#include "fvMeshRefiner.H"
+#include "fvMeshHexRefiner.H"
 #include "mapPolyMesh.H"
 #include "polyTopoChange.H"
 #include "syncTools.H"
@@ -536,8 +536,12 @@ int main(int argc, char *argv[])
         if (args.optionFound("force3D"))
         {
             refineDict.set("force3D", true);
+            refiner.set(new fvMeshHexRefiner(mesh, refineDict, true));
         }
-        refiner.set(new fvMeshRefiner(mesh, refineDict, true));
+        else
+        {
+            refiner = fvMeshRefiner::New(mesh, refineDict, true);
+        }
     }
     bool refine = refiner.valid();
 
@@ -637,7 +641,7 @@ int main(int argc, char *argv[])
                 max
                 (
                     setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
-                    gMax(refiner->meshCutter().cellLevel())*2
+                    gMax(refiner->cellLevel())*2
                 )
             );
     }
@@ -820,18 +824,16 @@ int main(int argc, char *argv[])
                 }
             }
 
-            if (writeSets)
-            {
-                topoSets.update
-                (
-                    regionDict,
-                    selectedCells,
-                    selectedFaces,
-                    selectedPoints
-                );
-            }
+            topoSets.update
+            (
+                regionDict,
+                selectedCells,
+                selectedFaces,
+                selectedPoints
+            );
             Info<< endl;
         }
+        topoSets.transferZones(false);
 
         // Update boundary conditions of fields used for refinement
         forAll(fields, fieldi)
@@ -1058,7 +1060,7 @@ int main(int argc, char *argv[])
             }
 
             // Mark cells greater than the max cell level for unrefinment
-            const labelList& cellLevel = refiner->meshCutter().cellLevel();
+            const labelList& cellLevel = refiner->cellLevel();
             forAll(error, celli)
             {
                 if (cellLevel[celli] == maxCellLevel[celli])
@@ -1074,6 +1076,7 @@ int main(int argc, char *argv[])
             // Write fields and mesh if using debug
             if (debug)
             {
+                mesh.setInstance(runTime.timeName());
                 bool writeOk = (mesh.write() && refiner->write());
                 volScalarField scalarMaxCellLevel
                 (
@@ -1119,7 +1122,7 @@ int main(int argc, char *argv[])
     {
         // Handle cell level (as volScalarField) explicitly
         // Important when using mapFields or rotateFields
-        const labelIOList& cellLevel = refiner->meshCutter().cellLevel();
+        const labelList& cellLevel = refiner->cellLevel();
         if (mesh.foundObject<volScalarField>("cellLevel"))
         {
             volScalarField& scalarCellLevel =
