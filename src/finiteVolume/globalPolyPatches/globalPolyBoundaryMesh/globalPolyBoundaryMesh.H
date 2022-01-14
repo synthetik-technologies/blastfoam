@@ -69,7 +69,7 @@ class globalPolyBoundaryMesh
 {
 // Private member data
 
-    HashTable<dictionary> interfacesDicts_;
+    HashTable<dictionary> interfaceDicts_;
 
     // Table of mapped patch selectors
     mutable HashPtrTable<globalPolyPatch> patches_;
