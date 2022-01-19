@@ -118,7 +118,8 @@ public:
             const dictionary& dict,
             const word& xName,
             const word& yName,
-            const word& name
+            const word& name,
+            const bool canRead = true
         );
 
         //- Construct from data
@@ -342,7 +343,8 @@ public:
             const dictionary& dict,
             const word& xName,
             const word& yName,
-            const word& name
+            const word& name,
+            const bool canRead = true
         );
 
         //- Read a set from a given dictionary
@@ -354,7 +356,8 @@ public:
             Field<scalar>& modValues,
             modFuncType& modFunc,
             modFuncType& invModFunc,
-            findIndexFunc& findIndex
+            findIndexFunc& findIndex,
+            const bool canRead = true
         );
 };
 

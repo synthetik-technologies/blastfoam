@@ -107,9 +107,9 @@ public:
         (
             const Field<scalar>& x,
             const Field<Type>& data,
-            const word& xMod,
-            const word& mod,
-            const word& interpolationScheme,
+            const word& xMod = "none",
+            const word& mod = "none",
+            const word& interpolationScheme  = "linearClamp",
             const bool isReal = true
         );
 
@@ -252,7 +252,8 @@ public:
     (
         const dictionary& dict,
         const word& xName,
-        const word& yName
+        const word& yName,
+        const bool canRead = true
     );
 
     //- Read a set from a given dictionary
@@ -264,7 +265,8 @@ public:
         Field<fType>& values,
         Field<fType>& modValues,
         modFuncType& modFunc,
-        modFuncType& invModFunc
+        modFuncType& invModFunc,
+        const bool canRead = true
     );
 };
 

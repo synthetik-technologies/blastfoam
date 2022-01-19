@@ -58,10 +58,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
     index_(0),
     f_(0.0)
 {
-    if (canRead)
-    {
-        read(dict, xName, name);
-    }
+    read(dict, xName, name, canRead);
 }
 
 
@@ -354,7 +351,8 @@ void Foam::lookupTable1D<Type>::read
 (
     const dictionary& dict,
     const word& xName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
     word interpolationScheme
@@ -370,7 +368,8 @@ void Foam::lookupTable1D<Type>::read
         xValues_,
         xModValues_,
         modXFunc_,
-        invModXFunc_
+        invModXFunc_,
+        canRead
     );
     Field<Type> data;
     readComponent<Type>
@@ -380,7 +379,8 @@ void Foam::lookupTable1D<Type>::read
         data,
         data_,
         modFunc_,
-        invModFunc_
+        invModFunc_,
+        canRead
     );
 }
 

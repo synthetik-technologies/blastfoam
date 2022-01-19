@@ -67,7 +67,8 @@ public:
         (
             const dictionary& dict,
             const word& xName,
-            const word& name
+            const word& name,
+            const bool canRead = true
         );
 
         //- Construct from data given list of x and data
@@ -106,7 +107,8 @@ public:
         (
             const dictionary& dict,
             const word& xName,
-            const word& yName
+            const word& yName,
+            const bool canRead = true
         );
 };
 

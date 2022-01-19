@@ -71,7 +71,8 @@ public:
             const word& xName,
             const word& yName,
             const word& zName,
-            const word& name
+            const word& name,
+            const bool canRead = true
         );
 
         //- Construct from data

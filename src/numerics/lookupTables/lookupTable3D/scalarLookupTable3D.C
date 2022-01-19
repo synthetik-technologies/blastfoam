@@ -37,10 +37,11 @@ Foam::scalarLookupTable3D::scalarLookupTable3D
     const word& xName,
     const word& yName,
     const word& zName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
-    read(dict, xName, yName, zName, name);
+    read(dict, xName, yName, zName, name, canRead);
 }
 
 

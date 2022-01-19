@@ -93,7 +93,8 @@ Foam::lookupTable2D<Type>::lookupTable2D
     const dictionary& dict,
     const word& xName,
     const word& yName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 :
     modFunc_(nullptr),
@@ -115,7 +116,7 @@ Foam::lookupTable2D<Type>::lookupTable2D
     fx_(0),
     fy_(0)
 {
-    read(dict, xName, yName, name);
+    read(dict, xName, yName, name, canRead);
 }
 
 
@@ -535,7 +536,8 @@ void Foam::lookupTable2D<Type>::read
     const dictionary& dict,
     const word& xName,
     const word& yName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
     word interpolationScheme
@@ -552,7 +554,8 @@ void Foam::lookupTable2D<Type>::read
         xModValues_,
         modXFunc_,
         invModXFunc_,
-        findXIndex_
+        findXIndex_,
+        canRead
     );
     readComponent
     (
@@ -562,13 +565,17 @@ void Foam::lookupTable2D<Type>::read
         yModValues_,
         modYFunc_,
         invModYFunc_,
-        findYIndex_
+        findYIndex_,
+        canRead
     );
 
-    data_.resize(xValues_.size());
-    forAll(data_, i)
+    if (canRead)
     {
-        data_[i].resize(yValues_.size());
+        data_.resize(xValues_.size());
+        forAll(data_, i)
+        {
+            data_[i].resize(yValues_.size());
+        }
     }
 
     const dictionary& fDict(dict.subDict(name + "Coeffs"));
@@ -586,7 +593,8 @@ void Foam::lookupTable2D<Type>::read
         file,
         fDict.lookupOrDefault<string>("delim", ","),
         data_,
-        fDict.lookupOrDefault<Switch>("flipTable", true)
+        fDict.lookupOrDefault<Switch>("flipTable", true),
+        !canRead
     );
     if (isReal)
     {
@@ -610,27 +618,15 @@ void Foam::lookupTable2D<Type>::readComponent
     Field<scalar>& modValues,
     modFuncType& modFunc,
     modFuncType& invModFunc,
-    findIndexFunc& findIndex
+    findIndexFunc& findIndex,
+    const bool canRead
 )
 {
     Switch isReal = true;
-    if (parentDict.found(name))
-    {
-        values = parentDict.lookup<Field<Type>>(name);
-        modValues.resize(values.size());
-        isReal =
-            parentDict.lookupOrDefault<Switch>(name + "isReal", true);
-        setMod
-        (
-            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
-            modFunc,
-            invModFunc
-        );
-    }
-    else if (parentDict.found(name + "Coeffs"))
+    bool canSetMod = true;
+    if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-        isReal = dict.lookupOrDefault<Switch>("isReal", true);
         setMod
         (
             dict.lookupOrDefault<word>("mod", "none"),
@@ -638,6 +634,19 @@ void Foam::lookupTable2D<Type>::readComponent
             invModFunc
         );
 
+        if (dict.found(name))
+        {
+            if (canRead)
+            {
+                values = dict.lookup<Field<Type>>(name);
+                modValues.resize(values.size());
+                isReal = dict.lookupOrDefault<Switch>("isReal", true);
+            }
+            else
+            {
+                canSetMod = false;
+            }
+        }
         if (dict.found("file"))
         {
             fileName file(dict.lookup("file"));
@@ -647,6 +656,7 @@ void Foam::lookupTable2D<Type>::readComponent
                 dict.lookupOrDefault<string>("delim", ","),
                 values
             );
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
         else
         {
@@ -659,7 +669,32 @@ void Foam::lookupTable2D<Type>::readComponent
             {
                 values[j] = miny + dy*j;
             }
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
+    }
+    else if (parentDict.found(name))
+    {
+        if (canRead)
+        {
+            values = parentDict.lookup<Field<Type>>(name);
+            modValues.resize(values.size());
+            isReal =
+                parentDict.lookupOrDefault<Switch>
+                (
+                    name + "isReal",
+                    true
+                );
+        }
+        else
+        {
+            canSetMod = false;
+        }
+        setMod
+        (
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            modFunc,
+            invModFunc
+        );
     }
     else
     {
@@ -669,29 +704,32 @@ void Foam::lookupTable2D<Type>::readComponent
             << abort(FatalError);
     }
 
-    if (!isReal)
+    if (canSetMod)
     {
-        modValues = values;
-        forAll(values, i)
+        if (!isReal)
         {
-            values[i] = invModFunc(values[i]);
+            modValues = values;
+            forAll(values, i)
+            {
+                values[i] = invModFunc(values[i]);
+            }
         }
-    }
-    else
-    {
-        modValues.resize(values.size());
-        forAll(values, i)
+        else
         {
-            modValues[i] = modFunc(values[i]);
+            modValues.resize(values.size());
+            forAll(values, i)
+            {
+                modValues[i] = modFunc(values[i]);
+            }
         }
-    }
-    if (checkUniform(modValues))
-    {
-        findIndex = &findUniformIndexes;
-    }
-    else
-    {
-        findIndex = &findNonuniformIndexes;
+        if (checkUniform(modValues))
+        {
+            findIndex = &findUniformIndexes;
+        }
+        else
+        {
+            findIndex = &findNonuniformIndexes;
+        }
     }
 }
 

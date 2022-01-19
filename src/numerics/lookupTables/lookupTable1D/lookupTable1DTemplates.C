@@ -37,26 +37,15 @@ void Foam::lookupTable1D<Type>::readComponent
     Field<fType>& values,
     Field<fType>& modValues,
     modFuncType& modFunc,
-    modFuncType& invModFunc
+    modFuncType& invModFunc,
+    const bool canRead
 )
 {
     Switch isReal = true;
-    if (parentDict.found(name))
-    {
-        values = parentDict.lookup<Field<fType>>(name);
-        modValues.resize(values.size());
-        isReal = parentDict.lookupOrDefault<Switch>(name + "isReal", true);
-        setMod
-        (
-            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
-            modFunc,
-            invModFunc
-        );
-    }
-    else if (parentDict.found(name + "Coeffs"))
+    bool canSetMod = true;
+    if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-        isReal = dict.lookupOrDefault<Switch>("isReal", true);
         setMod
         (
             dict.lookupOrDefault<word>("mod", "none"),
@@ -64,7 +53,20 @@ void Foam::lookupTable1D<Type>::readComponent
             invModFunc
         );
 
-        if (dict.found("file"))
+        if (dict.found(name))
+        {
+            if (canRead)
+            {
+                values = dict.lookup<Field<fType>>(name);
+                modValues.resize(values.size());
+                isReal = dict.lookupOrDefault<Switch>("isReal", true);
+            }
+            else
+            {
+                canSetMod = false;
+            }
+        }
+        else if (dict.found("file"))
         {
             fileName file(dict.lookup("file"));
             read1DTable
@@ -73,6 +75,7 @@ void Foam::lookupTable1D<Type>::readComponent
                 dict.lookupOrDefault<string>("delim", ","),
                 values
             );
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
         else
         {
@@ -85,7 +88,32 @@ void Foam::lookupTable1D<Type>::readComponent
             {
                 values[j] = miny + dy*j;
             }
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
+    }
+    else if (parentDict.found(name))
+    {
+        if (canRead)
+        {
+            values = parentDict.lookup<Field<fType>>(name);
+            modValues.resize(values.size());
+            isReal =
+                parentDict.lookupOrDefault<Switch>
+                (
+                    name + "isReal",
+                    true
+                );
+        }
+        else
+        {
+            canSetMod = false;
+        }
+        setMod
+        (
+            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            modFunc,
+            invModFunc
+        );
     }
     else
     {
@@ -95,20 +123,23 @@ void Foam::lookupTable1D<Type>::readComponent
             << abort(FatalError);
     }
 
-    if (!isReal)
+    if (canSetMod)
     {
-        modValues = values;
-        forAll(values, i)
+        if (!isReal)
         {
-            values[i] = invModFunc(values[i]);
+            modValues = values;
+            forAll(values, i)
+            {
+                values[i] = invModFunc(values[i]);
+            }
         }
-    }
-    else
-    {
-        modValues.resize(values.size());
-        forAll(values, i)
+        else
         {
-            modValues[i] = modFunc(values[i]);
+            modValues.resize(values.size());
+            forAll(values, i)
+            {
+                modValues[i] = modFunc(values[i]);
+            }
         }
     }
 }

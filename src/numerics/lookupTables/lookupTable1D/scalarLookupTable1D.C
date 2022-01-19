@@ -36,10 +36,11 @@ Foam::scalarLookupTable1D::scalarLookupTable1D
 (
     const dictionary& dict,
     const word& xName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
-    read(dict, xName, name);
+    read(dict, xName, name, canRead);
 }
 
 
@@ -127,7 +128,8 @@ void Foam::scalarLookupTable1D::read
 (
     const dictionary& dict,
     const word& xName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
     if (dict.found("file2D"))
@@ -172,7 +174,7 @@ void Foam::scalarLookupTable1D::read
         return;
     }
 
-    lookupTable1D<scalar>::read(dict, xName, name);
+    lookupTable1D<scalar>::read(dict, xName, name, canRead);
 }
 
 

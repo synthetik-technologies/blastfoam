@@ -105,10 +105,11 @@ Foam::scalarLookupTable2D::scalarLookupTable2D
     const dictionary& dict,
     const word& xName,
     const word& yName,
-    const word& name
+    const word& name,
+    const bool canRead
 )
 {
-    read(dict, xName, yName, name);
+    read(dict, xName, yName, name, canRead);
 }
 
 
