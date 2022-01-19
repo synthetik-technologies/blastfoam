@@ -183,8 +183,8 @@ public:
                     index,
                     newSize,
                     newStart,
-                    this->nbrPatchName(),
-                    this->nonOverlapPatchName()
+                    word::null,
+                    word::null
                 )
             );
         }

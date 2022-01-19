@@ -203,7 +203,7 @@ public:
                     index,
                     newSize,
                     newStart,
-                    this->nbrPatchName()
+                    word::null
                 )
             );
         }
