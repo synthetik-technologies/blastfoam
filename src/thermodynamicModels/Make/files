@@ -41,6 +41,6 @@ afterburnModels/MillerAfterburn/MillerAfterburn.C
 afterburnModels/noAfterburn/noAfterburn.C
 
 derivedFvPatchFields/pressureWaveTransmissive/pressureWaveTransmissiveFvPatchFields.C
-
+derivedFvPatchFields/globalTemperatureCoupled/globalTemperatureCoupledFvPatchScalarField.C
 
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

@@ -36,12 +36,20 @@ template<class Thermo>
 void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
 {
     this->updateMixture();
+
+    const scalarField& rhoCells = this->rho_.primitiveFieldRef();
+    scalarField& heCells = this->heRef();
+    scalarField& TCells = this->TRef().primitiveFieldRef();
+    scalarField& CpCells = this->CpRef().primitiveFieldRef();
+    scalarField& CvCells = this->CvRef().primitiveFieldRef();
+    scalarField& alphaCells = this->alphaRef().primitiveFieldRef();
+
     forAll(this->rho_, celli)
     {
         const typename Thermo::thermoType& t(this->mixture_[celli]);
-        const scalar& rhoi(this->rho_[celli]);
-        scalar& ei(this->heRef()[celli]);
-        scalar& Ti = this->TRef()[celli];
+        const scalar& rhoi(rhoCells[celli]);
+        scalar& ei(heCells[celli]);
+        scalar& Ti = TCells[celli];
 
         // Update temperature
         Ti = t.TRhoE(Ti, rhoi, ei);
@@ -52,41 +60,76 @@ void Foam::multicomponentSolidBlastThermo<Thermo>::calculate()
         }
 
         scalar Cpi = t.Cp(rhoi, ei, Ti);
-        this->CpRef()[celli] = Cpi;
-        this->CvRef()[celli] = t.Cv(rhoi, ei, Ti);
-        this->alphaRef()[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
+        CpCells[celli] = Cpi;
+        CvCells[celli] = t.Cv(rhoi, ei, Ti);
+        alphaCells[celli] = t.kappa(rhoi, ei, Ti)/Cpi;
     }
 
-    this->TRef().correctBoundaryConditions();
-    this->heRef().correctBoundaryConditions();
+    const volScalarField::Boundary& rhoBf =
+        this->rho_.boundaryFieldRef();
+
+    volScalarField::Boundary& heBf = this->heRef().boundaryFieldRef();
+    volScalarField::Boundary& TBf = this->TRef().boundaryFieldRef();
+
+    volScalarField::Boundary& CpBf = this->CpRef().boundaryFieldRef();
+    volScalarField::Boundary& CvBf = this->CvRef().boundaryFieldRef();
+    volScalarField::Boundary& alphaBf =
+        this->alphaRef().boundaryFieldRef();
 
     forAll(this->rho_.boundaryField(), patchi)
     {
-        const fvPatchScalarField& prho = this->rho_.boundaryField()[patchi];
-        const fvPatchScalarField& pT =
-            this->TRef().boundaryField()[patchi];
-        const fvPatchScalarField& phe =
-            this->heRef().boundaryField()[patchi];
+        const fvPatchScalarField& prho = rhoBf[patchi];
+        fvPatchScalarField& pT = TBf[patchi];
+        fvPatchScalarField& phe = heBf[patchi];
 
-        fvPatchScalarField& pCp = this->CpRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& pCv = this->CvRef().boundaryFieldRef()[patchi];
-        fvPatchScalarField& palpha =
-            this->alphaRef().boundaryFieldRef()[patchi];
+        fvPatchScalarField& pCp = CpBf[patchi];
+        fvPatchScalarField& pCv = CvBf[patchi];
+        fvPatchScalarField& palpha = alphaBf[patchi];
 
-        forAll(prho, facei)
+        if (pT.fixesValue())
         {
-            const typename Thermo::thermoType& t
-            (
-                this->mixture_.boundary(patchi, facei)
-            );
-            const scalar rhoi(prho[facei]);
-            const scalar ei(phe[facei]);
-            const scalar Ti(pT[facei]);
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                const scalar rhoi(prho[facei]);
+                scalar& ei(phe[facei]);
+                const scalar Ti(pT[facei]);
 
-            const scalar Cpi = t.Cp(rhoi, ei, Ti);
-            pCp[facei] = Cpi;
-            pCv[facei] = t.Cv(rhoi, ei, Ti);
-            palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+                ei = t.Es(rhoi, ei, Ti);
+
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                pCp[facei] = Cpi;
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+            }
+        }
+        else
+        {
+            forAll(prho, facei)
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                const scalar rhoi(prho[facei]);
+                scalar& ei(phe[facei]);
+                scalar& Ti(pT[facei]);
+
+                Ti = t.TRhoE(Ti, rhoi, ei);
+                if (Ti < this->TLow_)
+                {
+                    ei = t.Es(rhoi, ei, this->TLow_);
+                    Ti = this->TLow_;
+                }
+
+                const scalar Cpi = t.Cp(rhoi, ei, Ti);
+                pCp[facei] = Cpi;
+                pCv[facei] = t.Cv(rhoi, ei, Ti);
+                palpha[facei] = t.kappa(rhoi, ei, Ti)/Cpi;
+            }
         }
     }
 }

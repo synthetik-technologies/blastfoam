@@ -77,7 +77,7 @@ Foam::autoPtr<Foam::solidBlastThermo> Foam::solidBlastThermo::New
     return blastThermo::New<solidBlastThermo>
     (
         mesh,
-        dict,
+        dict.optionalSubDict("mixture"),
         phaseName,
         phaseName
     );

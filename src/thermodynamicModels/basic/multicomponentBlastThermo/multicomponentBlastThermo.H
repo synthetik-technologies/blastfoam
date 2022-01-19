@@ -155,6 +155,9 @@ public:
         //- Initialize models
         virtual void initializeModels();
 
+        //- Update the mixtures
+        virtual void updateMixture() = 0;
+
         //- Pre update step
         virtual void update();
 
