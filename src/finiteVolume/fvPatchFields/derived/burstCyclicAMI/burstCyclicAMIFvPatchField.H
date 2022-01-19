@@ -194,20 +194,12 @@ public:
                 const scalarField& deltaCoeffs
             ) const;
 
-            //- Return the matrix diagonal coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<Type>> gradientInternalCoeffs() const;
-
             //- Return the matrix source coefficients corresponding to the
             //  evaluation of the gradient of this patchField
             virtual tmp<Field<Type>> gradientBoundaryCoeffs
             (
                 const scalarField& deltaCoeffs
             ) const;
-
-            //- Return the matrix source coefficients corresponding to the
-            //  evaluation of the gradient of this patchField
-            virtual tmp<Field<Type>> gradientBoundaryCoeffs() const;
 
 
         // Coupled interface functionality

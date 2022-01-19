@@ -375,21 +375,12 @@ Foam::burstProcessorCyclicFvPatchField<Type>::gradientInternalCoeffs
 ) const
 {
     return
-        intactPatchField_().gradientInternalCoeffs(deltaCoeffs)
-       *burstProcessorCyclicPatch_.intact()
+        (
+            intactPatchField_().coupled()
+          ? intactPatchField_().gradientInternalCoeffs(deltaCoeffs)
+          : intactPatchField_().gradientInternalCoeffs()
+        )*burstProcessorCyclicPatch_.intact()
       + cyclicFvPatchField<Type>::gradientInternalCoeffs(deltaCoeffs)
-       *(1.0 - burstProcessorCyclicPatch_.intact());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::burstProcessorCyclicFvPatchField<Type>::gradientInternalCoeffs() const
-{
-    return
-        intactPatchField_().gradientInternalCoeffs()
-       *burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::gradientInternalCoeffs()
        *(1.0 - burstProcessorCyclicPatch_.intact());
 }
 
@@ -402,21 +393,12 @@ Foam::burstProcessorCyclicFvPatchField<Type>::gradientBoundaryCoeffs
 ) const
 {
     return
-        intactPatchField_().gradientBoundaryCoeffs(deltaCoeffs)
-       *burstProcessorCyclicPatch_.intact()
+        (
+            intactPatchField_().coupled()
+          ? intactPatchField_().gradientBoundaryCoeffs(deltaCoeffs)
+          : intactPatchField_().gradientBoundaryCoeffs()
+        )*burstProcessorCyclicPatch_.intact()
       + cyclicFvPatchField<Type>::gradientBoundaryCoeffs(deltaCoeffs)
-       *(1.0 - burstProcessorCyclicPatch_.intact());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::burstProcessorCyclicFvPatchField<Type>::gradientBoundaryCoeffs() const
-{
-    return
-        intactPatchField_().gradientBoundaryCoeffs()
-       *burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::gradientBoundaryCoeffs()
        *(1.0 - burstProcessorCyclicPatch_.intact());
 }
 
@@ -432,6 +414,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const scalarField& intact = burstProcessorCyclicPatch_.intact();
+    const polyPatch& p = this->patch().patch();
     {
         scalarField cResult(result.size(), Zero);
         cyclicFvPatchField<Type>::updateInterfaceMatrix
@@ -442,7 +425,11 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
             cmpt,
             commsType
         );
-        result -= (1.0 - intact)*cResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
+        }
     }
 
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
@@ -459,7 +446,11 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
             cmpt,
             commsType
         );
-        result -= iResult*intact;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += intact[fi]*iResult[celli];
+        }
     }
 }
 
@@ -474,6 +465,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const scalarField& intact = burstProcessorCyclicPatch_.intact();
+    const polyPatch& p = this->patch().patch();
     {
         Field<Type> cResult(result.size(), Zero);
         cyclicFvPatchField<Type>::updateInterfaceMatrix
@@ -483,7 +475,11 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
             coeffs,
             commsType
         );
-        result -= (1.0 - intact)*cResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
+        }
     }
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
     {
@@ -498,7 +494,11 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
             coeffs,
             commsType
         );
-        result -= intact*iResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += intact[fi]*iResult[celli];
+        }
     }
 }
 

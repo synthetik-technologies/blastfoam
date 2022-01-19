@@ -375,21 +375,9 @@ Foam::burstCyclicACMIFvPatchField<Type>::gradientInternalCoeffs
 ) const
 {
     return
-        intactPatchField_().gradientInternalCoeffs(deltaCoeffs)
-       *burstCyclicACMIPatch_.intact()
-      + cyclicACMIFvPatchField<Type>::gradientInternalCoeffs(deltaCoeffs)
-       *(1.0 - burstCyclicACMIPatch_.intact());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::burstCyclicACMIFvPatchField<Type>::gradientInternalCoeffs() const
-{
-    return
         intactPatchField_().gradientInternalCoeffs()
        *burstCyclicACMIPatch_.intact()
-      + cyclicACMIFvPatchField<Type>::gradientInternalCoeffs()
+      + cyclicACMIFvPatchField<Type>::gradientInternalCoeffs(deltaCoeffs)
        *(1.0 - burstCyclicACMIPatch_.intact());
 }
 
@@ -402,21 +390,9 @@ Foam::burstCyclicACMIFvPatchField<Type>::gradientBoundaryCoeffs
 ) const
 {
     return
-        intactPatchField_().gradientBoundaryCoeffs(deltaCoeffs)
-       *burstCyclicACMIPatch_.intact()
-      + cyclicACMIFvPatchField<Type>::gradientBoundaryCoeffs(deltaCoeffs)
-       *(1.0 - burstCyclicACMIPatch_.intact());
-}
-
-
-template<class Type>
-Foam::tmp<Foam::Field<Type>>
-Foam::burstCyclicACMIFvPatchField<Type>::gradientBoundaryCoeffs() const
-{
-    return
         intactPatchField_().gradientBoundaryCoeffs()
        *burstCyclicACMIPatch_.intact()
-      + cyclicACMIFvPatchField<Type>::gradientBoundaryCoeffs()
+      + cyclicACMIFvPatchField<Type>::gradientBoundaryCoeffs(deltaCoeffs)
        *(1.0 - burstCyclicACMIPatch_.intact());
 }
 
@@ -432,6 +408,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const scalarField& intact = burstCyclicACMIPatch_.intact();
+    const polyPatch& p = this->patch().patch();
     {
         scalarField cResult(result.size(), Zero);
         cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
@@ -442,7 +419,11 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             cmpt,
             commsType
         );
-        result -= (1.0 - intact)*cResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
+        }
     }
 
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
@@ -459,7 +440,11 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             cmpt,
             commsType
         );
-        result -= iResult*intact;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += intact[fi]*iResult[celli];
+        }
     }
 }
 
@@ -474,6 +459,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const scalarField& intact = burstCyclicACMIPatch_.intact();
+    const polyPatch& p = this->patch().patch();
     {
         Field<Type> cResult(result.size(), Zero);
         cyclicACMIFvPatchField<Type>::updateInterfaceMatrix
@@ -483,7 +469,11 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             coeffs,
             commsType
         );
-        result -= (1.0 - intact)*cResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
+        }
     }
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
     {
@@ -498,7 +488,11 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
             coeffs,
             commsType
         );
-        result -= intact*iResult;
+        forAll(p.faceCells(), fi)
+        {
+            const label celli = p.faceCells()[fi];
+            result[celli] += intact[fi]*iResult[celli];
+        }
     }
 }
 
