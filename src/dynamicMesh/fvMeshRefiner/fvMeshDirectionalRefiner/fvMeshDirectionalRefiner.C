@@ -289,55 +289,8 @@ Foam::labelListList Foam::fvMeshDirectionalRefiner::refineDirections
 Foam::labelListList
 Foam::fvMeshDirectionalRefiner::refine(const labelList& origCellsToRefine)
 {
-    List<labelList> cellsToRefine;
-    List<vectorField> cellDirections;
-    if (refinementZones_.size())
-    {
-        labelHashSet selectedCells(origCellsToRefine);
-        forAllConstIter
-        (
-            HashTable<List<vector>>,
-            refinementZones_,
-            iter
-        )
-        {
-            label zoneID = mesh_.cellZones().findIndex(iter.key());
-            if (zoneID == -1)
-            {
-                continue;
-                FatalErrorInFunction
-                    << "Could not find cellZone " << iter.key() << nl
-                    << "cellZones:" << nl
-                    << mesh_.cellZones().names() << endl
-                    << abort(FatalError);
-            }
-            const cellZone& zone = mesh_.cellZones()[zoneID];
-            DynamicList<label> cells(zone.size());
-            forAll(zone, i)
-            {
-                if (selectedCells.found(zone[i]))
-                {
-                    cells.append(zone[i]);
-                }
-            }
-            cells.shrink();
-            const List<vector>& dirs(iter());
-
-            forAll(dirs, diri)
-            {
-                cellsToRefine.append(cells);
-                cellDirections.append(vectorField(1, dirs[diri]));
-            }
-        }
-    }
-    else
-    {
-        forAll(refinementDirections_, diri)
-        {
-            cellsToRefine.append(origCellsToRefine);
-            cellDirections.append(vectorField(1, refinementDirections_[diri]));
-        }
-    }
+    List<labelList> cellsToRefine(1, origCellsToRefine);
+    List<vectorField> cellDirections(1, vectorField(1, refinementDirection_));
 
     return refineDirections(cellDirections, cellsToRefine);
 }
@@ -362,10 +315,21 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
         labelList(mesh.nCells(), 0)
     ),
 
-    cellWalker_(new geomCellLooper(mesh)),
-    cutter_(new undoableMeshCutter(mesh, false)),
+    pointLevel_
+    (
+        IOobject
+        (
+            "pointLevel",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        labelList(mesh.nPoints(), 0)
+    ),
 
-    isRefining_(false)
+    cellWalker_(new geomCellLooper(mesh)),
+    cutter_(new undoableMeshCutter(mesh, false))
 {
     Vector<label> geoD(mesh.geometricD());
     forAll(geoD, cmpti)
@@ -374,7 +338,8 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
         {
             vector v(Zero);
             v[cmpti] = 1.0;
-            refinementDirections_.append(v);
+            refinementDirection_ = v;
+            break;
         }
     }
 }
@@ -403,11 +368,34 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
         labelList(mesh.nCells(), 0)
     ),
 
-    cellWalker_(),
-    cutter_(new undoableMeshCutter(mesh, false)),
+    pointLevel_
+    (
+        IOobject
+        (
+            "pointLevel",
+            mesh.time().timeName(),
+            mesh,
+            read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
+            IOobject::NO_WRITE
+        ),
+        labelList(mesh.nPoints(), 0)
+    ),
 
-    isRefining_(false)
+    cellWalker_(),
+    cutter_(new undoableMeshCutter(mesh, false))
 {
+    Vector<label> geoD(mesh.geometricD());
+    forAll(geoD, cmpti)
+    {
+        if (geoD[cmpti] > 0)
+        {
+            vector v(Zero);
+            v[cmpti] = 1.0;
+            refinementDirection_ = v;
+            break;
+        }
+    }
+
     // Read static part of dictionary
     readDict(dict);
 }
@@ -434,53 +422,9 @@ void Foam::fvMeshDirectionalRefiner::readDict(const dictionary& dict)
         cellWalker_.reset(new hexCellLooper(mesh_));
     }
 
-    if (dict_.found("refinementZones"))
+    if (mesh_.nGeometricD() != 1)
     {
-        const PtrList<entry>& zones = dict_.lookup("refinementZones");
-        forAll(zones, zonei)
-        {
-            const dictionary& refDict = zones[zonei].dict();
-            refinementZones_.insert(zones[zonei].keyword(), {});
-
-            List<vector>& dirs = refinementZones_[zones[zonei].keyword()];
-            if (refDict.found("direction"))
-            {
-                dirs.append(getDirection(refDict.lookup<word>("direction")));
-            }
-            else if (refDict.found("directions"))
-            {
-                ITstream is(refDict.lookup("directions"));
-                while (is.good())
-                {
-                    dirs.append(getDirection(word(is)));
-                }
-            }
-        }
-    }
-    else if (dict_.found("direction"))
-    {
-        refinementDirections_.append(getDirection(dict_.lookup<word>("direction")));
-    }
-    else if (dict_.found("directions"))
-    {
-        ITstream is(dict_.lookup("directions"));
-        while (is.good())
-        {
-            refinementDirections_.append(getDirection(word(is)));
-        }
-    }
-    else
-    {
-        Vector<label> geoD(mesh_.geometricD());
-        forAll(geoD, cmpti)
-        {
-            if (geoD[cmpti] > 0)
-            {
-                vector v(Zero);
-                v[cmpti] = 1.0;
-                refinementDirections_.append(v);
-            }
-        }
+        refinementDirection_ = getDirection(dict_.lookup<word>("direction"));
     }
 }
 
@@ -494,75 +438,44 @@ bool Foam::fvMeshDirectionalRefiner::refine
 )
 {
     bool hasChanged = false;
-    bool balanced = false;
 
-    if (refineInterval_ == 0)
+    if (preUpdate())
     {
-        mesh_.topoChanging(hasChanged);
-
-        return false;
-    }
-
-    if (mesh_.time().timeIndex() % refineInterval_ == 0)
-    {
-        HashTable<parcelCloud*> clouds
-        (
-            mesh_.lookupClass<parcelCloud>()
-        );
-        forAllIter(HashTable<parcelCloud*>, clouds, iter)
-        {
-            iter()->storeGlobalPositions();
-        }
-
-        labelList maxRefinement;
-        if (!maxCellLevel.size())
-        {
-            maxRefinement.setSize
-            (
-                mesh_.nCells(),
-                dict_.lookup<label>("maxRefinement")
-            );
-        }
-        else
-        {
-            maxRefinement = maxCellLevel;
-        }
-
-        if (gMax(maxRefinement) == 0)
-        {
-            mesh_.topoChanging(hasChanged);
-
-            return false;
-        }
-        else if (gMin(maxRefinement) < 0)
-        {
-            FatalErrorInFunction
-                << "Illegal maximum refinement level " << gMin(maxRefinement) << nl
-                << "The maxRefinement should be > 0." << nl
-                << exit(FatalError);
-        }
-
         // Cells marked for refinement or otherwise protected from unrefinement.
         PackedBoolList refineCell(mesh_.nCells());
 
-        // Determine candidates for refinement (looking at field only)
-        selectRefineCandidates
-        (
-            lowerRefineLevel,
-            upperRefineLevel,
-            error,
-            refineCell
-        );
-
-        // Extend with a buffer layer to prevent neighbouring points
-        // being unrefined.
-        for (label i = 0; i < nBufferLayers_; i++)
+        if (canRefine(true))
         {
-            extendMarkedCells(refineCell, maxRefinement, i == 0);
-        }
+            labelList maxRefinement(maxCellLevel);
+            setMaxCellLevel(maxRefinement);
 
-        if (mesh_.globalData().nTotalCells() < maxCells_)
-        {
+            // Determine candidates for refinement (looking at field only)
+            selectRefineCandidates
+            (
+                lowerRefineLevel,
+                upperRefineLevel,
+                error,
+                refineCell
+            );
+
+            // Extend with a buffer layer to prevent neighbouring points
+            // being unrefined.
+            for (label i = 0; i < nRefinementBufferLayers_; i++)
+            {
+                extendMarkedCells(refineCell, maxRefinement, i == 0, force_);
+            }
+
+            forAll(protectedPatches_, patchi)
+            {
+                const polyPatch& p =
+                    mesh_.boundaryMesh()[protectedPatches_[patchi]];
+                forAll(p.faceCells(), facei)
+                {
+                    label own = mesh_.faceOwner()[facei + p.start()];
+                    refineCell.set(own, false);
+                }
+            }
+
             // Select subset of candidates. Take into account max allowable
             // cells, refinement level, protected cells.
             labelList cellsToRefine
@@ -582,6 +495,9 @@ bool Foam::fvMeshDirectionalRefiner::refine
 
             if (nCellsToRefine > 0)
             {
+                Info<<"Selected " << nCellsToRefine << " cells to refine" << endl;
+
+                const label nOldCells = mesh_.nCells();
                 labelListList oldToNew(refine(cellsToRefine));
 
                 const labelList oldCellLevel(cellLevel_);
@@ -603,36 +519,38 @@ bool Foam::fvMeshDirectionalRefiner::refine
                         cellLevel_[oldCelli] = oldCellLevel[oldCelli];
                     }
                 }
+
+                pointLevel_.resize(mesh_.nPoints(), 0);
+                forAll(pointLevel_, pointi)
+                {
+                    const labelList& pCells = mesh_.pointCells()[pointi];
+
+                    label newPointLevel = 0;
+                    forAll(pCells, ci)
+                    {
+                        newPointLevel =
+                            max(newPointLevel, cellLevel_[pCells[ci]]);
+                    }
+                    pointLevel_[pointi] = newPointLevel;
+                }
+
                 hasChanged = true;
+                Info<< "Refined from " << nOldCells << " cells to "
+                    << mesh_.nCells() << " cells" << endl;
             }
         }
 
         reduce(hasChanged, orOp<bool>());
-        mesh_.topoChanging(hasChanged);
-        balanced = balance();
-        if (balanced)
+        if (balance())
         {
-            //- Update objects stored on the mesh db
-            BalanceMeshObject::updateObjects(mesh_);
-
-            //- Update objects stores on the time db
-            BalanceMeshObject::updateObjects
-            (
-                const_cast<Time&>(mesh_.time())
-            );
             hasChanged = true;
         }
         else if (hasChanged)
         {
             //- Update objects stored on the mesh db
             RefineMeshObject::updateObjects(mesh_);
-
-            //- Update objects stores on the time db
-            RefineMeshObject::updateObjects
-            (
-                const_cast<Time&>(mesh_.time())
-            );
         }
+        mesh_.topoChanging(hasChanged);
 
         if (hasChanged)
         {
@@ -640,11 +558,11 @@ bool Foam::fvMeshDirectionalRefiner::refine
             // move, if are using inflation any follow on movePoints will set
             // it.
             mesh_.moving(false);
+            mesh_.setInstance(mesh_.time().timeName());
         }
-        nRefinementIterations_++;
     }
 
-    return hasChanged || balanced;
+    return hasChanged;
 }
 
 void Foam::fvMeshDirectionalRefiner::updateMesh(const mapPolyMesh& map)
@@ -702,40 +620,6 @@ void Foam::fvMeshDirectionalRefiner::distribute(const mapDistributePolyMesh& map
 {
     fvMeshRefiner::distribute(map);
     map.cellMap().distribute(cellLevel_);
-}
-
-
-bool Foam::fvMeshDirectionalRefiner::writeObject
-(
-    IOstream::streamFormat fmt,
-    IOstream::versionNumber ver,
-    IOstream::compressionType cmp,
-    const bool write
-) const
-{
-    bool writeOk = cellLevel_.write();
-    if (dumpLevel_)
-    {
-        volScalarField scalarCellLevel
-        (
-            volScalarField::New
-            (
-                "cellLevel",
-                mesh_,
-                dimensionedScalar(dimless, 0)
-            )
-        );
-
-
-        forAll(cellLevel_, celli)
-        {
-            scalarCellLevel[celli] = cellLevel_[celli];
-        }
-
-        writeOk = writeOk && scalarCellLevel.write();
-    }
-
-    return writeOk;
 }
 
 

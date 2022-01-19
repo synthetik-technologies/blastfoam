@@ -58,10 +58,13 @@ protected:
         fvMesh& mesh_;
 
         //- Dictionary for runTime balancing
-        dictionary decompositionDict_;
+        mutable dictionary decompositionDict_;
+
+        //- Constraints dictionary
+        dictionary constraintsDict_;
 
         //- Decomposition method
-        autoPtr<decompositionMethod> decomposer_;
+        mutable autoPtr<decompositionMethod> decomposer_;
 
         fvMeshDistribute distributor_;
 
@@ -70,6 +73,12 @@ protected:
 
         //- Allowable imbalance
         scalar allowableImbalance_;
+
+
+    // Private member functions
+
+        //- Set the decomposer
+        void makeDecomposer() const;
 
 
 public:
@@ -107,6 +116,15 @@ public:
 
         //- Does the mesh need to be balanced
         bool canBalance() const;
+
+        //- Add a constraint
+        void addConstraint(const dictionary& dict);
+
+        //- Return the decompositionMethod
+        const decompositionMethod& decomposer() const;
+
+        //- Access the decompositionMethod
+        decompositionMethod& decomposer();
 
         //- Balance the mesh
         autoPtr<mapDistributePolyMesh> distribute();

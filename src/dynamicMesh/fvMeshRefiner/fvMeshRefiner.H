@@ -119,43 +119,93 @@ protected:
         //- Balancer
         fvMeshBalance balancer_;
 
-        //- Number of refinement/unrefinement steps done so far.
-        label nRefinementIterations_;
+        // Track number of times refinement/unrefinement/balancing is done
 
-        //- Stored data for access outside of the class
+            //- Number of refinement steps done so far.
+            mutable label nRefinementIterations_;
 
-            //- Is refinement/unrefinement forced, i.e. for a meshing process,
-            //  not while a case is running
-            bool force_;
+            //- Number of unrefinement steps done so far.
+            mutable label nUnrefinementIterations_;
 
-            // Refinement interval
-            label refineInterval_;
-
-            //- When unrefinement starts
-            scalar beginUnrefine_;
-
-            //- Maximum number of cells
-            label maxCells_;
-
-            //- Number of buffer layers
-            //  this is different that the standard dynamicRefineFvMesh since
-            //  since this number of cells is refined, not just blocked from
-            //  unrefinement
-            label nBufferLayers_;
-
-            //- Dump cellLevel for postprocessing
-            Switch dumpLevel_;
-
-            //- Protected patches
-            wordList protectedPatches_;
+            //- Number of balance steps done so far
+            mutable label nBalanceIterations_;
 
 
+        //- Is refinement/unrefinement/balancing forced, i.e. for a meshing
+        // process
+        bool force_;
 
-        //- Has the mesh been balanced this step
-        mutable bool balanced_;
+        //- Does refinement occur
+        bool refine_;
 
-        //- Is the mesh in the process of being balanced
-        mutable bool isBalancing_;
+        //- Does unrefinement occur
+        bool unrefine_;
+
+        //- Does balancing occur
+        // Handled in fvMeshBalance
+        // bool balance_;
+
+
+        //- Refinement interval
+        label refineInterval_;
+
+        //- Unrefinement interval
+        label unrefineInterval_;
+
+        //- Balancing interval
+        label balanceInterval_;
+
+
+        //- When refinement starts
+        scalar beginRefine_;
+
+        //- When unrefinement starts
+        scalar beginUnrefine_;
+
+        //- When balancing starts
+        scalar beginBalance_;
+
+
+        //- When refinement ends
+        scalar endRefine_;
+
+        //- When unrefinement ends
+        scalar endUnrefine_;
+
+        //- When balancing ends
+        scalar endBalance_;
+
+
+        //- Maximum number of cells
+        label maxCells_;
+
+        //- Number of buffer layers for refinement
+        label nRefinementBufferLayers_;
+
+        //- Number of buffer layers for refinement
+        label nUnrefinementBufferLayers_;
+
+        //- Protected patches
+        wordList protectedPatches_;
+
+
+        //- Dump cellLevel for postprocessing
+        Switch dumpLevel_;
+
+
+
+
+        // Track the state of the refiner
+
+            //- Is the mesh in the process of being refined
+            mutable bool isRefining_;
+
+            //- Is the mesh in the process of being unrefined
+            mutable bool isUnrefining_;
+
+            //- Is the mesh in the process of being balanced
+            mutable bool isBalancing_;
+
 
         // Saved fields for mapping
 
@@ -186,14 +236,6 @@ protected:
             const PackedBoolList& candidateCell
         ) const;
 
-        //- Extend markedCell with cell-face-cell.
-        void extendMarkedCells
-        (
-            PackedBoolList& markedCell,
-            const labelList& maxRefinement,
-            const bool top
-        ) const;
-
         //- Get per cell max of connected point
         scalarField maxPointField(const scalarField&) const;
 
@@ -208,6 +250,21 @@ protected:
             const scalar minLevel,
             const scalar maxLevel
         ) const;
+
+        //- Preupdate by checking if refinement or unrefinement can occur
+        bool preUpdate();
+
+        //- Set the maximum cell level
+        void setMaxCellLevel(labelList& maxCellLevel) const;
+
+        //- Check if refinement should happen
+        virtual bool canRefine(const bool incr = false) const;
+
+        //- Check if unrefinement should happen
+        virtual bool canUnrefine(const bool incr = false) const;
+
+        //- Check if balancing should happen
+        virtual bool canBalance(const bool incr = false) const;
 
 
 public:
@@ -276,10 +333,34 @@ public:
 
         // Access
 
-            //- Return the number of buffer layers
-            label nBufferLayers() const
+            //- Is the mesh refining
+            bool isRefining() const
             {
-                return nBufferLayers_;
+                return isRefining_;
+            }
+
+            //- Is the mesh unrefining
+            bool isUnrefining() const
+            {
+                return isUnrefining_;
+            }
+
+            //- Is the mesh being balanced
+            bool isBalancing() const
+            {
+                return isBalancing_;
+            }
+
+            //- Return the number of buffer layers
+            label nRefinementBufferLayers() const
+            {
+                return nRefinementBufferLayers_;
+            }
+
+            //- Return the number of buffer layers
+            label nUnrefinementBufferLayers() const
+            {
+                return nUnrefinementBufferLayers_;
             }
 
             //- Force refinement/unrefinement
@@ -291,6 +372,9 @@ public:
             //- Return the cell level
             virtual const labelList& cellLevel() const = 0;
 
+            //- Return the point level
+            virtual const labelList& pointLevel() const = 0;
+
 
         //- Read the projection parameters from dictionary
         virtual void readDict(const dictionary& parentDict);
@@ -300,9 +384,9 @@ public:
         (
             const scalarField& error,
             const labelList& maxCellLevel = labelList(),
-            const scalar lowerRefineLevel = small,
+            const scalar lowerRefineLevel = sqrt(small),
             const scalar upperRefineLevel = great,
-            const scalar unrefineLevel = -small
+            const scalar unrefineLevel = -sqrt(small)
         ) = 0;
 
         //- Balance the mesh
@@ -322,11 +406,45 @@ public:
 
         static void extendMaxCellLevel
         (
-            const fvMesh& mesh,
+            const polyMesh& mesh,
             labelList& cells,
             labelList& maxCellLevel,
             const label level
         );
+
+        void extendMarkedCells
+        (
+            PackedBoolList& markedCells,
+            const labelList& maxCellLevel,
+            const bool isTop,
+            const bool force
+        );
+
+        //- Extend marked cells across faces given a bool list of already marked
+        //  cells
+        void extendMarkedCellsAcrossFaces
+        (
+            PackedBoolList& markedCells
+        );
+
+        //- Extend marked cells across points given a bool list of already
+        //  marked cells
+        void extendMarkedCellsAcrossPoints
+        (
+            PackedBoolList& markedCells
+        );
+
+
+    // Writing
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat fmt,
+            IOstream::versionNumber ver,
+            IOstream::compressionType cmp,
+            const bool write = true
+        ) const;
 
 
     // Member Operators

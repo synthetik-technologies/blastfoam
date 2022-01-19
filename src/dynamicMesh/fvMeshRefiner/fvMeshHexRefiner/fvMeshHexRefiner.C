@@ -44,6 +44,7 @@ License
 #include "hexRef3D.H"
 #include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
+#include "hexRefRefinementHistoryConstraint.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -576,11 +577,20 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner(fvMesh& mesh)
     meshCutter_(hexRef::New(mesh_)),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0),
-
-    isRefining_(false),
-    isUnrefining_(false)
+    protectedCell_(mesh_.nCells(), 0)
 {
+    // Added refinement history decomposition constraint to keep all
+    // cells with the same parent together
+    {
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            hexRefRefinementHistoryConstraint::typeName
+        );
+        balancer_.addConstraint(refinementHistoryDict);
+    }
+
     nProtected_ = 0;
 
     forAll(protectedCell_, celli)
@@ -1010,11 +1020,20 @@ Foam::fvMeshHexRefiner::fvMeshHexRefiner
     ),
 
     nProtected_(0),
-    protectedCell_(mesh_.nCells(), 0),
-
-    isRefining_(false),
-    isUnrefining_(false)
+    protectedCell_(mesh_.nCells(), 0)
 {
+    // Added refinement history decomposition constraint to keep all
+    // cells with the same parent together
+    {
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            hexRefRefinementHistoryConstraint::typeName
+        );
+        balancer_.addConstraint(refinementHistoryDict);
+    }
+
     // Read static part of dictionary
     readDict(dict);
 
@@ -1447,88 +1466,53 @@ bool Foam::fvMeshHexRefiner::refine
 )
 {
     bool hasChanged = false;
-    bool balanced = false;
 
-    if (refineInterval_ == 0)
+    if (preUpdate())
     {
-        mesh_.topoChanging(hasChanged);
-
-        return false;
-    }
-
-    if (mesh_.time().timeIndex() % refineInterval_ == 0)
-    {
-        HashTable<parcelCloud*> clouds
-        (
-            mesh_.lookupClass<parcelCloud>()
-        );
-        forAllIter(HashTable<parcelCloud*>, clouds, iter)
-        {
-            iter()->storeGlobalPositions();
-        }
-
-
-
-        labelList maxRefinement;
-        if (!maxCellLevel.size())
-        {
-            maxRefinement.setSize
-            (
-                mesh_.nCells(),
-                dict_.lookup<label>("maxRefinement")
-            );
-        }
-        else
-        {
-            maxRefinement = maxCellLevel;
-        }
-
-        if (gMax(maxRefinement) == 0)
-        {
-            mesh_.topoChanging(hasChanged);
-
-            return false;
-        }
-        else if (gMin(maxRefinement) < 0)
-        {
-            FatalErrorInFunction
-                << "Illegal maximum refinement level " << gMin(maxRefinement) << nl
-                << "The maxRefinement should be > 0." << nl
-                << exit(FatalError);
-        }
-
         // Cells marked for refinement or otherwise protected from unrefinement.
         PackedBoolList refineCell(mesh_.nCells());
 
-        // Determine candidates for refinement (looking at field only)
-        selectRefineCandidates
-        (
-            lowerRefineLevel,
-            upperRefineLevel,
-            error,
-            refineCell
-        );
-
-        // Extend with a buffer layer to prevent neighbouring points
-        // being unrefined.
-        for (label i = 0; i < nBufferLayers_; i++)
+        if (canRefine(true))
         {
-            extendMarkedCells(refineCell, maxRefinement, i == 0);
-        }
+            labelList maxRefinement(maxCellLevel);
+            setMaxCellLevel(maxRefinement);
 
-        if (nProtected_ > 0)
-        {
-            forAll(protectedCell_, celli)
+            // Determine candidates for refinement (looking at field only)
+            selectRefineCandidates
+            (
+                lowerRefineLevel,
+                upperRefineLevel,
+                error,
+                refineCell
+            );
+
+            // Extend with a buffer layer to prevent neighbouring points
+            // being unrefined.
+            for (label i = 0; i < nRefinementBufferLayers_; i++)
             {
-                if (protectedCell_.get(celli))
+                extendMarkedCells(refineCell, maxRefinement, i == 0, true);
+            }
+
+            forAll(protectedPatches_, patchi)
+            {
+                const polyPatch& p =
+                    mesh_.boundaryMesh()[protectedPatches_[patchi]];
+                forAll(p.faceCells(), facei)
                 {
-                    refineCell.set(celli, false);
+                    label own = mesh_.faceOwner()[facei + p.start()];
+                    refineCell.set(own, false);
                 }
             }
-        }
-
-        if (mesh_.globalData().nTotalCells() < maxCells_)
-        {
+            if (nProtected_ > 0)
+            {
+                forAll(protectedCell_, celli)
+                {
+                    if (protectedCell_.get(celli))
+                    {
+                        refineCell.set(celli, false);
+                    }
+                }
+            }
 
             // Select subset of candidates. Take into account max allowable
             // cells, refinement level, protected cells.
@@ -1588,8 +1572,15 @@ bool Foam::fvMeshHexRefiner::refine
         }
 
 
-        if (mesh_.time().value() > beginUnrefine_)
+        if (canUnrefine(true))
         {
+            // Extend with a buffer layer to prevent neighbouring points
+            // being unrefined.
+            for (label i = 0; i < nUnrefinementBufferLayers_; i++)
+            {
+                extendMarkedCellsAcrossFaces(refineCell);
+            }
+
             if (nProtected_ > 0)
             {
                 forAll(protectedCell_, celli)
@@ -1652,43 +1643,28 @@ bool Foam::fvMeshHexRefiner::refine
         }
 
         reduce(hasChanged, orOp<bool>());
-        mesh_.topoChanging(hasChanged);
-        balanced = balance();
-        if (balanced)
+        if (balance())
         {
-            //- Update objects stored on the mesh db
-            BalanceMeshObject::updateObjects(mesh_);
-
-            //- Update objects stores on the time db
-            BalanceMeshObject::updateObjects
-            (
-                const_cast<Time&>(mesh_.time())
-            );
             hasChanged = true;
         }
         else if (hasChanged)
         {
             //- Update objects stored on the mesh db
             RefineMeshObject::updateObjects(mesh_);
-
-            //- Update objects stores on the time db
-            RefineMeshObject::updateObjects
-            (
-                const_cast<Time&>(mesh_.time())
-            );
         }
 
+        mesh_.topoChanging(hasChanged);
         if (hasChanged)
         {
             // Reset moving flag (if any). If not using inflation we'll not
             // move, if are using inflation any follow on movePoints will set
             // it.
             mesh_.moving(false);
+            mesh_.setInstance(mesh_.time().timeName());
         }
-        nRefinementIterations_++;
     }
 
-    return hasChanged || balanced;
+    return hasChanged;
 }
 
 
@@ -1703,29 +1679,10 @@ bool Foam::fvMeshHexRefiner::writeObject
     // Force refinement data to go to the current time directory.
     const_cast<hexRef&>(meshCutter_()).setInstance(mesh_.facesInstance());
 
-    bool writeOk = meshCutter_->write();
+    bool writeOk =
+        fvMeshRefiner::writeObject(fmt, ver, cmp, write)
+     && meshCutter_->write();
 
-    if (dumpLevel_)
-    {
-        volScalarField scalarCellLevel
-        (
-            volScalarField::New
-            (
-                "cellLevel",
-                mesh_,
-                dimensionedScalar(dimless, 0)
-            )
-        );
-
-        const labelList& cellLevel = meshCutter_->cellLevel();
-
-        forAll(cellLevel, celli)
-        {
-            scalarCellLevel[celli] = cellLevel[celli];
-        }
-
-        writeOk = writeOk && scalarCellLevel.write();
-    }
     if (returnReduce(nProtected_, sumOp<label>()) > 0)
     {
         cellSet protectedCells(mesh_, "protectedCells", nProtected_);

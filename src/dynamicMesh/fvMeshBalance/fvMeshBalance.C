@@ -55,11 +55,21 @@ Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
             )
         )
     ),
+    constraintsDict_
+    (
+        decompositionDict_,
+        dictionary()
+
+    ),
     distributor_(mesh_),
-    balance_(false),
+    balance_(true),
     allowableImbalance_(0.2)
 {
-    read(decompositionDict_);
+    constraintsDict_.name() = "constraints";
+    if (decompositionDict_.found("constraints"))
+    {
+        constraintsDict_.merge(decompositionDict_.subDict("constraints"));
+    }
 }
 
 
@@ -84,10 +94,21 @@ Foam::fvMeshBalance::fvMeshBalance
             )
         )
     ),
+    constraintsDict_
+    (
+        decompositionDict_,
+        dictionary()
+
+    ),
     distributor_(mesh_),
     balance_(false),
     allowableImbalance_(0.2)
 {
+    constraintsDict_.name() = "constraints";
+    if (decompositionDict_.found("constraints"))
+    {
+        constraintsDict_.merge(decompositionDict_.subDict("constraints"));
+    }
     read(dict);
 }
 
@@ -118,35 +139,60 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
     // Change decomposition method if entry is present
     word method
     (
-        balanceDict.lookupOrDefault
+        balanceDict.lookupOrDefaultBackwardsCompatible
         (
-            "method",
-            decompositionDict_.lookup<word>("method")
+            {"method"},
+//             {"decomposer", "method"},
+            decompositionDict_.lookupBackwardsCompatible<word>
+            (
+//                 {"decomposer", "method"}
+                {"method"}
+            )
         )
     );
     decompositionDict_.set("method", method);
 
+    if (balanceDict.found("allowableImbalance"))
+    {
+        allowableImbalance_ =
+            balanceDict.lookup<scalar>("allowableImbalance");
+    }
+}
+
+
+void Foam::fvMeshBalance::addConstraint(const dictionary& dict)
+{
     // Add refinementHistory constraint
     if (!decompositionDict_.found("constraints"))
     {
         decompositionDict_.add("constraints", dictionary());
     }
-    {
-        dictionary refinementHistoryDict;
-        refinementHistoryDict.add("type", "hexRefRefinementHistory");
-        dictionary constraintsDict;
-        decompositionDict_.subDict("constraints").set
-        (
-            "refinementHistory",
-            refinementHistoryDict
-        );
+    constraintsDict_.set(keyType(dict.name()), dict);
 
+    // We need to apply the updated constraints, and this can only be done
+    // when the decomposer is created
+    if (decomposer_.valid())
+    {
+        decomposer_.clear();
+    }
+}
+
+void Foam::fvMeshBalance::makeDecomposer() const
+{
+    if (decomposer_.valid())
+    {
+        FatalErrorInFunction
+            << "Decomposer already set" << endl
+            << abort(FatalError);
     }
 
-    if (!decomposer_.valid())
-    {
-        decomposer_ = decompositionMethod::New(decompositionDict_);
-    }
+    const_cast<dictionary&>
+    (
+        decompositionDict_
+    ).set("constraints", constraintsDict_);
+    decomposer_ = decompositionMethod::New(decompositionDict_);
+
+    returnReduce(1, maxOp<label>());
     if (!decomposer_->parallelAware())
     {
         FatalErrorInFunction
@@ -156,12 +202,26 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
             << "Please select one that is (hierarchical, ptscotch)"
             << exit(FatalError);
     }
+}
 
-    if (balanceDict.found("allowableImbalance"))
+
+const Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
+{
+    if (!decomposer_.valid())
     {
-        allowableImbalance_ =
-            balanceDict.lookup<scalar>("allowableImbalance");
+        makeDecomposer();
     }
+    return decomposer_();
+}
+
+
+Foam::decompositionMethod& Foam::fvMeshBalance::decomposer()
+{
+    if (!decomposer_.valid())
+    {
+        makeDecomposer();
+    }
+    return decomposer_();
 }
 
 
@@ -178,16 +238,24 @@ bool Foam::fvMeshBalance::canBalance() const
     scalar idealNCells =
         scalar(nGlobalCells)/scalar(Pstream::nProcs());
     scalar localImbalance = mag(scalar(mesh_.nCells()) - idealNCells);
-    Foam::reduce(localImbalance, maxOp<scalar>());
-    scalar maxImbalance = localImbalance/idealNCells;
+    scalar maxImbalance = returnReduce(localImbalance, maxOp<scalar>());
+    scalar maxImbalanceRatio = maxImbalance/idealNCells;
 
-    Info<<"Maximum imbalance = " << 100*maxImbalance << " %" << endl;
+    Info<<"Maximum imbalance = " << 100*maxImbalanceRatio << " %" << endl;
+
+    if (debug)
+    {
+        Pout<< " localImbalance = "
+            << 100.0*localImbalance/idealNCells << "%, "
+            << "nCells = " << mesh_.nCells()
+            << endl;
+    }
 
     //If imbalanced, construct weighted coarse graph (level 0) with node
     // weights equal to their number of subcells. This partitioning works
     // as long as the number of level 0 cells is several times greater than
     // the number of processors.
-    if (maxImbalance > allowableImbalance_)
+    if (maxImbalanceRatio > allowableImbalance_)
     {
         return true;
     }
@@ -213,7 +281,7 @@ Foam::fvMeshBalance::distribute()
 
     // Decompose the mesh with uniform weights
     // The refinementHistory constraint is applied internally
-    labelList finalDecomp = decomposer_().decompose
+    labelList finalDecomp = decomposer().decompose
     (
         mesh_,
         scalarField(mesh_.nCells(), 1.0)
@@ -225,15 +293,25 @@ Foam::fvMeshBalance::distribute()
 
     Info << "Successfully distributed mesh" << endl;
 
-    scalarList procLoadNew (Pstream::nProcs(), 0.0);
-    procLoadNew[Pstream::myProcNo()] = mesh_.nCells();
+    label procLoadNew(mesh_.nCells());
+    label overallLoadNew(returnReduce(procLoadNew, sumOp<label>()));
+    scalar averageLoadNew(overallLoadNew/scalar(Pstream::nProcs()));
 
-    reduce(procLoadNew, sumOp<List<scalar> >());
+    scalar maxDevNew
+    (
+        returnReduce(mag(procLoadNew - averageLoadNew), maxOp<scalar>())
+    );
 
-    scalar overallLoadNew = sum(procLoadNew);
-    scalar averageLoadNew = overallLoadNew/double(Pstream::nProcs());
+    Info << "New max imbalance: " << maxDevNew/averageLoadNew*100.0 << "%"
+        << endl;
 
-    Info << "Max deviation: " << max(Foam::mag(procLoadNew-averageLoadNew)/averageLoadNew)*100.0 << " %" << endl;
+    if (debug)
+    {
+        Pout<< " localImbalance = "
+            << mag(procLoadNew - averageLoadNew)*100.0/averageLoadNew << "%, "
+            << "Cells = " << procLoadNew
+             << endl;
+    }
 
     //Correct values on all coupled patches
     correctBoundaries<volScalarField>();
@@ -250,9 +328,6 @@ Foam::fvMeshBalance::distribute()
 
     //- Update objects stored on the mesh db
     BalanceMeshObject::updateObjects(mesh_);
-
-    //- Update objects stores on the time db
-    BalanceMeshObject::updateObjects(mesh_.time());
 
     return map;
 }

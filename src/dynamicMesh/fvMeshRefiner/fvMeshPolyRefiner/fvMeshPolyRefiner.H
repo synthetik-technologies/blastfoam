@@ -23,38 +23,22 @@ License
 
 
 Class
-    Foam::fvMeshDirectionalRefiner
+    Foam::fvMeshPolyRefiner
 
 SourceFiles
-    fvMeshDirectionalRefiner.C
+    fvMeshPolyRefiner.C
 
 Description
     A fvMesh with run-time load balancing.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef fvMeshDirectionalRefiner_H
-#define fvMeshDirectionalRefiner_H
+#ifndef fvMeshPolyRefiner_H
+#define fvMeshPolyRefiner_H
 
 #include "fvMeshRefiner.H"
-#include "newCellCuts.H"
-#include "topoCellLooper.H"
-
-#include "hashedWordList.H"
-#include "fvc.H"
-#include "PtrMap.H"
-
-#include "searchablePlane.H"
-#include "searchableSurfacesQueries.H"
-
-#include "ListOps.H"
-#include "cellModeller.H"
-#include "RefineBalanceMeshObject.H"
-
-#include "refineCell.H"
-#include "undoableMeshCutter.H"
-#include "hexCellLooper.H"
-#include "geomCellLooper.H"
+#include "refinement.H"
+#include "polyTopoChanger.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -62,87 +46,47 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                     Class fvMeshDirectionalRefiner Declaration
+                     Class fvMeshPolyRefiner Declaration
 \*---------------------------------------------------------------------------*/
 
-class fvMeshDirectionalRefiner
+class fvMeshPolyRefiner
 :
     public fvMeshRefiner
 {
-public:
-    // Public static functions
+    //- Refiner
+    autoPtr<refinement> refiner_;
 
-        //- Given map from original to added cell set the refineCell for
-        //  the added cells to be equal to the one on the original cells.
-        static void addCells(const Map<label>&, List<refineCell>&);
+    //- Is the mesh in the process of being refined
+    mutable bool isRefining_;
 
-        //- Given map from original to added cell set the vectorField for
-        //  the added cells to be equal to the one on the original cells.
-        static void update(const Map<label>&, vectorField&);
-
-        //- Given map from original to added cell add the added cell to the
-        //  list of labels
-        static void addCells(const Map<label>&, labelList& labels);
-
-        //- Return a direction given a word
-        static vector getDirection(const word& d);
+    //- Is the mesh in the process of being unrefined
+    mutable bool isUnrefining_;
 
 
-private:
-    // Private data
+    // Private member functions
 
-        //- Cell level
-        labelIOList cellLevel_;
-
-        //- Point level
-        labelIOList pointLevel_;
-
-        //- Directions to refine
-        vector refinementDirection_;
-
-        //- Cell walker
-        autoPtr<cellLooper> cellWalker_;
-
-        // Construct undoable refinement topology modifier.
-        // Note: undoability switched off.
-        // Might want to reconsider if needs to be possible. But then can always
-        // use other constructor.
-        autoPtr<undoableMeshCutter> cutter_;
-
-
-    // Private Member Functions
-
-        //- Add new cells from map to overall list (addedCells_).
-        void addCells
+        //- Select points to unrefine
+        labelList selectUnrefinePoints
         (
-            const Map<label>&,
-            labelListList&
-        );
-
-        //- Refine cells in cellLabels_ in directions mentioned.
-        labelListList refineDirections
-        (
-            List<vectorField>& cellDirections,
-            List<labelList>& cellsToRefine
-        );
-
-        //- Refine the given cells
-        labelListList refine(const labelList& origCellsToRefine);
+            const scalar unrefineLevel,
+            const PackedBoolList& markedCell,
+            const scalarField& vFld
+        ) const;
 
 
 public:
 
     //- Runtime type information
-    TypeName("directionalRefiner");
+    TypeName("polyRefiner");
 
 
     // Constructors
 
         //- Construct from fvMesh
-        explicit fvMeshDirectionalRefiner(fvMesh& mesh);
+        explicit fvMeshPolyRefiner(fvMesh& mesh);
 
         //- Construct from fvMesh and dictionary
-        fvMeshDirectionalRefiner
+        fvMeshPolyRefiner
         (
             fvMesh& mesh,
             const dictionary& dict,
@@ -151,11 +95,11 @@ public:
         );
 
         //- Disallow default bitwise copy construction
-        fvMeshDirectionalRefiner(const fvMeshDirectionalRefiner&) = delete;
+        fvMeshPolyRefiner(const fvMeshPolyRefiner&) = delete;
 
 
     //- Destructor
-    virtual ~fvMeshDirectionalRefiner();
+    virtual ~fvMeshPolyRefiner();
 
 
     // Member Functions
@@ -165,13 +109,13 @@ public:
             //- Return the cell level
             virtual const labelList& cellLevel() const
             {
-                return cellLevel_;
+                return refiner_->cellLevel();
             }
 
             //- Return the point level
             virtual const labelList& pointLevel() const
             {
-                return pointLevel_;
+                return refiner_->pointLevel();
             }
 
 
@@ -195,10 +139,22 @@ public:
         virtual void distribute(const mapDistributePolyMesh& map);
 
 
+    // Writing
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat fmt,
+            IOstream::versionNumber ver,
+            IOstream::compressionType cmp,
+            const bool write = true
+        ) const;
+
+
     // Member Operators
 
         //- Disallow default bitwise assignment
-        void operator=(const fvMeshDirectionalRefiner&) = delete;
+        void operator=(const fvMeshPolyRefiner&) = delete;
 };
 
 

@@ -108,12 +108,6 @@ protected:
         //- Protected cells (usually since not hexes)
         PackedBoolList protectedCell_;
 
-        //- Is the mesh in the process of being refined
-        mutable bool isRefining_;
-
-        //- Is the mesh in the process of being unrefined
-        mutable bool isUnrefining_;
-
 
     // Protected Member Functions
 
@@ -196,6 +190,12 @@ public:
         virtual const labelList& cellLevel() const
         {
             return meshCutter_->cellLevel();
+        }
+
+        //- Return the point level
+        virtual const labelList& pointLevel() const
+        {
+            return meshCutter_->pointLevel();
         }
 
         //- Refine the mesh

@@ -82,11 +82,7 @@ Description
 
 #include "dynamicBlastFvMesh.H"
 #include "errorEstimator.H"
-#include "hexRef.H"
-#include "PackedBoolList.H"
-#include "Switch.H"
-#include "mapDistributePolyMesh.H"
-#include "fvMeshBalance.H"
+#include "fvMeshRefiner.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -106,130 +102,28 @@ protected:
         autoPtr<errorEstimator> error_;
 
         //- Mesh cutting engine
-        autoPtr<hexRef> meshCutter_;
-
-        //- Dump cellLevel for postprocessing
-        Switch dumpLevel_;
+        autoPtr<fvMeshRefiner> refiner_;
 
         //- Fluxes to map
         HashTable<word> correctFluxes_;
 
-        //- Number of refinement/unrefinement steps done so far.
-        label nRefinementIterations_;
 
-        //- Number of protected cells
-        label nProtected_;
+        // Protected member functions
 
-        //- Protected cells (usually since not hexes)
-        PackedBoolList protectedCell_;
-
-        //- Balancer
-        fvMeshBalance balancer_;
-
-        //- Has the mesh been balanced this step
-        mutable bool balanced_;
-
-        //- Is the mesh in the process of being refined
-        mutable bool isRefining_;
-
-        //- Is the mesh in the process of being unrefined
-        mutable bool isUnrefining_;
-
-        //- Is the mesh in the process of being balanced
-        mutable bool isBalancing_;
-
-        // Saved fields for mapping
-
-            //- Saved volumes as scalarFields
-            mutable DimensionedField<scalar, volMesh>* V0OldPtr_;
-            mutable DimensionedField<scalar, volMesh>* V00OldPtr_;
-
-
-    // Protected Member Functions
-
-        //- Count set/unset elements in packedlist.
-        static label count(const PackedBoolList&, const unsigned int);
-
-        //- Calculate cells that cannot be refined since would trigger
-        //  refinement of protectedCell_ (since 2:1 refinement cascade)
-        void calculateProtectedCells(PackedBoolList& unrefineableCell) const;
-
-        //- Read the projection parameters from dictionary
-        void readDict();
-
-
-        //- Refine cells. Update mesh and fields.
-        autoPtr<mapPolyMesh> refine(const labelList&);
-
-        //- Unrefine cells. Gets passed in centre points of cells to combine.
-        autoPtr<mapPolyMesh> unrefine(const labelList&);
-
-
-        // Selection of cells to un/refine
-
-            //- Get per cell max of connected point
-            scalarField maxPointField(const scalarField&) const;
-
-            //- Get point max of connected cell
-            scalarField maxCellField(const volScalarField&) const;
-
-            scalarField cellToPoint(const scalarField& vFld) const;
-
-            scalarField error
-            (
-                const scalarField& fld,
-                const scalar minLevel,
-                const scalar maxLevel
-            ) const;
-
-            //- Select candidate cells for refinement
-            virtual void selectRefineCandidates
-            (
-                const scalar lowerRefineLevel,
-                const scalar upperRefineLevel,
-                const scalarField& vFld,
-                PackedBoolList& candidateCell
-            ) const;
-
-            //- Subset candidate cells for refinement
-            virtual labelList selectRefineCells
-            (
-                const label maxCells,
-                const labelList& maxRefinement,
-                const PackedBoolList& candidateCell
-            ) const;
-
-            //- Select points that can be unrefined.
-            virtual labelList selectUnrefinePoints
-            (
-                const scalar unrefineLevel,
-                const PackedBoolList& markedCell,
-                const scalarField& pFld
-            ) const;
-
-            //- Extend markedCell with cell-face-cell.
-            void extendMarkedCells(PackedBoolList& markedCell) const;
-
-            //- Check all cells have 8 anchor points
-            void checkEightAnchorPoints
-            (
-                PackedBoolList& protectedCell,
-                label& nProtected
-            ) const;
-
-            //- Set protected cells
-            void setProtectedCells();
-
-            //- Map non-flux surface<Type>Fields for new internal faces
-            //  (from cell splitting)
-            template <class T>
-            void mapNewInternalFaces(const labelList& faceMap);
+            //- Read from dynamicFvMesh
+            void readDict();
 
             //- Overload update mesh to include other methods
             virtual void updateMesh(const mapPolyMesh& mpm);
 
             //- Distribute additional information
             virtual void distribute(const mapDistributePolyMesh& map);
+
+            //- Map non-flux surface<Type>Fields for new internal faces
+            //  (from cell splitting)
+            template <class T>
+            void mapNewInternalFaces(const labelList& faceMap)
+            {}
 
 
 public:
@@ -257,21 +151,9 @@ public:
         virtual void mapFields(const mapPolyMesh& mpm);
 
         //- Direct access to the refinement engine
-        const hexRef& meshCutter() const
+        const fvMeshRefiner& refiner() const
         {
-            return meshCutter_();
-        }
-
-        //- Cells which should not be refined/unrefined
-        const PackedBoolList& protectedCell() const
-        {
-            return protectedCell_;
-        }
-
-        //- Cells which should not be refined/unrefined
-        PackedBoolList& protectedCell()
-        {
-            return protectedCell_;
+            return refiner_();
         }
 
         //- Update the mesh for both mesh motion and topology change
@@ -279,11 +161,6 @@ public:
 
         //- Refine the mesh
         virtual bool refine();
-
-        //- Balance the mesh
-        bool balance();
-
-
 
 
     // Writing

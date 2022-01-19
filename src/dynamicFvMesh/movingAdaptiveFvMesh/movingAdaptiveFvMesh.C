@@ -55,7 +55,7 @@ Foam::movingAdaptiveFvMesh::movingAdaptiveFvMesh(const IOobject& io)
     motionPtr_(motionSolver::New(*this, dynamicMeshDict())),
     velocityMotionCorrection_(*this, dynamicMeshDict())
 {
-    this->meshCutter().locationMapper().needMap();
+//     this->meshCutter().locationMapper().needMap();
 }
 
 
@@ -77,7 +77,7 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
 
     // Do not update while balancing this is handled in the
     // distribute function
-    if (isBalancing_)
+    if (refiner_->isBalancing())
     {
 //         return;
     }
@@ -85,14 +85,14 @@ void Foam::movingAdaptiveFvMesh::updateMesh(const mapPolyMesh& mpm)
     {
         displacementMotionSolver& dispMS =
             dynamicCast<displacementMotionSolver>(motionPtr_());
-        if (isRefining_)
-        {
-            meshCutter().locationMapper().interpolateMidPoints
-            (
-                dispMS.points0()
-            );
-        }
-        else
+//         if (refiner_->isRefining())
+//         {
+//             meshCutter().locationMapper().interpolateMidPoints
+//             (
+//                 dispMS.points0()
+//             );
+//         }
+//         else
         {
             pointMapper(dispMS.pointDisplacement().mesh(), mpm)
             (
@@ -160,7 +160,7 @@ bool Foam::movingAdaptiveFvMesh::refine()
 {
     if (adaptiveFvMesh::refine())
     {
-        meshCutter().locationMapper().clearOut();
+//         meshCutter().locationMapper().clearOut();
         return true;
     }
 

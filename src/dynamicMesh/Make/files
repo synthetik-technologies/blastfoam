@@ -14,10 +14,20 @@ $(hexRef)/hexRef2DAxi/hexRef2DAxi.C
 
 newCellCuts/newCellCuts.C
 newRefinementIterator/newRefinementIterator.C
+
 fvMeshBalance/fvMeshBalance.C
 fvMeshRefiner/fvMeshRefiner.C
 fvMeshRefiner/fvMeshRefinerNew.C
 fvMeshRefiner/fvMeshHexRefiner/fvMeshHexRefiner.C
 fvMeshRefiner/fvMeshDirectionalRefiner/fvMeshDirectionalRefiner.C
+
+fvMeshRefiner/fvMeshPolyRefiner/fvMeshPolyRefiner.C
+
+fvMeshRefiner/fvMeshPolyRefiner/polyhedralRefinement/polyhedralRefinement.C
+fvMeshRefiner/fvMeshPolyRefiner/polyMeshModifier/polyMeshModifier.C
+fvMeshRefiner/fvMeshPolyRefiner/polyMeshModifier/polyMeshModifierNew.C
+fvMeshRefiner/fvMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
+fvMeshRefiner/fvMeshPolyRefiner/refinement/refinement.C
+fvMeshRefiner/fvMeshPolyRefiner/meshTools/foamMeshTools.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

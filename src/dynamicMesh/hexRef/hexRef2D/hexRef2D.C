@@ -205,9 +205,12 @@ Foam::label Foam::hexRef2D::storeMidPointInfo
         {
             label faceJ = cFaces[i];
 
-            if (faceMidPoint[faceJ] != faceMidPointi
-                && faceMidPoint[faceJ] >= 0
-                && faceMidPoint[faceJ] != 1234567890) // could be replace by faceJ == type "empty"
+            if
+            (
+                faceMidPoint[faceJ] != faceMidPointi
+             && faceMidPoint[faceJ] >= 0
+             && faceMidPoint[faceJ] != 1234567890
+            )
             {
                 face1 = faceJ;  // needed to take the other face points
             }
@@ -817,8 +820,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
     {
         const label & patchID = mesh_.boundaryMesh().whichPatch(facei);
 
-//        if (isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchID])
-        if (mesh_.boundaryMesh()[patchID].type() == "empty")
+        if (isA<emptyPolyPatch>(mesh_.boundaryMesh()[patchID]))
         {
             isDivisibleFace[facei] = true;
             const labelList& fEdges = mesh_.faceEdges(facei);
@@ -882,7 +884,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                 const edge& e = mesh_.edges()[edgeI];
                 if
                 (
-                 isDivisibleEdge[edgeI]
+                    isDivisibleEdge[edgeI]
                  && pointLevel_[e[0]] <= cellLevel_[celli]
                  && pointLevel_[e[1]] <= cellLevel_[celli]
                 )
