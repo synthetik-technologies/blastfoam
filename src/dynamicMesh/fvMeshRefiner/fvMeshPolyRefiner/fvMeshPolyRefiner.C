@@ -269,12 +269,33 @@ void Foam::fvMeshPolyRefiner::readDict(const dictionary& dict)
 {
     fvMeshRefiner::readDict(dict);
 
+    // Check whether the number of Refinement buffer layers is smaller than
+    // 3 for 2D cases
+    static bool hasWarnedRefine = false;
+    if
+    (
+        nRefinementBufferLayers_ < 3
+     && !hasWarnedRefine
+     && mesh_.nGeometricD() == 2
+    )
+    {
+        hasWarnedRefine = true;
+        WarningInFunction
+            << "Using " << nRefinementBufferLayers_
+            << " refinement buffer layers" << nl
+            << "Make sure that the number of refinement buffer layers is "
+            << "at least r in order to avoid problems with edge level "
+            << "in 2 dimensional cases"
+            << endl;
+        nRefinementBufferLayers_ = 3;
+    }
+
     // Check whether the number of unrefinement buffer layers is smaller than
     // number of refinement buffer layers + 2
-    static bool hasWarned = false;
-    if (nUnrefinementBufferLayers_ < 2 && !hasWarned)
+    static bool hasWarnedUnrefine = false;
+    if (nUnrefinementBufferLayers_ < 2 && !hasWarnedUnrefine)
     {
-        hasWarned = true;
+        hasWarnedUnrefine = true;
         WarningInFunction
             << "Using " << nUnrefinementBufferLayers_
             << " unrefinement buffer layers" << nl
@@ -410,7 +431,7 @@ bool Foam::fvMeshPolyRefiner::refine
             // Extend with a buffer layer to not unrefine neighbour cells
             for (label i = 0; i < nUnrefinementBufferLayers_; i++)
             {
-                extendMarkedCellsAcrossFaces(refineCell);
+                extendMarkedCellsAcrossPoints(refineCell);
             }
 
             forAll(protectedPatches_, patchi)

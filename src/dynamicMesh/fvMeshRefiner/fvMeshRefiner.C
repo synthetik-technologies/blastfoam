@@ -822,8 +822,8 @@ void Foam::fvMeshRefiner::extendMarkedCells
     {
         if (markedFace[facei])
         {
-            markedCells.set(mesh_.faceOwner()[facei], 1);
-            markedCells.set(mesh_.faceNeighbour()[facei], 1);
+            markedCells.set(mesh_.faceOwner()[facei]);
+            markedCells.set(mesh_.faceNeighbour()[facei]);
         }
     }
     for
@@ -835,7 +835,7 @@ void Foam::fvMeshRefiner::extendMarkedCells
     {
         if (markedFace[facei])
         {
-            markedCells.set(mesh_.faceOwner()[facei], 1);
+            markedCells.set(mesh_.faceOwner()[facei]);
         }
     }
 }
@@ -881,13 +881,9 @@ void Foam::fvMeshRefiner::extendMarkedCellsAcrossFaces
     {
         if (markedFace[faceI])
         {
-            // Face is marked, mark both owner and neighbour
-            const label& own = owner[faceI];
-            const label& nei = neighbour[faceI];
-
             // Mark owner and neighbour cells
-            markedCells.set(own, true);
-            markedCells.set(nei, true);
+            markedCells.set(owner[faceI]);
+            markedCells.set(neighbour[faceI]);
         }
     }
 
@@ -896,11 +892,8 @@ void Foam::fvMeshRefiner::extendMarkedCellsAcrossFaces
     {
         if (markedFace[faceI])
         {
-            // Face is marked, mark owner
-            const label& own = owner[faceI];
-
             // Mark owner
-            markedCells.set(own);
+            markedCells.set(owner[faceI]);
         }
     }
 }
@@ -955,7 +948,7 @@ void Foam::fvMeshRefiner::extendMarkedCellsAcrossPoints
 
             forAll (pCells, i)
             {
-                markedCells.set(pCells[i], true);
+                markedCells.set(pCells[i]);
             }
         }
     }
