@@ -1242,6 +1242,49 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
             }
             parentCells_.transfer(newParentCells);
         }
+//         {
+//             labelList newParentCells(mesh_.nCells(), -1);
+//
+//             forAll(parentCells_, i)
+//             {
+//                 label newI = reverseCellMap[i];
+//
+//                 if (newI >= mesh_.nCells())
+//                 {
+//                 }
+//
+//                 if (newI >= 0)
+//                 {
+//                     newParentCells[newI] = reverseCellMap[parentCells_[i]];
+//                 }
+//                 if (newParentCells[newI] > mesh_.nCells())
+//                 {
+//                     Pout<<parentCells_[i]<<" "<<newParentCells[newI]<<endl;
+//                 }
+//
+//             }
+//             const labelList& cellMap = map.cellMap();
+//
+//             forAll(cellMap, newCelli)
+//             {
+//                 label oldCelli = cellMap[newCelli];
+//                 if (newParentCells[newCelli] < 0)
+//                 {
+//
+//                     if (oldCelli == -1)
+//                     {
+//                         newParentCells[newCelli] = newCelli;
+//                     }
+//                     else
+//                     {
+//                         newParentCells[newCelli] = parentCells_[oldCelli];
+//                     }
+//                 }
+//             }
+//             Pout<<"max "<<map.nOldCells()<<" "<<parentCells_.size()<<" "<<max(cellMap)<<endl;
+//
+//             parentCells_.transfer(newParentCells);
+//         }
 
         const labelList& reversePointMap = map.reversePointMap();
         if (reversePointMap.size() == pointLevel_.size())
@@ -1302,6 +1345,14 @@ void Foam::refinement::distribute(const mapDistributePolyMesh& map)
 
     // Update pointlevel
     map.distributePointData(pointLevel_);
+
+    syncTools::syncPointList
+    (
+        mesh_,
+        pointLevel_,
+        minEqOp<label>(),
+        labelMax
+    );
 
     //- Distribute the parent cells;
     map.distributeCellData(parentCells_);

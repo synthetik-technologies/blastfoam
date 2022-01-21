@@ -25,6 +25,7 @@ License
 
 #include "burstFvPatchField.H"
 #include "coupledFvPatchField.H"
+#include "zeroGradientFvPatchField.H"
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -40,23 +41,19 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     fvPatchField<Type>(p, iF),
     burstPatchField_
     (
-        fvPatchField<Type>::New
+        new zeroGradientFvPatchField<Type>
         (
-            "zeroGradient",
-            typeName,
             p,
             iF
-        ).ptr()
+        )
     ),
     intactPatchField_
     (
-        fvPatchField<Type>::New
+        new zeroGradientFvPatchField<Type>
         (
-            "zeroGradient",
-            typeName,
             p,
             iF
-        ).ptr()
+        )
     ),
     pName_("p"),
     impulseName_("impulse"),

@@ -407,11 +407,12 @@ bool Foam::fvMeshPolyRefiner::refine
 
         if (canUnrefine(true))
         {
-            // Extend with a buffer layer to refine neighbour cells
+            // Extend with a buffer layer to not unrefine neighbour cells
             for (label i = 0; i < nUnrefinementBufferLayers_; i++)
             {
                 extendMarkedCellsAcrossFaces(refineCell);
             }
+
             forAll(protectedPatches_, patchi)
             {
                 const polyPatch& p =

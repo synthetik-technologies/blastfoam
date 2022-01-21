@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstPointPatchField.H"
+#include "calculatedPointPatchField.H"
 #include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -38,24 +39,24 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
     valuePointPatchField<Type>(p, iF),
     burstPointPatchField_
     (
-        pointPatchField<Type>::New
+        new calculatedPointPatchField<Type>
         (
-            "calculated",
             p,
             iF
-        ).ptr()
+        )
     ),
     intactPointPatchField_
     (
-        pointPatchField<Type>::New
+        new calculatedPointPatchField<Type>
         (
-            "calculated",
             p,
             iF
-        ).ptr()
+        )
     ),
     burstPatch_(refCast<const burstPointPatch>(p))
-{}
+{
+    Info<<"here"<<endl;
+}
 
 
 template<class Type>

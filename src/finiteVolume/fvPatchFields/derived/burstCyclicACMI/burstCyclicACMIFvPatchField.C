@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstCyclicACMIFvPatchField.H"
+#include "zeroGradientFvPatchField.H"
 #include "volFields.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -39,13 +40,11 @@ Foam::burstCyclicACMIFvPatchField<Type>::burstCyclicACMIFvPatchField
     cyclicACMIFvPatchField<Type>(p, iF),
     intactPatchField_
     (
-        fvPatchField<Type>::New
+        new zeroGradientFvPatchField<Type>
         (
-            "zeroGradient",
-            typeName,
             p,
             iF
-        ).ptr()
+        )
     ),
     pName_("p"),
     impulseName_("impulse"),

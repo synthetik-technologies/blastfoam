@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstProcessorCyclicPointPatchField.H"
+#include "calculatedPointPatchField.H"
 #include "pointFields.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -38,12 +39,11 @@ Foam::burstProcessorCyclicPointPatchField<Type>::burstProcessorCyclicPointPatchF
     processorCyclicPointPatchField<Type>(p, iF),
     intactPointPatchField_
     (
-        pointPatchField<Type>::New
+        new calculatedPointPatchField<Type>
         (
-            "calculated",
             p,
             iF
-        ).ptr()
+        )
     ),
     burstProcessorCyclicPatch_(refCast<const burstProcessorCyclicPointPatch>(p))
 {}

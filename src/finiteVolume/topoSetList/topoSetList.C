@@ -171,7 +171,12 @@ void Foam::topoSetList::updateFaces
             faceTopoSets_,
             faceZones_,
             faceSets_,
-            selectedFaces,
+            extractSelectedFaces
+            (
+                setDicts[seti],
+                selectedFaces,
+                false
+            ),
             setDicts[seti]
         );
     }
@@ -200,7 +205,12 @@ void Foam::topoSetList::updatePoints
             pointTopoSets_,
             pointZones_,
             pointSets_,
-            selectedPoints,
+            extractSelectedPoints
+            (
+                setDicts[seti],
+                selectedPoints,
+                false
+            ),
             setDicts[seti]
         );
     }
@@ -263,10 +273,6 @@ void Foam::topoSetList::modifyTopoSet
             topoSet::New(setType, mesh_, setName, 0).ptr()
         );
     }
-    else if (action == topoSetSource::REMOVE)
-    {}
-    else if (action == topoSetSource::ADD)
-    {}
     else
     {
         if (!topoSets.found(setName))
@@ -425,32 +431,9 @@ void Foam::topoSetList::modifyTopoSet
 
         case topoSetSource::REMOVE:
         {
-            const word sourceName(dict.lookup("source"));
-            const topoSet* sourcePtr = nullptr;
-            if (!topoSets.found(sourceName))
+            forAll(selected, i)
             {
-                sourcePtr = topoSet::New
-                (
-                    setType,
-                    mesh_,
-                    sourceName,
-                    IOobject::MUST_READ
-                ).ptr();
-            }
-            else
-            {
-                sourcePtr = topoSets[sourceName];
-            }
-
-            // Combine new value of currentSet with old one.
-            currentSet.deleteSet(*sourcePtr);
-
-            // Synchronise for coupled patches.
-            currentSet.sync(mesh_);
-
-            if (!topoSets.found(sourceName))
-            {
-                deleteDemandDrivenData(sourcePtr);
+                currentSet.erase(selected[i]);
             }
 
             if (isZone)
@@ -510,7 +493,6 @@ Foam::labelList Foam::topoSetList::extractInterfaceCells
 Foam::labelList Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
-    const labelList& cells,
     const labelList& faces,
     const bool defaultAll
 ) const
@@ -520,14 +502,17 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
       ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
       : selectionNames[dict.lookup<word>("selectionMode")];
 
+    // Return if the selection is empty of all faces are selected
     if (!returnReduce(faces.size(), sumOp<label>()) || sType == ALL)
     {
         return faces;
     }
 
-    labelList newFaces(faces);
+    // Create an easily searchable list of selected faces for searching
+    const labelHashSet selectedFaces(faces);
 
-    label fI = 0;
+    // Add internal faces (coupled faces are included)
+    labelHashSet internalFaces(faces.size());
     if (sType == INTERNAL)
     {
         forAll(faces, fi)
@@ -538,67 +523,92 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
                 const label patchi = mesh_.boundaryMesh().whichPatch(facei);
                 if (mesh_.boundaryMesh()[patchi].coupled())
                 {
-                    newFaces[fI++] = faces[fi];
+                    internalFaces.insert(faces[fi]);
                 }
             }
             else
             {
-                newFaces[fI++] = faces[fi];
+                internalFaces.insert(faces[fi]);
             }
         }
-        newFaces.resize(fI);
-        return newFaces;
+        return internalFaces.toc();
     }
 
-    const labelList& owner = mesh_.owner();
-    const labelList& neighbour = mesh_.neighbour();
-
-    labelHashSet selectedCells(cells);
-
-    labelHashSet patchIDs;
-    bool setBoundary = sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY;
-    if (setBoundary)
+    // Add boundary faces on the selected faces
+    labelHashSet boundaryFaces(faces.size());
+    if (sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY)
     {
-        patchIDs = mesh_.boundaryMesh().patchSet
-        (
-            dict.lookup<wordReList>("patches")
-        );
-    }
+        wordReList patchNames(dict.lookup("patches"));
 
-    bool setInternal = sType == INTERFACE || sType == INTERFACE_AND_BOUNDARY;
-    forAll(faces, fi)
-    {
-        const label facei = faces[fi];
-        if (facei >= mesh_.nInternalFaces())
+        forAll(patchNames, i)
         {
-            if (setBoundary)
+            const label patchi =
+                mesh_.boundaryMesh().findIndex(patchNames[i]);
+            const polyPatch& pp = mesh_.boundaryMesh()[patchi];
+
+            forAll(pp, fi)
             {
-                const label patchi = mesh_.boundaryMesh().whichPatch(facei);
-                if  (patchIDs.found(patchi))
+                const label facei = pp.start() + fi;
+                if (selectedFaces.found(facei))
                 {
-                    newFaces[fI++] = faces[fi];
+                    boundaryFaces.insert(facei);
                 }
             }
         }
-        else if
-        (
-            selectedCells.found(owner[facei])
-         != selectedCells.found(neighbour[facei])
-         && setInternal
-        )
+        if (sType == BOUNDARY)
         {
-            newFaces[fI++] = faces[fi];
+            return boundaryFaces.toc();
         }
     }
-    newFaces.resize(fI);
-    return newFaces;
+
+    // Select interface faces, i.e. selected faces whos owner/neighbour
+    // cells have some faces that are not selected
+    labelHashSet interfaceFaces(faces.size());
+    if (sType == INTERFACE || sType == INTERFACE_AND_BOUNDARY)
+    {
+        const labelList& owner = mesh_.faceOwner();
+        const labelList& neighbour = mesh_.faceNeighbour();
+        forAll(faces, fi)
+        {
+            const label facei = faces[fi];
+            const cell& own = mesh_.cells()[owner[facei]];
+
+            bool added = false;
+            forAll(own, fj)
+            {
+                if (!selectedFaces.found(own[fj]))
+                {
+                    interfaceFaces.insert(facei);
+                    break;
+                }
+            }
+            if (!added && facei < mesh_.nInternalFaces())
+            {
+                const cell& nei = mesh_.cells()[neighbour[facei]];
+                forAll(nei, fj)
+                {
+                    if (!selectedFaces.found(nei[fj]))
+                    {
+                        interfaceFaces.insert(facei);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (sType == INTERFACE)
+        {
+            return interfaceFaces.toc();
+        }
+    }
+
+    return (interfaceFaces | boundaryFaces).toc();
 }
 
 
 Foam::labelList Foam::topoSetList::extractSelectedPoints
 (
     const dictionary& dict,
-    const labelList& cells,
     const labelList& points,
     const bool defaultAll
 ) const
@@ -608,15 +618,20 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
       ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
       : selectionNames[dict.lookup("selectionMode")];
 
+    // Return if the selection is empty of all points are selected
     if (!returnReduce(points.size(), sumOp<label>()) || sType == ALL)
     {
         return points;
     }
 
-    // Remove boundary points
+    // Create a searchable list of selected points
+    const labelHashSet selectedPoints(points);
+
+    // Select all boundary points
     labelHashSet boundaryPoints;
     if (sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY)
     {
+        // Only select points on the given patches
         labelHashSet patchIDs
         (
             mesh_.boundaryMesh().patchSet
@@ -625,51 +640,51 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
             )
         );
 
-        forAll(mesh_.boundaryMesh(), patchi)
+        // Loop through all the selected patches and add the selected points
+        forAll(patchIDs, i)
         {
-            if (!patchIDs.found(patchi))
-            {
-                continue;
-            }
-
+            const label patchi = patchIDs[i];
             const labelList& ppoints
             (
                 mesh_.boundaryMesh()[patchi].meshPoints()
             );
             forAll(ppoints, pi)
             {
-                boundaryPoints.insert(ppoints[pi]);
+                if (selectedPoints.found(ppoints[pi]))
+                {
+                    boundaryPoints.insert(ppoints[pi]);
+                }
             }
         }
 
         if (sType == BOUNDARY)
         {
-            return (labelHashSet(points) & boundaryPoints).toc();
+            return boundaryPoints.toc();
         }
     }
 
-    // Return after removing boundary points
+    // The internal points are the entire selection minus the boundary points
     if (sType == INTERNAL)
     {
-        labelHashSet selectedPoints(points);
-        selectedPoints -= boundaryPoints;
-        return selectedPoints.toc();
+        labelHashSet internalPoints(points);
+        internalPoints -= boundaryPoints;
+        return internalPoints.toc();
     }
 
 
-    const labelListList& pointCells = mesh_.pointCells();
+    // Select the interface points, i.e. selected points for neighbour
+    // points that are not selected
+    const labelListList& pointPoints = mesh_.pointPoints();
     labelHashSet interfacePoints;
-    labelHashSet selectedCells(cells);
     forAll(points, pi)
     {
         const label pointi = points[pi];
-        const labelList& cp = pointCells[pointi];
+        const labelList& pp = pointPoints[pointi];
 
-        bool check = selectedCells.found(cp[0]);
-        bool add = false;;
-        for (label i = 1; i < cp.size(); i++)
+        bool add = false;
+        forAll(pp, pj)
         {
-            if (check != selectedCells.found(cp[i]))
+            if (!selectedPoints.found(pp[pj]))
             {
                 add = true;
                 break;
@@ -685,10 +700,19 @@ Foam::labelList Foam::topoSetList::extractSelectedPoints
     {
         return interfacePoints.toc();
     }
+    else if (sType == INTERFACE_AND_BOUNDARY)
+    {
+        return (boundaryPoints | interfacePoints).toc();
+    }
     else
     {
-        return (interfacePoints | boundaryPoints).toc();
+        FatalErrorInFunction
+            << "Unknown selection mode " << dict.lookup<word>("selectionMode")
+            << ", valid selection modes are: " << nl
+            << selectionNames.toc() << endl
+            << abort(FatalError);
     }
+    return points;
 }
 
 

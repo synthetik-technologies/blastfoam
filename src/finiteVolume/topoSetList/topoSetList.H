@@ -180,7 +180,6 @@ public:
         labelList extractSelectedFaces
         (
             const dictionary& dict,
-            const labelList& cells,
             const labelList& faces,
             const bool defaultAll = false
         ) const;
@@ -189,7 +188,6 @@ public:
         labelList extractSelectedPoints
         (
             const dictionary& dict,
-            const labelList& cells,
             const labelList& points,
             const bool defaultAll = false
         ) const;

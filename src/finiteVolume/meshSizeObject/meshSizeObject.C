@@ -86,7 +86,6 @@ void Foam::meshSizeObject::calcDx() const
     if (mesh.nGeometricD() != 3)
     {
 
-        scalarField faceLength(sqrt(mesh.magFaceAreas()));
         const labelList& own = mesh.faceOwner();
         labelList nFaces(dxPtr_->size(), 0);
 
@@ -98,7 +97,7 @@ void Foam::meshSizeObject::calcDx() const
                 forAll(patch, fi)
                 {
                     const label facei = patch.start() + fi;
-                    dx[own[facei]] += faceLength[facei];
+                    dx[own[facei]] += sqrt(mesh.magFaceAreas()[facei]);
 
                     nFaces[own[facei]]++;
                 }
