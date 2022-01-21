@@ -118,6 +118,12 @@ public:
                 return refiner_->pointLevel();
             }
 
+            //- Return the refiner
+            const refinement& refiner() const
+            {
+                return refiner_();
+            }
+
 
         //- Read the projection parameters from dictionary
         void readDict(const dictionary& parentDict);

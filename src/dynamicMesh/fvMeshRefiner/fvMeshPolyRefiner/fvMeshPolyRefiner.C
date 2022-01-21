@@ -34,6 +34,7 @@ License
 #include "parcelCloud.H"
 #include "prismatic2DRefinement.H"
 #include "polyhedralRefinement.H"
+#include "polyRefinementConstraint.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -108,6 +109,18 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner(fvMesh& mesh)
     isRefining_(false),
     isUnrefining_(false)
 {
+    // Added refinement history decomposition constraint to keep all
+    // cells with the same parent together
+    {
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            polyRefinementConstraint::typeName
+        );
+        balancer_.addConstraint(refinementHistoryDict);
+    }
+
     // Get number of valid geometric dimensions
     const label nGeometricDirs = mesh_.nGeometricD();
 
@@ -175,6 +188,18 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
     isRefining_(false),
     isUnrefining_(false)
 {
+    // Added refinement history decomposition constraint to keep all
+    // cells with the same parent together
+    {
+        dictionary refinementHistoryDict("refinementHistory");
+        refinementHistoryDict.add
+        (
+            "type",
+            polyRefinementConstraint::typeName
+        );
+        balancer_.addConstraint(refinementHistoryDict);
+    }
+
     readDict(dict);
 
     // Get number of valid geometric dimensions
@@ -478,6 +503,24 @@ bool Foam::fvMeshPolyRefiner::writeObject
     const bool write
 ) const
 {
+    {
+        volScalarField clusters
+        (
+            volScalarField::New
+            (
+                "clusters",
+                mesh_,
+                dimensionedScalar(dimless, 0)
+            )
+        );
+        labelList cellClusters;
+        refiner_->getCellClusters(cellClusters);
+        forAll(clusters, celli)
+        {
+            clusters[celli] = cellClusters[celli];
+        }
+        clusters.write();
+    }
     return
         fvMeshRefiner::writeObject(fmt, ver, cmp, write)
      && refiner_->write();

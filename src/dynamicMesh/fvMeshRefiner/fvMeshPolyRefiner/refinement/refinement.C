@@ -44,6 +44,7 @@ Notes
 #include "foamMeshTools.H"
 #include "mapPolyMesh.H"
 #include "mapDistributePolyMesh.H"
+#include "globalIndex.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -69,6 +70,7 @@ void Foam::refinement::setInstance(const fileName& inst) const
 
     cellLevel_.instance() = inst;
     pointLevel_.instance() = inst;
+    parentCells_.instance() = inst;
 }
 
 
@@ -941,6 +943,44 @@ Foam::label Foam::refinement::edgeConsistentUnrefinement
 }
 
 
+Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
+{
+    Map<label> count;
+    forAll(parentCells_, ci)
+    {
+        const label celli = parentCells_[ci];
+        if (!count.found(celli))
+        {
+            count.insert(celli, 1);
+        }
+        else
+        {
+            count[celli]++;
+        }
+    }
+
+    Map<label> map;
+    label i = 0;
+    forAllConstIter(Map<label>, count, iter)
+    {
+        if (iter() > 1)
+        {
+            map.insert(iter.key(), i++);
+        }
+    }
+
+    clusters.setSize(parentCells_.size(), -1);
+    forAll(parentCells_, celli)
+    {
+        if (map.found(parentCells_[celli]))
+        {
+            clusters[celli] = map[parentCells_[celli]];
+        }
+    }
+    return i;
+}
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::refinement::refinement
@@ -977,12 +1017,33 @@ Foam::refinement::refinement
         ),
         labelList(mesh_.nPoints(), 0)
     ),
+    parentCells_
+    (
+        IOobject
+        (
+            "parentCells",
+            mesh_.facesInstance(),
+            polyMesh::meshSubDir,
+            mesh_,
+            read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
+            IOobject::AUTO_WRITE
+        ),
+        identity(mesh_.nCells())
+    ),
     faceRemover_(mesh_, GREAT),   // Merge boundary faces wherever possible
     edgeBasedConsistency_
     (
         dict.lookupOrDefault<Switch>("edgeBasedConsistency", true)
     )
 {
+    if (!parentCells_.headerOk())
+    {
+        globalIndex gI(mesh_.nCells());
+        forAll(parentCells_, celli)
+        {
+            parentCells_[celli] = gI.toGlobal(parentCells_[celli]);
+        }
+    }
     DebugInfo<< "Created pointLevel and cellLevel" << endl;
 
     // Check consistency between cellLevel and number of cells and pointLevel
@@ -1107,7 +1168,6 @@ bool Foam::refinement::unrefine
 {
     polyTopoChange meshMod(mesh);
     this->setUnrefinement(meshMod, splitPointsToUnrefine);
-
     autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
     mesh.updateMesh(map());
 
@@ -1161,6 +1221,27 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
             }
             cellLevel_.transfer(newCellLevel);
         }
+        {
+            // Map data
+            const labelList& cellMap = map.cellMap();
+            label newParentIndex = gMax(parentCells_);
+
+            labelList newParentCells(cellMap.size(), -1);
+            forAll(cellMap, newCelli)
+            {
+                label oldCelli = cellMap[newCelli];
+
+                if (oldCelli == -1)
+                {
+                    newParentCells[newCelli] = ++newParentIndex;
+                }
+                else
+                {
+                    newParentCells[newCelli] = parentCells_[oldCelli];
+                }
+            }
+            parentCells_.transfer(newParentCells);
+        }
 
         const labelList& reversePointMap = map.reversePointMap();
         if (reversePointMap.size() == pointLevel_.size())
@@ -1170,7 +1251,6 @@ void Foam::refinement::updateMesh(const mapPolyMesh& map)
         }
         else
         {
-            Info<<"here"<<endl;
             // Map data
             const labelList& pointMap = map.pointMap();
 
@@ -1223,11 +1303,112 @@ void Foam::refinement::distribute(const mapDistributePolyMesh& map)
     // Update pointlevel
     map.distributePointData(pointLevel_);
 
+    //- Distribute the parent cells;
+    map.distributeCellData(parentCells_);
+
     // Update face removal engine
     faceRemover_.distribute(map);
 
     // Mark files as changed
     setInstance(mesh_.facesInstance());
+
+}
+
+
+void Foam::refinement::add
+(
+    boolList& blockedFace,
+    PtrList<labelList>& specifiedProcessorFaces,
+    labelList& specifiedProcessor,
+    List<labelPair>& explicitConnections
+) const
+{
+    blockedFace.setSize(mesh_.nFaces(), true);
+
+    // Find common parent for all cells
+    labelList cellToCluster;
+    getCellClusters(cellToCluster);
+
+    // Unblock all faces inbetween same cluster
+    label nUnblocked = 0;
+
+    forAll(mesh_.faceNeighbour(), faceI)
+    {
+        label ownCluster = cellToCluster[mesh_.faceOwner()[faceI]];
+        label neiCluster = cellToCluster[mesh_.faceNeighbour()[faceI]];
+
+        if (ownCluster != mesh_.faceOwner()[faceI] && ownCluster == neiCluster)
+        {
+            if (blockedFace[faceI])
+            {
+                blockedFace[faceI] = false;
+                nUnblocked++;
+            }
+        }
+    }
+
+    if (debug)
+    {
+        reduce(nUnblocked, sumOp<label>());
+        Info<< type() << " : unblocked " << nUnblocked << " faces" << endl;
+    }
+
+    syncTools::syncFaceList(mesh_, blockedFace, andEqOp<bool>());
+}
+
+
+void Foam::refinement::apply
+(
+    const boolList& blockedFace,
+    const PtrList<labelList>& specifiedProcessorFaces,
+    const labelList& specifiedProcessor,
+    const List<labelPair>& explicitConnections,
+    labelList& decomposition
+) const
+{
+    // Find common parent for all cells
+    labelList cellToCluster;
+    label nClusters = getCellClusters(cellToCluster);
+
+    // Unblock all faces inbetween same cluster
+    labelList clusterToProc(nClusters, -1);
+
+    label nChanged = 0;
+
+    forAll(mesh_.faceNeighbour(), faceI)
+    {
+        label own = mesh_.faceOwner()[faceI];
+        label nei = mesh_.faceNeighbour()[faceI];
+
+        label ownCluster = cellToCluster[own];
+        label neiCluster = cellToCluster[nei];
+
+        if (ownCluster != -1 && ownCluster == neiCluster)
+        {
+            if (clusterToProc[ownCluster] == -1)
+            {
+                clusterToProc[ownCluster] = decomposition[own];
+            }
+
+            if (decomposition[own] != clusterToProc[ownCluster])
+            {
+                decomposition[own] = clusterToProc[ownCluster];
+                nChanged++;
+            }
+            if (decomposition[nei] != clusterToProc[ownCluster])
+            {
+                decomposition[nei] = clusterToProc[ownCluster];
+                nChanged++;
+            }
+        }
+    }
+
+    if (debug)
+    {
+        reduce(nChanged, sumOp<label>());
+        Info<< typeName << ": changed decomposition on " << nChanged
+            << " cells" << endl;
+    }
 }
 
 

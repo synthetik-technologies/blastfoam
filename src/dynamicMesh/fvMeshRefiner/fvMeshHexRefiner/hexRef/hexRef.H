@@ -478,12 +478,12 @@ public:
                 return mesh_;
             }
 
-            const labelIOList& cellLevel() const
+            const labelList& cellLevel() const
             {
                 return cellLevel_;
             }
 
-            const labelIOList& pointLevel() const
+            const labelList& pointLevel() const
             {
                 return pointLevel_;
             }

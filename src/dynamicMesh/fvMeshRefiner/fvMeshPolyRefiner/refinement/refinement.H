@@ -88,6 +88,9 @@ protected:
             //- Point refinement level
             mutable labelIOList pointLevel_;
 
+            //- Parent cells
+            mutable labelIOList parentCells_;
+
             //- Face remover engine
             mutable removeFaces faceRemover_;
 
@@ -352,6 +355,31 @@ public:
 
             //- Distribute additional information
             virtual void distribute(const mapDistributePolyMesh& map);
+
+
+        // Helpers for decompositionConstraint
+
+            //- Return the cluster number for all cells
+            label getCellClusters(labelList&) const;
+
+            //- Add my decomposition constraints
+            void add
+            (
+                boolList& blockedFace,
+                PtrList<labelList>& specifiedProcessorFaces,
+                labelList& specifiedProcessor,
+                List<labelPair>& explicitConnections
+            ) const;
+
+            //- Apply any additional post-decomposition constraints
+            void apply
+            (
+                const boolList& blockedFace,
+                const PtrList<labelList>& specifiedProcessorFaces,
+                const labelList& specifiedProcessor,
+                const List<labelPair>& explicitConnections,
+                labelList& decomposition
+            ) const;
 
 
         //- Write

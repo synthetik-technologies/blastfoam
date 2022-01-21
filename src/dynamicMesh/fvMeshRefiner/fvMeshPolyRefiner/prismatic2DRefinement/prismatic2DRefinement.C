@@ -1267,7 +1267,8 @@ void Foam::prismatic2DRefinement::setRefinement
                         }
 
                         // Update cell level
-                        newCellLevel(cAdded[cellCounter]) = cellLevel_[cellI] + 1;
+                        newCellLevel(cAdded[cellCounter]) = cellLevel_[cellI]
+                        + 1;
 
                         // Collect the point-cell mapping into local index
                         // of cell added cells for point on this side
@@ -2166,21 +2167,21 @@ void Foam::prismatic2DRefinement::setRefinement
                 // Note: owner and neighbour are uniquely defined since we have
                 // gone through the face in the same way as we did while adding
                 // cells. This ensured easy definition of owner/neighbour cells
-                const label own = cAdded[nAddedFaces];
-                const label nei =
-                    nAddedFaces < cAdded.size() - 1
-                  ? cAdded[nAddedFaces + 1]
-                  : cAdded[0];
-
+                label own = cAdded[nAddedFaces];
+                label nei = cAdded[cAdded.fcIndex(nAddedFaces)];
 
                 // According to the definition of adding faces, the first n - 1
                 // faces need to be reverted, while the last one is correctly
                 // oriented
 
                 // ***** THIS LINE SEEMS TO CAUSE PROBLEMS ******
-//                 if (nAddedFaces < cAdded.size() - 1)
+                if (nAddedFaces < cAdded.size() - 1)
                 {
                     newFace = newFace.reverseFace();
+                }
+                else
+                {
+                    Swap(own, nei);
                 }
 
 
@@ -2202,7 +2203,6 @@ void Foam::prismatic2DRefinement::setRefinement
                         ownPt = meshPoints[pointJ];
                         neiPt = meshPoints[pointI];
                     }
-
                     checkInternalOrientation
                     (
                         meshMod,
@@ -2220,14 +2220,14 @@ void Foam::prismatic2DRefinement::setRefinement
                 (
                     meshMod,
                     faceI,
-                    pointI,
+                    nAddedFaces < cAdded.size() - 1 ? pointI : pointJ,
                     newFace,
                     own,
                     nei
                 );
 
                 // Increment number of added faces
-                ++nAddedFaces;
+                nAddedFaces++;
 
             } // End loop over all point (and edges) of the face
 

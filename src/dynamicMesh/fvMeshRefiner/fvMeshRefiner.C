@@ -982,8 +982,6 @@ bool Foam::fvMeshRefiner::writeObject
                 extrapolatedCalculatedFvPatchField<scalar>::typeName
             )
         );
-
-
         forAll(cellLevel(), celli)
         {
             scalarCellLevel[celli] = cellLevel()[celli];
@@ -999,6 +997,7 @@ bool Foam::fvMeshRefiner::writeObject
                 dimensionedScalar(dimless, 0.0)
             )
         );
+
         scalarField& sPointLevel = scalarPointLevel.primitiveFieldRef();
         forAll(sPointLevel, pointi)
         {

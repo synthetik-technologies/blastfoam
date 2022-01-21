@@ -1660,6 +1660,8 @@ bool Foam::fvMeshHexRefiner::refine
             // move, if are using inflation any follow on movePoints will set
             // it.
             mesh_.moving(false);
+
+            // Make sure all processors have the correct instance
             mesh_.setInstance(mesh_.time().timeName());
         }
     }
