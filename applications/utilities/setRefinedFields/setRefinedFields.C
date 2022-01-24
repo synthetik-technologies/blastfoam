@@ -695,10 +695,14 @@ int main(int argc, char *argv[])
             max
             (
                 1,
-                max
+                setFieldsDict.lookupOrDefault
                 (
-                    setFieldsDict.lookupOrDefault("maxIter", 2*maxLevel),
-                    gMax(refiner->cellLevel())*2
+                    "maxIter",
+                    max
+                    (
+                        2*maxLevel,
+                        gMax(refiner->cellLevel())*2
+                    )
                 )
             );
     }
@@ -953,7 +957,6 @@ int main(int argc, char *argv[])
                     refineFaces = topoSets.extractSelectedFaces
                     (
                         regions[regionI].dict(),
-                        savedCells[regionI],
                         savedFaces[regionI],
                         true
                     );
@@ -970,7 +973,6 @@ int main(int argc, char *argv[])
                     refinePoints = topoSets.extractSelectedPoints
                     (
                         regions[regionI].dict(),
-                        savedCells[regionI],
                         savedPoints[regionI],
                         true
                     );
@@ -1183,7 +1185,7 @@ int main(int argc, char *argv[])
 
     bool writeMesh = topoSets.writeSets();
 
-    if (refine)
+    if (refine && !debug)
     {
         // Write mesh and cell levels
         if (overwrite)
