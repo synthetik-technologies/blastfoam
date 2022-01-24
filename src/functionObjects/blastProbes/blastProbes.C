@@ -577,7 +577,7 @@ Foam::blastProbes::blastProbes
     ),
     loadFromFiles_(false),
     fieldSelection_(),
-    fixedLocations_(true),
+    fixedLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
@@ -598,7 +598,7 @@ Foam::blastProbes::blastProbes
     mesh_(refCast<const fvMesh>(obr)),
     loadFromFiles_(loadFromFiles),
     fieldSelection_(),
-    fixedLocations_(true),
+    fixedLocations_(false),
     interpolationScheme_("cell"),
     append_(false)
 {
