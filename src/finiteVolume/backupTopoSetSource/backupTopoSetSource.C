@@ -250,10 +250,14 @@ void Foam::backupTopoSetSource::applyToSet
     const bool allowBackup
 ) const
 {
-    const label origSize = set.size();
+    const label origSize = returnReduce(set.size(), sumOp<label>());
     source_->applyToSet(action, set);
 
-    if (origSize == set.size() && allowBackup && backup_.valid())
+    if
+    (
+        origSize == returnReduce(set.size(), sumOp<label>())
+     && allowBackup && backup_.valid()
+    )
     {
         backup_->applyToSet(action, set);
     }

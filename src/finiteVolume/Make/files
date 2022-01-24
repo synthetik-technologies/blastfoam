@@ -25,6 +25,7 @@ fluxSchemes/fluxSchemes/HLLC/HLLCFluxScheme.C
 fluxSchemes/fluxSchemes/HLLCP/HLLCPFluxScheme.C
 fluxSchemes/fluxSchemes/Kurganov/KurganovFluxScheme.C
 fluxSchemes/fluxSchemes/Tadmor/TadmorFluxScheme.C
+fluxSchemes/fluxSchemes/Roe/RoeFluxScheme.C
 
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxSchemeNew.C
