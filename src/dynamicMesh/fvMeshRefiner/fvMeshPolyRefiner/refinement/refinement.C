@@ -5,6 +5,9 @@
     \\  /    A nd           | Web:         http://www.foam-extend.org
      \\/     M anipulation  | For copyright notice see file Copyright
 -------------------------------------------------------------------------------
+24-01-2022 Synthetik Applied    :   Added support for axis-symmetric
+           Technologies                 cases and load balancing
+-------------------------------------------------------------------------------
 License
     This file is part of foam-extend.
 
@@ -145,27 +148,27 @@ Foam::label Foam::refinement::addInternalFace
     const label nei
 ) const
 {
-//     // Check whether this is an internal face
-//     if (mesh_.isInternalFace(meshFaceI))
-//     {
-//         return meshMod.setAction
-//         (
-//             polyAddFace
-//             (
-//                 newFace,                    // face
-//                 own,                        // owner
-//                 nei,                        // neighbour
-//                 -1,                         // master point
-//                 -1,                         // master edge
-//                 meshFaceI,                  // master face for addition
-//                 false,                      // flux flip
-//                 -1,                         // patch for face
-//                 -1,                         // zone for face
-//                 false                       // face zone flip
-//             )
-//         );
-//     }
-//     else
+    // Check whether this is an internal face
+    if (mesh_.isInternalFace(meshFaceI))
+    {
+        return meshMod.setAction
+        (
+            polyAddFace
+            (
+                newFace,                    // face
+                own,                        // owner
+                nei,                        // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                meshFaceI,                  // master face for addition
+                false,                      // flux flip
+                -1,                         // patch for face
+                -1,                         // zone for face
+                false                       // face zone flip
+            )
+        );
+    }
+    else
     {
         // This is not an internal face. Add face out of nothing
         return meshMod.setAction
@@ -340,10 +343,7 @@ void Foam::refinement::walkFaceFromMid
             faceVerts.append(f[fp]);
             break;
         }
-        else if (pointLevel_[f[fp]] == cLevel + 2)
-        {
-            // Continue to cLevel + 1
-        }
+        // Continue to next point
         fp = f.rcIndex(fp);
     }
 
@@ -369,47 +369,13 @@ void Foam::refinement::walkFaceFromMid
 
 Foam::label Foam::refinement::findMinLevel(const labelList& f) const
 {
-    // Initialise minimum level to large value
-    label minLevel = labelMax;
-
-    // Initialise point label at which min level is reached to -1
-    label pointIMin = -1;
-
-    forAll(f, fp)
-    {
-        const label& level = pointLevel_[f[fp]];
-
-        if (level < minLevel)
-        {
-            minLevel = level;
-            pointIMin = fp;
-        }
-    }
-
-    return pointIMin;
+    return findMin(labelField(pointLevel_, f));
 }
 
 
 Foam::label Foam::refinement::findMaxLevel(const labelList& f) const
 {
-    // Initialise  maximum level to small value
-    label maxLevel = labelMin;
-
-    // Initialise point label at which max level is reached to -1
-    label pointIMax = -1;
-
-    forAll(f, fp)
-    {
-        const label& level = pointLevel_[f[fp]];
-
-        if (level > maxLevel)
-        {
-            maxLevel = level;
-            pointIMax = fp;
-        }
-    }
-
-    return pointIMax;
+    return findMax(labelField(pointLevel_, f));
 }
 
 
@@ -425,7 +391,7 @@ Foam::label Foam::refinement::countAnchors
     {
         if (pointLevel_[f[fp]] <= anchorLevel)
         {
-            ++nAnchors;
+            nAnchors++;
         }
     }
     return nAnchors;
@@ -615,8 +581,8 @@ Foam::label Foam::refinement::faceConsistentRefinement
         // boundaries in order to simplify handling of edge based consistency
         // checks for parallel runs
         // Bugfix related to PLB: Check whether owner is already marked for
-        // refinement. Will allow 2:1 consistency across certain processor faces
-        // where we have a new processor boundary. VV, 23/Jan/2019.
+        // refinement. Will allow 2:1 consistency across certain processor
+        // faces where we have a new processor boundary. VV, 23/Jan/2019.
         if (ownLevel > (neiLevel[i] + 1))
         {
             if (!maxSet)
@@ -636,7 +602,7 @@ Foam::label Foam::refinement::faceConsistentRefinement
         // level) is taken into account on the other side automatically
     }
 
-    // Return number of added cells
+    // Return number of changed cells
     return nChanged;
 }
 
@@ -721,7 +687,7 @@ Foam::label Foam::refinement::edgeConsistentRefinement
     // with arbitrary polyhedral cells).
     // See faceConsistentRefinement for details. VV, 17/Apr/2018.
 
-    // Return number of added cells
+    // Return number of changed cells
     return nChanged;
 }
 
@@ -842,7 +808,7 @@ Foam::label Foam::refinement::faceConsistentUnrefinement
         }
     }
 
-    // Return number of local cells removed from unrefinement
+    // Return number of local changed
     return nChanged;
 }
 
@@ -938,13 +904,14 @@ Foam::label Foam::refinement::edgeConsistentUnrefinement
     // countless variants when dealing with arbitrary polyhedral cells).
     // See faceConsistentRefinement for details. VV, 3/Apr/2018.
 
-    // Return number of removed cells
+    // Return number of changed cells
     return nChanged;
 }
 
 
 Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
 {
+    // Count up the number of clusters that have been refined atleast once
     Map<label> count;
     forAll(parentCells_, ci)
     {
@@ -959,6 +926,7 @@ Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
         }
     }
 
+    // Create a map from the parent index to the cluster number
     Map<label> map;
     label i = 0;
     forAllConstIter(Map<label>, count, iter)
@@ -969,6 +937,7 @@ Foam::label Foam::refinement::getCellClusters(labelList& clusters) const
         }
     }
 
+    // Return the list of clusters and their children cells
     clusters.setSize(parentCells_.size(), -1);
     forAll(parentCells_, celli)
     {
@@ -1350,11 +1319,11 @@ void Foam::refinement::distribute(const mapDistributePolyMesh& map)
     (
         mesh_,
         pointLevel_,
-        minEqOp<label>(),
-        labelMax
+        maxEqOp<label>(),
+        labelMin
     );
 
-    //- Distribute the parent cells;
+    // Distribute the parent cells;
     map.distributeCellData(parentCells_);
 
     // Update face removal engine
@@ -1398,7 +1367,7 @@ void Foam::refinement::add
         }
     }
 
-    if (debug)
+//     if (debug)
     {
         reduce(nUnblocked, sumOp<label>());
         Info<< type() << " : unblocked " << nUnblocked << " faces" << endl;
@@ -1454,7 +1423,7 @@ void Foam::refinement::apply
         }
     }
 
-    if (debug)
+//     if (debug)
     {
         reduce(nChanged, sumOp<label>());
         Info<< typeName << ": changed decomposition on " << nChanged

@@ -2,13 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-05-2020 Synthetik Applied Technologies: |   Modified original
-                            dynamicRefineBalanceBlastFvMesh class
-                            to be more appilcable to compressible flows.
-                            Improved compatibility with snappyHexMesh.
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -33,47 +28,8 @@ Class
 SourceFiles
     fvMeshRefiner.C
 
-Authors
-    T.G. Voskuilen ( https://github.com/tgvoskuilen/meshBalancing )
-    Daniel Deising <deising@mma.tu-darmstadt.de>
-    Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
-    All rights reserved.
-
 Description
-    A fvMesh with run-time load balancing.
-
-    Updated to OpenFOAM-7 from the github version at:
-    https://github.com/ElsevierSoftwareX/SOFTX_2018_143.git
-
-    Reference:
-    Rettenmaier, D., Deising, D., Ouedraogo, Y., Gjonaj, E., De Gersem, H., Bothe, D., Tropea, C., Marschall, H.
-    "Load balanced 2D and 3D adaptive mesh refinement in OpenFOAM" (2019),
-    SoftwareX, volume 10, 2352-7110,
-
-    This code has been developed by :
-        Daniel Rettenmaier (main developer).
-
-    Method Development and Intellectual Property :
-        T.G. Voskuilen (Purdue University)
-        Timothée Pourpoint <timothee@purdue.edu> (Purdue University)
-        Daniel Rettenmaier <rettenmaier@gsc.tu-darmstadt.de>
-        Daniel Deising <deising@mma.tu-darmstadt.de>
-        Holger Marschall <marschall@csi.tu-darmstadt.de>
-        Dieter Bothe <bothe@csi.tu-darmstadt.de>
-        Cameron Tropea <ctropea@sla.tu-darmstadt.de>
-
-        School of Aeronautics and Astronautics Purdue University
-        Mathematical Modeling and Analysis
-        Institute for Fluid Mechanics and Aerodynamics
-        Center of Smart Interfaces
-        Technische Universitaet Darmstadt
-
-    If you use this software for your scientific work or your publications,
-    please don't forget to acknowledge explicitly the use of it.
-
-    Additional modifications not part of the original work include the use of
-    error estimators, improved stability with castellated mesh, and fewer
-    required user inputs.
+    A general class for the selection of mesh refinement method
 
 \*---------------------------------------------------------------------------*/
 

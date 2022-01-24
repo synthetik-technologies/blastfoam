@@ -161,7 +161,7 @@ void Foam::polyRefinementConstraint::apply
     }
     else
     {
-//         if (decompositionConstraint::debug)
+        if (decompositionConstraint::debug)
         {
             Info<< type() << " : reading fvMeshPolyRefiner from time "
                 << mesh.facesInstance() << endl;

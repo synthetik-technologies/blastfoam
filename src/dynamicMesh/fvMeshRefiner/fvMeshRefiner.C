@@ -2,13 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-05-2020 Synthetik Applied Technologies: |    Modified original
-                            dynamicRefineBalanceBlastFvMesh class
-                            to be more appilcable to compressible flows.
-                            Improved compatibility with snappyHexMesh.
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -222,7 +217,7 @@ Foam::labelList Foam::fvMeshRefiner::selectRefineCells
 
 void Foam::fvMeshRefiner::setMaxCellLevel(labelList& maxCellLevel) const
 {
-    if (!maxCellLevel.size())
+    if (!returnReduce(maxCellLevel.size(), sumOp<label>()))
     {
         maxCellLevel.setSize
         (

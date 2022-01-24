@@ -2,13 +2,8 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2014 Tyler Voskuilen
-     \\/     M anipulation  |
--------------------------------------------------------------------------------
-21-05-2020 Synthetik Applied Technologies: |    Modified original
-                            dynamicRefineBalanceBlastFvMesh class
-                            to be more appilcable to compressible flows.
-                            Improved compatibility with snappyHexMesh.
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -284,7 +279,7 @@ void Foam::fvMeshPolyRefiner::readDict(const dictionary& dict)
             << "Using " << nRefinementBufferLayers_
             << " refinement buffer layers" << nl
             << "Make sure that the number of refinement buffer layers is "
-            << "at least r in order to avoid problems with edge level "
+            << "at least 3 in order to avoid problems with edge level "
             << "in 2 dimensional cases"
             << endl;
         nRefinementBufferLayers_ = 3;
@@ -525,6 +520,7 @@ bool Foam::fvMeshPolyRefiner::writeObject
     const bool write
 ) const
 {
+    if (debug)
     {
         volScalarField clusters
         (

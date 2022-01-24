@@ -5,6 +5,9 @@
     \\  /    A nd           | Web:         http://www.foam-extend.org
      \\/     M anipulation  | For copyright notice see file Copyright
 -------------------------------------------------------------------------------
+24-01-2022 Synthetik Applied    :   Added support for axis-symmetric
+           Technologies                 cases and load balancing
+-------------------------------------------------------------------------------
 License
     This file is part of foam-extend.
 
