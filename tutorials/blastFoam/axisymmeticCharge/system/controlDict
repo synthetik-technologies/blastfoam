@@ -60,14 +60,6 @@ functions
 
         pRef            101298;
     }
-    speedOfSound
-    {
-        type            speedOfSound;
-        writeControl    writeTime;
-        writeInterval   1;
-
-        store yes;
-    }
     dynamicPressure
     {
         type            dynamicPressure;
@@ -94,7 +86,7 @@ functions
         fields
         (
             speedOfSound
-            dynamicPressure
+            dynamicP
             overpressure
         );
     }
@@ -119,7 +111,7 @@ functions
         (
             p
             impulse
-            dynamicPressure
+            dynamicP
         );
     }
 }

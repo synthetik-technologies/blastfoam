@@ -92,6 +92,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
         InfoInFunction
             << "Energy -> temperature conversion failed to converge:" << endl;
         Pout<< setw(width) << "iter"
+            << setw(width) << "rho"
+            << setw(width) << "e"
             << setw(width) << "Test"
             << setw(width) << "e/h Actual"
             << setw(width) << "e/h Test"
@@ -119,6 +121,8 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::T
             const unsigned int width = IOstream::defaultPrecision() + 8;
 
             Pout<< setw(width) << iter
+                << setw(width) << rho
+                << setw(width) << e
                 << setw(width) << Test
                 << setw(width) << f
                 << setw(width) << ((this->*F)(rho, f, Test))

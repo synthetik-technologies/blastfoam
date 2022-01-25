@@ -207,26 +207,25 @@ void Foam::fluidPhaseModel::decode()
     rho_.ref() = alphaRho_()/alpha();
     rho_.max(thermo().residualRho());
     rho_.correctBoundaryConditions();
-    alphaRho_.boundaryFieldRef() =
+    alphaRho_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField();
-    volScalarField alphaRho(alpha*rho_);
-    alphaRho.max(1e-10);
+    volScalarField alphaRhoLimited(alpha*rho_);
+    alphaRhoLimited.max(1e-10);
 
-    U_.ref() = alphaRhoU_()/(alphaRho());
+    U_.ref() = alphaRhoU_()/(alphaRhoLimited());
     U_.correctBoundaryConditions();
 
-    alphaRhoU_.boundaryFieldRef() =
+    alphaRhoU_.boundaryFieldRef() ==
         (*this).boundaryField()*rho_.boundaryField()*U_.boundaryField();
 
-    volScalarField E(alphaRhoE_/alphaRho);
-    e_.ref() = E() - 0.5*magSqr(U_());
+    e_.ref() = alphaRhoE_()/alphaRhoLimited() - 0.5*magSqr(U_());
 
     thermoPtr_->correct();
     thermoPtr_->speedOfSound() *= pos(alpha - residualAlpha());
     thermoPtr_->speedOfSound().max(small);
 
     // Update total energy because e may have changed
-    alphaRhoE_ = alphaRho_*(e_ + 0.5*magSqr(U_));
+    alphaRhoE_ == alphaRho_*(e_ + 0.5*magSqr(U_));
 
     constraints().constrain(p_);
 }

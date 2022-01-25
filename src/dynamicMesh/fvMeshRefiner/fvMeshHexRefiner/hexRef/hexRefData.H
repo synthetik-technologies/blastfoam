@@ -117,6 +117,9 @@ public:
         //  (even if they don't have a mesh). Used by redistributePar.
         void sync(const IOobject& io);
 
+        //- In-place update for topology changes
+        void updateMesh(const mapPolyMesh&);
+
         //- In-place distribute
         void distribute(const mapDistributePolyMesh&);
 

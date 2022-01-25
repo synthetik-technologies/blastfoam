@@ -1781,11 +1781,11 @@ bool Foam::dynamicRefineMultiFvMesh::refine()
 
         if ((nRefinementIterations_ % 10) == 0)
         {
-            // Compact refinement history occassionally (how often?).
+            // Compact refinement history occasionally (how often?).
             // Unrefinement causes holes in the refinementHistory.
             const_cast<hexRefRefinementHistory&>
             (
-                meshCutter()->history()
+                meshCutter_->history()
             ).compact();
         }
         nRefinementIterations_++;
