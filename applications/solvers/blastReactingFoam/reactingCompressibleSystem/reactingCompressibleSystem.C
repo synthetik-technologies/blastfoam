@@ -287,6 +287,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     this->decode();
 
     // Solve mass
+    rho_.storePrevIter();
     fvScalarMatrix rhoEqn
     (
         fvm::ddt(rho_) - fvc::ddt(rho_)
@@ -300,31 +301,22 @@ void Foam::reactingCompressibleSystem::postUpdate()
 
     constraintsPtr_->constrain(rho_);
 
-
+    // Update internal energy
+    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
 
     // Solve momentum
     fvVectorMatrix UEqn
     (
-        fvm::ddt(rho_, U_) - fvc::ddt(rho_, U_)
+        fvm::ddt(rho_, U_) - fvc::ddt(rhoU_)
      ==
         turbulence_->divDevTau(U_)
       + modelsPtr_->source(rho_, U_)
     );
 
-    // Solve thermal energy diffusion
-    rhoE_ +=
-        rho_.mesh().time().deltaT()
-       *fvc::div
-        (
-            fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-          & fluxScheme_->Uf()
-        );
-
-    // Update internal energy
-    e_ = rhoE_/rho_ - 0.5*magSqr(U_);
+    // Solve thermal energy
     fvScalarMatrix eEqn
     (
-        fvm::ddt(rho_, e_) - fvc::ddt(rho_, e_)
+        fvm::ddt(rho_, e_) - fvc::ddt(rho_.prevIter(), e_)
      ==
         thermophysicalTransport_->divq(e_)
       + modelsPtr_->source(rho_, e_)
@@ -349,11 +341,11 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 fvScalarMatrix YiEqn
                 (
                     fvm::ddt(rho_, Yi)
-                  - fvc::ddt(rho_, Yi)
+                  - fvc::ddt(rho_.prevIter(), Yi)
                   + thermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
-                  + modelsPtr_->source(Yi)
+                  + modelsPtr_->source(rho_, Yi)
                 );
 
                 constraintsPtr_->constrain(YiEqn);

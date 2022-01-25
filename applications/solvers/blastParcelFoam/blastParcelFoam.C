@@ -43,8 +43,9 @@ Description
 
 int main(int argc, char *argv[])
 {
-    #include "setRootCaseLists.H"
+    #include "postProcess.H"
 
+    #include "setRootCaseLists.H"
     #include "createTime.H"
     #include "createDynamicBlastFvMesh.H"
     #include "createFields.H"
