@@ -55,6 +55,9 @@ class gradientSchemes
         //- Mesh
         const fvMesh& mesh_;
 
+        //- Reference to displacement field
+        const volVectorField& D_;
+
         //- Operations
         const operations ops_;
 
@@ -92,15 +95,14 @@ class gradientSchemes
             {
                 return 1.0;
             }
-            return min
-            (
-                max
-                (
-                    max(deltaMax/delta, 0.0),
-                    max(deltaMin/delta, 0.0)
-                ),
-                1.0
-            );
+            else if (delta > 0)
+            {
+                return min(deltaMax/delta, 1.0);
+            }
+            else
+            {
+                return min(deltaMin/delta, 1.0);
+            }
         }
 
 
@@ -147,7 +149,7 @@ class gradientSchemes
                     dimensioned<Type>("pLimiter", dimless, pTraits<Type>::one)
                 )
             );
-//             return tphiLimiter;
+// //             return tphiLimiter;
             GeoFieldType& phiLimiter(tphiLimiter.ref());
 
             // Collect min and max values from neighbourhood
@@ -306,7 +308,7 @@ public:
     // Constructors
 
         //- Construct from mesh
-        gradientSchemes(const fvMesh&);
+        gradientSchemes(const volVectorField&);
 
 
     // Destructor

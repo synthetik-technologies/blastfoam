@@ -229,7 +229,7 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
 
         scalar alpha1 = 0.0;
 
-        if (mag(fac1) < SMALL)
+        if (fac1 < SMALL)
         {
             alpha1 = 3.0;
         }
@@ -237,13 +237,18 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
         {
             const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
 
+            alpha1 = 3.0*sqrt(fac1);
             if (fac2 >= 1.0)
             {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cosh(Foam::acosh(fac2)/3.0);
+                alpha1 *= cosh(acosh(fac2)/3.0);
             }
-            else
+            else if (1.0 - mag(fac2) > 0.001)
             {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cos(Foam::acos(fac2)/3.0);
+                alpha1 *= cos(acos(fac2)/3.0);
+            }
+            else if (fac2 < 0)
+            {
+                alpha1 *= -1;
             }
         }
 
@@ -256,7 +261,6 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
         if
         (
             !Ibar.boundaryField()[patchI].coupled()
-         && Ibar.boundaryField()[patchI].type() != "empty"
         )
         {
             // Take reference to patch fields for efficiency
@@ -273,26 +277,26 @@ Foam::tmp<Foam::volScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
 
                 scalar alpha1 = 0.0;
 
-                if (mag(fac1) < SMALL)
+                if (fac1 < SMALL)
                 {
                     alpha1 = 3.0;
                 }
                 else
                 {
-                    const scalar fac2 =
-                        (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
+                    const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
 
+                    alpha1 = 3.0*sqrt(fac1);
                     if (fac2 >= 1.0)
                     {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cosh(Foam::acosh(fac2)/3.0);
+                        alpha1 *= cosh(acosh(fac2)/3.0);
                     }
-                    else
+                    else if (1.0 - mag(fac2) > 0.001)
                     {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cos(Foam::acos(fac2)/3.0);
+                        alpha1 *= cos(acos(fac2)/3.0);
+                    }
+                    else if (fac2 < 0)
+                    {
+                        alpha1 *= -1;
                     }
                 }
 
@@ -335,16 +339,9 @@ Foam::tmp<Foam::surfaceScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
 
     tmp<surfaceScalarField> tIbar
     (
-        new surfaceScalarField
+        surfaceScalarField::New
         (
-            IOobject
-            (
-                "Ibar",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
+            "Ibar",
             mesh(),
             dimensionedScalar("zero", dimless, 0.0)
         )
@@ -364,7 +361,7 @@ Foam::tmp<Foam::surfaceScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
 
         scalar alpha1 = 0.0;
 
-        if (mag(fac1) < SMALL)
+        if (fac1 < SMALL)
         {
             alpha1 = 3.0;
         }
@@ -372,13 +369,18 @@ Foam::tmp<Foam::surfaceScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
         {
             const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
 
+            alpha1 = 3.0*sqrt(fac1);
             if (fac2 >= 1.0)
             {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cosh(Foam::acosh(fac2)/3.0);
+                alpha1 *= cosh(acosh(fac2)/3.0);
             }
-            else
+            else if (1.0 - mag(fac2) > 0.001)
             {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cos(Foam::acos(fac2)/3.0);
+                alpha1 *= cos(acos(fac2)/3.0);
+            }
+            else if (fac2 < 0)
+            {
+                alpha1 *= -1;
             }
         }
 
@@ -408,26 +410,26 @@ Foam::tmp<Foam::surfaceScalarField> Foam::neoHookeanElasticMisesPlastic::Ibar
 
                 scalar alpha1 = 0.0;
 
-                if (mag(fac1) < SMALL)
+                if (fac1 < SMALL)
                 {
                     alpha1 = 3.0;
                 }
                 else
                 {
-                    const scalar fac2 =
-                        (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
+                    const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
 
+                    alpha1 = 3.0*sqrt(fac1);
                     if (fac2 >= 1.0)
                     {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cosh(Foam::acosh(fac2)/3.0);
+                        alpha1 *= cosh(acosh(fac2)/3.0);
                     }
-                    else
+                    else if (1.0 - mag(fac2) > 0.001)
                     {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cos(Foam::acos(fac2)/3.0);
+                        alpha1 *= cos(acos(fac2)/3.0);
+                    }
+                    else if (fac2 < 0)
+                    {
+                        alpha1 *= -1;
                     }
                 }
 

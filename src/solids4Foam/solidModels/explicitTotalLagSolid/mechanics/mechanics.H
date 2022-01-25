@@ -59,17 +59,11 @@ class mechanics
         //- Deformation tensor
         const volTensorField& F_;
 
+        //- Inverse of feformation tensor
+        volTensorField invF_;
+
         //- Jacobian of total deformation gradient
         volScalarField J_;
-
-        //- Relative deformation tensor
-        volTensorField relF_;
-
-        //- Relative Jacobian of total deformation gradient
-        volScalarField relJ_;
-
-        //- Cofactor of deformation
-        volTensorField H_;
 
         //- Material normal
         surfaceVectorField N_;
@@ -123,22 +117,16 @@ public:
                 return F_;
             }
 
+            //- Return the inverse of deformation tensor
+            const volTensorField& invF() const
+            {
+                return invF_;
+            }
+
             //- Return the Jacobian of deformation
             const volScalarField& J() const
             {
                 return J_;
-            }
-
-            //- Return the cofactor of deformation
-            const volTensorField& H() const
-            {
-                return H_;
-            }
-
-            //- Return the relative deformation tensor
-            const volTensorField& relF() const
-            {
-                return relF_;
             }
 
             //- Return the mesh surface normals
@@ -182,6 +170,9 @@ public:
                 const volScalarField&,
                 const volScalarField&
             );
+
+            //- Correct deformation fields
+            void correctDeformation(const bool useOldTime = false);
 
             virtual bool movePoints();
 

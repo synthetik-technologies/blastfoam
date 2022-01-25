@@ -102,6 +102,15 @@ class explicitTotalLagSolid
         //- Cell displacment
         volVectorField& D_;
 
+        //- Increment of cell displacment
+        volVectorField& DD_;
+
+        //- Gradient of cell displacment
+        volTensorField& gradD_;
+
+        //- Gradient of the increment of cell displacment
+        volTensorField& gradDD_;
+
         //- Material coordinates
         volVectorField x_;
 
@@ -110,6 +119,9 @@ class explicitTotalLagSolid
 
         //- Point displacement
         pointVectorField& pointD_;
+
+        //- Increment of point displacement
+        pointVectorField& pointDD_;
 
         //- Density
         const volScalarField& rho_;

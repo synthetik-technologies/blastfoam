@@ -41,12 +41,12 @@ defineTypeNameAndDebug(angularMomentum, 0);
 
 angularMomentum::angularMomentum
 (
-    const fvMesh& vm,
+    const fvMesh& mesh,
     const dictionary& dict
 )
 :
-    mesh_(vm),
-    rho_(vm.lookupObject<volScalarField>("rho")),
+    mesh_(mesh),
+    rho_(mesh.lookupObject<volScalarField>("rho")),
     radialAxes_(vector::one),
     rotationAxes_(vector::one),
     validD_(max(mesh_.geometricD(), Vector<label>::zero)),

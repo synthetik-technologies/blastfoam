@@ -59,17 +59,11 @@ defineTypeNameAndDebug(explicitTotalLagSolid, 0);
 
 void explicitTotalLagSolid::updateStress()
 {
-    // Update gradient of displacement
-    mechanical().grad(D_, gradD());
-
-    // Update gradient of displacement increment
-    gradDD() = gradD() - gradD().oldTime();
-
     // Calculate the stress using run-time selectable mechanical law
     mechanical().correct(sigma());
     impK_ = mechanical().impK();
 
-    P_ = mech_.J()*(sigma() & ops_.invT(F_));
+    P_ = mech_.J()*(sigma() & mech_.invF().T());
 }
 
 
@@ -85,7 +79,6 @@ void explicitTotalLagSolid::solveGEqns
     rhoURHS = fvc::surfaceIntegrate(tractionC_*mesh().magSf());
     if (JSTScaleFactor_ > 0)
     {
-        dimensionedScalar deltaT0(mesh().time().deltaT0());
         rhoURHS -=
             JSTScaleFactor_*fvc::laplacian
             (
@@ -93,7 +86,7 @@ void explicitTotalLagSolid::solveGEqns
                 fvc::laplacian
                 (
                     deltaT*mechanical().impKf(),
-                    U(),
+                    U_,
                     "laplacian(DU,U)"
                 ),
                 "laplacian(DU,U)"
@@ -107,42 +100,61 @@ void explicitTotalLagSolid::solveGEqns
         );
         am_.AMconservation(x_, rhoU_, rhoURHS, rhsRhoUAM, stage);
     }
-//     vector validD((mesh().geometricD() + labelVector::one)/2);
-//     rhoURHS = cmptMultiply(validD, rhoURHS);
+
+    surfaceScalarField rhof(fvc::interpolate(rho_));
 
     // Update coordinates
-    volVectorField prevD(D_);
-    U_ = rhoU_/rho();
-    D_ += deltaT*U_;
-    D_.correctBoundaryConditions();
+    {
+        volVectorField prevD(D_);
+        volTensorField prevGradD(gradD_);
+        pointVectorField prevPointD(pointD_);
 
+        D_.ref() += U_()*deltaT;
+        D_.correctBoundaryConditions();
+
+        Df_ += deltaT*rhoUC_/rhof;
+        pointD_ += deltaT*pointRhoU_/mechanical().volToPoint().interpolate(rho_);;
+
+//         mechanical().interpolate(D_, pointD_);
+        mechanical().grad(D_, gradD_);
+
+        DD_ = D_ - prevD;
+        gradDD_ = gradD_ - prevGradD;
+        pointDD_ = pointD_ - prevPointD;
+    }
+
+    // Face displacement
+    Df_ = fvc::interpolate(D_);
+
+    // Material positions
     x_ = mesh().C() + D_;
 
     // Update linear momentum
-    rhoU_ += deltaT*rhoURHS;
-    rhoU_.correctBoundaryConditions();
+    rhoU_.ref() += deltaT*rhoURHS();
+    U_.ref() = rhoU_()/rho_();
 
-    pointVectorField prevPointD(pointD_);
-    mechanical().interpolate(D_, pointD_);
-    Df_ = interpSchemes_.pointToSurface(pointD_);
-
-    // Update increment of displacement
-    DD() = D_ - DD();
-    pointDD() = pointD_ - pointDD();
+    U_.boundaryFieldRef() = DD_.boundaryField()/deltaT.value();
+    rhoU_.boundaryFieldRef() = U_.boundaryField()*rho_.boundaryField();
 
     // Update deformation gradient tensor
-    F_ += deltaT*fvc::div(rhoUC_/fvc::interpolate(rho_)*mesh().Sf());
+    F_ +=
+        deltaT
+       *fvc::surfaceIntegrate(rhoUC_/rhof*mesh().Sf());
+//     F_ = I + gradD_.T();
+
+    // Update deformation quantities
+    mech_.correctDeformation();
 }
 
 
 void explicitTotalLagSolid::updateFluxes()
 {
-    mech_.correct(pWaveSpeed_, sWaveSpeed_);
-
     pWaveSpeed_ =
         sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch();
     sWaveSpeed_ =
         sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch();
+
+    mech_.correct(pWaveSpeed_, sWaveSpeed_);
 
     updateStress();
 
@@ -203,16 +215,14 @@ void explicitTotalLagSolid::updateFluxes()
         const polyPatch& p = mesh().boundaryMesh()[patchi];
         const fvPatch& patch = mesh().boundary()[patchi];
         const fvPatchField<vector>& pD(D_.boundaryField()[patchi]);
+        const fvPatchField<vector>& pRhoU(rhoU_.boundaryField()[patchi]);
         const vectorField pn(n.boundaryField()[patchi]);
         const vectorField pN(N.boundaryField()[patchi]);
 
         // Riemann solver for inter-processor boundaries
         if (pD.fixesValue() || U_.boundaryField()[patchi].fixesValue())
         {
-            prhoUC[patchi] =
-                rho_.boundaryField()[patchi]
-               *DD().boundaryField()[patchi]
-              /mesh().time().deltaT0().value();
+            prhoUC[patchi] = pRhoU[patchi];
 
             ptractionC[patchi] =
                 tractionOwn_.boundaryField()[patchi]
@@ -415,11 +425,7 @@ void explicitTotalLagSolid::updateFluxes()
         }
         else if (!polyPatch::constraintType(p.type()))
         {
-            prhoUC[patchi] =
-                rho_.boundaryField()[patchi]
-               *(
-                   DD().boundaryField()[patchi]
-                )/mesh().time().deltaT().value();
+            prhoUC[patchi] = pRhoU[patchi];
 
             ptractionC[patchi] =
                 tractionOwn_.boundaryField()[patchi]
@@ -433,7 +439,7 @@ void explicitTotalLagSolid::updateFluxes()
         }
         else
         {
-            prhoUC[patchi] = rhoU_.boundaryField()[patchi];
+            prhoUC[patchi] = pRhoU[patchi];
             ptractionC[patchi] =  P_.boundaryField()[patchi] & pn;
         }
     }
@@ -441,10 +447,12 @@ void explicitTotalLagSolid::updateFluxes()
     // Average linear momentum
     volVectorField rhoUAvg
     (
+//         fvc::average(rhoUC_)
         interpSchemes_.surfaceToVol(rhoUC_, pointRhoU_)
     );
     volTensorField gradRhoUAvg
     (
+//         fvc::grad(rhoUAvg)
         gradSchemes_.localGradient(rhoUAvg, rhoUC_, pointRhoU_)
     );
 
@@ -473,27 +481,10 @@ void explicitTotalLagSolid::updateFluxes()
                 }
             }
         }
-//         else if
-//         (
-//             D_.boundaryField()[patchi].fixesValue()
-//          || U_.boundaryField()[patchi].fixesValue()
-//         )
-//         {
-//             dynamicCast<valuePointPatchVectorField&>(ppointRhoU[patchi]) =
-//                 globalPatches()[p].faceToPoint(prhoUC[patchi]);
-//         }
-//         else if (!polyPatch::constraintType(p.type()))
-//         {
-//             ppointRhoU[patchi].setInInternalField
-//             (
-//                 pointRhoU_.primitiveFieldRef(),
-//                 globalPatches()[p].faceToPoint(prhoUC[patchi])()
-//             );
-//         }
     }
     pointRhoU_.correctBoundaryConditions();
 
-    rhoUC_ = interpSchemes_.pointToSurface(pointRhoU_);
+    rhoUC_.ref() = interpSchemes_.pointToSurface(pointRhoU_)()();
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -532,15 +523,16 @@ explicitTotalLagSolid::explicitTotalLagSolid
         solidModelDict().lookup("angularMomentumConservation")
     ),
     D_(this->D()),
+    DD_(this->DD()),
+    gradD_(this->gradD()),
+    gradDD_(this->gradDD()),
     x_
     (
         IOobject
         (
             "x",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         mesh.C() + D_
     ),
@@ -550,14 +542,12 @@ explicitTotalLagSolid::explicitTotalLagSolid
         (
             "Df",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            mesh
         ),
-        mesh,
-        dimensionedVector("0", dimLength, Zero)
+        fvc::interpolate(D_)
     ),
     pointD_(this->pointD()),
+    pointDD_(this->pointDD()),
     rho_(this->rho()),
     U_(this->U()),
     rhoU_
@@ -578,9 +568,7 @@ explicitTotalLagSolid::explicitTotalLagSolid
         (
             "rhoUC",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         fvc::interpolate(rho_*U_)
     ),
@@ -590,9 +578,7 @@ explicitTotalLagSolid::explicitTotalLagSolid
         (
             "pointRhoU",
             mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
+            mesh
         ),
         pMesh(),
         dimensionedVector("0", rhoU_.dimensions(), Zero),
@@ -611,7 +597,7 @@ explicitTotalLagSolid::explicitTotalLagSolid
     ),
     mech_(F_, ops_),
     interpSchemes_(mesh),
-    gradSchemes_(mesh),
+    gradSchemes_(DD_),
     am_(mesh, *this),
     P_
     (
@@ -620,7 +606,7 @@ explicitTotalLagSolid::explicitTotalLagSolid
             "P",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
         mech_.J()*(sigma() & ops_.invT(F_))
@@ -631,9 +617,7 @@ explicitTotalLagSolid::explicitTotalLagSolid
         (
             "pWaveSpeed",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         sqrt(mechanical().elasticModulus()/rho_)/beta_/mech_.stretch()
     ),
@@ -643,16 +627,14 @@ explicitTotalLagSolid::explicitTotalLagSolid
         (
             "sWaveSpeed",
             mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
+            mesh
         ),
         sqrt(mechanical().shearModulus()/rho_)*beta_/mech_.stretch()
     ),
     rhoUOwn_("rhoUOwn", rhoUC_),
     rhoUNei_("rhoUNei", rhoUC_),
-    tractionOwn_("rhoUOwn", tractionC_),
-    tractionNei_("rhoUNei", tractionC_),
+    tractionOwn_("tractionOwn", tractionC_),
+    tractionNei_("tractionNei", tractionC_),
     JSTScaleFactor_
     (
         solidModelDict().lookupOrDefault<scalar>("JSTScaleFactor", 0.0)
@@ -660,59 +642,35 @@ explicitTotalLagSolid::explicitTotalLagSolid
     energies_(mesh, solidModelDict()),
     impK_(mechanical().impK())
 {
-    // Tell the mechanical laws to lookup deformation fields
-    mechanical().setUseSolidDeformation();
-
     DisRequired();
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void explicitTotalLagSolid::setDeltaT(Time& runTime)
-{
-    // waveSpeed = cellWidth/deltaT
-    // So, deltaT = cellWidth/waveVelocity == (1.0/deltaCoeff)/waveSpeed
-    // In the current discretisation, information can move two cells per
-    // time-step. This means that we use 1/(2*d) == 0.5*deltaCoeff when
-    // calculating the required stable time-step
-    // i.e.e deltaT = (1.0/(0.5*deltaCoeff)/waveSpeed
-    // For safety, we should use a time-step smaller than this e.g. Abaqus uses
-    // 1/sqrt(2)*stableTimeStep: we will default to this value
-    const scalar requiredDeltaT =
-        1.0/
-        gMax
-        (
-            (
-                mesh().surfaceInterpolation::deltaCoeffs()
-               *fvc::interpolate(pWaveSpeed_)
-            )()
-        );
-
-    // Lookup the desired Courant number
-    const scalar maxCo =
-        runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.7071);
-
-    const scalar newDeltaT = maxCo*requiredDeltaT;
-
-    Info<< "maxCo = " << maxCo << nl
-        << "deltaT = " << newDeltaT << nl << endl;
-
-    runTime.setDeltaT(newDeltaT);
-}
-
-
 bool explicitTotalLagSolid::evolve()
 {
     Info<< "Evolving solid solver" << endl;
+    const dimensionedScalar& deltaT = mesh().time().deltaT();
 
-    D_.oldTime();
-    F_.oldTime();
-    rhoU_.oldTime();
-    pointD_.oldTime();
-
+    label iter = 0;
     do
     {
+        if (iter++ > 0)
+        {
+            // Momentum
+            rhoU_ = rhoU_.oldTime();
+
+            // Displacements
+            D_ = D_.oldTime();
+            Df_ = Df_.oldTime();
+            pointD_ = pointD_.oldTime();
+
+            // Deformation
+            gradD_ = gradD_.oldTime();
+            F_ = F_.oldTime();
+        }
+
         volVectorField rhoURHS
         (
             volVectorField::New
@@ -723,28 +681,55 @@ bool explicitTotalLagSolid::evolve()
             )
         );
 
+        // Predictor
         updateFluxes();
         solveGEqns(rhoURHS, 0);
 
+        // Corrector
         updateFluxes();
         solveGEqns(rhoURHS, 1);
 
+        // Update coordinates
+        rhoU_.ref() = 0.5*(rhoU_.oldTime()() + rhoU_());
+        U_.ref() = rhoU_()/rho_();
+
         D_ = 0.5*(D_.oldTime() + D_);
+        Df_ = 0.5*(Df_.oldTime() + Df_);
+        pointD_ = 0.5*(pointD_.oldTime() + pointD_);
+
         D_.correctBoundaryConditions();
+        DD_ = D_ - D_.oldTime();
+        pointDD_ = pointD_ - pointD_.oldTime();
+
+        // Update coordinates
         x_ = mesh().C() + D_;
 
-        F_ = 0.5*(F_.oldTime() + F_);
-        F_.correctBoundaryConditions();
+//         D_.ref() =  D_.oldTime() + deltaT*U_();
+//         D_.correctBoundaryConditions();
+//         mechanical().interpolate(D_, pointD_);
+//
+//         // Displacements
+//         DD_ = D_ - D_.oldTime();
+//         Df_ = fvc::interpolate(D_);
+//         pointDD_ = pointD_ - pointD_.oldTime();
+//
+//         // Material positions
+//         x_ = mesh().C() + D_;
+//
+        U_.boundaryFieldRef() = DD_.boundaryField()/deltaT.value();
+        rhoU_.boundaryFieldRef() = U_.boundaryField()*rho_.boundaryField();
 
-        rhoU_ = 0.5*(rhoU_.oldTime() + rhoU_);
-        rhoU_.correctBoundaryConditions();
+        // Update gradient of displacement increment
+        mechanical().grad(D_, gradD_);
 
-        mechanical().interpolate(D_, pointD_);
-        Df_ = fvc::interpolate(D_);
+        // Update the gradient of total displacement
+        gradDD_ = gradD_ - gradD_.oldTime();
+//
+//         // Update deformation gradient tensor
+//         F_ = 0.5*(F_.oldTime() + F_);//I + gradD_.T();
 
-        // Update increment of displacements
-        DD() = D_ - D_.oldTime();
-        pointDD() = pointD_ - pointD_.oldTime();
+        // Update deformation quantities
+        mech_.correctDeformation(true);
     } while (mesh().update());
 
     return true;
@@ -765,13 +750,16 @@ tmp<vectorField> explicitTotalLagSolid::tractionBoundarySnGrad
     const scalarField& impK(impK_.boundaryField()[patch.index()]);
 
     // Patch gradient
-    const tensorField& pGradD = gradD().boundaryField()[patchID];
+    const tensorField& pGradD = gradD_.boundaryField()[patchID];
 
     // Patch stress
     const symmTensorField& pSigma = sigma().boundaryField()[patchID];
 
-    // Patch unit normals
-    const vectorField& n(mech_.n().boundaryField()[patchID]);
+    // Patch unit normals (initial configuration)
+    const vectorField n(patch.nf());
+
+    // Patch unit normals (deformed configuration)
+    const vectorField& nCurrent(mech_.n().boundaryField()[patchID]);
 
     // Return patch snGrad
     return tmp<vectorField>
@@ -779,11 +767,45 @@ tmp<vectorField> explicitTotalLagSolid::tractionBoundarySnGrad
         new vectorField
         (
             (
-                (traction - n*pressure)
-              - (n & (pSigma - impK*pGradD))
+                (traction - nCurrent*pressure)
+              - (nCurrent & pSigma)
+              + impK*(n & pGradD)
             )/impK
         )
     );
+}
+
+
+void explicitTotalLagSolid::setDeltaT(Time& runTime)
+{
+    // waveSpeed = cellWidth/deltaT
+    // So, deltaT = cellWidth/waveVelocity == (1.0/deltaCoeff)/waveSpeed
+    // In the current discretisation, information can move two cells per
+    // time-step. This means that we use 1/(2*d) == 0.5*deltaCoeff when
+    // calculating the required stable time-step
+    // i.e.e deltaT = (1.0/(0.5*deltaCoeff)/waveSpeed
+    // For safety, we should use a time-step smaller than this e.g. Abaqus uses
+    // 1/sqrt(2)*stableTimeStep: we will default to this value
+    const scalar requiredDeltaT =
+        1.0
+       /gMax
+        (
+            (
+                mesh().surfaceInterpolation::deltaCoeffs()
+               *fvc::interpolate(pWaveSpeed_)
+            )()
+        );
+
+    // Lookup the desired Courant number
+    const scalar maxCo =
+        runTime.controlDict().lookupOrDefault<scalar>("maxCo", 0.7071);
+
+    const scalar newDeltaT = maxCo*requiredDeltaT;
+
+    Info<< "maxCo = " << maxCo << nl
+        << "deltaT = " << newDeltaT << nl << endl;
+
+    runTime.setDeltaT(newDeltaT);
 }
 
 
@@ -798,12 +820,6 @@ scalar explicitTotalLagSolid::CoNum() const
     // For safety, we should use a time-step smaller than this e.g. Abaqus uses
     // 1/sqrt(2)*stableTimeStep: we will default to this value
 
-//     return max
-//     (
-//         pWaveSpeed_
-//        *mesh().time().deltaT()
-//        /meshSizeObject::New(mesh()).dx()
-//     ).value();
     surfaceScalarField amaxSf(fvc::interpolate(pWaveSpeed_)*mesh().magSf());
 
     // Remove wave speed from wedge boundaries

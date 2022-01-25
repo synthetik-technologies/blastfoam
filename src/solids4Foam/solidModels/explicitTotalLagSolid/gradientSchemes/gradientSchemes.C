@@ -40,11 +40,12 @@ defineTypeNameAndDebug(gradientSchemes, 0);
 
 gradientSchemes::gradientSchemes
 (
-    const fvMesh& vm
+    const volVectorField& D
 )
 :
-    MeshObject<fvMesh, MoveableMeshObject, gradientSchemes>(vm),
-    mesh_(vm),
+    MeshObject<fvMesh, MoveableMeshObject, gradientSchemes>(D.mesh()),
+    mesh_(D.mesh()),
+    D_(D),
     ops_(mesh_),
     own_(mesh_.owner()),
     nei_(mesh_.neighbour()),
@@ -132,10 +133,9 @@ tmp<tensorField> gradientSchemes::distanceMatrixLocal() const
         Ainv[nei] += dNei*dNei;
     }
 
-    const volVectorField& pD = mesh_.lookupObject<volVectorField> ("D");
     forAll(mesh_.boundary(), patchi)
     {
-        bool fix = pD.boundaryField()[patchi].fixesValue();
+        bool fix = D_.boundaryField()[patchi].fixesValue();
         const fvPatch& patch = mesh_.boundary()[patchi];
         const vectorField pd(patch.fvPatch::delta());
 

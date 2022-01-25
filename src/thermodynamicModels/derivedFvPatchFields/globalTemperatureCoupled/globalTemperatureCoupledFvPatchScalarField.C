@@ -328,10 +328,10 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
             );
     }
 
-    valueFraction() = 1.0;//KDeltaNbr/(KDeltaNbr + KDelta);
+    valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
     refValue() = Tc;
     refGrad() =
-//         (Tc - TcOwn)*patch().deltaCoeffs()
+        (Tc - TcOwn)*patch().deltaCoeffs()
       - (qr + qrNbr)/kappa(*this);
 
     if (cgpp.hasUnmappedFaces())

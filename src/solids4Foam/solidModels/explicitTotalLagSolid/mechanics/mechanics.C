@@ -50,6 +50,17 @@ mechanics::mechanics
 
     F_(F),
 
+    invF_
+    (
+        IOobject
+        (
+            "invF",
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        inv(F_)
+    ),
+
     J_
     (
         IOobject
@@ -61,39 +72,6 @@ mechanics::mechanics
             IOobject::AUTO_WRITE
         ),
         det(F_)
-    ),
-
-    relF_
-    (
-        IOobject
-        (
-            "relF",
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        F & inv(F.oldTime())
-    ),
-
-    relJ_
-    (
-        IOobject
-        (
-            "relJ",
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        det(relF_)
-    ),
-
-    H_
-    (
-        IOobject
-        (
-            "H",
-            mesh_.time().timeName(),
-            mesh_
-        ),
-        J_*ops.invT(F_)
     ),
 
     N_("N", mesh_.Sf()/mesh_.magSf()),
@@ -165,27 +143,20 @@ bool mechanics::movePoints()
 
 void mechanics::correctN()
 {
-    surfaceTensorField FcInv(inv(fvc::interpolate(F_)));
-    n_ = (FcInv.T() & N_)/(mag(FcInv.T() & N_));
+    surfaceTensorField invFf(fvc::interpolate(invF_));
+    n_ = (invFf.T() & N_)/(mag(invFf.T() & N_));
 }
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-void mechanics::correct
-(
-    const volScalarField& pWaveSpeed,
-    const volScalarField& sWaveSpeed
-)
+void mechanics::correctDeformation(const bool useOldTime)
 {
     // Spatial normals
-    surfaceTensorField FcInv(inv(fvc::interpolate(F_)));
-    n_ = (FcInv.T() & N_)/(mag(FcInv.T() & N_));
+    correctN();
 
     J_ = det(F_);
-    H_ = J_*ops_.invT(F_);
-    relF_ = F_ & inv(F_.oldTime());
-    relJ_ = det(relF_);
+    invF_ = inv(F_);
 
     // Stretch
     volTensorField C(F_.T() & F_);
@@ -204,8 +175,15 @@ void mechanics::correct
             pstretch[patchi][facei] = sqrt(cmptMin(ops_.eigenValue()));
         }
     }
-    stretch_.correctBoundaryConditions();
+}
 
+
+void mechanics::correct
+(
+    const volScalarField& pWaveSpeed,
+    const volScalarField& sWaveSpeed
+)
+{
     // Stabilisation matrices
     surfaceTensorField nn(n_*n_);
     stabRhoU_ =

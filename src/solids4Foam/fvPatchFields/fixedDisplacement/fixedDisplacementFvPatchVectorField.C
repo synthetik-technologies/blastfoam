@@ -168,7 +168,7 @@ fixedDisplacementFvPatchVectorField::fixedDisplacementFvPatchVectorField
                 dict
             );
 
-        fvPatchField<vector>::operator==
+        Field<vector>::operator=
         (
             dispSeries_->value(this->db().time().timeOutputValue())
         );
@@ -251,7 +251,7 @@ void fixedDisplacementFvPatchVectorField::updateCoeffs()
         disp -= Dold.boundaryField()[patch().index()];
     }
 
-    fvPatchField<vector>::operator==(disp);
+    Field<vector>::operator=(disp);
 
     fixedValueFvPatchVectorField::updateCoeffs();
 

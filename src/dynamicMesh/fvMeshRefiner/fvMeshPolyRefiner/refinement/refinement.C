@@ -1367,7 +1367,7 @@ void Foam::refinement::add
         }
     }
 
-//     if (debug)
+    if (debug)
     {
         reduce(nUnblocked, sumOp<label>());
         Info<< type() << " : unblocked " << nUnblocked << " faces" << endl;
@@ -1423,7 +1423,7 @@ void Foam::refinement::apply
         }
     }
 
-//     if (debug)
+    if (debug)
     {
         reduce(nChanged, sumOp<label>());
         Info<< typeName << ": changed decomposition on " << nChanged

@@ -31,6 +31,10 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "wedgeFvPatch.H"
 
+#include "operations.H"
+#include "mechanics.H"
+#include "gradientSchemes.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -209,16 +213,103 @@ bool explicitLinGeomTotalDispSolid::evolve()
         // Update the stress field based on the latest D field
         updateStress();
 
+        volTensorField P(sigma() & tensor::I);
+        volVectorField rhoU(rho()*U());
+
+        operations ops(mesh());
+        volVectorField Px(ops.decomposeTensorX(P));
+        volVectorField Py(ops.decomposeTensorY(P));
+        volVectorField Pz(ops.decomposeTensorZ(P));
+
+        volTensorField gradRhoU(fvc::grad(rhoU));
+        volTensorField gradPx(fvc::grad(Px));
+        volTensorField gradPy(fvc::grad(Py));
+        volTensorField gradPz(fvc::grad(Pz));
+
+        // Reconstruction
+        surfaceVectorField rhoUOwn
+        (
+            surfaceVectorField::New
+            (
+                "rhoUOwn",
+                mesh(),
+                dimDensity*dimVelocity
+            )
+        );
+        surfaceVectorField rhoUNei
+        (
+            surfaceVectorField::New
+            (
+                "rhoUNei",
+                mesh(),
+                dimDensity*dimVelocity
+            )
+        );
+
+        surfaceTensorField POwn
+        (
+            surfaceTensorField::New
+            (
+                "POwn",
+                mesh(),
+                P.dimensions()
+            )
+        );
+        surfaceTensorField PNei
+        (
+            surfaceTensorField::New
+            (
+                "PNei",
+                mesh(),
+                P.dimensions()
+            )
+        );
+
+        gradientSchemes gradSchemes(D());
+        gradSchemes.reconstruct(rhoU, gradRhoU,rhoUOwn, rhoUNei);
+        gradSchemes.reconstruct(P, gradPx, gradPy, gradPz, POwn, PNei);
+
+        surfaceVectorField N(mesh().Sf()/mesh().magSf());
+        surfaceVectorField tractionOwn(POwn & N);
+        surfaceVectorField tractionNei(PNei & N);
+
+        volScalarField pWaveSpeed
+        (
+            sqrt(mechanical().elasticModulus()/rho())
+        );
+        volScalarField sWaveSpeed
+        (
+            sqrt(mechanical().shearModulus()/rho())
+        );
+        volTensorField F
+        (
+            volTensorField::New("F", mesh(), tensor::I)
+        );
+        mechanics mech(F, ops);
+        mech.correct(pWaveSpeed, sWaveSpeed);
+
+        // Acoustic Riemann solver
+        surfaceVectorField tractionC
+        (
+            0.5*(tractionOwn + tractionNei)
+          + 0.5*(mech.stabRhoU() & (rhoUNei - rhoUOwn))
+        );
+//         rhoUC =
+//             0.5*(rhoUOwn_ + rhoUNei_)
+//           + 0.5*(mech.stabTraction() & (tractionNei_ - tractionOwn_));
+
+
         // Compute acceleration
         // Note the inclusion of a linear bulk viscosity pressure term to
         // dissipate high frequency energies, and a Rhie-Chow term to avoid
         // checker-boarding
         a_.primitiveFieldRef() =
             (
+//                 fvc::surfaceIntegrate(mesh().magSf()*tractionC)()() +
                 fvc::div
                 (
-                    (mesh().Sf() & fvc::interpolate(sigma()))
-                  + mesh().Sf()*energies_.viscousPressure
+                    (mesh().Sf() & fvc::interpolate(sigma())) +
+                    mesh().Sf()*energies_.viscousPressure
                     (
                         rho(), waveSpeed_, gradD()
                     )

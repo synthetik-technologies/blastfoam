@@ -26,6 +26,7 @@ License
 #include "solidSubMeshes.H"
 #include "twoDPointCorrector.H"
 #include "wedgePolyPatch.H"
+#include "UautoPtr.H"
 #include "fvMeshSubset.H"
 
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
@@ -1719,23 +1720,23 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
         // What about uns approaches? I may need to include surfaceField options
         // here
         const bool useDeformedNormals = mesh.foundObject<volTensorField>("F");
-        tmp<volTensorField> tFinv;
-        tmp<volScalarField> tJ;
+        UautoPtr<const volTensorField> tFinv;
+        UautoPtr<const volScalarField> tJ;
         if (useDeformedNormals)
         {
-            if (mesh.foundObject<volTensorField>("relF"))
+            if (baseMesh_.moving())//mesh.foundObject<volTensorField>("relF"))
             {
                 // Updated Lagrangian approach: use the inverse of the relative
                 // deformation gradient
-                tFinv = inv(mesh.lookupObject<volTensorField>("relF"));
-                tJ = det(tFinv());
+                tFinv.set(&mesh.lookupObject<volTensorField>("invRelF"));
+                tJ.set(&mesh.lookupObject<volScalarField>("relJ"));
             }
             else
             {
                 // Total Lagrangian approach: use the inverse of the total
                 // deformation gradient
-                tFinv = inv(mesh.lookupObject<volTensorField>("F"));
-                tJ = det(tFinv);
+                tFinv.set(&mesh.lookupObject<volTensorField>("invF"));
+                tJ.set(&mesh.lookupObject<volScalarField>("J"));
             }
         }
 
