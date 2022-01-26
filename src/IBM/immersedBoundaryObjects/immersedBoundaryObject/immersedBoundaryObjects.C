@@ -45,13 +45,6 @@ namespace Foam
         moving
     );
 
-    addNamedToRunTimeSelectionTable
-    (
-        immersedBoundaryObject,
-        slaveLinearVelocityImmersedBoundaryObject,
-        dictionary,
-        slaveLinearVelocity
-    );
 //
 //     addNamedToRunTimeSelectionTable
 //     (

@@ -628,8 +628,7 @@ void Foam::immersedBoundaryObject::initialize() const
     force_ = Zero;
 
     // Find largest grid spacing
-    scalar maxEdgeLength =
-        max(meshSizeObject::New(pMesh_).dx()).value();
+    scalar maxEdgeLength = max(meshSizeObject::New(pMesh_).dx()).value();
 
     // Scale by 1.5 for weighting
     maxEdgeLength *= 1.5;

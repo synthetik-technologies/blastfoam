@@ -293,9 +293,18 @@ Foam::immersedBoundaryObjectListSolver::addObject(const polyPatch& patch)
     thermalForcingNeeded_ =
         thermalForcingNeeded_ || objects_[i].temperatureDependent();
 
-    bool moving = objects_[i].moving();
+    bool moving = false;
+    forAll(objects_, j)
+    {
+        if (objects_[j].moving())
+        {
+            moving = true;
+            break;
+        }
+    }
 
-    if (moving && !collision_.valid())
+
+    if (moving && !collision_.valid() && objects_.size() > 1)
     {
         collision_.set
         (

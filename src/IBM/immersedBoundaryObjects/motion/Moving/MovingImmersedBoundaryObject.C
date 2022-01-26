@@ -102,7 +102,7 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::initializeState()
             this->shape_->centre()
         );
     momentOfInertia_ = this->shape_->momentOfInertia()*mass_;
-    points0_ = this->points();
+    points0_ = inverseTransform(this->points());
     g_ =
         this->pMesh_.template foundObject<uniformDimensionedVectorField>("g")
       ? this->pMesh_.template lookupObject<uniformDimensionedVectorField>("g").value()
@@ -114,6 +114,11 @@ Foam::MovingImmersedBoundaryObject<ImmersedType>::initializeState()
     {
         centreOfRotation() = this->shape_->centre();
     }
+
+    Pstream::scatter(motionState_);
+
+    // Save the old-time motion state
+    motionState0_ = motionState_;
 
     // If the centres of mass and rotation are different ...
 //     vector R(this->initialCentreOfMass() - this->initialCentreOfRotation());
@@ -184,9 +189,6 @@ MovingImmersedBoundaryObject
     // Set constraints and initial centre of rotation
     // if different to the centre of mass
     addConstraints(dict);
-
-    // Save the old-time motion state
-    motionState0_ = motionState_;
 
     if (dict.lookupOrDefault<Switch>("log", false))
     {

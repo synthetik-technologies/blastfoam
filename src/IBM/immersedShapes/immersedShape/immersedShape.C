@@ -88,6 +88,7 @@ Foam::immersedShape::immersedShape
                 yi_ = dimi;
             }
         }
+        geometricD_[ei_] = 0.0;
 
         boundBox bb(pMesh_.points());
         scalar minE(returnReduce(bb.min()[ei_], minOp<scalar>()));
@@ -177,7 +178,7 @@ void Foam::immersedShape::read(const dictionary& dict)
         else
         {
             FatalErrorInFunction
-                << "centreOfMass of centreOfRotation was not provided"
+                << "centreOfMass or centreOfRotation was not provided"
                 << abort(FatalError);
         }
 
@@ -469,7 +470,7 @@ void Foam::immersedShape::refine3D(triSurface& triMesh) const
     }
 
     const pointField& tPoints(triMesh.points());
-    while (changing)
+    while (changing && iter < 10)
     {
         changing = false;
 
@@ -482,7 +483,7 @@ void Foam::immersedShape::refine3D(triSurface& triMesh) const
             forAll(f, pi)
             {
                 const point& p1(tPoints[f[pi]]);
-                const point& p2(tPoints[f[(pi+1)%3]]);
+                const point& p2(tPoints[f[f.fcIndex(pi)]]);
                 scalar L(mag(p1 - p2));
                 if (L > dx_)
                 {
