@@ -270,7 +270,10 @@ Foam::immersedFvPatchField<Type>::immersedFvPatchField
     setInternal_(true),
     internalValue_(Zero),
     nSmooth_(0)
-{}
+{
+    Field<Type> internal(iF, object_.allInternalCells());
+    internalValue_ = gSum(internal)/returnReduce(internal.size(), sumOp<label>());
+}
 
 
 template<class Type>
@@ -291,7 +294,11 @@ Foam::immersedFvPatchField<Type>::immersedFvPatchField
     ),
     setPatchInternal_(dict.lookupOrDefault("setPatchInternal", false)),
     setInternal_(dict.lookupOrDefault("setInternal", true)),
-    internalValue_(Zero),
+    internalValue_
+    (
+        gSum(Field<Type>(iF, object_.allInternalCells()))
+       /returnReduce(object_.allInternalCells().size(), sumOp<label>())
+    ),
     nSmooth_(dict.lookupOrDefault<label>("nSmooth", 0))
 {
     if (!isType<immersedFvPatch>(p))

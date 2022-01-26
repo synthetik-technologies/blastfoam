@@ -115,8 +115,21 @@ void Foam::immersedValueFvPatchField<Type>::readInternal
 {
     if (this->setInternal_ && this->nSmooth_ < 1)
     {
-        this->internalValue_ =
-            dict.lookup<Type>("internalValue");
+        if (dict.found("internalValue"))
+        {
+            this->internalValue_ =
+                dict.lookup<Type>("internalValue");
+        }
+        else
+        {
+            Field<Type> internal
+            (
+                this->internalField(),
+                this->object_.allInternalCells()
+            );
+            this->internalValue_ =
+                gSum(internal)/returnReduce(internal.size(), sumOp<label>());
+        }
     }
 }
 

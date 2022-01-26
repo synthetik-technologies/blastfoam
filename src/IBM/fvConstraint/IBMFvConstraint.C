@@ -67,7 +67,6 @@ void Foam::fv::IBMForceConstraint::readCoeffs()
 Foam::tmp<Foam::volScalarField>
 Foam::fv::IBMForceConstraint::alphaRho(const word& phase) const
 {
-    Info<<"phase: "<<phase<<endl;
     if (phase == word::null)
     {
         // Assuming incompressible
@@ -87,7 +86,6 @@ Foam::fv::IBMForceConstraint::alphaRho(const word& phase) const
     {
         word alphaName(IOobject::groupName("alpha", phase));
         word rhoName(IOobject::groupName("rho", phase));
-        Info<<alphaName<<" "<<rhoName<<endl;
         return
             mesh().lookupObject<volScalarField>(alphaName)
            *mesh().lookupObject<volScalarField>(rhoName);

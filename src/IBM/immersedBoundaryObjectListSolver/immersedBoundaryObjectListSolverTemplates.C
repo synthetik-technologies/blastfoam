@@ -39,7 +39,6 @@ Foam::immersedBoundaryObjectListSolver::forcing
     const dimensionedScalar& dt
 ) const
 {
-    Info<<"forcing"<<endl;
     tmp<GeometricField<Type, fvPatchField, volMesh>> tmpForce
     (
         new GeometricField<Type, fvPatchField, volMesh>

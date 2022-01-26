@@ -94,7 +94,7 @@ Foam::fv::IBMForceModel::IBMForceModel
         constraints
     );
     {
-        constraintsDict.add(name, coeffs());
+        constraintsDict.set(name, coeffs());
         constraintsDict.regIOobject::write();
     }
 
