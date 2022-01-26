@@ -345,6 +345,24 @@ public:
         //- Access the flux scheme
         virtual phaseFluxScheme& flux() = 0;
 
+        //- Turbulence model
+        const phaseCompressible::momentumTransportModel& turbulence() const
+        {
+            return turbulence_();
+        }
+
+        //- Thermophysical transport model
+        const
+            PhaseThermophysicalTransportModel
+            <
+                phaseCompressible::momentumTransportModel,
+                transportThermoModel
+            >&
+        thermophysicalTransport() const
+        {
+            return thermophysicalTransport_();
+        }
+
         //- Return the residual phase-fraction for given phase
         virtual dimensionedScalar residualAlpha() const
         {
