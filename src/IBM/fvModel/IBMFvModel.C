@@ -23,12 +23,10 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#define checkTimeIndex_ checkTimeIndex_; public:
-#include "fvConstraints.H"
-#undef checkTimeIndex_
-
 #include "IBMFvModel.H"
 #include "IBMFvConstraint.H"
+
+#include "fvConstraints.H"
 
 #include "fvMatrices.H"
 #include "basicThermo.H"
@@ -73,36 +71,35 @@ Foam::fv::IBMForceModel::IBMForceModel
         )
     )
 {
-    // Check if the fvConstraint exists for the IBM forcing and
-    // add it if it does not
-    fvConstraints& constraints =
-        fvConstraints::New(const_cast<fvMesh&>(mesh));
-    dictionary& constraintDict(constraints);
-    if (!constraintDict.found(name))
+    // Initialize the shapes
+    forAll(ibm_.objects(), i)
     {
-        constraintDict.add(name, coeffs());
-        PtrListDictionary<fvConstraint>& constraintList(constraints);
-        const label ci = constraintList.size();
-        constraints.constrainedFields_.setSize(ci + 1);
-        constraintList.setSize(ci + 1);
-        constraintList.set
-        (
-            ci,
-            name,
-            new IBMForceConstraint
-            (
-                name,
-                modelType,
-                coeffs(),
-                mesh
-            )
-        );
-        constraints.constrainedFields_.set
-        (
-            ci,
-            new wordHashSet()
-        );
+        ibm_.objects()[i].shape();
     }
+
+    // Create a temporary fvConstraints object to add the IBMConstraint to
+    fvConstraints constraints(mesh);
+    IOobject constraintsIO(constraints);
+    constraintsIO.registerObject() = false;
+    if (constraints.headerOk())
+    {
+        constraintsIO.readOpt() = IOobject::READ_IF_PRESENT;
+    }
+    else
+    {
+        constraintsIO.readOpt() = IOobject::NO_READ;
+        constraintsIO.instance() = mesh.time().system();
+    }
+    IOdictionary constraintsDict
+    (
+        constraintsIO,
+        constraints
+    );
+    {
+        constraintsDict.add(name, coeffs());
+        constraintsDict.regIOobject::write();
+    }
+
 }
 
 

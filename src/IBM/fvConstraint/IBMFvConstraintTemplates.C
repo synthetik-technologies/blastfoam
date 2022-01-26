@@ -36,7 +36,9 @@ bool Foam::fv::IBMForceConstraint::constrainType
 {
     const GeometricField<Type, fvPatchField, volMesh>& psi = eqn.psi();
     const word phase = psi.group();
-    const volScalarField& aRho = alphaRho(phase)();
+    tmp<volScalarField> taRho(alphaRho(phase));
+    const volScalarField& aRho = taRho();
+
     tmp<GeometricField<Type, fvPatchField, volMesh>> F
     (
         ibm_.forcing
@@ -48,11 +50,7 @@ bool Foam::fv::IBMForceConstraint::constrainType
             mesh().time().deltaT()
         )
     );
-//     if (psi.mesh().time().outputTime())
-//     {
-//         F().write();
-//     }
-//     eqn -= F;
+    eqn -= F;
     return true;
 }
 

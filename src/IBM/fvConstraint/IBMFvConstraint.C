@@ -41,6 +41,13 @@ namespace Foam
 namespace fv
 {
     defineTypeNameAndDebug(IBMForceConstraint, 0);
+
+    addToRunTimeSelectionTable
+    (
+        fvConstraint,
+        IBMForceConstraint,
+        dictionary
+    );
 }
 }
 
@@ -60,6 +67,7 @@ void Foam::fv::IBMForceConstraint::readCoeffs()
 Foam::tmp<Foam::volScalarField>
 Foam::fv::IBMForceConstraint::alphaRho(const word& phase) const
 {
+    Info<<"phase: "<<phase<<endl;
     if (phase == word::null)
     {
         // Assuming incompressible
@@ -79,9 +87,10 @@ Foam::fv::IBMForceConstraint::alphaRho(const word& phase) const
     {
         word alphaName(IOobject::groupName("alpha", phase));
         word rhoName(IOobject::groupName("rho", phase));
+        Info<<alphaName<<" "<<rhoName<<endl;
         return
             mesh().lookupObject<volScalarField>(alphaName)
-          * mesh().lookupObject<volScalarField>(rhoName);
+           *mesh().lookupObject<volScalarField>(rhoName);
     }
 }
 
@@ -107,30 +116,6 @@ Foam::fv::IBMForceConstraint::IBMForceConstraint
     forcedFields_()
 {
     readCoeffs();
-    fvModels& models =
-        fvModels::New(const_cast<fvMesh&>(mesh));
-    dictionary& modelDict(models);
-    if (!modelDict.found(name))
-    {
-        modelDict.add(name, coeffs());
-        PtrListDictionary<fvModel>& modelList(models);
-        label mi = modelList.size();
-        models.addSupFields_.setSize(mi + 1);
-        modelList.setSize(mi + 1);
-        modelList.set
-        (
-            mi,
-            name,
-            new IBMForceModel
-            (
-                name,
-                modelType,
-                coeffs(),
-                mesh
-            )
-        );
-        models.addSupFields_.set(mi, new wordHashSet());
-    }
 }
 
 
