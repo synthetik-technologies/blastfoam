@@ -41,6 +41,20 @@ Foam::Simpson38Integrator<Type>::Simpson38Integrator
 }
 
 
+template<class Type>
+Foam::Simpson38Integrator<Type>::Simpson38Integrator
+(
+    const equationType& eqn,
+    const label nSteps,
+    const label nIntervals
+)
+:
+    Integrator<Type>(eqn, nSteps, nIntervals)
+{
+    this->setNIntervals(this->nIntervals_);
+}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

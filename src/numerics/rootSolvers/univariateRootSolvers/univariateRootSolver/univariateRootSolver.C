@@ -86,6 +86,18 @@ Foam::univariateRootSolver::univariateRootSolver
 {}
 
 
+Foam::univariateRootSolver::univariateRootSolver
+(
+    const multivariateEquation<scalar>& eqn,
+    const scalar tolerance,
+    const label maxSteps
+)
+:
+    rootSolver(eqn, {tolerance}, maxSteps),
+    eqn_(dynamicCast<const equation>(eqn))
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::univariateRootSolver::~univariateRootSolver()

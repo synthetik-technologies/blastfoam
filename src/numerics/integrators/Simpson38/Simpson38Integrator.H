@@ -74,6 +74,14 @@ public:
             const dictionary& dict
         );
 
+        //- Construct for given Equation
+        Simpson38Integrator
+        (
+            const equationType& eqn,
+            const label nSteps,
+            const label nIntervals
+        );
+
         //- Disallow default bitwise copy construction
         Simpson38Integrator(const Simpson38Integrator<Type>&) = delete;
 

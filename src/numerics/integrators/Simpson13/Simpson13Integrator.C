@@ -41,6 +41,19 @@ Foam::Simpson13Integrator<Type>::Simpson13Integrator
 }
 
 
+template<class Type>
+Foam::Simpson13Integrator<Type>::Simpson13Integrator
+(
+    const equationType& eqn,
+    const label nSteps,
+    const label nIntervals
+)
+:
+    Integrator<Type>(eqn, nSteps, nIntervals)
+{
+    this->setNIntervals(this->nIntervals_);
+}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

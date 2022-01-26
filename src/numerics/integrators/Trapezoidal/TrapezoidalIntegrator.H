@@ -69,6 +69,14 @@ public:
             const dictionary& dict
         );
 
+        //- Construct for given Equation
+        TrapezoidalIntegrator
+        (
+            const equationType& eqn,
+            const label nSteps,
+            const label nIntervals
+        );
+
         //- Disallow default bitwise copy construction
         TrapezoidalIntegrator(const TrapezoidalIntegrator<Type>&) = delete;
 

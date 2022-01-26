@@ -82,12 +82,32 @@ public:
             (const equationType& eqn, const dictionary& dict),
             (eqn, dict)
         );
+        declareRunTimeSelectionTable
+        (
+            autoPtr,
+            Integrator,
+            inputs,
+            (
+                const equationType& eqn,
+                const label nSteps,
+                const label nIntervals
+            ),
+            (eqn, nSteps, nIntervals)
+        );
 
 
     // Constructors
 
         //- Construct for given Integrator
         Integrator(const equationType& eqn, const dictionary& dict);
+
+        //- Construct for given Integrator
+        Integrator
+        (
+            const equationType& eqn,
+            const label nSteps,
+            const label nIntervals
+        );
 
         //- Disallow default bitwise copy construction
         Integrator(const Integrator<Type>&) = delete;
@@ -106,7 +126,9 @@ public:
         static autoPtr<Integrator<Type>> New
         (
             const equationType& eqn,
-            const word& intType
+            const word& intType,
+            const label nSteps,
+            const label nIntervals
         );
 
 
@@ -172,14 +194,18 @@ public:
 #define makeIntegrator(Type)                                                   \
     defineNamedTemplateTypeNameAndDebug(Integrator<Type>, 0);                  \
                                                                                \
-    defineTemplateRunTimeSelectionTable(Integrator<Type>, dictionary);
+    defineTemplateRunTimeSelectionTable(Integrator<Type>, dictionary);         \
+    defineTemplateRunTimeSelectionTable(Integrator<Type>, inputs);
 
 
 #define makeIntegratorType(IntegratorType, Type)                               \
     defineNamedTemplateTypeNameAndDebug(IntegratorType<Type>, 0);              \
                                                                                \
     Integrator<Type>::adddictionaryConstructorToTable<IntegratorType<Type>>    \
-    addIntegrator##IntegratorType##Type##ConstructorToTable_;
+    add##IntegratorType##Type##dictinoary##ConstructorToTable_;                \
+                                                                               \
+    Integrator<Type>::addinputsConstructorToTable<IntegratorType<Type>>        \
+    add##IntegratorType##Type##inputs##ConstructorToTable_;
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

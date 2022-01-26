@@ -58,6 +58,17 @@ Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 {}
 
 
+Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
+(
+    const multivariateEquation<scalar>& eqn,
+    const scalar tolerance,
+    const label maxSteps
+)
+:
+    univariateRootSolver(eqn, tolerance, maxSteps)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::NewtonRaphsonUnivariateRootSolver::~NewtonRaphsonUnivariateRootSolver()

@@ -108,6 +108,20 @@ Foam::rootSolver::rootSolver
 }
 
 
+Foam::rootSolver::rootSolver
+(
+    const multivariateEquation<scalar>& eqns,
+    const scalarList& tolerances,
+    const label maxSteps
+)
+:
+    eqns_(eqns),
+    tolerances_(tolerances),
+    maxSteps_(maxSteps),
+    stepi_(0),
+    errors_(eqns.nEqns(), great)
+{}
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::rootSolver::~rootSolver()

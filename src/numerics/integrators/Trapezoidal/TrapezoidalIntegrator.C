@@ -39,6 +39,18 @@ Foam::TrapezoidalIntegrator<Type>::TrapezoidalIntegrator
 {}
 
 
+template<class Type>
+Foam::TrapezoidalIntegrator<Type>::TrapezoidalIntegrator
+(
+    const equationType& eqn,
+    const label nSteps,
+    const label nIntervals
+)
+:
+    Integrator<Type>(eqn, nSteps, nIntervals)
+{}
+
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

@@ -121,6 +121,14 @@ public:
             const dictionary& dict
         );
 
+        //- Construct for given rootSolver
+        rootSolver
+        (
+            const multivariateEquation<scalar>& eqns,
+            const scalarList& tolerances,
+            const label maxSteps
+        );
+
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
 

@@ -39,6 +39,17 @@ Foam::MidPointIntegrator<Type>::MidPointIntegrator
 {}
 
 
+template<class Type>
+Foam::MidPointIntegrator<Type>::MidPointIntegrator
+(
+    const equationType& eqn,
+    const label nSteps,
+    const label nIntervals
+)
+:
+    Integrator<Type>(eqn, nSteps, nIntervals)
+{}
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>

@@ -62,23 +62,25 @@ template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
     const equationType& eqn,
-    const word& integratorTypeName
+    const word& integratorTypeName,
+    const label nSteps,
+    const label nIntervals
 )
 {
-    typename dictionaryConstructorTable::iterator cstrIter =
-        dictionaryConstructorTablePtr_->find(integratorTypeName);
+    typename inputsConstructorTable::iterator cstrIter =
+        inputsConstructorTablePtr_->find(integratorTypeName);
 
-    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    if (cstrIter == inputsConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown integrator type "
             << integratorTypeName << nl << nl
             << "Valid integrators are : " << endl
-            << dictionaryConstructorTablePtr_->sortedToc()
+            << inputsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, dictionary()));
+    return autoPtr<Integrator<Type>>(cstrIter()(eqn, nSteps, nIntervals));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -95,6 +97,19 @@ Foam::Integrator<Type>::Integrator
     nIntervals_(nSteps_)
 {}
 
+
+template<class Type>
+Foam::Integrator<Type>::Integrator
+(
+    const equationType& eqn,
+    const label nSteps,
+    const label nIntervals
+)
+:
+    eqnPtr_(&eqn),
+    nSteps_(nSteps),
+    nIntervals_(nIntervals)
+{}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

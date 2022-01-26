@@ -113,6 +113,14 @@ public:
             const dictionary& dict
         );
 
+        //- Construct for given univariateRootSolver
+        univariateRootSolver
+        (
+            const multivariateEquation<scalar>& eqn,
+            const scalar tolerance,
+            const label maxSteps
+        );
+
         //- Disallow default bitwise copy construction
         univariateRootSolver(const univariateRootSolver&) = delete;
 
