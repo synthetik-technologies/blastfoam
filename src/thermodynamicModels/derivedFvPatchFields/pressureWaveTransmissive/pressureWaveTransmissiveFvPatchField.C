@@ -43,7 +43,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(p, iF),
-    phaseName_(word::null)
+    thermoBasePatchField(p)
 {}
 
 
@@ -58,7 +58,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptf, p, iF, mapper),
-    phaseName_(ptf.phaseName_)
+    thermoBasePatchField(ptf)
 {}
 
 
@@ -72,7 +72,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(p, iF, dict),
-    phaseName_(dict.lookupOrDefault<word>("phaseName", word::null))
+    thermoBasePatchField(p, dict)
 {}
 
 
@@ -85,7 +85,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptpsf, iF),
-    phaseName_(ptpsf.phaseName_)
+    thermoBasePatchField(ptpsf)
 {}
 
 
@@ -95,61 +95,14 @@ template<class Type>
 Foam::tmp<Foam::scalarField>
 Foam::pressureWaveTransmissiveFvPatchField<Type>::advectionSpeed() const
 {
-    Field<scalar> phip(this->size(), Zero);
-    if
+    scalarField phip
     (
-        this->db().template foundObject<surfaceScalarField>
-        (
-            this->phiName_
-        )
-    )
-    {
-        const surfaceScalarField& phi =
-            this->db().template
-            lookupObject<surfaceScalarField>(this->phiName_);
+        this->patch().template
+            lookupPatchField<surfaceScalarField, scalar>(this->phiName_)
+    );
 
+    const Field<scalar> cp(this->speedOfSound());
 
-        phip =
-            this->patch().template
-            lookupPatchField<surfaceScalarField, scalar>
-            (
-                this->phiName_
-            );
-        if (phi.dimensions() == dimDensity*dimVelocity*dimArea)
-        {
-            const fvPatchScalarField& rhop =
-                this->patch().template
-                lookupPatchField<volScalarField, scalar>
-                (
-                    this->rhoName_
-                );
-
-            phip /= rhop;
-        }
-    }
-
-    Field<scalar> cp(this->size(), Zero);
-    if
-    (
-        this->db().template foundObject<fluidBlastThermo>
-        (
-            IOobject::groupName(basicThermo::dictName, phaseName_)
-        )
-    )
-    {
-        const fluidBlastThermo& thermo =
-            this->db().template lookupObject<fluidBlastThermo>
-            (
-                IOobject::groupName
-                (
-                    basicThermo::dictName,
-                    phaseName_
-                )
-            );
-        // Lookup the velocity and compressibility of the patch
-        cp =
-            thermo.speedOfSound().boundaryField()[this->patch().index()];
-    }
     // Calculate the speed of the field wave w
     // by summing the component of the velocity normal to the boundary
     // and the speed of sound (sqrt(cp)).
@@ -162,9 +115,8 @@ void Foam::pressureWaveTransmissiveFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
 
+    thermoBasePatchField::write(os);
     writeEntryIfDifferent<word>(os, "phi", "phi", this->phiName_);
-    writeEntryIfDifferent<word>(os, "rho", "rho", this->rhoName_);
-    writeEntryIfDifferent<word>(os, "phaseName", word::null, phaseName_);
 
     if (this->lInf_ > small)
     {

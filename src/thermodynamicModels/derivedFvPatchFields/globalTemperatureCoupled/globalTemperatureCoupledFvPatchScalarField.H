@@ -86,7 +86,15 @@ class globalTemperatureCoupledFvPatchScalarField
         //- Name of field on the neighbour region
         const word TnbrName_;
 
-         //- Name of the radiative heat flux in the neighbor region
+        //- Name of the convective heat transfer coefficient field in the
+        //  neighbour region
+        const word hNbrName_;
+
+        //- Name of the convective heat transfer coefficient field in the local
+        //  region
+        const word hName_;
+
+        //- Name of the radiative heat flux in the neighbor region
         const word qrNbrName_;
 
         //- Name of the radiative heat flux in local region

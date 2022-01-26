@@ -128,6 +128,8 @@ globalTemperatureCoupledFvPatchScalarField
     mixedFvPatchScalarField(p, iF),
     globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
     TnbrName_("T"),
+    hNbrName_("none"),
+    hName_("none"),
     qrNbrName_("none"),
     qrName_("none"),
     thicknessLayers_(0),
@@ -151,7 +153,9 @@ globalTemperatureCoupledFvPatchScalarField
 :
     mixedFvPatchScalarField(p, iF),
     globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
-    TnbrName_(dict.lookupOrDefault<word>("Tnbr", "T")),
+    TnbrName_(dict.lookupOrDefault<word>("TNbr", "T")),
+    hNbrName_(dict.lookupOrDefault<word>("hNbr", "none")),
+    hName_(dict.lookupOrDefault<word>("h", "none")),
     qrNbrName_(dict.lookupOrDefault<word>("qrNbr", "none")),
     qrName_(dict.lookupOrDefault<word>("qr", "none")),
     thicknessLayers_(0),
@@ -209,6 +213,8 @@ globalTemperatureCoupledFvPatchScalarField
     mixedFvPatchScalarField(psf, p, iF, mapper),
     globalBoundary_(globalPolyBoundaryMesh::New(p.boundaryMesh().mesh())),
     TnbrName_(psf.TnbrName_),
+    hNbrName_(psf.hNbrName_),
+    hName_(psf.hName_),
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
     thicknessLayers_(psf.thicknessLayers_),
@@ -231,6 +237,8 @@ globalTemperatureCoupledFvPatchScalarField
         globalPolyBoundaryMesh::New(psf.patch().boundaryMesh().mesh())
     ),
     TnbrName_(psf.TnbrName_),
+    hNbrName_(psf.hNbrName_),
+    hName_(psf.hName_),
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
     thicknessLayers_(psf.thicknessLayers_),
@@ -290,7 +298,8 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
         samplePatch.faceInterpolate(nbrTp.patchInternalField())
     );
 
-    scalarField Tc((TcNbr + TcOwn)*0.5);
+    //- Difference in temperature
+    const scalarField deltaT(TcNbr - TcOwn);
 
     // Swap to obtain full local values of neighbour K*delta
     scalarField KDeltaNbr;
@@ -309,16 +318,34 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     scalarField KDelta(kappa(*this)*patch().deltaCoeffs());
 
-    scalarField qr(Tp.size(), 0.0);
-    if (qrName_ != "none")
+    scalarField q(Tp.size(), 0.0);
+    if (hName_ != "none")
     {
-        qr = patch().lookupPatchField<volScalarField, scalar>(qrName_);
+        q +=
+            patch().lookupPatchField<volScalarField, scalar>(hName_)
+           *deltaT;
     }
 
-    scalarField qrNbr(Tp.size(), 0.0);
+    if (hNbrName_ != "none")
+    {
+        q +=
+            samplePatch.faceInterpolate
+            (
+                nbrPatch.lookupPatchField<volScalarField, scalar>
+                (
+                    hNbrName_
+                )
+            )*deltaT;
+    }
+
+    if (qrName_ != "none")
+    {
+        q += patch().lookupPatchField<volScalarField, scalar>(qrName_);
+    }
+
     if (qrNbrName_ != "none")
     {
-        qrNbr =
+        q +=
             samplePatch.faceInterpolate
             (
                 nbrPatch.lookupPatchField<volScalarField, scalar>
@@ -329,10 +356,8 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
     }
 
     valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
-    refValue() = Tc;
-    refGrad() =
-        (Tc - TcOwn)*patch().deltaCoeffs()
-      - (qr + qrNbr)/kappa(*this);
+    refValue() = TcNbr;
+    refGrad() = q/kappa(*this);
 
     if (cgpp.hasUnmappedFaces())
     {
