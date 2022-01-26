@@ -60,13 +60,16 @@ protected:
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
+    word modType_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
+    word modXType_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
     //- Interpolation type
+    word interpType_;
     interp1DFuncType interpFunc_;
 
     //- List of x values in real space
@@ -143,6 +146,12 @@ public:
                 return f_;
             }
 
+            //- Return the modifier type name
+            const word& modType() const
+            {
+                return modType_;
+            }
+
             //- Modify by modType
             Type mod(const Type& f) const
             {
@@ -153,6 +162,12 @@ public:
             Type invMod(const Type& f) const
             {
                 return invModFunc_(f);
+            }
+
+            //- Return the x-modifier type name
+            const word& modXType() const
+            {
+                return modXType_;
             }
 
             //- Modify by modXType
@@ -187,6 +202,12 @@ public:
 
             //- Return the real data
             tmp<Field<Type>> realData() const;
+
+            //- Return the interpolation scheme type name
+            const word& interpType() const
+            {
+                return interpType_;
+            }
 
 
     // Public functions
@@ -262,6 +283,7 @@ public:
     (
         const dictionary& parentDict,
         const word& name,
+        word& type,
         Field<fType>& values,
         Field<fType>& modValues,
         modFuncType& modFunc,

@@ -60,15 +60,19 @@ protected:
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
+    word modType_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
+    word modXType_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
+    word modYType_;
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
+    word modZType_;
     modFuncType modZFunc_;
     modFuncType invModZFunc_;
 
@@ -82,6 +86,7 @@ protected:
     findIndexFunc findZIndex_;
 
     //- Interpolation type
+    word interpType_;
     interp3DFuncType interpFunc_;
 
     //- Data
@@ -195,6 +200,12 @@ public:
             return fz_;
         }
 
+        //- Return the modifier type name
+        const word& modType() const
+        {
+            return modType_;
+        }
+
         //- Modify by modType
         scalar mod(const scalar& f) const
         {
@@ -205,6 +216,12 @@ public:
         scalar invMod(const scalar& f) const
         {
             return invModFunc_(f);
+        }
+
+        //- Return the x-modifier type name
+        const word& modXType() const
+        {
+            return modXType_;
         }
 
         //- Modify by modXType
@@ -219,6 +236,12 @@ public:
             return invModXFunc_(f);
         }
 
+        //- Return the y-modifier type name
+        const word& modYType() const
+        {
+            return modYType_;
+        }
+
         //- Modify by modYType
         scalar modY(const scalar& f) const
         {
@@ -229,6 +252,12 @@ public:
         scalar invModY(const scalar& f) const
         {
             return invModYFunc_(f);
+        }
+
+        //- Return the z-modifier type name
+        const word& modZType() const
+        {
+            return modZType_;
         }
 
         //- Modify by modYType
@@ -288,6 +317,11 @@ public:
         //- Return real data values
         tmp<Field<Field<Field<Type>>>> realData() const;
 
+        //- Return the interpolation scheme type name
+        const word& interpType() const
+        {
+            return interpType_;
+        }
 
     // Member Functions
 
@@ -426,6 +460,7 @@ public:
         (
             const dictionary& parentDict,
             const word& name,
+            word& type,
             Field<scalar>& values,
             Field<scalar>& modValues,
             modFuncType& modFunc,

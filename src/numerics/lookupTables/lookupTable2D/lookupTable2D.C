@@ -66,14 +66,18 @@ bool Foam::lookupTable2D<Type>::checkUniform(const List<scalar>& xy) const
 template<class Type>
 Foam::lookupTable2D<Type>::lookupTable2D()
 :
+    modType_("none"),
     modFunc_(nullptr),
     invModFunc_(nullptr),
+    modXType_("none"),
     modXFunc_(nullptr),
     invModXFunc_(nullptr),
+    modYType_("none"),
     modYFunc_(nullptr),
     invModYFunc_(nullptr),
     findXIndex_(nullptr),
     findYIndex_(nullptr),
+    interpType_("linearClamp"),
     interpFunc_(nullptr),
     data_(),
     xModValues_(),
@@ -97,14 +101,18 @@ Foam::lookupTable2D<Type>::lookupTable2D
     const bool canRead
 )
 :
+    modType_("none"),
     modFunc_(nullptr),
     invModFunc_(nullptr),
+    modXType_("none"),
     modXFunc_(nullptr),
     invModXFunc_(nullptr),
+    modYType_("none"),
     modYFunc_(nullptr),
     invModYFunc_(nullptr),
     findXIndex_(nullptr),
     findYIndex_(nullptr),
+    interpType_("linearClamp"),
     interpFunc_(nullptr),
     data_(),
     xModValues_(),
@@ -133,14 +141,18 @@ Foam::lookupTable2D<Type>::lookupTable2D
     const bool isReal
 )
 :
+    modType_("none"),
     modFunc_(nullptr),
     invModFunc_(nullptr),
+    modXType_("none"),
     modXFunc_(nullptr),
     invModXFunc_(nullptr),
+    modYType_("none"),
     modYFunc_(nullptr),
     invModYFunc_(nullptr),
     findXIndex_(nullptr),
     findYIndex_(nullptr),
+    interpType_("linearClamp"),
     interpFunc_(nullptr),
     data_(data),
     xModValues_(x),
@@ -195,6 +207,8 @@ void Foam::lookupTable2D<Type>::set
     setX(x, modXType, isReal);
     setY(y, modYType, isReal);
     setData(data, modType, isReal);
+
+    interpType_ = interpolationScheme;
     setInterp(interpolationScheme, interpFunc_);
 }
 
@@ -207,6 +221,7 @@ void Foam::lookupTable2D<Type>::setX
     const bool isReal
 )
 {
+    modXType_ = modXType;
     setMod(modXType, modXFunc_, invModXFunc_);
     setX(x, isReal);
 }
@@ -248,13 +263,14 @@ void Foam::lookupTable2D<Type>::setX
 template<class Type>
 void Foam::lookupTable2D<Type>::setY
 (
-    const Field<scalar>& x,
-    const word& modXType,
+    const Field<scalar>& y,
+    const word& modYType,
     const bool isReal
 )
 {
-    setMod(modXType, modXFunc_, invModXFunc_);
-    setX(x, isReal);
+    modYType_ = modYType;
+    setMod(modYType, modYFunc_, invModYFunc_);
+    setY(y, isReal);
 }
 
 
@@ -321,6 +337,7 @@ void Foam::lookupTable2D<Type>::setData
     const bool isReal
 )
 {
+    modType_ = modType;
     setMod(modType, modFunc_, invModFunc_);
     setData(data, isReal);
 }
@@ -540,16 +557,15 @@ void Foam::lookupTable2D<Type>::read
     const bool canRead
 )
 {
-    word interpolationScheme
-    (
-        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
-    );
-    setInterp(interpolationScheme, interpFunc_);
+    interpType_ =
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp");
+    setInterp(interpType_, interpFunc_);
 
     readComponent
     (
         dict,
         xName,
+        modXType_,
         xValues_,
         xModValues_,
         modXFunc_,
@@ -561,6 +577,7 @@ void Foam::lookupTable2D<Type>::read
     (
         dict,
         yName,
+        modYType_,
         yValues_,
         yModValues_,
         modYFunc_,
@@ -579,9 +596,10 @@ void Foam::lookupTable2D<Type>::read
     }
 
     const dictionary& fDict(dict.subDict(name + "Coeffs"));
+    modType_ = fDict.lookupOrDefault<word>("mod", "none");
     setMod
     (
-        fDict.lookupOrDefault<word>("mod", "none"),
+        modType_,
         modFunc_,
         invModFunc_
     );
@@ -614,6 +632,7 @@ void Foam::lookupTable2D<Type>::readComponent
 (
     const dictionary& parentDict,
     const word& name,
+    word& type,
     Field<scalar>& values,
     Field<scalar>& modValues,
     modFuncType& modFunc,
@@ -627,9 +646,10 @@ void Foam::lookupTable2D<Type>::readComponent
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+        type = dict.lookupOrDefault<word>("mod", "none");
         setMod
         (
-            dict.lookupOrDefault<word>("mod", "none"),
+            type,
             modFunc,
             invModFunc
         );
@@ -689,9 +709,10 @@ void Foam::lookupTable2D<Type>::readComponent
         {
             canSetMod = false;
         }
+        type = parentDict.lookupOrDefault<word>(name + "Mod", "none");
         setMod
         (
-            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            type,
             modFunc,
             invModFunc
         );

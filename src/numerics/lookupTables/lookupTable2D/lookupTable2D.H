@@ -60,12 +60,15 @@ protected:
     //- Include definition of modifying functions
     #include "tableFuncs.H"
 
+    word modType_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
+    word modXType_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
+    word modYType_;
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
@@ -76,6 +79,7 @@ protected:
     findIndexFunc findYIndex_;
 
     //- Interpolation type
+    word interpType_;
     interp2DFuncType interpFunc_;
 
     //- Data
@@ -166,6 +170,12 @@ public:
             return fy_;
         }
 
+        //- Return the modifier type name
+        const word& modType() const
+        {
+            return modType_;
+        }
+
         //- Modify by modType
         scalar mod(const scalar& f) const
         {
@@ -178,6 +188,12 @@ public:
             return invModFunc_(f);
         }
 
+        //- Return the x-modifier type name
+        const word& modXType() const
+        {
+            return modXType_;
+        }
+
         //- Modify by modXType
         scalar modX(const scalar& f) const
         {
@@ -188,6 +204,12 @@ public:
         scalar invModX(const scalar& f) const
         {
             return modXFunc_(f);
+        }
+
+        //- Return the y-modifier type name
+        const word& modYType() const
+        {
+            return modYType_;
         }
 
         //- Modify by modYType
@@ -234,6 +256,12 @@ public:
 
         //- Return real data values
         tmp<Field<Field<Type>>> realData() const;
+
+        //- Return the interpolation scheme type name
+        const word& interpType() const
+        {
+            return interpType_;
+        }
 
 
     // Member Functions
@@ -352,6 +380,7 @@ public:
         (
             const dictionary& parentDict,
             const word& name,
+            word& type,
             Field<scalar>& values,
             Field<scalar>& modValues,
             modFuncType& modFunc,

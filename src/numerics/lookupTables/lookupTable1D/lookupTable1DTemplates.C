@@ -34,6 +34,7 @@ void Foam::lookupTable1D<Type>::readComponent
 (
     const dictionary& parentDict,
     const word& name,
+    word& type,
     Field<fType>& values,
     Field<fType>& modValues,
     modFuncType& modFunc,
@@ -46,9 +47,10 @@ void Foam::lookupTable1D<Type>::readComponent
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+        type = dict.lookupOrDefault<word>("mod", "none");
         setMod
         (
-            dict.lookupOrDefault<word>("mod", "none"),
+            type,
             modFunc,
             invModFunc
         );
@@ -108,9 +110,10 @@ void Foam::lookupTable1D<Type>::readComponent
         {
             canSetMod = false;
         }
+        type = parentDict.lookupOrDefault<word>(name + "Mod", "none");
         setMod
         (
-            parentDict.lookupOrDefault<word>(name + "Mod", "none"),
+            type,
             modFunc,
             invModFunc
         );
