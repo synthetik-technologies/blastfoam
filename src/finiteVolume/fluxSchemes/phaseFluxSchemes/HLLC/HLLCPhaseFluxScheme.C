@@ -260,8 +260,7 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     alphaPhi = alpha*phi;
     alphaRhoPhi = rho*alphaPhi;
     alphaRhoUPhi = alphaRhoPhi*U + alpha*p*Sf;
-    alphaRhoEPhi = alphaPhi*(rho*E + p);
-    alphaRhoEPhi += vMesh*magSf*p*alpha;
+    alphaRhoEPhi = alphaPhi*(rho*E + p) + vMesh*magSf*p*alpha;
 }
 
 
@@ -405,8 +404,7 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
 
     phi *= magSf;
     alphaRhoUPhi = alpha*(rho*U*phi + p*Sf);
-    alphaRhoEPhi = alpha*phi*(rho*E + p);
-    alphaRhoEPhi += vMesh*magSf*p*alpha;
+    alphaRhoEPhi = alpha*phi*(rho*E + p) + vMesh*magSf*p*alpha;
 
     forAll(alphaPhis, phasei)
     {

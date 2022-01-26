@@ -1533,6 +1533,7 @@ bool Foam::fvMeshHexRefiner::refine
 
             if (nCellsToRefine > 0)
             {
+                meshCutter_->history().active() = true;
                 isRefining_ = true;
 
                 // Refine/update mesh and map fields
