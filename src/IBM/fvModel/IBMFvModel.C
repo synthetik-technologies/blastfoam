@@ -72,10 +72,8 @@ Foam::fv::IBMForceModel::IBMForceModel
     )
 {
     // Initialize the shapes
-    forAll(ibm_.objects(), i)
-    {
-        ibm_.objects()[i].shape();
-    }
+    ibm_.setCellTypes();
+    ibm_.setObjectIDs();
 
     // Create a temporary fvConstraints object to add the IBMConstraint to
     fvConstraints constraints(mesh);
