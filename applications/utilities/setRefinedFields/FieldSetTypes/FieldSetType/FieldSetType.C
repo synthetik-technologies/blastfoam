@@ -387,10 +387,9 @@ void Foam::VolFieldSetType<Type>::setField()
             UIndirectList<Type> pf(fieldBf[patchi], indices);
             this->getBoundaryField(patchi, indices, pC, pf);
         }
+        this->fieldPtr_->boundaryFieldRef()[patchi] =
+            this->fieldPtr_->boundaryField()[patchi].patchInternalField();
     }
-
-    //- Evaluate boundary conditions
-    this->fieldPtr_().boundaryFieldRef().evaluate();
 
     if (this->write_)
     {
@@ -553,9 +552,6 @@ void Foam::PointFieldSetType<Type>::setField()
             this->getBoundaryField(patchi, indices, pC, pf);
         }
     }
-
-    //- Evaluate boundary conditions
-    this->fieldPtr_().boundaryFieldRef().evaluate();
 
     if (this->write_)
     {
