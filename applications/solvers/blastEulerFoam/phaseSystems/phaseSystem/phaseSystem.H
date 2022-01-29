@@ -246,6 +246,9 @@ protected:
         //- Fluid phase phase models
         UPtrList<phaseModel> fluidPhaseModels_;
 
+        //- Slave phase phase models
+        UPtrList<phaseModel> slavePhaseModels_;
+
         //- Pointer to kinetic theory system
         UautoPtr<kineticTheorySystem> kineticTheoryPtr_;
 

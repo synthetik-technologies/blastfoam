@@ -775,7 +775,36 @@ Foam::phaseSystem::phaseSystem
                 &phaseModels_[phasei]
             );
         }
+        else
+        {
+            slavePhaseModels_.resize(slavePhaseModels_.size() + 1);
+            slavePhaseModels_.set
+            (
+                slavePhaseModels_.size() - 1,
+                &phaseModels_[phasei]
+            );
+        }
     }
+    if (slavePhaseModels_.size())
+    {
+        if (!fluidPhaseModels_.size())
+        {
+            FatalErrorInFunction
+                << "Only slave phase models are being used. "
+                << "A fluid must also be used." << endl
+                << abort(FatalError);
+        }
+        else if (&fluidPhaseModels_[0] == &phaseModels_[0])
+        {
+            FatalErrorInFunction
+                << "A slave phase model should be the first phase." << nl
+                << "Please switch the order of "
+                << slavePhaseModels_[0].name() << " and "
+                << fluidPhaseModels_[0].name() << endl
+                << abort(FatalError);
+        }
+    }
+
     if (nFluids > 1)
     {
         PIPtr_.set
@@ -948,7 +977,8 @@ void Foam::phaseSystem::decode()
         // find largest volume fraction and set to 1-sum
         forAll(rho_, celli)
         {
-            SortableList<scalar> alphas(phaseModels_.size());
+            SortableList<scalar> alphas(phaseModels_.size(), 0.0);
+            scalar sumAlpha = 0.0;
             forAll(phaseModels_, phasei)
             {
                 phaseModels_[phasei][celli] =
@@ -961,18 +991,18 @@ void Foam::phaseSystem::decode()
                         ),
                         0.0
                     );
-                alphas[phasei] = phaseModels_[phasei][celli];
+                if (!phaseModels_[phasei].slavePressure())
+                {
+                    alphas[phasei] = phaseModels_[phasei][celli];
+                }
+                sumAlpha += phaseModels_[phasei][celli];
             }
             alphas.reverseSort();
 
             const label fixedPhase = alphas.indices()[0];
-
-            scalar sumAlpha = 0.0;
-            for (label phasei = 1; phasei < alphas.size(); phasei++)
-            {
-                sumAlpha += alphas[phasei];
-            }
-            phaseModels_[fixedPhase][celli] = 1.0 - sumAlpha;
+            phaseModels_[fixedPhase][celli] =
+                1.0
+              - (sumAlpha - phaseModels_[fixedPhase][celli]);
         }
 
         forAll(phaseModels_, phasei)
