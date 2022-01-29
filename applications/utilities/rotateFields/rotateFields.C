@@ -41,6 +41,9 @@ Description
 #include "UautoPtr.H"
 #include "genericFvPatchField.H"
 
+#include "fvMeshRefiner.H"
+#include "errorEstimator.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 template<class Type>
@@ -104,7 +107,8 @@ void mapVolFields
     const labelList& extendedCellMap,
     const IOobjectList& objects,
     const tensorField& R,
-    const HashSet<word>& mapFields
+    const HashSet<word>& mapFields,
+    const bool store = false
 )
 {
     typedef GeometricField<Type, fvPatchField, volMesh> fieldType;
@@ -124,7 +128,21 @@ void mapVolFields
         fieldType fieldSource(*fieldIter(), sourceMesh);
         autoPtr<fieldType> fieldTargetPtr;
         UautoPtr<const labelList> mapPtr;
-        if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
+        bool exists = false;
+        if (targetMesh.foundObject<fieldType>(fieldIter()->name()))
+        {
+            mapField = true;
+            fieldTargetPtr.set
+            (
+                &targetMesh.lookupObjectRef<fieldType>
+                (
+                    fieldIter()->name()
+                )
+            );
+            mapPtr.set(&cellMap);
+            exists = true;
+        }
+        else if (fieldTargetIOobject.typeHeaderOk<fieldType>(true))
         {
             mapField = true;
             fieldTargetPtr.set
@@ -141,8 +159,7 @@ void mapVolFields
         {
             mapField = true;
             fieldTargetIOobject.readOpt() = IOobject::NO_READ;
-            fieldTargetPtr.set
-            (
+            fieldType* fieldPtr =
                 new fieldType
                 (
                     fieldTargetIOobject,
@@ -154,8 +171,13 @@ void mapVolFields
                         pTraits<Type>::zero
                     ),
                     createBoundaryTypes<Type>(fieldSource, targetMesh)
-                )
-            );
+                );
+            if (store)
+            {
+                fieldPtr->store(fieldPtr);
+                exists = true;
+            }
+            fieldTargetPtr.set(fieldPtr);
             mapPtr.set(&extendedCellMap);
         }
 
@@ -182,7 +204,20 @@ void mapVolFields
                 fieldTarget.boundaryFieldRef()[patchi] =
                     fieldTarget.boundaryField()[patchi].patchInternalField();
             }
-            fieldTarget.write();
+            if (fieldTarget.name() == "lambda.tnt")
+            {
+                Info<<fieldTarget.name()<<" "<<exists<<endl;
+            }
+            if (!exists)
+            {
+                fieldTarget.write();
+            }
+            else
+            {
+                // Remove the pointer because it should not be deleted
+                // here
+                fieldTargetPtr.ptr();
+            }
         }
 #ifdef FULLDEBUG
         else
@@ -203,7 +238,8 @@ void mapFields
     const labelList& cellMap,
     const labelList& extendedCellMap,
     const tensorField& R,
-    const HashSet<word>& additionalFields
+    const HashSet<word>& additionalFields,
+    const bool store = false
 )
 {
     IOobjectList objects(sourceMesh, sourceMesh.time().timeName());
@@ -216,7 +252,8 @@ void mapFields
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<vector>
     (
@@ -226,7 +263,8 @@ void mapFields
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<sphericalTensor>
     (
@@ -236,7 +274,8 @@ void mapFields
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<symmTensor>
     (
@@ -246,7 +285,8 @@ void mapFields
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
     mapVolFields<tensor>
     (
@@ -256,7 +296,8 @@ void mapFields
         extendedCellMap,
         objects,
         R,
-        additionalFields
+        additionalFields,
+        store
     );
 }
 
@@ -336,6 +377,11 @@ void calcMapAndR
 
     forAll(cellMap, celli)
     {
+        // Mapping has already been set
+        if (cellMap[celli] >= 0)
+        {
+            continue;
+        }
         // Get the position on the target mesh
         vector ptTarget =
             cmptMultiply
@@ -392,6 +438,253 @@ void calcMapAndR
         }
         R[celli] = rotationTensor(nSource, nTarget);
     }
+}
+
+
+//- Read and add fields to the database
+template<class Type, template<class> class Patch, class Mesh>
+void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+    typedef GeometricField<Type, Patch, Mesh> FieldType;
+
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        mesh
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
+//- Read and add fields to the database
+template<class Type>
+void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
+{
+    typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
+    IOobjectList fields = objects.lookupClass(FieldType::typeName);
+    forAllIter(IOobjectList, fields, fieldIter)
+    {
+        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
+        {
+            IOobject fieldTargetIOobject
+            (
+                fieldIter()->name(),
+                mesh.time().timeName(),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE
+            );
+
+            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
+            {
+                FieldType* fPtr
+                (
+                    new FieldType
+                    (
+                        fieldTargetIOobject,
+                        pointMesh::New(mesh)
+                    )
+                );
+                fPtr->store(fPtr);
+            }
+        }
+    }
+}
+
+
+//- Read and add all fields to the database
+void readAllFields(const fvMesh& mesh)
+{
+    // Get all fields present at the current time
+    IOobjectList objects(mesh, mesh.time().timeName());
+
+    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
+    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
+
+    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
+    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
+
+    readPointFields<scalar>(mesh, objects);
+    readPointFields<vector>(mesh, objects);
+    readPointFields<symmTensor>(mesh, objects);
+    readPointFields<sphericalTensor>(mesh, objects);
+    readPointFields<tensor>(mesh, objects);
+}
+
+
+void refine
+(
+    const fvMesh& sourceMesh,
+    fvMesh& targetMesh,
+    const scalar maxR,
+    const vector& sourceCentre,
+    const vector& targetCentre,
+    const vector& rotationAxis,
+    const vector& rAxis,
+    const wordList& additionalFieldNames
+)
+{
+    labelList cellMap(targetMesh.nCells(), -1);
+    labelList extendedCellMap(targetMesh.nCells(), -1);
+    tensorField R(targetMesh.nCells(), tensor::I);
+
+    autoPtr<IOdictionary> refineDictPtr;
+    {
+        IOobject dynamicMeshDictIO
+        (
+            IOobject
+            (
+                "dynamicMeshDict",
+                targetMesh.time().constant(),
+                targetMesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        );
+        IOobject rotateFieldsDictIO
+        (
+            IOobject
+            (
+                "rotateFieldsDict",
+                targetMesh.time().system(),
+                targetMesh,
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            )
+        );
+        if (dynamicMeshDictIO.typeHeaderOk<IOdictionary>(true))
+        {
+            refineDictPtr.set(new IOdictionary(dynamicMeshDictIO));
+        }
+        else
+        {
+            if (rotateFieldsDictIO.typeHeaderOk<IOdictionary>(true))
+            {
+                refineDictPtr.set(new IOdictionary(rotateFieldsDictIO));
+            }
+        }
+
+        if (!refineDictPtr.valid())
+        {
+            WarningInFunction
+                << "Refinement was specified, but neither " << nl
+                << dynamicMeshDictIO.objectPath() << nl << " or " << nl
+                << rotateFieldsDictIO.objectPath() << nl << " was found."
+                << "Skipping." << endl;
+
+            return;
+        }
+    }
+    const IOdictionary& refineDict(refineDictPtr());
+
+    autoPtr<errorEstimator> error
+    (
+        errorEstimator::New(targetMesh, refineDict)
+    );
+    autoPtr<fvMeshRefiner> refiner
+    (
+        fvMeshRefiner::New
+        (
+            targetMesh,
+            refineDict,
+            true
+        )
+    );
+
+    readAllFields(targetMesh);
+
+    Info<< "Begining refinement iterations" << nl << endl;
+    bool good = true;
+    bool lastIter = false;
+    label iter = 0;
+    while (good)
+    {
+        if (iter++ > 10)
+        {
+            lastIter = true;
+        }
+
+        if (lastIter)
+        {
+            good = false;
+        }
+
+        Info<<"Iteration " << iter << endl;
+
+        labelList cellMap(targetMesh.nCells(), -1);
+        labelList extendedCellMap(targetMesh.nCells(), -1);
+        tensorField R(targetMesh.nCells(), tensor::I);
+
+        Info<< "Calulating map and rotation tensors" << endl;
+        calcMapAndR
+        (
+            sourceMesh,
+            targetMesh,
+            maxR,
+            sourceCentre,
+            targetCentre,
+            rotationAxis,
+            rAxis,
+            cellMap,
+            extendedCellMap,
+            R
+        );
+
+        // Map fields from the source mesh to the target mesh
+        Info<< "Mapping fields" << endl;
+        mapFields
+        (
+            sourceMesh,
+            targetMesh,
+            cellMap,
+            extendedCellMap,
+            R,
+            additionalFieldNames,
+            true
+        );
+
+        if (!lastIter)
+        {
+            Info<<"refining"<<endl;
+            error->update();
+
+            lastIter =
+                !refiner->refine(error->error(), error->maxRefinement());
+        }
+    }
+    refiner->write();
+
+    Info<< "Source mesh size: " << sourceMesh.nCells() << tab
+        << "Target mesh size: " << targetMesh.nCells() << nl
+        << endl;
 }
 
 
@@ -461,6 +754,11 @@ int main(int argc, char *argv[])
         "uniform",
         "Copy uniform objects (not time)"
     );
+    argList::addBoolOption
+    (
+        "refine",
+        "Iteratively map, rotate and refine the mesh"
+    );
 
     #include "addRegionOption.H"
 
@@ -512,12 +810,13 @@ int main(int argc, char *argv[])
     }
 
 
-    wordList additionalFieldsNames;
+    wordList additionalFieldNames;
     if (args.optionFound("additionalFields"))
     {
-        additionalFieldsNames = args.optionRead<wordList>("additionalFields");
+        additionalFieldNames =
+            args.optionRead<wordList>("additionalFields");
     }
-    HashSet<word> additionalFields(additionalFieldsNames);
+    HashSet<word> additionalFields(additionalFieldNames);
 
     bool copyUniform = args.optionFound("uniform");
 
@@ -673,39 +972,58 @@ int main(int argc, char *argv[])
         vector rotationAxis = sourceAxis[1] - targetAxis[1];
         vector rAxis = sourceAxis[0];
 
-        Info<< "Source mesh size: " << sourceMesh.nCells() << tab
-            << "Target mesh size: " << targetMesh.nCells() << nl << endl;
+        if (!args.optionFound("refine"))
+        {
+            Info<< "Source mesh size: " << sourceMesh.nCells() << tab
+                << "Target mesh size: " << targetMesh.nCells() << nl
+                << endl;
 
-        labelList cellMap(targetMesh.nCells(), -1);
-        labelList extendedCellMap(targetMesh.nCells(), -1);
-        tensorField R(targetMesh.nCells(), tensor::I);
+            labelList cellMap(targetMesh.nCells(), -1);
+            labelList extendedCellMap(targetMesh.nCells(), -1);
+            tensorField R(targetMesh.nCells(), tensor::I);
 
-        Info<< "Calulating map and rotation tensors" << endl;
-        calcMapAndR
-        (
-            sourceMesh,
-            targetMesh,
-            maxR,
-            sourceCentre,
-            targetCentre,
-            rotationAxis,
-            rAxis,
-            cellMap,
-            extendedCellMap,
-            R
-        );
+            Info<< "Calulating map and rotation tensors" << endl;
+            calcMapAndR
+            (
+                sourceMesh,
+                targetMesh,
+                maxR,
+                sourceCentre,
+                targetCentre,
+                rotationAxis,
+                rAxis,
+                cellMap,
+                extendedCellMap,
+                R
+            );
 
-        // Map fields from the source mesh to the target mesh
-        Info<< "Mapping field" << endl;
-        mapFields
-        (
-            sourceMesh,
-            targetMesh,
-            cellMap,
-            extendedCellMap,
-            R,
-            additionalFieldsNames
-        );
+            // Map fields from the source mesh to the target mesh
+            Info<< "Mapping field" << endl;
+            mapFields
+            (
+                sourceMesh,
+                targetMesh,
+                cellMap,
+                extendedCellMap,
+                R,
+                additionalFieldNames
+            );
+        }
+        else
+        {
+            refine
+            (
+                sourceMesh,
+                targetMesh,
+                maxR,
+                sourceCentre,
+                targetCentre,
+                rotationAxis,
+                rAxis,
+                additionalFieldNames
+            );
+            runTime.writeNow();
+        }
 
         if (copyUniform)
         {
