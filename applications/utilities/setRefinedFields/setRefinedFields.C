@@ -531,6 +531,11 @@ int main(int argc, char *argv[])
         "overwrite",
         "Write the mesh to constant"
     );
+    argList::addBoolOption
+    (
+        "noHistory",
+        "Do not write the history"
+    );
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -559,6 +564,7 @@ int main(int argc, char *argv[])
 
     bool noRefine(args.optionFound("noRefine"));
     bool overwrite(args.optionFound("overwrite"));
+    bool noHistory(args.optionFound("noHistory"));
     bool debug(args.optionFound("debug"));
 
     if (overwrite && debug)
@@ -581,10 +587,9 @@ int main(int argc, char *argv[])
         (
             setFieldsDict.optionalSubDict
             (
-                hexRef::typeName + "Coeffs"
+                "refinerCoeffs"
             )
         );
-        refineDict.set("beginUnRefine", -1);
         if (args.optionFound("forceHex8"))
         {
             refineDict.set("forceHex8", true);
@@ -651,7 +656,7 @@ int main(int argc, char *argv[])
     fields.resize(fi);
 
     // Read in all fields to allow resizing
-    if (updateAll || balance)
+    if (updateAll)
     {
         readAndAddAllFields(mesh);
     }
@@ -1177,12 +1182,6 @@ int main(int argc, char *argv[])
         iter++;
     }
 
-    // Write all fields
-    if (updateAll)
-    {
-        runTime.write();
-    }
-
     bool writeMesh = topoSets.writeSets();
 
     if (refine && !debug)
@@ -1192,7 +1191,6 @@ int main(int argc, char *argv[])
         {
             mesh.setInstance(runTime.constant());
         }
-        refiner->write();
 
         //- Write points0 field to time directory
         pointIOField points0
@@ -1208,6 +1206,17 @@ int main(int argc, char *argv[])
         );
         points0.write();
         writeMesh = true;
+    }
+
+    if (noHistory)
+    {
+        refiner.clear();
+    }
+
+    // Write all fields
+    if (updateAll)
+    {
+        runTime.write();
     }
     if (writeMesh)
     {
