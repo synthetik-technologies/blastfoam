@@ -71,17 +71,9 @@ void linGeomTotalDispSolid::predict()
 
 linGeomTotalDispSolid::linGeomTotalDispSolid(dynamicFvMesh& mesh)
 :
-    solidModel(typeName, mesh, nonLinGeom(), incremental()),
-    impK_(mechanical().impK()),
-    impKf_(mechanical().impKf()),
-    rImpK_(1.0/impK_),
+    linSolid<totalDispSolid>(typeName, mesh),
     predictor_(solidModelDict().lookupOrDefault<Switch>("predictor", false))
 {
-    DisRequired();
-
-    // For consistent restarts, we will calculate the gradient field
-    mechanical().grad(D(), gradD());
-
     if (predictor_)
     {
         // Check ddt scheme for D is not steadyState
@@ -150,30 +142,21 @@ bool linGeomTotalDispSolid::evolve()
             // Fixed or adaptive field under-relaxation
             relaxField(D(), iCorr);
 
-            // Update increment of displacement
-            DD() = D() - D().oldTime();
-
-            // Update gradient of displacement
-            mechanical().grad(D(), gradD());
-
-            // Update gradient of displacement increment
-            gradDD() = gradD() - gradD().oldTime();
-
             // Update the momentum equation inverse diagonal field
             // This may be used by the mechanical law when calculating the
             // hydrostatic pressure
             const volScalarField DEqnA("DEqnA", DEqn.A());
 
             // Calculate the stress using run-time selectable mechanical law
-            mechanical().correct(sigma());
+            update();
 
             // Update impKf to improve convergence
             // Note: impK and rImpK are not updated as they are used for
             // traction boundaries
-            //if (iCorr % 10 == 0)
-            //{
-            //    impKf_ = mechanical().impKf();
-            //}
+            if (iCorr % 10 == 0)
+            {
+               impKf_ = mechanical().impKf();
+            }
         }
         while
         (
@@ -195,60 +178,12 @@ bool linGeomTotalDispSolid::evolve()
          && ++iCorr < nCorr()
         );
 
-        // Interpolate cell displacements to vertices
-        mechanical().interpolate(D(), pointD());
-
-        // Increment of displacement
-        DD() = D() - D().oldTime();
-
-        // Increment of point displacement
-        pointDD() = pointD() - pointD().oldTime();
-
         // Velocity
         U() = fvc::ddt(D());
     }
     while (mesh().update());
 
     return true;
-}
-
-
-tmp<vectorField> linGeomTotalDispSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch mechanical property
-    const scalarField& impK = impK_.boundaryField()[patchID];
-
-    // Patch reciprocal implicit stiffness field
-    const scalarField& rImpK = rImpK_.boundaryField()[patchID];
-
-    // Patch gradient
-    const tensorField& pGradD = gradD().boundaryField()[patchID];
-
-    // Patch stress
-    const symmTensorField& pSigma = sigma().boundaryField()[patchID];
-
-    // Patch unit normals
-    const vectorField n(patch.nf());
-
-    // Return patch snGrad
-    return tmp<vectorField>
-    (
-        new vectorField
-        (
-            (
-                (traction - n*pressure)
-              - (n & (pSigma - impK*pGradD))
-            )*rImpK
-        )
-    );
 }
 
 

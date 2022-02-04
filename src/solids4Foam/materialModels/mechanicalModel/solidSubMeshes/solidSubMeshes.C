@@ -1667,6 +1667,7 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
         forAll(subMeshes, matI)
         {
             subMeshD()[matI] = subMeshes[matI].interpolate(D);
+            subMeshD()[matI].correctBoundaryConditions();
         }
 
         return;
@@ -1685,6 +1686,7 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
         if (!mesh.template foundObject<volScalarField>("impK"))
         {
             subMeshD = subMeshes[matI].interpolate(D);
+            subMeshD.correctBoundaryConditions();
             continue;
         }
 
@@ -1708,6 +1710,7 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
         // Map the base displacement field to the subMesh; this overwrites
         // the interface with the interpolated values
         subMeshD = subMeshes[matI].interpolate(D);
+        subMeshD.correctBoundaryConditions();
 
         // Check if a large strain procedure is being used, if so we must
         // calculate the deformed normals
@@ -2015,6 +2018,7 @@ void Foam::solidSubMeshes::interpolateDtoSubMeshD
                 // oldInternalFaces patch, so we check for them above.
                 // For now, no need to do anything here.
             }
+
         }
     }
 }

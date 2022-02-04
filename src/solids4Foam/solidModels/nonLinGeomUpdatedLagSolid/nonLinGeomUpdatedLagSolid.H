@@ -48,6 +48,8 @@ SourceFiles
 #define nonLinGeomUpdatedLagSolid_H
 
 #include "solidModel.H"
+#include "updatedLagSolid.H"
+#include "incrementalSolid.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -65,41 +67,8 @@ namespace solidModels
 
 class nonLinGeomUpdatedLagSolid
 :
-    public solidModel
+    public updatedLagSolid<incrementalSolid>
 {
-    // Private data
-
-        //- Total deformation gradient
-        volTensorField F_;
-
-        //- Jacobian of total deformation gradient
-        volScalarField J_;
-
-        //- Relative deformation gradient
-        volTensorField relF_;
-
-        //- Relative Jacobian: Jacobian of the relative deformation gradient
-        volTensorField relFinv_;
-
-        //- Relative Jacobian: Jacobian of the relative deformation gradient
-        volScalarField relJ_;
-
-        //- Density (updated configuration)
-        volScalarField rho_;
-
-        //- Implicit stiffness; coefficient of the Laplacian term
-        //  The value of this term only affects convergence and not the answer
-        //  In the case of Hookean elasticity, (2*mu + lambda) is the optimum
-        const volScalarField impK_;
-
-        //- Implicit stiffness surface field
-        const surfaceScalarField impKf_;
-
-        //- Reciprocal of impK
-        //  We divide by impK every time tractionBoundarySnGrad is called so we
-        //  will store the reciprocal for effficiency
-        const volScalarField rImpK_;
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
@@ -109,21 +78,10 @@ class nonLinGeomUpdatedLagSolid
         void operator=(const nonLinGeomUpdatedLagSolid&);
 
 
-protected:
-
-    // Protected member functions
-
-        //- Return nonlinear geometry enumerator
-        virtual nonLinearGeometry::nonLinearType nonLinGeom() const
-        {
-            return nonLinearGeometry::UPDATED_LAGRANGIAN;
-        }
-
-
 public:
 
     //- Runtime type information
-    TypeName("nonLinearGeometryUpdatedLagrangian");
+    TypeName("nonLinearUpdatedLagrangian");
 
     // Constructors
 
@@ -139,43 +97,8 @@ public:
 
     // Member Functions
 
-        // Access
-
-            //- Each solidModel must indicate whether D or DD is the primary
-            //  solution variable
-            virtual volVectorField& solutionD()
-            {
-                // This model solves for DD
-                return DD();
-            }
-
-            //- This solid model solves for DD instead of D
-            virtual bool incremental() const
-            {
-                return true;
-            }
-
-            //- Does this model move the mesh?
-            virtual bool movingMesh() const
-            {
-                return true;
-            }
-
-    // Edit
-
-            //- Evolve the solid solver and solve the mathematical model
-            virtual bool evolve();
-
-            //- Traction boundary surface normal gradient
-            virtual tmp<vectorField> tractionBoundarySnGrad
-            (
-                const vectorField& traction,
-                const scalarField& pressure,
-                const fvPatch& patch
-            ) const;
-
-            //- Update total accumulated fields
-            virtual void updateTotalFields();
+        //- Evolve the solid solver and solve the mathematical model
+        virtual bool evolve();
 };
 
 

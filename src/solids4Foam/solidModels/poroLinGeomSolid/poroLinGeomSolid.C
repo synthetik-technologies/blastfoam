@@ -181,10 +181,7 @@ bool poroLinGeomSolid::converged
 
 poroLinGeomSolid::poroLinGeomSolid(dynamicFvMesh& mesh)
 :
-    solidModel(typeName, mesh, nonLinGeom(), incremental()),
-    impK_(mechanical().impK()),
-    impKf_(mechanical().impKf()),
-    rImpK_(1.0/impK_),
+    linSolid<totalDispSolid>(typeName, mesh),
     p_
     (
         IOobject
@@ -332,45 +329,6 @@ bool poroLinGeomSolid::evolve()
     pointDD() = pointD() - pointD().oldTime();
 
     return true;
-}
-
-
-tmp<vectorField> poroLinGeomSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch mechanical property
-    const scalarField& impK = impK_.boundaryField()[patchID];
-
-    // Patch reciprocal implicit stiffness field
-    const scalarField& rImpK = rImpK_.boundaryField()[patchID];
-
-    // Patch gradient
-    const tensorField& pGradD = gradD().boundaryField()[patchID];
-
-    // Patch stress
-    const symmTensorField& pSigma = sigma().boundaryField()[patchID];
-
-    // Patch unit normals
-    const vectorField n(patch.nf());
-
-    // Return patch snGrad
-    return tmp<vectorField>
-    (
-        new vectorField
-        (
-            (
-                (traction - n*pressure)
-              - (n & (pSigma - impK*pGradD))
-            )*rImpK
-        )
-    );
 }
 
 

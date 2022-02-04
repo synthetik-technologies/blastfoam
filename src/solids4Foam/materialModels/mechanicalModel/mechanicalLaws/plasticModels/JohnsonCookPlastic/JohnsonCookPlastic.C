@@ -52,13 +52,13 @@ Foam::scalar Foam::JohnsonCookPlastic<PlasticType>::curYieldStress
         )
        *(
             1.0
-          + C_.value()*log(max(eDot/epsilonPDot0_.value(), 1e-6))
+          + (C_.value()*log(max(eDot/epsilonPDot0_.value(), 1.0)))
         );
     if (temperatureEffects_)
     {
         sigmay *= (1.0 - (Ti_ - Tref_.value())/(Tm_.value() - Tref_.value()));
     }
-    return sigmay;
+    return J*sigmay;
 }
 
 
@@ -118,9 +118,6 @@ Foam::JohnsonCookPlastic<PlasticType>::JohnsonCookPlastic
     B_("B", dimPressure, dict),
     C_("C", dimless, dict),
     n_("n", dimless, dict),
-    m_("m", dimless, dict),
-    Tref_("Tref", dimTemperature, dict),
-    Tm_("Tm", dimTemperature, dict),
     epsilonP0_
     (
         dimensionedScalar::lookupOrDefault
@@ -141,12 +138,22 @@ Foam::JohnsonCookPlastic<PlasticType>::JohnsonCookPlastic
             1.0
         )
     ),
-    totalStrainRate_(dict.lookupOrDefault<Switch>("totalStrainRate", true)),
+    totalStrainRate_(dict.lookupOrDefault<Switch>("totalStrainRate", false)),
     temperatureEffects_
     (
-        dict.lookupOrDefault<Switch>("temperatureEffects", true)
-    )
-{}
+        dict.lookupOrDefault<Switch>("temperatureEffects", false)
+    ),
+    m_(1.0),
+    Tref_("Tref", dimTemperature, 300),
+    Tm_("Tm", dimTemperature, 1000)
+{
+    if (temperatureEffects_)
+    {
+        m_ = dict.lookup<scalar>("m");
+        Tref_.read(dict);
+        Tm_.read(dict);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -170,6 +177,13 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     }
 
     // Compute effective strain rate
+    this->updateEpsilon
+    (
+        this->epsilonRef(),
+        this->nu_/this->E_,
+        sigma,
+        this->epsilonP()
+    );
     tmp<volSymmTensorField> eDot(fvc::ddt(this->epsilon()));
     const volSymmTensorField eElasticDot
     (
@@ -177,7 +191,7 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     );
     epsilonElasticEffDot_ = sqrt(2.0/3.0*(eElasticDot && eElasticDot));
 
-    PlasticType::correct(sigma);
+    PlasticType::correct(sigma, false);
 
     epsilonElasticEffDot_.clear();
 }
@@ -196,16 +210,21 @@ void Foam::JohnsonCookPlastic<PlasticType>::correct
     Tf_ = fvc::interpolate(T_());
 
     // Compute effective strain rate
-    const surfaceTensorField& gradD =
-        this->mesh().template lookupObject<surfaceTensorField>("grad(D)f");
-    tmp<surfaceSymmTensorField> eDot(symm(fvc::ddt(gradD)));
+    this->updateEpsilon
+    (
+        this->epsilonfRef(),
+        this->nu_/this->E_,
+        sigma,
+        this->epsilonPf()
+    );
+    tmp<surfaceSymmTensorField> eDot(symm(fvc::ddt(this->epsilonf())));
     const surfaceSymmTensorField eElasticDot
     (
         dev(eDot) - dev(fvc::ddt(this->epsilonPf()))
     );
     epsilonElasticEffDotf_ = sqrt(2.0/3.0*(eElasticDot && eElasticDot));
 
-    PlasticType::correct(sigma);
+    PlasticType::correct(sigma, false);
 
     epsilonElasticEffDotf_.clear();
 }

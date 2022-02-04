@@ -10,13 +10,35 @@ finiteVolume/logExpVolFields/expVolFields.C
 finiteVolume/logExpVolFields/logVolFields.C
 #finiteVolume/newLeastSquaresVolPointInterpolation/newLeastSquaresVolPointInterpolation.C
 
-solidModels/solidModel/solidModel.C
-solidModels/solidModel/lookupSolidModel.C
-solidModels/solidModel/momentumStabilisation/momentumStabilisation.C
-solidModels/solidModel/setCellDisplacements/setCellDisplacements.C
-solidModels/explicitLinGeomTotalDispSolid/explicitLinGeomTotalDispSolid.C
-solidModels/explicitUnsLinGeomTotalDispSolid/explicitUnsLinGeomTotalDispSolid.C
-solidModels/explicitUnsNonLinGeomTotalLagTotalDispSolid/explicitUnsNonLinGeomTotalLagTotalDispSolid.C
+basicSolids=solidModels/basicSolids
+$(basicSolids)/solidModel/solidModel.C
+$(basicSolids)/solidModel/lookupSolidModel.C
+$(basicSolids)/solidModel/momentumStabilisation/momentumStabilisation.C
+$(basicSolids)/solidModel/setCellDisplacements/setCellDisplacements.C
+
+$(basicSolids)/incrementalSolid/incrementalSolid.C
+$(basicSolids)/incrementalSolid/unsIncrementalSolid.C
+$(basicSolids)/totalDispSolid/totalDispSolid.C
+$(basicSolids)/totalDispSolid/unsTotalDispSolid.C
+
+explicit=solidModels/explicit
+$(explicit)/explicitLinGeomTotalDispSolid/explicitLinGeomTotalDispSolid.C
+$(explicit)/explicitUnsLinGeomTotalDispSolid/explicitUnsLinGeomTotalDispSolid.C
+$(explicit)/explicitUnsNonLinGeomTotalLagTotalDispSolid/explicitUnsNonLinGeomTotalLagTotalDispSolid.C
+$(explicit)/explicitNonLinGeomUpdatedLagSolid/explicitNonLinGeomUpdatedLagSolid.C
+$(explicit)/explicitNonLinGeomTotalLagSolid/explicitNonLinGeomTotalLagSolid.C
+$(explicit)/explicitFluidSolid/explicitFluidSolid.C
+
+explicitRiemann=$(explicit)/explicitRiemannSolid
+$(explicitRiemann)/angularMomentum/angularMomentum.C
+$(explicitRiemann)/gradientSchemes/gradientSchemes.C
+$(explicitRiemann)/interpolationSchemes/interpolationSchemes.C
+$(explicitRiemann)/mechanics/mechanics.C
+$(explicitRiemann)/operations/operations.C
+$(explicitRiemann)/explicitRiemannSolid.C
+$(explicitRiemann)/explicitLinRiemannSolid/explicitLinRiemannSolid.C
+$(explicitRiemann)/explicitNonLinRiemannSolid/explicitNonLinRiemannSolid.C
+
 solidModels/linGeomSolid/linGeomSolid.C
 solidModels/linGeomTotalDispSolid/linGeomTotalDispSolid.C
 solidModels/linGeomPressureDisplacementSolid/linGeomPressureDisplacementSolid.C
@@ -29,26 +51,6 @@ solidModels/unsLinGeomSolid/unsLinGeomSolid.C
 solidModels/unsNonLinGeomUpdatedLagSolid/unsNonLinGeomUpdatedLagSolid.C
 solidModels/unsNonLinGeomTotalLagSolid/unsNonLinGeomTotalLagSolid.C
 solidModels/weakThermalLinGeomSolid/weakThermalLinGeomSolid.C
-
-explicit=solidModels/explicitTotalLagSolid
-$(explicit)/explicitTotalLagSolid.C
-$(explicit)/explicitLinGeomTotalLagSolid/explicitLinGeomTotalLagSolid.C
-$(explicit)/explicitNonLinGeomTotalLagSolid/explicitNonLinGeomTotalLagSolid.C
-$(explicit)/angularMomentum/angularMomentum.C
-$(explicit)/gradientSchemes/gradientSchemes.C
-$(explicit)/interpolationSchemes/interpolationSchemes.C
-$(explicit)/mechanics/mechanics.C
-$(explicit)/operations/operations.C
-
-explicitBCs=$(explicit)/boundaryConditions
-$(explicitBCs)/calculated/calculatedTraction/calculatedTractionFvPatchVectorField.C
-$(explicitBCs)/calculated/calculatedLinearMomentum/calculatedLinearMomentumFvPatchVectorField.C
-$(explicitBCs)/symmetric/symmetricTraction/symmetricTractionFvPatchVectorField.C
-$(explicitBCs)/symmetric/symmetricLinearMomentum/symmetricLinearMomentumFvPatchVectorField.C
-$(explicitBCs)/traction/tractionTraction/tractionTractionFvPatchVectorField.C
-$(explicitBCs)/traction/tractionLinearMomentum/tractionLinearMomentumFvPatchVectorField.C
-$(explicitBCs)/wedge/wedgeLinearMomentum/wedgeLinearMomentumFvPatchVectorField.C
-$(explicitBCs)/wedge/wedgeTraction/wedgeTractionFvPatchVectorField.C
 
 materialModels/mechanicalModel/mechanicalModel.C
 materialModels/mechanicalModel/solidSubMeshes/solidSubMeshes.C
@@ -63,6 +65,7 @@ $(plastic)/linearPlasticModel/linearPlasticModel.C
 $(plastic)/nonLinearPlasticModel/nonLinearPlasticModel.C
 $(plastic)/JohnsonCookPlastic/JohnsonCookPlastics.C
 $(plastic)/powerLawPlastic/powerLawPlastics.C
+$(plastic)/CowperSymonds/CowperSymondsPlastics.C
 
 linGeomLaws = $(mechanicalLaws)/linearGeometryLaws
 $(linGeomLaws)/linearElastic/linearElastic.C

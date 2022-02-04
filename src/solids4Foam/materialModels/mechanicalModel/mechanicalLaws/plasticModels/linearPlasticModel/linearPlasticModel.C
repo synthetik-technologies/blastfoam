@@ -213,9 +213,16 @@ Foam::linearPlasticModel::impK(const label patchi) const
     return scaleFactor*(4.0/3.0)*mu_.value() + K_.value();
 }
 
-void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
+void Foam::linearPlasticModel::correct
+(
+    volSymmTensorField& sigma,
+    const bool needUpdate
+)
 {
-    this->updateEpsilon(epsilonRef(), nu_/E_, sigma, epsilonP());
+    if (needUpdate)
+    {
+        this->updateEpsilon(epsilonRef(), nu_/E_, sigma, epsilonP());
+    }
 
     const volSymmTensorField eps(this->epsilon());
 
@@ -317,12 +324,20 @@ void Foam::linearPlasticModel::correct(volSymmTensorField& sigma)
 
     // Update the stress
     sigma = hydrostaticStress(trEpsilon)*I + s;
+    sigma.correctBoundaryConditions();
 }
 
 
-void Foam::linearPlasticModel::correct(surfaceSymmTensorField& sigma)
+void Foam::linearPlasticModel::correct
+(
+    surfaceSymmTensorField& sigma,
+    const bool needUpdate
+)
 {
-    this->updateEpsilon(this->epsilonfRef(), nu_/E_, sigma, epsilonPf());
+    if (needUpdate)
+    {
+        this->updateEpsilon(this->epsilonfRef(), nu_/E_, sigma, epsilonPf());
+    }
 
     const surfaceSymmTensorField& eps(this->epsilonf());
 

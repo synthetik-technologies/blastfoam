@@ -129,7 +129,7 @@ Foam::scalar Foam::plasticModel::yieldFunction
     // curSigmaY is the current Kirchhoff yield stress which is typically a
     // function of total equivalent plastic strain (epsilonPEq + DEpsilonPEq)
     return
-        magSTrial - 2*muBar*DLambda
+        magSTrial - 2.0*muBar*DLambda
       - sqrtTwoOverThree_
        *curYieldStress
         (

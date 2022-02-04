@@ -51,8 +51,8 @@ Author
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef nonLinearPlastic_H
-#define nonLinearPlastic_H
+#ifndef nonLinearPlasticModel_H
+#define nonLinearPlasticModel_H
 
 #include "plasticModel.H"
 #include "surfaceFields.H"
@@ -97,15 +97,10 @@ class nonLinearPlasticModel
     // Private Member Functions
 
         //- Calcualte Ibar such that det(bEbar) == 1
-        tmp<volScalarField> Ibar
+        template<template<class> class PatchField, class Mesh>
+        tmp<GeometricField<scalar, PatchField, Mesh>> Ibar
         (
-            const volSymmTensorField& devBEbar
-        );
-
-        //- Calcualte Ibar such that det(bEbar) == 1
-        tmp<surfaceScalarField> Ibar
-        (
-            const surfaceSymmTensorField& devBEbar
+            const GeometricField<symmTensor, PatchField, Mesh>& devBEbar
         );
 
 
@@ -142,16 +137,40 @@ public:
         virtual tmp<scalarField> impK(const label) const;
 
         //- Update the stress
-        virtual void correct(volSymmTensorField& sigma);
+        virtual void correct(volSymmTensorField& sigma)
+        {
+            correct(sigma, true);
+        }
+
+        virtual void correct
+        (
+            volSymmTensorField& sigma,
+            const bool needUpdate
+        );
 
         //- Update the stress surface field
-        virtual void correct(surfaceSymmTensorField& sigma);
+        virtual void correct(surfaceSymmTensorField& sigma)
+        {
+            correct(sigma, true);
+        }
+
+        virtual void correct
+        (
+            surfaceSymmTensorField& sigma,
+            const bool needUpdate
+        );
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "nonLinearPlasticModelTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -43,7 +43,8 @@ SourceFiles
 #ifndef linGeomSolid_H
 #define linGeomSolid_H
 
-#include "solidModel.H"
+#include "linSolid.H"
+#include "incrementalSolid.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -61,23 +62,8 @@ namespace solidModels
 
 class linGeomSolid
 :
-    public solidModel
+    public linSolid<incrementalSolid>
 {
-    // Private data
-
-        //- Implicit stiffness; coefficient of the Laplacian term
-        //  The value of this term only affects convergence and not the answer
-        //  In the case of Hookean elasticity, (2*mu + lambda) is the optimum
-        const volScalarField impK_;
-
-        //- Implicit stiffness surface field
-        surfaceScalarField impKf_;
-
-        //- Reciprocal of impK
-        //  We divide by impK every time tractionBoundarySnGrad is called so we
-        //  will store the reciprocal for effficiency
-        const volScalarField rImpK_;
-
     // Private Member Functions
 
         //- Disallow default bitwise copy construct
@@ -87,21 +73,10 @@ class linGeomSolid
         void operator=(const linGeomSolid&);
 
 
-protected:
-
-    // Protected member functions
-
-        //- Return nonlinear geometry enumerator
-        virtual nonLinearGeometry::nonLinearType nonLinGeom() const
-        {
-            return nonLinearGeometry::LINEAR_GEOMETRY;
-        }
-
-
 public:
 
     //- Runtime type information
-    TypeName("linearGeometry");
+    TypeName("linear");
 
     // Constructors
 
@@ -117,34 +92,8 @@ public:
 
     // Member Functions
 
-        // Access
-
-            //- Each solidModel must indicate whether D or DD is the primary
-            //  solution variable
-            virtual volVectorField& solutionD()
-            {
-                // This model solves for DD
-                return DD();
-            }
-
-            //- This solid model solves for DD instead of D
-            virtual bool incremental() const
-            {
-                return true;
-            }
-
-        // Edit
-
-            //- Evolve the solid solver and solve the mathematical model
-            virtual bool evolve();
-
-            //- Traction boundary surface normal gradient
-            virtual tmp<vectorField> tractionBoundarySnGrad
-            (
-                const vectorField& traction,
-                const scalarField& pressure,
-                const fvPatch& patch
-            ) const;
+        //- Evolve the solid solver and solve the mathematical model
+        virtual bool evolve();
 };
 
 

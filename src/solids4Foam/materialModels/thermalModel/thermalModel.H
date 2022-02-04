@@ -43,7 +43,7 @@ SourceFiles
 #include "runTimeSelectionTables.H"
 #include "volFields.H"
 #include "tmp.H"
-#include "solidBlastThermo.H"
+#include "blastThermo.H"
 #include "Switch.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -68,10 +68,10 @@ class thermalModel
         UautoPtr<solidSubMeshes> subsetMeshes_;
 
         //- Thermal law
-        autoPtr<solidBlastThermo> thermoPtr_;
+        autoPtr<blastThermo> thermoPtr_;
 
         //- Sub thermo models
-        PtrList<solidBlastThermo> thermoModels_;
+        PtrList<blastThermo> thermoModels_;
 
 
     // Private Member Functions
@@ -91,7 +91,7 @@ public:
     // Constructors
 
         //- Construct from dictionary
-        thermalModel(const fvMesh& mesh);
+        thermalModel(const fvMesh& mesh, const bool isSolid = true);
 
 
     // Destructor
@@ -108,13 +108,13 @@ public:
         }
 
         //- Return thermal model
-        const solidBlastThermo& thermo() const
+        const blastThermo& thermo() const
         {
             return thermoPtr_();
         }
 
         //- Access thermal model
-        solidBlastThermo& thermo()
+        blastThermo& thermo()
         {
             return thermoPtr_();
         }

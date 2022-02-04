@@ -141,7 +141,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("unsNonLinearGeometryUpdatedLagrangian");
+    TypeName("unsNonLinearGeometryLagrangian");
 
     // Constructors
 

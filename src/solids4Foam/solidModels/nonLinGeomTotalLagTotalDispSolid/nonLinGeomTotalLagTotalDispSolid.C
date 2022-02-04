@@ -86,51 +86,9 @@ nonLinGeomTotalLagTotalDispSolid::nonLinGeomTotalLagTotalDispSolid
     dynamicFvMesh& mesh
 )
 :
-    solidModel(typeName, mesh, nonLinGeom(), incremental()),
-    F_
-    (
-        IOobject
-        (
-            "F",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedTensor("I", dimless, I)
-    ),
-    Finv_
-    (
-        IOobject
-        (
-            "Finv",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        inv(F_)
-    ),
-    J_
-    (
-        IOobject
-        (
-            "J",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        det(F_)
-    ),
-    impK_(mechanical().impK()),
-    impKf_(mechanical().impKf()),
-    rImpK_(1.0/impK_),
+    totalLagSolid<totalDispSolid>(typeName, mesh),
     predictor_(solidModelDict().lookupOrDefault<Switch>("predictor", false))
 {
-    DisRequired();
-
     if (predictor_)
     {
         // Check ddt scheme for D is not steadyState
@@ -150,7 +108,6 @@ nonLinGeomTotalLagTotalDispSolid::nonLinGeomTotalLagTotalDispSolid
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 
 bool nonLinGeomTotalLagTotalDispSolid::evolve()
 {
@@ -197,31 +154,13 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         // Fixed or adaptive field under-relaxation
         relaxField(D(), iCorr);
 
-        // Increment of displacement
-        DD() = D() - D().oldTime();
-
-        // Update gradient of displacement
-        mechanical().grad(D(), gradD());
-
-        // Update gradient of displacement increment
-        gradDD() = gradD() - gradD().oldTime();
-
-        // Total deformation gradient
-        F_ = I + gradD().T();
-
-        // Inverse of the deformation gradient
-        Finv_ = inv(F_);
-
-        // Jacobian of the deformation gradient
-        J_ = det(F_);
-
         // Update the momentum equation inverse diagonal field
         // This may be used by the mechanical law when calculating the
         // hydrostatic pressure
         const volScalarField DEqnA("DEqnA", DEqn.A());
 
         // Calculate the stress using run-time selectable mechanical law
-        mechanical().correct(sigma());
+        update();
     }
     while
     (
@@ -242,63 +181,10 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
         ) && ++iCorr < nCorr()
     );
 
-    // Interpolate cell displacements to vertices
-    mechanical().interpolate(D(), pointD());
-
-    // Increment of point displacement
-    pointDD() = pointD() - pointD().oldTime();
-
     // Velocity
     U() = fvc::ddt(D());
 
     return true;
-}
-
-
-tmp<vectorField> nonLinGeomTotalLagTotalDispSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch implicit stiffness field
-    const scalarField& impK = impK_.boundaryField()[patchID];
-
-    // Patch reciprocal implicit stiffness field
-    const scalarField& rImpK = rImpK_.boundaryField()[patchID];
-
-    // Patch gradient
-    const tensorField& pGradD = gradD().boundaryField()[patchID];
-
-    // Patch Cauchy stress
-    const symmTensorField& pSigma = sigma().boundaryField()[patchID];
-
-    // Patch total deformation gradient inverse
-    const tensorField& Finv = Finv_.boundaryField()[patchID];
-
-    // Patch unit normals (initial configuration)
-    const vectorField n(patch.nf());
-
-    // Patch unit normals (deformed configuration)
-    vectorField nCurrent(Finv.T() & n);
-    nCurrent /= mag(nCurrent);
-
-    // Return patch snGrad
-    return tmp<vectorField>
-    (
-        new vectorField
-        (
-            (
-                (traction - nCurrent*pressure)
-              - (nCurrent & pSigma)
-              + impK*(n & pGradD)
-            )*rImpK
-        )
-    );
 }
 
 

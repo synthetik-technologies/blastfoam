@@ -148,7 +148,7 @@ tmp<Field<vector> > solidWedgeFvPatchVectorField::snGrad() const
 
     const vectorField& patchC = patch().patch().faceCentres();
     vectorField nHat(this->patch().nf());
-    const vector& centreN = wedgePatch.centreNormal();
+    const vector centreN = wedgePatch.centreNormal();
     scalarField d(((patch().Cn() - patchC) & centreN)/(nHat & centreN));
     vectorField projC(d*nHat + patchC);
 

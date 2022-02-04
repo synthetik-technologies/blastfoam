@@ -57,50 +57,8 @@ addToRunTimeSelectionTable
 
 nonLinGeomTotalLagSolid::nonLinGeomTotalLagSolid(dynamicFvMesh& mesh)
 :
-    solidModel(typeName, mesh, nonLinGeom(), incremental()),
-    F_
-    (
-        IOobject
-        (
-            "F",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedTensor("I", dimless, I)
-    ),
-    Finv_
-    (
-        IOobject
-        (
-            "Finv",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        inv(F_)
-    ),
-    J_
-    (
-        IOobject
-        (
-            "J",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        det(F_)
-    ),
-    impK_(mechanical().impK()),
-    impKf_(mechanical().impKf()),
-    rImpK_(1.0/impK_)
+    totalLagSolid<incrementalSolid>(typeName, mesh)
 {
-    DDisRequired();
-
     //- Dummy Call to make sure the necessary old fields are initialized
     fvc::d2dt2(rho().oldTime(), D().oldTime());
 }
@@ -161,37 +119,12 @@ bool nonLinGeomTotalLagSolid::evolve()
         // Under-relax the DD field using fixed or adaptive under-relaxation
         relaxField(DD(), iCorr);
 
-        // Update the total displacement
-        D() = D().oldTime() + DD();
-
-        // Update gradient of displacement increment
-        mechanical().grad(DD(), gradDD());
-
-        // Update the gradient of total displacement
-        gradD() = gradD().oldTime() + gradDD();
-
-        // Total deformation gradient
-        F_ = I + gradD().T();
-
-        // Inverse of the deformation gradient
-        Finv_ = inv(F_);
-
-        // Jacobian of the deformation gradient
-        J_ = det(F_);
-
-        // Check if outer loops are diverging
-        if (!enforceLinear())
-        {
-            checkEnforceLinear(J_);
-        }
-
         // Update the momentum equation inverse diagonal field
         // This may be used by the mechanical law when calculating the
         // hydrostatic pressure
         const volScalarField DEqnA("DEqnA", DDEqn.A());
 
-        // Calculate the stress using run-time selectable mechanical law
-        mechanical().correct(sigma());
+        this->update();
 
         // Update impKf to improve convergence
         // Note: impK and rImpK are not updated as they are used for traction
@@ -220,15 +153,6 @@ bool nonLinGeomTotalLagSolid::evolve()
         ) && ++iCorr < nCorr()
     );
 
-    // Interpolate cell displacements to vertices
-    mechanical().interpolate(DD(), pointDD());
-
-    // Increment of displacement
-    D() = D().oldTime() + DD();
-
-    // Increment of point displacement
-    pointD() = pointD().oldTime() + pointDD();
-
     // Velocity
     U() = fvc::ddt(D());
 
@@ -247,10 +171,7 @@ tmp<vectorField> nonLinGeomTotalLagSolid::tractionBoundarySnGrad
     const label patchID = patch.index();
 
     // Patch implicit stiffness field
-    const scalarField& impK = impK_.boundaryField()[patchID];
-
-    // Patch reciprocal implicit stiffness field
-    const scalarField& rImpK = rImpK_.boundaryField()[patchID];
+    const scalarField& pimpK = impK_.boundaryField()[patchID];
 
     // Patch gradient
     const tensorField& pGradDD = gradDD().boundaryField()[patchID];
@@ -271,8 +192,8 @@ tmp<vectorField> nonLinGeomTotalLagSolid::tractionBoundarySnGrad
                 (
                     (traction - n*pressure)
                   - (n & pSigma)
-                  + impK*(n & pGradDD)
-                )*rImpK
+                  + pimpK*(n & pGradDD)
+                )/pimpK
             )
         );
     }
@@ -293,8 +214,8 @@ tmp<vectorField> nonLinGeomTotalLagSolid::tractionBoundarySnGrad
                 (
                     (traction - nCurrent*pressure)
                   - (nCurrent & pSigma)
-                  + impK*(n & pGradDD)
-                )*rImpK
+                  + pimpK*(n & pGradDD)
+                )/pimpK
             )
         );
     }

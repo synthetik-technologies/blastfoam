@@ -51,43 +51,8 @@ addToRunTimeSelectionTable(solidModel, unsLinGeomSolid, dictionary);
 
 unsLinGeomSolid::unsLinGeomSolid(dynamicFvMesh& mesh)
 :
-    solidModel(typeName, mesh, nonLinGeom(), incremental()),
-    sigmaf_
-    (
-        IOobject
-        (
-            "sigmaf",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedSymmTensor("zero", dimForce/dimArea, symmTensor::zero)
-    ),
-    gradDf_
-    (
-        IOobject
-        (
-            "grad(" + D().name() + ")f",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::NO_WRITE
-        ),
-        mesh,
-        dimensionedTensor("0", dimless, tensor::zero)
-    ),
-    impK_(mechanical().impK()),
-    impKf_(mechanical().impKf()),
-    rImpK_(1.0/impK_)
-{
-    DisRequired();
-
-    // Store old times
-    gradDf_.oldTime();
-    sigmaf_.oldTime();
-}
+    unsLinSolid<unsTotalDispSolid>(typeName, mesh)
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -128,21 +93,8 @@ bool unsLinGeomSolid::evolve()
         // Under-relax the field
         relaxField(D(), iCorr);
 
-        // Update increment of displacement
-        //DD() = D() - D().oldTime();
-
-        // Interpolate D to pointD
-        mechanical().interpolate(D(), pointD(), false);
-
-        // Update gradient of displacement
-        mechanical().grad(D(), pointD(), gradD(), gradDf_);
-
-        // Update gradient of displacement increment
-        //gradDD() = gradD() - gradD().oldTime();
-
         // Calculate the stress using run-time selectable mechanical law
-        mechanical().correct(sigmaf_);
-        mechanical().correct(sigma());
+        update();
     }
     while
     (
@@ -170,45 +122,6 @@ bool unsLinGeomSolid::evolve()
     U() = fvc::ddt(D());
 
     return true;
-}
-
-
-tmp<vectorField> unsLinGeomSolid::tractionBoundarySnGrad
-(
-    const vectorField& traction,
-    const scalarField& pressure,
-    const fvPatch& patch
-) const
-{
-    // Patch index
-    const label patchID = patch.index();
-
-    // Patch mechanical property
-    const scalarField& impK = impK_.boundaryField()[patchID];
-
-    // Patch reciprocal implicit stiffness field
-    const scalarField& rImpK = rImpK_.boundaryField()[patchID];
-
-    // Patch gradient
-    const tensorField& gradD = gradDf_.boundaryField()[patchID];
-
-    // Patch stress
-    const symmTensorField& sigma = sigmaf_.boundaryField()[patchID];
-
-    // Patch unit normals
-    const vectorField n(patch.nf());
-
-    // Return patch snGrad
-    return tmp<vectorField>
-    (
-        new vectorField
-        (
-            (
-                (traction - n*pressure)
-              - (n & (sigma - impK*gradD))
-            )*rImpK
-        )
-    );
 }
 
 

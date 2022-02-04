@@ -112,7 +112,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("weakThermalLinearGeometry");
+    TypeName("weakThermalLinear");
 
     // Constructors
 

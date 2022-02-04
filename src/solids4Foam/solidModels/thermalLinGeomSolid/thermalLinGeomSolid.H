@@ -45,7 +45,8 @@ SourceFiles
 #ifndef thermalLinGeomSolid_H
 #define thermalLinGeomSolid_H
 
-#include "solidModel.H"
+#include "linSolid.H"
+#include "totalDispSolid.H"
 #include "thermalModel.H"
 #include "SolverPerformance.H"
 
@@ -65,7 +66,7 @@ namespace solidModels
 
 class thermalLinGeomSolid
 :
-    public solidModel
+    public linSolid<totalDispSolid>
 {
     // Private data
 
@@ -84,18 +85,6 @@ class thermalLinGeomSolid
         //- Absolute temperature tolerance (in degrees)
         const scalar absTTol_;
 
-        //- Implicit stiffness; coefficient of the Laplacian term
-        //  The value of this term only affects convergence and not the answer
-        //  In the case of Hookean elasticity, (2*mu + lambda) is the optimum
-        const volScalarField impK_;
-
-        //- Implicit stiffness surface field
-        surfaceScalarField impKf_;
-
-        //- Reciprocal of impK
-        //  We divide by impK every time tractionBoundarySnGrad is called so we
-        //  will store the reciprocal for effficiency
-        const volScalarField rImpK_;
 
     // Private Member Functions
 
@@ -130,7 +119,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("thermalLinearGeometry");
+    TypeName("thermalLinear");
 
     // Constructors
 
@@ -148,14 +137,6 @@ public:
 
         // Access
 
-            //- Each solidModel must indicate whether D or DD is the primary
-            //  solution variable
-            virtual volVectorField& solutionD()
-            {
-                // This model solves for D
-                return D();
-            }
-
             //- Return const access to the cell temperature field
             const volScalarField& T() const
             {
@@ -172,14 +153,6 @@ public:
 
             //- Evolve the solid solver and solve the mathematical model
             virtual bool evolve();
-
-            //- Traction boundary surface normal gradient
-            virtual tmp<vectorField> tractionBoundarySnGrad
-            (
-                const vectorField& traction,
-                const scalarField& pressure,
-                const fvPatch& patch
-            ) const;
 
             //- Write fields
             virtual void writeFields(const Time& runTime);

@@ -300,10 +300,12 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     }
 
     this->pressure() = samplePatch.faceInterpolate(nbrP);
+    Info<<gMax(this->pressure())<<endl;
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
     this->traction() = -samplePatch.faceInterpolate(nbrViscous);
+    Info<<gMax(mag(this->traction()))<<endl;
 
     solidTractionFvPatchVectorField::updateCoeffs();
 }

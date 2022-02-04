@@ -79,15 +79,6 @@ class JohnsonCookPlastic
         //- Strain hardening exponentn
         dimensionedScalar n_;
 
-        //- Thermal softening coefficient
-        dimensionedScalar m_;
-
-        //- Reference temperature
-        dimensionedScalar Tref_;
-
-        //- Melting temperature
-        dimensionedScalar Tm_;
-
         //- Reference plastic strain
         dimensionedScalar epsilonP0_;
 
@@ -99,6 +90,15 @@ class JohnsonCookPlastic
 
         //- Are temperature effects included
         Switch temperatureEffects_;
+
+        //- Thermal softening coefficient
+        dimensionedScalar m_;
+
+        //- Reference temperature
+        dimensionedScalar Tref_;
+
+        //- Melting temperature
+        dimensionedScalar Tm_;
 
         mutable scalar Ti_;
         mutable scalar eDoti_;

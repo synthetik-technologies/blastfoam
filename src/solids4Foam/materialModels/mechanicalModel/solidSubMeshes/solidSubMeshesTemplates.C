@@ -545,22 +545,17 @@ Foam::solidSubMeshes::lookupBaseMeshVolField
 
         if (curSubMeshID == -1)
         {
-            FatalErrorIn
-                (
-                    "template<class Type>\n"
-                    "Foam::tmp< Foam::GeometricField"
-                    "<Type, Foam::fvPatchField, Foam::volMesh> >\n"
-                    "Foam::solidSubMeshes::lookupBaseMeshVolField\n"
-                    "(\n"
-                    "    const word& fieldName,\n"
-                    "    const fvMesh& subMesh\n"
-                    ") const"
-                )   << "SubMesh not found when looking for a field in the base "
-                    << "mesh" << abort(FatalError);
+            FatalErrorInFunction
+                << "SubMesh not found when looking for a field in the base "
+                << "mesh" << abort(FatalError);
         }
 
-        // Return the baseField interpolated to the subMesh
-        return subMeshes()[curSubMeshID].interpolate(baseField);
+        tmp<GeometricField<Type, fvsPatchField, surfaceMesh>> tinterpField
+        (
+            subMeshes()[curSubMeshID].interpolate(baseField)
+        );
+        tinterpField.ref().correctBoundaryConditions();
+        return tinterpField;
     }
 }
 
@@ -610,18 +605,9 @@ Foam::solidSubMeshes::lookupBaseMeshSurfaceField
 
         if (curSubMeshID == -1)
         {
-            FatalErrorIn
-                (
-                    "template<class Type>\n"
-                    "Foam::tmp< Foam::GeometricField"
-                    "<Type, Foam::fvsPatchField, Foam::surfaceMesh> >\n"
-                    "Foam::solidSubMeshes::lookupBaseMeshSurfaceField\n"
-                    "(\n"
-                    "    const word& fieldName,\n"
-                    "    const fvMesh& subMesh\n"
-                    ") const"
-                )   << "SubMesh not found when looking for a field in the base "
-                    << "mesh" << abort(FatalError);
+            FatalErrorInFunction
+                << "SubMesh not found when looking for a field in the base "
+                << "mesh" << abort(FatalError);
         }
 
         // Return the baseField interpolated to the subMesh

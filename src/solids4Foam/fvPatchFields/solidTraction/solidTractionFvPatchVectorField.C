@@ -300,7 +300,7 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
 
     if (tractionSeries_.valid())
     {
-        writeEntry(os, "tractionSeries", tractionSeries_());
+        writeEntry(os, tractionSeries_());
     }
     else
     {
@@ -309,7 +309,7 @@ void solidTractionFvPatchVectorField::write(Ostream& os) const
 
     if (pressureSeries_.valid())
     {
-        writeEntry(os, "pressureSeries", pressureSeries_());
+        writeEntry(os, pressureSeries_());
     }
     else
     {

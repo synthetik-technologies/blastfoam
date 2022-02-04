@@ -87,7 +87,7 @@ Foam::powerLawPlastic<PlasticType>::powerLawPlastic
     {
         FatalErrorInFunction
             << "Strength coefficient could not be determined." << nl
-            << "Either provide k or sigmaY." << nl
+            << "Either provide k or sigmaY and sigmaUT." << nl
             << abort(FatalError);
     }
 

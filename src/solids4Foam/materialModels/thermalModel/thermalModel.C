@@ -33,6 +33,8 @@ Author
 \*---------------------------------------------------------------------------*/
 
 #include "thermalModel.H"
+#include "fluidBlastThermo.H"
+#include "solidBlastThermo.H"
 #include "volFields.H"
 #include "fvc.H"
 #include "solidSubMeshes.H"
@@ -49,7 +51,7 @@ defineTypeNameAndDebug(thermalModel, 0);
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-thermalModel::thermalModel(const fvMesh& mesh)
+thermalModel::thermalModel(const fvMesh& mesh, const bool isSolid)
 :
     mesh_(mesh)
 {
@@ -67,7 +69,6 @@ thermalModel::thermalModel(const fvMesh& mesh)
     );
     if (mesh.foundObject<solidSubMeshes>(solidSubMeshes::typeName))
     {
-        Info<<"found"<<endl;
         subsetMeshes_.set
         (
             &mesh.lookupObjectRef<solidSubMeshes>(solidSubMeshes::typeName)
@@ -76,15 +77,35 @@ thermalModel::thermalModel(const fvMesh& mesh)
             subsetMeshes_->subMeshes();
         thermoModels_.setSize(subMeshes.size());
 
-        thermoPtr_ =
-            solidBlastThermo::New
+        if (isSolid)
+        {
+            thermoPtr_.set
             (
-                mesh,
-                thermophysicalProperties.subDict
+                solidBlastThermo::New
                 (
-                    subMeshes[0].subMesh().name()
-                )
+                    mesh,
+                    thermophysicalProperties.subDict
+                    (
+                        subMeshes[0].subMesh().name()
+                    )
+                ).ptr()
             );
+        }
+        else
+        {
+            thermoPtr_.set
+            (
+                fluidBlastThermo::New
+                (
+                    1,
+                    mesh,
+                    thermophysicalProperties.subDict
+                    (
+                        subMeshes[0].subMesh().name()
+                    )
+                ).ptr()
+            );
+        }
         forAll(subMeshes, i)
         {
             {
@@ -102,30 +123,62 @@ thermalModel::thermalModel(const fvMesh& mesh)
                 T.write();
             }
 
-            thermoModels_.set
-            (
-                i,
-                solidBlastThermo::New
+            if (isSolid)
+            {
+                thermoModels_.set
                 (
-                    subMeshes[i].subMesh(),
-                    thermophysicalProperties.subDict
+                    i,
+                    solidBlastThermo::New
                     (
-                        subMeshes[i].subMesh().name()
-                    )
-                )
-            );
+                        subMeshes[i].subMesh(),
+                        thermophysicalProperties.subDict
+                        (
+                            subMeshes[i].subMesh().name()
+                        )
+                    ).ptr()
+                );
+            }
+            else
+            {
+                thermoModels_.set
+                (
+                    i,
+                    fluidBlastThermo::New
+                    (
+                        1,
+                        subMeshes[i].subMesh(),
+                        thermophysicalProperties.subDict
+                        (
+                            subMeshes[i].subMesh().name()
+                        )
+                    ).ptr()
+                );
+            }
         }
         correct();
     }
-    else
+    else if (isSolid)
     {
-        Info<<"nope"<<endl;
-        thermoPtr_ =
+        thermoPtr_.set
+        (
             solidBlastThermo::New
             (
                 mesh,
                 thermophysicalProperties
-            );
+            ).ptr()
+        );
+    }
+    else
+    {
+        thermoPtr_.set
+        (
+            fluidBlastThermo::New
+            (
+                1,
+                mesh,
+                thermophysicalProperties
+            ).ptr()
+        );
     }
 }
 

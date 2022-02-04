@@ -31,278 +31,6 @@ License
 #include "fvm.H"
 #include "zeroGradientFvPatchFields.H"
 
-// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
-
-Foam::tmp<Foam::volScalarField> Foam::nonLinearPlasticModel::Ibar
-(
-    const volSymmTensorField& devBEbar
-)
-{
-    // From Simo & Hughes 1998:
-    // but this incorrectly results in det(bEbar) =! 1
-    //bEbar = (s/mu) + Ibar*I;
-
-    // A method of calculating Ibar to enforce det(bEbar) == 1 is proposed
-    // by solving a cubic equation.
-    // Rubin and Attia, CALCULATION OF HYPERELASTIC RESPONSE OF FINITELY
-    // DEFORMED ELASTIC-VISCOPLASTIC MATERIALS, INTERNATIONAL JOURNAL FOR
-    // NUMERICAL METHODS IN ENGINEERING, VOL. 39,309-320(1996)
-    // and
-    // M. Hollenstein M. Jabareen M. B. Rubin, Modeling a smooth elastic-
-    // inelastic transition with a strongly objective numerical integrator
-    // needing no iteration, Comput Mech (2013) 52:649–667
-    // DOI 10.1007/s00466-013-0838-7
-
-    // Note: In Hollenstrain et al. (2013), they suggest that Eqn 49(a) in the
-    // original Rubin and Attia paper should be used.
-
-    // Method implemented below is translated from the SmoothMultiPhase fortran
-    // subroutine of Rubin
-
-    tmp<volScalarField> tIbar
-    (
-        new volScalarField
-        (
-            IOobject
-            (
-                "Ibar",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("zero", dimless, 0.0)
-        )
-    );
-
-    volScalarField& Ibar = tIbar.ref();
-
-    // Take reference to internal fields for efficiency
-    scalarField& IbarI = Ibar.primitiveFieldRef();
-    const symmTensorField devBEbarI(devBEbar.primitiveField());
-
-    // Calculate internal field
-    forAll(IbarI, cellI)
-    {
-        const scalar detdevBepr = det(devBEbarI[cellI]);
-        const scalar dotprod = devBEbarI[cellI] && devBEbarI[cellI];
-        const scalar fac1 = 2.0*dotprod/3.0;
-
-        scalar alpha1 = 0.0;
-
-        if (mag(fac1) < SMALL)
-        {
-            alpha1 = 3.0;
-        }
-        else
-        {
-            const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
-
-            if (fac2 >= 1.0)
-            {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cosh(Foam::acosh(fac2)/3.0);
-            }
-            else
-            {
-                alpha1 = 3.0*Foam::sqrt(fac1)*Foam::cos(Foam::acos(fac2)/3.0);
-            }
-        }
-
-        IbarI[cellI] = alpha1/3.0;
-    }
-
-    // Calculate boundary field
-    forAll(Ibar.boundaryField(), patchI)
-    {
-        if
-        (
-            !Ibar.boundaryField()[patchI].coupled()
-         && Ibar.boundaryField()[patchI].type() != "empty"
-        )
-        {
-            // Take reference to patch fields for efficiency
-            scalarField& IbarP = Ibar.boundaryFieldRef()[patchI];
-            const symmTensorField& devBEbarP =
-                devBEbar.boundaryField()[patchI];
-
-            forAll(IbarP, faceI)
-            {
-                const scalar detdevBepr = det(devBEbarP[faceI]);
-                const scalar dotprod =
-                    devBEbarP[faceI] && devBEbarP[faceI];
-                const scalar fac1 = 2.0*dotprod/3.0;
-
-                scalar alpha1 = 0.0;
-
-                if (mag(fac1) < SMALL)
-                {
-                    alpha1 = 3.0;
-                }
-                else
-                {
-                    const scalar fac2 =
-                        (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
-
-                    if (fac2 >= 1.0)
-                    {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cosh(Foam::acosh(fac2)/3.0);
-                    }
-                    else
-                    {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cos(Foam::acos(fac2)/3.0);
-                    }
-                }
-
-                IbarP[faceI] = alpha1/3.0;
-            }
-        }
-    }
-
-    Ibar.correctBoundaryConditions();
-
-    return tIbar;
-}
-
-
-Foam::tmp<Foam::surfaceScalarField> Foam::nonLinearPlasticModel::Ibar
-(
-    const surfaceSymmTensorField& devBEbar
-)
-{
-    // From Simo & Hughes 1998:
-    // but this incorrectly results in det(bEbar) =! 1
-    //bEbar = (s/mu) + Ibar*I;
-
-    // A method of calculating Ibar to enforce det(bEbar) == 1 is proposed
-    // by solving a cubic equation.
-    // Rubin and Attia, CALCULATION OF HYPERELASTIC RESPONSE OF FINITELY
-    // DEFORMED ELASTIC-VISCOPLASTIC MATERIALS, INTERNATIONAL JOURNAL FOR
-    // NUMERICAL METHODS IN ENGINEERING, VOL. 39,309-320(1996)
-    // and
-    // M. Hollenstein M. Jabareen M. B. Rubin, Modeling a smooth elastic-
-    // inelastic transition with a strongly objective numerical integrator
-    // needing no iteration, Comput Mech (2013) 52:649–667
-    // DOI 10.1007/s00466-013-0838-7
-
-    // Note: In Hollenstrain et al. (2013), they suggest that Eqn 49(a) in the
-    // original Rubin and Attia paper should be used.
-
-    // Method implemented below is translated from the SmoothMultiPhase fortran
-    // subroutine of Rubin
-
-    tmp<surfaceScalarField> tIbar
-    (
-        new surfaceScalarField
-        (
-            IOobject
-            (
-                "Ibar",
-                mesh().time().timeName(),
-                mesh(),
-                IOobject::NO_READ,
-                IOobject::AUTO_WRITE
-            ),
-            mesh(),
-            dimensionedScalar("zero", dimless, 0.0)
-        )
-    );
-    surfaceScalarField& Ibar = tIbar.ref();
-
-    // Take reference to internal fields for efficiency
-    scalarField& IbarI = Ibar.primitiveFieldRef();
-    const symmTensorField devBEbarI(devBEbar.primitiveField());
-
-    // Calculate internal field
-    forAll(IbarI, cellI)
-    {
-        const scalar detdevBepr = det(devBEbarI[cellI]);
-        const scalar dotprod = devBEbarI[cellI] && devBEbarI[cellI];
-        const scalar fac1 = 2.0*dotprod/3.0;
-
-        scalar alpha1 = 0.0;
-
-        if (mag(fac1) < SMALL)
-        {
-            alpha1 = 3.0;
-        }
-        else
-        {
-            const scalar fac2 = (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
-
-            if (fac2 >= 1.0)
-            {
-                alpha1 =
-                    3.0*Foam::sqrt(fac1)*Foam::cosh(Foam::acosh(fac2)/3.0);
-            }
-            else
-            {
-                alpha1 =
-                    3.0*Foam::sqrt(fac1)*Foam::cos(Foam::acos(fac2)/3.0);
-            }
-        }
-
-        IbarI[cellI] = alpha1/3.0;
-    }
-
-    // Calculate boundary field
-    forAll(Ibar.boundaryField(), patchI)
-    {
-        if
-        (
-            !Ibar.boundaryField()[patchI].coupled()
-         && Ibar.boundaryField()[patchI].type() != "empty"
-        )
-        {
-            // Take reference to patch fields for efficiency
-            scalarField& IbarP = Ibar.boundaryFieldRef()[patchI];
-            const symmTensorField& devBEbarP =
-                devBEbar.boundaryField()[patchI];
-
-            forAll(IbarP, faceI)
-            {
-                const scalar detdevBepr = det(devBEbarP[faceI]);
-                const scalar dotprod =
-                    devBEbarP[faceI] && devBEbarP[faceI];
-                const scalar fac1 = 2.0*dotprod/3.0;
-
-                scalar alpha1 = 0.0;
-
-                if (mag(fac1) < SMALL)
-                {
-                    alpha1 = 3.0;
-                }
-                else
-                {
-                    const scalar fac2 =
-                        (4.0*(1.0 - detdevBepr))/(pow(fac1, 1.5));
-
-                    if (fac2 >= 1.0)
-                    {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cosh(Foam::acosh(fac2)/3.0);
-                    }
-                    else
-                    {
-                        alpha1 =
-                            3.0*Foam::sqrt(fac1)
-                           *Foam::cos(Foam::acos(fac2)/3.0);
-                    }
-                }
-
-                IbarP[faceI] = alpha1/3.0;
-            }
-        }
-    }
-
-    return tIbar;
-}
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 // Construct from dictionary
@@ -317,11 +45,7 @@ Foam::nonLinearPlasticModel::nonLinearPlasticModel
     plasticModel(name, mesh, dict, nonLinGeom),
     updateBEbarConsistent_
     (
-        dict.lookupOrDefault<Switch>
-        (
-            "updateBEbarConsistent",
-            Switch(true)
-        )
+        dict.lookupOrDefault<Switch>("updateBEbarConsistent", true)
     )
 {
     if (updateBEbarConsistent_)
@@ -397,7 +121,11 @@ Foam::nonLinearPlasticModel::impK(const label patchi) const
 }
 
 
-void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
+void Foam::nonLinearPlasticModel::correct
+(
+    volSymmTensorField& sigma,
+    const bool needUpdate
+)
 {
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was
@@ -409,20 +137,21 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
 
     // Update the Jacobian of the total deformation gradient
     const volScalarField& J = this->J();
+    volScalarField& DEpsilonPEq = this->DEpsilonPEqRef();
+    volSymmTensorField& DEpsilonP = this->DEpsilonPRef();
     volSymmTensorField& bEbar = this->bEbarRef();
     volSymmTensorField& bEbarTrial = this->bEbarTrialRef();
     volSymmTensorField& plasticN = this->plasticNRef();
     volScalarField& DLambda = this->DLambdaRef();
     volScalarField& sigmaY = this->sigmaYRef();
     const volScalarField& sigmaYOld = sigmaY.oldTime();
-    const volScalarField& epsilonPEqOld = epsilonPEq().oldTime();
-
-    // Calculate the relative Jacobian
-    const volScalarField relJ(J/J.oldTime());
+    volScalarField& epsilonPEq = this->epsilonPEqRef();
+    volSymmTensorField& epsilonP = this->epsilonPRef();
+    const volScalarField& epsilonPEqOld = epsilonPEq.oldTime();
 
     // Calculate the relative deformation gradient with the volumetric term
     // removed
-    const volTensorField relFbar(1.0/cbrt(relJ)*relF());
+    const volTensorField relFbar(relF()/cbrt(relJ()));
 
     // Update bE trial
     bEbarTrial = transform(relFbar, bEbar.oldTime());
@@ -439,11 +168,10 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
 
     // Store previous iteration for under-relaxation and calculation of plastic
     // residual in the solver
-    DEpsilonPRef().storePrevIter();
+    DEpsilonP.storePrevIter();
 
     // Normalise residual in Newton method with respect to mag(bE)
-    const scalar maxMagBE =
-        max(gMax(mag(bEbarTrial.primitiveField())), SMALL);
+    const scalar maxMagBE = max(max(mag(bEbarTrial)).value(), small);
 
     // Trial yield function
     // sigmaY is the Cauchy yield stress so we scale it by J
@@ -470,18 +198,20 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
         );
     }
 
+    volSymmTensorField::Boundary& bplasticN = plasticN.boundaryFieldRef();
+    volScalarField::Boundary& bDLambda = DLambda.boundaryFieldRef();
+    volScalarField::Boundary& bsigmaY = sigmaY.boundaryFieldRef();
     forAll(fTrial.boundaryField(), patchI)
     {
         // Take references to the boundary patch fields for efficiency
         const scalarField& pfTrial = fTrial.boundaryField()[patchI];
         const symmTensorField& psTrial = sTrial.boundaryField()[patchI];
-        symmTensorField& pN = plasticN.boundaryFieldRef()[patchI];
-        scalarField& pDLambda = DLambda.boundaryFieldRef()[patchI];
-        scalarField& psigmaY = sigmaY.boundaryFieldRef()[patchI];
+        symmTensorField& pN = bplasticN[patchI];
+        scalarField& pDLambda = bDLambda[patchI];
+        scalarField& psigmaY = bsigmaY[patchI];
         const scalarField& pmuBar = muBar.boundaryField()[patchI];
 
-        const scalarField& psigmaYOld =
-            sigmaYOld.boundaryField()[patchI];
+        const scalarField& psigmaYOld = sigmaYOld.boundaryField()[patchI];
         const scalarField& pepsilonPEqOld =
             epsilonPEqOld.boundaryField()[patchI];
         const scalarField& pJ = J.boundaryField()[patchI];
@@ -508,22 +238,25 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     }
 
     // Update DEpsilonP and DEpsilonPEq
-    DEpsilonPEqRef() = sqrtTwoOverThree_*DLambda;
-    DEpsilonPRef() = Ibar*DLambda*plasticN;
-    DEpsilonPRef().relax();
+    DEpsilonPEq = sqrtTwoOverThree_*DLambda;
+    DEpsilonP = Ibar*DLambda*plasticN;
+    DEpsilonP.relax();
+
+    epsilonPEq = epsilonPEq.oldTime() + DEpsilonPEq;
+    epsilonP = epsilonP.oldTime() + DEpsilonP;
 
     // Calculate deviatoric stress
-    const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP());
+    const volSymmTensorField s(sTrial - 2*mu_*DEpsilonP);
 
     // Update bEbar
+    const volSymmTensorField devBEbar(s/mu_);
     if (updateBEbarConsistent_)
     {
-        const volSymmTensorField devBEbar(s/mu_);
         bEbar = devBEbar + this->Ibar(devBEbar)*I;
     }
     else
     {
-        bEbar = (s/mu_) + Ibar*I;
+        bEbar = devBEbar + Ibar*I;
     }
 
     // Update hydrostatic stress (negative of pressure)
@@ -534,14 +267,16 @@ void Foam::nonLinearPlasticModel::correct(volSymmTensorField& sigma)
     );
 
     // Update the Cauchy stress
-    sigma = (1.0/J)*(sigmaHyd()*I + s);
-
-    epsilonPEqRef() += DEpsilonPEqRef();
-    epsilonPRef() += DEpsilonPRef();
+    sigma = (sigmaHyd()*I + s)/J;
+    sigma.correctBoundaryConditions();
 }
 
 
-void Foam::nonLinearPlasticModel::correct(surfaceSymmTensorField& sigma)
+void Foam::nonLinearPlasticModel::correct
+(
+    surfaceSymmTensorField& sigma,
+    const bool needUpdate
+)
 {
     // Update the deformation gradient field
     // Note: if true is returned, it means that linearised elasticity was

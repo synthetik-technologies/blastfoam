@@ -46,7 +46,8 @@ SourceFiles
 #ifndef unsNonLinGeomTotalLagSolid_H
 #define unsNonLinGeomTotalLagSolid_H
 
-#include "solidModel.H"
+#include "unsTotalLagSolid.H"
+#include "unsTotalDispSolid.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -64,52 +65,12 @@ namespace solidModels
 
 class unsNonLinGeomTotalLagSolid
 :
-    public solidModel
+    public unsTotalLagSolid<unsTotalDispSolid>
 {
     // Private data
 
-        //- Cauchy (true) stress surface field
-        surfaceSymmTensorField sigmaf_;
-
-        //- Surface displacement gradient
-        surfaceTensorField gradDf_;
-
-        //- Total deformation gradient
-        volTensorField F_;
-
-        //- Total deformation gradient surface field
-        surfaceTensorField Ff_;
-
-        //- Inverse of the total deformation gradient
-        volTensorField Finv_;
-
-        //- Inverse of the total deformation gradient surface field
-        surfaceTensorField Finvf_;
-
-        //- Jacobian of total deformation gradient
-        volScalarField J_;
-
-        //- Jacobian of total deformation gradient surface field
-        surfaceScalarField Jf_;
-
-        //- Implicit stiffness; coefficient of the Laplacian term
-        //  The value of this term only affects convergence and not the answer
-        //  In the case of Hookean elasticity, (2*mu + lambda) is the optimum
-        const volScalarField impK_;
-
-        //- Implicit stiffness surface field
-        const surfaceScalarField impKf_;
-
-        //- Reciprocal of impK
-        //  We divide by impK every time tractionBoundarySnGrad is called so we
-        //  will store the reciprocal for effficiency
-        const volScalarField rImpK_;
-
         //- Switch to enable/disable nonlinear geometry
         const Switch nonLinear_;
-
-        //- Debug switch for the print-out of residuals
-        const Switch debug_;
 
         //- Viscosity/damping coefficient
         const dimensionedScalar K_;
@@ -129,21 +90,10 @@ class unsNonLinGeomTotalLagSolid
         void operator=(const unsNonLinGeomTotalLagSolid&);
 
 
-protected:
-
-    // Protected member functions
-
-        //- Return nonlinear geometry enumerator
-        virtual nonLinearGeometry::nonLinearType nonLinGeom() const
-        {
-            return nonLinearGeometry::TOTAL_LAGRANGIAN;
-        }
-
-
 public:
 
     //- Runtime type information
-    TypeName("unsNonLinearGeometryTotalLagrangian");
+    TypeName("unsNonLinearTotalLagrangian");
 
     // Constructors
 
@@ -159,34 +109,8 @@ public:
 
     // Member Functions
 
-        // Access
-
-            //- Each solidModel must indicate whether D or DD is the primary
-            //  solution variable
-            virtual volVectorField& solutionD()
-            {
-                // This model solves for D
-                return D();
-            }
-
-            //- Return nonLinear geometry switch
-            const Switch& nonLinear() const
-            {
-                return nonLinear_;
-            }
-
-        // Edit
-
-            //- Evolve the solid solver and solve the mathematical model
-            virtual bool evolve();
-
-            //- Traction boundary surface normal gradient
-            virtual tmp<vectorField> tractionBoundarySnGrad
-            (
-                const vectorField& traction,
-                const scalarField& pressure,
-                const fvPatch& patch
-            ) const;
+        //- Evolve the solid solver and solve the mathematical model
+        virtual bool evolve();
 };
 
 

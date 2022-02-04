@@ -65,7 +65,7 @@ namespace Foam
         if (!fieldName##Ptr_.valid())                                          \
         {                                                                      \
             fieldName##Ptr_ =                                                  \
-                makeFieldFunc<Type, fvPatchField, volMesh>                     \
+                this->template makeFieldFunc<Type, fvPatchField, volMesh>      \
                 (                                                              \
                     #fieldName,                                                \
                     dimType,                                                   \
@@ -80,7 +80,7 @@ namespace Foam
         if (!fieldName##Ptr_.valid())                                          \
         {                                                                      \
             fieldName##Ptr_ =                                                  \
-                makeFieldFunc<Type, fvPatchField, volMesh>                     \
+                this->template makeFieldFunc<Type, fvPatchField, volMesh>      \
                 (                                                              \
                     #fieldName,                                                \
                     dimType,                                                   \
@@ -97,7 +97,7 @@ namespace Foam
         if (!fieldName##fPtr_.valid())                                         \
         {                                                                      \
             fieldName##fPtr_ =                                                 \
-                makeFieldFunc<Type, fvsPatchField, surfaceMesh>                \
+                this->template makeFieldFunc<Type, fvsPatchField, surfaceMesh> \
                 (                                                              \
                     #fieldName "f",                                            \
                     dimType,                                                   \
@@ -112,7 +112,7 @@ namespace Foam
         if (!fieldName##fPtr_.valid())                                         \
         {                                                                      \
             fieldName##fPtr_ =                                                 \
-                makeFieldFunc<Type, fvsPatchField, surfaceMesh>                \
+                this->template makeFieldFunc<Type, fvsPatchField, surfaceMesh> \
                 (                                                              \
                     #fieldName "f",                                            \
                     dimType,                                                   \
@@ -184,11 +184,17 @@ class mechanicalLaw
             //- Relative deformation gradient (surface)
             mutable autoPtr<surfaceTensorField> relFfPtr_;
 
-            //- Jacobian of the toal deformation gradient (vol)
+            //- Jacobian of the total deformation gradient (vol)
             mutable autoPtr<volScalarField> JPtr_;
 
-            //- Jacobian of the toal deformation gradient (surface)
+            //- Jacobian of the total deformation gradient (surface)
             mutable autoPtr<surfaceScalarField> JfPtr_;
+
+            //- Relative Jacobian of the total deformation gradient (vol)
+            mutable autoPtr<volScalarField> relJPtr_;
+
+            //- Relative Jacobian of the total deformation gradient (surface)
+            mutable autoPtr<surfaceScalarField> relJfPtr_;
 
             // Hydrostatic stress (negative of hydrostatic pressure) (vol)
             mutable autoPtr<volScalarField> sigmaHydPtr_;
@@ -227,6 +233,12 @@ class mechanicalLaw
 
         //- Make the Jf field
         void makeJf() const;
+
+        //- Make the relJ field
+        void makeRelJ() const;
+
+        //- Make the relJf field
+        void makeRelJf() const;
 
         //- Make the sigmaHyd field
         void makeSigmaHyd() const;
@@ -318,6 +330,18 @@ protected:
 
         //- Return a non-const reference to the Jf field
         surfaceScalarField& JfRef();
+
+        //- Return a reference to the relJ field
+        const volScalarField& relJ() const;
+
+        //- Return a reference to the relJ field
+        volScalarField& relJRef();
+
+        //- Return a reference to the relJf field
+        const surfaceScalarField& relJf() const;
+
+        //- Return a reference to the relJf field
+        surfaceScalarField& relJfRef();
 
         //- Return a const reference to the sigmaHyd field
         const volScalarField& sigmaHyd() const;
