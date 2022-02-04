@@ -37,6 +37,10 @@ Foam::burstCyclicACMIPointPatchField<Type>::burstCyclicACMIPointPatchField
 )
 :
     cyclicACMIPointPatchField<Type>(p, iF),
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
     intactPointPatchField_
     (
         new calculatedPointPatchField<Type>
@@ -44,8 +48,7 @@ Foam::burstCyclicACMIPointPatchField<Type>::burstCyclicACMIPointPatchField
             p,
             iF
         )
-    ),
-    burstCyclicACMIPatch_(refCast<const burstCyclicACMIPointPatch>(p))
+    )
 {}
 
 
@@ -58,8 +61,11 @@ Foam::burstCyclicACMIPointPatchField<Type>::burstCyclicACMIPointPatchField
 )
 :
     cyclicACMIPointPatchField<Type>(p, iF, dict),
-    intactPointPatchField_(),
-    burstCyclicACMIPatch_(refCast<const burstCyclicACMIPointPatch>(p))
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
+    intactPointPatchField_()
 {
     if (!isType<burstCyclicACMIPointPatch>(p))
     {
@@ -101,8 +107,11 @@ Foam::burstCyclicACMIPointPatchField<Type>::burstCyclicACMIPointPatchField
 )
 :
     cyclicACMIPointPatchField<Type>(ptf, p, iF, mapper),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr()),
-    burstCyclicACMIPatch_(refCast<const burstCyclicACMIPointPatch>(p))
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
+    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {
     if (!isType<burstCyclicACMIPointPatch>(this->patch()))
     {
@@ -124,12 +133,41 @@ Foam::burstCyclicACMIPointPatchField<Type>::burstCyclicACMIPointPatchField
 )
 :
     cyclicACMIPointPatchField<Type>(ptf, iF),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr()),
-    burstCyclicACMIPatch_(ptf.burstCyclicACMIPatch_)
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
+    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::burstCyclicACMIPointPatchField<Type>::autoMap
+(
+    const pointPatchFieldMapper& m
+)
+{
+    cyclicACMIPointPatchField<Type>::autoMap(m);
+    intactPointPatchField_->autoMap(m);
+}
+
+
+template<class Type>
+void Foam::burstCyclicACMIPointPatchField<Type>::rmap
+(
+    const pointPatchField<Type>& ptf,
+    const labelList& addr
+)
+{
+    cyclicACMIPointPatchField<Type>::rmap(ptf, addr);
+
+    const burstCyclicACMIPointPatchField<Type>& bpf =
+        refCast<const burstCyclicACMIPointPatchField<Type>>(ptf);
+    intactPointPatchField_->rmap(bpf.intactPointPatchField_(), addr);
+}
+
 
 template<class Type>
 void Foam::burstCyclicACMIPointPatchField<Type>::updateCoeffs()
@@ -139,10 +177,6 @@ void Foam::burstCyclicACMIPointPatchField<Type>::updateCoeffs()
         return;
     }
 
-    const_cast<burstCyclicACMIPointPatch&>
-    (
-        burstCyclicACMIPatch_
-    ).update(this->internalField().mesh()().time().timeIndex());
     intactPointPatchField_->updateCoeffs();
     cyclicACMIPointPatchField<Type>::updateCoeffs();
 }
@@ -185,8 +219,8 @@ void Foam::burstCyclicACMIPointPatchField<Type>::evaluate
 
     // Calculate the mixed boundary
     pIf =
-        intactVals*burstCyclicACMIPatch_.intact()
-      + this->patchInternalField()*(1.0 - burstCyclicACMIPatch_.intact());
+        intactVals*burstBase_.pointIntact()
+      + this->patchInternalField()*(1.0 - burstBase_.pointIntact());
 
     // Set the internal field
     this->setInInternalField(iF, pIf);

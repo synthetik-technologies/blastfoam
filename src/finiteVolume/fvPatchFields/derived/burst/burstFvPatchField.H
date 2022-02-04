@@ -41,7 +41,7 @@ SourceFiles
 #define burstFvPatchField_H
 
 #include "fvPatchField.H"
-#include "burstFvPatch.H"
+#include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -55,7 +55,8 @@ namespace Foam
 template<class Type>
 class burstFvPatchField
 :
-    public fvPatchField<Type>
+    public fvPatchField<Type>,
+    public burstFvPatchFieldBase
 {
     // Private Data
 
@@ -64,15 +65,6 @@ class burstFvPatchField
 
         //- Intact patchField
         autoPtr<fvPatchField<Type>> intactPatchField_;
-
-        //- Name of the pressure field
-        word pName_;
-
-        //- Name of the impulse field
-        word impulseName_;
-
-        //- Reference to the burstFvPatch
-        burstFvPatch& burstPatch_;
 
 
 public:

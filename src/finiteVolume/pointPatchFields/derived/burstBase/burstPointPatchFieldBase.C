@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -23,32 +23,71 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "burstCyclicFvPatch.H"
-#include "addToRunTimeSelectionTable.H"
-#include "fvMesh.H"
-#include "volFields.H"
+#include "burstPointPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    defineTypeNameAndDebug(burstCyclicFvPatch, 0);
-    addToRunTimeSelectionTable(fvPatch, burstCyclicFvPatch, polyPatch);
+    defineTypeNameAndDebug(burstPointPatchFieldBase, 0);
 }
+
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+
+Foam::burstPointPatchFieldBase::burstPointPatchFieldBase
+(
+    const polyPatch& pp
+)
+:
+    burstBase_
+    (
+        const_cast<burstPolyPatchBase&>
+        (
+            dynamicCast<const burstPolyPatchBase>(pp)
+        )
+    )
+{}
+
+
+Foam::burstPointPatchFieldBase::burstPointPatchFieldBase
+(
+    const polyPatch& pp,
+    const burstPointPatchFieldBase& bpf
+)
+:
+    burstBase_
+    (
+        const_cast<burstPolyPatchBase&>
+        (
+            dynamicCast<const burstPolyPatchBase>(pp)
+        )
+    )
+{}
+
+
+Foam::burstPointPatchFieldBase::burstPointPatchFieldBase
+(
+    const polyPatch& pp,
+    const burstPointPatchFieldBase& bpf,
+    const pointPatchFieldMapper& mapper
+)
+:
+    burstBase_
+    (
+        const_cast<burstPolyPatchBase&>
+        (
+            dynamicCast<const burstPolyPatchBase>(pp)
+        )
+    )
+{}
+
+
+// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+
+Foam::burstPointPatchFieldBase::~burstPointPatchFieldBase()
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::vectorField> Foam::burstCyclicFvPatch::delta() const
-{
-    if (intact_.size() != this->size() || min(intact_) > (1.0 - small))
-    {
-        return fvPatch::delta();
-    }
-    return
-        intact_*fvPatch::delta()
-      + (1.0 - intact_)*cyclicFvPatch::delta();
-}
-
 
 // ************************************************************************* //

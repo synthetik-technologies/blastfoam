@@ -37,6 +37,7 @@ SourceFiles
 
 #include "processorCyclicPolyPatch.H"
 #include "burstCyclicPolyPatch.H"
+#include "burstPolyPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,7 +50,8 @@ namespace Foam
 
 class burstProcessorCyclicPolyPatch
 :
-    public processorCyclicPolyPatch
+    public processorCyclicPolyPatch,
+    public burstPolyPatchBase
 {
 public:
 
@@ -218,42 +220,6 @@ public:
             const Field<scalar>& intact() const
             {
                 return referPatch().intact();
-            }
-
-            //- Is mapping needed
-            bool needMap() const
-            {
-                return referPatch().needMap();
-            }
-
-            //- Return if pressure is used
-            bool usePressure() const
-            {
-                return referPatch().usePressure();
-            }
-
-            //- Return burstProcessorCyclic pressure
-            scalar pBurst() const
-            {
-                return referPatch().pBurst();
-            }
-
-            //- Return if impulse is used
-            bool useImpulse() const
-            {
-                return referPatch().useImpulse();
-            }
-
-            //- Return burstProcessorCyclic impulse
-            scalar impulseBurst() const
-            {
-                return referPatch().impulseBurst();
-            }
-
-            //- Return if individual faces burstProcessorCyclic
-            bool partialBurst() const
-            {
-                return referPatch().partialBurst();
             }
 };
 

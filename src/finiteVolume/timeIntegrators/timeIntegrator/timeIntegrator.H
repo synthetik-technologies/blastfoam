@@ -212,8 +212,13 @@ public:
     virtual ~timeIntegrator();
 
 
-    // Selector
-    static autoPtr<timeIntegrator> New(const fvMesh& mesh);
+    // Selectors
+
+        //- Return a new timeIntegrator object
+        static autoPtr<timeIntegrator> New(const fvMesh& mesh);
+
+        //- Return a reference to a timeIntegrator object
+        static timeIntegrator& NewRef(const fvMesh& mesh);
 
 
     // Member Functions

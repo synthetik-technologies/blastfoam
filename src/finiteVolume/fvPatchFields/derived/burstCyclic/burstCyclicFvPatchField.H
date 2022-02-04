@@ -42,7 +42,7 @@ SourceFiles
 
 #include "fvPatchFields.H"
 #include "cyclicFvPatchField.H"
-#include "burstCyclicFvPatch.H"
+#include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,21 +56,13 @@ namespace Foam
 template<class Type>
 class burstCyclicFvPatchField
 :
-    public cyclicFvPatchField<Type>
+    public cyclicFvPatchField<Type>,
+    public burstFvPatchFieldBase
 {
     // Private Data
 
         //- Non-burstCyclic patchField
         autoPtr<fvPatchField<Type>> intactPatchField_;
-
-        //- Name of the pressure field
-        word pName_;
-
-        //- Name of the impulse field
-        word impulseName_;
-
-        //- Reference to the burstCyclicFvPatch
-        burstCyclicFvPatch& burstCyclicPatch_;
 
 
 public:

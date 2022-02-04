@@ -38,9 +38,6 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * //
-
-
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
 Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
@@ -65,7 +62,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
         neighbProcNo,
         referPatchName,
         patchType
-    )
+    ),
+    burstPolyPatchBase(dynamicCast<const polyPatch>(*this))
 {}
 
 
@@ -78,7 +76,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
     const word& patchType
 )
 :
-    processorCyclicPolyPatch(name, dict, index, bm, patchType)
+    processorCyclicPolyPatch(name, dict, index, bm, patchType),
+    burstPolyPatchBase(*this, dict)
 {}
 
 
@@ -88,7 +87,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
     const polyBoundaryMesh& bm
 )
 :
-    processorCyclicPolyPatch(pp, bm)
+    processorCyclicPolyPatch(pp, bm),
+    burstPolyPatchBase(*this, pp)
 {}
 
 
@@ -101,7 +101,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
     const label newStart
 )
 :
-    processorCyclicPolyPatch(pp, bm, index, newSize, newStart)
+    processorCyclicPolyPatch(pp, bm, index, newSize, newStart),
+    burstPolyPatchBase(*this, pp, newSize, newStart)
 {}
 
 
@@ -115,7 +116,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
     const word& referPatchName
 )
 :
-    processorCyclicPolyPatch(pp, bm, index, newSize, newStart, referPatchName)
+    processorCyclicPolyPatch(pp, bm, index, newSize, newStart, referPatchName),
+    burstPolyPatchBase(*this, pp, newSize, newStart)
 {}
 
 
@@ -128,7 +130,8 @@ Foam::burstProcessorCyclicPolyPatch::burstProcessorCyclicPolyPatch
     const label newStart
 )
 :
-    processorCyclicPolyPatch(pp, bm, index, mapAddressing, newStart)
+    processorCyclicPolyPatch(pp, bm, index, mapAddressing, newStart),
+    burstPolyPatchBase(*this, pp, mapAddressing)
 {}
 
 

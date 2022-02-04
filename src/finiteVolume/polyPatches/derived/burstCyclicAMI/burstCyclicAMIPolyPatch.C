@@ -83,7 +83,6 @@ void Foam::burstCyclicAMIPolyPatch::movePoints
 
 void Foam::burstCyclicAMIPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
-    needMap_ = true;
     cyclicAMIPolyPatch::initUpdateMesh(pBufs);
 }
 
@@ -91,7 +90,6 @@ void Foam::burstCyclicAMIPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 void Foam::burstCyclicAMIPolyPatch::updateMesh(PstreamBuffers& pBufs)
 {
     cyclicAMIPolyPatch::updateMesh(pBufs);
-    needMap_ = true;
 }
 
 
@@ -120,17 +118,8 @@ Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
         AMIRequireMatch,
         AMIMethod
     ),
-    intact_(size, 1.0),
-    usePressure_(true),
-    pBurst_(great),
-    useImpulse_(false),
-    impulseBurst_(great),
-    partialBurst_(false),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    burstPolyPatchBase(dynamicCast<const polyPatch>(*this))
+{}
 
 
 Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
@@ -154,48 +143,24 @@ Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
         AMIRequireMatch,
         AMIMethod
     ),
-    intact_(this->size(), 1.0),
-    usePressure_(dict.lookupOrDefault("usePressure", true)),
-    pBurst_(great),
-    useImpulse_(dict.lookupOrDefault("useImpulse", false)),
-    impulseBurst_(great),
-    partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    needMap_(false)
-{
-    if (usePressure_)
-    {
-        pBurst_ = dict.lookup<scalar>("pBurst");
-    }
-    if (useImpulse_)
-    {
-        impulseBurst_ = dict.lookup<scalar>("impulseBurst");
-    }
-}
+    burstPolyPatchBase(*this, dict)
+{}
 
 
 Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
 (
-    const burstCyclicAMIPolyPatch& pp,
+    const burstCyclicAMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm
 )
 :
-    cyclicAMIPolyPatch(pp, bm),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    cyclicAMIPolyPatch(bcpp, bm),
+    burstPolyPatchBase(*this, bcpp)
+{}
 
 
 Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
 (
-    const burstCyclicAMIPolyPatch& pp,
+    const burstCyclicAMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm,
     const label index,
     const label newSize,
@@ -203,37 +168,22 @@ Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
     const word& nbrPatchName
 )
 :
-    cyclicAMIPolyPatch(pp, bm, index, newSize, newStart, nbrPatchName),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    cyclicAMIPolyPatch(bcpp, bm, index, newSize, newStart, nbrPatchName),
+    burstPolyPatchBase(*this, bcpp, newSize, newStart)
+{}
 
 
 Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch
 (
-    const burstCyclicAMIPolyPatch& pp,
+    const burstCyclicAMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm,
     const label index,
     const labelUList& mapAddressing,
     const label newStart
 )
 :
-    cyclicAMIPolyPatch(pp, bm, index, mapAddressing, newStart),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(true)
+    cyclicAMIPolyPatch(bcpp, bm, index, mapAddressing, newStart),
+    burstPolyPatchBase(*this, bcpp, mapAddressing)
 {}
 
 
@@ -245,26 +195,10 @@ Foam::burstCyclicAMIPolyPatch::~burstCyclicAMIPolyPatch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::burstCyclicAMIPolyPatch::needMap() const
-{
-    return needMap_;
-}
-
-
 void Foam::burstCyclicAMIPolyPatch::write(Ostream& os) const
 {
     cyclicAMIPolyPatch::write(os);
-    writeEntry(os, "usePressure", usePressure_);
-    if (usePressure_)
-    {
-        writeEntry(os, "pBurst", pBurst_);
-    }
-    writeEntry(os, "useImpulse", useImpulse_);
-    if (useImpulse_)
-    {
-        writeEntry(os, "impulseBurst", impulseBurst_);
-    }
-    writeEntry(os, "partialBurst", partialBurst_);
+    burstPolyPatchBase::write(os);
 }
 
 

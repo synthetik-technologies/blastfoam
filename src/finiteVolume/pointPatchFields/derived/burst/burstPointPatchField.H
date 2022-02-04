@@ -37,6 +37,7 @@ SourceFiles
 
 #include "valuePointPatchField.H"
 #include "burstPointPatch.H"
+#include "burstPointPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,7 +51,8 @@ namespace Foam
 template<class Type>
 class burstPointPatchField
 :
-    public valuePointPatchField<Type>
+    public valuePointPatchField<Type>,
+    public burstPointPatchFieldBase
 {
     // Private Data
 
@@ -59,9 +61,6 @@ class burstPointPatchField
 
         //- Intact point patch field
         autoPtr<pointPatchField<Type>> intactPointPatchField_;
-
-        //- Local reference cast into the burst patch
-        const burstPointPatch& burstPatch_;
 
 
 public:
@@ -134,6 +133,15 @@ public:
             {
                 return intactPointPatchField_();
             }
+
+        // Mapping functions
+
+            //- Map (and resize as needed) from self given a mapping object
+            virtual void autoMap(const pointPatchFieldMapper&);
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            virtual void rmap(const pointPatchField<Type>&, const labelList&);
+
 
         // Evaluation functions
 

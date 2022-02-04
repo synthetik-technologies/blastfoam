@@ -12,5 +12,6 @@ blastMachNo/blastMachNo.C
 overpressure/overpressure.C
 dynamicPressure/dynamicPressure.C
 timeOfArrival/timeOfArrival.C
+intact/intact.C
 
 LIB = $(BLAST_LIBBIN)/libblastFunctionObjects

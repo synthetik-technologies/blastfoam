@@ -35,7 +35,8 @@ SourceFiles
 #ifndef burstPolyPatch_H
 #define burstPolyPatch_H
 
-#include "polyPatch.H"
+#include "wallPolyPatch.H"
+#include "burstPolyPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,37 +49,9 @@ namespace Foam
 
 class burstPolyPatch
 :
-    public polyPatch
+    public wallPolyPatch,
+    public burstPolyPatchBase
 {
-    // Private Data
-
-        //- Intact field
-        scalarField intact_;
-
-        //- Is pressure used
-        bool usePressure_;
-
-        //- Burst pressure
-        scalar pBurst_;
-
-        //- Reference pressure
-        scalarField pRef_;
-
-        //- bool impulse used
-        bool useImpulse_;
-
-        //- Burst impulse
-        scalar impulseBurst_;
-
-        //- Do individual faces burst
-        bool partialBurst_;
-
-        //- Is mapping needed
-        //  Since there is no mapping within polyPatch we will handle this
-        //  on the first call from a geometric field
-        mutable bool needMap_;
-
-
 protected:
 
     // Protected Member functions
@@ -219,53 +192,6 @@ public:
 
 
     // Member Functions
-
-        // Access
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Is mapping needed
-            bool needMap() const;
-
-            //- Return if pressure is used
-            bool usePressure() const
-            {
-                return usePressure_;
-            }
-
-            //- Return burst pressure
-            scalar pBurst() const
-            {
-                return pBurst_;
-            }
-
-            //- Return reference pressure
-            const scalarField& pRef() const
-            {
-                return pRef_;
-            }
-
-            //- Return if impulse is used
-            bool useImpulse() const
-            {
-                return useImpulse_;
-            }
-
-            //- Return burst impulse
-            scalar impulseBurst() const
-            {
-                return impulseBurst_;
-            }
-
-            //- Return if individual faces burst
-            bool partialBurst() const
-            {
-                return partialBurst_;
-            }
 
         //- Write the polyPatch data as a dictionary
         virtual void write(Ostream&) const;

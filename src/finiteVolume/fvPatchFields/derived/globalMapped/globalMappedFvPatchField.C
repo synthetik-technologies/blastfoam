@@ -168,7 +168,7 @@ void Foam::globalMappedFvPatchField<Type>::updateCoeffs()
 template<class Type>
 void Foam::globalMappedFvPatchField<Type>::write(Ostream& os) const
 {
-    fixedValueFvPatchField<Type>::write(os);
+    fvPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
 }
 

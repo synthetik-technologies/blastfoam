@@ -37,6 +37,10 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
 )
 :
     valuePointPatchField<Type>(p, iF),
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
     burstPointPatchField_
     (
         new calculatedPointPatchField<Type>
@@ -52,11 +56,8 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
             p,
             iF
         )
-    ),
-    burstPatch_(refCast<const burstPointPatch>(p))
-{
-    Info<<"here"<<endl;
-}
+    )
+{}
 
 
 template<class Type>
@@ -68,9 +69,12 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
 )
 :
     valuePointPatchField<Type>(p, iF, dict),
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
     burstPointPatchField_(),
-    intactPointPatchField_(),
-    burstPatch_(refCast<const burstPointPatch>(p))
+    intactPointPatchField_()
 {
     if (!isType<burstPointPatch>(p))
     {
@@ -83,7 +87,7 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
     }
 
     // Create a new patch dictionary and replace the type with the intactType
-     {
+    {
         dictionary burstDict(dict.parent(), dict.subDict("burstPatch"));
         if (!burstDict.found("patchType"))
         {
@@ -129,8 +133,11 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
 )
 :
     valuePointPatchField<Type>(ptf, p, iF, mapper),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr()),
-    burstPatch_(refCast<const burstPointPatch>(p))
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
+    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {
     if (!isType<burstPointPatch>(this->patch()))
     {
@@ -152,12 +159,43 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
 )
 :
     valuePointPatchField<Type>(ptf, iF),
-    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr()),
-    burstPatch_(ptf.burstPatch_)
+    burstPointPatchFieldBase
+    (
+        dynamicCast<const facePointPatch>(this->patch()).patch()
+    ),
+    intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::burstPointPatchField<Type>::autoMap
+(
+    const pointPatchFieldMapper& m
+)
+{
+    pointPatchField<Type>::autoMap(m);
+    intactPointPatchField_->autoMap(m);
+    burstPointPatchField_->autoMap(m);
+}
+
+
+template<class Type>
+void Foam::burstPointPatchField<Type>::rmap
+(
+    const pointPatchField<Type>& ptf,
+    const labelList& addr
+)
+{
+    pointPatchField<Type>::rmap(ptf, addr);
+
+    const burstPointPatchField<Type>& bpf =
+        refCast<const burstPointPatchField<Type>>(ptf);
+    intactPointPatchField_->rmap(bpf.intactPointPatchField_(), addr);
+    burstPointPatchField_->rmap(bpf.burstPointPatchField_(), addr);
+}
+
 
 template<class Type>
 void Foam::burstPointPatchField<Type>::updateCoeffs()
@@ -166,11 +204,6 @@ void Foam::burstPointPatchField<Type>::updateCoeffs()
     {
         return;
     }
-
-    const_cast<burstPointPatch&>
-    (
-        burstPatch_
-    ).update(this->internalField().mesh()().time().timeIndex());
 
     intactPointPatchField_->updateCoeffs();
     burstPointPatchField_->updateCoeffs();
@@ -212,9 +245,9 @@ void Foam::burstPointPatchField<Type>::evaluate
 
     // Calculate the mixed boundary
     (*this) =
-        intactVals*burstPatch_.intact()
+        intactVals*burstBase_.pointIntact()
       + burstPointPatchField_->patchInternalField()
-       *(1.0 - burstPatch_.intact());
+       *(1.0 - burstBase_.pointIntact());
 
     valuePointPatchField<Type>::updateCoeffs();
 }

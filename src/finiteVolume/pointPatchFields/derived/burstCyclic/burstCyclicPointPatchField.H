@@ -37,6 +37,7 @@ SourceFiles
 
 #include "cyclicPointPatchField.H"
 #include "burstCyclicPointPatch.H"
+#include "burstPointPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -50,15 +51,13 @@ namespace Foam
 template<class Type>
 class burstCyclicPointPatchField
 :
-    public cyclicPointPatchField<Type>
+    public cyclicPointPatchField<Type>,
+    public burstPointPatchFieldBase
 {
     // Private Data
 
         //- Intact point patch field
         autoPtr<pointPatchField<Type>> intactPointPatchField_;
-
-        //- Local reference cast into the burstCyclic patch
-        const burstCyclicPointPatch& burstCyclicPatch_;
 
 
 public:
@@ -125,6 +124,16 @@ public:
             {
                 return intactPointPatchField_();
             }
+
+
+        // Mapping functions
+
+            //- Map (and resize as needed) from self given a mapping object
+            virtual void autoMap(const pointPatchFieldMapper&);
+
+            //- Reverse map the given fvPatchField onto this fvPatchField
+            virtual void rmap(const pointPatchField<Type>&, const labelList&);
+
 
         // Evaluation functions
 

@@ -28,7 +28,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "pointMesh.H"
 #include "edgeList.H"
-#include "globalPolyBoundaryMesh.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -66,7 +65,6 @@ void Foam::burstPointPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
     facePointPatch::initUpdateMesh(pBufs);
     burstPointPatch::initCalcGeometry(pBufs);
-    curTimeIndex_ = -1;
 }
 
 
@@ -74,7 +72,6 @@ void Foam::burstPointPatch::updateMesh(PstreamBuffers& pBufs)
 {
     facePointPatch::updateMesh(pBufs);
     burstPointPatch::calcGeometry(pBufs);
-    curTimeIndex_ = -1;
 }
 
 
@@ -87,9 +84,7 @@ Foam::burstPointPatch::burstPointPatch
 )
 :
     facePointPatch(patch, bm),
-    burstPolyPatch_(refCast<const burstPolyPatch>(patch)),
-    intact_(patch.nPoints(), 1.0),
-    curTimeIndex_(-1)
+    burstPolyPatch_(refCast<const burstPolyPatch>(patch))
 
 {}
 
@@ -101,24 +96,6 @@ Foam::burstPointPatch::~burstPointPatch()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::burstPointPatch::update(const label curTimeIndex)
-{
-    if (curTimeIndex_ == curTimeIndex)
-    {
-        return;
-    }
-    curTimeIndex_ = curTimeIndex;
-
-    intact_ =
-        globalPolyBoundaryMesh::New
-        (
-            dynamicCast<const polyMesh>
-            (
-                burstPolyPatch_.boundaryMesh().mesh().thisDb()
-            )
-        )[burstPolyPatch_].faceToPoint(burstPolyPatch_.intact());
-}
 
 
 // ************************************************************************* //

@@ -83,7 +83,6 @@ void Foam::burstCyclicACMIPolyPatch::movePoints
 
 void Foam::burstCyclicACMIPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
-    needMap_ = true;
     cyclicACMIPolyPatch::initUpdateMesh(pBufs);
 }
 
@@ -91,7 +90,6 @@ void Foam::burstCyclicACMIPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 void Foam::burstCyclicACMIPolyPatch::updateMesh(PstreamBuffers& pBufs)
 {
     cyclicACMIPolyPatch::updateMesh(pBufs);
-    needMap_ = true;
 }
 
 
@@ -116,17 +114,8 @@ Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
         bm,
         patchType
     ),
-    intact_(size, 1.0),
-    usePressure_(true),
-    pBurst_(great),
-    useImpulse_(false),
-    impulseBurst_(great),
-    partialBurst_(false),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    burstPolyPatchBase(dynamicCast<const polyPatch>(*this))
+{}
 
 
 Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
@@ -146,48 +135,24 @@ Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
         bm,
         patchType
     ),
-    intact_(this->size(), 1.0),
-    usePressure_(dict.lookupOrDefault("usePressure", true)),
-    pBurst_(great),
-    useImpulse_(dict.lookupOrDefault("useImpulse", false)),
-    impulseBurst_(great),
-    partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    needMap_(false)
-{
-    if (usePressure_)
-    {
-        pBurst_ = dict.lookup<scalar>("pBurst");
-    }
-    if (useImpulse_)
-    {
-        impulseBurst_ = dict.lookup<scalar>("impulseBurst");
-    }
-}
+    burstPolyPatchBase(*this, dict)
+{}
 
 
 Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
 (
-    const burstCyclicACMIPolyPatch& pp,
+    const burstCyclicACMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm
 )
 :
-    cyclicACMIPolyPatch(pp, bm),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    cyclicACMIPolyPatch(bcpp, bm),
+    burstPolyPatchBase(*this, bcpp)
+{}
 
 
 Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
 (
-    const burstCyclicACMIPolyPatch& pp,
+    const burstCyclicACMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm,
     const label index,
     const label newSize,
@@ -196,37 +161,31 @@ Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
     const word& nonOverlapPatchName
 )
 :
-    cyclicACMIPolyPatch(pp, bm, index, newSize, newStart, nbrPatchName, nonOverlapPatchName),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    cyclicACMIPolyPatch
+    (
+        bcpp,
+        bm,
+        index,
+        newSize,
+        newStart,
+        nbrPatchName,
+        nonOverlapPatchName
+    ),
+    burstPolyPatchBase(*this, bcpp, newSize, newStart)
+{}
 
 
 Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
 (
-    const burstCyclicACMIPolyPatch& pp,
+    const burstCyclicACMIPolyPatch& bcpp,
     const polyBoundaryMesh& bm,
     const label index,
     const labelUList& mapAddressing,
     const label newStart
 )
 :
-    cyclicACMIPolyPatch(pp, bm, index, mapAddressing, newStart),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(true)
+    cyclicACMIPolyPatch(bcpp, bm, index, mapAddressing, newStart),
+    burstPolyPatchBase(*this, bcpp, mapAddressing)
 {}
 
 
@@ -238,26 +197,10 @@ Foam::burstCyclicACMIPolyPatch::~burstCyclicACMIPolyPatch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::burstCyclicACMIPolyPatch::needMap() const
-{
-    return needMap_;
-}
-
-
 void Foam::burstCyclicACMIPolyPatch::write(Ostream& os) const
 {
     cyclicACMIPolyPatch::write(os);
-    writeEntry(os, "usePressure", usePressure_);
-    if (usePressure_)
-    {
-        writeEntry(os, "pBurst", pBurst_);
-    }
-    writeEntry(os, "useImpulse", useImpulse_);
-    if (useImpulse_)
-    {
-        writeEntry(os, "impulseBurst", impulseBurst_);
-    }
-    writeEntry(os, "partialBurst", partialBurst_);
+    burstPolyPatchBase::write(os);
 }
 
 

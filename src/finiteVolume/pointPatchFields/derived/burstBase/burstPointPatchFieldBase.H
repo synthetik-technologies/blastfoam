@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,24 +22,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::burstProcessorCyclicFvPatch
+    Foam::burstPointPatchFieldBase
 
 Description
-    Cyclic-plane patch.
+
+Usage
 
 SourceFiles
-    burstProcessorCyclicFvPatch.C
+    burstPointPatchFieldBase.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef burstProcessorCyclicFvPatch_H
-#define burstProcessorCyclicFvPatch_H
+#ifndef burstPointPatchFieldBase_H
+#define burstPointPatchFieldBase_H
 
-#include "processorCyclicFvPatch.H"
-#include "burstProcessorCyclicPolyPatch.H"
-#include "burstFvPatchBase.H"
-#include "fvBoundaryMesh.H"
-#include "fvPatchFieldMapper.H"
+#include "pointPatchField.H"
+#include "pointFields.H"
+#include "burstPolyPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -47,51 +46,55 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class burstProcessorCyclicFvPatch Declaration
+          Class burstPointPatchFieldBase Declaration
 \*---------------------------------------------------------------------------*/
 
-class burstProcessorCyclicFvPatch
-:
-    public processorCyclicFvPatch,
-    public burstFvPatchBase
+class burstPointPatchFieldBase
 {
 protected:
+    // Protected Data
 
-    // Protected Member functions
-
-        //- Make patch weighting factors
-        virtual void makeWeights(scalarField& w) const
-        {
-            processorCyclicFvPatch::makeWeights(w);
-        }
+        //- Reference to the burstPolyPatch
+        burstPolyPatchBase& burstBase_;
 
 
 public:
 
     //- Runtime type information
-    TypeName(burstProcessorCyclicPolyPatch::typeName_());
+    TypeName("burstBase");
 
 
-    // Constructors
+    // Constructor
 
-        //- Construct from polyPatch
-        burstProcessorCyclicFvPatch
+        // Construct from polyPatch
+        burstPointPatchFieldBase(const polyPatch&);
+
+        //- Construct from polyPatch and a copy
+        burstPointPatchFieldBase
         (
-            const polyPatch& patch,
-            const fvBoundaryMesh& bm
-        )
-        :
-            processorCyclicFvPatch(patch, bm),
-            burstFvPatchBase(dynamicCast<const fvPatch>(*this))
-        {}
+            const polyPatch&,
+            const burstPointPatchFieldBase& bpf
+        );
+
+        //- Construct from polyPatch and mapper
+        burstPointPatchFieldBase
+        (
+            const polyPatch&,
+            const burstPointPatchFieldBase& bpf,
+            const pointPatchFieldMapper&
+        );
+
+    // Destructor
+    virtual ~burstPointPatchFieldBase();
 
 
     // Member Functions
 
-        // Access
-
-            //- Return delta (P to N) vectors across coupled patch
-            virtual tmp<vectorField> delta() const;
+        //- Return the burst polyPatch base
+        const burstPolyPatchBase& burstPolyPatch() const
+        {
+            return burstBase_;
+        }
 };
 
 

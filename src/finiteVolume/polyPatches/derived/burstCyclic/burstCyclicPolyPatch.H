@@ -36,6 +36,7 @@ SourceFiles
 #define burstCyclicPolyPatch_H
 
 #include "cyclicPolyPatch.H"
+#include "burstPolyPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,34 +49,9 @@ namespace Foam
 
 class burstCyclicPolyPatch
 :
-    public cyclicPolyPatch
+    public cyclicPolyPatch,
+    public burstPolyPatchBase
 {
-    // Private Data
-
-        //- Intact field
-        scalarField intact_;
-
-        //- Is pressure used
-        bool usePressure_;
-
-        //- Burst pressure
-        scalar pBurst_;
-
-        //- bool impulse used
-        bool useImpulse_;
-
-        //- Burst impulse
-        scalar impulseBurst_;
-
-        //- Do individual faces burstCyclic
-        bool partialBurst_;
-
-        //- Is mapping needed
-        //  Since there is no mapping within polyPatch we will handle this
-        //  on the first call from a geometric field
-        mutable bool needMap_;
-
-
 protected:
 
     // Protected Member functions
@@ -154,7 +130,11 @@ public:
         );
 
         //- Construct as copy, resetting the boundary mesh
-        burstCyclicPolyPatch(const burstCyclicPolyPatch&, const polyBoundaryMesh&);
+        burstCyclicPolyPatch
+        (
+            const burstCyclicPolyPatch&,
+            const polyBoundaryMesh&
+        );
 
         //- Construct given the original patch and resetting the
         //  face list and boundary mesh information
@@ -220,7 +200,14 @@ public:
         {
             return autoPtr<polyPatch>
             (
-                new burstCyclicPolyPatch(*this, bm, index, mapAddressing, newStart)
+                new burstCyclicPolyPatch
+                (
+                    *this,
+                    bm,
+                    index,
+                    mapAddressing,
+                    newStart
+                )
             );
         }
 
@@ -230,47 +217,6 @@ public:
 
 
     // Member Functions
-
-        // Access
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Is mapping needed
-            bool needMap() const;
-
-            //- Return if pressure is used
-            bool usePressure() const
-            {
-                return usePressure_;
-            }
-
-            //- Return burstCyclic pressure
-            scalar pBurst() const
-            {
-                return pBurst_;
-            }
-
-            //- Return if impulse is used
-            bool useImpulse() const
-            {
-                return useImpulse_;
-            }
-
-            //- Return burstCyclic impulse
-            scalar impulseBurst() const
-            {
-                return impulseBurst_;
-            }
-
-            //- Return if individual faces burstCyclic
-            bool partialBurst() const
-            {
-                return partialBurst_;
-            }
 
         //- Write the polyPatch data as a dictionary
         virtual void write(Ostream&) const;

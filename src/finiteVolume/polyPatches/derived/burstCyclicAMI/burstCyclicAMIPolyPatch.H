@@ -36,6 +36,7 @@ SourceFiles
 #define burstCyclicAMIPolyPatch_H
 
 #include "cyclicAMIPolyPatch.H"
+#include "burstPolyPatchBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -48,34 +49,9 @@ namespace Foam
 
 class burstCyclicAMIPolyPatch
 :
-    public cyclicAMIPolyPatch
+    public cyclicAMIPolyPatch,
+    public burstPolyPatchBase
 {
-    // Private Data
-
-        //- Intact field
-        scalarField intact_;
-
-        //- Is pressure used
-        bool usePressure_;
-
-        //- Burst pressure
-        scalar pBurst_;
-
-        //- bool impulse used
-        bool useImpulse_;
-
-        //- Burst impulse
-        scalar impulseBurst_;
-
-        //- Do individual faces burstCyclicAMI
-        bool partialBurst_;
-
-        //- Is mapping needed
-        //  Since there is no mapping within polyPatch we will handle this
-        //  on the first call from a geometric field
-        mutable bool needMap_;
-
-
 protected:
 
     // Protected Member functions
@@ -139,7 +115,11 @@ public:
         );
 
         //- Construct as copy, resetting the boundary mesh
-        burstCyclicAMIPolyPatch(const burstCyclicAMIPolyPatch&, const polyBoundaryMesh&);
+        burstCyclicAMIPolyPatch
+        (
+            const burstCyclicAMIPolyPatch&,
+            const polyBoundaryMesh&
+        );
 
         //- Construct given the original patch and resetting the
         //  face list and boundary mesh information
@@ -166,7 +146,10 @@ public:
         //- Construct and return a clone, resetting the boundary mesh
         virtual autoPtr<polyPatch> clone(const polyBoundaryMesh& bm) const
         {
-            return autoPtr<polyPatch>(new burstCyclicAMIPolyPatch(*this, bm));
+            return autoPtr<polyPatch>
+            (
+                new burstCyclicAMIPolyPatch(*this, bm)
+            );
         }
 
         //- Construct and return a clone, resetting the face list
@@ -205,7 +188,14 @@ public:
         {
             return autoPtr<polyPatch>
             (
-                new burstCyclicAMIPolyPatch(*this, bm, index, mapAddressing, newStart)
+                new burstCyclicAMIPolyPatch
+                (
+                    *this,
+                    bm,
+                    index,
+                    mapAddressing,
+                    newStart
+                )
             );
         }
 
@@ -215,47 +205,6 @@ public:
 
 
     // Member Functions
-
-        // Access
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Is mapping needed
-            bool needMap() const;
-
-            //- Return if pressure is used
-            bool usePressure() const
-            {
-                return usePressure_;
-            }
-
-            //- Return burstCyclicAMI pressure
-            scalar pBurst() const
-            {
-                return pBurst_;
-            }
-
-            //- Return if impulse is used
-            bool useImpulse() const
-            {
-                return useImpulse_;
-            }
-
-            //- Return burstCyclicAMI impulse
-            scalar impulseBurst() const
-            {
-                return impulseBurst_;
-            }
-
-            //- Return if individual faces burstCyclicAMI
-            bool partialBurst() const
-            {
-                return partialBurst_;
-            }
 
         //- Write the polyPatch data as a dictionary
         virtual void write(Ostream&) const;

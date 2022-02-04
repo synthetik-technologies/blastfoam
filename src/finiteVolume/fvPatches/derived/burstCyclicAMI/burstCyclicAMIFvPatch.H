@@ -37,6 +37,7 @@ SourceFiles
 
 #include "cyclicAMIFvPatch.H"
 #include "burstCyclicAMIPolyPatch.H"
+#include "burstFvPatchBase.H"
 #include "fvBoundaryMesh.H"
 #include "fvPatchFieldMapper.H"
 
@@ -51,18 +52,18 @@ namespace Foam
 
 class burstCyclicAMIFvPatch
 :
-    public cyclicAMIFvPatch
+    public cyclicAMIFvPatch,
+    public burstFvPatchBase
 {
-    // Private Data
+protected:
 
-        //- Current time index
-        mutable label curTimeIndex_;
+    // Protected Member functions
 
-        //- Constant reference to the burstCyclicAMIPolyPatch
-        const burstCyclicAMIPolyPatch& burstCyclicAMIPolyPatch_;
-
-        //- Intact field
-        scalarField& intact_;
+        //- Make patch weighting factors
+        virtual void makeWeights(scalarField& w) const
+        {
+            cyclicAMIFvPatch::makeWeights(w);
+        }
 
 
 public:
@@ -77,12 +78,7 @@ public:
         burstCyclicAMIFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm)
         :
             cyclicAMIFvPatch(patch, bm),
-            curTimeIndex_(-1),
-            burstCyclicAMIPolyPatch_(refCast<const burstCyclicAMIPolyPatch>(patch)),
-            intact_
-            (
-                const_cast<scalarField&>(burstCyclicAMIPolyPatch_.intact())
-            )
+            burstFvPatchBase(dynamicCast<const fvPatch>(*this))
         {}
 
 
@@ -90,62 +86,8 @@ public:
 
         // Access
 
-            //- Return local reference cast into the burstCyclicAMI patch
-            const burstCyclicAMIPolyPatch& burstCyclicAMIPatch() const
-            {
-                return burstCyclicAMIPolyPatch_;
-            }
-
             //- Return delta (P to N) vectors across coupled patch
             virtual tmp<vectorField> delta() const;
-
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Access the intact field
-            Field<scalar>& intact()
-            {
-                return intact_;
-            }
-
-            bool usePressure() const
-            {
-                return burstCyclicAMIPolyPatch_.usePressure();
-            }
-
-            bool useImpulse() const
-            {
-                return burstCyclicAMIPolyPatch_.useImpulse();
-            }
-
-            //- Return if the patch is up to date
-            bool uptoDate(const label curTimeIndex) const
-            {
-                if (curTimeIndex_ == curTimeIndex)
-                {
-                    return true;
-                }
-                curTimeIndex_ = curTimeIndex;
-                return false;
-            }
-
-        // Mapping functions
-
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap(const fvPatchFieldMapper&);
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap(const fvPatch&, const labelList&);
-
-
-        // Edit Functions
-
-            //- Update the intact field
-            void update(const scalarField& p, const scalarField& impulse);
 };
 
 

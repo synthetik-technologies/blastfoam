@@ -28,7 +28,6 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "pointMesh.H"
 #include "edgeList.H"
-#include "globalPolyBoundaryMesh.H"
 
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -66,7 +65,6 @@ void Foam::burstProcessorCyclicPointPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
     facePointPatch::initUpdateMesh(pBufs);
     burstProcessorCyclicPointPatch::initCalcGeometry(pBufs);
-    curTimeIndex_ = -1;
 }
 
 
@@ -74,7 +72,6 @@ void Foam::burstProcessorCyclicPointPatch::updateMesh(PstreamBuffers& pBufs)
 {
     facePointPatch::updateMesh(pBufs);
     burstProcessorCyclicPointPatch::calcGeometry(pBufs);
-    curTimeIndex_ = -1;
 }
 
 
@@ -87,9 +84,7 @@ Foam::burstProcessorCyclicPointPatch::burstProcessorCyclicPointPatch
 )
 :
     processorCyclicPointPatch(patch, bm),
-    burstProcessorCyclicPolyPatch_(refCast<const burstProcessorCyclicPolyPatch>(patch)),
-    intact_(patch.nPoints(), 1.0),
-    curTimeIndex_(-1)
+    burstProcessorCyclicPolyPatch_(refCast<const burstProcessorCyclicPolyPatch>(patch))
 
 {}
 
@@ -101,24 +96,5 @@ Foam::burstProcessorCyclicPointPatch::~burstProcessorCyclicPointPatch()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::burstProcessorCyclicPointPatch::update(const label curTimeIndex)
-{
-    if (curTimeIndex_ == curTimeIndex)
-    {
-        return;
-    }
-    curTimeIndex_ = curTimeIndex;
-
-    intact_ =
-        globalPolyBoundaryMesh::New
-        (
-            dynamicCast<const polyMesh>
-            (
-                burstProcessorCyclicPolyPatch_.boundaryMesh().mesh().thisDb()
-            )
-        )[burstProcessorCyclicPolyPatch_].faceToPoint(burstProcessorCyclicPolyPatch_.intact());
-}
-
 
 // ************************************************************************* //

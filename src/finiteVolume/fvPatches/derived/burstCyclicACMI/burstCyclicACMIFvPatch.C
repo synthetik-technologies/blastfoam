@@ -41,91 +41,14 @@ namespace Foam
 
 Foam::tmp<Foam::vectorField> Foam::burstCyclicACMIFvPatch::delta() const
 {
+    if (intact_.size() != this->size() || min(intact_))
+    {
+        return fvPatch::delta();
+    }
     return
         intact_*fvPatch::delta()
       + (1.0 - intact_)*cyclicACMIFvPatch::delta();
 }
 
-
-void Foam::burstCyclicACMIFvPatch::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    if (!burstCyclicACMIPolyPatch_.needMap())
-    {
-        return;
-    }
-    m(intact_, intact_);
-    intact_ = pos(intact_ - 0.5);
-}
-
-
-void Foam::burstCyclicACMIFvPatch::rmap
-(
-    const fvPatch& ptf,
-    const labelList& addr
-)
-{
-    if (!burstCyclicACMIPolyPatch_.needMap())
-    {
-        return;
-    }
-    const burstCyclicACMIFvPatch& bp = refCast<const burstCyclicACMIFvPatch>(ptf);
-    intact_.rmap(bp.intact_, addr);
-    intact_ = pos(intact_ - 0.5);
-}
-
-
-void Foam::burstCyclicACMIFvPatch::update
-(
-    const scalarField& p,
-    const scalarField& impulse
-)
-{
-    if (burstCyclicACMIPolyPatch_.partialBurst())
-    {
-        scalarField op(intact_.size(), -great);
-        scalarField imp(intact_.size(), -great);
-        if (burstCyclicACMIPolyPatch_.usePressure())
-        {
-            op = p - burstCyclicACMIPolyPatch_.pBurst();
-        }
-        if (burstCyclicACMIPolyPatch_.useImpulse())
-        {
-            imp = impulse - burstCyclicACMIPolyPatch_.impulseBurst();
-        }
-        forAll(intact_, facei)
-        {
-            if (intact_[facei])
-            {
-                intact_[facei] = op[facei] < 0 && imp[facei] < 0;
-            }
-        }
-    }
-    else if (!p.size())
-    {
-        return;
-    }
-    else
-    {
-        // Patch has already burstCyclicACMI
-        if (intact_[0] == 0)
-        {
-            return;
-        }
-
-        if (burstCyclicACMIPolyPatch_.usePressure())
-        {
-            scalar maxP(max(p));
-            intact_ = maxP > burstCyclicACMIPolyPatch_.pBurst() ? 0.0 : 1.0;
-        }
-        if (burstCyclicACMIPolyPatch_.useImpulse())
-        {
-            scalar maxImpulse(max(impulse));
-            intact_ = maxImpulse > burstCyclicACMIPolyPatch_.impulseBurst() ? 0.0 : 1.0;
-        }
-    }
-}
 
 // ************************************************************************* //

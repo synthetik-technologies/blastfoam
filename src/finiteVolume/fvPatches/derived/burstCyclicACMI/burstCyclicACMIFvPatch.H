@@ -37,6 +37,7 @@ SourceFiles
 
 #include "cyclicACMIFvPatch.H"
 #include "burstCyclicACMIPolyPatch.H"
+#include "burstFvPatchBase.H"
 #include "fvBoundaryMesh.H"
 #include "fvPatchFieldMapper.H"
 
@@ -51,18 +52,18 @@ namespace Foam
 
 class burstCyclicACMIFvPatch
 :
-    public cyclicACMIFvPatch
+    public cyclicACMIFvPatch,
+    public burstFvPatchBase
 {
-    // Private Data
+protected:
 
-        //- Current time index
-        mutable label curTimeIndex_;
+    // Protected Member functions
 
-        //- Constant reference to the burstCyclicACMIPolyPatch
-        const burstCyclicACMIPolyPatch& burstCyclicACMIPolyPatch_;
-
-        //- Intact field
-        scalarField& intact_;
+        //- Make patch weighting factors
+        virtual void makeWeights(scalarField& w) const
+        {
+            cyclicACMIFvPatch::makeWeights(w);
+        }
 
 public:
 
@@ -73,15 +74,14 @@ public:
     // Constructors
 
         //- Construct from polyPatch
-        burstCyclicACMIFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm)
+        burstCyclicACMIFvPatch
+        (
+            const polyPatch& patch,
+            const fvBoundaryMesh& bm
+        )
         :
             cyclicACMIFvPatch(patch, bm),
-            curTimeIndex_(-1),
-            burstCyclicACMIPolyPatch_(refCast<const burstCyclicACMIPolyPatch>(patch)),
-            intact_
-            (
-                const_cast<scalarField&>(burstCyclicACMIPolyPatch_.intact())
-            )
+            burstFvPatchBase(dynamicCast<const fvPatch>(*this))
         {}
 
 
@@ -89,62 +89,8 @@ public:
 
         // Access
 
-            //- Return local reference cast into the burstCyclicACMI patch
-            const burstCyclicACMIPolyPatch& burstCyclicACMIPatch() const
-            {
-                return burstCyclicACMIPolyPatch_;
-            }
-
             //- Return delta (P to N) vectors across coupled patch
             virtual tmp<vectorField> delta() const;
-
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Access the intact field
-            Field<scalar>& intact()
-            {
-                return intact_;
-            }
-
-            bool usePressure() const
-            {
-                return burstCyclicACMIPolyPatch_.usePressure();
-            }
-
-            bool useImpulse() const
-            {
-                return burstCyclicACMIPolyPatch_.useImpulse();
-            }
-
-            //- Return if the patch is up to date
-            bool uptoDate(const label curTimeIndex) const
-            {
-                if (curTimeIndex_ == curTimeIndex)
-                {
-                    return true;
-                }
-                curTimeIndex_ = curTimeIndex;
-                return false;
-            }
-
-        // Mapping functions
-
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap(const fvPatchFieldMapper&);
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap(const fvPatch&, const labelList&);
-
-
-        // Edit Functions
-
-            //- Update the intact field
-            void update(const scalarField& p, const scalarField& impulse);
 };
 
 

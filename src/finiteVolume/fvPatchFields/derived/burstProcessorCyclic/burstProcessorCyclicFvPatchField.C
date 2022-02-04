@@ -26,6 +26,7 @@ License
 #include "burstProcessorCyclicFvPatchField.H"
 #include "zeroGradientFvPatchField.H"
 #include "volFields.H"
+#include "burstProcessorCyclicFvPatch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -37,22 +38,14 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    cyclicFvPatchField<Type>(p, iF),
+    processorFvPatchField<Type>(p, iF),
+    burstFvPatchFieldBase(p),
     intactPatchField_
     (
         new zeroGradientFvPatchField<Type>
         (
             p,
             iF
-        )
-    ),
-    pName_("p"),
-    impulseName_("impulse"),
-    burstProcessorCyclicPatch_
-    (
-        const_cast<burstProcessorCyclicFvPatch&>
-        (
-            dynamicCast<const burstProcessorCyclicFvPatch>(p)
         )
     )
 {
@@ -68,17 +61,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
     const dictionary& dict
 )
 :
-    cyclicFvPatchField<Type>(p, iF, dict),
-    intactPatchField_(),
-    pName_(dict.lookupOrDefault<word>("pName", "p")),
-    impulseName_(dict.lookupOrDefault<word>("impulseName", "impulse")),
-    burstProcessorCyclicPatch_
-    (
-        const_cast<burstProcessorCyclicFvPatch&>
-        (
-            refCast<const burstProcessorCyclicFvPatch>(p)
-        )
-    )
+    processorFvPatchField<Type>(p, iF, dict),
+    burstFvPatchFieldBase(p),
+    intactPatchField_()
 {
     if (!isA<burstProcessorCyclicFvPatch>(p))
     {
@@ -93,14 +78,7 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
             << exit(FatalIOError);
     }
 
-    if (dict.found("intact"))
-    {
-        if (!burstProcessorCyclicPatch_.uptoDate(this->db().time().timeIndex()))
-        {
-            burstProcessorCyclicPatch_.intact() =
-                scalarField("intact", dict, p.size());
-        }
-    }
+    burstFvPatchFieldBase::read(dict);
 
     // Create a new patch dictionary and replace the type with the intactType
     dictionary intactDict(dict.parent(), dict);
@@ -119,7 +97,7 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
         ).ptr()
     );
 
-    this->evaluate(Pstream::commsTypes::blocking);
+    processorFvPatchField<Type>::evaluate(Pstream::commsTypes::blocking);
 }
 
 
@@ -132,16 +110,17 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
     const fvPatchFieldMapper& mapper
 )
 :
-    cyclicFvPatchField<Type>(bpf, p, iF, mapper),
-    intactPatchField_(bpf.intactPatchField_->clone(iF).ptr()),
-    pName_(bpf.pName_),
-    impulseName_(bpf.impulseName_),
-    burstProcessorCyclicPatch_
+    processorFvPatchField<Type>(bpf, p, iF, mapper),
+    burstFvPatchFieldBase(p, bpf, mapper),
+    intactPatchField_
     (
-        const_cast<burstProcessorCyclicFvPatch&>
+        fvPatchField<Type>::New
         (
-            refCast<const burstProcessorCyclicFvPatch>(p)
-        )
+            bpf.intactPatchField_(),
+            p,
+            iF,
+            mapper
+        ).ptr()
     )
 {}
 
@@ -153,17 +132,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    cyclicFvPatchField<Type>(bpf, iF),
-    intactPatchField_(bpf.intactPatchField_->clone(iF).ptr()),
-    pName_(bpf.pName_),
-    impulseName_(bpf.impulseName_),
-    burstProcessorCyclicPatch_
-    (
-        const_cast<burstProcessorCyclicFvPatch&>
-        (
-            refCast<const burstProcessorCyclicFvPatch>(this->patch())
-        )
-    )
+    processorFvPatchField<Type>(bpf, iF),
+    burstFvPatchFieldBase(this->patch()),
+    intactPatchField_(bpf.intactPatchField_->clone(iF).ptr())
 {}
 
 
@@ -173,10 +144,9 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::burstProcessorCyclicFvPatchField<Type>::patchNeighbourField() const
 {
-    const scalarField& intact = burstProcessorCyclicPatch_.intact();
     return
-        intact*intactPatchField_()
-      + (1.0 - intact)*cyclicFvPatchField<Type>::patchNeighbourField();
+        intact()*intactPatchField_()
+      + (1.0 - intact())*processorFvPatchField<Type>::patchNeighbourField();
 }
 
 
@@ -186,9 +156,8 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::autoMap
     const fvPatchFieldMapper& m
 )
 {
-    cyclicFvPatchField<Type>::autoMap(m);
+    processorFvPatchField<Type>::autoMap(m);
     intactPatchField_->autoMap(m);
-    burstProcessorCyclicPatch_.autoMap(m);
 }
 
 
@@ -199,12 +168,11 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::rmap
     const labelList& addr
 )
 {
-    cyclicFvPatchField<Type>::rmap(ptf, addr);
+    processorFvPatchField<Type>::rmap(ptf, addr);
 
     const burstProcessorCyclicFvPatchField<Type>& bpf =
         refCast<const burstProcessorCyclicFvPatchField<Type>>(ptf);
     intactPatchField_->rmap(bpf.intactPatchField_(), addr);
-    burstProcessorCyclicPatch_.rmap(ptf.patch(), addr);
 }
 
 
@@ -217,79 +185,8 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateCoeffs()
     }
 
     intactPatchField_->updateCoeffs();
-    cyclicFvPatchField<Type>::updateCoeffs();
-
-    // Execute the change to the openFraction only once per time-step
-    if (!burstProcessorCyclicPatch_.uptoDate(this->db().time().timeIndex()))
-    {
-        scalarField p(this->patch().patch().size(), 0.0);
-        scalarField impulse(this->patch().patch().size(), 0.0);
-
-        const polyMesh& mesh = this->patch().boundaryMesh().mesh();
-        bool shouldUpdate = false;
-
-        if (burstProcessorCyclicPatch_.usePressure())
-        {
-            if (mesh.template foundObject<volScalarField>(pName_))
-            {
-                const burstProcessorCyclicFvPatchField<scalar>& pp =
-                    refCast<const burstProcessorCyclicFvPatchField<scalar>>
-                    (
-                        this->patch().
-                        template lookupPatchField<volScalarField, scalar>
-                        (
-                            pName_
-                        )
-                    );
-                p =
-                    mag
-                    (
-                        pp.cyclicFvPatchField<scalar>::patchNeighbourField()
-                      - pp.patchInternalField()
-                    );
-                shouldUpdate = true;
-            }
-            else
-            {
-                WarningInFunction
-                    << "Could not find " << pName_
-                    << ", neglecting pressure. " << endl;
-            }
-        }
-        if (burstProcessorCyclicPatch_.useImpulse())
-        {
-            if (mesh.template foundObject<volScalarField>(impulseName_))
-            {
-                const burstProcessorCyclicFvPatchField<scalar>& pImpulse =
-                    refCast<const burstProcessorCyclicFvPatchField<scalar>>
-                    (
-                        this->patch().
-                        template lookupPatchField<volScalarField, scalar>
-                        (
-                            impulseName_
-                        )
-                    );
-                impulse =
-                    mag
-                    (
-                        pImpulse.cyclicFvPatchField<scalar>::patchNeighbourField()
-                      - pImpulse.patchInternalField()
-                    );
-                shouldUpdate = true;
-            }
-            else
-            {
-                WarningInFunction
-                    << "Could not find " << impulseName_
-                    << ", neglecting impulse. " << endl;
-            }
-        }
-
-        if (shouldUpdate)
-        {
-            burstProcessorCyclicPatch_.update(p, impulse);
-        }
-    }
+    processorFvPatchField<Type>::updateCoeffs();
+    burstFvPatchFieldBase::update();
 }
 
 
@@ -303,7 +200,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::initEvaluate
     {
         this->updateCoeffs();
     }
-    cyclicFvPatchField<Type>::initEvaluate(commsType);
+    processorFvPatchField<Type>::initEvaluate(commsType);
     intactPatchField_->initEvaluate(commsType);
 }
 
@@ -325,12 +222,12 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::evaluate
     intactPatchField_() = *this;
 
     intactPatchField_->evaluate(commsType);
-    cyclicFvPatchField<Type>::evaluate(commsType);
+    processorFvPatchField<Type>::evaluate(commsType);
 
     Field<Type>::operator=
     (
-        burstProcessorCyclicPatch_.intact()*intactPatchField_()
-      + (1.0 - burstProcessorCyclicPatch_.intact())*(*this)
+        intact()*intactPatchField_()
+      + (1.0 - intact())*(*this)
     );
 
 }
@@ -345,9 +242,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::valueInternalCoeffs
 {
     return
         intactPatchField_().valueInternalCoeffs(w)
-       *burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::valueInternalCoeffs(w)
-       *burstProcessorCyclicPatch_.intact();
+       *intact()
+      + processorFvPatchField<Type>::valueInternalCoeffs(w)
+       *intact();
 }
 
 
@@ -360,9 +257,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::valueBoundaryCoeffs
 {
     return
         intactPatchField_().valueBoundaryCoeffs(w)
-       *burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::valueBoundaryCoeffs(w)
-       *(1.0 - burstProcessorCyclicPatch_.intact());
+       *intact()
+      + processorFvPatchField<Type>::valueBoundaryCoeffs(w)
+       *(1.0 - intact());
 }
 
 
@@ -378,9 +275,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::gradientInternalCoeffs
             intactPatchField_().coupled()
           ? intactPatchField_().gradientInternalCoeffs(deltaCoeffs)
           : intactPatchField_().gradientInternalCoeffs()
-        )*burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::gradientInternalCoeffs(deltaCoeffs)
-       *(1.0 - burstProcessorCyclicPatch_.intact());
+        )*intact()
+      + processorFvPatchField<Type>::gradientInternalCoeffs(deltaCoeffs)
+       *(1.0 - intact());
 }
 
 
@@ -396,9 +293,9 @@ Foam::burstProcessorCyclicFvPatchField<Type>::gradientBoundaryCoeffs
             intactPatchField_().coupled()
           ? intactPatchField_().gradientBoundaryCoeffs(deltaCoeffs)
           : intactPatchField_().gradientBoundaryCoeffs()
-        )*burstProcessorCyclicPatch_.intact()
-      + cyclicFvPatchField<Type>::gradientBoundaryCoeffs(deltaCoeffs)
-       *(1.0 - burstProcessorCyclicPatch_.intact());
+        )*intact()
+      + processorFvPatchField<Type>::gradientBoundaryCoeffs(deltaCoeffs)
+       *(1.0 - intact());
 }
 
 
@@ -412,11 +309,10 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-    const scalarField& intact = burstProcessorCyclicPatch_.intact();
     const polyPatch& p = this->patch().patch();
     {
         scalarField cResult(result.size(), Zero);
-        cyclicFvPatchField<Type>::updateInterfaceMatrix
+        processorFvPatchField<Type>::updateInterfaceMatrix
         (
             cResult,
             psiInternal,
@@ -427,7 +323,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact[fi])*cResult[celli];
+            result[celli] += (1.0 - intact()[fi])*cResult[celli];
         }
     }
 
@@ -448,7 +344,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact[fi]*iResult[celli];
+            result[celli] += intact()[fi]*iResult[celli];
         }
     }
 }
@@ -463,11 +359,10 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
     const Pstream::commsTypes commsType
 ) const
 {
-    const scalarField& intact = burstProcessorCyclicPatch_.intact();
     const polyPatch& p = this->patch().patch();
     {
         Field<Type> cResult(result.size(), Zero);
-        cyclicFvPatchField<Type>::updateInterfaceMatrix
+        processorFvPatchField<Type>::updateInterfaceMatrix
         (
             cResult,
             psiInternal,
@@ -477,7 +372,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact[fi])*cResult[celli];
+            result[celli] += (1.0 - intact()[fi])*cResult[celli];
         }
     }
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
@@ -496,7 +391,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact[fi]*iResult[celli];
+            result[celli] += intact()[fi]*iResult[celli];
         }
     }
 }
@@ -521,10 +416,8 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::write(Ostream& os) const
     }
 
     fvPatchField<Type>::write(os);
-    writeEntryIfDifferent<word>(os, "pName", "p", pName_);
-    writeEntryIfDifferent<word>(os, "impulseName", "impulse", impulseName_);
 
-    writeEntry(os, "intact", burstProcessorCyclicPatch_.intact());
+    writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
 

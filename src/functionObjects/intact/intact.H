@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2020 OpenFOAM Foundation
-     \\/     M anipulation  |
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2022
+     \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,81 +22,93 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::burstProcessorCyclicFvPatch
+    Foam::functionObjects::intact
 
 Description
-    Cyclic-plane patch.
+    Write out a field corresponding to intact patches, used with burst patches
+
+Usage
+    \table
+        Property          | Description               | Required | Default
+        type              | type name: intact         | yes      |
+
+
+See also
+    Foam::functionObjects::fvMeshFunctionObject
 
 SourceFiles
-    burstProcessorCyclicFvPatch.C
+    intact.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef burstProcessorCyclicFvPatch_H
-#define burstProcessorCyclicFvPatch_H
+#ifndef functionObjects_intact_H
+#define functionObjects_intact_H
 
-#include "processorCyclicFvPatch.H"
-#include "burstProcessorCyclicPolyPatch.H"
-#include "burstFvPatchBase.H"
-#include "fvBoundaryMesh.H"
-#include "fvPatchFieldMapper.H"
+#include "fvMeshFunctionObject.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+namespace functionObjects
+{
+
 
 /*---------------------------------------------------------------------------*\
-                        Class burstProcessorCyclicFvPatch Declaration
+                        Class intact Declaration
 \*---------------------------------------------------------------------------*/
 
-class burstProcessorCyclicFvPatch
+class intact
 :
-    public processorCyclicFvPatch,
-    public burstFvPatchBase
+    public fvMeshFunctionObject
 {
-protected:
-
-    // Protected Member functions
-
-        //- Make patch weighting factors
-        virtual void makeWeights(scalarField& w) const
-        {
-            processorCyclicFvPatch::makeWeights(w);
-        }
-
-
 public:
 
     //- Runtime type information
-    TypeName(burstProcessorCyclicPolyPatch::typeName_());
+    TypeName("intact");
 
 
     // Constructors
 
-        //- Construct from polyPatch
-        burstProcessorCyclicFvPatch
+        //- Construct from Time and dictionary
+        intact
         (
-            const polyPatch& patch,
-            const fvBoundaryMesh& bm
-        )
-        :
-            processorCyclicFvPatch(patch, bm),
-            burstFvPatchBase(dynamicCast<const fvPatch>(*this))
-        {}
+            const word& name,
+            const Time& runTime,
+            const dictionary&
+        );
+
+        //- Disallow default bitwise copy construction
+        intact(const intact&) = delete;
+
+
+    //- Destructor
+    virtual ~intact();
 
 
     // Member Functions
 
-        // Access
+        //- Calculate the field averages
+        virtual bool execute()
+        {
+            return true;
+        }
 
-            //- Return delta (P to N) vectors across coupled patch
-            virtual tmp<vectorField> delta() const;
+        //- Write the field averages
+        virtual bool write();
+
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const intact&) = delete;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+} // End namespace functionObjects
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

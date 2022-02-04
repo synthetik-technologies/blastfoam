@@ -35,10 +35,10 @@ SourceFiles
 #ifndef burstFvPatch_H
 #define burstFvPatch_H
 
-#include "cyclicFvPatch.H"
+#include "fvPatch.H"
 #include "burstPolyPatch.H"
+#include "burstFvPatchBase.H"
 #include "fvBoundaryMesh.H"
-#include "fvPatchFieldMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -51,22 +51,15 @@ namespace Foam
 
 class burstFvPatch
 :
-    public fvPatch
+    public fvPatch,
+    public burstFvPatchBase
 {
-    // Private Data
+protected:
 
-        //- Current time index
-        mutable label curTimeIndex_;
-
-        //- Constant reference to the burstPolyPatch
-        const burstPolyPatch& burstPolyPatch_;
-
-        //- Intact field
-        scalarField& intact_;
-
-        //- Reference pressure field
-        scalarField& pRef_;
-
+    virtual void makeWeights(scalarField& weights) const
+    {
+        fvPatch::makeWeights(weights);
+    }
 
 public:
 
@@ -80,87 +73,8 @@ public:
         burstFvPatch(const polyPatch& patch, const fvBoundaryMesh& bm)
         :
             fvPatch(patch, bm),
-            curTimeIndex_(-1),
-            burstPolyPatch_(refCast<const burstPolyPatch>(patch)),
-            intact_
-            (
-                const_cast<scalarField&>(burstPolyPatch_.intact())
-            ),
-            pRef_
-            (
-                const_cast<scalarField&>(burstPolyPatch_.pRef())
-            )
+            burstFvPatchBase(dynamicCast<const fvPatch>(*this))
         {}
-
-
-    // Member Functions
-
-        // Access
-
-            //- Return local reference cast into the burst patch
-            const burstPolyPatch& burstPatch() const
-            {
-                return burstPolyPatch_;
-            }
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_;
-            }
-
-            //- Access the intact field
-            Field<scalar>& intact()
-            {
-                return intact_;
-            }
-
-            //- Return the reference pressure
-            const Field<scalar>& pRef() const
-            {
-                return pRef_;
-            }
-
-            //- Access the reference pressure
-            Field<scalar>& pRef()
-            {
-                return pRef_;
-            }
-
-            bool usePressure() const
-            {
-                return burstPolyPatch_.usePressure();
-            }
-
-            bool useImpulse() const
-            {
-                return burstPolyPatch_.useImpulse();
-            }
-
-            //- Return if the patch is up to date
-            bool uptoDate(const label curTimeIndex) const
-            {
-                if (curTimeIndex_ == curTimeIndex)
-                {
-                    return true;
-                }
-                curTimeIndex_ = curTimeIndex;
-                return false;
-            }
-
-        // Mapping functions
-
-            //- Map (and resize as needed) from self given a mapping object
-            virtual void autoMap(const fvPatchFieldMapper&);
-
-            //- Reverse map the given fvPatchField onto this fvPatchField
-            virtual void rmap(const fvPatch&, const labelList&);
-
-
-        // Edit Functions
-
-            //- Update the intact field
-            void update(const scalarField& p, const scalarField& impulse);
 };
 
 

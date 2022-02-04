@@ -58,12 +58,6 @@ class burstProcessorCyclicPointPatch
         //- Const reference to the burstProcessorCyclicPolyPatch
         const burstProcessorCyclicPolyPatch& burstProcessorCyclicPolyPatch_;
 
-        //- Intact points
-        scalarField intact_;
-
-        //- Current time index
-        mutable label curTimeIndex_;
-
 
     // Private Member Functions
 
@@ -113,23 +107,6 @@ public:
 
     //- Destructor
     virtual ~burstProcessorCyclicPointPatch();
-
-
-    // Member Functions
-
-        // Access
-
-            //- Return the intact patch field
-            const scalarField& intact() const
-            {
-                return intact_;
-            }
-
-
-        // Evaluation functions
-
-            //- Update the intact field
-            void update(const label curTimeIndex);
 };
 
 

@@ -51,7 +51,7 @@ namespace Foam
 
 void Foam::burstPolyPatch::initCalcGeometry(PstreamBuffers& pBufs)
 {
-    polyPatch::initCalcGeometry(pBufs);
+    wallPolyPatch::initCalcGeometry(pBufs);
 }
 
 
@@ -67,7 +67,7 @@ void Foam::burstPolyPatch::initCalcGeometry
 
 void Foam::burstPolyPatch::calcGeometry(PstreamBuffers& pBufs)
 {
-    polyPatch::calcGeometry(pBufs);
+    wallPolyPatch::calcGeometry(pBufs);
 }
 
 
@@ -77,7 +77,7 @@ void Foam::burstPolyPatch::initMovePoints
     const pointField& p
 )
 {
-    polyPatch::initMovePoints(pBufs, p);
+    wallPolyPatch::initMovePoints(pBufs, p);
 }
 
 
@@ -87,21 +87,19 @@ void Foam::burstPolyPatch::movePoints
     const pointField& p
 )
 {
-    polyPatch::movePoints(pBufs, p);
+    wallPolyPatch::movePoints(pBufs, p);
 }
 
 
 void Foam::burstPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
 {
-    needMap_ = true;
-    polyPatch::initUpdateMesh(pBufs);
+    wallPolyPatch::initUpdateMesh(pBufs);
 }
 
 
 void Foam::burstPolyPatch::updateMesh(PstreamBuffers& pBufs)
 {
-    polyPatch::updateMesh(pBufs);
-    needMap_ = true;
+    wallPolyPatch::updateMesh(pBufs);
 }
 
 
@@ -117,19 +115,9 @@ Foam::burstPolyPatch::burstPolyPatch
     const word& patchType
 )
 :
-    polyPatch(name, size, start, index, bm, patchType),
-    intact_(size, 1.0),
-    usePressure_(true),
-    pBurst_(great),
-    pRef_(size, 0.0),
-    useImpulse_(false),
-    impulseBurst_(great),
-    partialBurst_(false),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    wallPolyPatch(name, size, start, index, bm, patchType),
+    burstPolyPatchBase(dynamicCast<const polyPatch>(*this))
+{}
 
 
 Foam::burstPolyPatch::burstPolyPatch
@@ -141,90 +129,47 @@ Foam::burstPolyPatch::burstPolyPatch
     const word& patchType
 )
 :
-    polyPatch(name, dict, index, bm, patchType),
-    intact_(this->size(), 1.0),
-    usePressure_(dict.lookupOrDefault("usePressure", true)),
-    pBurst_(great),
-    pRef_(this->size(), 0.0),
-    useImpulse_(dict.lookupOrDefault("useImpulse", false)),
-    impulseBurst_(great),
-    partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    needMap_(false)
-{
-    if (usePressure_)
-    {
-        pBurst_ = dict.lookupOrDefault<scalar>("pBurst", 0.0);
-    }
-    if (useImpulse_)
-    {
-        impulseBurst_ = dict.lookup<scalar>("impulseBurst");
-    }
-}
+    wallPolyPatch(name, dict, index, bm, patchType),
+    burstPolyPatchBase(*this, dict)
+{}
 
 
 Foam::burstPolyPatch::burstPolyPatch
 (
-    const burstPolyPatch& pp,
+    const burstPolyPatch& bpp,
     const polyBoundaryMesh& bm
 )
 :
-    polyPatch(pp, bm),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    pRef_(pp.pRef_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    wallPolyPatch(bpp, bm),
+    burstPolyPatchBase(*this, bpp)
+{}
 
 
 Foam::burstPolyPatch::burstPolyPatch
 (
-    const burstPolyPatch& pp,
+    const burstPolyPatch& bpp,
     const polyBoundaryMesh& bm,
     const label index,
     const label newSize,
     const label newStart
 )
 :
-    polyPatch(pp, bm, index, newSize, newStart),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    pRef_(pp.pRef_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(false)
-{
-    // Neighbour patch might not be valid yet so no transformation
-    // calculation possible.
-}
+    wallPolyPatch(bpp, bm, index, newSize, newStart),
+    burstPolyPatchBase(*this, bpp, newSize, newStart)
+{}
 
 
 Foam::burstPolyPatch::burstPolyPatch
 (
-    const burstPolyPatch& pp,
+    const burstPolyPatch& bpp,
     const polyBoundaryMesh& bm,
     const label index,
     const labelUList& mapAddressing,
     const label newStart
 )
 :
-    polyPatch(pp, bm, index, mapAddressing, newStart),
-    intact_(pp.intact_),
-    usePressure_(pp.usePressure_),
-    pBurst_(pp.pBurst_),
-    pRef_(pp.pRef_),
-    useImpulse_(pp.useImpulse_),
-    impulseBurst_(pp.impulseBurst_),
-    partialBurst_(pp.partialBurst_),
-    needMap_(true)
+    wallPolyPatch(bpp, bm, index, mapAddressing, newStart),
+    burstPolyPatchBase(*this, bpp, mapAddressing)
 {}
 
 
@@ -236,26 +181,10 @@ Foam::burstPolyPatch::~burstPolyPatch()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-bool Foam::burstPolyPatch::needMap() const
-{
-    return needMap_;
-}
-
-
 void Foam::burstPolyPatch::write(Ostream& os) const
 {
     polyPatch::write(os);
-    writeEntry(os, "usePressure", usePressure_);
-    if (usePressure_)
-    {
-        writeEntry(os, "pBurst", pBurst_);
-    }
-    writeEntry(os, "useImpulse", useImpulse_);
-    if (useImpulse_)
-    {
-        writeEntry(os, "impulseBurst", impulseBurst_);
-    }
-    writeEntry(os, "partialBurst", partialBurst_);
+    burstPolyPatchBase::write(os);
 }
 
 

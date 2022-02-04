@@ -41,8 +41,8 @@ SourceFiles
 #define burstProcessorCyclicFvPatchField_H
 
 #include "fvPatchFields.H"
-#include "cyclicFvPatchField.H"
-#include "burstProcessorCyclicFvPatch.H"
+#include "processorFvPatchField.H"
+#include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -56,21 +56,13 @@ namespace Foam
 template<class Type>
 class burstProcessorCyclicFvPatchField
 :
-    public cyclicFvPatchField<Type>
+    public processorFvPatchField<Type>,
+    public burstFvPatchFieldBase
 {
     // Private Data
 
         //- Non-burstProcessorCyclic patchField
         autoPtr<fvPatchField<Type>> intactPatchField_;
-
-        //- Name of the pressure field
-        word pName_;
-
-        //- Name of the impulse field
-        word impulseName_;
-
-        //- Reference to the burstProcessorCyclicFvPatch
-        burstProcessorCyclicFvPatch& burstProcessorCyclicPatch_;
 
 
 public:

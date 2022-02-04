@@ -80,6 +80,7 @@ meshSizeObject/meshSizeObject.C
 
 calcAngleFraction/calcAngleFraction.C
 
+polyPatches/derived/burstBase/burstPolyPatchBase.C
 polyPatches/derived/burst/burstPolyPatch.C
 polyPatches/derived/burstCyclic/burstCyclicPolyPatch.C
 polyPatches/derived/burstProcessorCyclic/burstProcessorCyclicPolyPatch.C
@@ -92,12 +93,14 @@ pointPatches/derived/burstProcessorCyclic/burstProcessorCyclicPointPatch.C
 pointPatches/derived/burstCyclicAMI/burstCyclicAMIPointPatch.C
 pointPatches/derived/burstCyclicACMI/burstCyclicACMIPointPatch.C
 
+fvPatches/derived/burstBase/burstFvPatchBase.C
 fvPatches/derived/burst/burstFvPatch.C
 fvPatches/derived/burstCyclic/burstCyclicFvPatch.C
 fvPatches/derived/burstProcessorCyclic/burstProcessorCyclicFvPatch.C
 fvPatches/derived/burstCyclicAMI/burstCyclicAMIFvPatch.C
 fvPatches/derived/burstCyclicACMI/burstCyclicACMIFvPatch.C
 
+fvPatchFields/derived/burstBase/burstFvPatchFieldBase.C
 fvPatchFields/derived/burst/burstFvPatchFields.C
 fvPatchFields/derived/burstCyclic/burstCyclicFvPatchFields.C
 fvPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvPatchFields.C
@@ -110,6 +113,7 @@ fvsPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvsPatchFields.C
 fvsPatchFields/derived/burstCyclicAMI/burstCyclicAMIFvsPatchFields.C
 fvsPatchFields/derived/burstCyclicACMI/burstCyclicACMIFvsPatchFields.C
 
+pointPatchFields/derived/burstBase/burstPointPatchFieldBase.C
 pointPatchFields/derived/burst/burstPointPatchFields.C
 pointPatchFields/derived/burstCyclic/burstCyclicPointPatchFields.C
 pointPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicPointPatchFields.C
