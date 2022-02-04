@@ -45,7 +45,7 @@ Description
 #include "wedgePolyPatch.H"
 #include "errorEstimator.H"
 #include "extrapolatedCalculatedFvPatchField.H"
-
+#include "calcAngleFraction.H"
 #include "IOobjectList.H"
 #include "FieldSetType.H"
 
@@ -654,6 +654,7 @@ int main(int argc, char *argv[])
         }
     }
     fields.resize(fi);
+    const scalar angleFraction = calcAngleFraction(mesh);
 
     // Read in all fields to allow resizing
     if (updateAll)
@@ -868,9 +869,14 @@ int main(int argc, char *argv[])
                 {
                     V += mesh.V()[selectedCells[celli]];
                 }
+                reduce(V, sumOp<scalar>());
                 Info<< "    Set volume of cell: "
-                    << returnReduce(V, sumOp<scalar>()) << " m^3"
-                    << endl;
+                    << V << " m^3";
+                if (angleFraction != 1.0)
+                {
+                    Info<< " (" << V/angleFraction << " actual)";
+                }
+                Info<< endl;
 
                 if (regionDict.found("fieldValues") && !noFields)
                 {
