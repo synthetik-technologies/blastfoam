@@ -16,8 +16,8 @@ createDEps()
     set key left bottom center
     set size 2,2
     set autoscale
-    set xrange [0:4]
-#     set yrange [0:2.2]
+#     set xrange [0:4]
+#     set yrange [0:9]
     set mxtic 4
     set mytic 4
     plot    '$2/D.csv' using 1:2 title 'Neuberg et al', \

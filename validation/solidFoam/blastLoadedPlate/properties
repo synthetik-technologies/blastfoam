@@ -1,8 +1,8 @@
-S           1.0; // scale factor
-Wp          50; //kg
-th0         0.05;
-R0          0.5;
-D0          2.0;
+S           4.0; // scale factor
+Wp          70.0; //kg
+th0         0.04;
+R0          0.4;
+D0          2;
 
 thickness   #calc "$th0 / $S";
 nthickness  #calc "-$thickness";

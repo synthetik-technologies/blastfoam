@@ -60,7 +60,7 @@ functions
         type probes;
         probeLocations
         (
-            (0 0 0)
+            (1.2065 0 0)
         );
         fields (D);
     }

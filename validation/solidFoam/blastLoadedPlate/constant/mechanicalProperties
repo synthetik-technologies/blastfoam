@@ -29,11 +29,6 @@ mechanical
         B #calc "$thOpt == 0 ? 560e6 : ( $thOpt == 1 ? 545e6 : 355e6 )";
         C               0.014;
         n               0.26;
-        m               1.0;
-
-        Tref            296;
-        Tm              1700;
-        totalStrainRate false;
 
         solvePressureEqn no;
     }

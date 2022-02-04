@@ -15,24 +15,22 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// solidModel nonLinearGeometryTotalLagrangian;
-// solidModel explicitUnsLinearGeometryTotalDisplacement;
-// solidModel explicitLinearGeometryTotalLagrangian;
-solidModel explicitNonLinearGeometryTotalLagrangian;
+// solidModel explicitLinear;
+solidModel explicitNonLinearTotalLagrangian;
+// solidModel linear;
+// solidModel nonLinearTotalLagrangian;
 
-explicitUnsLinearGeometryTotalDisplacementCoeffs
+"explicit.*"
 {
-    JSTScaleFactor 0.02;
-}
+    JSTScaleFactor 0.0001;
+    LFScaleFactor 0.0001;
 
-"explicitNonLinearGeometryTotalLagrangianCoeffs|explicitLinearGeometryTotalLagrangianCoeffs"
-{
-    incompressiblilityCoefficient   0.2;
+    incompressiblilityCoefficient   1;
     angularMomentumConservation     yes;
 }
 
 
-nonLinearGeometryTotalLagrangianCoeffs
+"(unsLinear|linear|unsNonLinear|nonLinear).*"
 {
     // Maximum number of momentum correctors
     nCorrectors             1000;

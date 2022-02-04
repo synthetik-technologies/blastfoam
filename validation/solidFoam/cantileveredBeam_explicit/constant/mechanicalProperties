@@ -20,15 +20,9 @@ mechanical
 (
     steel
     {
-//         type            nonLinearPowerLawPlastic;
         type linearElastic;
-//         type neoHookeanElastic;
         E               200e9;
         nu              0.3;
-        sigmaY          1e11;
-        Hp              0.1;
-        k 1000;
-        n 0.2;
     }
 );
 

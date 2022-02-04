@@ -25,7 +25,7 @@ boundaryField
     plate_to_air
     {
         type            KBSolidTraction;
-        pRef            uniform 0;
+        pRef            uniform 101298;
         traction        uniform (0 0 0);
         pressure        uniform 0;
         value           uniform (0 0 0);
@@ -48,7 +48,7 @@ boundaryField
     }
     wedge
     {
-        type            wedge;
+        type            solidWedge;
         patchType       wedge;
         value           $internalField;
     }

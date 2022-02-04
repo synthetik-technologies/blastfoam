@@ -36,7 +36,7 @@ boundaryField
     tip
     {
         type            solidTraction;
-        traction        uniform (0 10000 0);
+        traction        uniform (0 100 0);
 //         tractionSeries
 //         {
 //             type table;

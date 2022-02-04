@@ -19,9 +19,9 @@ type basic;
 
 thermoType
 {
-    transport constIso;
     thermo eConst;
     equationOfState rhoConst;
+    transport constIso;
 }
 
 specie

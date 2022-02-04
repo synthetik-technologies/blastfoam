@@ -3,6 +3,9 @@
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
 paraFoam -builtin -touch
+nL=$(foamDictionary system/blockMeshDict -entry nL -value)
+L=$(foamDictionary system/blockMeshDict -entry L -value)
+nw=$(foamDictionary system/blockMeshDict -entry nw -value)
 runApplication blockMesh
-runApplication addTinyPatch free fixed -points "((-1.5 -0.4 0)(1.5 -0.4 0))"
+runApplication addTinyPatch free fixed -points "(($nL $nw 0)($L $nw 0))"
 runApplication $(getApplication)

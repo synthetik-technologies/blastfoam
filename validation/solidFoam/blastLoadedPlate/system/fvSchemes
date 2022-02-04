@@ -36,8 +36,9 @@ divSchemes
 
 gradSchemes
 {
-    default         leastSquares 0;
-//     default         cellMDLimited leastSquares 1.0;
+    default         cellLimited<Venkatakrishnan> extendedLeastSquares 0 1;
+    grad(D) extendedLeastSquares 0 1;
+//     default         cellMDLimited extendedLeastSquares 0 1;
 }
 
 laplacianSchemes

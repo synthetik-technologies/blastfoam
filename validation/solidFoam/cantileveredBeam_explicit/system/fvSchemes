@@ -23,11 +23,12 @@ d2dt2Schemes
 ddtSchemes
 {
     default                 Euler;
+    timeIntegrator          RK2SSP 3;
 }
 
 gradSchemes
 {
-    default                 cellMDLimited extendedLeastSquares 0 1;
+    default                 leastSquares;
 }
 
 divSchemes
@@ -51,6 +52,7 @@ snGradSchemes
 interpolationSchemes
 {
     default                 linear;
+    "reconstruct\(.*\)"     upwindMUSCL vanLeer;
 }
 
 
