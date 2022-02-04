@@ -204,10 +204,6 @@ void mapVolFields
                 fieldTarget.boundaryFieldRef()[patchi] =
                     fieldTarget.boundaryField()[patchi].patchInternalField();
             }
-            if (fieldTarget.name() == "lambda.tnt")
-            {
-                Info<<fieldTarget.name()<<" "<<exists<<endl;
-            }
             if (!exists)
             {
                 fieldTarget.write();
@@ -409,7 +405,6 @@ void calcMapAndR
             nSource = y*rotationAxis + x*rAxis;
         }
 
-
         // Actual point on the source mesh
         vector ptSource = nSource + sourceCentre;
 
@@ -435,6 +430,16 @@ void calcMapAndR
         {
             nTarget -= (nTarget & rotationAxis)*rotationAxis;
             nSource -= (nSource & rotationAxis)*rotationAxis;
+        }
+
+        // Normalise directions
+        if (mag(nTarget) > small)
+        {
+            nTarget = nTarget/mag(nTarget);
+        }
+        if (mag(nSource) > small)
+        {
+            nSource = nSource/mag(nSource);
         }
         R[celli] = rotationTensor(nSource, nTarget);
     }
@@ -673,9 +678,7 @@ void refine
 
         if (!lastIter)
         {
-            Info<<"refining"<<endl;
             error->update();
-
             lastIter =
                 !refiner->refine(error->error(), error->maxRefinement());
         }
