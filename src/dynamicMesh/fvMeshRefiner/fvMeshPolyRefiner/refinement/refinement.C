@@ -44,7 +44,7 @@ Notes
 #include "syncTools.H"
 #include "meshTools.H"
 #include "hexRef.H"
-#include "foamMeshTools.H"
+#include "dynMeshTools.H"
 #include "mapPolyMesh.H"
 #include "mapDistributePolyMesh.H"
 #include "globalIndex.H"

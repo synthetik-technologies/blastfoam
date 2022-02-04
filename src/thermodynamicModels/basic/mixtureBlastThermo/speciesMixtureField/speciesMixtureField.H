@@ -130,6 +130,9 @@ public:
         //- Update size of fields
         virtual void updateObject();
 
+        virtual void distribute(const mapDistributePolyMesh&)
+        {}
+
         //- Update size of fields
         virtual bool movePoints()
         {

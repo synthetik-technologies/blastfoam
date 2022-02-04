@@ -195,6 +195,18 @@ public:
         virtual void distribute(const mapDistributePolyMesh& map);
 
 
+    // Writing
+
+        //- Write using given format, version and compression
+        virtual bool writeObject
+        (
+            IOstream::streamFormat fmt,
+            IOstream::versionNumber ver,
+            IOstream::compressionType cmp,
+            const bool write = true
+        ) const;
+
+
     // Member Operators
 
         //- Disallow default bitwise assignment

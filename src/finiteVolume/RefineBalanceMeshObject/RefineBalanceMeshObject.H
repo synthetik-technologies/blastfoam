@@ -41,6 +41,7 @@ SourceFiles
 
 #include "fvMesh.H"
 #include "regIOobject.H"
+#include "mapDistributePolyMesh.H"
 
 namespace Foam
 {
@@ -81,9 +82,17 @@ public:
         )
     {}
 
+    // Update to save the necessary data before balancing
+    virtual void preDistribute()
+    {}
+
     virtual void updateObject() = 0;
 
+    virtual void distribute(const mapDistributePolyMesh&) = 0;
+
+    static void preDistribute(const objectRegistry&);
     static void updateObjects(const objectRegistry&);
+    static void distribute(const objectRegistry&, const mapDistributePolyMesh&);
 };
 
 
@@ -116,7 +125,6 @@ public:
     {}
 
     virtual void updateObject() = 0;
-
     static void updateObjects(const objectRegistry&);
 };
 

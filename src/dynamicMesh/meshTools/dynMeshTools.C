@@ -23,11 +23,15 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "foamMeshTools.H"
+#include "dynMeshTools.H"
 #include "polyMesh.H"
 #include "hexMatcher.H"
 #include "faceZone.H"
 #include "syncTools.H"
+#include "polyTopoChange.H"
+#include "polyAddFace.H"
+#include "polyModifyFace.H"
+#include "removeCells.H"
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
@@ -58,6 +62,361 @@ void Foam::meshTools::setFaceInfo
         zoneFlip = fZone.flipMap()[fZone.whichFace(faceI)];
     }
 }
+
+void Foam::meshTools::modifyOrAddFace
+(
+    polyTopoChange& meshMod,
+    const face& f,
+    const label facei,
+    const label own,
+    const bool flipFaceFlux,
+    const label newPatchi,
+    const label zoneID,
+    const bool zoneFlip,
+
+    PackedBoolList& modifiedFace
+)
+{
+    if (!modifiedFace.get(facei))
+    {
+        // First usage of face. Modify.
+        meshMod.setAction
+        (
+            polyModifyFace
+            (
+                f,                          // modified face
+                facei,                      // label of face
+                own,                        // owner
+                -1,                         // neighbour
+                flipFaceFlux,               // face flip
+                newPatchi,                  // patch for face
+                false,                      // remove from zone
+                zoneID,                     // zone for face
+                zoneFlip                    // face flip in zone
+            )
+        );
+        modifiedFace.set(facei);
+    }
+    else
+    {
+        // Second or more usage of face. Add.
+        meshMod.setAction
+        (
+            polyAddFace
+            (
+                f,                          // modified face
+                own,                        // owner
+                -1,                         // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                facei,                      // master face
+                flipFaceFlux,               // face flip
+                newPatchi,                  // patch for face
+                zoneID,                     // zone for face
+                zoneFlip                    // face flip in zone
+            )
+        );
+    }
+}
+
+
+Foam::label Foam::meshTools::createBaffleFaces
+(
+    const bool internalFacesOnly,
+    const polyMesh& mesh,
+    const faceZone& fZone,
+    const labelList& newMasterPatches,
+    const labelList& newSlavePatches,
+    polyTopoChange& meshMod,
+    PackedBoolList& modifiedFace
+)
+{
+    label nModified = 0;
+    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
+
+    forAll(newMasterPatches, i)
+    {
+        // Pass 1. Do selected side of zone
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+        {
+            label zoneFacei = fZone.whichFace(facei);
+
+            if (zoneFacei != -1)
+            {
+                if (!fZone.flipMap()[zoneFacei])
+                {
+                    // Use owner side of face
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei],    // modified face
+                        facei,                  // label of face
+                        mesh.faceOwner()[facei],// owner
+                        false,                  // face flip
+                        newMasterPatches[i],    // patch for face
+                        fZone.index(),          // zone for face
+                        false,                  // face flip in zone
+                        modifiedFace            // modify or add status
+                    );
+                }
+                else
+                {
+                    // Use neighbour side of face.
+                    // To keep faceZone pointing out of original neighbour
+                    // we don't need to set faceFlip since that cell
+                    // now becomes the owner
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei].reverseFace(),  // modified face
+                        facei,                      // label of face
+                        mesh.faceNeighbour()[facei],// owner
+                        true,                       // face flip
+                        newMasterPatches[i],        // patch for face
+                        fZone.index(),              // zone for face
+                        false,                      // face flip in zone
+                        modifiedFace                // modify or add status
+                    );
+                }
+
+                nModified++;
+            }
+        }
+
+
+        // Pass 2. Do other side of zone
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+        {
+            label zoneFacei = fZone.whichFace(facei);
+
+            if (zoneFacei != -1)
+            {
+                if (!fZone.flipMap()[zoneFacei])
+                {
+                    // Use neighbour side of face
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei].reverseFace(),  // modified face
+                        facei,                          // label of face
+                        mesh.faceNeighbour()[facei],    // owner
+                        true,                           // face flip
+                        newSlavePatches[i],             // patch for face
+                        fZone.index(),                  // zone for face
+                        true,                           // face flip in zone
+                        modifiedFace                    // modify or add
+                    );
+                }
+                else
+                {
+                    // Use owner side of face
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei],    // modified face
+                        facei,                  // label of face
+                        mesh.faceOwner()[facei],// owner
+                        false,                  // face flip
+                        newSlavePatches[i],     // patch for face
+                        fZone.index(),          // zone for face
+                        true,                   // face flip in zone
+                        modifiedFace            // modify or add status
+                    );
+                }
+            }
+        }
+
+
+        // Modify any boundary faces
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        // Normal boundary:
+        // - move to new patch. Might already be back-to-back baffle
+        // you want to add cyclic to. Do warn though.
+        //
+        // Processor boundary:
+        // - do not move to cyclic
+        // - add normal patches though.
+
+        // For warning once per patch.
+        labelHashSet patchWarned;
+
+        forAll(pbm, patchi)
+        {
+            const polyPatch& pp = pbm[patchi];
+
+            const label newMasterPatchi = newMasterPatches[i];
+            const label newSlavePatchi = newSlavePatches[i];
+
+            if
+            (
+                pp.coupled()
+             && (
+                    pbm[newMasterPatchi].coupled()
+                 || pbm[newSlavePatchi].coupled()
+                )
+            )
+            {
+                // Do not allow coupled faces to be moved to different
+                // coupled patches.
+            }
+            else if (pp.coupled() || !internalFacesOnly)
+            {
+                forAll(pp, i)
+                {
+                    label facei = pp.start()+i;
+
+                    label zoneFacei = fZone.whichFace(facei);
+
+                    if (zoneFacei != -1)
+                    {
+                        if (patchWarned.insert(patchi))
+                        {
+                            WarningInFunction
+                                << "Found boundary face (in patch "
+                                << pp.name()
+                                << ") in faceZone " << fZone.name()
+                                << " to convert to baffle patches "
+                                << pbm[newMasterPatchi].name() << "/"
+                                << pbm[newSlavePatchi].name()
+                                << endl
+                                << "    Set internalFacesOnly to true in the"
+                                << " createBaffles control dictionary if you"
+                                << " don't wish to convert boundary faces."
+                                << endl;
+                        }
+
+                        modifyOrAddFace
+                        (
+                            meshMod,
+                            mesh.faces()[facei],        // modified face
+                            facei,                      // label of face
+                            mesh.faceOwner()[facei],    // owner
+                            false,                      // face flip
+                            fZone.flipMap()[zoneFacei]
+                          ? newSlavePatchi
+                          : newMasterPatchi,            // patch for face
+                            fZone.index(),              // zone for face
+                            fZone.flipMap()[zoneFacei], // face flip in zone
+                            modifiedFace                // modify or add
+                        );
+
+                        nModified++;
+                    }
+                }
+            }
+        }
+    }
+    return nModified;
+}
+
+
+Foam::label Foam::meshTools::createPatchFaces
+(
+    const bool internalFacesOnly,
+    const polyMesh& mesh,
+    const faceZone& fZone,
+    const labelList& newPatches,
+    polyTopoChange& meshMod,
+    PackedBoolList& modifiedFace
+)
+{
+    label nModified = 0;
+
+    forAll(newPatches, i)
+    {
+        // Pass 1. Do selected side of zone
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        for (label facei = 0; facei < mesh.nInternalFaces(); facei++)
+        {
+            label zoneFacei = fZone.whichFace(facei);
+
+            if (zoneFacei != -1)
+            {
+                if (!fZone.flipMap()[zoneFacei])
+                {
+                    // Use owner side of face
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei],    // modified face
+                        facei,                  // label of face
+                        mesh.faceOwner()[facei],// owner
+                        false,                  // face flip
+                        newPatches[i],          // patch for face
+                        fZone.index(),          // zone for face
+                        false,                  // face flip in zone
+                        modifiedFace            // modify or add status
+                    );
+                }
+                else
+                {
+                    // Use neighbour side of face.
+                    // To keep faceZone pointing out of original neighbour
+                    // we don't need to set faceFlip since that cell
+                    // now becomes the owner
+                    modifyOrAddFace
+                    (
+                        meshMod,
+                        mesh.faces()[facei].reverseFace(),  // modified face
+                        facei,                      // label of face
+                        mesh.faceNeighbour()[facei],// owner
+                        true,                       // face flip
+                        newPatches[i],              // patch for face
+                        fZone.index(),              // zone for face
+                        false,                      // face flip in zone
+                        modifiedFace                // modify or add status
+                    );
+                }
+
+                nModified++;
+            }
+        }
+    }
+    return nModified;
+}
+
+
+void Foam::meshTools::setRemoveCells
+(
+    const polyMesh& mesh,
+    const labelHashSet& selectedCells,
+    const word& patchName,
+    polyTopoChange& meshMod,
+    const bool keepCells
+)
+{
+    label patchi = mesh.boundaryMesh().findPatchID(patchName);
+    labelHashSet cellsToRemove(selectedCells);
+    if (keepCells)
+    {
+        cellsToRemove.clear();
+        forAll(mesh.cells(), celli)
+        {
+            if (!selectedCells.found(celli))
+            {
+                cellsToRemove.insert(celli);
+            }
+        }
+    }
+
+    removeCells cellRemover(mesh, true);
+    labelList exposedFaces(cellRemover.getExposedFaces(cellsToRemove.toc()));
+    labelList exposedPatchIDs(exposedFaces.size(), patchi);
+    cellRemover.setRefinement
+    (
+        cellsToRemove.toc(),
+        exposedFaces,
+        exposedPatchIDs,
+        meshMod
+    );
+}
+
 /*
 
 // Does anyone have couples? Since meshes might have 0 cells and 0 proc

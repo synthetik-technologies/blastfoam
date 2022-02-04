@@ -212,7 +212,7 @@ private:
 public:
 
     // Declare name of the class and its debug switch
-    TypeName("hexRefinementHistory");
+    TypeName("refinementHistory");
 
 
     // Constructors

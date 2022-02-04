@@ -39,7 +39,7 @@ totalThermoTemperatureFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF),
-    thermoBasePatchField(p, iF),
+    thermoBasePatchField(this->patch(), iF),
     UName_(IOobject::groupName("U", this->phaseName_)),
     phiName_(IOobject::groupName("phi", this->phaseName_)),
     T0_(p.size(), 0.0)
@@ -55,7 +55,7 @@ totalThermoTemperatureFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict, false),
-    thermoBasePatchField(p, iF),
+    thermoBasePatchField(this->patch(), iF),
     UName_
     (
         dict.lookupOrDefault<word>
@@ -98,7 +98,7 @@ totalThermoTemperatureFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-    thermoBasePatchField(p, iF),
+    thermoBasePatchField(this->patch(), iF),
     UName_(ptf.UName_),
     phiName_(ptf.phiName_),
     T0_(mapper(ptf.T0_))
@@ -113,7 +113,7 @@ totalThermoTemperatureFvPatchScalarField
 )
 :
     fixedValueFvPatchScalarField(tppsf, iF),
-    thermoBasePatchField(tppsf.patch(), iF),
+    thermoBasePatchField(this->patch(), iF),
     UName_(tppsf.UName_),
     phiName_(tppsf.phiName_),
     T0_(tppsf.T0_)

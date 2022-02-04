@@ -459,7 +459,7 @@ Foam::fvMeshRefiner::fvMeshRefiner
     nUnrefinementIterations_(0),
     nBalanceIterations_(0),
 
-    force_(false),
+    force_(force),
     refine_(true),
     unrefine_(true),
 

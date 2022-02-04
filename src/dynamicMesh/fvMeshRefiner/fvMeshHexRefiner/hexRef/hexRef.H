@@ -669,7 +669,6 @@ public:
 
             //- Force writing refinement+history to polyMesh directory.
             bool write() const;
-
 };
 
 

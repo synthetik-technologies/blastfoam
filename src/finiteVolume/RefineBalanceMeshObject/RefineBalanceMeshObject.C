@@ -48,7 +48,7 @@ void Foam::RefineMeshObject::updateObjects(const objectRegistry& obr)
 
     if (debug)
     {
-        Pout<< "RefineMeshObject::updateMesh(objectRegistry&): updating" << nl
+        Pout<< FUNCTION_NAME << ": updating" << nl
             << " meshObjects for region " << obr.name() << endl;
     }
 
@@ -71,6 +71,42 @@ void Foam::RefineMeshObject::updateObjects(const objectRegistry& obr)
 }
 
 
+void Foam::BalanceMeshObject::preDistribute(const objectRegistry& obr)
+{
+    HashTable<BalanceMeshObject*> meshObjects
+    (
+        const_cast<objectRegistry&>
+        (
+            obr
+        ).lookupClass<BalanceMeshObject>()
+    );
+
+    if (debug)
+    {
+        Pout<< FUNCTION_NAME << ": updating"
+            << nl
+            << " meshObjects for region " << obr.name() << endl;
+    }
+
+    forAllIter
+    (
+        typename HashTable<BalanceMeshObject*>,
+        meshObjects,
+        iter
+    )
+    {
+        if (isA<BalanceMeshObject>(*iter()))
+        {
+            if (debug)
+            {
+                Pout<< "    preDistributing " << iter()->name() << endl;
+            }
+            dynamic_cast<BalanceMeshObject*>(iter())->preDistribute();
+        }
+    }
+}
+
+
 void Foam::BalanceMeshObject::updateObjects(const objectRegistry& obr)
 {
     HashTable<BalanceMeshObject*> meshObjects
@@ -83,7 +119,7 @@ void Foam::BalanceMeshObject::updateObjects(const objectRegistry& obr)
 
     if (debug)
     {
-        Pout<< "BalanceMeshObject::updateMesh(objectRegistry&): updating" << nl
+        Pout<< FUNCTION_NAME << ": updating" << nl
             << " meshObjects for region " << obr.name() << endl;
     }
 
@@ -104,5 +140,45 @@ void Foam::BalanceMeshObject::updateObjects(const objectRegistry& obr)
         }
     }
 }
+
+
+void Foam::BalanceMeshObject::distribute
+(
+    const objectRegistry& obr,
+    const mapDistributePolyMesh& map
+)
+{
+    HashTable<BalanceMeshObject*> meshObjects
+    (
+        const_cast<objectRegistry&>
+        (
+            obr
+        ).lookupClass<BalanceMeshObject>()
+    );
+
+    if (debug)
+    {
+        Pout<< FUNCTION_NAME << ": updating" << nl
+            << " meshObjects for region " << obr.name() << endl;
+    }
+
+    forAllIter
+    (
+        typename HashTable<BalanceMeshObject*>,
+        meshObjects,
+        iter
+    )
+    {
+        if (isA<BalanceMeshObject>(*iter()))
+        {
+            if (debug)
+            {
+                Pout<< "    Updating " << iter()->name() << endl;
+            }
+            dynamic_cast<BalanceMeshObject*>(iter())->distribute(map);
+        }
+    }
+}
+
 
 // ************************************************************************* //

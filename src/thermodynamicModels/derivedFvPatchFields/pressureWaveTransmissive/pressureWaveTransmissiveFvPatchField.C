@@ -43,7 +43,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(p, iF),
-    thermoBasePatchField(p)
+    thermoBasePatchField(this->patch())
 {}
 
 
@@ -58,7 +58,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptf, p, iF, mapper),
-    thermoBasePatchField(ptf)
+    thermoBasePatchField(this->patch())
 {}
 
 
@@ -72,7 +72,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(p, iF, dict),
-    thermoBasePatchField(p, dict)
+    thermoBasePatchField(this->patch(), dict)
 {}
 
 
@@ -85,7 +85,7 @@ pressureWaveTransmissiveFvPatchField
 )
 :
     advectiveFvPatchField<Type>(ptpsf, iF),
-    thermoBasePatchField(ptpsf)
+    thermoBasePatchField(this->patch())
 {}
 
 

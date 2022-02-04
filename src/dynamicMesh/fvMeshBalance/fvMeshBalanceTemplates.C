@@ -26,6 +26,7 @@ License
 #include "volMesh.H"
 #include "fvPatchField.H"
 #include "surfaceFields.H"
+#include "processorPolyPatch.H"
 
 
 template<class GeoField>
@@ -49,7 +50,7 @@ void Foam::fvMeshBalance::correctBoundaries()
 
             forAll(fld.boundaryField(), patchi)
             {
-                if (fld.boundaryField()[patchi].coupled())
+                if (isA<processorPolyPatch>(mesh_.boundaryMesh()[patchi]))
                 {
                     fld.boundaryFieldRef()[patchi].initEvaluate
                     (
@@ -70,7 +71,7 @@ void Foam::fvMeshBalance::correctBoundaries()
 
             forAll(fld.boundaryField(), patchi)
             {
-                if (fld.boundaryField()[patchi].coupled())
+                if (isA<processorPolyPatch>(mesh_.boundaryMesh()[patchi]))
                 {
                     fld.boundaryFieldRef()[patchi].evaluate
                     (
@@ -82,10 +83,8 @@ void Foam::fvMeshBalance::correctBoundaries()
         else
         {
             //Scheduled patch updates not supported
-            FatalErrorIn
-            (
-                "dynamicRefineBalancedBlastFvMeshTemplates::correctBoundaries"
-            )   << "Unsuported communications type "
+            FatalErrorInFunction
+                << "Unsuported communications type "
                 << Pstream::commsTypeNames[Pstream::defaultCommsType]
                 << exit(FatalError);
         }

@@ -46,7 +46,7 @@ Foam::dynamicThermoPressureFvPatchScalarField::dynamicThermoPressureFvPatchScala
 )
 :
     fixedValueFvPatchScalarField(p, iF),
-    thermoBasePatchField(p, iF),
+    thermoBasePatchField(this->patch(), iF),
     p0_(p.size(), 0)
 {}
 
@@ -59,7 +59,7 @@ Foam::dynamicThermoPressureFvPatchScalarField::dynamicThermoPressureFvPatchScala
 )
 :
     fixedValueFvPatchScalarField(p, iF, dict, false),
-    thermoBasePatchField(p, iF, dict),
+    thermoBasePatchField(this->patch(), iF, dict),
     p0_("p0", dict, p.size())
 {
     if (dict.found("value"))
@@ -85,7 +85,7 @@ Foam::dynamicThermoPressureFvPatchScalarField::dynamicThermoPressureFvPatchScala
 )
 :
     fixedValueFvPatchScalarField(ptf, p, iF, mapper),
-    thermoBasePatchField(p, iF),
+    thermoBasePatchField(this->patch(), iF),
     p0_(mapper(ptf.p0_))
 {}
 

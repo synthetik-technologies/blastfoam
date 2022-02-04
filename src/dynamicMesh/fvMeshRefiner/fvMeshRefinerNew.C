@@ -53,7 +53,7 @@ Foam::autoPtr<Foam::fvMeshRefiner> Foam::fvMeshRefiner::New
         refinerType = dynamicMeshDict.lookup<word>("refiner");
     }
 
-    Info<< "Selecting fvMeshRefiner " << refinerType << endl;
+    Info<< "Selecting fvMeshRefiner: " << refinerType << endl;
 
     fvMeshConstructorTable::iterator cstrIter =
         fvMeshConstructorTablePtr_->find(refinerType);

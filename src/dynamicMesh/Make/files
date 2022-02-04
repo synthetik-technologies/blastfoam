@@ -33,6 +33,6 @@ fvMeshRefiner/fvMeshPolyRefiner/prismatic2DRefinement/prismatic2DRefinement.C
 fvMeshRefiner/fvMeshPolyRefiner/refinement/refinement.C
 fvMeshRefiner/fvMeshPolyRefiner/polyRefinementConstraint.C
 
-meshTools/foamMeshTools.C
+meshTools/dynMeshTools.C
 
 LIB = $(BLAST_LIBBIN)/libblastDynamicMesh

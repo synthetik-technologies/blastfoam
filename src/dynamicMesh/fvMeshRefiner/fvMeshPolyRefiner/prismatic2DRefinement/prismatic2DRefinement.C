@@ -41,7 +41,7 @@ Author
 #include "emptyPolyPatch.H"
 #include "wedgePolyPatch.H"
 #include "meshTools.H"
-#include "foamMeshTools.H"
+#include "dynMeshTools.H"
 #include "OFstream.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -1755,7 +1755,6 @@ void Foam::prismatic2DRefinement::setRefinement
                             << abort(FatalError);
                     }
 
-                    bool flipFace = false;
                     if ((edgeI.start() == pointI) || (edgeI.end() == pointI))
                     {
                         // Current point is on edgeI, set edgeI midpoint and

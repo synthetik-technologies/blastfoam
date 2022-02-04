@@ -307,9 +307,10 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
         IOobject
         (
             "cellLevel",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
+            mesh_.facesInstance(),
+            polyMesh::meshSubDir,
+            mesh_,
+             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
         labelList(mesh.nCells(), 0)
@@ -320,8 +321,9 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
         IOobject
         (
             "pointLevel",
-            mesh.time().timeName(),
-            mesh,
+            mesh_.facesInstance(),
+            polyMesh::meshSubDir,
+            mesh_,
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
@@ -360,8 +362,9 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
         IOobject
         (
             "cellLevel",
-            mesh.time().timeName(),
-            mesh,
+            mesh_.facesInstance(),
+            polyMesh::meshSubDir,
+            mesh_,
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -373,8 +376,9 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
         IOobject
         (
             "pointLevel",
-            mesh.time().timeName(),
-            mesh,
+            mesh_.facesInstance(),
+            polyMesh::meshSubDir,
+            mesh_,
             read ? IOobject::READ_IF_PRESENT : IOobject::NO_READ,
             IOobject::NO_WRITE
         ),
@@ -620,6 +624,25 @@ void Foam::fvMeshDirectionalRefiner::distribute(const mapDistributePolyMesh& map
 {
     fvMeshRefiner::distribute(map);
     map.cellMap().distribute(cellLevel_);
+}
+
+
+bool Foam::fvMeshDirectionalRefiner::writeObject
+(
+    IOstream::streamFormat fmt,
+    IOstream::versionNumber ver,
+    IOstream::compressionType cmp,
+    const bool write
+) const
+{
+    // Force refinement data to go to the current time directory.
+    const_cast<labelIOList&>(cellLevel_).instance() = mesh_.facesInstance();
+    const_cast<labelIOList&>(pointLevel_).instance() = mesh_.facesInstance();
+
+    return
+        fvMeshRefiner::writeObject(fmt, ver, cmp, write)
+     && cellLevel_.write()
+     && pointLevel_.write();
 }
 
 

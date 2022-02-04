@@ -22,18 +22,18 @@ License
     along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
 
 Namespace
-    Foam::foamMeshTools
+    Foam::dynMeshTools
 
 Description
     Collection of static functions to do various simple mesh related things.
 
 SourceFiles
-    foamMeshTools.C
+    dynMeshTools.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef foamMeshTools_H
-#define foamMeshTools_H
+#ifndef dynMeshTools_H
+#define dynMeshTools_H
 
 #include "meshTools.H"
 #include "Pstream.H"
@@ -47,10 +47,12 @@ SourceFiles
 namespace Foam
 {
 
-class primitiveMesh;
 class polyMesh;
 class polyBoundaryMesh;
 class coupledPolyPatch;
+class polyTopoChange;
+class faceZone;
+class removeCells;
 
 /*---------------------------------------------------------------------------*\
                         Namespace meshTools Declaration
@@ -70,13 +72,59 @@ namespace meshTools
             label& zoneFlip
         );
 
-} // End namespace meshTools
+        void modifyOrAddFace
+        (
+            polyTopoChange& meshMod,
+            const face& f,
+            const label facei,
+            const label own,
+            const bool flipFaceFlux,
+            const label newPatchi,
+            const label zoneID,
+            const bool zoneFlip,
+
+            PackedBoolList& modifiedFace
+        );
+
+        //- Create baffle faces for fZone faces. Usually newMasterPatches,
+        //  newSlavePatches only size one but can be more for duplicate baffle
+        //  sets
+        label createBaffleFaces
+        (
+            const bool internalFacesOnly,
+            const polyMesh& mesh,
+            const faceZone& fZone,
+            const labelList& newMasterPatches,
+            const labelList& newSlavePatches,
+
+            polyTopoChange& meshMod,
+            PackedBoolList& modifiedFace
+        );
+
+        //- Create patch faces for fZone faces.
+        label createPatchFaces
+        (
+            const bool internalFacesOnly,
+            const polyMesh& mesh,
+            const faceZone& fZone,
+            const labelList& newPatches,
+
+            polyTopoChange& meshMod,
+            PackedBoolList& modifiedFace
+        );
+
+        //- Use the cells passed in to set the remove using remove cells
+        void setRemoveCells
+        (
+            const polyMesh& mesh,
+            const labelHashSet& selectedCells,
+            const word& patchName,
+
+            polyTopoChange& meshMod,
+            const bool keepCells = false
+        );
 
 /*
-namespace foamSyncTools
-{
-    // Private Member Functions
-
         //- Check whether uses couples.
         bool hasCouples(const polyBoundaryMesh&);
 
@@ -274,9 +322,12 @@ namespace foamSyncTools
             //- Get per face whether is it master (of a coupled set of faces)
             PackedBoolList getMasterFaces(const polyMesh&);
 
+*/
+
 } // End namespace foamSyncTools
 
 
+/*
 template<>
 void foamSyncTools::separateList(const vectorField&, UList<vector>&);
 
@@ -294,7 +345,7 @@ void foamSyncTools::separateList(const vectorField&, EdgeMap<vector>&);
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // #ifdef NoRepository
-// #   include "foamMeshToolsTemplates.C"
+// #   include "dynMeshToolsTemplates.C"
 // #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

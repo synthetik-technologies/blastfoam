@@ -37,7 +37,7 @@ Author
 #include "faceSet.H"
 #include "pointSet.H"
 #include "meshTools.H"
-#include "foamMeshTools.H"
+#include "dynMeshTools.H"
 #include "syncTools.H"
 #include "OFstream.H"
 
@@ -1993,8 +1993,6 @@ void Foam::polyhedralRefinement::setUnrefinement
         label pointi = splitPointsToUnrefine[i];
 
         const labelList& pCells = mesh_.pointCells(pointi);
-
-        label masterCelli = min(pCells);
 
         forAll(pCells, j)
         {
