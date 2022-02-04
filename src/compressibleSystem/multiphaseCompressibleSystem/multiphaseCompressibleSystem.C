@@ -59,6 +59,10 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 
     forAll(alphas_, phasei)
     {
+        // Ensure boundaries are updated
+        alphas_[phasei].correctBoundaryConditions();
+        rhos_[phasei].correctBoundaryConditions();
+
         word phaseName = alphas_[phasei].group();
         alphaRhos_.set
         (

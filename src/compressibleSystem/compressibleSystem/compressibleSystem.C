@@ -133,7 +133,9 @@ Foam::compressibleSystem::compressibleSystem
         (
             "phi",
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::NO_READ,
+            IOobject::AUTO_WRITE
         ),
         mesh,
         dimensionedScalar("0", dimVelocity*dimArea, 0.0)
@@ -329,7 +331,7 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
     {
         if (isA<wedgeFvPatch>(mesh().boundary()[patchi]))
         {
-            amaxSf.boundaryFieldRef() = Zero;
+            amaxSf.boundaryFieldRef()[patchi] = Zero;
         }
     }
     amaxSf += mag(fvc::flux(U()));

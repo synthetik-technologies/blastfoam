@@ -134,7 +134,7 @@ Foam::interfaceTwoPhaseCompressibleSystem::interfaceTwoPhaseCompressibleSystem
             IOobject::groupName("levelSet", rho1_.group()),
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT,
+            IOobject::MUST_READ,
             IOobject::AUTO_WRITE
         ),
         D(alpha1_)
