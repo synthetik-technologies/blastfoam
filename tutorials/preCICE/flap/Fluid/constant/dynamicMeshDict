@@ -14,7 +14,7 @@ dynamicFvMesh movingAdaptiveFvMesh;
 
 protectedPatches (flap);
 
-solver      displacementLaplacian;
+motionSolver      displacementLaplacian;
 
 displacementLaplacianCoeffs
 {
