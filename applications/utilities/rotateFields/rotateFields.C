@@ -390,6 +390,10 @@ void calcMapAndR
             nTarget -= (nTarget & rotationAxis)*rotationAxis;
             nSource -= (nSource & rotationAxis)*rotationAxis;
         }
+
+        // Normalise directions
+        nTarget /= max(mag(nTarget), small);
+        nSource /= max(mag(nSource), small);
         R[celli] = rotationTensor(nSource, nTarget);
     }
 }
