@@ -72,6 +72,9 @@ protected:
 
 public:
 
+    //- Runtime type information
+    TypeName("burstFvPatchBase");
+
     // Constructors
 
         //- Construct from polyPatch

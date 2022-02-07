@@ -34,7 +34,6 @@ boundaryField
     {
         type            globalMapped;
         nbrName         pointD;
-        value           $internalField;
     }
 
     wedge

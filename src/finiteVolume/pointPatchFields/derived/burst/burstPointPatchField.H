@@ -36,7 +36,6 @@ SourceFiles
 #define burstPointPatchField_H
 
 #include "valuePointPatchField.H"
-#include "burstPointPatch.H"
 #include "burstPointPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -66,7 +65,7 @@ class burstPointPatchField
 public:
 
     //- Runtime type information
-    TypeName(burstPointPatch::typeName_());
+    TypeName("burst");
 
 
     // Constructors

@@ -49,5 +49,5 @@ runTimeModifiable yes;
 
 adjustTimeStep  yes;
 
-maxCo           0.7;
+maxCo           0.5;
 // ************************************************************************* //

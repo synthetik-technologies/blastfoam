@@ -174,8 +174,8 @@ Foam::backupTopoSetSource::backupTopoSetSource(const backupTopoSetSource& source
 :
     mesh_(source.mesh_),
     dict_(source.dict_),
-    source_(source.source_, false),
-    backup_(source.backup_, false)
+    source_(source.source_->clone()),
+    backup_(source.backup_->clone())
 {}
 
 

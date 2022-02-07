@@ -14,7 +14,7 @@ runApplication -s plate blockMesh -region plate -dict system/plate/$blockMeshDic
 
 runApplication decomposePar -allRegions
 
-runParallel setRefinedFields -region air
+runParallel setRefinedFields -region air -updateAll
 
 runParallel $(getApplication)
 

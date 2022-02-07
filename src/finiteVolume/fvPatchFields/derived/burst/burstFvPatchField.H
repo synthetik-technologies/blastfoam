@@ -40,7 +40,7 @@ SourceFiles
 #ifndef burstFvPatchField_H
 #define burstFvPatchField_H
 
-#include "fvPatchField.H"
+#include "coupledFvPatchField.H"
 #include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -55,7 +55,7 @@ namespace Foam
 template<class Type>
 class burstFvPatchField
 :
-    public fvPatchField<Type>,
+    public coupledFvPatchField<Type>,
     public burstFvPatchFieldBase
 {
     // Private Data
@@ -238,6 +238,27 @@ public:
 
 
     // Member Operators
+
+        virtual void operator=(const UList<Type>&);
+
+        virtual void operator=(const fvPatchField<Type>&);
+        virtual void operator+=(const fvPatchField<Type>&);
+        virtual void operator-=(const fvPatchField<Type>&);
+        virtual void operator*=(const fvPatchField<scalar>&);
+        virtual void operator/=(const fvPatchField<scalar>&);
+
+        virtual void operator+=(const Field<Type>&);
+        virtual void operator-=(const Field<Type>&);
+
+        virtual void operator*=(const Field<scalar>&);
+        virtual void operator/=(const Field<scalar>&);
+
+        virtual void operator=(const Type&);
+        virtual void operator+=(const Type&);
+        virtual void operator-=(const Type&);
+        virtual void operator*=(const scalar);
+        virtual void operator/=(const scalar);
+
 
         // Force an assignment irrespective of form of patch
 

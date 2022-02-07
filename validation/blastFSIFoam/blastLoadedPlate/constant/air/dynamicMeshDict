@@ -17,6 +17,7 @@ FoamFile
 dynamicFvMesh   movingAdaptiveFvMesh;
 errorEstimator  scaledDelta;      // Model used to estimate error
 scaledDeltaField p;
+balance no;
 
 motionSolver    displacementLaplacian;
 
@@ -40,7 +41,7 @@ unrefineLevel   0.01;
 nBufferLayers   3;
 
 // Refine cells only up to maxRefinement levels
-maxRefinement   3;
+maxRefinement   0;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

@@ -30,7 +30,7 @@ interfaces
             sampleRegion plate;
             samplePatch  plate_to_air;
             mappingType  AMI;
-            interpolationMethod faceAreaWeight;
+            interpolationMethod mapNearest;
         }
     }
     plate
@@ -39,7 +39,6 @@ interfaces
         {
             sampleRegion air;
             samplePatch  air_to_plate;
-            displacementField pointD;
         }
     }
 );

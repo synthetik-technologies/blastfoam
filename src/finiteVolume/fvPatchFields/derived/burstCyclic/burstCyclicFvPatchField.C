@@ -42,18 +42,14 @@ Foam::burstCyclicFvPatchField<Type>::burstCyclicFvPatchField
     burstFvPatchFieldBase(p),
     intactPatchField_
     (
-        new extrapolatedCalculatedFvPatchField<Type>
+        new calculatedFvPatchField<Type>
         (
             p,
             iF
         )
     )
 {
-    if (notNull(iF))
-    {
-        fvPatchField<Type>::operator=(this->patchInternalField());
-        intactPatchField_() = this->patchInternalField();
-    }
+    this->operator==(Zero);
 }
 
 
@@ -135,7 +131,11 @@ Foam::burstCyclicFvPatchField<Type>::burstCyclicFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    cyclicFvPatchField<Type>(bpf, iF),
+    cyclicFvPatchField<Type>
+    (
+        static_cast<const  cyclicFvPatchField<Type>&>(bpf),
+        iF
+    ),
     burstFvPatchFieldBase(this->patch(), bpf),
     intactPatchField_(bpf.intactPatchField_->clone(iF).ptr())
 {}
@@ -148,7 +148,12 @@ Foam::tmp<Foam::Field<Type>>
 Foam::burstCyclicFvPatchField<Type>::patchNeighbourField() const
 {
     return
-        intact()*intactPatchField_()
+        intact()
+       *(
+            intactPatchField_->coupled()
+          ? intactPatchField_().patchNeighbourField()
+          : intactPatchField_()
+        )
       + (1.0 - intact())*cyclicFvPatchField<Type>::patchNeighbourField();
 }
 
@@ -188,6 +193,7 @@ void Foam::burstCyclicFvPatchField<Type>::updateCoeffs()
     }
 
     intactPatchField_() = *this;
+
     intactPatchField_->updateCoeffs();
     cyclicFvPatchField<Type>::updateCoeffs();
     burstFvPatchFieldBase::update();
@@ -204,10 +210,6 @@ void Foam::burstCyclicFvPatchField<Type>::initEvaluate
     {
         this->updateCoeffs();
     }
-    // Before we call evaluate on the cyclic patch, assign the current field
-    // to the intact patch. This is done to make sure everything that has been
-    // done to the actual patch is transfered
-    intactPatchField_() = *this;
 
     cyclicFvPatchField<Type>::initEvaluate(commsType);
     intactPatchField_->initEvaluate(commsType);
@@ -227,12 +229,6 @@ void Foam::burstCyclicFvPatchField<Type>::evaluate
 
     intactPatchField_->evaluate(commsType);
     cyclicFvPatchField<Type>::evaluate(commsType);
-
-    Field<Type>::operator=
-    (
-        intact()*intactPatchField_()
-      + (1.0 - intact())*(*this)
-    );
 }
 
 
@@ -411,6 +407,7 @@ void Foam::burstCyclicFvPatchField<Type>::write(Ostream& os) const
         os.indent();
         os << "intactPatch" << dict;
     }
+    writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
 
@@ -423,8 +420,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator=
     const UList<Type>& ul
 )
 {
-    fvPatchField<Type>::operator=(ul);
-//     intactPatchField_() = ul;
+    Field<Type>::operator=(ul);
+    intactPatchField_() = ul;
 }
 
 
@@ -434,8 +431,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator=(ptf);
-//     intactPatchField_() = ptf;
+    Field<Type>::operator=(ptf);
+    intactPatchField_() = ptf;
 }
 
 
@@ -445,8 +442,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator+=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator+=(ptf);
-//     intactPatchField_() += ptf;
+    Field<Type>::operator+=(ptf);
+    intactPatchField_() += ptf;
 }
 
 
@@ -456,8 +453,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator-=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator-=(ptf);
-//     intactPatchField_() -= ptf;
+    Field<Type>::operator-=(ptf);
+    intactPatchField_() -= ptf;
 }
 
 
@@ -467,8 +464,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator*=
     const fvPatchField<scalar>& ptf
 )
 {
-    fvPatchField<Type>::operator*=(ptf);
-//     intactPatchField_() *= ptf;
+    Field<Type>::operator*=(ptf);
+    intactPatchField_() *= ptf;
 }
 
 
@@ -478,8 +475,8 @@ void Foam::burstCyclicFvPatchField<Type>::operator/=
     const fvPatchField<scalar>& ptf
 )
 {
-    fvPatchField<Type>::operator/=(ptf);
-//     intactPatchField_() /= ptf;
+    Field<Type>::operator/=(ptf);
+    intactPatchField_() /= ptf;
 }
 
 
@@ -490,7 +487,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator+=
 )
 {
     Field<Type>::operator+=(tf);
-//     intactPatchField_() += tf;
+    intactPatchField_() += tf;
 }
 
 
@@ -501,7 +498,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator-=
 )
 {
     Field<Type>::operator-=(tf);
-//     intactPatchField_() -= tf;
+    intactPatchField_() -= tf;
 }
 
 
@@ -512,7 +509,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator*=
 )
 {
     Field<Type>::operator*=(tf);
-//     intactPatchField_() *= tf;
+    intactPatchField_() *= tf;
 }
 
 
@@ -523,7 +520,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator/=
 )
 {
     Field<Type>::operator/=(tf);
-//     intactPatchField_() /= tf;
+    intactPatchField_() /= tf;
 }
 
 
@@ -534,7 +531,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator=
 )
 {
     Field<Type>::operator=(t);
-//     intactPatchField_() = t;
+    intactPatchField_() = t;
 }
 
 
@@ -545,7 +542,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator+=
 )
 {
     Field<Type>::operator+=(t);
-//     intactPatchField_() += t;
+    intactPatchField_() += t;
 }
 
 
@@ -556,7 +553,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator-=
 )
 {
     Field<Type>::operator-=(t);
-//     intactPatchField_() -= t;
+    intactPatchField_() -= t;
 }
 
 
@@ -567,7 +564,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator*=
 )
 {
     Field<Type>::operator*=(s);
-//     intactPatchField_() *= s;
+    intactPatchField_() *= s;
 }
 
 
@@ -578,7 +575,7 @@ void Foam::burstCyclicFvPatchField<Type>::operator/=
 )
 {
     Field<Type>::operator/=(s);
-//     intactPatchField_() /= s;
+    intactPatchField_() /= s;
 }
 
 

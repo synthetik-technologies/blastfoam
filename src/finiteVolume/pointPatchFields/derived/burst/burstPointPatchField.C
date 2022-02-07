@@ -26,6 +26,7 @@ License
 #include "burstPointPatchField.H"
 #include "calculatedPointPatchField.H"
 #include "pointFields.H"
+#include "facePointPatch.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -76,15 +77,15 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
     burstPointPatchField_(),
     intactPointPatchField_()
 {
-    if (!isType<burstPointPatch>(p))
-    {
-        FatalIOErrorInFunction
-        (
-            dict
-        )   << "patch " << this->patch().index() << " not burst type. "
-            << "Patch type = " << p.type()
-            << exit(FatalIOError);
-    }
+//     if (!isType<burstPointPatch>(p))
+//     {
+//         FatalIOErrorInFunction
+//         (
+//             dict
+//         )   << "patch " << this->patch().index() << " not burst type. "
+//             << "Patch type = " << p.type()
+//             << exit(FatalIOError);
+//     }
 
     // Create a new patch dictionary and replace the type with the intactType
     {
@@ -139,15 +140,15 @@ Foam::burstPointPatchField<Type>::burstPointPatchField
     ),
     intactPointPatchField_(ptf.intactPointPatchField_->clone(iF).ptr())
 {
-    if (!isType<burstPointPatch>(this->patch()))
-    {
-        FatalErrorInFunction
-            << "Field type does not correspond to patch type for patch "
-            << this->patch().index() << "." << endl
-            << "Field type: " << typeName << endl
-            << "Patch type: " << this->patch().type()
-            << exit(FatalError);
-    }
+//     if (!isType<burstPointPatch>(this->patch()))
+//     {
+//         FatalErrorInFunction
+//             << "Field type does not correspond to patch type for patch "
+//             << this->patch().index() << "." << endl
+//             << "Field type: " << typeName << endl
+//             << "Patch type: " << this->patch().type()
+//             << exit(FatalError);
+//     }
 }
 
 

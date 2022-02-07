@@ -29,6 +29,12 @@ License
 #include "volFields.H"
 #include "surfaceFields.H"
 
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
+
+namespace Foam
+{
+    defineTypeNameAndDebug(burstFvPatchBase, 0);
+}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 

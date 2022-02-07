@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstFvPatchField.H"
-#include "burstFvPatch.H"
+#include "burstFvPatchBase.H"
 #include "coupledFvPatchField.H"
 #include "zeroGradientFvPatchField.H"
 #include "volFields.H"
@@ -39,11 +39,11 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(p, iF),
+    coupledFvPatchField<Type>(p, iF),
     burstFvPatchFieldBase(p),
     burstPatchField_
     (
-        new zeroGradientFvPatchField<Type>
+        new calculatedFvPatchField<Type>
         (
             p,
             iF
@@ -51,16 +51,17 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     ),
     intactPatchField_
     (
-        new zeroGradientFvPatchField<Type>
+        new calculatedFvPatchField<Type>
         (
             p,
             iF
         )
     )
 {
-    Field<Type>::operator=(Zero);
-    burstPatchField_() = Zero;
-    intactPatchField_() = Zero;
+    if (notNull(iF))
+    {
+        this->operator=(this->patchInternalField());
+    }
 }
 
 
@@ -72,18 +73,18 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const dictionary& dict
 )
 :
-    fvPatchField<Type>(p, iF, dict, false),
+    coupledFvPatchField<Type>(p, iF, dict, false),
     burstFvPatchFieldBase(p),
     burstPatchField_(),
     intactPatchField_()
 {
-    if (!isA<Foam::burstFvPatch>(p))
+    if (!isA<burstFvPatchBase>(p))
     {
         FatalIOErrorInFunction
         (
             dict
         )   << "    patch type '" << p.type()
-            << "' not constraint type '" << typeName << "'"
+            << "' not derived from '" << burstFvPatchBase::typeName << "'"
             << "\n    for patch " << p.name()
             << " of field " << this->internalField().name()
             << " in file " << this->internalField().objectPath()
@@ -98,7 +99,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
         dictionary burstDict(dict.parent(), dict.subDict("burstPatch"));
         if (!burstDict.found("patchType"))
         {
-            burstDict.add("patchType", typeName);
+            burstDict.add("patchType", this->patch().type());
         }
         burstPatchField_.set
         (
@@ -114,7 +115,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
         dictionary intactDict(dict.parent(), dict.subDict("intactPatch"));
         if (!intactDict.found("patchType"))
         {
-            intactDict.add("patchType", typeName);
+            intactDict.add("patchType", this->patch().type());
         }
         intactPatchField_.set
         (
@@ -144,7 +145,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const fvPatchFieldMapper& mapper
 )
 :
-    fvPatchField<Type>(bpf, p, iF, mapper),
+    coupledFvPatchField<Type>(bpf, p, iF, mapper),
     burstFvPatchFieldBase(p, bpf, mapper),
     burstPatchField_
     (
@@ -176,7 +177,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
     const DimensionedField<Type, volMesh>& iF
 )
 :
-    fvPatchField<Type>(bpf, iF),
+    coupledFvPatchField<Type>(bpf, iF),
     burstFvPatchFieldBase(this->patch()),
     burstPatchField_(bpf.burstPatchField_->clone(iF).ptr()),
     intactPatchField_(bpf.intactPatchField_->clone(iF).ptr())
@@ -190,8 +191,18 @@ Foam::tmp<Foam::Field<Type>>
 Foam::burstFvPatchField<Type>::patchNeighbourField() const
 {
     return
-        intact()*intactPatchField_().patchNeighbourField()
-      + (1.0 - intact())*burstPatchField_().patchNeighbourField();
+        intact()
+       *(
+            intactPatchField_->coupled()
+          ? intactPatchField_().patchNeighbourField()
+          : intactPatchField_()
+        )
+      + (1.0 - intact())
+       *(
+            burstPatchField_->coupled()
+          ? burstPatchField_().patchNeighbourField()
+          : burstPatchField_()
+        );
 }
 
 
@@ -231,6 +242,12 @@ void Foam::burstFvPatchField<Type>::updateCoeffs()
         return;
     }
 
+    // Before we call evaluate on the cyclic patch, assign the current field
+    // to the intact patch. This is done to make sure everything that has been
+    // done to the actual patch is transfered
+    intactPatchField_() = *this;
+    burstPatchField_() = *this;
+
     intactPatchField_->updateCoeffs();
     burstPatchField_->updateCoeffs();
 
@@ -250,12 +267,6 @@ void Foam::burstFvPatchField<Type>::initEvaluate
     {
         this->updateCoeffs();
     }
-
-    // Before we call evaluate on the cyclic patch, assign the current field
-    // to the intact patch. This is done to make sure everything that has been
-    // done to the actual patch is transfered
-    intactPatchField_() = *this;
-    burstPatchField_() = *this;
 
     burstPatchField_->initEvaluate(commsType);
     intactPatchField_->initEvaluate(commsType);
@@ -322,9 +333,16 @@ Foam::burstFvPatchField<Type>::gradientInternalCoeffs
 ) const
 {
     return
-        intactPatchField_->gradientInternalCoeffs(deltaCoeffs)*intact()
-      + burstPatchField_->gradientInternalCoeffs(deltaCoeffs)
-       *(1.0 - intact());
+        (
+            intactPatchField_->coupled()
+          ? intactPatchField_->gradientInternalCoeffs(deltaCoeffs)
+          : intactPatchField_->gradientInternalCoeffs()
+        )*intact()
+      + (
+            burstPatchField_->coupled()
+          ? burstPatchField_->gradientInternalCoeffs(deltaCoeffs)
+          : burstPatchField_->gradientInternalCoeffs()
+        )*(1.0 - intact());
 }
 
 
@@ -333,9 +351,22 @@ Foam::tmp<Foam::Field<Type>>
 Foam::burstFvPatchField<Type>::gradientInternalCoeffs() const
 {
     return
-        intactPatchField_->gradientInternalCoeffs()*intact()
-      + burstPatchField_->gradientInternalCoeffs()
-       *(1.0 - intact());
+        (
+            intactPatchField_->coupled()
+          ? intactPatchField_->gradientInternalCoeffs
+            (
+                this->patch().deltaCoeffs()
+            )
+          : intactPatchField_->gradientInternalCoeffs()
+        )*intact()
+      + (
+            burstPatchField_->coupled()
+          ? burstPatchField_->gradientInternalCoeffs
+            (
+                this->patch().deltaCoeffs()
+            )
+          : burstPatchField_->gradientInternalCoeffs()
+        )*(1.0 - intact());
 }
 
 
@@ -347,9 +378,16 @@ Foam::burstFvPatchField<Type>::gradientBoundaryCoeffs
 ) const
 {
     return
-        intactPatchField_->gradientBoundaryCoeffs(deltaCoeffs)*intact()
-      + burstPatchField_->gradientBoundaryCoeffs(deltaCoeffs)
-       *(1.0 - intact());
+        (
+            intactPatchField_->coupled()
+          ? intactPatchField_->gradientBoundaryCoeffs(deltaCoeffs)
+          : intactPatchField_->gradientBoundaryCoeffs()
+        )*intact()
+      + (
+            burstPatchField_->coupled()
+          ? burstPatchField_->gradientBoundaryCoeffs(deltaCoeffs)
+          : burstPatchField_->gradientBoundaryCoeffs()
+        )*(1.0 - intact());
 }
 
 
@@ -358,9 +396,22 @@ Foam::tmp<Foam::Field<Type>>
 Foam::burstFvPatchField<Type>::gradientBoundaryCoeffs() const
 {
     return
-        intactPatchField_->gradientBoundaryCoeffs()*intact()
-      + burstPatchField_->gradientBoundaryCoeffs()
-       *(1.0 - intact());
+        (
+            intactPatchField_->coupled()
+          ? intactPatchField_->gradientBoundaryCoeffs
+            (
+                this->patch().deltaCoeffs()
+            )
+          : intactPatchField_->gradientBoundaryCoeffs()
+        )*intact()
+      + (
+            burstPatchField_->coupled()
+          ? burstPatchField_->gradientBoundaryCoeffs
+            (
+                this->patch().deltaCoeffs()
+            )
+          : burstPatchField_->gradientBoundaryCoeffs()
+        )*(1.0 - intact());
 }
 
 
@@ -455,23 +506,211 @@ void Foam::burstFvPatchField<Type>::updateInterfaceMatrix
 template<class Type>
 void Foam::burstFvPatchField<Type>::write(Ostream& os) const
 {
-    os  << "burstPatch" << nl
-        << token::BEGIN_BLOCK << nl
-        << incrIndent << burstPatchField_() << decrIndent
-        << token::END_BLOCK;
-    os  << "intactPatch" << nl
-        << token::BEGIN_BLOCK << nl
-        << incrIndent << intactPatchField_() << decrIndent
-        << token::END_BLOCK;
-
     fvPatchField<Type>::write(os);
-
+    {
+        // Writing is a little weird since the burstPatchField has a different
+        // type, but is in the same dictionary
+        OStringStream oss;
+        burstPatchField_->write(oss);
+        dictionary dict(IStringStream(oss.str())());
+        os.indent();
+        os << "burstPatch" << dict;
+    }
+    {
+        // Writing is a little weird since the intactPatchField has a different
+        // type, but is in the same dictionary
+        OStringStream oss;
+        intactPatchField_->write(oss);
+        dictionary dict(IStringStream(oss.str())());
+        os.indent();
+        os << "intactPatch" << dict;
+    }
     writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
 
 
 // * * * * * * * * * * * * * * * Member Operators  * * * * * * * * * * * * * //
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator=
+(
+    const UList<Type>& ul
+)
+{
+    fvPatchField<Type>::operator=(ul);
+    intactPatchField_() = ul;
+    burstPatchField_() = ul;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator=
+(
+    const fvPatchField<Type>& ptf
+)
+{
+    fvPatchField<Type>::operator=(ptf);
+    intactPatchField_() = ptf;
+    burstPatchField_() = ptf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator+=
+(
+    const fvPatchField<Type>& ptf
+)
+{
+    fvPatchField<Type>::operator+=(ptf);
+    intactPatchField_() += ptf;
+    burstPatchField_() += ptf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator-=
+(
+    const fvPatchField<Type>& ptf
+)
+{
+    fvPatchField<Type>::operator-=(ptf);
+    intactPatchField_() -= ptf;
+    burstPatchField_() -= ptf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator*=
+(
+    const fvPatchField<scalar>& ptf
+)
+{
+    fvPatchField<Type>::operator*=(ptf);
+    intactPatchField_() *= ptf;
+    burstPatchField_() *= ptf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator/=
+(
+    const fvPatchField<scalar>& ptf
+)
+{
+    fvPatchField<Type>::operator/=(ptf);
+    intactPatchField_() /= ptf;
+    burstPatchField_() /= ptf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator+=
+(
+    const Field<Type>& tf
+)
+{
+    Field<Type>::operator+=(tf);
+    intactPatchField_() += tf;
+    burstPatchField_() += tf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator-=
+(
+    const Field<Type>& tf
+)
+{
+    Field<Type>::operator-=(tf);
+    intactPatchField_() -= tf;
+    burstPatchField_() -= tf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator*=
+(
+    const scalarField& tf
+)
+{
+    Field<Type>::operator*=(tf);
+    intactPatchField_() *= tf;
+    burstPatchField_() *= tf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator/=
+(
+    const scalarField& tf
+)
+{
+    Field<Type>::operator/=(tf);
+    intactPatchField_() /= tf;
+    burstPatchField_() /= tf;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator=
+(
+    const Type& t
+)
+{
+    Field<Type>::operator=(t);
+    intactPatchField_() = t;
+    burstPatchField_() = t;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator+=
+(
+    const Type& t
+)
+{
+    Field<Type>::operator+=(t);
+    intactPatchField_() += t;
+    burstPatchField_() += t;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator-=
+(
+    const Type& t
+)
+{
+    Field<Type>::operator-=(t);
+    intactPatchField_() -= t;
+    burstPatchField_() -= t;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator*=
+(
+    const scalar s
+)
+{
+    Field<Type>::operator*=(s);
+    intactPatchField_() *= s;
+    burstPatchField_() *= s;
+}
+
+
+template<class Type>
+void Foam::burstFvPatchField<Type>::operator/=
+(
+    const scalar s
+)
+{
+    Field<Type>::operator/=(s);
+    intactPatchField_() /= s;
+    burstPatchField_() /= s;
+}
+
 
 template<class Type>
 void Foam::burstFvPatchField<Type>::operator==

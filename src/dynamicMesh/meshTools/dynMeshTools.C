@@ -377,6 +377,29 @@ Foam::label Foam::meshTools::createPatchFaces
                 nModified++;
             }
         }
+
+        for (label facei = mesh.nInternalFaces(); facei < mesh.nFaces(); facei++)
+        {
+            label zoneFacei = fZone.whichFace(facei);
+
+            if (zoneFacei != -1)
+            {
+                // Use owner side of face
+                modifyOrAddFace
+                (
+                    meshMod,
+                    mesh.faces()[facei],    // modified face
+                    facei,                  // label of face
+                    mesh.faceOwner()[facei],// owner
+                    false,                  // face flip
+                    newPatches[i],          // patch for face
+                    fZone.index(),          // zone for face
+                    false,                  // face flip in zone
+                    modifiedFace            // modify or add status
+                );
+                nModified++;
+            }
+        }
     }
     return nModified;
 }

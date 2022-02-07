@@ -23,7 +23,4 @@ solvers
     }
 }
 
-angularMomentumConservation     yes;
-incompressiblilityCoefficient   1.0;
-
 // ************************************************************************* //

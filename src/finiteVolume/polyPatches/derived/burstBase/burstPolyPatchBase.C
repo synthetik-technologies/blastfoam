@@ -285,29 +285,23 @@ bool Foam::burstPolyPatchBase::update
 
         }
     }
-    else if (!p.size())
-    {
-        return burst;
-    }
     else
     {
         // Patch has already burst
-        if (gMax(intact_) == 0)
+        if (gMin(intact_) > 0)
         {
-            return burst;
+            if (usePressure_)
+            {
+                burst = gMax(p) > pBurst_;
+            }
+            if (useImpulse_)
+            {
+                burst = gMax(impulse) > impulseBurst_;
+            }
+            intact_ = !burst;
         }
-
-        if (usePressure_)
-        {
-            burst = gMax(p) > pBurst_;
-        }
-        if (useImpulse_)
-        {
-            burst = gMax(impulse) > impulseBurst_;
-        }
-        intact_ = !burst;
     }
-    return burst;
+    return returnReduce(burst, orOp<bool>());
 }
 
 

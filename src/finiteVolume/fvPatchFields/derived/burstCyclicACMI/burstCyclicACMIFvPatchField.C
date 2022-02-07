@@ -391,23 +391,16 @@ void Foam::burstCyclicACMIFvPatchField<Type>::updateInterfaceMatrix
 template<class Type>
 void Foam::burstCyclicACMIFvPatchField<Type>::write(Ostream& os) const
 {
+    fvPatchField<Type>::write(os);
     {
         // Writing is a little weird since the intactPatchField has a different
         // type, but is in the same dictionary
         OStringStream oss;
         intactPatchField_->write(oss);
         dictionary dict(IStringStream(oss.str())());
-
-        dict.changeKeyword("type", "intactType", false);
-        dict.remove("patchType");
-        forAllConstIter(IDLList<entry>, dict, iter)
-        {
-            iter().write(os);
-        }
+        os.indent();
+        os << "intactPatch" << dict;
     }
-
-    fvPatchField<Type>::write(os);
-
     writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
@@ -421,7 +414,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator=
     const UList<Type>& ul
 )
 {
-    fvPatchField<Type>::operator=(ul);
+    Field<Type>::operator=(ul);
     intactPatchField_() = ul;
 }
 
@@ -432,7 +425,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator=(ptf);
+    Field<Type>::operator=(ptf);
     intactPatchField_() = ptf;
 }
 
@@ -443,7 +436,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator+=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator+=(ptf);
+    Field<Type>::operator+=(ptf);
     intactPatchField_() += ptf;
 }
 
@@ -454,7 +447,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator-=
     const fvPatchField<Type>& ptf
 )
 {
-    fvPatchField<Type>::operator-=(ptf);
+    Field<Type>::operator-=(ptf);
     intactPatchField_() -= ptf;
 }
 
@@ -465,7 +458,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator*=
     const fvPatchField<scalar>& ptf
 )
 {
-    fvPatchField<Type>::operator*=(ptf);
+    Field<Type>::operator*=(ptf);
     intactPatchField_() *= ptf;
 }
 
@@ -476,7 +469,7 @@ void Foam::burstCyclicACMIFvPatchField<Type>::operator/=
     const fvPatchField<scalar>& ptf
 )
 {
-    fvPatchField<Type>::operator/=(ptf);
+    Field<Type>::operator/=(ptf);
     intactPatchField_() /= ptf;
 }
 

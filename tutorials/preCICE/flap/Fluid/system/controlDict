@@ -42,9 +42,5 @@ adjustTimeStep yes;
 
 functions
 {
-    preCICE_Adapter
-    {
-        type preciceAdapterFunctionObject;
-        libs ("libpreciceAdapterFunctionObject.so");
-    }
+
 }

@@ -15,11 +15,13 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel explicitNonLinearGeometryTotalLagrangian;
+solidModel explicitNonLinearTotalLagrangian;
 // solidModel nonLinearGeometryTotalLagrangian;
 
-explicitNonLinearGeometryTotalLagrangianCoeffs
+"explicit.*"
 {
+    JSTScaleFactor 0.01;
+    LFScaleFactor 0.001;
     incompressiblilityCoefficient   1.0;
     angularMomentumConservation     yes;
 }

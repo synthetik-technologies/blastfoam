@@ -25,6 +25,7 @@ License
 
 #include "topoSetList.H"
 #include "topoSetSource.H"
+#include "processorPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -338,6 +339,7 @@ void Foam::topoSetList::modifyTopoSet
             {
                 currentSet.insert(selected[i]);
             }
+
             if (isZone)
             {
                 zones.insert(setName);
@@ -400,9 +402,6 @@ void Foam::topoSetList::modifyTopoSet
             // Combine new value of currentSet with old one.
             currentSet.subset(oldSet);
 
-            // Synchronise for coupled patches.
-            currentSet.sync(mesh_);
-
             if (isZone)
             {
                 zones.insert(setName);
@@ -415,10 +414,16 @@ void Foam::topoSetList::modifyTopoSet
         break;
 
         case topoSetSource::CLEAR:
-        break;
+        {
+            // Synchronise for coupled patches.
+            currentSet.sync(mesh_);
+            break;
+        }
 
         case topoSetSource::INVERT:
-            topoSets[setName]->invert(topoSets[setName]->maxSize(mesh_));
+        {
+            currentSet.invert(topoSets[setName]->maxSize(mesh_));
+
             if (isZone)
             {
                 zones.insert(setName);
@@ -427,13 +432,14 @@ void Foam::topoSetList::modifyTopoSet
             {
                 sets.insert(setName);
             }
-        break;
+            break;
+        }
 
         case topoSetSource::REMOVE:
         {
             forAll(selected, i)
             {
-                currentSet.erase(selected[i]);
+                currentSet.insert(selected[i]);
             }
 
             if (isZone)
@@ -453,6 +459,17 @@ void Foam::topoSetList::modifyTopoSet
                 << "Unhandled action " << action << endl;
         break;
     }
+    if (isZone)
+    {
+        if (isA<faceZoneSet>(currentSet))
+        {
+            faceZoneSet& fz = dynamicCast<faceZoneSet>(currentSet);
+            fz.addressing() = currentSet.toc();
+            fz.flipMap().setSize(currentSet.size(), false);
+        }
+    }
+    // Synchronise for coupled patches.
+    currentSet.sync(mesh_);
 }
 
 
@@ -521,7 +538,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
             if (facei >= mesh_.nInternalFaces())
             {
                 const label patchi = mesh_.boundaryMesh().whichPatch(facei);
-                if (mesh_.boundaryMesh()[patchi].coupled())
+                if (isA<processorPolyPatch>(mesh_.boundaryMesh()[patchi]))
                 {
                     internalFaces.insert(faces[fi]);
                 }
@@ -792,7 +809,7 @@ void Foam::topoSetList::transferZones(const bool remove)
                 (
                     fzIter()->name(),
                     fzIter()->toc(),
-                    boolList(fzIter()->size(), false),
+                    dynamicCast<const faceZoneSet>(*fzIter()).flipMap(),
                     zonei,
                     mesh_.faceZones()
                 );

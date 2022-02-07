@@ -640,6 +640,7 @@ int main(int argc, char *argv[])
 
         if (fieldHeader.typeHeaderOk<volScalarField>(true))
         {
+            Info<<fieldHeader.name()<<endl;
             fields.set
             (
                 fi++,

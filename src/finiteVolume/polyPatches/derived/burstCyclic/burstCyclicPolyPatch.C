@@ -67,8 +67,9 @@ void Foam::burstCyclicPolyPatch::initCalcGeometry
 
 void Foam::burstCyclicPolyPatch::calcGeometry(PstreamBuffers& pBufs)
 {
-    static_cast<cyclicTransform&>(*this) =
-        cyclicTransform(true);
+    cyclicPolyPatch::calcGeometry(pBufs);
+//     static_cast<cyclicTransform&>(*this) =
+//         cyclicTransform(true);
 }
 
 

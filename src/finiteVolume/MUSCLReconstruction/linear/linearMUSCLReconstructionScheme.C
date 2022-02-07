@@ -121,7 +121,7 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateOwn() const
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
-        if (patch.coupled())
+        if (pphi.coupled())
         {
             Field<Type>& pphiOwn = phiOwn.boundaryFieldRef()[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());
@@ -227,7 +227,7 @@ Foam::linearMUSCLReconstructionScheme<Type>::interpolateNei() const
     {
         const fvPatch& patch = this->mesh_.boundary()[patchi];
         const fvPatchField<Type>& pphi = this->phi_.boundaryField()[patchi];
-        if (patch.coupled())
+        if (pphi.coupled())
         {
             Field<Type>& pphiNei = phiNei.boundaryFieldRef()[patchi];
             Field<Type> pphipOwn(pphi.patchInternalField());

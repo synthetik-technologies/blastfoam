@@ -24,7 +24,7 @@ boundaryField
     {
         type            coupledSolidTraction;
         pName           p;
-        pRef            0;
+        pRef            101298;
         traction        uniform (0 0 0);
         value           uniform (0 0 0);
         pressure        uniform 0;
@@ -49,7 +49,7 @@ boundaryField
 
     symmetry
     {
-        type            solidSymmetry;
+        type            symmetry;
         patchType       symmetry;
         value           $internalField;
     }

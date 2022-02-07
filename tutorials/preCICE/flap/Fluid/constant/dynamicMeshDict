@@ -9,12 +9,12 @@ FoamFile
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dynamicFvMesh movingAdaptiveFvMesh;
+dynamicFvMesh adaptiveFvMesh;
 
 
 protectedPatches (flap);
 
-solver      displacementLaplacian;
+motionSolver      displacementLaplacian;
 
 displacementLaplacianCoeffs
 {
