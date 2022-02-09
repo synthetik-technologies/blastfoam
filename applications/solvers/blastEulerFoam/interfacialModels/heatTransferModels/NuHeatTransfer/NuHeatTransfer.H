@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2019 OpenFOAM Foundation
+    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
@@ -22,21 +22,21 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::constantNuHeatTransfer
+    Foam::heatTransferModels::NuHeatTransfer
 
 Description
-    Model which applies a user provided constant Nusselt number for interfacial
-    heat transfer.
+    Base class for a heat transfer model that uses a Nusselt number
 
 SourceFiles
-    constantNuHeatTransfer.C
+    RanzMarshall.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef constantNuHeatTransfer_H
-#define constantNuHeatTransfer_H
+#ifndef NuHeatTransfer_H
+#define NuHeatTransfer_H
 
 #include "heatTransferModel.H"
+#include "NusseltNumberModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -49,28 +49,30 @@ namespace heatTransferModels
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class constantNuHeatTransfer Declaration
+                          Class NuHeatTransfer Declaration
 \*---------------------------------------------------------------------------*/
 
-class constantNuHeatTransfer
+class NuHeatTransfer
 :
     public heatTransferModel
 {
-    // Private data
+protected:
+// Protected data
 
-        //- Nusselt number
-        dimensionedScalar Nu_;
+    //- Nusselt number model
+    autoPtr<NusseltNumberModel> NuModel_;
+
 
 public:
 
     //- Runtime type information
-    TypeName("constantNu");
+    TypeName("NuHeatTransfer");
 
 
     // Constructors
 
         //- Construct from components
-        constantNuHeatTransfer
+        NuHeatTransfer
         (
             const dictionary& dict,
             const phasePair& pair
@@ -78,17 +80,16 @@ public:
 
 
     //- Destructor
-    virtual ~constantNuHeatTransfer();
+    virtual ~NuHeatTransfer();
 
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K
-        (
-            const label nodei = -1,
-            const label nodej = -1
-        ) const;
+        //- Function to return Nusselt number model
+        const NusseltNumberModel& NusseltNo() const
+        {
+            return NuModel_();
+        };
 };
 
 

@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2019 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2021 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -23,62 +23,70 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "constantNuHeatTransfer.H"
+#include "RanzMarshallNusseltNumberModel.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
+
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace heatTransferModels
+namespace NusseltNumberModels
 {
-    defineTypeNameAndDebug(constantNuHeatTransfer, 0);
-    addToRunTimeSelectionTable
-    (
-        heatTransferModel,
-        constantNuHeatTransfer,
-        dictionary
-    );
+    defineTypeNameAndDebug(RanzMarshall, 0);
+    addToRunTimeSelectionTable(NusseltNumberModel, RanzMarshall, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::constantNuHeatTransfer::constantNuHeatTransfer
+Foam::NusseltNumberModels::RanzMarshall::RanzMarshall
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    heatTransferModel(dict, pair),
-    Nu_("Nu", dimless, dict)
+    NusseltNumberModel(dict, pair)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::constantNuHeatTransfer::~constantNuHeatTransfer()
+Foam::NusseltNumberModels::RanzMarshall::~RanzMarshall()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::constantNuHeatTransfer::K
+Foam::NusseltNumberModels::RanzMarshall::Nu
 (
     const label nodei,
     const label nodej
 ) const
 {
-    return
-        6.0
-       *max(pair_.dispersed().volumeFraction(nodei), residualAlpha_)
-       *pair_.continuous().kappa()
-       *Nu_
-       /sqr(pair_.dispersed().d(nodei));
+    return volScalarField::New
+    (
+        "RanzMarshall::Nu",
+        2.0 + 0.6*sqrt(pair_.Re(nodei, nodej))*cbrt(pair_.Pr(nodei, nodej))
+    );
 }
 
+
+Foam::scalar Foam::NusseltNumberModels::RanzMarshall::cellNu
+(
+    const label celli,
+    const label nodei,
+    const label nodej
+) const
+{
+    return
+        2.0
+      + 0.6
+       *sqrt(pair_.cellRe(celli, nodei, nodej))
+       *cbrt(pair_.cellPr(celli, nodei, nodej));
+}
 
 // ************************************************************************* //

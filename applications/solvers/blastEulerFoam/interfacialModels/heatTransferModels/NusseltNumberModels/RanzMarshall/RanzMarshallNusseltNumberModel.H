@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2011-2019 OpenFOAM Foundation
+   \\    /   O peration     |
+    \\  /    A nd           | Copyright (C) 2022 Synthetik Applied Technologies
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of OpenFOAM.
+    This file is a derivative work of OpenFOAM.
 
     OpenFOAM is free software: you can redistribute it and/or modify it
     under the terms of the GNU General Public License as published by
@@ -22,22 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::heatTransferModels::RanzMarshall
+    Foam::NusseltNumberModels::RanzMarshall
 
 Description
-    Ranz-Marshall correlation for turbulent heat transfer from the surface of a
-    sphere to the surrounding fluid.
+    Ranz Marshall correlation
 
 SourceFiles
     RanzMarshall.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef RanzMarshall_H
-#define RanzMarshall_H
+#ifndef RanzMarshallNusseltNumber_H
+#define RanzMarshallNusseltNumber_H
 
-#include "heatTransferModel.H"
-#include "NuHeatTransfer.H"
+#include "NusseltNumberModel.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,18 +44,17 @@ namespace Foam
 
 class phasePair;
 
-namespace heatTransferModels
+namespace NusseltNumberModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class RanzMarshall Declaration
+                          Class constant Declaration
 \*---------------------------------------------------------------------------*/
 
 class RanzMarshall
 :
-    public NuHeatTransfer
+    public NusseltNumberModel
 {
-
 public:
 
     //- Runtime type information
@@ -80,9 +77,17 @@ public:
 
     // Member Functions
 
-        //- The heat transfer function K used in the enthalpy equation
-        tmp<volScalarField> K
+        //- Nusselt number
+        virtual tmp<volScalarField> Nu
         (
+            const label nodei = -1,
+            const label nodej = -1
+        ) const;
+
+        //- Nusselt number for cell
+        virtual scalar cellNu
+        (
+            const label,
             const label nodei = -1,
             const label nodej = -1
         ) const;
@@ -91,7 +96,7 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace heatTransferModels
+} // End namespace NusseltNumberModels
 } // End namespace Foam
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "RanzMarshall.H"
+#include "NuHeatTransfer.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,46 +33,27 @@ namespace Foam
 {
 namespace heatTransferModels
 {
-    defineTypeNameAndDebug(RanzMarshall, 0);
-    addToRunTimeSelectionTable(heatTransferModel, RanzMarshall, dictionary);
+    defineTypeNameAndDebug(NuHeatTransfer, 0);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshall::RanzMarshall
+Foam::heatTransferModels::NuHeatTransfer::NuHeatTransfer
 (
     const dictionary& dict,
     const phasePair& pair
 )
 :
-    NuHeatTransfer(dict, pair)
+    heatTransferModel(dict, pair),
+    NuModel_(NusseltNumberModel::New(dict, pair))
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::heatTransferModels::RanzMarshall::~RanzMarshall()
+Foam::heatTransferModels::NuHeatTransfer::~NuHeatTransfer()
 {}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::tmp<Foam::volScalarField>
-Foam::heatTransferModels::RanzMarshall::K
-(
-    const label nodei,
-    const label nodej
-) const
-{
-    return
-        6.0
-       *max(pair_.dispersed().volumeFraction(nodei), residualAlpha_)
-       *pair_.continuous().kappa()
-       *this->NuModel_->Nu(nodei, nodej)
-       /sqr(pair_.dispersed().d(nodei));
-}
-
 
 // ************************************************************************* //
