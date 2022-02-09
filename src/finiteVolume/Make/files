@@ -72,7 +72,7 @@ MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
 MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
 MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
-RefineBalanceMeshObject/RefineBalanceMeshObject.C
+#RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
 extendedNLevelGlobalCellToCellStencil/cellStencil.C
 extendedNLevelGlobalCellToCellStencil/extendedNLevelGlobalCellToCellStencils.C

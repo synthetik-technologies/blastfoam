@@ -28,15 +28,111 @@ License
 #include "fvMesh.H"
 #include "volFields.H"
 #include "surfaceFields.H"
+#include "mapPolyMesh.H"
+#include "fvPatchMapper.H"
+#include "wallPolyPatch.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
+    defineTypeNameAndDebug(burstFvPatchParent, 0);
     defineTypeNameAndDebug(burstFvPatchBase, 0);
 }
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::burstFvPatchParent::makeIntact() const
+{
+    if (mesh_.foundObject<volScalarField>("intact"))
+    {
+        return;
+    }
+    wordList patchTypes(mesh_.boundaryMesh().types());
+    wordList boundaryTypes(patchTypes);
+    forAll(mesh_.boundary(), patchi)
+    {
+        if
+        (
+            isA<burstFvPatchBase>(mesh_.boundary()[patchi])
+         || !polyPatch::constraintType(mesh_.boundaryMesh()[patchi].type())
+        )
+        {
+            boundaryTypes[patchi] = calculatedFvPatchField<scalar>::typeName;
+        }
+    }
+    intactPtr_.set
+    (
+        new volScalarField
+        (
+            IOobject
+            (
+                "intact",
+                mesh_.time().timeName(),
+                mesh_,
+                IOobject::READ_IF_PRESENT,
+                IOobject::AUTO_WRITE
+            ),
+            mesh_,
+            1.0,
+            boundaryTypes,
+            patchTypes
+        )
+    );
+    forAll(mesh_.boundaryMesh(), patchi)
+    {
+        if (isA<burstPolyPatchBase>(mesh_.boundaryMesh()[patchi]))
+        {
+            dynamicCast<burstPolyPatchBase>
+            (
+                const_cast<polyPatch&>(mesh_.boundaryMesh()[patchi])
+            ).setIntact(intact(patchi));
+        }
+        else if (!isA<wallPolyPatch>(mesh_.boundaryMesh()[patchi]))
+        {
+            intactPtr_->boundaryFieldRef()[patchi] = 0;
+        }
+    }
+}
+
+Foam::burstFvPatchParent::burstFvPatchParent(const fvMesh& mesh)
+:
+    regIOobject
+    (
+        IOobject
+        (
+            typeName,
+            mesh.time().timeName(),
+            mesh
+        )
+    ),
+    mesh_(mesh)
+{}
+
+
+Foam::burstFvPatchParent& Foam::burstFvPatchParent::New(const fvMesh& mesh)
+{
+    if (!mesh.foundObject<burstFvPatchParent>(typeName))
+    {
+        burstFvPatchParent* parent = new burstFvPatchParent(mesh);
+        return parent->store(parent);
+    }
+    return mesh.lookupObjectRef<burstFvPatchParent>(typeName);
+}
+
+
+void Foam::burstFvPatchParent::update
+(
+    const label patchi,
+    const scalarField& intact
+)
+{
+    if (intactPtr_.valid())
+    {
+        this->intact(patchi) = intact;
+    }
+}
+
 
 void Foam::burstFvPatchBase::updateDeltas()
 {
@@ -70,17 +166,10 @@ void Foam::burstFvPatchBase::updateDeltas()
         nonOrthCorrectionVectors.boundaryFieldRef()[patchI];
 
     burstPatch.makeWeights(pweights);
-    pweights = intact_ + (1.0 - intact_)*pweights;
+    pweights = intact() + (1.0 - intact())*pweights;
     pdeltaCoeffs = 1.0/pmagDelta;
     pnonOrthDeltaCoeffs = 1.0/max(patch_.nf() & pdelta, 0.05*pmagDelta);
     pnonOrthCorrectionVectors = n - pdelta*pnonOrthDeltaCoeffs;
-}
-
-
-void Foam::burstFvPatchBase::setIntact(const scalarField& intact)
-{
-    burstPolyPatch_.setIntact(intact);
-    // Do not update deltas since the mesh may not be constructed yet
 }
 
 
@@ -90,7 +179,7 @@ void Foam::burstFvPatchBase::update
     const scalarField& impulse
 )
 {
-    if (burstPolyPatch_.update(p, impulse))
+    if (burstPolyPatch_.update(p, impulse, intact()))
     {
         updateDeltas();
     }

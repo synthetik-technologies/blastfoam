@@ -39,11 +39,84 @@ SourceFiles
 #include "burstPolyPatchBase.H"
 #include "fvBoundaryMesh.H"
 #include "fvPatchFieldMapper.H"
+#include "regIOobject.H"
+#include "volFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
+
+/*---------------------------------------------------------------------------*\
+                    Class burstFvPatchParent Declaration
+\*---------------------------------------------------------------------------*/
+class burstFvPatchParent
+:
+    public regIOobject
+{
+// Private data
+
+    //- Constant reference to the mesh
+    const fvMesh& mesh_;
+
+    //- Intact field
+    mutable autoPtr<volScalarField> intactPtr_;
+
+    //- Make the intact field
+    void makeIntact() const;
+
+public:
+
+    //- Runtime type information
+    TypeName("burstFvPatchParent");
+
+    // Constructor
+    burstFvPatchParent(const fvMesh& mesh);
+
+    //- Return the intact field
+    const volScalarField& intact() const
+    {
+        if (!intactPtr_.valid())
+        {
+            makeIntact();
+        }
+        return intactPtr_();
+    }
+
+    //- Access the intact field
+    volScalarField& intact()
+    {
+        if (!intactPtr_.valid())
+        {
+            makeIntact();
+        }
+        return intactPtr_();
+    }
+
+    //- Return the intact field for a patch
+    const scalarField& intact(const label patchi) const
+    {
+        return intact().boundaryField()[patchi];
+    }
+
+    //- Access the intact field
+    scalarField& intact(const label patchi)
+    {
+        return intact().boundaryFieldRef()[patchi];
+    }
+
+    //- Update the intact field
+    void update(const label patchi, const scalarField& intact);
+
+    //- Return a reference to the object stored in mesh
+    static burstFvPatchParent& New(const fvMesh& mesh);
+
+    virtual bool writeData(Ostream&) const
+    {
+        return true;
+    }
+};
+
 
 /*---------------------------------------------------------------------------*\
                         Class burstFvPatchBase Declaration
@@ -60,8 +133,8 @@ protected:
         //- Constant reference to the burstCyclicPolyPatch
         burstPolyPatchBase& burstPolyPatch_;
 
-        //- Constant reference to the intact field
-        const scalarField& intact_;
+        //- Reference to the parent
+        burstFvPatchParent& parent_;
 
         //- Update the mesh weights and deltas
         void updateDeltas();
@@ -71,6 +144,8 @@ protected:
 
 
 public:
+
+    friend burstFvPatchParent;
 
     //- Runtime type information
     TypeName("burstFvPatchBase");
@@ -87,7 +162,10 @@ public:
                 (
                     refCast<const burstPolyPatchBase>(patch.patch()))
             ),
-            intact_(burstPolyPatch_.intact())
+            parent_
+            (
+                burstFvPatchParent::New(patch_.boundaryMesh().mesh())
+            )
         {}
 
         burstFvPatchBase(const burstFvPatchBase&) = delete;
@@ -104,14 +182,17 @@ public:
             return burstPolyPatch_;
         }
 
-        //- Access the burstPolyPatchBase
-        burstPolyPatchBase& burstPolyPatch()
+        //- Return the intact field
+        const scalarField& intact() const
         {
-            return burstPolyPatch_;
+            return parent_.intact(patch_.index());
         }
 
-        //- Set the polyPatch intact field
-        void setIntact(const scalarField& intact);
+        //- Access the intact field
+        scalarField& intact()
+        {
+            return parent_.intact(patch_.index());
+        }
 
         //- Update the intact field and update mesh weight and deltas if
         //  a change happens

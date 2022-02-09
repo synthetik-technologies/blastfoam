@@ -640,7 +640,6 @@ int main(int argc, char *argv[])
 
         if (fieldHeader.typeHeaderOk<volScalarField>(true))
         {
-            Info<<fieldHeader.name()<<endl;
             fields.set
             (
                 fi++,
@@ -793,6 +792,7 @@ int main(int argc, char *argv[])
         // List of saved cells (per cell set)
         labelListList savedCells(regions.size());
         labelListList savedFaces(regions.size());
+        boolListList savedFlipMaps(regions.size());
         labelListList savedPoints(regions.size());
 
         Info<< "Setting field region values" << endl;
@@ -801,13 +801,15 @@ int main(int argc, char *argv[])
             const dictionary& regionDict =  regions[regionI].dict();
             labelList selectedCells;
             labelList selectedFaces;
+            boolList selectedFlipMaps;
             labelList selectedPoints;
+            regions[regionI].allowBackup(!end);
             regions[regionI].createSets
             (
                 selectedCells,
                 selectedFaces,
-                selectedPoints,
-                !end
+                selectedFlipMaps,
+                selectedPoints
             );
 
             if
@@ -849,6 +851,7 @@ int main(int argc, char *argv[])
 
             savedCells[regionI] = selectedCells;
             savedFaces[regionI] = selectedFaces;
+            savedFlipMaps[regionI] = selectedFlipMaps;
             savedPoints[regionI] = selectedPoints;
 
             bool set =
@@ -902,6 +905,7 @@ int main(int argc, char *argv[])
                 regionDict,
                 selectedCells,
                 selectedFaces,
+                selectedFlipMaps,
                 selectedPoints
             );
             Info<< endl;

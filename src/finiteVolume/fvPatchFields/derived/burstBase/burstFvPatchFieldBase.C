@@ -47,7 +47,8 @@ Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
             dynamicCast<const burstFvPatchBase>(p)
         )
     ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch())
+    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
+    unblock_(false)
 {}
 
 
@@ -64,7 +65,8 @@ Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
             dynamicCast<const burstFvPatchBase>(p)
         )
     ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch())
+    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
+    unblock_(false)
 {}
 
 
@@ -82,7 +84,8 @@ Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
             dynamicCast<const burstFvPatchBase>(p)
         )
     ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch())
+    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
+    unblock_(false)
 {}
 
 
@@ -93,19 +96,6 @@ Foam::burstFvPatchFieldBase::~burstFvPatchFieldBase()
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-void Foam::burstFvPatchFieldBase::read(const dictionary& dict)
-{
-    if (dict.found("intact") && burstPolyPatch_.needRead())
-    {
-        scalarField intact(dict.lookup("intact"));
-        if (intact.size() == burstPolyPatch_.intact().size())
-        {
-            burstFvPatch_.setIntact(intact);
-        }
-    }
-}
-
 
 void Foam::burstFvPatchFieldBase::update()
 {
@@ -131,14 +121,23 @@ void Foam::burstFvPatchFieldBase::update()
                     lookupObject<volScalarField>(burstPolyPatch_.pName());
                 const fvPatchField<scalar>& pp =
                     pF.boundaryField()[p.index()];
+
                 if (pp.coupled())
                 {
+                    if (isA<burstFvPatchFieldBase>(pp))
+                    {
+                        dynamicCast<const burstFvPatchFieldBase>(pp).unblock();
+                    }
                     deltaP =
                         mag
                         (
                             pp.patchInternalField()
                           - pp.patchNeighbourField()
                         );
+                    if (isA<burstFvPatchFieldBase>(pp))
+                    {
+                        dynamicCast<const burstFvPatchFieldBase>(pp).block();
+                    }
                 }
                 else
                 {
@@ -168,12 +167,23 @@ void Foam::burstFvPatchFieldBase::update()
                     impF.boundaryField()[p.index()];
                 if (pimp.coupled())
                 {
+                    if (isA<burstFvPatchFieldBase>(pimp))
+                    {
+                        dynamicCast<const burstFvPatchFieldBase>
+                        (
+                            pimp)
+                        .unblock();
+                    }
                     deltaImp =
                         mag
                         (
                             pimp.patchInternalField()
                           - pimp.patchNeighbourField()
                         );
+                    if (isA<burstFvPatchFieldBase>(pimp))
+                    {
+                        dynamicCast<const burstFvPatchFieldBase>(pimp).block();
+                    }
                 }
                 else
                 {
@@ -189,7 +199,7 @@ void Foam::burstFvPatchFieldBase::update()
 //             }
         }
 
-        if (needUpdate)
+        if (returnReduce(needUpdate, orOp<bool>()))
         {
             burstFvPatch_.update(deltaP, deltaImp);
         }

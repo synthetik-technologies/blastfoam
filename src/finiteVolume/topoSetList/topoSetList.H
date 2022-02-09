@@ -43,6 +43,7 @@ SourceFiles
 #include "pointZoneSet.H"
 #include "NamedEnum.H"
 #include "MeshObject.H"
+#include "topoSetSource.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -128,6 +129,16 @@ public:
             return pointTopoSets_;
         }
 
+        // Apply a given source to the sets
+        virtual void applyToSets
+        (
+            const topoSetSource& source,
+            const dictionary& sets,
+            labelList& selectedCells,
+            labelList& selectedFaces,
+            labelList& selectedPoints
+        ) const;
+
         //- Update cell sets
         void updateCells
         (
@@ -141,6 +152,7 @@ public:
         (
             const dictionary& dict,
             const labelList& selectedFaces,
+            const boolList& flipMap,
             const bool isZone = false
         );
 
@@ -158,29 +170,41 @@ public:
             const dictionary& dict,
             const labelList& selectedCells,
             const labelList& selectedFaces,
+            const boolList& flipMap,
             const labelList& selectedPoints
         );
 
         //- Modify the given sets
         void modifyTopoSet
         (
-            const word& setType,
-            const bool isZone,
             HashPtrTable<topoSet>& topoSets,
             wordHashSet& zones,
             wordHashSet& sets,
-            const labelList& selected,
+            const topoSet& selected,
             const dictionary& dict
         );
 
         //- Extract interface cells
         labelList extractInterfaceCells(const labelList& cells) const;
 
-        //- Extract selected faces
+        //- Extract interface cells
+        autoPtr<topoSet> extractInterfaceCells(const topoSet& cells) const;
+
+        //- Extract selected faces (return indices to keep)
         labelList extractSelectedFaces
         (
             const dictionary& dict,
             const labelList& faces,
+            const bool defaultAll = false
+        ) const;
+
+        //- Extract selected faces after getting the kept indices
+        //  This is important because the flipMap needs to be kept if a zone
+        //  is used
+        autoPtr<topoSet> extractSelectedFaces
+        (
+            const dictionary& dict,
+            const topoSet& faces,
             const bool defaultAll = false
         ) const;
 
@@ -189,6 +213,14 @@ public:
         (
             const dictionary& dict,
             const labelList& points,
+            const bool defaultAll = false
+        ) const;
+
+        //- Extract selected points
+        autoPtr<topoSet> extractSelectedPoints
+        (
+            const dictionary& dict,
+            const topoSet& points,
             const bool defaultAll = false
         ) const;
 

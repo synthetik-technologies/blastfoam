@@ -41,7 +41,7 @@ SourceFiles
 #define burstProcessorCyclicFvPatchField_H
 
 #include "fvPatchFields.H"
-#include "processorFvPatchField.H"
+#include "processorCyclicFvPatchField.H"
 #include "burstFvPatchFieldBase.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -56,7 +56,7 @@ namespace Foam
 template<class Type>
 class burstProcessorCyclicFvPatchField
 :
-    public processorFvPatchField<Type>,
+    public processorCyclicFvPatchField<Type>,
     public burstFvPatchFieldBase
 {
     // Private Data

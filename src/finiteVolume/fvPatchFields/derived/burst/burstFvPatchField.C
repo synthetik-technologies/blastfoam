@@ -91,9 +91,6 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
             << exit(FatalIOError);
     }
 
-    // Read the initial conditions for the burst patch (if available)
-    burstFvPatchFieldBase::read(dict);
-
     // Create a new patch dictionary and replace the type with the intactType
     {
         dictionary burstDict(dict.parent(), dict.subDict("burstPatch"));
@@ -525,7 +522,6 @@ void Foam::burstFvPatchField<Type>::write(Ostream& os) const
         os.indent();
         os << "intactPatch" << dict;
     }
-    writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
 

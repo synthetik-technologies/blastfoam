@@ -30,35 +30,11 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(burstPolyPatchDistributor, 0);
     defineTypeNameAndDebug(burstPolyPatchBase, 0);
 }
 
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
-
-Foam::burstPolyPatchDistributor::burstPolyPatchDistributor
-(
-    const polyMesh& mesh
-)
-:
-    BalanceMeshObject(typeName, mesh),
-    mesh_(mesh)
-{}
-
-Foam::burstPolyPatchDistributor& Foam::burstPolyPatchDistributor::New
-(
-    const polyMesh& mesh
-)
-{
-    if (!mesh.foundObject<burstPolyPatchDistributor>(typeName))
-    {
-        burstPolyPatchDistributor* burstList =
-            new burstPolyPatchDistributor(mesh);
-        burstList->store(burstList);
-    }
-    return mesh.lookupObjectRef<burstPolyPatchDistributor>(typeName);
-}
 
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
@@ -67,7 +43,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 )
 :
     patch_(p),
-    intact_(p.size(), 1.0),
+    intact_(nullptr),
     usePressure_(false),
     pName_("p"),
     pBurst_(great),
@@ -78,9 +54,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     partialBurst_(false),
     needRead_(false),
     curTimeIndex_(-1)
-{
-    burstPolyPatchDistributor::New(patch_.boundaryMesh().mesh());
-}
+{}
 
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
@@ -90,7 +64,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 )
 :
     patch_(p),
-    intact_(p.size(), 1.0),//"intact", dict, p.size()),
+    intact_(nullptr),
     usePressure_(dict.lookupOrDefault("usePressure", true)),
     pName_(dict.lookupOrDefault<word>("pName", "p")),
     pBurst_(great),
@@ -99,7 +73,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(dict.lookupOrDefault<word>("impulseName", "impulse")),
     impulseBurst_(great),
     partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    needRead_(false),
+    needRead_(true),
     curTimeIndex_(-1)
 {
     if (usePressure_)
@@ -114,7 +88,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     {
         impulseBurst_ = dict.lookup<scalar>("impulseBurst");
     }
-    burstPolyPatchDistributor::New(patch_.boundaryMesh().mesh());
 }
 
 
@@ -125,7 +98,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 )
 :
     patch_(p),
-    intact_(bppb.intact_),
+    intact_(nullptr),
     usePressure_(bppb.usePressure_),
     pName_(bppb.pName_),
     pBurst_(bppb.pBurst_),
@@ -134,11 +107,9 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(bppb.impulseName_),
     impulseBurst_(bppb.impulseBurst_),
     partialBurst_(bppb.partialBurst_),
-    needRead_(false),
+    needRead_(true),
     curTimeIndex_(-1)
-{
-    burstPolyPatchDistributor::New(patch_.boundaryMesh().mesh());
-}
+{}
 
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
@@ -150,7 +121,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 )
 :
     patch_(p),
-    intact_(bppb.intact_),
+    intact_(nullptr),
     usePressure_(bppb.usePressure_),
     pName_(bppb.pName_),
     pBurst_(bppb.pBurst_),
@@ -159,11 +130,9 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(bppb.impulseName_),
     impulseBurst_(bppb.impulseBurst_),
     partialBurst_(bppb.partialBurst_),
-    needRead_(false),
+    needRead_(true),
     curTimeIndex_(-1)
-{
-    burstPolyPatchDistributor::New(patch_.boundaryMesh().mesh());
-}
+{}
 
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
@@ -174,7 +143,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
 )
 :
     patch_(p),
-    intact_(bppb.intact_, mapAddressing),
+    intact_(nullptr),
     usePressure_(bppb.usePressure_),
     pName_(bppb.pName_),
     pBurst_(bppb.pBurst_),
@@ -185,9 +154,7 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     partialBurst_(bppb.partialBurst_),
     needRead_(false),
     curTimeIndex_(-1)
-{
-    burstPolyPatchDistributor::New(patch_.boundaryMesh().mesh());
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -198,72 +165,19 @@ Foam::burstPolyPatchBase::~burstPolyPatchBase()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::burstPolyPatchDistributor::preDistribute()
-{
-    intact_.set(new scalarField(mesh_.nFaces(), 1.0));
-    forAll(mesh_.boundaryMesh(), patchi)
-    {
-        if (isA<burstPolyPatchBase>(mesh_.boundaryMesh()[patchi]))
-        {
-            const burstPolyPatchBase& p =
-                dynamicCast<const burstPolyPatchBase>
-                (
-                    mesh_.boundaryMesh()[patchi]
-                );
-            const label start = p.patch().start();
-            forAll(p.patch(), fi)
-            {
-                const label facei = start + fi;
-                intact_()[facei] = p.intact()[fi];
-            }
-        }
-    }
-}
-
-
-void Foam::burstPolyPatchDistributor::distribute
-(
-    const mapDistributePolyMesh& map
-)
-{
-    Pout<<"distibuting: "<<endl;
-    map.distributeFaceData(intact_());
-    forAll(mesh_.boundaryMesh(), patchi)
-    {
-        if (isA<burstPolyPatchBase>(mesh_.boundaryMesh()[patchi]))
-        {
-            burstPolyPatchBase& p =
-                const_cast<burstPolyPatchBase&>
-                (
-                    dynamicCast<const burstPolyPatchBase>
-                    (
-                        mesh_.boundaryMesh()[patchi]
-                    )
-                );
-            const label start = p.patch().start();
-            p.intact_.resize(p.patch().size());
-            forAll(p.patch(), fi)
-            {
-                const label facei = start + fi;
-                p.intact_[fi] = intact_()[facei];
-            }
-        }
-    }
-    intact_.clear();
-}
-
 
 bool Foam::burstPolyPatchBase::update
 (
     const scalarField& p,
-    const scalarField& impulse
-)
+    const scalarField& impulse,
+    scalarField& intact
+) const
 {
     bool burst = false;
     if (partialBurst_)
     {
-        scalarField burstP(intact_.size(), -great);
-        scalarField burstImp(intact_.size(), -great);
+        scalarField burstP(intact.size(), -great);
+        scalarField burstImp(intact.size(), -great);
         if (usePressure_)
         {
             burstP = p - pBurst_;
@@ -272,12 +186,12 @@ bool Foam::burstPolyPatchBase::update
         {
             burstImp = impulse - impulseBurst_;
         }
-        forAll(intact_, facei)
+        forAll(intact, facei)
         {
-            if (intact_[facei])
+            if (intact[facei])
             {
-                intact_[facei] = burstP[facei] < 0 && burstImp[facei] < 0;
-                if (!intact_[facei])
+                intact[facei] = burstP[facei] < 0 && burstImp[facei] < 0;
+                if (!intact[facei])
                 {
                     burst = true;
                 }
@@ -288,7 +202,7 @@ bool Foam::burstPolyPatchBase::update
     else
     {
         // Patch has already burst
-        if (gMin(intact_) > 0)
+        if (gMin(intact) > 0)
         {
             if (usePressure_)
             {
@@ -298,7 +212,7 @@ bool Foam::burstPolyPatchBase::update
             {
                 burst = gMax(impulse) > impulseBurst_;
             }
-            intact_ = !burst;
+            intact = !burst;
         }
     }
     return returnReduce(burst, orOp<bool>());
@@ -318,7 +232,7 @@ Foam::burstPolyPatchBase::pointIntact() const
                 (
                     patch_.boundaryMesh().mesh().thisDb()
                 )
-            )[patch_].faceToPoint(intact_).ptr()
+            )[patch_].faceToPoint(intact_()).ptr()
         );
     }
     return pointIntact_();

@@ -59,6 +59,9 @@ class backupTopoSetSource
     //- Stored dictionary
     dictionary dict_;
 
+    //- Is the backup region allowed to be used
+    bool allowBackup_;
+
     //- Actual topoSetSource
     autoPtr<topoSetSource> source_;
 
@@ -152,6 +155,12 @@ public:
             return source_->setType();
         }
 
+        //- Allow backup region to be used
+        void allowBackup(const bool allow)
+        {
+            allowBackup_ = allow;
+        }
+
         //- Return is the source is a cell based source
         bool isCell() const;
 
@@ -165,8 +174,7 @@ public:
         virtual void applyToSet
         (
             const topoSetSource::setAction action,
-            topoSet&,
-            const bool allowBackup = true
+            topoSet&
         ) const;
 
         //- Get selections from a given set, based on what setType this is
@@ -174,8 +182,8 @@ public:
         (
             labelList& cells,
             labelList& faces,
-            labelList& points,
-            const bool allowBackup = true
+            boolList& flipMap,
+            labelList& points
         ) const;
 };
 

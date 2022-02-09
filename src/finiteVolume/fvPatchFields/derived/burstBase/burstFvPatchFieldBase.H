@@ -59,7 +59,10 @@ protected:
         burstFvPatchBase& burstFvPatch_;
 
         //- Reference to the burstPolyPatch
-        burstPolyPatchBase& burstPolyPatch_;
+        const burstPolyPatchBase& burstPolyPatch_;
+
+        //- Remove the intact and use the burst condition
+        mutable bool unblock_;
 
 
 public:
@@ -94,6 +97,18 @@ public:
 
     // Member Functions
 
+        //- Set the unblock flag
+        void unblock() const
+        {
+            unblock_ = true;
+        }
+
+        //- Un set the unblock flag
+        void block() const
+        {
+            unblock_ = false;
+        }
+
         //- Return the burst polyPatch base
         const burstFvPatchBase& burstFvPatch() const
         {
@@ -109,11 +124,8 @@ public:
         //- Return the intact field
         const scalarField& intact() const
         {
-            return burstPolyPatch_.intact();
+            return burstFvPatch_.intact();
         }
-
-        //- Read the field properties from a dictionary
-        void read(const dictionary&);
 
         //- Update the burst patch if necessary
         void update();

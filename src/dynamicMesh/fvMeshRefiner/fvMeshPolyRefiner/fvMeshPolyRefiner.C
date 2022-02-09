@@ -24,7 +24,6 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "fvMeshPolyRefiner.H"
-#include "RefineBalanceMeshObject.H"
 #include "polyTopoChange.H"
 #include "parcelCloud.H"
 #include "prismatic2DRefinement.H"
@@ -474,11 +473,6 @@ bool Foam::fvMeshPolyRefiner::refine
         if (balance())
         {
             hasChanged = true;
-        }
-        else if (hasChanged)
-        {
-            //- Update objects stored on the mesh db
-            RefineMeshObject::updateObjects(mesh_);
         }
         mesh_.topoChanging(hasChanged);
 

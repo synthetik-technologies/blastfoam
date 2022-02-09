@@ -42,7 +42,6 @@ License
 #include "cellSet.H"
 #include "wedgePolyPatch.H"
 #include "hexRef3D.H"
-#include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
 #include "hexRefRefinementHistoryConstraint.H"
 
@@ -1647,11 +1646,6 @@ bool Foam::fvMeshHexRefiner::refine
         if (balance())
         {
             hasChanged = true;
-        }
-        else if (hasChanged)
-        {
-            //- Update objects stored on the mesh db
-            RefineMeshObject::updateObjects(mesh_);
         }
 
         mesh_.topoChanging(hasChanged);

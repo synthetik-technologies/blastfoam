@@ -46,6 +46,7 @@ Description
 #include "dictionaryEntry.H"
 
 #include "fvMeshTools.H"
+#include "fvMeshMapper.H"
 #include "dynMeshTools.H"
 
 using namespace Foam;
@@ -150,9 +151,12 @@ void readAndAddAllFields(const fvMesh& mesh)
 }
 
 
-void addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
+wordList addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
 {
     // Find new patches and add them to the mesh
+
+    wordList addedPatches;
+    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
 
     // Collect all new patches
     HashTable<dictionary> patchesToAdd;
@@ -168,21 +172,22 @@ void addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
         if
         (
             !patchesToAdd.found(patchName)
-        &&  mesh.boundaryMesh().findIndex(patchName) < 0
+        &&  pbm.findIndex(patchName) < 0
         )
         {
             patchesToAdd.insert(patchName, patchDict);
+            addedPatches.append(patchName);
         }
     }
 
     if (!patchesToAdd.size())
     {
-        return;
+        return addedPatches;
     }
     Info<< "Selected " << patchesToAdd.size() << " patches to add" << endl;
 
     // Add new patches with zero size to the mesh
-    label curPatchIndex = mesh.boundaryMesh().size();
+    label curPatchIndex = pbm.size();
     forAllConstIter(HashTable<dictionary>, patchesToAdd, iter)
     {
         dictionary dict(iter());
@@ -200,8 +205,8 @@ void addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
             (
                 iter.key(),
                 dict,
-                curPatchIndex,
-                mesh.boundaryMesh()
+                curPatchIndex++,
+                pbm
             )
         );
         polyPatch& pp = ppPtr();
@@ -220,15 +225,22 @@ void addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
             true
         );
     }
+
+    // Make sure patches and zoneFaces are synchronised across couples
+//     pbm.checkParallelSync(true);
+//     mesh.faceZones().checkParallelSync(true);
+
+    return addedPatches;
 }
 
 
 void updateTopoSets
 (
     topoSetList& topoSets,
-    const PtrList<backupTopoSetSource>& regions,
+    PtrList<backupTopoSetSource>& regions,
     labelListList& selectedRegionCells,
     labelListList& selectedRegionFaces,
+    boolListList& selectedRegionFlipMaps,
     labelListList& selectedRegionPoints,
     const bool allowBackup = false
 )
@@ -240,23 +252,26 @@ void updateTopoSets
 
         labelList& selectedCells = selectedRegionCells[regionI];
         labelList& selectedFaces = selectedRegionFaces[regionI];
+        boolList& selectedFlipMaps = selectedRegionFlipMaps[regionI];
         labelList& selectedPoints = selectedRegionPoints[regionI];
 
         selectedCells.clear();
         selectedFaces.clear();
+        selectedFlipMaps.clear();
         selectedPoints.clear();
+        regions[regionI].allowBackup(allowBackup);
         regions[regionI].createSets
         (
             selectedCells,
             selectedFaces,
-            selectedPoints,
-            allowBackup
+            selectedFlipMaps,
+            selectedPoints
         );
 
         if
         (
             regions[regionI].isCell()
-            && !returnReduce(selectedCells.size(), sumOp<label>())
+         && !returnReduce(selectedCells.size(), sumOp<label>())
         )
         {
             WarningInFunction
@@ -312,11 +327,431 @@ void updateTopoSets
             regionDict,
             selectedCells,
             selectedFaces,
+            selectedFlipMaps,
             selectedPoints
         );
         Info<< endl;
     }
     topoSets.transferZones(false);
+}
+
+
+// Filter out the empty patches.
+void filterPatches(fvMesh& mesh, const HashSet<word>& addedPatchNames)
+{
+    // Remove any zero-sized ones. Assumes
+    // - processor patches are already only there if needed
+    // - all other patches are available on all processors
+    // - but coupled ones might still be needed, even if zero-size
+    //   (e.g. processorCyclic)
+    // See also logic in createPatch.
+    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
+
+    labelList oldToNew(pbm.size(), -1);
+    label newPatchi = 0;
+    forAll(pbm, patchi)
+    {
+        const polyPatch& pp = pbm[patchi];
+
+        if (!isA<processorPolyPatch>(pp))
+        {
+            if
+            (
+                isA<coupledPolyPatch>(pp)
+             || returnReduce(pp.size(), sumOp<label>())
+             || addedPatchNames.found(pp.name())
+            )
+            {
+                // Coupled (and unknown size) or uncoupled and used
+                oldToNew[patchi] = newPatchi++;
+            }
+        }
+    }
+
+    forAll(pbm, patchi)
+    {
+        const polyPatch& pp = pbm[patchi];
+
+        if (isA<processorPolyPatch>(pp))
+        {
+            oldToNew[patchi] = newPatchi++;
+        }
+    }
+
+
+    const label nKeepPatches = newPatchi;
+
+    // Shuffle unused ones to end
+    if (nKeepPatches != pbm.size())
+    {
+        Info<< endl
+            << "Removing zero-sized patches:" << endl << incrIndent;
+
+        forAll(oldToNew, patchi)
+        {
+            if (oldToNew[patchi] == -1)
+            {
+                Info<< indent << pbm[patchi].name()
+                    << " type " << pbm[patchi].type()
+                    << " at position " << patchi << endl;
+                oldToNew[patchi] = newPatchi++;
+            }
+        }
+        Info<< decrIndent;
+
+        fvMeshTools::reorderPatches(mesh, oldToNew, nKeepPatches, true);
+        Info<< endl;
+    }
+}
+
+
+void updateFields
+(
+    fvMesh& mesh,
+    const mapPolyMesh& map,
+    const HashSet<word>& addedPatches,
+    const PtrList<entry>& entries
+)
+{
+    // Correct boundary faces mapped-out-of-nothing.
+    // This is just a hack to correct the value field.
+    {
+        fvMeshMapper mapper(mesh, map);
+        bool hasWarned = false;
+
+        forAllConstIter(HashSet<word>, addedPatches, iter)
+        {
+            label patchi = mesh.boundaryMesh().findPatchID(iter.key());
+
+            const fvPatchMapper& pm = mapper.boundaryMap()[patchi];
+
+            if (pm.sizeBeforeMapping() == 0)
+            {
+                if (!hasWarned)
+                {
+                    hasWarned = true;
+                    WarningInFunction
+                        << "Setting field on boundary faces to zero." << endl
+                        << "You might have to edit these fields." << endl;
+                }
+
+                fvMeshTools::zeroPatchFields(mesh, patchi);
+            }
+        }
+    }
+
+
+    // Pass 2: change patchFields
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    {
+        const polyBoundaryMesh& pbm = mesh.boundaryMesh();
+        forAll(entries, entryI)
+        {
+            const dictionary& dict = entries[entryI].dict();
+            if (dict.found("patches"))
+            {
+                const dictionary& patchSources = dict.subDict("patches");
+
+                forAllConstIter(dictionary, patchSources, iter)
+                {
+                    const word patchName(iter().dict()["name"]);
+                    label patchi = pbm.findPatchID(patchName);
+
+                    if (iter().dict().found("patchFields"))
+                    {
+                        const dictionary& patchFieldsDict =
+                            iter().dict().subDict
+                            (
+                                "patchFields"
+                            );
+
+                        fvMeshTools::setPatchFields
+                        (
+                            mesh,
+                            patchi,
+                            patchFieldsDict
+                        );
+                    }
+                }
+            }
+            else
+            {
+                const dictionary& patchSource = dict.subDict("patchPairs");
+
+                Switch sameGroup
+                (
+                    patchSource.lookupOrDefault("sameGroup", true)
+                );
+
+                const word& groupName = entries[entryI].name();
+
+                if (patchSource.found("patchFields"))
+                {
+                    dictionary patchFieldsDict = patchSource.subDict
+                    (
+                        "patchFields"
+                    );
+
+                    if (sameGroup)
+                    {
+                        // Add coupleGroup to all entries
+                        forAllIter(dictionary, patchFieldsDict, iter)
+                        {
+                            if (iter().isDict())
+                            {
+                                dictionary& dict = iter().dict();
+                                dict.set("coupleGroup", groupName);
+                            }
+                        }
+
+                        const labelList& patchIDs =
+                            pbm.groupPatchIDs()[groupName];
+
+                        forAll(patchIDs, i)
+                        {
+                            fvMeshTools::setPatchFields
+                            (
+                                mesh,
+                                patchIDs[i],
+                                patchFieldsDict
+                            );
+                        }
+                    }
+                    else
+                    {
+                        const word masterPatchName(groupName + "_master");
+                        const word slavePatchName(groupName + "_slave");
+
+                        label patchiMaster = pbm.findPatchID(masterPatchName);
+                        label patchiSlave = pbm.findPatchID(slavePatchName);
+
+                        fvMeshTools::setPatchFields
+                        (
+                            mesh,
+                            patchiMaster,
+                            patchFieldsDict
+                        );
+
+                        fvMeshTools::setPatchFields
+                        (
+                            mesh,
+                            patchiSlave,
+                            patchFieldsDict
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// Synchronise points on both sides of coupled boundaries.
+template<class CombineOp>
+void syncPoints
+(
+    const polyMesh& mesh,
+    pointField& points,
+    const CombineOp& cop,
+    const point& nullValue
+)
+{
+    if (points.size() != mesh.nPoints())
+    {
+        FatalErrorInFunction
+            << "Number of values " << points.size()
+            << " is not equal to the number of points in the mesh "
+            << mesh.nPoints() << abort(FatalError);
+    }
+
+    const polyBoundaryMesh& patches = mesh.boundaryMesh();
+
+    // Is there any coupled patch with transformation?
+    bool hasTransformation = false;
+
+    if (Pstream::parRun())
+    {
+        // Send
+
+        forAll(patches, patchi)
+        {
+            const polyPatch& pp = patches[patchi];
+
+            if
+            (
+                isA<processorPolyPatch>(pp)
+             && pp.nPoints() > 0
+             && refCast<const processorPolyPatch>(pp).owner()
+            )
+            {
+                const processorPolyPatch& procPatch =
+                    refCast<const processorPolyPatch>(pp);
+
+                // Get data per patchPoint in neighbouring point numbers.
+                pointField patchInfo(procPatch.nPoints(), nullValue);
+
+                const labelList& meshPts = procPatch.meshPoints();
+                const labelList& nbrPts = procPatch.nbrPoints();
+
+                forAll(nbrPts, pointi)
+                {
+                    label nbrPointi = nbrPts[pointi];
+                    if (nbrPointi >= 0 && nbrPointi < patchInfo.size())
+                    {
+                        patchInfo[nbrPointi] = points[meshPts[pointi]];
+                    }
+                }
+
+                OPstream toNbr
+                (
+                    Pstream::commsTypes::blocking,
+                    procPatch.neighbProcNo()
+                );
+                toNbr << patchInfo;
+            }
+        }
+
+
+        // Receive and set.
+
+        forAll(patches, patchi)
+        {
+            const polyPatch& pp = patches[patchi];
+
+            if
+            (
+                isA<processorPolyPatch>(pp)
+             && pp.nPoints() > 0
+             && !refCast<const processorPolyPatch>(pp).owner()
+            )
+            {
+                const processorPolyPatch& procPatch =
+                    refCast<const processorPolyPatch>(pp);
+
+                pointField nbrPatchInfo(procPatch.nPoints());
+                {
+                    // We do not know the number of points on the other side
+                    // so cannot use Pstream::read.
+                    IPstream fromNbr
+                    (
+                        Pstream::commsTypes::blocking,
+                        procPatch.neighbProcNo()
+                    );
+                    fromNbr >> nbrPatchInfo;
+                }
+                // Null any value which is not on neighbouring processor
+                nbrPatchInfo.setSize(procPatch.nPoints(), nullValue);
+
+                if (procPatch.transform().transformsPosition())
+                {
+                    hasTransformation = true;
+                    procPatch.transform().transformPosition
+                    (
+                        nbrPatchInfo,
+                        nbrPatchInfo
+                    );
+                }
+
+                const labelList& meshPts = procPatch.meshPoints();
+
+                forAll(meshPts, pointi)
+                {
+                    label meshPointi = meshPts[pointi];
+                    points[meshPointi] = nbrPatchInfo[pointi];
+                }
+            }
+        }
+    }
+
+    // Do the cyclics.
+    forAll(patches, patchi)
+    {
+        const polyPatch& pp = patches[patchi];
+
+        if
+        (
+            isA<cyclicPolyPatch>(pp)
+         && refCast<const cyclicPolyPatch>(pp).owner()
+        )
+        {
+            const cyclicPolyPatch& cycPatch =
+                refCast<const cyclicPolyPatch>(pp);
+
+            const edgeList& coupledPoints = cycPatch.coupledPoints();
+            const labelList& meshPts = cycPatch.meshPoints();
+            const cyclicPolyPatch& nbrPatch = cycPatch.nbrPatch();
+            const labelList& nbrMeshPts = nbrPatch.meshPoints();
+
+            pointField patchPoints(coupledPoints.size());
+
+            forAll(coupledPoints, i)
+            {
+                const edge& e = coupledPoints[i];
+                label point0 = meshPts[e[0]];
+                patchPoints[i] = points[point0];
+            }
+
+            if (cycPatch.transform().transformsPosition())
+            {
+                hasTransformation = true;
+                cycPatch.transform().invTransformPosition
+                (
+                    patchPoints,
+                    patchPoints
+                );
+            }
+
+            forAll(coupledPoints, i)
+            {
+                const edge& e = coupledPoints[i];
+                label point1 = nbrMeshPts[e[1]];
+                points[point1] = patchPoints[i];
+            }
+        }
+    }
+
+    //- Note: hasTransformation is only used for warning messages so
+    //  reduction not strictly necessary.
+    // reduce(hasTransformation, orOp<bool>());
+
+    // Synchronise multiple shared points.
+    const globalMeshData& pd = mesh.globalData();
+
+    if (pd.nGlobalPoints() > 0)
+    {
+        if (hasTransformation)
+        {
+            WarningInFunction
+                << "There are decomposed cyclics in this mesh with"
+                << " transformations." << endl
+                << "This is not supported. The result will be incorrect"
+                << endl;
+        }
+
+
+        // Values on shared points.
+        pointField sharedPts(pd.nGlobalPoints(), nullValue);
+
+        forAll(pd.sharedPointLabels(), i)
+        {
+            label meshPointi = pd.sharedPointLabels()[i];
+            // Fill my entries in the shared points
+            sharedPts[pd.sharedPointAddr()[i]] = points[meshPointi];
+        }
+
+        // Combine on master.
+        Pstream::listCombineGather(sharedPts, cop);
+        Pstream::listCombineScatter(sharedPts);
+
+        // Now we will all have the same information. Merge it back with
+        // my local information.
+        forAll(pd.sharedPointLabels(), i)
+        {
+            label meshPointi = pd.sharedPointLabels()[i];
+            points[meshPointi] = sharedPts[pd.sharedPointAddr()[i]];
+        }
+    }
 }
 
 
@@ -479,6 +914,7 @@ int main(int argc, char *argv[])
     // List of saved cells (per cell set)
     labelListList savedCells(regions.size());
     labelListList savedFaces(regions.size());
+    boolListList savedFlipMaps(regions.size());
     labelListList savedPoints(regions.size());
 
     while(!end)
@@ -508,6 +944,7 @@ int main(int argc, char *argv[])
             regions,
             savedCells,
             savedFaces,
+            savedFlipMaps,
             savedPoints,
             !end
         );
@@ -786,15 +1223,17 @@ int main(int argc, char *argv[])
     PtrListDictionary<entry> bafflePatchesToAdd(bafflesToAdd.size()*2);
     List<Pair<word>> bafflePatches(bafflesToAdd.size());
 
+    HashSet<word> addedPatches;
 
     // Find new patches and add them to the mesh
     if (setsToRemove.size())
     {
         Info<< "Removing cell sets" << endl;
         // Add new patches
-        addEmptyPatches(mesh, setsToRemove);
+        addedPatches.set(addEmptyPatches(mesh, setsToRemove));
 
         // Remove cells
+        label nRemoved = 0;
         polyTopoChange meshMod(mesh);
         forAll(setsToRemove, seti)
         {
@@ -804,7 +1243,7 @@ int main(int argc, char *argv[])
                 dict.lookupOrDefault("patchName", patchEntry.keyword());
 
             Info<< "    Removing cells in " << patchEntry.keyword() << endl;
-            meshTools::setRemoveCells
+            nRemoved += meshTools::setRemoveCells
             (
                 mesh,
                 *topoSets.cellSets()[setsToRemove[seti].keyword()],
@@ -812,26 +1251,27 @@ int main(int argc, char *argv[])
                 meshMod,
                 dict.lookupOrDefault("invert", false)
             );
+
         }
+        Info<< "    Removed " << returnReduce(nRemoved, sumOp<label>())
+            << " cells" << endl;
         autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
         mesh.updateMesh(map());
-    }
 
-//     updateTopoSets
-//     (
-//         topoSets,
-//         regions,
-//         savedCells,
-//         savedFaces,
-//         savedPoints
-//     );
+        // Move mesh (since morphing might not do this)
+//         if (map().hasMotionPoints())
+//         {
+//             mesh.movePoints(map().preMotionPoints());
+//             mesh.moving(false);
+//         }
+    }
 
     // Find new patches and add them to the mesh
     if (patchesToAdd.size())
     {
         Info<< nl << "Adding patches" << endl;
         // Add new patches
-        addEmptyPatches(mesh, patchesToAdd);
+        addedPatches.set(addEmptyPatches(mesh, patchesToAdd));
 
         // Modify faces
         polyTopoChange meshMod(mesh);
@@ -865,16 +1305,14 @@ int main(int argc, char *argv[])
         }
         autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
         mesh.updateMesh(map());
-    }
 
-//     updateTopoSets
-//     (
-//         topoSets,
-//         regions,
-//         savedCells,
-//         savedFaces,
-//         savedPoints
-//     );
+        // Move mesh (since morphing might not do this)
+//         if (map().hasMotionPoints())
+//         {
+//             mesh.movePoints(map().preMotionPoints());
+//             mesh.moving(false);
+//         }
+    }
 
     // Find new patches and add them to the mesh
     if (bafflesToAdd.size())
@@ -963,7 +1401,7 @@ int main(int argc, char *argv[])
         }
 
         // Add new patches
-        addEmptyPatches(mesh, bafflePatchesToAdd);
+        addedPatches.set(addEmptyPatches(mesh, bafflePatchesToAdd));
 
         // Modify faces
         polyTopoChange meshMod(mesh);
@@ -977,7 +1415,6 @@ int main(int argc, char *argv[])
             const label zoneID = mesh.faceZones().findIndex(setName);
 
             const faceZone& fZone(mesh.faceZones()[zoneID]);
-            Info<<returnReduce(fZone.size(), sumOp<label>())<<endl;
 
             meshTools::createBaffleFaces
             (
@@ -992,8 +1429,56 @@ int main(int argc, char *argv[])
         }
         autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
         mesh.updateMesh(map());
+
+        // Move mesh (since morphing might not do this)
+//         if (map().hasMotionPoints())
+//         {
+//             mesh.movePoints(map().preMotionPoints());
+//             mesh.moving(false);
+//         }
     }
 
+    // Synchronise points.
+//     if (!pointSync)
+//     {
+//         Info<< "Not synchronising points." << nl << endl;
+//     }
+//     else
+//     {
+//         Info<< "Synchronising points." << nl << endl;
+//
+//         pointField newPoints(mesh.points());
+//
+//         syncPoints
+//         (
+//             mesh,
+//             newPoints,
+//             minMagSqrEqOp<vector>(),
+//             point(great, great, great)
+//         );
+//
+//         scalarField diff(mag(newPoints-mesh.points()));
+//         Info<< "Points changed by average:" << gAverage(diff)
+//             << " max:" << gMax(diff) << nl << endl;
+//
+//         mesh.movePoints(newPoints);
+//         mesh.moving(false);
+//     }
+
+//     autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
+//     mesh.updateMesh(map());
+//
+//     // Move mesh (since morphing might not do this)
+//     if (map().hasMotionPoints())
+//     {
+//         mesh.movePoints(map().preMotionPoints());
+//     }
+
+
+    if (overwrite)
+    {
+        mesh.setInstance(runTime.constant());
+    }
 
     bool writeMesh = topoSets.writeSets();
     if (refine && !debug)
@@ -1004,7 +1489,7 @@ int main(int argc, char *argv[])
             IOobject
             (
                 "points0",
-                overwrite ? runTime.constant() : runTime.timeName(),
+                mesh.facesInstance(),
                 polyMesh::meshSubDir,
                 mesh
             ),
@@ -1014,6 +1499,8 @@ int main(int argc, char *argv[])
         writeMesh = true;
     }
 
+    // Remove any now zero-sized patches
+    filterPatches(mesh, addedPatches);
 
 //     if (writeMesh)
     {

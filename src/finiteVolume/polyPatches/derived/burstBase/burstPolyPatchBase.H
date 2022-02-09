@@ -36,61 +36,16 @@ SourceFiles
 #define burstPolyPatchBase_H
 
 #include "polyPatch.H"
-#include "fvPatchFieldMapper.H"
 #include "polyMesh.H"
 #include "polyBoundaryMesh.H"
 #include "Time.H"
-#include "RefineBalanceMeshObject.H"
+#include "UautoPtr.H"
 #include "UPtrList.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-
-
-class burstPolyPatchBase;
-
-
-/*---------------------------------------------------------------------------*\
-                    Class burstPolyPatchDistributor Declaration
-\*---------------------------------------------------------------------------*/
-class burstPolyPatchDistributor
-:
-    public BalanceMeshObject
-{
-// Private data
-
-    const polyMesh& mesh_;
-
-    autoPtr<scalarField> intact_;
-
-public:
-
-    //- Runtime type information
-    TypeName("burstPolyPatchDistributor");
-
-    // Constructor
-    burstPolyPatchDistributor(const polyMesh& mesh);
-
-    //- Lookup and return the burst polyPatch object
-    static burstPolyPatchDistributor& New(const polyMesh& mesh);
-
-    //- Save the intact field so it can be mapped after the mesh is distributed
-    virtual void preDistribute();
-
-    //- Update
-    virtual void updateObject()
-    {}
-
-    //- Distribute the intact field
-    virtual void distribute(const mapDistributePolyMesh&);
-
-    virtual bool writeData(Ostream&) const
-    {
-        return true;
-    }
-};
 
 
 /*---------------------------------------------------------------------------*\
@@ -107,7 +62,7 @@ protected:
         const polyPatch& patch_;
 
         //- Intact field
-        scalarField intact_;
+        UautoPtr<const scalarField> intact_;
 
         //- Is pressure used
         bool usePressure_;
@@ -144,8 +99,6 @@ protected:
 
 
 public:
-
-    friend burstPolyPatchDistributor;
 
     //- Runtime type information
     TypeName("burstPolyPatchBase");
@@ -199,12 +152,6 @@ public:
 
         // Access
 
-            //- Return if read is needed
-            bool needRead() const
-            {
-                return needRead_;
-            }
-
             //- Return the polyPatch
             const polyPatch& patch() const
             {
@@ -214,18 +161,15 @@ public:
             //- Return the intact field
             const Field<scalar>& intact() const
             {
-                return intact_;
+                return intact_();
             }
 
             //- Access the intact field
             void setIntact(const scalarField& intact)
             {
-                if (needRead_)
+                if (!intact_.valid())
                 {
-                    pointIntact_.clear();
-                    intact_ = intact;
-
-                    needRead_ = false;
+                    intact_.set(&intact);
                 }
             }
 
@@ -303,8 +247,9 @@ public:
             bool update
             (
                 const scalarField& p,
-                const scalarField& impulse
-            );
+                const scalarField& impulse,
+                scalarField& intact
+            ) const;
 
 
         // OS

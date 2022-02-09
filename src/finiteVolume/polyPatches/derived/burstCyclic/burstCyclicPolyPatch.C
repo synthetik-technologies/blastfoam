@@ -49,60 +49,63 @@ namespace Foam
 
 // * * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * //
 
-void Foam::burstCyclicPolyPatch::initCalcGeometry(PstreamBuffers& pBufs)
-{
-    polyPatch::initCalcGeometry(pBufs);
-}
-
-
-void Foam::burstCyclicPolyPatch::initCalcGeometry
-(
-    const primitivePatch& referPatch,
-    pointField& nbrCtrs,
-    vectorField& nbrAreas,
-    pointField& nbrCc
-)
-{}
-
-
-void Foam::burstCyclicPolyPatch::calcGeometry(PstreamBuffers& pBufs)
-{
-    cyclicPolyPatch::calcGeometry(pBufs);
-//     static_cast<cyclicTransform&>(*this) =
-//         cyclicTransform(true);
-}
-
-
-void Foam::burstCyclicPolyPatch::initMovePoints
-(
-    PstreamBuffers& pBufs,
-    const pointField& p
-)
-{
-    polyPatch::initMovePoints(pBufs, p);
-}
-
-
-void Foam::burstCyclicPolyPatch::movePoints
-(
-    PstreamBuffers& pBufs,
-    const pointField& p
-)
-{
-    polyPatch::movePoints(pBufs, p);
-}
-
-
-void Foam::burstCyclicPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
-{
-    cyclicPolyPatch::initUpdateMesh(pBufs);
-}
-
-
-void Foam::burstCyclicPolyPatch::updateMesh(PstreamBuffers& pBufs)
-{
-    cyclicPolyPatch::updateMesh(pBufs);
-}
+// void Foam::burstCyclicPolyPatch::initCalcGeometry(PstreamBuffers& pBufs)
+// {
+//     polyPatch::initCalcGeometry(pBufs);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::initCalcGeometry
+// (
+//     const primitivePatch& referPatch,
+//     pointField& nbrCtrs,
+//     vectorField& nbrAreas,
+//     pointField& nbrCc
+// )
+// {
+//     cyclicPolyPatch::initCalcGeometry(referPatch, nbrCtrs, nbrAreas, nbrCc);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::calcGeometry(PstreamBuffers& pBufs)
+// {
+//     cyclicPolyPatch::calcGeometry(pBufs);
+// //     static_cast<cyclicTransform&>(*this) =
+// //         cyclicTransform(true);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::initMovePoints
+// (
+//     PstreamBuffers& pBufs,
+//     const pointField& p
+// )
+// {
+//     polyPatch::initMovePoints(pBufs, p);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::movePoints
+// (
+//     PstreamBuffers& pBufs,
+//     const pointField& p
+// )
+// {
+//     polyPatch::movePoints(pBufs, p);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
+// {
+//     cyclicPolyPatch::initUpdateMesh(pBufs);
+// }
+//
+//
+// void Foam::burstCyclicPolyPatch::updateMesh(PstreamBuffers& pBufs)
+// {
+//     cyclicPolyPatch::updateMesh(pBufs);
+//     burstPolyPatchBase::updateMesh();
+// }
 
 
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
@@ -133,7 +136,7 @@ Foam::burstCyclicPolyPatch::burstCyclicPolyPatch
     const word& nbrPatchName
 )
 :
-    cyclicPolyPatch(name, size, start, index, bm, patchType),
+    cyclicPolyPatch(name, size, start, index, bm, patchType, nbrPatchName),
     burstPolyPatchBase(static_cast<const polyPatch&>(*this))
 {}
 
@@ -149,7 +152,9 @@ Foam::burstCyclicPolyPatch::burstCyclicPolyPatch
 :
     cyclicPolyPatch(name, dict, index, bm, patchType),
     burstPolyPatchBase(*this, dict)
-{}
+{
+    static_cast<cyclicTransform&>(*this) = cyclicTransform(dict, true);
+}
 
 
 Foam::burstCyclicPolyPatch::burstCyclicPolyPatch

@@ -25,6 +25,7 @@ License
 
 #include "intact.H"
 #include "burstPolyPatchBase.H"
+#include "wallPolyPatch.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
@@ -87,6 +88,10 @@ bool Foam::functionObjects::intact::write()
                 const burstPolyPatchBase& bppb =
                     dynamicCast<const burstPolyPatchBase>(pp);
                 intact.boundaryFieldRef()[patchi] == bppb.intact();
+            }
+            else if (isA<wallPolyPatch>(pp))
+            {
+                intact.boundaryFieldRef() = 1.0;
             }
         }
         return intact.write();

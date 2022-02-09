@@ -1530,7 +1530,7 @@ Foam::hexRef::hexRef(const polyMesh& mesh, const bool readHistory)
 
     // Check initial mesh for consistency
 
-    //if (debug)
+    if (debug)
     {
         checkMesh();
     }
@@ -1640,7 +1640,7 @@ Foam::hexRef::hexRef
 
     // Check initial mesh for consistency
 
-    //if (debug)
+    if (debug)
     {
         checkMesh();
     }
@@ -1741,7 +1741,7 @@ Foam::hexRef::hexRef
 
     // Check initial mesh for consistency
 
-    //if (debug)
+    if (debug)
     {
         checkMesh();
     }
@@ -3059,6 +3059,7 @@ void Foam::hexRef::distribute(const mapDistributePolyMesh& map)
 
     // Update celllevel
     map.distributeCellData(cellLevel_);
+
     // Update pointlevel
     map.distributePointData(pointLevel_);
 

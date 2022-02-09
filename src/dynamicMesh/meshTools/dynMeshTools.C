@@ -263,6 +263,13 @@ Foam::label Foam::meshTools::createBaffleFaces
             {
                 // Do not allow coupled faces to be moved to different
                 // coupled patches.
+//                 WarningInFunction
+//                     << pp.name() << " and " << pbm[newMasterPatchi].name()
+//                     << "/" << pbm[newSlavePatchi].name()
+//                     << " are both coupled "
+//                     << " so these shared faces will not be modified." << nl
+//                     << "If this is a processor patch, try changing the "
+//                     << "distribution method." << endl;
             }
             else if (pp.coupled() || !internalFacesOnly)
             {
@@ -405,7 +412,7 @@ Foam::label Foam::meshTools::createPatchFaces
 }
 
 
-void Foam::meshTools::setRemoveCells
+Foam::label Foam::meshTools::setRemoveCells
 (
     const polyMesh& mesh,
     const labelHashSet& selectedCells,
@@ -438,6 +445,7 @@ void Foam::meshTools::setRemoveCells
         exposedPatchIDs,
         meshMod
     );
+    return cellsToRemove.size();
 }
 
 /*

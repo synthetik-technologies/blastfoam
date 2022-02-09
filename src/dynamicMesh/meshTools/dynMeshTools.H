@@ -114,7 +114,7 @@ namespace meshTools
         );
 
         //- Use the cells passed in to set the remove using remove cells
-        void setRemoveCells
+        label setRemoveCells
         (
             const polyMesh& mesh,
             const labelHashSet& selectedCells,

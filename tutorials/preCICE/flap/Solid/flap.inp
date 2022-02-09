@@ -9,7 +9,7 @@
 *SOLID SECTION, Elset=Eall, Material=EL
 *STEP, NLGEOM, INC=1000000
 *DYNAMIC, DIRECT
-1.E-5, 10.0
+2E-5, 10.0
 
 ** fix on the lower boundary from x to z.
 *BOUNDARY

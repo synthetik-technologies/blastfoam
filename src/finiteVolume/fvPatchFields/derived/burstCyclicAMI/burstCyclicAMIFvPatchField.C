@@ -78,8 +78,6 @@ Foam::burstCyclicAMIFvPatchField<Type>::burstCyclicAMIFvPatchField
             << exit(FatalIOError);
     }
 
-    burstFvPatchFieldBase::read(dict);
-
     // Create a new patch dictionary and replace the type with the intactType
     dictionary intactDict(dict.parent(), dict);
     intactDict.set("type", dict.lookup<word>("intactType"));
@@ -96,8 +94,6 @@ Foam::burstCyclicAMIFvPatchField<Type>::burstCyclicAMIFvPatchField
             intactDict
         ).ptr()
     );
-
-    cyclicAMIFvPatchField<Type>::evaluate(Pstream::commsTypes::blocking);
 }
 
 
@@ -144,6 +140,10 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::burstCyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
+    if (this->unblock_)
+    {
+        return cyclicAMIFvPatchField<Type>::patchNeighbourField();
+    }
     return
         intact()*intactPatchField_()
       + (1.0 - intact())*cyclicAMIFvPatchField<Type>::patchNeighbourField();
@@ -397,7 +397,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 template<class Type>
 void Foam::burstCyclicAMIFvPatchField<Type>::write(Ostream& os) const
 {
-    fvPatchField<Type>::write(os);
+    cyclicAMIFvPatchField<Type>::write(os);
     {
         // Writing is a little weird since the intactPatchField has a different
         // type, but is in the same dictionary
@@ -407,7 +407,6 @@ void Foam::burstCyclicAMIFvPatchField<Type>::write(Ostream& os) const
         os.indent();
         os << "intactPatch" << dict;
     }
-    writeEntry(os, "intact", intact());
     writeEntry(os, "value", *this);
 }
 

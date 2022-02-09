@@ -174,8 +174,14 @@ Foam::backupTopoSetSource::backupTopoSetSource(const backupTopoSetSource& source
 :
     mesh_(source.mesh_),
     dict_(source.dict_),
+    allowBackup_(source.allowBackup_),
     source_(source.source_->clone()),
-    backup_(source.backup_->clone())
+    backup_
+    (
+        source.backup_.valid()
+      ? source.backup_->clone()
+      : autoPtr<topoSetSource>()
+    )
 {}
 
 
@@ -188,6 +194,7 @@ Foam::backupTopoSetSource::backupTopoSetSource
 :
     mesh_(mesh),
     dict_(dict),
+    allowBackup_(dict.lookupOrDefault("allowBackup", false)),
     source_
     (
         topoSetSource::New
@@ -246,8 +253,7 @@ bool Foam::backupTopoSetSource::isPoint() const
 void Foam::backupTopoSetSource::applyToSet
 (
     const topoSetSource::setAction action,
-    topoSet& set,
-    const bool allowBackup
+    topoSet& set
 ) const
 {
     const label origSize = returnReduce(set.size(), sumOp<label>());
@@ -256,7 +262,7 @@ void Foam::backupTopoSetSource::applyToSet
     if
     (
         origSize == returnReduce(set.size(), sumOp<label>())
-     && allowBackup && backup_.valid()
+     && allowBackup_ && backup_.valid()
     )
     {
         backup_->applyToSet(action, set);
@@ -268,8 +274,8 @@ void Foam::backupTopoSetSource::createSets
 (
     labelList& cells,
     labelList& faces,
-    labelList& points,
-    const bool allowBackup
+    boolList& flipMap,
+    labelList& points
 ) const
 {
     autoPtr<topoSet> setPtr;
@@ -362,7 +368,7 @@ void Foam::backupTopoSetSource::createSets
     }
     topoSet& set = setPtr();
 
-    applyToSet(topoSetSource::NEW, set, allowBackup);
+    applyToSet(topoSetSource::NEW, set);
 
     if (isCell())
     {
@@ -372,7 +378,16 @@ void Foam::backupTopoSetSource::createSets
     }
     else if (isFace())
     {
-        faces = set.toc();
+        if (setType() == topoSetSource::FACEZONESOURCE)
+        {
+            const faceZoneSet& fsz = dynamicCast<const faceZoneSet&>(set);
+            faces = fsz.addressing();
+            flipMap = fsz.flipMap();
+        }
+        else
+        {
+            faces = set.toc();
+        }
         cells = facesToCells(faces);
         points = facesToPoints(faces);
     }

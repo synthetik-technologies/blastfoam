@@ -30,7 +30,6 @@ License
 
 #include "fvMeshDirectionalRefiner.H"
 #include "newRefinementIterator.H"
-#include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
 #include "hexRef.H"
 #include "addToRunTimeSelectionTable.H"
@@ -548,11 +547,6 @@ bool Foam::fvMeshDirectionalRefiner::refine
         if (balance())
         {
             hasChanged = true;
-        }
-        else if (hasChanged)
-        {
-            //- Update objects stored on the mesh db
-            RefineMeshObject::updateObjects(mesh_);
         }
         mesh_.topoChanging(hasChanged);
 
