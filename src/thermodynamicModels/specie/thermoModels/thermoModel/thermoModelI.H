@@ -574,7 +574,15 @@ inline Foam::scalar Foam::thermoModel<ThermoType>::rhoPT
     scalar Rhoest = 1.0;
     scalar Rhonew = Rhoest;
     scalar pNew = p;
-    scalar E = ThermoType::Es(Rhoest, 0.0, T); //- Initial guess
+    scalar E = T; //- Initial guess
+    if (ThermoType::enthalpy())
+    {
+        E *= ThermoType::Cp(Rhoest, 0.0, T);
+    }
+    else
+    {
+        E *= ThermoType::Cv(Rhoest, 0.0, T);
+    }
 
     int    iter = 0;
     do
