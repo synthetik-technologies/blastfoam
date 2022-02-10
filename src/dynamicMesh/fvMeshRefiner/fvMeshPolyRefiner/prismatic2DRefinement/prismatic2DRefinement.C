@@ -746,6 +746,7 @@ void Foam::prismatic2DRefinement::setRefinement
         );
 
         // Phase 2: introduce points at the synced locations.
+        DynamicList<label> splitEdges(mesh_.nEdges());
         forAll(edgeMidPoint, edgeI)
         {
             if (edgeMidPoint[edgeI] > -1)
@@ -761,6 +762,7 @@ void Foam::prismatic2DRefinement::setRefinement
                         true             // Supports a cell
                     )
                 );
+                splitEdges.append(edgeI);
                 newPointLevel(edgeMidPoint[edgeI]) =
                     max
                     (
@@ -769,6 +771,7 @@ void Foam::prismatic2DRefinement::setRefinement
                     ) + 1;
             }
         }
+        locationMapper_.addSplitEdges(splitEdges, edgeMidPoint);
     }
 
     // Write out edge mid points for split edges for debugging
@@ -1045,55 +1048,65 @@ void Foam::prismatic2DRefinement::setRefinement
     }
 
 
-    // Add face points. Note: no need to sync face mid points (as we did for
-    // edge mid points) since processor faces do not introduce new points,
-    // only faces on special patch (empty or wedge) do
-
-    // Get face centres
-    const vectorField& meshFaceCentres = mesh_.faceCentres();
-
-    // Loop through faces on special patches (empty or wedge) only
-    forAll(boundaryMesh, patchI)
     {
-        // Get current patch
-        const polyPatch& curPatch = boundaryMesh[patchI];
+        // Add face points. Note: no need to sync face mid points
+        // (as we did for edge mid points) since processor faces do not
+        // introduce new points, only faces on special patch (empty or wedge)
+        // do
 
-        // Check whether this patch is special (empty or wedge)
-        if (isA<emptyPolyPatch>(curPatch) || isA<wedgePolyPatch>(curPatch))
+        // Get face centres
+        const vectorField& meshFaceCentres = mesh_.faceCentres();
+
+        // Loop through faces on special patches (empty or wedge) only
+        DynamicList<label> splitFaces(mesh_.nFaces());
+        forAll(boundaryMesh, patchI)
         {
-            // Get start and face labels
-            const label startFaceI = curPatch.start();
-            const label endFaceI = startFaceI + curPatch.size();
+            // Get current patch
+            const polyPatch& curPatch = boundaryMesh[patchI];
 
-            // Loop through all special patch faces (global indexing)
-            for (label faceI = startFaceI; faceI < endFaceI; ++faceI)
+            // Check whether this patch is special (empty or wedge)
+            if
+            (
+                isA<emptyPolyPatch>(curPatch)
+             || isA<wedgePolyPatch>(curPatch)
+            )
             {
-                if (faceMidPoint[faceI] > -1)
+                // Get start and face labels
+                const label startFaceI = curPatch.start();
+                const label endFaceI = startFaceI + curPatch.size();
+
+                // Loop through all special patch faces (global indexing)
+                for (label faceI = startFaceI; faceI < endFaceI; ++faceI)
                 {
-                    const face& f = mesh_.faces()[faceI];
+                    if (faceMidPoint[faceI] > -1)
+                    {
+                        const face& f = mesh_.faces()[faceI];
 
-                    // Face on special patch (empty or wedge) marked to be
-                    // split. Add the point at face centre and replace
-                    // faceMidPoint with new point label
+                        // Face on special patch (empty or wedge) marked to be
+                        // split. Add the point at face centre and replace
+                        // faceMidPoint with new point label
 
-                    faceMidPoint[faceI] = meshMod.setAction
-                    (
-                        polyAddPoint
+                        faceMidPoint[faceI] = meshMod.setAction
                         (
-                            meshFaceCentres[faceI], // Point
-                            f[0],                   // No master ID
-                            -1,                     // Zone for point
-                            true                    // Supports a cell
-                        )
-                    );
+                            polyAddPoint
+                            (
+                                meshFaceCentres[faceI], // Point
+                                f[0],                   // No master ID
+                                -1,                     // Zone for point
+                                true                    // Supports a cell
+                            )
+                        );
 
-                    // Determine the level of the corner points and midpoint
-                    // will be one higher.
-                    newPointLevel(faceMidPoint[faceI]) =
-                        faceAnchorLevel[faceI] + 1;
+                        splitFaces.append(faceI);
+                        // Determine the level of the corner points and
+                        // midpoint will be one higher.
+                        newPointLevel(faceMidPoint[faceI]) =
+                            faceAnchorLevel[faceI] + 1;
+                    }
                 }
             }
         }
+        locationMapper_.addSplitFaces(splitFaces, faceMidPoint);
     }
 
     // Write out all split faces as a face set for debugging

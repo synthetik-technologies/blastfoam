@@ -58,7 +58,7 @@ Authors
 #include "autoPtr.H"
 #include "runTimeSelectionTables.H"
 #include "volFields.H"
-#include "hexRefLocationMapper.H"
+#include "locationMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -122,7 +122,7 @@ protected:
         mutable autoPtr<cellShapeList> cellShapesPtr_;
 
         //- Mapper for locations
-        mutable hexRefLocationMapper locationMapper_;
+        mutable locationMapper locationMapper_;
 
 
     // Protected Member Functions
@@ -600,7 +600,13 @@ public:
             );
 
             //- Return the location mapper
-            hexRefLocationMapper& locationMapper() const
+            const locationMapper& locMapper() const
+            {
+                return locationMapper_;
+            }
+
+            //- Access the location mapper
+            locationMapper& locMapper()
             {
                 return locationMapper_;
             }

@@ -1,6 +1,8 @@
 newCellCuts/newCellCuts.C
 newRefinementIterator/newRefinementIterator.C
 
+locationMapper/locationMapper.C
+
 fvMeshBalance/fvMeshBalance.C
 fvMeshRefiner/fvMeshRefiner.C
 fvMeshRefiner/fvMeshRefinerNew.C
@@ -16,7 +18,6 @@ hexRef = fvMeshRefiner/fvMeshHexRefiner/hexRef
 $(hexRef)/hexRefRefinementHistory.C
 $(hexRef)/hexRefRefinementHistoryConstraint.C
 $(hexRef)/hexRefData.C
-$(hexRef)/hexRefLocationMapper/hexRefLocationMapper.C
 
 $(hexRef)/hexRef.C
 $(hexRef)/hexRefNew.C

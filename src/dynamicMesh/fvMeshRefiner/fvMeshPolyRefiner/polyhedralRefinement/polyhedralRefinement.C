@@ -781,24 +781,30 @@ void Foam::polyhedralRefinement::setRefinement
     // Shall be refined > -1 (label of added mid point)
     labelList cellMidPoint(mesh_.nCells(), -1);
 
-    // Loop through cells to refine
-    forAll(cellsToRefine, i)
     {
-        // Get cell idnex
-        const label& cellI = cellsToRefine[i];
-        label anchorPointi = mesh_.faces()[mesh_.cells()[cellI][0]][0];
+        DynamicList<label> splitCells(mesh_.nCells());
 
-        cellMidPoint[cellI] = meshMod.setAction
-        (
-            polyAddPoint
+        // Loop through cells to refine
+        forAll(cellsToRefine, i)
+        {
+            // Get cell idnex
+            const label& cellI = cellsToRefine[i];
+            label anchorPointi = mesh_.faces()[mesh_.cells()[cellI][0]][0];
+
+            cellMidPoint[cellI] = meshMod.setAction
             (
-                meshCellCentres[cellI], // Point to add (cell centre)
-                anchorPointi,           // Appended point: no master ID
-                -1,                     // Zone for point
-                true                    // Supports a cell
-            )
-        );
-        newPointLevel(cellMidPoint[cellI]) = cellLevel_[cellI] + 1;
+                polyAddPoint
+                (
+                    meshCellCentres[cellI], // Point to add (cell centre)
+                    anchorPointi,           // Appended point: no master ID
+                    -1,                     // Zone for point
+                    true                    // Supports a cell
+                )
+            );
+            newPointLevel(cellMidPoint[cellI]) = cellLevel_[cellI] + 1;
+            splitCells.append(cellI);
+        }
+        locationMapper_.addSplitCells(splitCells, cellMidPoint);
     }
 
     // Write out split cells as a cell set for debug
@@ -920,6 +926,7 @@ void Foam::polyhedralRefinement::setRefinement
         );
 
         // Phase 2: introduce points at the synced locations.
+        DynamicList<label> splitEdges(mesh_.nEdges());
         forAll(edgeMidPoint, edgeI)
         {
             if (edgeMidPoint[edgeI] > -1)
@@ -941,9 +948,12 @@ void Foam::polyhedralRefinement::setRefinement
                         pointLevel_[e[0]],
                         pointLevel_[e[1]]
                     ) + 1;
+
+                splitEdges.append(edgeI);
             }
         }
-    } // End memory management for syncing/adding edge points
+        locationMapper_.addSplitEdges(splitEdges, edgeMidPoint);
+    }
 
     // Write out edge mid points for split edges for debugging
     if (debug)
@@ -1129,6 +1139,7 @@ void Foam::polyhedralRefinement::setRefinement
         );
 
         // Loop through faces
+        DynamicList<label> splitFaces(mesh_.nFaces());
         forAll(faceMidPoint, faceI)
         {
             if (faceMidPoint[faceI] > -1)
@@ -1152,9 +1163,11 @@ void Foam::polyhedralRefinement::setRefinement
                     )
                 );
                 newPointLevel(faceMidPoint[faceI]) = faceAnchorLevel[faceI]+1;
+                splitFaces.append(faceI);
             }
         }
-    } // End memory management for syncing boundary data and adding face mids
+        locationMapper_.addSplitFaces(splitFaces, faceMidPoint);
+    }
 
     // Write out split faces as a face set for debugging
     if (debug)

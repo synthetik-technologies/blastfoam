@@ -330,7 +330,8 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner(fvMesh& mesh)
     ),
 
     cellWalker_(new geomCellLooper(mesh)),
-    cutter_(new undoableMeshCutter(mesh, false))
+    cutter_(new undoableMeshCutter(mesh, false)),
+    locationMapper_(mesh)
 {
     Vector<label> geoD(mesh.geometricD());
     forAll(geoD, cmpti)
@@ -385,7 +386,8 @@ Foam::fvMeshDirectionalRefiner::fvMeshDirectionalRefiner
     ),
 
     cellWalker_(),
-    cutter_(new undoableMeshCutter(mesh, false))
+    cutter_(new undoableMeshCutter(mesh, false)),
+    locationMapper_(mesh)
 {
     Vector<label> geoD(mesh.geometricD());
     forAll(geoD, cmpti)

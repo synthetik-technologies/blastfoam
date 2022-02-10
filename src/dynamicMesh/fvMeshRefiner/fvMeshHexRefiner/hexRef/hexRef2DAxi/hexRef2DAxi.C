@@ -919,7 +919,6 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
         // get differences.
 
         // Add split edges
-        labelList splitEdges(edgeMidPoint.size(), -1);
         labelList newEdgePoints(edgeMidPoint.size(), -1);
 
         pointField edgeMids(mesh_.nEdges(), point(-GREAT, -GREAT, -GREAT));
@@ -942,6 +941,7 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
 
 
         // Phase 2: introduce points at the synced locations.
+        DynamicList<label> splitEdges(edgeMidPoint.size());
         forAll(edgeMidPoint, edgei)
         {
             if (edgeMidPoint[edgei] >= 0)
@@ -961,7 +961,7 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
                         true                        // supports a cell
                     )
                 );
-                splitEdges[edgei] = 12345;
+                splitEdges.append(edgei);
                 newEdgePoints[edgei] = edgeMidPoint[edgei];
 
                 newPointLevel(edgeMidPoint[edgei]) =
@@ -1110,7 +1110,6 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
         // above
 
         // Add split faces
-        labelList splitFaces(faceMidPoint.size(), -1);
         labelList newFacePoints(faceMidPoint.size(), -1);
 
         pointField bFaceMids
@@ -1135,6 +1134,7 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
             maxEqOp<vector>()
         );
 
+        DynamicList<label> splitFaces(faceMidPoint.size());
         forAll(faceMidPoint, facei)
         {
             if (faceMidPoint[facei] >= 0 && isDivisibleFace[facei])
@@ -1158,7 +1158,7 @@ Foam::labelListList Foam::hexRef2DAxi::setRefinement
                     )
                 );
 
-                splitFaces[facei] = 12345;
+                splitFaces.append(facei);
                 newFacePoints[facei] = faceMidPoint[facei];
 
 

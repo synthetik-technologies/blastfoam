@@ -99,9 +99,7 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner(fvMesh& mesh)
 :
     fvMeshRefiner(mesh),
 
-    refiner_(nullptr),
-    isRefining_(false),
-    isUnrefining_(false)
+    refiner_(nullptr)
 {
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together
@@ -178,9 +176,7 @@ Foam::fvMeshPolyRefiner::fvMeshPolyRefiner
 :
     fvMeshRefiner(mesh, dict, force, read),
 
-    refiner_(nullptr),
-    isRefining_(false),
-    isUnrefining_(false)
+    refiner_(nullptr)
 {
     // Added refinement history decomposition constraint to keep all
     // cells with the same parent together

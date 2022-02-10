@@ -56,13 +56,6 @@ class fvMeshPolyRefiner
     //- Refiner
     autoPtr<refinement> refiner_;
 
-    //- Is the mesh in the process of being refined
-    mutable bool isRefining_;
-
-    //- Is the mesh in the process of being unrefined
-    mutable bool isUnrefining_;
-
-
     // Private member functions
 
         //- Select points to unrefine
@@ -122,6 +115,12 @@ public:
             const refinement& refiner() const
             {
                 return refiner_();
+            }
+
+            //- Return the location mapper
+            virtual const locationMapper& locMapper() const
+            {
+                return refiner_->locMapper();
             }
 
 

@@ -63,6 +63,7 @@ Notes
 #include "polyMesh.H"
 #include "labelIOField.H"
 #include "removeFaces.H"
+#include "locationMapper.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -99,6 +100,9 @@ protected:
 
             //- Switch whether to use edge based consistency on refinement
             bool edgeBasedConsistency_;
+
+            //- Mapper for locations
+            mutable locationMapper locationMapper_;
 
 
     // Protected Pure Virtual Member Functions
@@ -307,6 +311,11 @@ public:
                 return pointLevel_;
             }
 
+            //- Return the location mapper
+            const locationMapper& locMapper() const
+            {
+                return locationMapper_;
+            }
 
         // Edit
 

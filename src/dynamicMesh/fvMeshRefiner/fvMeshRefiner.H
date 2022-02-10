@@ -331,6 +331,15 @@ public:
             //- Return the point level
             virtual const labelList& pointLevel() const = 0;
 
+            //- Return the location mapper
+            virtual const locationMapper& locMapper() const = 0;
+
+            //- Tell the location mapper to store data
+            void needLocationMap(const bool needMap = true) const
+            {
+                locMapper().needMap(needMap);
+            }
+
 
         //- Read the projection parameters from dictionary
         virtual void readDict(const dictionary& parentDict);

@@ -198,6 +198,13 @@ public:
             return meshCutter_->pointLevel();
         }
 
+        //- Return the location mapper
+        virtual const locationMapper& locMapper() const
+        {
+            return meshCutter_->locMapper();
+        }
+
+
         //- Refine the mesh
         virtual bool refine
         (

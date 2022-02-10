@@ -266,8 +266,6 @@ bool Foam::fvMeshBalance::canBalance() const
 Foam::autoPtr<Foam::mapDistributePolyMesh>
 Foam::fvMeshBalance::distribute()
 {
-    blastMeshObject::preDistribute<fvMesh>(mesh_);
-
     //Correct values on all coupled patches
     correctBoundaries<volScalarField>();
     correctBoundaries<volVectorField>();

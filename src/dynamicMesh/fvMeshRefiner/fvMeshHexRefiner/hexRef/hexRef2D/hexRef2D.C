@@ -915,7 +915,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
         // get differences.
 
         // Add split edges
-        labelList splitEdges(edgeMidPoint.size(), -1);
         labelList newEdgePoints(edgeMidPoint.size(), -1);
 
         pointField edgeMids(mesh_.nEdges(), point(-GREAT, -GREAT, -GREAT));
@@ -938,6 +937,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
 
 
         // Phase 2: introduce points at the synced locations.
+        DynamicList<label> splitEdges(edgeMidPoint.size());
         forAll(edgeMidPoint, edgeI)
         {
             if (edgeMidPoint[edgeI] >= 0)
@@ -956,7 +956,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                         true                        // supports a cell
                     )
                 );
-                splitEdges[edgeI] = 12345;
+                splitEdges.append(edgeI);
                 newEdgePoints[edgeI] = edgeMidPoint[edgeI];
 
                 newPointLevel(edgeMidPoint[edgeI]) =
@@ -1105,7 +1105,6 @@ Foam::labelListList Foam::hexRef2D::setRefinement
         // above
 
         // Add split faces
-        labelList splitFaces(faceMidPoint.size(), -1);
         labelList newFacePoints(faceMidPoint.size(), -1);
 
         pointField bFaceMids
@@ -1130,6 +1129,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
             maxEqOp<vector>()
         );
 
+        DynamicList<label> splitFaces(faceMidPoint.size());
         forAll(faceMidPoint, facei)
         {
             if (faceMidPoint[facei] >= 0 && isDivisibleFace[facei])
@@ -1152,7 +1152,7 @@ Foam::labelListList Foam::hexRef2D::setRefinement
                         true                        // supports a cell
                     )
                 );
-                splitFaces[facei] = 12345;
+                splitFaces.append(facei);
                 newFacePoints[facei] = faceMidPoint[facei];
 
                 // Determine the level of the corner points and midpoint will
