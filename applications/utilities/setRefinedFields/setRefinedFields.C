@@ -863,9 +863,12 @@ int main(int argc, char *argv[])
             if (set)
             {
                 Info<< "    Selected "
-                    << selectedCells.size() << " cells, "
-                    << selectedFaces.size() << " faces, "
-                    << selectedPoints.size() << " points" << endl;
+                    << returnReduce(selectedCells.size(), sumOp<label>())
+                    << " cells, "
+                    << returnReduce(selectedFaces.size(), sumOp<label>())
+                    << " faces, "
+                    << returnReduce(selectedPoints.size(), sumOp<label>())
+                    << " points" << endl;
 
                 // Print the volume of the cells set
                 scalar V = 0.0;
@@ -1180,8 +1183,8 @@ int main(int argc, char *argv[])
                  && error.write();
 
                 Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
-                << "  ClockTime = " << runTime.elapsedClockTime() << " s"
-                << nl << endl;
+                    << "  ClockTime = " << runTime.elapsedClockTime() << " s"
+                    << nl << endl;
             }
 
             // Update mesh (return if mesh changes)
@@ -1192,6 +1195,7 @@ int main(int argc, char *argv[])
         }
         iter++;
     }
+    topoSets.transferZones(true);
 
     bool writeMesh = topoSets.writeSets();
 
