@@ -15,6 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dynamicFvMesh movingAdaptiveFvMesh;
+refiner polyRefiner;
 errorEstimator fieldValue;
 fieldName e;
 balance no;

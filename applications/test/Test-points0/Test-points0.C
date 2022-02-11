@@ -5,6 +5,7 @@
 #include "extendedNLevelGlobalCellToCellStencils.H"
 #include "Random.H"
 #include "volPointInterpolation.H"
+#include "polyTopoChange.H"
 
 using namespace Foam;
 
@@ -33,6 +34,12 @@ int main(int argc, char *argv[])
         mesh.lookupObjectRef<pointVectorField>("pointDisplacement");
     const volVectorField& cellDisplacement =
         mesh.lookupObject<volVectorField>("cellDisplacement");
+
+    // Dummy update mesh to check points0 in to the db
+    {
+        polyTopoChange meshMod(mesh);
+        mesh.updateMesh(meshMod.changeMesh(mesh, false)());
+    }
 
     runTime++;
 
