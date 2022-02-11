@@ -54,9 +54,6 @@ class blastMeshObject
 {
 public:
     template<class Mesh>
-    static void preDistribute(objectRegistry& obr);
-
-    template<class Mesh>
     static void distribute
     (
         objectRegistry& obr,
@@ -81,7 +78,6 @@ public:
         PatchMeshObject<Mesh>(typeName, io)
     {}
 
-    virtual void preDistribute() = 0;
     virtual void distribute(const mapDistributePolyMesh& map) = 0;
 };
 

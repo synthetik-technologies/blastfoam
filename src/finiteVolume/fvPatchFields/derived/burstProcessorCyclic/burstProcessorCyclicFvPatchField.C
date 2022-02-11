@@ -79,8 +79,7 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
     }
 
     // Create a new patch dictionary and replace the type with the intactType
-    dictionary intactDict(dict.parent(), dict);
-    intactDict.set("type", dict.lookup<word>("intactType"));
+    dictionary intactDict(dict.parent(), dict.subDict("intactPatch"));
     if (!intactDict.found("patchType"))
     {
         intactDict.add("patchType", typeName);
@@ -107,7 +106,7 @@ Foam::burstProcessorCyclicFvPatchField<Type>::burstProcessorCyclicFvPatchField
 )
 :
     processorCyclicFvPatchField<Type>(bpf, p, iF, mapper),
-    burstFvPatchFieldBase(p, bpf, mapper),
+    burstFvPatchFieldBase(p),
     intactPatchField_
     (
         fvPatchField<Type>::New
@@ -185,6 +184,10 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateCoeffs()
         return;
     }
 
+    // Set the intact field to zero gradient in the event that the
+    // patchField has not been updated
+    intactPatchField_() = this->patchInternalField();
+
     intactPatchField_->updateCoeffs();
     processorCyclicFvPatchField<Type>::updateCoeffs();
     burstFvPatchFieldBase::update();
@@ -216,11 +219,6 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::evaluate
     {
         this->updateCoeffs();
     }
-
-    // Before we call evaluate on the cyclic patch, assign the current field
-    // to the intact patch. This is done to make sure everything that has been
-    // done to the actual patch is transfered
-    intactPatchField_() = *this;
 
     intactPatchField_->evaluate(commsType);
     processorCyclicFvPatchField<Type>::evaluate(commsType);
@@ -311,6 +309,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const polyPatch& p = this->patch().patch();
+    const scalarField intact(this->intact());
     {
         scalarField cResult(result.size(), Zero);
         processorCyclicFvPatchField<Type>::updateInterfaceMatrix
@@ -324,7 +323,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact()[fi])*cResult[celli];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
         }
     }
 
@@ -345,7 +344,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact()[fi]*iResult[celli];
+            result[celli] += intact[fi]*iResult[celli];
         }
     }
 }
@@ -361,6 +360,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const polyPatch& p = this->patch().patch();
+    const scalarField intact(this->intact());
     {
         Field<Type> cResult(result.size(), Zero);
         processorCyclicFvPatchField<Type>::updateInterfaceMatrix
@@ -373,7 +373,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact()[fi])*cResult[celli];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
         }
     }
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
@@ -392,7 +392,7 @@ void Foam::burstProcessorCyclicFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact()[fi]*iResult[celli];
+            result[celli] += intact[fi]*iResult[celli];
         }
     }
 }

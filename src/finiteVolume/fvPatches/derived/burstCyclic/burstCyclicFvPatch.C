@@ -41,10 +41,14 @@ namespace Foam
 
 Foam::tmp<Foam::vectorField> Foam::burstCyclicFvPatch::delta() const
 {
-    const scalarField& intact = this->intact();
+    const scalarField intact(this->intact());
     if (min(intact) > (1.0 - small))
     {
         return fvPatch::delta();
+    }
+    else if (max(intact) < small)
+    {
+        return cyclicFvPatch::delta();
     }
     return
         intact*fvPatch::delta()

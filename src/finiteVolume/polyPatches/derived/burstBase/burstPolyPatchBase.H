@@ -91,9 +91,6 @@ protected:
         //- Intact points
         mutable autoPtr<scalarField> pointIntact_;
 
-        //- Can the intact field be read
-        mutable bool needRead_;
-
         //- Current time index
         mutable label curTimeIndex_;
 
@@ -156,12 +153,6 @@ public:
             const polyPatch& patch() const
             {
                 return patch_;
-            }
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return intact_();
             }
 
             //- Access the intact field

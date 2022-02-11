@@ -42,7 +42,7 @@ SourceFiles
 #include "faceZoneSet.H"
 #include "pointZoneSet.H"
 #include "NamedEnum.H"
-#include "MeshObject.H"
+#include "RefineBalanceMeshObject.H"
 #include "topoSetSource.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -54,7 +54,7 @@ class topoSetList;
 typedef MeshObject
 <
     fvMesh,
-    UpdateableMeshObject,
+    DistributeableMeshObject,
     topoSetList
 > TopoSetList;
 
@@ -128,16 +128,6 @@ public:
         {
             return pointTopoSets_;
         }
-
-        // Apply a given source to the sets
-        virtual void applyToSets
-        (
-            const topoSetSource& source,
-            const dictionary& sets,
-            labelList& selectedCells,
-            labelList& selectedFaces,
-            labelList& selectedPoints
-        ) const;
 
         //- Update cell sets
         void updateCells
@@ -227,14 +217,25 @@ public:
         //- Clear all sets
         void clear();
 
-        //- Update any stored data for new labels. Not implemented.
-        virtual void updateMesh(const mapPolyMesh& morphMap);
-
-        //- Move points
         virtual bool movePoints()
         {
             return false;
         }
+
+        virtual void reorderPatches
+        (
+            const labelUList& newToOld,
+            const bool validBoundary
+        );
+
+        virtual void addPatch(const label patchi)
+        {}
+
+        //- Update any stored data for new labels. Not implemented.
+        virtual void updateMesh(const mapPolyMesh& morphMap);
+
+        //- Distribute sets
+        virtual void distribute(const mapDistributePolyMesh& map);
 
         //- Send the cellZones to the mesh, by default zones are removed here
         void transferZones(const bool remove = true);

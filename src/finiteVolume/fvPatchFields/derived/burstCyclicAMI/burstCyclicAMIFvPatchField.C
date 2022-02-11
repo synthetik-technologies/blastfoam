@@ -79,8 +79,7 @@ Foam::burstCyclicAMIFvPatchField<Type>::burstCyclicAMIFvPatchField
     }
 
     // Create a new patch dictionary and replace the type with the intactType
-    dictionary intactDict(dict.parent(), dict);
-    intactDict.set("type", dict.lookup<word>("intactType"));
+    dictionary intactDict(dict.parent(), dict.subDict("intactPatch"));
     if (!intactDict.found("patchType"))
     {
         intactDict.add("patchType", typeName);
@@ -107,7 +106,7 @@ Foam::burstCyclicAMIFvPatchField<Type>::burstCyclicAMIFvPatchField
 )
 :
     cyclicAMIFvPatchField<Type>(bpf, p, iF, mapper),
-    burstFvPatchFieldBase(p, bpf, mapper),
+    burstFvPatchFieldBase(p),
     intactPatchField_
     (
         fvPatchField<Type>::New
@@ -140,13 +139,22 @@ template<class Type>
 Foam::tmp<Foam::Field<Type>>
 Foam::burstCyclicAMIFvPatchField<Type>::patchNeighbourField() const
 {
+    tmp<Field<Type>> pnF(cyclicAMIFvPatchField<Type>::patchNeighbourField());
+    tmp<Field<Type>> inF
+    (
+        intactPatchField_->coupled()
+       ? intactPatchField_().patchNeighbourField()
+       : intactPatchField_()
+    );
     if (this->unblock_)
     {
-        return cyclicAMIFvPatchField<Type>::patchNeighbourField();
+        return pnF;
     }
-    return
-        intact()*intactPatchField_()
-      + (1.0 - intact())*cyclicAMIFvPatchField<Type>::patchNeighbourField();
+    else if (this->block_)
+    {
+        return inF;
+    }
+    return intact()*inF + (1.0 - intact())*pnF;
 }
 
 
@@ -184,6 +192,10 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateCoeffs()
         return;
     }
 
+    // Set the intact field to zero gradient in the event that the
+    // patchField has not been updated
+    intactPatchField_() = this->patchInternalField();
+
     intactPatchField_->updateCoeffs();
     cyclicAMIFvPatchField<Type>::updateCoeffs();
     burstFvPatchFieldBase::update();
@@ -215,20 +227,15 @@ void Foam::burstCyclicAMIFvPatchField<Type>::evaluate
     {
         this->updateCoeffs();
     }
-
-    // Before we call evaluate on the cyclicAMI patch, assign the current field
-    // to the intact patch. This is done to make sure everything that has been
-    // done to the actual patch is transfered
-    intactPatchField_() = *this;
-
     intactPatchField_->evaluate(commsType);
-    cyclicAMIFvPatchField<Type>::evaluate(commsType);
-
-    Field<Type>::operator=
-    (
-        intact()*intactPatchField_() + (1.0 - intact())*(*this)
-    );
-
+    if (block_)
+    {
+        Field<Type>::operator=(intactPatchField_());
+    }
+    else
+    {
+        cyclicAMIFvPatchField<Type>::evaluate(commsType);
+    }
 }
 
 
@@ -307,6 +314,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const polyPatch& p = this->patch().patch();
+    const scalarField intact(this->intact());
     {
         scalarField cResult(result.size(), Zero);
         cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
@@ -320,7 +328,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact()[fi])*cResult[celli];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
         }
     }
 
@@ -341,7 +349,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact()[fi]*iResult[celli];
+            result[celli] += intact[fi]*iResult[celli];
         }
     }
 }
@@ -357,6 +365,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
 ) const
 {
     const polyPatch& p = this->patch().patch();
+    const scalarField intact(this->intact());
     {
         Field<Type> cResult(result.size(), Zero);
         cyclicAMIFvPatchField<Type>::updateInterfaceMatrix
@@ -369,7 +378,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += (1.0 - intact()[fi])*cResult[celli];
+            result[celli] += (1.0 - intact[fi])*cResult[celli];
         }
     }
     if (isA<coupledFvPatchField<Type>>(intactPatchField_()))
@@ -388,7 +397,7 @@ void Foam::burstCyclicAMIFvPatchField<Type>::updateInterfaceMatrix
         forAll(p.faceCells(), fi)
         {
             const label celli = p.faceCells()[fi];
-            result[celli] += intact()[fi]*iResult[celli];
+            result[celli] += intact[fi]*iResult[celli];
         }
     }
 }
@@ -407,7 +416,6 @@ void Foam::burstCyclicAMIFvPatchField<Type>::write(Ostream& os) const
         os.indent();
         os << "intactPatch" << dict;
     }
-    writeEntry(os, "value", *this);
 }
 
 

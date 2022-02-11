@@ -64,6 +64,9 @@ protected:
         //- Remove the intact and use the burst condition
         mutable bool unblock_;
 
+        //- Force patch to close
+        mutable bool block_;
+
 
 public:
 
@@ -76,20 +79,6 @@ public:
         // Construct from fvPatch
         burstFvPatchFieldBase(const fvPatch&);
 
-        //- Construct from fvPatch and a copy
-        burstFvPatchFieldBase
-        (
-            const fvPatch&,
-            const burstFvPatchFieldBase& bpf
-        );
-
-        //- Construct from fvPatch and mapper
-        burstFvPatchFieldBase
-        (
-            const fvPatch&,
-            const burstFvPatchFieldBase& bpf,
-            const fvPatchFieldMapper&
-        );
 
     // Destructor
     virtual ~burstFvPatchFieldBase();
@@ -98,15 +87,17 @@ public:
     // Member Functions
 
         //- Set the unblock flag
-        void unblock() const
+        void unblock(const bool unblocked) const
         {
-            unblock_ = true;
+            unblock_ = unblocked;
+            block_ = !unblock_;
         }
 
         //- Un set the unblock flag
-        void block() const
+        void block(const bool blocked) const
         {
-            unblock_ = false;
+            block_ = blocked;
+            unblock_ = !block_;
         }
 
         //- Return the burst polyPatch base
@@ -122,8 +113,22 @@ public:
         }
 
         //- Return the intact field
-        const scalarField& intact() const
+        tmp<scalarField> intact() const
         {
+            if (block_)
+            {
+                return tmp<scalarField>
+                (
+                    new scalarField(burstFvPatch_.patch().size(), 1.0)
+                );
+            }
+            else if (unblock_)
+            {
+                return tmp<scalarField>
+                (
+                    new scalarField(burstFvPatch_.patch().size(), 0.0)
+                );
+            }
             return burstFvPatch_.intact();
         }
 

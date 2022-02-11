@@ -215,12 +215,6 @@ public:
                 const polyPatch& pp = this->boundaryMesh()[referPatchID()];
                 return refCast<const burstCyclicPolyPatch>(pp);
             }
-
-            //- Return the intact field
-            const Field<scalar>& intact() const
-            {
-                return referPatch().intact();
-            }
 };
 
 

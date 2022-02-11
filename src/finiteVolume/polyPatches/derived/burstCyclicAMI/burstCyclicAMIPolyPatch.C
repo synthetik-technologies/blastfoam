@@ -46,53 +46,6 @@ namespace Foam
     addToRunTimeSelectionTable(polyPatch, burstCyclicAMIPolyPatch, dictionary);
 }
 
-
-// * * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * //
-
-void Foam::burstCyclicAMIPolyPatch::initCalcGeometry(PstreamBuffers& pBufs)
-{
-    cyclicAMIPolyPatch::initCalcGeometry(pBufs);
-}
-
-
-void Foam::burstCyclicAMIPolyPatch::calcGeometry(PstreamBuffers& pBufs)
-{
-    cyclicAMIPolyPatch::calcGeometry(pBufs);
-}
-
-
-void Foam::burstCyclicAMIPolyPatch::initMovePoints
-(
-    PstreamBuffers& pBufs,
-    const pointField& p
-)
-{
-    cyclicAMIPolyPatch::initMovePoints(pBufs, p);
-}
-
-
-void Foam::burstCyclicAMIPolyPatch::movePoints
-(
-    PstreamBuffers& pBufs,
-    const pointField& p
-)
-{
-    cyclicAMIPolyPatch::movePoints(pBufs, p);
-}
-
-
-void Foam::burstCyclicAMIPolyPatch::initUpdateMesh(PstreamBuffers& pBufs)
-{
-    cyclicAMIPolyPatch::initUpdateMesh(pBufs);
-}
-
-
-void Foam::burstCyclicAMIPolyPatch::updateMesh(PstreamBuffers& pBufs)
-{
-    cyclicAMIPolyPatch::updateMesh(pBufs);
-}
-
-
 // * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
 Foam::burstCyclicAMIPolyPatch::burstCyclicAMIPolyPatch

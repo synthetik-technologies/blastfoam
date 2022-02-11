@@ -125,126 +125,6 @@ Foam::topoSetList::~topoSetList()
 
 // * * * * * * * * * * * * Public Member Functions * * * * * * * * * * * * * //
 
-void Foam::topoSetList::applyToSets
-(
-    const topoSetSource& source,
-    const dictionary& sets,
-    labelList& selectedCells,
-    labelList& selectedFaces,
-    labelList& selectedPoints
-) const
-{
-    autoPtr<topoSet> currentSet;
-    if
-    (
-        source.setType() == topoSetSource::CELLSETSOURCE
-     || source.setType() == topoSetSource::CELLZONESOURCE
-    )
-    {
-        if (source.setType() == topoSetSource::CELLSETSOURCE)
-        {
-            currentSet.set
-            (
-                new cellSet
-                (
-                    mesh_,
-                    "cellSet",
-                    mesh_.nCells()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        else if (source.setType() == topoSetSource::CELLZONESOURCE)
-        {
-            currentSet.set
-            (
-                new cellZoneSet
-                (
-                    mesh_,
-                    "cellZoneSet",
-                    mesh_.nCells()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        topoSet& selectedCells = currentSet();
-    }
-    if
-    (
-        source.setType() == topoSetSource::FACESETSOURCE
-     || source.setType() == topoSetSource::FACEZONESOURCE
-    )
-    {
-        if (source.setType() == topoSetSource::FACESETSOURCE)
-        {
-            currentSet.set
-            (
-                new faceSet
-                (
-                    mesh_,
-                    "faceSet",
-                    mesh_.nFaces()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        else if (source.setType() == topoSetSource::FACEZONESOURCE)
-        {
-            currentSet.set
-            (
-                new faceZoneSet
-                (
-                    mesh_,
-                    "faceZoneSet",
-                    mesh_.nFaces()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        topoSet& selectedFaces = currentSet();
-    }
-    if
-    (
-        source.setType() == topoSetSource::POINTSETSOURCE
-     || source.setType() == topoSetSource::POINTZONESOURCE
-    )
-    {
-        if (source.setType() == topoSetSource::POINTSETSOURCE)
-        {
-            currentSet.set
-            (
-                new cellSet
-                (
-                    mesh_,
-                    "pointSet",
-                    mesh_.nPoints()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        else if (source.setType() == topoSetSource::POINTZONESOURCE)
-        {
-            currentSet.set
-            (
-                new cellZoneSet
-                (
-                    mesh_,
-                    "pointZoneSet",
-                    mesh_.nPoints()/10+1  // Reasonable size estimate.
-                )
-            );
-        }
-        topoSet& selectedPoints = currentSet();
-    }
-
-
-//     // Sets
-//     updateCells(dict, selectedCells, false);
-//     updateFaces(dict, selectedFaces, false);
-//     updatePoints(dict, selectedPoints, false);
-//
-//     // Zones
-//     updateCells(dict, selectedCells, true);
-//     updateFaces(dict, selectedFaces, true);
-//     updatePoints(dict, selectedPoints, true);
-}
-
-
 
 void Foam::topoSetList::updateCells
 (
@@ -1034,18 +914,113 @@ void Foam::topoSetList::updateMesh(const mapPolyMesh& morphMap)
 {
     forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        if (isA<cellZoneSet>(*iter()))
+        {
+            const cellZone& cz = mesh_.cellZones()[iter.key()];
+            cellZoneSet& czs = dynamicCast<cellZoneSet>(*iter());
+            czs.addressing() = cz;
+            czs.updateSet();
+        }
+        else
+        {
+            iter()->updateMesh(morphMap);
+        }
     }
     forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        if (isA<faceZoneSet>(*iter()))
+        {
+            const faceZone& fz = mesh_.faceZones()[iter.key()];
+            faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
+            fzs.addressing() = fz;
+            fzs.flipMap() = fz.flipMap();
+            fzs.updateSet();
+        }
+        else
+        {
+            iter()->updateMesh(morphMap);
+        }
     }
     forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
     {
-        iter()->updateMesh(morphMap);
+        if (isA<pointZoneSet>(*iter()))
+        {
+            const pointZone& pz = mesh_.pointZones()[iter.key()];
+            pointZoneSet& pzs = dynamicCast<pointZoneSet>(*iter());
+            pzs.addressing() = pz;
+            pzs.updateSet();
+        }
+        else
+        {
+            iter()->updateMesh(morphMap);
+        }
     }
 }
 
+
+void Foam::topoSetList::reorderPatches
+(
+    const labelUList& newToOld,
+    const bool validBoundary
+)
+{}
+
+
+void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
+{
+    forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
+    {
+        if (isA<cellZoneSet>(*iter()))
+        {
+            const cellZone& cz = mesh_.cellZones()[iter.key()];
+            cellZoneSet& czs = dynamicCast<cellZoneSet>(*iter());
+            czs.addressing() = cz;
+            czs.updateSet();
+        }
+        else
+        {
+            labelList addr(iter()->toc());
+            map.distributeFaceIndices(addr);
+            static_cast<labelHashSet&>(*iter()) = addr;
+            iter()->sync(mesh_);
+        }
+    }
+    forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
+    {
+        if (isA<faceZoneSet>(*iter()))
+        {
+            const faceZone& fz = mesh_.faceZones()[iter.key()];
+            faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
+            fzs.addressing() = fz;
+            fzs.flipMap() = fz.flipMap();
+            fzs.updateSet();
+        }
+        else
+        {
+            labelList addr(iter()->toc());
+            map.distributeFaceIndices(addr);
+            static_cast<labelHashSet&>(*iter()) = addr;
+            iter()->sync(mesh_);
+        }
+    }
+    forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
+    {
+        if (isA<pointZoneSet>(*iter()))
+        {
+            const pointZone& pz = mesh_.pointZones()[iter.key()];
+            pointZoneSet& pzs = dynamicCast<pointZoneSet>(*iter());
+            pzs.addressing() = pz;
+            pzs.updateSet();
+        }
+        else
+        {
+            labelList addr(iter()->toc());
+            map.distributeFaceIndices(addr);
+            static_cast<labelHashSet&>(*iter()) = addr;
+            iter()->sync(mesh_);
+        }
+    }
+}
 
 void Foam::topoSetList::transferZones(const bool remove)
 {

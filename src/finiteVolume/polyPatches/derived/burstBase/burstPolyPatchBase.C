@@ -52,7 +52,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_("impulse"),
     impulseBurst_(great),
     partialBurst_(false),
-    needRead_(false),
     curTimeIndex_(-1)
 {}
 
@@ -73,7 +72,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(dict.lookupOrDefault<word>("impulseName", "impulse")),
     impulseBurst_(great),
     partialBurst_(dict.lookupOrDefault("partialBurst", false)),
-    needRead_(true),
     curTimeIndex_(-1)
 {
     if (usePressure_)
@@ -107,7 +105,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(bppb.impulseName_),
     impulseBurst_(bppb.impulseBurst_),
     partialBurst_(bppb.partialBurst_),
-    needRead_(true),
     curTimeIndex_(-1)
 {}
 
@@ -130,7 +127,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(bppb.impulseName_),
     impulseBurst_(bppb.impulseBurst_),
     partialBurst_(bppb.partialBurst_),
-    needRead_(true),
     curTimeIndex_(-1)
 {}
 
@@ -152,7 +148,6 @@ Foam::burstPolyPatchBase::burstPolyPatchBase
     impulseName_(bppb.impulseName_),
     impulseBurst_(bppb.impulseBurst_),
     partialBurst_(bppb.partialBurst_),
-    needRead_(false),
     curTimeIndex_(-1)
 {}
 
@@ -188,7 +183,7 @@ bool Foam::burstPolyPatchBase::update
         }
         forAll(intact, facei)
         {
-            if (intact[facei])
+            if (intact[facei] > 0.5)
             {
                 intact[facei] = burstP[facei] < 0 && burstImp[facei] < 0;
                 if (!intact[facei])
@@ -206,16 +201,16 @@ bool Foam::burstPolyPatchBase::update
         {
             if (usePressure_)
             {
-                burst = gMax(p) > pBurst_;
+                burst = burst || gMax(p) > pBurst_;
             }
             if (useImpulse_)
             {
-                burst = gMax(impulse) > impulseBurst_;
+                burst = burst || gMax(impulse) > impulseBurst_;
             }
             intact = !burst;
         }
     }
-    return returnReduce(burst, orOp<bool>());
+    return burst;
 }
 
 

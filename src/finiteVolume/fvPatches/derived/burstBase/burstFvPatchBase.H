@@ -59,7 +59,11 @@ class burstFvPatchParent
     //- Constant reference to the mesh
     const fvMesh& mesh_;
 
-    //- Intact field
+    //- Do the field need to be read (i.e. are we starting)
+    mutable bool needToRead_;
+
+    //- Intact field not owned by this object
+    //  the field is not deleted if not owned my this object
     mutable autoPtr<volScalarField> intactPtr_;
 
     //- Make the intact field
@@ -73,6 +77,10 @@ public:
     // Constructor
     burstFvPatchParent(const fvMesh& mesh);
 
+    // Destructor
+    virtual ~burstFvPatchParent();
+
+
     //- Return the intact field
     const volScalarField& intact() const
     {
@@ -83,26 +91,22 @@ public:
         return intactPtr_();
     }
 
-    //- Access the intact field
-    volScalarField& intact()
+    //- Return the intact field for a patch
+    const tmp<scalarField> intact(const label patchi) const
     {
         if (!intactPtr_.valid())
         {
             makeIntact();
+
+            if (!intactPtr_.valid())
+            {
+                return tmp<scalarField>
+                (
+                    new scalarField(mesh_.boundaryMesh()[patchi].size(), 1.0)
+                );
+            }
         }
-        return intactPtr_();
-    }
-
-    //- Return the intact field for a patch
-    const scalarField& intact(const label patchi) const
-    {
-        return intact().boundaryField()[patchi];
-    }
-
-    //- Access the intact field
-    scalarField& intact(const label patchi)
-    {
-        return intact().boundaryFieldRef()[patchi];
+        return intactPtr_->boundaryField()[patchi];
     }
 
     //- Update the intact field
@@ -176,6 +180,12 @@ public:
 
     // Member Functions
 
+        //- Return the fvPatch
+        const fvPatch& patch() const
+        {
+            return patch_;
+        }
+
         //- Return the burstPolyPatchBase
         const burstPolyPatchBase& burstPolyPatch() const
         {
@@ -183,13 +193,7 @@ public:
         }
 
         //- Return the intact field
-        const scalarField& intact() const
-        {
-            return parent_.intact(patch_.index());
-        }
-
-        //- Access the intact field
-        scalarField& intact()
+        tmp<scalarField> intact() const
         {
             return parent_.intact(patch_.index());
         }

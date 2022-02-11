@@ -143,7 +143,7 @@ Foam::burstFvPatchField<Type>::burstFvPatchField
 )
 :
     coupledFvPatchField<Type>(bpf, p, iF, mapper),
-    burstFvPatchFieldBase(p, bpf, mapper),
+    burstFvPatchFieldBase(p),
     burstPatchField_
     (
         fvPatchField<Type>::New
@@ -242,8 +242,8 @@ void Foam::burstFvPatchField<Type>::updateCoeffs()
     // Before we call evaluate on the cyclic patch, assign the current field
     // to the intact patch. This is done to make sure everything that has been
     // done to the actual patch is transfered
-    intactPatchField_() = *this;
-    burstPatchField_() = *this;
+    intactPatchField_() = this->patchInternalField();
+    burstPatchField_() = this->patchInternalField();
 
     intactPatchField_->updateCoeffs();
     burstPatchField_->updateCoeffs();

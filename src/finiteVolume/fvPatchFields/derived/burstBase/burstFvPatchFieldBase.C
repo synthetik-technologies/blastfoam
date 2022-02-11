@@ -48,44 +48,10 @@ Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
         )
     ),
     burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
-    unblock_(false)
-{}
 
-
-Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
-(
-    const fvPatch& p,
-    const burstFvPatchFieldBase& bpf
-)
-:
-    burstFvPatch_
-    (
-        const_cast<burstFvPatchBase&>
-        (
-            dynamicCast<const burstFvPatchBase>(p)
-        )
-    ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
-    unblock_(false)
-{}
-
-
-Foam::burstFvPatchFieldBase::burstFvPatchFieldBase
-(
-    const fvPatch& p,
-    const burstFvPatchFieldBase& bpf,
-    const fvPatchFieldMapper& mapper
-)
-:
-    burstFvPatch_
-    (
-        const_cast<burstFvPatchBase&>
-        (
-            dynamicCast<const burstFvPatchBase>(p)
-        )
-    ),
-    burstPolyPatch_(burstFvPatch_.burstPolyPatch()),
-    unblock_(false)
+    // Default to unblocked (i.e. for temporary fields)
+    unblock_(false),
+    block_(false)
 {}
 
 
@@ -124,9 +90,14 @@ void Foam::burstFvPatchFieldBase::update()
 
                 if (pp.coupled())
                 {
+                    // Unblock the patch so that the coupled
+                    // boundary type is used to find the neighbour field
                     if (isA<burstFvPatchFieldBase>(pp))
                     {
-                        dynamicCast<const burstFvPatchFieldBase>(pp).unblock();
+                        dynamicCast<const burstFvPatchFieldBase>
+                        (
+                            pp
+                        ).unblock(true);
                     }
                     deltaP =
                         mag
@@ -136,7 +107,11 @@ void Foam::burstFvPatchFieldBase::update()
                         );
                     if (isA<burstFvPatchFieldBase>(pp))
                     {
-                        dynamicCast<const burstFvPatchFieldBase>(pp).block();
+                        // Reset the unblock flag
+                        dynamicCast<const burstFvPatchFieldBase>
+                        (
+                            pp
+                        ).unblock(false);
                     }
                 }
                 else
@@ -167,12 +142,14 @@ void Foam::burstFvPatchFieldBase::update()
                     impF.boundaryField()[p.index()];
                 if (pimp.coupled())
                 {
+                    // Unblock the patch so that the coupled
+                    // boundary type is used to find the neighbour field
                     if (isA<burstFvPatchFieldBase>(pimp))
                     {
                         dynamicCast<const burstFvPatchFieldBase>
                         (
-                            pimp)
-                        .unblock();
+                            pimp
+                        ).unblock(true);
                     }
                     deltaImp =
                         mag
@@ -180,9 +157,14 @@ void Foam::burstFvPatchFieldBase::update()
                             pimp.patchInternalField()
                           - pimp.patchNeighbourField()
                         );
+
+                    // Reset the unblock flag
                     if (isA<burstFvPatchFieldBase>(pimp))
                     {
-                        dynamicCast<const burstFvPatchFieldBase>(pimp).block();
+                        dynamicCast<const burstFvPatchFieldBase>
+                        (
+                            pimp
+                        ).unblock(false);
                     }
                 }
                 else
