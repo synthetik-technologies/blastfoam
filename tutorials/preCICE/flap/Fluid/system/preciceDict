@@ -7,7 +7,7 @@ FoamFile
     object      preciceDict;
 }
 
-preciceConfig "precice-config.xml";
+preciceConfig "../precice-config.xml";
 
 participant Fluid;
 
@@ -17,33 +17,18 @@ interfaces
 {
   Interface1
   {
-    mesh              Fluid-Mesh-Faces;
+    mesh              Fluid-Mesh;
     patches           (flap);
     locations         faceCenters;
 
     readData
     (
+        Displacement
     );
 
     writeData
     (
-      Forces0
-    );
-  };
-
-  Interface2
-  {
-    mesh              Fluid-Mesh-Nodes;
-    patches           (flap);
-    locations         faceNodes;
-
-    readData
-    (
-      Displacements0
-    );
-
-    writeData
-    (
+      Force
     );
   };
 };
