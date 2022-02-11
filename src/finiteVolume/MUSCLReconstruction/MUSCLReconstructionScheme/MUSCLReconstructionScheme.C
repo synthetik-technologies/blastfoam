@@ -105,6 +105,23 @@ Foam::MUSCLReconstructionScheme<Type>::New
     Istream& is(phi.mesh().interpolationScheme(name));
     word order(is);
     word scheme(order);
+    typedef surfaceInterpolationScheme<Type> sISType;
+    typename sISType::MeshFluxConstructorTable::iterator iter =
+        sISType::MeshFluxConstructorTablePtr_->find(scheme);
+
+    // Standard OpenFOAM interpolation
+    if (iter != sISType::MeshFluxConstructorTablePtr_->end())
+    {
+        return autoPtr<MUSCLReconstructionScheme<Type>>
+        (
+            new standardMUSCLReconstructionScheme<Type>
+            (
+                phi,
+                IStringStream(name)()
+            )
+        );
+    }
+
     if (is.good() && scheme != "none" && scheme != "upwindMUSCL")
     {
         token t(is);
@@ -121,28 +138,21 @@ Foam::MUSCLReconstructionScheme<Type>::New
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(scheme);
 
-    if (cstrIter != dictionaryConstructorTablePtr_->end())
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
     {
-        if (debug)
-        {
-            Info<< "selecting " << scheme << " interpolation scheme "
-                << "for " << phi.name() << endl;
-        }
-
-        return cstrIter()(phi, is);
+        FatalIOErrorInFunction
+        (
+            is
+        )   << "Unknown discretisation scheme "
+            << scheme << " for " << name << nl << nl
+            << "Valid MUSCL schemes are :" << endl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl << nl
+            << "Valid OpenFOAM schemes are:" << endl
+            << sISType::MeshFluxConstructorTablePtr_->sortedToc()
+            << abort(FatalIOError);
     }
 
-    if (debug)
-    {
-        Info<< "No MUSCL scheme named " << order << ". Using standard " << nl
-            << "interpolation schemes instead." << endl;
-    }
-
-    // Standard OpenFOAM interpolation
-    return autoPtr<MUSCLReconstructionScheme<Type>>
-    (
-        new standardMUSCLReconstructionScheme<Type>(phi, IStringStream(name)())
-    );
+    return cstrIter()(phi, is);
 }
 
 
