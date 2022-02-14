@@ -42,18 +42,21 @@
       <use-mesh name="Solid-Mesh" provide="yes" />
       <write-data name="Displacement" mesh="Solid-Mesh" />
       <read-data name="Force" mesh="Solid-Mesh" />
-      <watch-point mesh="Solid-Mesh" name="point1" coordinate="0.0;1" />
     </participant>
 
     <m2n:sockets from="Fluid" to="Solid" exchange-directory=".." />
 
-    <coupling-scheme:serial-explicit>
-        <time-window-size value="1e-5"/>
-        <max-time value="5e-3"/>
-        <participants first="Fluid" second="Solid"/>
-        <exchange data="Force" mesh="Solid-Mesh" from="Fluid" to="Solid"/>
-        <exchange data="Displacement" mesh="Solid-Mesh" from="Solid" to="Fluid"/>
-    </coupling-scheme:serial-explicit>
+    <coupling-scheme:parallel-implicit>
+      <time-window-size value="1e-5" />
+      <max-time value="5e-3" />
+      <participants first="Fluid" second="Solid" />
+      <exchange data="Force" mesh="Solid-Mesh" from="Fluid" to="Solid" />
+      <exchange data="Displacement" mesh="Solid-Mesh" from="Solid" to="Fluid" />
+      <max-iterations value="50" />
+      <relative-convergence-measure limit="5e-3" data="Displacement" mesh="Solid-Mesh" />
+      <relative-convergence-measure limit="5e-3" data="Force" mesh="Solid-Mesh" />
+
+    </coupling-scheme:parallel-implicit>
 
     </solver-interface>
 

@@ -51,7 +51,8 @@ namespace Foam
 
 class backupTopoSetSource
 {
-// Private data
+protected:
+// Protected data
 
     //- Reference to mesh
     const polyMesh& mesh_;
@@ -67,6 +68,20 @@ class backupTopoSetSource
 
     //- Backup topoSetSource
     autoPtr<topoSetSource> backup_;
+
+
+    //- Selected cells
+    labelList selectedCells_;
+
+    //- Selected faces
+    labelList selectedFaces_;
+
+    //- Flip map
+    boolList flipMap_;
+
+    //- SelectedPoints
+    labelList selectedPoints_;
+
 
     // Private member functions
 
@@ -161,6 +176,30 @@ public:
             allowBackup_ = allow;
         }
 
+        //- Return selected cells
+        const labelList& selectedCells() const
+        {
+            return selectedCells_;
+        }
+
+        //- Return selected faces
+        const labelList& selectedFaces() const
+        {
+            return selectedFaces_;
+        }
+
+        //- Return flip map
+        const boolList& flipMap() const
+        {
+            return flipMap_;
+        }
+
+        //- Return selected points
+        const labelList& selectedPoints() const
+        {
+            return selectedPoints_;
+        }
+
         //- Return is the source is a cell based source
         bool isCell() const;
 
@@ -178,13 +217,7 @@ public:
         ) const;
 
         //- Get selections from a given set, based on what setType this is
-        void createSets
-        (
-            labelList& cells,
-            labelList& faces,
-            boolList& flipMap,
-            labelList& points
-        ) const;
+        void updateSets();
 };
 
 

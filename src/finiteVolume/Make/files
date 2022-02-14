@@ -72,6 +72,9 @@ MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
 MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
 MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
 
+
+levelSetModel/levelSetModel.C
+
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 
 extendedNLevelGlobalCellToCellStencil/cellStencil.C
@@ -120,16 +123,18 @@ pointPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicPointPatchFiel
 pointPatchFields/derived/burstCyclicAMI/burstCyclicAMIPointPatchFields.C
 pointPatchFields/derived/burstCyclicACMI/burstCyclicACMIPointPatchFields.C
 
-cellSources/cylinderListToCell/cylinderListToCell.C
-cellSources/sphereListToCell/sphereListToCell.C
+sets/cellSources/cylinderListToCell/cylinderListToCell.C
+sets/cellSources/sphereListToCell/sphereListToCell.C
+sets/cellSources/massToCell/massToCell.C
+sets/cellSources/sphericalMassToCell/sphericalMassToCell.C
+sets/cellSources/cylindericalMassToCell/cylindericalMassToCell.C
+sets/cellSources/boxMassToCell/boxMassToCell.C
+sets/cellSources/surfacesToCell/surfacesToCell.C
+sets/cellSources/searchableSurfaceToCell/searchableSurfaceToCell.C
+sets/cellSources/searchableSurfaceToPoint/searchableSurfaceToPoint.C
 
-cellSources/massToCell/massToCell.C
-cellSources/sphericalMassToCell/sphericalMassToCell.C
-cellSources/cylindericalMassToCell/cylindericalMassToCell.C
-cellSources/boxMassToCell/boxMassToCell.C
-cellSources/surfacesToCell/surfacesToCell.C
-
-topoSetList/topoSetList.C
-backupTopoSetSource/backupTopoSetSource.C
+sets/topoSetList/topoSetList.C
+sets/backupTopoSetSource/backupTopoSetSource.C
+sets/backupSearchableSurfaceTopoSetSource/backupSearchableSurfaceTopoSetSource.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

@@ -756,6 +756,7 @@ int main(int argc, char *argv[])
         if (maxIter <= iter)
         {
             prepareToStop = true;
+            WarningInFunction << "Reach maximum number of iteration" << endl;
         }
 
         error = -1.0;
@@ -799,18 +800,13 @@ int main(int argc, char *argv[])
         forAll(regions, regionI)
         {
             const dictionary& regionDict =  regions[regionI].dict();
-            labelList selectedCells;
-            labelList selectedFaces;
-            boolList selectedFlipMaps;
-            labelList selectedPoints;
             regions[regionI].allowBackup(!end);
-            regions[regionI].createSets
-            (
-                selectedCells,
-                selectedFaces,
-                selectedFlipMaps,
-                selectedPoints
-            );
+            regions[regionI].updateSets();
+
+            const labelList& selectedCells = regions[regionI].selectedCells();
+            const labelList& selectedFaces = regions[regionI].selectedFaces();
+            const boolList& selectedFlipMaps = regions[regionI].flipMap();
+            const labelList& selectedPoints = regions[regionI].selectedPoints();
 
             if
             (

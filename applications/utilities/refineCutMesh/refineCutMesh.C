@@ -255,18 +255,13 @@ void updateTopoSets
         boolList& selectedFlipMaps = selectedRegionFlipMaps[regionI];
         labelList& selectedPoints = selectedRegionPoints[regionI];
 
-        selectedCells.clear();
-        selectedFaces.clear();
-        selectedFlipMaps.clear();
-        selectedPoints.clear();
         regions[regionI].allowBackup(allowBackup);
-        regions[regionI].createSets
-        (
-            selectedCells,
-            selectedFaces,
-            selectedFlipMaps,
-            selectedPoints
-        );
+        regions[regionI].updateSets();
+
+        selectedCells = regions[regionI].selectedCells();
+        selectedFaces = regions[regionI].selectedFaces();
+        selectedFlipMaps = regions[regionI].flipMap();
+        selectedPoints = regions[regionI].selectedPoints();
 
         if
         (

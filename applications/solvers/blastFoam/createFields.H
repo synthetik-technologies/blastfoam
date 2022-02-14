@@ -23,3 +23,4 @@ integrator->addSystem(fluid());
 const volScalarField& p = fluid->p();
 const volScalarField& T = fluid->T();
 fluid->update();
+integrator->clear();

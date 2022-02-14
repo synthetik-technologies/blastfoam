@@ -270,13 +270,7 @@ void Foam::backupTopoSetSource::applyToSet
 }
 
 
-void Foam::backupTopoSetSource::createSets
-(
-    labelList& cells,
-    labelList& faces,
-    boolList& flipMap,
-    labelList& points
-) const
+void Foam::backupTopoSetSource::updateSets()
 {
     autoPtr<topoSet> setPtr;
     switch (setType())
@@ -372,30 +366,30 @@ void Foam::backupTopoSetSource::createSets
 
     if (isCell())
     {
-        cells = set.toc();
-        faces = cellsToFaces(cells);
-        points = cellsToPoints(cells);
+        selectedCells_ = set.toc();
+        selectedFaces_ = cellsToFaces(selectedCells_);
+        selectedPoints_ = cellsToPoints(selectedCells_);
     }
     else if (isFace())
     {
         if (setType() == topoSetSource::FACEZONESOURCE)
         {
             const faceZoneSet& fsz = dynamicCast<const faceZoneSet&>(set);
-            faces = fsz.addressing();
-            flipMap = fsz.flipMap();
+            selectedFaces_ = fsz.addressing();
+            flipMap_ = fsz.flipMap();
         }
         else
         {
-            faces = set.toc();
+            selectedFaces_ = set.toc();
         }
-        cells = facesToCells(faces);
-        points = facesToPoints(faces);
+        selectedCells_ = facesToCells(selectedFaces_);
+        selectedPoints_ = facesToPoints(selectedFaces_);
     }
     else if (isPoint())
     {
-        points = set.toc();
-        cells = pointsToCells(points);
-        faces = pointsToFaces(points);
+        selectedPoints_ = set.toc();
+        selectedCells_ = pointsToCells(selectedPoints_);
+        selectedFaces_ = pointsToFaces(selectedPoints_);
     }
     else
     {
