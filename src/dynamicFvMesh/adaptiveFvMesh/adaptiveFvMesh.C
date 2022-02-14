@@ -308,7 +308,7 @@ bool Foam::adaptiveFvMesh::refine()
     //- Update error
     error_->update();
     error_->error().correctBoundaryConditions();
-    return refiner_->refine(error_->error());
+    return refiner_->refine(error_->error(), error_->maxRefinement());
 }
 
 
