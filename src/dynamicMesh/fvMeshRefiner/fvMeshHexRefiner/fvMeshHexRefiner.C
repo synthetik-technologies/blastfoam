@@ -62,7 +62,7 @@ void Foam::fvMeshHexRefiner::calculateProtectedCells
     PackedBoolList& unrefineableCell
 ) const
 {
-    if (protectedCell_.empty())
+    if (!returnReduce(protectedCell_.size(), sumOp<label>()))
     {
         unrefineableCell.clear();
         return;
@@ -312,7 +312,6 @@ Foam::labelList Foam::fvMeshHexRefiner::selectRefineCells
 {
     // Every refined cell causes 7 extra cells
     label nTotToRefine = (maxCells - mesh_.globalData().nTotalCells()) / 7;
-
     const labelList& cellLevel = meshCutter_->cellLevel();
 
     // Mark cells that cannot be refined since they would trigger refinement
@@ -326,7 +325,6 @@ Foam::labelList Foam::fvMeshHexRefiner::selectRefineCells
 
     // Collect all cells
     DynamicList<label> candidates(nLocalCandidates);
-
     if (nCandidates < nTotToRefine)
     {
         forAll(candidateCell, celli)

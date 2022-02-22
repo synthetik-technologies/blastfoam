@@ -219,6 +219,12 @@ void Foam::fvMeshRefiner::setMaxCellLevel(labelList& maxCellLevel) const
 {
     if (!returnReduce(maxCellLevel.size(), sumOp<label>()))
     {
+        if (!dict_.found("maxRefinement"))
+        {
+            FatalIOErrorInFunction(dict_)
+                << "maxRefinement was not specified" << endl
+                << abort(FatalError);
+        }
         maxCellLevel.setSize
         (
             mesh_.nCells(),
