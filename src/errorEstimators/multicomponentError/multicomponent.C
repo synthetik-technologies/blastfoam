@@ -151,7 +151,7 @@ Foam::labelList Foam::errorEstimators::multicomponent::maxRefinement() const
                 }
 
             }
-        };
+        }
     }
     return maxRefinement_;
 }

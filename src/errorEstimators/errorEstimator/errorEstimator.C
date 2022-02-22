@@ -157,10 +157,16 @@ void Foam::errorEstimator::read(const dictionary& dict)
         maxLevel_ = dict.lookup<label>("maxRefinement");
         minDx_ = -1;
     }
-    else
+    else if (dict.found("minDx"))
     {
         minDx_ = dict.lookup<scalar>("minDx");
         maxLevel_ = -1;
+    }
+    else
+    {
+        FatalIOErrorInFunction(dict)
+            << "Either maxRefinement or minDx must be specified" << endl
+            << abort(FatalError);
     }
 }
 
