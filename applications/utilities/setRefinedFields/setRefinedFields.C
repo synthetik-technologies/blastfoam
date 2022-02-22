@@ -607,18 +607,6 @@ int main(int argc, char *argv[])
     }
     bool refine = refiner.valid();
 
-    volScalarField error
-    (
-        IOobject
-        (
-            "error",
-            runTime.timeName(),
-            mesh
-        ),
-        mesh,
-        0.0
-    );
-
     wordList fieldNames;
     if (!noFields)
     {
@@ -691,6 +679,25 @@ int main(int argc, char *argv[])
     {
         EE = errorEstimator::New(mesh, setFieldsDict);
     }
+    else
+    {
+        volScalarField* errorPtr
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    "error",
+                    runTime.timeName(),
+                    mesh
+                ),
+                mesh,
+                0.0
+            )
+        );
+        errorPtr->store(errorPtr);
+    };
+    volScalarField& error = mesh.lookupObjectRef<volScalarField>("error");
 
     // Maximum number of iterations
     label iter = 0;
@@ -1078,30 +1085,27 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                if (!EE.valid())
+                forAll(refineCells, celli)
                 {
-                    forAll(refineCells, celli)
-                    {
-                        error[refineCells[celli]] = 1.0;
-                    }
-                    forAll(refineFaces, fi)
-                    {
-                        const label facei = refineFaces[fi];
-                        error[owner[facei]] = 1.0;
+                    error[refineCells[celli]] = 1.0;
+                }
+                forAll(refineFaces, fi)
+                {
+                    const label facei = refineFaces[fi];
+                    error[owner[facei]] = 1.0;
 
-                        if (facei < mesh.nInternalFaces())
-                        {
-                            error[neighbour[facei]] = 1.0;
-                        }
-                    }
-                    forAll(refinePoints, pi)
+                    if (facei < mesh.nInternalFaces())
                     {
-                        const label pointi = refinePoints[pi];
-                        const labelList& pc = pointCells[pointi];
-                        forAll(pc, ci)
-                        {
-                            error[pc[ci]] = 1.0;
-                        }
+                        error[neighbour[facei]] = 1.0;
+                    }
+                }
+                forAll(refinePoints, pi)
+                {
+                    const label pointi = refinePoints[pi];
+                    const labelList& pc = pointCells[pointi];
+                    forAll(pc, ci)
+                    {
+                        error[pc[ci]] = 1.0;
                     }
                 }
 
@@ -1186,6 +1190,7 @@ int main(int argc, char *argv[])
             // Update mesh (return if mesh changes)
             if (!end)
             {
+                Pout<<"refine"<<endl;
                 prepareToStop = !refiner->refine(error, maxCellLevel);
             }
         }
