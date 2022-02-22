@@ -20,6 +20,7 @@ heatTransferModels/heatTransferModel/heatTransferModel.C
 heatTransferModels/heatTransferModel/newHeatTransferModel.C
 heatTransferModels/sphericalHeatTransfer/sphericalHeatTransfer.C
 heatTransferModels/NuHeatTransfer/NuHeatTransfer.C
+heatTransferModels/noneNu/noneNu.C
 heatTransferModels/RanzMarshall/RanzMarshall.C
 
 heatTransferModels/NusseltNumberModels/NusseltNumberModel/NusseltNumberModel.C
