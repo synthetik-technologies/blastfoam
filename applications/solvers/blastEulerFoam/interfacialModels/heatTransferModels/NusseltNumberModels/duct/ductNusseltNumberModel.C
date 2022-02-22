@@ -81,7 +81,7 @@ Foam::scalar Foam::NusseltNumberModels::duct::cellNu
 {
     scalar Pr(pair_.cellPr(celli, nodei, nodej));
     scalar Re(pair_.cellRe(celli, nodei, nodej));
-    return 0.23*pow(Re, 0.8)*pow(Pr, 0.4);
+    return 0.023*pow(Re, 0.8)*pow(Pr, 0.4);
 }
 
 // ************************************************************************* //
