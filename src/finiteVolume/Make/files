@@ -135,6 +135,5 @@ sets/cellSources/searchableSurfaceToPoint/searchableSurfaceToPoint.C
 
 sets/topoSetList/topoSetList.C
 sets/backupTopoSetSource/backupTopoSetSource.C
-sets/backupSearchableSurfaceTopoSetSource/backupSearchableSurfaceTopoSetSource.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume

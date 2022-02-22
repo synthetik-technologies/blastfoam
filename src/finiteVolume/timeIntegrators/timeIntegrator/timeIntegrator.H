@@ -100,6 +100,9 @@ protected:
     //- Number of stored deltas
     label nDelta_;
 
+    //- Current step V0/V
+    volScalarField::Internal V0byV_;
+
     //- FvModels
     mutable UautoPtr<fvModels> modelsPtr_;
 
@@ -335,6 +338,12 @@ public:
 
         //- Is the current step the last
         bool finalStep() const;
+
+        //- Return current step VbyV0
+        const volScalarField::Internal& V0byV() const
+        {
+            return V0byV_;
+        }
 
         //- Add old field to saved fields
         inline void addOldField(const volScalarField& f) const;

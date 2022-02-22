@@ -74,6 +74,20 @@ Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh, const label)
     stepi_(0),
     f_(0),
     f0_(0),
+    V0byV_
+    (
+        volScalarField::Internal
+        (
+            IOobject
+            (
+                "V0byV",
+                mesh.time().timeName(),
+                mesh
+            ),
+            mesh,
+            1.0
+        )
+    ),
     modelsPtr_(nullptr),
     constraintsPtr_(nullptr),
     solveFields_()
@@ -142,7 +156,6 @@ void Foam::timeIntegrator::initialize()
         f_[0] = sum(bs_[0]);
         for (label stepi = 2; stepi <= nSteps(); stepi++)
         {
-            f_[stepi-1] = sum(bs_[stepi-1]);
             scalarList ts(stepi+1, 0.0);
             scalarList dts(stepi, 0.0);
             forAll(dts, i)
@@ -160,6 +173,7 @@ void Foam::timeIntegrator::initialize()
                 ts[i+1] += dts[i];
             }
             f0_[stepi-1] = ts.last() - dts.last();
+            f_[stepi-1] = f0_[stepi-1] + sum(bs_[stepi-1]);
         }
     }
 }
@@ -225,6 +239,14 @@ void Foam::timeIntegrator::integrate()
     for (stepi_ = 1; stepi_ <= as_.size(); stepi_++)
     {
         Info<< nl << this->type() << ": step " << stepi_ << endl;
+
+        // Set use a linear change in volume
+        // All fields are scaled according to the true volume
+        if (mesh_.moving())
+        {
+            V0byV_ = (mesh_.V0()*(1.0 - f0()) + f0()*mesh_.V())/mesh_.V();
+        }
+
         this->updateAll();
         forAll(systems_, i)
         {

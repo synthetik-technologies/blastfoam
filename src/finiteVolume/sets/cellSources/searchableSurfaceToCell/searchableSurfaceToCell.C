@@ -110,6 +110,61 @@ Foam::searchableSurfaceToCell::searchableSurfaceToCell
 }
 
 
+Foam::searchableSurfaceToCell::searchableSurfaceToCell
+(
+    const word& surfaceType,
+    const polyMesh& mesh,
+    const dictionary& dict
+)
+:
+    topoSetSource(mesh),
+    surfacePtr_
+    (
+        searchableSurface::New
+        (
+            surfaceType,
+            IOobject
+            (
+                dict.lookupOrDefault("name", mesh.objectRegistry::db().name()),
+                mesh.time().constant(),
+                searchableSurface::geometryDir(mesh.time()),
+                mesh.objectRegistry::db(),
+                IOobject::MUST_READ,
+                IOobject::NO_WRITE
+            ),
+            dict
+        )
+    )
+{
+    if (!surfacePtr_->hasVolumeType())
+    {
+        FatalErrorInFunction
+            << "Searchable surface type " << surfacePtr_->type()
+            << " does not support volume type, but this is required" << endl
+            << abort(FatalError);
+    }
+}
+
+
+Foam::searchableSurfaceToCell::searchableSurfaceToCell
+(
+    const polyMesh& mesh,
+    autoPtr<searchableSurface>& surface
+)
+:
+    topoSetSource(mesh),
+    surfacePtr_(surface)
+{
+    if (!surfacePtr_->hasVolumeType())
+    {
+        FatalErrorInFunction
+            << "Searchable surface type " << surfacePtr_->type()
+            << " does not support volume type, but this is required" << endl
+            << abort(FatalError);
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::searchableSurfaceToCell::~searchableSurfaceToCell()

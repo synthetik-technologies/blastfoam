@@ -25,10 +25,11 @@ License
 
 #include "levelSetModel.H"
 #include "surfaceFields.H"
-#include "fvcGrad.H"
+#include "fvc.H"
 #include "distributedTriSurfaceMesh.H"
 #include "volPointInterpolation.H"
 #include "meshSizeObject.H"
+#include "zeroGradientFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -51,7 +52,7 @@ const Foam::NamedEnum<Foam::levelSetModel::levelSetFunc, 2>
 
 Foam::levelSetModel::levelSetModel
 (
-    const volScalarField& alpha,
+    volScalarField& alpha,
     const dictionary& dict
 )
 :
@@ -64,14 +65,48 @@ Foam::levelSetModel::levelSetModel
             IOobject::groupName("levelSet", alpha.group()),
             mesh_.time().timeName(),
             mesh_,
-            IOobject::READ_IF_PRESENT,
+            IOobject::NO_READ,
             IOobject::AUTO_WRITE
         ),
-        mesh_,
-        0.0
+        alpha*2.0 - 1.0,
+        zeroGradientFvPatchScalarField::typeName
     ),
-    epsilon_("epsilon", dimLength, dict),
-    smoothPow_(dict.lookup<scalar>("smoothPow")),
+    nHatf_
+    (
+        IOobject
+        (
+            IOobject::groupName("nHatf", alpha_.group()),
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        mesh_,
+        dimensionedScalar("0", dimArea, 0)
+    ),
+    K_
+    (
+        IOobject
+        (
+            IOobject::groupName("curvature", alpha_.group()),
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        mesh_,
+        dimensionedScalar(dimless/dimLength, 0)
+    ),
+    epsilon0_("epsilon", dimless, dict),
+    epsilon_
+    (
+        IOobject
+        (
+            IOobject::groupName("levelSet::epsilon", alpha_.group()),
+            mesh_.time().timeName(),
+            mesh_
+        ),
+        mesh_,
+        dimensionedScalar(dimLength, 0)
+    ),
+    smoothPow_(dict.lookupOrDefault<scalar>("smoothPow", 0.1)),
+    useDistributed_(dict.lookupOrDefault("useDistributed", true)),
     filterType_
     (
         dict.found("filtering")
@@ -86,13 +121,6 @@ Foam::levelSetModel::levelSetModel
     )
 {
     scalar minDx(min(meshSizeObject::New(mesh_).dx()).value());
-    if (epsilon_.value() < minDx)
-    {
-        WarningInFunction
-            << "Interface thickness, " << epsilon_ << " is smaller than the "
-            << "minimum mesh size, " << minDx << endl;
-    }
-
     if (Pstream::parRun())
     {
         triMeshDict_.set
@@ -100,11 +128,12 @@ Foam::levelSetModel::levelSetModel
             "distributionType",
             distributedTriSurfaceMesh::distributionTypeNames_
             [
-                distributedTriSurfaceMesh::INDEPENDENT
+                distributedTriSurfaceMesh::FROZEN
             ]
         );
         triMeshDict_.set("mergeDistance", minDx/2.0);
     }
+    correct(true);
 }
 
 
@@ -117,17 +146,17 @@ Foam::levelSetModel::~levelSetModel()
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::levelSetModel::calcLevelSet(const volScalarField& distance) const
+Foam::levelSetModel::calcLevelSet(const volScalarField& d) const
 {
     switch (lsFunc_)
     {
         case TANH:
         {
-            return 0.5*(1.0 + tanh(distance/(2.0*epsilon_)));
+            return max(-1.0, min(1.0, tanh(d/(2.0*epsilon_))));
         }
         case EXP:
         {
-            return 1.0/(1.0 + exp(distance/epsilon_));
+            return max(-1.0, min(1.0, 1.0 - 2.0/(1.0 + exp(d/epsilon_))));
         }
         default:
         {
@@ -139,7 +168,7 @@ Foam::levelSetModel::calcLevelSet(const volScalarField& distance) const
 }
 
 
-void Foam::levelSetModel::redistance()
+Foam::tmp<Foam::volScalarField> Foam::levelSetModel::distance() const
 {
     // Get point interpolated volume fraction field
     pointScalarField pointAlpha
@@ -148,14 +177,18 @@ void Foam::levelSetModel::redistance()
     );
 
     // Contour the volume fraction at 0.5
-    isoSurface contour
+    contourPtr_.reset
     (
-        mesh_,
-        alpha_,
-        pointAlpha,
-        0.5,
-        filterType_
+        new isoSurface
+        (
+            mesh_,
+            alpha_,
+            pointAlpha,
+            0.5,
+            filterType_
+        )
     );
+    isoSurface& contour = contourPtr_();
 
     // Make sure the isoSurface is meshed with triangles
     contour.triangulate();
@@ -172,7 +205,7 @@ void Foam::levelSetModel::redistance()
     // Create a searchable triSufaceMesh
     autoPtr<triSurfaceMesh> triMeshPtr;
     triSurface tri(triFaces, contour.points());
-    if (Pstream::parRun())
+    if (Pstream::parRun() && useDistributed_)
     {
         triMeshDict_.set("bounds", List<boundBox>(1, mesh_.bounds()));
         triMeshPtr.set
@@ -214,26 +247,21 @@ void Foam::levelSetModel::redistance()
     }
 
     // Temporary distance to interface field
-    volScalarField distance
+    tmp<volScalarField> td
     (
         volScalarField::New
         (
             IOobject::groupName("distance", alpha_.group()),
             mesh_,
-            dimensionedScalar("0", dimLength, 0)
+            dimensionedScalar(dimLength, -great),
+            zeroGradientFvPatchScalarField::typeName
         )
     );
-
-    // Calculate the distance to the cells from the nearest surface
-    volScalarField::Boundary& bdistance = distance.boundaryFieldRef();
+    volScalarField& d(td.ref());
 
     // Collect all points that are need to be sampled (i.e. cell centers
     // and boundary face centres)
-    pointField samples(mesh_.cellCentres());
-    forAll(bdistance, patchi)
-    {
-        samples.append(mesh_.C().boundaryField()[patchi]);
-    }
+    pointField samples(mesh_.C());
     scalarField nearestDistSqr(samples.size(), magSqr(mesh_.bounds().span()));
     List<pointIndexHit> hitPoints(samples.size());
 
@@ -243,48 +271,87 @@ void Foam::levelSetModel::redistance()
     // Compute distance to nearest point on the contour
     forAll(mesh_.C(), celli)
     {
-        distance[celli] =
+        d[celli] =
             mag(mesh_.C()[celli] - hitPoints[celli].rawPoint())
            *(alpha_[celli] > 0.5 ? 1.0 : -1.0);
     }
+    d.correctBoundaryConditions();
 
-    label i = mesh_.nCells();
-    forAll(mesh_.boundaryMesh(), patchi)
-    {
-        scalarField& pdistance = bdistance[patchi];
-        const vectorField& pCf = mesh_.Cf().boundaryField()[patchi];
-        const scalarField& palpha = alpha_.boundaryField()[patchi];
-        forAll(pdistance, facei)
-        {
-            pdistance[facei] =
-                mag(pCf[facei] - hitPoints[i++].rawPoint())
-               *(palpha[facei] > 0.5 ? 1.0 : -1.0);
-        }
-    }
-
-    // Compute the level set function
-    levelSet_ = calcLevelSet(distance);
-    distance.write();
+    return td;
 }
 
 
-Foam::tmp<Foam::volScalarField> Foam::levelSetModel::H() const
+const Foam::isoSurface& Foam::levelSetModel::contour() const
 {
-    return volScalarField::New
+    if (!contourPtr_.valid())
+    {
+        distance();
+    }
+    return contourPtr_();
+}
+
+
+void Foam::levelSetModel::correct(const bool redistance)
+{
+    epsilon_ = min(meshSizeObject::New(mesh_).dx())*epsilon0_;
+    if (redistance)
+    {
+        levelSet_ = calcLevelSet(distance());
+    }
+
+    surfaceVectorField gradPsi(fvc::interpolate(fvc::grad(psi())));
+    nHatf_ =
+        (
+            gradPsi
+           /max(mag(gradPsi), dimensionedScalar(gradPsi.dimensions(), 1e-6))
+        ) & mesh_.Sf();
+
+    // Update curvature
+    K_ = -fvc::div(nHatf_);
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::levelSetModel::nearInterface() const
+{
+    tmp<volScalarField> tnearInterface
     (
-        IOobject::groupName("H", alpha_.name()),
-        tanh(sqr(alpha_*(1.0 - alpha_))/0.01)
+        volScalarField::New
+        (
+            IOobject::groupName("nearInterface", alpha_.name()),
+            mesh_,
+            0.0
+        )
     );
+    labelList intCells(interfaceCells());
+    UIndirectList<scalar>(tnearInterface.ref(), intCells) = 1.0;
+    return tnearInterface;
+}
+
+
+Foam::labelList Foam::levelSetModel::interfaceCells() const
+{
+    if (!contourPtr_.valid())
+    {
+        distance();
+    }
+    return contourPtr_->meshCells();
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::levelSetModel::alpha() const
+{
+    return volScalarField::New("alpha", 0.5*(levelSet_ + 1.0));
 }
 
 
 Foam::tmp<Foam::volScalarField> Foam::levelSetModel::psi() const
 {
-    volScalarField lsPow(pow(levelSet_, smoothPow_));
+    volScalarField alpha1(alpha());
+    volScalarField alpha1Pow(pow(alpha1, smoothPow_));
     return volScalarField::New
     (
         IOobject::groupName("psi", alpha_.name()),
-        lsPow/(lsPow + pow(1.0 - levelSet_, smoothPow_))
+        alpha1Pow/(alpha1Pow + pow(1.0 - alpha1, smoothPow_))
     );
 }
 
@@ -292,13 +359,28 @@ Foam::tmp<Foam::volScalarField> Foam::levelSetModel::psi() const
 Foam::tmp<Foam::volVectorField>
 Foam::levelSetModel::gradLevelSet() const
 {
-    volScalarField alpha2(1.0 - alpha_);
+    volScalarField alpha1(0.5*(levelSet_ + 1.0));
+    volScalarField alpha2(1.0 - alpha1);
     return volVectorField::New
     (
-        "grad(" + IOobject::groupName("levelSet", alpha_.name() + ")"),
+        "grad(" + IOobject::groupName("levelSet", alpha_.group() + ")"),
         fvc::grad(psi())/smoothPow_
-       *pow(alpha_*alpha2, 1.0 - smoothPow_)
-       *sqr(pow(alpha_, smoothPow_) + pow(alpha2, smoothPow_))
+       *pow(alpha1*alpha2, 1.0 - smoothPow_)
+       *sqr(pow(alpha1, smoothPow_) + pow(alpha2, smoothPow_))
+    );
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::levelSetModel::nHat() const
+{
+    volVectorField gradPsi(fvc::grad(psi()));
+    return volVectorField::New
+    (
+        "nHat",
+        (
+            gradPsi
+           /max(mag(gradPsi), dimensionedScalar(gradPsi.dimensions(), 1e-6))
+        )
     );
 }
 

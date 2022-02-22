@@ -38,6 +38,7 @@ SourceFiles
 #include "volFields.H"
 #include "isoSurface.H"
 #include "NamedEnum.H"
+#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -68,17 +69,29 @@ private:
         const fvMesh& mesh_;
 
         //- Reference to the volume fraction field
-        const volScalarField& alpha_;
+        volScalarField& alpha_;
 
         //- Level set function
         volScalarField levelSet_;
 
+        //- Interface normal direction
+        surfaceScalarField nHatf_;
+
+        //- Interface curvature
+        volScalarField K_;
+
         //- Thickness of interface
-        dimensionedScalar epsilon_;
+        dimensionedScalar epsilon0_;
+
+        //- True interface thickness (dx*epsilon0)
+        volScalarField epsilon_;
 
         //- Power used to smooth the levelSet function for more diffuse
         //  interface. This is used to compute surface normals
         scalar smoothPow_;
+
+        //- Use distributed triSurface
+        bool useDistributed_;
 
         //- Filtering method for contouring
         isoSurface::filterType filterType_;
@@ -87,7 +100,10 @@ private:
         levelSetFunc lsFunc_;
 
         //- Dictionary used to construct distributedTriSurfaceMesh
-        dictionary triMeshDict_;
+        mutable dictionary triMeshDict_;
+
+        //- Stored isoSurface
+        mutable autoPtr<isoSurface> contourPtr_;
 
 
 
@@ -95,6 +111,7 @@ private:
 
         //- Compute the level set function
         tmp<volScalarField> calcLevelSet(const volScalarField&) const;
+
 
 public:
 
@@ -107,7 +124,7 @@ public:
         //- Construct from volume fraction and dictionary
         levelSetModel
         (
-            const volScalarField& alpha,
+            volScalarField& alpha,
             const dictionary& dict
         );
 
@@ -117,17 +134,67 @@ public:
 
     // Member Functions
 
-        //- Recompute the levelSet function
-        void redistance();
+        // Access
+
+            //- Return the levelSet function
+            const volScalarField& levelSet() const
+            {
+                return levelSet_;
+            }
+
+            //- Access the levelSet function
+            volScalarField& levelSet()
+            {
+                return levelSet_;
+            }
+
+            //- Return the interface thickness parameter
+            const volScalarField& epsilon() const
+            {
+                return epsilon_;
+            }
+
+            //- Return the interface normal direction
+            const surfaceScalarField& nHatf() const
+            {
+                return nHatf_;
+            }
+
+            //- Return the interface curvature
+            const volScalarField& K() const
+            {
+                return K_;
+            }
+
+            //- Return the isoSurface
+            const isoSurface& contour() const;
+
+
+        //- Update and optionally calculate distance
+        void correct(const bool redistance = false);
+
+        //- Return the calculated volume fraction (0-1)
+        tmp<volScalarField> alpha() const;
+
+        //- Calculate and return the distance from the interface
+        tmp<volScalarField> distance() const;
 
         //- Interface indictator function
-        tmp<volScalarField> H() const;
+        tmp<volScalarField> nearInterface() const;
+
+        //- Interface cells
+        labelList interfaceCells() const;
 
         //- Return the smoothed levelSet function
         tmp<volScalarField> psi() const;
 
         //- Return the gradient of the smoothed level set function
         tmp<volVectorField> gradLevelSet() const;
+
+        //- Return interface normal
+        tmp<volVectorField> nHat() const;
+
+
 };
 
 

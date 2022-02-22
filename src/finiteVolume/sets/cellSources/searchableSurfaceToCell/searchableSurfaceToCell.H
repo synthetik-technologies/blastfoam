@@ -81,6 +81,21 @@ public:
             const dictionary& dict
         );
 
+        //- Construct from dictionary
+        searchableSurfaceToCell
+        (
+            const word& surfaceType,
+            const polyMesh& mesh,
+            const dictionary& dict
+        );
+
+        //- Construct from searchable surface
+        searchableSurfaceToCell
+        (
+            const polyMesh& mesh,
+            autoPtr<searchableSurface>& surface
+        );
+
 
     //- Destructor
     virtual ~searchableSurfaceToCell();
@@ -93,7 +108,6 @@ public:
         {
             return surfacePtr_();
         }
-
 
         virtual sourceType setType() const
         {

@@ -242,6 +242,61 @@ public:
 
     // Write sets and zones
     bool writeSets() const;
+
+
+    // Static functions
+
+        //- Extract interface cells
+        static labelList extractInterfaceCells
+        (
+            const polyMesh&,
+            const labelList&
+        );
+
+        //- Extract interface cells
+        static autoPtr<topoSet> extractInterfaceCells
+        (
+            const polyMesh& mesh,
+            const topoSet& cells
+        );
+
+        //- Extract selected faces (return indices to keep)
+        static labelList extractSelectedFaces
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            const labelList& faces,
+            const bool defaultAll = false
+        );
+
+        //- Extract selected faces after getting the kept indices
+        //  This is important because the flipMap needs to be kept if a zone
+        //  is used
+        static autoPtr<topoSet> extractSelectedFaces
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            const topoSet& faces,
+            const bool defaultAll = false
+        );
+
+        //- Extract selected points
+        static labelList extractSelectedPoints
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            const labelList& points,
+            const bool defaultAll = false
+        );
+
+        //- Extract selected points
+        static autoPtr<topoSet> extractSelectedPoints
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            const topoSet& points,
+            const bool defaultAll = false
+        );
 };
 
 

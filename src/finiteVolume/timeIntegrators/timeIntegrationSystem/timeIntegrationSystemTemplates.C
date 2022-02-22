@@ -41,7 +41,7 @@ void Foam::timeIntegrationSystem::storeOld
         // Correct old field for mesh motion before storage
         if (meshPtr_->moving() && conservative)
         {
-            f.ref() *= meshPtr_->V0()/meshPtr_->V();
+            f.ref() *= timeInt_->V0byV();
         }
     }
 

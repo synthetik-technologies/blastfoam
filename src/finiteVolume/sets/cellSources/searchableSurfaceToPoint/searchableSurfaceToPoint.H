@@ -81,6 +81,21 @@ public:
             const dictionary& dict
         );
 
+        //- Construct from type name and dictionary
+        searchableSurfaceToPoint
+        (
+            const word& surfaceType,
+            const polyMesh& mesh,
+            const dictionary& dict
+        );
+
+        //- Construct from searchable surface
+        searchableSurfaceToPoint
+        (
+            const polyMesh& mesh,
+            autoPtr<searchableSurface>& surface
+        );
+
 
     //- Destructor
     virtual ~searchableSurfaceToPoint();
