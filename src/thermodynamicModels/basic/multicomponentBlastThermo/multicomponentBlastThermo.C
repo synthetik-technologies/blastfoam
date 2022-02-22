@@ -243,7 +243,7 @@ void Foam::multicomponentBlastThermo::solve()
             Yt += Y_[i];
         }
 
-        if (mag(max(Yt).value()) < rootVSmall)
+        if (max(Yt).value() < rootVSmall)
         {
             FatalErrorInFunction
                 << "Sum of mass fractions is zero for species " << species()
@@ -347,7 +347,9 @@ void Foam::multicomponentBlastThermo::integrator::solve()
         if (active_[i])
         {
             volScalarField YOld(Y_[i]);
-            this->storeAndBlendOld(YOld);
+
+            // Not conservative, but alphaRhoYi is
+            this->storeAndBlendOld(YOld, false);
 
             volScalarField deltaAlphaRhoY
             (

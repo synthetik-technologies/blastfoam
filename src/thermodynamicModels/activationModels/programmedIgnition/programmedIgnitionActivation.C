@@ -106,15 +106,18 @@ Foam::activationModels::programmedIgnitionActivation::programmedIgnitionActivati
     forAll(this->detonationPoints_, pointi)
     {
         const detonationPoint& dp = this->detonationPoints_[pointi];
-        forAll(tIgn_, celli)
+        if (!dp.activated())
         {
-            tIgn_[celli] =
-                min
-                (
-                    tIgn_[celli],
-                    (useDelay ? dp.delay() : 0.0)
-                  + mag(this->mesh().C()[celli] - dp)/vDet_.value()
-                );
+            forAll(tIgn_, celli)
+            {
+                tIgn_[celli] =
+                    min
+                    (
+                        tIgn_[celli],
+                        (useDelay ? dp.delay() : 0.0)
+                      + mag(this->mesh().C()[celli] - dp)/vDet_.value()
+                    );
+            }
         }
     }
 }
