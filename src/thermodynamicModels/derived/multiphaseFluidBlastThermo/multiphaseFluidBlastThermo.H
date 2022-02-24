@@ -51,6 +51,8 @@ SourceFiles
 
 #include "phaseFluidBlastThermo.H"
 #include "fluidBlastThermo.H"
+#include "thermoEquations.H"
+#include "univariateRootSolver.H"
 
 namespace Foam
 {
@@ -84,6 +86,18 @@ class multiphaseFluidBlastThermo
 
         //- Pointer to total volume fraction field
         UautoPtr<const volScalarField> sumVfPtr_;
+
+        //- Energy equation
+        mutable fluidEEquation EEqn_;
+
+        //- Root solver for the energy Equation
+        autoPtr<univariateRootSolver> ESolver_;
+
+        //- Energy equation
+        mutable THEEquation THEEqn_;
+
+        //- Root solver for the energy Equation
+        autoPtr<univariateRootSolver> THESolver_;
 
 
     // Private member functions

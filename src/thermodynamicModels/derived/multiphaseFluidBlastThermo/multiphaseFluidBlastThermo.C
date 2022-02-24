@@ -44,94 +44,6 @@ namespace Foam
     );
 }
 
-
-// * * * * * * * * * multiphaseEEquation Member Functions  * * * * * * * * * //
-
-namespace Foam
-{
-    class multiphaseEEquation
-    :
-        public equation
-    {
-        const multiphaseFluidBlastThermo& thermo_;
-        const volScalarField& p_;
-        mutable volScalarField* e_;
-
-    public:
-        multiphaseEEquation
-        (
-            multiphaseFluidBlastThermo& thermo
-        )
-        :
-            equation(-great, great),
-            thermo_(thermo),
-            p_(thermo_.p()),
-            e_(&thermo.he())
-        {}
-        virtual label nDerivatives() const
-        {
-            return 1;
-        }
-        virtual scalar fx(const scalar e, const label li) const
-        {
-            (*e_)[li] = e;
-            return thermo_.cellpRhoT(li, false) - p_[li];
-        }
-        virtual scalar dfdx(const scalar e, const label li) const
-        {
-            (*e_)[li] = e;
-            return thermo_.celldpde(li);
-        }
-    };
-
-    class multiphaseTHEEquation
-    :
-        public equation
-    {
-        const multiphaseFluidBlastThermo& thermo_;
-        const volScalarField& he_;
-        label patchi_;
-
-    public:
-        multiphaseTHEEquation
-        (
-            multiphaseFluidBlastThermo& thermo,
-            const scalar TLow
-        )
-        :
-            equation(TLow, great),
-            thermo_(thermo),
-            he_(thermo.he()),
-            patchi_(-1)
-        {}
-
-        label& patch()
-        {
-            return patchi_;
-        }
-
-        virtual label nDerivatives() const
-        {
-            return 1;
-        }
-        virtual scalar fx(const scalar T, const label li) const
-        {
-            return
-                patchi_ == -1
-              ? thermo_.cellHE(T, li) - he_[li]
-              : thermo_.patchFaceHE(T, patchi_, li)
-              - he_.boundaryField()[patchi_][li];
-        }
-        virtual scalar dfdx(const scalar T, const label li) const
-        {
-            return
-                patchi_ == -1
-              ? thermo_.cellCpv(T, li)
-              : thermo_.patchFaceCpv(T, patchi_, li);
-        }
-    };
-}
-
 // * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 void Foam::multiphaseFluidBlastThermo::calculate()
@@ -141,19 +53,18 @@ void Foam::multiphaseFluidBlastThermo::calculate()
     volScalarField::Boundary& bT = T_.boundaryFieldRef();
     volScalarField::Boundary& bhe = this->he().boundaryFieldRef();
 
-    multiphaseTHEEquation eqn(*this, this->TLow_);
-    NewtonRaphsonUnivariateRootSolver solver(eqn, dictionary());
+    THEEqn_.setCells();
     forAll(TCells, celli)
     {
-        TCells[celli] = solver.solve(TCells[celli], celli);
+        TCells[celli] = THESolver_->solve(TCells[celli], celli);
     }
     forAll(bT, patchi)
     {
-        eqn.patch() = patchi;
+        THEEqn_.setPatch(patchi);
         scalarField& pT = bT[patchi];
         forAll(pT, facei)
         {
-            pT[facei] = solver.solve(pT[facei], facei);
+            pT[facei] = THESolver_->solve(pT[facei], facei);
         }
     }
     T_.correctBoundaryConditions();
@@ -265,9 +176,32 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
     residualAlpha_(dimless, 0.0),
-    sumVfPtr_(nullptr)
+    sumVfPtr_(nullptr),
+    EEqn_(*this),
+    ESolver_(nullptr),
+    THEEqn_(*this, this->TLow_),
+    THESolver_(nullptr)
 
 {
+    // Select the solvers for energy and temperature
+    if (dict.isDict("eSolverCoeffs"))
+    {
+        ESolver_ =
+            univariateRootSolver::New(EEqn_, dict.subDict("eSolverCoeffs"));
+    }
+    else
+    {
+        ESolver_.set(new NewtonRaphsonUnivariateRootSolver(EEqn_));
+    }
+    if (dict.isDict("TSolverCoeffs"))
+    {
+        THESolver_ =
+            univariateRootSolver::New(THEEqn_, dict.subDict("TSolverCoeffs"));
+    }
+    else
+    {
+        THESolver_.set(new NewtonRaphsonUnivariateRootSolver(THEEqn_));
+    }
     volScalarField sumAlpha
     (
         IOobject
@@ -447,16 +381,8 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
 {
     tmp<volScalarField> eInitTmp(volScalarField::New("eInit", e_));
     volScalarField& eInit(eInitTmp.ref());
-    multiphaseFluidBlastThermo& thermo
-    (
-        const_cast<multiphaseFluidBlastThermo&>(*this)
-    );
     volScalarField& e(const_cast<volScalarField&>(e_));
 
-    multiphaseEEquation eqn(thermo);
-    dictionary dict;
-    dict.add("tolerance", 1e-6);
-    NewtonRaphsonUnivariateRootSolver solver(eqn, dict);
     forAll(eInit, celli)
     {
         if (mag(celldpde(celli)) < small)
@@ -465,9 +391,9 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
         }
         else
         {
-            const scalar e0 = e[celli];
-            eInit[celli] = solver.solve(e0, celli);
-            e[celli] = e0;
+            EEqn_.save(celli);
+            eInit[celli] = ESolver_->solve(e[celli], celli);
+            EEqn_.reset(celli);
         }
     }
     forAll(volumeFractions_, phasei)

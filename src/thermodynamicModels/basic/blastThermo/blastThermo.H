@@ -122,7 +122,6 @@ protected:
             }
 
 
-
 public:
 
     TypeName("blastThermo");
