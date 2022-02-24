@@ -125,7 +125,7 @@ Foam::activationModels::linearActivation::delta() const
 
 void Foam::activationModels::linearActivation::correct()
 {
-    if (max(lambda_.oldTime()).value() == 1)
+    if (min(lambda_.oldTime()).value() == 1)
     {
         return;
     }
