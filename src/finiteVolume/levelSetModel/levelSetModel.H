@@ -53,14 +53,24 @@ class levelSetModel
 {
 public:
 
-    enum levelSetFunc
+    enum class levelSetFunc
     {
         TANH,
         EXP
     };
 
+    enum class truncation
+    {
+        NONE,
+        CUTOFF,
+        TANH
+    };
+
     //- Named enumeration of level set functions
     static const NamedEnum<levelSetFunc, 2> levelSetFuncNames_;
+
+    //- Named enumeration of level set truncation methods
+    static const NamedEnum<truncation, 3> truncationNames_;
 
 private:
     // Private Data
@@ -73,6 +83,9 @@ private:
 
         //- Level set function
         volScalarField levelSet_;
+
+        //- Optional truncated levelSet
+        autoPtr<volScalarField> tlevelSet_;
 
         //- Interface normal direction
         surfaceScalarField nHatf_;
@@ -99,18 +112,17 @@ private:
         //- Method for computing level set function
         levelSetFunc lsFunc_;
 
+        //- Method for truncating the level set function
+        truncation truncation_;
+
+        //- Truncation cut off value
+        scalar cutOff_;
+
         //- Dictionary used to construct distributedTriSurfaceMesh
         mutable dictionary triMeshDict_;
 
         //- Stored isoSurface
         mutable autoPtr<isoSurface> contourPtr_;
-
-
-
-    // Private member functions
-
-        //- Compute the level set function
-        tmp<volScalarField> calcLevelSet(const volScalarField&) const;
 
 
 public:
@@ -148,6 +160,12 @@ public:
                 return levelSet_;
             }
 
+            //- Return the truncated levelSet function
+            const volScalarField& tlevelSet() const
+            {
+                return tlevelSet_.valid() ? tlevelSet_() : levelSet_;
+            }
+
             //- Return the interface thickness parameter
             const volScalarField& epsilon() const
             {
@@ -172,6 +190,12 @@ public:
 
         //- Update and optionally calculate distance
         void correct(const bool redistance = false);
+
+        //- Compute the level set function
+        tmp<volScalarField> calcLevelSet(const volScalarField&) const;
+
+        //- Compute the level set function
+        tmp<volScalarField> calcDistance(const volScalarField&) const;
 
         //- Return the calculated volume fraction (0-1)
         tmp<volScalarField> alpha() const;

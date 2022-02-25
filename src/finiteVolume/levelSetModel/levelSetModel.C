@@ -45,8 +45,19 @@ const char* Foam::NamedEnum<Foam::levelSetModel::levelSetFunc, 2>::names[] =
     "exp"
 };
 
+template<>
+const char* Foam::NamedEnum<Foam::levelSetModel::truncation, 3>::names[] =
+{
+    "none",
+    "cutOff",
+    "tanh"
+};
+
 const Foam::NamedEnum<Foam::levelSetModel::levelSetFunc, 2>
     Foam::levelSetModel::levelSetFuncNames_;
+
+const Foam::NamedEnum<Foam::levelSetModel::truncation, 3>
+    Foam::levelSetModel::truncationNames_;
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -118,8 +129,37 @@ Foam::levelSetModel::levelSetModel
         dict.found("levelSetFunction")
       ? levelSetFuncNames_.read(dict.lookup("levelSetFunction"))
       : levelSetFunc::TANH
+    ),
+    truncation_
+    (
+        dict.found("truncation")
+      ? truncationNames_.read(dict.lookup("truncation"))
+      : truncation::NONE
+    ),
+    cutOff_
+    (
+        truncation_ == truncation::CUTOFF
+      ? dict.lookup<scalar>("cutOffValue")
+      : 0.0
     )
 {
+    if (truncation_ != truncation::NONE)
+    {
+        tlevelSet_.set
+        (
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("tlevelSet", alpha_.group()),
+                    mesh_.time().timeName(),
+                    mesh_
+                ),
+                levelSet_
+            )
+        );
+    }
+
     scalar minDx(min(meshSizeObject::New(mesh_).dx()).value());
     if (Pstream::parRun())
     {
@@ -150,13 +190,35 @@ Foam::levelSetModel::calcLevelSet(const volScalarField& d) const
 {
     switch (lsFunc_)
     {
-        case TANH:
+        case levelSetFunc::TANH:
         {
             return max(-1.0, min(1.0, tanh(d/(2.0*epsilon_))));
         }
-        case EXP:
+        case levelSetFunc::EXP:
         {
             return max(-1.0, min(1.0, 1.0 - 2.0/(1.0 + exp(d/epsilon_))));
+        }
+        default:
+        {
+            FatalErrorInFunction
+                << "Unknown level set function" << endl
+                << abort(FatalError);
+        }
+    }
+}
+
+Foam::tmp<Foam::volScalarField>
+Foam::levelSetModel::calcDistance(const volScalarField& ls) const
+{
+    switch (lsFunc_)
+    {
+        case levelSetFunc::TANH:
+        {
+            return atanh(max(small - 1.0, min(ls, 1.0 - small)))*2.0*epsilon_;
+        }
+        case levelSetFunc::EXP:
+        {
+            return log(max(2.0/max(1.0 - ls, small) - 1.0, small))*epsilon_;
         }
         default:
         {
@@ -298,6 +360,36 @@ void Foam::levelSetModel::correct(const bool redistance)
     {
         levelSet_ = calcLevelSet(distance());
     }
+    if (tlevelSet_.valid())
+    {
+        switch (truncation_)
+        {
+            case truncation::NONE:
+            {
+                break;
+            }
+            case truncation::CUTOFF:
+            {
+                volScalarField d(calcDistance(levelSet_));
+                volScalarField cond(pos(mag(d) - sqrt(2.0)/2.0*epsilon_));
+                tlevelSet_() = cond*sign(levelSet_) + (1.0 - cond)*levelSet_;
+                break;
+            }
+            case truncation::TANH:
+            {
+                const scalar pi = Foam::constant::mathematical::pi;
+                tlevelSet_() = tanh(pi*levelSet_)/tanh(pi);
+                break;
+            }
+            default:
+            {
+                FatalErrorInFunction
+                    << "Unknown truncation method" << endl
+                    << abort(FatalError);
+            }
+        }
+    }
+
 
     surfaceVectorField gradPsi(fvc::interpolate(fvc::grad(psi())));
     nHatf_ =
@@ -340,7 +432,7 @@ Foam::labelList Foam::levelSetModel::interfaceCells() const
 
 Foam::tmp<Foam::volScalarField> Foam::levelSetModel::alpha() const
 {
-    return volScalarField::New("alpha", 0.5*(levelSet_ + 1.0));
+    return volScalarField::New("alpha", 0.5*(tlevelSet() + 1.0));
 }
 
 
