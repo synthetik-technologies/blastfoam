@@ -30,6 +30,7 @@ License
 #include "volPointInterpolation.H"
 #include "meshSizeObject.H"
 #include "zeroGradientFvPatchFields.H"
+#include "gaussGrad.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -460,6 +461,18 @@ Foam::levelSetModel::gradLevelSet() const
        *pow(alpha1*alpha2, 1.0 - smoothPow_)
        *sqr(pow(alpha1, smoothPow_) + pow(alpha2, smoothPow_))
     );
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::levelSetModel::gradAlpha() const
+{
+    // If truncation is used the gradient can be non-physical so force
+    // linear
+    if (truncation_ != truncation::NONE)
+    {
+        return fv::gaussGrad<scalar>(mesh_).grad(alpha());
+    }
+    return fvc::grad(alpha());
 }
 
 

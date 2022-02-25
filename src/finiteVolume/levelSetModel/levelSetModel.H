@@ -215,6 +215,9 @@ public:
         //- Return the gradient of the smoothed level set function
         tmp<volVectorField> gradLevelSet() const;
 
+        //- Return the gradient of the volume fraction
+        tmp<volVectorField> gradAlpha() const;
+
         //- Return interface normal
         tmp<volVectorField> nHat() const;
 
