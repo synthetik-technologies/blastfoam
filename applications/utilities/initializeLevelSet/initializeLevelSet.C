@@ -138,7 +138,10 @@ void setPhase
         {
             const dictionary& regionDict = regions[regionI].dict();
             regions[regionI].allowBackup(!end);
-            savedCells[regionI] = regions[regionI].selectCells();
+            savedCells[regionI] = regions[regionI].selectPoints
+            (
+                mesh.cellCentres()
+            );
             const labelList& selectedCells = savedCells[regionI];
 
             if (!returnReduce(selectedCells.size(), sumOp<label>()))
@@ -225,7 +228,10 @@ void setPhase
 
                 if (dict.lookupOrDefault("refinePoints", false))
                 {
-                    labelList selectedPoints(regions[regionI].selectPoints());
+                    labelList selectedPoints
+                    (
+                        regions[regionI].selectPoints(mesh.points())
+                    );
                     refinePoints = topoSetList::extractSelectedPoints
                     (
                         mesh,
