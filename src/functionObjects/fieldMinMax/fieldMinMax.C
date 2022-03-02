@@ -89,8 +89,8 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     restartOnRestart_(dict.lookupOrDefault("restartOnRestart", false)),
     mode_(modeType::cmpt),
     minMax_(minMaxType::max),
+    minMaxName_(minMax_ == minMaxType::min ? "Min" : "Max"),
     fieldNames_(dict.lookup("fields")),
-    computeFieldNames_(fieldNames_.size()),
 
     cellMap_(nullptr),
     rCellMap_(nullptr),
@@ -107,87 +107,7 @@ Foam::functionObjects::fieldMinMax::fieldMinMax
     sSymmTensorFields_(0),
     sTensorFields_(0)
 {
-
     read(dict);
-
-    word minMaxName;
-    if (minMax_ == minMaxType::min)
-    {
-        minMaxName = "Min";
-    }
-    else
-    {
-        minMaxName = "Max";
-    }
-
-    if (mode_ == modeType::mag)
-    {
-        minMaxName += "Mag";
-    }
-    else if (mode_ == modeType::cmptMag)
-    {
-        minMaxName += "CmptMag";
-    }
-
-    forAll(fieldNames_, fieldi)
-    {
-        computeFieldNames_[fieldi] =
-            IOobject::member(fieldNames_[fieldi])
-          + minMaxName
-          + IOobject::group(fieldNames_[fieldi]);
-
-        createMinMax<volScalarField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<volVectorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<volSphericalTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<volSymmTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<volTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-
-        createMinMax<surfaceScalarField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<surfaceVectorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<surfaceSphericalTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<surfaceSymmTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-        createMinMax<surfaceTensorField>
-        (
-            fieldNames_[fieldi],
-            computeFieldNames_[fieldi]
-        );
-    }
 }
 
 
@@ -210,6 +130,7 @@ bool Foam::functionObjects::fieldMinMax::read(const dictionary& dict)
     dict.readIfPresent("restartOnRestart", restartOnRestart_);
     mode_ = modeTypeNames_[dict.lookupOrDefault<word>("mode", "component")];
     minMax_ = minMaxTypeNames_[dict.lookupOrDefault<word>("minMax", "max")];
+    minMaxName_ = minMax_ == minMaxType::min ? "Min" : "Max";
 
     Log << endl;
 
@@ -223,44 +144,44 @@ void Foam::functionObjects::fieldMinMax::updateMesh(const mapPolyMesh& mpm)
     {
         map<volScalarField>
         (
-            computeFieldNames_[fieldi], mpm, vScalarFields_
+            fieldNames_[fieldi], mpm, vScalarFields_
         );
         map<volVectorField>
         (
-            computeFieldNames_[fieldi], mpm, vVectorFields_
+            fieldNames_[fieldi], mpm, vVectorFields_
         );
         map<volSphericalTensorField>
         (
-            computeFieldNames_[fieldi], mpm, vSphericalTensorFields_
+            fieldNames_[fieldi], mpm, vSphericalTensorFields_
         );
         map<volSymmTensorField>
         (
-            computeFieldNames_[fieldi], mpm, vSymmTensorFields_
+            fieldNames_[fieldi], mpm, vSymmTensorFields_
         );
         map<volTensorField>
         (
-            computeFieldNames_[fieldi], mpm, vTensorFields_
+            fieldNames_[fieldi], mpm, vTensorFields_
         );
 
         map<surfaceScalarField>
         (
-            computeFieldNames_[fieldi], mpm, sScalarFields_
+            fieldNames_[fieldi], mpm, sScalarFields_
         );
         map<surfaceVectorField>
         (
-            computeFieldNames_[fieldi], mpm, sVectorFields_
+            fieldNames_[fieldi], mpm, sVectorFields_
         );
         map<surfaceSphericalTensorField>
         (
-            computeFieldNames_[fieldi], mpm, sSphericalTensorFields_
+            fieldNames_[fieldi], mpm, sSphericalTensorFields_
         );
         map<surfaceSymmTensorField>
         (
-            computeFieldNames_[fieldi], mpm, sSymmTensorFields_
+            fieldNames_[fieldi], mpm, sSymmTensorFields_
         );
         map<surfaceTensorField>
         (
-            computeFieldNames_[fieldi], mpm, sTensorFields_
+            fieldNames_[fieldi], mpm, sTensorFields_
         );
     }
 
@@ -275,62 +196,52 @@ bool Foam::functionObjects::fieldMinMax::execute()
         update<volScalarField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             vScalarFields_
         );
         update<volVectorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             vVectorFields_
         );
         update<volSphericalTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             vSphericalTensorFields_
         );
         update<volSymmTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             vSymmTensorFields_
         );
         update<volTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             vTensorFields_
         );
 
         update<surfaceScalarField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             sScalarFields_
         );
         update<surfaceVectorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             sVectorFields_
         );
         update<surfaceSphericalTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             sSphericalTensorFields_
         );
         update<surfaceSymmTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             sSymmTensorFields_
         );
         update<surfaceTensorField>
         (
             fieldNames_[fieldi],
-            computeFieldNames_[fieldi],
             sTensorFields_
         );
     }
@@ -370,53 +281,53 @@ void Foam::functionObjects::fieldMinMax::setOldFields(const mapPolyMesh& mpm)
     {
         createOld<volScalarField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             vScalarFields_
         );
         createOld<volVectorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             vVectorFields_
         );
         createOld<volSphericalTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             vSphericalTensorFields_
         );
         createOld<volSymmTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             vSymmTensorFields_
         );
         createOld<volTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             vTensorFields_
         );
 
         createOld<surfaceScalarField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             sScalarFields_
         );
         createOld<surfaceVectorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             sVectorFields_
         );
         createOld<surfaceSphericalTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             sSphericalTensorFields_
         );
         createOld<surfaceSymmTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             sSymmTensorFields_
         );
         createOld<surfaceTensorField>
         (
-            computeFieldNames_[fieldi],
+            fieldNames_[fieldi],
             sTensorFields_
         );
     }
@@ -435,17 +346,17 @@ bool Foam::functionObjects::fieldMinMax::write()
 
     forAll(fieldNames_, fieldi)
     {
-        writeField<volScalarField>(computeFieldNames_[fieldi]);
-        writeField<volVectorField>(computeFieldNames_[fieldi]);
-        writeField<volSphericalTensorField>(computeFieldNames_[fieldi]);
-        writeField<volSymmTensorField>(computeFieldNames_[fieldi]);
-        writeField<volTensorField>(computeFieldNames_[fieldi]);
+        writeField<volScalarField>(fieldNames_[fieldi]);
+        writeField<volVectorField>(fieldNames_[fieldi]);
+        writeField<volSphericalTensorField>(fieldNames_[fieldi]);
+        writeField<volSymmTensorField>(fieldNames_[fieldi]);
+        writeField<volTensorField>(fieldNames_[fieldi]);
 
-        writeField<surfaceScalarField>(computeFieldNames_[fieldi]);
-        writeField<surfaceVectorField>(computeFieldNames_[fieldi]);
-        writeField<surfaceSphericalTensorField>(computeFieldNames_[fieldi]);
-        writeField<surfaceSymmTensorField>(computeFieldNames_[fieldi]);
-        writeField<surfaceTensorField>(computeFieldNames_[fieldi]);
+        writeField<surfaceScalarField>(fieldNames_[fieldi]);
+        writeField<surfaceVectorField>(fieldNames_[fieldi]);
+        writeField<surfaceSphericalTensorField>(fieldNames_[fieldi]);
+        writeField<surfaceSymmTensorField>(fieldNames_[fieldi]);
+        writeField<surfaceTensorField>(fieldNames_[fieldi]);
     }
     return true;
 }
