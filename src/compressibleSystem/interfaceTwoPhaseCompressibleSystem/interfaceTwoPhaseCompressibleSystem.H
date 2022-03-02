@@ -41,6 +41,7 @@ SourceFiles
 #include "compressibleBlastSystem.H"
 #include "twoPhaseFluidBlastThermo.H"
 #include "interfaceProperties.H"
+#include "levelSetModel.H"
 
 
 namespace Foam
@@ -73,12 +74,14 @@ class interfaceTwoPhaseCompressibleSystem
         //- Phase 2 density
         volScalarField& rho2_;
 
-        //- Interface thickness parameter
-        dimensionedScalar epsilon_;
+        //- LevelSet model
+        levelSetModel levelSet_;
 
-        //- Level set function
-        volScalarField levelSet_;
+        //- Is redistancing used
+        bool redistance_;
 
+        //- Interval to redistance
+        label redistanceInterval_;
 
     //- Conserved variables
 
@@ -103,23 +106,9 @@ class interfaceTwoPhaseCompressibleSystem
         //- Phase 2 mass flux
         surfaceScalarField alphaRhoPhi2_;
 
+
     //- Surface tension model
-    interfaceProperties interfaceProperties_;
-
-    //- Smooth distance function
-    tmp<volScalarField> Psi(const volScalarField& alpha) const;
-
-    //- Gradient of smooth distance function
-    tmp<volVectorField> GradPhi(const volScalarField& alpha) const;
-
-    //- Distance function
-    tmp<volScalarField> D(const volScalarField& alpha) const;
-
-    //- Interface compression function
-    tmp<volScalarField> H() const;
-
-    //- Realizable volume fraction sharpening
-    tmp<volScalarField> sharpen(const volScalarField& alpha) const;
+    autoPtr<surfaceTensionModel> sigmaPtr_;
 
 
 public:
