@@ -964,7 +964,9 @@ bool Foam::fvMeshRefiner::writeObject
     const bool write
 ) const
 {
-    if (dumpLevel_)
+    bool writeOK = balancer_.write(write);
+
+    if (dumpLevel_ && write)
     {
         volScalarField scalarCellLevel
         (
@@ -999,10 +1001,11 @@ bool Foam::fvMeshRefiner::writeObject
         }
 
         return
-            scalarCellLevel.write()
+            writeOK
+         && scalarCellLevel.write()
          && scalarPointLevel.write();
     }
-    return true;
+    return writeOK;
 }
 
 // ************************************************************************* //

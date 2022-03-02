@@ -47,6 +47,8 @@ SourceFiles
 namespace Foam
 {
 
+class fvMesh;
+class IOobjectList;
 class polyMesh;
 class polyBoundaryMesh;
 class coupledPolyPatch;
@@ -124,219 +126,23 @@ namespace meshTools
             const bool keepCells = false
         );
 
-/*
-        //- Check whether uses couples.
-        bool hasCouples(const polyBoundaryMesh&);
+        //- Read and add fields to the database
+        template<class FieldType>
+        void readGeoFields(const fvMesh& mesh, const IOobjectList& objects);
 
-        //- Check for single transformation tensor only.
-        void checkTransform(const coupledPolyPatch&, const bool);
+        template<class FieldType>
+        void readPointFields(const fvMesh& mesh, const IOobjectList& objects);
 
-        //- Apply separation to list. Either single vector or one vector
-        //  per element.
-        template <class T>
-        void separateList(const vectorField&, UList<T>&);
+        //- Read and add all fields to the database
+        void readAndStoreFields(const fvMesh& mesh);
 
-        template <class T>
-        void separateList(const vectorField&, Map<T>&);
-
-        template <class T>
-        void separateList(const vectorField&, EdgeMap<T>&);
-
-        //- Combine value with existing value in map.
-        template <class T, class CombineOp>
-        void combine
+        //- Remove empty patches
+        void filterPatches
         (
-            Map<T>& pointValues,
-            const CombineOp& cop,
-            const label index,
-            const T& val
+            fvMesh& mesh,
+            const HashSet<word>& addedPatchNames
         );
-
-        //- Combine val with existing value at (implicit index) e.
-        template <class T, class CombineOp>
-        void combine
-        (
-            EdgeMap<T>& edgeValues,
-            const CombineOp& cop,
-            const edge& index,
-            const T& val
-        );
-
-    // Static data members
-
-        //- Synchronize values on all mesh points.
-        //  Applies rotation and optionally separation for parallel cyclics
-        template <class T, class CombineOp>
-        void syncPointList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const CombineOp& cop,
-            const T& nullValue,
-            const bool applySeparation
-        );
-
-        //- Synchronize values on selected mesh points.
-        //  Applies rotation and optionally separation for parallel cyclics
-        template <class T, class CombineOp>
-        void syncPointList
-        (
-            const polyMesh&,
-            const labelList& meshPoints,
-            UList<T>&,
-            const CombineOp& bop,
-            const T& nullValue,
-            const bool applySeparation
-        );
-
-        //- Synchronize values on all mesh edges.
-        //  Applies rotation and optionally separation for parallel cyclics
-        template <class T, class CombineOp>
-        void syncEdgeList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const CombineOp& cop,
-            const T& nullValue,
-            const bool applySeparation
-        );
-
-        //- Synchronize values on boundary faces only.
-        //  Optionally applies rotation tensor for non-parallel cyclics
-        //  (but not separation!)
-        template <class T, class CombineOp>
-        void syncBoundaryFaceList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const CombineOp& cop,
-            const bool applySeparation
-        );
-
-        //- Synchronize values on all mesh faces.
-        //  Optionally applies rotation tensor for non-parallel cyclics
-        //  (but not separation!)
-        template <class T, class CombineOp>
-        void syncFaceList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const CombineOp& cop,
-            const bool applySeparation
-        );
-
-        //- Swap coupled face values.
-        //  Applies rotation and optionally separation for parallel cyclics
-        template <class T>
-        void swapBoundaryFaceList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const bool applySeparation
-        );
-
-        //- Swap coupled face values.
-        //  Applies rotation and optionally separation for parallel cyclics
-        template <class T>
-        void swapFaceList
-        (
-            const polyMesh&,
-            UList<T>&,
-            const bool applySeparation
-        );
-
-
-        // Sparse versions
-
-            //- Synchronize values on selected points.
-            //  Applies rotation and optionally separation for parallel
-            //  cyclics.
-            template <class T, class CombineOp>
-            void syncPointMap
-            (
-                const polyMesh&,
-                Map<T>& pointValues,
-                const CombineOp& cop,
-                const bool applySeparation
-            );
-
-            //- Synchronize values on selected edges. Edges are represented
-            //  by the two vertices that make it up so global edges never get
-            //  constructed.
-            //  Applies rotation and optionally separation for parallel
-            //  cyclics.
-            template <class T, class CombineOp>
-            void syncEdgeMap
-            (
-                const polyMesh&,
-                EdgeMap<T>& edgeValues,
-                const CombineOp& cop,
-                const bool applySeparation
-            );
-
-
-        // PackedList versions
-
-            template <unsigned nBits, class CombineOp>
-            void syncFaceList
-            (
-                const polyMesh& mesh,
-                PackedList<nBits>& faceValues,
-                const CombineOp& cop
-            );
-
-            template <unsigned nBits>
-            void swapFaceList
-            (
-                const polyMesh& mesh,
-                PackedList<nBits>& faceValues
-            );
-
-            template <unsigned nBits, class CombineOp>
-            void syncPointList
-            (
-                const polyMesh& mesh,
-                PackedList<nBits>& pointValues,
-                const CombineOp& cop,
-                const unsigned int nullValue
-            );
-
-            template <unsigned nBits, class CombineOp>
-            void syncEdgeList
-            (
-                const polyMesh& mesh,
-                PackedList<nBits>& edgeValues,
-                const CombineOp& cop,
-                const unsigned int nullValue
-            );
-
-
-        // Other
-
-            //- Get per point whether is it master (of a coupled set of points)
-            PackedBoolList getMasterPoints(const polyMesh&);
-
-            //- Get per edge whether is it master (of a coupled set of edges)
-            PackedBoolList getMasterEdges(const polyMesh&);
-
-            //- Get per face whether is it master (of a coupled set of faces)
-            PackedBoolList getMasterFaces(const polyMesh&);
-
-*/
-
 } // End namespace foamSyncTools
-
-
-/*
-template<>
-void foamSyncTools::separateList(const vectorField&, UList<vector>&);
-
-template<>
-void foamSyncTools::separateList(const vectorField&, Map<vector>&);
-
-template<>
-void foamSyncTools::separateList(const vectorField&, EdgeMap<vector>&);
-*/
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -344,9 +150,9 @@ void foamSyncTools::separateList(const vectorField&, EdgeMap<vector>&);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// #ifdef NoRepository
-// #   include "dynMeshToolsTemplates.C"
-// #endif
+#ifdef NoRepository
+#   include "dynMeshToolsTemplates.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

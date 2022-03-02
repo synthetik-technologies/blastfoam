@@ -28,6 +28,12 @@ License
 #include "addToRunTimeSelectionTable.H"
 #include "RefineBalanceMeshObject.H"
 #include "parcelCloud.H"
+#include "preserveFaceZonesConstraint.H"
+#include "singleProcessorFaceSetsConstraint.H"
+#include "preservePatchesConstraint.H"
+#include "preserveBafflesConstraint.H"
+
+using namespace Foam::decompositionConstraints;
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -55,20 +61,52 @@ Foam::fvMeshBalance::fvMeshBalance(fvMesh& mesh)
             )
         )
     ),
-    constraintsDict_
-    (
-        decompositionDict_,
-        dictionary()
-
-    ),
+    modified_(false),
+    constraintsDict_(decompositionDict_.subDictPtr("constraints")),
+    preserveFaceZonesDict_(nullptr),
+    singleProcessorFaceSetsDict_(nullptr),
+    preservePatchesDict_(nullptr),
+    preserveBafflesDict_(nullptr),
     distributor_(mesh_),
     balance_(true),
     allowableImbalance_(0.2)
 {
-    constraintsDict_.name() = "constraints";
-    if (decompositionDict_.found("constraints"))
+    if (!constraintsDict_)
     {
-        constraintsDict_.merge(decompositionDict_.subDict("constraints"));
+        decompositionDict_.add("constraints", dictionary());
+        constraintsDict_ = decompositionDict_.subDictPtr("constraints");
+    }
+    else
+    {
+        wordList toc(decompositionDict_.toc());
+        forAll(toc, i)
+        {
+            if (decompositionDict_.isDict(toc[i]))
+            {
+                dictionary& dict(decompositionDict_.subDict(toc[i]));
+                word type(dict.lookupOrDefault<word>("type", "none"));
+
+                if (type == preserveFaceZonesConstraint::typeName)
+                {
+                    preserveFaceZonesDict_ = &dict;
+                }
+                else if
+                (
+                    type == singleProcessorFaceSetsConstraint::typeName
+                )
+                {
+                    singleProcessorFaceSetsDict_ = &dict;
+                }
+                else if (type == preservePatchesConstraint::typeName)
+                {
+                    preservePatchesDict_ = &dict;
+                }
+                else if (type == preserveBafflesConstraint::typeName)
+                {
+                    preserveBafflesDict_ = &dict;
+                }
+            }
+        }
     }
 }
 
@@ -94,20 +132,52 @@ Foam::fvMeshBalance::fvMeshBalance
             )
         )
     ),
-    constraintsDict_
-    (
-        decompositionDict_,
-        dictionary()
-
-    ),
+    modified_(false),
+    constraintsDict_(decompositionDict_.subDictPtr("constraints")),
+    preserveFaceZonesDict_(nullptr),
+    singleProcessorFaceSetsDict_(nullptr),
+    preservePatchesDict_(nullptr),
+    preserveBafflesDict_(nullptr),
     distributor_(mesh_),
     balance_(false),
     allowableImbalance_(0.2)
 {
-    constraintsDict_.name() = "constraints";
-    if (decompositionDict_.found("constraints"))
+    if (!constraintsDict_)
     {
-        constraintsDict_.merge(decompositionDict_.subDict("constraints"));
+        decompositionDict_.add("constraints", dictionary());
+        constraintsDict_ = decompositionDict_.subDictPtr("constraints");
+    }
+    else
+    {
+        wordList toc(decompositionDict_.toc());
+        forAll(toc, i)
+        {
+            if (decompositionDict_.isDict(toc[i]))
+            {
+                dictionary& dict(decompositionDict_.subDict(toc[i]));
+                word type(dict.lookupOrDefault<word>("type", "none"));
+
+                if (type == preserveFaceZonesConstraint::typeName)
+                {
+                    preserveFaceZonesDict_ = &dict;
+                }
+                else if
+                (
+                    type == singleProcessorFaceSetsConstraint::typeName
+                )
+                {
+                    singleProcessorFaceSetsDict_ = &dict;
+                }
+                else if (type == preservePatchesConstraint::typeName)
+                {
+                    preservePatchesDict_ = &dict;
+                }
+                else if (type == preserveBafflesConstraint::typeName)
+                {
+                    preserveBafflesDict_ = &dict;
+                }
+            }
+        }
     }
     read(dict);
 }
@@ -162,20 +232,171 @@ void Foam::fvMeshBalance::read(const dictionary& balanceDict)
 
 void Foam::fvMeshBalance::addConstraint(const dictionary& dict)
 {
-    // Add refinementHistory constraint
-    if (!decompositionDict_.found("constraints"))
+    // Add constraints dictionary
+    if (!constraintsDict_->found(dict.name()))
     {
-        decompositionDict_.add("constraints", dictionary());
-    }
-    constraintsDict_.set(keyType(dict.name()), dict);
+        modified_ = true;
 
-    // We need to apply the updated constraints, and this can only be done
-    // when the decomposer is created
-    if (decomposer_.valid())
-    {
-        decomposer_.clear();
+        constraintsDict_->set(word(dict.name()), dict);
+
+        // We need to apply the updated constraints, and this can only
+        // be done when the decomposer is created
+        if (decomposer_.valid())
+        {
+            decomposer_.clear();
+        }
     }
 }
+
+
+void Foam::fvMeshBalance::preserveFaceZone(const wordRe& zoneName)
+{
+    if (!preserveFaceZonesDict_)
+    {
+        constraintsDict_->add("faceZones", dictionary());
+        preserveFaceZonesDict_ = constraintsDict_->subDictPtr("faceZones");
+        preserveFaceZonesDict_->set
+        (
+            "type",
+            preserveFaceZonesConstraint::typeName
+        );
+    }
+    wordReList zones
+    (
+        preserveFaceZonesDict_->lookupOrDefault("zones", wordReList())
+    );
+
+    bool exists = false;
+    forAll(zones, i)
+    {
+        if (zones[i].match(zoneName))
+        {
+            exists = true;
+            break;
+        }
+    }
+    if (!exists)
+    {
+        modified_ = true;
+        zones.append(zoneName);
+        preserveFaceZonesDict_->set("zones", zones);
+
+        if (decomposer_.valid())
+        {
+            decomposer_.clear();
+        }
+    }
+}
+
+
+void Foam::fvMeshBalance::singleProcessorFaceSet
+(
+    const word& setName,
+    const label proc
+)
+{
+    if (!preserveFaceZonesDict_)
+    {
+        constraintsDict_->add("singleProcessorFaceSets", dictionary());
+        singleProcessorFaceSetsDict_ =
+            constraintsDict_->subDictPtr("singleProcessorFaceSets");
+        singleProcessorFaceSetsDict_->set
+        (
+            "type",
+            singleProcessorFaceSetsConstraint::typeName
+        );
+    }
+    List<Tuple2<word, label>> setNameAndProcs
+    (
+        singleProcessorFaceSetsDict_->lookupOrDefault
+        (
+            "singleProcessorFaceSets",
+            List<Tuple2<word, label>>()
+        )
+    );
+
+    bool exists = false;
+    forAll(setNameAndProcs, i)
+    {
+        if (setName == setNameAndProcs[i].first())
+        {
+            exists = true;
+            break;
+        }
+    }
+    if (!exists)
+    {
+        modified_ = true;
+        setNameAndProcs.append(Tuple2<word, label>(setName, proc));
+        singleProcessorFaceSetsDict_->set
+        (
+            "setNameAndProcs",
+            setNameAndProcs
+        );
+
+        if (decomposer_.valid())
+        {
+            decomposer_.clear();
+        }
+    }
+}
+
+
+void Foam::fvMeshBalance::preservePatch(const wordRe& patchName)
+{
+    if (!preservePatchesDict_)
+    {
+        constraintsDict_->add("patches", dictionary());
+        preservePatchesDict_ = constraintsDict_->subDictPtr("patches");
+        preservePatchesDict_->set
+        (
+            "type",
+            preservePatchesConstraint::typeName
+        );
+    }
+    wordReList patches
+    (
+        preservePatchesDict_->lookupOrDefault("patches", wordReList())
+    );
+
+    bool exists = false;
+    forAll(patches, i)
+    {
+        if (patches[i].match(patchName))
+        {
+            exists = true;
+            break;
+        }
+    }
+    if (!exists)
+    {
+        modified_ = true;
+        patches.append(patchName);
+        preservePatchesDict_->set("patches", patches);
+
+        if (decomposer_.valid())
+        {
+            decomposer_.clear();
+        }
+    }
+}
+
+
+void Foam::fvMeshBalance::preserveBaffles()
+{
+    if (!preserveBafflesDict_)
+    {
+        modified_ = true;
+        constraintsDict_->add("baffles", dictionary());
+        preserveBafflesDict_ = constraintsDict_->subDictPtr("baffles");
+        preserveBafflesDict_->set
+        (
+            "type",
+            preserveBafflesConstraint::typeName
+        );
+    }
+}
+
 
 void Foam::fvMeshBalance::makeDecomposer() const
 {
@@ -185,11 +406,6 @@ void Foam::fvMeshBalance::makeDecomposer() const
             << "Decomposer already set" << endl
             << abort(FatalError);
     }
-
-    const_cast<dictionary&>
-    (
-        decompositionDict_
-    ).set("constraints", constraintsDict_);
     decomposer_ = decompositionMethod::New(decompositionDict_);
 
     returnReduce(1, maxOp<label>());
@@ -331,5 +547,29 @@ Foam::fvMeshBalance::distribute()
 
     return map;
 }
+
+bool Foam::fvMeshBalance::write(const bool write) const
+{
+    if (balance_ && modified_ && write)
+    {
+        modified_ = false;
+        IOdictionary decomposeParDict
+        (
+            IOobject
+            (
+                "decomposeParDict",
+                mesh_.time().system(),
+                mesh_.time(),
+                IOobject::NO_READ,
+                IOobject::NO_WRITE,
+                false
+            ),
+            decompositionDict_
+        );
+        return decomposeParDict.regIOobject::write();
+    }
+    return true;
+}
+
 
 // ************************************************************************* //

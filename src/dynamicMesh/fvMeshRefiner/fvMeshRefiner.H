@@ -340,6 +340,18 @@ public:
                 locMapper().needMap(needMap);
             }
 
+            //- Return the fvMeshBalancer
+            const fvMeshBalance& balancer() const
+            {
+                return balancer_;
+            }
+
+            //- Access the fvMeshBalancer
+            fvMeshBalance& balancer()
+            {
+                return balancer_;
+            }
+
 
         //- Read the projection parameters from dictionary
         virtual void readDict(const dictionary& parentDict);

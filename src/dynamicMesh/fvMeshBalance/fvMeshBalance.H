@@ -60,8 +60,23 @@ protected:
         //- Dictionary for runTime balancing
         mutable dictionary decompositionDict_;
 
+        //- Has the decomposition dict been modified
+        mutable bool modified_;
+
         //- Constraints dictionary
-        dictionary constraintsDict_;
+        dictionary* constraintsDict_;
+
+        //- Preserve faceZones dict
+        dictionary* preserveFaceZonesDict_;
+
+        //- Preserve faceSets dict
+        dictionary* singleProcessorFaceSetsDict_;
+
+        //- Preserve patches dict
+        dictionary* preservePatchesDict_;
+
+        //- Preserve baffles dict
+        dictionary* preserveBafflesDict_;
 
         //- Decomposition method
         mutable autoPtr<decompositionMethod> decomposer_;
@@ -117,8 +132,26 @@ public:
         //- Does the mesh need to be balanced
         bool canBalance() const;
 
-        //- Add a constraint
-        void addConstraint(const dictionary& dict);
+        // Decomposition constraints
+
+            //- Add a constraint
+            void addConstraint(const dictionary& dict);
+
+            //- Preserve a faceZone
+            void preserveFaceZone(const wordRe& zoneName);
+
+            //- Preserve a faceSet on a single processor
+            void singleProcessorFaceSet
+            (
+                const word& setName,
+                const label proc
+            );
+
+            //- Preserve a patch
+            void preservePatch(const wordRe& patchName);
+
+            //- Preserve baffles
+            void preserveBaffles();
 
         //- Return the decompositionMethod
         const decompositionMethod& decomposer() const;
@@ -135,6 +168,9 @@ public:
 
         //- Read the projection parameters from dictionary
         void read(const dictionary& dict);
+
+        //- Write the decompositionDict
+        bool write(const bool write = true) const;
 
     // Member Operators
 
