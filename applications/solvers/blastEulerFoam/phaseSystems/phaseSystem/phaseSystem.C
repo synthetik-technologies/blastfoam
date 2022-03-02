@@ -35,8 +35,10 @@ License
 #include "massTransferModel.H"
 #include "interfacialPressureModel.H"
 #include "interfacialVelocityModel.H"
+#include "pressureRelaxationModel.H"
 #include "dragModel.H"
 #include "dragODE.H"
+#include "pressureRelaxationSolver.H"
 #include "surfaceInterpolate.H"
 #include "fvcDdt.H"
 #include "phaseFluxScheme.H"
@@ -535,6 +537,18 @@ void Foam::phaseSystem::relaxTemperature(const dimensionedScalar& deltaT)
 }
 
 
+void Foam::phaseSystem::relaxPressure(const dimensionedScalar& deltaT)
+{
+    if (pressureSolver_->solve())
+    {
+        Info<< "Solving pressure relaxation" <<endl;
+        pressureSolver_->solve(deltaT.value());
+
+        encode();
+    }
+}
+
+
 void Foam::phaseSystem::calcMixtureVariables()
 {
     rho_ = Zero;
@@ -585,6 +599,15 @@ void Foam::phaseSystem::calcMixtureVariables()
             dimensionedScalar("0", dimDensity, 0)
         )
     );
+    volScalarField sumAlphaRhoKappa
+    (
+        volScalarField::New
+        (
+            "sumAlphaRhoKappa",
+            mesh_,
+            dimensionedScalar("0", dimDensity*kappa_.dimensions(), 0)
+        )
+    );
     p_ =  Zero;
     kappa_ = Zero;
     if (PIPtr_.valid())
@@ -597,7 +620,7 @@ void Foam::phaseSystem::calcMixtureVariables()
         sumAlpha += phase;
         sumAlphaRho += phase.alphaRho();
         p_ += phase*phase.p();
-        kappa_ += phase.alphaRho()*phase.kappa();
+        sumAlphaRhoKappa += phase.alphaRho()*phase.kappa();
         if (PIPtr_.valid())
         {
             PIPtr_() +=
@@ -605,7 +628,7 @@ void Foam::phaseSystem::calcMixtureVariables()
         }
     }
     p_ /= sumAlpha;
-    kappa_ /= sumAlphaRho;
+    kappa_ = sumAlphaRhoKappa/sumAlphaRho;
 }
 
 
@@ -763,6 +786,13 @@ Foam::phaseSystem::phaseSystem
         true
     );
 
+    generatePairsAndSubModels
+    (
+        "pressureRelaxation",
+        pressureRelaxationModels_,
+        false
+    );
+
     label nFluids = 0;
     forAll(phaseModels_, phasei)
     {
@@ -827,6 +857,14 @@ Foam::phaseSystem::phaseSystem
     {
         dragODE_.set(new dragODE(*this, dragModels_));
     }
+
+    pressureSolver_ = pressureRelaxationSolver::New
+    (
+        *this,
+        interfacialPressureModels_,
+        pressureRelaxationModels_
+
+    );
 
     if (phaseModels_.size() == 2)
     {
@@ -1153,10 +1191,9 @@ void Foam::phaseSystem::postUpdate()
     decode();
     forAll(phaseModels_, phasei)
     {
-        incrIndent(Info);
-        Info<< "Solving " << phaseModels_[phasei].name() << ":" << endl;
+        Info<< "Solving: " << phaseModels_[phasei].name() << ":" << endl;
         phaseModels_[phasei].postUpdate();
-        decrIndent(Info);
+        Info<< endl;
     }
 
     decode();
@@ -1166,6 +1203,8 @@ void Foam::phaseSystem::postUpdate()
     relaxTemperature(deltaT);
 
     decode();
+
+    relaxPressure(deltaT);
 }
 
 
@@ -1181,19 +1220,31 @@ void Foam::phaseSystem::clear()
 
 void Foam::phaseSystem::printInfo() const
 {
-    Info<< "Phase statistics:"<<endl;
+    Info<< "Total statistics:" << endl << incrIndent
+        << indent
+        << T_.name() << " max, min = "
+        << ' ' << max(T_).value()
+        << ' ' << min(T_).value() << nl
+        << indent
+        << p_.name() << " max, min = "
+        << ' ' << max(p_).value()
+        << ' ' << min(p_).value()
+        << endl << decrIndent;
+
+    Info<< "Phase statistics:"<< endl << incrIndent;
     forAll(phaseModels_, phasei)
     {
-        Info<< phaseModels_[phasei].name() << ":" << endl;
+        Info<< indent << phaseModels_[phasei].name() << ":"
+            << endl << incrIndent;
 
         const volScalarField& alpha(phaseModels_[phasei]);
         const volScalarField& T(phaseModels_[phasei].T());
-        Info<< "\t"
-            << alpha.name() << " fraction, max, min = "
+        Info<< indent
+            << alpha.name() << " average, max, min = "
             << alpha.weightedAverage(mesh_.V()).value()
             << ' ' << max(alpha).value()
             << ' ' << min(alpha).value() << nl
-            << "\t"
+            << indent
             << T.name() << " max, min = "
             << ' ' << max(T).value()
             << ' ' << min(T).value()
@@ -1201,26 +1252,28 @@ void Foam::phaseSystem::printInfo() const
         if (!phaseModels_[phasei].slavePressure())
         {
             const volScalarField& p(phaseModels_[phasei].p());
-            Info<< "\t"
+            Info<< indent
                 << p.name() << " max, min = "
                 << ' ' << max(p).value()
                 << ' ' << min(p).value() << endl;
         }
-        Info<< endl;
-
+        Info<< endl << decrIndent;
     }
     if (kineticTheoryPtr_.valid())
     {
         if (kineticTheoryPtr_->polydisperse())
         {
             const volScalarField& alpha(kineticTheoryPtr_->alphap());
-            Info<< alpha.name() << " fraction, max, min = "
+            Info<< nl
+                << indent << alpha.name() << " fraction, max, min = "
                 << alpha.weightedAverage(mesh_.V()).value()
                 << ' ' << max(alpha).value()
                 << ' ' << min(alpha).value()
                 << endl;
         }
     }
+    Info<< decrIndent;
+
 }
 
 

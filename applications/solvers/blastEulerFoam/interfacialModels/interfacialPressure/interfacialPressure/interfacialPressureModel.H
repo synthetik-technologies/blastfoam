@@ -107,6 +107,12 @@ public:
 
     // Member Functions
 
+        //- Return the phase pair
+        const phasePair& pair() const
+        {
+            return pair_;
+        }
+
         //- Return the interfacial pressure
         virtual tmp<volScalarField> PI() const = 0;
 

@@ -127,6 +127,12 @@ public:
 
     // Member Functions
 
+        //- Return the phase pair
+        const phasePair& pair() const
+        {
+            return pair_;
+        }
+
         //- Return the pressure relaxation coefficient
         virtual tmp<volScalarField> K
         (

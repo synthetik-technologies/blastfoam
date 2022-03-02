@@ -19,24 +19,23 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::pressureRelaxationODE
+    Foam::instantPressureRelaxation
 
 Description
-    Basic ode solver for coupling phases with pressureRelaxation
+    Using a multivariate root solver find the volume fractions and energy
+    that are in equilibrium between all phases
 
 SourceFiles
-    pressureRelaxationODEI.H
-    pressureRelaxationODE.C
+    instantPressureRelaxation.C
+
 \*---------------------------------------------------------------------------*/
 
-#ifndef pressureRelaxationODE_H
-#define pressureRelaxationODE_H
+#ifndef instantPressureRelaxation_H
+#define instantPressureRelaxation_H
 
 #include "pressureRelaxationSolver.H"
-#include "ODESystem.H"
-#include "ODESolver.H"
-#include "volFields.H"
-#include "simpleMatrix.H"
+#include "rootSolver.H"
+#include "MultivariateEquation.H"
 #include "phaseSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -48,47 +47,47 @@ namespace Foam
                       Class pressureRelaxationODE Declaration
 \*---------------------------------------------------------------------------*/
 
-class pressureRelaxationODE
+class instantPressureRelaxation
 :
     public pressureRelaxationSolver,
-    public ODESystem
+    public MultivariateEquation<scalar>
 {
     // Private Member Functions
 
         //- Disallow copy constructor
-        pressureRelaxationODE(const pressureRelaxationODE&);
+        instantPressureRelaxation(const instantPressureRelaxation&);
 
         //- Disallow default bitwise assignment
-        void operator=(const pressureRelaxationODE&);
+        void operator=(const instantPressureRelaxation&);
 
 
 protected:
+
+
     // Protected data
 
-        //- Ode dictionary
+        //- Root solver dictionary
         const dictionary& dict_;
 
-        //- Temporary field (u1 v1 w1, u2 v2 w2 ...)
-        scalarField q_;
+        //- Root solver
+        autoPtr<rootSolver> rootSolver_;
 
-        //- Temporary rate-of-change of variables field
-        scalarField dqdt_;
+        //- Original densitites
+        scalarList rho0_;
 
-        //- Stored time step
-        volScalarField::Internal deltaT_;
+        //- Original energies
+        scalarList e0_;
 
-        //- Ode solver
-        autoPtr<ODESolver> odeSolver_;
+        //- Original interface pressure
+        scalar PI0_;
 
 
 public:
 
-    TypeName("ode");
+    TypeName("instant");
 
-    // Constructors
-
-        //- Construct from thermo
-        pressureRelaxationODE
+    //- Constructor
+        instantPressureRelaxation
         (
             phaseSystem& fluid,
             interfacialPressureModelTable& interfacialPressureModels,
@@ -97,7 +96,7 @@ public:
 
 
     //- Destructor
-    virtual ~pressureRelaxationODE();
+    virtual ~instantPressureRelaxation();
 
 
     // Member Functions
@@ -106,29 +105,34 @@ public:
         //  and return the characteristic time
         virtual scalar solve(const scalar& deltaT);
 
+
     // ODE functions (overriding abstract functions in ODE.H)
 
             //- Number of ODE's to solve
             virtual label nEqns() const
             {
-                return nEqns_;
+                return pressureRelaxationSolver::nEqns_;
             }
 
-            virtual void derivatives
+            //- Number of implemented derivatives
+            virtual label nDerivatives() const
+            {
+                return 1;
+            }
+
+            virtual void f
             (
-                const scalar t,
-                const scalarField& q,
+                const scalarField& x,
                 const label li,
-                scalarField& dqdt
+                scalarField& fx
             ) const;
 
             virtual void jacobian
             (
-                const scalar t,
-                const scalarField& q,
+                const scalarField& x,
                 const label li,
-                scalarField& dqdt,
-                scalarSquareMatrix& J
+                scalarField& fx,
+                RectangularMatrix<scalar>& J
             ) const;
 };
 

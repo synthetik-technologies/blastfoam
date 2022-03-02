@@ -1,4 +1,5 @@
 EXE_INC = \
+    -DFULLDEBUG -g -O0 \
     -I$(LIB_SRC)/ODE/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
@@ -9,9 +10,10 @@ EXE_INC = \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/phaseCompressible/lnInclude \
     -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
+    -I$(BLAST_DIR)/src/numerics/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/diameterModels/lnInclude \
-    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I../phaseSystems/lnInclude \
     -I../phaseCompressibleMomentumTransportModels/lnInclude
 

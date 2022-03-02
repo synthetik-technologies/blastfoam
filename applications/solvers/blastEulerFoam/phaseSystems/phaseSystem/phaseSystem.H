@@ -61,8 +61,10 @@ class turbulentDispersionModel;
 class massTransferModel;
 class interfacialPressureModel;
 class interfacialVelocityModel;
+class pressureRelaxationModel;
 class dragModel;
 class dragODE;
+class pressureRelaxationSolver;
 class kineticTheorySystem;
 
 class blendingMethod;
@@ -151,6 +153,13 @@ public:
             phasePairKey,
             phasePairKey::hash
         > interfacialVelocityModelTable;
+
+        typedef HashTable
+        <
+            autoPtr<pressureRelaxationModel>,
+            phasePairKey,
+            phasePairKey::hash
+        > pressureRelaxationModelTable;
 
         // Coefficient tables
         typedef HashPtrTable
@@ -261,6 +270,9 @@ protected:
         //- Ode system and solver for solving the  drag system
         autoPtr<dragODE> dragODE_;
 
+        //- Ode system and solver for solving the  drag system
+        autoPtr<pressureRelaxationSolver> pressureSolver_;
+
 
         // Sub Models
 
@@ -296,6 +308,9 @@ protected:
 
             //- Interfacial velocity models
             interfacialVelocityModelTable interfacialVelocityModels_;
+
+            //- Pressure relaxation models
+            pressureRelaxationModelTable pressureRelaxationModels_;
 
 
         //- Stored coefficients
@@ -377,6 +392,9 @@ protected:
 
         //- Solve heat transfer between phases
         void relaxTemperature(const dimensionedScalar& deltaT);
+
+        //- Relax pressure between phases
+        void relaxPressure(const dimensionedScalar& deltaT);
 
 
 public:
