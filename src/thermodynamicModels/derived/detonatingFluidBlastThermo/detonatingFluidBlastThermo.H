@@ -177,6 +177,9 @@ public:
         //- Calculate internal energy from pressure and density
         virtual tmp<volScalarField> calce(const volScalarField& p) const;
 
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
+
         //- Calculate the pressure
         virtual tmp<volScalarField> calcp() const;
 

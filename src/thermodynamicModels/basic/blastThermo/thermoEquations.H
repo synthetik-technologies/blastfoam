@@ -58,9 +58,6 @@ class fluidEEquation
     //- Constant reference to the fluidBlastThermo
     const fluidBlastThermo& thermo_;
 
-    //- Constant reference to the pressure
-    const volScalarField& p_;
-
     //- Non-constant reference to the internal energy
     //  A pointer is used so it can be mutable
     mutable volScalarField* e_;
@@ -68,14 +65,17 @@ class fluidEEquation
     //- Saved old internal energy
     scalar eOld_;
 
+    //- Current pressure
+    scalar p_;
+
 public:
     fluidEEquation(fluidBlastThermo& thermo)
     :
         equation(-great, great),
         thermo_(thermo),
-        p_(thermo_.p()),
         e_(&thermo.he()),
-        eOld_(0.0)
+        eOld_(0.0),
+        p_(0.0)
     {}
 
     //- Return the number of derivatives
@@ -85,9 +85,10 @@ public:
     }
 
     // Save the old energy
-    void save(const label li)
+    void save(const scalar p, const label li)
     {
         eOld_ = (*e_)[li];
+        p_ = p;
     }
 
     // Revert to the old energy
@@ -100,7 +101,7 @@ public:
     virtual scalar fx(const scalar e, const label li) const
     {
         (*e_)[li] = e;
-        return thermo_.cellpRhoT(li, false) - p_[li];
+        return thermo_.cellpRhoT(li, false) - p_;
     }
 
     //- Return the derivative of pressure w.r.t. energy

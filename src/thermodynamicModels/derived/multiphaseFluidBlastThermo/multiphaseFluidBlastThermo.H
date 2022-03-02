@@ -228,6 +228,9 @@ public:
         //- Calculate internal energy
         virtual tmp<volScalarField> calce(const volScalarField&) const;
 
+        //- Calculate internal energy for a cell
+        virtual scalar calcCelle(const scalar p, const label) const;
+
         //- Return the thermo name
         virtual word thermoName() const
         {

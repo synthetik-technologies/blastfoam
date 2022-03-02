@@ -170,8 +170,15 @@ public:
 
         // Fields derived from thermodynamic state variables
 
-            //- Calclate internal energy [J/kg]
+            //- Calculate internal energy [J/kg]
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
+
+            //- Calculate internal energy for a cell
+            virtual scalar calcCelle
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
 
             //- Recompute the density
             virtual void updateRho();

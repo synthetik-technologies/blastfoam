@@ -165,6 +165,13 @@ public:
             //- Calculate internal energy given a pressure
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;
 
+            //- Calculate internal energy for a cell
+            virtual scalar calcCelle
+            (
+                const scalar p,
+                const label celli
+            ) const = 0;
+
             //- Calculate Gamma = dpde
             virtual tmp<volScalarField> Gamma() const = 0;
 

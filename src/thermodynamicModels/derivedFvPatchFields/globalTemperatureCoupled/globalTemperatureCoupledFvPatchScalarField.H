@@ -100,6 +100,9 @@ class globalTemperatureCoupledFvPatchScalarField
         //- Name of the radiative heat flux in local region
         const word qrName_;
 
+        //- Is the temperature gradient limited
+        bool limitGrad_;
+
         //- Thickness of layers
         scalarList thicknessLayers_;
 

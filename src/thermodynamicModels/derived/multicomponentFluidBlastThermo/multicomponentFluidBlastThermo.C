@@ -480,6 +480,24 @@ Foam::multicomponentFluidBlastThermo<Thermo>::calce
 
 
 template<class Thermo>
+Foam::scalar
+Foam::multicomponentFluidBlastThermo<Thermo>::calcCelle
+(
+    const scalar p,
+    const label celli
+) const
+{
+    return this->mixture_[celli].initializeEnergy
+    (
+        p,
+        this->rho_[celli],
+        this->e_[celli],
+        this->T_[celli]
+    );
+}
+
+
+template<class Thermo>
 Foam::tmp<Foam::volScalarField>
 Foam::multicomponentFluidBlastThermo<Thermo>::calcp() const
 {

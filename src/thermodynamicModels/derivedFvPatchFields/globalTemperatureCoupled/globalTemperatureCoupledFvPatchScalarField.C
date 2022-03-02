@@ -132,6 +132,7 @@ globalTemperatureCoupledFvPatchScalarField
     hName_("none"),
     qrNbrName_("none"),
     qrName_("none"),
+    limitGrad_(false),
     thicknessLayers_(0),
     kappaLayers_(0),
     contactRes_(0),
@@ -158,6 +159,7 @@ globalTemperatureCoupledFvPatchScalarField
     hName_(dict.lookupOrDefault<word>("h", "none")),
     qrNbrName_(dict.lookupOrDefault<word>("qrNbr", "none")),
     qrName_(dict.lookupOrDefault<word>("qr", "none")),
+    limitGrad_(dict.lookupOrDefault("limitGrad", false)),
     thicknessLayers_(0),
     kappaLayers_(0),
     contactRes_(0.0),
@@ -217,6 +219,7 @@ globalTemperatureCoupledFvPatchScalarField
     hName_(psf.hName_),
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
+    limitGrad_(psf.limitGrad_),
     thicknessLayers_(psf.thicknessLayers_),
     kappaLayers_(psf.kappaLayers_),
     contactRes_(psf.contactRes_),
@@ -241,6 +244,7 @@ globalTemperatureCoupledFvPatchScalarField
     hName_(psf.hName_),
     qrNbrName_(psf.qrNbrName_),
     qrName_(psf.qrName_),
+    limitGrad_(psf.limitGrad_),
     thicknessLayers_(psf.thicknessLayers_),
     kappaLayers_(psf.kappaLayers_),
     contactRes_(psf.contactRes_),
@@ -357,7 +361,40 @@ void globalTemperatureCoupledFvPatchScalarField::updateCoeffs()
 
     valueFraction() = KDeltaNbr/(KDeltaNbr + KDelta);
     refValue() = TcNbr;
-    refGrad() = q/kappa(*this);
+    scalarField grad(q/kappa(*this));
+
+    if (limitGrad_)
+    {
+        // Limit gradients based on neighbour cells and max/min
+        // coupled region
+        scalarField minT(min(min(nbrTp.internalField()).value(), TcOwn));
+        scalarField maxT(max(max(nbrTp.internalField()).value(), TcOwn));
+        const scalarField& vf = valueFraction();
+
+        scalarField minGradT
+        (
+            (
+                (minT - vf*refValue())/max(1.0 - vf, small)
+              - patchInternalField()
+            )*patch().deltaCoeffs()
+        );
+        scalarField maxGradT
+        (
+            (
+                (maxT - vf*refValue())/max(1.0 - vf, small)
+              - patchInternalField()
+            )*patch().deltaCoeffs()
+        );
+
+        //- Make sure resulting temperature is within  physical bounds
+        forAll(grad, i)
+        {
+            grad[i] =
+                vf[i] > small
+              ? min(max(grad[i], minGradT[i]), maxGradT[i]) : grad[i];
+        }
+    }
+    refGrad() = grad;
 
     if (cgpp.hasUnmappedFaces())
     {
@@ -396,12 +433,33 @@ void globalTemperatureCoupledFvPatchScalarField::write
 ) const
 {
     mixedFvPatchScalarField::write(os);
-    writeEntry(os, "Tnbr", TnbrName_);
-    writeEntry(os, "qrNbr", qrNbrName_);
-    writeEntry(os, "qr", qrName_);
-    writeEntry(os, "thicknessLayers", thicknessLayers_);
-    writeEntry(os, "kappaLayers", kappaLayers_);
-    writeEntry(os, "unmappedT", unmappedT_);
+    writeEntryIfDifferent<word>(os, "Tnbr", "T", TnbrName_);
+    writeEntryIfDifferent<word>(os, "qrNbr", "none", qrNbrName_);
+    writeEntryIfDifferent<word>(os, "qr", "none", qrName_);
+    writeEntryIfDifferent<word>(os, "hNbr", "none", hNbrName_);
+    writeEntryIfDifferent<word>(os, "h", "none", hName_);
+    if (thicknessLayers_.size())
+    {
+        writeEntry(os, "thicknessLayers", thicknessLayers_);
+    }
+    if (kappaLayers_.size())
+    {
+        writeEntry(os, "kappaLayers", kappaLayers_);
+    }
+    writeEntryIfDifferent<scalar>
+    (
+        os,
+        "unmappedT",
+        constant::thermodynamic::Tstd,
+        unmappedT_
+    );
+    writeEntryIfDifferent<scalar>
+    (
+        os,
+        "limitGrad",
+        false,
+        limitGrad_
+    );
 }
 
 

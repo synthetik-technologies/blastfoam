@@ -391,7 +391,7 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
         }
         else
         {
-            EEqn_.save(celli);
+            EEqn_.save(this->p_[celli], celli);
             eInit[celli] = ESolver_->solve(e[celli], celli);
             EEqn_.reset(celli);
         }
@@ -402,6 +402,27 @@ Foam::multiphaseFluidBlastThermo::calce(const volScalarField& p) const
     }
 
     return eInitTmp;
+}
+
+
+Foam::scalar Foam::multiphaseFluidBlastThermo::calcCelle
+(
+    const scalar p,
+    const label celli
+) const
+{
+    scalar e;
+    if (mag(celldpde(celli)) < small)
+    {
+        e = cellHE(T_[celli], celli);
+    }
+    else
+    {
+        EEqn_.save(p, celli);
+        e = ESolver_->solve(this->e_[celli], celli);
+        EEqn_.reset(celli);
+    }
+    return e;
 }
 
 
