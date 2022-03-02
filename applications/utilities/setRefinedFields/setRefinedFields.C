@@ -1190,7 +1190,6 @@ int main(int argc, char *argv[])
             // Update mesh (return if mesh changes)
             if (!end)
             {
-                Pout<<"refine"<<endl;
                 prepareToStop = !refiner->refine(error, maxCellLevel);
             }
         }

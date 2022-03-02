@@ -51,106 +51,6 @@ Description
 
 using namespace Foam;
 
-
-//- Read and add fields to the database
-template<class Type, template<class> class Patch, class Mesh>
-void readGeoFields(const fvMesh& mesh, const IOobjectList& objects)
-{
-    typedef GeometricField<Type, Patch, Mesh> FieldType;
-
-    IOobjectList fields = objects.lookupClass(FieldType::typeName);
-    forAllIter(IOobjectList, fields, fieldIter)
-    {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
-        {
-            IOobject fieldTargetIOobject
-            (
-                fieldIter()->name(),
-                mesh.time().timeName(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            );
-
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
-            {
-                FieldType* fPtr
-                (
-                    new FieldType
-                    (
-                        fieldTargetIOobject,
-                        mesh
-                    )
-                );
-                fPtr->store(fPtr);
-            }
-        }
-    }
-}
-
-
-//- Read and add fields to the database
-template<class Type>
-void readPointFields(const fvMesh& mesh, const IOobjectList& objects)
-{
-    typedef GeometricField<Type, pointPatchField, pointMesh> FieldType;
-    IOobjectList fields = objects.lookupClass(FieldType::typeName);
-    forAllIter(IOobjectList, fields, fieldIter)
-    {
-        if (!mesh.foundObject<FieldType>(fieldIter()->name()))
-        {
-            IOobject fieldTargetIOobject
-            (
-                fieldIter()->name(),
-                mesh.time().timeName(),
-                mesh,
-                IOobject::MUST_READ,
-                IOobject::AUTO_WRITE
-            );
-
-            if (fieldTargetIOobject.typeHeaderOk<FieldType>(true))
-            {
-                FieldType* fPtr
-                (
-                    new FieldType
-                    (
-                        fieldTargetIOobject,
-                        pointMesh::New(mesh)
-                    )
-                );
-                fPtr->store(fPtr);
-            }
-        }
-    }
-}
-
-
-//- Read and add all fields to the database
-void readAndAddAllFields(const fvMesh& mesh)
-{
-    // Get all fields present at the current time
-    IOobjectList objects(mesh, mesh.time().timeName());
-
-    readGeoFields<scalar, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<vector, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<symmTensor, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<sphericalTensor, fvPatchField, volMesh>(mesh, objects);
-    readGeoFields<tensor, fvPatchField, volMesh>(mesh, objects);
-
-    readGeoFields<scalar, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<vector, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<symmTensor, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<sphericalTensor, fvsPatchField, surfaceMesh>(mesh, objects);
-    readGeoFields<tensor, fvsPatchField, surfaceMesh>(mesh, objects);
-
-    readPointFields<scalar>(mesh, objects);
-    readPointFields<vector>(mesh, objects);
-    readPointFields<symmTensor>(mesh, objects);
-    readPointFields<sphericalTensor>(mesh, objects);
-    readPointFields<tensor>(mesh, objects);
-}
-
-
 wordList addEmptyPatches(fvMesh& mesh, const PtrList<entry>& entries)
 {
     // Find new patches and add them to the mesh
@@ -328,75 +228,6 @@ void updateTopoSets
         Info<< endl;
     }
     topoSets.transferZones(false);
-}
-
-
-// Filter out the empty patches.
-void filterPatches(fvMesh& mesh, const HashSet<word>& addedPatchNames)
-{
-    // Remove any zero-sized ones. Assumes
-    // - processor patches are already only there if needed
-    // - all other patches are available on all processors
-    // - but coupled ones might still be needed, even if zero-size
-    //   (e.g. processorCyclic)
-    // See also logic in createPatch.
-    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
-
-    labelList oldToNew(pbm.size(), -1);
-    label newPatchi = 0;
-    forAll(pbm, patchi)
-    {
-        const polyPatch& pp = pbm[patchi];
-
-        if (!isA<processorPolyPatch>(pp))
-        {
-            if
-            (
-                isA<coupledPolyPatch>(pp)
-             || returnReduce(pp.size(), sumOp<label>())
-             || addedPatchNames.found(pp.name())
-            )
-            {
-                // Coupled (and unknown size) or uncoupled and used
-                oldToNew[patchi] = newPatchi++;
-            }
-        }
-    }
-
-    forAll(pbm, patchi)
-    {
-        const polyPatch& pp = pbm[patchi];
-
-        if (isA<processorPolyPatch>(pp))
-        {
-            oldToNew[patchi] = newPatchi++;
-        }
-    }
-
-
-    const label nKeepPatches = newPatchi;
-
-    // Shuffle unused ones to end
-    if (nKeepPatches != pbm.size())
-    {
-        Info<< endl
-            << "Removing zero-sized patches:" << endl << incrIndent;
-
-        forAll(oldToNew, patchi)
-        {
-            if (oldToNew[patchi] == -1)
-            {
-                Info<< indent << pbm[patchi].name()
-                    << " type " << pbm[patchi].type()
-                    << " at position " << patchi << endl;
-                oldToNew[patchi] = newPatchi++;
-            }
-        }
-        Info<< decrIndent;
-
-        fvMeshTools::reorderPatches(mesh, oldToNew, nKeepPatches, true);
-        Info<< endl;
-    }
 }
 
 
@@ -804,14 +635,10 @@ int main(int argc, char *argv[])
     // Do not load in fields
     bool noFields(args.optionFound("noFields"));
 
-    // Do not write fields
-    // Usefull if a refined mesh is needed before mesh manipulation
-    bool noWrite(args.optionFound("noWrite") || noFields);
-
-    bool noRefine(args.optionFound("noRefine"));
-    bool overwrite(args.optionFound("overwrite"));
-    bool noHistory(args.optionFound("noHistory"));
     bool debug(args.optionFound("debug"));
+    bool noRefine(args.optionFound("noRefine"));
+    bool overwrite(args.optionFound("overwrite") && !debug);
+    bool noHistory(args.optionFound("noHistory"));
 
     //- Is the mesh balanced
     autoPtr<fvMeshRefiner> refiner;
@@ -837,6 +664,9 @@ int main(int argc, char *argv[])
     }
     bool refine = refiner.valid();
 
+    // Store the original instance
+    fileName oldFacesInstance = mesh.facesInstance();
+
     volScalarField error
     (
         IOobject
@@ -852,7 +682,7 @@ int main(int argc, char *argv[])
     // Read in all fields to allow resizing
     if (!noFields)
     {
-        readAndAddAllFields(mesh);
+        meshTools::readAndStoreFields(mesh);
     }
 
     //- List of sources (and backups if present)
@@ -878,6 +708,22 @@ int main(int argc, char *argv[])
       : refineCutDict.lookupOrDefault<label>("maxRefinement", 0)
     );
 
+
+    // Remove cells in the selected regions
+    PtrList<entry> setsToRemove(refineCutDict.lookup("remove"));
+
+    // Remove cells in the selected regions
+    PtrList<entry> patchesToAdd(refineCutDict.lookup("patches"));
+
+    // Add baffles
+    PtrList<entry> bafflesToAdd(refineCutDict.lookup("baffles"));
+
+    // Zones protected from distribution
+    wordReList protectedZones;
+    if (bafflesToAdd.size() && refiner.valid())
+    {
+        refiner().balancer().preserveBaffles();
+    }
 
     // Maximum number of iterations
     label iter = 0;
@@ -1020,6 +866,7 @@ int main(int argc, char *argv[])
                     );
 
                 // Set actual max cell level
+                const label level = levels[regionI];
                 const labelList& owner = mesh.faceOwner();
                 const labelList& neighbour = mesh.faceNeighbour();
                 const labelListList& pointCells = mesh.pointCells();
@@ -1027,7 +874,7 @@ int main(int argc, char *argv[])
                 {
                     forAll(refineCells, celli)
                     {
-                        maxCellLevel[refineCells[celli]] = levels[regionI];
+                        maxCellLevel[refineCells[celli]] = level;
                     }
 
                     forAll(refineFaces, fi)
@@ -1036,7 +883,7 @@ int main(int argc, char *argv[])
                         maxCellLevel[owner[facei]] = levels[regionI];
                         if (facei < mesh.nInternalFaces())
                         {
-                            maxCellLevel[neighbour[facei]] = levels[regionI];
+                            maxCellLevel[neighbour[facei]] = level;
                         }
                     }
                     forAll(refinePoints, pi)
@@ -1045,7 +892,7 @@ int main(int argc, char *argv[])
                         const labelList& pc = pointCells[pointi];
                         forAll(pc, ci)
                         {
-                            maxCellLevel[pc[ci]] = levels[regionI];
+                            maxCellLevel[pc[ci]] = level;
                         }
                     }
                 }
@@ -1057,7 +904,7 @@ int main(int argc, char *argv[])
                             max
                             (
                                 maxCellLevel[refineCells[celli]],
-                                levels[regionI]
+                                level
                             );
                     }
                     forAll(refineFaces, fi)
@@ -1067,7 +914,7 @@ int main(int argc, char *argv[])
                             max
                             (
                                 maxCellLevel[owner[facei]],
-                                levels[regionI]
+                                level
                             );
                         if (facei < mesh.nInternalFaces())
                         {
@@ -1075,7 +922,7 @@ int main(int argc, char *argv[])
                                 max
                                 (
                                     maxCellLevel[neighbour[facei]],
-                                    levels[regionI]
+                                    level
                                 );
                         }
                     }
@@ -1102,8 +949,8 @@ int main(int argc, char *argv[])
                 forAll(refineFaces, fi)
                 {
                     const label facei = refineFaces[fi];
-                    error[owner[facei]] = 1.0;
 
+                    error[owner[facei]] = 1.0;
                     if (facei < mesh.nInternalFaces())
                     {
                         error[neighbour[facei]] = 1.0;
@@ -1166,26 +1013,8 @@ int main(int argc, char *argv[])
             if (debug)
             {
                 mesh.setInstance(runTime.timeName());
-                bool writeOk = (mesh.write() && refiner->write());
-                volScalarField scalarMaxCellLevel
-                (
-                    volScalarField::New
-                    (
-                        "maxCellLevel",
-                        mesh,
-                        dimensionedScalar(dimless, 0),
-                        extrapolatedCalculatedFvPatchField<scalar>::typeName
-                    )
-                );
-
-                forAll(cellLevel, celli)
-                {
-                    scalarMaxCellLevel[celli] = maxCellLevel[celli];
-                }
-                scalarMaxCellLevel.correctBoundaryConditions();
-                writeOk =
-                    writeOk
-                 && scalarMaxCellLevel.write();
+                runTime.write();
+                mesh.write();
 
                 Info<< "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
                 << "  ClockTime = " << runTime.elapsedClockTime() << " s"
@@ -1197,6 +1026,25 @@ int main(int argc, char *argv[])
             {
                 prepareToStop = !refiner->refine(error, maxCellLevel);
             }
+
+            //- Count the number of cells at each level
+            {
+                Info<< "Cell level distribution:" << endl;
+                labelList nCells(maxLevel + 1, 0);
+                const labelList& cellLevel = refiner->cellLevel();
+                for (label leveli = 0; leveli < nCells.size(); leveli++)
+                {
+                    forAll(cellLevel, celli)
+                    {
+                        if (cellLevel[celli] == leveli)
+                        {
+                            nCells[leveli]++;
+                        }
+                    }
+                    Info<<"level " << leveli << ": "
+                        << returnReduce(nCells[leveli], sumOp<label>()) << endl;
+                }
+            }
         }
         iter++;
     }
@@ -1206,15 +1054,7 @@ int main(int argc, char *argv[])
         refiner.clear();
     }
 
-
-    // Remove cells in the selected regions
-    PtrList<entry> setsToRemove(refineCutDict.lookup("remove"));
-
-    // Remove cells in the selected regions
-    PtrList<entry> patchesToAdd(refineCutDict.lookup("patches"));
-
     // Add baffles
-    PtrList<entry> bafflesToAdd(refineCutDict.lookup("baffles"));
     PtrListDictionary<entry> bafflePatchesToAdd(bafflesToAdd.size()*2);
     List<Pair<word>> bafflePatches(bafflesToAdd.size());
 
@@ -1259,7 +1099,15 @@ int main(int argc, char *argv[])
 //             mesh.movePoints(map().preMotionPoints());
 //             mesh.moving(false);
 //         }
+
+        if (debug)
+        {
+            runTime++;
+            runTime.write();
+            mesh.write();
+        }
     }
+
 
     // Find new patches and add them to the mesh
     if (patchesToAdd.size())
@@ -1307,6 +1155,13 @@ int main(int argc, char *argv[])
 //             mesh.movePoints(map().preMotionPoints());
 //             mesh.moving(false);
 //         }
+
+        if (debug)
+        {
+            runTime++;
+            runTime.write();
+            mesh.write();
+        }
     }
 
     // Find new patches and add them to the mesh
@@ -1405,10 +1260,10 @@ int main(int argc, char *argv[])
             const entry& patchEntry = bafflesToAdd[bafflei];
             const dictionary& patchDict = patchEntry.dict();
             const word patchName = patchEntry.keyword();
-            const word setName = patchDict.lookup<word>("set");
+            const word zoneName = patchDict.lookup<word>("zone");
             PackedBoolList modifiedFace(mesh.nFaces());
-            const label zoneID = mesh.faceZones().findIndex(setName);
 
+            const label zoneID = mesh.faceZones().findIndex(zoneName);
             const faceZone& fZone(mesh.faceZones()[zoneID]);
 
             meshTools::createBaffleFaces
@@ -1433,32 +1288,33 @@ int main(int argc, char *argv[])
 //         }
     }
 
+
     // Synchronise points.
-//     if (!pointSync)
-//     {
-//         Info<< "Not synchronising points." << nl << endl;
-//     }
-//     else
-//     {
-//         Info<< "Synchronising points." << nl << endl;
-//
-//         pointField newPoints(mesh.points());
-//
-//         syncPoints
-//         (
-//             mesh,
-//             newPoints,
-//             minMagSqrEqOp<vector>(),
-//             point(great, great, great)
-//         );
-//
-//         scalarField diff(mag(newPoints-mesh.points()));
-//         Info<< "Points changed by average:" << gAverage(diff)
-//             << " max:" << gMax(diff) << nl << endl;
-//
-//         mesh.movePoints(newPoints);
-//         mesh.moving(false);
-//     }
+    if (!refineCutDict.lookupOrDefault("syncPoints", true))
+    {
+        Info<< "Not synchronising points." << nl << endl;
+    }
+    else
+    {
+        Info<< "Synchronising points." << nl << endl;
+
+        pointField newPoints(mesh.points());
+
+        syncPoints
+        (
+            mesh,
+            newPoints,
+            minMagSqrEqOp<vector>(),
+            point(great, great, great)
+        );
+
+        scalarField diff(mag(newPoints-mesh.points()));
+        Info<< "Points changed by average:" << gAverage(diff)
+            << " max:" << gMax(diff) << nl << endl;
+
+        mesh.movePoints(newPoints);
+        mesh.moving(false);
+    }
 
 //     autoPtr<mapPolyMesh> map = meshMod.changeMesh(mesh, false);
 //     mesh.updateMesh(map());
@@ -1468,12 +1324,6 @@ int main(int argc, char *argv[])
 //     {
 //         mesh.movePoints(map().preMotionPoints());
 //     }
-
-
-    if (overwrite)
-    {
-        mesh.setInstance(runTime.constant());
-    }
 
     bool writeMesh = topoSets.writeSets();
     if (refine && !debug)
@@ -1495,12 +1345,18 @@ int main(int argc, char *argv[])
     }
 
     // Remove any now zero-sized patches
-    filterPatches(mesh, addedPatches);
+    meshTools::filterPatches(mesh, addedPatches);
 
-//     if (writeMesh)
+    if (!overwrite)
     {
-        mesh.write();
+        runTime++;
     }
+    else
+    {
+        mesh.setInstance(oldFacesInstance);
+    }
+    runTime.write();
+    mesh.write();
 
     Info<< "\nEnd\n" << nl
         << "ExecutionTime = " << runTime.elapsedCpuTime() << " s"
