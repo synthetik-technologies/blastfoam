@@ -39,6 +39,7 @@ SourceFiles
 #include "isoSurface.H"
 #include "NamedEnum.H"
 #include "surfaceFields.H"
+#include "searchableSurface.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -84,8 +85,8 @@ private:
         //- Level set function
         volScalarField levelSet_;
 
-        //- Optional truncated levelSet
-        autoPtr<volScalarField> tlevelSet_;
+        //- Heavy-side function
+        volScalarField H_;
 
         //- Interface normal direction
         surfaceScalarField nHatf_;
@@ -98,10 +99,6 @@ private:
 
         //- True interface thickness (dx*epsilon0)
         volScalarField epsilon_;
-
-        //- Power used to smooth the levelSet function for more diffuse
-        //  interface. This is used to compute surface normals
-        scalar smoothPow_;
 
         //- Use distributed triSurface
         bool useDistributed_;
@@ -121,9 +118,6 @@ private:
         //- Dictionary used to construct distributedTriSurfaceMesh
         mutable dictionary triMeshDict_;
 
-        //- Stored isoSurface
-        mutable autoPtr<isoSurface> contourPtr_;
-
 
 public:
 
@@ -137,7 +131,8 @@ public:
         levelSetModel
         (
             volScalarField& alpha,
-            const dictionary& dict
+            const dictionary& dict,
+            const bool mustRead = true
         );
 
     //- Destructor
@@ -160,10 +155,16 @@ public:
                 return levelSet_;
             }
 
-            //- Return the truncated levelSet function
-            const volScalarField& tlevelSet() const
+            //- Return the heavy-side function
+            const volScalarField& H() const
             {
-                return tlevelSet_.valid() ? tlevelSet_() : levelSet_;
+                return H_;
+            }
+
+            //- Access the heavy-side function
+            volScalarField& H()
+            {
+                return H_;
             }
 
             //- Return the interface thickness parameter
@@ -184,44 +185,47 @@ public:
                 return K_;
             }
 
-            //- Return the isoSurface
-            const isoSurface& contour() const;
-
 
         //- Update and optionally calculate distance
-        void correct(const bool redistance = false);
+        void correct(const bool updateH = true);
+
+        //- Update the epsilon field
+        void updateEpsilon();
 
         //- Compute the level set function
-        tmp<volScalarField> calcLevelSet(const volScalarField&) const;
+        tmp<volScalarField> calcH(const volScalarField& ls) const;
 
-        //- Compute the level set function
-        tmp<volScalarField> calcDistance(const volScalarField&) const;
+        //- Compute the distance function using the inverse levelSet function
+        tmp<volScalarField> calcLevelSet(const volScalarField& H) const;
+
+        // Calculate the levelSet from a list of searchableSurfaces
+        tmp<volScalarField> calcLevelSet
+        (
+            const volScalarField& alpha,
+            const UPtrList<searchableSurface>& regions
+        ) const;
+
+        //- Calculate and return the distance from the interface
+        tmp<volScalarField> calcLevelSet
+        (
+            const volScalarField& isoField,
+            const scalar isoValue
+        ) const;
+
+        //- Recompute distance from levelSet 0
+        void redistance();
 
         //- Return the calculated volume fraction (0-1)
         tmp<volScalarField> alpha() const;
 
-        //- Calculate and return the distance from the interface
-        tmp<volScalarField> distance() const;
-
         //- Interface indictator function
         tmp<volScalarField> nearInterface() const;
-
-        //- Interface cells
-        labelList interfaceCells() const;
-
-        //- Return the smoothed levelSet function
-        tmp<volScalarField> psi() const;
-
-        //- Return the gradient of the smoothed level set function
-        tmp<volVectorField> gradLevelSet() const;
-
-        //- Return the gradient of the volume fraction
-        tmp<volVectorField> gradAlpha() const;
 
         //- Return interface normal
         tmp<volVectorField> nHat() const;
 
-
+        //- Return the gradient of the volume fraction
+        tmp<volVectorField> gradAlpha() const;
 };
 
 

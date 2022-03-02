@@ -25,7 +25,8 @@ License
 
 #include "topoSetList.H"
 #include "topoSetSource.H"
-#include "processorPolyPatch.H"
+#include "coupledPolyPatch.H"
+#include "syncTools.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -204,7 +205,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
             if (facei >= mesh.nInternalFaces())
             {
                 const label patchi = mesh.boundaryMesh().whichPatch(facei);
-                if (isA<processorPolyPatch>(mesh.boundaryMesh()[patchi]))
+                if (isA<coupledPolyPatch>(mesh.boundaryMesh()[patchi]))
                 {
                     internalFaces.insert(faces[fi]);
                 }
@@ -251,38 +252,40 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
     {
         const labelList& owner = mesh.faceOwner();
         const labelList& neighbour = mesh.faceNeighbour();
+        PackedBoolList markedFaces(mesh.nFaces());
         forAll(faces, fi)
         {
             const label facei = faces[fi];
-            if (facei < mesh.nInternalFaces())
+            bool added = false;
             {
-                bool added = false;
+                const cell& c = mesh.cells()[owner[facei]];
+                forAll(c, fj)
                 {
-                    const cell& c = mesh.cells()[owner[facei]];
-                    forAll(c, fj)
+                    if (!selectedFaces.found(c[fj]))
                     {
-                        if (!selectedFaces.found(c[fj]))
-                        {
-                            interfaceFaces.insert(facei);
-                            added = true;
-                            break;
-                        }
+                        markedFaces.set(facei);
+                        added = true;
+                        break;
                     }
                 }
-                if (!added)
+            }
+            if (facei < mesh.nInternalFaces() && !added)
+            {
+                const cell& c = mesh.cells()[neighbour[facei]];
+                forAll(c, fj)
                 {
-                    const cell& c = mesh.cells()[neighbour[facei]];
-                    forAll(c, fj)
+                    if (!selectedFaces.found(c[fj]))
                     {
-                        if (!selectedFaces.found(c[fj]))
-                        {
-                            interfaceFaces.insert(facei);
-                            break;
-                        }
+                        markedFaces.set(facei);
+                        break;
                     }
                 }
             }
         }
+
+        syncTools::syncFaceList(mesh, markedFaces, orEqOp<uint>());
+
+        interfaceFaces.insert(markedFaces.used());
 
         if (sType == INTERFACE)
         {
@@ -984,46 +987,15 @@ void Foam::topoSetList::updateMesh(const mapPolyMesh& morphMap)
 {
     forAllConstIter(HashPtrTable<topoSet>, cellTopoSets_, iter)
     {
-        if (isA<cellZoneSet>(*iter()))
-        {
-            const cellZone& cz = mesh_.cellZones()[iter.key()];
-            cellZoneSet& czs = dynamicCast<cellZoneSet>(*iter());
-            czs.addressing() = cz;
-            czs.updateSet();
-        }
-        else
-        {
-            iter()->updateMesh(morphMap);
-        }
+        iter()->updateMesh(morphMap);
     }
     forAllConstIter(HashPtrTable<topoSet>, faceTopoSets_, iter)
     {
-        if (isA<faceZoneSet>(*iter()))
-        {
-            const faceZone& fz = mesh_.faceZones()[iter.key()];
-            faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
-            fzs.addressing() = fz;
-            fzs.flipMap() = fz.flipMap();
-            fzs.updateSet();
-        }
-        else
-        {
-            iter()->updateMesh(morphMap);
-        }
+        iter()->updateMesh(morphMap);
     }
     forAllConstIter(HashPtrTable<topoSet>, pointTopoSets_, iter)
     {
-        if (isA<pointZoneSet>(*iter()))
-        {
-            const pointZone& pz = mesh_.pointZones()[iter.key()];
-            pointZoneSet& pzs = dynamicCast<pointZoneSet>(*iter());
-            pzs.addressing() = pz;
-            pzs.updateSet();
-        }
-        else
-        {
-            iter()->updateMesh(morphMap);
-        }
+        iter()->updateMesh(morphMap);
     }
 }
 
@@ -1042,9 +1014,8 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
     {
         if (isA<cellZoneSet>(*iter()))
         {
-            const cellZone& cz = mesh_.cellZones()[iter.key()];
             cellZoneSet& czs = dynamicCast<cellZoneSet>(*iter());
-            czs.addressing() = cz;
+            map.distributeCellIndices(czs.addressing());
             czs.updateSet();
         }
         else
@@ -1059,10 +1030,20 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
     {
         if (isA<faceZoneSet>(*iter()))
         {
-            const faceZone& fz = mesh_.faceZones()[iter.key()];
             faceZoneSet& fzs = dynamicCast<faceZoneSet>(*iter());
-            fzs.addressing() = fz;
-            fzs.flipMap() = fz.flipMap();
+            boolList flipMap(mesh_.nFaces(), false);
+            forAll(fzs.addressing(), fi)
+            {
+                flipMap[fzs.addressing()[fi]] = fzs.flipMap()[fi];
+            }
+            map.distributeFaceIndices(fzs.addressing());
+            map.distributeFaceData(flipMap);
+
+            fzs.flipMap().resize(fzs.addressing().size());
+            forAll(fzs.addressing(), fi)
+            {
+                fzs.flipMap()[fi] = flipMap[fzs.addressing()[fi]];
+            }
             fzs.updateSet();
         }
         else
@@ -1077,15 +1058,14 @@ void Foam::topoSetList::distribute(const mapDistributePolyMesh& map)
     {
         if (isA<pointZoneSet>(*iter()))
         {
-            const pointZone& pz = mesh_.pointZones()[iter.key()];
             pointZoneSet& pzs = dynamicCast<pointZoneSet>(*iter());
-            pzs.addressing() = pz;
+            map.distributePointIndices(pzs.addressing());
             pzs.updateSet();
         }
         else
         {
             labelList addr(iter()->toc());
-            map.distributeFaceIndices(addr);
+            map.distributePointIndices(addr);
             static_cast<labelHashSet&>(*iter()) = addr;
             iter()->sync(mesh_);
         }

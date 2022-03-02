@@ -30,6 +30,8 @@ License
 #include "faceZoneSet.H"
 #include "pointSet.H"
 #include "pointZoneSet.H"
+#include "coupledPolyPatch.H"
+#include "syncTools.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -43,24 +45,37 @@ namespace Foam
 Foam::labelList
 Foam::backupTopoSetSource::cellsToFaces(const labelList& cells) const
 {
-    labelHashSet selectedFaces;
+    PackedBoolList markedFaces(mesh_.nFaces());
     forAll(cells, ci)
     {
-        selectedFaces.insert(mesh_.cells()[cells[ci]]);
+        const labelList& cFaces = mesh_.cells()[cells[ci]];
+        forAll(cFaces, fi)
+        {
+            markedFaces.set(cFaces[fi]);
+        }
     }
-    return selectedFaces.toc();
+    syncTools::syncFaceList(mesh_, markedFaces, orEqOp<uint>());
+
+    return markedFaces.used();
 }
 
 
 Foam::labelList
 Foam::backupTopoSetSource::cellsToPoints(const labelList& cells) const
 {
-    labelHashSet selectedPoints;
+    PackedBoolList markedPoints(mesh_.nPoints());
     forAll(cells, ci)
     {
-        selectedPoints.insert(mesh_.cellPoints()[cells[ci]]);
+        const labelList& cPoints = mesh_.cellPoints()[cells[ci]];
+        forAll(cPoints, pi)
+        {
+            markedPoints.set(cPoints[pi]);
+        }
     }
-    return selectedPoints.toc();
+
+    syncTools::syncPointList(mesh_, markedPoints, orEqOp<uint>(), 0);
+
+    return markedPoints.used();
 }
 
 
@@ -98,12 +113,18 @@ Foam::backupTopoSetSource::facesToCells(const labelList& faces) const
 Foam::labelList
 Foam::backupTopoSetSource::facesToPoints(const labelList& faces) const
 {
-    labelHashSet selectedPoints;
+    PackedBoolList markedPoints(mesh_.nPoints());
     forAll(faces, fi)
     {
-        selectedPoints.insert(mesh_.faces()[faces[fi]]);
+        const labelList& fPoints = mesh_.faces()[faces[fi]];
+        forAll(fPoints, pi)
+        {
+            markedPoints.set(fPoints[pi]);
+        }
     }
-    return selectedPoints.toc();
+
+    syncTools::syncPointList(mesh_, markedPoints, orEqOp<uint>(), false);
+    return markedPoints.used();
 }
 
 
@@ -372,13 +393,13 @@ void Foam::backupTopoSetSource::updateSets()
     }
     else if (isFace())
     {
-        if (setType() == topoSetSource::FACEZONESOURCE)
-        {
-            const faceZoneSet& fsz = dynamicCast<const faceZoneSet&>(set);
-            selectedFaces_ = fsz.addressing();
-            flipMap_ = fsz.flipMap();
-        }
-        else
+//         if (setType() == topoSetSource::FACEZONESOURCE)
+//         {
+//             const faceZoneSet& fsz = dynamicCast<const faceZoneSet&>(set);
+//             selectedFaces_ = fsz.addressing();
+//             flipMap_ = fsz.flipMap();
+//         }
+//         else
         {
             selectedFaces_ = set.toc();
         }
@@ -396,6 +417,49 @@ void Foam::backupTopoSetSource::updateSets()
         FatalErrorInFunction
             << "Unknown topoSetSource type " << setType() << endl
             << abort(FatalError);
+    }
+
+
+    // Calculate the flip map
+    if
+    (
+        returnReduce
+        (
+            flipMap_.size() != selectedFaces_.size(),
+            orOp<bool>()
+        )
+    )
+    {
+        flipMap_ = boolList(selectedFaces_.size(), false);
+
+        labelHashSet cells(selectedCells_);
+
+        const labelList& owner = mesh_.faceOwner();
+        const labelList& neighbour = mesh_.faceNeighbour();
+        forAll(selectedFaces_, fi)
+        {
+            const label facei = selectedFaces_[fi];
+
+            // Check id a face owner and neighbour are not the same for
+            // internal faces
+            if (facei < mesh_.nInternalFaces())
+            {
+                if
+                (
+                    !cells.found(owner[facei])
+                 && cells.found(neighbour[facei])
+                )
+                {
+                    flipMap_[fi] = true;
+                }
+            }
+            // Assuming the faces have been synced, a face may be selected,
+            // but not its owner cell
+            else if (!cells.found(owner[facei]))
+            {
+                flipMap_[fi] = true;
+            }
+        }
     }
 }
 

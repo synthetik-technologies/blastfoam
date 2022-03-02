@@ -50,8 +50,10 @@ void Foam::timeIntegrator::postUpdateAll()
 {
     forAll(systems_, i)
     {
+        Info<< "Post-updating " << systems_[i].name() << ":" << endl;
         systems_[i].postUpdate();
     }
+    Info<< endl;
 }
 
 
@@ -238,7 +240,7 @@ void Foam::timeIntegrator::integrate()
     // Update and store original fields
     for (stepi_ = 1; stepi_ <= as_.size(); stepi_++)
     {
-        Info<< nl << this->type() << ": step " << stepi_ << endl;
+        Info<< this->type() << ": step " << stepi_ << endl;
 
         // Set use a linear change in volume
         // All fields are scaled according to the true volume
@@ -252,9 +254,9 @@ void Foam::timeIntegrator::integrate()
         {
             Info<< "Solving " << systems_[i].name() << ":" << endl;
             systems_[i].solve();
+            Info<< endl;
         }
     }
-    Info<< endl;
 
 
     this->postUpdateAll();

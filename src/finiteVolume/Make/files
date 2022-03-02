@@ -29,6 +29,7 @@ fluxSchemes/fluxSchemes/Roe/RoeFluxScheme.C
 
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/phaseFluxScheme/phaseFluxSchemeNew.C
+fluxSchemes/phaseFluxSchemes/HLL/HLLPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
@@ -135,5 +136,6 @@ sets/cellSources/searchableSurfaceToPoint/searchableSurfaceToPoint.C
 
 sets/topoSetList/topoSetList.C
 sets/backupTopoSetSource/backupTopoSetSource.C
+sets/backupSearchableSurface/backupSearchableSurface.C
 
 LIB = $(BLAST_LIBBIN)/libblastFiniteVolume
