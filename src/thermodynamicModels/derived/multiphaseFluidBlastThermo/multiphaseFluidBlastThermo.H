@@ -81,9 +81,6 @@ class multiphaseFluidBlastThermo
         //- Volume weighted density of phases
         PtrList<volScalarField> alphaRhos_;
 
-        //- Residual volume fraction
-        dimensionedScalar residualAlpha_;
-
         //- Pointer to total volume fraction field
         UautoPtr<const volScalarField> sumVfPtr_;
 

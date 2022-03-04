@@ -175,7 +175,6 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
     rhos_(phases_.size()),
     thermos_(phases_.size()),
     alphaRhos_(phases_.size()),
-    residualAlpha_(dimless, 0.0),
     sumVfPtr_(nullptr),
     EEqn_(*this),
     ESolver_(nullptr),
@@ -262,13 +261,15 @@ Foam::multiphaseFluidBlastThermo::multiphaseFluidBlastThermo
         );
 
         thermos_[phasei].read(dict.subDict(phaseIName));
-        residualAlpha_ = max(thermos_[phasei].residualAlpha(), residualAlpha_);
-        residualRho_ = max(thermos_[phasei].residualRho(), residualRho_);
+        this->residualAlpha_ =
+            max(thermos_[phasei].residualAlpha(), this->residualAlpha_);
+        this->residualRho_ =
+            max(thermos_[phasei].residualRho(), this->residualRho_);
 
         rho_ += volumeFractions_[phasei]*rhos_[phasei];
         sumAlpha += volumeFractions_[phasei];
     }
-    rho_ /= max(sumAlpha, residualAlpha_);
+    rho_ /= max(sumAlpha, this->residualAlpha_);
     this->initializeFields();
 }
 
@@ -310,7 +311,10 @@ bool Foam::multiphaseFluidBlastThermo::read()
     forAll(thermos_, phasei)
     {
         thermos_[phasei].read(this->subDict(thermos_[phasei].phaseName()));
-        residualAlpha_ = max(residualAlpha_, thermos_[phasei].residualAlpha());
+        this->residualAlpha_ =
+            max(this->residualAlpha_, thermos_[phasei].residualAlpha());
+        this->residualRho_ =
+            max(this->residualRho_, thermos_[phasei].residualRho());
     }
     return true;
 }

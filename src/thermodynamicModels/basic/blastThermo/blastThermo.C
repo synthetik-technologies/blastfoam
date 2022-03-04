@@ -102,7 +102,12 @@ Foam::blastThermo::blastThermo
         mesh,
         dimensionedScalar(dimEnergy/dimMass/dimTemperature, Zero)
     ),
-    TLow_(dict.lookupOrDefault<scalar>("TLow", 0.0)),
+    TLow_
+    (
+        dict.lookupOrDefault("limitT", true)
+      ? dict.lookupOrDefault<scalar>("TLow", 0.0)
+      : -great
+    ),
     residualAlpha_("residualAlpha", dimless, 0.0),
     residualRho_("residualRho", dimDensity, 0.0)
 {}
