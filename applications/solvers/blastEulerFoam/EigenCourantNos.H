@@ -23,7 +23,11 @@
             fvc::surfaceSum(amaxSf)().primitiveField()
         );
 
-        sumPhi += fvc::interpolate(phases[phasei])*sumAmaxSf;
+        sumPhi +=
+            fvc::surfaceSum
+            (
+                amaxSf*fvc::interpolate(phases[phasei])
+            )().primitiveField();
 
         phaseCoNums[phasei] =
             0.5*gMax(sumAmaxSf/mesh.V().field())*runTime.deltaTValue();
