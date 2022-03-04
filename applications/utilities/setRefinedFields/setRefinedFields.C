@@ -601,7 +601,7 @@ int main(int argc, char *argv[])
         }
         if (Pstream::parRun())
         {
-            balance = refineDict.lookupOrDefault("balance", true);
+            balance = refiner->balancer().balance();
         }
         refiner->setForce(true);
     }
@@ -645,7 +645,7 @@ int main(int argc, char *argv[])
     const scalar angleFraction = calcAngleFraction(mesh);
 
     // Read in all fields to allow resizing
-    if (updateAll)
+    if (updateAll || balance)
     {
         readAndAddAllFields(mesh);
     }
