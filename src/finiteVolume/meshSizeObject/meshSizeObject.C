@@ -152,10 +152,11 @@ void Foam::meshSizeObject::calcDX() const
     const faceList& faces = this->mesh_.faces();
     const cellList& cells = this->mesh_.cells();
     const pointField& points = this->mesh_.points();
+    const labelListList cPoints = this->mesh_.cellPoints();
+
     forAll(dX, celli)
     {
-        dX[celli] =
-            boundBox(points, this->mesh_.cellPoints()[celli]).span();
+        dX[celli] = boundBox(points, cPoints[celli], false).span();
 //         const cell& c = cells[celli];
 //         const edgeList cedges(c.edges(faces));
 //         vector dx(Zero);
@@ -171,7 +172,6 @@ void Foam::meshSizeObject::calcDX() const
 //         nEdges = max(nEdges, Vector<label>::one);
 //         dX[celli] = cmptDivide(dx, vector(nEdges));
     }
-
     for
     (
         label fi = this->mesh_.nInternalFaces();
