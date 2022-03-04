@@ -73,7 +73,10 @@ public:
     {
         OTHER = 0,          // not on special patch
         PATCH = 1,          // next to (non-coupled) boundary
-        OVERSET = 2         // next to 'overset' boundary
+        BOUNDARYPATCH = 2,  // next to patch on the outside of the main
+                            // region  (zoneID = 0)
+        OVERSET = 3,        // next to 'overset' boundary
+        OVERSETPATCH = 4    // next to 'overset' and non-coupled boundary
     };
 
     enum cellType

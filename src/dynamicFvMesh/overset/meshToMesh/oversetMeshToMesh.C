@@ -275,7 +275,8 @@ void Foam::oversetMeshToMesh::calcAddressing
 
 void Foam::oversetMeshToMesh::calculate(const word& methodName, const bool normalise)
 {
-    Info<< "Creating mesh-to-mesh addressing for " << srcRegion_.name()
+    DebugInfo
+        << "Creating mesh-to-mesh addressing for " << srcRegion_.name()
         << " and " << tgtRegion_.name() << " regions using "
         << methodName << endl;
 
@@ -466,7 +467,7 @@ void Foam::oversetMeshToMesh::calculate(const word& methodName, const bool norma
         );
     }
 
-    Info<< "    Overlap volume: " << V_ << endl;
+    DebugInfo<< "    Overlap volume: " << V_ << endl;
 }
 
 
@@ -521,12 +522,13 @@ void Foam::oversetMeshToMesh::calculatePatchAMIs(const word& AMIMethodName)
         const polyPatch& srcPP = srcRegion_.boundaryMesh()[srcPatchi];
         const polyPatch& tgtPP = tgtRegion_.boundaryMesh()[tgtPatchi];
 
-        Info<< "Creating AMI between source patch " << srcPP.name()
+        DebugInfo
+            << "Creating AMI between source patch " << srcPP.name()
             << " and target patch " << tgtPP.name()
             << " using " << AMIMethodName
             << endl;
 
-        Info<< incrIndent;
+        DebugInfo<< incrIndent;
 
         patchAMIs_.set
         (
@@ -543,7 +545,7 @@ void Foam::oversetMeshToMesh::calculatePatchAMIs(const word& AMIMethodName)
             )
         );
 
-        Info<< decrIndent;
+        DebugInfo<< decrIndent;
     }
 }
 

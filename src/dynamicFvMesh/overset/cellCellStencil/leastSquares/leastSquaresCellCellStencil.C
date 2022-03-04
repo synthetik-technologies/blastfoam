@@ -53,6 +53,11 @@ void Foam::cellCellStencils::leastSquares::stencilWeights
     // Number of donors
     label nD = donorCcs.size();
 
+    if (!nD)
+    {
+        return;
+    }
+
     weights.setSize(nD);
 
     // List for distance vectors and LSQ weights
@@ -102,7 +107,7 @@ void Foam::cellCellStencils::leastSquares::stencilWeights
     {
         // Use Singular Value Decomposition to avoid problems
         // with 1D, 2D stencils
-        SVD svd(A.T()*A, SMALL);
+        SVD svd(A.T()*A);
 
         // Least squares vectors
         RectangularMatrix<scalar> ATAinvAT(svd.VSinvUt()*A.T());
@@ -142,7 +147,7 @@ void Foam::cellCellStencils::leastSquares::stencilWeights
         }
     }
 
-    if (shortC)
+    else
     {
         // Matrix ill conditioned. Use straight injection from central
         // donor.

@@ -147,7 +147,8 @@ Foam::autoPtr<Foam::mapDistribute> Foam::oversetMeshToMesh::calcProcMap
         }
         default:
         {
-            Info<< "oversetMeshToMesh: Using AABBTree method" << endl;
+            DebugInfo
+                << "oversetMeshToMesh: Using AABBTree method" << endl;
 
             // get decomposition of cells on src mesh
             List<treeBoundBoxList> procBb(Pstream::nProcs());
