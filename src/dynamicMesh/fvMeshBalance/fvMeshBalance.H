@@ -129,6 +129,12 @@ public:
             return balance_;
         }
 
+        //- Access if balancing enabled
+        bool& balance()
+        {
+            return balance_;
+        }
+
         //- Does the mesh need to be balanced
         bool canBalance() const;
 
