@@ -283,6 +283,7 @@ public:
     (
         const dictionary& parentDict,
         const word& name,
+        const List<List<string>>& table,
         word& type,
         Field<fType>& values,
         Field<fType>& modValues,

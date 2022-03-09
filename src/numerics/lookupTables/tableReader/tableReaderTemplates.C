@@ -188,6 +188,24 @@ void Foam::read2DTable
 
 
 template<class Type>
+Foam::List<Type> Foam::readColumn
+(
+    const List<List<string>>& entries,
+    const label col
+)
+{
+    List<Type> vals(entries.size());
+    Type v;
+    forAll(entries, i)
+    {
+        IStringStream(entries[i][col])() >> v;
+        vals[i] = v;
+    }
+    return vals;
+}
+
+
+template<class Type>
 void Foam::read3DTable
 (
     const fileName& file,

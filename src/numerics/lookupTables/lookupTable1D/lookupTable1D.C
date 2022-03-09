@@ -294,7 +294,7 @@ Foam::tmp<Foam::Field<Type>> Foam::lookupTable1D<Type>::realData() const
     Field<Type>& f = tmpF.ref();
     forAll(f, i)
     {
-        f[i] - invModFunc_(f[i]);
+        f[i] = invModFunc_(f[i]);
     }
     return tmpF;
 }
@@ -384,10 +384,23 @@ void Foam::lookupTable1D<Type>::read
         dict.lookupOrDefault<word>("interpolationScheme", "linearClamp");
     setInterp(interpType_, interpFunc_);
 
+    List<List<string>> table;
+    if (dict.found("file"))
+    {
+        table = read2DTable
+        (
+            dict.lookup<fileName>("file"),
+            dict.lookupOrDefault<string>("delim", ","),
+            dict.lookupOrDefault<label>("startRow", 0),
+            dict.lookupOrDefault<Switch>("flipTable", false)
+        );
+    }
+
     readComponent<scalar>
     (
         dict,
         xName,
+        table,
         modXType_,
         xValues_,
         xModValues_,
@@ -395,11 +408,13 @@ void Foam::lookupTable1D<Type>::read
         invModXFunc_,
         canRead
     );
+
     Field<Type> data;
     readComponent<Type>
     (
         dict,
         name,
+        table,
         modType_,
         data,
         data_,

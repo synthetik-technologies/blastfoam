@@ -36,4 +36,107 @@ void Foam::removeComments(string& line)
     }
 }
 
+
+Foam::List<Foam::List<Foam::string>> Foam::read2DTable
+(
+    const fileName& file,
+    const string& delim,
+    const label startLine,
+    const bool flip
+)
+{
+    fileName fNameExpanded(file);
+    fNameExpanded.expand();
+
+    // Open a stream and check it
+    autoPtr<ISstream> isPtr(fileHandler().NewIFstream(fNameExpanded));
+    ISstream& is = isPtr();
+    if (!is.good())
+    {
+        FatalIOErrorInFunction(is)
+            << "Cannot open file" << file << nl
+            << exit(FatalIOError);
+    }
+
+    DynamicList<Tuple2<scalar, scalar>> values;
+
+    label ny = -1;
+    label nx = 0;
+    label lineI = 0;
+
+    word line;
+    DynamicList<List<string>> tentries;
+    while (is.good())
+    {
+        is.getLine(line);
+        if (lineI++ < startLine)
+        {
+            continue;
+        }
+        removeComments(line);
+
+        DynamicList<word> lineVals(line.size());
+        label stringi = 0;
+        for
+        (
+            string::const_iterator iter = line.begin();
+            iter != line.end();
+            ++iter
+        )
+        {
+            if (*iter != delim[0])
+            {
+                lineVals(stringi) = lineVals(stringi) + *iter;
+            }
+            else
+            {
+                stringi++;
+            }
+        }
+
+        if (ny < 0)
+        {
+            ny = lineVals.size();
+        }
+        else if (!lineVals.size())
+        {
+            break;
+        }
+        else if (lineVals.size() != ny)
+        {
+            FatalErrorInFunction
+                << "Incompatible table rows" << endl
+                << line
+                << abort(FatalError);
+        }
+        tentries.append(List<string>(lineVals.size()));
+        forAll(lineVals, i)
+        {
+            tentries[nx][i] = lineVals[i];
+        }
+        nx++;
+    }
+
+    if (flip)
+    {
+        label t = nx;
+        nx = ny;
+        ny = t;
+    }
+
+    if (!flip)
+    {
+        return move(tentries);
+    }
+    List<List<string>> entries(nx, List<string>(ny));
+    forAll(entries, i)
+    {
+        forAll(entries[i], j)
+        {
+            entries[i][j] = tentries[j][i];
+        }
+    }
+    return entries;
+}
+
 // ************************************************************************* //

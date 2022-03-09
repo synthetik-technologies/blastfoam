@@ -34,6 +34,7 @@ void Foam::lookupTable1D<Type>::readComponent
 (
     const dictionary& parentDict,
     const word& name,
+    const List<List<string>>& table,
     word& type,
     Field<fType>& values,
     Field<fType>& modValues,
@@ -44,6 +45,7 @@ void Foam::lookupTable1D<Type>::readComponent
 {
     Switch isReal = true;
     bool canSetMod = true;
+    bool readFromTable = table.size();
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
@@ -55,7 +57,9 @@ void Foam::lookupTable1D<Type>::readComponent
             invModFunc
         );
 
-        if (dict.found(name))
+        if (readFromTable)
+        {}
+        else if (dict.found(name))
         {
             if (canRead)
             {
@@ -93,9 +97,11 @@ void Foam::lookupTable1D<Type>::readComponent
             isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
     }
-    else if (parentDict.found(name))
+    else if (parentDict.found(name) || readFromTable)
     {
-        if (canRead)
+        if (readFromTable)
+        {}
+        else if (canRead)
         {
             values = parentDict.lookup<Field<fType>>(name);
             modValues.resize(values.size());
@@ -124,6 +130,22 @@ void Foam::lookupTable1D<Type>::readComponent
             << "Either a list of values or " << name << "Coeffs must" << nl
             << "be provided for " << name << endl
             << abort(FatalError);
+    }
+
+    if (readFromTable)
+    {
+        values = readColumn<Type>
+        (
+            table,
+            parentDict.lookup<label>(name + "Col")
+        );
+        modValues.resize(values.size());
+        isReal =
+            parentDict.lookupOrDefault<Switch>
+            (
+                name + "isReal",
+                true
+            );
     }
 
     if (canSetMod)

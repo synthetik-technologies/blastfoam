@@ -74,6 +74,22 @@ void read2DTable
 );
 
 
+List<List<string>> read2DTable
+(
+    const fileName& file,
+    const string& delim,
+    const label startRow = 0,
+    const bool flip = false
+);
+
+//- Read a column of a table
+template<class Type>
+List<Type> readColumn
+(
+    const List<List<string>>& entries,
+    const label col
+);
+
 //- Read a 3D table
 template<class Type>
 void read3DTable
