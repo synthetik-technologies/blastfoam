@@ -1,25 +1,24 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
-  \\      /  F ield         | foam-extend: Open Source CFD
-   \\    /   O peration     | Version:     4.1
-    \\  /    A nd           | Web:         http://www.foam-extend.org
-     \\/     M anipulation  | For copyright notice see file Copyright
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is part of OpenFOAM.
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-    foam-extend is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation, either version 3 of the License, or (at your
-    option) any later version.
-
-    foam-extend is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
 
     You should have received a copy of the GNU General Public License
-    along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
 
@@ -37,9 +36,12 @@ License
 #include "pointFields.H"
 #include "fvMeshTools.H"
 
+#include "polyModifyFace.H"
+#include "polyAddFace.H"
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::meshTools::setFaceInfo
+void Foam::meshTools::getFaceInfo
 (
     const polyMesh& mesh,
     const label faceI,
@@ -65,6 +67,419 @@ void Foam::meshTools::setFaceInfo
 
         zoneFlip = fZone.flipMap()[fZone.whichFace(faceI)];
     }
+}
+
+
+Foam::label Foam::meshTools::addFace
+(
+    polyTopoChange& meshMod,
+    const polyMesh& mesh,
+    const label faceI,
+    const face& newFace,
+    const label own,
+    const label nei
+)
+{
+    // Set face information
+    label patchID, zoneID, zoneFlip;
+    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
+
+    // Set new face index to -1
+    label newFaceI = -1;
+
+    if ((nei == -1) || (own < nei))
+    {
+        // Ordering is ok, add the face
+        newFaceI = meshMod.setAction
+        (
+            polyAddFace
+            (
+                newFace,                    // face
+                own,                        // owner
+                nei,                        // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                faceI,                      // master face for addition
+                false,                      // flux flip
+                patchID,                    // patch for face
+                zoneID,                     // zone for face
+                zoneFlip                    // face zone flip
+            )
+        );
+    }
+    else
+    {
+        // Ordering is flipped, reverse face and flip owner/neighbour
+        newFaceI = meshMod.setAction
+        (
+            polyAddFace
+            (
+                newFace.reverseFace(),      // face
+                nei,                        // owner
+                own,                        // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                faceI,                      // master face for addition
+                false,                      // flux flip
+                patchID,                    // patch for face
+                zoneID,                     // zone for face
+                zoneFlip                    // face zone flip
+            )
+        );
+    }
+
+    return newFaceI;
+}
+
+
+Foam::label Foam::meshTools::addInternalFace
+(
+    polyTopoChange& meshMod,
+    const polyMesh& mesh,
+    const label meshFaceI,
+    const label meshPointI,
+    const face& newFace,
+    const label own,
+    const label nei
+)
+{
+    // Check whether this is an internal face
+    if (mesh.isInternalFace(meshFaceI))
+    {
+        return meshMod.setAction
+        (
+            polyAddFace
+            (
+                newFace,                    // face
+                own,                        // owner
+                nei,                        // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                meshFaceI,                  // master face for addition
+                false,                      // flux flip
+                -1,                         // patch for face
+                -1,                         // zone for face
+                false                       // face zone flip
+            )
+        );
+    }
+    else
+    {
+        // This is not an internal face. Add face out of nothing
+        return meshMod.setAction
+        (
+            polyAddFace
+            (
+                newFace,                    // face
+                own,                        // owner
+                nei,                        // neighbour
+                -1,                         // master point
+                -1,                         // master edge
+                -1,                         // master face for addition
+                false,                      // flux flip
+                -1,                         // patch for face
+                -1,                         // zone for face
+                false                       // face zone flip
+            )
+        );
+    }
+}
+
+
+void Foam::meshTools::modifyFace
+(
+    polyTopoChange& meshMod,
+    const polyMesh& mesh,
+    const label faceI,
+    const face& newFace,
+    const label own,
+    const label nei
+)
+{
+    // Set face inforomation
+    label patchID, zoneID, zoneFlip;
+    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
+
+    // Get owner/neighbour addressing and mesh faces
+    const labelList& owner = mesh.faceOwner();
+    const labelList& neighbour = mesh.faceNeighbour();
+
+    const faceList& meshFaces = mesh.faces();
+
+    if
+    (
+        (own != owner[faceI])
+     || (
+            mesh.isInternalFace(faceI)
+         && (nei != neighbour[faceI])
+        )
+     || (newFace != meshFaces[faceI])
+    )
+    {
+        // Either:
+        // 1. Owner index does not correspond to mesh owner,
+        // 2. Neighbour index does not correspond to mesh neighbour,
+        // 3. New face does not correspond to mesh face
+        // So we need to modify this face
+        if ((nei == -1) || (own < nei))
+        {
+            // Ordering is ok, add the face
+            meshMod.setAction
+            (
+                polyModifyFace
+                (
+                    newFace,            // modified face
+                    faceI,              // label of face being modified
+                    own,                // owner
+                    nei,                // neighbour
+                    false,              // face flip
+                    patchID,            // patch for face
+                    false,              // remove from zone
+                    zoneID,             // zone for face
+                    zoneFlip            // face flip in zone
+                )
+            );
+        }
+        else
+        {
+            // Ordering is flipped, reverse face and flip owner/neighbour
+            meshMod.setAction
+            (
+                polyModifyFace
+                (
+                    newFace.reverseFace(),  // modified face
+                    faceI,                  // label of face being modified
+                    nei,                    // owner
+                    own,                    // neighbour
+                    false,                  // face flip
+                    patchID,                // patch for face
+                    false,                  // remove from zone
+                    zoneID,                 // zone for face
+                    zoneFlip                // face flip in zone
+                )
+            );
+        }
+    }
+}
+
+
+void Foam::meshTools::checkInternalOrientation
+(
+    const polyTopoChange& meshMod,
+    const label cellI,
+    const label faceI,
+    const point& ownPt,
+    const point& neiPt,
+    const face& newFace
+)
+{
+    const face compactFace(identity(newFace.size()));
+
+    // Get compact points
+    const pointField compactPoints(meshMod.points(), newFace);
+
+    const vector n(compactFace.normal(compactPoints));
+    const vector dir(neiPt - ownPt);
+
+    // Check orientation error
+    if ((dir & n) < 0)
+    {
+        FatalErrorInFunction
+            << "cell:" << cellI << nl
+            << "face:" << faceI << nl
+            << "newFace:" << newFace << nl
+            << "coords:" << compactPoints << nl
+            << "ownPt:" << ownPt << nl
+            << "neiPt:" << neiPt << nl
+            << abort(FatalError);
+    }
+
+    // Note: report significant non-orthogonality error
+    const scalar severeNonOrthogonalityThreshold =
+        cos(70.0/180.0*constant::mathematical::pi);
+
+    const vector fcToOwn(compactFace.centre(compactPoints) - ownPt);
+
+    const scalar s = (fcToOwn & n)/(mag(fcToOwn) + VSMALL);
+
+    if (s > severeNonOrthogonalityThreshold)
+    {
+        WarningInFunction
+            << "Detected severely non-orthogonal face with non-orthogonality: "
+            << acos(s)/constant::mathematical::pi*180.0 << nl
+            << "cell:" << cellI << " old face:" << faceI << nl
+            << "newFace: " << newFace << nl
+            << "coords: " << compactPoints << nl
+            << "ownPt: " << ownPt << nl
+            << "neiPt: " << neiPt << nl
+            << "s: " << s << nl
+            << endl;
+    }
+}
+
+
+void Foam::meshTools::checkBoundaryOrientation
+(
+    const polyTopoChange& meshMod,
+    const label cellI,
+    const label faceI,
+    const point& ownPt,
+    const point& boundaryPt,
+    const face& newFace
+)
+{
+    face compactFace(identity(newFace.size()));
+    pointField compactPoints(meshMod.points(), newFace);
+
+    vector n(compactFace.normal(compactPoints));
+
+    vector dir(boundaryPt - ownPt);
+
+    if ((dir & n) < 0)
+    {
+        FatalErrorInFunction
+            << "cell:" << cellI << " old face:" << faceI
+            << " newFace:" << newFace
+            << " coords:" << compactPoints
+            << " ownPt:" << ownPt
+            << " boundaryPt:" << boundaryPt
+            << abort(FatalError);
+    }
+
+    // Note: report significant non-orthogonality error
+    const scalar severeNonOrthogonalityThreshold =
+        cos(70.0/180.0*constant::mathematical::pi);
+
+    const vector fcToOwn(compactFace.centre(compactPoints) - ownPt);
+
+    const scalar s = (fcToOwn & n)/(mag(fcToOwn) + VSMALL);
+
+    if (s > severeNonOrthogonalityThreshold)
+    {
+        WarningInFunction
+            << "Detected severely non-orthogonal face with non-orthogonality: "
+            << acos(s)/constant::mathematical::pi*180.0
+            << "cell:" << cellI << " old face:" << faceI
+            << " newFace:" << newFace
+            << " coords:" << compactPoints
+            << " ownPt:" << ownPt
+            << " boundaryPt:" << boundaryPt
+            << " s:" << s
+            << endl;
+    }
+}
+
+
+void Foam::meshTools::checkFaceOrientation
+(
+    const polyTopoChange& meshMod,
+    const polyMesh& mesh,
+    const label& faceI,
+    const face& newFace
+)
+{
+    // Get mesh cell centres
+    const vectorField& meshCellCentres = mesh.cellCentres();
+
+    if (mesh.isInternalFace(faceI))
+    {
+        // Get old owner/neighbour indices
+        const label own = mesh.faceOwner()[faceI];
+        const label nei = mesh.faceNeighbour()[faceI];
+
+        meshTools::checkInternalOrientation
+        (
+            meshMod,
+            own,
+            faceI,
+            meshCellCentres[own],
+            meshCellCentres[nei],
+            newFace
+        );
+    }
+    else
+    {
+        // Get face centres and old owner
+        const vectorField& meshFaceCentres = mesh.faceCentres();
+        const label own = mesh.faceOwner()[faceI];
+
+        meshTools::checkBoundaryOrientation
+        (
+            meshMod,
+            own,
+            faceI,
+            meshCellCentres[own],
+            meshFaceCentres[faceI],
+            newFace
+        );
+    }
+}
+
+
+Foam::label Foam::meshTools::addPatch
+(
+    fvMesh& mesh,
+    const word& patchName,
+    const wordList& groupNames,
+    const dictionary& patchDict
+)
+{
+    const polyBoundaryMesh& pbm = mesh.boundaryMesh();
+
+    if (pbm.findPatchID(patchName) == -1)
+    {
+        autoPtr<polyPatch> ppPtr
+        (
+            polyPatch::New
+            (
+                patchName,
+                patchDict,
+                0,
+                pbm
+            )
+        );
+        polyPatch& pp = ppPtr();
+
+        forAll(groupNames, i)
+        {
+            if (!pp.inGroup(groupNames[i]))
+            {
+                pp.inGroups().append(groupNames[i]);
+            }
+        }
+
+
+        // Add patch, create calculated everywhere
+        fvMeshTools::addPatch
+        (
+            mesh,
+            pp,
+            dictionary(),   // do not set specialised patchFields
+            calculatedFvPatchField<scalar>::typeName,
+            true            // parallel sync'ed addition
+        );
+    }
+    else
+    {
+        Info<< "Patch '" << patchName
+            << "' already exists.  Only "
+            << "moving patch faces - type will remain the same"
+            << endl;
+    }
+
+    return pbm.findPatchID(patchName);
+}
+
+
+Foam::label Foam::meshTools::addPatch
+(
+    fvMesh& mesh,
+    const word& patchName,
+    const word& groupName,
+    const dictionary& patchDict
+)
+{
+    return addPatch(mesh, patchName, wordList(1, groupName), patchDict);
 }
 
 void Foam::meshTools::modifyOrAddFace
@@ -267,13 +682,6 @@ Foam::label Foam::meshTools::createBaffleFaces
             {
                 // Do not allow coupled faces to be moved to different
                 // coupled patches.
-//                 WarningInFunction
-//                     << pp.name() << " and " << pbm[newMasterPatchi].name()
-//                     << "/" << pbm[newSlavePatchi].name()
-//                     << " are both coupled "
-//                     << " so these shared faces will not be modified." << nl
-//                     << "If this is a processor patch, try changing the "
-//                     << "distribution method." << endl;
             }
             else if (pp.coupled() || !internalFacesOnly)
             {

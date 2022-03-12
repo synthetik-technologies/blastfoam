@@ -126,46 +126,8 @@ protected:
 
     // Protected Member Functions
 
-        // Useful helper functions used by derived classes
-
-            //- Set file instance for cellLevel_ and pointLevel_
-            void setInstance(const fileName& inst) const;
-
-
-        // Local topology modification functions (operate on cells/faces)
-
-            //- Adds a face on top of existing faceI. Reverses if nessecary
-            label addFace
-            (
-                polyTopoChange& ref,
-                const label faceI,
-                const face& newFace,
-                const label own,
-                const label nei
-            ) const;
-
-            //- Adds internal face from point. No checks on reversal
-            label addInternalFace
-            (
-                polyTopoChange& ref,
-                const label meshFaceI,
-                const label meshPointI,
-                const face& newFace,
-                const label own,
-                const label nei
-            ) const;
-
-            //- Modifies existing faceI for either new owner/neighbour or new
-            //  face points. Reverses if nessecary
-            void modifyFace
-            (
-                polyTopoChange& ref,
-                const label faceI,
-                const face& newFace,
-                const label own,
-                const label nei
-            ) const;
-
+        //- Set file instance for cellLevel_ and pointLevel_
+        void setInstance(const fileName& inst) const;
 
         // Topological change helper functions
 
@@ -205,31 +167,6 @@ protected:
             ) const;
 
 
-        // Debug functions
-
-            //- Check orientation of added internal face
-            void checkInternalOrientation
-            (
-                polyTopoChange& ref,
-                const label cellI,
-                const label faceI,
-                const point& ownPt,
-                const point& neiPt,
-                const face& newFace
-            ) const;
-
-            //- Check orientation of a new boundary face
-            void checkBoundaryOrientation
-            (
-                polyTopoChange& ref,
-                const label cellI,
-                const label faceI,
-                const point& ownPt,
-                const point& boundaryPt,
-                const face& newFace
-            ) const;
-
-
         // Refinement/unrefinement consistency checks
 
             //- Updates cellsToRefine such that a face consistent 2:1 refinement
@@ -240,8 +177,8 @@ protected:
                 const bool maxSet
             ) const;
 
-            //- Updates cellsToRefine such that an edge consistent 4:1 refinement
-            //  is obtained. Returns local number of cells changed
+            //- Updates cellsToRefine such that an edge consistent 4:1
+            //  refinement is obtained. Returns local number of cells changed
             label edgeConsistentRefinement
             (
                 PackedBoolList& refineCell,

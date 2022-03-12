@@ -419,6 +419,9 @@ class newCellCuts
                 const List<scalarField>& cellLoopWeights
             );
 
+            //- Update ACMI boundary points and edges
+            void syncACMI();
+
             //- Update basic cut information to be consistent across
             //  coupled boundaries.
             void syncProc();

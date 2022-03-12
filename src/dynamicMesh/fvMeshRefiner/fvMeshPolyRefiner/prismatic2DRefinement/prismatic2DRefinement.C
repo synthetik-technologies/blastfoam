@@ -509,13 +509,13 @@ void Foam::prismatic2DRefinement::checkNewFaceOrientation
         // Print info only with deep debug level
         if (debug > 1)
         {
-            Pout<< "Split infternal face: " << faceI
+            Pout<< "Split internal face: " << faceI
                 << ", into quad: " << newFace << nl
                 << "owner: " << oldOwn
                 << ", neighbour: " << oldNei << endl;
         }
 
-        checkInternalOrientation
+        meshTools::checkInternalOrientation
         (
             meshMod,
             oldOwn,
@@ -539,7 +539,7 @@ void Foam::prismatic2DRefinement::checkNewFaceOrientation
                 << "owner: " << oldOwn << endl;
         }
 
-        checkBoundaryOrientation
+        meshTools::checkBoundaryOrientation
         (
             meshMod,
             oldOwn,
@@ -1631,12 +1631,28 @@ void Foam::prismatic2DRefinement::setRefinement
                     {
                         // Modify first face
                         modifiedFace = true;
-                        modifyFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::modifyFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                     else
                     {
                         // Add additional faces
-                        addFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::addFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                 }
             }
@@ -1912,12 +1928,28 @@ void Foam::prismatic2DRefinement::setRefinement
                     {
                         // Modify first face
                         modifiedFace = true;
-                        modifyFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::modifyFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                     else
                     {
                         // Add additional faces
-                        addFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::addFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                 }
             }
@@ -2004,7 +2036,15 @@ void Foam::prismatic2DRefinement::setRefinement
                     }
 
                     // Modify the face
-                    modifyFace(meshMod, faceI, newFace, own, nei);
+                    meshTools::modifyFace
+                    (
+                        meshMod,
+                        mesh_,
+                        faceI,
+                        newFace,
+                        own,
+                        nei
+                    );
 
                     // Mark face as handled
                     facesToSplit[faceI] = false;
@@ -2050,7 +2090,7 @@ void Foam::prismatic2DRefinement::setRefinement
             );
 
             // Modify the face, changing owner and neighbour
-            modifyFace(meshMod, faceI, f, own, nei);
+            meshTools::modifyFace(meshMod, mesh_, faceI, f, own, nei);
 
             // Mark face as handled
             facesToSplit[faceI] = false;
@@ -2358,7 +2398,7 @@ void Foam::prismatic2DRefinement::setRefinement
                         ownPt = meshPoints[pointJ];
                         neiPt = meshPoints[pointI];
                     }
-                    checkInternalOrientation
+                    meshTools::checkInternalOrientation
                     (
                         meshMod,
                         cellI,
@@ -2371,9 +2411,10 @@ void Foam::prismatic2DRefinement::setRefinement
 
                 // Finally, add the face. Note: ignoring return of new face
                 // index from meshMod.setAction(polyAddFace(...)) call
-                addInternalFace
+                meshTools::addInternalFace
                 (
                     meshMod,
+                    mesh_,
                     faceI,
                     isOtherEdgePointAnchor ? pointI : pointJ,
                     newFace,

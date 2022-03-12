@@ -691,7 +691,7 @@ Foam::label Foam::polyhedralRefinement::storeMidPointInfo
                 neiPt = meshPoints[anchorPointI];
             }
 
-            checkInternalOrientation
+            meshTools::checkInternalOrientation
             (
                 ref,
                 cellI,
@@ -702,9 +702,10 @@ Foam::label Foam::polyhedralRefinement::storeMidPointInfo
             );
         }
 
-        return addInternalFace
+        return meshTools::addInternalFace
         (
             ref,
+            mesh_,
             faceI,
             anchorPointI,
             newFace,
@@ -1520,7 +1521,7 @@ void Foam::polyhedralRefinement::setRefinement
                                     << ", neighbour: " << oldNei << endl;
                             }
 
-                            checkInternalOrientation
+                            meshTools::checkInternalOrientation
                             (
                                 meshMod,
                                 oldOwn,
@@ -1543,7 +1544,7 @@ void Foam::polyhedralRefinement::setRefinement
                                     << "owner: " << oldOwn << endl;
                             }
 
-                            checkBoundaryOrientation
+                            meshTools::checkBoundaryOrientation
                             (
                                 meshMod,
                                 oldOwn,
@@ -1560,12 +1561,28 @@ void Foam::polyhedralRefinement::setRefinement
                     {
                         // Modify first face
                         modifiedFace = true;
-                        modifyFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::modifyFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                     else
                     {
                         // Add additional faces
-                        addFace(meshMod, faceI, newFace, own, nei);
+                        meshTools::addFace
+                        (
+                            meshMod,
+                            mesh_,
+                            faceI,
+                            newFace,
+                            own,
+                            nei
+                        );
                     }
                 } // End point anchor check
             } // End for all points
@@ -1662,7 +1679,7 @@ void Foam::polyhedralRefinement::setRefinement
                             const label oldOwn = meshFaceOwner[faceI];
                             const label oldNei = meshFaceNeighbour[faceI];
 
-                            checkInternalOrientation
+                            meshTools::checkInternalOrientation
                             (
                                 meshMod,
                                 oldOwn,
@@ -1676,7 +1693,7 @@ void Foam::polyhedralRefinement::setRefinement
                         {
                             const label oldOwn = meshFaceOwner[faceI];
 
-                            checkBoundaryOrientation
+                            meshTools::checkBoundaryOrientation
                             (
                                 meshMod,
                                 oldOwn,
@@ -1689,7 +1706,15 @@ void Foam::polyhedralRefinement::setRefinement
                     } // End debug
 
                     // Modify the face
-                    modifyFace(meshMod, faceI, newFace, own, nei);
+                    meshTools::modifyFace
+                    (
+                        meshMod,
+                        mesh_,
+                        faceI,
+                        newFace,
+                        own,
+                        nei
+                    );
 
                     // Mark face as handled
                     facesToSplit[faceI] = false;
@@ -1736,7 +1761,7 @@ void Foam::polyhedralRefinement::setRefinement
             );
 
             // Modify the face, changing owner and neighbour
-            modifyFace(meshMod, faceI, f, own, nei);
+            meshTools::modifyFace(meshMod, mesh_, faceI, f, own, nei);
 
             // Mark face as handled
             facesToSplit[faceI] = false;

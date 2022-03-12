@@ -1,25 +1,26 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
-  \\      /  F ield         | foam-extend: Open Source CFD
-   \\    /   O peration     | Version:     4.1
-    \\  /    A nd           | Web:         http://www.foam-extend.org
-     \\/     M anipulation  | For copyright notice see file Copyright
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+03-10-2022  Synthetik Applied Technologies : Collected functions
 -------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is part of OpenFOAM.
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-    foam-extend is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation, either version 3 of the License, or (at your
-    option) any later version.
-
-    foam-extend is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
 
     You should have received a copy of the GNU General Public License
-    along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Namespace
     Foam::dynMeshTools
@@ -65,13 +66,101 @@ namespace meshTools
     // Face information
 
         //- Set face information: patch, zone and zone flip for a face
-        void setFaceInfo
+        void getFaceInfo
         (
             const polyMesh& mesh,
             const label faceI,
             label& patchID,
             label& zoneID,
             label& zoneFlip
+        );
+
+        // Local topology modification functions (operate on cells/faces)
+
+            //- Adds a face on top of existing faceI. Reverses if nessecary
+            label addFace
+            (
+                polyTopoChange& meshMod,
+                const polyMesh& mesh,
+                const label faceI,
+                const face& newFace,
+                const label own,
+                const label nei
+            );
+
+            //- Adds internal face from point. No checks on reversal
+            label addInternalFace
+            (
+                polyTopoChange& meshMod,
+                const polyMesh& mesh,
+                const label meshFaceI,
+                const label meshPointI,
+                const face& newFace,
+                const label own,
+                const label nei
+            );
+
+            //- Modifies existing faceI for either new owner/neighbour or new
+            //  face points. Reverses if nessecary
+            void modifyFace
+            (
+                polyTopoChange& meshMod,
+                const polyMesh& mesh,
+                const label faceI,
+                const face& newFace,
+                const label own,
+                const label nei
+            );
+
+
+        // Debug functions
+
+            //- Check orientation of added internal face
+            void checkInternalOrientation
+            (
+                const polyTopoChange& meshMod,
+                const label cellI,
+                const label faceI,
+                const point& ownPt,
+                const point& neiPt,
+                const face& newFace
+            );
+
+            //- Check orientation of a new boundary face
+            void checkBoundaryOrientation
+            (
+                const polyTopoChange& meshMod,
+                const label cellI,
+                const label faceI,
+                const point& ownPt,
+                const point& boundaryPt,
+                const face& newFace
+            );
+
+            void checkFaceOrientation
+            (
+                const polyTopoChange& meshMod,
+                const polyMesh& mesh,
+                const label& faceI,
+                const face& newFace
+            );
+
+
+        // Add an empty patch given a mesh, name, group, and dictionary
+        label addPatch
+        (
+            fvMesh& mesh,
+            const word& patchName,
+            const wordList& groupNames,
+            const dictionary& patchDict
+        );
+
+        label addPatch
+        (
+            fvMesh& mesh,
+            const word& patchName,
+            const word& group,
+            const dictionary& patchDict
         );
 
         void modifyOrAddFace

@@ -1,36 +1,25 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
-  \\      /  F ield         | foam-extend: Open Source CFD
-   \\    /   O peration     | Version:     4.1
-    \\  /    A nd           | Web:         http://www.foam-extend.org
-     \\/     M anipulation  | For copyright notice see file Copyright
--------------------------------------------------------------------------------
-24-01-2022 Synthetik Applied    :   Added support for axis-symmetric
-           Technologies                 cases and load balancing
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2011-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License
-    This file is part of foam-extend.
+    This file is part of OpenFOAM.
 
-    foam-extend is free software: you can redistribute it and/or modify it
-    under the terms of the GNU General Public License as published by the
-    Free Software Foundation, either version 3 of the License, or (at your
-    option) any later version.
+    OpenFOAM is free software: you can redistribute it and/or modify it
+    under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
 
-    foam-extend is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-    General Public License for more details.
+    OpenFOAM is distributed in the hope that it will be useful, but WITHOUT
+    ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+    FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+    for more details.
 
     You should have received a copy of the GNU General Public License
-    along with foam-extend.  If not, see <http://www.gnu.org/licenses/>.
-
-Author
-    Vuko Vukcevic, Wikki Ltd.  All rights reserved.
-    Hrvoje Jasak, Wikki Ltd.
-
-Notes
-    Generalisation of hexRef8 for polyhedral cells and refactorisation into mesh
-    modifier engine.
+    along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 \*---------------------------------------------------------------------------*/
 
@@ -74,196 +63,6 @@ void Foam::refinement::setInstance(const fileName& inst) const
     cellLevel_.instance() = inst;
     pointLevel_.instance() = inst;
     parentCells_.instance() = inst;
-}
-
-
-Foam::label Foam::refinement::addFace
-(
-    polyTopoChange& meshMod,
-    const label faceI,
-    const face& newFace,
-    const label own,
-    const label nei
-) const
-{
-    // Set face information
-    label patchID, zoneID, zoneFlip;
-    meshTools::setFaceInfo(mesh_, faceI, patchID, zoneID, zoneFlip);
-
-    // Set new face index to -1
-    label newFaceI = -1;
-
-    if ((nei == -1) || (own < nei))
-    {
-        // Ordering is ok, add the face
-        newFaceI = meshMod.setAction
-        (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                faceI,                      // master face for addition
-                false,                      // flux flip
-                patchID,                    // patch for face
-                zoneID,                     // zone for face
-                zoneFlip                    // face zone flip
-            )
-        );
-    }
-    else
-    {
-        // Ordering is flipped, reverse face and flip owner/neighbour
-        newFaceI = meshMod.setAction
-        (
-            polyAddFace
-            (
-                newFace.reverseFace(),      // face
-                nei,                        // owner
-                own,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                faceI,                      // master face for addition
-                false,                      // flux flip
-                patchID,                    // patch for face
-                zoneID,                     // zone for face
-                zoneFlip                    // face zone flip
-            )
-        );
-    }
-
-    return newFaceI;
-}
-
-
-Foam::label Foam::refinement::addInternalFace
-(
-    polyTopoChange& meshMod,
-    const label meshFaceI,
-    const label meshPointI,
-    const face& newFace,
-    const label own,
-    const label nei
-) const
-{
-    // Check whether this is an internal face
-    if (mesh_.isInternalFace(meshFaceI))
-    {
-        return meshMod.setAction
-        (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                meshFaceI,                  // master face for addition
-                false,                      // flux flip
-                -1,                         // patch for face
-                -1,                         // zone for face
-                false                       // face zone flip
-            )
-        );
-    }
-    else
-    {
-        // This is not an internal face. Add face out of nothing
-        return meshMod.setAction
-        (
-            polyAddFace
-            (
-                newFace,                    // face
-                own,                        // owner
-                nei,                        // neighbour
-                -1,                         // master point
-                -1,                         // master edge
-                -1,                         // master face for addition
-                false,                      // flux flip
-                -1,                         // patch for face
-                -1,                         // zone for face
-                false                       // face zone flip
-            )
-        );
-    }
-}
-
-
-void Foam::refinement::modifyFace
-(
-    polyTopoChange& meshMod,
-    const label faceI,
-    const face& newFace,
-    const label own,
-    const label nei
-) const
-{
-    // Set face inforomation
-    label patchID, zoneID, zoneFlip;
-    meshTools::setFaceInfo(mesh_, faceI, patchID, zoneID, zoneFlip);
-
-    // Get owner/neighbour addressing and mesh faces
-    const labelList& owner = mesh_.faceOwner();
-    const labelList& neighbour = mesh_.faceNeighbour();
-
-    const faceList& meshFaces = mesh_.faces();
-
-    if
-    (
-        (own != owner[faceI])
-     || (
-            mesh_.isInternalFace(faceI)
-         && (nei != neighbour[faceI])
-        )
-     || (newFace != meshFaces[faceI])
-    )
-    {
-        // Either:
-        // 1. Owner index does not correspond to mesh owner,
-        // 2. Neighbour index does not correspond to mesh neighbour,
-        // 3. New face does not correspond to mesh face
-        // So we need to modify this face
-        if ((nei == -1) || (own < nei))
-        {
-            // Ordering is ok, add the face
-            meshMod.setAction
-            (
-                polyModifyFace
-                (
-                    newFace,            // modified face
-                    faceI,              // label of face being modified
-                    own,                // owner
-                    nei,                // neighbour
-                    false,              // face flip
-                    patchID,            // patch for face
-                    false,              // remove from zone
-                    zoneID,             // zone for face
-                    zoneFlip            // face flip in zone
-                )
-            );
-        }
-        else
-        {
-            // Ordering is flipped, reverse face and flip owner/neighbour
-            meshMod.setAction
-            (
-                polyModifyFace
-                (
-                    newFace.reverseFace(),  // modified face
-                    faceI,                  // label of face being modified
-                    nei,                    // owner
-                    own,                    // neighbour
-                    false,                  // face flip
-                    patchID,                // patch for face
-                    false,                  // remove from zone
-                    zoneID,                 // zone for face
-                    zoneFlip                // face flip in zone
-                )
-            );
-        }
-    }
 }
 
 
@@ -395,112 +194,6 @@ Foam::label Foam::refinement::countAnchors
         }
     }
     return nAnchors;
-}
-
-
-void Foam::refinement::checkInternalOrientation
-(
-    polyTopoChange& meshMod,
-    const label cellI,
-    const label faceI,
-    const point& ownPt,
-    const point& neiPt,
-    const face& newFace
-) const
-{
-    const face compactFace(identity(newFace.size()));
-
-    // Get compact points
-    const pointField compactPoints(meshMod.points(), newFace);
-
-    const vector n(compactFace.normal(compactPoints));
-    const vector dir(neiPt - ownPt);
-
-    // Check orientation error
-    if ((dir & n) < 0)
-    {
-        FatalErrorInFunction
-            << "cell:" << cellI << " old face:" << faceI
-            << " newFace:" << newFace << endl
-            << " coords:" << compactPoints
-            << " ownPt:" << ownPt
-            << " neiPt:" << neiPt
-            << abort(FatalError);
-    }
-
-    // Note: report significant non-orthogonality error
-    const scalar severeNonOrthogonalityThreshold =
-        cos(70.0/180.0*constant::mathematical::pi);
-
-    const vector fcToOwn(compactFace.centre(compactPoints) - ownPt);
-
-    const scalar s = (fcToOwn & n)/(mag(fcToOwn) + VSMALL);
-
-    if (s > severeNonOrthogonalityThreshold)
-    {
-        WarningInFunction
-            << "Detected severely non-orthogonal face with non-orthogonality: "
-            << acos(s)/constant::mathematical::pi*180.0
-            << " cell:" << cellI << " old face:" << faceI
-            << " newFace: " << newFace << endl
-            << " coords: " << compactPoints
-            << " ownPt: " << ownPt
-            << " neiPt: " << neiPt
-            << " s: " << s
-            << endl;
-    }
-}
-
-
-void Foam::refinement::checkBoundaryOrientation
-(
-    polyTopoChange& meshMod,
-    const label cellI,
-    const label faceI,
-    const point& ownPt,
-    const point& boundaryPt,
-    const face& newFace
-) const
-{
-    face compactFace(identity(newFace.size()));
-    pointField compactPoints(meshMod.points(), newFace);
-
-    vector n(compactFace.normal(compactPoints));
-
-    vector dir(boundaryPt - ownPt);
-
-    if ((dir & n) < 0)
-    {
-        FatalErrorInFunction
-            << "cell:" << cellI << " old face:" << faceI
-            << " newFace:" << newFace
-            << " coords:" << compactPoints
-            << " ownPt:" << ownPt
-            << " boundaryPt:" << boundaryPt
-            << abort(FatalError);
-    }
-
-    // Note: report significant non-orthogonality error
-    const scalar severeNonOrthogonalityThreshold =
-        cos(70.0/180.0*constant::mathematical::pi);
-
-    const vector fcToOwn(compactFace.centre(compactPoints) - ownPt);
-
-    const scalar s = (fcToOwn & n)/(mag(fcToOwn) + VSMALL);
-
-    if (s > severeNonOrthogonalityThreshold)
-    {
-        WarningInFunction
-            << "Detected severely non-orthogonal face with non-orthogonality: "
-            << acos(s)/constant::mathematical::pi*180.0
-            << "cell:" << cellI << " old face:" << faceI
-            << " newFace:" << newFace
-            << " coords:" << compactPoints
-            << " ownPt:" << ownPt
-            << " boundaryPt:" << boundaryPt
-            << " s:" << s
-            << endl;
-    }
 }
 
 
