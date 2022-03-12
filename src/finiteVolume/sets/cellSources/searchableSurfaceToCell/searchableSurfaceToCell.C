@@ -61,6 +61,32 @@ void Foam::searchableSurfaceToCell::combine
     const bool add
 ) const
 {
+    if (!surfacePtr_->hasVolumeType())
+    {
+        const vectorField& samples(mesh_.cellCentres());
+        List<pointIndexHit> info(samples.size());
+        scalarField nearestDistSqr
+        (
+            info.size(),
+            magSqr(mesh_.bounds().span())
+        );
+        surfacePtr_->findNearest(samples, nearestDistSqr, info);
+
+        vectorField normals(mesh_.nCells(), Zero);
+        surfacePtr_->getNormal(info, normals);
+        forAll(normals, celli)
+        {
+            if (info[celli].hit())
+            {
+                vector dir(samples[celli] - info[celli].hitPoint());
+                if ((dir & normals[celli]) < 0)
+                {
+                    addOrDelete(set, celli, add);
+                }
+            }
+        }
+        return;
+    }
     List<volumeType> inOut(mesh_.nCells(), volumeType::unknown);
     surfacePtr_->getVolumeType(mesh_.cellCentres(), inOut);
     forAll(inOut, celli)
@@ -100,13 +126,13 @@ Foam::searchableSurfaceToCell::searchableSurfaceToCell
         )
     )
 {
-    if (!surfacePtr_->hasVolumeType())
-    {
-        FatalErrorInFunction
-            << "Searchable surface type " << surfacePtr_->type()
-            << " does not support volume type, but this is required" << endl
-            << abort(FatalError);
-    }
+//     if (!surfacePtr_->hasVolumeType())
+//     {
+//         FatalErrorInFunction
+//             << "Searchable surface type " << surfacePtr_->type()
+//             << " does not support volume type, but this is required" << endl
+//             << abort(FatalError);
+//     }
 }
 
 
@@ -155,13 +181,13 @@ Foam::searchableSurfaceToCell::searchableSurfaceToCell
     topoSetSource(mesh),
     surfacePtr_(surface)
 {
-    if (!surfacePtr_->hasVolumeType())
-    {
-        FatalErrorInFunction
-            << "Searchable surface type " << surfacePtr_->type()
-            << " does not support volume type, but this is required" << endl
-            << abort(FatalError);
-    }
+//     if (!surfacePtr_->hasVolumeType())
+//     {
+//         FatalErrorInFunction
+//             << "Searchable surface type " << surfacePtr_->type()
+//             << " does not support volume type, but this is required" << endl
+//             << abort(FatalError);
+//     }
 }
 
 
