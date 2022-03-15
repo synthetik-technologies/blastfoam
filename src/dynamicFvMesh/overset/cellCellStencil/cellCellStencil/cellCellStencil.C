@@ -112,15 +112,27 @@ void Foam::cellCellStencil::updateMesh(const mapPolyMesh& map)
 {
     if (mesh_.foundObject<labelIOList>("zoneID"))
     {
-        const volScalarField& volZoneID =
-            mesh_.lookupObject<volScalarField>("volZoneID");
-        labelIOList& zoneID = mesh_.lookupObjectRef<labelIOList>("zoneID");
+        labelIOList& zoneID =
+            mesh_.lookupObjectRef<labelIOList>("zoneID");
 
-        zoneID.resize(map.cellMap().size());
-        forAll(volZoneID, cellI)
+        // Map data
+        const labelList& cellMap = map.cellMap();
+
+        labelList newZoneID(cellMap.size());
+        forAll(cellMap, newCelli)
         {
-            zoneID[cellI] = round(volZoneID[cellI]);
+            label oldCelli = cellMap[newCelli];
+
+            if (oldCelli == -1)
+            {
+                newZoneID[newCelli] = -1;
+            }
+            else
+            {
+                newZoneID[newCelli] = zoneID[oldCelli];
+            }
         }
+        zoneID.transfer(newZoneID);
     }
     needUpdate_ = true;
 }
@@ -145,31 +157,23 @@ const Foam::labelIOList& Foam::cellCellStencil::zoneID(const fvMesh& mesh)
         );
         labelIOList& zoneID = *zoneIDPtr;
 
-        volScalarField* volZoneIDPtr
+        const volScalarField volZoneID
         (
-            new volScalarField
+            IOobject
             (
-                IOobject
-                (
-                    "zoneID",
-                    mesh.time().findInstance(mesh.dbDir(), "zoneID"),
-                    mesh,
-                    IOobject::MUST_READ,
-                    IOobject::NO_WRITE,
-                    false
-                ),
-                mesh
-            )
+                "zoneID",
+                mesh.time().findInstance(mesh.dbDir(), "zoneID"),
+                mesh,
+                IOobject::MUST_READ,
+                IOobject::AUTO_WRITE,
+                false
+            ),
+            mesh
         );
-        volZoneIDPtr->rename("volZoneID");
-        volZoneIDPtr->checkIn();
-        volZoneIDPtr->store(volZoneIDPtr);
-        const volScalarField& volZoneID = *volZoneIDPtr;
         forAll(volZoneID, cellI)
         {
             zoneID[cellI] = label(volZoneID[cellI]);
         }
-
         zoneIDPtr->store();
     }
     return mesh.lookupObject<labelIOList>("zoneID");
