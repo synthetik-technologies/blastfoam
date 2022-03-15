@@ -127,8 +127,8 @@ void Foam::lookupTable1D<Type>::readComponent
     else
     {
         FatalErrorInFunction
-            << "Either a list of values or " << name << "Coeffs must" << nl
-            << "be provided for " << name << endl
+            << "Neither the entry \"" << name << "\" or the \""
+            << name << "Coeffs\" subDictionary was found" << endl
             << abort(FatalError);
     }
 

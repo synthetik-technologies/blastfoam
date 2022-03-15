@@ -194,6 +194,20 @@ Foam::List<Type> Foam::readColumn
     const label col
 )
 {
+    if (!entries.size())
+    {
+        FatalErrorInFunction
+            << "Trying to read from a table but no data was read." << endl
+            << abort(FatalError);
+    }
+    if (col > entries.first().size())
+    {
+        FatalErrorInFunction
+            << "Only " << entries.first().size() << " columns were read, " << nl
+            << " but column " << col << " was requested" << endl
+            << abort(FatalError);
+    }
+
     List<Type> vals(entries.size());
     Type v;
     forAll(entries, i)
