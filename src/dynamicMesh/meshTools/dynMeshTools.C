@@ -693,21 +693,21 @@ Foam::label Foam::meshTools::createBaffleFaces
 
                     if (zoneFacei != -1)
                     {
-                        if (patchWarned.insert(patchi))
-                        {
-                            WarningInFunction
-                                << "Found boundary face (in patch "
-                                << pp.name()
-                                << ") in faceZone " << fZone.name()
-                                << " to convert to baffle patches "
-                                << pbm[newMasterPatchi].name() << "/"
-                                << pbm[newSlavePatchi].name()
-                                << endl
-                                << "    Set internalFacesOnly to true in the"
-                                << " createBaffles control dictionary if you"
-                                << " don't wish to convert boundary faces."
-                                << endl;
-                        }
+//                         if (patchWarned.insert(patchi))
+//                         {
+//                             WarningInFunction
+//                                 << "Found boundary face (in patch "
+//                                 << pp.name()
+//                                 << ") in faceZone " << fZone.name()
+//                                 << " to convert to baffle patches "
+//                                 << pbm[newMasterPatchi].name() << "/"
+//                                 << pbm[newSlavePatchi].name()
+//                                 << endl
+//                                 << "    Set internalFacesOnly to true in the"
+//                                 << " createBaffles control dictionary if you"
+//                                 << " don't wish to convert boundary faces."
+//                                 << endl;
+//                         }
 
                         modifyOrAddFace
                         (
