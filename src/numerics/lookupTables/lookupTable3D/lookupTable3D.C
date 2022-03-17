@@ -288,7 +288,7 @@ void Foam::lookupTable3D<Type>::setX
     modXType_ = modX;
     needXMod_ = modX != "none";
 
-    setMod(modX, modXFunc_, invModXFunc_);
+    setMod<scalar>(modX, modXFunc_, invModXFunc_);
     setX(x, isReal);
 }
 
@@ -353,7 +353,7 @@ void Foam::lookupTable3D<Type>::setY
     modYType_ = modY;
     needYMod_ = modY != "none";
 
-    setMod(modY, modYFunc_, invModYFunc_);
+    setMod<scalar>(modY, modYFunc_, invModYFunc_);
     setY(y, isReal);
 }
 
@@ -418,7 +418,7 @@ void Foam::lookupTable3D<Type>::setZ
     modZType_ = modZ;
     needZMod_ = modZ != "none";
 
-    setMod(modZ, modZFunc_, invModZFunc_);
+    setMod<scalar>(modZ, modZFunc_, invModZFunc_);
     setZ(z, isReal);
 }
 
@@ -534,7 +534,7 @@ void Foam::lookupTable3D<Type>::setData
     modType_ = mod;
     needMod_ = mod != "none";
 
-    setMod(mod, modFunc_, invModFunc_);
+    setMod<Type>(mod, modFunc_, invModFunc_);
     setData(data, isReal);
 }
 
@@ -658,8 +658,6 @@ void Foam::lookupTable3D<Type>::read
     const dictionary& fDict(dict.optionalSubDict(name + "Coeffs"));
 
     modType_ = fDict.lookupOrDefault<word>("mod", "none");
-    setMod(modType_, modFunc_, invModFunc_);
-
     isReal = fDict.lookupOrDefault<Switch>("isReal", true);
 
     fileName file(fDict.lookup<word>("file"));

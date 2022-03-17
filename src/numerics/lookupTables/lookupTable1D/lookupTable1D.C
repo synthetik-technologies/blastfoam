@@ -50,8 +50,8 @@ Foam::lookupTable1D<Type>::lookupTable1D()
     indices_(0),
     weights_(0.0)
 {
-    setMod(modType_, modFunc_, invModFunc_);
-    setMod(modXType_, modXFunc_, invModXFunc_);
+    setMod<Type>(modType_, modFunc_, invModFunc_);
+    setMod<scalar>(modXType_, modXFunc_, invModXFunc_);
     setInterp(interpType_, interpFunc_);
 }
 
@@ -251,7 +251,7 @@ void Foam::lookupTable1D<Type>::setX
     modXType_ = xMod;
     needXMod_ = xMod != "none";
 
-    setMod(modXType_, modXFunc_, invModXFunc_);
+    setMod<scalar>(modXType_, modXFunc_, invModXFunc_);
     setX(x, isReal);
 }
 
@@ -305,7 +305,7 @@ void Foam::lookupTable1D<Type>::setData
     modType_ = mod;
     needMod_ = mod != "none";
 
-    setMod(modType_, modFunc_, invModFunc_);
+    setMod<Type>(modType_, modFunc_, invModFunc_);
     setData(data, isReal);
 }
 

@@ -53,9 +53,6 @@ class scalarLookupTable3D
 {
 // Private data
 
-    //- Include definition of modifying functions
-    #include "scalarTableFuncs.H"
-
 
 public:
 

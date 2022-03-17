@@ -53,9 +53,6 @@ class scalarLookupTable2D
 {
 // Private data
 
-    //- Include definition of modifying functions
-    #include "scalarTableFuncs.H"
-
     //- Find bottom of interpolation region, return index and weight between i and i+1
     labelList boundi(const scalar f) const;
 

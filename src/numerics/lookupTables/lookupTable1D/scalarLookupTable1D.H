@@ -52,9 +52,6 @@ class scalarLookupTable1D
 {
 // Private data
 
-    //- Include definition of modifying functions
-    #include "scalarTableFuncs.H"
-
 public:
 
     // Constructors

@@ -247,7 +247,7 @@ void Foam::lookupTable2D<Type>::setX
     modXType_ = modX;
     needXMod_ = modX != "none";
 
-    setMod(modX, modXFunc_, invModXFunc_);
+    setMod<scalar>(modX, modXFunc_, invModXFunc_);
     setX(x, isReal);
 }
 
@@ -312,7 +312,7 @@ void Foam::lookupTable2D<Type>::setY
     modYType_ = modY;
     needYMod_ = modY != "none";
 
-    setMod(modY, modYFunc_, invModYFunc_);
+    setMod<scalar>(modY, modYFunc_, invModYFunc_);
     setY(y, isReal);
 }
 
@@ -422,7 +422,7 @@ void Foam::lookupTable2D<Type>::setData
     modType_ = mod;
     needMod_ = mod != "none";
 
-    setMod(mod, modFunc_, invModFunc_);
+    setMod<Type>(mod, modFunc_, invModFunc_);
     setData(data, isReal);
 }
 
