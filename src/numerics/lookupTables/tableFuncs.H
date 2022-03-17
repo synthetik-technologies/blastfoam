@@ -105,8 +105,8 @@ inline static void linearExtrapolatedInterp
     scalarList& weights
 )
 {
-    label hi = min(xs.size() - 1, I + 1);
-    label lo = hi - 1;
+    label lo = max(I, 0);
+    label hi = min(xs.size() - 1, lo + 1);
 
     indices.setSize(2);
     weights.setSize(2);
@@ -160,14 +160,14 @@ inline static void quadraticExtrapolatedInterp
     scalarList& weights
 )
 {
-    if (I < 1 || I > xs.size() - 2)
+    if (xs.size() < 3)
     {
         return linearExtrapolatedInterp(x, I, xs, indices, weights);
     }
 
-    label lo = I - 1;
-    label mid = I;
-    label hi = I + 1;
+    label lo = max(I-1, 0);
+    label mid = lo + 1;
+    label hi = mid + 1;
 
     const scalar& x0 = xs[lo];
     const scalar& x1 = xs[mid];
@@ -214,6 +214,11 @@ inline static void quadraticClampInterp
         weights[0] = 1.0;
         return;
     }
+    else if (I < 1 || I > xs.size() - 2)
+    {
+        return linearClampInterp(x, I, xs, indices, weights);
+    }
+
     return quadraticExtrapolatedInterp(x, I, xs, indices, weights);
 }
 
@@ -227,27 +232,31 @@ inline static void cubicExtrapolatedInterp
     scalarList& weights
 )
 {
-    if (I < 1)
-    {
-        return linearExtrapolatedInterp(x, I, xs, indices, weights);
-    }
-    if (I > xs.size() - 3)
+    if (xs.size() < 4)
     {
         return quadraticExtrapolatedInterp(x, I, xs, indices, weights);
+    }
+
+    label lo = max(I - 1, 0);
+    label hi = lo + 3;
+    if (hi > xs.size() - 1)
+    {
+        hi = xs.size() - 1;
+        lo = hi - 3;
     }
 
     indices.resize(4);
     weights.resize(4);
 
-    indices[0] = I - 1;
-    indices[1] = I;
-    indices[2] = I + 1;
-    indices[3] = I + 2;
+    indices[0] = lo;
+    indices[1] = lo + 1;
+    indices[2] = lo + 2;
+    indices[3] = lo + 3;
 
-    const scalar& x0 = xs[I-1];
-    const scalar& x1 = xs[I];
-    const scalar& x2 = xs[I+1];
-    const scalar& x3 = xs[I+2];
+    const scalar& x0 = xs[lo];
+    const scalar& x1 = xs[lo+1];
+    const scalar& x2 = xs[lo+2];
+    const scalar& x3 = xs[lo+3];
 
 
     weights[0] = (x - x1)*(x - x2)*(x - x3)/(x0 - x1)/(x0 - x2)/(x0 - x3);
@@ -295,6 +304,14 @@ inline static void cubicClampInterp
         indices[0] = xs.size() - 1;
         weights[0] = 1.0;
         return;
+    }
+    else if (I < 1)
+    {
+        return linearClampInterp(x, I, xs, indices, weights);
+    }
+    else if (I > xs.size() - 3)
+    {
+        return quadraticClampInterp(x, I, xs, indices, weights);
     }
     return cubicExtrapolatedInterp(x, I, xs, indices, weights);
 }
