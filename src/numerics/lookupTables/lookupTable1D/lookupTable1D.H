@@ -61,31 +61,66 @@ protected:
     #include "tableFuncs.H"
 
     word modType_;
+    bool needMod_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
     word modXType_;
+    bool needXMod_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
     //- Interpolation type
     word interpType_;
-    interp1DFuncType interpFunc_;
-
-    //- List of x values in real space
-    Field<scalar> xValues_;
-
-    //- List of x values in the given space
-    Field<scalar> xModValues_;
+    interpFuncType interpFunc_;
 
     //- Data
     Field<Type> data_;
 
+    //- List of x values in the given space
+    Field<scalar> xModValues_;
+
+    //- Real data
+    Field<Type>* realDataPtr_;
+
+    //- List of x values in real space
+    Field<scalar>* xValuesPtr_;
+
     //- Current index (used to access location in list after lookup)
     mutable label index_;
 
+    //- List of interpolation indices
+    mutable labelList indices_;
+
     //- Current interpolation weight
-    mutable scalar f_;
+    mutable scalarList weights_;
+
+
+    // Protected member functions
+
+        // Return the real data
+        inline const Field<scalar>& fValues() const
+        {
+            return *realDataPtr_;
+        }
+
+        // Access the real data values
+        inline Field<scalar>& fValues()
+        {
+            return *realDataPtr_;
+        }
+
+        // Return the real x values
+        inline const Field<scalar>& xValues() const
+        {
+            return *xValuesPtr_;
+        }
+
+        // Access the real x values
+        inline Field<scalar>& xValues()
+        {
+            return *xValuesPtr_;
+        }
 
 
 public:
@@ -140,10 +175,16 @@ public:
                 return index_;
             }
 
-            //- Access current interpolation weight
-            scalar f() const
+            //- Access current interpolation indices
+            const labelList& indices() const
             {
-                return f_;
+                return indices_;
+            }
+
+            //- Access current interpolation indices
+            const scalarList& weights() const
+            {
+                return weights_;
             }
 
             //- Return the modifier type name
@@ -185,7 +226,7 @@ public:
             //- Const access to real x values
             const Field<scalar>& x() const
             {
-                return xValues_;
+                return xValues();
             }
 
             //- Const access to modified x values
@@ -195,13 +236,16 @@ public:
             }
 
             //- Const access to modified data values
-            const Field<Type>& data() const
+            const Field<Type>& fMod() const
             {
                 return data_;
             }
 
             //- Return the real data
-            tmp<Field<Type>> realData() const;
+            const Field<Type>& f() const
+            {
+                return fValues();
+            }
 
             //- Return the interpolation scheme type name
             const word& interpType() const
@@ -219,8 +263,8 @@ public:
         Type lookup(const scalar x) const;
 
         //- Interpolate value using the current index and weight
-        template<class fType>
-        fType interpolate(const fType&, const fType&) const;
+        template<template<class> class ListType, class fType>
+        fType interpolate(const ListType<fType>&) const;
 
         //- Interpolate value using the current index and weight
         template<template<class> class ListType, class fType>
@@ -255,7 +299,6 @@ public:
         (
             const Field<scalar>& x,
             const word& xMod,
-            const word& interpolationScheme,
             const bool isReal = true
         );
 
@@ -274,21 +317,6 @@ public:
         const dictionary& dict,
         const word& xName,
         const word& yName,
-        const bool canRead = true
-    );
-
-    //- Read a set from a given dictionary
-    template<class fType>
-    void readComponent
-    (
-        const dictionary& parentDict,
-        const word& name,
-        const List<List<string>>& table,
-        word& type,
-        Field<fType>& values,
-        Field<fType>& modValues,
-        modFuncType& modFunc,
-        modFuncType& invModFunc,
         const bool canRead = true
     );
 };

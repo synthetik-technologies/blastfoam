@@ -51,6 +51,16 @@ namespace Foam
 //- Remove comments from a line
 void removeComments(string& line);
 
+template<class Type>
+bool readComponent
+(
+    const dictionary& parentDict,
+    const word& name,
+    word& modType,
+    Field<Type>& values,
+    const List<List<string>>& table = List<List<string>>()
+);
+
 //- Read a 1D table from a file
 template<class Type>
 void read1DTable

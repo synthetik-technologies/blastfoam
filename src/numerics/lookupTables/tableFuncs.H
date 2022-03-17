@@ -75,15 +75,6 @@ inline static label findNonuniformIndexes
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//- Interpolation types
-typedef Type (*interp1DFuncType)
-(
-    const scalar,
-    const label,
-    const List<scalar>&,
-    const List<Type>&
-);
-
 inline static scalar linearWeight
 (
     const scalar x,
@@ -94,172 +85,259 @@ inline static scalar linearWeight
     return (x - xLow)/(xHigh - xLow);
 }
 
+//- Interpolation types
+typedef void (*interpFuncType)
+(
+    const scalar,
+    const label,
+    const scalarList&,
+    labelList&,
+    scalarList&
+);
 
-inline static Type linearExtrapolatedInterp
+
+inline static void linearExtrapolatedInterp
 (
     const scalar x,
     const label I,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
-    const label i = min(I, xs.size() - 2);
-    return ys[i] + linearWeight(x, xs[i], xs[i+1])*(ys[i+1] - ys[i]);
+    label hi = min(xs.size() - 1, I + 1);
+    label lo = hi - 1;
+
+    indices.setSize(2);
+    weights.setSize(2);
+
+    indices[0] = lo;
+    indices[1] = hi;
+
+    weights[1] = (x - xs[lo])/(xs[hi] - xs[lo]);
+    weights[0] = 1.0 - weights[1];
 }
 
 
-inline static Type linearClampInterp
+inline static void linearClampInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
     if (x < xs[0])
     {
-        return ys[0];
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = 0;
+        weights[0] = 1.0;
+
+        return;
     }
     else if (x > xs.last())
     {
-        return ys.last();
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = xs.size() - 1;
+        weights[0] = 1.0;
+        return;
     }
-    return linearExtrapolatedInterp(x, i, xs, ys);
+    return linearExtrapolatedInterp(x, I, xs, indices, weights);
 }
 
 
-inline static Type quadraticExtrapolatedInterp
+inline static void quadraticExtrapolatedInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
-    if (i < 1 || i > xs.size() - 2)
+    if (I < 1 || I > xs.size() - 2)
     {
-        return linearExtrapolatedInterp(x, i, xs, ys);
+        return linearExtrapolatedInterp(x, I, xs, indices, weights);
     }
-    const scalar x0 = xs[i-1];
-    const scalar x1 = xs[i];
-    const scalar x2 = xs[i+1];
 
-    return
-        (x - x1)*(x - x2)/(x0 - x1)/(x0 - x2)*ys[i-1]
-      + (x - x2)*(x - x0)/(x1 - x2)/(x1 - x0)*ys[i]
-      + (x - x0)*(x - x1)/(x2 - x0)/(x2 - x1)*ys[i+1];
+    label lo = I - 1;
+    label mid = I;
+    label hi = I + 1;
 
+    const scalar& x0 = xs[lo];
+    const scalar& x1 = xs[mid];
+    const scalar& x2 = xs[hi];
+
+    indices.resize(3);
+    weights.resize(3);
+
+    indices[0] = lo;
+    indices[1] = mid;
+    indices[2] = hi;
+
+    weights[0] = (x - x1)*(x - x2)/(x0 - x1)/(x0 - x2);
+    weights[1] = (x - x2)*(x - x0)/(x1 - x2)/(x1 - x0);
+    weights[2] = (x - x0)*(x - x1)/(x2 - x0)/(x2 - x1);
 }
 
 
-inline static Type quadraticClampInterp
+inline static void quadraticClampInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
     if (x < xs[0])
     {
-        return ys[0];
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = 0;
+        weights[0] = 1.0;
+
+        return;
     }
     else if (x > xs.last())
     {
-        return ys.last();
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = xs.size() - 1;
+        weights[0] = 1.0;
+        return;
     }
-    return quadraticExtrapolatedInterp(x, i, xs, ys);
+    return quadraticExtrapolatedInterp(x, I, xs, indices, weights);
 }
 
 
-inline static Type cubicExtrapolatedInterp
+inline static void cubicExtrapolatedInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
-    if (i < 1)
+    if (I < 1)
     {
-        return linearExtrapolatedInterp(x, i, xs, ys);
+        return linearExtrapolatedInterp(x, I, xs, indices, weights);
     }
-    if (i > xs.size() - 3)
+    if (I > xs.size() - 3)
     {
-        return quadraticExtrapolatedInterp(x, i, xs, ys);
+        return quadraticExtrapolatedInterp(x, I, xs, indices, weights);
     }
-    const scalar x0 = xs[i-1];
-    const scalar x1 = xs[i];
-    const scalar x2 = xs[i+1];
-    const scalar x3 = xs[i+2];
-    const scalar dx20 = x2 - x0;
-    const scalar dx31 = x3 - x1;
 
-    const Type a =
-      - ys[i-1]/dx20
-      + ys[i]*(2.0 - 1.0/dx31)
-      + ys[i+1]*(1.0/dx20 - 2.0)
-      + ys[i+2]/dx31;
-    const Type b =
-        ys[i-1]*2.0/dx20
-      + ys[i]*(1.0/dx31 - 3.0)
-      + ys[i+1]*(3.0 - 2.0/dx20)
-      - ys[i+2]/dx31;
-    const Type c = (ys[i+1] - ys[i-1])/dx20;
-    const Type d = ys[i];
+    indices.resize(4);
+    weights.resize(4);
 
-    return a*pow3(x) + b*sqr(x) + c*x + d;
+    indices[0] = I - 1;
+    indices[1] = I;
+    indices[2] = I + 1;
+    indices[3] = I + 2;
+
+    const scalar& x0 = xs[I-1];
+    const scalar& x1 = xs[I];
+    const scalar& x2 = xs[I+1];
+    const scalar& x3 = xs[I+2];
+
+
+    weights[0] = (x - x1)*(x - x2)*(x - x3)/(x0 - x1)/(x0 - x2)/(x0 - x3);
+    weights[1] = (x - x2)*(x - x3)*(x - x0)/(x1 - x0)/(x1 - x2)/(x1 - x3);
+    weights[2] = (x - x3)*(x - x0)*(x - x1)/(x2 - x0)/(x2 - x1)/(x2 - x3);
+    weights[3] = (x - x0)*(x - x1)*(x - x2)/(x3 - x0)/(x3 - x1)/(x3 - x2);
+
+//     const scalar dx20 = xs[I+1] - xs[I-1];
+//     const scalar dx31 = xs[I+2] - xs[I];
+//
+//     const scalar x3 = pow3(x);
+//     const scalar x2 = sqr(x);
+//
+//     weights[0] = (-x3 + x2*2.0 - x)/dx20;
+//     weights[1] = x3*(2.0 - 1.0/dx31) + x2*(1.0/dx31 - 3.0) + 1.0;
+//     weights[2] = x3*(1.0/dx20 - 2.0) + x2*(3.0 - 2.0/dx20) + 1.0/dx20;
+//     weights[3] = (x3 - x2)/dx31;
 }
 
 
-inline static Type cubicClampInterp
+inline static void cubicClampInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
     if (x < xs[0])
     {
-        return ys[0];
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = 0;
+        weights[0] = 1.0;
+
+        return;
     }
     else if (x > xs.last())
     {
-        return ys.last();
+        indices.setSize(1);
+        weights.setSize(1);
+
+        indices[0] = xs.size() - 1;
+        weights[0] = 1.0;
+        return;
     }
-    return cubicExtrapolatedInterp(x, i, xs, ys);
+    return cubicExtrapolatedInterp(x, I, xs, indices, weights);
 }
 
 
-inline static Type ceilInterp
+inline static void ceilInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
-    return ys[x != xs[i] ? i+1 : i];
+    indices.setSize(1);
+    weights.setSize(1);
+
+    indices[0] = x != xs[I] ? I + 1 : I;
+    weights[0] = 1.0;
 }
 
 
-inline static Type floorInterp
+inline static void floorInterp
 (
     const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    const List<Type>& ys
+    const label I,
+    const scalarList& xs,
+    labelList& indices,
+    scalarList& weights
 )
 {
-    return ys[i];
+    indices.setSize(1);
+    weights.setSize(1);
+
+    indices[0] = I;
+    weights[0] = 1.0;
 }
 
 
 inline void setInterp
 (
     const word& interpolationScheme,
-    interp1DFuncType& interp
+    interpFuncType& interp
 )
 {
     if (interpolationScheme == "linearClamp")
@@ -311,975 +389,3 @@ inline void setInterp
     }
 }
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-//- Interpolation types
-typedef Type (*interp2DFuncType)
-(
-    const scalar,
-    const scalar,
-    const label,
-    const label,
-    const List<scalar>&,
-    const List<scalar>&,
-    const Field<Field<Type>>&
-);
-
-
-inline static Type bilinearClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(I, xs.size() - 2);
-    const label j = min(J, ys.size() - 2);
-    Type m(linearClampInterp(y, j, ys, zs[i]));
-    Type p(linearClampInterp(y, j, ys, zs[i+1]));
-    return linearClampInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
-}
-
-
-inline static Type bilinearExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(I, xs.size() - 2);
-    const label j = min(J, ys.size() - 2);
-    Type m(linearExtrapolatedInterp(x, i, xs, zs[i]));
-    Type p(linearExtrapolatedInterp(x, i+1, xs, zs[i+1]));
-
-    return linearExtrapolatedInterp(y, 0, {ys[j], ys[j+1]}, {m, p});
-}
-
-
-inline static Type biquadraticClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
-
-    Type fim(quadraticClampInterp(x, i-1, xs, zs[i-1]));
-    Type fi(quadraticClampInterp(x, i, xs, zs[i]));
-    Type fip(quadraticClampInterp(x, i+1, xs, zs[i+1]));
-
-    return quadraticClampInterp
-    (
-        y,
-        1,
-        {ys[j-1], ys[j], ys[j+1]},
-        {fim, fi, fip}
-    );
-}
-
-
-inline static Type biquadraticExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
-
-    Type fim(quadraticClampInterp(x, i-1, xs, zs[i-1]));
-    Type fi(quadraticClampInterp(x, i, xs, zs[i]));
-    Type fip(quadraticClampInterp(x, i+1, xs, zs[i+1]));
-    return quadraticExtrapolatedInterp
-    (
-        y,
-        1,
-        {ys[j-1], ys[j], ys[j+1]},
-        {fim, fi, fip}
-    );
-}
-
-
-inline static Type bicubicClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 3);
-    const label j = min(max(J, 1), ys.size() - 3);
-
-    Type fim(cubicClampInterp(x, i-1, xs, zs[i-1]));
-    Type fi(cubicClampInterp(x, i, xs, zs[i]));
-    Type fip(cubicClampInterp(x, i+1, xs, zs[i+1]));
-    Type fipp(cubicClampInterp(x, i+2, xs, zs[i+2]));
-    return cubicClampInterp
-    (
-        y,
-        1,
-        {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-        {fim, fi, fip, fipp}
-    );
-}
-
-
-inline static Type bicubicExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const label I,
-    const label J,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 3);
-    const label j = min(max(J, 1), ys.size() - 3);
-
-    Type fim(cubicExtrapolatedInterp(x, i-1, xs, zs[i-1]));
-    Type fi(cubicExtrapolatedInterp(x, i, xs, zs[i]));
-    Type fip(cubicExtrapolatedInterp(x, i+1, xs, zs[i+1]));
-    Type fipp(cubicExtrapolatedInterp(x, i+2, xs, zs[i+2]));
-    return cubicExtrapolatedInterp
-    (
-        y,
-        1,
-        {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-        {fim, fi, fip, fipp}
-    );
-}
-
-
-inline static Type bifloor
-(
-    const scalar x,
-    const scalar y,
-    const label i,
-    const label j,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    return zs[i][j];
-}
-
-
-inline static Type biceil
-(
-    const scalar x,
-    const scalar y,
-    const label i,
-    const label j,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const Field<Field<Type>>& zs
-)
-{
-    return zs[x != xs[i] ? i+1 : i][y != ys[j] ? j+1 : j];
-}
-
-
-inline void setInterp
-(
-    const word& interpolationScheme,
-    interp2DFuncType& interp
-)
-{
-    Info<< "Selecting " << interpolationScheme << " interpolation" << endl;
-    if (interpolationScheme == "linearClamp")
-    {
-        interp = &bilinearClampInterp;
-    }
-    else if (interpolationScheme == "linearExtrapolated")
-    {
-        interp = &bilinearExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "quadraticClamp")
-    {
-        interp = &biquadraticClampInterp;
-    }
-    else if (interpolationScheme == "quadraticExtrapolated")
-    {
-        interp = &biquadraticExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "cubicClamp")
-    {
-        interp = &bicubicClampInterp;
-    }
-    else if (interpolationScheme == "cubicExtrapolated")
-    {
-        interp = &bicubicExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "floor")
-    {
-        interp = &bifloor;
-    }
-    else if (interpolationScheme == "ceil")
-    {
-        interp = &biceil;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << interpolationScheme << " is not a valid interpolation scheme" << nl
-            << "Options are: " << nl
-            << "    linearClamp" << nl
-            << "    linearExtrapolated" << nl
-            << "    quadraticClamp" << nl
-            << "    quadraticExtrapolated" << nl
-            << "    cubicClamp" << nl
-            << "    cubicExtrapolated" << nl
-            << "    floor" << nl
-            << "    ceil" << nl
-            << abort(FatalError);
-    }
-}
-
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-//- Interpolation types
-typedef Type (*interp3DFuncType)
-(
-    const scalar,
-    const scalar,
-    const scalar,
-    const label,
-    const label,
-    const label,
-    const List<scalar>&,
-    const List<scalar>&,
-    const List<scalar>&,
-    const Field<Field<Field<Type>>>&
-);
-
-
-inline static Type trilinearClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label i,
-    const label j,
-    const label k,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    Field<Field<Type>> tf(2, Field<Type>(2, 0.0));
-    tf[0][0] = fs[i][j][k];
-    tf[0][1] = fs[i][j][k+1];
-    tf[1][0] = fs[i][j+1][k];
-    tf[1][1] = fs[i][j+1][k+1];
-    Type m
-    (
-        bilinearClampInterp
-        (
-            y,
-            z,
-            0,
-            0,
-            {ys[j], ys[j+1]},
-            {zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j][k];
-    tf[0][1] = fs[i+1][j][k+1];
-    tf[1][0] = fs[i+1][j+1][k];
-    tf[1][1] = fs[i+1][j+1][k+1];
-    Type p
-    (
-        bilinearClampInterp
-        (
-            y,
-            z,
-            0,
-            0,
-            {ys[j], ys[j+1]},
-            {zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    return linearClampInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
-}
-
-
-inline static Type trilinearExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label i,
-    const label j,
-    const label k,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    Field<Field<Type>> tf(2, Field<Type>(2));
-    tf[0][0] = fs[i][j][k];
-    tf[0][1] = fs[i][j][k+1];
-    tf[1][0] = fs[i][j+1][k];
-    tf[1][1] = fs[i][j+1][k+1];
-
-    Type m
-    (
-        bilinearExtrapolatedInterp
-        (
-            y,
-            z,
-            0,
-            0,
-            {ys[j], ys[j+1]},
-            {zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j][k];
-    tf[0][1] = fs[i+1][j][k+1];
-    tf[1][0] = fs[i+1][j+1][k];
-    tf[1][1] = fs[i+1][j+1][k+1];
-
-    Type p
-    (
-        bilinearExtrapolatedInterp
-        (
-            y,
-            z,
-            0,
-            0,
-            {ys[j], ys[j+1]},
-            {zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    return linearExtrapolatedInterp(x, 0, {xs[i], xs[i+1]}, {m, p});
-}
-
-
-inline static Type triquadraticClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label I,
-    const label J,
-    const label K,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
-    const label k = min(max(K, 1), zs.size() - 2);
-
-    Field<Field<Type>> tf(3, Field<Type>(3, 0.0));
-    tf[0][0] = fs[i-1][j-1][k-1];
-    tf[0][1] = fs[i-1][j-1][k];
-    tf[0][2] = fs[i-1][j-1][k+1];
-    tf[1][0] = fs[i-1][j][k-1];
-    tf[1][1] = fs[i-1][j][k];
-    tf[1][2] = fs[i-1][j][k+1];
-    tf[2][0] = fs[i-1][j+1][k-1];
-    tf[2][1] = fs[i-1][j+1][k];
-    tf[2][2] = fs[i-1][j+1][k+1];
-    Type fim
-    (
-        biquadraticClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i][j-1][k-1];
-    tf[0][1] = fs[i][j-1][k];
-    tf[0][2] = fs[i][j-1][k+1];
-    tf[1][0] = fs[i][j][k-1];
-    tf[1][1] = fs[i][j][k];
-    tf[1][2] = fs[i][j][k+1];
-    tf[2][0] = fs[i][j+1][k-1];
-    tf[2][1] = fs[i][j+1][k];
-    tf[2][2] = fs[i][j+1][k+1];
-    Type fi
-    (
-        biquadraticClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j-1][k-1];
-    tf[0][1] = fs[i+1][j-1][k];
-    tf[0][2] = fs[i+1][j-1][k+1];
-    tf[1][0] = fs[i+1][j][k-1];
-    tf[1][1] = fs[i+1][j][k];
-    tf[1][2] = fs[i+1][j][k+1];
-    tf[2][0] = fs[i+1][j+1][k-1];
-    tf[2][1] = fs[i+1][j+1][k];
-    tf[2][2] = fs[i+1][j+1][k+1];
-    Type fip
-    (
-        biquadraticClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    return quadraticClampInterp
-    (
-        x,
-        1,
-        {xs[i-1], xs[i], xs[i+1]},
-        {fim, fi, fip}
-    );
-}
-
-
-inline static Type triquadraticExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label I,
-    const label J,
-    const label K,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 2);
-    const label j = min(max(J, 1), ys.size() - 2);
-    const label k = min(max(K, 1), zs.size() - 2);
-
-    Field<Field<Type>> tf(3, Field<Type>(3, 0.0));
-    tf[0][0] = fs[i-1][j-1][k-1];
-    tf[0][1] = fs[i-1][j-1][k];
-    tf[0][2] = fs[i-1][j-1][k+1];
-    tf[1][0] = fs[i-1][j][k-1];
-    tf[1][1] = fs[i-1][j][k];
-    tf[1][2] = fs[i-1][j][k+1];
-    tf[2][0] = fs[i-1][j+1][k-1];
-    tf[2][1] = fs[i-1][j+1][k];
-    tf[2][2] = fs[i-1][j+1][k+1];
-    Type fim
-    (
-        biquadraticExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i][j-1][k-1];
-    tf[0][1] = fs[i][j-1][k];
-    tf[0][2] = fs[i][j-1][k+1];
-    tf[1][0] = fs[i][j][k-1];
-    tf[1][1] = fs[i][j][k];
-    tf[1][2] = fs[i][j][k+1];
-    tf[2][0] = fs[i][j+1][k-1];
-    tf[2][1] = fs[i][j+1][k];
-    tf[2][2] = fs[i][j+1][k+1];
-    Type fi
-    (
-        biquadraticExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j-1][k-1];
-    tf[0][1] = fs[i+1][j-1][k];
-    tf[0][2] = fs[i+1][j-1][k+1];
-    tf[1][0] = fs[i+1][j][k-1];
-    tf[1][1] = fs[i+1][j][k];
-    tf[1][2] = fs[i+1][j][k+1];
-    tf[2][0] = fs[i+1][j+1][k-1];
-    tf[2][1] = fs[i+1][j+1][k];
-    tf[2][2] = fs[i+1][j+1][k+1];
-    Type fip
-    (
-        biquadraticExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1]},
-            {zs[k-1], zs[k], zs[k+1]},
-            tf
-        )
-    );
-
-    return quadraticExtrapolatedInterp
-    (
-        x,
-        1,
-        {xs[i-1], xs[i], xs[i+1]},
-        {fim, fi, fip}
-    );
-}
-
-
-inline static Type tricubicClampInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label I,
-    const label J,
-    const label K,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 3);
-    const label j = min(max(J, 1), ys.size() - 3);
-    const label k = min(max(K, 1), zs.size() - 3);
-
-    Field<Field<Type>> tf(4, Field<Type>(4, 0.0));
-    tf[0][0] = fs[i-1][j-1][k-1];
-    tf[0][1] = fs[i-1][j-1][k];
-    tf[0][2] = fs[i-1][j-1][k+1];
-    tf[0][3] = fs[i-1][j-1][k+2];
-    tf[1][0] = fs[i-1][j][k-1];
-    tf[1][1] = fs[i-1][j][k];
-    tf[1][2] = fs[i-1][j][k+1];
-    tf[1][3] = fs[i-1][j][k+2];
-    tf[2][0] = fs[i-1][j+1][k-1];
-    tf[2][1] = fs[i-1][j+1][k];
-    tf[2][2] = fs[i-1][j+1][k+1];
-    tf[2][3] = fs[i-1][j+1][k+2];
-    tf[3][0] = fs[i-1][j+2][k-1];
-    tf[3][1] = fs[i-1][j+2][k];
-    tf[3][2] = fs[i-1][j+2][k+1];
-    tf[3][3] = fs[i-1][j+2][k+2];
-    Type fim
-    (
-        bicubicClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i][j-1][k-1];
-    tf[0][1] = fs[i][j-1][k];
-    tf[0][2] = fs[i][j-1][k+1];
-    tf[0][3] = fs[i][j-1][k+2];
-    tf[1][0] = fs[i][j][k-1];
-    tf[1][1] = fs[i][j][k];
-    tf[1][2] = fs[i][j][k+1];
-    tf[1][3] = fs[i][j][k+2];
-    tf[2][0] = fs[i][j+1][k-1];
-    tf[2][1] = fs[i][j+1][k];
-    tf[2][2] = fs[i][j+1][k+1];
-    tf[2][3] = fs[i][j+1][k+2];
-    tf[3][0] = fs[i][j+2][k-1];
-    tf[3][1] = fs[i][j+2][k];
-    tf[3][2] = fs[i][j+2][k+1];
-    tf[3][3] = fs[i][j+2][k+2];
-    Type fi
-    (
-        bicubicClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j-1][k-1];
-    tf[0][1] = fs[i+1][j-1][k];
-    tf[0][2] = fs[i+1][j-1][k+1];
-    tf[0][3] = fs[i+1][j-1][k+2];
-    tf[1][0] = fs[i+1][j][k-1];
-    tf[1][1] = fs[i+1][j][k];
-    tf[1][2] = fs[i+1][j][k+1];
-    tf[1][3] = fs[i+1][j][k+2];
-    tf[2][0] = fs[i+1][j+1][k-1];
-    tf[2][1] = fs[i+1][j+1][k];
-    tf[2][2] = fs[i+1][j+1][k+1];
-    tf[2][3] = fs[i+1][j+1][k+2];
-    tf[3][0] = fs[i+1][j+2][k-1];
-    tf[3][1] = fs[i+1][j+2][k];
-    tf[3][2] = fs[i+1][j+2][k+1];
-    tf[3][3] = fs[i+1][j+2][k+2];
-    Type fip
-    (
-        bicubicClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+2][j-1][k-1];
-    tf[0][1] = fs[i+2][j-1][k];
-    tf[0][2] = fs[i+2][j-1][k+1];
-    tf[0][3] = fs[i+2][j-1][k+2];
-    tf[1][0] = fs[i+2][j][k-1];
-    tf[1][1] = fs[i+2][j][k];
-    tf[1][2] = fs[i+2][j][k+1];
-    tf[1][3] = fs[i+2][j][k+2];
-    tf[2][0] = fs[i+2][j+1][k-1];
-    tf[2][1] = fs[i+2][j+1][k];
-    tf[2][2] = fs[i+2][j+1][k+1];
-    tf[2][3] = fs[i+2][j+1][k+2];
-    tf[3][0] = fs[i+2][j+2][k-1];
-    tf[3][1] = fs[i+2][j+2][k];
-    tf[3][2] = fs[i+2][j+2][k+1];
-    tf[3][3] = fs[i+2][j+2][k+2];
-    Type fipp
-    (
-        bicubicClampInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    return cubicClampInterp
-    (
-        x,
-        1,
-        {xs[i-1], xs[i], xs[i+1], xs[i+2]},
-        {fim, fi, fip, fipp}
-    );
-}
-
-
-inline static Type tricubicClampExtrapolatedInterp
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label I,
-    const label J,
-    const label K,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    const label i = min(max(I, 1), xs.size() - 3);
-    const label j = min(max(J, 1), ys.size() - 3);
-    const label k = min(max(K, 1), zs.size() - 3);
-
-    Field<Field<Type>> tf(4, Field<Type>(4, 0.0));
-    tf[0][0] = fs[i-1][j-1][k-1];
-    tf[0][1] = fs[i-1][j-1][k];
-    tf[0][2] = fs[i-1][j-1][k+1];
-    tf[0][3] = fs[i-1][j-1][k+2];
-    tf[1][0] = fs[i-1][j][k-1];
-    tf[1][1] = fs[i-1][j][k];
-    tf[1][2] = fs[i-1][j][k+1];
-    tf[1][3] = fs[i-1][j][k+2];
-    tf[2][0] = fs[i-1][j+1][k-1];
-    tf[2][1] = fs[i-1][j+1][k];
-    tf[2][2] = fs[i-1][j+1][k+1];
-    tf[2][3] = fs[i-1][j+1][k+2];
-    tf[3][0] = fs[i-1][j+2][k-1];
-    tf[3][1] = fs[i-1][j+2][k];
-    tf[3][2] = fs[i-1][j+2][k+1];
-    tf[3][3] = fs[i-1][j+2][k+2];
-    Type fim
-    (
-        bicubicExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i][j-1][k-1];
-    tf[0][1] = fs[i][j-1][k];
-    tf[0][2] = fs[i][j-1][k+1];
-    tf[0][3] = fs[i][j-1][k+2];
-    tf[1][0] = fs[i][j][k-1];
-    tf[1][1] = fs[i][j][k];
-    tf[1][2] = fs[i][j][k+1];
-    tf[1][3] = fs[i][j][k+2];
-    tf[2][0] = fs[i][j+1][k-1];
-    tf[2][1] = fs[i][j+1][k];
-    tf[2][2] = fs[i][j+1][k+1];
-    tf[2][3] = fs[i][j+1][k+2];
-    tf[3][0] = fs[i][j+2][k-1];
-    tf[3][1] = fs[i][j+2][k];
-    tf[3][2] = fs[i][j+2][k+1];
-    tf[3][3] = fs[i][j+2][k+2];
-    Type fi
-    (
-        bicubicExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+1][j-1][k-1];
-    tf[0][1] = fs[i+1][j-1][k];
-    tf[0][2] = fs[i+1][j-1][k+1];
-    tf[0][3] = fs[i+1][j-1][k+2];
-    tf[1][0] = fs[i+1][j][k-1];
-    tf[1][1] = fs[i+1][j][k];
-    tf[1][2] = fs[i+1][j][k+1];
-    tf[1][3] = fs[i+1][j][k+2];
-    tf[2][0] = fs[i+1][j+1][k-1];
-    tf[2][1] = fs[i+1][j+1][k];
-    tf[2][2] = fs[i+1][j+1][k+1];
-    tf[2][3] = fs[i+1][j+1][k+2];
-    tf[3][0] = fs[i+1][j+2][k-1];
-    tf[3][1] = fs[i+1][j+2][k];
-    tf[3][2] = fs[i+1][j+2][k+1];
-    tf[3][3] = fs[i+1][j+2][k+2];
-    Type fip
-    (
-        bicubicExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    tf[0][0] = fs[i+2][j-1][k-1];
-    tf[0][1] = fs[i+2][j-1][k];
-    tf[0][2] = fs[i+2][j-1][k+1];
-    tf[0][3] = fs[i+2][j-1][k+2];
-    tf[1][0] = fs[i+2][j][k-1];
-    tf[1][1] = fs[i+2][j][k];
-    tf[1][2] = fs[i+2][j][k+1];
-    tf[1][3] = fs[i+2][j][k+2];
-    tf[2][0] = fs[i+2][j+1][k-1];
-    tf[2][1] = fs[i+2][j+1][k];
-    tf[2][2] = fs[i+2][j+1][k+1];
-    tf[2][3] = fs[i+2][j+1][k+2];
-    tf[3][0] = fs[i+2][j+2][k-1];
-    tf[3][1] = fs[i+2][j+2][k];
-    tf[3][2] = fs[i+2][j+2][k+1];
-    tf[3][3] = fs[i+2][j+2][k+2];
-    Type fipp
-    (
-        bicubicExtrapolatedInterp
-        (
-            y,
-            z,
-            1,
-            1,
-            {ys[j-1], ys[j], ys[j+1], ys[j+2]},
-            {zs[k-1], zs[k], zs[k+1], zs[k+2]},
-            tf
-        )
-    );
-
-    return cubicExtrapolatedInterp
-    (
-        x,
-        1,
-        {xs[i-1], xs[i], xs[i+1], xs[i+2]},
-        {fim, fi, fip, fipp}
-    );
-}
-
-
-inline static Type trifloor
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label i,
-    const label j,
-    const label k,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    return fs[i][j][k];
-}
-
-
-inline static Type triceil
-(
-    const scalar x,
-    const scalar y,
-    const scalar z,
-    const label i,
-    const label j,
-    const label k,
-    const List<scalar>& xs,
-    const List<scalar>& ys,
-    const List<scalar>& zs,
-    const Field<Field<Field<Type>>>& fs
-)
-{
-    return
-        fs
-        [x != xs[i] ? i+1 : i]
-        [y != ys[j] ? j+1 : j]
-        [z != zs[k] ? k+1 : k];
-}
-
-
-inline void setInterp
-(
-    const word& interpolationScheme,
-    interp3DFuncType& interp
-)
-{
-    Info<< "Selecting " << interpolationScheme << " interpolation" << endl;
-    if (interpolationScheme == "linearClamp")
-    {
-        interp = &trilinearClampInterp;
-    }
-    else if (interpolationScheme == "linearExtrapolated")
-    {
-        interp = &trilinearExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "quadraticClamp")
-    {
-        interp = &triquadraticClampInterp;
-    }
-    else if (interpolationScheme == "quadraticExtrapolated")
-    {
-        interp = &triquadraticExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "cubicClamp")
-    {
-        interp = &tricubicClampInterp;
-    }
-    else if (interpolationScheme == "cubicExtrapolated")
-    {
-        interp = &tricubicClampExtrapolatedInterp;
-    }
-    else if (interpolationScheme == "floor")
-    {
-        interp = &trifloor;
-    }
-    else if (interpolationScheme == "ceil")
-    {
-        interp = &triceil;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << interpolationScheme << " is not a valid interpolation scheme" << nl
-            << "Options are: " << nl
-            << "    linearClamp" << nl
-            << "    linearExtrapolated" << nl
-            << "    quadraticClamp" << nl
-            << "    quadraticExtrapolated" << nl
-            << "    cubicClamp" << nl
-            << "    cubicExtrapolated" << nl
-            << "    floor" << nl
-            << "    ceil" << nl
-            << abort(FatalError);
-    }
-}

@@ -28,6 +28,98 @@ License
 // * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
 
 template<class Type>
+bool Foam::readComponent
+(
+    const dictionary& parentDict,
+    const word& name,
+    word& modType,
+    Field<Type>& values,
+    const List<List<string>>& table
+)
+{
+    Switch isReal = true;
+    bool readFromTable = table.size();
+    if (parentDict.found(name + "Coeffs"))
+    {
+        const dictionary& dict(parentDict.subDict(name + "Coeffs"));
+        modType = dict.lookupOrDefault<word>("mod", "none");
+
+        if (readFromTable)
+        {}
+        else if (dict.found(name))
+        {
+            values = dict.lookup<Field<Type>>(name);
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
+        }
+        else if (dict.found("file"))
+        {
+            fileName file(dict.lookup("file"));
+            read1DTable
+            (
+                file,
+                dict.lookupOrDefault<string>("delim", ","),
+                values
+            );
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
+        }
+        else
+        {
+            label ny = dict.lookup<label>("n");
+            Type dy = dict.lookup<Type>("delta");
+            Type miny = dict.lookup<Type>("min");
+
+            values.resize(ny);
+            forAll(values, j)
+            {
+                values[j] = miny + dy*j;
+            }
+            isReal = dict.lookupOrDefault<Switch>("isReal", true);
+        }
+    }
+    else if (parentDict.found(name) || readFromTable)
+    {
+        if (readFromTable)
+        {}
+        else
+        {
+            values = parentDict.lookup<Field<Type>>(name);
+            isReal =
+                parentDict.lookupOrDefault<Switch>
+                (
+                    name + "isReal",
+                    true
+                );
+        }
+
+        modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
+    }
+    else
+    {
+        FatalErrorInFunction
+            << "Neither the entry \"" << name << "\" or the \""
+            << name << "Coeffs\" subDictionary was found" << endl
+            << abort(FatalError);
+    }
+
+    if (readFromTable)
+    {
+        values = readColumn<Type>
+        (
+            table,
+            parentDict.lookup<label>(name + "Col")
+        );
+        isReal =
+            parentDict.lookupOrDefault<Switch>
+            (
+                name + "isReal",
+                true
+            );
+    }
+    return isReal;
+}
+
+
+template<class Type>
 void Foam::read1DTable
 (
     const fileName& file,

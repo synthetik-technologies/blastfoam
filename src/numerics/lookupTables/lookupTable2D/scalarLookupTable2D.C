@@ -32,32 +32,32 @@ Foam::labelList Foam::scalarLookupTable2D::boundi
     const scalar f
 ) const
 {
-    if (f < data_[0][j_])
+    const label i = ij_.x();
+    const label j = ij_.y();
+    if (f < data_[0][j])
     {
         return labelList(1, 0);
     }
 
-    labelList I(data_.size());
-    label nFound = 0;
-    for (i_ = 0; i_ < data_.size() - 1; i_++)
+    DynamicList<label> Is(data_.size());
+    for (label I = 0; I < data_.size() - 1; I++)
     {
         if
         (
-            f > data_[i_][j_]
-         && f < data_[i_][j_+1]
-         && f > data_[i_+1][j_]
-         && f < data_[i_+1][j_+1]
+            f > data_[i][j]
+         && f < data_[i][j+1]
+         && f > data_[i+1][j]
+         && f < data_[i+1][j+1]
         )
         {
-            I[nFound++] = i_;
+            Is.append(I);
         }
     }
-    if (!nFound)
+    if (!Is.size())
     {
         return labelList(1, data_.size() - 2);
     }
-    I.resize(nFound);
-    return I;
+    return move(Is);
 }
 
 
@@ -66,32 +66,32 @@ Foam::labelList Foam::scalarLookupTable2D::boundj
     const scalar f
 ) const
 {
-    if (data_[i_][0] > f)
+    const label i = ij_.x();
+    const label j = ij_.y();
+    if (data_[i][0] > f)
     {
         return labelList(1, 0);
     }
 
-    labelList J(data_[i_].size());
-    label nFound = 0;
-    for (j_ = 0; j_ < data_[i_].size() - 1; j_++)
+    DynamicList<label> Js(data_[i].size());
+    for (label J = 0; J < data_[i].size() - 1; J++)
     {
         if
         (
-            f > data_[i_][j_]
-         && f < data_[i_+1][j_]
-         && f > data_[i_][j_+1]
-         && f < data_[i_+1][j_+1]
+            f > data_[i][j]
+         && f < data_[i+1][j]
+         && f > data_[i][j+1]
+         && f < data_[i+1][j+1]
         )
         {
-            J[nFound++] = j_;
+            Js.append(j);
         }
     }
-    if (!nFound)
+    if (!Js.size())
     {
-        return labelList(1, data_[i_].size() - 2);
+        return labelList(1, data_[i].size() - 2);
     }
-    J.resize(nFound);
-    return J;
+    return move(Js);
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -154,21 +154,26 @@ Foam::scalarLookupTable2D::reverseLookupY
 ) const
 {
     scalar f(modFunc_(fin));
-    updateX(x);
+
+    ij_.x() = findXIndex_(x, xValues());
     labelList Js(boundj(f));
-    updateXWeight(x);
+
+    const label i = ij_.x();
+    label& j = ij_.y();
+    scalar fx = linearWeight(modXFunc_(x), xModValues_[i], xModValues_[i+1]);
+    scalar fy = 1.0;
 
     if (Js.size() == 1)
     {
-        j_ = Js[0];
-        const scalar mm(data_[i_][j_]);
-        const scalar pm(data_[i_+1][j_]);
-        const scalar mp(data_[i_][j_+1]);
-        const scalar pp(data_[i_+1][j_+1]);
-        fy_ =
-            (f + fx_*(mm  - pm) - mm)
-           /(fx_*(mm - pm - mp + pp) - mm + mp);
-        return invModYFunc_(getValue(j_, fy_, yModValues_));
+        j = Js[0];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
+        fy =
+            (f + fx*(mm  - pm) - mm)
+           /(fx*(mm - pm - mp + pp) - mm + mp);
+        return invModYFunc_(getValue(j, fy, yModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -176,19 +181,19 @@ Foam::scalarLookupTable2D::reverseLookupY
     Field<scalar> errors(Js.size(), great);
     forAll(Js, J)
     {
-        j_ = Js[J];
-        const scalar mm(data_[i_][j_]);
-        const scalar pm(data_[i_+1][j_]);
-        const scalar mp(data_[i_][j_+1]);
-        const scalar pp(data_[i_+1][j_+1]);
-        fy_ =
-            (f + fx_*(mm  - pm) - mm)
-           /(fx_*(mm - pm - mp + pp) - mm + mp);
-        yTrys[J] = invModYFunc_(getValue(j_, fy_, yModValues_));
-        errors[J] = mag(fin - lookup(x, yTrys[j_]));
+        j = Js[J];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
+        fy =
+            (f + fx*(mm  - pm) - mm)
+           /(fx*(mm - pm - mp + pp) - mm + mp);
+        yTrys[J] = invModYFunc_(getValue(j, fy, yModValues_));
+        errors[J] = mag(fin - lookup(x, yTrys[j]));
     }
-    j_ = findMin(errors);
-    return yTrys[j_];
+    j = findMin(errors);
+    return yTrys[j];
 }
 
 
@@ -200,22 +205,27 @@ Foam::scalarLookupTable2D::reverseLookupX
 ) const
 {
     scalar f(modFunc_(fin));
-    updateY(y);
+    ij_.y() = findYIndex_(y, yValues());
     labelList Is(boundi(f));
-    updateYWeight(y);
+
+    const label j = ij_.y();
+    label& i = ij_.x();
+    scalar fy = linearWeight(modYFunc_(y), yModValues_[j], yModValues_[j+1]);
+    scalar fx = 1.0;
+
     if (Is.size() == 1)
     {
-        i_ = Is[0];
-        const scalar mm(data_[i_][j_]);
-        const scalar pm(data_[i_+1][j_]);
-        const scalar mp(data_[i_][j_+1]);
-        const scalar pp(data_[i_+1][j_+1]);
+        i = Is[0];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
 
-        fx_ =
-            (f + fy_*(mm - mp) - mm)
-           /(fy_*(mm - mp - pm + pp) - mm + pm);
+        fx =
+            (f + fy*(mm - mp) - mm)
+           /(fy*(mm - mp - pm + pp) - mm + pm);
 
-        return invModXFunc_(getValue(i_, fx_, xModValues_));
+        return invModXFunc_(getValue(i, fx, xModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -223,19 +233,19 @@ Foam::scalarLookupTable2D::reverseLookupX
     Field<scalar> errors(Is.size(), great);
     forAll(Is, I)
     {
-        i_ = Is[I];
-        const scalar mm(data_[i_][j_]);
-        const scalar pm(data_[i_+1][j_]);
-        const scalar mp(data_[i_][j_+1]);
-        const scalar pp(data_[i_+1][j_+1]);
-        fx_ =
-            (f + fy_*(mm - mp) - mm)
-           /(fy_*(mm - mp - pm + pp) - mm + pm);
-        xTrys[I] = invModXFunc_(getValue(i_, fx_, xModValues_));
+        i = Is[I];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
+        fx =
+            (f + fy*(mm - mp) - mm)
+           /(fy*(mm - mp - pm + pp) - mm + pm);
+        xTrys[I] = invModXFunc_(getValue(i, fx, xModValues_));
         errors[I] = mag(fin - lookup(xTrys[I], y));
     }
-    i_ = findMin(errors);
-    return xTrys[i_];
+    i = findMin(errors);
+    return xTrys[i];
 }
 
 // ************************************************************************* //

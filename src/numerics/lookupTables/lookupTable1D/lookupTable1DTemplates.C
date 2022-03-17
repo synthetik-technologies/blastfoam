@@ -26,161 +26,21 @@ License
 #include "lookupTable1D.H"
 
 
-// * * * * * * * * * * * * * Static Member Functions * * * * * * * * * * * * //
-
-template<class Type>
-template<class fType>
-void Foam::lookupTable1D<Type>::readComponent
-(
-    const dictionary& parentDict,
-    const word& name,
-    const List<List<string>>& table,
-    word& type,
-    Field<fType>& values,
-    Field<fType>& modValues,
-    modFuncType& modFunc,
-    modFuncType& invModFunc,
-    const bool canRead
-)
-{
-    Switch isReal = true;
-    bool canSetMod = true;
-    bool readFromTable = table.size();
-    if (parentDict.found(name + "Coeffs"))
-    {
-        const dictionary& dict(parentDict.subDict(name + "Coeffs"));
-        type = dict.lookupOrDefault<word>("mod", "none");
-        setMod
-        (
-            type,
-            modFunc,
-            invModFunc
-        );
-
-        if (readFromTable)
-        {}
-        else if (dict.found(name))
-        {
-            if (canRead)
-            {
-                values = dict.lookup<Field<fType>>(name);
-                modValues.resize(values.size());
-                isReal = dict.lookupOrDefault<Switch>("isReal", true);
-            }
-            else
-            {
-                canSetMod = false;
-            }
-        }
-        else if (dict.found("file"))
-        {
-            fileName file(dict.lookup("file"));
-            read1DTable
-            (
-                file,
-                dict.lookupOrDefault<string>("delim", ","),
-                values
-            );
-            isReal = dict.lookupOrDefault<Switch>("isReal", true);
-        }
-        else
-        {
-            label ny = dict.lookup<label>("n");
-            fType dy = dict.lookup<fType>("delta");
-            fType miny = dict.lookup<fType>("min");
-
-            values.resize(ny);
-            forAll(values, j)
-            {
-                values[j] = miny + dy*j;
-            }
-            isReal = dict.lookupOrDefault<Switch>("isReal", true);
-        }
-    }
-    else if (parentDict.found(name) || readFromTable)
-    {
-        if (readFromTable)
-        {}
-        else if (canRead)
-        {
-            values = parentDict.lookup<Field<fType>>(name);
-            modValues.resize(values.size());
-            isReal =
-                parentDict.lookupOrDefault<Switch>
-                (
-                    name + "isReal",
-                    true
-                );
-        }
-        else
-        {
-            canSetMod = false;
-        }
-        type = parentDict.lookupOrDefault<word>(name + "Mod", "none");
-        setMod
-        (
-            type,
-            modFunc,
-            invModFunc
-        );
-    }
-    else
-    {
-        FatalErrorInFunction
-            << "Neither the entry \"" << name << "\" or the \""
-            << name << "Coeffs\" subDictionary was found" << endl
-            << abort(FatalError);
-    }
-
-    if (readFromTable)
-    {
-        values = readColumn<Type>
-        (
-            table,
-            parentDict.lookup<label>(name + "Col")
-        );
-        modValues.resize(values.size());
-        isReal =
-            parentDict.lookupOrDefault<Switch>
-            (
-                name + "isReal",
-                true
-            );
-    }
-
-    if (canSetMod)
-    {
-        if (!isReal)
-        {
-            modValues = values;
-            forAll(values, i)
-            {
-                values[i] = invModFunc(values[i]);
-            }
-        }
-        else
-        {
-            modValues.resize(values.size());
-            forAll(values, i)
-            {
-                modValues[i] = modFunc(values[i]);
-            }
-        }
-    }
-}
-
-
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-template<class fType>
+template<template<class> class ListType, class fType>
 fType Foam::lookupTable1D<Type>::interpolate
 (
-    const fType& fm,
-    const fType& fp
+    const ListType<fType>& fs
 ) const
 {
-    return f_ == 0 ? fm : (f_ == 1 ? fp : (1.0 - f_)*fm + f_*fp);
+    fType modf = weights_[0]*fs[indices_[0]];
+    for (label i = 1; i < indices_.size(); i++)
+    {
+        modf += weights_[i]*fs[indices_[i]];
+    }
+    return modf;
 }
 
 
@@ -193,13 +53,13 @@ fType Foam::lookupTable1D<Type>::interpolate
 ) const
 {
     update(x);
-    return
-        f_ == 0 ? fs[index_]
-      : (
-            f_ == 1
-          ? fs[index_ + 1]
-          : (1.0 - f_)*fs[index_] + f_*fs[index_ + 1]
-        );
+
+    fType modf = weights_[0]*fs[indices_[0]];
+    for (label i = 1; i < indices_.size(); i++)
+    {
+        modf += weights_[i]*fs[indices_[i]];
+    }
+    return modf;
 }
 
 // ************************************************************************* //

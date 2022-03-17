@@ -54,6 +54,10 @@ namespace Foam
 template<class Type>
 class lookupTable2D
 {
+public:
+
+    typedef Vector2D<label> labelVector2D;
+
 protected:
 // Protected data
 
@@ -61,14 +65,17 @@ protected:
     #include "tableFuncs.H"
 
     word modType_;
+    bool needMod_;
     modFuncType modFunc_;
     modFuncType invModFunc_;
 
     word modXType_;
+    bool needXMod_;
     modFuncType modXFunc_;
     modFuncType invModXFunc_;
 
     word modYType_;
+    bool needYMod_;
     modFuncType modYFunc_;
     modFuncType invModYFunc_;
 
@@ -80,7 +87,7 @@ protected:
 
     //- Interpolation type
     word interpType_;
-    interp2DFuncType interpFunc_;
+    interpFuncType interpFunc_;
 
     //- Data
     Field<Field<Type>> data_;
@@ -91,22 +98,63 @@ protected:
     //- Modified y field values
     Field<scalar> yModValues_;
 
+    //- Stored real data
+    Field<Field<Type>>* realDataPtr_;
+
     //- Stored real x values
-    Field<scalar> xValues_;
+    Field<scalar>* xValuesPtr_;
 
     //- Stored real y values
-    Field<scalar> yValues_;
+    Field<scalar>* yValuesPtr_;
 
     //- Current indexes (used to access location in list after lookup)
-    mutable label i_;
-    mutable label j_;
+    mutable labelVector2D ij_;
+    mutable List<labelVector2D> indices_;
 
-    //- Current linear interpolation weights
-    mutable scalar fx_;
-    mutable scalar fy_;
+    //- Current interpolation weights
+    mutable scalarList weights_;
 
     //- Check if spacing in a list is uniform
     bool checkUniform(const List<scalar>& xy) const;
+
+
+    // Protected member functions
+
+        //- Return the real data
+        inline const Field<Field<scalar>>& fValues() const
+        {
+            return *realDataPtr_;
+        }
+
+        //- Access the real data values
+        inline Field<Field<scalar>>& fValues()
+        {
+            return *realDataPtr_;
+        }
+
+        //- Return the real x values
+        inline const Field<scalar>& xValues() const
+        {
+            return *xValuesPtr_;
+        }
+
+        //- Access the real x values
+        inline Field<scalar>& xValues()
+        {
+            return *xValuesPtr_;
+        }
+
+        //- Return the real y values
+        inline const Field<scalar>& yValues() const
+        {
+            return *yValuesPtr_;
+        }
+
+        //- Access the real y values
+        inline Field<scalar>& yValues()
+        {
+            return *yValuesPtr_;
+        }
 
 
 public:
@@ -149,25 +197,25 @@ public:
         //- Access current index (x)
         label i() const
         {
-            return i_;
+            return ij_.x();
         }
 
         //- Access current index (y)
         label j() const
         {
-            return j_;
+            return ij_.y();
         }
 
-        //- Access current interpolation weight (x)
-        scalar fx() const
+        //- Access current interpolation indices
+        const List<labelVector2D>& indices() const
         {
-            return fx_;
+            return indices_;
         }
 
-        //- Access current interpolation weight (y)
-        scalar fy() const
+        //- Access current interpolation indices
+        const scalarList& weights() const
         {
-            return fy_;
+            return weights_;
         }
 
         //- Return the modifier type name
@@ -227,13 +275,13 @@ public:
         //- Const access to real x values
         const Field<scalar>& x() const
         {
-            return xValues_;
+            return xValues();
         }
 
         //- Const access to real y values
         const Field<scalar>& y() const
         {
-            return yValues_;
+            return yValues();
         }
 
         //- Const access to modified x values
@@ -249,13 +297,16 @@ public:
         }
 
         //- Const access to modified data values
-        const Field<Field<Type>>& data() const
+        const Field<Field<Type>>& fMod() const
         {
             return data_;
         }
 
         //- Return real data values
-        tmp<Field<Field<Type>>> realData() const;
+        const Field<Field<Type>>& f() const
+        {
+            return fValues();
+        }
 
         //- Return the interpolation scheme type name
         const word& interpType() const
@@ -268,18 +319,6 @@ public:
 
         //- Update indexes
         void update(const scalar x, const scalar y) const;
-
-        //- Update x index
-        void updateX(const scalar x) const;
-
-        //- Update y index
-        void updateY(const scalar y) const;
-
-        //- Update x weight
-        void updateXWeight(const scalar x) const;
-
-        //- Update y weight
-        void updateYWeight(const scalar y) const;
 
         //- Lookup value
         Type lookup(const scalar x, const scalar y) const;
@@ -372,20 +411,6 @@ public:
             const word& xName,
             const word& yName,
             const word& name,
-            const bool canRead = true
-        );
-
-        //- Read a set from a given dictionary
-        void readComponent
-        (
-            const dictionary& parentDict,
-            const word& name,
-            word& type,
-            Field<scalar>& values,
-            Field<scalar>& modValues,
-            modFuncType& modFunc,
-            modFuncType& invModFunc,
-            findIndexFunc& findIndex,
             const bool canRead = true
         );
 };

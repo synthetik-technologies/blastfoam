@@ -65,28 +65,28 @@ virtual void setMod
 }
 
 
-inline void setInterp
-(
-    const word& interpolationScheme,
-    interp2DFuncType& interp
-)
-{
-    Info<< "Selecting " << interpolationScheme << " interpolation" << endl;
-    if (interpolationScheme == "linearClamp")
-    {
-        interp = &bilinearClampInterp;
-    }
-    else if (interpolationScheme == "linearExtrapolated")
-    {
-        interp = &bilinearExtrapolatedInterp;
-    }
-    else
-    {
-        FatalErrorInFunction
-            << interpolationScheme << " is not a valid interpolation scheme" << nl
-            << "Options are: " << nl
-            << "    linearClamp" << nl
-            << "    linearExtrapolated" << nl
-            << abort(FatalError);
-    }
-}
+// inline void setInterp
+// (
+//     const word& interpolationScheme,
+//     interp2DFuncType& interp
+// )
+// {
+//     Info<< "Selecting " << interpolationScheme << " interpolation" << endl;
+//     if (interpolationScheme == "linearClamp")
+//     {
+//         interp = &bilinearClampInterp;
+//     }
+//     else if (interpolationScheme == "linearExtrapolated")
+//     {
+//         interp = &bilinearExtrapolatedInterp;
+//     }
+//     else
+//     {
+//         FatalErrorInFunction
+//             << interpolationScheme << " is not a valid interpolation scheme" << nl
+//             << "Options are: " << nl
+//             << "    linearClamp" << nl
+//             << "    linearExtrapolated" << nl
+//             << abort(FatalError);
+//     }
+// }
