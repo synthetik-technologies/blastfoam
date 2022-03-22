@@ -93,7 +93,7 @@ See also
 #ifndef tabulatedTransport_H
 #define tabulatedTransport_H
 
-#include "scalarLookupTable1D.H"
+#include "lookupTables1D.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

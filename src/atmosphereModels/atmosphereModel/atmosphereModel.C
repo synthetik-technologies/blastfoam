@@ -28,6 +28,7 @@ License
 #include "fvmLaplacian.H"
 #include "fvcDiv.H"
 #include "fvcSnGrad.H"
+#include "fvcFlux.H"
 #include "surfaceInterpolate.H"
 #include "constrainPressure.H"
 #include "uniformDimensionedFields.H"
@@ -116,17 +117,14 @@ void Foam::atmosphereModel::hydrostaticInitialisation
     volScalarField gh("gh", (g_ & normal_)*h_);
     surfaceScalarField ghf("ghf", fvc::interpolate(gh));
 
-    volScalarField p_rgh
-    (
-        IOobject
-        (
-            "p_rgh",
-            mesh.time().timeName(),
-            mesh
-        ),
-        p - rho*gh - pRef,
-        "fixedFluxPressure"
-    );
+    wordList p_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
+    forAll(p_rghBcs, patchi)
+    {
+        if (p.boundaryField()[patchi].fixesValue())
+        {
+            p_rghBcs[patchi] = "fixedValue";
+        }
+    }
 
     volVectorField U
     (
@@ -134,71 +132,87 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         (
             "U",
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT
         ),
         mesh,
         dimensionedVector(dimVelocity, Zero),
         "noSlip"
     );
-
-    volScalarField ph_rgh
+    surfaceScalarField phi
     (
         IOobject
         (
-            "ph_rgh",
+            "phi",
+            mesh.time().timeName(),
             mesh
+        ),
+        fvc::flux(U)
+    );
+
+    volScalarField p_rgh
+    (
+        IOobject
+        (
+            "p_rgh",
+            mesh.time().timeName(),
+            mesh,
+            IOobject::READ_IF_PRESENT
         ),
         mesh,
         dimensionedScalar(dimensionSet(1, -1, -2, 0, 0, 0, 0), 0.0),
-        "fixedFluxPressure"
+        p_rghBcs
     );
 
     label nCorr
     (
-        dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 5)
+        dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
+    scalar tolerance(dict_.lookupOrDefault<scalar>("tolerance", 1e-6));
 
     dictionary solverDict;
     solverDict.add("solver", "PCG");
     solverDict.add("preconditioner", "DIC");
-    solverDict.add("tolerance", 1e-6);
-    solverDict.add("relTol", 0);
+    solverDict.add("tolerance", 1e-10);
+    solverDict.add("relTol", 0.1);
+
+    surfaceScalarField rhof("rhof", fvc::interpolate(rho));
+    surfaceScalarField phig
+    (
+        "phig",
+        -rhof*ghf*fvc::snGrad(rho)*mesh.magSf()
+    );
 
     for (label i=0; i<nCorr; i++)
     {
-        surfaceScalarField rhof("rhof", fvc::interpolate(rho));
-
-        surfaceScalarField phig
-        (
-            "phig",
-            -rhof*ghf*fvc::snGrad(rho)*mesh.magSf()
-        );
+        Info<< nl << "Hydrostatic iteration " << i << endl;
 
         // Update the pressure BCs to ensure flux consistency
-        constrainPressure(ph_rgh, rho, U, phig, rhof);
+        constrainPressure(p_rgh, rho, U, phig, rhof);
 
         fvScalarMatrix ph_rghEqn
         (
-            fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
+            fvm::laplacian(rhof, p_rgh) == fvc::div(phig)
         );
 
         ph_rghEqn.solve(solverDict);
 
-        p = ph_rgh + rho*gh + pRef;
-        forAll(p.boundaryField(), patchi)
-        {
-            p.boundaryFieldRef()[patchi] ==
-                p.boundaryField()[patchi].patchInternalField();
-        }
-        Info<< "Hydrostatic pressure variation "
-            << (max(ph_rgh) - min(ph_rgh)).value() << endl;
-    }
+        scalar residual = (max(p_rgh) - min(p_rgh)).value();
 
-    forAll(p.boundaryField(), patchi)
-    {
-        p.boundaryFieldRef()[patchi] =
-            p.boundaryField()[patchi].patchInternalField();
+        p = p_rgh + rho*gh + pRef;
+        p.correctBoundaryConditions();
+
+        p_rgh = p - rho*gh - pRef;
+
+        Info<< "Hydrostatic pressure variation "<< residual << endl;
+
+        if (residual < tolerance)
+        {
+            break;
+        }
     }
+    thermo.correct();
+    p_rgh.write();
 }
 
 // ************************************************************************* //

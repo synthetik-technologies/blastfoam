@@ -48,19 +48,9 @@ Foam::atmosphereModels::table::table
 )
 :
     atmosphereModel(mesh, dict),
-    pTable_
-    (
-        dict_.subDict("pTable").lookup<fileName>("file"),
-        dict_.subDict("pTable").lookupOrDefault<word>("pMod", "none"),
-        dict_.subDict("pTable").lookupOrDefault<word>("hMod", "none")
-    ),
-    TTable_
-    (
-        dict_.subDict("TTable").lookup<fileName>("file"),
-        dict_.subDict("TTable").lookupOrDefault<word>("TMod", "none"),
-        dict_.subDict("TTable").lookupOrDefault<word>("hMod", "none")
-    ),
-    W_(dict_.lookupOrDefault("W", 28.97))
+    pTable_(dict_.subDict("pTable"), "h", "p"),
+    TTable_(dict_.subDict("TTable"), "h", "T"),
+    correct_(dict_.lookupOrDefault("correct", false))
 {}
 
 
@@ -77,19 +67,52 @@ void Foam::atmosphereModels::table::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
-    forAll(thermo.p(), celli)
+    volScalarField& p = thermo.p();
+    volScalarField& T = thermo.T();
+
+    forAll(p, celli)
     {
-        thermo.p()[celli] = pTable_.lookup(h_[celli]);
-        thermo.T()[celli] = TTable_.lookup(h_[celli]);
+        p[celli] = pTable_.lookup(h_[celli]);
+        T[celli] = TTable_.lookup(h_[celli]);
     }
 
-    hydrostaticInitialisation
-    (
-        thermo,
-        dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
-    );
-    thermo.p().write();
-    thermo.T().write();
+    p.correctBoundaryConditions();
+    T.correctBoundaryConditions();
+
+    volScalarField::Boundary& bp = p.boundaryFieldRef();
+    volScalarField::Boundary& bT = T.boundaryFieldRef();
+    forAll(bp, patchi)
+    {
+        if (bp[patchi].fixesValue())
+        {
+            forAll(bp[patchi], facei)
+            {
+                bp[patchi][facei] =
+                    pTable_.lookup(h_.boundaryField()[patchi][facei]);
+            }
+        }
+        if (bT[patchi].fixesValue())
+        {
+            forAll(bT[patchi], facei)
+            {
+                bT[patchi][facei] =
+                    TTable_.lookup(h_.boundaryField()[patchi][facei]);
+            }
+        }
+    }
+
+    // Correct density
+    thermo.updateRho(p);
+
+    // Equalibriate the pressure field
+    if (correct_)
+    {
+        hydrostaticInitialisation
+        (
+            thermo,
+            dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
+        );
+    }
 }
 
 // ************************************************************************* //

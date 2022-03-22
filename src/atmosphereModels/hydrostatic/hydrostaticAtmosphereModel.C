@@ -77,7 +77,6 @@ void Foam::atmosphereModels::hydrostatic::createAtmosphere
 ) const
 {
     hydrostaticInitialisation(thermo, pRef_);
-    thermo.p().write();
 }
 
 // ************************************************************************* //

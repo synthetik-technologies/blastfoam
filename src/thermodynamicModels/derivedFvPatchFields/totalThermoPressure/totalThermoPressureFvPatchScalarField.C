@@ -121,11 +121,21 @@ void Foam::totalThermoPressureFvPatchScalarField::updateCoeffs
 
 void Foam::totalThermoPressureFvPatchScalarField::updateCoeffs()
 {
-    const fvPatchField<vector>& Up =
-        patch().lookupPatchField<volVectorField, vector>(UName_);
+    if (db().foundObject<volVectorField>(UName_))
+    {
+        const fvPatchField<vector>& Up =
+            patch().lookupPatchField<volVectorField, vector>(UName_);
 
-    updateCoeffs(p0_, Up);
+        updateCoeffs(p0_, Up);
+    }
+    else
+    {
+        Field<scalar>::operator=(p0_);
+        fixedValueFvPatchScalarField::updateCoeffs();
+    }
+
 }
+
 
 
 void Foam::totalThermoPressureFvPatchScalarField::write(Ostream& os) const

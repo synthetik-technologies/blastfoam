@@ -26,7 +26,7 @@ Class
 
 Description
     Initialize atmosphere using pressure and temperature tables based on
-    height. An ideal gas is assumed.
+    height.
 
 SourceFiles
     tableAtmosphereModel.C
@@ -38,7 +38,7 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "scalarLookupTable1D.H"
+#include "lookupTable1D.H"
 #include "atmosphereModel.H"
 
 namespace Foam
@@ -57,13 +57,13 @@ class table
 // Private data
 
     //- Pressure table
-    scalarLookupTable1D pTable_;
+    lookupTable1D<scalar> pTable_;
 
     //- Temperature table
-    scalarLookupTable1D TTable_;
+    lookupTable1D<scalar> TTable_;
 
-    //- Molecular weight
-    scalar W_;
+    //- Is the pressure field corrected
+    bool correct_;
 
 
 public:

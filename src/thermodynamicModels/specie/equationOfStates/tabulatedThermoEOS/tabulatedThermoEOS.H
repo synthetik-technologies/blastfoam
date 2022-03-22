@@ -43,7 +43,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "autoPtr.H"
-#include "scalarLookupTable2D.H"
+#include "lookupTables2D.H"
 
 namespace Foam
 {
