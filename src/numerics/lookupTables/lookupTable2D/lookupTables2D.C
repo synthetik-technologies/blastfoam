@@ -23,11 +23,12 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "scalarLookupTable2D.H"
+#include "lookupTables2D.H"
 
-// * * * * * * * * * * * * * * Private Functinos * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Scalar Functions * * * * * * * * * * * * * * //
 
-Foam::labelList Foam::scalarLookupTable2D::boundi
+template<>
+Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
 (
     const scalar f
 ) const
@@ -61,7 +62,8 @@ Foam::labelList Foam::scalarLookupTable2D::boundi
 }
 
 
-Foam::labelList Foam::scalarLookupTable2D::boundj
+template<>
+Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
 (
     const scalar f
 ) const
@@ -94,73 +96,27 @@ Foam::labelList Foam::scalarLookupTable2D::boundj
     return move(Js);
 }
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::scalarLookupTable2D::scalarLookupTable2D()
-{}
-
-
-Foam::scalarLookupTable2D::scalarLookupTable2D
+template<>
+Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
 (
-    const dictionary& dict,
-    const word& xName,
-    const word& yName,
-    const word& name,
-    const bool canRead
-)
-{
-    read(dict, xName, yName, name, canRead);
-}
-
-
-Foam::scalarLookupTable2D::scalarLookupTable2D
-(
-    const Field<scalar>& x,
-    const Field<scalar>& y,
-    const Field<Field<scalar>>& data,
-    const word& modXType,
-    const word& modYType,
-    const word& modType,
-    const word& interpolationScheme,
-    const bool isReal
-)
-{
-    set
-    (
-        x,
-        y,
-        data,
-        modXType,
-        modYType,
-        modType,
-        interpolationScheme,
-        isReal
-    );
-}
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::scalarLookupTable2D::~scalarLookupTable2D()
-{}
-
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-Foam::scalar
-Foam::scalarLookupTable2D::reverseLookupY
-(
-    const scalar fin,
+    const scalar& fin,
     const scalar x
 ) const
 {
-    scalar f(modFunc_(fin));
+    scalar f(mod_()(fin));
 
-    ij_.x() = findXIndex_(x, xValues());
+    ij_.x() = xIndexing_->findIndex(x, xValues());
     labelList Js(boundj(f));
 
     const label i = ij_.x();
     label& j = ij_.y();
-    scalar fx = linearWeight(modXFunc_(x), xModValues_[i], xModValues_[i+1]);
+    scalar fx = interpolationWeight1D::linearWeight
+    (
+        modX_()(x),
+        xModValues_[i],
+        xModValues_[i+1]
+    );
     scalar fy = 1.0;
 
     if (Js.size() == 1)
@@ -173,7 +129,7 @@ Foam::scalarLookupTable2D::reverseLookupY
         fy =
             (f + fx*(mm  - pm) - mm)
            /(fx*(mm - pm - mp + pp) - mm + mp);
-        return invModYFunc_(getValue(j, fy, yModValues_));
+        return modY_->inv(getValue(j, fy, yModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -189,7 +145,7 @@ Foam::scalarLookupTable2D::reverseLookupY
         fy =
             (f + fx*(mm  - pm) - mm)
            /(fx*(mm - pm - mp + pp) - mm + mp);
-        yTrys[J] = invModYFunc_(getValue(j, fy, yModValues_));
+        yTrys[J] = modY_->inv(getValue(j, fy, yModValues_));
         errors[J] = mag(fin - lookup(x, yTrys[j]));
     }
     j = findMin(errors);
@@ -197,20 +153,25 @@ Foam::scalarLookupTable2D::reverseLookupY
 }
 
 
-Foam::scalar
-Foam::scalarLookupTable2D::reverseLookupX
+template<>
+Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupX
 (
-    const scalar fin,
+    const scalar& fin,
     const scalar y
 ) const
 {
-    scalar f(modFunc_(fin));
-    ij_.y() = findYIndex_(y, yValues());
+    scalar f(mod_()(fin));
+    ij_.y() = yIndexing_->findIndex(y, yValues());
     labelList Is(boundi(f));
 
     const label j = ij_.y();
     label& i = ij_.x();
-    scalar fy = linearWeight(modYFunc_(y), yModValues_[j], yModValues_[j+1]);
+    scalar fy = interpolationWeight1D::linearWeight
+    (
+        modY_()(y),
+        yModValues_[j],
+        yModValues_[j+1]
+    );
     scalar fx = 1.0;
 
     if (Is.size() == 1)
@@ -225,7 +186,7 @@ Foam::scalarLookupTable2D::reverseLookupX
             (f + fy*(mm - mp) - mm)
            /(fy*(mm - mp - pm + pp) - mm + pm);
 
-        return invModXFunc_(getValue(i, fx, xModValues_));
+        return modX_->inv(getValue(i, fx, xModValues_));
     }
 
     //- If multiple indicies meet criteria, check for closest
@@ -241,7 +202,7 @@ Foam::scalarLookupTable2D::reverseLookupX
         fx =
             (f + fy*(mm - mp) - mm)
            /(fy*(mm - mp - pm + pp) - mm + pm);
-        xTrys[I] = invModXFunc_(getValue(i, fx, xModValues_));
+        xTrys[I] = modX_->inv(getValue(i, fx, xModValues_));
         errors[I] = mag(fin - lookup(xTrys[I], y));
     }
     i = findMin(errors);

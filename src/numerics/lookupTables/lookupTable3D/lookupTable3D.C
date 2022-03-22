@@ -46,48 +46,21 @@ Type Foam::lookupTable3D<Type>::getValue
 }
 
 
-template<class Type>
-bool Foam::lookupTable3D<Type>::checkUniform(const List<scalar>& xyz) const
-{
-    scalar dxyz = xyz[1] - xyz[0];
-
-    for (label i = 2; i < xyz.size(); i++)
-    {
-        if (mag(xyz[i] - xyz[i-1] - dxyz) > small)
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
 Foam::lookupTable3D<Type>::lookupTable3D()
 :
-    modType_("none"),
-    needMod_(false),
-    modFunc_(nullptr),
-    invModFunc_(nullptr),
-    modXType_("none"),
-    needXMod_(false),
-    modXFunc_(nullptr),
-    invModXFunc_(nullptr),
-    modYType_("none"),
-    needYMod_(false),
-    modYFunc_(nullptr),
-    invModYFunc_(nullptr),
-    modZType_("none"),
-    needZMod_(false),
-    modZFunc_(nullptr),
-    invModZFunc_(nullptr),
-    findXIndex_(nullptr),
-    findYIndex_(nullptr),
-    findZIndex_(nullptr),
-    interpType_("linearClamp"),
-    interpFunc_(nullptr),
+    mod_(nullptr),
+    modX_(nullptr),
+    modY_(nullptr),
+    modZ_(nullptr),
+    xIndexing_(nullptr),
+    yIndexing_(nullptr),
+    zIndexing_(nullptr),
+    xInterpolator_(nullptr),
+    yInterpolator_(nullptr),
+    zInterpolator_(nullptr),
     data_(),
     xModValues_(),
     yModValues_(),
@@ -103,6 +76,42 @@ Foam::lookupTable3D<Type>::lookupTable3D()
 
 
 template<class Type>
+Foam::lookupTable3D<Type>::lookupTable3D(const lookupTable3D<Type>& table)
+:
+    mod_(table.mod_->clone()),
+    modX_(table.modX_->clone()),
+    modY_(table.modY_->clone()),
+    modZ_(table.modZ_->clone()),
+    xIndexing_(nullptr),
+    yIndexing_(nullptr),
+    zIndexing_(nullptr),
+    xInterpolator_(table.xInterpolator_->clone()),
+    yInterpolator_(table.yInterpolator_->clone()),
+    zInterpolator_(table.zInterpolator_->clone()),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    zModValues_(),
+    realDataPtr_(nullptr),
+    xValuesPtr_(nullptr),
+    yValuesPtr_(nullptr),
+    zValuesPtr_(nullptr),
+    ijk_(0, 0, 0),
+    indices_(0),
+    weights_(0.0)
+{
+    set
+    (
+        table.xModValues_,
+        table.yModValues_,
+        table.zModValues_,
+        table.data_,
+        false
+    );
+}
+
+
+template<class Type>
 Foam::lookupTable3D<Type>::lookupTable3D
 (
     const dictionary& dict,
@@ -113,27 +122,16 @@ Foam::lookupTable3D<Type>::lookupTable3D
     const bool canRead
 )
 :
-    modType_("none"),
-    needMod_(false),
-    modFunc_(nullptr),
-    invModFunc_(nullptr),
-    modXType_("none"),
-    needXMod_(false),
-    modXFunc_(nullptr),
-    invModXFunc_(nullptr),
-    modYType_("none"),
-    needYMod_(false),
-    modYFunc_(nullptr),
-    invModYFunc_(nullptr),
-    modZType_("none"),
-    needZMod_(false),
-    modZFunc_(nullptr),
-    invModZFunc_(nullptr),
-    findXIndex_(nullptr),
-    findYIndex_(nullptr),
-    findZIndex_(nullptr),
-    interpType_("linearClamp"),
-    interpFunc_(nullptr),
+    mod_(nullptr),
+    modX_(nullptr),
+    modY_(nullptr),
+    modZ_(nullptr),
+    xIndexing_(nullptr),
+    yIndexing_(nullptr),
+    zIndexing_(nullptr),
+    xInterpolator_(nullptr),
+    yInterpolator_(nullptr),
+    zInterpolator_(nullptr),
     data_(),
     xModValues_(),
     yModValues_(),
@@ -161,31 +159,22 @@ Foam::lookupTable3D<Type>::lookupTable3D
     const word& modYType,
     const word& modZType,
     const word& modType,
-    const word& interpolationScheme,
+    const word& xInterpolationScheme,
+    const word& yInterpolationScheme,
+    const word& zInterpolationScheme,
     const bool isReal
 )
 :
-   modType_("none"),
-    needMod_(false),
-    modFunc_(nullptr),
-    invModFunc_(nullptr),
-    modXType_("none"),
-    needXMod_(false),
-    modXFunc_(nullptr),
-    invModXFunc_(nullptr),
-    modYType_("none"),
-    needYMod_(false),
-    modYFunc_(nullptr),
-    invModYFunc_(nullptr),
-    modZType_("none"),
-    needZMod_(false),
-    modZFunc_(nullptr),
-    invModZFunc_(nullptr),
-    findXIndex_(nullptr),
-    findYIndex_(nullptr),
-    findZIndex_(nullptr),
-    interpType_("linearClamp"),
-    interpFunc_(nullptr),
+    mod_(Modifier<Type>::New(modType)),
+    modX_(Modifier<scalar>::New(modXType)),
+    modY_(Modifier<scalar>::New(modYType)),
+    modZ_(Modifier<scalar>::New(modZType)),
+    xIndexing_(nullptr),
+    yIndexing_(nullptr),
+    zIndexing_(nullptr),
+    xInterpolator_(nullptr),
+    yInterpolator_(nullptr),
+    zInterpolator_(nullptr),
     data_(),
     xModValues_(),
     yModValues_(),
@@ -204,7 +193,9 @@ Foam::lookupTable3D<Type>::lookupTable3D
         data,
         modXType, modYType, modZType,
         modType,
-        interpolationScheme,
+        xInterpolationScheme,
+        yInterpolationScheme,
+        zInterpolationScheme,
         isReal
     );
 }
@@ -263,7 +254,9 @@ void Foam::lookupTable3D<Type>::set
     const word& modYType,
     const word& modZType,
     const word& modType,
-    const word& interpolationScheme,
+    const word& xInterpolationScheme,
+    const word& yInterpolationScheme,
+    const word& zInterpolationScheme,
     const bool isReal
 )
 {
@@ -272,8 +265,9 @@ void Foam::lookupTable3D<Type>::set
     setZ(z, modZType, isReal);
     setData(data, modType, isReal);
 
-    interpType_ = interpolationScheme;
-    setInterp(interpolationScheme, interpFunc_);
+    xInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, x.size());
+    yInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, y.size());
+    zInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, z.size());
 }
 
 
@@ -285,10 +279,7 @@ void Foam::lookupTable3D<Type>::setX
     const bool isReal
 )
 {
-    modXType_ = modX;
-    needXMod_ = modX != "none";
-
-    setMod<scalar>(modX, modXFunc_, invModXFunc_);
+    modX_ = Modifier<scalar>::New(modX);
     setX(x, isReal);
 }
 
@@ -305,7 +296,7 @@ void Foam::lookupTable3D<Type>::setX
         deleteDemandDrivenData(xValuesPtr_);
     }
 
-    if (!needXMod_)
+    if (!modX_->needMod())
     {
         xModValues_ = x;
         xValuesPtr_ = &xModValues_;
@@ -319,26 +310,18 @@ void Foam::lookupTable3D<Type>::setX
         {
             forAll(x, i)
             {
-                xModValues_[i] = modXFunc_(x[i]);
+                xModValues_[i] = modX_()(x[i]);
             }
         }
         else
         {
             forAll(x, i)
             {
-                (*xValuesPtr_)[i] = invModXFunc_(x[i]);
+                (*xValuesPtr_)[i] = modX_->inv(x[i]);
             }
         }
     }
-
-    if (checkUniform(xModValues_))
-    {
-        findXIndex_ = &lookupTable3D::findUniformIndexes;
-    }
-    else
-    {
-        findXIndex_ = &lookupTable3D::findNonuniformIndexes;
-    }
+    xIndexing_ = indexer::New(xModValues_);
 }
 
 
@@ -350,10 +333,7 @@ void Foam::lookupTable3D<Type>::setY
     const bool isReal
 )
 {
-    modYType_ = modY;
-    needYMod_ = modY != "none";
-
-    setMod<scalar>(modY, modYFunc_, invModYFunc_);
+    modY_ = Modifier<scalar>::New(modY);
     setY(y, isReal);
 }
 
@@ -370,7 +350,7 @@ void Foam::lookupTable3D<Type>::setY
         deleteDemandDrivenData(yValuesPtr_);
     }
 
-    if (!needYMod_)
+    if (!modY_->needMod())
     {
         yModValues_ = y;
         yValuesPtr_ = &yModValues_;
@@ -384,26 +364,18 @@ void Foam::lookupTable3D<Type>::setY
         {
             forAll(y, i)
             {
-                yModValues_[i] = modYFunc_(y[i]);
+                yModValues_[i] = modY_()(y[i]);
             }
         }
         else
         {
             forAll(y, i)
             {
-                (*yValuesPtr_)[i] = invModYFunc_(y[i]);
+                (*yValuesPtr_)[i] = modY_->inv(y[i]);
             }
         }
     }
-
-    if (checkUniform(yModValues_))
-    {
-        findYIndex_ = &lookupTable3D::findUniformIndexes;
-    }
-    else
-    {
-        findYIndex_ = &lookupTable3D::findNonuniformIndexes;
-    }
+    yIndexing_ = indexer::New(yModValues_);
 }
 
 
@@ -415,10 +387,7 @@ void Foam::lookupTable3D<Type>::setZ
     const bool isReal
 )
 {
-    modZType_ = modZ;
-    needZMod_ = modZ != "none";
-
-    setMod<scalar>(modZ, modZFunc_, invModZFunc_);
+    modZ_ = Modifier<scalar>::New(modZ);
     setZ(z, isReal);
 }
 
@@ -435,7 +404,7 @@ void Foam::lookupTable3D<Type>::setZ
         deleteDemandDrivenData(zValuesPtr_);
     }
 
-    if (!needZMod_)
+    if (!modZ_->needMod())
     {
         zModValues_ = z;
         zValuesPtr_ = &zModValues_;
@@ -449,26 +418,18 @@ void Foam::lookupTable3D<Type>::setZ
         {
             forAll(z, i)
             {
-                zModValues_[i] = modZFunc_(z[i]);
+                zModValues_[i] = modZ_()(z[i]);
             }
         }
         else
         {
             forAll(z, i)
             {
-                (*zValuesPtr_)[i] = invModZFunc_(z[i]);
+                (*zValuesPtr_)[i] = modZ_->inv(z[i]);
             }
         }
     }
-
-    if (checkUniform(zModValues_))
-    {
-        findZIndex_ = &lookupTable3D::findUniformIndexes;
-    }
-    else
-    {
-        findZIndex_ = &lookupTable3D::findNonuniformIndexes;
-    }
+    zIndexing_ = indexer::New(zModValues_);
 }
 
 
@@ -484,7 +445,7 @@ void Foam::lookupTable3D<Type>::setData
         deleteDemandDrivenData(realDataPtr_);
     }
 
-    if (!needMod_)
+    if (!mod_->needMod())
     {
         data_ = data;
         realDataPtr_ = &data_;
@@ -502,7 +463,7 @@ void Foam::lookupTable3D<Type>::setData
             {
                 forAll(data[i][j], k)
                 {
-                    data_[i][j][k] = modFunc_(data[i][j][k]);
+                    data_[i][j][k] = mod_()(data[i][j][k]);
                 }
             }
         }
@@ -515,7 +476,7 @@ void Foam::lookupTable3D<Type>::setData
             {
                 forAll(data[i][j], k)
                 {
-                    (*realDataPtr_)[i][j][k] = invModFunc_(data[i][j][k]);
+                    (*realDataPtr_)[i][j][k] = mod_->inv(data[i][j][k]);
                 }
             }
         }
@@ -531,10 +492,7 @@ void Foam::lookupTable3D<Type>::setData
     const bool isReal
 )
 {
-    modType_ = mod;
-    needMod_ = mod != "none";
-
-    setMod<Type>(mod, modFunc_, invModFunc_);
+    mod_ = Modifier<Type>::New(mod);
     setData(data, isReal);
 }
 
@@ -547,20 +505,20 @@ void Foam::lookupTable3D<Type>::update
     const scalar z
 ) const
 {
-    scalar xMod(modXFunc_(x));
-    scalar yMod(modYFunc_(y));
-    scalar zMod(modZFunc_(z));
+    scalar xMod(modX_()(x));
+    scalar yMod(modY_()(y));
+    scalar zMod(modZ_()(z));
 
-    ijk_.x() = findXIndex_(xMod, xModValues_);
-    ijk_.y() = findYIndex_(yMod, yModValues_);
-    ijk_.z() = findZIndex_(zMod, zModValues_);
+    ijk_.x() = xIndexing_->findIndex(xMod, xModValues_);
+    ijk_.y() = yIndexing_->findIndex(yMod, yModValues_);
+    ijk_.z() = zIndexing_->findIndex(zMod, zModValues_);
 
     labelList is, js, ks;
     scalarList wxs, wys, wzs;
 
-    interpFunc_(x, ijk_.x(), xModValues_, is, wxs);
-    interpFunc_(y, ijk_.y(), yModValues_, js, wys);
-    interpFunc_(z, ijk_.z(), zModValues_, ks, wzs);
+    xInterpolator_->updateWeights(xMod, ijk_.x(), xModValues_, is, wxs);
+    yInterpolator_->updateWeights(yMod, ijk_.y(), yModValues_, js, wys);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), zModValues_, ks, wzs);
 
     indices_.setSize(is.size()*js.size()*ks.size());
     weights_.setSize(indices_.size());
@@ -608,7 +566,7 @@ Type Foam::lookupTable3D<Type>::lookup
             [indices_[i].y()]
             [indices_[i].z()];
     }
-    return invModFunc_(modf);
+    return mod_->inv(modf);
 }
 
 
@@ -623,41 +581,72 @@ void Foam::lookupTable3D<Type>::read
     const bool canRead
 )
 {
-    interpType_ =
-        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp");
-    setInterp(interpType_, interpFunc_);
+    const word scheme
+    (
+        dict.lookupOrDefault<word>("interpolationScheme", "linearClamp")
+    );
 
     scalarField x, y, z;
+    word modXType;
     bool isReal = readComponent
     (
         dict,
         xName,
-        modXType_,
+        modXType,
         x
     );
-    setX(x, modXType_, isReal);
+    setX(x, modXType, isReal);
+    xInterpolator_ = interpolationWeight1D::New
+    (
+        dict.lookupOrDefault<word>
+        (
+            xName + "InterpolationScheme",
+            scheme
+        ),
+        xModValues_.size()
+    );
 
+    word modYType;
     isReal = readComponent
     (
         dict,
         yName,
-        modYType_,
+        modYType,
         y
     );
-    setY(y, modYType_, isReal);
+    setY(y, modYType, isReal);
+    yInterpolator_ = interpolationWeight1D::New
+    (
+        dict.lookupOrDefault<word>
+        (
+            yName + "InterpolationScheme",
+            scheme
+        ),
+        yModValues_.size()
+    );
 
+    word modZType;
     isReal = readComponent
     (
         dict,
         zName,
-        modZType_,
+        modZType,
         z
     );
-    setZ(z, modZType_, isReal);
+    setZ(z, modZType, isReal);
+    zInterpolator_ = interpolationWeight1D::New
+    (
+        dict.lookupOrDefault<word>
+        (
+            zName + "InterpolationScheme",
+            scheme
+        ),
+        zModValues_.size()
+    );
 
     const dictionary& fDict(dict.optionalSubDict(name + "Coeffs"));
 
-    modType_ = fDict.lookupOrDefault<word>("mod", "none");
+    word modType = fDict.lookupOrDefault<word>("mod", "none");
     isReal = fDict.lookupOrDefault<Switch>("isReal", true);
 
     fileName file(fDict.lookup<word>("file"));
@@ -679,7 +668,7 @@ void Foam::lookupTable3D<Type>::read
         dict.lookupOrDefault<Switch>("flipTable", true),
         !canRead
     );
-    setData(data, modZType_, isReal);
+    setData(data, modType, isReal);
 }
 
 // ************************************************************************* //

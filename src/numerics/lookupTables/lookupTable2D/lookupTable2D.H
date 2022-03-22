@@ -44,6 +44,10 @@ SourceFiles
 #include "Field.H"
 #include "fileName.H"
 
+#include "Modifier.H"
+#include "interpolationWeights1D.H"
+#include "indexing.H"
+
 namespace Foam
 {
 
@@ -61,33 +65,22 @@ public:
 protected:
 // Protected data
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
+    //- Modifiers
+    autoPtr<Modifier<Type>> mod_;
+    autoPtr<Modifier<scalar>> modX_;
+    autoPtr<Modifier<scalar>> modY_;
 
-    word modType_;
-    bool needMod_;
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
+    //- Lookup indexes in the x direction
+    autoPtr<indexer> xIndexing_;
 
-    word modXType_;
-    bool needXMod_;
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
+    //- Lookup indexes in the y direction
+    autoPtr<indexer> yIndexing_;
 
-    word modYType_;
-    bool needYMod_;
-    modFuncType modYFunc_;
-    modFuncType invModYFunc_;
+    //- X-interpolater type
+    autoPtr<interpolationWeight1D> xInterpolator_;
 
-    //- Pointer to function to lookup indexes in the x direction
-    findIndexFunc findXIndex_;
-
-    //- Pointer to function to lookup indexes in the y direction
-    findIndexFunc findYIndex_;
-
-    //- Interpolation type
-    word interpType_;
-    interpFuncType interpFunc_;
+    //- Y-interpolater type
+    autoPtr<interpolationWeight1D> yInterpolator_;
 
     //- Data
     Field<Field<Type>> data_;
@@ -114,8 +107,6 @@ protected:
     //- Current interpolation weights
     mutable scalarList weights_;
 
-    //- Check if spacing in a list is uniform
-    bool checkUniform(const List<scalar>& xy) const;
 
 
     // Protected member functions
@@ -156,6 +147,23 @@ protected:
             return *yValuesPtr_;
         }
 
+        //- Find bottom of interpolation region, return index and weight
+        //  between i and i+1
+        labelList boundi(const Type f) const
+        {
+            NotImplemented;
+            return labelList();
+        }
+
+        //- Find bottom of interpolation region, return index and weight
+        //  between j and j+1
+        labelList boundj(const Type f) const
+        {
+            NotImplemented;
+            return labelList();
+        }
+
+
 
 public:
 
@@ -163,6 +171,9 @@ public:
 
         //- Construct empty
         lookupTable2D();
+
+        //- Copy constructor
+        lookupTable2D(const lookupTable2D&);
 
         //- Construct from dictionary
         lookupTable2D
@@ -183,7 +194,8 @@ public:
             const word& xMod,
             const word& yMod,
             const word& mod,
-            const word& interpolationScheme,
+            const word& xInterpolationScheme,
+            const word& yInterpolationScheme,
             const bool isReal = true
         );
 
@@ -218,58 +230,22 @@ public:
             return weights_;
         }
 
-        //- Return the modifier type name
-        const word& modType() const
+        //- Return the modifier
+        const Modifier<Type>& mod() const
         {
-            return modType_;
+            return mod_();
         }
 
-        //- Modify by modType
-        scalar mod(const scalar& f) const
+        //- Return the x-modifier
+        const Modifier<scalar>& modX() const
         {
-            return modFunc_(f);
+            return modX_();
         }
 
-        //- Modify by invModType
-        scalar invMod(const scalar& f) const
+        //- Return the y-modifier
+        const Modifier<scalar>& modY() const
         {
-            return invModFunc_(f);
-        }
-
-        //- Return the x-modifier type name
-        const word& modXType() const
-        {
-            return modXType_;
-        }
-
-        //- Modify by modXType
-        scalar modX(const scalar& f) const
-        {
-            return modXFunc_(f);
-        }
-
-        //- Modify by invModXType
-        scalar invModX(const scalar& f) const
-        {
-            return modXFunc_(f);
-        }
-
-        //- Return the y-modifier type name
-        const word& modYType() const
-        {
-            return modYType_;
-        }
-
-        //- Modify by modYType
-        scalar modY(const scalar& f) const
-        {
-            return modYFunc_(f);
-        }
-
-        //- Modify by invModYType
-        scalar invModY(const scalar& f) const
-        {
-            return modYFunc_(f);
+            return modY_();
         }
 
         //- Const access to real x values
@@ -308,10 +284,16 @@ public:
             return fValues();
         }
 
-        //- Return the interpolation scheme type name
-        const word& interpType() const
+        //- Return the interpolation scheme for x
+        const interpolationWeight1D& xInterpolator() const
         {
-            return interpType_;
+            return xInterpolator_();
+        }
+
+        //- Return the interpolation scheme for y
+        const interpolationWeight1D& yInterpolator() const
+        {
+            return yInterpolator_();
         }
 
 
@@ -322,6 +304,43 @@ public:
 
         //- Lookup value
         Type lookup(const scalar x, const scalar y) const;
+
+        //- Lookup x given f and y
+        scalar reverseLookupX(const Type& fin, const scalar y) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
+
+        //- Lookup y given f and x
+        scalar reverseLookupY(const Type& fin, const scalar x) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
+
+        //- Interpolate value using the current index and weight
+        template
+        <
+            template<class> class ListType1,
+            template<class> class ListType2,
+            class fType
+        >
+        fType interpolate(const ListType1<ListType2<fType>>&) const;
+
+        //- Interpolate value using the current index and weight
+        template
+        <
+            template<class> class ListType1,
+            template<class> class ListType2,
+            class fType
+        >
+        fType interpolate
+        (
+            const scalar,
+            const scalar,
+            const ListType1<ListType2<fType>>&
+        ) const;
 
         //- Return first derivative w.r.t. x
         Type dFdX(const scalar x, const scalar y) const;
@@ -360,7 +379,8 @@ public:
             const word& xMod,
             const word& yMod,
             const word& mod,
-            const word& interpolationScheme,
+            const word& xInterpolationScheme,
+            const word& yInterpolationScheme,
             const bool isReal = true
         );
 
@@ -423,7 +443,8 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "lookupTable2D.C"
+    #include "lookupTable2D.C"
+    #include "lookupTable2DTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

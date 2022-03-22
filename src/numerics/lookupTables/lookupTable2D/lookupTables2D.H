@@ -21,77 +21,25 @@ License
     You should have received a copy of the GNU General Public License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
-Class
-    Foam::scalarLookupTable3D
-
-Description
-    Table used to lookup scalar values given a 3D table
-
-SourceFiles
-    scalarLookupTable3D.C
-
 \*---------------------------------------------------------------------------*/
 
-#ifndef scalarLookupTable3D_H
-#define scalarLookupTable3D_H
+#ifndef lookupTables2D_H
+#define lookupTables2D_H
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "lookupTable3D.H"
-#include "ListOps.H"
+#include "lookupTable2D.H"
+#include "fieldTypes.H"
 
 namespace Foam
 {
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-/*---------------------------------------------------------------------------*\
-                        Class scalarLookupTable3D Declaration
-\*---------------------------------------------------------------------------*/
-
-class scalarLookupTable3D
-:
-    public lookupTable3D<scalar>
-{
-// Private data
-
-
-public:
-
-    // Constructors
-
-        //- Construct empty
-        scalarLookupTable3D();
-
-        //- Construct from dictionary
-        scalarLookupTable3D
-        (
-            const dictionary& dict,
-            const word& xName,
-            const word& yName,
-            const word& zName,
-            const word& name,
-            const bool canRead = true
-        );
-
-        //- Construct from data
-        scalarLookupTable3D
-        (
-            const Field<scalar>& x,
-            const Field<scalar>& y,
-            const Field<scalar>& z,
-            const Field<Field<Field<scalar>>>& data,
-            const word& xMod,
-            const word& yMod,
-            const word& zMod,
-            const word& mod,
-            const word& interpolationScheme,
-            const bool isReal = true
-        );
-
-
-
-    //- Destructor
-    virtual ~scalarLookupTable3D();
-};
+typedef lookupTable2D<scalar> scalarLookupTable2D;
+typedef lookupTable2D<vector> vectorLookupTable2D;
+typedef lookupTable2D<symmTensor> symmTensorLookupTable2D;
+typedef lookupTable2D<sphericalTensor> sphericalTensorLookupTable2D;
+typedef lookupTable2D<tensor> tensorLookupTable2D;
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

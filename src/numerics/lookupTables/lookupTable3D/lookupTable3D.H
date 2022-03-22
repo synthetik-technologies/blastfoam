@@ -45,6 +45,11 @@ SourceFiles
 #include "fileName.H"
 #include "labelVector.H"
 
+#include "Modifier.H"
+#include "interpolationWeights1D.H"
+#include "indexing.H"
+
+
 namespace Foam
 {
 
@@ -58,41 +63,29 @@ class lookupTable3D
 protected:
 // Protected data
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
+    //- Modifiers
+    autoPtr<Modifier<Type>> mod_;
+    autoPtr<Modifier<scalar>> modX_;
+    autoPtr<Modifier<scalar>> modY_;
+    autoPtr<Modifier<scalar>> modZ_;
 
-    word modType_;
-    bool needMod_;
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
+    //- Lookup indexes in the x direction
+    autoPtr<indexer> xIndexing_;
 
-    word modXType_;
-    bool needXMod_;
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
+    //- Lookup indexes in the y direction
+    autoPtr<indexer> yIndexing_;
 
-    word modYType_;
-    bool needYMod_;
-    modFuncType modYFunc_;
-    modFuncType invModYFunc_;
+    //- Lookup indexes in the z direction
+    autoPtr<indexer> zIndexing_;
 
-    word modZType_;
-    bool needZMod_;
-    modFuncType modZFunc_;
-    modFuncType invModZFunc_;
+    //- X-interpolator
+    autoPtr<interpolationWeight1D> xInterpolator_;
 
-    //- Pointer to function to lookup indexes in the x direction
-    findIndexFunc findXIndex_;
+    //- Y-interpolator
+    autoPtr<interpolationWeight1D> yInterpolator_;
 
-    //- Pointer to function to lookup indexes in the y direction
-    findIndexFunc findYIndex_;
-
-    //- Pointer to function to lookup indexes in the y direction
-    findIndexFunc findZIndex_;
-
-    //- Interpolation type
-    word interpType_;
-    interpFuncType interpFunc_;
+    //- Z-interpolator
+    autoPtr<interpolationWeight1D> zInterpolator_;
 
     //- Data
     Field<Field<Field<Type>>> data_;
@@ -187,6 +180,9 @@ public:
         //- Construct empty
         lookupTable3D();
 
+        //- Copy constructor
+        lookupTable3D(const lookupTable3D&);
+
         //- Construct from dictionary
         lookupTable3D
         (
@@ -195,7 +191,7 @@ public:
             const word& yName,
             const word& zName,
             const word& name,
-            const bool canRead
+            const bool canRead = true
         );
 
         //- Construct from data
@@ -209,7 +205,9 @@ public:
             const word& yMod,
             const word& zMod,
             const word& mod,
-            const word& interpolationScheme,
+            const word& xInterpolationScheme,
+            const word& yInterpolationScheme,
+            const word& zInterpolationScheme,
             const bool isReal = true
         );
 
@@ -250,76 +248,28 @@ public:
             return weights_;
         }
 
-        //- Return the modifier type name
-        const word& modType() const
+        //- Return the modifier
+        const Modifier<Type>& mod() const
         {
-            return modType_;
+            return mod_();
         }
 
-        //- Modify by modType
-        scalar mod(const scalar& f) const
+        //- Return the x-modifier
+        const Modifier<scalar>& modX() const
         {
-            return modFunc_(f);
+            return modX_();
         }
 
-        //- Modify by invModType
-        scalar invMod(const scalar& f) const
+        //- Return the y-modifier
+        const Modifier<scalar>& modY() const
         {
-            return invModFunc_(f);
+            return modY_();
         }
 
-        //- Return the x-modifier type name
-        const word& modXType() const
+        //- Return the z-modifier
+        const Modifier<scalar>& modZ() const
         {
-            return modXType_;
-        }
-
-        //- Modify by modXType
-        scalar modX(const scalar& f) const
-        {
-            return modXFunc_(f);
-        }
-
-        //- Modify by invModXType
-        scalar invModX(const scalar& f) const
-        {
-            return invModXFunc_(f);
-        }
-
-        //- Return the y-modifier type name
-        const word& modYType() const
-        {
-            return modYType_;
-        }
-
-        //- Modify by modYType
-        scalar modY(const scalar& f) const
-        {
-            return modYFunc_(f);
-        }
-
-        //- Modify by invModYType
-        scalar invModY(const scalar& f) const
-        {
-            return invModYFunc_(f);
-        }
-
-        //- Return the z-modifier type name
-        const word& modZType() const
-        {
-            return modZType_;
-        }
-
-        //- Modify by modYType
-        scalar modZ(const scalar& f) const
-        {
-            return modZFunc_(f);
-        }
-
-        //- Modify by invModYType
-        scalar invModZ(const scalar& f) const
-        {
-            return invModZFunc_(f);
+            return modZ_();
         }
 
         //- Const access to real x values
@@ -370,11 +320,24 @@ public:
             return fValues();
         }
 
-        //- Return the interpolation scheme type name
-        const word& interpType() const
+        //- Return the interpolation scheme for x
+        const interpolationWeight1D& xInterpolator() const
         {
-            return interpType_;
+            return xInterpolator_();
         }
+
+        //- Return the interpolation scheme for y
+        const interpolationWeight1D& yInterpolator() const
+        {
+            return yInterpolator_();
+        }
+
+        //- Return the interpolation scheme for z
+        const interpolationWeight1D& zInterpolator() const
+        {
+            return zInterpolator_();
+        }
+
 
     // Member Functions
 
@@ -390,6 +353,35 @@ public:
             const label ijk,
             const scalar f,
             const List<Type>& xyz
+        ) const;
+
+        //- Interpolate value using the current index and weight
+        template
+        <
+            template<class> class ListType1,
+            template<class> class ListType2,
+            template<class> class ListType3,
+            class fType
+        >
+        fType interpolate
+        (
+            const ListType1<ListType2<ListType3<fType>>>&
+        ) const;
+
+        //- Interpolate value using the current index and weight
+        template
+        <
+            template<class> class ListType1,
+            template<class> class ListType2,
+            template<class> class ListType3,
+            class fType
+        >
+        fType interpolate
+        (
+            const scalar,
+            const scalar,
+            const scalar,
+            const ListType1<ListType2<ListType3<fType>>>&
         ) const;
 
 
@@ -414,7 +406,9 @@ public:
             const word& yMod,
             const word& zMod,
             const word& mod,
-            const word& interpolationScheme,
+            const word& xInterpolationScheme,
+            const word& yInterpolationScheme,
+            const word& zInterpolationScheme,
             const bool isReal = true
         );
 
@@ -491,7 +485,8 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "lookupTable3D.C"
+    #include "lookupTable3D.C"
+    #include "lookupTable3DTemplates.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

@@ -23,63 +23,49 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "scalarLookupTable3D.H"
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-Foam::scalarLookupTable3D::scalarLookupTable3D()
-{}
-
-
-Foam::scalarLookupTable3D::scalarLookupTable3D
-(
-    const dictionary& dict,
-    const word& xName,
-    const word& yName,
-    const word& zName,
-    const word& name,
-    const bool canRead
-)
-{
-    read(dict, xName, yName, zName, name, canRead);
-}
-
-
-Foam::scalarLookupTable3D::scalarLookupTable3D
-(
-    const Field<scalar>& x,
-    const Field<scalar>& y,
-    const Field<scalar>& z,
-    const Field<Field<Field<scalar>>>& data,
-    const word& modXType,
-    const word& modYType,
-    const word& modZType,
-    const word& modType,
-    const word& interpolationScheme,
-    const bool isReal
-)
-{
-    set
-    (
-        x,
-        y,
-        z,
-        data,
-        modXType,
-        modYType,
-        modZType,
-        modType,
-        interpolationScheme,
-        isReal
-    );
-}
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-Foam::scalarLookupTable3D::~scalarLookupTable3D()
-{}
+#include "lookupTable2D.H"
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+template<class Type>
+template
+<
+    template<class> class ListType1,
+    template<class> class ListType2,
+    class fType
+>
+fType Foam::lookupTable2D<Type>::interpolate
+(
+    const ListType1<ListType2<fType>>& fs
+) const
+{
+    fType modf = weights_[0]*fs[indices_[0].x()][indices_[0].y()];
+    for (label i = 1; i < indices_.size(); i++)
+    {
+        modf += weights_[i]*fs[indices_[i].x()][indices_[i].y()];
+    }
+    return modf;
+}
+
+
+template<class Type>
+template
+<
+    template<class> class ListType1,
+    template<class> class ListType2,
+    class fType
+>
+fType Foam::lookupTable2D<Type>::interpolate
+(
+    const scalar x,
+    const scalar y,
+    const ListType1<ListType2<fType>>& fs
+) const
+{
+    update(x, y);
+
+    return interpolate(fs);
+}
 
 // ************************************************************************* //

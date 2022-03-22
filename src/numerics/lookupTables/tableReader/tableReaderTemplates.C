@@ -39,13 +39,19 @@ bool Foam::readComponent
 {
     Switch isReal = true;
     bool readFromTable = table.size();
+    label col = -1;
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
         modType = dict.lookupOrDefault<word>("mod", "none");
 
         if (readFromTable)
-        {}
+        {
+            if (dict.found("col"))
+            {
+                col = dict.lookup<label>("col");
+            }
+        }
         else if (dict.found(name))
         {
             values = dict.lookup<Field<Type>>(name);
@@ -106,7 +112,7 @@ bool Foam::readComponent
         values = readColumn<Type>
         (
             table,
-            parentDict.lookup<label>(name + "Col")
+            col < 0 ? parentDict.lookup<label>(name + "Col") : col
         );
         isReal =
             parentDict.lookupOrDefault<Switch>

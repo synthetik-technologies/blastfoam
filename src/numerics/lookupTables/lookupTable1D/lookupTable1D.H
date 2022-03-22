@@ -44,6 +44,10 @@ SourceFiles
 #include "IOList.H"
 #include "fileName.H"
 
+#include "Modifier.H"
+#include "indexing.H"
+#include "interpolationWeights1D.H"
+
 namespace Foam
 {
 
@@ -57,22 +61,15 @@ class lookupTable1D
 protected:
 // Protected data
 
-    //- Include definition of modifying functions
-    #include "tableFuncs.H"
+    //- Modifiers
+    autoPtr<Modifier<Type>> mod_;
+    autoPtr<Modifier<scalar>> modX_;
 
-    word modType_;
-    bool needMod_;
-    modFuncType modFunc_;
-    modFuncType invModFunc_;
+    //- Lookup indexes
+    autoPtr<indexer> indexing_;
 
-    word modXType_;
-    bool needXMod_;
-    modFuncType modXFunc_;
-    modFuncType invModXFunc_;
-
-    //- Interpolation type
-    word interpType_;
-    interpFuncType interpFunc_;
+    //- Interpolation scheme
+    autoPtr<interpolationWeight1D> interpolator_;
 
     //- Data
     Field<Type> data_;
@@ -129,6 +126,9 @@ public:
 
         //- Empty constructor
         lookupTable1D();
+
+        //- Copy constructor
+        lookupTable1D(const lookupTable1D&);
 
         //- Construct from file
         lookupTable1D
@@ -187,40 +187,16 @@ public:
                 return weights_;
             }
 
-            //- Return the modifier type name
-            const word& modType() const
+            //- Return the modifier
+            const Modifier<Type>& mod() const
             {
-                return modType_;
+                return mod_();
             }
 
-            //- Modify by modType
-            Type mod(const Type& f) const
+            //- Return the x-modifier
+            const Modifier<scalar>& modX() const
             {
-                return modFunc_(f);
-            }
-
-            //- Modify by invModType
-            Type invMod(const Type& f) const
-            {
-                return invModFunc_(f);
-            }
-
-            //- Return the x-modifier type name
-            const word& modXType() const
-            {
-                return modXType_;
-            }
-
-            //- Modify by modXType
-            scalar modX(const scalar f) const
-            {
-                return modXFunc_(f);
-            }
-
-            //- Modify by invModXType
-            scalar invModX(const scalar f) const
-            {
-                return modXFunc_(f);
+                return modX_();
             }
 
             //- Const access to real x values
@@ -248,9 +224,9 @@ public:
             }
 
             //- Return the interpolation scheme type name
-            const word& interpType() const
+            const interpolationWeight1D& interpolator() const
             {
-                return interpType_;
+                return interpolator_();
             }
 
 
@@ -261,6 +237,13 @@ public:
 
         //- Lookup value
         Type lookup(const scalar x) const;
+
+        //- Lookup x given f
+        scalar reverseLookup(const Type& fin) const
+        {
+            NotImplemented;
+            return 0.0;
+        }
 
         //- Interpolate value using the current index and weight
         template<template<class> class ListType, class fType>
