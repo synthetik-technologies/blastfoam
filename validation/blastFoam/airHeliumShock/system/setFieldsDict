@@ -16,12 +16,11 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 fields (alpha.air);
-nBufferLayers 0;
+nBufferLayers 2;
 
 defaultFieldValues
 (
     volScalarFieldValue p           1e5
-    volScalarFieldValue alpha.air   1
     volScalarFieldValue rho.air     1.4
     volVectorFieldValue U           (0 0 0)
 );
@@ -29,23 +28,9 @@ defaultFieldValues
 
 regions
 (
-    cylinderToCell
-    {
-        p1 (0.1335 0 -1);
-        p2 (0.1335 0 1);
-        radius 0.025;
-        level 3;
-
-        fieldValues
-        (
-            volScalarFieldValue alpha.air   0
-        );
-    }
-
     boxToCell
     {
-        boxes ((0 -2.5 -1) (0.1 2.5 1));
-        level 3;
+        boxes ((0 -2.5 -1) (0.1001 2.5 1));
 
         fieldValues
         (

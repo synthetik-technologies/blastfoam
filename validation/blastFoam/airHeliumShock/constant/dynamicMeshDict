@@ -33,20 +33,15 @@ errorEstimators
         upperRefineLevel    0.99;
         unrefineLevel       1e-2;
         upperUnrefineLevel  0.99;
-        maxRefinement       2;
+        maxRefinement       3;
     }
 );
 
 // How often to refine
 refineInterval  2;
 
-
-
 // Have slower than 2:1 refinement
-nBufferLayers   1;
-
-// Refine cells only up to maxRefinement levels
-
+nBufferLayers   3;
 
 // Write the refinement level as a volScalarField
 dumpLevel       true;

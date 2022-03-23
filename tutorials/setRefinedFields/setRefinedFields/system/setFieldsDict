@@ -148,17 +148,18 @@ regions
                 //  remove - removes the set/zone from the source
                 //  add - add the set/zone to the set
                 //  delete - deletes the set/zone
-                //  subset - selects the cells/faces/points that belong to both
-                //           the current and the source
+                //  subset - selects the cells/faces/points that belong to
+                //      both the current and the source
                 action new;
 
                 // Which faces/points to select
                 // options:
                 //  all - nothing is changed
-                //  interface - elements on the boundary of selected/no are
-                //              chosen
+                //  interface - elements on the boundary of selected/no
+                //      are chosen
                 //  boundary - only elements on the boundary are chosen
-                // interfaceAndBoundary - Combination of interface and boundary
+                // interfaceAndBoundary - Combination of interface and
+                //      boundary
                 selectionMode interface;
             }
         );
@@ -185,7 +186,7 @@ regions
         pointZones
         (
             {
-                name test;
+                name points;
                 action new;
                 selectionMode all;
             }
@@ -206,6 +207,15 @@ regions
 
                 // Which patches to include faces from
                 patches (patches);
+            }
+        );
+
+        cellZones
+        (
+            {
+                // Create a new cellZone
+                name cells;
+                action new;
             }
         );
 
@@ -240,14 +250,20 @@ regions
         level 2;
 
         // Create a new cell zone named test
-        // Zones can be viewed in paraview by checking the "readZones" option
-        // The "Copy data to cell zones" can be used to view fields in these
-        // zones
+        // Zones can be viewed in paraview by checking the "readZones"
+        // option
+        // The "Copy data to cell zones" can be used to view fields in
+        // these zones
         cellZones
         (
             {
-                name testCellZone;
-                action new;
+                // Subset cells from the cells cellZone, aka only cells
+                // in both zones
+                name subsetCells;
+
+                action subset;
+
+                source cells;
             }
         );
 
@@ -258,14 +274,21 @@ regions
                 // Use the previously created faceZone
                 name subsetFaces;
 
-                // Add to the existing zone
-                action subset;
+                // Create a new faceZone
+                action new;
 
-                // Only select faces on the boundary
+                // Only select interface faces
                 selectionMode interface;
+            }
+        );
 
-                // Which zone so use as the source (can also be a set)
-                source faces;
+        // Create a new cell set named test
+        pointZones
+        (
+            {
+                name points;
+                action remove;
+                selectionMode all;
             }
         );
 
