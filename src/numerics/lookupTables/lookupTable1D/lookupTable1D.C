@@ -308,6 +308,13 @@ void Foam::lookupTable1D<Type>::setData
 
 
 template<class Type>
+void Foam::lookupTable1D<Type>::updateIndex(const scalar x) const
+{
+    index_ = indexing_->findIndex(modX_()(x), xValues());
+}
+
+
+template<class Type>
 void Foam::lookupTable1D<Type>::update(const scalar x) const
 {
     scalar xMod(modX_()(x));

@@ -56,12 +56,15 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 )
 {
     bool uniform = true;
-    scalar dx = x[1] - x[0];
-    for (label i = 2; i < x.size(); i++)
+    if (x.size() > 2)
     {
-        if (mag(x[i] - x[i-1] - dx) > small)
+        scalar dx = x[1] - x[0];
+        for (label i = 2; i < x.size(); i++)
         {
-            uniform = false;
+            if (mag(x[i] - x[i-1] - dx) > small)
+            {
+                uniform = false;
+            }
         }
     }
 

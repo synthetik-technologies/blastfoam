@@ -232,6 +232,9 @@ public:
 
     // Public functions
 
+        //- Update index
+        void updateIndex(const scalar x) const;
+
         //- Update index and weight
         void update(const scalar x) const;
 

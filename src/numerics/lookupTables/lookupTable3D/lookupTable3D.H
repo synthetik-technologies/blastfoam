@@ -342,6 +342,9 @@ public:
     // Member Functions
 
         //- Update indexes
+        void updateIndex(const scalar x, const scalar y, const scalar z) const;
+
+        //- Update indexes and weights
         void update(const scalar x, const scalar y, const scalar z) const;
 
         //- Lookup value

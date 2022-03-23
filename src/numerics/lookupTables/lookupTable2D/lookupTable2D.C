@@ -403,6 +403,18 @@ void Foam::lookupTable2D<Type>::setData
 
 
 template<class Type>
+void Foam::lookupTable2D<Type>::updateIndex
+(
+    const scalar x,
+    const scalar y
+) const
+{
+    ij_.x() = xIndexing_->findIndex(modX_()(x), xModValues_);
+    ij_.y() = yIndexing_->findIndex(modY_()(y), yModValues_);
+}
+
+
+template<class Type>
 void Foam::lookupTable2D<Type>::update(const scalar x, const scalar y) const
 {
     scalar xMod(modX_()(x));
