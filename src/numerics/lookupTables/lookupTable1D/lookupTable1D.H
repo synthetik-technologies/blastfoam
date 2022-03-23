@@ -65,17 +65,17 @@ protected:
     autoPtr<Modifier<Type>> mod_;
     autoPtr<Modifier<scalar>> modX_;
 
-    //- Lookup indexes
-    autoPtr<indexer> indexing_;
-
-    //- Interpolation scheme
-    autoPtr<interpolationWeight1D> interpolator_;
-
     //- Data
     Field<Type> data_;
 
     //- List of x values in the given space
     Field<scalar> xModValues_;
+
+    //- Lookup indexes
+    autoPtr<indexer> indexing_;
+
+    //- Interpolation scheme
+    autoPtr<interpolationWeight1D> interpolator_;
 
     //- Real data
     Field<Type>* realDataPtr_;

@@ -60,15 +60,29 @@ namespace Foam
 
 class interpolationWeight1D
 {
+protected:
+    const List<scalar>& xs_;
+
 public:
 
     virtual word type() const = 0;
 
+    interpolationWeight1D(const List<scalar>& xs)
+    :
+        xs_(xs)
+    {}
+
     virtual ~interpolationWeight1D()
     {}
 
-    static autoPtr<interpolationWeight1D> New(const word&, const label);
-    virtual autoPtr<interpolationWeight1D> clone() const = 0;
+    static autoPtr<interpolationWeight1D> New
+    (
+        const word&,
+        const List<scalar>&
+    );
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const = 0;
+
+    virtual bool validate(const bool fail = true) const;
 
     static scalar linearWeight
     (
@@ -84,7 +98,6 @@ public:
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const = 0;
@@ -93,6 +106,56 @@ public:
 
 namespace interpolationWeights1D
 {
+
+/*---------------------------------------------------------------------------*\
+                        Clamp interpolation Declaration
+\*---------------------------------------------------------------------------*/
+
+template<class Interp>
+class Clamp
+:
+    public Interp
+{
+public:
+
+    Clamp(const List<scalar>& xs)
+    :
+        Interp(xs)
+    {}
+
+    virtual ~Clamp()
+    {}
+
+    virtual void updateWeights
+    (
+        const scalar x,
+        const label i,
+        List<label>& indices,
+        List<scalar>& weights
+    ) const
+    {
+        if (x < this->xs_[0])
+        {
+            indices.setSize(1);
+            weights.setSize(1);
+
+            indices[0] = 0;
+            weights[0] = 1.0;
+
+            return;
+        }
+        else if (x > this->xs_.last())
+        {
+            indices.setSize(1);
+            weights.setSize(1);
+
+            indices[0] = this->xs_.size() - 1;
+            weights[0] = 1.0;
+            return;
+        }
+        Interp::updateWeights(x, i, indices, weights);
+    }
+};
 
 /*---------------------------------------------------------------------------*\
                         Floor interpolation Declaration
@@ -104,6 +167,11 @@ class floor
 {
 public:
 
+    floor(const List<scalar>& xs)
+    :
+        interpolationWeight1D(xs)
+    {}
+
     virtual ~floor()
     {}
 
@@ -112,16 +180,15 @@ public:
         return "floor";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new floor());
+        return autoPtr<interpolationWeight1D>(new floor(xs));
     }
 
     virtual void updateWeights
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const;
@@ -138,6 +205,11 @@ class ceil
 {
 public:
 
+    ceil(const List<scalar>& xs)
+    :
+        interpolationWeight1D(xs)
+    {}
+
     virtual ~ceil()
     {}
 
@@ -146,16 +218,15 @@ public:
         return "ceil";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new ceil());
+        return autoPtr<interpolationWeight1D>(new ceil(xs));
     }
 
     virtual void updateWeights
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const;
@@ -172,6 +243,11 @@ class linearExtrapolated
 {
 public:
 
+    linearExtrapolated(const List<scalar>& xs)
+    :
+        interpolationWeight1D(xs)
+    {}
+
     virtual ~linearExtrapolated()
     {}
 
@@ -180,16 +256,15 @@ public:
         return "linearExtrapolated";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new linearExtrapolated());
+        return autoPtr<interpolationWeight1D>(new linearExtrapolated(xs));
     }
 
     virtual void updateWeights
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const;
@@ -198,9 +273,14 @@ public:
 
 class linearClamp
 :
-    public linearExtrapolated
+    public Clamp<linearExtrapolated>
 {
 public:
+
+    linearClamp(const List<scalar>& xs)
+    :
+        Clamp<linearExtrapolated>(xs)
+    {}
 
     virtual ~linearClamp()
     {}
@@ -210,19 +290,10 @@ public:
         return "linearClamp";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new linearClamp());
+        return autoPtr<interpolationWeight1D>(new linearClamp(xs));
     }
-
-    virtual void updateWeights
-    (
-        const scalar x,
-        const label i,
-        const List<scalar>& xs,
-        List<label>& indices,
-        List<scalar>& weights
-    ) const;
 };
 
 /*---------------------------------------------------------------------------*\
@@ -236,6 +307,11 @@ class quadraticExtrapolated
 {
 public:
 
+    quadraticExtrapolated(const List<scalar>& xs)
+    :
+        interpolationWeight1D(xs)
+    {}
+
     virtual ~quadraticExtrapolated()
     {}
 
@@ -244,16 +320,15 @@ public:
         return "quadraticExtrapolated";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new quadraticExtrapolated());
+        return autoPtr<interpolationWeight1D>(new quadraticExtrapolated(xs));
     }
 
     virtual void updateWeights
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const;
@@ -262,9 +337,14 @@ public:
 
 class quadraticClamp
 :
-    public quadraticExtrapolated
+    public Clamp<quadraticExtrapolated>
 {
 public:
+
+    quadraticClamp(const List<scalar>& xs)
+    :
+        Clamp<quadraticExtrapolated>(xs)
+    {}
 
     virtual ~quadraticClamp()
     {}
@@ -274,19 +354,10 @@ public:
         return "quadraticClamp";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new quadraticClamp());
+        return autoPtr<interpolationWeight1D>(new quadraticClamp(xs));
     }
-
-    virtual void updateWeights
-    (
-        const scalar x,
-        const label i,
-        const List<scalar>& xs,
-        List<label>& indices,
-        List<scalar>& weights
-    ) const;
 };
 
 
@@ -301,6 +372,11 @@ class cubicExtrapolated
 {
 public:
 
+    cubicExtrapolated(const List<scalar>& xs)
+    :
+        interpolationWeight1D(xs)
+    {}
+
     virtual ~cubicExtrapolated()
     {}
 
@@ -309,16 +385,15 @@ public:
         return "cubicExtrapolated";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new cubicExtrapolated());
+        return autoPtr<interpolationWeight1D>(new cubicExtrapolated(xs));
     }
 
     virtual void updateWeights
     (
         const scalar x,
         const label i,
-        const List<scalar>& xs,
         List<label>& indices,
         List<scalar>& weights
     ) const;
@@ -327,9 +402,14 @@ public:
 
 class cubicClamp
 :
-    public cubicExtrapolated
+    public Clamp<cubicExtrapolated>
 {
 public:
+
+    cubicClamp(const List<scalar>& xs)
+    :
+        Clamp<cubicExtrapolated>(xs)
+    {}
 
     virtual ~cubicClamp()
     {}
@@ -339,19 +419,10 @@ public:
         return "cubicClamp";
     }
 
-    virtual autoPtr<interpolationWeight1D> clone() const
+    virtual autoPtr<interpolationWeight1D> clone(const List<scalar>& xs) const
     {
-        return autoPtr<interpolationWeight1D>(new cubicClamp());
+        return autoPtr<interpolationWeight1D>(new cubicClamp(xs));
     }
-
-    virtual void updateWeights
-    (
-        const scalar x,
-        const label i,
-        const List<scalar>& xs,
-        List<label>& indices,
-        List<scalar>& weights
-    ) const;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

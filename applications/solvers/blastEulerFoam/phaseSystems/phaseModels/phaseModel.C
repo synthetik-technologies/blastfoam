@@ -390,17 +390,17 @@ void Foam::phaseModel::postUpdate()
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-//             alphaRhoE_ +=
-//                 rho().time().deltaT()
-//                *fvc::div
-//                 (
-//                     fvc::dotInterpolate
-//                     (
-//                         rho().mesh().Sf(),
-//                         turbulence_->devTau()
-//                     )
-//                   & flux().Uf()
-//                 );
+            alphaRhoE_ +=
+                rho().time().deltaT()
+               *fvc::div
+                (
+                    fvc::dotInterpolate
+                    (
+                        rho().mesh().Sf(),
+                        turbulence_->devTau()
+                    )
+                  & flux().Uf()
+                );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
@@ -408,7 +408,7 @@ void Foam::phaseModel::postUpdate()
 
         alphaRhoU_ = alphaRho_*U_;
 
-//         he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
+        he() = alphaRhoE_/Foam::max(alphaRho_, smallAlphaRho) - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
@@ -417,7 +417,14 @@ void Foam::phaseModel::postUpdate()
         fvScalarMatrix eEqn
         (
             fvm::ddt(alphaRho_, he())
-          - fvc::ddt(alphaRho_.prevIter(), he())
+          - fvc::ddt(alphaRhoE_)
+          - (
+                U_
+              & (
+                    alphaRho_*fvc::ddt(U_)
+                  + 0.5*U_*fvc::ddt(alphaRho_)
+                )
+            )
           + fvc::ddt(smallAlphaRho, he())
           - fvm::ddt(smallAlphaRho, he())
          ==

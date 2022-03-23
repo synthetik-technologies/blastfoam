@@ -106,7 +106,7 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
 {
     scalar f(mod_()(fin));
 
-    ij_.x() = xIndexing_->findIndex(x, xValues());
+    ij_.x() = xIndexing_->findIndex(modX_()(x));
     labelList Js(boundj(f));
 
     const label i = ij_.x();
@@ -161,7 +161,7 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupX
 ) const
 {
     scalar f(mod_()(fin));
-    ij_.y() = yIndexing_->findIndex(y, yValues());
+    ij_.y() = yIndexing_->findIndex(modY_()(y));
     labelList Is(boundi(f));
 
     const label j = ij_.y();

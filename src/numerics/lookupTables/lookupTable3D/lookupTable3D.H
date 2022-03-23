@@ -69,6 +69,18 @@ protected:
     autoPtr<Modifier<scalar>> modY_;
     autoPtr<Modifier<scalar>> modZ_;
 
+    //- Data
+    Field<Field<Field<Type>>> data_;
+
+    //- Modified x field values
+    Field<scalar> xModValues_;
+
+    //- Modified y field values
+    Field<scalar> yModValues_;
+
+    //- Modified z field values
+    Field<scalar> zModValues_;
+
     //- Lookup indexes in the x direction
     autoPtr<indexer> xIndexing_;
 
@@ -86,18 +98,6 @@ protected:
 
     //- Z-interpolator
     autoPtr<interpolationWeight1D> zInterpolator_;
-
-    //- Data
-    Field<Field<Field<Type>>> data_;
-
-    //- Modified x field values
-    Field<scalar> xModValues_;
-
-    //- Modified y field values
-    Field<scalar> yModValues_;
-
-    //- Modified z field values
-    Field<scalar> zModValues_;
 
     //- Stored real data
     Field<Field<Field<Type>>>* realDataPtr_;

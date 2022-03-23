@@ -29,22 +29,27 @@ License
 
 Foam::autoPtr<Foam::indexer> Foam::indexer::New
 (
-    const word& name
+    const word& name,
+    const List<scalar>& xs
 )
 {
-    if (name == "uniform")
+    if (name == "null")
     {
-        return autoPtr<indexer>(new indexers::uniform());
+        return autoPtr<indexer>(new indexers::null(xs));
+    }
+    else if (name == "uniform")
+    {
+        return autoPtr<indexer>(new indexers::uniform(xs));
     }
     else if (name =="nonuniform")
     {
-        return autoPtr<indexer>(new indexers::nonuniform());
+        return autoPtr<indexer>(new indexers::nonuniform(xs));
     }
     else
     {
         FatalErrorInFunction
             << "Unknown indexer " << name << nl
-            << "Valid indexers are uniform or nonuniform" << endl
+            << "Valid indexers are null, uniform, or nonuniform" << endl
             << abort(FatalError);
     }
     return autoPtr<indexer>();
@@ -52,29 +57,31 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 
 Foam::autoPtr<Foam::indexer> Foam::indexer::New
 (
-    const List<scalar>& x
+    const List<scalar>& xs
 )
 {
-    bool uniform = true;
-    if (x.size() > 2)
+    if (xs.size() < 2)
     {
-        scalar dx = x[1] - x[0];
-        for (label i = 2; i < x.size(); i++)
+        return autoPtr<indexer>(new indexers::null(xs));
+    }
+
+    bool uniform = true;
+    const scalar dx = xs[1] - xs[0];
+    for (label i = 2; i < xs.size(); i++)
+    {
+        if (mag(xs[i] - xs[i-1] - dx) > small)
         {
-            if (mag(x[i] - x[i-1] - dx) > small)
-            {
-                uniform = false;
-            }
+            uniform = false;
         }
     }
 
     if (uniform)
     {
-        return autoPtr<indexer>(new indexers::uniform());
+        return autoPtr<indexer>(new indexers::uniform(xs));
     }
     else
     {
-        return autoPtr<indexer>(new indexers::nonuniform());
+        return autoPtr<indexer>(new indexers::nonuniform(xs));
     }
 }
 
@@ -83,38 +90,36 @@ Foam::autoPtr<Foam::indexer> Foam::indexer::New
 
 Foam::label Foam::indexers::uniform::findIndex
 (
-    const scalar x,
-    const List<scalar>& xs
+    const scalar x
 ) const
 {
-    scalar ij = (x - xs[0])/(xs[1] - xs[0]);
+    scalar ij = (x - xs_[0])/(xs_[1] - xs_[0]);
     if (ij <= 0)
     {
         return 0;
     }
-    return min(floor(ij), xs.size() - 2);
+    return min(floor(ij), xs_.size() - 2);
 }
 
 
 Foam::label Foam::indexers::nonuniform::findIndex
 (
-    const scalar x,
-    const List<scalar>& xs
+    const scalar x
 ) const
 {
-    if (x < xs[0])
+    if (x < xs_[0])
     {
         return 0;
     }
 
-    for (label ij = 0; ij < xs.size() - 1; ij++)
+    for (label ij = 0; ij < xs_.size() - 1; ij++)
     {
-        if (x > xs[ij] && x < xs[ij+1])
+        if (x > xs_[ij] && x < xs_[ij+1])
         {
             return ij;
         }
     }
-    return xs.size() - 2;
+    return xs_.size() - 2;
 }
 
 // ************************************************************************* //

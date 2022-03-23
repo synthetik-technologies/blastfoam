@@ -40,10 +40,16 @@ bool Foam::readComponent
     Switch isReal = true;
     bool readFromTable = table.size();
     label col = -1;
+    label scale = 1.0;
     if (parentDict.found(name + "Coeffs"))
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
         modType = dict.lookupOrDefault<word>("mod", "none");
+
+        if (dict.found("scale"))
+        {
+            scale = dict.lookup<scalar>("scale");
+        }
 
         if (readFromTable)
         {
@@ -120,6 +126,11 @@ bool Foam::readComponent
                 name + "isReal",
                 true
             );
+    }
+
+    if (scale != 1.0)
+    {
+        values = scale*values;
     }
     return isReal;
 }

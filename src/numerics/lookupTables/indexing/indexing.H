@@ -53,23 +53,65 @@ namespace Foam
 
 class indexer
 {
+protected:
+    const List<scalar>& xs_;
+
 public:
 
     virtual word type() const = 0;
+
+    indexer(const List<scalar>& xs)
+    :
+        xs_(xs)
+    {}
 
     virtual ~indexer()
     {}
 
     static autoPtr<indexer> New(const List<scalar>&);
-    static autoPtr<indexer> New(const word&);
+    static autoPtr<indexer> New(const word&, const List<scalar>&);
     virtual autoPtr<indexer> clone() const = 0;
 
-    virtual label findIndex(const scalar x, const List<scalar>& xs) const = 0;
+    virtual label findIndex(const scalar x) const = 0;
 };
 
 
 namespace indexers
 {
+
+/*---------------------------------------------------------------------------*\
+                        null indexer Declaration
+\*---------------------------------------------------------------------------*/\
+
+class null
+:
+    public indexer
+{
+public:
+
+    null(const List<scalar>& xs)
+    :
+        indexer(xs)
+    {}
+    virtual ~null()
+    {}
+
+    virtual word type() const
+    {
+        return "null";
+    }
+
+    virtual autoPtr<indexer> clone() const
+    {
+        return autoPtr<indexer>(new null(xs_));
+    }
+
+    virtual label findIndex(const scalar x) const
+    {
+        return 0;
+    }
+};
+
 
 /*---------------------------------------------------------------------------*\
                         Uniform indexer Declaration
@@ -81,6 +123,11 @@ class uniform
 {
 public:
 
+    uniform(const List<scalar>& xs)
+    :
+        indexer(xs)
+    {}
+
     virtual ~uniform()
     {}
 
@@ -91,10 +138,10 @@ public:
 
     virtual autoPtr<indexer> clone() const
     {
-        return autoPtr<indexer>(new uniform());
+        return autoPtr<indexer>(new uniform(xs_));
     }
 
-    virtual label findIndex(const scalar x, const List<scalar>& xs) const;
+    virtual label findIndex(const scalar x) const;
 };
 
 
@@ -109,6 +156,11 @@ class nonuniform
 {
 public:
 
+    nonuniform(const List<scalar>& xs)
+    :
+        indexer(xs)
+    {}
+
     virtual ~nonuniform()
     {}
 
@@ -119,10 +171,10 @@ public:
 
     virtual autoPtr<indexer> clone() const
     {
-        return autoPtr<indexer>(new nonuniform());
+        return autoPtr<indexer>(new nonuniform(xs_));
     }
 
-    virtual label findIndex(const scalar x, const List<scalar>& xs) const;
+    virtual label findIndex(const scalar xff) const;
 };
 
 

@@ -31,92 +31,63 @@ License
 Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
 (
     const word& scheme,
-    const label n
+    const List<scalar>& xs
 )
 {
-    hashedWordList validSchemes;
-    if (n > 0)
-    {
-        validSchemes.append("floor");
-        validSchemes.append("ceil");
-        validSchemes.append("linearClamp");
-        validSchemes.append("linearExtrapolated");
-    }
-    if (n > 2)
-    {
-        validSchemes.append("quadraticClamp");
-        validSchemes.append("quadraticExtrapolated");
-    }
-    if (n > 3)
-    {
-        validSchemes.append("cubicClamp");
-        validSchemes.append("cibicExtrapolated");
-    }
-
-    if (!validSchemes.found(scheme))
-    {
-        FatalErrorInFunction
-            << scheme << " is not a valid interpolation scheme for a list "
-            << " of size " << n << nl
-            << "Valid Options are: " << nl
-            << validSchemes << endl
-            << abort(FatalError);
-    }
-
     if (scheme == "floor")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::floor()
+            new interpolationWeights1D::floor(xs)
         );
     }
     else if (scheme == "ceil")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::ceil()
+            new interpolationWeights1D::ceil(xs)
         );
     }
     else if (scheme == "linearClamp")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::linearClamp()
+            new interpolationWeights1D::linearClamp(xs)
         );
     }
     else if (scheme == "linearExtrapolated")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::linearExtrapolated()
+            new interpolationWeights1D::linearExtrapolated(xs)
         );
     }
     else if (scheme == "quadraticClamp")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::quadraticClamp()
+            new interpolationWeights1D::quadraticClamp(xs)
         );
     }
     else if (scheme == "quadraticExtrapolated")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::quadraticExtrapolated()
+            new interpolationWeights1D::quadraticExtrapolated(xs)
         );
     }
     else if (scheme == "cubicClamp")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::cubicClamp()
+            new interpolationWeights1D::cubicClamp(xs)
         );
     }
     else if (scheme == "cubicExtrapolated")
     {
         return autoPtr<interpolationWeight1D>
         (
-            new interpolationWeights1D::cubicExtrapolated()
+            new interpolationWeights1D::cubicExtrapolated(xs)
         );
     }
     else
@@ -137,13 +108,55 @@ Foam::autoPtr<Foam::interpolationWeight1D> Foam::interpolationWeight1D::New
     return autoPtr<interpolationWeight1D>();
 }
 
+bool Foam::interpolationWeight1D::validate(const bool fail) const
+{
+    hashedWordList validSchemes;
+    const label n = xs_.size();
+    if (n > 0)
+    {
+        validSchemes.append("floor");
+        validSchemes.append("ceil");
+        validSchemes.append("linearClamp");
+    }
+    if (n > 1)
+    {
+        validSchemes.append("linearExtrapolated");
+    }
+    if (n > 2)
+    {
+        validSchemes.append("quadraticClamp");
+        validSchemes.append("quadraticExtrapolated");
+    }
+    if (n > 3)
+    {
+        validSchemes.append("cubicClamp");
+        validSchemes.append("cibicExtrapolated");
+    }
+
+    if (!validSchemes.found(this->type()))
+    {
+        if (fail)
+        {
+            FatalErrorInFunction
+                << this->type()
+                << " is not a valid interpolation scheme for a list "
+                << " of size " << n << nl
+                << "Valid Options are: " << nl
+                << validSchemes << endl
+                << abort(FatalError);
+        }
+        return false;
+    }
+    return true;
+}
+
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 void Foam::interpolationWeights1D::floor::updateWeights
 (
     const scalar x,
     const label i,
-    const List<scalar>& xs,
     List<label>& indices,
     List<scalar>& weights
 ) const
@@ -160,7 +173,6 @@ void Foam::interpolationWeights1D::ceil::updateWeights
 (
     const scalar x,
     const label i,
-    const List<scalar>& xs,
     List<label>& indices,
     List<scalar>& weights
 ) const
@@ -168,7 +180,7 @@ void Foam::interpolationWeights1D::ceil::updateWeights
     indices.setSize(1);
     weights.setSize(1);
 
-    indices[0] = x != xs[i] ? i + 1 : i;
+    indices[0] = x != xs_[i] ? i + 1 : i;
     weights[0] = 1.0;
 }
 
@@ -177,13 +189,12 @@ void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    const List<scalar>& xs,
     List<label>& indices,
     List<scalar>& weights
 ) const
 {
     label lo = max(i, 0);
-    label hi = min(xs.size() - 1, lo + 1);
+    label hi = min(xs_.size() - 1, lo + 1);
 
     indices.setSize(2);
     weights.setSize(2);
@@ -191,40 +202,8 @@ void Foam::interpolationWeights1D::linearExtrapolated::updateWeights
     indices[0] = lo;
     indices[1] = hi;
 
-    weights[1] = (x - xs[lo])/(xs[hi] - xs[lo]);
+    weights[1] = (x - xs_[lo])/(xs_[hi] - xs_[lo]);
     weights[0] = 1.0 - weights[1];
-}
-
-
-void Foam::interpolationWeights1D::linearClamp::updateWeights
-(
-    const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    List<label>& indices,
-    List<scalar>& weights
-) const
-{
-    if (x < xs[0])
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = 0;
-        weights[0] = 1.0;
-
-        return;
-    }
-    else if (x > xs.last())
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = xs.size() - 1;
-        weights[0] = 1.0;
-        return;
-    }
-    return linearExtrapolated::updateWeights(x, i, xs, indices, weights);
 }
 
 
@@ -232,7 +211,6 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    const List<scalar>& xs,
     List<label>& indices,
     List<scalar>& weights
 ) const
@@ -241,9 +219,9 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
     label mid = lo + 1;
     label hi = mid + 1;
 
-    const scalar& x0 = xs[lo];
-    const scalar& x1 = xs[mid];
-    const scalar& x2 = xs[hi];
+    const scalar& x0 = xs_[lo];
+    const scalar& x1 = xs_[mid];
+    const scalar& x2 = xs_[hi];
 
     indices.resize(3);
     weights.resize(3);
@@ -258,53 +236,19 @@ void Foam::interpolationWeights1D::quadraticExtrapolated::updateWeights
 }
 
 
-void Foam::interpolationWeights1D::quadraticClamp::updateWeights
-(
-    const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    List<label>& indices,
-    List<scalar>& weights
-) const
-{
-    if (x < xs[0])
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = 0;
-        weights[0] = 1.0;
-
-        return;
-    }
-    else if (x > xs.last())
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = xs.size() - 1;
-        weights[0] = 1.0;
-        return;
-    }
-
-    return quadraticExtrapolated::updateWeights(x, i, xs, indices, weights);
-}
-
-
 void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 (
     const scalar x,
     const label i,
-    const List<scalar>& xs,
     List<label>& indices,
     List<scalar>& weights
 ) const
 {
     label lo = max(i - 1, 0);
     label hi = lo + 3;
-    if (hi > xs.size() - 1)
+    if (hi > xs_.size() - 1)
     {
-        hi = xs.size() - 1;
+        hi = xs_.size() - 1;
         lo = hi - 3;
     }
 
@@ -316,10 +260,10 @@ void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
     indices[2] = lo + 2;
     indices[3] = lo + 3;
 
-    const scalar& x0 = xs[lo];
-    const scalar& x1 = xs[lo+1];
-    const scalar& x2 = xs[lo+2];
-    const scalar& x3 = xs[lo+3];
+    const scalar& x0 = xs_[lo];
+    const scalar& x1 = xs_[lo+1];
+    const scalar& x2 = xs_[lo+2];
+    const scalar& x3 = xs_[lo+3];
 
 
     weights[0] = (x - x1)*(x - x2)*(x - x3)/(x0 - x1)/(x0 - x2)/(x0 - x3);
@@ -337,38 +281,6 @@ void Foam::interpolationWeights1D::cubicExtrapolated::updateWeights
 //     weights[1] = x3*(2.0 - 1.0/dx31) + x2*(1.0/dx31 - 3.0) + 1.0;
 //     weights[2] = x3*(1.0/dx20 - 2.0) + x2*(3.0 - 2.0/dx20) + 1.0/dx20;
 //     weights[3] = (x3 - x2)/dx31;
-}
-
-
-void Foam::interpolationWeights1D::cubicClamp::updateWeights
-(
-    const scalar x,
-    const label i,
-    const List<scalar>& xs,
-    List<label>& indices,
-    List<scalar>& weights
-) const
-{
-    if (x < xs[0])
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = 0;
-        weights[0] = 1.0;
-
-        return;
-    }
-    else if (x > xs.last())
-    {
-        indices.setSize(1);
-        weights.setSize(1);
-
-        indices[0] = xs.size() - 1;
-        weights[0] = 1.0;
-        return;
-    }
-    return cubicExtrapolated::updateWeights(x, i, xs, indices, weights);
 }
 
 // ************************************************************************* //

@@ -55,16 +55,16 @@ Foam::lookupTable3D<Type>::lookupTable3D()
     modX_(nullptr),
     modY_(nullptr),
     modZ_(nullptr),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    zModValues_(),
     xIndexing_(nullptr),
     yIndexing_(nullptr),
     zIndexing_(nullptr),
     xInterpolator_(nullptr),
     yInterpolator_(nullptr),
     zInterpolator_(nullptr),
-    data_(),
-    xModValues_(),
-    yModValues_(),
-    zModValues_(),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     yValuesPtr_(nullptr),
@@ -82,16 +82,16 @@ Foam::lookupTable3D<Type>::lookupTable3D(const lookupTable3D<Type>& table)
     modX_(table.modX_->clone()),
     modY_(table.modY_->clone()),
     modZ_(table.modZ_->clone()),
-    xIndexing_(nullptr),
-    yIndexing_(nullptr),
-    zIndexing_(nullptr),
-    xInterpolator_(table.xInterpolator_->clone()),
-    yInterpolator_(table.yInterpolator_->clone()),
-    zInterpolator_(table.zInterpolator_->clone()),
     data_(),
     xModValues_(),
     yModValues_(),
     zModValues_(),
+    xIndexing_(nullptr),
+    yIndexing_(nullptr),
+    zIndexing_(nullptr),
+    xInterpolator_(table.xInterpolator_->clone(xModValues_)),
+    yInterpolator_(table.yInterpolator_->clone(yModValues_)),
+    zInterpolator_(table.zInterpolator_->clone(zModValues_)),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     yValuesPtr_(nullptr),
@@ -126,16 +126,16 @@ Foam::lookupTable3D<Type>::lookupTable3D
     modX_(nullptr),
     modY_(nullptr),
     modZ_(nullptr),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    zModValues_(),
     xIndexing_(nullptr),
     yIndexing_(nullptr),
     zIndexing_(nullptr),
     xInterpolator_(nullptr),
     yInterpolator_(nullptr),
     zInterpolator_(nullptr),
-    data_(),
-    xModValues_(),
-    yModValues_(),
-    zModValues_(),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     yValuesPtr_(nullptr),
@@ -169,16 +169,16 @@ Foam::lookupTable3D<Type>::lookupTable3D
     modX_(Modifier<scalar>::New(modXType)),
     modY_(Modifier<scalar>::New(modYType)),
     modZ_(Modifier<scalar>::New(modZType)),
+    data_(),
+    xModValues_(),
+    yModValues_(),
+    zModValues_(),
     xIndexing_(nullptr),
     yIndexing_(nullptr),
     zIndexing_(nullptr),
     xInterpolator_(nullptr),
     yInterpolator_(nullptr),
     zInterpolator_(nullptr),
-    data_(),
-    xModValues_(),
-    yModValues_(),
-    zModValues_(),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     yValuesPtr_(nullptr),
@@ -265,9 +265,17 @@ void Foam::lookupTable3D<Type>::set
     setZ(z, modZType, isReal);
     setData(data, modType, isReal);
 
-    xInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, x.size());
-    yInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, y.size());
-    zInterpolator_ = interpolationWeight1D::New(xInterpolationScheme, z.size());
+    xInterpolator_ =
+        interpolationWeight1D::New(xInterpolationScheme, xModValues_);
+    xInterpolator_->validate();
+
+    yInterpolator_ =
+        interpolationWeight1D::New(xInterpolationScheme, yModValues_);
+    yInterpolator_->validate();
+
+    zInterpolator_ =
+        interpolationWeight1D::New(xInterpolationScheme, zModValues_);
+    zInterpolator_->validate();
 }
 
 
@@ -322,6 +330,10 @@ void Foam::lookupTable3D<Type>::setX
         }
     }
     xIndexing_ = indexer::New(xModValues_);
+    if (xInterpolator_.valid())
+    {
+        xInterpolator_->validate();
+    }
 }
 
 
@@ -376,6 +388,10 @@ void Foam::lookupTable3D<Type>::setY
         }
     }
     yIndexing_ = indexer::New(yModValues_);
+    if (yInterpolator_.valid())
+    {
+        yInterpolator_->validate();
+    }
 }
 
 
@@ -430,6 +446,10 @@ void Foam::lookupTable3D<Type>::setZ
         }
     }
     zIndexing_ = indexer::New(zModValues_);
+    if (zInterpolator_.valid())
+    {
+        zInterpolator_->validate();
+    }
 }
 
 
@@ -505,9 +525,9 @@ void Foam::lookupTable3D<Type>::updateIndex
     const scalar z
 ) const
 {
-    ijk_.x() = xIndexing_->findIndex(modX_()(x), xModValues_);
-    ijk_.y() = yIndexing_->findIndex(modY_()(y), yModValues_);
-    ijk_.z() = zIndexing_->findIndex(modZ_()(z), zModValues_);
+    ijk_.x() = xIndexing_->findIndex(modX_()(x));
+    ijk_.y() = yIndexing_->findIndex(modY_()(y));
+    ijk_.z() = zIndexing_->findIndex(modZ_()(z));
 }
 
 
@@ -523,16 +543,16 @@ void Foam::lookupTable3D<Type>::update
     scalar yMod(modY_()(y));
     scalar zMod(modZ_()(z));
 
-    ijk_.x() = xIndexing_->findIndex(xMod, xModValues_);
-    ijk_.y() = yIndexing_->findIndex(yMod, yModValues_);
-    ijk_.z() = zIndexing_->findIndex(zMod, zModValues_);
+    ijk_.x() = xIndexing_->findIndex(xMod);
+    ijk_.y() = yIndexing_->findIndex(yMod);
+    ijk_.z() = zIndexing_->findIndex(zMod);
 
     labelList is, js, ks;
     scalarList wxs, wys, wzs;
 
-    xInterpolator_->updateWeights(xMod, ijk_.x(), xModValues_, is, wxs);
-    yInterpolator_->updateWeights(yMod, ijk_.y(), yModValues_, js, wys);
-    zInterpolator_->updateWeights(zMod, ijk_.z(), zModValues_, ks, wzs);
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, wxs);
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, wys);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, wzs);
 
     indices_.setSize(is.size()*js.size()*ks.size());
     weights_.setSize(indices_.size());
@@ -617,8 +637,9 @@ void Foam::lookupTable3D<Type>::read
             xName + "InterpolationScheme",
             scheme
         ),
-        xModValues_.size()
+        xModValues_
     );
+    xInterpolator_->validate();
 
     word modYType;
     isReal = readComponent
@@ -636,8 +657,9 @@ void Foam::lookupTable3D<Type>::read
             yName + "InterpolationScheme",
             scheme
         ),
-        yModValues_.size()
+        yModValues_
     );
+    yInterpolator_->validate();
 
     word modZType;
     isReal = readComponent
@@ -655,8 +677,9 @@ void Foam::lookupTable3D<Type>::read
             zName + "InterpolationScheme",
             scheme
         ),
-        zModValues_.size()
+        zModValues_
     );
+    zInterpolator_->validate();
 
     const dictionary& fDict(dict.optionalSubDict(name + "Coeffs"));
 

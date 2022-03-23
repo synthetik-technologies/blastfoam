@@ -34,10 +34,10 @@ Foam::lookupTable1D<Type>::lookupTable1D()
 :
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New("none")),
-    indexing_(nullptr),
-    interpolator_(nullptr),
     data_(),
     xModValues_(),
+    indexing_(nullptr),
+    interpolator_(nullptr),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     index_(0),
@@ -51,10 +51,10 @@ Foam::lookupTable1D<Type>::lookupTable1D(const lookupTable1D<Type>& table)
 :
     mod_(table.mod_->clone()),
     modX_(table.modX_->clone()),
-    indexing_(nullptr),
-    interpolator_(table.interpolator_->clone()),
     data_(),
     xModValues_(),
+    indexing_(nullptr),
+    interpolator_(table.interpolator_->clone(xModValues_)),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     index_(0),
@@ -75,10 +75,10 @@ Foam::lookupTable1D<Type>::lookupTable1D
 :
     mod_(nullptr),
     modX_(nullptr),
-    indexing_(nullptr),
-    interpolator_(nullptr),
     data_(),
     xModValues_(),
+    indexing_(nullptr),
+    interpolator_(nullptr),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     index_(0),
@@ -102,17 +102,10 @@ Foam::lookupTable1D<Type>::lookupTable1D
 :
     mod_(Modifier<Type>::New(mod)),
     modX_(Modifier<scalar>::New(xMod)),
-    indexing_(nullptr),
-    interpolator_
-    (
-        interpolationWeight1D::New
-        (
-            interpolationScheme,
-            x.size()
-        )
-    ),
     data_(data),
     xModValues_(x),
+    indexing_(nullptr),
+    interpolator_(interpolationWeight1D::New(interpolationScheme, xModValues_)),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     index_(0),
@@ -134,10 +127,10 @@ Foam::lookupTable1D<Type>::lookupTable1D
 :
     mod_(Modifier<Type>::New("none")),
     modX_(Modifier<scalar>::New(xMod)),
-    indexing_(nullptr),
-    interpolator_(interpolationWeight1D::New(interpolationScheme, x.size())),
     data_(),
     xModValues_(),
+    indexing_(nullptr),
+    interpolator_(interpolationWeight1D::New(interpolationScheme, xModValues_)),
     realDataPtr_(nullptr),
     xValuesPtr_(nullptr),
     index_(0),
@@ -193,11 +186,7 @@ void Foam::lookupTable1D<Type>::set
     setX(x, xMod, isReal);
     setData(data, mod, isReal);
     interpolator_ =
-        interpolationWeight1D::New
-        (
-            interpolationScheme,
-            x.size()
-        );
+        interpolationWeight1D::New(interpolationScheme, xModValues_);
 
 }
 
@@ -240,6 +229,10 @@ void Foam::lookupTable1D<Type>::setX
         }
     }
     indexing_ = indexer::New(xModValues_);
+    if (interpolator_.valid())
+    {
+        interpolator_->validate();
+    }
 }
 
 
@@ -310,7 +303,7 @@ void Foam::lookupTable1D<Type>::setData
 template<class Type>
 void Foam::lookupTable1D<Type>::updateIndex(const scalar x) const
 {
-    index_ = indexing_->findIndex(modX_()(x), xValues());
+    index_ = indexing_->findIndex(modX_()(x));
 }
 
 
@@ -318,12 +311,11 @@ template<class Type>
 void Foam::lookupTable1D<Type>::update(const scalar x) const
 {
     scalar xMod(modX_()(x));
-    index_ = indexing_->findIndex(xMod, xModValues_);
+    index_ = indexing_->findIndex(xMod);
     interpolator_->updateWeights
     (
         xMod,
         index_,
-        xModValues_,
         indices_,
         weights_
     );
@@ -442,8 +434,9 @@ void Foam::lookupTable1D<Type>::read
         interpolationWeight1D::New
         (
             dict.lookupOrDefault<word>("interpolationScheme", "linearClamp"),
-            x.size()
+            xModValues_
         );
+    interpolator_->validate();
 
     Field<Type> data;
     word modType;
