@@ -81,6 +81,9 @@ class IBMForceConstraint
         //- Return the phase density (alpha*rho)
         tmp<volScalarField> alphaRho(const word& phase) const;
 
+        //- Return the phase old density (alpha*rho)
+        tmp<volScalarField> alphaRhoOld(const word& phase) const;
+
         //- Add source terms to a phase equation
         template<class Type>
         bool constrainType

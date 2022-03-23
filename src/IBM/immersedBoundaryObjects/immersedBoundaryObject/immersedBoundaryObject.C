@@ -648,6 +648,11 @@ void Foam::immersedBoundaryObject::initialize() const
         }
         nearestNeighbours_[fi].transfer(nn);
     }
+
+    if (shape_->write_ && Pstream::master())
+    {
+        writeVTK(this->name());
+    }
 }
 
 

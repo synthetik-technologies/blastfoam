@@ -175,6 +175,8 @@ protected:
 
 public:
 
+    friend immersedBoundaryObject;
+
     //- Runtime type information
     TypeName("immersedShape");
 

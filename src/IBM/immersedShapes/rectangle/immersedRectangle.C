@@ -57,10 +57,10 @@ Foam::immersedRectangle::immersedRectangle
     vector p4(Zero);
 
     p1[xi_] = -L_/2.0;
-    p1[yi_] = -H_/2.0;
+    p1[yi_] = ai_ == -1 ? -H_/2.0 : max(-H_/2.0, 0.0);
 
     p2[xi_] = L_/2.0;
-    p2[yi_] = -H_/2.0;
+    p2[yi_] = ai_ == -1 ? -H_/2.0 : max(-H_/2.0, 0.0);
 
     p3[xi_] = L_/2.0;
     p3[yi_] = H_/2.0;
@@ -92,10 +92,10 @@ Foam::autoPtr<Foam::standAlonePatch>
 Foam::immersedRectangle::createPatch() const
 {
     pointField points;
-    points.append(discretizeLine(points_[0], points_[1]));
-    points.append(discretizeLine(points_[1], points_[2]));
-    points.append(discretizeLine(points_[2], points_[3]));
-    points.append(discretizeLine(points_[3], points_[0]));
+    points.append(discretizeLine(points_[0], points_[3]));
+    points.append(discretizeLine(points_[3], points_[2]));
+    points.append(discretizeLine(points_[2], points_[1]));
+    points.append(discretizeLine(points_[1], points_[0]));
 
     List<face> faces;
     if (ai_ != -1)

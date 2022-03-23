@@ -93,6 +93,36 @@ Foam::fv::IBMForceConstraint::alphaRho(const word& phase) const
 }
 
 
+Foam::tmp<Foam::volScalarField>
+Foam::fv::IBMForceConstraint::alphaRhoOld(const word& phase) const
+{
+    if (phase == word::null)
+    {
+        // Assuming incompressible
+        if (!mesh().foundObject<volScalarField>("rho"))
+        {
+            return volScalarField::New
+            (
+                "rho",
+                mesh(),
+                dimensionedScalar(dimless, 1.0)
+            );
+        }
+
+        return mesh().lookupObject<volScalarField>("rho").oldTime();
+    }
+    else
+    {
+        word alphaName(IOobject::groupName("alpha", phase));
+        word rhoName(IOobject::groupName("rho", phase));
+        return
+            mesh().lookupObject<volScalarField>(alphaName).oldTime()
+           *mesh().lookupObject<volScalarField>(rhoName).oldTime();
+    }
+}
+
+
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::fv::IBMForceConstraint::IBMForceConstraint

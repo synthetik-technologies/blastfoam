@@ -36,7 +36,6 @@ void Foam::immersedFvPatchField<Type>::setInternalField
     const Type& val
 )
 {
-
     object_.setInternal
     (
         this->internalFieldRef(),
@@ -267,13 +266,10 @@ Foam::immersedFvPatchField<Type>::immersedFvPatchField
         ).immersedObject()
     ),
     setPatchInternal_(false),
-    setInternal_(true),
+    setInternal_(false),
     internalValue_(Zero),
     nSmooth_(0)
-{
-    Field<Type> internal(iF, object_.allInternalCells());
-    internalValue_ = gSum(internal)/returnReduce(internal.size(), sumOp<label>());
-}
+{}
 
 
 template<class Type>

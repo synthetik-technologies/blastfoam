@@ -193,7 +193,7 @@ Foam::immersedValueFvPatchField<Type>::addForcing
             immersedField_*this->object_.interpolateTo(alphaRho)
           - this->object_.interpolateTo(old)
         )/dt
-      + this->object_.interpolateTo(RHS)
+      - this->object_.interpolateTo(RHS)
 
     );
     this->object_.interpolateFrom(interpF(), F);
@@ -204,6 +204,7 @@ template<class Type>
 void Foam::immersedValueFvPatchField<Type>::write(Ostream& os) const
 {
     immersedFvPatchField<Type>::write(os);
+    writeEntry(os, "value", *this);
 }
 
 // ************************************************************************* //

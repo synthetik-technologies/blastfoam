@@ -346,8 +346,8 @@ void Foam::immersedBoundaryObjectListSolver::solve()
         objects_[i].momentExt() = Zero;
 
         objects_[i].force() =
-            objects_[i].Sf()*objects_[i].patchExternalField(p)
-          + (
+            -objects_[i].Sf()*objects_[i].patchExternalField(p)
+          - (
                 objects_[i].Sf()
               & objects_[i].patchExternalField(sigma)
             );
