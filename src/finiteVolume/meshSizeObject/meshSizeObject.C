@@ -27,6 +27,7 @@ License
 #include "fvc.H"
 #include "wedgePolyPatch.H"
 #include "emptyPolyPatch.H"
+#include "extrapolatedCalculatedFvPatchFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -78,7 +79,8 @@ void Foam::meshSizeObject::calcDx() const
                 false
             ),
             mesh,
-            dimensionedScalar(dimLength, 0.0)
+            dimensionedScalar(dimLength, 0.0),
+            extrapolatedCalculatedFvPatchScalarField::typeName
         )
     );
     volScalarField& dx = dxPtr_();
@@ -129,7 +131,10 @@ void Foam::meshSizeObject::calcDx() const
 
 void Foam::meshSizeObject::calcDX() const
 {
-    const fvMesh& mesh(dynamicCast<const fvMesh&>(this->mesh_));
+    if (dXPtr_.valid())
+    {
+        FatalErrorInFunction<<"dX already set" << abort(FatalError);
+    }
     dXPtr_.set
     (
         new volVectorField
@@ -143,66 +148,21 @@ void Foam::meshSizeObject::calcDX() const
                 IOobject::NO_WRITE,
                 false
             ),
-            mesh,
-            dimensionedVector(dimLength, Zero)
+            dynamicCast<const fvMesh&>(this->mesh_),
+            dimensionedVector(dimLength, Zero),
+            extrapolatedCalculatedFvPatchScalarField::typeName
         )
     );
     volVectorField& dX = dXPtr_();
 
-    const faceList& faces = this->mesh_.faces();
-    const cellList& cells = this->mesh_.cells();
-    const pointField& points = this->mesh_.points();
-    const labelListList cPoints = this->mesh_.cellPoints();
-
     forAll(dX, celli)
     {
-        dX[celli] = boundBox(points, cPoints[celli], false).span();
-//         const cell& c = cells[celli];
-//         const edgeList cedges(c.edges(faces));
-//         vector dx(Zero);
-//         Vector<label> nEdges(Zero);
-//         forAll(cedges, ei)
-//         {
-//             const edge& e = cedges[ei];
-//             vector edx(cmptMag(e.vec(points)));
-//             label cmpti = findMax(edx);
-//             dx[cmpti] += edx[cmpti];
-//             nEdges[cmpti]++;
-//         }
-//         nEdges = max(nEdges, Vector<label>::one);
-//         dX[celli] = cmptDivide(dx, vector(nEdges));
-    }
-    for
-    (
-        label fi = this->mesh_.nInternalFaces();
-        fi < this->mesh_.nFaces();
-        fi++
-    )
-    {
-        const label patchi = this->mesh_.boundaryMesh().whichPatch(fi);
-        const polyPatch& p = this->mesh_.boundaryMesh()[patchi];
-        if (!p.size())
-        {
-            continue;
-        }
-        const label facei = fi - p.start();
-
-        const face& f = faces[fi];
-        const edgeList& fedges = f.edges();
-        vector dx(Zero);
-        Vector<label> nEdges;
-        forAll(fedges, ei)
-        {
-            const edge& e = fedges[ei];
-            vector edx(cmptMag(e.vec(points)));
-            label cmpti = findMax(edx);
-            dx[cmpti] += edx[cmpti];
-            nEdges[cmpti]++;
-        }
-
-        nEdges = max(nEdges, Vector<label>::one);
-        dX.boundaryFieldRef()[patchi][facei] =
-            cmptDivide(dx, vector(nEdges));
+        dX[celli] = boundBox
+        (
+            this->mesh_.points(),
+            this->mesh_.cellPoints()[celli],
+            false
+        ).span();
     }
     dX.correctBoundaryConditions();
 }
