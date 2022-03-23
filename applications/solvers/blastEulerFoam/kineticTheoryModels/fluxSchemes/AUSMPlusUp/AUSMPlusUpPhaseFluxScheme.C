@@ -327,7 +327,7 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     (
         facei,
         patchi,
-        (U & Sf) - vMesh*magSf,//alphaRhoPhi/max(alpha, 1e-6)/rho,
+        alphaRhoPhi/max(alpha, 1e-6)/rho,
         phi_
     );
     alphaPhi = alphaRhoPhi/rho;

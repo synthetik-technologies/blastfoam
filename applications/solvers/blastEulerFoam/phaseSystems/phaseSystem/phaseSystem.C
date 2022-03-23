@@ -915,6 +915,8 @@ Foam::phaseSystem::phaseSystem
                 << "min(sum(alphas)) = " << min(sumAlpha).value()
                 << ", max(sum(alphas)) = " << max(sumAlpha).value()
                 << endl
+                << "Maximum deviation from unity: "
+                << max(mag(sumAlpha - 1.0)).value() << endl
                 << abort(FatalError);
         }
     }
