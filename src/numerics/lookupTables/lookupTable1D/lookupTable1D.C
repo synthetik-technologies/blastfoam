@@ -42,7 +42,7 @@ Foam::lookupTable1D<Type>::lookupTable1D()
     xValuesPtr_(nullptr),
     index_(0),
     indices_(0),
-    weights_(0.0)
+    weights_(0)
 {}
 
 
@@ -59,7 +59,7 @@ Foam::lookupTable1D<Type>::lookupTable1D(const lookupTable1D<Type>& table)
     xValuesPtr_(nullptr),
     index_(0),
     indices_(0),
-    weights_(0.0)
+    weights_(0)
 {
     set(table.xModValues_, table.data_, false);
 }
@@ -83,7 +83,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
     xValuesPtr_(nullptr),
     index_(0),
     indices_(0),
-    weights_(0.0)
+    weights_(0)
 {
     read(dict, xName, name, canRead);
 }
@@ -110,7 +110,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
     xValuesPtr_(nullptr),
     index_(0),
     indices_(0),
-    weights_(0.0)
+    weights_(0)
 {
     set(x, data, isReal);
 }
@@ -135,7 +135,7 @@ Foam::lookupTable1D<Type>::lookupTable1D
     xValuesPtr_(nullptr),
     index_(0),
     indices_(0),
-    weights_(0.0)
+    weights_(0)
 {
     setX(x, isReal);
 }
