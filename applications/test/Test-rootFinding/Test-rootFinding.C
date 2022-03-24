@@ -1,82 +1,36 @@
 #include "dictionary.H"
 #include "univariateRootSolver.H"
 #include "argList.H"
+#include "createEquations.H"
 
 using namespace Foam;
 
 
-class testEqn1
-:
-    public equation
-{
-public:
-    testEqn1(const scalar xMin, const scalar xMax)
-    :
-        equation(xMin, xMax)
-    {}
+createEquation2
+(
+    testEqn1,
+    0.0, 1.0,
+    Foam::cos(x) - Foam::pow3(x),
+    -Foam::sin(x) - 3.0*Foam::sqr(x),
+    -Foam::cos(x) - 6.0*x
+);
 
-    virtual ~testEqn1()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return Foam::cos(x) - Foam::pow3(x);
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return -Foam::sin(x) - 3.0*Foam::sqr(x);
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return -Foam::cos(x) - 6.0*x;
-    }
-};
-
-class testEqn2
-:
-    public equation
-{
-public:
-    testEqn2(const scalar xMin, const scalar xMax)
-    :
-        equation(xMin, xMax)
-    {}
-
-    virtual ~testEqn2()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return Foam::exp(x) - 10.0*x;
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return Foam::exp(x) - 10.0;
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return Foam::exp(x);
-    }
-};
+createEquation2
+(
+    testEqn2,
+    0.0, 1.0,
+    Foam::exp(x) - 10.0*x,
+    Foam::exp(x) - 10.0,
+    Foam::exp(x)
+);
 
 
 int main(int argc, char *argv[])
 {
 
     PtrList<equation> uniEqns(2);
-    wordList uniEqnStrs(2);
-    uniEqns.set(0, new testEqn1(0.0, 1.0));
-    uniEqnStrs[0] = "f(x) = cos(x) - x^3";
-    uniEqns.set(1, new testEqn2(0.0, 1.0));
-    uniEqnStrs[1] = "f(x) = exp(x) - 10*x";
+    uniEqns.set(0, new testEqn1());
+    uniEqns.set(1, new testEqn2());
 
     dictionary dict;
 
@@ -88,7 +42,7 @@ int main(int argc, char *argv[])
     );
     forAll(uniEqns, eqni)
     {
-        Info<< "Solving " << uniEqnStrs[eqni] << endl;
+        Info<< "Solving " << uniEqns[eqni].printfx() << endl;
         const equation& eqn = uniEqns[eqni];
         forAll(methods, i)
         {

@@ -92,6 +92,29 @@ public:
             NotImplemented;
             return this->fx(x, li);
         }
+
+
+        //- Optional printing of stringified version of the equations
+        virtual string printfx() const
+        {
+            NotImplemented;
+            return string::null;
+        }
+        virtual string printdfdx() const
+        {
+            NotImplemented;
+            return string::null;
+        }
+        virtual string printd2fdx2() const
+        {
+            NotImplemented;
+            return string::null;
+        }
+        virtual string printd3fdx3() const
+        {
+            NotImplemented;
+            return string::null;
+        }
 };
 
 

@@ -45,6 +45,10 @@ bool Foam::readComponent
     {
         const dictionary& dict(parentDict.subDict(name + "Coeffs"));
         modType = dict.lookupOrDefault<word>("mod", "none");
+        if (modType != "none")
+        {
+            isReal = dict.lookup<Switch>("isReal");
+        }
 
         if (dict.found("scale"))
         {
@@ -61,7 +65,6 @@ bool Foam::readComponent
         else if (dict.found(name))
         {
             values = dict.lookup<Field<Type>>(name);
-            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
         else if (dict.found("file"))
         {
@@ -72,7 +75,6 @@ bool Foam::readComponent
                 dict.lookupOrDefault<string>("delim", ","),
                 values
             );
-            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
         else
         {
@@ -85,7 +87,6 @@ bool Foam::readComponent
             {
                 values[j] = miny + dy*j;
             }
-            isReal = dict.lookupOrDefault<Switch>("isReal", true);
         }
     }
     else if (parentDict.found(name) || readFromTable)
@@ -95,15 +96,13 @@ bool Foam::readComponent
         else
         {
             values = parentDict.lookup<Field<Type>>(name);
-            isReal =
-                parentDict.lookupOrDefault<Switch>
-                (
-                    name + "isReal",
-                    true
-                );
         }
 
         modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
+        if (modType != "none")
+        {
+            isReal = parentDict.lookup<Switch>(name + "IsReal");
+        }
     }
     else
     {
@@ -120,12 +119,6 @@ bool Foam::readComponent
             table,
             col < 0 ? parentDict.lookup<label>(name + "Col") : col
         );
-        isReal =
-            parentDict.lookupOrDefault<Switch>
-            (
-                name + "isReal",
-                true
-            );
     }
 
     if (scale != 1.0)

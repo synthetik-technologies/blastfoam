@@ -1,94 +1,54 @@
 #include "dictionary.H"
 #include "argList.H"
-#include "UnivariateEquation.H"
 #include "IntegratorsFwd.H"
+#include "createEquations.H"
 
 using namespace Foam;
 
 
-class testEqn1
-:
-    public UnivariateEquation<scalar>
-{
-public:
-    testEqn1(const scalar xMin, const scalar xMax)
-    :
-        UnivariateEquation<scalar>(1, xMin, xMax)
-    {}
+createUnivariateEquation2
+(
+    testEqn1,
+    scalar,
+    0.0, 2.5,
+    Foam::cos(x) - Foam::pow3(x),
+    -Foam::sin(x) - 3.0*Foam::sqr(x),
+    -Foam::cos(x) - 6.0*x
+);
 
-    virtual ~testEqn1()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return Foam::cos(x) - Foam::pow3(x);
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return -Foam::sin(x) - 3.0*Foam::sqr(x);
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return -Foam::cos(x) - 6.0*x;
-    }
-};
-
-class testEqn2
-:
-    public UnivariateEquation<scalar>
-{
-public:
-    testEqn2(const scalar xMin, const scalar xMax)
-    :
-        UnivariateEquation<scalar>(1, xMin, xMax)
-    {}
-
-    virtual ~testEqn2()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return Foam::exp(x) - 10.0*x;
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return Foam::exp(x) - 10.0;
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return Foam::exp(x);
-    }
-};
+createUnivariateEquation2
+(
+    testEqn2,
+    vector,
+    0.0, 2.5,
+    cmptPow(vector(x, x, x), vector::one*3.0),
+    3.0*cmptPow(vector(x, x, x), vector::one*2.0),
+    6.0*vector(x, x, x)
+);
 
 int main(int argc, char *argv[])
 {
 
-    testEqn1 eqn(0.0, 1.0);
+    testEqn1 eqn1;
+    testEqn2 eqn2;
     dictionary dict;
 
-    Info<< "Integration of f(x) = cos(x) - x^3 in (0, 2.5)" << endl;
     labelList nIntervals({1, 5, 10, 25, 50});
-    const scalar ans = -9.167152855896045;
-    wordList intMethods
+
+    wordList intMethods1
     (
         scalarIntegrator::dictionaryConstructorTablePtr_->toc()
     );
-    forAll(intMethods, i)
+
+    Info<< "Integration of " << eqn1.printfx() << " in (0, 2.5)"
+        << endl;
+    const scalar ans1 = -9.167152855896045;
+    forAll(intMethods1, i)
     {
-        dict.set("integrator", intMethods[i]);
+        dict.set("integrator", intMethods1[i]);
         autoPtr<scalarIntegrator> integrator
         (
-            scalarIntegrator::New(eqn, dict)
+            scalarIntegrator::New(eqn1, dict)
         );
 
         forAll(nIntervals, inti)
@@ -96,7 +56,33 @@ int main(int argc, char *argv[])
             integrator->setNIntervals(nIntervals[inti]);
             scalar est = integrator->integrate(0, 2.5, 0);
             Info<< "\t" << integrator->nIntervals() << " steps: "
-                << "estimate=" << est << ", error=" << mag(est - ans) <<endl;
+                << "estimate=" << est << ", error=" << mag(est - ans1) <<endl;
+        }
+        Info<< endl;
+    }
+
+    wordList intMethods2
+    (
+        vectorIntegrator::dictionaryConstructorTablePtr_->toc()
+    );
+
+    Info<< "Integration of " << eqn2.printfx() << " in (0, 2.5)"
+        << endl;
+    const vector ans2(9.76563*vector::one);
+    forAll(intMethods2, i)
+    {
+        dict.set("integrator", intMethods2[i]);
+        autoPtr<vectorIntegrator> integrator
+        (
+            vectorIntegrator::New(eqn2, dict)
+        );
+
+        forAll(nIntervals, inti)
+        {
+            integrator->setNIntervals(nIntervals[inti]);
+            vector est = integrator->integrate(0, 2.5, 0);
+            Info<< "\t" << integrator->nIntervals() << " steps: "
+                << "estimate=" << est << ", error=" << mag(est - ans2) <<endl;
         }
         Info<< endl;
     }

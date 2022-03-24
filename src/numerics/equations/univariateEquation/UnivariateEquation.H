@@ -58,6 +58,13 @@ public:
         //- Construct with limits
         UnivariateEquation
         (
+            const scalar& lowerLimit,
+            const scalar& upperLimit
+        );
+
+        //- Construct with limits and number of equations
+        UnivariateEquation
+        (
             const label nVar,
             const scalar& lowerLimit,
             const scalar& upperLimit

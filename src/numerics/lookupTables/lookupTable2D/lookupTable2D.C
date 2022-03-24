@@ -45,6 +45,20 @@ Type Foam::lookupTable2D<Type>::getValue
     return xy[ij] + f*(xy[ij+1] - xy[ij]);
 }
 
+template<class Type>
+Foam::labelList Foam::lookupTable2D<Type>::boundi(const Type& f) const
+{
+    NotImplemented;
+    return labelList();
+}
+
+template<class Type>
+Foam::labelList Foam::lookupTable2D<Type>::boundj(const Type& f) const
+{
+    NotImplemented;
+    return labelList();
+}
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -479,144 +493,142 @@ Type Foam::lookupTable2D<Type>::lookup(const scalar x, const scalar y) const
             [indices_[i].y()];
     }
 
-    return mod_()(modf);
+    return mod_->inv(modf);
+}
+
+template<class Type>
+Foam::scalar Foam::lookupTable2D<Type>::reverseLookupX
+(
+    const Type& fin,
+    const scalar y
+) const
+{
+    NotImplemented;
+    return 0.0;
+}
+
+
+template<class Type>
+Foam::scalar Foam::lookupTable2D<Type>::reverseLookupY
+(
+    const Type& fin,
+    const scalar x
+) const
+{
+    NotImplemented;
+    return 0.0;
 }
 
 
 template<class Type>
 Type Foam::lookupTable2D<Type>::dFdX(const scalar x, const scalar y) const
 {
-    label i = xIndexing_->findIndex(modX_()(x));
-    label j = yIndexing_->findIndex(modY_()(y));
-    scalar fy = interpolationWeight1D::linearWeight
-    (
-        modY_()(y),
-        yModValues_[j],
-        yModValues_[j+1]
-    );
+    scalar yMod(modY_()(y));
+    ij_.x() = xIndexing_->findIndex(modX_()(x));
+    const label i = ij_.x();
+
+    ij_.y() = yIndexing_->findIndex(yMod);
+
+    labelList js;
+    scalarList ws;
+    yInterpolator_->updateWeights(yMod, ij_.y(), js, ws);
+    Type fm(data_[i][js[0]]*ws[0]);
+    Type fp(data_[i+1][js[0]]*ws[0]);
+    for (label j = 1; j < js.size(); j++)
+    {
+        fm += data_[i][js[j]]*ws[j];
+        fp += data_[i+1][js[j]]*ws[j];
+    }
 
     return
-        (
-            mod_->inv
-            (
-                data_[i+1][j]*(1.0 - fy)
-              + data_[i+1][j+1]*fy
-            )
-          - mod_->inv
-            (
-                data_[i][j]*(1.0 - fy)
-              + data_[i][j+1]*fy
-            )
-        )/(xValues()[i+1] - xValues()[i]);
+        (mod_->inv(fp) - mod_->inv(fm))/(xValues()[i+1] - xValues()[i]);
 }
 
 
 template<class Type>
 Type Foam::lookupTable2D<Type>::dFdY(const scalar x, const scalar y) const
 {
-    label i = xIndexing_->findIndex(modX_()(x));
-    label j = yIndexing_->findIndex(modY_()(y));
-    scalar fx = interpolationWeight1D::linearWeight
-    (
-        modX_()(x),
-        xModValues_[i],
-        xModValues_[i+1]
-    );
+    scalar xMod(modX_()(x));
+    ij_.x() = xIndexing_->findIndex(xMod);
+    ij_.y() = yIndexing_->findIndex(modY_()(y));
+    const label j = ij_.y();
 
-    return
-        (
-            mod_->inv
-            (
-                data_[i][j+1]*(1.0 - fx)
-              + data_[i+1][j+1]*fx
-            )
-          - mod_->inv
-            (
-                data_[i][j]*(1.0 - fx)
-              + data_[i+1][j]*fx
-            )
-        )/(yValues()[j+1] - yValues()[j]);
+    labelList is;
+    scalarList ws;
+    xInterpolator_->updateWeights(xMod, ij_.x(), is, ws);
+    Type fm(data_[is[0]][j]*ws[0]);
+    Type fp(data_[is[0]][j+1]*ws[0]);
+    for (label i = 1; i < is.size(); i++)
+    {
+        fm += data_[is[i]][j]*ws[i];
+        fp += data_[is[i]][j+1]*ws[i];
+    }
+
+    return (mod_->inv(fp) - mod_->inv(fm))/(yValues()[j+1] - yValues()[j]);
 }
 
 
 template<class Type>
 Type Foam::lookupTable2D<Type>::d2FdX2(const scalar x, const scalar y) const
 {
-    label i = xIndexing_->findIndex(modX_()(x));
-    label j = yIndexing_->findIndex(modY_()(y));
+    scalar yMod(modY_()(y));
+    ij_.x() = xIndexing_->findIndex(modX_()(x));
+    const label i = max(ij_.x(), 1);
 
-    scalar fy = interpolationWeight1D::linearWeight
-    (
-        modY_()(y),
-        yModValues_[j],
-        yModValues_[j+1]
-    );
+    ij_.y() = yIndexing_->findIndex(yMod);
 
-    if (i == 0)
+    labelList js;
+    scalarList ws;
+    yInterpolator_->updateWeights(yMod, ij_.y(), js, ws);
+
+    const scalar dxm(xValues()[i] - xValues()[i-1]);
+    const scalar dxp(xValues()[i+1] - xValues()[i]);
+
+    Type fm(data_[i-1][js[0]]*ws[0]);
+    Type f(data_[i][js[0]]*ws[0]);
+    Type fp(data_[i+1][js[0]]*ws[0]);
+    for (label j = 1; j < js.size(); j++)
     {
-        i++;
+        fm += data_[i-1][js[j]]*ws[j];
+        f += data_[i][js[j]]*ws[j];
+        fp += data_[i+1][js[j]]*ws[j];
     }
-
-    const Type gmm(mod_->inv(data_[i-1][j]));
-    const Type gm(mod_->inv(data_[i][j]));
-    const Type gpm(mod_->inv(data_[i+1][j]));
-
-    const Type gmp(mod_->inv(data_[i-1][j+1]));
-    const Type gp(mod_->inv(data_[i][j+1]));
-    const Type gpp(mod_->inv(data_[i+1][j+1]));
-
-    const scalar xm(xValues()[i-1]);
-    const scalar xi(xValues()[i]);
-    const scalar xp(xValues()[i+1]);
-
-    const Type gPrimepm((gpm - gm)/(xp - xi));
-    const Type gPrimemm((gm - gmm)/(xi - xm));
-    const Type gPrimepp((gpp - gp)/(xp - xi));
-    const Type gPrimemp((gp - gmp)/(xi - xm));
-
-    return
-        (1.0 - fy)*(gPrimepm - gPrimemm)/(0.5*(xp - xm))
-      + fy*(gPrimepp - gPrimemp)/(0.5*(xp - xm));
+    fm = mod_->inv(fm);
+    f = mod_->inv(f);
+    fp = mod_->inv(fp);
+    return ((fp - f)/dxp - (f - fm)/dxm)/(0.5*(dxp + dxm));
 }
 
 
 template<class Type>
 Type Foam::lookupTable2D<Type>::d2FdY2(const scalar x, const scalar y) const
 {
-    label i = xIndexing_->findIndex(modX_()(x));
-    label j = yIndexing_->findIndex(modY_()(y));
-    scalar fx = interpolationWeight1D::linearWeight
-    (
-        modX_()(x),
-        xModValues_[i],
-        xModValues_[i+1]
-    );
+    scalar xMod(modX_()(x));
+    ij_.x() = xIndexing_->findIndex(xMod);
+    ij_.y() = yIndexing_->findIndex(modY_()(y));
+    const label j = max(ij_.y(), 1);
 
-    if (j == 0)
+    labelList is;
+    scalarList ws;
+
+    const scalar dym(yValues()[j] - yValues()[j-1]);
+    const scalar dyp(yValues()[j+1] - yValues()[j]);
+
+    xInterpolator_->updateWeights(xMod, ij_.x(), is, ws);
+    Type fm(data_[is[0]][j-1]*ws[0]);
+    Type f(data_[is[0]][j]*ws[0]);
+    Type fp(data_[is[0]][j+1]*ws[0]);
+    for (label i = 1; i < is.size(); i++)
     {
-        j++;
+        fm += data_[is[i]][j-1]*ws[i];
+        f += data_[is[i]][j]*ws[i];
+        fp += data_[is[i]][j+1]*ws[i];
     }
 
-    const Type gmm(mod_->inv(data_[i][j-1]));
-    const Type gm(mod_->inv(data_[i][j]));
-    const Type gmp(mod_->inv(data_[i][j+1]));
-
-    const Type gpm(mod_->inv(data_[i+1][j-1]));
-    const Type gp(mod_->inv(data_[i+1][j]));
-    const Type gpp(mod_->inv(data_[i+1][j+1]));
-
-    const scalar ym(yValues()[j-1]);
-    const scalar yi(yValues()[j]);
-    const scalar yp(yValues()[j+1]);
-
-    const Type gPrimemp((gmp - gm)/(yp - yi));
-    const Type gPrimemm((gm - gmm)/(yi - ym));
-    const Type gPrimepp((gpp - gp)/(yp - yi));
-    const Type gPrimepm((gp - gpm)/(yi - ym));
-
-    return
-        (1.0 - fx)*(gPrimemp - gPrimemm)/(0.5*(yp - ym))
-      + fx*(gPrimepp - gPrimepm)/(0.5*(yp - ym));
+    fm = mod_->inv(fm);
+    f = mod_->inv(f);
+    fp = mod_->inv(fp);
+    return ((fp - f)/dyp - (f - fm)/dym)/(0.5*(dyp + dym));
 }
 
 
@@ -626,10 +638,10 @@ Type Foam::lookupTable2D<Type>::d2FdXdY(const scalar x, const scalar y) const
     label i = xIndexing_->findIndex(modX_()(x));
     label j = yIndexing_->findIndex(modY_()(y));
 
-    const Type gmm(f()[i][j]);
-    const Type gmp(f()[i][j+1]);
-    const Type gpm(f()[i+1][j]);
-    const Type gpp(f()[i+1][j+1]);
+    const Type& fmm(f()[i][j]);
+    const Type& fmp(f()[i][j+1]);
+    const Type& fpm(f()[i+1][j]);
+    const Type& fpp(f()[i+1][j+1]);
 
     const scalar xm(xValues()[i]);
     const scalar xp(xValues()[i+1]);
@@ -637,7 +649,7 @@ Type Foam::lookupTable2D<Type>::d2FdXdY(const scalar x, const scalar y) const
     const scalar ym(yValues()[j]);
     const scalar yp(yValues()[j+1]);
 
-    return ((gpp - gmp)/(xp - xm) - (gpm - gmm)/(xp - xm))/(yp - ym);
+    return ((fpp - fmp)/(xp - xm) - (fpm - fmm)/(xp - xm))/(yp - ym);
 }
 
 
@@ -700,7 +712,10 @@ void Foam::lookupTable2D<Type>::read
 
     const dictionary& fDict(dict.subDict(name + "Coeffs"));
     word modType = fDict.lookupOrDefault<word>("mod", "none");
-    isReal = fDict.lookupOrDefault<Switch>("isReal", true);
+    if (modType != "none")
+    {
+        isReal = fDict.lookup<Switch>("isReal");
+    }
 
     fileName file(fDict.lookup<word>("file"));
     Field<Field<Type>> data

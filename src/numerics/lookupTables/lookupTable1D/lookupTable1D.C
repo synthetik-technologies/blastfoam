@@ -359,11 +359,8 @@ Type Foam::lookupTable1D<Type>::dFdX(const scalar x) const
 
     update(x);
 
-    scalar fm(data_[index_]);
-    scalar fp(data_[index_ + 1]);
-
     return
-        (mod_->inv(fp) - mod_->inv(fm))
+        (f()[index_ + 1] - f()[index_])
        /(xValues()[index_ + 1] - xValues()[index_]);
 }
 
@@ -386,15 +383,14 @@ Type Foam::lookupTable1D<Type>::d2FdX2(const scalar x) const
         index_++;
     }
 
-    scalar ym(mod_->inv(data_[index_-1]));
-    scalar yi(mod_->inv(data_[index_]));
-    scalar yp(mod_->inv(data_[index_+1]));
+    const Type& ym(f()[index_-1]);
+    const Type& yi(f()[index_]);
+    const Type& yp(f()[index_+1]);
 
-    const scalar& xm(xValues()[index_-1]);
-    const scalar& xi(xValues()[index_]);
-    const scalar& xp(xValues()[index_+1]);
+    const scalar dxm(xValues()[index_] - xValues()[index_-1]);
+    const scalar dxp(xValues()[index_+1] - xValues()[index_]);
 
-    return ((yp - yi)/(xp - xi) - (yi - ym)/(xi - xm))/(xp - xm);
+    return ((yp - yi)/dxp - (yi - ym)/dxm)/(0.5*(dxp + dxm));
 }
 
 

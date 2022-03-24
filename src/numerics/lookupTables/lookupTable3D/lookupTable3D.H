@@ -350,6 +350,33 @@ public:
         //- Lookup value
         Type lookup(const scalar x, const scalar y, const scalar z) const;
 
+        //- Return first derivative w.r.t.. x
+        Type dFdX(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return first derivative w.r.t. y
+        Type dFdY(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return first derivative w.r.t. z
+        Type dFdZ(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return second derivative w.r.t. x
+        Type d2FdX2(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return second derivative w.r.t. y
+        Type d2FdY2(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return second derivative w.r.t. z
+        Type d2FdZ2(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return mixed second derivative w.r.t. x and y
+        Type d2FdXdY(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return mixed second derivative  w.r.t. x and z
+        Type d2FdXdZ(const scalar x, const scalar y, const scalar z) const;
+
+        //- Return mixed second derivative  w.r.t. y and z
+        Type d2FdYdZ(const scalar x, const scalar y, const scalar z) const;
+
         //- Return value from a given list from lower index and weight
         Type getValue
         (

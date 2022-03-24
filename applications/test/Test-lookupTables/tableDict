@@ -15,7 +15,7 @@ table1D
 
 table2D
 {
-    interpolationScheme cubicClamp;
+    interpolationScheme linearClamp;
     xCoeffs
     {
         file        "x.csv";
@@ -25,10 +25,14 @@ table2D
     {
         file        "y.csv";
         delim       ";";
+        mod         ln;
+        isReal      yes;
     }
     fCoeffs
     {
         file        "table2D.csv";
+        mod         pow10;
+        isReal      yes;
     }
 }
 
@@ -41,12 +45,17 @@ table3D
         mod         none;
         delim       ",";
         rowDelim    ";";
+        mod         ln;
+        isReal      yes;
     }
 
     xCoeffs
     {
         file        "x.csv";
         delim       ";";
+        mod         exp;
+        isReal      yes;
+
     }
     yCoeffs
     {
@@ -56,5 +65,7 @@ table3D
     zCoeffs
     {
         file        "z.csv";
+        mod         pow10;
+        isReal      yes;
     }
 }

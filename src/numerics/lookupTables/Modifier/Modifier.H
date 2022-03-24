@@ -203,7 +203,7 @@ public:
 
     inline scalar inv(const scalar& x) const
     {
-        return sqr(pow5(x));
+        return pow(10.0, x);
     }
 
     inline bool needMod() const
@@ -231,7 +231,7 @@ public:
 
     inline scalar operator()(const scalar& x) const
     {
-        return sqr(pow5(x));
+        return pow(10.0, x);
     }
 
     inline scalar inv(const scalar& x) const

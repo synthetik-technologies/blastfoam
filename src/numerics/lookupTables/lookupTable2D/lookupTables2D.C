@@ -30,10 +30,10 @@ License
 template<>
 Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
 (
-    const scalar f
+    const scalar& f
 ) const
 {
-    const label i = ij_.x();
+    label& i = ij_.x();
     const label j = ij_.y();
     if (f < data_[0][j])
     {
@@ -41,50 +41,50 @@ Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundi
     }
 
     DynamicList<label> Is(data_.size());
-    for (label I = 0; I < data_.size() - 1; I++)
+    for (i = 0; i < data_.size(); i++)
     {
-        if
-        (
-            f > data_[i][j]
-         && f < data_[i][j+1]
-         && f > data_[i+1][j]
-         && f < data_[i+1][j+1]
-        )
+        if (f > data_[i][j] && f < data_[i][j+1])
         {
-            Is.append(I);
+            Is.append(i);
         }
     }
     if (!Is.size())
     {
         return labelList(1, data_.size() - 2);
     }
-    return move(Is);
+    if (Is.size() == 1)
+    {
+        return move(Is);
+    }
+    DynamicList<label> newIs(Is.size());
+    for (i = 0; i < Is.size() - 1; i++)
+    {
+        if (Is[i]+1 == Is[i+1])
+        {
+            newIs.append(Is[i]);
+        }
+    }
+    return move(newIs);
 }
 
 
 template<>
 Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
 (
-    const scalar f
+    const scalar& f
 ) const
 {
     const label i = ij_.x();
-    const label j = ij_.y();
+    label& j = ij_.y();
     if (data_[i][0] > f)
     {
         return labelList(1, 0);
     }
 
     DynamicList<label> Js(data_[i].size());
-    for (label J = 0; J < data_[i].size() - 1; J++)
+    for (j = 0; j < data_[i].size(); j++)
     {
-        if
-        (
-            f > data_[i][j]
-         && f < data_[i+1][j]
-         && f > data_[i][j+1]
-         && f < data_[i+1][j+1]
-        )
+        if (f > data_[i][j] && f < data_[i+1][j])
         {
             Js.append(j);
         }
@@ -93,63 +93,19 @@ Foam::labelList Foam::lookupTable2D<Foam::scalar>::boundj
     {
         return labelList(1, data_[i].size() - 2);
     }
-    return move(Js);
-}
-
-
-template<>
-Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
-(
-    const scalar& fin,
-    const scalar x
-) const
-{
-    scalar f(mod_()(fin));
-
-    ij_.x() = xIndexing_->findIndex(modX_()(x));
-    labelList Js(boundj(f));
-
-    const label i = ij_.x();
-    label& j = ij_.y();
-    scalar fx = interpolationWeight1D::linearWeight
-    (
-        modX_()(x),
-        xModValues_[i],
-        xModValues_[i+1]
-    );
-    scalar fy = 1.0;
-
     if (Js.size() == 1)
     {
-        j = Js[0];
-        const scalar mm(data_[i][j]);
-        const scalar pm(data_[i+1][j]);
-        const scalar mp(data_[i][j+1]);
-        const scalar pp(data_[i+1][j+1]);
-        fy =
-            (f + fx*(mm  - pm) - mm)
-           /(fx*(mm - pm - mp + pp) - mm + mp);
-        return modY_->inv(getValue(j, fy, yModValues_));
+        return move(Js);
     }
-
-    //- If multiple indicies meet criteria, check for closest
-    Field<scalar> yTrys(Js.size());
-    Field<scalar> errors(Js.size(), great);
-    forAll(Js, J)
+    DynamicList<label> newJs(Js.size());
+    for (j = 0; j < Js.size() - 1; j++)
     {
-        j = Js[J];
-        const scalar mm(data_[i][j]);
-        const scalar pm(data_[i+1][j]);
-        const scalar mp(data_[i][j+1]);
-        const scalar pp(data_[i+1][j+1]);
-        fy =
-            (f + fx*(mm  - pm) - mm)
-           /(fx*(mm - pm - mp + pp) - mm + mp);
-        yTrys[J] = modY_->inv(getValue(j, fy, yModValues_));
-        errors[J] = mag(fin - lookup(x, yTrys[j]));
+        if (Js[j]+1 == Js[j+1])
+        {
+            newJs.append(Js[j]);
+        }
     }
-    j = findMin(errors);
-    return yTrys[j];
+    return move(newJs);
 }
 
 
@@ -208,5 +164,62 @@ Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupX
     i = findMin(errors);
     return xTrys[i];
 }
+
+
+template<>
+Foam::scalar Foam::lookupTable2D<Foam::scalar>::reverseLookupY
+(
+    const scalar& fin,
+    const scalar x
+) const
+{
+    scalar f(mod_()(fin));
+
+    ij_.x() = xIndexing_->findIndex(modX_()(x));
+    labelList Js(boundj(f));
+
+    const label i = ij_.x();
+    label& j = ij_.y();
+    scalar fx = interpolationWeight1D::linearWeight
+    (
+        modX_()(x),
+        xModValues_[i],
+        xModValues_[i+1]
+    );
+    scalar fy = 1.0;
+
+    if (Js.size() == 1)
+    {
+        j = Js[0];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
+        fy =
+            (f + fx*(mm  - pm) - mm)
+           /(fx*(mm - pm - mp + pp) - mm + mp);
+        return modY_->inv(getValue(j, fy, yModValues_));
+    }
+
+    //- If multiple indicies meet criteria, check for closest
+    Field<scalar> yTrys(Js.size());
+    Field<scalar> errors(Js.size(), great);
+    forAll(Js, J)
+    {
+        j = Js[J];
+        const scalar mm(data_[i][j]);
+        const scalar pm(data_[i+1][j]);
+        const scalar mp(data_[i][j+1]);
+        const scalar pp(data_[i+1][j+1]);
+        fy =
+            (f + fx*(mm  - pm) - mm)
+           /(fx*(mm - pm - mp + pp) - mm + mp);
+        yTrys[J] = modY_->inv(getValue(j, fy, yModValues_));
+        errors[J] = mag(fin - lookup(x, yTrys[J]));
+    }
+    j = findMin(errors);
+    return yTrys[j];
+}
+
 
 // ************************************************************************* //

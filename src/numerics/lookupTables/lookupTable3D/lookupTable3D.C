@@ -605,6 +605,413 @@ Type Foam::lookupTable3D<Type>::lookup
 
 
 template<class Type>
+Type Foam::lookupTable3D<Type>::dFdX
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar yMod(modY_()(y));
+    scalar zMod(modZ_()(z));
+
+    ijk_.x() = xIndexing_->findIndex(modX_()(x));
+    const label i = ijk_.x();
+
+    ijk_.y() = yIndexing_->findIndex(yMod);
+    ijk_.z() = zIndexing_->findIndex(zMod);
+
+    labelList js, ks;
+    scalarList wys, wzs;
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, wys);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, wzs);
+
+    Type fm(data_[i][js[0]][ks[0]]*wys[0]*wzs[0]);
+    Type fp(data_[i+1][js[0]][ks[0]]*wys[0]*wzs[0]);
+    for (label k = 1; k < ks.size(); k++)
+    {
+        fm += data_[i][js[0]][ks[k]]*wys[0]*wzs[k];
+        fp += data_[i+1][js[0]][ks[k]]*wys[0]*wzs[k];
+    }
+    for (label j = 1; j < js.size(); j++)
+    {
+        for (label k = 0; k < ks.size(); k++)
+        {
+            fm += data_[i][js[j]][ks[k]]*wys[j]*wzs[k];
+            fp += data_[i+1][js[j]][ks[k]]*wys[j]*wzs[k];
+        }
+    }
+    return (mod_->inv(fp) - mod_->inv(fm))/(xValues()[i+1] - xValues()[i]);
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::dFdY
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar xMod(modX_()(x));
+    scalar zMod(modZ_()(z));
+
+    ijk_.y() = yIndexing_->findIndex(modY_()(y));
+    const label j = ijk_.y();
+
+    ijk_.x() = xIndexing_->findIndex(xMod);
+    ijk_.z() = zIndexing_->findIndex(zMod);
+
+    labelList is, ks;
+    scalarList wxs, wzs;
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, wxs);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, wzs);
+
+    Type fm(data_[is[0]][j][ks[0]]*wxs[0]*wzs[0]);
+    Type fp(data_[is[0]][j+1][ks[0]]*wxs[0]*wzs[0]);
+    for (label k = 1; k < ks.size(); k++)
+    {
+        fm += data_[is[0]][j][ks[k]]*wxs[0]*wzs[k];
+        fp += data_[is[0]][j+1][ks[k]]*wxs[0]*wzs[k];
+    }
+    for (label i = 1; i < is.size(); i++)
+    {
+        for (label k = 0; k < ks.size(); k++)
+        {
+            fm += data_[is[i]][j][ks[k]]*wxs[i]*wzs[k];
+            fp += data_[is[i]][j+1][ks[k]]*wxs[i]*wzs[k];
+        }
+    }
+    return (mod_->inv(fp) - mod_->inv(fm))/(yValues()[j+1] - yValues()[j]);
+}
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::dFdZ
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar xMod(modX_()(x));
+    scalar yMod(modY_()(y));
+
+    ijk_.z() = zIndexing_->findIndex(modZ_()(z));
+    const label k = ijk_.z();
+
+    ijk_.x() = xIndexing_->findIndex(xMod);
+    ijk_.y() = yIndexing_->findIndex(yMod);
+
+    labelList is, js;
+    scalarList wxs, wys;
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, wxs);
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, wys);
+
+    Type fm(data_[is[0]][js[0]][k]*wxs[0]*wys[0]);
+    Type fp(data_[is[0]][js[0]][k+1]*wxs[0]*wys[0]);
+    for (label j = 1; j < js.size(); j++)
+    {
+        fm += data_[is[0]][js[j]][k]*wxs[0]*wys[j];
+        fp += data_[is[0]][js[j]][k+1]*wxs[0]*wys[j];
+    }
+    for (label i = 1; i < is.size(); i++)
+    {
+        for (label j = 0; j < js.size(); j++)
+        {
+            fm += data_[is[i]][js[j]][k]*wxs[i]*wys[j];
+            fp += data_[is[i]][js[j]][k+1]*wxs[i]*wys[j];
+        }
+    }
+    return (mod_->inv(fp) - mod_->inv(fm))/(zValues()[k+1] - zValues()[k]);
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdX2
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar yMod(modY_()(y));
+    scalar zMod(modZ_()(z));
+
+    ijk_.x() = xIndexing_->findIndex(modX_()(x));
+    const label i = ijk_.x();
+
+    ijk_.y() = yIndexing_->findIndex(yMod);
+    ijk_.z() = zIndexing_->findIndex(zMod);
+
+    labelList js, ks;
+    scalarList wys, wzs;
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, wys);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, wzs);
+
+    Type fm(data_[i-1][js[0]][ks[0]]*wys[0]*wzs[0]);
+    Type f(data_[i][js[0]][ks[0]]*wys[0]*wzs[0]);
+    Type fp(data_[i+1][js[0]][ks[0]]*wys[0]*wzs[0]);
+    for (label k = 1; k < ks.size(); k++)
+    {
+        fm += data_[i-1][js[0]][ks[k]]*wys[0]*wzs[k];
+        f += data_[i][js[0]][ks[k]]*wys[0]*wzs[k];
+        fp += data_[i+1][js[0]][ks[k]]*wys[0]*wzs[k];
+    }
+    for (label j = 1; j < js.size(); j++)
+    {
+        for (label k = 0; k < ks.size(); k++)
+        {
+            fm += data_[i-1][js[j]][ks[k]]*wys[j]*wzs[k];
+            f += data_[i][js[j]][ks[k]]*wys[j]*wzs[k];
+            fp += data_[i+1][js[j]][ks[k]]*wys[j]*wzs[k];
+        }
+    }
+    const scalar dxm(xValues()[i] - xValues()[i-1]);
+    const scalar dxp(xValues()[i+1] - xValues()[i]);
+
+    fm = mod_->inv(fm);
+    f = mod_->inv(f);
+    fp = mod_->inv(fp);
+    return ((fp - f)/dxp - (f - fm)/dxm)/(0.5*(dxp + dxm));
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdY2
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar xMod(modX_()(x));
+    scalar zMod(modZ_()(z));
+
+    ijk_.y() = yIndexing_->findIndex(modY_()(y));
+    const label j = ijk_.y();
+
+    ijk_.x() = xIndexing_->findIndex(xMod);
+    ijk_.z() = zIndexing_->findIndex(zMod);
+
+    labelList is, ks;
+    scalarList wxs, wzs;
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, wxs);
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, wzs);
+
+    Type fm(data_[is[0]][j-1][ks[0]]*wxs[0]*wzs[0]);
+    Type f(data_[is[0]][j][ks[0]]*wxs[0]*wzs[0]);
+    Type fp(data_[is[0]][j+1][ks[0]]*wxs[0]*wzs[0]);
+    for (label k = 1; k < ks.size(); k++)
+    {
+        fm += data_[is[0]][j-1][ks[k]]*wxs[0]*wzs[k];
+        f += data_[is[0]][j][ks[k]]*wxs[0]*wzs[k];
+        fp += data_[is[0]][j+1][ks[k]]*wxs[0]*wzs[k];
+    }
+    for (label i = 1; i < is.size(); i++)
+    {
+        for (label k = 0; k < ks.size(); k++)
+        {
+            fm += data_[is[i]][j-1][ks[k]]*wxs[i]*wzs[k];
+            f += data_[is[i]][j][ks[k]]*wxs[i]*wzs[k];
+            fp += data_[is[i]][j+1][ks[k]]*wxs[i]*wzs[k];
+        }
+    }
+    const scalar dym(yValues()[j] - yValues()[j-1]);
+    const scalar dyp(yValues()[j+1] - yValues()[j]);
+    fm = mod_->inv(fm);
+    f = mod_->inv(f);
+    fp = mod_->inv(fp);
+    return ((fp - f)/dyp - (f - fm)/dym)/(0.5*(dyp + dym));
+}
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdZ2
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar xMod(modX_()(x));
+    scalar yMod(modY_()(y));
+
+    ijk_.z() = zIndexing_->findIndex(modZ_()(z));
+    const label k = ijk_.z();
+
+    ijk_.x() = xIndexing_->findIndex(xMod);
+    ijk_.y() = yIndexing_->findIndex(yMod);
+
+    labelList is, js;
+    scalarList wxs, wys;
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, wxs);
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, wys);
+
+    Type fm(data_[is[0]][js[0]][k-1]*wxs[0]*wys[0]);
+    Type f(data_[is[0]][js[0]][k]*wxs[0]*wys[0]);
+    Type fp(data_[is[0]][js[0]][k+1]*wxs[0]*wys[0]);
+    for (label j = 1; j < js.size(); j++)
+    {
+        fm += data_[is[0]][js[j]][k-1]*wxs[0]*wys[j];
+        f += data_[is[0]][js[j]][k]*wxs[0]*wys[j];
+        fp += data_[is[0]][js[j]][k+1]*wxs[0]*wys[j];
+    }
+    for (label i = 1; i < is.size(); i++)
+    {
+        for (label j = 0; j < js.size(); j++)
+        {
+            fm += data_[is[i]][js[j]][k-1]*wxs[i]*wys[j];
+            f += data_[is[i]][js[j]][k]*wxs[i]*wys[j];
+            fp += data_[is[i]][js[j]][k+1]*wxs[i]*wys[j];
+        }
+    }
+    const scalar dzm(zValues()[k] - zValues()[k-1]);
+    const scalar dzp(zValues()[k+1] - zValues()[k]);
+    fm = mod_->inv(fm);
+    f = mod_->inv(f);
+    fp = mod_->inv(fp);
+    return ((fp - f)/dzp - (f - fm)/dzm)/(0.5*(dzp + dzm));
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdXdY
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar zMod(modZ_()(z));
+
+    ijk_.x() = xIndexing_->findIndex(modX_()(x));
+    ijk_.y() = yIndexing_->findIndex(modY_()(y));
+    const label i = max(ijk_.x(), 1);
+    const label j = max(ijk_.y(), 1);
+
+    ijk_.z() = zIndexing_->findIndex(zMod);
+
+    labelList ks;
+    scalarList ws;
+    zInterpolator_->updateWeights(zMod, ijk_.z(), ks, ws);
+
+    Type fmm(data_[i][j][ks[0]]*ws[0]);
+    Type fmp(data_[i][j+1][ks[0]]*ws[0]);
+    Type fpm(data_[i+1][j][ks[0]]*ws[0]);
+    Type fpp(data_[i+1][j+1][ks[0]]*ws[0]);
+
+    for (label k = 1; k < ks.size(); k++)
+    {
+        fmm += data_[i][j][ks[k]]*ws[k];
+        fmp += data_[i][j+1][ks[k]]*ws[k];
+        fpm += data_[i+1][j][ks[k]]*ws[k];
+        fpp += data_[i+1][j+1][ks[k]]*ws[k];
+    }
+
+    const scalar dx(xValues()[i+1] - xValues()[i]);
+    const scalar dy(yValues()[j+1] - yValues()[j]);
+
+    fmm = mod_->inv(fmm);
+    fmp = mod_->inv(fmp);
+    fpm = mod_->inv(fpm);
+    fpp = mod_->inv(fpp);
+
+    return (fpp - fmp - fpm + fmm)/(dx*dy);
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdXdZ
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar yMod(modY_()(y));
+
+    ijk_.x() = xIndexing_->findIndex(modX_()(x));
+    ijk_.z() = zIndexing_->findIndex(modZ_()(z));
+    const label i = max(ijk_.x(), 1);
+    const label k = max(ijk_.z(), 1);
+
+    ijk_.y() = yIndexing_->findIndex(yMod);
+
+    labelList js;
+    scalarList ws;
+    yInterpolator_->updateWeights(yMod, ijk_.y(), js, ws);
+
+    Type fmm(data_[i][js[0]][k]*ws[0]);
+    Type fmp(data_[i][js[0]][k+1]*ws[0]);
+    Type fpm(data_[i+1][js[0]][k]*ws[0]);
+    Type fpp(data_[i+1][js[0]][k+1]*ws[0]);
+
+    for (label j = 1; j < js.size(); j++)
+    {
+        fmm += data_[i][js[j]][k]*ws[j];
+        fmp += data_[i][js[j]][k+1]*ws[j];
+        fpm += data_[i+1][js[j]][k]*ws[j];
+        fpp += data_[i+1][js[j]][k+1]*ws[j];
+    }
+
+    const scalar dx(xValues()[i+1] - xValues()[i]);
+    const scalar dz(zValues()[k+1] - zValues()[k]);
+
+    fmm = mod_->inv(fmm);
+    fmp = mod_->inv(fmp);
+    fpm = mod_->inv(fpm);
+    fpp = mod_->inv(fpp);
+
+    return (fpp - fmp - fpm + fmm)/(dx*dz);
+}
+
+
+template<class Type>
+Type Foam::lookupTable3D<Type>::d2FdYdZ
+(
+    const scalar x,
+    const scalar y,
+    const scalar z
+) const
+{
+    scalar xMod(modX_()(x));
+
+    ijk_.y() = yIndexing_->findIndex(modY_()(y));
+    ijk_.z() = zIndexing_->findIndex(modZ_()(z));
+    const label j = max(ijk_.y(), 1);
+    const label k = max(ijk_.z(), 1);
+
+    ijk_.x() = xIndexing_->findIndex(xMod);
+
+    labelList is;
+    scalarList ws;
+    xInterpolator_->updateWeights(xMod, ijk_.x(), is, ws);
+
+    Type fmm(data_[is[0]][j][k]*ws[0]);
+    Type fmp(data_[is[0]][j][k+1]*ws[0]);
+    Type fpm(data_[is[0]][j+1][k]*ws[0]);
+    Type fpp(data_[is[0]][j+1][k+1]*ws[0]);
+
+    for (label i = 1; i < is.size(); i++)
+    {
+        fmm += data_[is[i]][j][k]*ws[i];
+        fmp += data_[is[i]][j][k+1]*ws[i];
+        fpm += data_[is[i]][j+1][k]*ws[i];
+        fpp += data_[is[i]][j+1][k+1]*ws[i];
+    }
+
+    const scalar dy(yValues()[j+1] - yValues()[j]);
+    const scalar dz(zValues()[k+1] - zValues()[k]);
+
+    fmm = mod_->inv(fmm);
+    fmp = mod_->inv(fmp);
+    fpm = mod_->inv(fpm);
+    fpp = mod_->inv(fpp);
+
+    return (fpp - fmp - fpm + fmm)/(dy*dz);
+}
+
+
+template<class Type>
 void Foam::lookupTable3D<Type>::read
 (
     const dictionary& dict,

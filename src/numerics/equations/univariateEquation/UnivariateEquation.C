@@ -34,6 +34,23 @@ License
 template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation
 (
+    const scalar& lowerLimit,
+    const scalar& upperLimit
+)
+:
+    Equation<scalar, Type>
+    (
+        1,
+        1,
+        lowerLimit,
+        upperLimit
+    )
+{}
+
+
+template<class Type>
+Foam::UnivariateEquation<Type>::UnivariateEquation
+(
     const label nVar,
     const scalar& lowerLimit,
     const scalar& upperLimit

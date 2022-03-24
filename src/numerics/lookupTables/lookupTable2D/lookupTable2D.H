@@ -149,20 +149,11 @@ protected:
 
         //- Find bottom of interpolation region, return index and weight
         //  between i and i+1
-        labelList boundi(const Type f) const
-        {
-            NotImplemented;
-            return labelList();
-        }
+        labelList boundi(const Type& f) const;
 
         //- Find bottom of interpolation region, return index and weight
         //  between j and j+1
-        labelList boundj(const Type f) const
-        {
-            NotImplemented;
-            return labelList();
-        }
-
+        labelList boundj(const Type& f) const;
 
 
 public:
@@ -309,18 +300,10 @@ public:
         Type lookup(const scalar x, const scalar y) const;
 
         //- Lookup x given f and y
-        scalar reverseLookupX(const Type& fin, const scalar y) const
-        {
-            NotImplemented;
-            return 0.0;
-        }
+        scalar reverseLookupX(const Type& fin, const scalar y) const;
 
         //- Lookup y given f and x
-        scalar reverseLookupY(const Type& fin, const scalar x) const
-        {
-            NotImplemented;
-            return 0.0;
-        }
+        scalar reverseLookupY(const Type& fin, const scalar x) const;
 
         //- Interpolate value using the current index and weight
         template

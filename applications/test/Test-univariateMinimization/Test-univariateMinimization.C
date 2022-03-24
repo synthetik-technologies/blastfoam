@@ -2,82 +2,37 @@
 #include "univariateMinimizationScheme.H"
 #include "argList.H"
 #include "IntegratorsFwd.H"
+#include "createEquations.H"
 
 using namespace Foam;
 
 
-class testEqn1
-:
-    public equation
-{
-public:
-    testEqn1(const scalar xMin, const scalar xMax)
-    :
-        equation(xMin, xMax)
-    {}
+createEquation2
+(
+    testEqn1,
+    1.0, 3.0,
+    mag(x - 2.0) + sqr(x - 1.0),
+    (x - 2.0)/max(mag(x - 2.0), small) + 2.0*(x - 1.0),
+    2.0
+);
 
-    virtual ~testEqn1()
-    {}
+createEquation2
+(
+    testEqn2,
+    1.0, 5.0,
+    sqr(x - 2.0),
+    2.0*(x - 2.0),
+    2.0
+);
 
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return mag(x - 2.0) + sqr(x - 1.0);
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return (x - 2.0)/max(mag(x - 2.0), small) + 2.0*(x - 1.0);
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return 2.0;
-    }
-};
-
-class testEqn2
-:
-    public equation
-{
-public:
-    testEqn2(const scalar xMin, const scalar xMax)
-    :
-        equation(xMin, xMax)
-    {}
-
-    virtual ~testEqn2()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 2;
-    }
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return sqr(x - 2.0);
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return 2.0*(x - 2.0);
-    }
-    virtual scalar d2fdx2(const scalar x, const label li) const
-    {
-        return 2.0;
-    }
-};
 
 
 int main(int argc, char *argv[])
 {
 
     PtrList<equation> uniEqns(2);
-    wordList uniEqnStrs(2);
-    uniEqns.set(0, new testEqn1(1.0, 3.0));
-    uniEqnStrs[0] = "f(x) = cos(x) - x^3";
-    uniEqns.set(1, new testEqn2(1.0, 5.0));
-    uniEqnStrs[1] = "f(x) = exp(x) - 10*x";
+    uniEqns.set(0, new testEqn1());
+    uniEqns.set(1, new testEqn2());
 
     dictionary dict;
 
@@ -89,7 +44,7 @@ int main(int argc, char *argv[])
     );
     forAll(uniEqns, eqni)
     {
-        Info<< "Solving " << uniEqnStrs[eqni] << endl;
+        Info<< "Solving " << uniEqns[eqni].printfx() << endl;
 
         const equation& eqn = uniEqns[eqni];
         forAll(methods, i)
