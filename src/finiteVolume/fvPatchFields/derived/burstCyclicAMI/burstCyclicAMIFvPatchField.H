@@ -62,7 +62,7 @@ class burstCyclicAMIFvPatchField
     // Private Data
 
         //- Non-burstCyclicAMI patchField
-        autoPtr<fvPatchField<Type>> intactPatchField_;
+        tmp<fvPatchField<Type>> intactPatchField_;
 
 
 public:

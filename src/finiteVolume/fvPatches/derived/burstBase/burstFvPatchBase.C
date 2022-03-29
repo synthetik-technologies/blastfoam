@@ -48,6 +48,10 @@ void Foam::burstFvPatchParent::makeIntact() const
     {
         return;
     }
+    if (mesh_.foundObject<volScalarField>("intact"))
+    {
+        return;
+    }
     needToRead_ = false;
 
     IOobject intactIO
@@ -113,6 +117,7 @@ void Foam::burstFvPatchParent::makeIntact() const
             }
         }
     }
+    intactPtr_->instance() = mesh_.time().timeName();
 }
 
 Foam::burstFvPatchParent::burstFvPatchParent(const fvMesh& mesh)

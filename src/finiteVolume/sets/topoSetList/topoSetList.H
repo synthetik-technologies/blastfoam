@@ -181,6 +181,17 @@ public:
         autoPtr<topoSet> extractInterfaceCells(const topoSet& cells) const;
 
         //- Extract selected faces (return indices to keep)
+        void extractSelectedFaces
+        (
+            const dictionary& dict,
+            const labelList& faces,
+            const boolList& flipMap,
+            labelList& newFaces,
+            boolList& newFlipMap,
+            const bool defaultAll = false
+        ) const;
+
+        //- Extract selected faces (return indices to keep)
         labelList extractSelectedFaces
         (
             const dictionary& dict,
@@ -266,6 +277,18 @@ public:
             const polyMesh& mesh,
             const dictionary& dict,
             const labelList& faces,
+            const bool defaultAll = false
+        );
+
+        //- Extract selected faces (return indices to keep)
+        static void extractSelectedFaces
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            const labelList& faces,
+            const boolList& flipMap,
+            labelList& newFaces,
+            boolList& newFlipMap,
             const bool defaultAll = false
         );
 

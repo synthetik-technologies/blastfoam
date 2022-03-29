@@ -138,35 +138,30 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
         const faceZoneSet& origFzs = dynamicCast<const faceZoneSet>(faces);
         faceZoneSet& fzs = dynamicCast<faceZoneSet>(selectedFaces());
 
-        const labelList& addressing = origFzs.addressing();
-        const boolList& flipMap = origFzs.flipMap();
-
-        Map<label> faceToIndex(addressing.size());
-        forAll(addressing, i)
-        {
-            faceToIndex.insert(addressing[i], i);
-        }
-
-        DynamicList<label> newAddressing(facesToKeep.size());
-        DynamicList<bool> newFlipMap(facesToKeep.size());
-        forAll(addressing, i)
-        {
-            const label facei = addressing[i];
-            if (facesToKeep.found(facei))
-            {
-                // Not found in fSet so add
-                newAddressing.append(facei);
-                newFlipMap.append(flipMap[i]);
-            }
-        }
-
-        fzs.addressing().transfer(newAddressing);
-        fzs.flipMap().transfer(newFlipMap);
+        extractSelectedFaces
+        (
+            mesh,
+            dict,
+            origFzs.addressing(),
+            origFzs.flipMap(),
+            fzs.addressing(),
+            fzs.flipMap(),
+            defaultAll
+        );
         fzs.updateSet();
     }
     else
     {
-        static_cast<labelHashSet&>(selectedFaces()) = facesToKeep;
+
+        boolList flipMap;
+        labelList addressing = extractSelectedFaces
+        (
+            mesh,
+            dict,
+            faces.toc(),
+            defaultAll
+        );
+        static_cast<labelHashSet&>(selectedFaces()) = labelHashSet(addressing);
         selectedFaces->sync(mesh);
     }
     return selectedFaces;
@@ -181,45 +176,83 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
     const bool defaultAll
 )
 {
+    labelList newFaces;
+    boolList flipMap;
+    extractSelectedFaces
+    (
+        mesh,
+        dict,
+        faces,
+        boolList(faces.size(), false),
+        newFaces,
+        flipMap,
+        defaultAll
+    );
+    return newFaces;
+}
+
+
+void Foam::topoSetList::extractSelectedFaces
+(
+    const polyMesh& mesh,
+    const dictionary& dict,
+    const labelList& faces,
+    const boolList& flipMap,
+    labelList& newFaces,
+    boolList& newFlipMap,
+    const bool defaultAll
+)
+{
     const SelectionType sType =
         defaultAll
       ? selectionNames[dict.lookupOrDefault<word>("selectionMode", "all")]
       : selectionNames[dict.lookup<word>("selectionMode")];
 
     // Return if the selection is empty of all faces are selected
-    if (!returnReduce(faces.size(), sumOp<label>()) || sType == ALL)
+    if (!returnReduce(faces.size(), sumOp<label>()))
     {
-        return faces;
+        newFaces.clear();
+        newFlipMap.clear();
+        return;
+    }
+    if (sType == ALL)
+    {
+        newFaces = faces;
+        newFlipMap = flipMap;
+        return;
     }
 
     // Create an easily searchable list of selected faces for searching
-    const labelHashSet selectedFaces(faces);
+    Map<bool> flipMapMap(faces.size());
+    forAll(faces, fi)
+    {
+        flipMapMap.insert(faces[fi], flipMap[fi]);
+    }
+
+    Map<bool> selectedFaces(mesh.nFaces());
 
     // Add internal faces (coupled faces are included)
-    labelHashSet internalFaces(faces.size());
     if (sType == INTERNAL)
     {
-        forAll(faces, fi)
+        forAllConstIter(Map<bool>, flipMapMap, iter)
         {
-            const label facei = faces[fi];
+            const label facei = iter.key();
             if (facei >= mesh.nInternalFaces())
             {
                 const label patchi = mesh.boundaryMesh().whichPatch(facei);
                 if (isA<coupledPolyPatch>(mesh.boundaryMesh()[patchi]))
                 {
-                    internalFaces.insert(faces[fi]);
+                    selectedFaces.insert(iter.key(), iter());
                 }
             }
             else
             {
-                internalFaces.insert(faces[fi]);
+                selectedFaces.insert(iter.key(), iter());
             }
         }
-        return internalFaces.toc();
     }
 
     // Add boundary faces on the selected faces
-    labelHashSet boundaryFaces(faces.size());
     if (sType == BOUNDARY || sType == INTERFACE_AND_BOUNDARY)
     {
         wordReList patchNames(dict.lookup("patches"));
@@ -233,35 +266,30 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
             forAll(pp, fi)
             {
                 const label facei = pp.start() + fi;
-                if (selectedFaces.found(facei))
+                if (flipMapMap.found(facei))
                 {
-                    boundaryFaces.insert(facei);
+                    selectedFaces.insert(facei, flipMapMap[facei]);
                 }
             }
-        }
-        if (sType == BOUNDARY)
-        {
-            return boundaryFaces.toc();
         }
     }
 
     // Select interface faces, i.e. selected faces whos owner/neighbour
     // cells have some faces that are not selected
-    labelHashSet interfaceFaces(faces.size());
     if (sType == INTERFACE || sType == INTERFACE_AND_BOUNDARY)
     {
         const labelList& owner = mesh.faceOwner();
         const labelList& neighbour = mesh.faceNeighbour();
         PackedBoolList markedFaces(mesh.nFaces());
-        forAll(faces, fi)
+        forAllConstIter(Map<bool>, flipMapMap, iter)
         {
-            const label facei = faces[fi];
+            const label facei = iter.key();
             bool added = false;
             {
                 const cell& c = mesh.cells()[owner[facei]];
                 forAll(c, fj)
                 {
-                    if (!selectedFaces.found(c[fj]))
+                    if (!flipMapMap.found(c[fj]))
                     {
                         markedFaces.set(facei);
                         added = true;
@@ -274,7 +302,7 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
                 const cell& c = mesh.cells()[neighbour[facei]];
                 forAll(c, fj)
                 {
-                    if (!selectedFaces.found(c[fj]))
+                    if (!flipMapMap.found(c[fj]))
                     {
                         markedFaces.set(facei);
                         break;
@@ -285,15 +313,22 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
 
         syncTools::syncFaceList(mesh, markedFaces, orEqOp<uint>());
 
-        interfaceFaces.insert(markedFaces.used());
-
-        if (sType == INTERFACE)
+        labelList used(markedFaces.used());
+        forAll(used, fi)
         {
-            return interfaceFaces.toc();
+            selectedFaces.insert(used[fi], true);
         }
     }
 
-    return (interfaceFaces | boundaryFaces).toc();
+    newFaces.resize(selectedFaces.size(), -1);
+    newFlipMap.resize(selectedFaces.size(), false);
+    label fi = 0;
+    forAllConstIter(Map<bool>, selectedFaces, iter)
+    {
+        newFaces[fi] = iter.key();
+        newFlipMap[fi] = iter();
+        fi++;
+    }
 }
 
 
@@ -932,6 +967,30 @@ Foam::autoPtr<Foam::topoSet> Foam::topoSetList::extractSelectedFaces
 
 
 //- Remove faces without an owner and a neighbour
+void Foam::topoSetList::extractSelectedFaces
+(
+    const dictionary& dict,
+    const labelList& faces,
+    const boolList& flipMap,
+    labelList& newFaces,
+    boolList& newFlipMap,
+    const bool defaultAll
+) const
+{
+    extractSelectedFaces
+    (
+        mesh_,
+        dict,
+        faces,
+        flipMap,
+        newFaces,
+        newFlipMap,
+        defaultAll
+    );
+}
+
+
+//- Remove faces without an owner and a neighbour
 Foam::labelList Foam::topoSetList::extractSelectedFaces
 (
     const dictionary& dict,
@@ -939,7 +998,13 @@ Foam::labelList Foam::topoSetList::extractSelectedFaces
     const bool defaultAll
 ) const
 {
-    return extractSelectedFaces(mesh_, dict, faces, defaultAll);
+    return extractSelectedFaces
+    (
+        mesh_,
+        dict,
+        faces,
+        defaultAll
+    );
 }
 
 

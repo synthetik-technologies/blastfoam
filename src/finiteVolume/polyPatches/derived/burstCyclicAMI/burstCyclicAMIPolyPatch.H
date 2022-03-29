@@ -148,7 +148,7 @@ public:
                     index,
                     newSize,
                     newStart,
-                    word::null
+                    nbrPatchName()
                 )
             );
         }

@@ -329,8 +329,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
     // Owner values
     scalar alpha;
     scalar rho;
-    scalarList alphas(alphasOwn.size());
-    scalarList rhos(rhosOwn.size());
+    scalarField alphas(alphasOwn.size());
+    scalarField rhos(rhosOwn.size());
     vector U;
     scalar E;
     scalar p;
@@ -344,11 +344,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         E = EOwn;
         p = pOwn;
 
-        forAll(alphas, phasei)
-        {
-            alphas[phasei] = alphasOwn[phasei];
-            rhos[phasei] = rhosOwn[phasei];
-        }
+        alphas = alphasOwn;
+        rhos = rhosOwn;
     }
     else if (SStar > 0)
     {
@@ -360,11 +357,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         E = EOwn + (pStar*SStar - pOwn*UvOwn)/(rhoOwn*(SOwn - UvOwn));
         p = pStar;
 
-        forAll(alphas, phasei)
-        {
-            alphas[phasei] = alphasOwn[phasei];
-            rhos[phasei] = rhosOwn[phasei]*f;
-        }
+        alphas = alphasOwn;
+        rhos = rhosOwn*f;
     }
     else if (SNei > 0)
     {
@@ -376,11 +370,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         E = ENei + (pStar*SStar - pNei*UvNei)/(rhoNei*(SNei - UvNei));
         p = pStar;
 
-        forAll(alphas, phasei)
-        {
-            alphas[phasei] = alphasNei[phasei];
-            rhos[phasei] = rhosNei[phasei]*f;
-        }
+        alphas = alphasNei;
+        rhos = rhosNei*f;
     }
     else
     {
@@ -391,11 +382,8 @@ void Foam::phaseFluxSchemes::HLLC::calculateFluxes
         E = ENei;
         p = pNei;
 
-        forAll(alphas, phasei)
-        {
-            alphas[phasei] = alphasNei[phasei];
-            rhos[phasei] = rhosNei[phasei];
-        }
+        alphas = alphasNei;
+        rhos = rhosNei;
     }
 
     this->save(facei, patchi, alpha, alphaf_);

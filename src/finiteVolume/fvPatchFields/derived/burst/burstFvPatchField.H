@@ -61,10 +61,10 @@ class burstFvPatchField
     // Private Data
 
         //- Burst patchField
-        autoPtr<fvPatchField<Type>> burstPatchField_;
+        tmp<fvPatchField<Type>> burstPatchField_;
 
         //- Intact patchField
-        autoPtr<fvPatchField<Type>> intactPatchField_;
+        tmp<fvPatchField<Type>> intactPatchField_;
 
 
 public:

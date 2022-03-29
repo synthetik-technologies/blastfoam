@@ -239,6 +239,37 @@ Foam::backupTopoSetSource::backupTopoSetSource
 }
 
 
+Foam::backupTopoSetSource::backupTopoSetSource
+(
+    const polyMesh& mesh,
+    const dictionary& dict,
+    autoPtr<topoSetSource>& source
+)
+:
+    mesh_(mesh),
+    dict_(dict),
+    allowBackup_(dict.lookupOrDefault("allowBackup", false)),
+    source_(source),
+    backup_()
+{}
+
+
+Foam::backupTopoSetSource::backupTopoSetSource
+(
+    const polyMesh& mesh,
+    const dictionary& dict,
+    autoPtr<topoSetSource>& source,
+    autoPtr<topoSetSource>& backup
+)
+:
+    mesh_(mesh),
+    dict_(dict),
+    allowBackup_(dict.lookupOrDefault("allowBackup", false)),
+    source_(source),
+    backup_(backup)
+{}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::backupTopoSetSource::~backupTopoSetSource()

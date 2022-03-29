@@ -122,6 +122,23 @@ public:
             const dictionary& dict
         );
 
+        //- Construct from components
+        backupTopoSetSource
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            autoPtr<topoSetSource>& source
+        );
+
+        //- Construct from components
+        backupTopoSetSource
+        (
+            const polyMesh& mesh,
+            const dictionary& dict,
+            autoPtr<topoSetSource>& source,
+            autoPtr<topoSetSource>& backup
+        );
+
 
     //- Destructor
     virtual ~backupTopoSetSource();

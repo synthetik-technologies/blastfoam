@@ -111,6 +111,9 @@ fvPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvPatchFields.C
 fvPatchFields/derived/burstCyclicAMI/burstCyclicAMIFvPatchFields.C
 fvPatchFields/derived/burstCyclicACMI/burstCyclicACMIFvPatchFields.C
 
+fvPatchFields/derived/hole/holePatchField.C
+fvPatchFields/derived/holeVelocityCyclic/holeVelocityCyclicFvPatchVectorField.C
+
 fvsPatchFields/derived/burst/burstFvsPatchFields.C
 fvsPatchFields/derived/burstCyclic/burstCyclicFvsPatchFields.C
 fvsPatchFields/derived/burstProcessorCyclic/burstProcessorCyclicFvsPatchFields.C

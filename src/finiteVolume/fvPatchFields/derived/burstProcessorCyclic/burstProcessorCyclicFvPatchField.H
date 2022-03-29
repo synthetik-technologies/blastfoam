@@ -62,7 +62,7 @@ class burstProcessorCyclicFvPatchField
     // Private Data
 
         //- Non-burstProcessorCyclic patchField
-        autoPtr<fvPatchField<Type>> intactPatchField_;
+        tmp<fvPatchField<Type>> intactPatchField_;
 
 
 public:
