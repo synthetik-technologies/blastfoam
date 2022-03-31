@@ -176,6 +176,7 @@ Foam::compressibleSystem::compressibleSystem
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
     solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
+    U_.oldTime();
     scalar emptyDirV
     (
         Foam::max(mag(U_ & (vector::one - solutionDs_))).value()

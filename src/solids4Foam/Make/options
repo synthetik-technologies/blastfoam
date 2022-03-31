@@ -1,26 +1,31 @@
-EXE_INC = \
+EXE_INC= \
+    -DOPENFOAMFOUNDATION \
+    -DOPENFOAMESIORFOUNDATION \
+    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
+    -I$(LIB_SRC)/thermophysicalModels/specie/lnInclude \
     -I$(LIB_SRC)/thermophysicalModels/basic/lnInclude \
-    -I$(LIB_SRC)/thermophysicalModels/solidThermo/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/momentumTransportModels/lnInclude \
-    -I$(LIB_SRC)/MomentumTransportModels/incompressible/lnInclude \
     -I$(LIB_SRC)/MomentumTransportModels/compressible/lnInclude \
-    -I$(LIB_SRC)/dynamicMesh/lnInclude \
+    -I$(LIB_SRC)/ThermophysicalTransportModels/lnInclude \
+    -I$(LIB_SRC)/meshTools/lnInclude \
     -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
-    -I$(LIB_SRC)/topoChangerFvMesh/lnInclude \
-    -I$(LIB_SRC)/lagrangian/basic/lnInclude \
-    -I$(BLAST_DIR)/src/numerics/lnInclude \
-    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
-    -I$(BLAST_DIR)/src/sampling/lnInclude \
+    -I$(SOLIDS_4_FOAM_DIR)/src/solids4FoamModels/lnInclude
 
 LIB_LIBS = \
     -lmomentumTransportModels \
-    -lincompressibleMomentumTransportModels \
     -lcompressibleMomentumTransportModels \
-    -llagrangian \
+    -lincompressibleMomentumTransportModels \
     -ldynamicMesh \
-    -ldynamicFvMesh \
-    -ltopoChangerFvMesh
+    -L$(BLAST_LIBBIN) \
+    -lblastThermodynamics \
+    -lcompressibleSystems \
+    -lblastDynamicFvMesh \
+    -lblastFunctionObjects \
+    -L$(FOAM_USER_LIBBIN) \
+    -lsolids4FoamModels

@@ -9,7 +9,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/thermodynamicModels/lnInclude \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    -I$(BLAST_DIR)/src/solids4Foam/lnInclude
+    -I$(BLAST_DIR)/src/regionModels/lnInclude \
+    -I$(BLAST_DIR)/src/solidModels/lnInclude
 
 
 EXE_LIBS = \
@@ -20,4 +21,5 @@ EXE_LIBS = \
     -lblastFiniteVolume \
     -lblastThermodynamics \
     -lblastDynamicFvMesh \
-    -lsolids4Foam
+    -lblastRegionModels \
+    -lblastSolidModels

@@ -17,7 +17,8 @@ EXE_INC = \
     -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
     -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
-    -I$(BLAST_DIR)/src/solids4Foam/lnInclude
+    -I$(BLAST_DIR)/src/solidModels/lnInclude \
+    -I$(BLAST_DIR)/src/regionModels/lnInclude
 
 
 EXE_LIBS = \
@@ -33,4 +34,6 @@ EXE_LIBS = \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
-    -lsolids4Foam
+    -lblastSolidModels \
+    -lblastRegionModels \
+    $(BLAST_ADDITIONAL_LIBS)

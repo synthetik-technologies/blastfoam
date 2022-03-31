@@ -24,7 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "burstPolyPatchBase.H"
-#include "globalPolyBoundaryMesh.H"
+#include "globalMeshData.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -34,8 +34,49 @@ namespace Foam
 }
 
 
-// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * //
 
+void Foam::burstPolyPatchBase::makePointIntact() const
+{
+    const polyBoundaryMesh& pbm = patch_.boundaryMesh();
+    const polyMesh& mesh = pbm.mesh();
+
+    // Set the point intact field
+    pointIntact_.set(new scalarField(patch_.nPoints(), 0));
+    scalarField& pI = pointIntact_();
+    const scalarField& I = intact_();
+
+    const labelListList& pointFaces = patch_.pointFaces();
+    forAll(pointFaces, pointi)
+    {
+        const labelList& pFaces = pointFaces[pointi];
+        forAll(pFaces, fi)
+        {
+            const label facei = pFaces[fi];
+            if (I[facei] > 0.5)
+            {
+                pI[pointi] = 1.0;
+                break;
+            }
+        }
+    }
+
+    if (Pstream::parRun())
+    {
+        scalarField allPI(mesh.nPoints(), 0);
+        UIndirectList<scalar>(allPI, patch_.meshPoints()) = pI;
+        mesh.globalData().syncPointData
+        (
+            allPI,
+            maxEqOp<scalar>(),
+            mapDistribute::transform()
+        );
+        pI = scalarField(allPI, patch_.meshPoints());
+    }
+}
+
+
+// * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * * //
 
 Foam::burstPolyPatchBase::burstPolyPatchBase
 (
@@ -219,16 +260,7 @@ Foam::burstPolyPatchBase::pointIntact() const
 {
     if (!pointIntact_.valid())
     {
-        pointIntact_.set
-        (
-            globalPolyBoundaryMesh::New
-            (
-                dynamicCast<const polyMesh>
-                (
-                    patch_.boundaryMesh().mesh().thisDb()
-                )
-            )[patch_].faceToPoint(intact_()).ptr()
-        );
+        makePointIntact();
     }
     return pointIntact_();
 }

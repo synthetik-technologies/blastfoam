@@ -32,4 +32,5 @@ EXE_LIBS = \
     -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
     -lblastFiniteVolume \
-    -lblastDynamicFvMesh
+    -lblastDynamicFvMesh \
+    $(BLAST_ADDITIONAL_LIBS)

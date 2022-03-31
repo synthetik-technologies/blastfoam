@@ -124,6 +124,12 @@ Foam::twoPhaseCompressibleSystem::twoPhaseCompressibleSystem
     thermo_.initializeModels();
     this->setModels();
 
+    alpha1_.oldTime();
+    alpha2_.oldTime();
+    rho1_.oldTime();
+    rho2_.oldTime();
+    U_.oldTime();
+    e_.oldTime();
     encode();
 }
 
@@ -234,6 +240,8 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
 {
     this->decode();
 
+    bool updateRho = false;
+
     // Solve volume fraction
     if (needSolve(alpha1_.name()))
     {
@@ -249,6 +257,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
 
         alpha1_.maxMin(0.0, 1.0);
         alpha2_ = 1.0 - alpha1_;
+
+        alphaRho1_ = alpha1_*rho1_;
+        alphaRho2_ = alpha2_*rho2_;
+
+        updateRho = true;
     }
     // Solve phase 1 mass
     if (needSolve(rho1_.name()))
@@ -264,6 +277,11 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
         constraints().constrain(alphaRho1Eqn);
         alphaRho1Eqn.solve();
         constraints().constrain(rho1_);
+
+        alphaRho1_ = alpha1_*rho1_;
+
+        updateRho = true;
+
     }
     // Solve phase 2 mass
     if (needSolve(rho2_.name()))
@@ -279,14 +297,18 @@ void Foam::twoPhaseCompressibleSystem::postUpdate()
         constraints().constrain(alphaRho2Eqn);
         alphaRho2Eqn.solve();
         constraints().constrain(rho2_);
+
+        alphaRho2_ = alpha2_*rho2_;
+
+        updateRho = true;
     }
 
     // Update phase masses
-    alphaRho1_ = alpha1_*rho1_;
-    alphaRho2_ = alpha2_*rho2_;
-
-    rho_.storePrevIter();
-    rho_ = alphaRho1_ + alphaRho2_;
+    if (updateRho)
+    {
+        rho_.storePrevIter();
+        rho_ = alphaRho1_ + alphaRho2_;
+    }
 
     compressibleBlastSystem::postUpdate();
 }

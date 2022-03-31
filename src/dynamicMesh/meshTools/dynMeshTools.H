@@ -112,6 +112,15 @@ namespace meshTools
                 const label nei
             );
 
+            //- Change patch a face is on
+            void changePatchFace
+            (
+                polyTopoChange& meshMod,
+                const polyMesh& mesh,
+                const label faceI,
+                const label newPatchID
+            );
+
 
         // Debug functions
 

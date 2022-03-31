@@ -32,4 +32,5 @@ EXE_LIBS = \
     -lsampling \
     -lmeshTools \
     -L$(BLAST_LIBBIN) \
-    -lblastFiniteVolume
+    -lblastFiniteVolume \
+    $(BLAST_ADDITIONAL_LIBS)

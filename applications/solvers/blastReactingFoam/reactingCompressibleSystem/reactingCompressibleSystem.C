@@ -214,15 +214,6 @@ Foam::reactingCompressibleSystem::~reactingCompressibleSystem()
 
 void Foam::reactingCompressibleSystem::solve()
 {
-    volScalarField rhoOld(rho_);
-    volVectorField rhoUOld(rhoU_);
-    volScalarField rhoEOld(rhoE_);
-
-    //- Store old values
-    this->storeAndBlendOld(rhoOld);
-    this->storeAndBlendOld(rhoUOld);
-    this->storeAndBlendOld(rhoEOld);
-
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
@@ -236,13 +227,20 @@ void Foam::reactingCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoU);
     this->storeAndBlendDelta(deltaRhoE);
 
+    //- Store old values
+    this->storeAndBlendOld(rho_);
+    rho_.storePrevIter();
+
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
+
 
     dimensionedScalar dT = rho_.time().deltaT();
-    rho_ = rhoOld - dT*deltaRho;
+    rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
-    rhoU_ = rhoUOld - dT*deltaRhoU;
-    rhoE_ = rhoEOld - dT*deltaRhoE;
+    rhoU_ -= dT*deltaRhoU;
+    rhoE_ -= dT*deltaRhoE;
 
     if (reaction_.valid())
     {
@@ -251,23 +249,17 @@ void Foam::reactingCompressibleSystem::solve()
         volScalarField Yt(0.0*Ys[0]);
         forAll(Ys, i)
         {
-            if (this->step() == 1)
-            {
-                Ys[i].storeOldTime();
-            }
-
             if (composition.solve(i))
             {
-                volScalarField YOld(Ys[i]);
-                this->storeAndBlendOld(YOld);
-
                 volScalarField deltaRhoY
                 (
                     fvc::div(fluxScheme_->interpolate(Ys[i], "Yi")*rhoPhi_)
                 );
                 this->storeAndBlendDelta(deltaRhoY);
 
-                Ys[i] = (YOld*rhoOld - dT*deltaRhoY)/rho_;
+                this->storeAndBlendOld(Ys[i]);
+
+                Ys[i] = (Ys[i]*rho_.prevIter() - dT*deltaRhoY)/rho_;
                 Ys[i].correctBoundaryConditions();
 
                 Ys[i].max(0.0);

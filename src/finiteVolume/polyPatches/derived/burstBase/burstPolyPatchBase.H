@@ -94,6 +94,9 @@ protected:
         //- Current time index
         mutable label curTimeIndex_;
 
+        //- Make the pointIntact field
+        void makePointIntact() const;
+
 
 public:
 

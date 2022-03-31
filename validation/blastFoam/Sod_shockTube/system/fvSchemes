@@ -19,7 +19,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  RK3SSP 4;
+    timeIntegrator  Euler;
 }
 
 gradSchemes

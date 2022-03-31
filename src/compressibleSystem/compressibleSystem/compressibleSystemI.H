@@ -31,14 +31,20 @@ const Foam::fluxScheme& Foam::compressibleSystem::flux() const
 }
 
 
-const Foam::momentumTransportModel&
+bool Foam::compressibleSystem::inviscid() const
+{
+    return !turbulence_.valid();
+}
+
+
+const Foam::compressible::momentumTransportModel&
 Foam::compressibleSystem::turbulence() const
 {
     return turbulence_();
 }
 
 
-Foam::momentumTransportModel&
+Foam::compressible::momentumTransportModel&
 Foam::compressibleSystem::turbulence()
 {
     return turbulence_();

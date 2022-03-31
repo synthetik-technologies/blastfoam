@@ -197,6 +197,8 @@ public:
             phasePairKey::hash
         > UiTable;
 
+        static const dimensionedScalar zeroMDot;
+
 
 protected:
 
@@ -497,9 +499,32 @@ public:
             const phaseModel& phase2
         ) const;
 
+        //- Return the volume fraction source due to mass transfer for a pair
+        tmp<volScalarField> mDotByRho
+        (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the volume fraction source due to mass transfer for a pair
+        tmp<volScalarField> mDotByRho
+        (
+            const volScalarField& mD,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
         //- Return the momentum change due to mass transfer for a pair
         tmp<volVectorField> mDotU
         (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the momentum change due to mass transfer for a pair
+        tmp<volVectorField> mDotU
+        (
+            const volScalarField& mD,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;
@@ -511,10 +536,27 @@ public:
             const phaseModel& phase2
         ) const;
 
+        //- Return the energy change due to mass transfer for a pair
+        tmp<volScalarField> mDotE
+        (
+            const volScalarField& mD,
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
         //- Return the pseudo thermal energy change due to
         //  mass transfer for a pair
         tmp<volScalarField> mDotPTE
         (
+            const phaseModel& phase1,
+            const phaseModel& phase2
+        ) const;
+
+        //- Return the pseudo thermal energy change due to
+        //  mass transfer for a pair
+        tmp<volScalarField> mDotPTE
+        (
+            const volScalarField& mD,
             const phaseModel& phase1,
             const phaseModel& phase2
         ) const;

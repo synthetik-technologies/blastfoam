@@ -599,6 +599,7 @@ int main(int argc, char *argv[])
         {
             refiner = fvMeshRefiner::New(mesh, refineDict, true);
         }
+
         if (Pstream::parRun())
         {
             balance = refiner->balancer().balance();

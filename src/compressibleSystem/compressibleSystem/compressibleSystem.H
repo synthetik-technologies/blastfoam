@@ -174,11 +174,14 @@ public:
 
     // Member Access Functions
 
-        //- Return turbulence class
-        inline const momentumTransportModel& turbulence() const;
+        //- Return if the system is inviscid
+        inline bool inviscid() const;
 
         //- Return turbulence class
-        inline momentumTransportModel& turbulence();
+        inline const compressible::momentumTransportModel& turbulence() const;
+
+        //- Return turbulence class
+        inline compressible::momentumTransportModel& turbulence();
 
         //- Const access to thermo model
         virtual const fluidThermo& thermo() const = 0;

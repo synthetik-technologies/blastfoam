@@ -263,6 +263,36 @@ void Foam::meshTools::modifyFace
 }
 
 
+void Foam::meshTools::changePatchFace
+(
+    polyTopoChange& meshMod,
+    const polyMesh& mesh,
+    const label faceI,
+    const label newPatchID
+)
+{
+    // Set face inforomation
+    label patchID, zoneID, zoneFlip;
+    meshTools::getFaceInfo(mesh, faceI, patchID, zoneID, zoneFlip);
+
+    meshMod.setAction
+    (
+        polyModifyFace
+        (
+            mesh.faces()[faceI],    // modified face
+            faceI,                  // label of face being modified
+            mesh.faceOwner()[faceI],// owner
+            -1,                     // neighbour
+            false,                  // face flip
+            newPatchID,             // patch for face
+            false,                  // remove from zone
+            zoneID,                 // zone for face
+            zoneFlip                // face flip in zone
+        )
+    );
+}
+
+
 void Foam::meshTools::checkInternalOrientation
 (
     const polyTopoChange& meshMod,

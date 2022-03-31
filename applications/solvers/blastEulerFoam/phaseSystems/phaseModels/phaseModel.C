@@ -317,6 +317,18 @@ void Foam::phaseModel::solve()
 {
     dimensionedScalar dT = rho().time().deltaT();
 
+    tmp<volScalarField> deltaAlpha;
+    if (solveAlpha_)
+    {
+        volScalarField& alpha(*this);
+        deltaAlpha =
+            volScalarField::New
+            (
+                IOobject::groupName("deltaAlpha", name_),
+                fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
+            );
+    }
+
     volVectorField deltaAlphaRhoU
     (
         IOobject::groupName("deltaAlphaRhoU", name_),
@@ -339,8 +351,14 @@ void Foam::phaseModel::solve()
         const phaseModel& otherPhase = fluid_.phases()[phasei];
         if (&otherPhase != this)
         {
-            deltaAlphaRhoU -= fluid_.mDotU(*this, otherPhase);
-            deltaAlphaRhoE -= fluid_.mDotE(*this, otherPhase);
+            volScalarField mD(fluid_.mDot(*this, otherPhase));
+            if (solveAlpha_)
+            {
+                deltaAlpha.ref() -=
+                    fluid_.mDotByRho(mD, *this, otherPhase);
+            }
+            deltaAlphaRhoU -= fluid_.mDotU(mD, *this, otherPhase);
+            deltaAlphaRhoE -= fluid_.mDotE(mD, *this, otherPhase);
         }
     }
     this->storeAndBlendDelta(deltaAlphaRhoU);
@@ -358,15 +376,11 @@ void Foam::phaseModel::solve()
     // Transport volume fraction if required
     if (solveAlpha_)
     {
-        volScalarField& alpha(*this);
-        volScalarField deltaAlpha
-        (
-            IOobject::groupName("deltaAlpha", name_),
-            fvc::div(alphaPhiPtr_()) - alpha*fvc::div(fluid_.phi())
-        );
-        this->storeAndBlendDelta(deltaAlpha);
+        this->storeAndBlendDelta(deltaAlpha.ref());
 
+        volScalarField& alpha(*this);
         this->storeAndBlendOld(alpha);
+
         alpha -= dT*deltaAlpha;
         alpha.max(0);
         alpha.min(alphaMax_);

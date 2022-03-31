@@ -46,6 +46,4 @@ derivedFvPatchFields/dynamicThermoPressure/dynamicThermoPressureFvPatchScalarFie
 derivedFvPatchFields/totalThermoPressure/totalThermoPressureFvPatchScalarField.C
 derivedFvPatchFields/totalThermoTemperature/totalThermoTemperatureFvPatchScalarField.C
 
-derivedFvPatchFields/globalTemperatureCoupled/globalTemperatureCoupledFvPatchScalarField.C
-
 LIB = $(BLAST_LIBBIN)/libblastThermodynamics

@@ -61,7 +61,7 @@ Foam::quadraticMUSCLReconstructionScheme<Type>::quadraticMUSCLReconstructionSche
         fv::gradScheme<vector>::New
         (
             this->mesh_,
-            this->mesh_.gradScheme("limitedHessMUSCL)")
+            this->mesh_.gradScheme("limitedHessMUSCL")
         )
     );
     for (direction cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)

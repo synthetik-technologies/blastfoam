@@ -192,17 +192,6 @@ Foam::psiuCompressibleSystem::~psiuCompressibleSystem()
 
 void Foam::psiuCompressibleSystem::solve()
 {
-    volScalarField rhoOld(rho_);
-    volVectorField rhoUOld(rhoU_);
-    volScalarField rhoEOld(rhoE_);
-    volScalarField rhoEuOld(rhoEu_);
-
-    //- Store old values
-    this->storeAndBlendOld(rhoOld);
-    this->storeAndBlendOld(rhoUOld);
-    this->storeAndBlendOld(rhoEOld);
-    this->storeAndBlendOld(rhoEuOld);
-
     volScalarField deltaRho(fvc::div(rhoPhi_));
     volVectorField deltaRhoU(fvc::div(rhoUPhi_) - g_*rho_);
     volScalarField deltaRhoE
@@ -222,14 +211,20 @@ void Foam::psiuCompressibleSystem::solve()
     this->storeAndBlendDelta(deltaRhoE);
     this->storeAndBlendDelta(deltaRhoEu);
 
+    //- Store old values
+    this->storeAndBlendOld(rho_);
+    this->storeAndBlendOld(rhoU_);
+    this->storeAndBlendOld(rhoE_);
+    this->storeAndBlendOld(rhoEu_);
+
     dimensionedScalar dT = rho_.time().deltaT();
-    rho_ = rhoOld - dT*deltaRho;
+    rho_ -= dT*deltaRho;
     rho_.correctBoundaryConditions();
 
     vector solutionDs((vector(rho_.mesh().solutionD()) + vector::one)/2.0);
-    rhoU_ = cmptMultiply(rhoUOld - dT*deltaRhoU, solutionDs);
-    rhoE_ = rhoEOld - dT*deltaRhoE;
-    rhoEu_ = rhoEuOld - dT*deltaRhoEu;
+    rhoU_ -= cmptMultiply(dT*deltaRhoU, solutionDs);
+    rhoE_ -= dT*deltaRhoE;
+    rhoEu_ -= dT*deltaRhoEu;
 }
 
 

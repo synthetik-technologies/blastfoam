@@ -1,3 +1,0 @@
-refineCutMesh.C
-
-EXE = $(BLAST_APPBIN)/refineCutMesh

@@ -1,3 +1,0 @@
-Test-immersedBoundaryObject_collision.C
-
-EXE = $(BLAST_APPBIN)/Test-immersedBoundaryObject_collision

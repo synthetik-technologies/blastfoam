@@ -34,37 +34,7 @@ fluxSchemes/phaseFluxSchemes/HLLC/HLLCPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Kurganov/KurganovPhaseFluxScheme.C
 fluxSchemes/phaseFluxSchemes/Tadmor/TadmorPhaseFluxScheme.C
 
-finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresGrads.C
-finiteVolume/gradSchemes/extendedLeastSquaresGrad/extendedLeastSquaresVectors.C
-
-globalPolyPatches/standAlonePatch/standAlonePatch.C
-globalPolyPatches/globalPolyPatch/globalPolyPatch.C
-globalPolyPatches/coupledGlobalPolyPatch/coupledGlobalPolyPatch.C
-globalPolyPatches/globalPolyBoundaryMesh/globalPolyBoundaryMesh.C
-
-patchToPatchMappings = globalPolyPatches/coupledGlobalPolyPatch/patchToPatchMappings
-$(patchToPatchMappings)/patchToPatchMapping/patchToPatchMapping.C
-$(patchToPatchMappings)/primitive/primitivePatchToPatchMapping.C
-$(patchToPatchMappings)/directMap/directMapPatchToPatchMapping.C
-
-AMI = $(patchToPatchMappings)/ami
-$(AMI)/newAMIInterpolation/newAMIInterpolationName.C
-$(AMI)/amiZoneInterpolation/amiZoneInterpolation.C
-$(AMI)/amiPatchToPatchMapping.C
-
-GGI = $(patchToPatchMappings)/ggi
-$(GGI)/ggiPatchToPatchMapping.C
-$(GGI)/GGIInterpolation/GGIInterpolationName.C
-
-RBF = $(patchToPatchMappings)/rbf
-$(RBF)/RBFInterpolation/RBFInterpolation.C
-$(RBF)/rbfPatchToPatchMapping.C
-
-fvPatchFields/derived/globalMapped/globalMappedFvPatchFields.C
-
 pointPatchFields/derived/fixedSlip/fixedSlipPointPatchFields.C
-pointPatchFields/derived/globalInterpolated/globalInterpolatedPointPatchFields.C
-pointPatchFields/derived/globalMapped/globalMappedPointPatchFields.C
 
 MUSCLReconstruction/MUSCLReconstructionScheme/MUSCLReconstructionSchemes.C
 MUSCLReconstruction/none/noneMUSCLReconstructionSchemes.C
@@ -72,9 +42,6 @@ MUSCLReconstruction/standard/standardMUSCLReconstructionSchemes.C
 MUSCLReconstruction/upwind/upwindMUSCLReconstructionSchemes.C
 MUSCLReconstruction/linear/linearMUSCLReconstructionSchemes.C
 MUSCLReconstruction/quadratic/quadraticMUSCLReconstructionSchemes.C
-
-
-levelSetModel/levelSetModel.C
 
 #RefineBalanceMeshObject/RefineBalanceMeshObject.C
 

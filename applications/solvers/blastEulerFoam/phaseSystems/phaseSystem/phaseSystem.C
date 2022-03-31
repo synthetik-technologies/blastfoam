@@ -52,6 +52,10 @@ namespace Foam
 {
     defineTypeNameAndDebug(phaseSystem, 0);
 }
+
+const Foam::dimensionedScalar
+Foam::phaseSystem::zeroMDot(dimDensity/dimTime, 0.0);
+
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
 void Foam::phaseSystem::generatePairs
@@ -868,8 +872,16 @@ Foam::phaseSystem::phaseSystem
 
     if (phaseModels_.size() == 2)
     {
-        phaseModels_[0].solveAlpha(true);
-        phaseModels_[1].solveAlpha(false);
+        if (phaseModels_[1].slavePressure())
+        {
+            phaseModels_[1].solveAlpha(true);
+            phaseModels_[0].solveAlpha(false);
+        }
+        else
+        {
+            phaseModels_[0].solveAlpha(true);
+            phaseModels_[1].solveAlpha(false);
+        }
     }
     else
     {
@@ -1330,7 +1342,7 @@ Foam::phaseSystem::mDot(const phaseModel& phase1, const phaseModel& phase2) cons
     (
         volScalarField::New
         (
-            IOobject::groupName("mDot", phase1.name()),
+            "mD" + phase1.name() + "." + phase2.name(),
             mesh_,
             dimensionedScalar(dimDensity/dimTime, 0.0)
         )
@@ -1350,50 +1362,67 @@ Foam::phaseSystem::mDot(const phaseModel& phase1, const phaseModel& phase2) cons
     return tmpmDoti;
 }
 
-
-Foam::tmp<Foam::volVectorField>
-Foam::phaseSystem::mDotU(const phaseModel& phase1, const phaseModel& phase2) const
+Foam::tmp<Foam::volScalarField>
+Foam::phaseSystem::mDotByRho
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
 {
-    tmp<volVectorField> tmpmDotUi
-    (
-        volVectorField::New
-        (
-            IOobject::groupName("mDotU", phase1.name()),
-            mesh_,
-            dimensionedVector(dimDensity*dimVelocity/dimTime, Zero)
-        )
-    );
-    volVectorField& mDotUi = tmpmDotUi.ref();
-    phasePairKey key1(phase1.name(), phase2.name(), true);
-    phasePairKey key2(phase2.name(), phase1.name(), true);
-    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
-
-    volScalarField mD
-    (
-        volScalarField::New
-        (
-            "mD" + phase1.name()+"."+phase2.name(),
-            mesh_,
-            dimensionedScalar("0", dimDensity/dimTime, 0.0)
-        )
-    );
-    if (mDots_.found(key1))
-    {
-        mD += *mDots_[key1];
-    }
-    if (mDots_.found(key2))
-    {
-        mD -= *mDots_[key2];
-    }
-    mDotUi += max(mD, zeroM)*phase2.U() + min(mD, zeroM)*phase1.U();
-    return tmpmDotUi;
+    return mDotByRho(mDot(phase2, phase2)(), phase1, phase2);
 }
 
 
 Foam::tmp<Foam::volScalarField>
-Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) const
+Foam::phaseSystem::mDotByRho
+(
+    const volScalarField& mD,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
 {
-    tmp<volScalarField> tmpmDotEi
+    return
+        volScalarField::New
+        (
+            IOobject::groupName("mDotByRho", phase1.name()),
+            max(mD, zeroMDot)/phase2.rho() + min(mD, zeroMDot)/phase1.rho()
+        );
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::phaseSystem::mDotU
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return mDotU(mDot(phase1, phase2), phase1, phase2);
+}
+
+
+Foam::tmp<Foam::volVectorField> Foam::phaseSystem::mDotU
+(
+    const volScalarField& mD,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return
+        volVectorField::New
+        (
+            IOobject::groupName("mDotU", phase1.name()),
+            max(mD, zeroMDot)*phase2.U() + min(mD, zeroMDot)*phase1.U()
+        );
+}
+
+Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotE
+(
+    const volScalarField& mD,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    tmp<volScalarField> tmDotEi
     (
         volScalarField::New
         (
@@ -1402,32 +1431,11 @@ Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) con
             dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
         )
     );
-    volScalarField& mDotEi = tmpmDotEi.ref();
-    phasePairKey key1(phase1.name(), phase2.name(), true);
-    phasePairKey key2(phase2.name(), phase1.name(), true);
-    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
-    volScalarField mD
-    (
-        volScalarField::New
-        (
-            "mD" + phase1.name()+"."+phase2.name(),
-            mesh_,
-            dimensionedScalar("0", dimDensity/dimTime, 0.0)
-        )
-    );
+    volScalarField& mDotEi = tmDotEi.ref();
 
     volScalarField hc(phase1.thermo().hc() - phase2.thermo().hc());
-
-    if (mDots_.found(key1))
-    {
-        mD += *mDots_[key1];
-    }
-    if (mDots_.found(key2))
-    {
-        mD -= *mDots_[key2];
-    }
-    volScalarField mD21(max(mD, zeroM));
-    volScalarField mD12(min(mD, zeroM));
+    volScalarField mD21(max(mD, zeroMDot));
+    volScalarField mD12(min(mD, zeroMDot));
     mDotEi += mD21*phase2.he() + mD12*phase1.he() + mD21*hc;
 
     if (phase1.totalEnergy())
@@ -1443,7 +1451,48 @@ Foam::phaseSystem::mDotE(const phaseModel& phase1, const phaseModel& phase2) con
         mDotEi += mD21*K2 + mD12*K1;
     }
 
-    return tmpmDotEi;
+    return tmDotEi;
+}
+
+
+Foam::tmp<Foam::volScalarField>
+Foam::phaseSystem::mDotE
+(
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    return mDotE(mDot(phase1, phase2)(), phase1, phase2);
+}
+
+
+Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotPTE
+(
+    const volScalarField& mD,
+    const phaseModel& phase1,
+    const phaseModel& phase2
+) const
+{
+    tmp<volScalarField> tmDotPTEi
+    (
+        volScalarField::New
+        (
+            IOobject::groupName("mDotPTE", phase1.name()),
+            mesh_,
+            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
+        )
+    );
+    volScalarField& mDotPTEi = tmDotPTEi.ref();
+
+    if (phase1.granular())
+    {
+        mDotPTEi += min(mD, zeroMDot)*1.5*phase1.Theta();
+    }
+    if (phase2.granular())
+    {
+        mDotPTEi += max(mD, zeroMDot)*1.5*phase2.Theta();
+    }
+    return tmDotPTEi;
 }
 
 
@@ -1453,31 +1502,9 @@ Foam::tmp<Foam::volScalarField> Foam::phaseSystem::mDotPTE
     const phaseModel& phase2
 ) const
 {
-    tmp<volScalarField> tmpmDotPTEi
-    (
-        volScalarField::New
-        (
-            IOobject::groupName("mDotPTE", phase1.name()),
-            mesh_,
-            dimensionedScalar(dimDensity*sqr(dimVelocity)/dimTime, 0.0)
-        )
-    );
-    if (!phase1.granular())
-    {
-        return tmpmDotPTEi;
-    }
-
-    volScalarField& mDotPTEi = tmpmDotPTEi.ref();
-    phasePairKey key1(phase1.name(), phase2.name(), true);
-
-    dimensionedScalar zeroM(dimDensity/dimTime, 0.0);
-    if (mDots_.found(key1))
-    {
-        const volScalarField& mD(*mDots_[key1]);
-        mDotPTEi += min(mD, zeroM)*1.5*phase1.Theta();
-    }
-    return tmpmDotPTEi;
+    return mDotPTE(mDot(phase1, phase2), phase1, phase2);
 }
+
 
 
 bool Foam::phaseSystem::read()

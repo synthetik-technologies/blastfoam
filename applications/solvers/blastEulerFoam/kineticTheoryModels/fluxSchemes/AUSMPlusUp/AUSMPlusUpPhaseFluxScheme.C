@@ -150,7 +150,7 @@ Foam::phaseFluxSchemes::AUSMPlusUp::AUSMPlusUp
     D_(dict_.lookupOrDefault("D", 1.0)),
     cutOffMa_(dict_.lookupOrDefault("cutOffMa", 1e-10)),
     residualAlphaRho_(dict_.lookupOrDefault("residualAlphaRho", 1e-6)),
-    residualU_(dict_.lookupOrDefault("residualU", 1e-10))
+    residualC_(dict_.lookupOrDefault("residualC", 1e-3))
 {}
 
 
@@ -218,15 +218,19 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
 
     scalar c12
     (
-        sqrt
+        max
         (
-            max
+            sqrt
             (
-                (alphaOwn*sqr(cOwn) + alphaNei*sqr(cNei))
-               /Foam::max(alphaOwn + alphaNei, 1e-6),
-                0.0
-            )
-        ) + residualU_
+                max
+                (
+                    (alphaOwn*sqr(cOwn) + alphaNei*sqr(cNei))
+                   /Foam::max(alphaOwn + alphaNei, 1e-6),
+                    0.0
+                )
+            ),
+            residualC_
+        )
     );
 
     // Compute slpit Mach numbers
@@ -266,7 +270,10 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
     (
         Ma4Own + Ma4Nei
       - 2.0*Kp/fa_*max(1.0 - sigma*MaBarSqr, 0.0)*(pNei - pOwn)
-       /((alphaOwn*rhoOwn + alphaNei*rhoNei + residualAlphaRho_)*sqr(c12))
+       /(
+            max(alphaOwn*rhoOwn + alphaNei*rhoNei, residualAlphaRho_)
+           *max(sqr(c12), residualC_)
+        )
     );
 
     scalar p5Own(P5(MaOwn, 1, xi));
@@ -277,14 +284,14 @@ void Foam::phaseFluxSchemes::AUSMPlusUp::calculateFluxes
         (
             facei,
             patchi,
-           -Ku*fa_*(c12 - residualU_)*p5Own*p5Nei
+           -Ku*fa_*c12*p5Own*p5Nei
            *(alphaOwn*rhoOwn + alphaNei*rhoNei)*(UvNei - UvOwn)
           + p5Own*pOwn + p5Nei*pNei,
             pf_
         );
     scalar F
     (
-        (c12 - residualU_)
+        c12
        *(1.0 + mag(Ma12)*(1.0 - G/2.0))
        *alphaP
        *(alphaOwn*rhoOwn - alphaNei*rhoNei)/(2.0*alphaMax)
