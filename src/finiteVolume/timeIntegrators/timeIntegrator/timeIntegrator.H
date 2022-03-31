@@ -103,6 +103,9 @@ protected:
     //- Current step V0/V
     volScalarField::Internal V0byV_;
 
+    //- Current time index
+    label curTimeIndex_;
+
     //- FvModels
     mutable UautoPtr<fvModels> modelsPtr_;
 
@@ -113,6 +116,7 @@ protected:
     mutable hashedWordList solveFields_;
 
     //- Stored old fields
+    mutable wordHashSet savedOldFields_;
     mutable HashPtrTable<PtrList<volScalarField>> oldScalarFields_;
     mutable HashPtrTable<PtrList<volVectorField>> oldVectorFields_;
     mutable HashPtrTable<PtrList<volSphericalTensorField>>
@@ -128,67 +132,76 @@ protected:
     mutable HashPtrTable<PtrList<volSymmTensorField>> deltaSymmTensorFields_;
     mutable HashPtrTable<PtrList<volTensorField>> deltaTensorFields_;
 
-    //- Update all stored systems
-    void updateAll();
 
-    //- Post update of all stored systems
-    void postUpdateAll();
+    // Private member functions
 
-    //- Initialize ODE sizes
-    void initialize();
+        //- Update all stored systems
+        void updateAll();
 
-            //- Insert a list of old fields into the given hash table
-            template<class FieldType>
-            void insertOldList
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Post update of all stored systems
+        void postUpdateAll();
 
-            //- Insert a list of delta fields into the given hash table
-            template<class FieldType>
-            void insertDeltaList
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Initialize ODE sizes
+        void initialize();
 
-            //- Return the List of old fields
-            template<class FieldType>
-            const PtrList<FieldType>& lookupOld
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Insert a list of old fields into the given hash table
+        template<class FieldType>
+        void insertOldList
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of old fields
-            template<class FieldType>
-            PtrList<FieldType>& lookupOld
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            );
+        //- Insert a list of delta fields into the given hash table
+        template<class FieldType>
+        void insertDeltaList
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of delta fields
-            template<class FieldType>
-            const PtrList<FieldType>& lookupDelta
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            ) const;
+        //- Return the List of old fields
+        template<class FieldType>
+        const PtrList<FieldType>& lookupOld
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
-            //- Return the List of delta fields
-            template<class FieldType>
-            PtrList<FieldType>& lookupDelta
-            (
-                HashPtrTable<PtrList<FieldType>>& table,
-                const FieldType& f
-            );
+        //- Return the List of old fields
+        template<class FieldType>
+        PtrList<FieldType>& lookupOld
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        );
 
-            //- Clear and resize stored old fields
-            template<class FieldType>
-            void clearFields(HashPtrTable<PtrList<FieldType>>& table);
+        //- Return the List of delta fields
+        template<class FieldType>
+        const PtrList<FieldType>& lookupDelta
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        ) const;
 
+        //- Return the List of delta fields
+        template<class FieldType>
+        PtrList<FieldType>& lookupDelta
+        (
+            HashPtrTable<PtrList<FieldType>>& table,
+            const FieldType& f
+        );
+
+        //- Clear and resize stored old fields
+        template<class FieldType>
+        void clearOldFields(HashPtrTable<PtrList<FieldType>>& table);
+
+        template<class FieldType>
+        void clearDeltaFields(HashPtrTable<PtrList<FieldType>>& table);
+
+        //- Reset all fields of the given type to the oldTime
+        template<class FieldType>
+        void resetFields();
 
 public:
 
@@ -237,6 +250,9 @@ public:
 
         //- Clear all ODE fields (old/delta)
         void clear();
+
+        //- Reset fields to the old time
+        void reset();
 
         //- Create/lookup fvModels/fvConstraints
         void createModels() const;

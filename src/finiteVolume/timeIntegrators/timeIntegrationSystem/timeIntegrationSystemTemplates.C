@@ -38,11 +38,13 @@ void Foam::timeIntegrationSystem::storeOld
 {
     if (step() == 1)
     {
-        // Correct old field for mesh motion before storage
-        if (meshPtr_->moving() && conservative)
-        {
-            f.ref() *= timeInt_->V0byV();
-        }
+        f.storeOldTimes();
+    }
+
+    // Correct old field for mesh motion before storage
+    if (meshPtr_->moving() && conservative)
+    {
+        f.ref() *= timeInt_->V0byV();
     }
 
     // Store fields if needed later
@@ -58,7 +60,7 @@ void Foam::timeIntegrationSystem::storeOld
             fList.set
             (
                 i,
-                new FieldType
+                FieldType::New
                 (
                     f.name() + "_old_" + Foam::name(step() - 1),
                     f
@@ -100,7 +102,7 @@ void Foam::timeIntegrationSystem::storeDelta
             fList.set
             (
                 i,
-                new FieldType
+                FieldType::New
                 (
                     f.name() + "_delta_" + Foam::name(step() - 1),
                     f
@@ -281,7 +283,7 @@ Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcDelta(const FieldType& f) 
 {
     if (!timeInt_.valid())
     {
-        return tmp<FieldType>(new FieldType(f));
+        return FieldType::New(f.name(), f);
     }
     return calcDelta(f, timeInt_->deltaFields(f));
 }
@@ -305,7 +307,7 @@ Foam::tmp<FieldType> Foam::timeIntegrationSystem::calcAndStoreDelta(const FieldT
 {
     if (!timeInt_.valid())
     {
-        return tmp<FieldType>(new FieldType(f));
+        return tmp<FieldType>(FieldType::New(f.name(), f));
     }
    return calcAndStoreDelta(f, timeInt_->deltaFields(f));
 }

@@ -25,6 +25,8 @@ License
 
 #include "timeIntegrator.H"
 #include "timeIntegrationSystem.H"
+#include "pointFields.H"
+#include "surfaceFields.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -90,6 +92,7 @@ Foam::timeIntegrator::timeIntegrator(const fvMesh& mesh, const label)
             1.0
         )
     ),
+    curTimeIndex_(-1),
     modelsPtr_(nullptr),
     constraintsPtr_(nullptr),
     solveFields_()
@@ -237,6 +240,12 @@ void Foam::timeIntegrator::preUpdateMesh()
 
 void Foam::timeIntegrator::integrate()
 {
+    if (mesh_.time().timeIndex() == curTimeIndex_)
+    {
+        reset();
+    }
+    curTimeIndex_ = mesh_.time().timeIndex();
+
     // Update and store original fields
     for (stepi_ = 1; stepi_ <= as_.size(); stepi_++)
     {
@@ -258,7 +267,6 @@ void Foam::timeIntegrator::integrate()
         }
     }
 
-
     this->postUpdateAll();
     if (modelsPtr_.valid())
     {
@@ -275,16 +283,39 @@ void Foam::timeIntegrator::clear()
         systems_[i].clear();
     }
 
-    clearFields(oldScalarFields_);
-    clearFields(oldVectorFields_);
-    clearFields(oldSphTensorFields_);
-    clearFields(oldSymmTensorFields_);
-    clearFields(oldTensorFields_);
-    clearFields(deltaScalarFields_);
-    clearFields(deltaVectorFields_);
-    clearFields(deltaSphTensorFields_);
-    clearFields(deltaSymmTensorFields_);
-    clearFields(deltaTensorFields_);
+    clearOldFields(oldScalarFields_);
+    clearOldFields(oldVectorFields_);
+    clearOldFields(oldSphTensorFields_);
+    clearOldFields(oldSymmTensorFields_);
+    clearOldFields(oldTensorFields_);
+    clearDeltaFields(deltaScalarFields_);
+    clearDeltaFields(deltaVectorFields_);
+    clearDeltaFields(deltaSphTensorFields_);
+    clearDeltaFields(deltaSymmTensorFields_);
+    clearDeltaFields(deltaTensorFields_);
+}
+
+
+void Foam::timeIntegrator::reset()
+{
+    DebugInfo<<"Resetting fields to old time"<<endl;
+    resetFields<volScalarField>();
+    resetFields<volVectorField>();
+    resetFields<volSymmTensorField>();
+    resetFields<volSphericalTensorField>();
+    resetFields<volTensorField>();
+
+    resetFields<surfaceScalarField>();
+    resetFields<surfaceVectorField>();
+    resetFields<surfaceSymmTensorField>();
+    resetFields<surfaceSphericalTensorField>();
+    resetFields<surfaceTensorField>();
+
+    resetFields<pointScalarField>();
+    resetFields<pointVectorField>();
+    resetFields<pointSymmTensorField>();
+    resetFields<pointSphericalTensorField>();
+    resetFields<pointTensorField>();
 }
 
 
