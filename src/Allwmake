@@ -25,7 +25,7 @@ wmake $targetType solidModels
 wmake $targetType levelSet
 
 # -- Optional library for use with solids4foam
-wmake $targetType solids4Foam
+solids4Foam/Allwmake
 
 # -----------------------------------------------------------------------------
 
