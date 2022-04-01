@@ -23,39 +23,38 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef IntegratorsFwd_H
-#define IntegratorsFwd_H
+#include "integrator.H"
 
-#include "Integrator.H"
-#include "vector.H"
-#include "symmTensor.H"
-#include "sphericalTensor.H"
-#include "tensor.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
 namespace Foam
 {
-    typedef Integrator<scalar> scalarIntegrator;
-    typedef Integrator<vector> vectorIntegrator;
-    typedef Integrator<symmTensor> symmTensorIntegrator;
-    typedef Integrator<sphericalTensor> sphericalTensorIntegrator;
-    typedef Integrator<tensor> tensorIntegrator;
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-defineAdaptiveIntegrator(scalar);
-defineAdaptiveIntegrator(vector);
-defineAdaptiveIntegrator(symmTensor);
-defineAdaptiveIntegrator(sphericalTensor);
-defineAdaptiveIntegrator(tensor);
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
+    defineTypeNameAndDebug(integrator, 0);
 }
 
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-#endif
+Foam::integrator::integrator(const dictionary& dict)
+:
+    adaptive_(dict.lookupOrDefault<bool>("adaptive", true)),
+    tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    maxSplits_(dict.lookupOrDefault<label>("maxSplits", 10)),
+    nIntervals_(dict.lookupOrDefault<label>("nIntervals", 10))
+{}
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+void Foam::integrator::reset(const scalar dx) const
+{
+    if (adaptive())
+    {
+        minDx_ = mag(dx)/scalar(pow(2, maxSplits_));
+        intervals_ = 1;
+    }
+    else
+    {
+        intervals_ = nIntervals_;
+    }
+}
 
 // ************************************************************************* //

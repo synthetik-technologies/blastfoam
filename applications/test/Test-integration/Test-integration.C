@@ -6,24 +6,20 @@
 using namespace Foam;
 
 
-createUnivariateEquation2
+createUnivariateEquation0
 (
     testEqn1,
     scalar,
     0.0, 2.5,
-    Foam::cos(x) - Foam::pow3(x),
-    -Foam::sin(x) - 3.0*Foam::sqr(x),
-    -Foam::cos(x) - 6.0*x
+    Foam::cos(x) - Foam::pow3(x)
 );
 
-createUnivariateEquation2
+createUnivariateEquation0
 (
     testEqn2,
     vector,
     0.0, 2.5,
-    cmptPow(vector(x, x, x), vector::one*3.0),
-    3.0*cmptPow(vector(x, x, x), vector::one*2.0),
-    6.0*vector(x, x, x)
+    vector(Foam::pow(x, 0.1257), 3.2*x*Foam::sin(x), Foam::exp(-x))
 );
 
 int main(int argc, char *argv[])
@@ -33,7 +29,7 @@ int main(int argc, char *argv[])
     testEqn2 eqn2;
     dictionary dict;
 
-    labelList nIntervals({1, 5, 10, 25, 50});
+    labelList nIntervals({1, 5, 10, 25, 100});
 
     wordList intMethods1
     (
@@ -46,15 +42,20 @@ int main(int argc, char *argv[])
     forAll(intMethods1, i)
     {
         dict.set("integrator", intMethods1[i]);
+        dict.set("tolerance", 1e-9);
+        dict.set("maxSteps", max(nIntervals));
+        dict.set("nNodes", 2);
         autoPtr<scalarIntegrator> integrator
         (
             scalarIntegrator::New(eqn1, dict)
         );
-
+        scalar est = integrator->integrate(0.0, 2.5, 0);
+        Info<< "\t" << integrator->nIntervals() << " adaptive intervals: "
+            << "estimate=" << est << ", error=" << mag(est - ans1) <<endl;
         forAll(nIntervals, inti)
         {
             integrator->setNIntervals(nIntervals[inti]);
-            scalar est = integrator->integrate(0, 2.5, 0);
+            est = integrator->integrate(0.0, 2.5, 0);
             Info<< "\t" << integrator->nIntervals() << " steps: "
                 << "estimate=" << est << ", error=" << mag(est - ans1) <<endl;
         }
@@ -68,15 +69,26 @@ int main(int argc, char *argv[])
 
     Info<< "Integration of " << eqn2.printfx() << " in (0, 2.5)"
         << endl;
-    const vector ans2(9.76563*vector::one);
+    const vector ans2
+    (
+        2.491944667998765,
+        8.324259785508131,
+        0.917915001376102
+    );
     forAll(intMethods2, i)
     {
         dict.set("integrator", intMethods2[i]);
+        dict.set("tolerance", 1e-9);
+        dict.set("maxSteps", max(nIntervals)*2);
+        dict.set("nNodes", 5);
         autoPtr<vectorIntegrator> integrator
         (
             vectorIntegrator::New(eqn2, dict)
         );
 
+        vector est = integrator->integrate(0.0, 2.5, 0);
+        Info<< "\t" << integrator->nIntervals() << " adaptive steps: "
+            << "estimate=" << est << ", error=" << mag(est - ans2) <<endl;
         forAll(nIntervals, inti)
         {
             integrator->setNIntervals(nIntervals[inti]);

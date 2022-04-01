@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::Simpson13Integrator
+    Foam::BooleIntegrator
 
 Description
-   Simpson 1/3 integration method
+    Simpson 3/8 integration method
 
 SourceFiles
-    Simpson13Integrator.C
+    BooleIntegrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Simpson13Integrator_H
-#define Simpson13Integrator_H
+#ifndef BooleIntegrator_H
+#define BooleIntegrator_H
 
 #include "Integrator.H"
 #include "typeInfo.H"
@@ -45,22 +45,29 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class Simpson13Integrator Declaration
+                        Class BooleIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class Simpson13Integrator
+class BooleIntegrator
 :
     public Integrator<Type>
 {
+// Private data
+
     typedef univariateEquation<Type> equationType;
 
-        //- Basic integration method
+    const scalar oneThird = 1.0/3.0;
+    const scalar twoThirds = 2.0/3.0;
+
+        //- Solve the root
         virtual Type integrate_
         (
             const scalar dx,
             const Type& f0,
-            const Type& fm,
+            const Type& f14,
+            const Type& f12,
+            const Type& f34,
             const Type& f1
         ) const;
 
@@ -71,7 +78,9 @@ class Simpson13Integrator
             const scalar x0,
             const scalar x1,
             const Type& f0,
-            const Type& fm,
+            const Type& f14,
+            const Type& f12,
+            const Type& f34,
             const Type& f1,
             const scalar tol,
             const label li
@@ -80,33 +89,33 @@ class Simpson13Integrator
 public:
 
     //- Runtime type information
-    TypeName("Simpson13");
+    TypeName("Boole");
 
     // Constructors
 
         //- Construct for given Equation
-        Simpson13Integrator
+        BooleIntegrator
         (
             const equationType& eqn,
             const dictionary& dict
         );
 
         //- Construct for given Equation
-        Simpson13Integrator
+        BooleIntegrator
         (
             const equationType& eqn,
             const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
-        Simpson13Integrator(const Simpson13Integrator<Type>&) = delete;
+        BooleIntegrator(const BooleIntegrator<Type>&) = delete;
 
 
     //- Destructor
-    virtual ~Simpson13Integrator()
+    virtual ~BooleIntegrator()
     {}
 
-    // Member Operators
+    // Member Functions
 
         //- Integrate the equation
         virtual Type integrate
@@ -117,7 +126,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const Simpson13Integrator<Type>&) = delete;
+        void operator=(const BooleIntegrator<Type>&) = delete;
 };
 
 
@@ -128,7 +137,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "Simpson13Integrator.C"
+#include "BooleIntegrator.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

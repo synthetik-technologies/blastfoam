@@ -30,6 +30,7 @@ rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
 rootSolvers/goodBroyden/goodBroydenRootSolver.C
 rootSolvers/badBroyden/badBroydenRootSolver.C
 
+integrators/Integrator/integrator.C
 integrators/Integrator/Integrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C

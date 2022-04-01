@@ -55,10 +55,30 @@ class TrapezoidalIntegrator
 {
     typedef univariateEquation<Type> equationType;
 
+        //- Solve the root
+        virtual Type integrate_
+        (
+            const scalar dx,
+            const Type& f0,
+            const Type& f1
+        ) const;
+
+        //- Solve the root
+        virtual Type integrate_
+        (
+            const Type& Q,
+            const scalar x0,
+            const scalar x1,
+            const Type& f0,
+            const Type& f1,
+            const scalar tol,
+            const label li
+        ) const;
+
 public:
 
     //- Runtime type information
-    TypeName("Trapezoidal");
+    TypeName("trapezoidal");
 
     // Constructors
 
@@ -73,8 +93,7 @@ public:
         TrapezoidalIntegrator
         (
             const equationType& eqn,
-            const label nSteps,
-            const label nIntervals
+            const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
@@ -88,13 +107,14 @@ public:
 
     // Member Functions
 
-        //- Solve the root
+        //- Integrate the equation
         virtual Type integrate
         (
             const scalar x0,
             const scalar x1,
             const label li
         ) const;
+
 
     // Member Operators
 

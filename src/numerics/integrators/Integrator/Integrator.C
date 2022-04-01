@@ -37,7 +37,11 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 {
     word integratorTypeName
     (
-        dict.lookupOrDefault("integrator", Simpson13Integrator<Type>::typeName)
+        dict.lookupOrDefault<word>
+        (
+            "integrator",
+            Simpson13Integrator<Type>::typeName
+        )
     );
     Info<< "Selecting integrator " << integratorTypeName << endl;
 
@@ -62,25 +66,23 @@ template<class Type>
 Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
 (
     const equationType& eqn,
-    const word& integratorTypeName,
-    const label nSteps,
-    const label nIntervals
+    const integrator& inter
 )
 {
     typename inputsConstructorTable::iterator cstrIter =
-        inputsConstructorTablePtr_->find(integratorTypeName);
+        inputsConstructorTablePtr_->find(inter.type());
 
     if (cstrIter == inputsConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown integrator type "
-            << integratorTypeName << nl << nl
+            << inter.type() << nl << nl
             << "Valid integrators are : " << endl
             << inputsConstructorTablePtr_->sortedToc()
             << exit(FatalError);
     }
 
-    return autoPtr<Integrator<Type>>(cstrIter()(eqn, nSteps, nIntervals));
+    return autoPtr<Integrator<Type>>(cstrIter()(eqn, inter));
 }
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
@@ -92,9 +94,8 @@ Foam::Integrator<Type>::Integrator
     const dictionary& dict
 )
 :
-    eqnPtr_(&eqn),
-    nSteps_(dict.lookupOrDefault<label>("nSteps", 10)),
-    nIntervals_(nSteps_)
+    integrator(dict),
+    eqnPtr_(&eqn)
 {}
 
 
@@ -102,16 +103,11 @@ template<class Type>
 Foam::Integrator<Type>::Integrator
 (
     const equationType& eqn,
-    const label nSteps,
-    const label nIntervals
+    const integrator& inter
 )
 :
-    eqnPtr_(&eqn),
-    nSteps_(nSteps),
-    nIntervals_(nIntervals)
+    integrator(inter),
+    eqnPtr_(&eqn)
 {}
-
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
 
 // ************************************************************************* //

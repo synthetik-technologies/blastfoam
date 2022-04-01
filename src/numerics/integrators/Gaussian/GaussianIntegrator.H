@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::Simpson13Integrator
+    Foam::GaussianIntegrator
 
 Description
-   Simpson 1/3 integration method
+    Variable node Gaussian quadrature
 
 SourceFiles
-    Simpson13Integrator.C
+    GaussianIntegrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Simpson13Integrator_H
-#define Simpson13Integrator_H
+#ifndef GaussianIntegrator_H
+#define GaussianIntegrator_H
 
 #include "Integrator.H"
 #include "typeInfo.H"
@@ -45,24 +45,31 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class Simpson13Integrator Declaration
+                        Class GaussianIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class Simpson13Integrator
+class GaussianIntegrator
 :
     public Integrator<Type>
 {
+// Private data
+
     typedef univariateEquation<Type> equationType;
 
-        //- Basic integration method
-        virtual Type integrate_
-        (
-            const scalar dx,
-            const Type& f0,
-            const Type& fm,
-            const Type& f1
-        ) const;
+    //- Gauss weights
+    scalarList ws_;
+
+    //- Normalized positions
+    scalarList xs_;
+
+    // Private member functions
+
+        //- Set the weights and positions
+        void setQuadrature(const label N);
+
+        //- Solve the root
+        virtual Type integrate_(const scalar dx, const PtrList<Type>& fs) const;
 
         //- Solve the root
         virtual Type integrate_
@@ -70,9 +77,8 @@ class Simpson13Integrator
             const Type& Q,
             const scalar x0,
             const scalar x1,
-            const Type& f0,
-            const Type& fm,
-            const Type& f1,
+            const scalarList& xs,
+            const PtrList<Type>& fs,
             const scalar tol,
             const label li
         ) const;
@@ -80,33 +86,33 @@ class Simpson13Integrator
 public:
 
     //- Runtime type information
-    TypeName("Simpson13");
+    TypeName("Gaussian");
 
     // Constructors
 
         //- Construct for given Equation
-        Simpson13Integrator
+        GaussianIntegrator
         (
             const equationType& eqn,
             const dictionary& dict
         );
 
         //- Construct for given Equation
-        Simpson13Integrator
+        GaussianIntegrator
         (
             const equationType& eqn,
             const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
-        Simpson13Integrator(const Simpson13Integrator<Type>&) = delete;
+        GaussianIntegrator(const GaussianIntegrator<Type>&) = delete;
 
 
     //- Destructor
-    virtual ~Simpson13Integrator()
+    virtual ~GaussianIntegrator()
     {}
 
-    // Member Operators
+    // Member Functions
 
         //- Integrate the equation
         virtual Type integrate
@@ -117,7 +123,7 @@ public:
         ) const;
 
         //- Disallow default bitwise assignment
-        void operator=(const Simpson13Integrator<Type>&) = delete;
+        void operator=(const GaussianIntegrator<Type>&) = delete;
 };
 
 
@@ -128,7 +134,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "Simpson13Integrator.C"
+#include "GaussianIntegrator.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

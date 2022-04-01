@@ -53,7 +53,18 @@ class MidPointIntegrator
 :
     public Integrator<Type>
 {
-        typedef univariateEquation<Type> equationType;
+    typedef univariateEquation<Type> equationType;
+
+    //- Recursive integration
+    virtual Type integrate_
+    (
+        const Type& Q,
+        const scalar x0,
+        const scalar x1,
+        const scalar tol,
+        const label li
+    ) const;
+
 
 public:
 
@@ -73,8 +84,7 @@ public:
         MidPointIntegrator
         (
             const equationType& eqn,
-            const label nSteps,
-            const label nIntervals
+            const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
@@ -88,7 +98,7 @@ public:
 
     // Member Functions
 
-        //- Solve the root
+        //- Integrate the equation
         virtual Type integrate
         (
             const scalar x0,

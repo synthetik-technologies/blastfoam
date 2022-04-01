@@ -31,6 +31,8 @@ License
 #include "TrapezoidalIntegrator.H"
 #include "Simpson13Integrator.H"
 #include "Simpson38Integrator.H"
+#include "BooleIntegrator.H"
+#include "GaussianIntegrator.H"
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -40,7 +42,9 @@ License
     makeIntegratorType(MidPointIntegrator, Type)                               \
     makeIntegratorType(TrapezoidalIntegrator, Type)                            \
     makeIntegratorType(Simpson13Integrator, Type)                              \
-    makeIntegratorType(Simpson38Integrator, Type)
+    makeIntegratorType(Simpson38Integrator, Type)                              \
+    makeIntegratorType(GaussianIntegrator, Type)                               \
+    makeIntegratorType(BooleIntegrator, Type)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

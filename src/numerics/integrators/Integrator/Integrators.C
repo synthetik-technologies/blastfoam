@@ -49,6 +49,35 @@ makeIntegratorTypes(tensor);
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+makeAdaptiveIntegrator
+(
+    mag(f1 - f2)/stabilise(mag(f1), small),
+    scalar
+);
+makeAdaptiveIntegrator
+(
+    mag(f1 - f2)/stabilise(mag(f1), small),
+    vector
+);
+makeAdaptiveIntegrator
+(
+    mag(f1 - f2)/stabilise(mag(f1), small),
+    symmTensor
+);
+makeAdaptiveIntegrator
+(
+    mag(f1 - f2)/stabilise(mag(f1), small),
+    sphericalTensor
+);
+makeAdaptiveIntegrator
+(
+    mag(f1 - f2)/stabilise(mag(f1), small),
+    tensor
+);
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
 } // End namespace Foam
 
 // ************************************************************************* //

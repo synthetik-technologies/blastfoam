@@ -22,114 +22,112 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::Simpson13Integrator
+    Foam::Integrator
 
 Description
-   Simpson 1/3 integration method
+    Generic class for integrating a given univariate equation.
 
 SourceFiles
-    Simpson13Integrator.C
+    integrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Simpson13Integrator_H
-#define Simpson13Integrator_H
+#ifndef integrator_H
+#define integrator_H
 
-#include "Integrator.H"
+#include "UnivariateEquation.H"
 #include "typeInfo.H"
-#include "autoPtr.H"
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class Simpson13Integrator Declaration
+                          Class integrator Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class Type>
-class Simpson13Integrator
-:
-    public Integrator<Type>
+class integrator
 {
-    typedef univariateEquation<Type> equationType;
+protected:
+    // Protected data
 
-        //- Basic integration method
-        virtual Type integrate_
-        (
-            const scalar dx,
-            const Type& f0,
-            const Type& fm,
-            const Type& f1
-        ) const;
+        //- Is the integration adaptive
+        bool adaptive_;
 
-        //- Solve the root
-        virtual Type integrate_
-        (
-            const Type& Q,
-            const scalar x0,
-            const scalar x1,
-            const Type& f0,
-            const Type& fm,
-            const Type& f1,
-            const scalar tol,
-            const label li
-        ) const;
+        //- Tolerance
+        scalar tolerance_;
+
+        //- Maximum number of domain splits
+        label maxSplits_;
+
+        //- Number of intervals
+        label nIntervals_;
+
+        mutable label evals_;
+        mutable label intervals_;
+        mutable scalar minDx_;
+
+        //- Reset counters and minimum spacing
+        void reset(const scalar dx) const;
+
 
 public:
 
     //- Runtime type information
-    TypeName("Simpson13");
+    TypeName("integrator");
 
     // Constructors
 
-        //- Construct for given Equation
-        Simpson13Integrator
-        (
-            const equationType& eqn,
-            const dictionary& dict
-        );
-
-        //- Construct for given Equation
-        Simpson13Integrator
-        (
-            const equationType& eqn,
-            const integrator& inter
-        );
-
-        //- Disallow default bitwise copy construction
-        Simpson13Integrator(const Simpson13Integrator<Type>&) = delete;
+        //- Construct for from dictinoary
+        integrator(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~Simpson13Integrator()
+    virtual ~integrator()
     {}
 
-    // Member Operators
 
-        //- Integrate the equation
-        virtual Type integrate
+    // Member Functions
+
+        //- Return if the integration is adaptive
+        virtual bool adaptive() const = 0;
+
+        //- Return the number of steps
+        label nSteps() const
+        {
+            return evals_;
+        }
+
+        //- Return the number of intervals
+        label nIntervals() const
+        {
+            return adaptive() ? intervals_ : nIntervals_;
+        }
+
+        //- Access the number of steps
+        virtual void setAdaptive
         (
-            const scalar x0,
-            const scalar x1,
-            const label li
-        ) const;
+            const label maxSplits = 10,
+            const scalar tol = 1e-6
+        )
+        {
+            adaptive_ = true;
+            maxSplits_ = maxSplits;
+            tolerance_ = tol;
+        }
 
-        //- Disallow default bitwise assignment
-        void operator=(const Simpson13Integrator<Type>&) = delete;
+        //- Access the number of intervals to use
+        virtual void setNIntervals(const label nIntervals)
+        {
+            adaptive_ = false;
+            nIntervals_ = nIntervals;
+        }
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-#include "Simpson13Integrator.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -35,6 +35,7 @@ SourceFiles
 #ifndef Integrator_H
 #define Integrator_H
 
+#include "integrator.H"
 #include "UnivariateEquation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -51,6 +52,8 @@ namespace Foam
 
 template<class Type>
 class Integrator
+:
+    public integrator
 {
 protected:
 
@@ -61,11 +64,32 @@ protected:
         //- Reference to Equation
         UautoPtr<const equationType> eqnPtr_;
 
-        //- Number of steps to integrate with
-        label nSteps_;
+        // Return the error give two values
+        scalar error(const Type& t1, const Type& t2) const
+        {
+            return great;
+        }
 
-        //- Number of intervals
-        label nIntervals_;
+        // Return the error give two values and spacing
+        scalar converged
+        (
+            const Type& t1,
+            const Type& t2,
+            const scalar dx,
+            const scalar tol
+        ) const
+        {
+            if (mag(dx) < minDx_)
+            {
+                return true;
+            }
+            else if (!adaptive())
+            {
+                return false;
+            }
+            return error(t1, t2) < tol;
+        }
+
 
 public:
 
@@ -89,10 +113,9 @@ public:
             inputs,
             (
                 const equationType& eqn,
-                const label nSteps,
-                const label nIntervals
+                const integrator& inter
             ),
-            (eqn, nSteps, nIntervals)
+            (eqn, inter)
         );
 
 
@@ -101,12 +124,11 @@ public:
         //- Construct for given Integrator
         Integrator(const equationType& eqn, const dictionary& dict);
 
-        //- Construct for given Integrator
+        //- Copy constructor with a new equation
         Integrator
         (
             const equationType& eqn,
-            const label nSteps,
-            const label nIntervals
+            const integrator& inter
         );
 
         //- Disallow default bitwise copy construction
@@ -126,9 +148,7 @@ public:
         static autoPtr<Integrator<Type>> New
         (
             const equationType& eqn,
-            const word& intType,
-            const label nSteps,
-            const label nIntervals
+            const integrator& inter
         );
 
 
@@ -139,23 +159,10 @@ public:
 
     // Member Functions
 
-        //- Return the number of steps
-        label nSteps() const
+        //- Return if the integration is adaptive
+        bool adaptive() const
         {
-            return nSteps_;
-        }
-
-        //- Return the number of intervals
-        label nIntervals() const
-        {
-            return nIntervals_;
-        }
-
-        //- Access the number of steps
-        virtual void setNIntervals(const label nIntervals)
-        {
-            nSteps_ = nIntervals;
-            nIntervals_ = nIntervals;
+            return false;
         }
 
         //- Set the equation to integrate
@@ -171,6 +178,7 @@ public:
             const scalar x1,
             const label li = -1
         ) const = 0;
+
 
     // Member Operators
 
@@ -206,6 +214,31 @@ public:
                                                                                \
     Integrator<Type>::addinputsConstructorToTable<IntegratorType<Type>>        \
     add##IntegratorType##Type##inputs##ConstructorToTable_;
+
+
+#define defineAdaptiveIntegrator(Type)                                         \
+    template<>                                                                 \
+    bool Integrator<Type>::adaptive() const;                                   \
+                                                                               \
+    template<>                                                                 \
+    scalar Integrator<Type>::error(const Type&, const Type&) const;
+
+#define defineAdaptiveIntegratorArgs(Dummy, Type)                              \
+    template<>                                                                 \
+    bool Integrator<Type>::adaptive() const;                                   \
+                                                                               \
+    template<>                                                                 \
+    scalar Integrator<Type>::error(const Type&, const Type&) const;
+
+#define makeAdaptiveIntegrator(Func, Type)                                     \
+    template<>                                                                 \
+    bool Integrator<Type>::adaptive() const {return adaptive_;}                \
+                                                                               \
+    template<>                                                                 \
+    scalar Integrator<Type>::error(const Type& f1, const Type& f2) const       \
+    {                                                                          \
+        return Func;                                                           \
+    }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

@@ -23,13 +23,13 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Simpson13Integrator.H"
+#include "BooleIntegrator.H"
 #include "addToRunTimeSelectionTable.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::Simpson13Integrator<Type>::Simpson13Integrator
+Foam::BooleIntegrator<Type>::BooleIntegrator
 (
     const equationType& eqn,
     const dictionary& dict
@@ -40,7 +40,7 @@ Foam::Simpson13Integrator<Type>::Simpson13Integrator
 
 
 template<class Type>
-Foam::Simpson13Integrator<Type>::Simpson13Integrator
+Foam::BooleIntegrator<Type>::BooleIntegrator
 (
     const equationType& eqn,
     const integrator& inter
@@ -49,28 +49,34 @@ Foam::Simpson13Integrator<Type>::Simpson13Integrator
     Integrator<Type>(eqn, inter)
 {}
 
+
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate_
+Type Foam::BooleIntegrator<Type>::integrate_
 (
     const scalar dx,
     const Type& f0,
-    const Type& fm,
+    const Type& f14,
+    const Type& f12,
+    const Type& f34,
     const Type& f1
 ) const
 {
-    return dx/6.0*(f0 + 4.0*fm + f1);
+    return dx/90.0*(7.0*(f0 + f1) + 32.0*(f14 + f34) + 12.0*f12);
 }
 
+
 template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate_
+Type Foam::BooleIntegrator<Type>::integrate_
 (
     const Type& Q,
     const scalar x0,
     const scalar x1,
     const Type& f0,
-    const Type& fm,
+    const Type& f14,
+    const Type& f12,
+    const Type& f34,
     const Type& f1,
     const scalar tol,
     const label li
@@ -82,16 +88,20 @@ Type Foam::Simpson13Integrator<Type>::integrate_
         return Q;
     }
 
-    const scalar xm = 0.5*(x0 + x1);
-    const scalar x0m = 0.5*(x0 + xm);
-    const scalar xm1 = 0.5*(xm + x1);
+    const scalar x18 = x0 + 0.125*dx;
+    const scalar x38 = x0 + 0.375*dx;
+    const scalar x12 = x0 + 0.5*dx;
+    const scalar x58 = x0 + 0.625*dx;
+    const scalar x78 = x0 + 0.875*dx;
 
-    const Type f0m(this->eqnPtr_->fx(x0m, li));
-    const Type fm1(this->eqnPtr_->fx(xm1, li));
-    this->evals_ += 2;
+    const Type f18(this->eqnPtr_->fx(x18, li));
+    const Type f38(this->eqnPtr_->fx(x38, li));
+    const Type f58(this->eqnPtr_->fx(x58, li));
+    const Type f78(this->eqnPtr_->fx(x78, li));
+    this->evals_ += 4;
 
-    const Type fx0(integrate_(xm - x0, f0, f0m, fm));
-    const Type fx1(integrate_(x1 - xm, fm, fm1, f1));
+    const Type fx0(integrate_(x12 - x0, f0, f18, f14, f38, f12));
+    const Type fx1(integrate_(x1 - x12, f12, f58, f34, f78, f1));
     const Type fx(fx0 + fx1);
     if (this->converged(fx, Q, dx, tol))
     {
@@ -101,14 +111,14 @@ Type Foam::Simpson13Integrator<Type>::integrate_
     {
         this->intervals_++;
         return
-            integrate_(fx0, x0, xm, f0, f0m, fm, tol/2.0, li)
-          + integrate_(fx1, xm, x1, fm, fm1, f1, tol/2.0, li);
+            integrate_(fx0, x0, x12, f0, f18, f14, f38, f12, tol/2.0, li)
+          + integrate_(fx1, x12, x1, f12, f58, f34, f78, f1, tol/2.0, li);
     }
 }
 
 
 template<class Type>
-Type Foam::Simpson13Integrator<Type>::integrate
+Type Foam::BooleIntegrator<Type>::integrate
 (
     const scalar X0,
     const scalar X1,
@@ -126,38 +136,49 @@ Type Foam::Simpson13Integrator<Type>::integrate
     if (this->adaptive())
     {
         const Type f0(this->eqnPtr_->fx(X0, li));
+        const Type f14(this->eqnPtr_->fx(X0 + 0.25*dx, li));
         const Type f12(this->eqnPtr_->fx(X0 + 0.5*dx, li));
+        const Type f34(this->eqnPtr_->fx(X0 + 0.75*dx, li));
         const Type f1(this->eqnPtr_->fx(X1, li));
+        const Type Q(integrate_(dx, f0, f14, f12, f34, f1));
 
-        this->evals_ = 3;
+        this->evals_ = 5;
         return integrate_
         (
-            integrate_(dx, f0, f12, f1),
+            Q,
             X0, X1,
-            f0, f12, f1,
+            f0, f14, f12, f34, f1,
             this->tolerance_,
             li
         );
     }
 
     dx /= scalar(this->nIntervals_);
+    scalar x14 = X0 + 0.25*dx;
     scalar x12 = X0 + 0.5*dx;
+    scalar x34 = X0 + 0.75*dx;
     scalar x1 = X0 + dx;
-    Type f0(this->eqnPtr_->fx(x1, li));
+
+    Type f0(this->eqnPtr_->fx(X0, li));
     Type f1(this->eqnPtr_->fx(x1, li));
+
     Type res
     (
         integrate_
         (
             dx,
             f0,
+            this->eqnPtr_->fx(x14, li),
             this->eqnPtr_->fx(x12, li),
+            this->eqnPtr_->fx(x34, li),
             f1
         )
     );
     for (label i = 1; i < this->nIntervals_; i++)
     {
+        x14 += dx;
         x12 += dx;
+        x34 += dx;
         x1 += dx;
 
         f0 = f1;
@@ -168,11 +189,13 @@ Type Foam::Simpson13Integrator<Type>::integrate
             (
                 dx,
                 f0,
+                this->eqnPtr_->fx(x14, li),
                 this->eqnPtr_->fx(x12, li),
+                this->eqnPtr_->fx(x34, li),
                 f1
             );
     }
-    this->evals_ = 2*this->nIntervals_ + 1;
+    this->evals_ = 4*this->nIntervals_ + 1;
     return res;
 }
 
