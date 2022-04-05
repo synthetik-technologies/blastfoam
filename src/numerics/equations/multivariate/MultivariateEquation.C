@@ -24,8 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "MultivariateEquation.H"
-
-// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
+#include "adaptiveTypes.H"
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
@@ -110,6 +109,51 @@ void Foam::MultivariateEquation<Type>::jacobian
     fx.resize(nEqns_);
     this->FX(x, li, fx);
     calculateJacobian(x, li, fx, J);
+}
+
+
+template<class Type>
+bool Foam::MultivariateEquation<Type>::containsRoot
+(
+    const List<Type>& y0s,
+    const List<Type>& y1s
+) const
+{
+    forAll(y0s, i)
+    {
+        for (label cmpti = 0; cmpti < this->nVar(); cmpti++)
+        {
+            if
+            (
+                adaptiveError::cmpt<Type>(y0s[i], cmpti)
+               *adaptiveError::cmpt<Type>(y1s[i], cmpti)
+              > 0
+            )
+            {
+                #ifdef FULLDEBUG
+                FatalErrorInFunction
+                    << "Solution of component " << i
+                    << " is not bracked in "
+                    << "(" << lowerLimits()
+                    << ","<< upperLimits() << ")" << endl
+                    << abort(FatalError);
+                #endif
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+
+template<class Type>
+bool Foam::MultivariateEquation<Type>::containsRoot(const label li) const
+{
+    List<Type> fxLow(nEqns());
+    List<Type> fxHigh(nEqns());
+    this->FX(lowerLimits(), li, fxLow);
+    this->FX(upperLimits(), li, fxHigh);
+    return containsRoot(fxLow, fxHigh);
 }
 
 

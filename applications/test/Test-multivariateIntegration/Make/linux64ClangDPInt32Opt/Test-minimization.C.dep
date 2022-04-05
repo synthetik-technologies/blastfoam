@@ -116,7 +116,6 @@ $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/MatrixSpace.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/TensorI.H \
 /home/jheylmun/OpenFOAM/blastfoam/src/numerics/lnInclude/equationBase.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/RectangularMatrix.H \
-/home/jheylmun/OpenFOAM/blastfoam/src/numerics/lnInclude/multivariateEquation.C \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/FieldFunctionsM.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/undefFieldFunctionsM.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/char.H \
@@ -351,7 +350,6 @@ $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/MatrixSpace.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/TensorI.H :
 /home/jheylmun/OpenFOAM/blastfoam/src/numerics/lnInclude/equationBase.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/RectangularMatrix.H :
-/home/jheylmun/OpenFOAM/blastfoam/src/numerics/lnInclude/multivariateEquation.C :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/FieldFunctionsM.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/undefFieldFunctionsM.H :
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/char.H :

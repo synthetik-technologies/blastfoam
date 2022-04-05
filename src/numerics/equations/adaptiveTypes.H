@@ -50,6 +50,27 @@ public:
     }
 
     template<class Type>
+    static scalar mag(const Type& f)
+    {
+        NotImplemented;
+        return great;
+    }
+
+    template<class Type>
+    static label nCmpts()
+    {
+        NotImplemented;
+        return great;
+    }
+
+    template<class Type>
+    static scalar cmpt(const Type& f, const label i)
+    {
+        NotImplemented;
+        return great;
+    }
+
+    template<class Type>
     static scalar error(const Type& f1, const Type& f2)
     {
         return great;
@@ -63,23 +84,61 @@ public:
     bool adaptiveError::adaptive<Type>(const bool);                            \
                                                                                \
     template<>                                                                 \
+    scalar adaptiveError::mag<Type>(const Type&);                              \
+                                                                               \
+    template<>                                                                 \
+    label adaptiveError::nCmpts<Type>();                                       \
+                                                                               \
+    template<>                                                                 \
+    scalar adaptiveError::cmpt<Type>(const Type&, const label);                \
+                                                                               \
+    template<>                                                                 \
     scalar adaptiveError::error<Type>(const Type&, const Type&);
 
-#define defineAdaptiveIntegratorArgs(Dummy, Type)                              \
+
+#define defineAdaptiveTypeArgs(Dummy, Type)                                    \
     template<>                                                                 \
     bool adaptiveError::adaptive<Type>(const bool);                            \
                                                                                \
     template<>                                                                 \
+    scalar adaptiveError::mag<Type>(const Type&);                              \
+                                                                               \
+    template<>                                                                 \
+    label adaptiveError::nCmpts<Type>();                                       \
+                                                                               \
+    template<>                                                                 \
+    scalar adaptiveError::cmpt<Type>(const Type&, const label);                \
+                                                                               \
+    template<>                                                                 \
     scalar adaptiveError::error<Type>(const Type&, const Type&);
 
-#define makeAdaptiveType(Func, Type)                                           \
+
+#define makeAdaptiveType(N, MFunc, CFunc, EFunc, Type)                         \
     template<>                                                                 \
     bool adaptiveError::adaptive<Type>(const bool a) {return a;}               \
                                                                                \
     template<>                                                                 \
+    scalar adaptiveError::mag<Type>(const Type& f)                             \
+    {                                                                          \
+        return MFunc;                                                          \
+    }                                                                          \
+                                                                               \
+    template<>                                                                 \
+    label adaptiveError::nCmpts<Type>()                                        \
+    {                                                                          \
+        return N;                                                              \
+    }                                                                          \
+                                                                               \
+    template<>                                                                 \
+    scalar adaptiveError::cmpt<Type>(const Type& f, const label i)             \
+    {                                                                          \
+        return CFunc;                                                          \
+    }                                                                          \
+                                                                               \
+    template<>                                                                 \
     scalar adaptiveError::error<Type>(const Type& f1, const Type& f2)          \
     {                                                                          \
-        return Func;                                                           \
+        return EFunc;                                                          \
     }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

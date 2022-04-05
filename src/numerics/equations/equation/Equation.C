@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "Equation.H"
+#include "adaptiveTypes.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -85,13 +86,14 @@ void Foam::Equation<Type>::FX
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::Equation<Type>::dfdX
+void Foam::Equation<Type>::dfdX
 (
     const scalarList& x,
-    const label li
+    const label li,
+    List<Type>& dfdx
 ) const
 {
-    return tmp<Field<Type>>(new Field<Type>(1, this->dfdx(x[0], li)));
+    dfdx[0] = this->dfdx(x[0], li);
 }
 
 
@@ -123,9 +125,14 @@ bool Foam::Equation<Type>::containsRoot
     const Type& y1
 ) const
 {
-    for (label cmpti = 0; cmpti < pTraits<Type>::nComponents; cmpti++)
+    for (label cmpti = 0; cmpti < adaptiveError::nCmpts<Type>(); cmpti++)
     {
-        if (component(y0, cmpti)*component(y1, cmpti) > 0)
+        if
+        (
+            adaptiveError::cmpt<Type>(y0, cmpti)
+           *adaptiveError::cmpt<Type>(y1, cmpti)
+          > 0
+        )
         {
             #ifdef FULLDEBUG
             FatalErrorInFunction

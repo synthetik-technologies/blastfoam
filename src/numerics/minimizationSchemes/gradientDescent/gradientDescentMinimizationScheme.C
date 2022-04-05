@@ -73,7 +73,8 @@ Foam::gradientDescentMinimizationScheme::minimize
     scalarField& xNew = txNew.ref();
     scalarField xOld(xNew);
     scalar fx(eqns_.fX(x0, li));
-    scalarField grad(eqns_.dfdX(x0, li));
+    scalarField grad(x0.size(), 0.0);
+    eqns_.dfdX(x0, li, grad);
     scalarField gradOld(grad);
     scalar alpha;
 
@@ -99,7 +100,7 @@ Foam::gradientDescentMinimizationScheme::minimize
 
         gradOld = grad;
         fx = eqns_.fX(xNew, li);
-        grad = eqns_.dfdX(xNew, li);
+        eqns_.dfdX(xNew, li, grad);
         printStepInformation(xNew);
     }
     printFinalInformation();

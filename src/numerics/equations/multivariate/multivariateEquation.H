@@ -68,7 +68,8 @@ public:
         {}
 
     //- Destructor
-    virtual ~multivariateEquation();
+    virtual ~multivariateEquation()
+    {}
 
     //- Public member functions
 
@@ -119,22 +120,16 @@ public:
         (
             const List<Type>& y0s,
             const List<Type>& y1s
-        ) const;
+        ) const = 0;
 
         //- Check if the solution is bracketed (compute bounds)
-        virtual bool containsRoot(const label li) const;
+        virtual bool containsRoot(const label li) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-#ifdef NoRepository
-#include "multivariateEquation.C"
-#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

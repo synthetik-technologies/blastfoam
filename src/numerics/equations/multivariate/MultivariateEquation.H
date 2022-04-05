@@ -160,6 +160,16 @@ public:
             List<Type>& fx,
             RectangularMatrix<Type>& J
         ) const;
+
+        //- Check if the solution is bracketed
+        virtual bool containsRoot
+        (
+            const List<Type>& y0s,
+            const List<Type>& y1s
+        ) const;
+
+        //- Check if the solution is bracketed (compute bounds)
+        virtual bool containsRoot(const label li) const;
 };
 
 

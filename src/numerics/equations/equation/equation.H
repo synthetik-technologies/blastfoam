@@ -79,8 +79,14 @@ public:
         //- Return the lower limit
         virtual scalar lower() const = 0;
 
+        //- Access the lower limit
+        virtual scalar& lower() = 0;
+
         //- Return the upper limit
         virtual scalar upper() const = 0;
+
+        //- Access the upper limit
+        virtual scalar& upper() = 0;
 
         //- Return the finite difference step size
         virtual scalar dx() const = 0;
@@ -125,7 +131,6 @@ public:
         //- Check if the solution is bracketed (compute bounds)
         using univariateEquation<Type>::containsRoot;
         virtual bool containsRoot(const Type& y0, const Type& y1) const = 0;
-        virtual bool containsRoot(const label li) const = 0;
 };
 
 

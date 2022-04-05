@@ -68,10 +68,11 @@ protected:
     mutable scalarField dX_;
 
     //- Calculate the gradient using a finite difference
-    tmp<Field<Type>> calculateGradient
+    void calculateGradient
     (
         const scalarList& x0,
-        const label li
+        const label li,
+        List<Type>& grad
     ) const;
 
 
@@ -145,10 +146,11 @@ public:
 
 
         //- Calculate the gradient
-        virtual tmp<Field<Type>> dfdX
+        virtual void dfdX
         (
             const scalarList& x,
-            const label li
+            const label li,
+            List<Type>& dfdx
         ) const;
 
         //- Calculate the gradient
@@ -167,6 +169,16 @@ public:
             List<Type>& fx,
             RectangularMatrix<Type>& J
         ) const;
+
+        //- Check if the solution is bracketed
+        virtual bool containsRoot
+        (
+            const List<Type>& y0s,
+            const List<Type>& y1s
+        ) const;
+
+        //- Check if the solution is bracketed (compute bounds)
+        virtual bool containsRoot(const label li) const;
 };
 
 

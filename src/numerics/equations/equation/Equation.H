@@ -101,6 +101,12 @@ public:
             return lower_;
         }
 
+        //- Access the lower limit
+        virtual scalar& lower()
+        {
+            return lower_;
+        }
+
         //- Return the lower limit
         virtual tmp<scalarField> lowerLimits() const
         {
@@ -109,6 +115,12 @@ public:
 
         //- Return the upper limit
         virtual scalar upper() const
+        {
+            return upper_;
+        }
+
+        //- Access the upper limit
+        virtual scalar& upper()
         {
             return upper_;
         }
@@ -169,10 +181,11 @@ public:
         ) const;
 
         //- Calulate the gradient
-        virtual tmp<Field<Type>> dfdX
+        virtual void dfdX
         (
             const scalarList& x,
-            const label li
+            const label li,
+            List<Type>& dfdx
         ) const;
 
         //- Calulate the Jacobian (dfdx)

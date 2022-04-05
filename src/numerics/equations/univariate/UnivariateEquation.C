@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "UnivariateEquation.H"
+#include "adaptiveTypes.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -67,15 +68,13 @@ Foam::UnivariateEquation<Type>::~UnivariateEquation()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::UnivariateEquation<Type>::calculateGradient
+void Foam::UnivariateEquation<Type>::calculateGradient
 (
     const scalarList& x0,
-    const label li
+    const label li,
+    List<Type>& grad
 ) const
 {
-    tmp<Field<Type>> tgrad(new Field<Type>(nVar_));
-    Field<Type> grad(tgrad.ref());
-
     const Type fx0(this->fX(x0, li));
     scalarList x1(x0);
     for (label cmpti = 0; cmpti < nVar_; cmpti++)
@@ -84,7 +83,6 @@ Foam::tmp<Foam::Field<Type>> Foam::UnivariateEquation<Type>::calculateGradient
         grad[cmpti] = (this->fX(x1, li) - fx0)/dX_[cmpti];
         x1[cmpti] = x0[cmpti];
     }
-    return tgrad;
 }
 
 
@@ -101,13 +99,14 @@ void Foam::UnivariateEquation<Type>::FX
 
 
 template<class Type>
-Foam::tmp<Foam::Field<Type>> Foam::UnivariateEquation<Type>::dfdX
+void Foam::UnivariateEquation<Type>::dfdX
 (
     const scalarList& x,
-    const label li
+    const label li,
+    List<Type>& dfdx
 ) const
 {
-    return calculateGradient(x, li);
+    calculateGradient(x, li, dfdx);
 }
 
 
@@ -124,11 +123,55 @@ void Foam::UnivariateEquation<Type>::jacobian
     fx[0] = this->fX(x, li);
 
     J.setSize(1, x.size());
-    List<Type> dfdx(this->dfdX(x, li));
+    List<Type> dfdx(x.size());
+    this->dfdX(x, li, dfdx);
     forAll(dfdx, i)
     {
         J(0, i) = dfdx[i];
     }
 }
+
+
+template<class Type>
+bool Foam::UnivariateEquation<Type>::containsRoot
+(
+    const List<Type>& y0s,
+    const List<Type>& y1s
+) const
+{
+    for (label cmpti = 0; cmpti < this->nVar(); cmpti++)
+    {
+        if
+        (
+            adaptiveError::cmpt<Type>(y0s[0], cmpti)
+            *adaptiveError::cmpt<Type>(y1s[0], cmpti)
+            > 0
+        )
+        {
+            #ifdef FULLDEBUG
+            FatalErrorInFunction
+                << "Solution of component " << i
+                << " is not bracked in "
+                << "(" << lowerLimits()
+                << ","<< upperLimits() << ")" << endl
+                << abort(FatalError);
+            #endif
+            return false;
+        }
+    }
+    return true;
+}
+
+
+template<class Type>
+bool Foam::UnivariateEquation<Type>::containsRoot(const label li) const
+{
+    List<Type> fxLow(nEqns());
+    List<Type> fxHigh(nEqns());
+    this->FX(lowerLimits(), li, fxLow);
+    this->FX(upperLimits(), li, fxHigh);
+    return containsRoot(fxLow, fxHigh);
+}
+
 
 // ************************************************************************* //
