@@ -35,7 +35,7 @@ SourceFiles
 
 #include "pressureRelaxationSolver.H"
 #include "rootSolver.H"
-#include "MultivariateEquation.H"
+#include "MultivariateEquationsFwd.H"
 #include "phaseSystem.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -50,7 +50,7 @@ namespace Foam
 class instantPressureRelaxation
 :
     public pressureRelaxationSolver,
-    public MultivariateEquation<scalar>
+    public ScalarMultivariateEquation
 {
     // Private Member Functions
 
@@ -120,18 +120,18 @@ public:
                 return 1;
             }
 
-            virtual void f
+            virtual void FX
             (
-                const scalarField& x,
+                const scalarList& x,
                 const label li,
-                scalarField& fx
+                scalarList& fx
             ) const;
 
             virtual void jacobian
             (
-                const scalarField& x,
+                const scalarList& x,
                 const label li,
-                scalarField& fx,
+                scalarList& fx,
                 RectangularMatrix<scalar>& J
             ) const;
 };

@@ -102,13 +102,13 @@ Foam::stepUnivariateRootSolver::~stepUnivariateRootSolver()
 
 Foam::scalar Foam::stepUnivariateRootSolver::findRoot
 (
+    const scalar xm,
     const scalar x0,
     const scalar x1,
-    const scalar x2,
     const label li
 ) const
 {
-    scalar x = x1;
+    scalar x = x0;
     scalar dx = dx_;
     scalar yLower = eqn_.fx(x0, li);
 

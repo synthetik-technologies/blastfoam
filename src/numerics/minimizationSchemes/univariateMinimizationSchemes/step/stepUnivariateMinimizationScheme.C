@@ -72,8 +72,7 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
         dict.lookupOrDefault<scalar>
         (
             "dx",
-            (eqn_.upper() - eqn_.lower())
-           /ceil(maxSteps_/10)
+            (eqn_.upper() - eqn_.lower())/100.0
         )
     ),
     f_(dict.lookupOrDefault<scalar>("f", 0.5))
@@ -99,17 +98,17 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (yUpper > yLower)
-        {
-            dx *= f_;
-            xUpper  = xLower + dx;
-            yUpper = eqn_.fx(xUpper, li);
-        }
-        else
+        if (yUpper < yLower)
         {
             xLower = xUpper;
             xUpper += dx;
             yLower = yUpper;
+            yUpper = eqn_.fx(xUpper, li);
+        }
+        else
+        {
+            dx *= f_;
+            xUpper  = xLower + dx;
             yUpper = eqn_.fx(xUpper, li);
         }
 
@@ -118,14 +117,14 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
         {
             break;
         }
-        if (converged(yLower))
+        if (converged(yUpper - yLower))
         {
             break;
         }
         printStepInformation(xUpper);
     }
 
-    converged(yUpper);
+    converged(yUpper - yLower);
     return printFinalInformation(xLower);
 }
 

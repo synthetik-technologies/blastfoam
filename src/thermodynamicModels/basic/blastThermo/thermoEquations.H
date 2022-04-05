@@ -42,7 +42,7 @@ SourceFiles
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "fluidBlastThermo.H"
-#include "equation.H"
+#include "EquationsFwd.H"
 
 namespace Foam
 {
@@ -53,7 +53,7 @@ namespace Foam
 
 class fluidEEquation
 :
-    public equation
+    public ScalarEquation
 {
     //- Constant reference to the fluidBlastThermo
     const fluidBlastThermo& thermo_;
@@ -71,7 +71,7 @@ class fluidEEquation
 public:
     fluidEEquation(fluidBlastThermo& thermo)
     :
-        equation(-great, great),
+        ScalarEquation(-great, great),
         thermo_(thermo),
         e_(&thermo.he()),
         eOld_(0.0),
@@ -120,7 +120,7 @@ public:
 
 class THEEquation
 :
-    public equation
+    public ScalarEquation
 {
     //- Constant reference to the blastThermo
     const blastThermo& thermo_;
@@ -138,7 +138,7 @@ public:
         const scalar TLow
     )
     :
-        equation(-great, great),
+        ScalarEquation(-great, great),
         thermo_(thermo),
         he_(thermo.he()),
         patchi_(-1)

@@ -107,7 +107,7 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
             yMean = yLow;
         }
 
-        if (converged(yMean))
+        if (converged(yHigh - yLow))
         {
             break;
         }
@@ -116,7 +116,7 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
         printStepInformation(xMean);
     }
-    converged(yMean);
+    converged(yHigh - yLow);
 
     return printFinalInformation(xMean);
 }

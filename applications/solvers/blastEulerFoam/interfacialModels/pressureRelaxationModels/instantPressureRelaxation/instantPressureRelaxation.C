@@ -53,7 +53,7 @@ Foam::instantPressureRelaxation::instantPressureRelaxation
         false,
         false
     ),
-    MultivariateEquation<scalar>
+    ScalarMultivariateEquation
     (
         phaseModels_.size() + 1,
         scalarField(phaseModels_.size() + 1, 0.0),
@@ -76,14 +76,14 @@ Foam::instantPressureRelaxation::~instantPressureRelaxation()
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::instantPressureRelaxation::f
+void Foam::instantPressureRelaxation::FX
 (
-     const scalarField& rhoPI,
+     const scalarList& rhoPI,
     const label li,
-    scalarField& fx
+    scalarList& fx
 ) const
 {
-    fx = scalarField(nEqns(), 0.0);
+    fx.setSize(nEqns(), 0.0);
     scalar sumAlpha = 0;
 
     forAll(phaseModels_, phasei)
@@ -109,16 +109,15 @@ void Foam::instantPressureRelaxation::f
 
 void Foam::instantPressureRelaxation::jacobian
 (
-    const scalarField& rhoPI,
+    const scalarList& rhoPI,
     const label li,
-    scalarField& fx,
+    scalarList& fx,
     RectangularMatrix<scalar>& J
 ) const
 {
-    J = scalarSquareMatrix(nEqns(), 0.0);
-    fx = scalarField(nEqns(), 0.0);
+    J.setSize(nEqns(), nEqns());
+    fx.setSize(nEqns(), 0.0);
     scalar sumAlpha = 0;
-    Info<<rhoPI<<endl;
     forAll(phaseModels_, phasei)
     {
         scalar alphaRho = phaseModels_[phasei].alphaRho()[li];
