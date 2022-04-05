@@ -25,20 +25,16 @@ Class
     Foam::equation
 
 Description
-    Scalar equation with a single input. Derived from both scalarEquation
-    and multivariateEquation so that a scalar equation can be cast in either
-    form.
+    Abstract base class an equation with a single scalar input, and any type
+    as an output.
 
 \*---------------------------------------------------------------------------*/
 
 #ifndef equation_H
 #define equation_H
 
-#include "UnivariateEquation.H"
-#include "ScalarEquation.H"
 #include "univariateEquation.H"
-#include "multivariateEquation.H"
-#include "dictionary.H"
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -46,114 +42,97 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                      Class equation Declaration
+                          Class equation Declaration
 \*---------------------------------------------------------------------------*/
 
+template<class Type>
 class equation
 :
-    public Equation<scalar, scalar>,
-    public scalarEquation,
-    public univariateEquation<scalar>,
-    public multivariateEquation<scalar>
+    public univariateEquation<Type>
 {
 public:
 
     // Constructors
 
-        //- Construct given bounds
-        equation(const scalar lowerLimit, const scalar upperLimit);
+        //- Construct with limits
+        equation()
+        :
+            univariateEquation<Type>()
+        {}
+
+        //- Construct with limits
+        equation(const string& name)
+        :
+            univariateEquation<Type>(name)
+        {}
 
 
     //- Destructor
-    virtual ~equation();
+    virtual ~equation()
+    {}
 
 
     // Member Functions
 
-        //- Return the number of input variables
-        virtual label nVar() const;
-
-        //- Return the number of equations
-        virtual label nEqns() const;
-
-        using Equation<scalar, scalar>::nDerivatives;
+        virtual label nDerivatives() const = 0;
 
         //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const;
+        virtual scalar lower() const = 0;
 
         //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const;
+        virtual scalar upper() const = 0;
 
         //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const;
+        virtual scalar dx() const = 0;
 
         //- Return the finite difference step size
-        virtual void setDX(const scalarField& newDx) const;
+        virtual void setDx(const scalar& newDx) const = 0;
 
         //- Limit the value of x to the range of the equation
-        using scalarEquation::limit;
-        using multivariateEquation<scalar>::limit;
-        virtual void limit(scalar& x) const;
+        using univariateEquation<Type>::limit;
+        virtual void limit(scalar& x) const = 0;
 
-        //- Calulate the function at a point
-        virtual void f
-        (
-            const scalar& x,
-            const label li,
-            scalar& fx
-        ) const;
+        virtual Type fx(const scalar x, const label li) const = 0;
 
-        //- Calulate the function at a set of points
-        virtual void f
-        (
-            const scalarField& x,
-            const label li,
-            scalar& fx
-        ) const;
+        //- Calculate the first derivative of the equation
+        virtual Type dfdx(const scalar x, const label li) const
+        {
+            NotImplemented
+            return this->fx(x, li);
+        }
 
-        //- Calulate the function at a set of points
-        virtual void f
-        (
-            const scalarField& x,
-            const label li,
-            Field<scalar>& fx
-        ) const;
+        //- Calculate the second derivative of the equation
+        virtual Type d2fdx2(const scalar x, const label li) const
+        {
+            NotImplemented
+            return this->fx(x, li);
+        }
 
-        //- Calulate the gradient (dfdx)
-        virtual void gradient
-        (
-            const scalarField& x,
-            const label li,
-            scalar& fx,
-            scalarField& grad
-        ) const;
+        //- Calculate the third derivative of the equation
+        virtual Type d3fdx3(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return this->fx(x, li);
+        }
 
-        //- Calulate the Jacobian (dfdx)
-        virtual void jacobian
-        (
-            const scalarField& x,
-            const label li,
-            scalarField& fx,
-            RectangularMatrix<scalar>& J
-        ) const;
-
-        //- Check if the solution is bracketed
-        virtual bool containsRoot(const scalar y0, const scalar y1) const;
-
-        //- Check if the solution is bracketed
-        virtual bool containsRoot
-        (
-            const scalarField& y0s,
-            const scalarField& y1s
-        ) const;
+        //- Calculate the fourth derivative of the equation
+        virtual Type d4fdx4(const scalar x, const label li) const
+        {
+            NotImplemented;
+            return this->fx(x, li);
+        }
 
         //- Check if the solution is bracketed (compute bounds)
-        virtual bool containsRoot(const label li) const;
+        using univariateEquation<Type>::containsRoot;
+        virtual bool containsRoot(const Type& y0, const Type& y1) const = 0;
+        virtual bool containsRoot(const label li) const = 0;
 };
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

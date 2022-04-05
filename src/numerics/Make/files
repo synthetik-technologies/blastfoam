@@ -7,8 +7,11 @@ lookupTables/lookupTable1D/lookupTables1D.C
 lookupTables/lookupTable2D/lookupTables2D.C
 lookupTables/lookupTable3D/lookupTables3D.C
 
-equations/scalarEquation/ScalarEquation.C
-equations/equation/equation.C
+equations/adaptiveTypes.C
+equations/equationBase/equationBase.C
+equations/equation/Equations.C
+equations/univariate/UnivariateEquations.C
+equations/multivariate/MultivariateEquations.C
 
 rootSolvers/rootSolver/rootSolver.C
 rootSolvers/rootSolver/rootSolverNew.C
@@ -30,8 +33,12 @@ rootSolvers/NewtonRaphson/NewtonRaphsonRootSolver.C
 rootSolvers/goodBroyden/goodBroydenRootSolver.C
 rootSolvers/badBroyden/badBroydenRootSolver.C
 
+integrators/integratorBase.C
+integrators/Gaussian/GaussianWeights.C
 integrators/Integrator/integrator.C
 integrators/Integrator/Integrators.C
+integrators/MultivariateIntegrator/multivariateIntegrator.C
+integrators/MultivariateIntegrator/MultivariateIntegrators.C
 
 minimizationSchemes/minimizationScheme/minimizationScheme.C
 minimizationSchemes/minimizationScheme/minimizationSchemeNew.C

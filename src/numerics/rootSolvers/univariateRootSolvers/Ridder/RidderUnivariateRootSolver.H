@@ -62,7 +62,7 @@ public:
         //- Construct for given univariateRootSolver
         RidderUnivariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 

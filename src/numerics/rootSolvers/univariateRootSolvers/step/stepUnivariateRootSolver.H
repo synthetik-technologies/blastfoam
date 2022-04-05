@@ -73,14 +73,14 @@ public:
         //- Construct for given UnivariateRootSolver
         stepUnivariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Construct from equation and step size
         stepUnivariateRootSolver
         (
-            const equation& eqn,
+            const scalarMultivariateEquation& eqn,
             const scalar dx
         );
 

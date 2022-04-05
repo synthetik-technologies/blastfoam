@@ -100,7 +100,7 @@ public:
         //- Construct for given minimizationScheme
         particleSwarmMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

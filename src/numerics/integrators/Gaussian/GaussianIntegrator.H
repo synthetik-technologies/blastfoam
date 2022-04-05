@@ -55,7 +55,7 @@ class GaussianIntegrator
 {
 // Private data
 
-    typedef univariateEquation<Type> equationType;
+    typedef Equation<Type> equationType;
 
     //- Gauss weights
     scalarList ws_;
@@ -64,9 +64,6 @@ class GaussianIntegrator
     scalarList xs_;
 
     // Private member functions
-
-        //- Set the weights and positions
-        void setQuadrature(const label N);
 
         //- Solve the root
         virtual Type integrate_(const scalar dx, const PtrList<Type>& fs) const;

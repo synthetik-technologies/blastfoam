@@ -64,7 +64,7 @@ public:
         //- Construct for given multivariateRootSolver
         badBroydenRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 

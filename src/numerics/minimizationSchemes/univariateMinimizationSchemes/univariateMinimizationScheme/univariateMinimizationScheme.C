@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(univariateMinimizationScheme, 0);
+    defineTypeNameAndDebug(univariateMinimizationScheme, 1);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryZero);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryOne);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryTwo);
@@ -46,7 +46,7 @@ bool Foam::univariateMinimizationScheme::converged(const scalar error) const
 
 void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) const
 {
-    if (debug > 2 || minimizationScheme::debug > 2)
+    if (debug > 2)
     {
         Info<< "Step " << stepi_
             << ", error=" << errors_[0]
@@ -58,12 +58,12 @@ void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) 
 Foam::scalar
 Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) const
 {
-    if (stepi_ < maxSteps_ && (debug > 1 || minimizationScheme::debug > 1))
+    if (stepi_ < maxSteps_ && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations"
             << ", final " << errorName() << "=" << errors_[0] << endl;
     }
-    else if (stepi_ >= maxSteps_)
+    else if (stepi_ >= maxSteps_ && debug)
     {
         WarningInFunction
             << "Did not converge, "
@@ -83,7 +83,7 @@ void Foam::univariateMinimizationScheme::sample
     {
         return;
     }
-    if (debug || minimizationScheme::debug)
+    if (debug > 1)
     {
         Info<<"Pre sampling interval" << endl;
     }
@@ -103,7 +103,7 @@ void Foam::univariateMinimizationScheme::sample
     x0 += scalar(minI)*dx;
     x1 = x0 + dx;
 
-    if (debug || minimizationScheme::debug)
+    if (debug > 1)
     {
         Info<<"Found minimum values in (" << x0 << "," << x1 << ")"
             << " minY = " << minY
@@ -116,12 +116,12 @@ void Foam::univariateMinimizationScheme::sample
 
 Foam::univariateMinimizationScheme::univariateMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :
     minimizationScheme(eqn, dict),
-    eqn_(dynamicCast<const equation>(eqn)),
+    eqn_(dynamicCast<const scalarEquation>(eqn)),
     nSample_(dict.lookupOrDefault<label>("nSample", 0))
 {
     nSamples_ = 0;

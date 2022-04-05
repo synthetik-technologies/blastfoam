@@ -53,7 +53,7 @@ class MidPointIntegrator
 :
     public Integrator<Type>
 {
-    typedef univariateEquation<Type> equationType;
+    typedef Equation<Type> equationType;
 
     //- Recursive integration
     virtual Type integrate_

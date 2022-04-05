@@ -9,7 +9,8 @@ using namespace Foam;
 createEquation2
 (
     testEqn1,
-    0.0, 1.0,
+    scalar,
+    0.01, 1.0,
     Foam::cos(x) - Foam::pow3(x),
     -Foam::sin(x) - 3.0*Foam::sqr(x),
     -Foam::cos(x) - 6.0*x
@@ -18,7 +19,8 @@ createEquation2
 createEquation2
 (
     testEqn2,
-    0.0, 1.0,
+    scalar,
+    0.01, 1.0,
     Foam::exp(x) - 10.0*x,
     Foam::exp(x) - 10.0,
     Foam::exp(x)
@@ -28,7 +30,7 @@ createEquation2
 int main(int argc, char *argv[])
 {
 
-    PtrList<equation> uniEqns(2);
+    PtrList<scalarEquation> uniEqns(2);
     uniEqns.set(0, new testEqn1());
     uniEqns.set(1, new testEqn2());
 
@@ -42,8 +44,8 @@ int main(int argc, char *argv[])
     );
     forAll(uniEqns, eqni)
     {
-        Info<< "Solving " << uniEqns[eqni].printfx() << endl;
-        const equation& eqn = uniEqns[eqni];
+        Info<< "Solving " << uniEqns[eqni].name() << endl;
+        const scalarEquation& eqn = uniEqns[eqni];
         forAll(methods, i)
         {
             dict.set("solver", methods[i]);

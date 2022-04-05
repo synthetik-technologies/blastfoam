@@ -22,21 +22,21 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::ScalarEquation
+    Foam::Integrator
 
 Description
-    An equation using a scalarField as input, but outputing only a single,
-    scalar value. Used in minimization.
+    Generic class for integrating a given univariate equation.
+
+SourceFiles
+    integratorBase.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef ScalarEquation_H
-#define ScalarEquation_H
+#ifndef integratorBase_H
+#define integratorBase_H
 
-#include "Equation.H"
-#include "scalarEquation.H"
-#include "scalarField.H"
-#include "dictionary.H"
+#include "typeInfo.H"
+#include "adaptiveTypes.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,78 +44,51 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class scalarEquation Declaration
+                          Class integratorBase Declaration
 \*---------------------------------------------------------------------------*/
 
-class ScalarEquation
-:
-    public Equation<scalarField, scalar>,
-    public scalarEquation
+class integratorBase
 {
 protected:
-// Protected data
+    // Protected data
 
-    //- Calculate the gradient using a finite difference
-    void calculateGradient
-    (
-        const scalarField& x0,
-        const label li,
-        const scalar& fx0,
-        scalarField& grad
-    ) const;
+        //- Is the integration adaptive
+        bool adaptive_;
+
+        //- Tracked number of function evaluations
+        mutable label evals_;
 
 
 public:
 
+    //- Runtime type information
+    TypeName("integratorBase");
+
     // Constructors
 
-        //- Construct given bounds
-        ScalarEquation
-        (
-            const label nVar,
-            const scalarField& lowerLimit,
-            const scalarField& upperLimit
-        );
+        //- Construct for from dictinoary
+        integratorBase(const dictionary& dict);
 
 
     //- Destructor
-    virtual ~ScalarEquation();
+    virtual ~integratorBase()
+    {}
 
 
     // Member Functions
 
-        //- Return the number of input variables
-        virtual label nVar() const;
+        //- Return the number of function evaluations
+        label nEvals() const
+        {
+            return evals_;
+        }
 
-        //- Return the number of equations
-        virtual label nEqns() const;
-
-        //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const;
-
-        //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const;
-
-        //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const;
-
-        //- Return the finite difference step size
-        virtual void setDX(const scalarField& newDx) const;
-
-        //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const;
-
-        //- Calulate the gradient
-        using scalarEquation::gradient;
-        virtual void gradient
-        (
-            const scalarField& x,
-            const label li,
-            scalar& fx,
-            scalarField& grad
-        ) const;
+        //- Access the number of steps
+        virtual void setAdaptive()
+        {
+            adaptive_ = true;
+        }
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

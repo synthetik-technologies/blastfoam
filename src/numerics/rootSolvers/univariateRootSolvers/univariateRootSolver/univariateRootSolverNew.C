@@ -29,7 +29,7 @@ License
 
 Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 {
@@ -91,7 +91,7 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
 
 Foam::autoPtr<Foam::rootSolver> Foam::univariateRootSolver::NewUnivariate
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 {

@@ -130,7 +130,7 @@ public:
         //- Construct for given minimizationScheme
         NelderMeadMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

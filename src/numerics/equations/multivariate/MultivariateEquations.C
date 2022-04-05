@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,42 +23,6 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "Equation.H"
-
-// * * * * * * * * * * * * * Private member functions  * * * * * * * * * * * //
-
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
-
-template<class InType, class OutType>
-Foam::Equation<InType, OutType>::Equation
-(
-    const label nVar,
-    const label nEqns,
-    const InType& lowerLimits,
-    const InType& upperLimits
-)
-:
-    nVar_(nVar),
-    nEqns_(nEqns),
-    lowerLimits_(lowerLimits),
-    upperLimits_(upperLimits),
-    dx_(lowerLimits)
-{
-    for (label cmpti = 0; cmpti < nVar; cmpti++)
-    {
-        setComponent(dx_, cmpti) = 1e-6;
-    }
-}
-
-
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
-
-template<class InType, class OutType>
-Foam::Equation<InType, OutType>::~Equation()
-{}
-
-
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
+#include "MultivariateEquationsFwd.H"
 
 // ************************************************************************* //

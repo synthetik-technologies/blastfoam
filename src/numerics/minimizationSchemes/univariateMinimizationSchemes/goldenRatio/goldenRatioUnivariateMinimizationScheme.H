@@ -74,7 +74,7 @@ public:
         //- Construct for given univariateUnivariateMinimizationScheme
         goldenRatioUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

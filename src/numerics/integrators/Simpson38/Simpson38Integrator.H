@@ -55,7 +55,7 @@ class Simpson38Integrator
 {
 // Private data
 
-    typedef univariateEquation<Type> equationType;
+    typedef Equation<Type> equationType;
 
     const scalar oneThird = 1.0/3.0;
     const scalar twoThirds = 2.0/3.0;

@@ -22,18 +22,16 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::scalarEquation
+    Foam::equationBase
 
 Description
-    Abstract class for an equation that takes in a scalarList and outputs
-    a single scalar value.
+    Base class for all equation types
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef scalarEquation_H
-#define scalarEquation_H
+#ifndef equationBase_H
+#define equationBase_H
 
-#include "scalarField.H"
 #include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -42,76 +40,56 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class scalarEquation Declaration
+                          Class equationBase Declaration
 \*---------------------------------------------------------------------------*/
 
-class scalarEquation
+class equationBase
 {
+protected:
+
+    // Protected data
+
+        //- Number in input variables
+        word name_;
+
+
 public:
 
     // Constructors
 
-        //- Construct given bounds
-        scalarEquation()
-        {}
+        //- Construct null
+        equationBase();
+
+        //- Construct null
+        equationBase(const string& name);
 
 
     //- Destructor
-    virtual ~scalarEquation()
-    {}
+    virtual ~equationBase();
 
-    //- Public member functions
 
-        //- Return the number of input variables
-        virtual label nVar() const = 0;
+    // Member functions
 
-        //- Return the number of equations
-        virtual label nEqns() const = 0;
+        //- Return the name
+        virtual const word& name() const
+        {
+            return name_;
+        }
+
+        //- Access the name
+        virtual word& name()
+        {
+            return name_;
+        }
 
         //- Return the number of derivatives
         virtual label nDerivatives() const = 0;
-
-        //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const = 0;
-
-        //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const = 0;
-
-        //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const = 0;
-
-        //- Return the finite difference step size
-        virtual void setDX(const scalarField& newDx) const = 0;
-
-        //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const
-        {
-            x = max(lowerLimits(), min(x, upperLimits()));
-        }
-
-        //- Return the function value
-        virtual void f
-        (
-            const scalarField& x,
-            const label li,
-            scalar& fx
-        ) const = 0;
-
-        //- Return the function value
-        virtual void gradient
-        (
-            const scalarField& x,
-            const label li,
-            scalar& fx,
-            scalarField& grad
-        ) const = 0;
 };
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

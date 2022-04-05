@@ -53,7 +53,7 @@ class TrapezoidalIntegrator
 :
     public Integrator<Type>
 {
-    typedef univariateEquation<Type> equationType;
+    typedef Equation<Type> equationType;
 
         //- Solve the root
         virtual Type integrate_

@@ -36,7 +36,7 @@ SourceFiles
 #define univariateRootSolver_H
 
 #include "rootSolver.H"
-#include "equation.H"
+#include "EquationsFwd.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -59,7 +59,7 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const equation& eqn_;
+        const scalarEquation& eqn_;
 
         //- Is the solution converged
         bool converged(const scalar error) const;
@@ -83,7 +83,7 @@ public:
             autoPtr,
             univariateRootSolver,
             dictionaryZero,
-            (const multivariateEquation<scalar>& eqn, const dictionary& dict),
+            (const scalarMultivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -91,7 +91,7 @@ public:
             autoPtr,
             univariateRootSolver,
             dictionaryOne,
-            (const multivariateEquation<scalar>& eqn, const dictionary& dict),
+            (const scalarMultivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -99,7 +99,7 @@ public:
             autoPtr,
             univariateRootSolver,
             dictionaryTwo,
-            (const multivariateEquation<scalar>& eqn, const dictionary& dict),
+            (const scalarMultivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
 
@@ -109,14 +109,14 @@ public:
         //- Construct for given univariateRootSolver
         univariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Construct for given univariateRootSolver
         univariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const scalar tolerance,
             const label maxSteps
         );
@@ -130,14 +130,14 @@ public:
         //- Select null constructed
         static autoPtr<univariateRootSolver> New
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Select null constructed
         static autoPtr<rootSolver> NewUnivariate
         (
-            const multivariateEquation<scalar>& eqns,
+            const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
 

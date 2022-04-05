@@ -36,7 +36,7 @@ SourceFiles
 #define Integrator_H
 
 #include "integrator.H"
-#include "UnivariateEquation.H"
+#include "Equation.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 #include "UautoPtr.H"
@@ -59,19 +59,13 @@ protected:
 
     // Protected data
 
-        typedef univariateEquation<Type> equationType;
+        typedef Equation<Type> equationType;
 
         //- Reference to Equation
         UautoPtr<const equationType> eqnPtr_;
 
-        // Return the error give two values
-        scalar error(const Type& t1, const Type& t2) const
-        {
-            return great;
-        }
-
         // Return the error give two values and spacing
-        scalar converged
+        bool converged
         (
             const Type& t1,
             const Type& t2,
@@ -87,7 +81,7 @@ protected:
             {
                 return false;
             }
-            return error(t1, t2) < tol;
+            return adaptiveError::error<Type>(t1, t2) < tol;
         }
 
 
@@ -160,9 +154,9 @@ public:
     // Member Functions
 
         //- Return if the integration is adaptive
-        bool adaptive() const
+        inline bool adaptive() const
         {
-            return false;
+            return adaptiveError::adaptive<Type>(adaptive_);
         }
 
         //- Set the equation to integrate
@@ -214,31 +208,6 @@ public:
                                                                                \
     Integrator<Type>::addinputsConstructorToTable<IntegratorType<Type>>        \
     add##IntegratorType##Type##inputs##ConstructorToTable_;
-
-
-#define defineAdaptiveIntegrator(Type)                                         \
-    template<>                                                                 \
-    bool Integrator<Type>::adaptive() const;                                   \
-                                                                               \
-    template<>                                                                 \
-    scalar Integrator<Type>::error(const Type&, const Type&) const;
-
-#define defineAdaptiveIntegratorArgs(Dummy, Type)                              \
-    template<>                                                                 \
-    bool Integrator<Type>::adaptive() const;                                   \
-                                                                               \
-    template<>                                                                 \
-    scalar Integrator<Type>::error(const Type&, const Type&) const;
-
-#define makeAdaptiveIntegrator(Func, Type)                                     \
-    template<>                                                                 \
-    bool Integrator<Type>::adaptive() const {return adaptive_;}                \
-                                                                               \
-    template<>                                                                 \
-    scalar Integrator<Type>::error(const Type& f1, const Type& f2) const       \
-    {                                                                          \
-        return Func;                                                           \
-    }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 

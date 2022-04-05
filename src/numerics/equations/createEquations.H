@@ -25,7 +25,7 @@ License
 
 #ifndef createEquations_H
 #define createEquations_H
-#include "equation.H"
+#include "Equation.H"
 #include "UnivariateEquation.H"
 
 // * * * * * * * * * * * * * * Helper MACROS * * * * * * * * * * * * * * * * //
@@ -48,114 +48,141 @@ License
 // * * * * * * * * * * * * * * Define Functions  * * * * * * * * * * * * * * //
 
 #define defineEquation(Type, FuncName)                                         \
-    virtual Type FuncName(const scalar, const label) const;                    \
-    virtual string print##FuncName() const;
+    virtual Type FuncName(const scalar, const label) const;
 
-#define defineEquationClass(Name, Base, Type, Min, Max, ...)                   \
+#define defineUnivariateEquation(Type, FuncName)                               \
+    virtual Type FuncName(const scalarList&, const label) const;
+
+#define defineEquationClass(Name, Type, Min, Max, ...)                         \
 class Name                                                                     \
 :                                                                              \
-    public Base                                                                \
+    public Equation<Type>                                                      \
 {                                                                              \
 public:                                                                        \
-    Name() : Base(Min, Max) {}                                                 \
+    Name() : Equation<Type>(Min, Max) {}                                       \
                                                                                \
     virtual ~Name() {}                                                         \
                                                                                \
     virtual label nDerivatives() const                                         \
     {                                                                          \
-        return VA_NARGS(__VA_ARGS__);                                          \
+        return VA_NARGS(__VA_ARGS__)+1;                                        \
     }                                                                          \
-    FOR_EACH(defineEquation, Type, __VA_ARGS__);                              \
+    FOR_EACH(defineEquation, Type, __VA_ARGS__);                               \
 };
 
-#define defineEquation0(Name, Min, Max)                                        \
-defineEquationClass(Name, equation, scalar, Min, Max, fx)
 
-#define defineEquation1(Name, Min, Max)                                        \
-defineEquationClass(Name, equation, scalar, Min, Max, fx, dfdx)
+#define defineUnivariateEquationClass(Name, Base, Type, Min, Max, ...)         \
+class Name                                                                     \
+:                                                                              \
+    public UnivariateEquation<Type>                                            \
+{                                                                              \
+public:                                                                        \
+    Name() : UnivariateEquation<Type>(Min, Max) {}                             \
+                                                                               \
+    virtual ~Name() {}                                                         \
+                                                                               \
+    virtual label nDerivatives() const                                         \
+    {                                                                          \
+        return VA_NARGS(__VA_ARGS__)+1;                                        \
+    }                                                                          \
+    FOR_EACH(defineUnivariateEquation, Type, __VA_ARGS__);                     \
+};
 
-#define defineEquation2(Name, Min, Max)                                        \
-defineEquationClass(Name, equation, scalar, Min, Max, fx, dfdx, d2fdx2)
 
-#define defineEquation3(Name, Min, Max)                                        \
-defineEquationClass(Name, equation, scalar, Min, Max, fx, dfdx, d2fdx2, d3fdx3)
+#define defineEquation0(Name, Type, Min, Max)                                  \
+defineEquationClass(Name, Type, Min, Max, fx)
+
+#define defineEquation1(Name, Type, Min, Max)                                  \
+defineEquationClass(Name, Type, Min, Max, fx, dfdx)
+
+#define defineEquation2(Name, Type, Min, Max)                                  \
+defineEquationClass(Name, Type, Min, Max, fx, dfdx, d2fdx2)
+
+#define defineEquation3(Name, Type, Min, Max)                                  \
+defineEquationClass(Name, Type, Min, Max, fx, dfdx, d2fdx2, d3fdx3)
 
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define defineUnivariateEquation0(Name, Type, Min, Max)                        \
-defineEquationClass(Name, UnivariateEquation<Type>, Type, Min, Max, fx)
+defineUnivariateEquationClass(Name, Type, Min, Max, fx)
 
 #define defineUnivariateEquation1(Name, Type, Min, Max)                        \
-defineEquationClass(Name, UnivariateEquation<Type>, Type, Min, Max, fx, dfdx)
+defineUnivariateEquationClass(Name, Type, Min, Max, fx, dfdx)
 
 #define defineUnivariateEquation2(Name, Type, Min, Max)                        \
-defineEquationClass(Name, UnivariateEquation<Type>, Type, Min, Max, fx, dfdx, d2fdx2)
+defineUnivariateEquationClass(Name, Type, Min, Max, fx, dfdx, d2fdx2)
 
 #define defineUnivariateEquation3(Name, Type, Min, Max)                        \
-defineEquationClass(Name, UnivariateEquation<Type>, Type, Min, Max, fx, dfdx, d2fdx2, d3fdx3)
-
+defineUnivariateEquationClass(Name, Type, Min, Max, fx, dfdx, d2fdx2, d3fdx3)
 
 
 // * * * * * * * * * * * * * * * Add Functions * * * * * * * * * * * * * * * //
 
 #define addEquationFunc(Name, Type, FuncName, Func)                            \
-Type Name::FuncName(const scalar x, const label li) const {return Func;}       \
-string Name::print##FuncName() const {return #FuncName "(x) = " #Func;}
+Type Name::FuncName(const scalar x, const label li) const {return Func;}
 
-#define addUnivariateEquation0Funcs(Name, Type, FX)                            \
+#define addEquation0Funcs(Name, Type, FX)                                      \
 addEquationFunc(Name, Type, fx, FX)
 
-#define addUnivariateEquation1Funcs(Name, Type, FX, dFdX)                      \
+#define addEquation1Funcs(Name, Type, FX, dFdX)                                \
 addEquationFunc(Name, Type, fx, FX)                                            \
 addEquationFunc(Name, Type, dfdx, dFdX)
 
-#define addUnivariateEquation2Funcs(Name, Type, FX, dFdX, d2FdX2)              \
+#define addEquation2Funcs(Name, Type, FX, dFdX, d2FdX2)                        \
 addEquationFunc(Name, Type, fx, FX)                                            \
 addEquationFunc(Name, Type, dfdx, dFdX)                                        \
 addEquationFunc(Name, Type, d2fdx2, d2FdX2)
 
-#define addUnivariateEquation3Funcs(Name, Type, FX, dFdX, d2FdX2, d3FdX3)      \
+#define addEquation3Funcs(Name, Type, FX, dFdX, d2FdX2, d3FdX3)      \
 addEquationFunc(Name, Type, fx, FX)                                            \
 addEquationFunc(Name, Type, dfdx, dFdX)                                        \
 addEquationFunc(Name, Type, d2fdx2, d2FdX2)                                    \
 addEquationFunc(Name, Type, d3fdx3, d3FdX3)
 
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#define addEquation0Funcs(Name, FX)                                            \
-addUnivariateEquation0Funcs(Name, scalar, FX)
+#define addUnivatiateEquationFunc(Name, Type, FuncName, Func)                  \
+Type Name::FuncName(const scalarList& x, const label li) const {return Func;}
 
-#define addEquation1Funcs(Name, FX, dFdX)                                      \
-addUnivariateEquation1Funcs(Name, scalar, FX, dFdX)
+#define addUnivariateEquation0Funcs(Name, Type, FX)                            \
+addUnivariateEquationFunc(Name, Type, fX, FX)
 
-#define addEquation2Funcs(Name, FX, dFdX, d2FdX2)                              \
-addUnivariateEquation2Funcs(Name, scalar, FX, dFdX, d2FdX2)
+#define addUnivariateEquation1Funcs(Name, Type, FX, dFdX)                      \
+addUnivariateEquationFunc(Name, Type, fX, FX)                                  \
+addUnivariateEquationFunc(Name, Type, dfdX, dFdX)
 
-#define addEquation3Funcs(Name, FX, dFdX, d2FdX2, d3FdX3)                      \
-addUnivariateEquation3Funcs(Name, scalar, FX, dFdX, d2FdX2, d3DdX3)
+#define addUnivariateEquation2Funcs(Name, Type, FX, dFdX, d2FdX2)              \
+addUnivariateEquationFunc(Name, Type, fX, FX)                                  \
+addUnivariateEquationFunc(Name, Type, dfdX, dFdX)                              \
+addUnivariateEquationFunc(Name, Type, d2fdX2, d2FdX2)
+
+#define addUnivariateEquation3Funcs(Name, Type, FX, dFdX, d2FdX2, d3FdX3)      \
+addUnivariateEquationFunc(Name, Type, fx, FX)                                  \
+addUnivariateEquationFunc(Name, Type, dfdX, dFdX)                              \
+addUnivariateEquationFunc(Name, Type, d2fdX2, d2FdX2)                          \
+addUnivariateEquationFunc(Name, Type, d3fdX3, d3FdX3)
 
 
 // * * * * * * * * * * * * Define and Implement Functions  * * * * * * * * * //
 
-#define createEquation0(Name, Min, Max, FX)                                    \
-defineEquation0(Name, Min, Max)                                                \
-addEquation0Funcs(Name, FX)
+#define createEquation0(Name, Type, Min, Max, FX)                              \
+defineEquation0(Name, Type, Min, Max)                                          \
+addEquation0Funcs(Name, Type, FX)
 
-#define createEquation1(Name, Min, Max, FX, dFdX)                              \
-defineEquation1(Name, Min, Max)                                                \
-addEquation1Funcs(Name, FX, dFdX)
+#define createEquation1(Name, Type, Min, Max, FX, dFdX)                        \
+defineEquation1(Name, Type, Min, Max)                                          \
+addEquation1Funcs(Name, Type, FX, dFdX)
 
-#define createEquation2(Name, Min, Max, FX, dFdX, d2FdX2)                      \
-defineEquation2(Name, Min, Max)                                                \
-addEquation2Funcs(Name, FX, dFdX, d2FdX2)
+#define createEquation2(Name, Type, Min, Max, FX, dFdX, d2FdX2)                \
+defineEquation2(Name, Type, Min, Max)                                          \
+addEquation2Funcs(Name, Type, FX, dFdX, d2FdX2)
 
-#define createEquation3(Name, Min, Max, FX, dFdX, d2FdX2, d3FdX3)              \
-defineEquation3(Name, Min, Max)                                                \
-addEquation3Funcs(Name, FX, dFdX, d2FdX2, d3FdX3)
+#define createEquation3(Name, Type, Min, Max, FX, dFdX, d2FdX2, d3FdX3)        \
+defineEquation3(Name, Type, Min, Max)                                          \
+addEquation3Funcs3(Name, Type, FX, dFdX, d2FdX2, d3FdX3)
 
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #define createUnivariateEquation0(Name, Type, Min, Max, FX)                    \
 defineUnivariateEquation0(Name, Type, Min, Max)                                \
@@ -172,7 +199,6 @@ addUnivariateEquation2Funcs(Name, Type, FX, dFdX, d2FdX2)
 #define createUnivariateEquation3(Name, Type, Min, Max, FX, dFdX, d2FdX2, d3FdX3) \
 defineUnivariateEquation3(Name, Type, Min, Max)                                \
 addUnivariateEquation3Funcs3(Name, Type, FX, dFdX, d2FdX2, d3FdX3)
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #endif

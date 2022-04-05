@@ -45,7 +45,7 @@ namespace Foam
 
 Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
 (
-    const scalarEquation& eqns,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -95,12 +95,12 @@ Foam::NelderMeadMinimizationScheme::minimize
     const label np = eqns_.nVar() + 1;
     List<scalarField> points(np, x0);
     SortableList<scalar> ys(np);
-    eqns_.f(points[0], li, ys[0]);
+    ys[0] = eqns_.fX(points[0], li);
     for (label i = 1; i < np; i++)
     {
         points[i][i - 1] += (xMin[i-1] + xMax[i-1])*0.5;
         eqns_.limit(points[i]);
-        eqns_.f(points[i], li, ys[i]);
+        ys[i] = eqns_.fX(points[i], li);
     }
 
     // Create an indirect list to the points using the sort map
@@ -156,7 +156,7 @@ Foam::NelderMeadMinimizationScheme::minimize
         else
         {
             eqns_.limit(xReflection);
-            eqns_.f(xReflection, li, yReflection);
+            yReflection = eqns_.fX(xReflection, li);
         }
 
 //         if
@@ -184,7 +184,7 @@ Foam::NelderMeadMinimizationScheme::minimize
             // Expansion point
             xTmp = xMean + expansionCoeff_*(xReflection - xMean);
             eqns_.limit(xTmp);
-            eqns_.f(xTmp, li, yTmp);
+            yTmp = eqns_.fX(xTmp, li);
 
             if (yTmp < yReflection)
             {
@@ -218,7 +218,7 @@ Foam::NelderMeadMinimizationScheme::minimize
             else
             {
                 eqns_.limit(xTmp);
-                eqns_.f(xTmp, li, yTmp);
+                yTmp = eqns_.fX(xTmp, li);
             }
 
             // Half the distance from all points to the lowest point
@@ -227,7 +227,7 @@ Foam::NelderMeadMinimizationScheme::minimize
                 for (label i = 1; i < np; i++)
                 {
                     points[i] = (points[i] + xLow)*0.5;
-                    eqns_.f(points[i], li, ys[i]);
+                    ys[i] = eqns_.fX(points[i], li);
                 }
             }
             else

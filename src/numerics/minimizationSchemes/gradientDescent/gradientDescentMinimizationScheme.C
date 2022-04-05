@@ -50,7 +50,7 @@ namespace Foam
 
 Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
 (
-    const scalarEquation& eqns,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -72,9 +72,8 @@ Foam::gradientDescentMinimizationScheme::minimize
     tmp<scalarField> txNew(new scalarField(x0));
     scalarField& xNew = txNew.ref();
     scalarField xOld(xNew);
-    scalar fx(eqns_.nEqns());
-    scalarField grad(x0.size());
-    eqns_.gradient(x0, li, fx, grad);
+    scalar fx(eqns_.fX(x0, li));
+    scalarField grad(eqns_.dfdX(x0, li));
     scalarField gradOld(grad);
     scalar alpha;
 
@@ -99,7 +98,8 @@ Foam::gradientDescentMinimizationScheme::minimize
         }
 
         gradOld = grad;
-        eqns_.gradient(xNew, li, fx, grad);
+        fx = eqns_.fX(xNew, li);
+        grad = eqns_.dfdX(xNew, li);
         printStepInformation(xNew);
     }
     printFinalInformation();

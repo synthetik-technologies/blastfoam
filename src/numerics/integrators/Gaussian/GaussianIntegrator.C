@@ -24,78 +24,8 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "GaussianIntegrator.H"
+#include "GaussianWeights.H"
 #include "addToRunTimeSelectionTable.H"
-
-// * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * * //
-
-template<class Type>
-void Foam::GaussianIntegrator<Type>::setQuadrature(const label N)
-{
-    switch (N)
-    {
-        case 1:
-        {
-            xs_ = {0.0};
-            ws_ = {2.0};
-            break;
-        }
-        case 2:
-        {
-            const scalar x = 1.0/sqrt(3.0);
-            xs_ = {-x, x};
-            ws_ = {1.0, 1.0};
-            break;
-        }
-        case 3:
-        {
-            const scalar x = sqrt(3.0/5.0);
-            xs_ = {-x, 0.0,  x};
-            ws_ = {5.0/9.0, 8.0/9.0, 5.0/9.0};
-            break;
-        }
-        case 4:
-        {
-            const scalar x1 = sqrt(3.0/7.0 - 2.0/7.0*sqrt(6.0/5.0));
-            const scalar x2 = sqrt(3.0/7.0 + 2.0/7.0*sqrt(6.0/5.0));
-
-            const scalar w1 = (18.0 + sqrt(30.0))/36.0;
-            const scalar w2 = (18.0 - sqrt(30.0))/36.0;
-
-            xs_ = {-x2, -x1, x1, x2};
-            ws_ = {w2, w1, w1, w2};
-            break;
-        }
-        case 5:
-        {
-            const scalar x1 = sqrt(5.0 - 2.0*sqrt(10.0/7.0))/3.0;
-            const scalar x2 = sqrt(5.0 + 2.0*sqrt(10.0/7.0))/3.0;
-
-            const scalar w0 = 128.0/225.0;
-            const scalar w1 = (322.0 + 13.0*sqrt(70.0))/900.0;
-            const scalar w2 = (322.0 - 13.0*sqrt(70.0))/900.0;
-
-            xs_ = {-x2, -x1, 0.0, x1, x2};
-            ws_ = {w2, w1, w0, w1, w2};
-            break;
-        }
-        default:
-        {
-            FatalErrorInFunction
-                << "Unsupported number of Nodes for Gaussian integration" << nl
-                << "1 to 5 nodes can be used."
-                << abort(FatalError);
-        }
-    }
-
-    // Normalize weights and move xs to be in (0, 1)
-    scalar sumW = sum(ws_);
-    forAll(xs_, i)
-    {
-        ws_[i] /= sumW;
-        xs_[i] = 0.5*(xs_[i] + 1.0);
-    }
-}
-
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
@@ -110,7 +40,7 @@ Foam::GaussianIntegrator<Type>::GaussianIntegrator
     ws_(0),
     xs_(0)
 {
-    setQuadrature(dict.lookup<label>("nNodes"));
+    GaussianWeights::setQuadrature(dict.lookup<label>("nNodes"), ws_, xs_);
 }
 
 
@@ -158,7 +88,7 @@ Type Foam::GaussianIntegrator<Type>::integrate_
 ) const
 {
     const scalar dx(x1 - x0);
-    if (mag(dx) < this->minDx_)
+    if (mag(dx) <= this->minDx_)
     {
         return Q;
     }

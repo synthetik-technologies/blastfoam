@@ -31,13 +31,14 @@ License
 Foam::autoPtr<Foam::minimizationScheme>
 Foam::minimizationScheme::New
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
     word minimizationSchemeType(dict.lookup("solver"));
-    Info<< "Selecting minimization scheme: " << minimizationSchemeType << endl;
-    if (eqn.nVar() == 1)
+    DebugInfo
+        << "Selecting minimization scheme: " << minimizationSchemeType << endl;
+    if (isA<scalarEquation>(eqn))
     {
 
         dictionaryUnivariateConstructorTable::iterator cstrIter =

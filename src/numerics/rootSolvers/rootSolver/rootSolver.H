@@ -35,7 +35,7 @@ SourceFiles
 #ifndef rootSolver_H
 #define rootSolver_H
 
-#include "MultivariateEquation.H"
+#include "MultivariateEquationsFwd.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
 
@@ -56,7 +56,7 @@ protected:
     // Protected data
 
         //- Reference to scalarMultivariateEquation
-        const multivariateEquation<scalar>& eqns_;
+        const scalarMultivariateEquation& eqns_;
 
         //- Convergence tolerance
         scalarField tolerances_;
@@ -91,7 +91,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryUnivariate,
-            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
         declareRunTimeSelectionTable
@@ -99,7 +99,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryZero,
-            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
         declareRunTimeSelectionTable
@@ -107,7 +107,7 @@ public:
             autoPtr,
             rootSolver,
             dictionaryOne,
-            (const multivariateEquation<scalar>& eqns, const dictionary& dict),
+            (const scalarMultivariateEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
 
@@ -117,14 +117,14 @@ public:
         //- Construct for given rootSolver
         rootSolver
         (
-            const multivariateEquation<scalar>& eqns,
+            const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
 
         //- Construct for given rootSolver
         rootSolver
         (
-            const multivariateEquation<scalar>& eqns,
+            const scalarMultivariateEquation& eqns,
             const scalarList& tolerances,
             const label maxSteps
         );
@@ -137,7 +137,7 @@ public:
         //- Select null constructed
         static autoPtr<rootSolver> New
         (
-            const multivariateEquation<scalar>& eqns,
+            const scalarMultivariateEquation& eqns,
             const dictionary& dict
         );
 

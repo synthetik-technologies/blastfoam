@@ -1,7 +1,7 @@
 #include "dictionary.H"
 #include "minimizationScheme.H"
-#include "equation.H"
-#include "ScalarEquation.H"
+#include "EquationsFwd.H"
+#include "UnivariateEquationsFwd.H"
 #include "argList.H"
 
 using namespace Foam;
@@ -9,15 +9,15 @@ using namespace Foam;
 
 class testEqn1
 :
-    public ScalarEquation
+    public ScalarUnivariateEquation
 {
 public:
     // Constructors
     testEqn1()
     :
-        ScalarEquation
+        ScalarUnivariateEquation
         (
-            3,
+            "f(x, y, z) = ((x + 2)*sin(x))^2 + (y + 2)^2 + (z + 3)^2",
             scalarField(scalarList{2, -4, -4}),
             scalarField(scalarList{4, 4, 4})
         )
@@ -31,25 +31,25 @@ public:
     {
         return 0;
     }
-    virtual void f
+    virtual scalar fX
     (
-        const scalarField& x,
-        const label li,
-        scalar& fx
+        const scalarList& x,
+        const label li
     ) const
     {
-        fx = sqr((x[0] + 2.0)*Foam::sin(x[0])) + sqr(x[1] + 2.0) + sqr(x[2] + 3.0);
+        return
+            sqr((x[0] + 2.0)*Foam::sin(x[0])) + sqr(x[1] + 2.0) + sqr(x[2] + 3.0);
     }
 };
 
 class testEqn2
 :
-    public equation
+    public ScalarEquation
 {
 public:
     testEqn2()
     :
-        equation(-3, 3)
+        ScalarEquation("f(x) = (x - 2)^2", -3, 3)
     {}
 
     virtual ~testEqn2()
@@ -72,26 +72,21 @@ public:
 
 int main(int argc, char *argv[])
 {
-    PtrList<scalarEquation> multEqns(2);
-    wordList multiEqnStrs(2);
+    PtrList<scalarUnivariateEquation> multEqns(2);
     multEqns.set(0, new testEqn1());
-    multiEqnStrs[0] =
-        word("    f(x1, x2) = ((x1 + 1)*sin(x))^2 + (x2 + 2)^2 + (x3 + 3)^3\n");
     multEqns.set(1, new testEqn2());
-    multiEqnStrs[1] =
-        word("    f(x1) = (x1 - 2.0^2)\n");
 
     dictionary dict;
 //     dict.add("maxSteps", 10);
-    dict.add("nParticles", 100);
+    dict.add("nParticles", 1000);
 
     Info<< "Minimization" << endl;
-    minimizationScheme::debug = 1;
+    minimizationScheme::debug = 0;
     forAll(multEqns, eqni)
     {
-        Info<< nl << "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
+        Info<< nl << "Solving equations: " << nl << multEqns[eqni].name() << endl;
         scalarField x0Orig(scalarList({0, 0, 0}));
-        const scalarEquation& eqns = multEqns[eqni];
+        const scalarUnivariateEquation& eqns = multEqns[eqni];
 
         wordList multivariateMethods
         (
@@ -110,7 +105,8 @@ int main(int argc, char *argv[])
                 minimizationScheme::New(eqns, dict)
             );
             scalarField localMin(solver->solve());
-            Info<< "    Local minimums=" << localMin << endl;
+            Info<< "    " << multivariateMethods[i] << ": "
+                << "Local minimums = " << localMin << endl;
         }
     }
 

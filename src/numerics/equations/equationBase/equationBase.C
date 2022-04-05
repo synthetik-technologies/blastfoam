@@ -23,62 +23,29 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "multivariateEquation.H"
+#include "equationBase.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::multivariateEquation<Type>::multivariateEquation()
+Foam::equationBase::equationBase()
+:
+    name_(string::null)
+{}
+
+
+Foam::equationBase::equationBase(const string& name)
+:
+    name_(name)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::multivariateEquation<Type>::~multivariateEquation()
+Foam::equationBase::~equationBase()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
-
-template<class Type>
-bool Foam::multivariateEquation<Type>::containsRoot
-(
-    const Field<Type>& y0s,
-    const Field<Type>& y1s
-) const
-{
-    forAll(y0s, i)
-    {
-        for (label cmpti = 0; cmpti < this->nVar(); cmpti++)
-        {
-            if ((component(y0s[i], cmpti)*component(y1s[i], cmpti)) > 0)
-            {
-                #ifdef FULLDEBUG
-                FatalErrorInFunction
-                    << "Solution of component " << i
-                    << " is not bracked in "
-                    << "(" << lowerLimits()
-                    << ","<< upperLimits() << ")" << endl
-                    << abort(FatalError);
-                #endif
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
-
-template<class Type>
-bool Foam::multivariateEquation<Type>::containsRoot(const label li) const
-{
-    scalarField fxLow(nEqns());
-    scalarField fxHigh(nEqns());
-    this->f(lowerLimits(), li, fxLow);
-    this->f(upperLimits(), li, fxHigh);
-    return containsRoot(fxLow, fxHigh);
-}
 
 
 // ************************************************************************* //

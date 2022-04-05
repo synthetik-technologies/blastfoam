@@ -62,7 +62,7 @@ namespace Foam
 
 Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :

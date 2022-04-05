@@ -51,7 +51,7 @@ namespace Foam
 
 Foam::badBroydenRootSolver::badBroydenRootSolver
 (
-    const multivariateEquation<scalar>& eqns,
+    const scalarMultivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -110,7 +110,7 @@ Foam::badBroydenRootSolver::findRoots
         }
 
         // update f
-        eqns_.f(x, li, f);
+        eqns_.FX(x, li, f);
 
         forAll(dx, i)
         {

@@ -81,7 +81,7 @@ Type Foam::Simpson38Integrator<Type>::integrate_
 ) const
 {
     const scalar dx(x1 - x0);
-    if (mag(dx) < this->minDx_)
+    if (mag(dx) <= this->minDx_)
     {
         return Q;
     }

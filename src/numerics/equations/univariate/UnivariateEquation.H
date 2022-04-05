@@ -22,17 +22,19 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::scalarEquation
+    Foam::TypeEquation
 
 Description
-    Abstract class for a multivariate equation
+    An equation using a scalarField as input, but outputing only a single,
+    scalar value. Used in minimization.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef multivariateEquation_H
-#define multivariateEquation_H
+#ifndef UnivariateEquation_H
+#define UnivariateEquation_H
 
-#include "RectangularMatrix.H"
+#include "univariateEquation.H"
+#include "multivariateEquation.H"
 #include "scalarField.H"
 #include "dictionary.H"
 
@@ -42,78 +44,129 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                        Class multivariateEquation Declaration
+                          Class UnivariateEquation Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class multivariateEquation
+class UnivariateEquation
+:
+    public univariateEquation<Type>
 {
+protected:
+// Protected data
+
+    //- Number in input variables
+    const label nVar_;
+
+    //- Lower limits
+    scalarField lowerLimits_;
+
+    //- Upper limit
+    scalarField upperLimits_;
+
+    //- Finite difference step size
+    mutable scalarField dX_;
+
+    //- Calculate the gradient using a finite difference
+    tmp<Field<Type>> calculateGradient
+    (
+        const scalarList& x0,
+        const label li
+    ) const;
+
+
 public:
 
     // Constructors
 
         //- Construct given bounds
-        multivariateEquation();
+        UnivariateEquation
+        (
+            const scalarList& lowerLimit,
+            const scalarList& upperLimit
+        );
+
+        //- Construct given bounds
+        UnivariateEquation
+        (
+            const string& name,
+            const scalarList& lowerLimit,
+            const scalarList& upperLimit
+        );
 
 
     //- Destructor
-    virtual ~multivariateEquation();
+    virtual ~UnivariateEquation();
 
-    //- Public member functions
+
+    // Member Functions
 
         //- Return the number of input variables
-        virtual label nVar() const = 0;
+        virtual label nVar() const
+        {
+            return nVar_;
+        }
 
         //- Return the number of equations
-        virtual label nEqns() const = 0;
-
-        //- Return the number of derivatives
-        virtual label nDerivatives() const = 0;
+        virtual label nEqns() const
+        {
+            return 1;
+        }
 
         //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const = 0;
+        virtual tmp<scalarField> lowerLimits() const
+        {
+            return lowerLimits_;
+        }
 
         //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const = 0;
+        virtual tmp<scalarField> upperLimits() const
+        {
+            return upperLimits_;
+        }
 
         //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const = 0;
+        virtual tmp<scalarField> dX() const
+        {
+            return dX_;
+        }
 
         //- Return the finite difference step size
-        virtual void setDX(const scalarField& newDx) const = 0;
+        virtual void setDX(const scalarList& newDx) const
+        {
+            dX_ = newDx;
+        }
 
         //- Limit the value of x to the range of the equation
         virtual void limit(scalarField& x) const
         {
-            x = max(lowerLimits(), min(x, upperLimits()));
+            x = max(min(upperLimits_, x), lowerLimits_);
         }
 
-        //- Return the function value
-        virtual void f
-        (
-            const scalarField& x,
-            const label li,
-            Field<Type>& fx
-        ) const = 0;
 
-        //- Return the function value
-        virtual void jacobian
+        //- Calculate the gradient
+        virtual tmp<Field<Type>> dfdX
         (
-            const scalarField& x,
-            const label li,
-            Field<Type>& fx,
-            RectangularMatrix<Type>& J
-        ) const = 0;
-
-        //- Check if the solution is bracketed
-        virtual bool containsRoot
-        (
-            const Field<Type>& y0s,
-            const Field<Type>& y1s
+            const scalarList& x,
+            const label li
         ) const;
 
-        //- Check if the solution is bracketed (compute bounds)
-        virtual bool containsRoot(const label li) const;
+        //- Calculate the gradient
+        virtual void FX
+        (
+            const scalarList& x,
+            const label li,
+            List<Type>& fx
+        ) const;
+
+        //- Calculate the jacobian
+        virtual void jacobian
+        (
+            const scalarList& x,
+            const label li,
+            List<Type>& fx,
+            RectangularMatrix<Type>& J
+        ) const;
 };
 
 
@@ -124,7 +177,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-#include "multivariateEquation.C"
+    #include "UnivariateEquation.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

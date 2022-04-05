@@ -78,7 +78,7 @@ public:
         //- Construct for given minimizationScheme
         gradientDescentMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

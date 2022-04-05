@@ -69,7 +69,7 @@ public:
         //- Construct for given multivariateMultivariateRootSolver
         NewtonRaphsonRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 

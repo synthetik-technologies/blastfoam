@@ -35,7 +35,7 @@ SourceFiles
 #ifndef minimizationScheme_H
 #define minimizationScheme_H
 
-#include "ScalarEquation.H"
+#include "UnivariateEquationsFwd.H"
 #include "Switch.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -57,7 +57,7 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const scalarEquation& eqns_;
+        const scalarUnivariateEquation& eqns_;
 
         //- Convergence tolerance
         scalarField tolerances_;
@@ -150,7 +150,7 @@ public:
             autoPtr,
             minimizationScheme,
             dictionaryUnivariate,
-            (const scalarEquation& eqns, const dictionary& dict),
+            (const scalarUnivariateEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
         declareRunTimeSelectionTable
@@ -158,7 +158,7 @@ public:
             autoPtr,
             minimizationScheme,
             dictionaryMultivariate,
-            (const scalarEquation& eqns, const dictionary& dict),
+            (const scalarUnivariateEquation& eqns, const dictionary& dict),
             (eqns, dict)
         );
 
@@ -168,7 +168,7 @@ public:
         //- Construct for given minimizationScheme
         minimizationScheme
         (
-            const scalarEquation& eqns,
+            const scalarUnivariateEquation& eqns,
             const dictionary& dict
         );
 
@@ -181,7 +181,7 @@ public:
         //- Select null constructed
         static autoPtr<minimizationScheme> New
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

@@ -62,7 +62,7 @@ namespace Foam
 
 Foam::falsePointUnivariateRootSolver::falsePointUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :

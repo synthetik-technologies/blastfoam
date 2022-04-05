@@ -62,7 +62,7 @@ namespace Foam
 
 Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :
@@ -82,7 +82,7 @@ Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
 
 Foam::stepUnivariateRootSolver::stepUnivariateRootSolver
 (
-    const equation& eqn,
+    const scalarMultivariateEquation& eqn,
     const scalar dx
 )
 :

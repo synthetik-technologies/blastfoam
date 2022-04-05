@@ -35,8 +35,10 @@ SourceFiles
 #ifndef integrator_H
 #define integrator_H
 
+#include "integratorBase.H"
 #include "UnivariateEquation.H"
 #include "typeInfo.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -47,12 +49,11 @@ namespace Foam
 \*---------------------------------------------------------------------------*/
 
 class integrator
+:
+    public integratorBase
 {
 protected:
     // Protected data
-
-        //- Is the integration adaptive
-        bool adaptive_;
 
         //- Tolerance
         scalar tolerance_;
@@ -63,7 +64,6 @@ protected:
         //- Number of intervals
         label nIntervals_;
 
-        mutable label evals_;
         mutable label intervals_;
         mutable scalar minDx_;
 
@@ -92,28 +92,10 @@ public:
         //- Return if the integration is adaptive
         virtual bool adaptive() const = 0;
 
-        //- Return the number of steps
-        label nSteps() const
-        {
-            return evals_;
-        }
-
         //- Return the number of intervals
         label nIntervals() const
         {
             return adaptive() ? intervals_ : nIntervals_;
-        }
-
-        //- Access the number of steps
-        virtual void setAdaptive
-        (
-            const label maxSplits = 10,
-            const scalar tol = 1e-6
-        )
-        {
-            adaptive_ = true;
-            maxSplits_ = maxSplits;
-            tolerance_ = tol;
         }
 
         //- Access the number of intervals to use

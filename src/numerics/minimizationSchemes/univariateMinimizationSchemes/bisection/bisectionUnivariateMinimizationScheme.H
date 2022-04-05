@@ -62,7 +62,7 @@ public:
         //- Construct for given univariateUnivariateMinimizationScheme
         bisectionUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

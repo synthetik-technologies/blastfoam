@@ -70,7 +70,7 @@ const Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::invPhi2 =
 
 Foam::goldenRatioUnivariateMinimizationScheme::goldenRatioUnivariateMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :

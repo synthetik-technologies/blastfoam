@@ -64,7 +64,7 @@ public:
         //- Construct for given univariateMinimizationScheme
         NewtonRaphsonUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

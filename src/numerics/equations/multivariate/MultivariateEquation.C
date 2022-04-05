@@ -32,21 +32,20 @@ License
 template<class Type>
 void Foam::MultivariateEquation<Type>::calculateJacobian
 (
-    const scalarField& x0,
+    const scalarList& x0,
     const label li,
-    const Field<Type>& f0,
+    const List<Type>& f0,
     RectangularMatrix<Type>& J
 ) const
 {
-    scalarField f1(this->nVar_);
-    J.setSize(this->nEqns_, this->nVar_);
-    const Equation<scalarField, Field<Type>>& eqns(*this);
-    for (label cmptj = 0; cmptj < this->nVar_; cmptj++)
+    scalarList f1(nVar_);
+    J.setSize(nEqns_, nVar_);
+    for (label cmptj = 0; cmptj < nVar_; cmptj++)
     {
-        scalarField x1(x0);
-        x1[cmptj] += this->dx(cmptj);
-        eqns.f(x1, li, f1);
-        for (label cmpti = 0; cmpti < this->nEqns_; cmpti++)
+        scalarList x1(x0);
+        x1[cmptj] += dX_[cmptj];
+        this->FX(x1, li, f1);
+        for (label cmpti = 0; cmpti < nEqns_; cmpti++)
         {
             J(cmpti, cmptj) =
                 (f1[cmpti] - f0[cmpti])/(x1[cmptj] - x0[cmptj]);
@@ -60,17 +59,33 @@ template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
     const label nEqns,
-    const scalarField& lowerLimits,
-    const scalarField& upperLimits
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits
 )
 :
-    Equation<scalarField, Field<Type>>
-    (
-        lowerLimits.size(),
-        nEqns,
-        lowerLimits,
-        upperLimits
-    )
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
+    lowerLimits_(lowerLimits),
+    upperLimits_(upperLimits),
+    dX_(nVar_, 1e-6)
+{}
+
+
+template<class Type>
+Foam::MultivariateEquation<Type>::MultivariateEquation
+(
+    const string& name,
+    const label nEqns,
+    const scalarList& lowerLimits,
+    const scalarList& upperLimits
+)
+:
+    multivariateEquation<Type>(name),
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
+    lowerLimits_(lowerLimits),
+    upperLimits_(upperLimits),
+    dX_(nVar_, 1e-6)
 {}
 
 
@@ -84,71 +99,16 @@ Foam::MultivariateEquation<Type>::~MultivariateEquation()
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
 template<class Type>
-Foam::label Foam::MultivariateEquation<Type>::nVar() const
-{
-    return Equation<scalarField, Field<Type>>::nVar();
-}
-
-
-template<class Type>
-Foam::label Foam::MultivariateEquation<Type>::nEqns() const
-{
-    return Equation<scalarField, Field<Type>>::nEqns();
-}
-
-
-template<class Type>
-Foam::tmp<Foam::scalarField>
-Foam::MultivariateEquation<Type>::lowerLimits() const
-{
-    return Equation<scalarField, Field<Type>>::lower();
-}
-
-
-template<class Type>
-Foam::tmp<Foam::scalarField>
-Foam::MultivariateEquation<Type>::upperLimits() const
-{
-    return Equation<scalarField, Field<Type>>::lower();
-}
-
-
-template<class Type>
-Foam::tmp<Foam::scalarField>
-Foam::MultivariateEquation<Type>::dX() const
-{
-    return Equation<scalarField, Field<Type>>::dx();
-}
-
-
-template<class Type>
-void Foam::MultivariateEquation<Type>::setDX
-(
-    const scalarField& newDx
-) const
-{
-    this->dx_ = newDx;
-}
-
-
-template<class Type>
-void Foam::MultivariateEquation<Type>::limit(scalarField& x) const
-{
-    Equation<scalarField, Field<Type>>::limit(x);
-}
-
-template<class Type>
 void Foam::MultivariateEquation<Type>::jacobian
 (
-    const scalarField& x,
+    const scalarList& x,
     const label li,
-    Field<Type>& fx,
+    List<Type>& fx,
     RectangularMatrix<Type>& J
 ) const
 {
-    fx.resize(this->nEqns_);
-    const Equation<scalarField, Field<Type>>& eqns(*this);
-    eqns.f(x, li, fx);
+    fx.resize(nEqns_);
+    this->FX(x, li, fx);
     calculateJacobian(x, li, fx, J);
 }
 

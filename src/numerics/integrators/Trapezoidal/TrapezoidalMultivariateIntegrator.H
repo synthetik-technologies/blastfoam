@@ -22,19 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::UnivariateEquation
+    Foam::TrapezoidalMultivariateIntegrator
 
 Description
-    Templated equation for that uses a single input to return a Type.
+    Mid-point integration
+
+SourceFiles
+    TrapezoidalMultivariateIntegrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef UnivariateEquation_H
-#define UnivariateEquation_H
+#ifndef TrapezoidalMultivariateIntegrator_H
+#define TrapezoidalMultivariateIntegrator_H
 
-#include "Equation.H"
-#include "univariateEquation.H"
-#include "scalarField.H"
+#include "MultivariateIntegrator.H"
+#include "typeInfo.H"
+#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -42,51 +45,80 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class UnivariateEquation Declaration
+                        Class TrapezoidalMultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class UnivariateEquation
+class TrapezoidalMultivariateIntegrator
 :
-    public Equation<scalar, Type>,
-    public univariateEquation<Type>
+    public MultivariateIntegrator<Type>
 {
+    typedef univariateEquation<Type> equationType;
+
+    virtual Type integrateFunc
+    (
+        const scalarField& x0,
+        const scalarField& x1,
+        const label li
+    ) const;
+
+    //- Recursive add to the sum
+    virtual void addCorners
+    (
+        const label diri,
+        const scalarField& dx,
+        const label li,
+        scalarField& x,
+        Type& fx
+    ) const;
+
 public:
+
+    //- Runtime type information
+    TypeName("trapezoidal");
 
     // Constructors
 
-        //- Construct with limits
-        UnivariateEquation
+        //- Construct for given Equation
+        TrapezoidalMultivariateIntegrator
         (
-            const scalar& lowerLimit,
-            const scalar& upperLimit
+            const equationType& eqn,
+            const dictionary& dict
         );
 
-        //- Construct with limits and number of equations
-        UnivariateEquation
+        //- Construct for given Equation
+        TrapezoidalMultivariateIntegrator
         (
-            const label nVar,
-            const scalar& lowerLimit,
-            const scalar& upperLimit
+            const equationType& eqn,
+            const multivariateIntegrator& inter
         );
+
+        //- Disallow default bitwise copy construction
+        TrapezoidalMultivariateIntegrator
+        (
+            const TrapezoidalMultivariateIntegrator<Type>&
+        ) = delete;
 
 
     //- Destructor
-    virtual ~UnivariateEquation();
+    virtual ~TrapezoidalMultivariateIntegrator()
+    {}
 
 
     // Member Functions
 
-        //- Calculate the first derivative of the equation
-        virtual void f
+        //- Integrate the equation
+        virtual Type integrate
         (
-            const scalar& x,
-            const label li,
-            Type& fx
-        ) const
-        {
-            fx = this->fx(x, li);
-        }
+            const scalarField& x0,
+            const scalarField& x1,
+            const label li
+        ) const;
+
+    // Member Operators
+
+        //- Disallow default bitwise assignment
+        void operator=(const TrapezoidalMultivariateIntegrator<Type>&) = delete;
 };
 
 
@@ -94,11 +126,10 @@ public:
 
 } // End namespace Foam
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "UnivariateEquation.C"
+#include "TrapezoidalMultivariateIntegrator.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

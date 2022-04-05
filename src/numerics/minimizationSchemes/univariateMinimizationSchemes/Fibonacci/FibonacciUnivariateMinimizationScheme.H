@@ -72,7 +72,7 @@ public:
         //- Construct for given univariateMinimizationScheme
         FibonacciUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

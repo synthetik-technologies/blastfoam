@@ -39,7 +39,7 @@ namespace Foam
 
 Foam::HalleyUnivariateRootSolver::HalleyUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :

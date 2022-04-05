@@ -22,21 +22,22 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::MultivariateEquation
+    Foam::GaussianMultivariateIntegrator
 
 Description
-    Abstract base class a multivariate equation. Uses a scalar field as
-    the input, but can output a list of any type.
+    Variable node Gaussian quadrature
+
+SourceFiles
+    GaussianMultivariateIntegrator.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef MultivariateEquation_H
-#define MultivariateEquation_H
+#ifndef GaussianMultivariateIntegrator_H
+#define GaussianMultivariateIntegrator_H
 
-#include "multivariateEquation.H"
-#include "Equation.H"
-#include "scalarField.H"
-#include "RectangularMatrix.H"
+#include "MultivariateIntegrator.H"
+#include "typeInfo.H"
+#include "autoPtr.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -44,79 +45,89 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class MultivariateEquation Declaration
+                Class GaussianMultivariateIntegrator Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class MultivariateEquation
+class GaussianMultivariateIntegrator
 :
-    public Equation<scalarField, Field<Type>>,
-    public multivariateEquation<Type>
+    public MultivariateIntegrator<Type>
 {
-protected:
+// Private data
 
-    // Protected member functions
+    typedef univariateEquation<Type> equationType;
 
-        //- Create a Jacobian matrix given a list of dx
-        void calculateJacobian
+    //- Gauss weights
+    List<scalarList> ws_;
+
+    //- Normalized positions
+    List<scalarList> xs_;
+
+
+    // Private member functions
+
+        virtual Type integrateFunc
         (
             const scalarField& x0,
+            const scalarField& x1,
+            const label li
+        ) const;
+
+        //- Recursive add to the sum
+        virtual void addCorners
+        (
+            const label diri,
+            const scalarField& x0,
+            const scalarField& x1,
             const label li,
-            const Field<Type>& f0,
-            RectangularMatrix<Type>& J
+            labelList& gi,
+            Type& fx
         ) const;
 
 public:
 
+    //- Runtime type information
+    TypeName("Gaussian");
+
     // Constructors
 
-        //- Construct null
-        MultivariateEquation(const label nEqns);
-
-        //- Construct with limits
-        MultivariateEquation
+        //- Construct for given Equation
+        GaussianMultivariateIntegrator
         (
-            const label nEqns,
-            const scalarField& lowerLimits,
-            const scalarField& upperLimits
+            const equationType& eqn,
+            const dictionary& dict
         );
+
+        //- Construct for given Equation
+        GaussianMultivariateIntegrator
+        (
+            const equationType& eqn,
+            const multivariateIntegrator& inter
+        );
+
+        //- Disallow default bitwise copy construction
+        GaussianMultivariateIntegrator
+        (
+            const GaussianMultivariateIntegrator<Type>&
+        ) = delete;
 
 
     //- Destructor
-    virtual ~MultivariateEquation();
-
+    virtual ~GaussianMultivariateIntegrator()
+    {}
 
     // Member Functions
 
-        //- Return the number of input variables
-        virtual label nVar() const;
-
-        //- Return the number of equations
-        virtual label nEqns() const;
-
-        //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const;
-
-        //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const;
-
-        //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const;
-
-        //- Return the finite difference step size
-        virtual void setDX(const scalarField& newDx) const;
-
-        //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const;
-
-        //- Calculate the Jacobian of the equation
-        virtual void jacobian
+        //- Integrate the equation
+        virtual Type integrate
         (
-            const scalarField& x,
-            const label li,
-            Field<Type>& fx,
-            RectangularMatrix<Type>& J
+            const scalarField& x0,
+            const scalarField& x1,
+            const label li
         ) const;
+
+        //- Disallow default bitwise assignment
+        void operator=(const GaussianMultivariateIntegrator<Type>&) = delete;
 };
 
 
@@ -124,11 +135,10 @@ public:
 
 } // End namespace Foam
 
-
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "MultivariateEquation.C"
+#include "GaussianMultivariateIntegrator.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

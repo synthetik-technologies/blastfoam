@@ -50,7 +50,7 @@ namespace Foam
 
 Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :
@@ -60,7 +60,7 @@ Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 
 Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const scalar tolerance,
     const label maxSteps
 )

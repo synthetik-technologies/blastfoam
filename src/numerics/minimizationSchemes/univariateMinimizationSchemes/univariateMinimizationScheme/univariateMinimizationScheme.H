@@ -35,7 +35,7 @@ SourceFiles
 #ifndef univariateMinimizationScheme_H
 #define univariateMinimizationScheme_H
 
-#include "equation.H"
+#include "EquationsFwd.H"
 #include "minimizationScheme.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -59,7 +59,7 @@ protected:
     // Protected data
 
         //- Reference to scalarEquation
-        const equation& eqn_;
+        const scalarEquation& eqn_;
 
         //- Number of location to pre sample
         label nSample_;
@@ -88,7 +88,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryZero,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const scalarUnivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -96,7 +96,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryOne,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const scalarUnivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
         declareRunTimeSelectionTable
@@ -104,7 +104,7 @@ public:
             autoPtr,
             univariateMinimizationScheme,
             dictionaryTwo,
-            (const scalarEquation& eqn, const dictionary& dict),
+            (const scalarUnivariateEquation& eqn, const dictionary& dict),
             (eqn, dict)
         );
 
@@ -114,7 +114,7 @@ public:
         //- Construct for given univariateMinimizationScheme
         univariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 
@@ -127,7 +127,7 @@ public:
         //- Select null constructed
         static autoPtr<univariateMinimizationScheme> New
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

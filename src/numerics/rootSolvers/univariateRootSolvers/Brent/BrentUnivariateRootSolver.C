@@ -62,7 +62,7 @@ namespace Foam
 
 Foam::BrentUnivariateRootSolver::BrentUnivariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :

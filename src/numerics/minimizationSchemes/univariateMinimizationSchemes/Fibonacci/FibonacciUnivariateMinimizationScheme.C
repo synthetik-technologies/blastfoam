@@ -68,7 +68,7 @@ const Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::s =
 
 Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :

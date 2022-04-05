@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(minimizationScheme, 0);
+    defineTypeNameAndDebug(minimizationScheme, 1);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryUnivariate);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryMultivariate);
 }
@@ -61,7 +61,7 @@ void Foam::minimizationScheme::printStepInformation
 {
     if (debug > 1)
     {
-        Info<< "Step: " << stepi_ << ":" << nl
+        DebugInfo<< "Step: " << stepi_ << ":" << nl
             << "    " << errorName() << "s: " << errors_ << nl
             << "    values: " << vals << endl;
     }
@@ -75,8 +75,9 @@ void Foam::minimizationScheme::printFinalInformation() const
         Info<< "Converged in " << stepi_ << " iterations" << nl
             << "    Final " << errorName() << "s=" << errors_ << endl;
     }
-    else if (stepi_ >= maxSteps_)
+    else if (stepi_ >= maxSteps_ && debug)
     {
+        Info<<debug<<endl;
         WarningInFunction
             << "Did not converge in " << maxSteps_ << " iterations" << nl
             << "    Final " << errorName() << "s: " << errors_ << endl;
@@ -119,7 +120,7 @@ Foam::scalar Foam::minimizationScheme::lineSearch
     const scalar fx0(fx);
     scalarField x1(x0 - a*grad);
     eqns_.limit(x1);
-    eqns_.f(x1, li, fx);
+    fx = eqns_.fX(x1, li);
 
     label iter = 0;
     while (fx >= fx0 && iter++ < maxSteps_)
@@ -127,7 +128,7 @@ Foam::scalar Foam::minimizationScheme::lineSearch
         a *= tau_;
         x1 = x0 - a*grad;
         eqns_.limit(x1);
-        eqns_.f(x1, li, fx);
+        fx = eqns_.fX(x1, li);
     }
     return a;
 }
@@ -150,7 +151,7 @@ Foam::scalar Foam::minimizationScheme::lineSearch
     const scalar fx0(fx);
     scalarField x1(x0 - alpha*grad);
     eqns_.limit(x1);
-    eqns_.f(x1, li, fx);
+    fx = eqns_.fX(x1, li);
 
     label iter = 0;
     while (fx >= fx0 && iter++ < maxSteps_)
@@ -158,7 +159,7 @@ Foam::scalar Foam::minimizationScheme::lineSearch
         alpha *= tau_;
         x1 = x0 - alpha*grad;
         eqns_.limit(x1);
-        eqns_.f(x1, li, fx);
+        fx = eqns_.fX(x1, li);
     }
     return alpha;
 }
@@ -208,8 +209,7 @@ void Foam::minimizationScheme::sample
 
     if (diri >= xBest.size())
     {
-        scalar y;
-        eqns_.f((xLow + xHigh)*0.5, li, y);
+        scalar y = eqns_.fX((xLow + xHigh)*0.5, li);
 
         if (y < yBest)
         {
@@ -255,7 +255,7 @@ void Foam::minimizationScheme::sample
 
 Foam::minimizationScheme::minimizationScheme
 (
-    const scalarEquation& eqns,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -282,12 +282,6 @@ Foam::minimizationScheme::minimizationScheme
     normalize_(dict.lookupOrDefault("normalizeError", true)),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
 {
-    if (eqns_.nEqns() > 1)
-    {
-        FatalErrorInFunction
-            << "Only a single output is allowed" << abort(FatalError);
-    }
-
     if (dict.found("tolerance"))
     {
         tolerances_ = dict.lookup<scalar>("tolerance");

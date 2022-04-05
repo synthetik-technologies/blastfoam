@@ -72,7 +72,7 @@ Foam::vector2D Foam::ShubertPiyavskiiMinimizationScheme::intersection
 
 Foam::ShubertPiyavskiiMinimizationScheme::ShubertPiyavskiiMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :

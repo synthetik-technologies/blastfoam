@@ -77,24 +77,24 @@ Foam::univariateRootSolver::printFinalInformation(const scalar val) const
 
 Foam::univariateRootSolver::univariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 :
     rootSolver(eqn, dict),
-    eqn_(dynamicCast<const equation>(eqn))
+    eqn_(dynamicCast<const scalarEquation>(eqn))
 {}
 
 
 Foam::univariateRootSolver::univariateRootSolver
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const scalar tolerance,
     const label maxSteps
 )
 :
     rootSolver(eqn, {tolerance}, maxSteps),
-    eqn_(dynamicCast<const equation>(eqn))
+    eqn_(dynamicCast<const scalarEquation>(eqn))
 {}
 
 

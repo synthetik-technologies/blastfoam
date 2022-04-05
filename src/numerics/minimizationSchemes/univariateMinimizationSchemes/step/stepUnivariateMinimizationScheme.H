@@ -73,7 +73,7 @@ public:
         //- Construct for given univariateMinimizationScheme
         stepUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -23,56 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "UnivariateEquation.H"
+#ifndef EquationsFwd_H
+#define EquationsFwd_H
 
-// * * * * * * * * * * * * * Static member functions * * * * * * * * * * * * //
+#include "Equation.H"
+#include "adaptiveTypesFwd.H"
 
-// * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
+namespace Foam
+{
 
-template<class Type>
-Foam::UnivariateEquation<Type>::UnivariateEquation
-(
-    const scalar& lowerLimit,
-    const scalar& upperLimit
-)
-:
-    Equation<scalar, Type>
-    (
-        1,
-        1,
-        lowerLimit,
-        upperLimit
-    )
-{}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+typedef equation<scalar> scalarEquation;
+typedef equation<vector> vectorEquation;
+typedef equation<symmTensor> symmTensorEquation;
+typedef equation<sphericalTensor> sphericalTensorEquation;
+typedef equation<tensor> tensorEquation;
 
 
-template<class Type>
-Foam::UnivariateEquation<Type>::UnivariateEquation
-(
-    const label nVar,
-    const scalar& lowerLimit,
-    const scalar& upperLimit
-)
-:
-    Equation<scalar, Type>
-    (
-        nVar,
-        1,
-        lowerLimit,
-        upperLimit
-    )
-{}
+typedef Equation<scalar> ScalarEquation;
+typedef Equation<vector> VectorEquation;
+typedef Equation<symmTensor> SymmTensorEquation;
+typedef Equation<sphericalTensor> SphericalTensorEquation;
+typedef Equation<tensor> TensorEquation;
 
 
-// * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-template<class Type>
-Foam::UnivariateEquation<Type>::~UnivariateEquation()
-{}
+}
 
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
+#endif
 
 // ************************************************************************* //

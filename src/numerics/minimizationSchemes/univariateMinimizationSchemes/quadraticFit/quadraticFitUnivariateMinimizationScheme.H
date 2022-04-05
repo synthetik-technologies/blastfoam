@@ -69,7 +69,7 @@ public:
         //- Construct for given univariateMinimizationScheme
         quadraticFitUnivariateMinimizationScheme
         (
-            const scalarEquation& eqn,
+            const scalarUnivariateEquation& eqn,
             const dictionary& dict
         );
 

@@ -7,17 +7,19 @@ using namespace Foam;
 
 class testEqn1
 :
-    public MultivariateEquation<scalar>
+    public ScalarMultivariateEquation
 {
 public:
     // Constructors
     testEqn1()
     :
-        MultivariateEquation
+        ScalarMultivariateEquation
         (
+            word("f1(x1, x2) = x1^2 + x2^2 - 4.0\n")
+          + word("f2(x1, x2) = x1^2 - x2 + 1.0\n"),
             2,
-            scalarField(2, 0.0),
-            scalarField(2, 2.0)
+            {0.0, 0.0},
+            {2.0, 2.0}
         )
     {}
 
@@ -33,11 +35,11 @@ public:
     {
         return 1;
     }
-    virtual void f
+    virtual void FX
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx
+        scalarList& fx
     ) const
     {
         fx[0] = sqr(x[0]) + sqr(x[1]) - 4.0;
@@ -45,9 +47,9 @@ public:
     }
     // virtual void jacobian
     // (
-    //     const scalarField& x,
+    //     const scalarList& x,
     //     const label li,
-    //     scalarField& fx,
+    //     scalarList& fx,
     //     scalarRectangularMatrix& dfdx
     // ) const
     // {
@@ -62,17 +64,19 @@ public:
 
 class testEqn2
 :
-    public MultivariateEquation<scalar>
+    public ScalarMultivariateEquation
 {
 public:
     // Constructors
     testEqn2()
     :
-        MultivariateEquation
+        ScalarMultivariateEquation
         (
+            word("f1(x1, x2) = x2^2 + x1^2 + x1\n")
+          + word("f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n"),
             2,
-            scalarField(2, -10.0),
-            scalarField(2, 10.0)
+            {-10.0, -10.0},
+            {10.0, 10.0}
         )
     {}
 
@@ -88,11 +92,11 @@ public:
     {
         return 1;
     }
-    virtual void f
+    virtual void FX
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx
+        scalarList& fx
     ) const
     {
         fx[0] = x[1] - sqr(x[0]) + x[0];
@@ -100,13 +104,13 @@ public:
     }
     virtual void jacobian
     (
-        const scalarField& x,
+        const scalarList& x,
         const label li,
-        scalarField& fx,
+        scalarList& fx,
         RectangularMatrix<scalar>& J
     ) const
     {
-        f(x, li, fx);
+        FX(x, li, fx);
 
         J(0, 0) = stabilise(-2.0*x[0] + 1.0, small);
         J(0, 1) = 1.0;
@@ -119,15 +123,8 @@ public:
 int main(int argc, char *argv[])
 {
     PtrList<multivariateEquation<scalar>> multEqns(2);
-    wordList multiEqnStrs(2);
     multEqns.set(0, new testEqn1());
-    multiEqnStrs[0] =
-        word("    f1(x1, x2) = x1^2 + x2^2 - 4.0\n")
-      + word("    f2(x1, x2) = x1^2 - x2 + 1.0\n");
     multEqns.set(1, new testEqn2());
-    multiEqnStrs[1] =
-        word("    f1(x1, x2) = x2^2 + x1^2 + x1\n")
-      + word("    f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0\n");
 
     dictionary dict;
 
@@ -138,7 +135,7 @@ int main(int argc, char *argv[])
     );
     forAll(multEqns, eqni)
     {
-        Info<< "Solving equations: " << nl << multiEqnStrs[eqni] << endl;
+        Info<< "Solving equations: " << nl << multEqns[eqni].name() << endl;
         scalarField x0(2, 0.1);
         const multivariateEquation<scalar>& eqns = multEqns[eqni];
         forAll(multivariateMethods, i)

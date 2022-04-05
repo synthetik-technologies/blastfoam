@@ -62,7 +62,7 @@ namespace Foam
 
 Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 :

@@ -30,7 +30,7 @@ License
 
 Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
 (
-    const multivariateEquation<scalar>& eqn,
+    const scalarMultivariateEquation& eqn,
     const dictionary& dict
 )
 {

@@ -63,14 +63,14 @@ public:
         //- Construct for given univariateRootSolver
         NewtonRaphsonUnivariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 
         //- Construct for given univariateRootSolver
         NewtonRaphsonUnivariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const scalar tolerance = 1e-6,
             const label maxSteps = 100
         );

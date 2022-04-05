@@ -22,16 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::Equation
+    Foam::scalarEquation
 
 Description
-    Abstract base class for an equation.
+    Abstract class for a multivariate equation
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef Equation_H
-#define Equation_H
+#ifndef multivariateEquation_H
+#define multivariateEquation_H
 
+#include "equationBase.H"
+#include "RectangularMatrix.H"
 #include "scalarField.H"
 #include "dictionary.H"
 
@@ -40,106 +42,87 @@ Description
 namespace Foam
 {
 
-template<class Type>
-inline Type& setComponent(List<Type>& f, const direction diri)
-{
-    return f[diri];
-}
-
-
-template<class Type>
-inline const Type& component(const List<Type>& f, const direction diri)
-{
-    return f[diri];
-}
-
 /*---------------------------------------------------------------------------*\
-                          Class Equation Declaration
+                        Class multivariateEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-template<class InType, class OutType>
-class Equation
+template<class Type>
+class multivariateEquation
+:
+    public equationBase
 {
-protected:
-
-    // Protected data
-
-        //- Number in input variables
-        const label nVar_;
-
-        //- Number of equations
-        const label nEqns_;
-
-        //- Lower limits
-        InType lowerLimits_;
-
-        //- Upper limit
-        InType upperLimits_;
-
-        //- Finite difference step size
-        mutable InType dx_;
-
-
 public:
 
-    // Constructors
+    //- Constructors
 
-        //- Construct given bounds
-        Equation
-        (
-            const label nVar,
-            const label nEqns,
-            const InType& lowerLimit,
-            const InType& upperLimit
-        );
+        //- Null constructor
+        multivariateEquation()
+        :
+            equationBase()
+        {}
 
+        //- Construct from name
+        multivariateEquation(const string& name)
+        :
+            equationBase(name)
+        {}
 
     //- Destructor
-    virtual ~Equation();
+    virtual ~multivariateEquation();
 
+    //- Public member functions
 
-    // Member Functions
 
         //- Return the number of input variables
-        inline label nVar() const;
+        virtual label nVar() const = 0;
 
         //- Return the number of equations
-        inline label nEqns() const;
+        virtual label nEqns() const = 0;
 
-        //- Return the number of derivatives
-        virtual label nDerivatives() const = 0;
+        //- Return the lower limit
+        virtual tmp<scalarField> lowerLimits() const = 0;
 
-        //- Return the lower limits
-        virtual const InType& lower() const;
-
-        //- Access the lower limits
-        virtual InType& lower();
-
-        //- Return the upper limits
-        inline const InType& upper() const;
-
-        //- Access the upper limits
-        inline InType& upper();
+        //- Return the upper limit
+        virtual tmp<scalarField> upperLimits() const = 0;
 
         //- Return the finite difference step size
-        inline const InType& dx() const;
+        virtual tmp<scalarField> dX() const = 0;
 
-        //- Access the finite difference step size
-        inline InType& dx();
-
-        //- Return the finite difference step size for a direction
-        inline scalar dx(const label cmpti) const;
+        //- Return the finite difference step size
+        virtual void setDX(const scalarList& newDx) const = 0;
 
         //- Limit the value of x to the range of the equation
-        inline  void limit(InType& x) const;
+        virtual void limit(scalarField& x) const
+        {
+            x = max(lowerLimits(), min(x, upperLimits()));
+        }
 
         //- Return the function value
-        virtual void f
+        virtual void FX
         (
-            const InType& x,
+            const scalarList& x,
             const label li,
-            OutType& fx
+            List<Type>& fx
         ) const = 0;
+
+        //- Return the function value
+        virtual void jacobian
+        (
+            const scalarList& x,
+            const label li,
+            List<Type>& fx,
+            RectangularMatrix<Type>& J
+        ) const = 0;
+
+        //- Check if the solution is bracketed
+        virtual bool containsRoot
+        (
+            const List<Type>& y0s,
+            const List<Type>& y1s
+        ) const;
+
+        //- Check if the solution is bracketed (compute bounds)
+        virtual bool containsRoot(const label li) const;
 };
 
 
@@ -149,12 +132,8 @@ public:
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "EquationI.H"
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
 #ifdef NoRepository
-#include "Equation.C"
+#include "multivariateEquation.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

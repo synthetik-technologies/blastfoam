@@ -50,7 +50,7 @@ namespace Foam
 
 Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
 (
-    const scalarEquation& eqns,
+    const scalarUnivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -96,7 +96,7 @@ Foam::particleSwarmMinimizationScheme::minimize
         p.xBest = p.x;
         p.v.resize(n, 0.0);
 
-        eqns_.f(p.x, li, y);
+        y = eqns_.fX(p.x, li);
         p.y = y;
         p.yBest = p.y;
         if (y < yBest)
@@ -144,7 +144,7 @@ Foam::particleSwarmMinimizationScheme::minimize
                 vWeight_*p.v
               + cLocal_*r1*(p.xBest - p.x)
               + cGlobal_*r2*(xBest - p.x);
-            eqns_.f(p.x, li, y);
+            y = eqns_.fX(p.x, li);
             if (y < yBest)
             {
                 yBest = y;

@@ -84,7 +84,7 @@ void Foam::rootSolver::printFinalInformation() const
 
 Foam::rootSolver::rootSolver
 (
-    const multivariateEquation<scalar>& eqns,
+    const scalarMultivariateEquation& eqns,
     const dictionary& dict
 )
 :
@@ -110,7 +110,7 @@ Foam::rootSolver::rootSolver
 
 Foam::rootSolver::rootSolver
 (
-    const multivariateEquation<scalar>& eqns,
+    const scalarMultivariateEquation& eqns,
     const scalarList& tolerances,
     const label maxSteps
 )

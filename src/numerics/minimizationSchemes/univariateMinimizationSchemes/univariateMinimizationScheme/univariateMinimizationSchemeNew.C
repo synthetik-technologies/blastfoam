@@ -29,23 +29,25 @@ License
 
 Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationScheme::New
 (
-    const scalarEquation& eqn,
+    const scalarUnivariateEquation& eqn,
     const dictionary& dict
 )
 {
     word univariateMinimizationSchemeTypeName(dict.lookup("solver"));
     label nDeriv = eqn.nDerivatives();
-    Info<< "Selecting root solver " << univariateMinimizationSchemeTypeName << endl;
+    DebugInfo
+        << "Selecting root solver "
+        << univariateMinimizationSchemeTypeName << endl;
 
-    if (debug)
-    {
-        Info<< "    detected " << nDeriv << " implemented derivatives" << endl;
-    }
+    DebugInfo<< "    detected " << nDeriv << " implemented derivatives" << endl;
 
     if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
-            dictionaryZeroConstructorTablePtr_->find(univariateMinimizationSchemeTypeName);
+            dictionaryZeroConstructorTablePtr_->find
+            (
+                univariateMinimizationSchemeTypeName
+            );
 
         if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
         {

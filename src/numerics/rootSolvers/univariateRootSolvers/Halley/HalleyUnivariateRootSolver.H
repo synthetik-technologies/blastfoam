@@ -63,7 +63,7 @@ public:
         //- Construct for given univariateRootSolver
         HalleyUnivariateRootSolver
         (
-            const multivariateEquation<scalar>& eqn,
+            const scalarMultivariateEquation& eqn,
             const dictionary& dict
         );
 

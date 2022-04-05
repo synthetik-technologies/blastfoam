@@ -68,7 +68,11 @@ public:
     // Constructors
 
         //- Construct for given minimizationScheme
-        ShubertPiyavskiiMinimizationScheme(const scalarEquation& eqn, const dictionary& dict);
+        ShubertPiyavskiiMinimizationScheme
+        (
+            const scalarUnivariateEquation& eqn,
+            const dictionary& dict
+        );
 
         //- Disallow default bitwise copy construction
         ShubertPiyavskiiMinimizationScheme(const minimizationScheme&) = delete;

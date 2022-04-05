@@ -29,6 +29,8 @@ createEquation2
 
 int main(int argc, char *argv[])
 {
+    minimizationScheme::debug = 0;
+    univariateMinimizationScheme::debug = 0;
 
     PtrList<equation> uniEqns(2);
     uniEqns.set(0, new testEqn1());
@@ -36,8 +38,7 @@ int main(int argc, char *argv[])
 
     dictionary dict;
 
-    Info<< endl;
-    Info<< "Minimization" << endl;
+    Info<< nl << "Univariate minimization" << endl;
     wordList methods
     (
         minimizationScheme::dictionaryUnivariateConstructorTablePtr_->toc()
@@ -54,10 +55,12 @@ int main(int argc, char *argv[])
             (
                 minimizationScheme::New(eqn, dict)
             );
-            Info<<"    min=" << solver->solve()
+            Info<< "    " << methods[i] <<": "
+                << " min=" << solver->solve()
                 << ", nSteps=" << solver->nSteps()
-                << ", error=" << solver->errors() << nl << endl;
+                << ", error=" << solver->errors() << endl;
         }
+        Info<<nl;
     }
 
     Info<< "done" << endl;
