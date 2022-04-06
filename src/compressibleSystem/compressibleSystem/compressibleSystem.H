@@ -182,6 +182,13 @@ public:
         //- Return turbulence class
         inline compressible::momentumTransportModel& turbulence();
 
+        //- Const access to fluidThermophysicalTransportModel model
+        inline const fluidThermophysicalTransportModel&
+        thermophysicalTransport() const;
+
+        //- Non-const access to fluidThermophysicalTransportModel model
+        inline fluidThermophysicalTransportModel& thermophysicalTransport();
+
         //- Const access to thermo model
         virtual const fluidThermo& thermo() const = 0;
 

@@ -51,6 +51,20 @@ Foam::compressibleSystem::turbulence()
 }
 
 
+const Foam::fluidThermophysicalTransportModel&
+Foam::compressibleSystem::thermophysicalTransport() const
+{
+    return thermophysicalTransport_();
+}
+
+
+Foam::fluidThermophysicalTransportModel&
+Foam::compressibleSystem::thermophysicalTransport()
+{
+    return thermophysicalTransport_();
+}
+
+
 const Foam::volVectorField& Foam::compressibleSystem::U() const
 {
     return U_;
