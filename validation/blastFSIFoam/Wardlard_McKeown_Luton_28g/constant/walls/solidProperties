@@ -17,16 +17,16 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel explicitNonLinearGeometryTotalLagrangian;
+solidModel explicitNonLinearTotalLagrangian;
 
-explicitNonLinearGeometryTotalLagrangianCoeffs
+explicitNonLinearTotalLagrangianCoeffs
 {
     incompressiblilityCoefficient   1.0;
     angularMomentumConservation     yes;
 }
 
 
-nonLinearGeometryTotalLagrangianCoeffs
+nonLinearTotalLagrangianCoeffs
 {
     // Maximum number of momentum correctors
     nCorrectors             2000;

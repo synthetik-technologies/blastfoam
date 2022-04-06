@@ -34,7 +34,7 @@ regions
         p1 (0 0 -1);
         p2 (0 0 1);
         radius 0.1;
-        level 3;
+        level 5;
 
         fieldValues
         (

@@ -20,7 +20,7 @@ fluxScheme      HLLC;
 ddtSchemes
 {
     default         Euler;
-    timeIntegrator  Euler;
+    timeIntegrator  RK2SSP;
 }
 
 gradSchemes
@@ -40,13 +40,13 @@ laplacianSchemes
 
 interpolationSchemes
 {
-    default             linear;
-    reconstruct(alpha.air)  MPLIC;
-    reconstruct(rho)    linearMUSCL Minmod;
-    reconstruct(U)      quadraticMUSCL Minmod;
-    reconstruct(e)      linearUpwind Minmod;
-    reconstruct(p)      linearUpwind Minmod;
-    reconstruct(speedOfSound) linearUpwind Minmod;
+    default             cubic;
+    reconstruct(alpha)  vanLeer;
+    reconstruct(rho)    vanLeer;
+    reconstruct(U)      vanLeerV;
+    reconstruct(e)      vanLeer;
+    reconstruct(p)      vanLeer;
+    reconstruct(speedOfSound)      vanLeer;
 }
 
 snGradSchemes
