@@ -49,6 +49,7 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     fieldPtr_(lookupOrRead(fieldName)),
     selectedIndices_(selectedIndices),
     noInternal_(false),
+    evaluateBoundaries_(false),
     write_(write),
     good_(fieldPtr_.valid())
 {
@@ -75,6 +76,9 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
                 break;
             case fieldSetOptions::NoInternal:
                 noInternal_ = true;
+                break;
+            case fieldSetOptions::EvaluateBoundaries:
+                evaluateBoundaries_ = true;
                 break;
             default:
                 FatalErrorInFunction
@@ -109,6 +113,8 @@ Foam::FieldSetType<Type, Patch, Mesh>::FieldSetType
     fName_(word::null),
     fieldPtr_(nullptr),
     selectedIndices_(selectedIndices),
+    noInternal_(false),
+    evaluateBoundaries_(false),
     write_(false),
     good_(false)
 {}
@@ -391,6 +397,11 @@ void Foam::VolFieldSetType<Type>::setField()
             this->fieldPtr_->boundaryField()[patchi].patchInternalField();
     }
 
+    if (this->evaluateBoundaries_)
+    {
+        this->fieldPtr_->correctBoundaryConditions();
+    }
+
     if (this->write_)
     {
         if (!this->fieldPtr_->write())
@@ -551,6 +562,11 @@ void Foam::PointFieldSetType<Type>::setField()
             );
             this->getBoundaryField(patchi, indices, pC, pf);
         }
+    }
+
+    if (this->evaluateBoundaries_)
+    {
+        this->fieldPtr_->correctBoundaryConditions();
     }
 
     if (this->write_)

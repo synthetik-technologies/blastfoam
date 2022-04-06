@@ -77,6 +77,9 @@ protected:
     //- Only set patch values
     bool noInternal_;
 
+    //- Evaluate boundaries
+    bool evaluateBoundaries_;
+
     //- Boundaries to set
     wordHashSet boundaries_;
 

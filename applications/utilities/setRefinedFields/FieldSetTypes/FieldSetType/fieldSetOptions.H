@@ -53,9 +53,10 @@ public:
     {
         SetBoundaries,
         SetAllBoundaries,
-        NoInternal
+        NoInternal,
+        EvaluateBoundaries
     };
-    static const NamedEnum<options, 3> optionNames;
+    static const NamedEnum<options, 4> optionNames;
 };
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

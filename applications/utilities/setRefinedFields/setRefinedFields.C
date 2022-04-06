@@ -920,10 +920,10 @@ int main(int argc, char *argv[])
         topoSets.transferZones(false);
 
         // Update boundary conditions of fields used for refinement
-        forAll(fields, fieldi)
-        {
-            fields[fieldi].correctBoundaryConditions();
-        }
+//         forAll(fields, fieldi)
+//         {
+//             fields[fieldi].correctBoundaryConditions();
+//         }
 
         // Update error and mesh if not the final iteration
         if (refine)
