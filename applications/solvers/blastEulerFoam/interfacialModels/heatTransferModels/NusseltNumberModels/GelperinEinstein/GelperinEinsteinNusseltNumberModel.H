@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::NusseltNumberModels::GelperinEpstein
+    Foam::NusseltNumberModels::GelperinEinstein
 
 Description
-    Nusselt number correlation of GelperinEpstein
+    Nusselt number correlation of GelperinEinstein
 
 SourceFiles
     GelperinEpsteinNusseltNumberModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef GelperinEpsteinNusseltNumberModel_H
-#define GelperinEpsteinNusseltNumberModel_H
+#ifndef GelperinEinsteinNusseltNumberModel_H
+#define GelperinEinsteinNusseltNumberModel_H
 
 #include "NusseltNumberModel.H"
 
@@ -48,23 +48,23 @@ namespace NusseltNumberModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class GelperinEpstein Declaration
+                        Class GelperinEinstein Declaration
 \*---------------------------------------------------------------------------*/
 
-class GelperinEpstein
+class GelperinEinstein
 :
     public NusseltNumberModel
 {
 public:
 
     //- Runtime type information
-    TypeName("GelperinEpstein");
+    TypeName("GelperinEinstein");
 
 
     // Constructors
 
         //- Construct from components
-        GelperinEpstein
+        GelperinEinstein
         (
             const dictionary& dict,
             const phasePair& pair
@@ -72,7 +72,7 @@ public:
 
 
     //- Destructor
-    virtual ~GelperinEpstein();
+    virtual ~GelperinEinstein();
 
 
     // Member Functions

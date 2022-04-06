@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "GelperinEpsteinNusseltNumberModel.H"
+#include "GelperinEinsteinNusseltNumberModel.H"
 #include "phasePair.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,15 +33,15 @@ namespace Foam
 {
 namespace NusseltNumberModels
 {
-    defineTypeNameAndDebug(GelperinEpstein, 0);
-    addToRunTimeSelectionTable(NusseltNumberModel, GelperinEpstein, dictionary);
+    defineTypeNameAndDebug(GelperinEinstein, 0);
+    addToRunTimeSelectionTable(NusseltNumberModel, GelperinEinstein, dictionary);
 }
 }
 
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::NusseltNumberModels::GelperinEpstein::GelperinEpstein
+Foam::NusseltNumberModels::GelperinEinstein::GelperinEinstein
 (
     const dictionary& dict,
     const phasePair& pair
@@ -53,14 +53,14 @@ Foam::NusseltNumberModels::GelperinEpstein::GelperinEpstein
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::NusseltNumberModels::GelperinEpstein::~GelperinEpstein()
+Foam::NusseltNumberModels::GelperinEinstein::~GelperinEinstein()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::NusseltNumberModels::GelperinEpstein::Nu
+Foam::NusseltNumberModels::GelperinEinstein::Nu
 (
     const label nodei,
     const label nodej
@@ -72,7 +72,7 @@ Foam::NusseltNumberModels::GelperinEpstein::Nu
 }
 
 
-Foam::scalar Foam::NusseltNumberModels::GelperinEpstein::cellNu
+Foam::scalar Foam::NusseltNumberModels::GelperinEinstein::cellNu
 (
     const label celli,
     const label nodei,
