@@ -6,29 +6,32 @@
 using namespace Foam;
 
 
-createEquation0
+createNamedEquation0
 (
     testEqn1,
+    "f(x) = cos(x) - x^3",
     scalar,
     0.0, 2.5,
     Foam::cos(x) - Foam::pow3(x)
 );
 
-createEquation0
+createNamedEquation3
 (
     testEqn2,
+    "f(X) = <x^(1.257), 3.2*x*sin(x), exp(-x)>",
     vector,
     0.0, 2.5,
-    vector(Foam::pow(x, 0.1257), 3.2*x*Foam::sin(x), Foam::exp(-x))
+    vector(Foam::pow(x, 0.1257), 3.2*x*Foam::sin(x), Foam::exp(-x)),
+    vector::zero,
+    vector::zero,
+    vector::zero
 );
 
 int main(int argc, char *argv[])
 {
 
     testEqn1 eqn1;
-    eqn1.name() = "f(x) = cos(x) - x^3";
     testEqn2 eqn2;
-    eqn2.name() = "f(X) = <x^(1.257), 3.2*x*sin(x), exp(-x)";
     dictionary dict;
 
     labelList nIntervals({1, 5, 10, 25, 100, 200});

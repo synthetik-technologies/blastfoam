@@ -79,8 +79,16 @@ bool Foam::readComponent
         else
         {
             label ny = dict.lookup<label>("n");
-            Type dy = dict.lookup<Type>("delta");
             Type miny = dict.lookup<Type>("min");
+            Type dy;
+            if (dict.found("delta"))
+            {
+                dy = dict.lookup<Type>("delta");
+            }
+            else if (dict.found("max"))
+            {
+                dy = (dict.lookup<Type>("max") - miny)/scalar(ny);
+            }
 
             values.resize(ny);
             forAll(values, j)

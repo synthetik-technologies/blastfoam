@@ -1,73 +1,31 @@
 #include "dictionary.H"
 #include "minimizationScheme.H"
-#include "EquationsFwd.H"
+#include "createEquations.H"
 #include "UnivariateEquationsFwd.H"
 #include "argList.H"
 
 using namespace Foam;
 
+createNamedUnivariateEquation0
+(
+    testEqn1,
+    "f(x, y, z) = ((x + 2)*sin(x))^2 + (y + 2)^2 + (z + 3)^2",
+    scalar,
+    scalarList({2.0, -4.0, -4.0}), scalarList({4.0, 4.0, 4.0}),
+    Foam::sqr((x[0] + 2.0)*Foam::sin(x[0]))
+  + Foam::sqr(x[1] + 2.0)
+  + Foam::sqr(x[2] + 3.0)
+);
 
-class testEqn1
-:
-    public ScalarUnivariateEquation
-{
-public:
-    // Constructors
-    testEqn1()
-    :
-        ScalarUnivariateEquation
-        (
-            "f(x, y, z) = ((x + 2)*sin(x))^2 + (y + 2)^2 + (z + 3)^2",
-            scalarField(scalarList{2, -4, -4}),
-            scalarField(scalarList{4, 4, 4})
-        )
-    {}
-
-    //- Destructor
-    virtual ~testEqn1()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 0;
-    }
-    virtual scalar fX
-    (
-        const scalarList& x,
-        const label li
-    ) const
-    {
-        return
-            sqr((x[0] + 2.0)*Foam::sin(x[0])) + sqr(x[1] + 2.0) + sqr(x[2] + 3.0);
-    }
-};
-
-class testEqn2
-:
-    public ScalarEquation
-{
-public:
-    testEqn2()
-    :
-        ScalarEquation("f(x) = (x - 2)^2", -3, 3)
-    {}
-
-    virtual ~testEqn2()
-    {}
-
-    virtual label nDerivatives() const
-    {
-        return 0;
-    }
-    virtual scalar fx(const scalar x, const label li) const
-    {
-        return sqr(x - 2.0);
-    }
-    virtual scalar dfdx(const scalar x, const label li) const
-    {
-        return 2.0*(x - 2.0);
-    }
-};
+createNamedEquation1
+(
+    testEqn2,
+    "f(x) = (x - 2)^2",
+    scalar,
+    -3, 3,
+    sqr(x - 2.0),
+    2.0*(x - 2.0)
+);
 
 
 int main(int argc, char *argv[])
