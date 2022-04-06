@@ -39,7 +39,6 @@ void incrementalSolid::updateDisplacement()
 {
     // Update the total displacement
     D() = D().oldTime() + DD();
-    D().correctBoundaryConditions();
 
     // Interpolate DD to pointDD
     mechanical().interpolate(DD(), pointDD(), false);

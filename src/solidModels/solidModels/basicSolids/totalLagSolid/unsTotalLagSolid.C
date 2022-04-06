@@ -37,7 +37,10 @@ namespace solidModels
 // * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * * //
 
 template<class IncrementalModel>
-void unsTotalLagSolid<IncrementalModel>::update()
+void unsTotalLagSolid<IncrementalModel>::update
+(
+    const bool correctSigma
+)
 {
     totalLagSolid<IncrementalModel>::update();
 
@@ -67,7 +70,10 @@ void unsTotalLagSolid<IncrementalModel>::update()
     // Relative Jacobian (Jacobian of relative deformation gradient)
     relJf_ = det(relFf_);
 
-    this->mechanical().correct(this->sigmaf_);
+    if (correctSigma)
+    {
+        this->mechanical().correct(this->sigmaf_);
+    }
 }
 
 

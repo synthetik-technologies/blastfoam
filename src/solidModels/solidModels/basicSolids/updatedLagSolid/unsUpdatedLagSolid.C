@@ -45,9 +45,12 @@ namespace solidModels
 // * * * * * * * * * * *  Private Member Functions * * * * * * * * * * * * * //
 
 template<class IncrementalModel>
-void unsUpdatedLagSolid<IncrementalModel>::update()
+void unsUpdatedLagSolid<IncrementalModel>::update
+(
+    const bool correctSigma
+)
 {
-    updatedLagSolid<IncrementalModel>::update();
+    updatedLagSolid<IncrementalModel>::update(false);
 
     // Update gradient of displacement increment
     this->mechanical().grad(this->DD(), this->pointDD(), this->gradDDf_);
@@ -70,7 +73,10 @@ void unsUpdatedLagSolid<IncrementalModel>::update()
     // Jacobian of deformation gradient
     Jf_ = relJf_*Jf_.oldTime();
 
-    this->mechanical().correct(this->sigmaf_);
+    if (correctSigma)
+    {
+        this->mechanical().correct(this->sigmaf_);
+    }
 }
 
 

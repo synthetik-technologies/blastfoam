@@ -565,7 +565,6 @@ void Foam::solidModel::displacementFromVelocity
     volVectorField& ddisp
 )
 {
-    Info<<"disp"<<endl;
     // Get the number of stored times
     // We don't care if D or DD is used since both need to be consistent
     label nOld = max(disp.nOldTimes(), ddisp.nOldTimes());
@@ -1003,6 +1002,7 @@ Foam::tmp<Foam::vectorField> Foam::solidModel::faceZoneAcceleration
 
 void Foam::solidModel::updateTotalFields()
 {
+    thermal().correct();
     mechanical().updateTotalFields();
 
     //- Clear global Patches since displacement may have changed
@@ -1339,26 +1339,17 @@ const Foam::dictionary& Foam::solidModel::solidModelDict() const
     return this->subDict(type_ + "Coeffs");
 }
 
-bool Foam::solidModel::readIfModified()
+
+void Foam::solidModel::readIfPresent()
 {
-    if (regIOobject::readIfModified())
-    {
-        const dictionary& dict = solidModelDict();
-        solutionTol_ =
-            dict.lookupOrDefault<scalar>("solutionTolerance", 1e-06);
-        alternativeTol_ =
-            dict.lookupOrDefault<scalar>("alternativeTolerance", 1e-07);
-        materialTol_ =
-            dict.lookupOrDefault<scalar>("materialTolerance", 1e-05);
-        infoFrequency_ =
-            dict.lookupOrDefault<int>("infoFrequency", 100);
-        nCorr_ = dict.lookupOrDefault<int>("nCorrectors", 10000);
-        minCorr_ = dict.lookupOrDefault<int>("minCorrectors", 1);
-        writeResidualField_ =
-            dict.lookupOrDefault<Switch>("writeResidualField", false);
-        return true;
-    }
-    return false;
+    const dictionary& dict = solidModelDict();
+    dict.readIfPresent("solutionTolerance", solutionTol_);
+    dict.readIfPresent("alternativeTolerance", alternativeTol_);
+    dict.readIfPresent("materialTolerance", materialTol_);
+    dict.readIfPresent("infoFrequency", infoFrequency_);
+    dict.readIfPresent("nCorrectors", nCorr_);
+    dict.readIfPresent("minCorrectors", minCorr_);
+    dict.readIfPresent("writeResidualField", writeResidualField_);
 }
 
 // ************************************************************************* //

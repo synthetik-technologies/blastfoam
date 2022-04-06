@@ -113,6 +113,9 @@ bool nonLinGeomTotalLagSolid::evolve()
         // Under-relax the linear system
         DDEqn.relax();
 
+        // Enforce any cell displacements
+        solidModel::setCellDisps(DDEqn);
+
         // Solve the linear system
         solverPerfDD = DDEqn.solve();
 

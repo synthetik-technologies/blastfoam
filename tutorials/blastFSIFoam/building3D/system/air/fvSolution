@@ -22,7 +22,7 @@ solvers
         solver diagonal;
     }
 
-    "(U|cellDisplacement|e)"
+    "(U|cellDisplacement|cellMotionU|e)"
     {
         solver          PBiCGStab;
         preconditioner  DIC ;

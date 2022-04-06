@@ -278,7 +278,6 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     UPstream::msgType() = oldTag+1;
 
     // Get the coupling information from the mappedPatchBase
-    // Get the coupling information from the mappedPatchBase
     const coupledGlobalPolyPatch& cgpp =
         globalBoundary_(this->patch().patch());
     const polyMesh& nbrMesh = cgpp.sampleMesh();
@@ -300,12 +299,10 @@ void Foam::coupledSolidTractionFvPatchVectorField::updateCoeffs()
     }
 
     this->pressure() = samplePatch.faceInterpolate(nbrP);
-    Info<<gMax(this->pressure())<<endl;
 
     // Flip sign since the boundary normal is opposite and the stress is dotted
     // with the neighbor boundary then mapped
     this->traction() = -samplePatch.faceInterpolate(nbrViscous);
-    Info<<gMax(mag(this->traction()))<<endl;
 
     solidTractionFvPatchVectorField::updateCoeffs();
 }

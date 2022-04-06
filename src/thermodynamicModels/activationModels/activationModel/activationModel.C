@@ -327,6 +327,22 @@ Foam::activationModel::readDetonationPoints
     const bool needDetonationPoints
 ) const
 {
+    {
+        IOobject detPointsHeader
+        (
+            IOobject::groupName("detonationPoints", alpha.group()),
+            alpha.mesh().time().timeName(),
+            "uniform",
+            alpha.mesh()
+        );
+        if (detPointsHeader.typeHeaderOk<IOPtrList<detonationPoint>>(true))
+        {
+            Info<<"found"<<endl;
+            return PtrList<detonationPoint>();
+        }
+    }
+    Info<<"notFOund"<<endl;
+
     Switch useCOM(dict.lookupOrDefault("useCOM", false));
     List<vector> points
     (

@@ -26,7 +26,7 @@ ddtSchemes
 gradSchemes
 {
     default         cellMDLimited leastSquares 1.0;
-    grad(cellDisplacement) Gauss linear;
+    grad(cellMotionU) Gauss linear;
 }
 
 divSchemes
@@ -41,7 +41,7 @@ divSchemes
 laplacianSchemes
 {
     default         Gauss linear corrected;
-    laplacian(diffusivity,cellDisplacement) Gauss linear uncorrected;
+    laplacian(diffusivity,cellMotionU) Gauss linear uncorrected;
 }
 
 interpolationSchemes

@@ -2,6 +2,7 @@
 SolverPerformance<vector>::debug = 0;
 
 solidModels[i].evolve();
+solidModels[i].updateTotalFields();
 
 // Turn solver information back on
 SolverPerformance<vector>::debug = 1;

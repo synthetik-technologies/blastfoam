@@ -41,7 +41,6 @@ void totalDispSolid::updateDisplacement()
 {
     // Update the total displacement
     DD() = D() - D().oldTime();
-    DD().correctBoundaryConditions();
 
     // Update gradient of displacement increment
     mechanical().grad(D(), gradD());

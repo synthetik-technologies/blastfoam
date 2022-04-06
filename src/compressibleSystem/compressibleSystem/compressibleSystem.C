@@ -339,12 +339,13 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
             gSum(sumAmaxSf)/gSum(mesh().V().field())
         )*mesh().time().deltaTValue();
 
+    Info<< "Courant Number ";
     if (mesh().name() != polyMesh::defaultRegion)
     {
-        Info<< "Region " << mesh().name() << " ";
+        Info<< "for region " << mesh().name() << " ";
     }
-    Info<< "Courant Number Mean/Max = "
-        << meanCoNum << ", "<< CoNum << nl << endl;
+    Info<< "Mean/Max = "
+        << meanCoNum << ", "<< CoNum << endl;
     return CoNum;
 }
 

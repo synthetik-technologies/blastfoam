@@ -53,8 +53,8 @@ mechanicalEnergies::mechanicalEnergies
     internalEnergy_(0.0),
     internalEnergyOldTime_(0.0),
     kineticEnergy_(0.0),
-    // laplacianSmoothingEnergy_(0.0),
-    // laplacianSmoothingEnergyOldTime_(0.0),
+    laplacianSmoothingEnergy_(0.0),
+    laplacianSmoothingEnergyOldTime_(0.0),
     linearBulkViscosityEnergy_(0.0),
     linearBulkViscosityEnergyOldTime_(0.0),
     linearBulkViscosityCoeff_
@@ -72,7 +72,8 @@ mechanicalEnergies::mechanicalEnergies
     // TODO: read/write energies to allow restart?
     //wip();
 
-    if (Pstream::master())
+    bool writeEnergies = dict.lookupOrDefault("writeEnergies", false);
+    if (Pstream::master() && writeEnergies)
     {
         Pout<< "Writing energies.dat" << endl;
 
@@ -83,7 +84,7 @@ mechanicalEnergies::mechanicalEnergies
             << "External "
             << "Internal "
             << "Kinetic "
-            //<< "Smoothing "
+            << "Smoothing "
             << "Viscosity"
             << endl;
     }
@@ -170,7 +171,7 @@ void mechanicalEnergies::checkEnergies
     const volTensorField& gradDD,
     const surfaceScalarField& waveSpeed,
     const dimensionedVector& g,
-    const scalar, // laplacianSmoothCoeff,
+    const scalar laplacianSmoothCoeff,
     const surfaceScalarField& impKf
 )
 {
@@ -181,7 +182,7 @@ void mechanicalEnergies::checkEnergies
         // Update old time values
         externalWorkOldTime_ = externalWork_;
         internalEnergyOldTime_ = internalEnergy_;
-        //laplacianSmoothingEnergyOldTime_ = laplacianSmoothingEnergy_;
+        laplacianSmoothingEnergyOldTime_ = laplacianSmoothingEnergy_;
         linearBulkViscosityEnergyOldTime_ = linearBulkViscosityEnergy_;
     }
 
@@ -256,20 +257,23 @@ void mechanicalEnergies::checkEnergies
 
     // Integrate energy dissipated due to Laplacian (Lax-Friedrichs) smoothing
     // term
-    //const dimensionedScalar& deltaT = mesh_.time().deltaT();
-    //const dimensionedScalar& deltaT0 = mesh_.time().deltaT0();
-    // laplacianSmoothingEnergy_ =
-    //     laplacianSmoothingEnergyOldTime_
-    //   + gSum
-    //     (
-    //         fvc::reconstruct
-    //         (
-    //             laplacianSmoothCoeff*0.5*(deltaT + deltaT0)*impKf
-    //            *(
-    //                fvc::snGrad(U) + fvc::snGrad(U.oldTime())
-    //             )*mesh_.magSf()
-    //         )().internalField() && gradDD.internalField()*mesh_.V()
-    //     );
+    const dimensionedScalar& deltaT = mesh_.time().deltaT();
+    const dimensionedScalar& deltaT0 = mesh_.time().deltaT0();
+    laplacianSmoothingEnergy_ =
+        laplacianSmoothingEnergyOldTime_
+      + gSum
+        (
+            DimensionedField<scalar, volMesh>
+            (
+                fvc::reconstruct
+                (
+                    laplacianSmoothCoeff*0.5*(deltaT + deltaT0)*impKf
+                   *(
+                        fvc::snGrad(U) + fvc::snGrad(U.oldTime())
+                    )*mesh_.magSf()
+                )().internalField() && gradDD.internalField()*mesh_.V()
+            )
+        );
 
     // Check the energy imbalance
     // Ideally this should stay less than 1% of the max energy component
@@ -278,7 +282,7 @@ void mechanicalEnergies::checkEnergies
         externalWork_
       - internalEnergy_
       - kineticEnergy_
-        //- laplacianSmoothingEnergy_
+      - laplacianSmoothingEnergy_
       - linearBulkViscosityEnergy_;
 
     const scalar energyImbalancePercent =
@@ -290,8 +294,8 @@ void mechanicalEnergies::checkEnergies
     Info<< "External work = " << externalWork_ << " J" << nl
         << "Internal energy = " << internalEnergy_ << " J" << nl
         << "Kinetic energy = " << kineticEnergy_ << " J" << nl
-        //<< "laplacian smoothing energy = "
-        //<< laplacianSmoothingEnergy_ << " J"
+        << "laplacian smoothing energy = "
+        << laplacianSmoothingEnergy_ << " J"
         << nl
         << "Bulk viscosity energy = " << linearBulkViscosityEnergy_ << " J"
         << nl
@@ -302,20 +306,17 @@ void mechanicalEnergies::checkEnergies
     {
        WarningIn(type() + "::checkEnergies()")
            << "The energy imbalance is greater than 10%" << endl;
-       // FatalErrorIn(type() + "::checkEnergies()")
-       //     << "The energy imbalance is greater than 10%"
-       //     << abort(FatalError);
     }
 
     // Write energies to file
-    if (Pstream::master())
+    if (Pstream::master() && energiesFilePtr_.valid())
     {
         energiesFilePtr_()
             << mesh_.time().value() << " "
             << externalWork_ << " "
             << internalEnergy_ << " "
             << kineticEnergy_ << " "
-            //<< laplacianSmoothingEnergy_ << " "
+            << laplacianSmoothingEnergy_ << " "
             << linearBulkViscosityEnergy_
             << endl;
     }

@@ -99,7 +99,7 @@ protected:
     // Protected member functions
 
         //- Update fields
-        virtual void update();
+        virtual void update(const bool correctSigma = true);
 
         //- Return nonlinear geometry enumerator
         virtual nonLinearGeometry::nonLinearType nonLinGeom() const

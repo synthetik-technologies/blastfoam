@@ -80,11 +80,11 @@ class mechanicalEnergies
         scalar kineticEnergy_;
 
         //- Accumulated energy dissipated due to Laplacian smoothing term
-        // scalar laplacianSmoothingEnergy_;
+        scalar laplacianSmoothingEnergy_;
 
         //- Accumulated energy dissipated due to Laplacian smoothing term old
         //  time
-        // scalar laplacianSmoothingEnergyOldTime_;
+        scalar laplacianSmoothingEnergyOldTime_;
 
         //- Linear bulk viscosity energy
         scalar linearBulkViscosityEnergy_;

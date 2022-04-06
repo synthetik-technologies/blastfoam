@@ -57,7 +57,20 @@ int main(int argc, char *argv[])
     #include "createMeshes.H"
     #include "createFields.H"
     #include "createTimeControls.H"
-    #include "compressibleMultiRegionCourantNo.H"
+
+    scalar CoNum = 0.0;
+    forAll(fluidRegions, regionI)
+    {
+        CoNum = max(fluids[regionI].CoNum(), CoNum);
+    }
+    forAll(solidRegions, regionI)
+    {
+        scalar regionCoNum = solidModels[regionI].CoNum();
+        Info<< "Cournant Number for region "
+            << solidRegions[regionI].name()
+            << " Mean/Max = " << regionCoNum << endl;
+        CoNum = max(CoNum, regionCoNum);
+    }
     #include "setInitialMultiRegionDeltaT.H"
 
     while (runTime.run())
@@ -66,12 +79,18 @@ int main(int argc, char *argv[])
 
         #include "readTimeControls.H"
 
-        #include "compressibleMultiRegionCourantNo.H"
-        forAll(solidRegions, i)
+        Info<< nl;
+        scalar CoNum = 0.0;
+        forAll(fluidRegions, regionI)
         {
-            scalar regionCoNum = solidModels[i].CoNum();
-            Info<< solidRegions[i].name() << " max Courant Number = "
-            << regionCoNum << endl;
+            CoNum = max(fluids[regionI].CoNum(), CoNum);
+        }
+        forAll(solidRegions, regionI)
+        {
+            scalar regionCoNum = solidModels[regionI].CoNum();
+            Info<< "Cournant Number for region "
+                << solidRegions[regionI].name()
+                << " Mean/Max = " << regionCoNum << endl;
             CoNum = max(CoNum, regionCoNum);
         }
         #include "setMultiRegionDeltaT.H"

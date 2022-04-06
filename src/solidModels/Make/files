@@ -27,17 +27,16 @@ $(explicit)/explicitUnsLinGeomTotalDispSolid/explicitUnsLinGeomTotalDispSolid.C
 $(explicit)/explicitUnsNonLinGeomTotalLagTotalDispSolid/explicitUnsNonLinGeomTotalLagTotalDispSolid.C
 $(explicit)/explicitNonLinGeomUpdatedLagSolid/explicitNonLinGeomUpdatedLagSolid.C
 $(explicit)/explicitNonLinGeomTotalLagSolid/explicitNonLinGeomTotalLagSolid.C
-$(explicit)/explicitFluidSolid/explicitFluidSolid.C
 
-explicitRiemann=$(explicit)/explicitRiemannSolid
-$(explicitRiemann)/angularMomentum/angularMomentum.C
-$(explicitRiemann)/gradientSchemes/gradientSchemes.C
-$(explicitRiemann)/interpolationSchemes/interpolationSchemes.C
-$(explicitRiemann)/mechanics/mechanics.C
-$(explicitRiemann)/operations/operations.C
-$(explicitRiemann)/explicitRiemannSolid.C
-$(explicitRiemann)/explicitLinRiemannSolid/explicitLinRiemannSolid.C
-$(explicitRiemann)/explicitNonLinRiemannSolid/explicitNonLinRiemannSolid.C
+# explicitRiemann=$(explicit)/explicitRiemannSolid
+# $(explicitRiemann)/angularMomentum/angularMomentum.C
+# $(explicitRiemann)/gradientSchemes/gradientSchemes.C
+# $(explicitRiemann)/interpolationSchemes/interpolationSchemes.C
+# $(explicitRiemann)/mechanics/mechanics.C
+# $(explicitRiemann)/operations/operations.C
+# $(explicitRiemann)/explicitRiemannSolid.C
+# $(explicitRiemann)/explicitLinRiemannSolid/explicitLinRiemannSolid.C
+# $(explicitRiemann)/explicitNonLinRiemannSolid/explicitNonLinRiemannSolid.C
 
 solidModels/linGeomSolid/linGeomSolid.C
 solidModels/linGeomTotalDispSolid/linGeomTotalDispSolid.C

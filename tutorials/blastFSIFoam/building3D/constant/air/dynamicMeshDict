@@ -18,14 +18,8 @@ dynamicFvMesh   movingAdaptiveFvMesh;
 
 errorEstimator densityGradient;      // Model used to estimate error
 
-balance no;
-
-motionSolver      displacementLaplacian;
-
-displacementLaplacianCoeffs
-{
-    diffusivity quadratic inverseDistance (air_to_building);
-}
+motionSolver      velocityLaplacian;
+diffusivity quadratic inverseDistance (air_to_building);
 
 // beginUnrefine 1e-5;
 

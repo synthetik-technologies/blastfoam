@@ -644,7 +644,7 @@ public:
             virtual void end();
 
             //- Read object
-            virtual bool readIfModified();
+            virtual void readIfPresent();
 
             //- Write function must be defined for regIOobjects
             virtual bool writeData(Ostream&) const

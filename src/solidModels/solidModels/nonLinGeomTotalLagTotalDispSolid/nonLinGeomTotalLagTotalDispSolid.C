@@ -161,6 +161,13 @@ bool nonLinGeomTotalLagTotalDispSolid::evolve()
 
         // Calculate the stress using run-time selectable mechanical law
         update();
+
+        // Check if outer loops are diverging
+        if (!enforceLinear())
+        {
+            checkEnforceLinear(J_);
+        }
+
     }
     while
     (

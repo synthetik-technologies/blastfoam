@@ -15,10 +15,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-solidModel linearGeometryTotalDisplacement;
+solidModel linearTotalDisplacement;
 
 
-linearGeometryTotalDisplacementCoeffs
+linearTotalDisplacementCoeffs
 {
     // Maximum number of momentum correctors
     nCorrectors             2000;

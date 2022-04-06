@@ -37,26 +37,23 @@ namespace solidModels
 // * * * * * * * * * * *  Protected Member Functions * * * * * * * * * * * * //
 
 template<class IncrementalModel>
-void totalLagSolid<IncrementalModel>::update()
+void totalLagSolid<IncrementalModel>::update(const bool correctSigma)
 {
     IncrementalModel::updateDisplacement();
 
     if (this->incremental())
     {
         // Total deformation gradient
-        relF_ = I + this->gradDD().T();
-
-        // Relative deformation gradient
-        F_ = relF_ & F_.oldTime();
+        F_ = F_.oldTime() + this->gradDD().T();
     }
     else
     {
         // Total deformation gradient
         F_ = I + this->gradD().T();
-
-        // Relative deformation gradient
-        relF_ = F_ & Finv_.oldTime();
     }
+
+    // Relative deformation gradient
+    relF_ = F_ & Finv_.oldTime();
 
     // Inverse of the deformation gradient
     Finv_ = inv(F_);
@@ -71,7 +68,10 @@ void totalLagSolid<IncrementalModel>::update()
     relJ_ = det(relF_);
 
     // Update stress
-    this->mechanical().correct(this->sigma());
+    if (correctSigma)
+    {
+        this->mechanical().correct(this->sigma());
+    }
 }
 
 

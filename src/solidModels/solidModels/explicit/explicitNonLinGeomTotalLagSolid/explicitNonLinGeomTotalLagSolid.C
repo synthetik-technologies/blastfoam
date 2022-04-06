@@ -248,7 +248,7 @@ bool explicitNonLinGeomTotalLagSolid::evolve()
             gradDD(),
             waveSpeed_,
             g(),
-            0.0,
+            LFScaleFactor_,
             impKf_
         );
     }

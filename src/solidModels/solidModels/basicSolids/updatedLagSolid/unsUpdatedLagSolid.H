@@ -90,7 +90,7 @@ protected:
     // Protected Member Functions
 
         //- Update fields
-        virtual void update();
+        virtual void update(const bool correctSigma = true);
 
 
 public:
