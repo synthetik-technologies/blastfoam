@@ -194,6 +194,16 @@ public:
                 const tmp<Field<Type>>& tpf
             ) const;
 
+            bool hashUnmappedFaces() const
+            {
+                return unmappedFaces_.size();
+            }
+
+            bool hashUnmappedPoints() const
+            {
+                return unmappedPoints_.size();
+            }
+
             //- Set the unmapped values on field corresponding to faces
             template<class Type>
             void setUnmappedFace

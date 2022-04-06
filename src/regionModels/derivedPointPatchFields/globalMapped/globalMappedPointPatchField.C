@@ -159,13 +159,16 @@ void Foam::globalMappedPointPatchField<Type>::updateCoeffs()
         samplePatch.pointInterpolate(nbr.patchInternalField())
     );
     fixedValuePointPatchField<Type>::updateCoeffs();
+
+    // Restore tag
+    UPstream::msgType() = oldTag;
 }
 
 
 template<class Type>
 void Foam::globalMappedPointPatchField<Type>::write(Ostream& os) const
 {
-    pointPatchField<Type>::write(os);
+    fixedValuePointPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
 }
 

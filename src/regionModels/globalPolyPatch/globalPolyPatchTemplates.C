@@ -104,27 +104,14 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalPointToPatch
             << abort(FatalError);
     }
 
-    tmp<Field<Type> > tpField
-    (
-        new Field<Type>(patch().nPoints(), pTraits<Type>::zero)
-    );
-    Field<Type>& pField = tpField.ref();
-
     if (Pstream::parRun())
     {
-        const labelList& addr = pointToGlobalAddr();
-
-        forAll (addr, i)
-        {
-            pField[i] = gField[addr[i]];
-        }
+        return tmp<Field<Type>>
+        (
+            new Field<Type>(gField, pointToGlobalAddr())
+        );
     }
-    else
-    {
-        pField = gField;
-    }
-
-    return tpField;
+    return tmp<Field<Type>>(new Field<Type>(gField));
 }
 
 
@@ -204,27 +191,14 @@ Foam::tmp<Foam::Field<Type> > Foam::globalPolyPatch::globalFaceToPatch
             << abort(FatalError);
     }
 
-    tmp<Field<Type> > tpField
-    (
-        new Field<Type>(patch().size(), pTraits<Type>::zero)
-    );
-    Field<Type>& pField = tpField.ref();
-
     if (Pstream::parRun())
     {
-        const labelList& addr = faceToGlobalAddr();
-
-        forAll(addr, i)
-        {
-            pField[i] = gField[addr[i]];
-        }
+        return tmp<Field<Type>>
+        (
+            new Field<Type>(gField, faceToGlobalAddr())
+        );
     }
-    else
-    {
-        pField = gField;
-    }
-
-    return tpField;
+    return tmp<Field<Type>>(new Field<Type>(gField));
 }
 
 

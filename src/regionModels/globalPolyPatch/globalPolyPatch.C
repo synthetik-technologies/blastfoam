@@ -29,6 +29,7 @@ License
 #include "volFields.H"
 #include "pointPatchFields.H"
 #include "valuePointPatchFields.H"
+#include "globalPoints.H"
 #include "vtkWritePolyData.H"
 #include "OSspecific.H"
 
@@ -68,6 +69,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
         patchName_,
         mesh_.boundaryMesh()
     );
+    const polyPatch& patch = mesh_.boundaryMesh()[patchID.index()];
 
     if (!patchID.active())
     {
@@ -82,15 +84,40 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
     pointListList procPatchPoints(Pstream::nProcs());
     faceListList procPatchFaces(Pstream::nProcs());
+    labelListList ownerPoint(Pstream::nProcs());
+
+    globalPoints gPoints(mesh_, true, false);
+    const globalIndex gIndex(mesh_.nPoints());
+    const Map<label>& meshToProcPoint = gPoints.meshToProcPoint();
+    const DynamicList<labelPairList>& procPoints = gPoints.procPoints();
 
     // Add points and faces if the patch is not empty
     if (!mesh_.boundaryMesh()[patchID.index()].empty())
     {
+        ownerPoint[Pstream::myProcNo()].setSize(patch.nPoints(), -1);
+        const labelList& meshPoints = patch.meshPoints();
+        forAll(meshPoints, pi)
+        {
+            const label pointi = meshPoints[pi];
+            Map<label>::const_iterator iter = meshToProcPoint.find(pointi);
+            if (iter != meshToProcPoint.cend())
+            {
+                ownerPoint[Pstream::myProcNo()][pi] =
+                    gIndex.toGlobal
+                    (
+                        procPoints[iter()][0].second(),
+                        procPoints[iter()][0].first()
+                    );
+            }
+            else
+            {
+                ownerPoint[Pstream::myProcNo()][pi] =
+                    gIndex.toGlobal(pointi);
+            }
+        }
+
         // Insert my points
-        pointField pts
-        (
-            mesh_.boundaryMesh()[patchID.index()].localPoints()
-        );
+        pointField pts(patch.localPoints());
         if (displacementField_ != "none")
         {
             if (this->mesh_.foundObject<volVectorField>(displacementField_))
@@ -153,6 +180,10 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
     Pstream::gatherList(procPatchFaces);
     Pstream::scatterList(procPatchFaces);
 
+    // Communicate point owners
+    Pstream::gatherList(ownerPoint);
+    Pstream::scatterList(ownerPoint);
+
     // At this point, all points and faces for the current patch
     // are available.
 
@@ -188,11 +219,12 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
     // PC, 15/12/17
     // I will keep track of duplicate points with this set
-    HashTable<label, point, Hash<point> > zonePointsSet(nZonePoints);
     label nDuplicatePoints = 0;
 
     label nCurPoints = 0;
     label nCurFaces = 0;
+
+    Map<label> procPointMap(mesh_.nPoints());
 
     // Collect all points and faces
     forAll (procPatchPoints, procI)
@@ -216,14 +248,9 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
             // Current point
             const point& curPoint = curProcPoints[pointI];
 
-            // Check if the point has already been added
-            HashTable<label, point, Hash<point> >::iterator iter =
-                zonePointsSet.find(curPoint);
-
-            if (iter == zonePointsSet.end())
+            if (gIndex.isLocal(procI, ownerPoint[procI][pointI]))
             {
-                // This is a new point; add it and record the index
-                zonePointsSet.insert(curPoint, nCurPoints);
+                procPointMap.insert(ownerPoint[procI][pointI], nCurPoints);
 
                 // Add the point
                 zonePoints[nCurPoints] = curPoint;
@@ -238,7 +265,7 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
                 nDuplicatePoints++;
 
                 // Lookup previous instance of the point
-                const label pID = iter();
+                const label pID = procPointMap[ownerPoint[procI][pointI]];
 
                 // Set the map to point to the previous instance of the point
                 pointMap[pointI] = pID;
@@ -285,11 +312,9 @@ void Foam::globalPolyPatch::calcGlobalPatch() const
 
     if (debug)
     {
-        Info<< "    nDuplicatePoints: " << nDuplicatePoints << endl;
-
-        Info<< "void globalPolyPatch::calcGlobalPatch() const : "
-            << "Finished calculating primitive patch"
-            << endl;
+        InfoInFunction
+            << "Finished calculating primitive patch" << nl
+            << "    nDuplicatePoints: " << nDuplicatePoints << endl;
     }
 }
 

@@ -831,7 +831,7 @@ setSourceToTargetPointAddressing
     const pointField& sourcePoints = sourcePatch.localPoints();
     const labelListList& targetPointEdges = targetPatch.pointEdges();
     const edgeList& targetEdges = targetPatch.edges();
-    const vectorField targetPointNormals = targetPatch.pointNormals();
+    const vectorField targetPointNormals(targetPatch.pointNormals());
 
     // Allow projection of source points to points/edges on the boundary of the
     // target patch: if true, then all points with possibleMasterFaces will
@@ -845,8 +845,10 @@ setSourceToTargetPointAddressing
 
         // Find target faces that could possibly be in contact with this point
         // We will use the face addressing for this
-        const labelList possibleTargetFaces =
-            this->possibleTargetFaces(sourcePointFaces[pointI], sourceFaceAddr);
+        const labelList possibleTargetFaces
+        (
+            this->possibleTargetFaces(sourcePointFaces[pointI], sourceFaceAddr)
+        );
 
         if (possibleTargetFaces.size() == 0)
         {

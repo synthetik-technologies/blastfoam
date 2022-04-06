@@ -160,15 +160,18 @@ void Foam::globalMappedFvPatchField<Type>::updateCoeffs()
         ).boundaryField()[samplePatchi];
 
 
-    Field<Type>::operator==(samplePatch.pointInterpolate(nbr));
+    Field<Type>::operator=(samplePatch.faceInterpolate(nbr));
     fixedValueFvPatchField<Type>::updateCoeffs();
+
+    // Restore tag
+    UPstream::msgType() = oldTag;
 }
 
 
 template<class Type>
 void Foam::globalMappedFvPatchField<Type>::write(Ostream& os) const
 {
-    fvPatchField<Type>::write(os);
+    fixedValueFvPatchField<Type>::write(os);
     writeEntry(os, "nbrName", nbrName_);
 }
 
