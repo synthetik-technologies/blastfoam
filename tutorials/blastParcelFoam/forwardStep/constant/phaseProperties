@@ -48,3 +48,13 @@ gas
     residualRho     1e-6;
     residualAlpha   1e-10;
 }
+
+liquids
+{}
+
+solids
+{
+    C
+    {
+    }
+}
