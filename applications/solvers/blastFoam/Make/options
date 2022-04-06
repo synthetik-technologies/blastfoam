@@ -21,5 +21,4 @@ EXE_LIBS = \
     -lblastThermodynamics \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \
-    -lblastFunctionObjects \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastFunctionObjects

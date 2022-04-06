@@ -57,6 +57,4 @@ export BLAST_APPBIN="$FOAM_USER_APPBIN"
 
 export FOAM_CODE_TEMPLATES="$BLAST_DIR/etc/codeTemplates"
 
-# Set optional, additional libraries to be included in solvers by default
-# export BLAST_ADDITIONAL_LIBS=
 #------------------------------------------------------------------------------

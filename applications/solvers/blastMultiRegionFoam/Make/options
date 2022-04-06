@@ -36,5 +36,4 @@ EXE_LIBS = \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
-    -lblastRegionModels \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastRegionModels

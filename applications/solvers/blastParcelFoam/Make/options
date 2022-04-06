@@ -27,5 +27,4 @@ EXE_LIBS = \
     -lblastFiniteVolume \
     -lblastThermodynamics \
     -lcompressibleSystems \
-    -lblastDynamicFvMesh \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastDynamicFvMesh

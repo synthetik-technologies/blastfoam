@@ -35,5 +35,4 @@ EXE_LIBS = \
     -lblastDynamicFvMesh \
     -lblastFunctionObjects \
     -lblastSolidModels \
-    -lblastRegionModels \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastRegionModels
