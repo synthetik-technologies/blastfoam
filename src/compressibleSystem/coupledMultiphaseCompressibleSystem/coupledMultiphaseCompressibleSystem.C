@@ -47,7 +47,7 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     const fvMesh& mesh
 )
 :
-    multiphaseCompressibleSystem(mesh),
+    multiphaseCompressibleSystem(mesh, false),
     volumeFraction_
     (
         IOobject
@@ -78,6 +78,11 @@ Foam::coupledMultiphaseCompressibleSystem::coupledMultiphaseCompressibleSystem
     (
         thermoPtr_()
     ).setTotalVolumeFractionPtr(volumeFraction_);
+
+    thermoPtr_->initializeModels();
+    this->setModels();
+
+    encode();
 }
 
 

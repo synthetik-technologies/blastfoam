@@ -76,17 +76,6 @@ Foam::compressibleSystem::compressibleSystem
     const fvMesh& mesh
 )
 :
-    IOdictionary
-    (
-        IOobject
-        (
-            "phaseProperties",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ_IF_MODIFIED,
-            IOobject::NO_WRITE
-        )
-    ),
     timeIntegrationSystem("compressibleSystem", mesh),
     U_
     (
@@ -176,7 +165,6 @@ Foam::compressibleSystem::compressibleSystem
     g_(mesh.lookupObject<uniformDimensionedVectorField>("g")),
     solutionDs_((vector(mesh.solutionD()) + vector::one)/2.0)
 {
-    U_.oldTime();
     scalar emptyDirV
     (
         Foam::max(mag(U_ & (vector::one - solutionDs_))).value()
@@ -267,13 +255,13 @@ void Foam::compressibleSystem::postUpdate()
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-//             rhoE_ +=
-//                 rho().mesh().time().deltaT()
-//                 *fvc::div
-//                 (
-//                     fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
-//                   & fluxScheme_->Uf()
-//                 );
+            rhoE_ +=
+                rho().mesh().time().deltaT()
+                *fvc::div
+                (
+                    fvc::dotInterpolate(rho().mesh().Sf(), turbulence_->devTau())
+                  & fluxScheme_->Uf()
+                );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
@@ -282,7 +270,7 @@ void Foam::compressibleSystem::postUpdate()
         rhoU_ = rho()*U_;
 
         //- Update internal energy
-//         he() = rhoE_/rho() - 0.5*magSqr(U_);
+        he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion
@@ -342,19 +330,22 @@ Foam::scalar Foam::compressibleSystem::CoNum() const
         fvc::surfaceSum(amaxSf)().primitiveField()
     );
 
-    return 0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
-}
+    scalar CoNum =
+        0.5*gMax(sumAmaxSf/mesh().V().field())*mesh().time().deltaTValue();
 
+    scalar meanCoNum =
+        0.5
+       *(
+            gSum(sumAmaxSf)/gSum(mesh().V().field())
+        )*mesh().time().deltaTValue();
 
-bool Foam::compressibleSystem::writeData(Ostream& os) const
-{
-    return os.good();
-}
-
-
-bool Foam::compressibleSystem::read()
-{
-    return regIOobject::read();
+    if (mesh().name() != polyMesh::defaultRegion)
+    {
+        Info<< "Region " << mesh().name() << " ";
+    }
+    Info<< "Courant Number Mean/Max = "
+        << meanCoNum << ", "<< CoNum << nl << endl;
+    return CoNum;
 }
 
 // ************************************************************************* //

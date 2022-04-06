@@ -58,6 +58,17 @@ Foam::compressibleBlastSystem::compressibleBlastSystem
 )
 :
     compressibleSystem(mesh),
+    IOdictionary
+    (
+        IOobject
+        (
+            "phaseProperties",
+            mesh.time().constant(),
+            mesh,
+            IOobject::MUST_READ_IF_MODIFIED,
+            IOobject::NO_WRITE
+        )
+    ),
     thermoPtr_
     (
         fluidBlastThermo::New(nPhases, mesh, *this)
@@ -175,19 +186,22 @@ void Foam::compressibleBlastSystem::postUpdate()
         if (turbulence_.valid())
         {
             UEqn += turbulence_->divDevTau(U_);
-//             rhoE_ +=
-//                 rho_.mesh().time().deltaT()
-//                *fvc::div
-//                 (
-//                     fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
-//                   & fluxScheme_->Uf()
-//                 );
+            rhoE_ +=
+                rho_.mesh().time().deltaT()
+               *fvc::div
+                (
+                    fvc::dotInterpolate(rho_.mesh().Sf(), turbulence_->devTau())
+                  & fluxScheme_->Uf()
+                );
         }
         constraints().constrain(UEqn);
         UEqn.solve();
         constraints().constrain(U_);
 
         rhoU_ = rho()*U_;
+
+        //- Update internal energy
+        he() = rhoE_/rho() - 0.5*magSqr(U_);
     }
 
     // Solve thermal energy diffusion

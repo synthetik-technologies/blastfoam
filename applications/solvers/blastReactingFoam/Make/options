@@ -1,6 +1,4 @@
 EXE_INC= \
-    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
-    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/finiteVolume/lnInclude \
     -I$(LIB_SRC)/dynamicFvMesh/lnInclude \
     -I$(LIB_SRC)/transportModels/lnInclude \
@@ -16,6 +14,9 @@ EXE_INC= \
     -I$(LIB_SRC)/combustionModels/lnInclude \
     -I$(LIB_SRC)/radiationModels/lnInclude \
     -I$(LIB_SRC)/meshTools/lnInclude \
+    -I$(BLAST_DIR)/src/finiteVolume/lnInclude \
+    -I$(BLAST_DIR)/src/dynamicFvMesh/lnInclude \
+    -I$(BLAST_DIR)/src/compressibleSystem/lnInclude \
     -IreactingCompressibleSystem \
     -IBCs/mixedFixedValueSlip
 
@@ -31,6 +32,6 @@ EXE_LIBS = \
     -lradiationModels \
     -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
+    -lcompressibleSystems \
     -lblastFiniteVolume \
-    -lblastDynamicFvMesh \
-    $(BLAST_ADDITIONAL_LIBS)
+    -lblastDynamicFvMesh

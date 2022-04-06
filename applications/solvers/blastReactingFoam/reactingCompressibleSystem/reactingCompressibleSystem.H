@@ -38,16 +38,11 @@ SourceFiles
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "timeIntegrationSystem.H"
-#include "fluxScheme.H"
+#include "compressibleSystem.H"
 #include "fluidReactionThermo.H"
-#include "combustionModel.H"
-#include "dynamicMomentumTransportModel.H"
 #include "fluidReactionThermophysicalTransportModel.H"
-#include "uniformDimensionedFields.H"
+#include "combustionModel.H"
 #include "radiationModel.H"
-#include "fvModels.H"
-#include "fvConstraints.H"
 
 namespace Foam
 {
@@ -58,7 +53,7 @@ namespace Foam
 
 class reactingCompressibleSystem
 :
-    public timeIntegrationSystem
+    public compressibleSystem
 {
 protected:
 // Protected data
@@ -71,9 +66,6 @@ protected:
         //- Total mass
         volScalarField rho_;
 
-        //- Velocity
-        volVectorField U_;
-
         //- Pressure
         volScalarField& p_;
 
@@ -83,48 +75,20 @@ protected:
         //- Internal energy
         volScalarField& e_;
 
-
-    //- Conserved variables
-
-        //- Momentum
-        volVectorField rhoU_;
-
-        //- Energy
-        volScalarField rhoE_;
-
-
-    //- Fluxes
-
-        //- Volumetric flux
-        surfaceScalarField phi_;
-
-        //- Total mass flux
-        surfaceScalarField rhoPhi_;
-
-        //- Momentum flux
-        surfaceVectorField rhoUPhi_;
-
-        //- Energy flux
-        surfaceScalarField rhoEPhi_;
-
-        //- Flux scheme
-        autoPtr<fluxScheme> fluxScheme_;
-
-        //- Turbulence model
-        autoPtr<compressible::momentumTransportModel> turbulence_;
-
         //- Thermo turbulence model
-        autoPtr<fluidReactionThermophysicalTransportModel> thermophysicalTransport_;
+        autoPtr<fluidReactionThermophysicalTransportModel> reactionThermophysicalTransport_;
 
 
-    //- Chemistry
-    autoPtr<combustionModel> reaction_;
+        //- Chemistry
+        autoPtr<combustionModel> reaction_;
 
-    //- Radiation model
-    autoPtr<radiationModel> radiation_;
+        //- Radiation model
+        autoPtr<radiationModel> radiation_;
 
-    //- Gravitational acceleration
-    const uniformDimensionedVectorField& g_;
+
+    //- Allocate models
+    virtual void setModels()
+    {}
 
 
 public:
@@ -158,25 +122,34 @@ public:
 
     // Member Access Functions
 
-        //- Return the flux scheme
-        virtual const fluxScheme& flux() const
+        //- Const access to thermo model
+        const fluidThermo& thermo() const
         {
-            return fluxScheme_();
+            return thermo_();
         }
 
-        //- Access the flux scheme
-        virtual fluxScheme& flux()
+        //- Non-const access to thermo model
+        fluidThermo& thermo()
         {
-            return fluxScheme_();
+            return thermo_();
         }
 
-        //- Return speed of sound
-        tmp<volScalarField> speedOfSound() const;
-
-        //- Return volumetric flux
-        const surfaceScalarField& phi() const
+        //- Const access to total mass
+        const volScalarField& rho() const
         {
-            return phi_;
+            return rho_;
+        }
+
+        //- Const access to internal energy
+        const volScalarField& he() const
+        {
+            return e_;
+        }
+
+        //- Access to internal energy
+        volScalarField& he()
+        {
+            return e_;
         }
 
         //- Return thermodynamic pressure
@@ -185,17 +158,15 @@ public:
             return p_;
         }
 
-        //- Return thermodynamic pressure
-        const volVectorField& U() const
-        {
-            return U_;
-        }
-
         //- Return temperature
         const volScalarField& T() const
         {
             return T_;
         }
+
+        //- Return speed of sound
+        tmp<volScalarField> speedOfSound() const;
+
 
     //- Return functions for transport model
 

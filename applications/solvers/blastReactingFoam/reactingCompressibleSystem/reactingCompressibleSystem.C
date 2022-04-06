@@ -41,7 +41,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
     const fvMesh& mesh
 )
 :
-    timeIntegrationSystem("phaseCompressibleSystem", mesh),
+    compressibleSystem(mesh),
     thermo_(fluidReactionThermo::New(mesh)),
     rho_
     (
@@ -56,94 +56,9 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         mesh,
         dimensionedScalar("rho", dimDensity, 0.0)
     ),
-    U_
-    (
-        IOobject
-        (
-            "U",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh
-    ),
     p_(thermo_->p()),
     T_(thermo_->T()),
-    e_(thermo_->he()),
-    rhoU_
-    (
-        IOobject
-        (
-            "rhoU",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        rho_*U_
-    ),
-    rhoE_
-    (
-        IOobject
-        (
-            "rhoE",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*sqr(dimVelocity), 0.0)
-    ),
-    phi_
-    (
-        IOobject
-        (
-            "phi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimVelocity*dimArea, 0.0)
-    ),
-    rhoPhi_
-    (
-        IOobject
-        (
-            "rhoPhi",
-            mesh.time().timeName(),
-            mesh,
-            IOobject::NO_READ,
-            IOobject::AUTO_WRITE
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*dimVelocity*dimArea, 0.0)
-    ),
-    rhoUPhi_
-    (
-        IOobject
-        (
-            "rhoUPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedVector("0", dimDensity*sqr(dimVelocity)*dimArea, Zero)
-    ),
-    rhoEPhi_
-    (
-        IOobject
-        (
-            "rhoEPhi",
-            mesh.time().timeName(),
-            mesh
-        ),
-        mesh,
-        dimensionedScalar("0", dimDensity*pow3(dimVelocity)*dimArea, 0.0)
-    ),
-    fluxScheme_(fluxScheme::NewSingle(mesh)),
-    g_(mesh.lookupObject<uniformDimensionedVectorField>("g"))
+    e_(thermo_->he())
 {
     thermo_->validate("compressibleSystem", "e");
     rho_ = thermo_->rho();
@@ -163,7 +78,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
             thermo_()
         ).ptr()
     );
-    thermophysicalTransport_.set
+    reactionThermophysicalTransport_.set
     (
         fluidReactionThermophysicalTransportModel::New
         (
@@ -201,6 +116,7 @@ Foam::reactingCompressibleSystem::reactingCompressibleSystem
         radiation_ = radiationModel::New(radDict, T_);
     }
 
+    fluxScheme_ = fluxScheme::NewSingle(mesh);
     encode();
 }
 
@@ -307,7 +223,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
     (
         fvm::ddt(rho_, e_) - fvc::ddt(rho_.prevIter(), e_)
      ==
-        thermophysicalTransport_->divq(e_)
+        reactionThermophysicalTransport_->divq(e_)
       + models().source(rho_, e_)
     );
 
@@ -338,7 +254,7 @@ void Foam::reactingCompressibleSystem::postUpdate()
                 (
                     fvm::ddt(rho_, Yi)
                   - fvc::ddt(rho_.prevIter(), Yi)
-                  + thermophysicalTransport_->divj(Yi)
+                  + reactionThermophysicalTransport_->divj(Yi)
                  ==
                     reaction_->R(Yi)
                   + models().source(rho_, Yi)

@@ -59,7 +59,6 @@ namespace Foam
 
 class compressibleSystem
 :
-    public IOdictionary,
     public timeIntegrationSystem
 {
 protected:
@@ -239,12 +238,6 @@ public:
 
         //- Return the maximum Courant number
         virtual scalar CoNum() const;
-
-        //- Dummy write for regIOobject
-        bool writeData(Ostream& os) const;
-
-        //- Read phaseProperties
-        virtual bool read();
 };
 
 

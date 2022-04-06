@@ -118,6 +118,78 @@ Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
 }
 
 
+Foam::multiphaseCompressibleSystem::multiphaseCompressibleSystem
+(
+    const fvMesh& mesh,
+    const bool
+)
+:
+    compressibleBlastSystem(3, mesh),
+    thermo_(dynamicCast<multiphaseFluidBlastThermo>(thermoPtr_())),
+    alphas_(thermo_.volumeFractions()),
+    rhos_(thermo_.rhos()),
+    alphaRhos_(alphas_.size()),
+    alphaPhis_(alphas_.size()),
+    alphaRhoPhis_(alphas_.size())
+{
+    this->fluxScheme_ = fluxScheme::NewMulti(mesh);
+
+    forAll(alphas_, phasei)
+    {
+        // Ensure boundaries are updated
+        alphas_[phasei].correctBoundaryConditions();
+        rhos_[phasei].correctBoundaryConditions();
+
+        word phaseName = alphas_[phasei].group();
+        alphaRhos_.set
+        (
+            phasei,
+            new volScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaRho", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                alphas_[phasei]*rhos_[phasei],
+                rhos_[phasei].boundaryField().types()
+            )
+        );
+        alphaPhis_.set
+        (
+            phasei,
+            new surfaceScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaPhi", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimensionSet(0, 3, -1, 0, 0), 0.0)
+            )
+        );
+        alphaRhoPhis_.set
+        (
+            phasei,
+            new surfaceScalarField
+            (
+                IOobject
+                (
+                    IOobject::groupName("alphaRhoPhi", phaseName),
+                    mesh.time().timeName(),
+                    mesh
+                ),
+                mesh,
+                dimensionedScalar("0", dimensionSet(1, 0, -1, 0, 0), 0.0)
+            )
+        );
+    }
+}
+
+
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::multiphaseCompressibleSystem::~multiphaseCompressibleSystem()

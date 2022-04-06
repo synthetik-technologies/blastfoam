@@ -53,11 +53,7 @@ int main(int argc, char *argv[])
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
     Info<< "\nStarting time loop\n" << endl;
-
-
-
     while (runTime.run())
     {
         integrator->preUpdateMesh();
@@ -66,7 +62,7 @@ int main(int argc, char *argv[])
         refineMesh(mesh);
 
         //- Set the new time step and advance
-        #include "eigenvalueCourantNo.H"
+        scalar CoNum = fluid.CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 
