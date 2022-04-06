@@ -24,6 +24,7 @@ EXE_LIBS = \
     -lfluidThermophysicalModels \
     -ldynamicFvMesh \
     -L$(BLAST_LIBBIN) \
+    -lblastFiniteVolume \
     -lblastThermodynamics \
     -lcompressibleSystems \
     -lblastDynamicFvMesh \

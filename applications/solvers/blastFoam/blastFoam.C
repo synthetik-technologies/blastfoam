@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
         refineMesh(mesh);
 
         //- Set the new time step and advance
-        #include "eigenvalueCourantNo.H"
+        scalar CoNum = fluid->CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 

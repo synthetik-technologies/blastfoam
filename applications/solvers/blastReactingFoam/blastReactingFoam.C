@@ -51,6 +51,9 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createTimeControls.H"
 
+    scalar CoNum = fluid.CoNum();
+    #include "setInitialDeltaT.H"
+
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
     Info<< "\nStarting time loop\n" << endl;
@@ -62,7 +65,7 @@ int main(int argc, char *argv[])
         refineMesh(mesh);
 
         //- Set the new time step and advance
-        scalar CoNum = fluid.CoNum();
+        CoNum = fluid.CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 

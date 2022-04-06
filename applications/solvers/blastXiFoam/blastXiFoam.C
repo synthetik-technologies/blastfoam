@@ -75,7 +75,8 @@ int main(int argc, char *argv[])
     #include "createFields.H"
     #include "createFieldRefs.H"
     #include "createTimeControls.H"
-    #include "eigenCourantNo.H"
+
+    scalar CoNum = fluid.CoNum();
     #include "setInitialDeltaT.H"
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
@@ -84,8 +85,8 @@ int main(int argc, char *argv[])
 
     while (runTime.run())
     {
+        CoNum = fluid.CoNum();
         #include "readTimeControls.H"
-        #include "eigenCourantNo.H"
         #include "setDeltaT.H"
 
         runTime++;

@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
         //- Refine the mesh
         refineMesh(mesh);
 
-        #include "eigenvalueCourantNo.H"
+        scalar CoNum = fluid.CoNum();
         #include "readTimeControls.H"
         #include "setDeltaT.H"
 

@@ -428,14 +428,10 @@ void Foam::phaseModel::postUpdate()
     // Solve thermal energy diffusion
     if (needSolve(he().name()) || turbulence_.valid())
     {
-        volScalarField K(0.5*magSqr(U_));
-        K.oldTime() = 0.5*magSqr(U_.oldTime());
-
         fvScalarMatrix eEqn
         (
             fvm::ddt(alphaRho_, he())
           - fvc::ddt(alphaRho_.prevIter(), he())
-          + fvc::ddt(alphaRho_, K)
 //           - fvc::ddt(alphaRhoE_)
 //           - (
 //                 U_

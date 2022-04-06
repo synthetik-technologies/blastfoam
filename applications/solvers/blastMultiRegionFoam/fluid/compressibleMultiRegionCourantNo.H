@@ -1,10 +1,10 @@
-    scalar CoNum = 0.0;
+scalar CoNum = 0.0;
 
-    forAll(fluidRegions, regionI)
-    {
-        CoNum = max
-        (
-            fluids[regionI].CoNum(),
-            CoNum
-        );
-    }
+forAll(fluidRegions, regionI)
+{
+    CoNum = max
+    (
+        fluids[regionI].CoNum(),
+        CoNum
+    );
+}
