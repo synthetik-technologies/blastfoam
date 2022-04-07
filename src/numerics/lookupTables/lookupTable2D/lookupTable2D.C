@@ -483,7 +483,6 @@ Type Foam::lookupTable2D<Type>::lookup(const scalar x, const scalar y) const
        *data_
         [indices_[0].x()]
         [indices_[0].y()];
-
     for (label i = 1; i < indices_.size(); i++)
     {
         modf +=
@@ -492,7 +491,6 @@ Type Foam::lookupTable2D<Type>::lookup(const scalar x, const scalar y) const
             [indices_[i].x()]
             [indices_[i].y()];
     }
-
     return mod_->inv(modf);
 }
 
@@ -728,7 +726,7 @@ void Foam::lookupTable2D<Type>::read
         file,
         fDict.lookupOrDefault<string>("delim", ","),
         data,
-        fDict.lookupOrDefault<Switch>("flipTable", true),
+        fDict.lookupOrDefault<Switch>("flipTable", false),
         !canRead
     );
     setData(data, modType, isReal);

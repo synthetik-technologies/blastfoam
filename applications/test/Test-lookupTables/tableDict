@@ -1,12 +1,11 @@
 
 table1D
 {
-    interpolationScheme linearClamp;
-    xCoeffs
-    {
-        file    "x.csv";
-        delim ";";
-    }
+    interpolationScheme cubicClamp;
+    nX      10;
+    minX    1.0;
+    maxX    2.0;
+
     fCoeffs
     {
         file    "table1D.csv";
@@ -25,14 +24,13 @@ table2D
     {
         file        "y.csv";
         delim       ";";
-        mod         ln;
         isReal      yes;
     }
     fCoeffs
     {
         file        "table2D.csv";
-        mod         pow10;
         isReal      yes;
+        flipTable   yes;
     }
 }
 

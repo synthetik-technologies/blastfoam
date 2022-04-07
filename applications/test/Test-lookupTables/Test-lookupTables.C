@@ -91,15 +91,18 @@ scalar d2func3dydz(const scalar x, const scalar y, const scalar z)
 int main(int argc, char *argv[])
 {
     // Create some tables
-    label nx = 10;
-    label ny = 30;
-    label nz = 20;
+    label nx = 20;
+    label ny = 20;
+    label nz = 30;
+    scalar xMin = 1.0;
+    scalar yMin = 0.1;
+    scalar zMin = 0.001;
     scalar xMax = 2.0;
     scalar yMax = 3.0;
     scalar zMax = 4.0;
-    scalar dx = xMax/scalar(nx-1.0);
-    scalar dy = yMax/scalar(ny-1.0);
-    scalar dz = zMax/scalar(nz-1.0);
+    scalar dx = (xMax - xMin)/scalar(nx);
+    scalar dy = (yMax - yMin)/scalar(ny);
+    scalar dz = (zMax - zMin)/scalar(nz);
 
     scalarField x(nx);
     scalarField y(ny);
@@ -109,7 +112,7 @@ int main(int argc, char *argv[])
         OFstream outX("x.csv");
         for (label i = 0; i < nx; i++)
         {
-            x[i] =  dx*scalar(i);
+            x[i] =  xMin + dx*scalar(i);
             outX << x[i] << ";";
         }
     }
@@ -117,7 +120,7 @@ int main(int argc, char *argv[])
         OFstream outY("y.csv");
         for (label j = 0; j < ny; j++)
         {
-            y[j] =  dy*scalar(j);
+            y[j] =  yMin + dy*scalar(j);
             outY << y[j] << ";\n";
         }
     }
@@ -126,7 +129,7 @@ int main(int argc, char *argv[])
         outZ << "# abc"<<endl;
         for (label k = 0; k < nz; k++)
         {
-            z[k] =  dz*scalar(k);
+            z[k] =  zMin + dz*scalar(k);
             outZ << z[k] << "\n";
         }
     }
@@ -181,15 +184,14 @@ int main(int argc, char *argv[])
     IFstream is("tableDict");
     dictionary dict(is);
 
-    scalar xTest = 1.5;
-    scalar yTest = 1.6;
-    scalar zTest = 2.6;
+    scalar xTest = 1.435;
+    scalar yTest = 1.3346;
+    scalar zTest = 2.5676;
 
     Info<<nl<<"1D table:" << endl;
     scalarLookupTable1D table1(dict.subDict("table1D"), "x", "f");
     scalarLookupTable1D table11(table1);
-    Info<< "f: " << table1.lookup(xTest) <<endl
-        << "fCopy: " << table11.lookup(xTest)
+    Info<< "f: " << table11.lookup(xTest)
         << ", answer: " << func1(xTest) << endl
         << "dfdx: " << table1.dFdX(xTest)
         << ", answer: " << dfunc1dx(xTest) << endl
@@ -199,9 +201,7 @@ int main(int argc, char *argv[])
     Info<<nl<<"2D table:" << endl;
     lookupTable2D<scalar> table2(dict.subDict("table2D"), "x", "y", "f");
     scalarLookupTable2D table21(table2);
-    Info<< "f: " << table2.lookup(xTest, yTest) <<endl
-        << "f interpolate: " << table2.interpolate(table2.f()) <<endl
-        << "fCopy: " << table21.lookup(xTest, yTest)
+    Info<< "f: " << table2.lookup(xTest, yTest)
         << ", answer: " << func2(xTest, yTest) << endl
         << "dfdx: " << table2.dFdX(xTest, yTest)
         << ", answer: " << dfunc2dx(xTest, yTest) << endl
@@ -219,9 +219,7 @@ int main(int argc, char *argv[])
     Info<<nl<<"3D table" << endl;
     scalarLookupTable3D table3(dict.subDict("table3D"), "x", "y", "z", "f");
     scalarLookupTable3D table31(table3);
-    Info<< "f: " << table3.lookup(xTest, yTest, zTest) <<endl
-        << "f interpolate: " << table3.interpolate(table3.f()) <<endl
-        << "fCopy: " << table31.lookup(xTest, yTest, zTest)
+    Info<< "f: " << table3.lookup(xTest, yTest, zTest)
         << ", answer: " << func3(xTest, yTest, zTest) << endl
         << "dfdx: " << table3.dFdX(xTest, yTest, zTest)
         << ", answer: " << dfunc3dx(xTest, yTest, zTest) << endl
@@ -242,5 +240,6 @@ int main(int argc, char *argv[])
         << "d2fdydz: " << table3.d2FdYdZ(xTest, yTest, zTest)
         << ", answer: " << d2func3dydz(xTest, yTest, zTest) << endl;
 
+    Info<< nl << "Finished" << nl << endl;
     return 0;
 }

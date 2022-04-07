@@ -34,12 +34,25 @@ bool Foam::readComponent
     const word& name,
     word& modType,
     Field<Type>& values,
-    const List<List<string>>& table
+    const List<List<string>>& Table
 )
 {
     Switch isReal = true;
+
+    List<List<string>> table(Table);
+    if (parentDict.found(name + "File"))
+    {
+        table = read2DTable
+        (
+            parentDict.lookup<fileName>(name + "File"),
+            parentDict.lookupOrDefault<string>(name + "Delim", ","),
+            parentDict.lookupOrDefault<label>(name + "StartRow", 0),
+            parentDict.lookupOrDefault<Switch>(name + "FlipTable", false)
+        );
+    }
     bool readFromTable = table.size();
-    label col = -1;
+
+    label col = 0;
     label scale = 1.0;
     if (parentDict.found(name + "Coeffs"))
     {
@@ -68,15 +81,20 @@ bool Foam::readComponent
         }
         else if (dict.found("file"))
         {
-            fileName file(dict.lookup("file"));
-            read1DTable
+            table = read2DTable
             (
-                file,
+                dict.lookup<fileName>("file"),
                 dict.lookupOrDefault<string>("delim", ","),
-                values
+                dict.lookupOrDefault<label>("startRow", 0),
+                dict.lookupOrDefault<Switch>("flipTable", false)
             );
+            if (table[0].size() > 1)
+            {
+                col = dict.lookup<label>("col");
+            }
+            readFromTable = true;
         }
-        else
+        else if (dict.found("n"))
         {
             label ny = dict.lookup<label>("n");
             Type miny = dict.lookup<Type>("min");
@@ -95,6 +113,43 @@ bool Foam::readComponent
             {
                 values[j] = miny + dy*j;
             }
+        }
+        else
+        {
+            FatalIOErrorInFunction(dict)
+                << "Could not determine construction method of " << name << nl
+                << "Pease provide a file to read from or (n, min, delta/max)" << endl
+                << abort(FatalError);
+        }
+    }
+    else if (parentDict.found("n" + name.capitalise()))
+    {
+        modType = parentDict.lookupOrDefault<word>(name + "Mod", "none");
+        if (modType != "none")
+        {
+            isReal = parentDict.lookup<Switch>(name + "IsReal");
+        }
+
+        label ny = parentDict.lookup<label>("n" + name.capitalise());
+        Type miny = parentDict.lookup<Type>("min" + name.capitalise());
+        Type dy;
+        if (parentDict.found("delta" + name.capitalise()))
+        {
+            dy = parentDict.lookup<Type>("delta" + name.capitalise());
+        }
+        else if (parentDict.found("max" + name.capitalise()))
+        {
+            dy =
+                (
+                    parentDict.lookup<Type>("max" + name.capitalise())
+                  - miny
+                )/scalar(ny);
+        }
+
+        values.resize(ny);
+        forAll(values, j)
+        {
+            values[j] = miny + dy*j;
         }
     }
     else if (parentDict.found(name) || readFromTable)
@@ -115,7 +170,13 @@ bool Foam::readComponent
     else
     {
         FatalErrorInFunction
-            << "Neither the entry \"" << name << "\" or the \""
+            << "Neither the entry \"" << name << "\", "
+            << "construction method "
+            << "(n" << name.capitalise() << ", "
+            << "min" << name.capitalise() << ", "
+            << "max" << name.capitalise()
+            << "/delta" << name.capitalise() << ") "
+            << ", or the \""
             << name << "Coeffs\" subDictionary was found" << endl
             << abort(FatalError);
     }
@@ -231,13 +292,13 @@ void Foam::read2DTable
 
         Field<Type> lineVals(iss);
 
-        if (ny < 0)
+        if (!lineVals.size())
+        {
+            continue;
+        }
+        else if (ny < 0)
         {
             ny = lineVals.size();
-        }
-        else if (!lineVals.size())
-        {
-            break;
         }
         else if (lineVals.size() != ny)
         {
@@ -374,13 +435,13 @@ void Foam::read3DTable
             endSplit = line.find(rowDelim);
         }
 
-        if (ny < 0)
-        {
-            ny = strings.size();
-        }
-        else if (!strings.size())
+        if (!strings.size())
         {
             continue;
+        }
+        else if (ny < 0)
+        {
+            ny = strings.size();
         }
         else if (ny != strings.size())
         {
@@ -399,13 +460,13 @@ void Foam::read3DTable
             IStringStream iss(lineEntry);
 
             Field<Type> zvals(iss);
-            if (nz < 0)
-            {
-                nz = zvals.size();
-            }
-            else if (!yzvals.size())
+            if (!yzvals.size())
             {
                 continue;
+            }
+            else if (nz < 0)
+            {
+                nz = zvals.size();
             }
             else if (nz != zvals.size())
             {

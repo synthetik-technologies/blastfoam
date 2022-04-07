@@ -94,13 +94,13 @@ Foam::List<Foam::List<Foam::string>> Foam::read2DTable
             }
         }
 
-        if (ny < 0)
+        if (!lineVals.size())
+        {
+            continue;
+        }
+        else if (ny < 0)
         {
             ny = lineVals.size();
-        }
-        else if (!lineVals.size())
-        {
-            break;
         }
         else if (lineVals.size() != ny)
         {
@@ -117,14 +117,18 @@ Foam::List<Foam::List<Foam::string>> Foam::read2DTable
         nx++;
     }
 
-    if (flip)
+    // If only one row is provided, assume this is the data
+    bool f = flip;
+    if (flip || nx == 1)
     {
+        f = true;
         label t = nx;
         nx = ny;
         ny = t;
     }
 
-    if (!flip)
+
+    if (!f)
     {
         return move(tentries);
     }
