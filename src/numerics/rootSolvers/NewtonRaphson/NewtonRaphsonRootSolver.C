@@ -70,6 +70,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonRootSolver::findRoots
     const label li
 ) const
 {
+    initialise(x0);
     scalarField xOld(x0);
     tmp<scalarField> xNewTmp(new scalarField(x0));
     scalarField& xNew = xNewTmp.ref();
@@ -81,7 +82,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonRootSolver::findRoots
     {
         scalarField delta(-(SVDinv(J)*f));
 
-        if (converged(delta))
+        if (converged(delta, f))
         {
             break;
         }
@@ -100,7 +101,7 @@ Foam::tmp<Foam::scalarField> Foam::NewtonRaphsonRootSolver::findRoots
 
         printStepInformation(xNew);
     }
-    printFinalInformation();
+    printFinalInformation(xNew);
 
     return xNewTmp;
 }

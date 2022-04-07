@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
     multEqns.set(1, new testEqn2());
 
     dictionary dict;
-//     dict.add("maxSteps", 10);
     dict.add("nParticles", 1000);
 
     Info<< "Minimization" << endl;

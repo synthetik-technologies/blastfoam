@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(SteffensenUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        SteffensenUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         SteffensenUnivariateRootSolver,
         dictionaryZero
@@ -86,21 +80,27 @@ Foam::scalar Foam::SteffensenUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xOld = x0;
     scalar xNew = x0;
+
+    scalar fx = eqn_.fx(xOld, li);
+    scalar gx = eqn_.fx(xOld + fx, li)/stabilise(fx, small) - 1.0;
+
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar fx = eqn_.fx(xOld, li);
-        scalar gx = eqn_.fx(xOld + fx, li)/stabilise(fx, small) - 1.0;
         xNew = xOld - eqn_.fx(xOld, li)/stabilise(gx, small);
         eqn_.limit(xNew);
 
-        if (converged(xNew - xOld))
+        fx = eqn_.fx(xNew, li);
+        if (converged(xNew, xOld, fx))
         {
             break;
         }
-        xOld = xNew;
 
+        gx = eqn_.fx(xNew + fx, li)/stabilise(fx, small) - 1.0;
+
+        xOld = xNew;
         printStepInformation(xNew);
 
     }

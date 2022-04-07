@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(bisectionUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        bisectionUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         bisectionUnivariateRootSolver,
         dictionaryZero
@@ -86,6 +80,7 @@ Foam::scalar Foam::bisectionUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xMean = x0;
     scalar xLow = x1;
     scalar xHigh = x2;
@@ -107,7 +102,7 @@ Foam::scalar Foam::bisectionUnivariateRootSolver::findRoot
             xHigh = xMean;
         }
 
-        if (converged(y))
+        if (converged(xLow, xHigh, y))
         {
             break;
         }

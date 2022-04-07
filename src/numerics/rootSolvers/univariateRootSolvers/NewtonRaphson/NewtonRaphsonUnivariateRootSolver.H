@@ -67,14 +67,6 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given univariateRootSolver
-        NewtonRaphsonUnivariateRootSolver
-        (
-            const scalarMultivariateEquation& eqn,
-            const scalar tolerance = 1e-6,
-            const label maxSteps = 100
-        );
-
         //- Disallow default bitwise copy construction
         NewtonRaphsonUnivariateRootSolver(const univariateRootSolver&) = delete;
 

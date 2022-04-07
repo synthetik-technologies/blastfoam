@@ -58,8 +58,14 @@ protected:
         //- Reference to scalarMultivariateEquation
         const scalarMultivariateEquation& eqns_;
 
-        //- Convergence tolerance
-        scalarField tolerances_;
+        //- Position convergence tolerance
+        scalarField xTols_;
+
+        //- Function convergence tolerance
+        scalarField yTols_;
+
+        //- Normalised position convergence tolerances
+        mutable scalarField xRelTols_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -67,17 +73,39 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current errors
-        mutable scalarField errors_;
+        //- Current x errors
+        mutable scalarField xErrors_;
+
+        //- Current y errors
+        mutable scalarField yErrors_;
+
+
+    // Protected member function
+
+        //- Normalise x tolerance
+        void initialise(const scalarField& x) const;
 
         //- Is the solution converged
-        bool converged(const scalarField& errors) const;
+        bool converged
+        (
+            const scalarField& dx,
+            const scalarField& y
+        ) const;
+
+        //- Is the solution converged
+        bool converged
+        (
+            const scalarField& x0,
+            const scalarField& x1,
+            const scalarField& y
+        ) const;
 
         //- Print information about the current step
         void printStepInformation(const scalarField& vals) const;
 
         //- Print information about the current step
-        void printFinalInformation() const;
+        void printFinalInformation(const scalarField& vals) const;
+
 
 public:
 
@@ -121,14 +149,6 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given rootSolver
-        rootSolver
-        (
-            const scalarMultivariateEquation& eqns,
-            const scalarList& tolerances,
-            const label maxSteps
-        );
-
         //- Disallow default bitwise copy construction
         rootSolver(const rootSolver&) = delete;
 
@@ -141,6 +161,14 @@ public:
             const dictionary& dict
         );
 
+        //- Select null constructed
+        static autoPtr<rootSolver> New
+        (
+            const word& rootSolverType,
+            const scalarMultivariateEquation& eqns,
+            const dictionary& dict
+        );
+
 
     //- Destructor
     virtual ~rootSolver();
@@ -148,14 +176,26 @@ public:
 
     // Member Functions
 
-        //- Return access to the tolerance
-        inline const scalarField& tolerances() const;
+        //- Return the absolute tolerances
+        inline const scalarField& xTols() const;
+
+        //- Access the absolute tolerances
+        inline scalarField& xTols();
+
+        //- Return the relative tolerances
+        inline const scalarField& yTols() const;
+
+        //- Access the relative tolerances
+        inline scalarField& yTols();
 
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the errors
-        inline const scalarList& errors() const;
+        //- Return the x errors
+        inline const scalarList& xErrors() const;
+
+        //- Return the y errors
+        inline const scalarList& yErrors() const;
 
         //- Find the roots of the equation
         virtual tmp<scalarField> solve() const;

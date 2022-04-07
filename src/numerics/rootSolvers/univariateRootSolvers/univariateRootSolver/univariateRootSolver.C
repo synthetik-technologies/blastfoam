@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(univariateRootSolver, 0);
+    defineTypeName(univariateRootSolver);
     defineRunTimeSelectionTable(univariateRootSolver, dictionaryZero);
     defineRunTimeSelectionTable(univariateRootSolver, dictionaryOne);
     defineRunTimeSelectionTable(univariateRootSolver, dictionaryTwo);
@@ -37,21 +37,45 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::univariateRootSolver::converged(const scalar error) const
+void Foam::univariateRootSolver::initialise(const scalar x) const
 {
-    errors_[0] = mag(error);
-    return errors_[0] < tolerances_[0];
+    xRelTols_[0] = max(xTols_[0]*mag(x), small);
+}
+
+
+bool Foam::univariateRootSolver::converged
+(
+    const scalar dx,
+    const scalar y
+) const
+{
+    xErrors_[0] = mag(dx);
+    yErrors_[0] = mag(y);
+    return xErrors_[0] < xTols_[0] && yErrors_[0] < yTols_[0];
+}
+
+
+bool Foam::univariateRootSolver::converged
+(
+    const scalar x0,
+    const scalar x1,
+    const scalar y
+) const
+{
+    xErrors_[0] = mag(x1 - x0);
+    yErrors_[0] = mag(y);
+    return xErrors_[0] < xRelTols_[0] && yErrors_[0] < yTols_[0];
 }
 
 
 
 void Foam::univariateRootSolver::printStepInformation(const scalar val) const
 {
-    if (debug)
+    if (debug > 2)
     {
         Info<< "Step " << stepi_
-            << ", error=" << errors_[0]
-            << ", value: " << val << endl;
+            << ", est= " << val
+            << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
     }
 }
 
@@ -61,13 +85,17 @@ Foam::univariateRootSolver::printFinalInformation(const scalar val) const
 {
     if (stepi_ < maxSteps_ && debug > 1)
     {
-        Info<< "Converged in " << stepi_ << " iterations"
-            << ", final error=" << errors_[0];
+        Info<< indent << "Converged in " << stepi_ << " iterations" << nl
+            << indent << "Final x error=" << xErrors_[0] << nl
+            << indent << "Final y error=" << yErrors_[0] << nl
+            << indent << "Root=" << val << endl;
     }
     else if (stepi_ >= maxSteps_ && debug)
     {
         WarningInFunction
-            << "Did not converge, final error= " << errors_[0] << endl;
+            << "Did not converge in " << stepi_ << " iterations"
+            << ", root=" << val
+            << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
     }
     return val;
 }
@@ -82,18 +110,6 @@ Foam::univariateRootSolver::univariateRootSolver
 )
 :
     rootSolver(eqn, dict),
-    eqn_(dynamicCast<const scalarEquation>(eqn))
-{}
-
-
-Foam::univariateRootSolver::univariateRootSolver
-(
-    const scalarMultivariateEquation& eqn,
-    const scalar tolerance,
-    const label maxSteps
-)
-:
-    rootSolver(eqn, {tolerance}, maxSteps),
     eqn_(dynamicCast<const scalarEquation>(eqn))
 {}
 

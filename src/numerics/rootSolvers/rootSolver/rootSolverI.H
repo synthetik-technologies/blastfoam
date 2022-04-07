@@ -23,9 +23,27 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline const Foam::scalarField& Foam::rootSolver::tolerances() const
+inline const Foam::scalarField& Foam::rootSolver::xTols() const
 {
-    return tolerances_;
+    return xTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::xTols()
+{
+    return xTols_;
+}
+
+
+inline const Foam::scalarField& Foam::rootSolver::yTols() const
+{
+    return yTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::yTols()
+{
+    return yTols_;
 }
 
 
@@ -35,9 +53,15 @@ inline Foam::label Foam::rootSolver::nSteps() const
 }
 
 
-inline const Foam::scalarList& Foam::rootSolver::errors() const
+inline const Foam::scalarList& Foam::rootSolver::xErrors() const
 {
-    return errors_;
+    return xErrors_;
+}
+
+
+inline const Foam::scalarList& Foam::rootSolver::yErrors() const
+{
+    return yErrors_;
 }
 
 

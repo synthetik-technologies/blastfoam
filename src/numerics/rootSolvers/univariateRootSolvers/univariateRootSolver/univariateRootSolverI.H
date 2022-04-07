@@ -23,15 +23,39 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar Foam::univariateRootSolver::error() const
+inline Foam::scalar Foam::univariateRootSolver::xError() const
 {
-    return errors_[0];
+    return xErrors_[0];
 }
 
 
-inline Foam::scalar Foam::univariateRootSolver::tolerance() const
+inline Foam::scalar Foam::univariateRootSolver::yError() const
 {
-    return tolerances_[0];
+    return yErrors_[0];
+}
+
+
+inline Foam::scalar Foam::univariateRootSolver::xTol() const
+{
+    return xTols_[0];
+}
+
+
+inline Foam::scalar& Foam::univariateRootSolver::xTol()
+{
+    return xTols_[0];
+}
+
+
+inline Foam::scalar Foam::univariateRootSolver::yTol() const
+{
+    return yTols_[0];
+}
+
+
+inline Foam::scalar& Foam::univariateRootSolver::yTol()
+{
+    return yTols_[0];
 }
 
 

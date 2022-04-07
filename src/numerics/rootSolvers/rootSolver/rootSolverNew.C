@@ -34,36 +34,41 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
     const dictionary& dict
 )
 {
-    word rootSolverTypeName(dict.lookup("solver"));
-    Info<< "Selecting root solver " << rootSolverTypeName << endl;
+    return New(dict.lookup<word>("solver"), eqn, dict);
+}
 
-    if (eqn.nVar() == 1)
+
+Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
+(
+    const word& rootSolverType,
+    const scalarMultivariateEquation& eqn,
+    const dictionary& dict
+)
+{
+    if (isA<scalarEquation>(eqn))
     {
-        dictionaryUnivariateConstructorTable::iterator cstrIter =
-            dictionaryUnivariateConstructorTablePtr_->find(rootSolverTypeName);
-
-        if (cstrIter == dictionaryUnivariateConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown root solver type "
-                << rootSolverTypeName << nl << nl
-                << "Valid root solvers for no derivates are : " << endl
-                << dictionaryUnivariateConstructorTablePtr_->sortedToc()
-                << exit(FatalError);
-        }
-        return autoPtr<rootSolver>(cstrIter()(eqn, dict));
+        return autoPtr<rootSolver>
+        (
+            univariateRootSolver::New
+            (
+                rootSolverType,
+                dynamicCast<const scalarEquation>(eqn),
+                dict
+            ).ptr()
+        );
     }
 
+    Info<< "Selecting root solver: " << rootSolverType << endl;
     if (eqn.nDerivatives() <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =
-            dictionaryZeroConstructorTablePtr_->find(rootSolverTypeName);
+            dictionaryZeroConstructorTablePtr_->find(rootSolverType);
 
         if (cstrIter == dictionaryZeroConstructorTablePtr_->end())
         {
             FatalErrorInFunction
                 << "Unknown root solver type "
-                << rootSolverTypeName << nl << nl
+                << rootSolverType << nl << nl
                 << "Valid root solvers for no derivates are : " << endl
                 << dictionaryZeroConstructorTablePtr_->sortedToc()
                 << exit(FatalError);
@@ -71,13 +76,13 @@ Foam::autoPtr<Foam::rootSolver> Foam::rootSolver::New
         return autoPtr<rootSolver>(cstrIter()(eqn, dict));
     }
     dictionaryOneConstructorTable::iterator cstrIter =
-        dictionaryOneConstructorTablePtr_->find(rootSolverTypeName);
+        dictionaryOneConstructorTablePtr_->find(rootSolverType);
 
     if (cstrIter == dictionaryOneConstructorTablePtr_->end())
     {
         FatalErrorInFunction
             << "Unknown root solver type "
-            << rootSolverTypeName << nl << nl
+            << rootSolverType << nl << nl
             << "Valid root solvers are : " << endl
             << dictionaryOneConstructorTablePtr_->sortedToc()
             << exit(FatalError);

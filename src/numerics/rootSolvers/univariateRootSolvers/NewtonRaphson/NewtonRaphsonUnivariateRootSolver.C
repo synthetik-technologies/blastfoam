@@ -58,17 +58,6 @@ Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
 {}
 
 
-Foam::NewtonRaphsonUnivariateRootSolver::NewtonRaphsonUnivariateRootSolver
-(
-    const scalarMultivariateEquation& eqn,
-    const scalar tolerance,
-    const label maxSteps
-)
-:
-    univariateRootSolver(eqn, tolerance, maxSteps)
-{}
-
-
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
 Foam::NewtonRaphsonUnivariateRootSolver::~NewtonRaphsonUnivariateRootSolver()
@@ -85,13 +74,18 @@ Foam::scalar Foam::NewtonRaphsonUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xOld = x0;
     scalar xNew = x0;
+    scalar y = eqn_.fx(xOld, li);
+
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        xNew = xOld - eqn_.fx(xOld, li)/stabilise(eqn_.dfdx(xOld, li), small);
+        xNew = xOld - y/stabilise(eqn_.dfdx(xOld, li), small);
         eqn_.limit(xNew);
-        if (converged(xNew - xOld))
+        y = eqn_.fx(xNew, li);
+
+        if (converged(xNew, xOld, y))
         {
             break;
         }

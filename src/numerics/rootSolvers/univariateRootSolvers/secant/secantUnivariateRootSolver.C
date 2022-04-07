@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(secantUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        secantUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         secantUnivariateRootSolver,
         dictionaryZero
@@ -86,6 +80,7 @@ Foam::scalar Foam::secantUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xNew = x0;
     scalar xLow = x1;
     scalar xHigh = x2;
@@ -106,7 +101,7 @@ Foam::scalar Foam::secantUnivariateRootSolver::findRoot
         xLow = xHigh;
         xHigh = xNew;
 
-        if (converged(xHigh - xLow))
+        if (converged(xHigh, xLow, yHigh))
         {
             break;
         }

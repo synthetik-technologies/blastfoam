@@ -230,21 +230,53 @@ Foam::twoPhaseFluidBlastThermo::twoPhaseFluidBlastThermo
     // Select the solvers for energy and temperature
     if (dict.isDict("eSolverCoeffs"))
     {
+        const dictionary& eDict(dict.subDict("eSolverCoeffs"));
         ESolver_ =
-            univariateRootSolver::New(EEqn_, dict.subDict("eSolverCoeffs"));
+            univariateRootSolver::New
+            (
+                eDict.lookupOrDefault
+                (
+                    "solver",
+                    NewtonRaphsonUnivariateRootSolver::typeName
+                ),
+                EEqn_,
+                eDict
+            );
     }
     else
     {
-        ESolver_.set(new NewtonRaphsonUnivariateRootSolver(EEqn_));
+        ESolver_ =
+            univariateRootSolver::New
+            (
+                NewtonRaphsonUnivariateRootSolver::typeName,
+                EEqn_,
+                dict
+            );
     }
     if (dict.isDict("TSolverCoeffs"))
     {
+        const dictionary& TDict(dict.subDict("TSolverCoeffs"));
         THESolver_ =
-            univariateRootSolver::New(THEEqn_, dict.subDict("TSolverCoeffs"));
+            univariateRootSolver::New
+            (
+                TDict.lookupOrDefault
+                (
+                    "solver",
+                    NewtonRaphsonUnivariateRootSolver::typeName
+                ),
+                THEEqn_,
+                TDict
+            );
     }
     else
     {
-        THESolver_.set(new NewtonRaphsonUnivariateRootSolver(THEEqn_));
+        THESolver_ =
+            univariateRootSolver::New
+            (
+                NewtonRaphsonUnivariateRootSolver::typeName,
+                THEEqn_,
+                dict
+            );
     }
 
     //- Force reading of residual values

@@ -63,21 +63,25 @@ Foam::scalar Foam::HalleyUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xOld = x0;
     scalar xNew = x0;
+    scalar f = eqn_.fx(xNew, li);
+    scalar fp = eqn_.dfdx(xNew, li);
+    scalar fpp = eqn_.d2fdx2(xNew, li);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        scalar f = eqn_.fx(xOld, li);
-        scalar fp = eqn_.dfdx(xOld, li);
-        scalar fpp = eqn_.d2fdx2(xOld, li);
-
-        xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, tolerance());
+        xNew = xOld - 2.0*f*fp/stabilise(2.0*sqr(fp) - f*fpp, yTol());
         eqn_.limit(xNew);
+        f = eqn_.fx(xNew, li);
 
-        if (converged(xNew - xOld))
+        if (converged(xNew, xOld, f))
         {
             break;
         }
+        fp = eqn_.dfdx(xNew, li);
+        fpp = eqn_.d2fdx2(xNew, li);
+
         xOld = xNew;
 
         printStepInformation(xNew);

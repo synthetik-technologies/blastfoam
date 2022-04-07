@@ -81,6 +81,7 @@ Foam::badBroydenRootSolver::findRoots
     const label li
 ) const
 {
+    initialise(x0);
     tmp<scalarField> xTmp(new scalarField(x0));
     scalarField& x = xTmp.ref();
 
@@ -96,22 +97,26 @@ Foam::badBroydenRootSolver::findRoots
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
+        // Save previous time step
         xOld = x;
         fOld = f;
 
-        scalarField delta(-Jinv*f);
-        x += delta;
+        // Increment by the jacobian
+        x -= Jinv*f;
 
+        // Limit to the bounds to the equation
         eqns_.limit(x);
-
-        if (converged(delta))
-        {
-            break;
-        }
 
         // update f
         eqns_.FX(x, li, f);
 
+        // Check for convergence
+        if (converged(xOld, x, f))
+        {
+            break;
+        }
+
+        // Update changes in x and f
         forAll(dx, i)
         {
             dx(i, 0) = x[i] - xOld[i];
@@ -125,7 +130,7 @@ Foam::badBroydenRootSolver::findRoots
 
         printStepInformation(x);
     }
-    printFinalInformation();
+    printFinalInformation(x);
 
     return xTmp;
 }

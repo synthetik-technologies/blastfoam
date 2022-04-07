@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(RidderUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        RidderUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         RidderUnivariateRootSolver,
         dictionaryZero
@@ -86,6 +80,7 @@ Foam::scalar Foam::RidderUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x);
     scalar x0 = xLow;
     scalar x1 = xHigh;
     scalar xNew = x;
@@ -107,18 +102,12 @@ Foam::scalar Foam::RidderUnivariateRootSolver::findRoot
           + (xMean - x0)*sign(y0 - y1)
            *yMean/sqrt(max(sqr(yMean) - y0*y1, small));
 
-        if (converged(xNew - x0) || converged(xNew - x1))
+        eqn_.limit(xNew);
+        scalar yNew = eqn_.fx(xNew, li);
+        if (converged(min(mag(xNew - x0), mag(xNew - x1)), yNew))
         {
             break;
         }
-        eqn_.limit(xNew);
-
-        scalar yNew = eqn_.fx(xNew, li);
-        if (converged(yNew))
-        {
-            return xNew;
-        }
-
         if (yMean*yNew < 0)
         {
             x0 = xMean;
@@ -136,6 +125,7 @@ Foam::scalar Foam::RidderUnivariateRootSolver::findRoot
             x1 = xNew;
             y1 = yNew;
         }
+
         printStepInformation(xNew);
     }
 

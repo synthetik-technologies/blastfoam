@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(rootSolver, 0);
+    defineTypeNameAndDebug(rootSolver, 1);
     defineRunTimeSelectionTable(rootSolver, dictionaryUnivariate);
     defineRunTimeSelectionTable(rootSolver, dictionaryZero);
     defineRunTimeSelectionTable(rootSolver, dictionaryOne);
@@ -37,45 +37,129 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::rootSolver::converged(const scalarField& errors) const
+void Foam::rootSolver::initialise(const scalarField& x) const
 {
-    errors_ = mag(errors);
-    forAll(errors_, i)
+    forAll(x, i)
     {
-        if (errors_[i] > tolerances_[i])
-        {
-            return false;
-        }
+        xRelTols_[i] = max(xTols_[i]*mag(x[i]), small);
     }
-    return true;
 }
 
 
-void Foam::rootSolver::printStepInformation
+bool Foam::rootSolver::converged
 (
-    const scalarField& vals
+    const scalarField& dx,
+    const scalarField& y
 ) const
 {
-    if (debug)
+    bool good = true;
+
+    forAll(y, i)
     {
-        Info<< "Step " << stepi_
-            << ", errors=" << errors_
-            << ", values: " << vals << endl;
+        yErrors_[i] = mag(y[i]);
+        if (yErrors_[i] > yTols_[i] )
+        {
+           good = false;
+        }
+
     }
+
+    forAll(dx, i)
+    {
+        xErrors_[i] = mag(dx[i]);
+        if (xErrors_[i] > xRelTols_[i])
+        {
+            good = false;
+        }
+
+    }
+    return good;
 }
 
 
-void Foam::rootSolver::printFinalInformation() const
+bool Foam::rootSolver::converged
+(
+    const scalarField& x0,
+    const scalarField& x1,
+    const scalarField& y
+) const
 {
-    if (stepi_ < maxSteps_ && debug)
+    bool good = true;
+
+    forAll(y, i)
     {
-        Info<< "Converged in " << stepi_ << " iterations"
-            << ", final errors=" << errors_;
+        yErrors_[i] = mag(y[i]);
+        if (yErrors_[i] > yTols_[i] )
+        {
+           good = false;
+        }
+
     }
-    else if (stepi_ >= maxSteps_)
+
+    bool zeroDiff = true;
+    forAll(x0, i)
     {
-        WarningInFunction
-            << "Did not converge, final errors= " << errors_ << endl;
+        xErrors_[i] = mag(x0[i] - x1[i]);
+        if (xErrors_[i] > xRelTols_[i])
+        {
+            good = false;
+            if (xErrors_[i] > vSmall)
+            {
+                zeroDiff = false;
+            }
+        }
+
+    }
+    return zeroDiff || good;
+}
+
+
+void Foam::rootSolver::printStepInformation(const scalarField& vals) const
+{
+    if (debug > 2)
+    {
+        Info<< "Step " << stepi_
+            << ", est= " << vals
+            << ", error=" << xErrors_ << "/" << yErrors_ << endl;
+    }
+}
+
+void Foam::rootSolver::printFinalInformation(const scalarField& vals) const
+{
+    if (!debug)
+    {
+        return;
+    }
+
+    bool converged =
+        (stepi_ < maxSteps_)
+     && max(xErrors_ - xRelTols_) <= 0.0
+     && max(yErrors_ - xTols_) <= 0.0;
+
+    if (converged && debug > 1)
+    {
+        Info<< indent << "Converged in " << stepi_ << " iterations" << nl
+            << indent << "Final x errors=" << xErrors_ << nl
+            << indent << "Final y errors=" << yErrors_ << nl
+            << indent << "Roots=" << vals << endl;
+    }
+    else if (!converged)
+    {
+        if (stepi_ < maxSteps_)
+        {
+            WarningInFunction
+                << "Did not converge due to bounds"
+                << ", tried " << stepi_ << " iterations"
+                << ", est=" << vals
+                << ", errors=" << xErrors_ << "/" << yErrors_ << endl;
+        }
+        else
+        {
+            WarningInFunction
+                << "Did not converge in " << stepi_ << " iterations"
+                << ", roots=" << vals
+                << ", errors=" << xErrors_ << "/" << yErrors_ << endl;
+        }
     }
 }
 
@@ -89,38 +173,43 @@ Foam::rootSolver::rootSolver
 )
 :
     eqns_(eqns),
-    tolerances_
+    xTols_
     (
-        dict.lookupOrDefault<scalarField>
+        dict.lookupOrDefault<scalarList>
         (
-            "tolerances",
-            scalarField(eqns_.nVar(), 1e-6)
+            "xTol",
+            scalarList
+            (
+                eqns.nVar(),
+                dict.lookupOrDefault("tolerance", 1e-6)
+            )
         )
     ),
+    yTols_
+    (
+        dict.lookupOrDefault<scalarList>
+        (
+            "yTol",
+            scalarList
+            (
+                eqns.nEqns(),
+                dict.lookupOrDefault("tolerance", 1e-6)
+            )
+        )
+    ),
+    xRelTols_(xTols_),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
-    errors_(eqns.nEqns(), great)
+    xErrors_(eqns.nVar(), great),
+    yErrors_(eqns.nEqns(), great)
 {
     if (dict.found("tolerance"))
     {
-        tolerances_ = dict.lookup<scalar>("tolerance");
+        xTols_ = dict.lookup<scalar>("tolerance");
+        yTols_ = dict.lookup<scalar>("tolerance");
     }
 }
 
-
-Foam::rootSolver::rootSolver
-(
-    const scalarMultivariateEquation& eqns,
-    const scalarList& tolerances,
-    const label maxSteps
-)
-:
-    eqns_(eqns),
-    tolerances_(tolerances),
-    maxSteps_(maxSteps),
-    stepi_(0),
-    errors_(eqns.nEqns(), great)
-{}
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

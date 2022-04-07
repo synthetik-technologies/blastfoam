@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(falsePointUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        falsePointUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         falsePointUnivariateRootSolver,
         dictionaryZero
@@ -86,6 +80,7 @@ Foam::scalar Foam::falsePointUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x0);
     scalar xNew = x0;
     scalar xLow = x1;
     scalar xHigh = x2;
@@ -103,12 +98,21 @@ Foam::scalar Foam::falsePointUnivariateRootSolver::findRoot
         eqn_.limit(xNew);
         scalar yNew = eqn_.fx(xNew, li);
 
-        if (converged(yNew) || converged(xHigh - xLow))
+        // Both on the same side so pick the smallest value
+        if (yLow*yHigh > 0)
         {
-            break;
+            if (mag(yLow) < mag(yHigh))
+            {
+                xHigh = xNew;
+                yHigh = yNew;
+            }
+            else
+            {
+                xLow = xNew;
+                yLow = yNew;
+            }
         }
-
-        if (yNew*yLow > 0)
+        else if (yNew*yLow < 0)
         {
             xLow = xNew;
             yLow = yNew;
@@ -118,6 +122,12 @@ Foam::scalar Foam::falsePointUnivariateRootSolver::findRoot
             xHigh = xNew;
             yHigh = yNew;
         }
+        if (converged(xHigh, xLow, yNew))
+        {
+            break;
+        }
+
+
         printStepInformation(xNew);
     }
 

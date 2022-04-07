@@ -81,6 +81,7 @@ Foam::goodBroydenRootSolver::findRoots
     const label li
 ) const
 {
+    initialise(x0);
     tmp<scalarField> xTmp(new scalarField(x0));
     scalarField& x = xTmp.ref();
 
@@ -96,21 +97,26 @@ Foam::goodBroydenRootSolver::findRoots
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
+        // Save previous time step
         xOld = x;
         fOld = f;
 
-        scalarField delta(-Jinv*f);
-        x += delta;
-        eqns_.limit(x);
+        // Increment by the jacobian
+        x -= Jinv*f;
 
-        if (converged(delta))
-        {
-            break;
-        }
+        // Limit to the bounds to the equation
+        eqns_.limit(x);
 
         // update f
         eqns_.FX(x, li, f);
 
+        // Check for convergence
+        if (converged(xOld, x, f))
+        {
+            break;
+        }
+
+        // Update changes in x and f
         forAll(dx, i)
         {
             dx(i, 0) = x[i] - xOld[i];
@@ -125,7 +131,7 @@ Foam::goodBroydenRootSolver::findRoots
 
         printStepInformation(x);
     }
-    printFinalInformation();
+    printFinalInformation(x);
 
     return xTmp;
 }

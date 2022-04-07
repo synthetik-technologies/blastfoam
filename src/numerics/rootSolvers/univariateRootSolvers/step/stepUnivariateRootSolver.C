@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(stepUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        stepUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         stepUnivariateRootSolver,
         dictionaryZero
@@ -108,6 +102,7 @@ Foam::scalar Foam::stepUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(xm);
     scalar x = x0;
     scalar dx = dx_;
     scalar yLower = eqn_.fx(x0, li);
@@ -123,7 +118,7 @@ Foam::scalar Foam::stepUnivariateRootSolver::findRoot
         {
             x += dx;
         }
-        if (converged(dx) || converged(y))
+        if (converged(dx, y))
         {
             break;
         }

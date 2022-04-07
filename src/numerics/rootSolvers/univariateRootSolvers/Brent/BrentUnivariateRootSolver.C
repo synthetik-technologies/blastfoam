@@ -33,12 +33,6 @@ namespace Foam
     defineTypeNameAndDebug(BrentUnivariateRootSolver, 0);
     addToRunTimeSelectionTable
     (
-        rootSolver,
-        BrentUnivariateRootSolver,
-        dictionaryUnivariate
-    );
-    addToRunTimeSelectionTable
-    (
         univariateRootSolver,
         BrentUnivariateRootSolver,
         dictionaryZero
@@ -86,6 +80,7 @@ Foam::scalar Foam::BrentUnivariateRootSolver::findRoot
     const label li
 ) const
 {
+    initialise(x);
     scalar x0 = xLow;
     scalar x1 = xHigh;
     scalar xNew = x;
@@ -114,12 +109,7 @@ Foam::scalar Foam::BrentUnivariateRootSolver::findRoot
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(x1 - x0))
-        {
-            break;
-        }
-
-        if (converged(y0 - y2) && converged(y1 - y2))
+        if (mag(y0 - y2)  < yTol() && mag(y1 - y2) < yTol())
         {
             xNew =
                 x0*y1*y2/((y0 - y1)*(y0 - y2))
@@ -128,12 +118,12 @@ Foam::scalar Foam::BrentUnivariateRootSolver::findRoot
         }
         else
         {
-            xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), tolerance());
+            xNew = x1 - y1*(x1 - x0)/stabilise((y1 - y0), yTol());
         }
         eqn_.limit(xNew);
 
         // Use bisection method if satisfies the conditions.
-        scalar delta = mag(tolerance()*x1);
+        scalar delta = mag(xTol()*x1);
         scalar min1 = mag(xNew - x1);
         scalar min2 = mag(x1 - x2);
         scalar min3 = mag(x2 - x3);
@@ -156,7 +146,7 @@ Foam::scalar Foam::BrentUnivariateRootSolver::findRoot
 
         scalar yNew = eqn_.fx(xNew, li);
 
-        if (converged(yNew))
+        if (converged(x0, x1, yNew))
         {
             break;
         }

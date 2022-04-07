@@ -61,8 +61,26 @@ protected:
         //- Reference to scalarEquation
         const scalarEquation& eqn_;
 
+
+    // Protected member functions
+
+        //- Normalise x tolerance
+        void initialise(const scalar x) const;
+
         //- Is the solution converged
-        bool converged(const scalar error) const;
+        bool converged
+        (
+            const scalar dx,
+            const scalar y
+        ) const;
+
+        //- Is the solution converged
+        bool converged
+        (
+            const scalar x0,
+            const scalar x1,
+            const scalar y
+        ) const;
 
         //- Print information about the current step
         void printStepInformation(const scalar val) const;
@@ -73,8 +91,8 @@ protected:
 
 public:
 
-    //- Runtime type information
-    TypeName("univariateRootSolver");
+    //- Runtime type information (debug defined in rootSolver)
+    TypeNameNoDebug("univariateRootSolver");
 
     // Declare run-time constructor selection table
 
@@ -113,31 +131,24 @@ public:
             const dictionary& dict
         );
 
-        //- Construct for given univariateRootSolver
-        univariateRootSolver
-        (
-            const scalarMultivariateEquation& eqn,
-            const scalar tolerance,
-            const label maxSteps
-        );
-
         //- Disallow default bitwise copy construction
         univariateRootSolver(const univariateRootSolver&) = delete;
 
 
     // Selectors
 
-        //- Select null constructed
+        //- Select from a dictionary
         static autoPtr<univariateRootSolver> New
         (
-            const scalarMultivariateEquation& eqn,
+            const scalarEquation& eqn,
             const dictionary& dict
         );
 
-        //- Select null constructed
-        static autoPtr<rootSolver> NewUnivariate
+        //- Select given a type name
+        static autoPtr<univariateRootSolver> New
         (
-            const scalarMultivariateEquation& eqns,
+            const word& rootSolverType,
+            const scalarEquation& eqn,
             const dictionary& dict
         );
 
@@ -148,11 +159,23 @@ public:
 
     // Member Functions
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the x error
+        inline scalar xError() const;
 
-        //- Return the tolerance
-        inline scalar tolerance() const;
+        //- Return the y error
+        inline scalar yError() const;
+
+        //- Return the x tolerance
+        inline scalar xTol() const;
+
+        //- Access the x tolerance
+        inline scalar& xTol();
+
+        //- Return the y tolerance
+        inline scalar yTol() const;
+
+        //- Access the y tolerance
+        inline scalar& yTol();
 
         using rootSolver::solve;
 
