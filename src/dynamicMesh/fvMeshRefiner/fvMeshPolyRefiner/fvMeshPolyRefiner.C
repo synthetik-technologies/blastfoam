@@ -466,10 +466,10 @@ bool Foam::fvMeshPolyRefiner::refine
         }
 
         reduce(hasChanged, orOp<bool>());
-        if (balance())
-        {
-            hasChanged = true;
-        }
+//         if (balance())
+//         {
+//             hasChanged = true;
+//         }
         mesh_.topoChanging(hasChanged);
 
         if (hasChanged)
