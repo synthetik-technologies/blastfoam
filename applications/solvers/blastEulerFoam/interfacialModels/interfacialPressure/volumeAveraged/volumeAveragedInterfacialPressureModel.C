@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "massAveragedInterfacialPressureModel.H"
+#include "volumeAveragedInterfacialPressureModel.H"
 #include "fluidBlastThermo.H"
 #include "addToRunTimeSelectionTable.H"
 
@@ -33,11 +33,11 @@ namespace Foam
 {
 namespace interfacialPressureModels
 {
-    defineTypeNameAndDebug(massAveraged, 0);
+    defineTypeNameAndDebug(volumeAveraged, 0);
     addToRunTimeSelectionTable
     (
         interfacialPressureModel,
-        massAveraged,
+        volumeAveraged,
         dictionary
     );
 }
@@ -46,7 +46,7 @@ namespace interfacialPressureModels
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::massAveraged::massAveraged
+Foam::interfacialPressureModels::volumeAveraged::volumeAveraged
 (
     const dictionary& dict,
     const phasePair& pair
@@ -58,48 +58,45 @@ Foam::interfacialPressureModels::massAveraged::massAveraged
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::interfacialPressureModels::massAveraged::~massAveraged()
+Foam::interfacialPressureModels::volumeAveraged::~volumeAveraged()
 {}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 Foam::tmp<Foam::volScalarField>
-Foam::interfacialPressureModels::massAveraged::PI() const
+Foam::interfacialPressureModels::volumeAveraged::PI() const
 {
-    volScalarField alphaRho
+    volScalarField alphaSum(this->pair_.phase1() + this->pair_.phase2());
+    alphaSum.max(1e-10);
+    volScalarField alphaPI
     (
-        this->pair_.phase1().alphaRho() + this->pair_.phase2().alphaRho()
-    );
-    alphaRho.max(1e-10);
-    volScalarField alphaRhoPI
-    (
-        this->pair_.phase1().alphaRho()*this->pair_.phase1().p()
-      + this->pair_.phase2().alphaRho()*this->pair_.phase2().p()
+        this->pair_.phase1()*this->pair_.phase1().p()
+      + this->pair_.phase2()*this->pair_.phase2().p()
     );
 
-    return alphaRhoPI/alphaRho;
+    return alphaPI/alphaSum;
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::massAveraged::cellPI(const label celli) const
+Foam::interfacialPressureModels::volumeAveraged::cellPI(const label celli) const
 {
     const phaseModel& phase1 = this->pair_.phase1();
     const phaseModel& phase2 = this->pair_.phase2();
-    scalar alphaRho(phase1.alphaRho()[celli] + phase2.alphaRho()[celli]);
-    scalar alphaRhoPI
+    scalar alphaSum(phase1[celli] + phase2[celli]);
+    scalar alphaPI
     (
-        phase1.alphaRho()[celli]*phase1.p()[celli]
-      + phase2.alphaRho()[celli]*phase2.p()[celli]
+        phase1[celli]*phase1.p()[celli]
+      + phase2[celli]*phase2.p()[celli]
     );
 
-    return alphaRhoPI/max(alphaRho, 1e-10);
+    return alphaPI/max(alphaSum, 1e-10);
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::massAveraged::celldPIdAlpha
+Foam::interfacialPressureModels::volumeAveraged::celldPIdAlpha
 (
     const label celli,
     const label phasei
@@ -111,22 +108,21 @@ Foam::interfacialPressureModels::massAveraged::celldPIdAlpha
       : this->pair_.phase2();
     const phaseModel& phase2 = this->pair_.otherPhase(phase1);
     const scalar p1 = phase1.p()[celli];
-    const scalar rho1 = phase1.rho()[celli];
-    scalar alphaRho
+    scalar alphaSum
     (
-        max(phase1.alphaRho()[celli] + phase2.alphaRho()[celli], 1e-10)
+        max(phase1[celli] + phase2[celli], 1e-10)
     );
-    scalar alphaRhoPI
+    scalar alphaPI
     (
-        phase1.alphaRho()[celli]*p1 + phase2.alphaRho()[celli]*phase2.p()[celli]
+        phase1[celli]*p1 + phase2[celli]*phase2.p()[celli]
     );
 
-    return rho1*p1/alphaRho - alphaRhoPI*rho1/sqr(alphaRho);
+    return p1/alphaSum - alphaPI/sqr(alphaSum);
 }
 
 
 Foam::scalar
-Foam::interfacialPressureModels::massAveraged::celldPIde
+Foam::interfacialPressureModels::volumeAveraged::celldPIde
 (
     const label celli,
     const label phasei
@@ -139,12 +135,9 @@ Foam::interfacialPressureModels::massAveraged::celldPIde
     const phaseModel& phase2 = this->pair_.otherPhase(phase1);
     const fluidBlastThermo& thermo1 =
         dynamicCast<const fluidBlastThermo>(phase1.thermo());
-    scalar alphaRho
-    (
-        max(phase1.alphaRho()[celli] + phase2.alphaRho()[celli], 1e-10)
-    );
+    scalar alphaSum(max(phase1[celli] + phase2[celli], 1e-10));
 
-    return phase1.alphaRho()[celli]*thermo1.celldpde(celli)/alphaRho;
+    return phase1[celli]*thermo1.celldpde(celli)/alphaSum;
 }
 
 

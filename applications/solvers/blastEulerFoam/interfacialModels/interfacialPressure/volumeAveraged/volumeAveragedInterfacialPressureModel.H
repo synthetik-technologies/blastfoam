@@ -22,18 +22,18 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::interfacialPressureModels::none
+    Foam::interfacialPressureModels::volumeAveraged
 
 Description
     One phase is used to determine the interfacial pressure
 
 SourceFiles
-    noneInterfacialPressureModel.C
+    volumeAveragedPressureModel.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef noneInterfacialPressure_H
-#define noneInterfacialPressure_H
+#ifndef volumeAveragedInterfacialPressure_H
+#define volumeAveragedInterfacialPressure_H
 
 #include "interfacialPressureModel.H"
 
@@ -46,23 +46,23 @@ namespace interfacialPressureModels
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class none Declaration
+                          Class volumeAveraged Declaration
 \*---------------------------------------------------------------------------*/
 
-class none
+class volumeAveraged
 :
     public interfacialPressureModel
 {
 public:
 
     //- Runtime type information
-    TypeName("none");
+    TypeName("volumeAveraged");
 
 
     // Constructors
 
         //- Construct from components
-        none
+        volumeAveraged
         (
             const dictionary& dict,
             const phasePair& pair
@@ -70,7 +70,7 @@ public:
 
 
     //- Destructor
-    virtual ~none();
+    virtual ~volumeAveraged();
 
 
     // Member Functions

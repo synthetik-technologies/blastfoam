@@ -25,7 +25,7 @@ Class
     Foam::NusseltNumberModels::RanzMarshall
 
 Description
-    Ranz Marshall correlation
+    Ranz Marshall Nusselt number for spheres
 
 SourceFiles
     RanzMarshall.C
