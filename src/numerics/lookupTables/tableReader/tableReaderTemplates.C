@@ -107,6 +107,12 @@ bool Foam::readComponent
             {
                 dy = (dict.lookup<Type>("max") - miny)/scalar(ny);
             }
+            else
+            {
+                FatalIOErrorInFunction(dict)
+                    << "Either delta or max must be provided" <<endl
+                    << abort(FatalIOError);
+            }
 
             values.resize(ny);
             forAll(values, j)
@@ -144,6 +150,13 @@ bool Foam::readComponent
                     parentDict.lookup<Type>("max" + name.capitalise())
                   - miny
                 )/scalar(ny);
+        }
+        else
+        {
+            FatalIOErrorInFunction(parentDict)
+                << "Either delta" << name.capitalise()
+                << " or max" << name.capitalise() << " must be provided" <<endl
+                << abort(FatalIOError);
         }
 
         values.resize(ny);
