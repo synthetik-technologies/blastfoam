@@ -177,11 +177,11 @@ Foam::rootSolver::rootSolver
     (
         dict.lookupOrDefault<scalarList>
         (
-            "xTol",
+            "xTols",
             scalarList
             (
                 eqns.nVar(),
-                dict.lookupOrDefault("tolerance", 1e-6)
+                dict.lookupOrDefault("xTol", 1e-6)
             )
         )
     ),
@@ -189,11 +189,11 @@ Foam::rootSolver::rootSolver
     (
         dict.lookupOrDefault<scalarList>
         (
-            "yTol",
+            "yTols",
             scalarList
             (
                 eqns.nEqns(),
-                dict.lookupOrDefault("tolerance", 1e-6)
+                dict.lookupOrDefault("yTol", 1e-6)
             )
         )
     ),
@@ -202,13 +202,7 @@ Foam::rootSolver::rootSolver
     stepi_(0),
     xErrors_(eqns.nVar(), great),
     yErrors_(eqns.nEqns(), great)
-{
-    if (dict.found("tolerance"))
-    {
-        xTols_ = dict.lookup<scalar>("tolerance");
-        yTols_ = dict.lookup<scalar>("tolerance");
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

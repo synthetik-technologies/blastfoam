@@ -265,7 +265,11 @@ Foam::minimizationScheme::minimizationScheme
         dict.lookupOrDefault<scalarField>
         (
             "tolerances",
-            scalarField(eqns_.nVar(), 1e-6)
+            scalarField
+            (
+                eqns_.nVar(),
+                dict.lookupOrDefault("tolerance", 1e-6)
+            )
         )
     ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
@@ -276,17 +280,16 @@ Foam::minimizationScheme::minimizationScheme
         dict.lookupOrDefault<labelList>
         (
             "nSamples",
-            labelList(eqns.nVar(), 0)
+            labelList
+            (
+                eqns.nVar(),
+                dict.lookupOrDefault("nSample", 0)
+            )
         )
     ),
-    normalize_(dict.lookupOrDefault("normalizeError", true)),
+    normalize_(dict.lookupOrDefault("normaliseError", true)),
     tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
-{
-    if (dict.found("tolerance"))
-    {
-        tolerances_ = dict.lookup<scalar>("tolerance");
-    }
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
