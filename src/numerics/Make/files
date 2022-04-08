@@ -59,6 +59,8 @@ minimizationSchemes/univariateMinimizationSchemes/NewtonRaphson/NewtonRaphsonUni
 algorithms/polygon/clipping/SutherlandHodgman.C
 algorithms/polygon/pointInPolygon/HormannAgathos.C
 algorithms/rotation/RodriguesRotation.C
+eigenSolver/eigenSolver.C
+polynomialRoots/polynomialRoots.C
 
 octree = algorithms/octree
 $(octree)/octreeName.C
