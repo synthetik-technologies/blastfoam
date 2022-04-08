@@ -45,7 +45,7 @@ Foam::autoPtr<Foam::univariateRootSolver> Foam::univariateRootSolver::New
 )
 {
     label nDeriv = eqn.nDerivatives();
-    Info<< "Selecting unvariate root solver: " << rootSolverType << endl;
+    Info<< "Selecting univariate root solver: " << rootSolverType << endl;
     if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =

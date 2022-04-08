@@ -39,7 +39,7 @@ namespace Foam
 
 void Foam::univariateRootSolver::initialise(const scalar x) const
 {
-    xRelTols_[0] = max(xTols_[0]*mag(x), small);
+    xRelTols_[0] = max(xTols_[0]*mag(x), xAbsTols_[0]);
 }
 
 
@@ -95,7 +95,8 @@ Foam::univariateRootSolver::printFinalInformation(const scalar val) const
         WarningInFunction
             << "Did not converge in " << stepi_ << " iterations"
             << ", root=" << val
-            << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+            << ", error=" << xErrors_[0] << "/" << yErrors_[0]
+            << ", tolerances=" << xRelTols_[0] << "/" << yTols_[0] << endl;
     }
     return val;
 }

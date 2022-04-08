@@ -41,7 +41,7 @@ void Foam::rootSolver::initialise(const scalarField& x) const
 {
     forAll(x, i)
     {
-        xRelTols_[i] = max(xTols_[i]*mag(x[i]), small);
+        xRelTols_[i] = max(xTols_[i]*mag(x[i]), xAbsTols_[i]);
     }
 }
 
@@ -194,6 +194,18 @@ Foam::rootSolver::rootSolver
             (
                 eqns.nEqns(),
                 dict.lookupOrDefault("yTol", 1e-6)
+            )
+        )
+    ),
+    xAbsTols_
+    (
+        dict.lookupOrDefault<scalarList>
+        (
+            "xAbsTol",
+            scalarList
+            (
+                eqns.nVar(),
+                dict.lookupOrDefault("xAbsTol", 1e-6)
             )
         )
     ),

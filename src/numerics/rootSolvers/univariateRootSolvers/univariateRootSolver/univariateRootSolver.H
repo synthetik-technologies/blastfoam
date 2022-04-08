@@ -171,6 +171,12 @@ public:
         //- Access the x tolerance
         inline scalar& xTol();
 
+        //- Return the absolute x tolerance
+        inline scalar xAbsTol() const;
+
+        //- Access the absolute x tolerance
+        inline scalar& xAbsTol();
+
         //- Return the y tolerance
         inline scalar yTol() const;
 

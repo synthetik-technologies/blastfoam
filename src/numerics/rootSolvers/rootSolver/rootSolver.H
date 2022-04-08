@@ -64,6 +64,9 @@ protected:
         //- Function convergence tolerance
         scalarField yTols_;
 
+        //- Absolute position convergence tolerances
+        scalarField xAbsTols_;
+
         //- Normalised position convergence tolerances
         mutable scalarField xRelTols_;
 
@@ -176,11 +179,17 @@ public:
 
     // Member Functions
 
-        //- Return the absolute tolerances
+        //- Return the tolerances
         inline const scalarField& xTols() const;
 
-        //- Access the absolute tolerances
+        //- Access the tolerances
         inline scalarField& xTols();
+
+        //- Return the absolute tolerances
+        inline const scalarField& xAbsTols() const;
+
+        //- Access the absolute tolerances
+        inline scalarField& xAbsTols();
 
         //- Return the relative tolerances
         inline const scalarField& yTols() const;

@@ -35,6 +35,18 @@ inline Foam::scalarField& Foam::rootSolver::xTols()
 }
 
 
+inline const Foam::scalarField& Foam::rootSolver::xAbsTols() const
+{
+    return xAbsTols_;
+}
+
+
+inline Foam::scalarField& Foam::rootSolver::xAbsTols()
+{
+    return xAbsTols_;
+}
+
+
 inline const Foam::scalarField& Foam::rootSolver::yTols() const
 {
     return yTols_;

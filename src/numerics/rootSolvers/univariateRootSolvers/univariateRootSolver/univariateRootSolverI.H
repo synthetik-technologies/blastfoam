@@ -47,6 +47,18 @@ inline Foam::scalar& Foam::univariateRootSolver::xTol()
 }
 
 
+inline Foam::scalar Foam::univariateRootSolver::xAbsTol() const
+{
+    return xAbsTols_[0];
+}
+
+
+inline Foam::scalar& Foam::univariateRootSolver::xAbsTol()
+{
+    return xAbsTols_[0];
+}
+
+
 inline Foam::scalar Foam::univariateRootSolver::yTol() const
 {
     return yTols_[0];
