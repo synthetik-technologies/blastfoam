@@ -67,6 +67,7 @@ Type Foam::MidPointIntegrator<Type>::integrate_
         return Q;
     }
 
+    this->intervals_++;
     const scalar xm = 0.5*(x1 + x0);
     const scalar x0m = 0.5*(x0 + xm);
     const Type fx0((xm - x0)*this->eqnPtr_->fx(x0m, li));
@@ -82,7 +83,6 @@ Type Foam::MidPointIntegrator<Type>::integrate_
     }
     else
     {
-        this->intervals_++;
         return
             integrate_(fx0, x0, xm, tol/2.0, li)
           + integrate_(fx1, xm, x1, tol/2.0, li);

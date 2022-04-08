@@ -82,6 +82,7 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate_
         return Q;
     }
 
+    this->intervals_++;
     const scalar x12 = x0 + 0.5*dx;
     const Type f12(this->eqnPtr_->fx(x12, li));
     this->evals_++;
@@ -95,7 +96,6 @@ Type Foam::TrapezoidalIntegrator<Type>::integrate_
     }
     else
     {
-        this->intervals_++;
         return
             integrate_(fx0, x0, x12, f0, f12, tol/2.0, li)
           + integrate_(fx1, x12, x1, f12, f1, tol/2.0, li);

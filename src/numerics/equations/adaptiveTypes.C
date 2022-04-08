@@ -35,41 +35,41 @@ namespace Foam
 makeAdaptiveType
 (
     1,
-    mag(f),
+    Foam::mag(f),
     f,
-    mag(f1 - f2)/stabilise(mag(f1), small),
+    Foam::mag(f1 - f2),
     scalar
 );
 makeAdaptiveType
 (
     pTraits<vector>::nComponents,
-    mag(f),
+    Foam::mag(f),
     f[i],
-    mag(f1 - f2)/stabilise(mag(f1), small),
+    Foam::mag(f1 - f2),
     vector
 );
 makeAdaptiveType
 (
     pTraits<symmTensor>::nComponents,
-    mag(f),
+    Foam::mag(f),
     f[i],
-    mag(f1 - f2)/stabilise(mag(f1), small),
+    Foam::mag(f1 - f2),
     symmTensor
 );
 makeAdaptiveType
 (
     pTraits<sphericalTensor>::nComponents,
-    mag(f),
+    Foam::mag(f),
     f[i],
-    mag(f1 - f2)/stabilise(mag(f1), small),
+    Foam::mag(f1 - f2),
     sphericalTensor
 );
 makeAdaptiveType
 (
     pTraits<tensor>::nComponents,
-    mag(f),
+    Foam::mag(f),
     f[i],
-    mag(f1 - f2)/stabilise(mag(f1), small),
+    Foam::mag(f1 - f2),
     tensor
 );
 

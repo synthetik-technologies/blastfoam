@@ -82,7 +82,9 @@ protected:
             {
                 return false;
             }
-            return adaptiveError::error<Type>(t1, t2) < tol;
+            return
+                adaptiveError::error<Type>(t1, t2)
+              < max(adaptiveError::mag<Type>(t1), absTolerance_[i])*tol;
         }
 
         virtual Type integrateFunc

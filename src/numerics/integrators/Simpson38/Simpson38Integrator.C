@@ -86,6 +86,7 @@ Type Foam::Simpson38Integrator<Type>::integrate_
         return Q;
     }
 
+    this->intervals_++;
     const scalar x16 = x0 + 1.0/6.0*dx;
     const scalar x12 = x0 + 0.5*dx;
     const scalar x56 = x0 + 5.0/6.0*dx;
@@ -104,7 +105,6 @@ Type Foam::Simpson38Integrator<Type>::integrate_
     }
     else
     {
-        this->intervals_++;
         return
             integrate_(fx0, x0, x12, f0, f16, f13, f12, tol/2.0, li)
           + integrate_(fx1, x12, x1, f12, f23, f56, f1, tol/2.0, li);

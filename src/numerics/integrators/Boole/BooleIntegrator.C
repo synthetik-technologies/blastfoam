@@ -88,6 +88,7 @@ Type Foam::BooleIntegrator<Type>::integrate_
         return Q;
     }
 
+    this->intervals_++;
     const scalar x18 = x0 + 0.125*dx;
     const scalar x38 = x0 + 0.375*dx;
     const scalar x12 = x0 + 0.5*dx;
@@ -109,7 +110,6 @@ Type Foam::BooleIntegrator<Type>::integrate_
     }
     else
     {
-        this->intervals_++;
         return
             integrate_(fx0, x0, x12, f0, f18, f14, f38, f12, tol/2.0, li)
           + integrate_(fx1, x12, x1, f12, f58, f34, f78, f1, tol/2.0, li);

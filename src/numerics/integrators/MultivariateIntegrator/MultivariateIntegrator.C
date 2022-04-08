@@ -174,6 +174,8 @@ void Foam::MultivariateIntegrator<Type>::integrate_
     const scalar x0Orig(x0[diri]);
     const scalar x1Orig(x1[diri]);
 
+    this->intervals_[diri]++;
+
     x1[diri] = xm;
     integrate_(Qs, diri+1, fi, x0, x1, tol, li, fx);
 

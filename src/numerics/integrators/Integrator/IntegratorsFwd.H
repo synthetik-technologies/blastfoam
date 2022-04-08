@@ -26,9 +26,9 @@ License
 #ifndef IntegratorsFwd_H
 #define IntegratorsFwd_H
 
+#include "adaptiveTypesFwd.H"
 #include "Integrator.H"
 #include "EquationsFwd.H"
-#include "adaptiveTypesFwd.H"
 #include "vector.H"
 #include "symmTensor.H"
 #include "sphericalTensor.H"

@@ -93,6 +93,7 @@ Type Foam::GaussianIntegrator<Type>::integrate_
         return Q;
     }
 
+    this->intervals_++;
     const scalar xm = x0 + 0.5*dx;
     scalarList x0s(xs.size());
     scalarList x1s(xs.size());
@@ -119,7 +120,6 @@ Type Foam::GaussianIntegrator<Type>::integrate_
     }
     else
     {
-        this->intervals_++;
         return
             integrate_(fx0, x0, xm, x0s, f0s, tol/2.0, li)
           + integrate_(fx1, xm, x1, x1s, f1s, tol/2.0, li);
@@ -136,7 +136,7 @@ Type Foam::GaussianIntegrator<Type>::integrate
 ) const
 {
     scalar dx(x1 - x0);
-    if (mag(dx) < small)
+    if (mag(dx) <= small)
     {
         return dx*this->eqnPtr_->fx(x0, li);
     }

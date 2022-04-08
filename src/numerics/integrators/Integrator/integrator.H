@@ -58,6 +58,9 @@ protected:
         //- Tolerance
         scalar tolerance_;
 
+        //- Absolute tolerance
+        scalar absTolerance_;
+
         //- Maximum number of domain splits
         label maxSplits_;
 

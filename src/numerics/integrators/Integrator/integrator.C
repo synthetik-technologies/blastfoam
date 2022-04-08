@@ -38,6 +38,7 @@ Foam::integrator::integrator(const dictionary& dict)
 :
     integratorBase(dict),
     tolerance_(dict.lookupOrDefault<scalar>("tolerance", 1e-6)),
+    absTolerance_(dict.lookupOrDefault<scalar>("absTolerance", 1e-6)),
     maxSplits_(dict.lookupOrDefault<label>("maxSplits", 10)),
     nIntervals_(dict.lookupOrDefault<label>("nIntervals", 10))
 {}

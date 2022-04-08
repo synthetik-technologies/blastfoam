@@ -58,6 +58,9 @@ protected:
         //- Tolerance
         Field<scalar> tolerance_;
 
+        //- Absolute tolerances
+        Field<scalar> absTolerance_;
+
         //- Maximum number of domain splits
         List<label> maxSplits_;
 

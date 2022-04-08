@@ -49,6 +49,14 @@ Foam::multivariateIntegrator::multivariateIntegrator
             List<scalar>(n, 1e-4)
         )
     ),
+    absTolerance_
+    (
+        dict.lookupOrDefault<List<scalar>>
+        (
+            "absTolerance",
+            List<scalar>(n, 1e-6)
+        )
+    ),
     maxSplits_
     (
         dict.lookupOrDefault<List<label>>
