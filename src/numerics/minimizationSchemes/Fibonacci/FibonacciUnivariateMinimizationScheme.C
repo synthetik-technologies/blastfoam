@@ -92,7 +92,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
     {
         return x1;
     }
-    label n = 20;
+    label n = maxSteps_;
 
     scalar rho = 1.0/(goldenRatio*(1.0 - pow(s, n + 1))/(1.0 - pow(s, n)));
 
@@ -110,6 +110,8 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
         {
             c = rho*a + (1.0 - rho)*b;
         }
+
+        eqn_.limit(c);
         yc = eqn_.fx(c, li);
         if (yc < yd)
         {

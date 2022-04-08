@@ -79,7 +79,7 @@ protected:
 public:
 
     //- Runtime type information
-    TypeName("univariateMinimizationScheme");
+    TypeNameNoDebug("univariateMinimizationScheme");
 
     // Declare run-time constructor selection table
 

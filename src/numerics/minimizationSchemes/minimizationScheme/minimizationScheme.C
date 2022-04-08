@@ -59,7 +59,7 @@ void Foam::minimizationScheme::printStepInformation
     const scalarList& vals
 ) const
 {
-    if (debug > 1)
+    if (debug > 2)
     {
         DebugInfo<< "Step: " << stepi_ << ":" << nl
             << "    " << errorName() << "s: " << errors_ << nl
@@ -70,17 +70,33 @@ void Foam::minimizationScheme::printStepInformation
 
 void Foam::minimizationScheme::printFinalInformation() const
 {
-    if (stepi_ < maxSteps_ && debug)
+    if (!debug)
+    {
+        return;
+    }
+    bool converged =
+        (stepi_ < maxSteps_)
+     && max(errors_ - tolerances_) <= 0.0;
+    if (converged && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations" << nl
             << "    Final " << errorName() << "s=" << errors_ << endl;
     }
-    else if (stepi_ >= maxSteps_ && debug)
+    else if (!converged)
     {
-        Info<<debug<<endl;
-        WarningInFunction
-            << "Did not converge in " << maxSteps_ << " iterations" << nl
-            << "    Final " << errorName() << "s: " << errors_ << endl;
+        if (stepi_ < maxSteps_)
+        {
+            WarningInFunction
+                << "Did not converge due to bounds"
+                << ", tried " << stepi_ << " iterations" << nl
+                << "    Final " << errorName() << "s: " << errors_ << endl;
+        }
+        else
+        {
+            WarningInFunction
+                << "Did not converge in " << stepi_ << " iterations" << nl
+                << "    Final " << errorName() << "s: " << errors_ << endl;
+        }
     }
 }
 

@@ -108,6 +108,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
             break;
         }
 
+        eqn_.limit(x);
         yx = eqn_.fx(x, li);
 
         if (x > b)
@@ -125,7 +126,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
                 yb = yx;
             }
         }
-        else
+        else if (x < b)
         {
             if (yx > yb)
             {

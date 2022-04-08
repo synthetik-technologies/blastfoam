@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(univariateMinimizationScheme, 1);
+    defineTypeName(univariateMinimizationScheme);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryZero);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryOne);
     defineRunTimeSelectionTable(univariateMinimizationScheme, dictionaryTwo);
@@ -58,16 +58,33 @@ void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) 
 Foam::scalar
 Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) const
 {
-    if (stepi_ < maxSteps_ && debug > 1)
+    if (!debug)
     {
-        Info<< "Converged in " << stepi_ << " iterations"
-            << ", final " << errorName() << "=" << errors_[0] << endl;
+        return val;
     }
-    else if (stepi_ >= maxSteps_ && debug)
+    bool converged =
+        (stepi_ < maxSteps_)
+     && errors_[0] - tolerances_[0] <= 0.0;
+    if (converged && debug > 1)
     {
-        WarningInFunction
-            << "Did not converge, "
-            << "final " << errorName() << "= " << errors_[0] << endl;
+        Info<< "Converged in " << stepi_ << " iterations" << nl
+            << "    Final " << errorName() << "=" << errors_[0] << endl;
+    }
+    else if (!converged)
+    {
+        if (stepi_ < maxSteps_)
+        {
+            WarningInFunction
+                << "Did not converge due to bounds"
+                << ", tried " << stepi_ << " iterations" << nl
+                << "    Final " << errorName() << "s: " << errors_[0] << endl;
+        }
+        else
+        {
+            WarningInFunction
+                << "Did not converge in " << stepi_ << " iterations" << nl
+                << "    Final " << errorName() << "s: " << errors_[0] << endl;
+        }
     }
     return val;
 }
