@@ -1,3 +1,0 @@
-SOURCE += Test-minimization.C
-
-EXE = $(BLAST_APPBIN)/Test-multivariateIntegration
