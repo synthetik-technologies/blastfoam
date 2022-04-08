@@ -53,6 +53,17 @@ class GaussianWeights
 {
 public:
 
+    // Binomial coefficient
+    static scalar binCoeff(const scalar n, const scalar k);
+
+    //- Calculate the weights and positions
+    static void calcQuadrature
+    (
+        const label N,
+        List<scalar>& ws,
+        List<scalar>& xs
+    );
+
     //- Set the weights and positions
     static void setQuadrature
     (

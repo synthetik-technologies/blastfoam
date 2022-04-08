@@ -60,7 +60,9 @@ Foam::blastThermo::blastThermo
                 "e", phaseName
             ),
             mesh.time().timeName(),
-            mesh
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
         ),
         mesh,
         dimensionedScalar(dimEnergy/dimMass, 0.0),

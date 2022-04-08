@@ -94,6 +94,12 @@ public:
         //- Return the function as a word
         word polyName() const;
 
+        //- Evaluate the polynomial
+        static scalar eval(const List<scalar>& coeffs, const scalar x);
+
+        //- Evaluate the polynomial
+        scalar eval(const scalar x) const;
+
         //- Return real parts of the roots
         const List<scalar>& rootsRe() const
         {

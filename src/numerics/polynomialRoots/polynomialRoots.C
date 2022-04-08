@@ -51,6 +51,35 @@ Foam::polynomialRoots::polynomialRoots
 
 }
 
+
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
+
+Foam::scalar Foam::polynomialRoots::eval(const scalar x) const
+{
+    return eval(coeffs_, x);
+}
+
+
+Foam::scalar Foam::polynomialRoots::eval
+(
+    const List<scalar>& coeffs,
+    const scalar x
+)
+{
+    label i = coeffs.size()-1;
+    scalar res = coeffs[i--];
+    scalar xPow = x;
+
+    res += xPow*coeffs[i--];
+    while (i >= 0)
+    {
+        xPow *= x;
+        res += xPow*coeffs[i--];
+    }
+    return res;
+}
+
+
 Foam::word Foam::polynomialRoots::polyName() const
 {
     label i = coeffs_.size()-1;

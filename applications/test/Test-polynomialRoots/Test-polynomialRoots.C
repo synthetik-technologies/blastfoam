@@ -1,5 +1,6 @@
 #include "polynomialRoots.H"
 #include "OStringStream.H"
+#include "GaussianWeights.H"
 #include "argList.H"
 
 using namespace Foam;
@@ -49,6 +50,7 @@ int main(int argc, char *argv[])
             << mag(P2.rootsRe()[i] - rootsReP2[i]) + mag(P2.rootsIm()[i] - rootsImP2[i]) << endl;
     }
     Info<< decrIndent << endl;
+
 
     Info<< nl << "Finished" << nl << endl;
     return 0;
