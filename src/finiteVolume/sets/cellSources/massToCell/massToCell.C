@@ -37,6 +37,7 @@ Foam::massToCell::massToCell(const dictionary& dict)
     mass_(0.0),
     centre_(dict.lookup<vector>("centre")),
     volume_(0.0),
+    scale_(dict.lookupOrDefault("scale", 1.0)),
     read_(false)
 {
     if (mustRead_)
@@ -49,7 +50,7 @@ Foam::massToCell::massToCell(const dictionary& dict)
         rho_ = dict.lookupOrDefault<scalar>("rho", 1.0);
         mass_ = dict.lookupOrDefault<scalar>("mass", 0.0);
     }
-    volume_ = mass_/rho_;
+    volume_ = mass_/rho_*scale_;
 }
 
 

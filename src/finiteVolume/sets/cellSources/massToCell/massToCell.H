@@ -66,6 +66,9 @@ class massToCell
         //- Volume to set
         scalar volume_;
 
+        //- Optional scale factor
+        scalar scale_;
+
 protected:
 
     // has the dictionary been read
