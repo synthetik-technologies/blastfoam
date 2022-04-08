@@ -139,9 +139,7 @@ Foam::burstCyclicACMIPolyPatch::burstCyclicACMIPolyPatch
 :
     cyclicACMIPolyPatch(bcpp, bm, index, mapAddressing, newStart),
     burstPolyPatchBase(*this, bcpp, mapAddressing)
-{
-    Pout<<*this<<endl;
-}
+{}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //

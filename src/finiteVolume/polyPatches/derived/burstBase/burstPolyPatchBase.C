@@ -209,6 +209,12 @@ bool Foam::burstPolyPatchBase::update
     scalarField& intact
 ) const
 {
+    if (curTimeIndex_ == patch().boundaryMesh().mesh().time().timeIndex())
+    {
+        return false;
+    }
+    curTimeIndex_ = patch().boundaryMesh().mesh().time().timeIndex();
+
     bool burst = false;
     if (partialBurst_)
     {
@@ -251,7 +257,7 @@ bool Foam::burstPolyPatchBase::update
             intact = !burst;
         }
     }
-    return burst;
+    return returnReduce(burst, orOp<bool>());
 }
 
 

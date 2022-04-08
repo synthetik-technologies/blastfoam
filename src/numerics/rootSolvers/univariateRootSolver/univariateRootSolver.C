@@ -83,20 +83,40 @@ void Foam::univariateRootSolver::printStepInformation(const scalar val) const
 Foam::scalar
 Foam::univariateRootSolver::printFinalInformation(const scalar val) const
 {
-    if (stepi_ < maxSteps_ && debug > 1)
+    if (!debug)
+    {
+        return val;
+    }
+
+    bool converged =
+        (stepi_ < maxSteps_)
+     && xErrors_[0] - xRelTols_[0] <= 0.0
+     && yErrors_[0] - yTols_[0] <= 0.0;
+
+    if (converged && debug > 1)
     {
         Info<< indent << "Converged in " << stepi_ << " iterations" << nl
             << indent << "Final x error=" << xErrors_[0] << nl
             << indent << "Final y error=" << yErrors_[0] << nl
             << indent << "Root=" << val << endl;
     }
-    else if (stepi_ >= maxSteps_ && debug)
+    else if (!converged)
     {
-        WarningInFunction
-            << "Did not converge in " << stepi_ << " iterations"
-            << ", root=" << val
-            << ", error=" << xErrors_[0] << "/" << yErrors_[0]
-            << ", tolerances=" << xRelTols_[0] << "/" << yTols_[0] << endl;
+        if (stepi_ < maxSteps_)
+        {
+            WarningInFunction
+                << "Did not converge due to bounds"
+                << ", tried " << stepi_ << " iterations"
+                << ", est=" << val
+                << ", error=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+        }
+        else
+        {
+            WarningInFunction
+                << "Did not converge in " << stepi_ << " iterations"
+                << ", roots=" << val
+                << ", errors=" << xErrors_[0] << "/" << yErrors_[0] << endl;
+        }
     }
     return val;
 }

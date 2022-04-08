@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(rootSolver, 1);
+    defineTypeNameAndDebug(rootSolver, 0);
     defineRunTimeSelectionTable(rootSolver, dictionaryUnivariate);
     defineRunTimeSelectionTable(rootSolver, dictionaryZero);
     defineRunTimeSelectionTable(rootSolver, dictionaryOne);
@@ -134,7 +134,7 @@ void Foam::rootSolver::printFinalInformation(const scalarField& vals) const
     bool converged =
         (stepi_ < maxSteps_)
      && max(xErrors_ - xRelTols_) <= 0.0
-     && max(yErrors_ - xTols_) <= 0.0;
+     && max(yErrors_ - yTols_) <= 0.0;
 
     if (converged && debug > 1)
     {

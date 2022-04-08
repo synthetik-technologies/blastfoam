@@ -337,11 +337,9 @@ Foam::activationModel::readDetonationPoints
         );
         if (detPointsHeader.typeHeaderOk<IOPtrList<detonationPoint>>(true))
         {
-            Info<<"found"<<endl;
             return PtrList<detonationPoint>();
         }
     }
-    Info<<"notFOund"<<endl;
 
     Switch useCOM(dict.lookupOrDefault("useCOM", false));
     List<vector> points
