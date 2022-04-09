@@ -26,7 +26,7 @@ runApplication createBaffles -overwrite
 runApplication -s cells setRefinedFields -noFields -overwrite -noRefine
 
 # -- Remove walls
-runApplication subsetMesh -patch walls internalCells -overwrite
+runApplication subsetMesh -patch walls internalCells -overwrite -noFields
 
 # -- Set the initial conditions for the fluid
 runApplication setRefinedFields

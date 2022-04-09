@@ -66,7 +66,7 @@ baffles
         //  - windows_slave
         patchPairs
         {
-            type            burstCyclic;
+            type            burstCyclicAMI;
             partialBurst    yes;
             useImpulse      yes;
             impulseBurst    10000;

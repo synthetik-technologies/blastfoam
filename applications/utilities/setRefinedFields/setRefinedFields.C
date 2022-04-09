@@ -1196,7 +1196,7 @@ int main(int argc, char *argv[])
         }
         iter++;
     }
-    topoSets.transferZones(true);
+    topoSets.transferZones(false);
 
     bool writeMesh = topoSets.writeSets();
 

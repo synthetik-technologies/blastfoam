@@ -394,15 +394,11 @@ template<class Type>
 void Foam::burstCyclicACMIFvPatchField<Type>::write(Ostream& os) const
 {
     cyclicACMIFvPatchField<Type>::write(os);
-    {
-        // Writing is a little weird since the intactPatchField has a different
-        // type, but is in the same dictionary
-        OStringStream oss;
-        intactPatchField_->write(oss);
-        dictionary dict(IStringStream(oss.str())());
-        os.indent();
-        os << "intactPatch" << dict;
-    }
+
+    writeKeyword(os, "intactPatch")
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    intactPatchField_->write(os);
+    os << decrIndent << indent << token::END_BLOCK << endl;
 }
 
 

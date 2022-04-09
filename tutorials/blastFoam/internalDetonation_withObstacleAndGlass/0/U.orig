@@ -27,15 +27,19 @@ boundaryField
 
     windows_master
     {
-        type            burstCyclic;
-        intactType      slip;
-        value           $internalField;
+        type            burstCyclicAMI;
+        intactPatch
+        {
+            type      slip;
+        }
     }
     windows_slave
     {
-        type            burstCyclic;
-        intactType      slip;
-        value           $internalField;
+        type            burstCyclicAMI;
+        intactPatch
+        {
+            type      slip;
+        }
     }
 
     outlet

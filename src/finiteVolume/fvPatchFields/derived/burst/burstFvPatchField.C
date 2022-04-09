@@ -500,24 +500,16 @@ template<class Type>
 void Foam::burstFvPatchField<Type>::write(Ostream& os) const
 {
     fvPatchField<Type>::write(os);
-    {
-        // Writing is a little weird since the burstPatchField has a different
-        // type, but is in the same dictionary
-        OStringStream oss;
-        burstPatchField_->write(oss);
-        dictionary dict(IStringStream(oss.str())());
-        os.indent();
-        os << "burstPatch" << dict;
-    }
-    {
-        // Writing is a little weird since the intactPatchField has a different
-        // type, but is in the same dictionary
-        OStringStream oss;
-        intactPatchField_->write(oss);
-        dictionary dict(IStringStream(oss.str())());
-        os.indent();
-        os << "intactPatch" << dict;
-    }
+    writeKeyword(os, "burstPatch")
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    burstPatchField_->write(os);
+    os << decrIndent << indent << token::END_BLOCK << endl;
+
+    writeKeyword(os, "intactPatch")
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    intactPatchField_->write(os);
+    os << decrIndent << indent << token::END_BLOCK << endl;
+
     writeEntry(os, "value", *this);
 }
 

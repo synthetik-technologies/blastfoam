@@ -400,20 +400,12 @@ template<class Type>
 void Foam::burstProcessorCyclicFvPatchField<Type>::write(Ostream& os) const
 {
     processorCyclicFvPatchField<Type>::write(os);
-    {
-        // Writing is a little weird since the intactPatchField has a different
-        // type, but is in the same dictionary
-        OStringStream oss;
-        intactPatchField_->write(oss);
-        dictionary dict(IStringStream(oss.str())());
 
-        dict.changeKeyword("type", "intactType", false);
-        dict.remove("patchType");
-        forAllConstIter(IDLList<entry>, dict, iter)
-        {
-            iter().write(os);
-        }
-    }
+    writeKeyword(os, "intactPatch")
+        << nl << indent << token::BEGIN_BLOCK << nl << incrIndent;
+    intactPatchField_->write(os);
+    os << decrIndent << indent << token::END_BLOCK << endl;
+
     writeEntry(os, "value", *this);
 }
 

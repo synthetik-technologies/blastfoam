@@ -27,15 +27,19 @@ boundaryField
 
     windows_master
     {
-        type            burstCyclic;
-        intactType      zeroGradient;
-        value           $internalField;
+        type            burstCyclicAMI;
+        intactPatch
+        {
+            type      zeroGradient;
+        }
     }
     windows_slave
     {
-        type            burstCyclic;
-        intactType      zeroGradient;
-        value           $internalField;
+        type            burstCyclicAMI;
+        intactPatch
+        {
+            type      zeroGradient;
+        }
     }
 
     baffles_master
