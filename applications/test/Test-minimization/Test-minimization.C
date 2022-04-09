@@ -62,8 +62,13 @@ int main(int argc, char *argv[])
     eqns.set(3, new testEqn4());
 
     dictionary dict;
-    dict.add("nParticles", 100);
-    dict.add("maxSteps", 1000);
+    dict.add("cLocal", 0.3);
+    dict.add("cGlobal", 0.1);
+    dict.add("vWeight", 0.8);
+    dict.add("nParticles", 1000);
+
+    dict.add("maxSteps", 100);
+
 
     Info<< nl << "Univariate minimization" << endl;
     wordList methods

@@ -85,7 +85,6 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
     scalar xMean = 0.5*(x1 + x2);
     scalar yLow = eqn_.fx(xLow, li);
     scalar yHigh = eqn_.fx(xHigh, li);
-    scalar yMean = yLow;
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
@@ -98,13 +97,11 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
         {
             xLow = xMean;
             yLow = eqn_.fx(xLow, li);
-            yMean = yHigh;
         }
         else
         {
             xHigh = xMean;
             yHigh = eqn_.fx(xHigh, li);
-            yMean = yLow;
         }
 
         xMean = (xLow + xHigh)*0.5;

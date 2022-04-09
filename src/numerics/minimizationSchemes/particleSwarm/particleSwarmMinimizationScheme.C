@@ -57,9 +57,9 @@ Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
     minimizationScheme(eqns, dict),
     rand_(0),
     particles_(dict.lookupOrDefault<label>("nParticles", 100)),
-    cLocal_(dict.lookupOrDefault<scalar>("cLocal", 1)),
-    cGlobal_(dict.lookupOrDefault<scalar>("cGlobal", 1)),
-    vWeight_(dict.lookupOrDefault<scalar>("vWeight", 1))
+    cLocal_(dict.lookup<scalar>("cLocal")),
+    cGlobal_(dict.lookup<scalar>("cGlobal")),
+    vWeight_(dict.lookup<scalar>("vWeight"))
 
 {}
 

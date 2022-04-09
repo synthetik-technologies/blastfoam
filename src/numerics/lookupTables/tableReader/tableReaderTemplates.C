@@ -98,7 +98,7 @@ bool Foam::readComponent
         {
             label ny = dict.lookup<label>("n");
             Type miny = dict.lookup<Type>("min");
-            Type dy;
+            Type dy(Zero);
             if (dict.found("delta"))
             {
                 dy = dict.lookup<Type>("delta");
@@ -138,7 +138,7 @@ bool Foam::readComponent
 
         label ny = parentDict.lookup<label>("n" + name.capitalise());
         Type miny = parentDict.lookup<Type>("min" + name.capitalise());
-        Type dy;
+        Type dy(Zero);
         if (parentDict.found("delta" + name.capitalise()))
         {
             dy = parentDict.lookup<Type>("delta" + name.capitalise());
