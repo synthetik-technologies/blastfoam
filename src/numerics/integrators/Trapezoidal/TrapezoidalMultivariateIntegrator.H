@@ -57,8 +57,8 @@ class TrapezoidalMultivariateIntegrator
 
     virtual Type integrateFunc
     (
-        const scalarField& x0,
-        const scalarField& x1,
+        const scalarList& x0,
+        const scalarList& x1,
         const label li
     ) const;
 
@@ -66,9 +66,9 @@ class TrapezoidalMultivariateIntegrator
     virtual void addCorners
     (
         const label diri,
-        const scalarField& dx,
+        const scalarList& dx,
         const label li,
-        scalarField& x,
+        scalarList& x,
         Type& fx
     ) const;
 
@@ -110,8 +110,8 @@ public:
         //- Integrate the equation
         virtual Type integrate
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li
         ) const;
 

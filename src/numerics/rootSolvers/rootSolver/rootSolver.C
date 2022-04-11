@@ -37,7 +37,7 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-void Foam::rootSolver::initialise(const scalarField& x) const
+void Foam::rootSolver::initialise(const scalarList& x) const
 {
     forAll(x, i)
     {
@@ -48,8 +48,8 @@ void Foam::rootSolver::initialise(const scalarField& x) const
 
 bool Foam::rootSolver::converged
 (
-    const scalarField& dx,
-    const scalarField& y
+    const scalarList& dx,
+    const scalarList& y
 ) const
 {
     bool good = true;
@@ -79,9 +79,9 @@ bool Foam::rootSolver::converged
 
 bool Foam::rootSolver::converged
 (
-    const scalarField& x0,
-    const scalarField& x1,
-    const scalarField& y
+    const scalarList& x0,
+    const scalarList& x1,
+    const scalarList& y
 ) const
 {
     bool good = true;
@@ -114,7 +114,7 @@ bool Foam::rootSolver::converged
 }
 
 
-void Foam::rootSolver::printStepInformation(const scalarField& vals) const
+void Foam::rootSolver::printStepInformation(const scalarList& vals) const
 {
     if (debug > 2)
     {
@@ -124,7 +124,7 @@ void Foam::rootSolver::printStepInformation(const scalarField& vals) const
     }
 }
 
-void Foam::rootSolver::printFinalInformation(const scalarField& vals) const
+void Foam::rootSolver::printFinalInformation(const scalarList& vals) const
 {
     if (!debug)
     {
@@ -239,7 +239,7 @@ Foam::tmp<Foam::scalarField> Foam::rootSolver::solve() const
 
 Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalarField& x0
+    const scalarList& x0
 ) const
 {
     return this->findRoots(x0, eqns_.lowerLimits(), eqns_.upperLimits(), 0);
@@ -248,7 +248,7 @@ Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalarField& x0,
+    const scalarList& x0,
     const label li
 ) const
 {
@@ -258,9 +258,9 @@ Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh
 ) const
 {
     return this->findRoots(x0, xLow, xHigh, 0);
@@ -269,9 +269,9 @@ Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::rootSolver::solve
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {

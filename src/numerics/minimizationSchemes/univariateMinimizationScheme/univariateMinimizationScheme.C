@@ -37,10 +37,53 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::univariateMinimizationScheme::converged(const scalar error) const
+bool Foam::univariateMinimizationScheme::convergedX
+(
+    const scalar error
+) const
 {
-    errors_[0] = mag(error);
-    return errors_[0] < tolerances_[0];
+    xErrors_[0] = mag(error);
+    return xErrors_[0] < xTolerances_[0];
+}
+
+
+bool Foam::univariateMinimizationScheme::convergedX
+(
+    const scalar x1,
+    const scalar x2
+) const
+{
+    xErrors_[0] = mag(x2 - x1);
+    if (normalize_)
+    {
+        xErrors_[0] /= stabilise(min(mag(x1), mag(x2)), small);
+    }
+    return xErrors_[0] < xTolerances_[0];
+}
+
+
+bool Foam::univariateMinimizationScheme::convergedY
+(
+    const scalar error
+) const
+{
+    yErrors_[0] = mag(error);
+    return yErrors_[0] < yTolerances_[0];
+}
+
+
+bool Foam::univariateMinimizationScheme::convergedY
+(
+    const scalar y1,
+    const scalar y2
+) const
+{
+    yErrors_[0] = mag(y2 - y1);
+    if (normalize_)
+    {
+        yErrors_[0] /= stabilise(min(mag(y1), mag(y2)), small);
+    }
+    return yErrors_[0] < yTolerances_[0];
 }
 
 
@@ -49,7 +92,8 @@ void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) 
     if (debug > 2)
     {
         Info<< "Step " << stepi_
-            << ", error=" << errors_[0]
+            << ", xError=" << xErrors_[0]
+            << ", delta=" << yErrors_[0]
             << ", value: " << val << nl<< endl;
     }
 }
@@ -64,13 +108,19 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
     }
     bool converged =
         (stepi_ < maxSteps_)
-     && errors_[0] - tolerances_[0] <= 0.0;
+     && (
+            xErrors_[0] - xTolerances_[0] <= 0.0
+         || yErrors_[0] - yTolerances_[0] <= 0.0
+        );
     if (converged && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations" << nl
-            << "    Final " << errorName() << "=" << errors_[0] << nl
-            << "    Minimum=" << val 
-            << endl;
+            << "    Final error: " << xErrors_[0] << endl;
+        if (checkY_)
+        {
+            Info<< "    Final delta: " << yErrors_[0] << endl;
+        }
+        Info<<"    Minimum=" << val << endl;
     }
     else if (!converged)
     {
@@ -78,14 +128,21 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
         {
             WarningInFunction
                 << "Did not converge due to bounds"
-                << ", tried " << stepi_ << " iterations" << nl
-                << "    Final " << errorName() << "s: " << errors_[0] << endl;
+                << ", tried " << stepi_ << " iterations" << endl;
+            if (checkY_)
+            {
+                Info<< "    Final delta: " << yErrors_[0] << endl;
+            }
         }
         else
         {
             WarningInFunction
                 << "Did not converge in " << stepi_ << " iterations" << nl
-                << "    Final " << errorName() << "s: " << errors_[0] << endl;
+                << "    Final error: " << xErrors_[0] << endl;
+            if (checkY_)
+            {
+                Info<< "    Final delta: " << yErrors_[0] << endl;
+            }
         }
     }
     return val;
@@ -192,9 +249,9 @@ Foam::scalar Foam::univariateMinimizationScheme::solve
 
 Foam::tmp<Foam::scalarField> Foam::univariateMinimizationScheme::minimize
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {

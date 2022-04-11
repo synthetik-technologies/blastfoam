@@ -53,7 +53,7 @@ createNamedEquation1
 
 int main(int argc, char *argv[])
 {
-//     minimizationScheme::debug = 2;
+    minimizationScheme::debug = 2;
 
     PtrList<scalarUnivariateEquation> eqns(4);
     eqns.set(0, new testEqn1());
@@ -78,8 +78,11 @@ int main(int argc, char *argv[])
 
     forAll(eqns, eqni)
     {
-        Info<< nl << "Solving equations: " << nl << eqns[eqni].name() << endl;
         const scalarUnivariateEquation& eqn = eqns[eqni];
+        Info<< nl << "Solving equations: " << nl << eqn.name()
+            << " with bounds " << eqn.lowerLimits() << ", "
+            << eqn.upperLimits()
+            << nl << endl;
 
         wordList methods
         (
@@ -96,10 +99,7 @@ int main(int argc, char *argv[])
                 minimizationScheme::New(eqn, dict)
             );
             scalarField localMin(solver->solve());
-            Info<< "    " << methods[i] <<": "
-                << " min=" << localMin
-                << ", nSteps=" << solver->nSteps()
-                << ", error=" << solver->errors() << nl << endl;
+            Info<< endl;
         }
         Info<<nl;
     }

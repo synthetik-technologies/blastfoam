@@ -36,21 +36,79 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::minimizationScheme::converged
+bool Foam::minimizationScheme::convergedX
 (
     const scalarList& errors
 ) const
 {
-    errors_ = mag(errors);
+    xErrors_ = mag(errors);
 
-    forAll(errors_, i)
+    forAll(xErrors_, i)
     {
-        if (errors_[i] > tolerances_[i])
+        if (xErrors_[i] > xTolerances_[i])
         {
             return false;
         }
     }
     return true;
+}
+
+
+bool Foam::minimizationScheme::convergedX
+(
+    const scalarList& x1,
+    const scalarList& x2
+) const
+{
+    bool c = false;
+    forAll(xErrors_, i)
+    {
+        xErrors_[i] = mag(x2[i] - x1[i]);
+        if (normalize_)
+        {
+            xErrors_[i] /= stabilise(min(mag(x1[i]), mag(x2[i])), small);
+        }
+        c = c && xErrors_[i] > xTolerances_[i];
+    }
+    return c;
+}
+
+
+bool Foam::minimizationScheme::convergedY
+(
+    const scalarList& errors
+) const
+{
+    yErrors_ = mag(errors);
+
+    forAll(yErrors_, i)
+    {
+        if (yErrors_[i] > yTolerances_[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+bool Foam::minimizationScheme::convergedY
+(
+    const scalarList& y1,
+    const scalarList& y2
+) const
+{
+    bool c = false;
+    forAll(yErrors_, i)
+    {
+        yErrors_[i] = mag(y2[i] - y1[i]);
+        if (normalize_)
+        {
+            yErrors_[i] /= stabilise(min(mag(y1[i]), mag(y2[i])), small);
+        }
+        c = c && yErrors_[i] > yTolerances_[i];
+    }
+    return c;
 }
 
 
@@ -62,13 +120,17 @@ void Foam::minimizationScheme::printStepInformation
     if (debug > 2)
     {
         DebugInfo<< "Step: " << stepi_ << ":" << nl
-            << "    " << errorName() << "s: " << errors_ << nl
-            << "    values: " << vals << endl;
+            << "    Errors: " << xErrors_ << nl
+            << "    Deltas: " << yErrors_ << nl
+            << "    Minimums: " << vals << endl;
     }
 }
 
 
-void Foam::minimizationScheme::printFinalInformation() const
+void Foam::minimizationScheme::printFinalInformation
+(
+    const scalarList& vals
+) const
 {
     if (!debug)
     {
@@ -76,11 +138,19 @@ void Foam::minimizationScheme::printFinalInformation() const
     }
     bool converged =
         (stepi_ < maxSteps_)
-     && max(errors_ - tolerances_) <= 0.0;
+     && (
+            max(xErrors_ - xTolerances_) <= 0.0
+         || max(yErrors_ - yTolerances_) <= 0.0
+        );
     if (converged && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations" << nl
-            << "    Final " << errorName() << "s=" << errors_ << endl;
+            << "    Final errors: " << xErrors_ << endl;
+        if (checkY_)
+        {
+            Info<< "    Final deltas: " << yErrors_ << endl;
+        }
+        Info<< "    Minimums: " << vals << endl;
     }
     else if (!converged)
     {
@@ -89,13 +159,24 @@ void Foam::minimizationScheme::printFinalInformation() const
             WarningInFunction
                 << "Did not converge due to bounds"
                 << ", tried " << stepi_ << " iterations" << nl
-                << "    Final " << errorName() << "s: " << errors_ << endl;
+                << "    Final errors: " << xErrors_ << endl;
+            if (checkY_)
+            {
+                Info<< "    Final deltas: " << yErrors_ << endl;
+            }
+            Info<< "    Minimums: " << vals << endl;
         }
         else
         {
             WarningInFunction
                 << "Did not converge in " << stepi_ << " iterations" << nl
-                << "    Final " << errorName() << "s: " << errors_ << endl;
+                << "due to limits on bounds" << nl
+                << "    Final errors: " << xErrors_ << endl;
+            if (checkY_)
+            {
+                Info<< "    Final deltas: " << yErrors_ << endl;
+            }
+            Info<< "    Minimums: " << vals << endl;
         }
     }
 }
@@ -103,8 +184,8 @@ void Foam::minimizationScheme::printFinalInformation() const
 
 Foam::scalar Foam::minimizationScheme::alpha
 (
-    const scalarField& grad,
-    const scalarField& gradOld
+    const scalarList& grad,
+    const scalarList& gradOld
 ) const
 {
     return 1.0;
@@ -113,9 +194,9 @@ Foam::scalar Foam::minimizationScheme::alpha
 
 Foam::scalar Foam::minimizationScheme::lineSearch
 (
-    const scalarField& x0,
-    const scalarField& grad,
-    const scalarField& gradOld,
+    const scalarList& x0,
+    const scalarList& grad,
+    const scalarList& gradOld,
     const label li,
     scalar& fx
 ) const
@@ -152,8 +233,8 @@ Foam::scalar Foam::minimizationScheme::lineSearch
 
 Foam::scalar Foam::minimizationScheme::lineSearch
 (
-    const scalarField& x0,
-    const scalarField& grad,
+    const scalarList& x0,
+    const scalarList& grad,
     const label li,
     scalar& fx
 ) const
@@ -209,8 +290,8 @@ Foam::scalar Foam::minimizationScheme::inner
 
 void Foam::minimizationScheme::sample
 (
-    scalarField& xLow,
-    scalarField& xHigh,
+    scalarList& xLow,
+    scalarList& xHigh,
     labelList& xBest,
     scalar& yBest,
     labelList& indicies,
@@ -276,21 +357,42 @@ Foam::minimizationScheme::minimizationScheme
 )
 :
     eqns_(eqns),
-    tolerances_
+    xTolerances_
     (
-        dict.lookupOrDefault<scalarField>
+        dict.lookupOrDefaultBackwardsCompatible
         (
-            "tolerances",
-            scalarField
+            {"xTolerances", "tolerances"},
+            scalarList
             (
                 eqns_.nVar(),
-                dict.lookupOrDefault("tolerance", 1e-6)
+                dict.lookupOrDefault
+                (
+                    {"xTolerance", "tolerance"},
+                    1e-6
+                )
+            )
+        )
+    ),
+    yTolerances_
+    (
+        dict.lookupOrDefaultBackwardsCompatible
+        (
+            {"yTolerances", "tolerances"},
+            scalarList
+            (
+                eqns_.nVar(),
+                dict.lookupOrDefault
+                (
+                    {"yTolerance", "tolerance"},
+                    1e-6
+                )
             )
         )
     ),
     maxSteps_(dict.lookupOrDefault<scalar>("maxSteps", 100)),
     stepi_(0),
-    errors_(eqns.nVar(), great),
+    xErrors_(eqns.nVar(), great),
+    yErrors_(eqns.nVar(), great),
     nSamples_
     (
         dict.lookupOrDefault<labelList>
@@ -304,7 +406,8 @@ Foam::minimizationScheme::minimizationScheme
         )
     ),
     normalize_(dict.lookupOrDefault("normaliseError", true)),
-    tau_(dict.lookupOrDefault<scalar>("tau", 0.5))
+    tau_(dict.lookupOrDefault<scalar>("tau", 0.5)),
+    checkY_(false)
 {}
 
 
@@ -324,7 +427,7 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve() const
 
 Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalarField& x0
+    const scalarList& x0
 ) const
 {
     return solve(x0, eqns_.lowerLimits(), eqns_.upperLimits(), 0);
@@ -333,7 +436,7 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 
 Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalarField& x0,
+    const scalarList& x0,
     const label li
 ) const
 {
@@ -343,9 +446,9 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 
 Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh
 ) const
 {
     return solve(x0, xLow, xHigh, 0);
@@ -354,15 +457,15 @@ Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 
 Foam::tmp<Foam::scalarField> Foam::minimizationScheme::solve
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
-    scalarField x1(xLow);
-    scalarField x2(xHigh);
-    scalarField xStart(x0);
+    scalarList x1(xLow);
+    scalarList x2(xHigh);
+    scalarList xStart(x0);
     if (min(nSamples_) > 0)
     {
         labelList xBest(x1.size(), 0);

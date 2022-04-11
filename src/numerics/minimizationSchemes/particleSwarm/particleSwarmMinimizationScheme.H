@@ -84,11 +84,6 @@ private:
     scalar cGlobal_;
     scalar vWeight_;
 
-    //- Name of the error
-    virtual word errorName() const
-    {
-        return "variance";
-    }
 
 public:
 
@@ -114,9 +109,9 @@ public:
         //- Solve the root
         virtual tmp<scalarField> minimize
         (
-            const scalarField& x0,
-            const scalarField& x1,
-            const scalarField& x2,
+            const scalarList& x0,
+            const scalarList& x1,
+            const scalarList& x2,
             const label li
         ) const;
 

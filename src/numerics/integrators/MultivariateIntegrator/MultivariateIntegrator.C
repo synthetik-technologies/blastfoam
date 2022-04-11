@@ -35,8 +35,19 @@ Foam::MultivariateIntegrator<Type>::New
     const dictionary& dict
 )
 {
-    word integratorTypeName(dict.lookup<word>("integrator"));
+    return New(dict.lookup<word>("integrator"), eqn, dict);
+}
 
+
+template<class Type>
+Foam::autoPtr<Foam::MultivariateIntegrator<Type>>
+Foam::MultivariateIntegrator<Type>::New
+(
+    const word& integratorTypeName,
+    const equationType& eqn,
+    const dictionary& dict
+)
+{
     Info<< "Selecting integrator " << integratorTypeName << endl;
 
     typename dictionaryConstructorTable::iterator cstrIter =
@@ -112,8 +123,8 @@ void Foam::MultivariateIntegrator<Type>::addMidsToInt
 (
     const label diri,
     label& fi,
-    scalarField& x0,
-    scalarField& x1,
+    scalarList& x0,
+    scalarList& x1,
     PtrList<Type>& fxs,
     const label li
 ) const
@@ -150,9 +161,9 @@ void Foam::MultivariateIntegrator<Type>::integrate_
     const PtrList<Type>& Qs,
     const label diri,
     label& fi,
-    scalarField& x0,
-    scalarField& x1,
-    const scalarField& tol,
+    scalarList& x0,
+    scalarList& x1,
+    const scalarList& tol,
     const label li,
     Type& fx
 ) const
@@ -191,9 +202,9 @@ Type Foam::MultivariateIntegrator<Type>::integrate_
 (
     const Type& Q,
     const label diri,
-    const scalarField& X0,
-    const scalarField& X1,
-    const scalarField& tol,
+    const scalarList& X0,
+    const scalarList& X1,
+    const scalarList& tol,
     const label li
 ) const
 {
@@ -204,8 +215,8 @@ Type Foam::MultivariateIntegrator<Type>::integrate_
     }
     label fi = 0;
     PtrList<Type> fxs(pow(2, X0.size()));
-    scalarField x0(X0);
-    scalarField x1(X1);
+    scalarList x0(X0);
+    scalarList x1(X1);
     addMidsToInt
     (
         0,

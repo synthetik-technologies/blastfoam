@@ -53,7 +53,19 @@ class univariateEquation
 {
 public:
 
-    TypeNameNoDebug("univariateEquation");
+     TypeNameNoDebug("equation");
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        univariateEquation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
 
     // Constructors
 
@@ -73,6 +85,31 @@ public:
     //- Destructor
     virtual ~univariateEquation()
     {}
+
+
+    //- Selector
+    static autoPtr<univariateEquation<Type>> New
+    (
+        const word& type,
+        const dictionary& dict
+    )
+    {
+        typename dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(type);
+
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown " << typeName << " type "
+                << type <<  nl << nl
+                << "Valid " << typeName << " types are:" << nl
+                << dictionaryConstructorTablePtr_->sortedToc() << nl
+                << exit(FatalError);
+        }
+
+        return cstrIter()(dict);
+    }
+
 
     //- Public member functions
 
@@ -111,7 +148,7 @@ public:
         (
             const scalarList& x,
             const label li,
-            List<Type> d2dfx2
+            List<Type>& d2dfx2
         ) const
         {
             NotImplemented;
@@ -122,7 +159,7 @@ public:
         (
             const scalarList& x,
             const label li,
-            List<Type> d3dfx3
+            List<Type>& d3dfx3
         ) const
         {
             NotImplemented;

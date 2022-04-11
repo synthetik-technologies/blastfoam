@@ -66,8 +66,8 @@ Foam::GaussianMultivariateIntegrator<Type>::GaussianMultivariateIntegrator
 template<class Type>
 Type Foam::GaussianMultivariateIntegrator<Type>::integrateFunc
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
@@ -83,8 +83,8 @@ template<class Type>
 void Foam::GaussianMultivariateIntegrator<Type>::addCorners
 (
     const label diri,
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li,
     labelList& gi,
     Type& fx
@@ -115,12 +115,12 @@ void Foam::GaussianMultivariateIntegrator<Type>::addCorners
 template<class Type>
 Type Foam::GaussianMultivariateIntegrator<Type>::integrate
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
-    scalarField dX(x1 - x0);
+    scalarList dX(x1 - x0);
     this->reset(dX);
 
     scalar dx = 1.0;

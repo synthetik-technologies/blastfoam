@@ -133,9 +133,17 @@ public:
 
     // Selectors
 
-        //- Select null constructed
+        //- Construct from dictionary
         static autoPtr<Integrator<Type>> New
         (
+            const equationType& eqn,
+            const dictionary& dict
+        );
+
+        //- Construct from dictionary with a given type
+        static autoPtr<Integrator<Type>> New
+        (
+            const word& integratorTypeName,
             const equationType& eqn,
             const dictionary& dict
         );

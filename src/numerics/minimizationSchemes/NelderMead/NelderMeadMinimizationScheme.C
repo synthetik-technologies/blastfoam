@@ -86,14 +86,14 @@ Foam::NelderMeadMinimizationScheme::NelderMeadMinimizationScheme
 Foam::tmp<Foam::scalarField>
 Foam::NelderMeadMinimizationScheme::minimize
 (
-    const scalarField& x0,
-    const scalarField& xMin,
-    const scalarField& xMax,
+    const scalarList& x0,
+    const scalarList& xMin,
+    const scalarList& xMax,
     const label li
 ) const
 {
     const label np = eqns_.nVar() + 1;
-    List<scalarField> points(np, x0);
+    List<scalarField> points(np, scalarField(x0));
     SortableList<scalar> ys(np);
     ys[0] = eqns_.fX(points[0], li);
     for (label i = 1; i < np; i++)
@@ -122,7 +122,7 @@ Foam::NelderMeadMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xStd))
+        if (convergedX(xStd))
         {
             break;
         }
@@ -147,8 +147,8 @@ Foam::NelderMeadMinimizationScheme::minimize
         xReflection = xMean + reflectionCoeff_*(xMean - xHigh);
         if
         (
-            max(pos(xReflection - tolerances_ - xMax))
-         || max(neg(xReflection + tolerances_ - xMin))
+            max(pos(xReflection - xTolerances_ - xMax))
+         || max(neg(xReflection + xTolerances_ - xMin))
         )
         {
             yReflection = great;
@@ -165,14 +165,11 @@ Foam::NelderMeadMinimizationScheme::minimize
 //          || max(neg(xReflection - xMin)) > 0
 //         )
 //         {
-//             Info<<xReflection<<xMax<<(xReflection - xMax)<<endl;
-//             Info<<xReflection<<xMin<<(xReflection - xMin)<<endl;
 //             scalarField shift
 //             (
 //                 max(0.0, xReflection - xMax)
 //               + min(0.0, xReflection - xMin)
 //             );
-//             Info<<shift<<endl;
 //             forAll(points, i)
 //             {
 //                 points[i] -= shift;
@@ -209,8 +206,8 @@ Foam::NelderMeadMinimizationScheme::minimize
             xTmp = xMean + contractionCoeff_*(xHigh - xMean);
             if
             (
-                max(pos(xTmp - tolerances_ - xMax))
-             || max(neg(xTmp + tolerances_ - xMin))
+                max(pos(xTmp - xTolerances_ - xMax))
+             || max(neg(xTmp + xTolerances_ - xMin))
             )
             {
                 yTmp = great;
@@ -256,7 +253,7 @@ Foam::NelderMeadMinimizationScheme::minimize
         printStepInformation(xMean);
     }
     xMean = points[0];
-    printFinalInformation();
+    printFinalInformation(xMean);
     return txMean;
 }
 

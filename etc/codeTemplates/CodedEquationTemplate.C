@@ -23,7 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "codedEquationTemplate.H"
+#include "CodedEquationTemplate.H"
 
 // * * * * * * * * * * * * * * Static Data Members * * * * * * * * * * * * * //
 
@@ -66,7 +66,7 @@ ${typeName}_${TemplateType}Equation(const dictionary& dict)
 :
     Equation<${TemplateType}>
     (
-        dict.lookup<string>("name"),
+        dict.lookupOrDefault<string>("eqnString", "undefined"),
         dict.lookup<scalar>("lowerBound"),
         dict.lookup<scalar>("upperBound")
     )

@@ -64,8 +64,17 @@ protected:
         //- Number of location to pre sample
         label nSample_;
 
-        //- Is the solution converged
-        bool converged(const scalar error) const;
+        //- Is the solution converged in x
+        bool convergedX(const scalar error) const;
+
+        //- Is the solution converged in x
+        bool convergedX(const scalar x1, const scalar x2) const;
+
+        //- Is the solution converged in y
+        bool convergedY(const scalar error) const;
+
+        //- Is the solution converged in y
+        bool convergedY(const scalar y1, const scalar y2) const;
 
         //- Print information about the current step
         void printStepInformation(const scalar val) const;
@@ -139,14 +148,17 @@ public:
 
     // Member Functions
 
-        //- Return the tolerance
-        inline scalar tolerance() const;
+        //- Return the x tolerance
+        inline scalar xTolerance() const;
 
-        //- Access to the tolerance
-        inline scalar& tolerance();
+        //- Return the y tolerance
+        inline scalar yTolerance() const;
 
-        //- Return the error
-        inline scalar error() const;
+        //- Return the x error
+        inline scalar xError() const;
+
+        //- Return the y error
+        inline scalar yError() const;
 
         using minimizationScheme::solve;
 
@@ -189,9 +201,9 @@ public:
         //- Find the root of the equation between xHigh and xLow
         virtual tmp<scalarField> minimize
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const;
 

@@ -63,9 +63,9 @@ Foam::gradientDescentMinimizationScheme::gradientDescentMinimizationScheme
 Foam::tmp<Foam::scalarField>
 Foam::gradientDescentMinimizationScheme::minimize
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
@@ -93,7 +93,7 @@ Foam::gradientDescentMinimizationScheme::minimize
 
         eqns_.limit(xNew);
 
-        if (converged(xNew - xOld))
+        if (convergedX(xNew - xOld))
         {
             break;
         }
@@ -103,7 +103,7 @@ Foam::gradientDescentMinimizationScheme::minimize
         eqns_.dfdX(xNew, li, grad);
         printStepInformation(xNew);
     }
-    printFinalInformation();
+    printFinalInformation(xNew);
     return txNew;
 }
 

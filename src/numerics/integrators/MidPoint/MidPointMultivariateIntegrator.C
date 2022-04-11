@@ -54,13 +54,13 @@ Foam::MidPointMultivariateIntegrator<Type>::MidPointMultivariateIntegrator
 template<class Type>
 Type Foam::MidPointMultivariateIntegrator<Type>::integrateFunc
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
     this->evals_++;
-    scalarField xs(0.5*(x0 + x1));
+    scalarList xs(0.5*(x0 + x1));
     return this->eqnPtr_->fX(xs, li);
 }
 
@@ -68,12 +68,12 @@ Type Foam::MidPointMultivariateIntegrator<Type>::integrateFunc
 template<class Type>
 Type Foam::MidPointMultivariateIntegrator<Type>::integrate
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
-    scalarField dX(x1 - x0);
+    scalarList dX(x1 - x0);
     this->reset(dX);
 
     scalar dx = 1.0;

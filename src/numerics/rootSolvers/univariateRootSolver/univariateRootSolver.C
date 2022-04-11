@@ -184,9 +184,9 @@ Foam::scalar Foam::univariateRootSolver::solve
 
 Foam::tmp<Foam::scalarField> Foam::univariateRootSolver::findRoots
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {

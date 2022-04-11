@@ -75,7 +75,9 @@ Foam::goldenRatioUnivariateMinimizationScheme::goldenRatioUnivariateMinimization
 )
 :
     univariateMinimizationScheme(eqn, dict)
-{}
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -91,11 +93,11 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
     scalar a = min(x1, x2);
     scalar b = max(x1, x2);
     scalar h = b - a;
-    if (converged(h))
+    if (convergedX(h))
     {
         return x1;
     }
-    label n = ceil(log(tolerance()/h)/log(invPhi));
+    label n = ceil(log(xTolerance()/h)/log(invPhi));
 
     scalar c = a + invPhi2*h;
     scalar d = a + invPhi*h;
@@ -123,9 +125,11 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
             d = a + invPhi*h;
             yd = eqn_.fx(d, li);
         }
-        converged(b - a);
+        convergedX(b - a);
         printStepInformation(0.5*(a + b));
     }
+
+    convergedY(yc, yd);
     return printFinalInformation(0.5*(a + b));
 }
 

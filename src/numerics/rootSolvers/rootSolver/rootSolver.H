@@ -86,28 +86,28 @@ protected:
     // Protected member function
 
         //- Normalise x tolerance
-        void initialise(const scalarField& x) const;
+        void initialise(const scalarList& x) const;
 
         //- Is the solution converged
         bool converged
         (
-            const scalarField& dx,
-            const scalarField& y
+            const scalarList& dx,
+            const scalarList& y
         ) const;
 
         //- Is the solution converged
         bool converged
         (
-            const scalarField& x0,
-            const scalarField& x1,
-            const scalarField& y
+            const scalarList& x0,
+            const scalarList& x1,
+            const scalarList& y
         ) const;
 
         //- Print information about the current step
-        void printStepInformation(const scalarField& vals) const;
+        void printStepInformation(const scalarList& vals) const;
 
         //- Print information about the current step
-        void printFinalInformation(const scalarField& vals) const;
+        void printFinalInformation(const scalarList& vals) const;
 
 
 public:
@@ -210,38 +210,38 @@ public:
         virtual tmp<scalarField> solve() const;
 
         //- Find the roots of the equation
-        virtual tmp<scalarField> solve(const scalarField& x0) const;
+        virtual tmp<scalarField> solve(const scalarList& x0) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh
         ) const;
 
         //- Find the roots of the equation
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
+            const scalarList& x0,
             const label li
         ) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const;
 
         //- Find the roots of the equation between xHigh and xLow
         virtual tmp<scalarField> findRoots
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const = 0;
 };

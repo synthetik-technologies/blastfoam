@@ -68,8 +68,8 @@ class GaussianMultivariateIntegrator
 
         virtual Type integrateFunc
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li
         ) const;
 
@@ -77,8 +77,8 @@ class GaussianMultivariateIntegrator
         virtual void addCorners
         (
             const label diri,
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li,
             labelList& gi,
             Type& fx
@@ -121,8 +121,8 @@ public:
         //- Integrate the equation
         virtual Type integrate
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li
         ) const;
 

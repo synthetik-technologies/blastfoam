@@ -35,16 +35,28 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     const dictionary& dict
 )
 {
-    word integratorTypeName
+    return New
     (
         dict.lookupOrDefault<word>
         (
             "integrator",
             Simpson13Integrator<Type>::typeName
-        )
+        ),
+        eqn,
+        dict
     );
-    Info<< "Selecting integrator " << integratorTypeName << endl;
+}
 
+
+template<class Type>
+Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
+(
+    const word& integratorTypeName,
+    const equationType& eqn,
+    const dictionary& dict
+)
+{
+    Info<< "Selecting integrator " << integratorTypeName << endl;
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(integratorTypeName);
 

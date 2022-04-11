@@ -89,8 +89,8 @@ protected:
 
         virtual Type integrateFunc
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li
         ) const = 0;
 
@@ -99,8 +99,8 @@ protected:
         (
             const label diri,
             label& fi,
-            scalarField& x0,
-            scalarField& x1,
+            scalarList& x0,
+            scalarList& x1,
             PtrList<Type>& fs,
             const label li
         ) const;
@@ -111,9 +111,9 @@ protected:
             const PtrList<Type>& Qs,
             const label diri,
             label& fi,
-            scalarField& x0,
-            scalarField& x1,
-            const scalarField& tol,
+            scalarList& x0,
+            scalarList& x1,
+            const scalarList& tol,
             const label li,
             Type& fx
         ) const;
@@ -124,9 +124,9 @@ protected:
         (
             const Type& Q,
             const label diri,
-            const scalarField& x0,
-            const scalarField& x1,
-            const scalarField& tol,
+            const scalarList& x0,
+            const scalarList& x1,
+            const scalarList& tol,
             const label li
         ) const;
 
@@ -193,6 +193,14 @@ public:
         //- Select null constructed
         static autoPtr<MultivariateIntegrator<Type>> New
         (
+            const word& integratorTypeName,
+            const equationType& eqn,
+            const dictionary& dict
+        );
+
+        //- Select null constructed
+        static autoPtr<MultivariateIntegrator<Type>> New
+        (
             const equationType& eqn,
             const multivariateIntegrator& inter
         );
@@ -220,8 +228,8 @@ public:
         //- Integrate the equation from x0 to x1
         virtual Type integrate
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li = -1
         ) const = 0;
 

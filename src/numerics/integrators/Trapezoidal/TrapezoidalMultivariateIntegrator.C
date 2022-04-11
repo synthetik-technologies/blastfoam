@@ -54,13 +54,13 @@ Foam::TrapezoidalMultivariateIntegrator<Type>::TrapezoidalMultivariateIntegrator
 template<class Type>
 Type Foam::TrapezoidalMultivariateIntegrator<Type>::integrateFunc
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
-    scalarField x(x0);
-    scalarField dx(x1 - x0);
+    scalarList x(x0);
+    scalarList dx(x1 - x0);
     this->evals_++;
     Type fx(this->eqnPtr_->fX(x, li));
 
@@ -74,9 +74,9 @@ template<class Type>
 void Foam::TrapezoidalMultivariateIntegrator<Type>::addCorners
 (
     const label diri,
-    const scalarField& dx,
+    const scalarList& dx,
     const label li,
-    scalarField& x,
+    scalarList& x,
     Type& fx
 ) const
 {
@@ -96,15 +96,15 @@ void Foam::TrapezoidalMultivariateIntegrator<Type>::addCorners
 template<class Type>
 Type Foam::TrapezoidalMultivariateIntegrator<Type>::integrate
 (
-    const scalarField& x0,
-    const scalarField& x1,
+    const scalarList& x0,
+    const scalarList& x1,
     const label li
 ) const
 {
-    scalarField dX(x1 - x0);
+    scalarList dX(x1 - x0);
     this->reset(dX);
 
-    scalarField xs(0.5*(x1 + x0));
+    scalarList xs(0.5*(x1 + x0));
     scalar dx = 1.0;
     forAll(x1, i)
     {

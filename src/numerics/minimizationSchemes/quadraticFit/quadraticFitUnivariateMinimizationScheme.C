@@ -66,7 +66,9 @@ Foam::quadraticFitUnivariateMinimizationScheme::quadraticFitUnivariateMinimizati
 )
 :
     univariateMinimizationScheme(eqn, dict)
-{}
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -101,9 +103,9 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
             )/stabilise
             (
                 ya*(b - c) + yb*(c - a) + yc*(a - b),
-                tolerance()
+                yTolerance()
             );
-        if (converged(x - b))
+        if (convergedX(x - b))
         {
             break;
         }
@@ -126,7 +128,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
                 yb = yx;
             }
         }
-        else if (x < b)
+        else
         {
             if (yx > yb)
             {
@@ -141,8 +143,15 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
                 yb = yx;
             }
         }
+        if (convergedY(ya, yb))
+        {
+            break;
+        }
+
         printStepInformation(x);
     }
+
+    convergedY(ya, yb);
     return printFinalInformation(x);
 }
 

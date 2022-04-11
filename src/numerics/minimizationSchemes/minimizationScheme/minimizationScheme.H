@@ -59,8 +59,11 @@ protected:
         //- Reference to scalarEquation
         const scalarUnivariateEquation& eqns_;
 
-        //- Convergence tolerance
-        scalarField tolerances_;
+        //- Convergence tolerances for x
+        scalarField xTolerances_;
+
+        //- Convergence tolerances for y
+        scalarField yTolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -68,8 +71,11 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current errors
-        mutable scalarField errors_;
+        //- Current x errors
+        mutable scalarList xErrors_;
+
+        //- Current delta y errors
+        mutable scalarList yErrors_;
 
         //- Number of pre-samples in each direction
         labelList nSamples_;
@@ -80,19 +86,23 @@ protected:
         //- Line search reduction coefficient
         scalar tau_;
 
+        //- In convergence in the delta checked
+        bool checkY_;
+
+
         //- Initial line search parameter
         virtual scalar alpha
         (
-            const scalarField& grad,
-            const scalarField& gradOld
+            const scalarList& grad,
+            const scalarList& gradOld
         ) const;
 
         //- Line search
         scalar lineSearch
         (
-            const scalarField& x0,
-            const scalarField& grad,
-            const scalarField& gradOld,
+            const scalarList& x0,
+            const scalarList& grad,
+            const scalarList& gradOld,
             const label li,
             scalar& fx
         ) const;
@@ -100,8 +110,8 @@ protected:
         //- Line search
         scalar lineSearch
         (
-            const scalarField& x0,
-            const scalarField& grad,
+            const scalarList& x0,
+            const scalarList& grad,
             const label li,
             scalar& fx
         ) const;
@@ -112,20 +122,29 @@ protected:
         //- Return lst^T * lst
         scalar inner(const scalarList& lst1, const scalarList& lst2) const;
 
-        //- Is the solution converged
-        bool converged(const scalarList& error) const;
+        //- Is the solution converged in w.r.t x
+        bool convergedX(const scalarList& error) const;
+
+        //- Is the solution converged in w.r.t x
+        bool convergedX(const scalarList& x1, const scalarList& x2) const;
+
+        //- Is the solution converged in w.r.t y
+        bool convergedY(const scalarList& error) const;
+
+        //- Is the solution converged in w.r.t y
+        bool convergedY(const scalarList& y1, const scalarList& y2) const;
 
         //- Print information about the current step
         void printStepInformation(const scalarList& vals) const;
 
         //- Print information about the current step
-        void printFinalInformation() const;
+        void printFinalInformation(const scalarList& vals) const;
 
         //- Sample and return the interval with the smallest value
         void sample
         (
-            scalarField&,
-            scalarField&,
+            scalarList&,
+            scalarList&,
             labelList& xBest,
             scalar& yBest,
             labelList& indicies,
@@ -133,11 +152,6 @@ protected:
             const label diri
         ) const;
 
-        //- Name of the error
-        virtual word errorName() const
-        {
-            return "error";
-        }
 
 public:
 
@@ -193,51 +207,51 @@ public:
 
     // Member Functions
 
-        //- Return access to the tolerance
-        inline scalarList& tolerances();
-
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the errors
-        inline scalarList& errors() const;
+        //- Return the x errors
+        inline scalarList& xErrors() const;
+
+        //- Return the y errors
+        inline scalarList& yErrors() const;
 
         //- Find the root of the equation
         virtual tmp<scalarField> solve() const;
 
         //- Find the root of the equation
-        virtual tmp<scalarField> solve(const scalarField& x0) const;
+        virtual tmp<scalarField> solve(const scalarList& x0) const;
 
         //- Find the root of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh
         ) const;
 
         //- Find the root of the equation
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
+            const scalarList& x0,
             const label li
         ) const;
 
         //- Find the root of the equation between xHigh and xLow
         virtual tmp<scalarField> solve
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const;
 
         //- Find the root of the equation between xHigh and xLow
         virtual tmp<scalarField> minimize
         (
-            const scalarField& x0,
-            const scalarField& xLow,
-            const scalarField& xHigh,
+            const scalarList& x0,
+            const scalarList& xLow,
+            const scalarList& xHigh,
             const label li
         ) const = 0;
 

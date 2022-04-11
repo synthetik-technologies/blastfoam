@@ -73,7 +73,9 @@ Foam::FibonacciUnivariateMinimizationScheme::FibonacciUnivariateMinimizationSche
 )
 :
     univariateMinimizationScheme(eqn, dict)
-{}
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -88,10 +90,6 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 {
     scalar a = min(x1, x2);
     scalar b = max(x1, x2);
-    if (converged(a - b))
-    {
-        return x1;
-    }
     label n = maxSteps_;
 
     scalar rho = 1.0/(goldenRatio*(1.0 - pow(s, n + 1))/(1.0 - pow(s, n)));
@@ -102,6 +100,10 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < n; stepi_++)
     {
+        if (convergedX(b - a))
+        {
+            break;
+        }
         if (stepi_ == n - 1)
         {
             c = 0.01*a + 0.99*b;
@@ -113,6 +115,12 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 
         eqn_.limit(c);
         yc = eqn_.fx(c, li);
+
+        if (convergedY(yc, yd))
+        {
+            break;
+        }
+
         if (yc < yd)
         {
             b = d;
@@ -124,10 +132,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
             a = b;
             b = c;
         }
-        if (converged(b - a))
-        {
-            break;
-        }
+
         rho =
             1.0
            /(
@@ -137,6 +142,8 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
             );
         printStepInformation(0.5*(a + b));
     }
+
+    convergedY(yc, yd);
     return printFinalInformation(0.5*(a + b));
 }
 

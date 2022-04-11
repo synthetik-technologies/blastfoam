@@ -25,14 +25,14 @@ Description
     Template for use with dynamic code generation of an Equation
 
 SourceFiles
-    Function3Template.C
+    CodedMultivariateTemplate.C
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef codedFunction3Template_H
-#define codedFunction3Template_H
+#ifndef CodedMultivariateTemplate_H
+#define CodedMultivariateTemplate_H
 
-#include "EquationsFwd.H"
+#include "MultivariateEquationsFwd.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -47,9 +47,9 @@ namespace Foam
                            A templated Equation
 \*---------------------------------------------------------------------------*/
 
-class ${typeName}_${TemplateType}Equation
+class ${typeName}_${TemplateType}MultivariateEquation
 :
-    public Equation<${TemplateType}>
+    public MultivariateEquation<${TemplateType}>
 {
 public:
 
@@ -60,12 +60,12 @@ public:
     // Constructors
 
         //- Construct from entry name and dictionary
-        ${typeName}_${TemplateType}Equation(const dictionary&);
+        ${typeName}_${TemplateType}MultivariateEquation(const dictionary&);
 
 
 
     //- Destructor
-    virtual ~${typeName}_${TemplateType}Equation();
+    virtual ~${typeName}_${TemplateType}MultivariateEquation();
 
 
     // Member Functions
@@ -75,35 +75,31 @@ public:
         {
             return ${nDerivatives};
         }
+
         //- Return value as a function of scalar variable
-        inline virtual ${TemplateType} fx(const scalar x, const label li) const
+        inline virtual void FX
+        (
+            const scalarList& x,
+            const label li,
+            List<${TemplateType}>& fx
+        ) const
         {
 //{{{ begin code
-    ${fx}
+    ${fx_code}
 //}}} end code
         }
 
         //- Return value as a function of scalar variable
-        inline virtual ${TemplateType} dfdx(const scalar x, const label li) const
+        inline virtual void jacobian
+        (
+            const scalarList& x,
+            const label li,
+            List<${TemplateType}>& fx,
+            RectangularMatrix<${TemplateType}>& J
+        ) const
         {
 //{{{ begin code
-    ${dfdx}
-//}}} end code
-        }
-
-        //- Return value as a function of scalar variable
-        inline virtual ${TemplateType} d2fdx2(const scalar x, const label li) const
-        {
-//{{{ begin code
-    ${d2fdx2}
-//}}} end code
-        }
-
-        //- Return value as a function of scalar variable
-        inline virtual ${TemplateType} d3fdx3(const scalar x, const label li) const
-        {
-//{{{ begin code
-    ${d3fdx3}
+    ${dfdx_code}
 //}}} end code
         }
 };

@@ -1,0 +1,3 @@
+blastEquation.C
+
+EXE = $(BLAST_APPBIN)/blastEquation

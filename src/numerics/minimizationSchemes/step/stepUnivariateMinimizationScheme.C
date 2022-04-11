@@ -76,7 +76,9 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
         )
     ),
     f_(dict.lookupOrDefault<scalar>("f", 0.5))
-{}
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -113,18 +115,18 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
         }
 
         eqn_.limit(xUpper);
-        if (converged(xUpper - xLower))
+        if (convergedX(xUpper, xLower))
         {
             break;
         }
-        if (converged(yUpper - yLower))
+        if (convergedY(yUpper, yLower))
         {
             break;
         }
         printStepInformation(xUpper);
     }
 
-    converged(yUpper - yLower);
+    convergedY(yUpper, yLower);
     return printFinalInformation(xLower);
 }
 

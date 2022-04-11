@@ -100,18 +100,27 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
     DynamicList<scalar> ptsy({A.y(), P_prev.y(), P.y(), P_next.y(), B.y()});
 
     scalar delta = great;
-    stepi_ = 0;
-    while (delta > tolerance_)
+    for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         label i = findMin(ptsy);
         P = vector2D(ptsx[i], eqn_.f(ptsx[i], li));
         delta = mag(P.y() - ptsy[i]);
+
+        if (convergedX(delta))
+        {
+            break;
+        }
 
         P_prev = vector2D(ptsx[i-1], ptsy[i-1]);
         P_next = vector2D(ptsx[i+1], ptsy[i+1]);
 
         P_prev = intersection(P_prev, P);
         P_next = intersection(P, P_next);
+
+        if (convergedY(P_next.y(), P_prev.y()))
+        {
+            break;
+        }
 
         List<scalar> ptsxTmp = ptsx;
         List<scalar> ptsyTmp = ptsy;
@@ -130,12 +139,8 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
             ptsx[j+2] = ptsxTmp[j];
             ptsy[j+2] = ptsyTmp[j];
         }
-        stepi_++;
     }
-    error_ = 1.0;
-    // converged(P_next.x() - P_prev.x());
-
-
+    convergedY(P_next.y(), P_prev.y());
     return P.x();
 }
 

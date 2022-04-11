@@ -57,8 +57,8 @@ class MidPointMultivariateIntegrator
 
     virtual Type integrateFunc
     (
-        const scalarField& x0,
-        const scalarField& x1,
+        const scalarList& x0,
+        const scalarList& x1,
         const label li
     ) const;
 
@@ -101,8 +101,8 @@ public:
         //- Integrate the equation
         virtual Type integrate
         (
-            const scalarField& x0,
-            const scalarField& x1,
+            const scalarList& x0,
+            const scalarList& x1,
             const label li
         ) const;
 

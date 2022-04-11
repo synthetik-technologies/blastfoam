@@ -55,6 +55,18 @@ public:
 
     TypeNameNoDebug("multivariateEquation");
 
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        multivariateEquation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
     //- Constructors
 
         //- Null constructor
@@ -73,8 +85,32 @@ public:
     virtual ~multivariateEquation()
     {}
 
-    //- Public member functions
 
+    //- Selector
+    static autoPtr<multivariateEquation<Type>> New
+    (
+        const word& type,
+        const dictionary& dict
+    )
+    {
+        typename dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(type);
+
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown " << typeName << " type "
+                << type <<  nl << nl
+                << "Valid " << typeName << " types are:" << nl
+                << dictionaryConstructorTablePtr_->sortedToc() << nl
+                << exit(FatalError);
+        }
+
+        return cstrIter()(dict);
+    }
+
+
+    //- Public member functions
 
         //- Return the number of input variables
         virtual label nVar() const = 0;

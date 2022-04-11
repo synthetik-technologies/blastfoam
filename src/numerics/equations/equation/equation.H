@@ -81,7 +81,10 @@ public:
         {}
 
 
-    
+    //- Destructor
+    virtual ~equation()
+    {}
+
 
     //- Selector
     static autoPtr<equation<Type>> New
@@ -105,10 +108,6 @@ public:
 
         return cstrIter()(dict);
     }
-    
-    //- Destructor
-    virtual ~equation()
-    {}
 
 
     // Member Functions

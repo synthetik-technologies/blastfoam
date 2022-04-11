@@ -23,21 +23,27 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalar Foam::univariateMinimizationScheme::tolerance() const
+inline Foam::scalar Foam::univariateMinimizationScheme::xTolerance() const
 {
-    return tolerances_[0];
+    return xTolerances_[0];
 }
 
 
-inline Foam::scalar& Foam::univariateMinimizationScheme::tolerance()
+inline Foam::scalar Foam::univariateMinimizationScheme::yTolerance() const
 {
-    return tolerances_[0];
+    return yTolerances_[0];
 }
 
 
-inline Foam::scalar Foam::univariateMinimizationScheme::error() const
+inline Foam::scalar Foam::univariateMinimizationScheme::xError() const
 {
-    return errors_[0];
+    return xErrors_[0];
+}
+
+
+inline Foam::scalar Foam::univariateMinimizationScheme::yError() const
+{
+    return yErrors_[0];
 }
 
 

@@ -23,22 +23,21 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-inline Foam::scalarList& Foam::minimizationScheme::tolerances()
-{
-    return tolerances_;
-}
-
-
 inline Foam::label Foam::minimizationScheme::nSteps() const
 {
     return stepi_;
 }
 
 
-inline Foam::scalarList& Foam::minimizationScheme::errors() const
+inline Foam::scalarList& Foam::minimizationScheme::xErrors() const
 {
-    return errors_;
+    return xErrors_;
 }
 
+
+inline Foam::scalarList& Foam::minimizationScheme::yErrors() const
+{
+    return yErrors_;
+}
 
 // ************************************************************************* //

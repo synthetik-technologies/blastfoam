@@ -67,7 +67,9 @@ Foam::bisectionUnivariateMinimizationScheme::bisectionUnivariateMinimizationSche
 )
 :
     univariateMinimizationScheme(eqn, dict)
-{}
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -88,7 +90,7 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xHigh - xLow))
+        if (convergedX(xHigh - xLow))
         {
             break;
         }
@@ -106,9 +108,14 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
         xMean = (xLow + xHigh)*0.5;
 
+        if (convergedX(yHigh, yLow))
+        {
+            break;
+        }
+
         printStepInformation(xMean);
     }
-    converged(yHigh - yLow);
+    convergedY(yHigh, yLow);
 
     return printFinalInformation(xMean);
 }

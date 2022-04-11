@@ -60,14 +60,6 @@ class gradientDescentMinimizationScheme
 :
     public minimizationScheme
 {
-
-    //- Name of the error
-    virtual word errorName() const
-    {
-        return "delta";
-    }
-
-
 public:
 
     //- Runtime type information
@@ -92,9 +84,9 @@ public:
         //- Solve the root
         virtual tmp<scalarField> minimize
         (
-            const scalarField& x0,
-            const scalarField& x1,
-            const scalarField& x2,
+            const scalarList& x0,
+            const scalarList& x1,
+            const scalarList& x2,
             const label li
         ) const;
 

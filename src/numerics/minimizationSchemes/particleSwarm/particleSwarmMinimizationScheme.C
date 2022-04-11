@@ -69,9 +69,9 @@ Foam::particleSwarmMinimizationScheme::particleSwarmMinimizationScheme
 Foam::tmp<Foam::scalarField>
 Foam::particleSwarmMinimizationScheme::minimize
 (
-    const scalarField& x0,
-    const scalarField& xLow,
-    const scalarField& xHigh,
+    const scalarList& x0,
+    const scalarList& xLow,
+    const scalarList& xHigh,
     const label li
 ) const
 {
@@ -122,7 +122,7 @@ Foam::particleSwarmMinimizationScheme::minimize
     scalarField r2(n);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (converged(xStd))
+        if (convergedX(xStd))
         {
             break;
         }
@@ -174,7 +174,7 @@ Foam::particleSwarmMinimizationScheme::minimize
         printStepInformation(xMean);
     }
     xMean = xBest;
-    printFinalInformation();
+    printFinalInformation(xMean);
     return txMean;
 }
 
