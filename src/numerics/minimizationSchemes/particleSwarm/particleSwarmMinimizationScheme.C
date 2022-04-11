@@ -113,16 +113,12 @@ Foam::particleSwarmMinimizationScheme::minimize
     }
     xVar /= scalar(np);
     scalarField xStd(sqrt(xVar));
-    if (normalize_)
-    {
-        xStd /= stabilise(xMean, small);
-    }
 
     scalarField r1(n);
     scalarField r2(n);
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedX(xStd))
+        if (convergedXScale(xStd, xBest))
         {
             break;
         }
@@ -166,10 +162,6 @@ Foam::particleSwarmMinimizationScheme::minimize
         }
         xVar /= scalar(np);
         xStd = sqrt(xVar);
-        if (normalize_)
-        {
-            xStd /= stabilise(xMean, small);
-        }
 
         printStepInformation(xMean);
     }

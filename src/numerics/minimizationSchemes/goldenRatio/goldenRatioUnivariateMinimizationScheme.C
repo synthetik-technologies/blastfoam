@@ -93,7 +93,7 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
     scalar a = min(x1, x2);
     scalar b = max(x1, x2);
     scalar h = b - a;
-    if (convergedX(h))
+    if (convergedX(h, x))
     {
         return x1;
     }
@@ -125,7 +125,7 @@ Foam::scalar Foam::goldenRatioUnivariateMinimizationScheme::minimize
             d = a + invPhi*h;
             yd = eqn_.fx(d, li);
         }
-        convergedX(b - a);
+        convergedX(b, a);
         printStepInformation(0.5*(a + b));
     }
 

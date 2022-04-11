@@ -65,13 +65,13 @@ protected:
         label nSample_;
 
         //- Is the solution converged in x
-        bool convergedX(const scalar error) const;
+        bool convergedXScale(const scalar error, const scalar s) const;
 
         //- Is the solution converged in x
         bool convergedX(const scalar x1, const scalar x2) const;
 
         //- Is the solution converged in y
-        bool convergedY(const scalar error) const;
+        bool convergedYScale(const scalar error, const scalar s) const;
 
         //- Is the solution converged in y
         bool convergedY(const scalar y1, const scalar y2) const;

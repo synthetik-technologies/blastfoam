@@ -483,6 +483,7 @@ int main(int argc, char *argv[])
 {
     argList::addOption("func", "Function dictionary");
     argList::addBoolOption("clean", "Remove dynamicCode library");
+    argList::addBoolOption("noClean", "No not remove dynamicCode library");
     argList::addOption("name", "Function name");
 
     argList::addBoolOption("multi", "Use multiple inputs for function");
@@ -526,6 +527,8 @@ int main(int argc, char *argv[])
     label nDerivatives = -1;
     bool multi = false;
     List<scalar> P;
+
+    bool clean = args.optionFound("clean");
 
     if (args.optionFound("func"))
     {
@@ -583,6 +586,7 @@ int main(int argc, char *argv[])
     }
     else
     {
+        clean = !args.optionFound("noClean") || clean;
         funcDictPtr.set(new dictionary());
         multi = args.optionFound("multi");
         if (multi)

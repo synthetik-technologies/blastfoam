@@ -122,7 +122,7 @@ Foam::NelderMeadMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedX(xStd))
+        if (convergedXScale(xStd, xMean))
         {
             break;
         }
@@ -245,10 +245,6 @@ Foam::NelderMeadMinimizationScheme::minimize
         mean(points, xMean);
         variance(points, xMean, xVar);
         xStd = sqrt(xVar);
-        if (normalize_)
-        {
-            xStd /= stabilise(xMean, small);
-        }
 
         printStepInformation(xMean);
     }

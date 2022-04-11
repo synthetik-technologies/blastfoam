@@ -93,7 +93,7 @@ Foam::gradientDescentMinimizationScheme::minimize
 
         eqns_.limit(xNew);
 
-        if (convergedX(xNew - xOld))
+        if (convergedXScale(xNew - xOld, xNew))
         {
             break;
         }

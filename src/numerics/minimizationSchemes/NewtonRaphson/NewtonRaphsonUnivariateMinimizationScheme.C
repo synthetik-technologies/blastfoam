@@ -71,7 +71,7 @@ Foam::scalar Foam::NewtonRaphsonUnivariateMinimizationScheme::minimize
           - eqn_.dfdx(xOld, li)/stabilise(eqn_.d2fdx2(xOld, li), small);
 
         eqn_.limit(xNew);
-        if (convergedX(xNew - xOld))
+        if (convergedX(xNew, xOld))
         {
             break;
         }

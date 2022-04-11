@@ -37,13 +37,15 @@ namespace Foam
 
 // * * * * * * * * * * * * Protected Member Functions  * * * * * * * * * * * //
 
-bool Foam::univariateMinimizationScheme::convergedX
+bool Foam::univariateMinimizationScheme::convergedXScale
 (
-    const scalar error
+    const scalar error,
+    const scalar s
 ) const
 {
     xErrors_[0] = mag(error);
-    return xErrors_[0] < xTolerances_[0];
+    xRelErrors_[0] = xErrors_[0]/max(mag(s), small);
+    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
 }
 
 
@@ -54,21 +56,21 @@ bool Foam::univariateMinimizationScheme::convergedX
 ) const
 {
     xErrors_[0] = mag(x2 - x1);
-    if (normalize_)
-    {
-        xErrors_[0] /= stabilise(min(mag(x1), mag(x2)), small);
-    }
-    return xErrors_[0] < xTolerances_[0];
+    xRelErrors_[0] = xErrors_[0]/stabilise(min(mag(x1), mag(x2)), small);
+    return converged(xErrors_, xRelErrors_, xTolerances_, xRelTolerances_);
 }
 
 
-bool Foam::univariateMinimizationScheme::convergedY
+
+bool Foam::univariateMinimizationScheme::convergedYScale
 (
-    const scalar error
+    const scalar error,
+    const scalar s
 ) const
 {
     yErrors_[0] = mag(error);
-    return yErrors_[0] < yTolerances_[0];
+    yRelErrors_[0] = yErrors_[0]/max(mag(s), small);
+    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
 }
 
 
@@ -79,22 +81,27 @@ bool Foam::univariateMinimizationScheme::convergedY
 ) const
 {
     yErrors_[0] = mag(y2 - y1);
-    if (normalize_)
-    {
-        yErrors_[0] /= stabilise(min(mag(y1), mag(y2)), small);
-    }
-    return yErrors_[0] < yTolerances_[0];
+    yRelErrors_[0] = yErrors_[0]/stabilise(min(mag(y1), mag(y2)), small);
+    return converged(yErrors_, yRelErrors_, yTolerances_, yRelTolerances_);
 }
 
 
-void Foam::univariateMinimizationScheme::printStepInformation(const scalar val) const
+void Foam::univariateMinimizationScheme::printStepInformation
+(
+    const scalar val
+) const
 {
     if (debug > 2)
     {
-        Info<< "Step " << stepi_
-            << ", xError=" << xErrors_[0]
-            << ", delta=" << yErrors_[0]
-            << ", value: " << val << nl<< endl;
+        DebugInfo<< "Step: " << stepi_ << ":" << nl
+            << "    Error (abs/rel): "
+            << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+        if (checkY_)
+        {
+            Info<< "    Delta (abs/rel): "
+                << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+        }
+        Info<< "    Minimum: " << val << endl;
     }
 }
 
@@ -107,44 +114,35 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
         return val;
     }
     bool converged =
-        (stepi_ < maxSteps_)
-     && (
-            xErrors_[0] - xTolerances_[0] <= 0.0
-         || yErrors_[0] - yTolerances_[0] <= 0.0
-        );
-    if (converged && debug > 1)
+        (xErrors_[0] - xTolerances_[0] <= 0.0)
+     || (xRelErrors_[0] - xRelTolerances_[0] <= 0.0)
+     || (yErrors_[0] - yTolerances_[0] <= 0.0)
+     || (yRelErrors_[0] - yRelTolerances_[0] <= 0.0);
+
+    if (converged)
     {
-        Info<< "Converged in " << stepi_ << " iterations" << nl
-            << "    Final error: " << xErrors_[0] << endl;
-        if (checkY_)
-        {
-            Info<< "    Final delta: " << yErrors_[0] << endl;
-        }
-        Info<<"    Minimum=" << val << endl;
+        Info<< "Converged in " << stepi_ << " iterations" << endl;
     }
-    else if (!converged)
+    else if (stepi_ < maxSteps_)
     {
-        if (stepi_ < maxSteps_)
-        {
-            WarningInFunction
-                << "Did not converge due to bounds"
-                << ", tried " << stepi_ << " iterations" << endl;
-            if (checkY_)
-            {
-                Info<< "    Final delta: " << yErrors_[0] << endl;
-            }
-        }
-        else
-        {
-            WarningInFunction
-                << "Did not converge in " << stepi_ << " iterations" << nl
-                << "    Final error: " << xErrors_[0] << endl;
-            if (checkY_)
-            {
-                Info<< "    Final delta: " << yErrors_[0] << endl;
-            }
-        }
+        WarningInFunction
+            << "Did not converge due to bounds, tried "
+            << stepi_ << " iterations" << endl;
     }
+    else
+    {
+        WarningInFunction
+            << "Did not converge in "
+            << stepi_ << " iterations" << endl;
+    }
+    Info<< "    Final error (abs/rel): "
+        << xErrors_[0] << ", " << xRelErrors_[0] << endl;
+    if (checkY_)
+    {
+        Info<< "    Final delta (abs/rel): "
+            << yErrors_[0] << ", " << yRelErrors_[0] << endl;
+    }
+    Info<< "    Minimum: " << val << endl;
     return val;
 }
 

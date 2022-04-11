@@ -100,7 +100,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < n; stepi_++)
     {
-        if (convergedX(b - a))
+        if (convergedX(b, a))
         {
             break;
         }

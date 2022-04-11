@@ -59,11 +59,17 @@ protected:
         //- Reference to scalarEquation
         const scalarUnivariateEquation& eqns_;
 
-        //- Convergence tolerances for x
+        //- Absolute convergence tolerances for x
         scalarField xTolerances_;
 
-        //- Convergence tolerances for y
+        //- Relative convergence tolerances for x
+        scalarField xRelTolerances_;
+
+        //- Absolute convergence tolerances for y
         scalarField yTolerances_;
+
+        //- Relative convergence tolerances for y
+        scalarField yRelTolerances_;
 
         //- The maximum number of sub-steps allowed for the integration step
         label maxSteps_;
@@ -71,11 +77,17 @@ protected:
         //- Current step number
         mutable label stepi_;
 
-        //- Current x errors
+        //- Current absolute x errors
         mutable scalarList xErrors_;
 
-        //- Current delta y errors
+        //- Current relative x errors
+        mutable scalarList xRelErrors_;
+
+        //- Current absolute delta y errors
         mutable scalarList yErrors_;
+
+        //- Current relative delta y errors
+        mutable scalarList yRelErrors_;
 
         //- Number of pre-samples in each direction
         labelList nSamples_;
@@ -123,13 +135,29 @@ protected:
         scalar inner(const scalarList& lst1, const scalarList& lst2) const;
 
         //- Is the solution converged in w.r.t x
-        bool convergedX(const scalarList& error) const;
+        bool convergedXScale
+        (
+            const scalarList& error,
+            const scalarList& s
+        ) const;
+
+        bool converged
+        (
+            const scalarList& absErrors,
+            const scalarList& relErrors,
+            const scalarList& absTols,
+            const scalarList& relTols
+        ) const;
 
         //- Is the solution converged in w.r.t x
         bool convergedX(const scalarList& x1, const scalarList& x2) const;
 
         //- Is the solution converged in w.r.t y
-        bool convergedY(const scalarList& error) const;
+        bool convergedYScale
+        (
+            const scalarList& error,
+            const scalarList& s
+        ) const;
 
         //- Is the solution converged in w.r.t y
         bool convergedY(const scalarList& y1, const scalarList& y2) const;
@@ -210,11 +238,17 @@ public:
         //- Return the step number
         inline label nSteps() const;
 
-        //- Return the x errors
+        //- Return the absolute x errors
         inline scalarList& xErrors() const;
 
-        //- Return the y errors
+        //- Return the relative x errors
+        inline scalarList& xRelErrors() const;
+
+        //- Return the absolute y errors
         inline scalarList& yErrors() const;
+
+        //- Return the relative y errors
+        inline scalarList& yRelErrors() const;
 
         //- Find the root of the equation
         virtual tmp<scalarField> solve() const;

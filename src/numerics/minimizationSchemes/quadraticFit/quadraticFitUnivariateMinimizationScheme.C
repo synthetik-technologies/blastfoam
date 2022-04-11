@@ -66,9 +66,7 @@ Foam::quadraticFitUnivariateMinimizationScheme::quadraticFitUnivariateMinimizati
 )
 :
     univariateMinimizationScheme(eqn, dict)
-{
-    checkY_ = true;
-}
+{}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -105,7 +103,7 @@ Foam::scalar Foam::quadraticFitUnivariateMinimizationScheme::minimize
                 ya*(b - c) + yb*(c - a) + yc*(a - b),
                 yTolerance()
             );
-        if (convergedX(x - b))
+        if (convergedX(x, b))
         {
             break;
         }

@@ -40,26 +40,15 @@ createNamedUnivariateEquation0
   + Foam::sqr(x[2] + 3.0)
 );
 
-createNamedEquation1
-(
-    testEqn4,
-    "f(x) = (x - 2)^2",
-    scalar,
-    -3, 3,
-    sqr(x - 2.0),
-    2.0*(x - 2.0)
-);
-
 
 int main(int argc, char *argv[])
 {
     minimizationScheme::debug = 2;
 
-    PtrList<scalarUnivariateEquation> eqns(4);
+    PtrList<scalarUnivariateEquation> eqns(3);
     eqns.set(0, new testEqn1());
     eqns.set(1, new testEqn2());
     eqns.set(2, new testEqn3());
-    eqns.set(3, new testEqn4());
 
     dictionary dict;
     dict.add("cLocal", 0.3);
@@ -79,8 +68,8 @@ int main(int argc, char *argv[])
     forAll(eqns, eqni)
     {
         const scalarUnivariateEquation& eqn = eqns[eqni];
-        Info<< nl << "Solving equations: " << nl << eqn.name()
-            << " with bounds " << eqn.lowerLimits() << ", "
+        Info<< nl << "Solving equations: " << nl << eqn.name() << nl
+            << "Bounds: " << eqn.lowerLimits() << ", "
             << eqn.upperLimits()
             << nl << endl;
 
