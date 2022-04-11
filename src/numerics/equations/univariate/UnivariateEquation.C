@@ -150,7 +150,7 @@ bool Foam::UnivariateEquation<Type>::containsRoot
         {
             #ifdef FULLDEBUG
             FatalErrorInFunction
-                << "Solution of component " << i
+                << "Solution of component " << cmpti
                 << " is not bracked in "
                 << "(" << lowerLimits()
                 << ","<< upperLimits() << ")" << endl

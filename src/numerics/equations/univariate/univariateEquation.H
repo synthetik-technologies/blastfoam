@@ -53,6 +53,8 @@ class univariateEquation
 {
 public:
 
+    TypeNameNoDebug("univariateEquation");
+
     // Constructors
 
         //- Null constructor

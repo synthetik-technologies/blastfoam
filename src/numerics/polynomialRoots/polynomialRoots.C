@@ -43,6 +43,9 @@ Foam::polynomialRoots::polynomialRoots
     for (label i = 1; i < coeffs_.size(); i++)
     {
         A(0, i-1) = -coeffs_[i]/c0;
+    }
+    for (label i = 1; i < coeffs_.size()-1; i++)
+    {
         A(i, i-1) =  1.0;
     }
     eigenSolver eig(A, false);
@@ -80,17 +83,25 @@ Foam::scalar Foam::polynomialRoots::eval
 }
 
 
-Foam::word Foam::polynomialRoots::polyName() const
+Foam::word Foam::polynomialRoots::polyName(const List<scalar>& coeffs)
 {
-    label i = coeffs_.size()-1;
+    label i = coeffs.size()-1;
     OStringStream os;
-    scalar c = coeffs_[i--];
+    scalar c = coeffs[i--];
     if (mag(c) > 0)
     {
         os << c;
     }
+    else if (i < 0)
+    {
+        return "0";
+    }
+    if (i < 0)
+    {
+        return os.str();
+    }
 
-    c = coeffs_[i--];
+    c = coeffs[i--];
     if (c > 0)
     {
         if (c == 1)
@@ -113,19 +124,24 @@ Foam::word Foam::polynomialRoots::polyName() const
            os << " - " << mag(c)<< "*x";
         }
     }
+    if (i < 0)
+    {
+        return os.str();
+    }
+
     label p = 2;
     while (i >= 0)
     {
-        c = coeffs_[i--];
+        c = coeffs[i--];
         if (c > 0)
         {
             if (c == 1)
             {
-                os << " + x^" << p++;
+                os << " + pow(x," << p++ << ")";
             }
             else
             {
-                os << " + " << c << "*x^" << p++;
+                os << " + " << c << "*pow(x," << p++ << ")";
             }
 
         }
@@ -133,15 +149,48 @@ Foam::word Foam::polynomialRoots::polyName() const
         {
             if (c == -1)
             {
-                os << " + x^" << p++;
+                os << " + pow(x," << p++ << ")";
             }
             else
             {
-            os << " - " << mag(c)<< "*x^" << p++;
+              os << " - " << mag(c)<< "*pow(x," << p++ << ")";
             }
         }
     }
     return os.str();
 }
+
+
+Foam::word Foam::polynomialRoots::polyName() const
+{
+    return polyName(coeffs_);
+}
+
+
+Foam::List<Foam::scalar> Foam::polynomialRoots::derivative
+(
+    const List<scalar>& P
+)
+{
+    if (P.size() == 1)
+    {
+        return List<scalar>(1, 0.0);
+    }
+    
+    List<scalar> Pprime(P.size() - 1);
+    label n = P.size() - 1;
+    forAll(Pprime, k)
+    {
+        Pprime[k] = P[k]*scalar(n-k);
+    }
+    return Pprime;
+}
+
+
+Foam::List<Foam::scalar> Foam::polynomialRoots::derivative() const 
+{
+    return derivative(coeffs_);
+}
+
 
 // ************************************************************************* //

@@ -197,4 +197,43 @@ Foam::tmp<Foam::scalarField> Foam::univariateRootSolver::findRoots
 }
 
 
+Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
+(
+    const scalar xLow,
+    const scalar xHigh,
+    const label li,
+    const label nSamples
+) const
+{
+    scalar dx = (xHigh - xLow)/scalar(nSamples);
+    scalar x0 = xLow;
+    scalar x1 = x0 + dx;
+    DynamicList<scalar> roots(nSamples);
+    for (label i = 0; i < nSamples; i++)
+    {
+        x0 += dx;
+        x1 += dx;
+        scalar f0 = eqn_.fx(x0, li);
+        scalar f1 = eqn_.fx(x1, li);
+        if (eqn_.containsRoot(f0, f1))
+        {
+            Info<<"yes";
+            roots.append(this->findRoot(0.5*(x0 + x1), x0, x1, li));
+        }
+        Info<<endl;
+    }
+    return move(roots);
+}
+
+
+Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
+(
+    const label li,
+    const label nSamples
+) const
+{
+    return solveAll(eqn_.lower(), eqn_.upper(), li, nSamples);
+}
+
+
 // ************************************************************************* //

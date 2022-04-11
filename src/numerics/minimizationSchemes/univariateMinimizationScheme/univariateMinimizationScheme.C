@@ -68,7 +68,9 @@ Foam::univariateMinimizationScheme::printFinalInformation(const scalar val) cons
     if (converged && debug > 1)
     {
         Info<< "Converged in " << stepi_ << " iterations" << nl
-            << "    Final " << errorName() << "=" << errors_[0] << endl;
+            << "    Final " << errorName() << "=" << errors_[0] << nl
+            << "    Minimum=" << val 
+            << endl;
     }
     else if (!converged)
     {

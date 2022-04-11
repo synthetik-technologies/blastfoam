@@ -53,6 +53,8 @@ class multivariateEquation
 {
 public:
 
+    TypeNameNoDebug("multivariateEquation");
+
     //- Constructors
 
         //- Null constructor

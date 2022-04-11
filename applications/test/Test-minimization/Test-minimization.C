@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
     dict.add("vWeight", 0.8);
     dict.add("nParticles", 1000);
 
-    dict.add("maxSteps", 100);
+    dict.add("maxSteps", 200);
 
 
     Info<< nl << "Univariate minimization" << endl;

@@ -92,6 +92,9 @@ public:
         }
 
         //- Return the function as a word
+        static word polyName(const List<scalar>& coeffs);
+
+        //- Return the function as a word
         word polyName() const;
 
         //- Evaluate the polynomial
@@ -99,6 +102,12 @@ public:
 
         //- Evaluate the polynomial
         scalar eval(const scalar x) const;
+
+        //- Evaluate the polynomial
+        static List<scalar> derivative(const List<scalar>& coeffs);
+
+        //- Evaluate the polynomial
+        List<scalar> derivative() const;
 
         //- Return real parts of the roots
         const List<scalar>& rootsRe() const

@@ -229,6 +229,22 @@ public:
             const scalar xHigh,
             const label li
         ) const = 0;
+
+        //- Find all the root of the equation between xHigh and xLow
+        virtual List<scalar> solveAll
+        (
+            const scalar xLow,
+            const scalar xHigh,
+            const label li,
+            const label nSamples = 100
+        ) const;
+
+        //- Find all the root of the equation between xHigh and xLow
+        virtual List<scalar> solveAll
+        (
+            const label li,
+            const label nSamples = 100
+        ) const;
 };
 
 

@@ -135,7 +135,7 @@ bool Foam::Equation<Type>::containsRoot
         )
         {
             #ifdef FULLDEBUG
-            FatalErrorInFunction
+            WarningInFunction
                 << "Solution is not bracked:" << nl
                 << "limits: (" << lower() << ","<< upper() << ")" << endl
                 << "f(x0)=" << y0 << ", f(x1)=" << y1 << endl

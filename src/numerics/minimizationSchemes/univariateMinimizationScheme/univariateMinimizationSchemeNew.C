@@ -39,8 +39,6 @@ Foam::autoPtr<Foam::univariateMinimizationScheme> Foam::univariateMinimizationSc
         << "Selecting root solver "
         << univariateMinimizationSchemeTypeName << endl;
 
-    DebugInfo<< "    detected " << nDeriv << " implemented derivatives" << endl;
-
     if (nDeriv <= 0)
     {
         dictionaryZeroConstructorTable::iterator cstrIter =

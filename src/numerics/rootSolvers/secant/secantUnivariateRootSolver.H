@@ -46,7 +46,7 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class secantUnivariateRootSolver Declaration
+                 Class secantUnivariateRootSolver Declaration
 \*---------------------------------------------------------------------------*/
 
 class secantUnivariateRootSolver

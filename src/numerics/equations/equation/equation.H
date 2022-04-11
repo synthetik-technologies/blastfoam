@@ -34,7 +34,7 @@ Description
 #define equation_H
 
 #include "univariateEquation.H"
-
+#include "runTimeSelectionTables.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -52,6 +52,20 @@ class equation
 {
 public:
 
+    TypeNameNoDebug("equation");
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        equation,
+        dictionary,
+        (
+            const dictionary& dict
+        ),
+        (dict)
+    );
+
     // Constructors
 
         //- Construct with limits
@@ -67,6 +81,31 @@ public:
         {}
 
 
+    
+
+    //- Selector
+    static autoPtr<equation<Type>> New
+    (
+        const word& type,
+        const dictionary& dict
+    )
+    {
+        typename dictionaryConstructorTable::iterator cstrIter =
+            dictionaryConstructorTablePtr_->find(type);
+
+        if (cstrIter == dictionaryConstructorTablePtr_->end())
+        {
+            FatalErrorInFunction
+                << "Unknown " << typeName << " type "
+                << type <<  nl << nl
+                << "Valid " << typeName << " types are:" << nl
+                << dictionaryConstructorTablePtr_->sortedToc() << nl
+                << exit(FatalError);
+        }
+
+        return cstrIter()(dict);
+    }
+    
     //- Destructor
     virtual ~equation()
     {}
