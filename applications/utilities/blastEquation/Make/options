@@ -1,5 +1,4 @@
 EXE_INC = \
-    -DFULLDEBUG -g -O0 \
     -I$(BLAST_DIR)/src/numerics/lnInclude
 
 EXE_LIBS = \
