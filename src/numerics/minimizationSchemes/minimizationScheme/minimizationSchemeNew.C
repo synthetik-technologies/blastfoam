@@ -36,7 +36,7 @@ Foam::minimizationScheme::New
 )
 {
     word minimizationSchemeType(dict.lookup("solver"));
-    DebugInfo
+    Info
         << "Selecting minimization scheme: " << minimizationSchemeType << endl;
     if (isA<scalarEquation>(eqn))
     {

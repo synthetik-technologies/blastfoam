@@ -18,7 +18,6 @@ FoamFile
 // faces.
 internalFacesOnly true;
 
-noFields a;
 // Baffles to create.
 baffles
 {

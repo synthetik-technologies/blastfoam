@@ -95,28 +95,6 @@ public:
             const label li,
             List<Type>& dfdx
         ) const = 0;
-
-        //- Return the function value
-        virtual void d2fdX2
-        (
-            const scalarList& x,
-            const label li,
-            List<Type>& d2dfx2
-        ) const
-        {
-            NotImplemented;
-        }
-
-        //- Return the function value
-        virtual void d3fdX3
-        (
-            const scalarList& x,
-            const label li,
-            List<Type>& d3dfx3
-        ) const
-        {
-            NotImplemented;
-        }
 };
 
 

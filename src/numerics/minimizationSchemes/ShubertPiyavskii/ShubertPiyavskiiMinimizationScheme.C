@@ -40,19 +40,19 @@ namespace Foam
     );
     addToRunTimeSelectionTable
     (
-        minimizationScheme,
+        univariateMinimizationScheme,
         ShubertPiyavskiiMinimizationScheme,
         dictionaryZero
     );
     addToRunTimeSelectionTable
     (
-        minimizationScheme,
+        univariateMinimizationScheme,
         ShubertPiyavskiiMinimizationScheme,
         dictionaryOne
     );
     addToRunTimeSelectionTable
     (
-        minimizationScheme,
+        univariateMinimizationScheme,
         ShubertPiyavskiiMinimizationScheme,
         dictionaryTwo
     );
@@ -68,6 +68,7 @@ Foam::vector2D Foam::ShubertPiyavskiiMinimizationScheme::intersection
     return vector2D(A.x() + t, A.y() - t*l_);
 }
 
+
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
 Foam::ShubertPiyavskiiMinimizationScheme::ShubertPiyavskiiMinimizationScheme
@@ -76,14 +77,23 @@ Foam::ShubertPiyavskiiMinimizationScheme::ShubertPiyavskiiMinimizationScheme
     const dictionary& dict
 )
 :
-    minimizationScheme(eqn, dict),
-    l_(dict.lookupOrDefault<scalar>("l", (eqn.upper() - eqn.lower())/2.0))
-{}
+    univariateMinimizationScheme(eqn, dict),
+    l_
+    (
+        dict.lookupOrDefault<scalar>
+        (
+            "l",
+            (eqn_.upper() - eqn_.lower())/2.0
+        )
+    )
+{
+    checkY_ = true;
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
+Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::minimize
 (
     const scalar x,
     const scalar x1,
@@ -91,9 +101,9 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
     const label li
 ) const
 {
-    vector2D A(x1, eqn_.f(x1, li));
-    vector2D B(x2, eqn_.f(x2, li));
-    vector2D P(x, eqn_.f(x, li));
+    vector2D A(x1, eqn_.fx(x1, li));
+    vector2D B(x2, eqn_.fx(x2, li));
+    vector2D P(x, eqn_.fx(x, li));
     vector2D P_prev(intersection(A, P));
     vector2D P_next(intersection(P, B));
     DynamicList<scalar> ptsx({A.x(), P_prev.x(), P.x(), P_next.x(), B.x()});
@@ -103,13 +113,8 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         label i = findMin(ptsy);
-        P = vector2D(ptsx[i], eqn_.f(ptsx[i], li));
+        P = vector2D(ptsx[i], eqn_.fx(ptsx[i], li));
         delta = mag(P.y() - ptsy[i]);
-
-        if (convergedX(delta))
-        {
-            break;
-        }
 
         P_prev = vector2D(ptsx[i-1], ptsy[i-1]);
         P_next = vector2D(ptsx[i+1], ptsy[i+1]);
@@ -117,7 +122,11 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
         P_prev = intersection(P_prev, P);
         P_next = intersection(P, P_next);
 
-        if (convergedY(P_next.y(), P_prev.y()))
+        if
+        (
+            convergedX(P_next.x(), P_prev.x())
+         && convergedY(P_next.y(), P_prev.y())
+        )
         {
             break;
         }
@@ -139,9 +148,10 @@ Foam::scalar Foam::ShubertPiyavskiiMinimizationScheme::solve
             ptsx[j+2] = ptsxTmp[j];
             ptsy[j+2] = ptsyTmp[j];
         }
+        printStepInformation(P.x());
     }
-    convergedY(P_next.y(), P_prev.y());
-    return P.x();
+
+    return printFinalInformation(P.x());
 }
 
 // ************************************************************************* //

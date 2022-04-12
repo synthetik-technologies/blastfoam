@@ -77,23 +77,22 @@ Foam::gradientDescentMinimizationScheme::minimize
     eqns_.dfdX(x0, li, grad);
     scalarField gradOld(grad);
     scalar alpha;
-
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         xOld = xNew;
-         if (stepi_ <= 1)
-         {
-            alpha = lineSearch(xOld, grad, li, fx);
-         }
-         else
-         {
-             alpha = lineSearch(xOld, grad, gradOld, li, fx);
-         }
+        if (stepi_ <= 1)
+        {
+        alpha = lineSearch(xOld, grad, li, fx);
+        }
+        else
+        {
+            alpha = lineSearch(xOld, grad, gradOld, li, fx);
+        }
         xNew = xOld - alpha*grad;
 
         eqns_.limit(xNew);
 
-        if (convergedXScale(xNew - xOld, xNew))
+        if (convergedXScale(xNew, xOld))
         {
             break;
         }

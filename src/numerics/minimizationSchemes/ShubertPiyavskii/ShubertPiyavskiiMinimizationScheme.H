@@ -35,7 +35,7 @@ SourceFiles
 #ifndef ShubertPiyavskiiMinimizationScheme_H
 #define ShubertPiyavskiiMinimizationScheme_H
 
-#include "minimizationScheme.H"
+#include "univariateMinimizationScheme.H"
 #include "vector2D.H"
 #include "typeInfo.H"
 #include "autoPtr.H"
@@ -51,7 +51,7 @@ namespace Foam
 
 class ShubertPiyavskiiMinimizationScheme
 :
-    public minimizationScheme
+    public univariateMinimizationScheme
 {
 // Private data
 
@@ -60,6 +60,8 @@ class ShubertPiyavskiiMinimizationScheme
 
     //- Return intersection of two lines
     vector2D intersection(const vector2D&, const vector2D&) const;
+
+
 public:
 
     //- Runtime type information
@@ -85,9 +87,8 @@ public:
 
     // Member Functions
 
-        //- Solve the root
-        using minimizationScheme::solve;
-        virtual scalar solve
+        //- Minimize the function
+        virtual scalar minimize
         (
             const scalar x0,
             const scalar x1,

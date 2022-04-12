@@ -108,6 +108,105 @@ EqnType getEqnType(const dictionary& dict)
     return getEqnType(dict.lookup<verbatimString>("fx_code"));
 }
 
+
+label calcNVar(const string& fxStr)
+{
+    IStringStream is(fxStr);
+    label maxI = -1;
+    while (is.good())
+    {
+        char t(readChar(is));
+        if (t == token::BEGIN_SQR)
+        {
+            label i(readLabel(is));
+            maxI = max(i, maxI);
+        }
+    }
+    return maxI + 1;
+}
+
+word readXs(Istream& is)
+{
+    OStringStream os;
+    word str;
+    while (is.good())
+    {
+        token t(is);
+        if (t.good())
+        {
+            os << t << token::SPACE;
+        }
+    }
+    return os.str();
+}
+
+
+List<scalar> readSingleX(Istream& is)
+{
+    DynamicList<scalar> xs;
+    token t(is);
+    while (is.good())
+    {
+        is >> t;
+        if (t.isNumber())
+        {
+            xs.append(t.number());
+        }
+    }
+    return move(xs);
+}
+
+
+List<scalarList> readMultiX(Istream& is)
+{
+    DynamicList<scalarList> xs;
+    DynamicList<scalar> x;
+    token t(is); // read first (
+    bool inList = false;
+
+    is >> t;
+    // Check for multiple inputs
+    if (t.isPunctuation())
+    {
+        if (t.pToken() == token::BEGIN_LIST)
+        {
+            inList = true;
+        }
+    }
+    else
+    {
+        inList = true;
+        is.putBack(t);
+    }
+    while (is.good())
+    {
+        is >> t;
+
+        if (t.isPunctuation())
+        {
+            if (t.pToken() == token::BEGIN_LIST)
+            {
+                inList = true;
+            }
+            else if (t.pToken() == token::END_LIST && inList)
+            {
+                inList = false;
+                xs.append(x);
+                x.clear();
+            }
+        }
+        else if (t.isNumber())
+        {
+            if (inList)
+            {
+                x.append(t.number());
+            }
+        }
+    }
+    return move(xs);
+}
+
+
 void setEquationFuncDict
 (
     const argList& args,
@@ -237,56 +336,51 @@ void setEquationSolverDict
     if (args.optionFound("eval"))
     {
         dictionary evaluationDict;
-        if (args.optionFound("x"))
-        {
-            evaluationDict.set("x", args.optionRead<scalar>("x"));
-        }
-        if (args.optionFound("xs"))
-        {
-            evaluationDict.set("xs", args.optionRead<scalarList>("xs"));
-        }
-
+        evaluationDict.set("x", readXs((args.optionLookup("eval")())));
         dict.set("evaluationCoeffs", evaluationDict);
         dict.set("evaluate", true);
     }
 
     if (args.optionFound("findRoots") || args.optionFound("findAllRoots"))
     {
-        if (!funcDict.found("P"))
+        dictionary rootsDict;
+        rootsDict.set
+        (
+            "solver",
+            args.optionLookupOrDefault<word>
+            (
+                "rootSolver",
+                (nDerivatives > 0 ? "NewtonRaphson" : "secant")
+            )
+        );
+        if (args.optionFound("findAllRoots"))
         {
-            dictionary rootsDict;
+            rootsDict.set("findAllRoots", true);
             Pair<scalar> rootBounds
             (
-                args.optionRead<Pair<scalar>>("rootBounds")
+                args.optionRead<Pair<scalar>>("findAllRoots")
+            );
+            rootsDict.set("bounds", rootBounds);
+        }
+        else
+        {
+            Pair<scalar> rootBounds
+            (
+                args.optionRead<Pair<scalar>>("findRoots")
             );
             rootsDict.set("bounds", rootBounds);
             rootsDict.set
             (
-                "solver",
-                args.optionLookupOrDefault<word>
-                (
-                    "rootSolver",
-                    (nDerivatives > 0 ? "NewtonRaphson" : "secant")
-                )
+                "x0",
+                0.5*(rootBounds.first() + rootBounds.second())
             );
-            if (args.optionFound("findAllRoots"))
-            {
-                rootsDict.set("findAllRoots", true);
-            }
-            else
-            {
-                rootsDict.set
-                (
-                    "x0",
-                    args.optionLookupOrDefault<scalar>
-                    (
-                        "x",
-                        0.5*(rootBounds.first() + rootBounds.second())
-                    )
-                );
-            }
-            dict.set("rootCoeffs", rootsDict);
         }
+        dict.set("rootCoeffs", rootsDict);
+        dict.set("findRoots", true);
+    }
+
+    if (args.optionFound("findPolyRoots") && funcDict.found("P"))
+    {
         dict.set("findRoots", true);
     }
 
@@ -296,7 +390,7 @@ void setEquationSolverDict
         integrationDict.set
         (
             "bounds",
-            args.optionRead<Pair<scalar>>("integrationBounds")
+            args.optionRead<Pair<scalar>>("integrate")
         );
         integrationDict.set
         (
@@ -317,6 +411,17 @@ void setEquationSolverDict
     {
         dictionary minimizationDict;
 
+        List<scalar> xs(args.optionRead<List<scalar>>("minimize"));
+        minimizationDict.set
+        (
+            "bounds",
+            Pair<scalar>(xs[0], xs[1])
+        );
+        if (xs.size() > 2)
+        {
+            minimizationDict.set("x0", xs[2]);
+        }
+
         minimizationDict.set
         (
             "solver",
@@ -326,7 +431,6 @@ void setEquationSolverDict
                 "bisection"
             )
         );
-        dict.set("x0", args.optionRead<scalar>("x"));
 
         dict.set("minimizationCoeffs", minimizationDict);
         dict.set("minimize", true);
@@ -334,6 +438,52 @@ void setEquationSolverDict
 }
 
 
+string splitEquations(const word& name, Istream& is)
+{
+    DynamicList<string> strs;
+    autoPtr<OStringStream> os;
+    token t;
+
+    while (is.good())
+    {
+        if (!os.valid())
+        {
+            os.set(new OStringStream());
+            os() << name << "[" << strs.size() << "] = ";
+        }
+        is >> t;
+        if (t.good())
+        {
+            if (t.isPunctuation())
+            {
+                if (t.pToken() == token::END_STATEMENT)
+                {
+                    os() << t;
+                    strs.append(os->str());
+                    os.clear();
+                    continue;
+                }
+            }
+            os() << t << token::SPACE;
+        }
+    }
+    if (os.valid())
+    {
+        if (os().str().size())
+        {
+            os() << token::END_STATEMENT;
+            strs.append(os->str());
+        }
+    }
+
+    string str;
+    forAll(strs, i)
+    {
+        str += strs[i];
+    }
+    return str;
+
+}
 void setUnivariateFuncDict
 (
     const argList& args,
@@ -342,16 +492,13 @@ void setUnivariateFuncDict
 {
     dict.set("fx_code", "return " + args.optionRead<string>("fx") +";");
     dict.set("eqnString", args.optionRead<string>("fx"));
-    if
-    (
-        args.optionFound("dfdx")
-     || args.optionFound("d2fdx2")
-     || args.optionFound("d3fdx3")
-    )
+    if (args.optionFound("dfdx"))
     {
-        WarningInFunction
-            << "Gradients of functions with multiple inputs must be" << nl
-            << "specified in a dictionary with the \"func\" option" << endl;
+        dict.set
+        (
+            "dfdx_code",
+            splitEquations("dfdx", (args.optionLookup("dfdx"))())
+        );
     }
 
     dict.set("name", string(args.optionLookupOrDefault<word>("name", "f")));
@@ -365,7 +512,7 @@ void setUnivariateFuncDict
     }
     else
     {
-        nVar = args.optionRead<label>("nVar");
+        nVar = calcNVar(args.optionRead<string>("fx"));
         bounds[0].setSize(nVar, -great);
         bounds[1].setSize(nVar, great);
     }
@@ -378,7 +525,6 @@ void setUnivariateFuncDict
 
 label nUnivariateEquationDerivatives(dictionary& dict)
 {
-    label nDerivatives = 0;
     if (!dict.found("dfdx_code"))
     {
         dict.set
@@ -386,36 +532,8 @@ label nUnivariateEquationDerivatives(dictionary& dict)
             "dfdx_code",
             string("UnivariateEquation<scalar>::dfdX(x, li, dfdx);")
         );
-        if (nDerivatives == 0)
-        {
-            nDerivatives++;
-        }
     }
-    if (!dict.found("d2fd2_code"))
-    {
-        dict.set
-        (
-            "d2fdx2_code",
-            string("UnivariateEquation<scalar>::d2fdX2(x, li, d2fdx2);")
-        );
-        if (nDerivatives == 1)
-        {
-            nDerivatives++;
-        }
-    }
-    if (!dict.found("d3fdx3_code"))
-    {
-        dict.set
-        (
-            "d3fdx3_code",
-            string("UnivariateEquation<scalar>::d3fdX3(x, li, d3fdx3);")
-        );
-        if (nDerivatives == 2)
-        {
-            nDerivatives++;
-        }
-    }
-    return nDerivatives;
+    return 1;
 }
 
 
@@ -430,15 +548,7 @@ void setUnivariateSolverDict
     if (args.optionFound("eval"))
     {
         dictionary evaluationDict;
-        if (args.optionFound("x"))
-        {
-            evaluationDict.set("x", args.optionRead<scalarList>("x"));
-        }
-        if (args.optionFound("xs"))
-        {
-            evaluationDict.set("xs", args.optionRead<List<scalarList>>("xs"));
-        }
-
+        evaluationDict.set("x", readXs((args.optionLookup("eval"))()));
         dict.set("evaluationCoeffs", evaluationDict);
         dict.set("evaluate", true);
     }
@@ -449,7 +559,7 @@ void setUnivariateSolverDict
         integrationDict.set
         (
             "bounds",
-            args.optionRead<Pair<scalarList>>("integrationBounds")
+            args.optionRead<Pair<scalarList>>("integrate")
         );
         integrationDict.set
         (
@@ -473,6 +583,16 @@ void setUnivariateSolverDict
     if (args.optionFound("minimize"))
     {
         dictionary minimizationDict;
+        List<scalarList> xs(args.optionRead<List<scalarList>>("minimize"));
+        minimizationDict.set
+        (
+            "bounds",
+            Pair<scalarList>(xs[0], xs[1])
+        );
+        if (xs.size() > 2)
+        {
+            minimizationDict.set("x0", xs[2]);
+        }
 
         minimizationDict.set
         (
@@ -480,11 +600,9 @@ void setUnivariateSolverDict
             args.optionLookupOrDefault<word>
             (
                 "minimizer",
-                "NelderMead"
+                "gradientDescent"
             )
         );
-        dict.set("x0", args.optionRead<scalarList>("x"));
-
         dict.set("minimizationCoeffs", minimizationDict);
         dict.set("minimize", true);
     }
@@ -501,39 +619,33 @@ using namespace Foam;
 int main(int argc, char *argv[])
 {
     argList::addOption("func", "Function dictionary");
+    argList::addOption("dict", "Operations dictionary");
+
     argList::addBoolOption("clean", "Remove dynamicCode library");
     argList::addBoolOption("noClean", "No not remove dynamicCode library");
     argList::addOption("name", "Function name");
 
-    argList::addBoolOption("time", "Construct time");
-
-    argList::addOption("nVar", "numberOfVariables");
-
-    argList::addOption("x", "Evaluation point");
     argList::addOption("fx", "Function");
     argList::addOption("dfdx", "Derivative function");
     argList::addOption("d2fdx2", "Second derivative function");
     argList::addOption("d3fdx3", "Third derivative function");
     argList::addOption("P", "Polynomial coeffs");
-    argList::addOption("bounds", "bounds");
 
-    argList::addBoolOption("eval", "Evaluate the function");
-    argList::addOption("x", "Value to evaluate at");
-    argList::addOption("xs", "Values to evaluate at");
+    argList::addOption("eval", "Evaluate the function at the given values");
 
-    argList::addBoolOption("findRoots", "Find nearest root");
-    argList::addBoolOption("findAllRoots", "Find all roots");
+    argList::addOption("findRoots", "Find nearest root");
+    argList::addOption("findAllRoots", "Find all roots");
     argList::addOption("rootSolver", "Root solver type");
-    argList::addOption("rootBounds", "Bounds of the roots");
+    argList::addBoolOption("findPolyRoots", "Find roots of a polynomial");
 
-    argList::addBoolOption("minimize", "Find function minimum");
+    argList::addOption("minimize", "Find function minimum");
     argList::addOption("minimizer", "Minimization scheme");
 
-    argList::addBoolOption("integrate", "Integrate function");
+    argList::addOption("integrate", "Integrate function");
     argList::addOption("integrator", "Integration scheme");
-    argList::addOption("integrationBounds", "Bounds of integration");
 
-    #include "addDictOption.H"
+    argList::addBoolOption("time", "Construct time");
+
     #include "setRootCase.H"
 
     autoPtr<Time> runTimePtr;
@@ -633,6 +745,7 @@ int main(int argc, char *argv[])
     {
         nDerivatives = nUnivariateEquationDerivatives(funcDictPtr());
     }
+
     if (!funcDictPtr->found("nDerivatives"))
     {
         funcDictPtr->set("nDerivatives", nDerivatives);
@@ -699,31 +812,22 @@ int main(int argc, char *argv[])
                 << "Evaluating function" << nl
                 << "************************************" << endl;
 
-            bool evaluated = false;
-            if (evaluationDict.found("x"))
+            List<scalarList> xs
+            (
+                readMultiX(evaluationDict.lookup("x"))
+            );
+            forAll(xs, i)
             {
-                scalarList x(evaluationDict.lookup("x"));
-                scalarList dfdx(x.size());
-                Info<<"f(" << print(x) << ") = " << eqn.fX(x, 0) << endl;
-                eqn.dfdX(x, 0, dfdx);
-                evaluated = true;
-            }
-            if (dict.found("xs"))
-            {
-                List<scalarList> xs(evaluationDict.lookup("xs"));
-                forAll(xs, i)
+                Info<<"f(" << print(xs[i]) << ") = "
+                    << eqn.fX(xs[i], 0) << endl;
+                if (nDerivatives > 0)
                 {
-                    Info<<"f(" << xs[i] << ") = " << eqn.fX(xs[i], 0) << endl;
+                    scalarList dfdx(xs[i].size());
+                    eqn.dfdX(xs[i], 0, dfdx);
+                    Info<<"dfdx(" << print(xs[i]) << ") = " << dfdx << endl;
                 }
-                evaluated = true;
+                Info<< endl;
             }
-            if (!evaluated)
-            {
-                WarningInFunction
-                    << "Please provide \"x\" or \"xs\" to evaluate a function"
-                    << endl;
-            }
-            Info<< endl;
         }
 
         if (dict.lookupOrDefault("integrate", false))
@@ -740,9 +844,8 @@ int main(int argc, char *argv[])
             (
                 MultivariateIntegrator<scalar>::New(eqn, integrationDict)
             );
-            Info<<"integral_{" << bounds[0] << "}^{" << bounds[1] << "}: "
+            Info<<"integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
-                << integrator->nIntervals() << " intervals"
                 << nl << endl;
         }
 
@@ -761,16 +864,29 @@ int main(int argc, char *argv[])
             (
                 minimizationScheme::New(eqn, minimizationDict)
             );
+            const scalarList lower(eqn.lowerLimits());
+            const scalarList upper(eqn.upperLimits());
+            if (minimizationDict.found("bounds"))
+            {
+                Pair<scalarList> limits(minimizationDict.lookup("bounds"));
+                eqn.setLowerLimits(limits.first());
+                eqn.setUpperLimits(limits.second());
+            }
+
             scalarList minimum
             (
-                minimizer->solve
+                minimizationDict.found("x0")
+              ? minimizer->solve
                 (
                     minimizationDict.lookup<scalarList>("x0"),
                     0
                 )
+              : minimizer->solve()
             );
+            Info<< "Minimum = " << minimum << nl << endl;
 
-            Info<< "Minimum=" << minimum << nl << endl;
+            eqn.setLowerLimits(lower);
+            eqn.setUpperLimits(upper);
         }
     }
     else if (eqnType == SINGLE)
@@ -796,28 +912,27 @@ int main(int argc, char *argv[])
                 << "Evaluating function" << nl
                 << "************************************" << endl;
 
-            bool evaluated = false;
-            if (evaluationDict.found("x"))
+            List<scalar> xs(readSingleX(evaluationDict.lookup("x")));
+            forAll(xs, i)
             {
-                scalar x = evaluationDict.lookup<scalar>("x");
-                Info<<"f(" << x << ") = " << eqn.fx(x, 0) << endl;
-                evaluated = true;
-            }
-            if (evaluationDict.found("xs"))
-            {
-                List<scalar> xs(evaluationDict.lookup<List<scalar>>("xs"));
-                forAll(xs, i)
+                Info<<"f(" << xs[i] << ") = " << eqn.fx(xs[i], 0) << endl;
+                if (nDerivatives > 0)
                 {
-                    Info<<"f(" << xs[i] << ") = " << eqn.fx(xs[i], 0) << endl;
+                    Info<<"dfdx(" << xs[i] << ") = "
+                        << eqn.dfdx(xs[i], 0) << endl;
                 }
-                evaluated = true;
+                if (nDerivatives > 1)
+                {
+                    Info<<"d2fdx2(" << xs[i] << ") = "
+                        << eqn.d2fdx2(xs[i], 0) << endl;
+                }
+                if (nDerivatives > 2)
+                {
+                    Info<<"d3fdx3(" << xs[i] << ") = "
+                        << eqn.d3fdx3(xs[i], 0) << endl;
+                }
             }
-            if (!evaluated)
-            {
-                WarningInFunction
-                    << "Please provide \"x\" or \"xs\" to evaluate a function"
-                    << endl;
-            }
+
             Info<< endl;
         }
 
@@ -829,8 +944,8 @@ int main(int argc, char *argv[])
             if (P.size())
             {
                 polynomialRoots PRoots(P);
-                Info<< "Real roots: " << PRoots.rootsRe() << nl
-                    << "Imaginary roots: " << PRoots.rootsIm() << nl
+                Info<< "Real roots = " << PRoots.rootsRe() << nl
+                    << "Imaginary roots = " << PRoots.rootsIm() << nl
                     << endl;
             }
             else
@@ -859,14 +974,17 @@ int main(int argc, char *argv[])
                             nIntervals
                         )
                     );
-                    Info<< "Roots: " << roots << nl << endl;
+                    Info<< "Roots = " << roots << nl << endl;
                 }
                 else
                 {
                     scalar x(rootsDict.lookup<scalar>("x0"));
-                    scalar root(rootSolver->solve(x, bounds[0], bounds[1], 0.0));
+                    scalar root
+                    (
+                        rootSolver->solve(x, bounds[0], bounds[1], 0.0)
+                    );
 
-                    Info<< "Root: " << root << nl << endl;
+                    Info<< "Root = " << root << nl << endl;
                 }
             }
         }
@@ -885,10 +1003,9 @@ int main(int argc, char *argv[])
             (
                 Integrator<scalar>::New(eqn, dictPtr())
             );
-            Info<<"integral_{" << bounds[0] << "}^{" << bounds[1] << "}: "
+            Info<<"integral from " << bounds[0] << " to " << bounds[1] << " = "
                 << integrator->integrate(bounds[0], bounds[1], 0) << nl
-                << integrator->nIntervals() << " intervals"
-                << nl << endl;
+                << endl;
         }
 
         if (dict.isDict("minimizationCoeffs"))
@@ -906,14 +1023,29 @@ int main(int argc, char *argv[])
             (
                 minimizationScheme::New(eqn, minimizationDict)
             );
+            const scalar lower(eqn.lower());
+            const scalar upper(eqn.upper());
+            if (minimizationDict.found("bounds"))
+            {
+                Pair<scalar> limits(minimizationDict.lookup("bounds"));
+                eqn.setLower(limits.first());
+                eqn.setUpper(limits.second());
+            }
 
-            scalar minimum =
-                minimizer->solve
+            scalar minimum
+            (
+                minimizationDict.found("x0")
+              ? minimizer->solve
                 (
                     {minimizationDict.lookup<scalar>("x0")},
                     0
-                )()[0];
-            Info<< "Minimum: " << minimum << nl << endl;
+                )()[0]
+              : minimizer->solve()()[0]
+            );
+            Info<< "Minimum = " << minimum << nl << endl;
+
+            eqn.setLower(lower);
+            eqn.setUpper(upper);
         }
     }
 

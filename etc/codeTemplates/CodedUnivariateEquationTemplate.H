@@ -104,32 +104,6 @@ public:
     ${dfdx_code}
 //}}} end code
         }
-
-        //- Return value as a function of scalar variable
-        inline virtual void d2fdX2
-        (
-            const scalarList& x,
-            const label li,
-            List<${TemplateType}>& d2fdx2
-        ) const
-        {
-//{{{ begin code
-    ${d2fdx2_code}
-//}}} end code
-        }
-
-        //- Return value as a function of scalar variable
-        inline virtual void d3fdX3
-        (
-            const scalarList& x,
-            const label li,
-            List<${TemplateType}>& d3fdx3
-        ) const
-        {
-//{{{ begin code
-    ${d3fdx3_code}
-//}}} end code
-        }
 };
 
 

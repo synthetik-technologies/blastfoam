@@ -55,6 +55,7 @@ minimizationSchemes/goldenRatio/goldenRatioUnivariateMinimizationScheme.C
 minimizationSchemes/quadraticFit/quadraticFitUnivariateMinimizationScheme.C
 minimizationSchemes/Fibonacci/FibonacciUnivariateMinimizationScheme.C
 minimizationSchemes/NewtonRaphson/NewtonRaphsonUnivariateMinimizationScheme.C
+#minimizationSchemes/ShubertPiyavskii/ShubertPiyavskiiMinimizationScheme.C
 
 
 algorithms/polygon/clipping/SutherlandHodgman.C

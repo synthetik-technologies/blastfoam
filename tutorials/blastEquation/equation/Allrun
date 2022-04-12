@@ -1,0 +1,16 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # run from this directory
+
+# -- run the calc
+# the debug flag writes each intermediate refinement set
+blastEquation \
+    -fx "sqr(x - 3) - 2" \
+    -minimize "(-5 5)"\
+    -findAllRoots "(-5 5)" \
+    -integrate "(-1 1)" > log.function
+
+blastEquation \
+    -P "(4.2 7 3.1 2)" \
+    -findPolyRoots \
+    -integrate "(-2.3 0.45)" > log.polynomial
+

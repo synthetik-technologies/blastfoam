@@ -130,28 +130,6 @@ public:
             redirectEquationPtr_->dfdX(x, li, dfdx);
         }
 
-        //- Return the function value
-        virtual void d2fdX2
-        (
-            const scalarList& x,
-            const label li,
-            List<Type>& d2fdx2
-        ) const
-        {
-            redirectEquationPtr_->d2fdX2(x, li, d2fdx2);
-        }
-
-        //- Return the function value
-        virtual void d3fdX3
-        (
-            const scalarList& x,
-            const label li,
-            List<Type>& d3fdx3
-        ) const
-        {
-            redirectEquationPtr_->d3fdX3(x, li, d3fdx3);
-        }
-
         //- Write data to dictionary stream
         using regIOobject::write;
         virtual void write(Ostream& os) const

@@ -35,8 +35,6 @@ Foam::wordList Foam::CodedUnivariateEquation<Type>::codeKeys() const
     {
         "fx_code",
         "dfdx_code",
-        "d2fdx2_code",
-        "d3fdx3_code",
         "codeInclude"
     };
 }
@@ -118,9 +116,7 @@ Foam::CodedUnivariateEquation<Type>::expandCodeDict
     (
         {
             "fx_code",
-            "dfdx_code",
-            "d2fdx2_code",
-            "d3fdx3_code"
+            "dfdx_code"
         }
     );
     dictionary& dict = const_cast<dictionary&>(cDict);
