@@ -31,8 +31,9 @@ namespace Foam
 {
     defineTypeNameAndDebug(${typeName}_${TemplateType}Equation, 0);
 
-    equation<${TemplateType}>::adddictionaryConstructorToTable<${typeName}_${TemplateType}Equation>
-        ${typeName}_${TemplateType}EquationConstructorToTable_;
+    regEquation<${TemplateType}, Equation>::
+    adddictionaryConstructorToTable<${typeName}_${TemplateType}Equation>
+        ${typeName}_${TemplateType}RegEquationConstructorToTable_;
 }
 
 
@@ -61,15 +62,13 @@ extern "C"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::${typeName}_${TemplateType}Equation::
-${typeName}_${TemplateType}Equation(const dictionary& dict)
+Foam::${typeName}_${TemplateType}Equation::${typeName}_${TemplateType}Equation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
 :
-    Equation<${TemplateType}>
-    (
-        dict.lookupOrDefault<string>("eqnString", "undefined"),
-        dict.lookup<scalar>("lowerBound"),
-        dict.lookup<scalar>("upperBound")
-    )
+    regEquation<${TemplateType}, Equation>(obr, dict)
 {
     if (${verbose:-false})
     {

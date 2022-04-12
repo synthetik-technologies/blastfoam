@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,8 @@ Class
     Foam::equation
 
 Description
-    Abstract base class an equation with a single scalar input, and any type
-    as an output.
+    Abstract base class an equation with a single input, and single output.
+    Inherits from univariate and multivariate equations
 
 \*---------------------------------------------------------------------------*/
 
@@ -52,32 +52,24 @@ class equation
 {
 public:
 
-    TypeNameNoDebug("equation");
-
-    //- Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        equation,
-        dictionary,
-        (
-            const dictionary& dict
-        ),
-        (dict)
-    );
-
     // Constructors
 
-        //- Construct with limits
+        //- Construct null
         equation()
         :
             univariateEquation<Type>()
         {}
 
-        //- Construct with limits
-        equation(const string& name)
+        //- Construct from equation string
+        equation(const string& eqnString)
         :
-            univariateEquation<Type>(name)
+            univariateEquation<Type>(eqnString)
+        {}
+
+        //- Construct from dictionary
+        equation(const dictionary& dict)
+        :
+            univariateEquation<Type>(dict)
         {}
 
 
@@ -86,50 +78,24 @@ public:
     {}
 
 
-    //- Selector
-    static autoPtr<equation<Type>> New
-    (
-        const word& type,
-        const dictionary& dict
-    )
-    {
-        typename dictionaryConstructorTable::iterator cstrIter =
-            dictionaryConstructorTablePtr_->find(type);
-
-        if (cstrIter == dictionaryConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown " << typeName << " type "
-                << type <<  nl << nl
-                << "Valid " << typeName << " types are:" << nl
-                << dictionaryConstructorTablePtr_->sortedToc() << nl
-                << exit(FatalError);
-        }
-
-        return cstrIter()(dict);
-    }
-
-
     // Member Functions
-
-        virtual label nDerivatives() const = 0;
 
         //- Return the lower limit
         virtual scalar lower() const = 0;
 
-        //- Access the lower limit
-        virtual scalar& lower() = 0;
+        //- Set the lower limit
+        virtual void setLower(const scalar) = 0;
 
         //- Return the upper limit
         virtual scalar upper() const = 0;
 
-        //- Access the upper limit
-        virtual scalar& upper() = 0;
+        //- Set the upper limit
+        virtual void setUpper(const scalar) = 0;
 
         //- Return the finite difference step size
         virtual scalar dx() const = 0;
 
-        //- Return the finite difference step size
+        //- Set the finite difference step size
         virtual void setDx(const scalar& newDx) const = 0;
 
         //- Limit the value of x to the range of the equation

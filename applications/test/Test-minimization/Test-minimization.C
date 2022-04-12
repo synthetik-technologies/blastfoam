@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     forAll(eqns, eqni)
     {
         const scalarUnivariateEquation& eqn = eqns[eqni];
-        Info<< nl << "Solving equations: " << nl << eqn.name() << nl
+        Info<< nl << "Solving equations: " << nl << eqn.eqnString() << nl
             << "Bounds: " << eqn.lowerLimits() << ", "
             << eqn.upperLimits()
             << nl << endl;

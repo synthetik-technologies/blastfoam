@@ -34,9 +34,9 @@ namespace Foam
         ${typeName}_${TemplateType}MultivariateEquation,
         0
     );
-    multivariateEquation<${TemplateType}>::
+    regEquation<${TemplateType}, MultivariateEquation>::
     adddictionaryConstructorToTable<${typeName}_${TemplateType}MultivariateEquation>
-        ${typeName}_${TemplateType}MultivariateEquationConstructorToTable_;
+        ${typeName}_${TemplateType}RegMultivariateEquationConstructorToTable_;
 }
 
 
@@ -68,16 +68,11 @@ extern "C"
 Foam::${typeName}_${TemplateType}MultivariateEquation::
 ${typeName}_${TemplateType}MultivariateEquation
 (
+    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    MultivariateEquation<${TemplateType}>
-    (
-        dict.lookupOrDefault<string>("eqnString", "undefined"),
-        dict.lookup<label>("nEquations"),
-        dict.lookup<scalarList>("lowerBounds"),
-        dict.lookup<scalarList>("upperBounds")
-    )
+    regEquation<${TemplateType}, MultivariateEquation>(obr, dict)
 {
     if (${verbose:-false})
     {

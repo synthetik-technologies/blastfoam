@@ -33,6 +33,7 @@ SourceFiles
 #define CodedMultivariateTemplate_H
 
 #include "MultivariateEquationsFwd.H"
+#include "regEquation.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -49,7 +50,7 @@ namespace Foam
 
 class ${typeName}_${TemplateType}MultivariateEquation
 :
-    public MultivariateEquation<${TemplateType}>
+    public regEquation<${TemplateType}, MultivariateEquation>
 {
 public:
 
@@ -60,7 +61,11 @@ public:
     // Constructors
 
         //- Construct from entry name and dictionary
-        ${typeName}_${TemplateType}MultivariateEquation(const dictionary&);
+        ${typeName}_${TemplateType}MultivariateEquation
+        (
+            const objectRegistry&,
+            const dictionary&
+        );
 
 
 

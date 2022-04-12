@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -62,10 +62,10 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
     const scalarList& upperLimits
 )
 :
-    nVar_(lowerLimits.size()),
-    nEqns_(nEqns),
     lowerLimits_(lowerLimits),
     upperLimits_(upperLimits),
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
     dX_(nVar_, 1e-6)
 {}
 
@@ -73,18 +73,30 @@ Foam::MultivariateEquation<Type>::MultivariateEquation
 template<class Type>
 Foam::MultivariateEquation<Type>::MultivariateEquation
 (
-    const string& name,
+    const List<string>& eqnStrings,
     const label nEqns,
     const scalarList& lowerLimits,
     const scalarList& upperLimits
 )
 :
-    multivariateEquation<Type>(name),
-    nVar_(lowerLimits.size()),
-    nEqns_(nEqns),
+    multivariateEquation<Type>(eqnStrings),
     lowerLimits_(lowerLimits),
     upperLimits_(upperLimits),
+    nVar_(lowerLimits.size()),
+    nEqns_(nEqns),
     dX_(nVar_, 1e-6)
+{}
+
+
+template<class Type>
+Foam::MultivariateEquation<Type>::MultivariateEquation(const dictionary& dict)
+:
+    multivariateEquation<Type>(dict),
+    lowerLimits_(dict.lookup("lowerBounds")),
+    upperLimits_(dict.lookup("upperBounds")),
+    nVar_(lowerLimits_.size()),
+    nEqns_(dict.lookup<label>("nEquations")),
+    dX_(dict.lookupOrDefault("dx", scalarList(nVar_, 1e-6)))
 {}
 
 

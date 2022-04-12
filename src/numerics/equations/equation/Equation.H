@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -22,12 +22,12 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::equation
+    Foam::Equation
 
 Description
-    Scalar equation with a single input. Derived from both scalarEquation
-    and multivariateEquation so that a scalar equation can be cast in either
-    form.
+    Equation with a single input and single output. Derived from equation,
+    univariateEquation and multivariateEquation so that an equation can be
+    cast in any form and used in any of the multivariate numerical methods.
 
 \*---------------------------------------------------------------------------*/
 
@@ -53,10 +53,15 @@ class Equation
 :
     public equation<Type>
 {
+public:
+    // Public typedef
+    typedef equation<Type> BaseEquation;
+
+
 protected:
     // Protected Data
 
-        //- Lower limits
+        //- Lower limit
         scalar lower_;
 
         //- Upper limit
@@ -74,7 +79,15 @@ public:
         Equation(const scalar lower, const scalar upper);
 
         //- Construct given bounds and name
-        Equation(const string& name, const scalar lower, const scalar upper);
+        Equation
+        (
+            const string& eqnString,
+            const scalar lower,
+            const scalar upper
+        );
+
+         //- Construct from dictionary
+        Equation(const dictionary& dict);
 
 
     //- Destructor
@@ -101,10 +114,10 @@ public:
             return lower_;
         }
 
-        //- Access the lower limit
-        virtual scalar& lower()
+        //- Set the lower limit
+        virtual void setLower(const scalar low)
         {
-            return lower_;
+            lower_ = low;
         }
 
         //- Return the lower limit
@@ -113,22 +126,34 @@ public:
             return tmp<scalarField>(new scalarField(1, lower_));
         }
 
+        //- Set the lower limit
+        virtual void setLowerLimits(const scalarList& low)
+        {
+            lower_ = low[0];
+        }
+
         //- Return the upper limit
         virtual scalar upper() const
         {
             return upper_;
         }
 
-        //- Access the upper limit
-        virtual scalar& upper()
+        //- Set the upper limit
+        virtual void setUpper(const scalar up)
         {
-            return upper_;
+            upper_ = up;
         }
 
         //- Return the upper limit
         virtual tmp<scalarField> upperLimits() const
         {
             return tmp<scalarField>(new scalarField(1, upper_));
+        }
+
+        //- Set the lower limit
+        virtual void setUpperLimits(const scalarList& up)
+        {
+            upper_ = up[0];
         }
 
         //- Return the finite difference step size
@@ -172,7 +197,7 @@ public:
             const label li
         ) const;
 
-        //- Calulate the function at a set of points
+        //- Calulate the function at a point
         virtual void FX
         (
             const scalarList& x,
@@ -197,6 +222,7 @@ public:
             RectangularMatrix<Type>& J
         ) const;
 
+        //- Check if the a root is on the interval (change in signs)
         virtual bool containsRoot(const label li) const;
         virtual bool containsRoot(const Type& y0, const Type& y1) const;
         virtual bool containsRoot

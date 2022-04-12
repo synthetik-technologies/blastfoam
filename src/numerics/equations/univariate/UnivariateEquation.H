@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,7 @@ Class
     Foam::TypeEquation
 
 Description
-    An equation using a scalarField as input, but outputing only a single,
-    scalar value. Used in minimization.
+    Equation with multiple inputs and a single output
 
 \*---------------------------------------------------------------------------*/
 
@@ -52,17 +51,22 @@ class UnivariateEquation
 :
     public univariateEquation<Type>
 {
+public:
+    // Public typedef
+    typedef univariateEquation<Type> BaseEquation;
+
+
 protected:
 // Protected data
-
-    //- Number in input variables
-    const label nVar_;
 
     //- Lower limits
     scalarField lowerLimits_;
 
     //- Upper limit
     scalarField upperLimits_;
+
+    //- Number in input variables
+    const label nVar_;
 
     //- Finite difference step size
     mutable scalarField dX_;
@@ -87,13 +91,16 @@ public:
             const scalarList& upperLimit
         );
 
-        //- Construct given bounds
+        //- Construct given an equation string and bounds
         UnivariateEquation
         (
-            const string& name,
+            const string& eqnString,
             const scalarList& lowerLimit,
             const scalarList& upperLimit
         );
+
+        //- Construct from dictionary
+        UnivariateEquation(const dictionary& dict);
 
 
     //- Destructor
@@ -120,10 +127,22 @@ public:
             return lowerLimits_;
         }
 
+        //- Set the lower limit
+        virtual void setLowerLimits(const scalarList& low)
+        {
+            lowerLimits_ = low;
+        }
+
         //- Return the upper limit
         virtual tmp<scalarField> upperLimits() const
         {
             return upperLimits_;
+        }
+
+        //- Set the upper limit
+        virtual void setUpperLimits(const scalarList& up)
+        {
+            upperLimits_ = up;
         }
 
         //- Return the finite difference step size

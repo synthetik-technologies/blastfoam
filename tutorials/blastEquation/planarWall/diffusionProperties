@@ -18,16 +18,14 @@ FoamFile
 minimizationCoeffs
 {
     //coeffs (10.07 -11.55 11.55 -9.935e-15 0); // Assuming L = 1m, D = 0.05, Time = 3 s, u0 = 10.
-    solver      Fibonacci;
+    solver      goldenRatio;
     maxSteps    200;
-    normalizeError   no;
-    tolerance   1e-6;
+    tolerance   1e-12;
     nParticles  10;
     cLocal      0.1;
     cGlobal     0.1;
     vWeight     0.8;
-    D0          (0.1);//(0.1 0.001 0.001);
-    x0          0.0;
+    x0          0.1;
 }
 
 solution

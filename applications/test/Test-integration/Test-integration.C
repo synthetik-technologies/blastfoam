@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         scalarIntegrator::dictionaryConstructorTablePtr_->toc()
     );
 
-    Info<< "Integration of " << eqn1.name() << " in (0, 2.5)" << endl;
+    Info<< "Integration of " << eqn1.eqnString() << " in (0, 2.5)" << endl;
     const scalar ans1 = -9.167152855896045;
     forAll(intMethods1, i)
     {
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
         vectorIntegrator::dictionaryConstructorTablePtr_->toc()
     );
 
-    Info<< nl<< "Integration of " << eqn2.name() << " in (0, 2.5)" << endl;
+    Info<< nl<< "Integration of " << eqn2.eqnString() << " in (0, 2.5)" << endl;
     const vector ans2
     (
         2.491944667998765,
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
         scalarMultivariateIntegrator::dictionaryConstructorTablePtr_->toc()
     );
 
-    Info<< "Integration of " << eqn3.name() << " from (0, 0, 0) : (1, 1, 1)"
+    Info<< "Integration of " << eqn3.eqnString() << " from (0, 0, 0) : (1, 1, 1)"
         << endl;
 
     scalarField x0(3, 0.0);

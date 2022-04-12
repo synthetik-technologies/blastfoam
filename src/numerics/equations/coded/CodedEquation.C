@@ -1,9 +1,11 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2020-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+12-04-2022 Synthetik Applied Technologies : Added equation functionality
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -25,6 +27,9 @@ License
 
 #include "CodedEquation.H"
 #include "adaptiveTypes.H"
+
+
+// * * * * * * * * * * * * * Private Member Functions  * * * * * * * * * * * //
 
 template<class Type>
 Foam::wordList Foam::CodedEquation<Type>::codeKeys() const
@@ -96,7 +101,12 @@ Foam::autoPtr<Foam::equation<Type>>
 Foam::CodedEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return equation<Type>::New(codeName(), codeDict());
+    return regEquation<Type, Equation>::New
+    (
+        codeName(),
+        this->obr_,
+        codeDict()
+    );
 }
 
 
@@ -131,15 +141,11 @@ Foam::CodedEquation<Type>::expandCodeDict
 template<class Type>
 Foam::CodedEquation<Type>::CodedEquation
 (
+    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    Equation<Type>
-    (
-        dict.lookupOrDefault<string>("eqnString", "undefined"),
-        dict.lookup<scalar>("lowerBound"),
-        dict.lookup<scalar>("upperBound")
-    ),
+    regEquation<Type, Equation>(obr, dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {

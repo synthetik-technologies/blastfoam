@@ -15,6 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+name diffusionOpt;
 lowerBound  1e-6;
 upperBound  1.0;
 
@@ -37,25 +38,22 @@ codeLibs
 codeInclude
 #{
 #include "Time.H"
-#include "pisoControl.H"
 #include "fvCFD.H"
 #include "lookupTables1D.H"
 #};
 
 fx_code
 #{
-    static label iter = 0;
-    iter++;
-
-    static fileName path(cwd());
-    static Time runTime
+    // Cast the object registry to Time
+    Time& runTime
     (
-        Time::controlDictName,
-        fileName(path.path()),
-        fileName(path.name())
+        const_cast<Time&>(dynamicCast<const Time>(this->obr_))
     );
+
+    // Reset the time to 0
     runTime.setTime(0.0, 0);
 
+    // Create the mesh
     fvMesh mesh
     (
         IOobject
@@ -67,8 +65,7 @@ fx_code
         )
     );
 
-    pisoControl piso(mesh);
-
+    // Read in the concentration field
     volScalarField c
     (
         IOobject
@@ -82,25 +79,35 @@ fx_code
         mesh
     );
 
+    // Read in the concentration field
+    volScalarField error
+    (
+        IOobject
+        (
+            "error",
+            runTime.timeName(),
+            mesh
+        ),
+        mesh,
+        dimensionedScalar(dimless, 0.0),
+        "zeroGradient"
+    );
+
+    // Create the diffusion coefficient
     dimensionedScalar D("D", dimVelocity*dimLength, x);
+
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+    // Solve the transient diffusion problem
     SolverPerformance<scalar>::debug = 0;
-    while (piso.loop(runTime))
+    while (runTime.loop())
     {
-        while (piso.correctNonOrthogonal())
-        {
-            fvScalarMatrix cEqn
-            (
-                fvm::ddt(c) - fvm::laplacian(D, c)
-            );
-
-            cEqn.solve();
-        }
+        Foam::solve(fvm::ddt(c) - fvm::laplacian(D, c));
     }
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+    // Compute the error
     static lookupTable1D<scalar> solution
     (
         dictionary(IFstream("./diffusionProperties")()).subDict("solution"),
@@ -108,19 +115,27 @@ fx_code
         "c"
     );
 
-    scalar err = 0.0;
-    forAll(c,celli)
+    scalar e = 0.0;
+    forAll(c, celli)
     {
         scalar Cexp = solution.lookup(mesh.C()[celli].x());
-        err += magSqr((c[celli] - Cexp)/Cexp);
+        error[celli] = c[celli] - Cexp;
+        e += magSqr((c[celli] - Cexp)/Cexp);
     }
-    reduce(err, sumOp<scalar>());
-    err = sqrt(err/returnReduce(c.size(), sumOp<label>()));
+    error.correctBoundaryConditions();
 
-    runTime.setTime(scalar(iter), iter);
+    reduce(e, sumOp<scalar>());
+    e = sqrt(e/returnReduce(c.size(), sumOp<label>()));
+
+    // Write the concentration field
     c.write();
+    error.write();
 
-    return err;
+    // Output the diffusion coefficient and error to a file
+    static OFstream os("D_vs_error");
+    os << x << " " << e << endl;
+
+    return e;
 #};
 
 // ************************************************************************* //

@@ -53,20 +53,6 @@ class univariateEquation
 {
 public:
 
-     TypeNameNoDebug("equation");
-
-    //- Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        univariateEquation,
-        dictionary,
-        (
-            const dictionary& dict
-        ),
-        (dict)
-    );
-
     // Constructors
 
         //- Null constructor
@@ -76,9 +62,15 @@ public:
         {}
 
         //- Construct given name
-        univariateEquation(const string& name)
+        univariateEquation(const string& eqnString)
         :
-            multivariateEquation<Type>(name)
+            multivariateEquation<Type>(eqnString)
+        {}
+
+        //- Construct from dictionary
+        univariateEquation(const dictionary& dict)
+        :
+            multivariateEquation<Type>(dict)
         {}
 
 
@@ -87,46 +79,7 @@ public:
     {}
 
 
-    //- Selector
-    static autoPtr<univariateEquation<Type>> New
-    (
-        const word& type,
-        const dictionary& dict
-    )
-    {
-        typename dictionaryConstructorTable::iterator cstrIter =
-            dictionaryConstructorTablePtr_->find(type);
-
-        if (cstrIter == dictionaryConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown " << typeName << " type "
-                << type <<  nl << nl
-                << "Valid " << typeName << " types are:" << nl
-                << dictionaryConstructorTablePtr_->sortedToc() << nl
-                << exit(FatalError);
-        }
-
-        return cstrIter()(dict);
-    }
-
-
     //- Public member functions
-
-        //- Return the lower limit
-        virtual tmp<scalarField> lowerLimits() const = 0;
-
-        //- Return the upper limit
-        virtual tmp<scalarField> upperLimits() const = 0;
-
-        //- Return the finite difference step size
-        virtual tmp<scalarField> dX() const = 0;
-
-        //- Return the finite difference step size
-        virtual void setDX(const scalarList& newDx) const = 0;
-
-        //- Limit the value of x to the range of the equation
-        virtual void limit(scalarField& x) const = 0;
 
         //- Return the function value
         virtual Type fX

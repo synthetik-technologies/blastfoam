@@ -53,20 +53,6 @@ class multivariateEquation
 {
 public:
 
-    TypeNameNoDebug("multivariateEquation");
-
-    //- Declare runtime constructor selection table
-    declareRunTimeSelectionTable
-    (
-        autoPtr,
-        multivariateEquation,
-        dictionary,
-        (
-            const dictionary& dict
-        ),
-        (dict)
-    );
-
     //- Constructors
 
         //- Null constructor
@@ -75,39 +61,28 @@ public:
             equationBase()
         {}
 
-        //- Construct from name
-        multivariateEquation(const string& name)
+        //- Construct from equation string
+        multivariateEquation(const string& eqnString)
         :
-            equationBase(name)
+            equationBase(eqnString)
         {}
+
+        //- Construct from a list of equation strings
+        multivariateEquation(const List<string>& eqnStrings)
+        :
+            equationBase(eqnStrings)
+        {}
+
+        //- Construct from dictionary
+        multivariateEquation(const dictionary& dict)
+        :
+            equationBase(dict)
+        {}
+
 
     //- Destructor
     virtual ~multivariateEquation()
     {}
-
-
-    //- Selector
-    static autoPtr<multivariateEquation<Type>> New
-    (
-        const word& type,
-        const dictionary& dict
-    )
-    {
-        typename dictionaryConstructorTable::iterator cstrIter =
-            dictionaryConstructorTablePtr_->find(type);
-
-        if (cstrIter == dictionaryConstructorTablePtr_->end())
-        {
-            FatalErrorInFunction
-                << "Unknown " << typeName << " type "
-                << type <<  nl << nl
-                << "Valid " << typeName << " types are:" << nl
-                << dictionaryConstructorTablePtr_->sortedToc() << nl
-                << exit(FatalError);
-        }
-
-        return cstrIter()(dict);
-    }
 
 
     //- Public member functions
@@ -121,8 +96,14 @@ public:
         //- Return the lower limit
         virtual tmp<scalarField> lowerLimits() const = 0;
 
+        //- Set the lower limit
+        virtual void setLowerLimits(const scalarList&) = 0;
+
         //- Return the upper limit
         virtual tmp<scalarField> upperLimits() const = 0;
+
+        //- Set the upper limit
+        virtual void setUpperLimits(const scalarList&) = 0;
 
         //- Return the finite difference step size
         virtual tmp<scalarField> dX() const = 0;

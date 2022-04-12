@@ -23,55 +23,65 @@ License
 
 \*---------------------------------------------------------------------------*/
 
-#include "equationBase.H"
-#include "OStringStream.H"
-
-// * * * * * * * * * * Protected Static Member Functions * * * * * * * * * * //
-
-Foam::string Foam::equationBase::mergeStrings(const List<string>& eqns) const
-{
-    OStringStream os;
-    os << word(eqns[0]);
-    for (label i = 1; i < eqns.size(); i++)
-    {
-        os << nl << word(eqns[i]);
-    }
-    return os.str();
-}
+#include "regEquation.H"
+#include "dictionary.H"
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-Foam::equationBase::equationBase()
+template<class Type, template<class> class BaseEquation>
+Foam::regEquation<Type, BaseEquation>::regEquation
+(
+    const objectRegistry& obr,
+    const dictionary& dict
+)
 :
-    eqnString_(string::null)
-{}
-
-
-Foam::equationBase::equationBase(const string& eqnString)
-:
-    eqnString_(eqnString)
-{}
-
-
-Foam::equationBase::equationBase(const List<string>& eqnStrings)
-:
-    eqnString_(mergeStrings(eqnStrings))
-{}
-
-
-Foam::equationBase::equationBase(const dictionary& dict)
-:
-    eqnString_(dict.lookupOrDefault<string>("eqnString", string::null))
+    regIOobject
+    (
+        IOobject
+        (
+            dict.lookup<word>("name"),
+            obr.instance(),
+            obr
+        )
+    ),
+    BaseEquation<Type>(dict),
+    obr_(obr)
 {}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 
-Foam::equationBase::~equationBase()
+template<class Type, template<class> class BaseEquation>
+Foam::regEquation<Type, BaseEquation>::~regEquation()
 {}
 
 
 // * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * * //
 
+template<class Type, template<class> class BaseEquation>
+Foam::autoPtr<typename BaseEquation<Type>::BaseEquation>
+Foam::regEquation<Type, BaseEquation>::New
+(
+    const word& type,
+    const objectRegistry& obr,
+    const dictionary& dict
+)
+{
+    typename dictionaryConstructorTable::iterator cstrIter =
+        dictionaryConstructorTablePtr_->find(type);
+
+    if (cstrIter == dictionaryConstructorTablePtr_->end())
+    {
+        FatalErrorInFunction
+            << "Unknown " << typeName << " type "
+            << type <<  nl << nl
+            << "Valid " << typeName << " types are:" << nl
+            << dictionaryConstructorTablePtr_->sortedToc() << nl
+            << exit(FatalError);
+    }
+
+    autoPtr<regEquation<Type, BaseEquation>> eqnPtr(cstrIter()(obr, dict));
+    return autoPtr<typename BaseEquation<Type>::BaseEquation>(eqnPtr.ptr());
+}
 
 // ************************************************************************* //

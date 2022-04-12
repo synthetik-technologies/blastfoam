@@ -100,10 +100,6 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < n; stepi_++)
     {
-        if (convergedX(b, a))
-        {
-            break;
-        }
         if (stepi_ == n - 1)
         {
             c = 0.01*a + 0.99*b;
@@ -116,7 +112,7 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
         eqn_.limit(c);
         yc = eqn_.fx(c, li);
 
-        if (convergedY(yc, yd))
+        if (convergedX(a, b) && convergedY(yc, yd))
         {
             break;
         }
@@ -143,7 +139,6 @@ Foam::scalar Foam::FibonacciUnivariateMinimizationScheme::minimize
         printStepInformation(0.5*(a + b));
     }
 
-    convergedY(yc, yd);
     return printFinalInformation(0.5*(a + b));
 }
 

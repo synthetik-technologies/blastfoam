@@ -1,9 +1,11 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2020-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+12-04-2022 Synthetik Applied Technologies : Added equation functionality
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -22,19 +24,17 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::CodedMultvariateEquation
+    Foam::CodedEquation
 
 Description
-    An equation using a scalarField as input, but outputing only a single,
-    scalar value. Used in minimization.
+    User defined equation with a single input and single output
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef CodedMultvariateEquation_H
-#define CodedMultvariateEquation_H
+#ifndef CodedEquation_H
+#define CodedEquation_H
 
-#include "multivariateEquation.H"
-#include "scalarField.H"
+#include "regEquation.H"
 #include "dictionary.H"
 
 #include "codedBase.H"
@@ -49,13 +49,13 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                    Class CodedMultvariateEquation Declaration
+                          Class CodedEquation Declaration
 \*---------------------------------------------------------------------------*/
 
 template<class Type>
-class CodedMultivariateEquation
+class CodedEquation
 :
-    public MultivariateEquation<Type>,
+    public regEquation<Type, Equation>,
     public codedBase
 {
     // Private Data
@@ -64,7 +64,7 @@ class CodedMultivariateEquation
         label nDerivatives_;
 
         //- The dynamically generated Equation pointer
-        mutable autoPtr<multivariateEquation<Type>> redirectEquationPtr_;
+        mutable autoPtr<equation<Type>> redirectEquationPtr_;
 
 
     // Private Member Functions
@@ -83,7 +83,7 @@ class CodedMultivariateEquation
         virtual void clearRedirect() const;
 
         //- Compile, link and return the now coded Equation
-        autoPtr<multivariateEquation<Type>> compileNew();
+        autoPtr<equation<Type>> compileNew();
 
         //- Expand strings in the code entry
         const dictionary& expandCodeDict(const dictionary& cDict) const;
@@ -91,16 +91,11 @@ class CodedMultivariateEquation
 
 public:
 
-    // Runtime type information
-    TypeName("coded");
-
-    // Constructors
-
-        //- Construct from name and dictionary
-        CodedMultivariateEquation(const dictionary& dict);
+    //- Construct from dictionary
+    CodedEquation(const objectRegistry& obr, const dictionary& dict);
 
     //- Destructor
-    virtual ~CodedMultivariateEquation();
+    virtual ~CodedEquation();
 
 
     // Member Functions
@@ -112,29 +107,47 @@ public:
         }
 
         //- Return the function value
-        virtual inline void FX
+        virtual inline Type fx
         (
-            const scalarList& x,
-            const label li,
-            List<Type>& fx
+            const scalar x,
+            const label li
         ) const
         {
-            redirectEquationPtr_->FX(x, li, fx);
+            return redirectEquationPtr_->fx(x, li);
         }
 
         //- Return the function value
-        virtual void jacobian
+        virtual inline Type dfdx
         (
-            const scalarList& x,
-            const label li,
-            List<Type>& fx,
-            RectangularMatrix<Type>& J
+            const scalar x,
+            const label li
         ) const
         {
-            redirectEquationPtr_->jacobian(x, li, fx, J);
+            return redirectEquationPtr_->dfdx(x, li);
+        }
+
+        //- Return the function value
+        virtual inline Type d2fdx2
+        (
+            const scalar x,
+            const label li
+        ) const
+        {
+            return redirectEquationPtr_->d2fdx2(x, li);
+        }
+
+        //- Return the function value
+        virtual inline Type d3fdx3
+        (
+            const scalar x,
+            const label li
+        ) const
+        {
+            return redirectEquationPtr_->d3fdx3(x, li);
         }
 
         //- Write data to dictionary stream
+        using regIOobject::write;
         virtual void write(Ostream& os) const
         {
             writeCode(os);
@@ -149,7 +162,7 @@ public:
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #ifdef NoRepository
-    #include "CodedMultivariateEquation.C"
+    #include "CodedEquation.C"
 #endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

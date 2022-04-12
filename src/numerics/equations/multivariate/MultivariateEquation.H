@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -25,8 +25,7 @@ Class
     Foam::MultivariateEquation
 
 Description
-    Abstract base class a multivariate equation. Uses a scalar field as
-    the input, but can output a list of any type.
+    Equation for multiple inputs and outputs.
 
 \*---------------------------------------------------------------------------*/
 
@@ -51,20 +50,25 @@ class MultivariateEquation
 :
     public multivariateEquation<Type>
 {
+public:
+    // Public typedef
+    typedef multivariateEquation<Type> BaseEquation;
+
+
 protected:
     // Protected data
-
-        //- Number in input variables
-        const label nVar_;
-
-        //- Number of equations
-        const label nEqns_;
 
         //- Lower limits
         scalarField lowerLimits_;
 
         //- Upper limit
         scalarField upperLimits_;
+
+        //- Number in input variables
+        const label nVar_;
+
+        //- Number of equations
+        const label nEqns_;
 
         //- Finite difference step size
         mutable scalarField dX_;
@@ -97,11 +101,14 @@ public:
         //- Construct with number of equations, limits, and name
         MultivariateEquation
         (
-            const string& name,
+            const List<string>& eqnString,
             const label nEqns,
             const scalarList& lowerLimits,
             const scalarList& upperLimits
         );
+
+        //- Construct from dictionary
+        MultivariateEquation(const dictionary& dict);
 
 
     //- Destructor
@@ -128,10 +135,22 @@ public:
             return lowerLimits_;
         }
 
+        //- Set the lower limit
+        virtual void setLowerLimits(const scalarList& low)
+        {
+            lowerLimits_ = low;
+        }
+
         //- Return the upper limit
         virtual tmp<scalarField> upperLimits() const
         {
             return upperLimits_;
+        }
+
+        //- Set the upper limit
+        virtual void setUpperLimits(const scalarList& up)
+        {
+            upperLimits_ = up;
         }
 
         //- Return the finite difference step size

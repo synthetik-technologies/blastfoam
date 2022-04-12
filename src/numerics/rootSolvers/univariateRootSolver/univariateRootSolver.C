@@ -205,6 +205,12 @@ Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
     const label nSamples
 ) const
 {
+    // Store old weights since we will be strictly enforcing bounds
+    // when looking for roots on intervals
+    const scalar oldLower = eqn_.lower();
+    const scalar oldUpper = eqn_.upper();
+    scalarEquation& eqn = const_cast<scalarEquation&>(eqn_);
+
     scalar dx = (xHigh - xLow)/scalar(nSamples);
     scalar x0 = xLow;
     scalar x1 = x0 + dx;
@@ -213,15 +219,15 @@ Foam::List<Foam::scalar> Foam::univariateRootSolver::solveAll
     {
         x0 += dx;
         x1 += dx;
-        scalar f0 = eqn_.fx(x0, li);
-        scalar f1 = eqn_.fx(x1, li);
-        if (eqn_.containsRoot(f0, f1))
+        eqn.setLower(x0);
+        eqn.setUpper(x1);
+        if (eqn_.containsRoot(li))
         {
-            Info<<"yes";
             roots.append(this->findRoot(0.5*(x0 + x1), x0, x1, li));
         }
-        Info<<endl;
     }
+    eqn.setLower(oldLower);
+    eqn.setUpper(oldUpper);
     return move(roots);
 }
 

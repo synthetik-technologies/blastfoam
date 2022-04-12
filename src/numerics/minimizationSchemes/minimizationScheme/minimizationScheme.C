@@ -29,7 +29,7 @@ License
 
 namespace Foam
 {
-    defineTypeNameAndDebug(minimizationScheme, 1);
+    defineTypeNameAndDebug(minimizationScheme, 0);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryUnivariate);
     defineRunTimeSelectionTable(minimizationScheme, dictionaryMultivariate);
 }
@@ -63,6 +63,7 @@ bool Foam::minimizationScheme::converged
     }
     return c;
 }
+
 
 bool Foam::minimizationScheme::convergedXScale
 (
@@ -305,7 +306,7 @@ void Foam::minimizationScheme::sample
     const label diri
 ) const
 {
-    if ((debug || minimizationScheme::debug) && diri == 0)
+    if ((debug) && diri == 0)
     {
         Info<<"Pre sampling interval" << endl;
     }
@@ -346,7 +347,7 @@ void Foam::minimizationScheme::sample
         xHigh[i] = xLow[i] + dx;
     }
 
-    if (debug || minimizationScheme::debug)
+    if (debug)
     {
         Info<< "Found minimum values in (" << xLow << "," << xHigh << ")"
             << " yBest: " << yBest << endl;
@@ -371,7 +372,7 @@ Foam::minimizationScheme::minimizationScheme
             scalarList
             (
                 eqns_.nVar(),
-                dict.lookupOrDefault
+                dict.lookupOrDefaultBackwardsCompatible
                 (
                     {"xTolerance", "tolerance"},
                     1e-6
@@ -381,15 +382,15 @@ Foam::minimizationScheme::minimizationScheme
     ),
     xRelTolerances_
     (
-        dict.lookupOrDefault
+        dict.lookupOrDefaultBackwardsCompatible
         (
-            "xRelTolerances",
+            {"xRelTolerances", "tolerances"},
             scalarList
             (
                 eqns_.nVar(),
-                dict.lookupOrDefault
+                dict.lookupOrDefaultBackwardsCompatible
                 (
-                    "xRelTolerance",
+                    {"xRelTolerance", "tolerance"},
                     1e-6
                 )
             )
@@ -413,15 +414,15 @@ Foam::minimizationScheme::minimizationScheme
     ),
     yRelTolerances_
     (
-        dict.lookupOrDefault
+        dict.lookupOrDefaultBackwardsCompatible
         (
-            "yRelTolerances",
+            {"yRelTolerances", "tolerances"},
             scalarList
             (
                 eqns_.nVar(),
-                dict.lookupOrDefault
+                dict.lookupOrDefaultBackwardsCompatible
                 (
-                    "yRelTolerance",
+                    {"yRelTolerance", "tolerance"},
                     1e-6
                 )
             )

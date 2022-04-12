@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -36,22 +36,35 @@ Foam::Equation<Type>::Equation
 )
 :
     lower_(lower),
-    upper_(upper)
+    upper_(upper),
+    dx_(1e-6)
 {}
 
 
 template<class Type>
 Foam::Equation<Type>::Equation
 (
-    const string& name,
+    const string& eqnString,
     const scalar lower,
     const scalar upper
 )
 :
-    equation<Type>(name),
+    equation<Type>(eqnString),
     lower_(lower),
-    upper_(upper)
+    upper_(upper),
+    dx_(1e-6)
 {}
+
+
+template<class Type>
+Foam::Equation<Type>::Equation(const dictionary& dict)
+:
+    equation<Type>(dict),
+    lower_(dict.lookup<scalar>("lowerBound")),
+    upper_(dict.lookup<scalar>("upperBound")),
+    dx_(dict.lookupOrDefault<scalar>("dx", 1e-6))
+{}
+
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
 

@@ -90,7 +90,7 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
-        if (convergedX(xHigh, xLow))
+        if (convergedX(xLow, xHigh) && convergedY(yLow, yHigh))
         {
             break;
         }
@@ -108,14 +108,8 @@ Foam::scalar Foam::bisectionUnivariateMinimizationScheme::minimize
 
         xMean = (xLow + xHigh)*0.5;
 
-        if (convergedY(yHigh, yLow))
-        {
-            break;
-        }
-
         printStepInformation(xMean);
     }
-    convergedY(yHigh, yLow);
 
     return printFinalInformation(xMean);
 }

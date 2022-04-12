@@ -56,7 +56,7 @@ Foam::autoPtr<Foam::Integrator<Type>> Foam::Integrator<Type>::New
     const dictionary& dict
 )
 {
-    Info<< "Selecting integrator " << integratorTypeName << endl;
+    Info<< "Selecting integrator: " << integratorTypeName << endl;
     typename dictionaryConstructorTable::iterator cstrIter =
         dictionaryConstructorTablePtr_->find(integratorTypeName);
 

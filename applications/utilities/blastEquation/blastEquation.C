@@ -47,42 +47,14 @@ Description
 #include "CodedUnivariateEquation.H"
 #include "CodedMultivariateEquation.H"
 
-#include "addToRunTimeSelectionTable.H"
+#include "Time.H"
+
+
 
 namespace Foam
 {
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-typedef CodedEquation<scalar> scalarCodedEquation;
-defineTemplateTypeNameAndDebug(scalarCodedEquation, 0);
-addTemplateToRunTimeSelectionTable
-(
-    scalarEquation,
-    CodedEquation,
-    scalar,
-    dictionary
-);
-
-typedef CodedUnivariateEquation<scalar> scalarCodedUnivariateEquation;
-defineTemplateTypeNameAndDebug(scalarCodedUnivariateEquation, 0);
-addTemplateToRunTimeSelectionTable
-(
-    scalarUnivariateEquation,
-    CodedUnivariateEquation,
-    scalar,
-    dictionary
-);
-
-typedef CodedMultivariateEquation<scalar> scalarCodedMultivariateEquation;
-defineTemplateTypeNameAndDebug(scalarCodedMultivariateEquation, 0);
-addTemplateToRunTimeSelectionTable
-(
-    scalarMultivariateEquation,
-    CodedMultivariateEquation,
-    scalar,
-    dictionary
-);
 
 
 word print(const scalarList& x)
@@ -97,6 +69,45 @@ word print(const scalarList& x)
 }
 
 
+enum EqnType
+{
+    SINGLE,
+    UNI,
+    MULTI,
+    UNKNOWN
+};
+
+
+EqnType getEqnType(const string& fxStr)
+{
+    label i = fxStr.find("x[");
+    if (i < 0)
+    {
+        return SINGLE;
+    }
+    return UNI;
+}
+
+
+EqnType getEqnType(const argList& args)
+{
+    if (args.optionFound("P"))
+    {
+        return SINGLE;
+    }
+    return getEqnType(args.optionRead<string>("fx"));
+}
+
+
+EqnType getEqnType(const dictionary& dict)
+{
+    if (dict.found("P"))
+    {
+        return SINGLE;
+    }
+    return getEqnType(dict.lookup<verbatimString>("fx_code"));
+}
+
 void setEquationFuncDict
 (
     const argList& args,
@@ -108,7 +119,7 @@ void setEquationFuncDict
     {
         dict.set("eqnString", args.optionRead<string>("fx"));
         dict.set("fx_code", "return " + args.optionRead<string>("fx") +";");
-        if (!args.optionFound("dfdx"))
+        if (args.optionFound("dfdx"))
         {
             dict.set
             (
@@ -136,6 +147,7 @@ void setEquationFuncDict
     else if (args.optionFound("P"))
     {
         P = args.optionRead<List<scalar>>("P");
+        dict.set("P", P);
         dict.set("fx_code", "return " + polynomialRoots::polyName(P) + ";");
         dict.set("eqnString", string(polynomialRoots::polyName(P)));
 
@@ -160,11 +172,14 @@ void setEquationFuncDict
             "return " + polynomialRoots::polyName(d3fdx3) + ";"
         );
     }
-    word name
-    (
-        string(args.optionLookupOrDefault<word>("name", "f"))
-    );
-    dict.set("name", string(name));
+    else
+    {
+        FatalErrorInFunction
+            << "For scalar equations, either fx of P (polynomial coefficients)"
+            << " must be provided" << endl
+            << abort(FatalError);
+    }
+    dict.set("name", args.optionLookupOrDefault<word>("name", "f"));
 
     Pair<scalar> bounds(-great, great);
     if (args.optionFound("bounds"))
@@ -183,27 +198,30 @@ label nEquationDerivatives(dictionary& dict)
     if (!dict.found("dfdx_code"))
     {
         dict.set("dfdx_code", string("return 0.0;"));
-        if (nDerivatives == 0)
-        {
-            nDerivatives++;
-        }
     }
+    else if (nDerivatives == 0)
+    {
+        nDerivatives++;
+    }
+
     if (!dict.found("d2fdx2_code"))
     {
         dict.set("d2fdx2_code", string("return 0.0;"));
-        if (nDerivatives == 1)
-        {
-            nDerivatives++;
-        }
     }
+    else if (nDerivatives == 1)
+    {
+        nDerivatives++;
+    }
+
     if (!dict.found("d3fdx3_code"))
     {
         dict.set("d3fdx3_code", string("return 0.0;"));
-        if (nDerivatives == 2)
-        {
-            nDerivatives++;
-        }
     }
+    else if (nDerivatives == 2)
+    {
+        nDerivatives++;
+    }
+
     return nDerivatives;
 }
 
@@ -211,6 +229,7 @@ label nEquationDerivatives(dictionary& dict)
 void setEquationSolverDict
 (
     const argList& args,
+    const dictionary& funcDict,
     const label nDerivatives,
     dictionary& dict
 )
@@ -231,60 +250,44 @@ void setEquationSolverDict
         dict.set("evaluate", true);
     }
 
-    if (args.optionFound("root"))
+    if (args.optionFound("findRoots") || args.optionFound("findAllRoots"))
     {
-        dictionary rootDict;
-        Pair<scalar> rootBounds
-        (
-            args.optionLookupOrDefault<Pair<scalar>>
+        if (!funcDict.found("P"))
+        {
+            dictionary rootsDict;
+            Pair<scalar> rootBounds
             (
-                "rootBounds",
-                dict.lookup("bounds")
-            )
-        );
-        rootDict.set("bounds", rootBounds);
-        rootDict.set
-        (
-            "solver",
-            args.optionLookupOrDefault<word>
+                args.optionRead<Pair<scalar>>("rootBounds")
+            );
+            rootsDict.set("bounds", rootBounds);
+            rootsDict.set
             (
-                "rootSolver",
-                (nDerivatives > 0 ? "NewtonRaphson" : "secant")
-            )
-        );
-        rootDict.set
-        (
-            "x",
-            args.optionLookupOrDefault<scalar>
-            (
-                "x",
-                0.5*(rootBounds.first() + rootBounds.second())
-            )
-        );
-
-        dict.set("rootCoeffs", rootDict);
-        dict.set("findRoot", true);
-    }
-    if (args.optionFound("allRoots"))
-    {
-        dictionary rootsDict;
-        rootsDict.set
-        (
-            "rootBounds",
-            args.optionRead<Pair<scalar>>("rootBounds")
-        );
-        rootsDict.set
-        (
-            "solver",
-            args.optionLookupOrDefault<word>
-            (
-                "rootSolver",
-                nDerivatives > 0 ? "NewtonRaphson" : "secant"
-            )
-        );
-
-        dict.set("rootsCoeffs", rootsDict);
-        dict.set("findAllRoots", true);
+                "solver",
+                args.optionLookupOrDefault<word>
+                (
+                    "rootSolver",
+                    (nDerivatives > 0 ? "NewtonRaphson" : "secant")
+                )
+            );
+            if (args.optionFound("findAllRoots"))
+            {
+                rootsDict.set("findAllRoots", true);
+            }
+            else
+            {
+                rootsDict.set
+                (
+                    "x0",
+                    args.optionLookupOrDefault<scalar>
+                    (
+                        "x",
+                        0.5*(rootBounds.first() + rootBounds.second())
+                    )
+                );
+            }
+            dict.set("rootCoeffs", rootsDict);
+        }
+        dict.set("findRoots", true);
     }
 
     if (args.optionFound("integrate"))
@@ -339,6 +342,17 @@ void setUnivariateFuncDict
 {
     dict.set("fx_code", "return " + args.optionRead<string>("fx") +";");
     dict.set("eqnString", args.optionRead<string>("fx"));
+    if
+    (
+        args.optionFound("dfdx")
+     || args.optionFound("d2fdx2")
+     || args.optionFound("d3fdx3")
+    )
+    {
+        WarningInFunction
+            << "Gradients of functions with multiple inputs must be" << nl
+            << "specified in a dictionary with the \"func\" option" << endl;
+    }
 
     dict.set("name", string(args.optionLookupOrDefault<word>("name", "f")));
 
@@ -408,7 +422,7 @@ label nUnivariateEquationDerivatives(dictionary& dict)
 void setUnivariateSolverDict
 (
     const argList& args,
-    const label nVar,
+    const dictionary& funcDict,
     const label nDerivatives,
     dictionary& dict
 )
@@ -446,7 +460,11 @@ void setUnivariateSolverDict
                 "Gaussian"
             )
         );
-        integrationDict.set("nNodes", labelList(nVar, 3));
+        integrationDict.set
+        (
+            "nNodes",
+            labelList(funcDict.lookup<label>("nVar"), 3)
+        );
         dict.set("integrate", true);
 
         dict.set("integrationCoeffs", integrationDict);
@@ -479,6 +497,7 @@ void setUnivariateSolverDict
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 using namespace Foam;
+
 int main(int argc, char *argv[])
 {
     argList::addOption("func", "Function dictionary");
@@ -486,7 +505,8 @@ int main(int argc, char *argv[])
     argList::addBoolOption("noClean", "No not remove dynamicCode library");
     argList::addOption("name", "Function name");
 
-    argList::addBoolOption("multi", "Use multiple inputs for function");
+    argList::addBoolOption("time", "Construct time");
+
     argList::addOption("nVar", "numberOfVariables");
 
     argList::addOption("x", "Evaluation point");
@@ -501,8 +521,8 @@ int main(int argc, char *argv[])
     argList::addOption("x", "Value to evaluate at");
     argList::addOption("xs", "Values to evaluate at");
 
-    argList::addBoolOption("root", "Find nearest root");
-    argList::addBoolOption("allRoots", "Find all roots");
+    argList::addBoolOption("findRoots", "Find nearest root");
+    argList::addBoolOption("findAllRoots", "Find all roots");
     argList::addOption("rootSolver", "Root solver type");
     argList::addOption("rootBounds", "Bounds of the roots");
 
@@ -514,18 +534,35 @@ int main(int argc, char *argv[])
     argList::addOption("integrationBounds", "Bounds of integration");
 
     #include "addDictOption.H"
+    #include "setRootCase.H"
 
-    Foam::argList args(argc, argv);
-    if (!args.checkRootCase())
+    autoPtr<Time> runTimePtr;
+    if (args.optionFound("time"))
     {
-        Foam::FatalError.exit();
+        Foam::Info<< "Create time\n" << Foam::endl;
+
+        runTimePtr.set(new Time(Foam::Time::controlDictName, args));
     }
+    else
+    {
+        fileName path(cwd());
+        runTimePtr.set
+        (
+            new Time
+            (
+                fileName(path.path()),
+                fileName(path.name())
+            )
+        );
+    }
+    Time& runTime = runTimePtr();
+
 
     autoPtr<dictionary> funcDictPtr;
     autoPtr<dictionary> dictPtr;
 
     label nDerivatives = -1;
-    bool multi = false;
+    EqnType eqnType = UNKNOWN;
     List<scalar> P;
 
     bool clean = args.optionFound("clean");
@@ -539,11 +576,9 @@ int main(int argc, char *argv[])
                 (IFstream(args.optionRead<fileName>("func")))()
             )
         );
-        multi =
-            args.optionFound("multi")
-          || funcDictPtr->lookupOrDefault("multi", false);
+        eqnType = getEqnType(funcDictPtr());
 
-        if (funcDictPtr->found("P") && !multi)
+        if (funcDictPtr->found("P"))
         {
             P = funcDictPtr->lookup<scalarList>("P");
             funcDictPtr->set
@@ -574,33 +609,34 @@ int main(int argc, char *argv[])
                 "return " + polynomialRoots::polyName(d3fdx3) + ";"
             );
         }
-        nDerivatives =
-            multi
-          ? nUnivariateEquationDerivatives(funcDictPtr())
-          : nEquationDerivatives(funcDictPtr());
-
-        if (!funcDictPtr->found("nDerivatives"))
-        {
-            funcDictPtr->set("nDerivatives", nDerivatives);
-        }
     }
     else
     {
+        eqnType = getEqnType(args);
+
         clean = !args.optionFound("noClean") || clean;
         funcDictPtr.set(new dictionary());
-        multi = args.optionFound("multi");
-        if (multi)
+        if (eqnType == UNI)
         {
             setUnivariateFuncDict(args, funcDictPtr());
-            nDerivatives = nUnivariateEquationDerivatives(funcDictPtr());
         }
         else
         {
             setEquationFuncDict(args, funcDictPtr(), P);
-            nDerivatives = nEquationDerivatives(funcDictPtr());
         }
     }
-    funcDictPtr->set("nDerivatives", nDerivatives);
+    if (eqnType == SINGLE)
+    {
+        nDerivatives = nEquationDerivatives(funcDictPtr());
+    }
+    else if (eqnType == UNI)
+    {
+        nDerivatives = nUnivariateEquationDerivatives(funcDictPtr());
+    }
+    if (!funcDictPtr->found("nDerivatives"))
+    {
+        funcDictPtr->set("nDerivatives", nDerivatives);
+    }
 
     if (args.optionFound("dict"))
     {
@@ -615,41 +651,47 @@ int main(int argc, char *argv[])
     else
     {
         dictPtr.set(new dictionary());
-        if (multi)
+        if (eqnType == UNI)
         {
             setUnivariateSolverDict
             (
                 args,
-                funcDictPtr->lookup<label>("nVar"),
+                funcDictPtr(),
                 nDerivatives,
                 dictPtr()
             );
         }
-        else
+        else if (eqnType == SINGLE)
         {
-            setEquationSolverDict(args, nDerivatives, dictPtr());
+            setEquationSolverDict
+            (
+                args,
+                funcDictPtr(),
+                nDerivatives,
+                dictPtr()
+            );
         }
 
     }
     const dictionary& dict = dictPtr();
 
 
-    if (multi)
+    if (eqnType == UNI)
     {
-        const word name = dict.lookupOrDefault<word>("name", "f");
+        const word name = funcDictPtr->lookupOrDefault<word>("name", "f");
 
-        CodedUnivariateEquation<scalar> eqn(funcDictPtr());
+        CodedUnivariateEquation<scalar> eqn(runTime, funcDictPtr());
         Info << nl << endl;
 
-        if (eqn.name() != "undefined")
+        if (eqn.eqnString() != "undefined")
         {
             Info<< "************************************" << nl
-                << name << "(x)=" << eqn.name() << nl
+                << name << "(x) = " << eqn.eqnString() << nl
                 << "************************************" << nl
                 << endl;
         }
 
-        if (dict.isDict("evaluationCoeffs"))
+        if (dict.lookupOrDefault("evaluate", false))
         {
             const dictionary& evaluationDict(dict.subDict("evaluationCoeffs"));
 
@@ -684,7 +726,7 @@ int main(int argc, char *argv[])
             Info<< endl;
         }
 
-        if (dict.isDict("integrationCoeffs"))
+        if (dict.lookupOrDefault("integrate", false))
         {
             const dictionary& integrationDict(dict.subDict("integrationCoeffs"));
 
@@ -704,7 +746,7 @@ int main(int argc, char *argv[])
                 << nl << endl;
         }
 
-        if (dict.isDict("minimizationCoeffs"))
+        if (dict.lookupOrDefault("minimize", false))
         {
             const dictionary& minimizationDict
             (
@@ -715,35 +757,38 @@ int main(int argc, char *argv[])
                 << "Minimizing function" << nl
                 << "************************************" << endl;
 
-            minimizationScheme::debug = 2;
             autoPtr<minimizationScheme> minimizer
             (
                 minimizationScheme::New(eqn, minimizationDict)
             );
-            minimizer->solve
+            scalarList minimum
             (
-                minimizationDict.lookup<scalarList>("x0"),
-                0
+                minimizer->solve
+                (
+                    minimizationDict.lookup<scalarList>("x0"),
+                    0
+                )
             );
-            Info<< endl;
+
+            Info<< "Minimum=" << minimum << nl << endl;
         }
     }
-    else
+    else if (eqnType == SINGLE)
     {
-        const word name = dict.lookupOrDefault<word>("name", "f");
+        const word name = funcDictPtr->lookupOrDefault<word>("name", "f");
 
-        CodedEquation<scalar> eqn(funcDictPtr());
+        CodedEquation<scalar> eqn(runTime, funcDictPtr());
         Info << nl << endl;
 
         if (eqn.name() != "undefined")
         {
             Info<< "************************************" << nl
-                << name << "(x)=" << eqn.name() << nl
+                << name << "(x) = " << eqn.name() << nl
                 << "************************************" << nl
                 << endl;
         }
 
-        if (dict.isDict("evaluationCoeffs"))
+        if (dict.lookupOrDefault("evaluate", false))
         {
             const dictionary& evaluationDict(dict.subDict("evaluationCoeffs"));
 
@@ -758,7 +803,7 @@ int main(int argc, char *argv[])
                 Info<<"f(" << x << ") = " << eqn.fx(x, 0) << endl;
                 evaluated = true;
             }
-            if (dict.found("xs"))
+            if (evaluationDict.found("xs"))
             {
                 List<scalar> xs(evaluationDict.lookup<List<scalar>>("xs"));
                 forAll(xs, i)
@@ -776,35 +821,12 @@ int main(int argc, char *argv[])
             Info<< endl;
         }
 
-        if (dict.isDict("rootCoeffs"))
+        if (dict.lookupOrDefault("findRoots", false))
         {
-            const dictionary& rootDict(dict.subDict("rootCoeffs"));
-
-            Info<< "************************************" << nl
-                << "Finding function root" << nl
-                << "************************************" << endl;
-
-            autoPtr<univariateRootSolver> rootSolver
-            (
-                univariateRootSolver::New(eqn, rootDict)
-            );
-            Pair<scalar> bounds(rootDict.lookup("bounds"));
-            scalar x(rootDict.lookup<scalar>("x0"));
-
-            Info<<"Root: "
-                << rootSolver->solve(x, bounds[0], bounds[1], 0.0)
-                << nl << endl;
-        }
-
-        if (dict.isDict("rootsCoeffs"))
-        {
-            const dictionary& rootsDict(dict.subDict("rootsCoeffs"));
-
             Info<< "************************************" << nl
                 << "Finding function roots" << nl
                 << "************************************" << endl;
-
-            if (P.size() > 1)
+            if (P.size())
             {
                 polynomialRoots PRoots(P);
                 Info<< "Real roots: " << PRoots.rootsRe() << nl
@@ -813,25 +835,39 @@ int main(int argc, char *argv[])
             }
             else
             {
+                const dictionary& rootsDict(dict.subDict("rootCoeffs"));
+
                 autoPtr<univariateRootSolver> rootSolver
                 (
                     univariateRootSolver::New(eqn, rootsDict)
                 );
-
                 Pair<scalar> bounds(rootsDict.lookup("bounds"));
-                label nIntervals
-                (
-                    rootsDict.lookupOrDefault("nIntervals", 123)
-                );
-                Info<< "Root: "
-                    <<  rootSolver->solveAll
+
+                if (rootsDict.lookupOrDefault("findAllRoots", false))
+                {
+                    label nIntervals
+                    (
+                        rootsDict.lookupOrDefault("nIntervals", 123)
+                    );
+                    scalarList roots
+                    (
+                        rootSolver->solveAll
                         (
                             bounds[0],
                             bounds[1],
                             0,
                             nIntervals
                         )
-                    << nl << endl;
+                    );
+                    Info<< "Roots: " << roots << nl << endl;
+                }
+                else
+                {
+                    scalar x(rootsDict.lookup<scalar>("x0"));
+                    scalar root(rootSolver->solve(x, bounds[0], bounds[1], 0.0));
+
+                    Info<< "Root: " << root << nl << endl;
+                }
             }
         }
 
@@ -866,22 +902,22 @@ int main(int argc, char *argv[])
                 << "Minimizing function" << nl
                 << "************************************" << endl;
 
-            minimizationScheme::debug = 2;
-            autoPtr<univariateMinimizationScheme> minimizer
+            autoPtr<minimizationScheme> minimizer
             (
-                univariateMinimizationScheme::New(eqn, minimizationDict)
+                minimizationScheme::New(eqn, minimizationDict)
             );
 
-            minimizer->solve
-            (
-                minimizationDict.lookup<scalar>("x0"),
-                0
-            );
-            Info<< endl;
+            scalar minimum =
+                minimizer->solve
+                (
+                    {minimizationDict.lookup<scalar>("x0")},
+                    0
+                )()[0];
+            Info<< "Minimum: " << minimum << nl << endl;
         }
     }
 
-    if (args.optionFound("clean"))
+    if (clean)
     {
         rmDir("./dynamicCode");
     }

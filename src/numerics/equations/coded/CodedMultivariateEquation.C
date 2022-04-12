@@ -1,9 +1,11 @@
 /*---------------------------------------------------------------------------*\
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
-   \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
-     \\/     M anipulation  | Synthetik Applied Technologies
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Copyright (C) 2020-2021 OpenFOAM Foundation
+     \\/     M anipulation  |
+-------------------------------------------------------------------------------
+12-04-2022 Synthetik Applied Technologies : Added equation functionality
 -------------------------------------------------------------------------------
 License
     This file is a derivative work of OpenFOAM.
@@ -94,7 +96,12 @@ Foam::autoPtr<Foam::multivariateEquation<Type>>
 Foam::CodedMultivariateEquation<Type>::compileNew()
 {
     this->updateLibrary();
-    return multivariateEquation<Type>::New(codeName(), codeDict());
+    return regEquation<Type, MultivariateEquation>::New
+    (
+        codeName(),
+        this->obr_,
+        codeDict()
+    );
 }
 
 
@@ -127,16 +134,11 @@ Foam::CodedMultivariateEquation<Type>::expandCodeDict
 template<class Type>
 Foam::CodedMultivariateEquation<Type>::CodedMultivariateEquation
 (
+    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    MultivariateEquation<Type>
-    (
-        dict.lookupOrDefault<string>("eqnString", "undefined"),
-        dict.lookup<label>("nEquations"),
-        dict.lookup<scalarList>("lowerBounds"),
-        dict.lookup<scalarList>("upperBounds")
-    ),
+    regEquation<Type, MultivariateEquation>(obr, dict),
     codedBase("test", expandCodeDict(dict)),
     nDerivatives_(dict.lookup<label>("nDerivatives"))
 {

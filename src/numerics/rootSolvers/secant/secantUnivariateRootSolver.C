@@ -85,11 +85,6 @@ Foam::scalar Foam::secantUnivariateRootSolver::findRoot
     scalar xLow = x1;
     scalar xHigh = x2;
 
-    if (!eqn_.containsRoot(li))
-    {
-        return x0;
-    }
-
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         scalar yHigh = eqn_.fx(xHigh, li);

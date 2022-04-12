@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     |
-    \\  /    A nd           | Copyright (C) 2021
+    \\  /    A nd           | Copyright (C) 2021-2022
      \\/     M anipulation  | Synthetik Applied Technologies
 -------------------------------------------------------------------------------
 License
@@ -35,9 +35,9 @@ Foam::UnivariateEquation<Type>::UnivariateEquation
     const scalarList& upperLimits
 )
 :
-    nVar_(lowerLimits.size()),
     lowerLimits_(lowerLimits),
     upperLimits_(upperLimits),
+    nVar_(lowerLimits.size()),
     dX_(nVar_, 1e-6)
 {}
 
@@ -45,16 +45,27 @@ Foam::UnivariateEquation<Type>::UnivariateEquation
 template<class Type>
 Foam::UnivariateEquation<Type>::UnivariateEquation
 (
-    const string& name,
+    const string& eqnString,
     const scalarList& lowerLimits,
     const scalarList& upperLimits
 )
 :
-    univariateEquation<Type>(name),
-    nVar_(lowerLimits.size()),
+    univariateEquation<Type>(eqnString),
     lowerLimits_(lowerLimits),
     upperLimits_(upperLimits),
+    nVar_(lowerLimits.size()),
     dX_(nVar_, 1e-6)
+{}
+
+
+template<class Type>
+Foam::UnivariateEquation<Type>::UnivariateEquation(const dictionary& dict)
+:
+    univariateEquation<Type>(dict),
+    lowerLimits_(dict.lookup("lowerBounds")),
+    upperLimits_(dict.lookup("upperBounds")),
+    nVar_(lowerLimits_.size()),
+    dX_(dict.lookupOrDefault("dx", scalarList(nVar_, 1e-6)))
 {}
 
 

@@ -93,33 +93,43 @@ Foam::scalar Foam::stepUnivariateMinimizationScheme::minimize
 {
     scalar xLower = x0;
     scalar dx = dx_;
+    scalar xMid = x0 + dx*f_;
     scalar xUpper = x0 + dx;
 
     scalar yLower = eqn_.fx(xLower, li);
+    scalar yMid = eqn_.fx(xMid, li);
     scalar yUpper = eqn_.fx(xUpper, li);
 
     for (stepi_ = 0; stepi_ < maxSteps_; stepi_++)
     {
         if (yUpper < yLower)
         {
-            xLower = xUpper;
-            xUpper += dx;
-            yLower = yUpper;
-            yUpper = eqn_.fx(xUpper, li);
+            if (yMid > yUpper)
+            {
+                xLower = xUpper;
+                yLower = yUpper;
+            }
+            else
+            {
+                xLower = xMid;
+                yLower = yMid;
+                dx *= f_;
+            }
         }
         else
         {
             dx *= f_;
-            xUpper  = xLower + dx;
-            yUpper = eqn_.fx(xUpper, li);
         }
 
+        xMid = xLower + dx*f_;
+        yMid = eqn_.fx(xMid, li);
+
+        xUpper = xLower + dx;
+
         eqn_.limit(xUpper);
-        if (convergedX(xUpper, xLower))
-        {
-            break;
-        }
-        if (convergedY(yUpper, yLower))
+        yUpper = eqn_.fx(xUpper, li);
+
+        if (convergedX(xLower, xUpper) && convergedY(yLower, yUpper))
         {
             break;
         }

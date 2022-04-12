@@ -33,6 +33,7 @@ SourceFiles
 #define CodedUnivariateEquationTemplate_H
 
 #include "UnivariateEquationsFwd.H"
+#include "regEquation.H"
 
 //{{{ begin codeInclude
 ${codeInclude}
@@ -49,7 +50,7 @@ namespace Foam
 
 class ${typeName}_${TemplateType}UnivariateEquation
 :
-    public UnivariateEquation<${TemplateType}>
+    public regEquation<${TemplateType}, UnivariateEquation>
 {
 public:
 
@@ -60,7 +61,11 @@ public:
     // Constructors
 
         //- Construct from entry name and dictionary
-        ${typeName}_${TemplateType}UnivariateEquation(const dictionary&);
+        ${typeName}_${TemplateType}UnivariateEquation
+        (
+            const objectRegistry&,
+            const dictionary&
+        );
 
 
 

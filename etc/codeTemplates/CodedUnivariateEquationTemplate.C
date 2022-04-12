@@ -31,9 +31,9 @@ namespace Foam
 {
     defineTypeNameAndDebug(${typeName}_${TemplateType}UnivariateEquation, 0);
 
-    univariateEquation<${TemplateType}>::
+    regEquation<${TemplateType}, UnivariateEquation>::
     adddictionaryConstructorToTable<${typeName}_${TemplateType}UnivariateEquation>
-        ${typeName}_${TemplateType}UnivariateEquationConstructorToTable_;
+        ${typeName}_${TemplateType}RegUnivariateEquationConstructorToTable_;
 }
 
 
@@ -65,15 +65,11 @@ extern "C"
 Foam::${typeName}_${TemplateType}UnivariateEquation::
 ${typeName}_${TemplateType}UnivariateEquation
 (
+    const objectRegistry& obr,
     const dictionary& dict
 )
 :
-    UnivariateEquation<${TemplateType}>
-    (
-        dict.lookupOrDefault<string>("eqnString", "undefined"),
-        dict.lookup<scalarList>("lowerBounds"),
-        dict.lookup<scalarList>("upperBounds")
-    )
+    regEquation<${TemplateType}, UnivariateEquation>(obr, dict)
 {
     if (${verbose:-false})
     {

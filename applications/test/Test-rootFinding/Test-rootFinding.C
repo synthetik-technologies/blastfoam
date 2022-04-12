@@ -38,8 +38,10 @@ public:
     :
         ScalarMultivariateEquation
         (
-            "f1(x1, x2) = x1^2 + x2^2 - 4.0\n"
-            "f2(x1, x2) = x1^2 - x2 + 1.0",
+            {
+                "f1(x1, x2) = x1^2 + x2^2 - 4.0",
+                "f2(x1, x2) = x1^2 - x2 + 1.0"
+            },
             2,
             {0.0, 0.0},
             {2.0, 2.0}
@@ -95,8 +97,10 @@ public:
     :
         ScalarMultivariateEquation
         (
-            "f1(x1, x2) = x2^2 + x1^2 + x1\n"
-            "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0",
+            {
+                "f1(x1, x2) = x2^2 + x1^2 + x1",
+                "f2(x1, x2) = (x1^2)/16 - x2^2 - 1.0"
+            },
             2,
             {-10.0, -10.0},
             {10.0, 10.0}
@@ -184,7 +188,7 @@ int main(int argc, char *argv[])
     forAll(eqns, eqni)
     {
         Info<< "*****************************************" << nl
-            << "Solving:" << nl << eqns[eqni].name() << nl;
+            << "Solving:" << nl << eqns[eqni].eqnString() << nl;
         if (roots[eqni].size() > 1)
         {
             Info<< "roots=" << roots[eqni] <<nl;

@@ -22,18 +22,20 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::equationBase
+    Foam::equation
 
 Description
-    Base class for all equation types that holds the equation as an optional
-    string
+    Scalar equation with a single input. Derived from both scalarEquation
+    and multivariateEquation so that a scalar equation can be cast in either
+    form.
 
 \*---------------------------------------------------------------------------*/
 
-#ifndef equationBase_H
-#define equationBase_H
+#ifndef regEquation_H
+#define regEquation_H
 
-#include "dictionary.H"
+#include "regIOobject.H"
+#include "objectRegistry.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -41,63 +43,78 @@ namespace Foam
 {
 
 /*---------------------------------------------------------------------------*\
-                          Class equationBase Declaration
+                      Class regEquation Declaration
 \*---------------------------------------------------------------------------*/
 
-class equationBase
+template<class Type, template<class> class BaseEquation>
+class regEquation
+:
+    public regIOobject,
+    public BaseEquation<Type>
 {
+public:
+    // Public typedef
+    typedef regEquation<Type, BaseEquation> RegEquationType;
+
 protected:
-    // Protected data
+    // Protected member data
 
-        //- Equation as a string
-        word eqnString_;
+        // Reference to the constructing object registry
+        const objectRegistry& obr_;
 
-        // Merge list of strings
-        string mergeStrings(const List<string>& eqns) const;
 
 public:
 
+    //- Runtime type information
+    TypeName("regEquation");
+
+    //- Declare runtime constructor selection table
+    declareRunTimeSelectionTable
+    (
+        autoPtr,
+        RegEquationType,
+        dictionary,
+        (
+            const objectRegistry& obr,
+            const dictionary& dict
+        ),
+        (obr, dict)
+    );
+
     // Constructors
 
-        //- Construct null
-        equationBase();
-
-        //- Construct from equation string
-        equationBase(const string& eqnString);
-
-        //- Construct from multiple equation strings
-        equationBase(const List<string>& eqnStrings);
-
-        //- Construct from a dictionary
-        equationBase(const dictionary& dict);
+        //- Construct given bounds
+        regEquation(const objectRegistry& obr, const dictionary& dict);
 
 
     //- Destructor
-    virtual ~equationBase();
+    virtual ~regEquation();
 
 
-    // Member functions
+    //- Selector
+    static autoPtr<typename BaseEquation<Type>::BaseEquation> New
+    (
+        const word& type,
+        const objectRegistry& obr,
+        const dictionary& dict
+    );
 
-        //- Return the equation as a string
-        virtual const word& eqnString() const
-        {
-            return eqnString_;
-        }
-
-        //- Access the equation string
-        virtual word& eqnString()
-        {
-            return eqnString_;
-        }
-
-        //- Return the number of derivatives
-        virtual label nDerivatives() const = 0;
+    virtual bool writeData(Ostream&) const
+    {
+        return true;
+    }
 };
-
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 } // End namespace Foam
+
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#ifdef NoRepository
+    #include "regEquation.C"
+#endif
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
