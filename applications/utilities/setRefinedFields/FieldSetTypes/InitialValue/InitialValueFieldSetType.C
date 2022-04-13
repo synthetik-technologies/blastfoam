@@ -50,7 +50,12 @@ Foam::FieldSetTypes::InitialValue<Type, FSType>::InitialValue
     ),
     origFieldPtr_
     (
-        this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+        mesh.foundObject<typename FSType<Type>::FieldType>
+        (
+            IOobject::groupName(fieldName, "orig")
+        )
+      ? this->lookupOrRead(IOobject::groupName(fieldName, "orig"))
+      : nullptr
     )
 {
     if (!origFieldPtr_.valid())
