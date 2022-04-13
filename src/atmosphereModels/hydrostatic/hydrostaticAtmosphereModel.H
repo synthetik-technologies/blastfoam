@@ -57,7 +57,7 @@ class hydrostatic
 // Private data
 
     //- Pressure at reference height
-    dimensionedScalar pRef_;
+    uniformDimensionedScalarField pRef_;
 
 
 public:

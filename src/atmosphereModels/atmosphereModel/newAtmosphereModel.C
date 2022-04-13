@@ -50,7 +50,7 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict);
+    return cstrIter()(mesh, dict.optionalSubDict(atmosphereModelType + "Coeffs"));
 }
 
 

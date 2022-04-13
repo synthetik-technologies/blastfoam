@@ -104,14 +104,29 @@ void Foam::atmosphereModels::table::createAtmosphere
     // Correct density
     thermo.updateRho(p);
 
+    // Save pressure field since it may change
+    volScalarField pConst(p);
+    thermo.correct();
+
+    // Reset the pressure
+    p = pConst;
+
     // Equalibriate the pressure field
     if (correct_)
     {
-        hydrostaticInitialisation
+        uniformDimensionedScalarField pRef
         (
-            thermo,
-            dimensionedScalar(dimPressure, pTable_.lookup(gMin(h_)))
+            IOobject
+            (
+                "pRef",
+                mesh_.time().constant(),
+                mesh_,
+                IOobject::READ_IF_PRESENT,
+                IOobject::NO_WRITE
+            ),
+            dimensionedScalar("pRef", dimPressure, pTable_.lookup(gMin(h_)))
         );
+        hydrostaticInitialisation(thermo, pRef);
     }
 }
 

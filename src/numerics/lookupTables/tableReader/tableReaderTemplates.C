@@ -182,7 +182,7 @@ bool Foam::readComponent
     }
     else
     {
-        FatalErrorInFunction
+        FatalIOErrorInFunction(parentDict)
             << "Neither the entry \"" << name << "\", "
             << "construction method "
             << "(n" << name.capitalise() << ", "
@@ -191,7 +191,7 @@ bool Foam::readComponent
             << "/delta" << name.capitalise() << ") "
             << ", or the \""
             << name << "Coeffs\" subDictionary was found" << endl
-            << abort(FatalError);
+            << abort(FatalIOError);
     }
 
     if (readFromTable)

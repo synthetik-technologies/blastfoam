@@ -68,7 +68,7 @@ protected:
     vector normal_;
 
     //- Elevation of lowest point in mesh
-    dimensionedScalar baseElevation_;
+    uniformDimensionedScalarField baseElevation_;
 
     //- Height field
     volScalarField h_;

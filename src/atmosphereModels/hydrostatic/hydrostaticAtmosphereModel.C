@@ -47,7 +47,18 @@ Foam::atmosphereModels::hydrostatic::hydrostatic
 )
 :
     atmosphereModel(mesh, dict),
-    pRef_("pRef", dimPressure, dict_)
+    pRef_
+    (
+        IOobject
+        (
+            "pRef",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedScalar("pRef", dimPressure, dict_)
+    )
 {}
 
 
@@ -59,7 +70,18 @@ Foam::atmosphereModels::hydrostatic::hydrostatic
 )
 :
     atmosphereModel(mesh, elevation),
-    pRef_("pRef", dimPressure, pRef)
+    pRef_
+    (
+        IOobject
+        (
+            "pRef",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedScalar("pRef", dimPressure, pRef)
+    )
 {}
 
 

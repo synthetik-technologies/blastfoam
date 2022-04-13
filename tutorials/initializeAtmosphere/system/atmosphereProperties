@@ -1,0 +1,44 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      atmosphereProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type hydrostatic;
+
+hydrostaticCoeffs
+{
+    baseElevation 0;            // Minimum point where h = 0
+    pRef 101298;                // Reference pressure
+    nHydrostaticCorrectors 10;  // Number of iterations
+}
+
+
+tableCoeffs
+{
+    baseElevation   -10;        // Minimum point where h = 0
+    correct         true;       // Use hydrostatic initiaization after setting
+                                // table values
+    pTable
+    {
+        p (3e5 1e5);            // Pressure values
+        h (-10 10);             // Heights
+    }
+    TTable
+    {
+        T (310 300);            // Temperature values
+        h (-10 10);             // Heights
+    }
+}
+// ************************************************************************* //

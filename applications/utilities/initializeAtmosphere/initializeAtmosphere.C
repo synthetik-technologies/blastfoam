@@ -141,9 +141,7 @@ int main(int argc, char *argv[])
     Info<< "Initializing atmosphere." << endl;
     atmosphere->createAtmosphere(thermo());
 
-    thermo->p().write();
-    thermo->rho().write();
-    thermo->T().write();
+    runTime.writeNow();
 
     Info<< "Done" << nl << endl;
 }

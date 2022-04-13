@@ -64,7 +64,18 @@ Foam::atmosphereModel::atmosphereModel
         )
     ),
     normal_(-g_.value()/max(mag(g_).value(), small)),
-    baseElevation_("baseElevation", dimLength, dict_),
+    baseElevation_
+    (
+        IOobject
+        (
+            "hRef",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedScalar("baseElevation", dimLength, dict_)
+    ),
     h_("h", normal_ & mesh.C())
 {
     h_ += baseElevation_ - min(h_);
@@ -91,7 +102,18 @@ Foam::atmosphereModel::atmosphereModel
         )
     ),
     normal_(-g_.value()/max(mag(g_).value(), small)),
-    baseElevation_("baseElevation", dimLength, elevation),
+    baseElevation_
+    (
+        IOobject
+        (
+            "hRef",
+            mesh.time().constant(),
+            mesh,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedScalar("baseElevation", dimLength, elevation)
+    ),
     h_("h", normal_ & mesh.C())
 {
     h_ += baseElevation_ - min(h_);
@@ -111,18 +133,22 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 ) const
 {
     volScalarField& p(thermo.p());
+
+    // Correct density
+    thermo.updateRho(p);
+
     volScalarField& rho(thermo.rho());
     const fvMesh& mesh = p.mesh();
 
     volScalarField gh("gh", (g_ & normal_)*h_);
     surfaceScalarField ghf("ghf", fvc::interpolate(gh));
 
-    wordList p_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
-    forAll(p_rghBcs, patchi)
+    wordList ph_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
+    forAll(ph_rghBcs, patchi)
     {
         if (p.boundaryField()[patchi].fixesValue())
         {
-            p_rghBcs[patchi] = "fixedValue";
+            ph_rghBcs[patchi] = "fixedValue";
         }
     }
 
@@ -137,7 +163,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         ),
         mesh,
         dimensionedVector(dimVelocity, Zero),
-        "noSlip"
+        "fixedValue"
     );
     surfaceScalarField phi
     (
@@ -150,69 +176,72 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         fvc::flux(U)
     );
 
-    volScalarField p_rgh
+    volScalarField ph_rgh
     (
         IOobject
         (
-            "p_rgh",
+            "ph_rgh",
             mesh.time().timeName(),
             mesh,
-            IOobject::READ_IF_PRESENT
+            IOobject::NO_READ
         ),
-        mesh,
-        dimensionedScalar(dimensionSet(1, -1, -2, 0, 0, 0, 0), 0.0),
-        p_rghBcs
+        mesh_,
+        dimensionedScalar("ph_rgh", dimPressure, 0.0),
+        ph_rghBcs
     );
+
+//     p = ph_rgh + rho*gh + pRef;
+//     p.correctBoundaryConditions();
+
+    // Correct density
+    thermo.updateRho(p);
 
     label nCorr
     (
         dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
-    scalar tolerance(dict_.lookupOrDefault<scalar>("tolerance", 1e-6));
 
     dictionary solverDict;
-    solverDict.add("solver", "PCG");
-    solverDict.add("preconditioner", "DIC");
-    solverDict.add("tolerance", 1e-10);
-    solverDict.add("relTol", 0.1);
-
-    surfaceScalarField rhof("rhof", fvc::interpolate(rho));
-    surfaceScalarField phig
-    (
-        "phig",
-        -rhof*ghf*fvc::snGrad(rho)*mesh.magSf()
-    );
+    solverDict.add("solver", "GAMG");
+    solverDict.add("smoother", "GaussSeidel");
+    solverDict.add("tolerance", 1e-6);
+    solverDict.add("relTol", 0);
+    solverDict.add("minIter", 1);
 
     for (label i=0; i<nCorr; i++)
     {
         Info<< nl << "Hydrostatic iteration " << i << endl;
 
+        ph_rgh == p - rho*gh - pRef;
+
+        surfaceScalarField rhof("rhof", fvc::interpolate(rho));
+        surfaceScalarField phig
+        (
+            "phig",
+            -rhof*ghf*fvc::snGrad(rho)*mesh.magSf()
+        );
+
         // Update the pressure BCs to ensure flux consistency
-        constrainPressure(p_rgh, rho, U, phig, rhof);
+        constrainPressure(ph_rgh, rho, U, phig, rhof);
 
         fvScalarMatrix ph_rghEqn
         (
-            fvm::laplacian(rhof, p_rgh) == fvc::div(phig)
+            fvm::laplacian(rhof, ph_rgh) == fvc::div(phig)
         );
 
         ph_rghEqn.solve(solverDict);
 
-        scalar residual = (max(p_rgh) - min(p_rgh)).value();
+        scalar residual = (max(ph_rgh) - min(ph_rgh)).value();
 
-        p = p_rgh + rho*gh + pRef;
+        p = ph_rgh + rho*gh + pRef;
         p.correctBoundaryConditions();
 
-        p_rgh = p - rho*gh - pRef;
+        // Correct density
+        thermo.updateRho(p);
+        thermo.correct();
 
         Info<< "Hydrostatic pressure variation "<< residual << endl;
-
-        if (residual < tolerance)
-        {
-            break;
-        }
     }
-    thermo.correct();
-    p_rgh.write();
 }
 
 // ************************************************************************* //
