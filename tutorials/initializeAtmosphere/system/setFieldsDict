@@ -36,6 +36,22 @@ regions
             volScalarFieldValue alpha.air   1
             volScalarFieldValue p           101298
         );
+
+        cellZones
+        (
+            {
+                name airRegion;
+                action new;
+            }
+            {
+                name waterRegion;
+                action new;
+            }
+            {
+                name waterRegion;
+                action invert;
+            }
+        );
     }
 );
 

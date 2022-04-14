@@ -296,6 +296,7 @@ public:
             //- Initialize internal energy
             virtual scalar rhoPT
             (
+                const scalar rho,
                 const scalar p,
                 const scalar T
             ) const = 0;
@@ -644,11 +645,12 @@ public:
             //- Initialize internal energy
             virtual scalar rhoPT
             (
+                const scalar rho,
                 const scalar p,
                 const scalar T
             ) const
             {
-                return ThermoType::rhoPT(p,T);
+                return ThermoType::rhoPT(rho, p,T);
             }
 
             //- Temperature from enthalpy or internal energy

@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     simpleBlastThermo& eos = eosPtr();
 
     scalar p = 1e5;
-    scalar rho = 1.225;
+    scalar rho = eos.rhoPT(1.0, p, T);//1.225;
     scalar e = eos.Es(rho, 0, T);
 
 //     label n = 1000;
@@ -36,9 +36,10 @@ int main(int argc, char *argv[])
 //         Es[i] = eos.E(rhos[i], e, T);
 //     }
 
-    e = eos.initializeEnergy(p, rho, e, T);
+//     e = eos.initializeEnergy(p, rho, e, T);
     T = eos.TRhoE(T, rho, e);
 
+    Info<<"rho: "<< rho <<endl;
     Info<<"e: "<< e <<endl;
     Info<<"gamma: "<< eos.Gamma(rho, e, T) <<endl;
     Info<<"p: "<< eos.p(rho, e, T) <<endl;
@@ -46,7 +47,7 @@ int main(int argc, char *argv[])
     Info<<"T: "<< T <<endl;
     Info<<"Cp: "<< eos.Cp(rho, e, T) <<endl;
     Info<<"Cv: "<< eos.Cv(rho, e, T) <<endl;
-    Info<<"rho: "<< eos.rhoPT(p, T) <<endl;
+    Info<<"rho: "<< eos.rhoPT(rho, p, T) <<endl;
     Info<<"p: "<< eos.p(rho, e, T) <<endl;
 
     return 0;

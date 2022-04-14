@@ -18,12 +18,11 @@ convertToMeters 1;
 
 vertices
 (
-    // this domain is slightly larger than the bounds of the geometry in the stl
-    ( -1  -10  0 ) // bottom
-    (  1  -10  0 )
-    (  1   10  0 )
-    ( -1   10  0 )
-    ( -1  -10  0.1) // top
+    ( -1  -10  0  )
+    (  1  -10  0  )
+    (  1   10  0  )
+    ( -1   10  0  )
+    ( -1  -10  0.1)
     (  1  -10  0.1)
     (  1   10  0.1)
     ( -1   10  0.1)

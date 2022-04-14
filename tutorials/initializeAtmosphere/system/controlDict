@@ -15,7 +15,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application     blastFoam;
+application     initializeAtmosphere;
 
 startFrom       startTime;
 
@@ -23,7 +23,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         0.00031;
+endTime         0;
 
 deltaT          1e-7;
 
@@ -50,24 +50,5 @@ adjustTimeStep  yes;
 maxCo           0.5;
 
 maxDeltaT       1e-5;
-
-libs ("libtwoPhaseMixture.so");
-
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-functions
-{
-    writeTimes
-    {
-        type writeTimeList;
-        times
-        (
-            0.071e-3
-            0.14e-3
-            0.22e-3
-            0.301e-3
-        );
-    }
-}
 
 // ************************************************************************* //

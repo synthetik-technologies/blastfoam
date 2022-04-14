@@ -26,27 +26,28 @@ thermoType
 {
     transport const;
     thermo      eConst;
-    equationOfState DoanNickel;
+    equationOfState stiffenedGas;
 }
 
 thermodynamics
 {
-    Cv 718;
-    Hf 0;
+    Cv      4186;
+    Esref   4.1e4;
+    Hf      0;
 
-    file        "T.csv";
-    nRho        7;
-    ne          40;
-    minRho      -3.0;
-    mine        11.8748;
-    dRho        1.0;
-    de          1.0;
-
-    mod         ln;
-    TMod        ln;
+//     file        "T.csv";
+//     nRho        7;
+//     ne          40;
+//     minRho      -3.0;
+//     mine        11.8748;
+//     dRho        1.0;
+//     de          1.0;
+//
+//     mod         ln;
+//     TMod        ln;
 }
-// equationOfState
-// {
+equationOfState
+{
 // //     b 0.001;
 // // Shock
 // //     rho0    1000;
@@ -80,8 +81,8 @@ thermodynamics
 // //     C       14.57e9;
 // //     pCav    5000;
 //
-// // Stiffened gas
-// //     a 3309;
-// //     b 0;
-// //     gamma 7.15;
-// }
+// Stiffened gas
+    a 3e8;
+    b 0;
+    gamma 7.15;
+}

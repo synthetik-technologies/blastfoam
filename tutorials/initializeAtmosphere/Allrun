@@ -16,12 +16,15 @@ runApplication snappyHexMesh -overwrite
 runApplication createPatch -overwrite
 
 # -- Set initial conditions
-runApplication -s initial setRefinedFields
+runApplication setRefinedFields
 
-# -- run the calc
-runApplication initializeAtmosphere
+# -- Initialize the pressure in the water region
+runApplication -s water initializeAtmosphere -zone waterRegion -type hydrostatic
+
+# -- Initialize the pressure in the air region
+runApplication -s air initializeAtmosphere -zone airRegion -type table
 
 # -- Set initial conditions (reset left region)
-runApplication setRefinedFields
+# runApplication setRefinedFields
 
 # ----------------------------------------------------------------- end-of-file
