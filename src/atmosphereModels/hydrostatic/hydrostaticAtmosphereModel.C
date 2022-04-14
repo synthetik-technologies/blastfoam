@@ -43,45 +43,11 @@ namespace atmosphereModels
 Foam::atmosphereModels::hydrostatic::hydrostatic
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
-    atmosphereModel(mesh, dict),
-    pRef_
-    (
-        IOobject
-        (
-            "pRef",
-            mesh.time().constant(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        dimensionedScalar("pRef", dimPressure, dict_)
-    )
-{}
-
-
-Foam::atmosphereModels::hydrostatic::hydrostatic
-(
-    const fvMesh& mesh,
-    const scalar pRef,
-    const scalar elevation
-)
-:
-    atmosphereModel(mesh, elevation),
-    pRef_
-    (
-        IOobject
-        (
-            "pRef",
-            mesh.time().constant(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        dimensionedScalar("pRef", dimPressure, pRef)
-    )
+    atmosphereModel(mesh, dict, zoneID)
 {}
 
 
@@ -98,7 +64,7 @@ void Foam::atmosphereModels::hydrostatic::createAtmosphere
     fluidBlastThermo& thermo
 ) const
 {
-    hydrostaticInitialisation(thermo, pRef_);
+    hydrostaticInitialisation(thermo);
 }
 
 // ************************************************************************* //

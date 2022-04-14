@@ -44,14 +44,21 @@ namespace atmosphereModels
 Foam::atmosphereModels::table::table
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
-    atmosphereModel(mesh, dict),
+    atmosphereModel(mesh, dict, zoneID),
     pTable_(dict_.subDict("pTable"), "h", "p"),
     TTable_(dict_.subDict("TTable"), "h", "T"),
     correct_(dict_.lookupOrDefault("correct", false))
-{}
+{
+    const_cast<dictionary&>(dict_).set
+    (
+        "pRef",
+        pTable_.lookup(gMin(h_))
+    );
+}
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -70,63 +77,56 @@ void Foam::atmosphereModels::table::createAtmosphere
     volScalarField& p = thermo.p();
     volScalarField& T = thermo.T();
 
-    forAll(p, celli)
+    // Optional setting of only some cells
+    labelList cells
+    (
+        zoneID_ >= 0
+      ? labelList(mesh_.cellZones()[zoneID_])
+      : identity(mesh_.nCells())
+    );
+
+    // Create a hash set for easier searching of selected cells
+    labelHashSet cSet(cells);
+
+    // Set the internal values
+    forAll(cells, i)
     {
-        p[celli] = pTable_.lookup(h_[celli]);
-        T[celli] = TTable_.lookup(h_[celli]);
+        p[cells[i]] = pTable_.lookup(h_[cells[i]]);
+        T[cells[i]] = TTable_.lookup(h_[cells[i]]);
     }
 
-    p.correctBoundaryConditions();
-    T.correctBoundaryConditions();
-
+    // The the boundary values that have their owner face included in the set
     volScalarField::Boundary& bp = p.boundaryFieldRef();
     volScalarField::Boundary& bT = T.boundaryFieldRef();
     forAll(bp, patchi)
     {
-        if (bp[patchi].fixesValue())
+        const labelList& fCells = bp[patchi].patch().faceCells();
+        forAll(fCells, facei)
         {
-            forAll(bp[patchi], facei)
+            if (cSet.found(fCells[facei]))
             {
                 bp[patchi][facei] =
                     pTable_.lookup(h_.boundaryField()[patchi][facei]);
-            }
-        }
-        if (bT[patchi].fixesValue())
-        {
-            forAll(bT[patchi], facei)
-            {
                 bT[patchi][facei] =
                     TTable_.lookup(h_.boundaryField()[patchi][facei]);
             }
         }
     }
 
+    // Correct boundary conditions
+    p.correctBoundaryConditions();
+    T.correctBoundaryConditions();
+
     // Correct density
     thermo.updateRho(p);
 
-    // Save pressure field since it may change
-    volScalarField pConst(p);
+    // Correct of thermodynamic variables
     thermo.correct();
-
-    // Reset the pressure
-    p = pConst;
 
     // Equalibriate the pressure field
     if (correct_)
     {
-        uniformDimensionedScalarField pRef
-        (
-            IOobject
-            (
-                "pRef",
-                mesh_.time().constant(),
-                mesh_,
-                IOobject::READ_IF_PRESENT,
-                IOobject::NO_WRITE
-            ),
-            dimensionedScalar("pRef", dimPressure, pTable_.lookup(gMin(h_)))
-        );
-        hydrostaticInitialisation(thermo, pRef);
+        hydrostaticInitialisation(thermo);
     }
 }
 

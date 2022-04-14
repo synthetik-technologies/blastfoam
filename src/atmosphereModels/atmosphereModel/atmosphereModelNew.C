@@ -30,11 +30,22 @@ License
 Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 {
-    const word atmosphereModelType(dict.lookup<word>("type"));
+    return New(dict.lookup<word>("type"), mesh, dict, zoneID);
+}
 
+
+Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
+(
+    const word& atmosphereModelType,
+    const fvMesh& mesh,
+    const dictionary& dict,
+    const label zoneID
+)
+{
     Info<< "Selecting atmosphereModel: " << atmosphereModelType << endl;
 
     dictionaryConstructorTable::iterator cstrIter =
@@ -50,7 +61,12 @@ Foam::autoPtr<Foam::atmosphereModel> Foam::atmosphereModel::New
             << exit(FatalError);
     }
 
-    return cstrIter()(mesh, dict.optionalSubDict(atmosphereModelType + "Coeffs"));
+    return cstrIter()
+    (
+        mesh,
+        dict.optionalSubDict(atmosphereModelType + "Coeffs"),
+        zoneID
+    );
 }
 
 

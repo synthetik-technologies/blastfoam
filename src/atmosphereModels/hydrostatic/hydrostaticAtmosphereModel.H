@@ -54,28 +54,13 @@ class hydrostatic
 :
     public atmosphereModel
 {
-// Private data
-
-    //- Pressure at reference height
-    uniformDimensionedScalarField pRef_;
-
-
 public:
 
     //- Runtime type information
     TypeName("hydrostatic");
 
     // Constructor
-    hydrostatic(const fvMesh& mesh, const dictionary& dict);
-
-    // Constructor
-    hydrostatic
-    (
-        const fvMesh& mesh,
-        const scalar pRef,
-        const scalar elevation
-    );
-
+    hydrostatic(const fvMesh&, const dictionary&, const label);
 
     //- Destructor
     virtual ~hydrostatic();

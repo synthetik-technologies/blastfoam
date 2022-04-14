@@ -29,7 +29,7 @@ Description
 
 SourceFiles
     atmosphereModel.C
-    newAtmosphereModel.C
+    atmosphereModelNew.C
 
 \*---------------------------------------------------------------------------*/
 
@@ -73,11 +73,13 @@ protected:
     //- Height field
     volScalarField h_;
 
+    //- Saved zoneID to set
+    const label zoneID_;
+
     //- Stabilize fields
     void hydrostaticInitialisation
     (
-        fluidBlastThermo& thermo,
-        const dimensionedScalar& pRef
+        fluidBlastThermo& thermo
     ) const;
 
 public:
@@ -95,16 +97,14 @@ public:
             dictionary,
             (
                 const fvMesh& mesh,
-                const dictionary& dict
+                const dictionary& dict,
+                const label zoneID
             ),
-            (mesh, dict)
+            (mesh, dict, zoneID)
         );
 
     // Constructor
-    atmosphereModel(const fvMesh& mesh, const dictionary& dict);
-
-    // Constructor
-    atmosphereModel(const fvMesh& mesh, const scalar elevation);
+    atmosphereModel(const fvMesh&, const dictionary&, const label);
 
 
     //- Destructor
@@ -113,10 +113,21 @@ public:
 
     // Selectors
 
+        // Construct from dictionary
         static autoPtr<atmosphereModel> New
         (
             const fvMesh& mesh,
-            const dictionary& dict
+            const dictionary& dict,
+            const label zoneID = -1
+        );
+
+        //- COnstruct given a model type and dictionary
+        static autoPtr<atmosphereModel> New
+        (
+            const word& atmosphereModelType,
+            const fvMesh& mesh,
+            const dictionary& dict,
+            const label zoneID = -1
         );
 
 

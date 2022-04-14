@@ -47,7 +47,8 @@ namespace Foam
 Foam::atmosphereModel::atmosphereModel
 (
     const fvMesh& mesh,
-    const dictionary& dict
+    const dictionary& dict,
+    const label zoneID
 )
 :
     dict_(dict),
@@ -74,51 +75,13 @@ Foam::atmosphereModel::atmosphereModel
             IOobject::READ_IF_PRESENT,
             IOobject::NO_WRITE
         ),
-        dimensionedScalar("baseElevation", dimLength, dict_)
+        dimensionedScalar("hRef", dimLength, dict_)
     ),
-    h_("h", normal_ & mesh.C())
+    h_("h", normal_ & mesh.C()),
+    zoneID_(zoneID)
 {
     h_ += baseElevation_ - min(h_);
 }
-
-
-Foam::atmosphereModel::atmosphereModel
-(
-    const fvMesh& mesh,
-    const scalar elevation
-)
-:
-    dict_(),
-    mesh_(mesh),
-    g_
-    (
-        IOobject
-        (
-            "g",
-            mesh.time().constant(),
-            mesh,
-            IOobject::MUST_READ,
-            IOobject::NO_WRITE
-        )
-    ),
-    normal_(-g_.value()/max(mag(g_).value(), small)),
-    baseElevation_
-    (
-        IOobject
-        (
-            "hRef",
-            mesh.time().constant(),
-            mesh,
-            IOobject::READ_IF_PRESENT,
-            IOobject::NO_WRITE
-        ),
-        dimensionedScalar("baseElevation", dimLength, elevation)
-    ),
-    h_("h", normal_ & mesh.C())
-{
-    h_ += baseElevation_ - min(h_);
-}
-
 
 
 // * * * * * * * * * * * * * * * * Destructor  * * * * * * * * * * * * * * * //
@@ -128,21 +91,18 @@ Foam::atmosphereModel::~atmosphereModel()
 
 void Foam::atmosphereModel::hydrostaticInitialisation
 (
-    fluidBlastThermo& thermo,
-    const dimensionedScalar& pRef
+    fluidBlastThermo& thermo
 ) const
 {
-    volScalarField& p(thermo.p());
+    volScalarField p(thermo.p());
 
-    // Correct density
-    thermo.updateRho(p);
-
-    volScalarField& rho(thermo.rho());
+    const volScalarField& rho(thermo.rho());
     const fvMesh& mesh = p.mesh();
 
     volScalarField gh("gh", (g_ & normal_)*h_);
     surfaceScalarField ghf("ghf", fvc::interpolate(gh));
 
+    // Set the default boundary conditions for ph_rgh
     wordList ph_rghBcs(p.boundaryField().size(), "fixedFluxPressure");
     forAll(ph_rghBcs, patchi)
     {
@@ -152,6 +112,7 @@ void Foam::atmosphereModel::hydrostaticInitialisation
         }
     }
 
+    // Optionally read in some fields
     volVectorField U
     (
         IOobject
@@ -183,24 +144,37 @@ void Foam::atmosphereModel::hydrostaticInitialisation
             "ph_rgh",
             mesh.time().timeName(),
             mesh,
-            IOobject::NO_READ
+            IOobject::READ_IF_PRESENT
         ),
         mesh_,
         dimensionedScalar("ph_rgh", dimPressure, 0.0),
         ph_rghBcs
     );
 
-//     p = ph_rgh + rho*gh + pRef;
-//     p.correctBoundaryConditions();
-
-    // Correct density
-    thermo.updateRho(p);
+    // Reference pressure
+    uniformDimensionedScalarField pRef
+    (
+        IOobject
+        (
+            "pRef",
+            mesh_.time().constant(),
+            mesh_,
+            IOobject::READ_IF_PRESENT,
+            IOobject::NO_WRITE
+        ),
+        dimensionedScalar("pRef", dimPressure, 0.0)
+    );
+    if (ph_rgh.needReference())
+    {
+        pRef = dimensionedScalar("pRef", dimPressure, dict_);
+    }
 
     label nCorr
     (
         dict_.lookupOrDefault<label>("nHydrostaticCorrectors", 10)
     );
 
+    // Create a simple solver dictionary
     dictionary solverDict;
     solverDict.add("solver", "GAMG");
     solverDict.add("smoother", "GaussSeidel");
@@ -231,16 +205,27 @@ void Foam::atmosphereModel::hydrostaticInitialisation
 
         ph_rghEqn.solve(solverDict);
 
-        scalar residual = (max(ph_rgh) - min(ph_rgh)).value();
 
+        scalar residual = (max(ph_rgh()) - min(ph_rgh())).value();
         p = ph_rgh + rho*gh + pRef;
-        p.correctBoundaryConditions();
-
-        // Correct density
-        thermo.updateRho(p);
-        thermo.correct();
-
         Info<< "Hydrostatic pressure variation "<< residual << endl;
+
+        // Correct density and thermodynamic quantities
+        p.correctBoundaryConditions();
+        thermo.updateRho(p);
+        thermo.he() = thermo.calce(thermo.p());
+    }
+
+    if (zoneID_ >= 0)
+    {
+        const cellZone& cz = mesh_.cellZones()[zoneID_];
+        UIndirectList<scalar>(thermo.p(), cz) = UIndirectList<scalar>(p, cz);
+        thermo.p().correctBoundaryConditions();
+
+        // Correct density and thermodynamic quantities
+        thermo.updateRho(thermo.p());
+        thermo.he() = thermo.calce(thermo.p());
+        thermo.correct();
     }
 }
 

@@ -49,8 +49,11 @@ using namespace Foam;
 int main(int argc, char *argv[])
 {
     argList::addOption("pRef", "Reference pressure [Pa]");
-    argList::addOption("elevation", "Elevation of the lowest point [m]");
+    argList::addOption("hRef", "Height of the lowest point [m]");
     argList::addOption("phase", "Name of the phase");
+    argList::addOption("phases", "List of phases");
+    argList::addOption("zone", "Cell zone to set");
+    argList::addOption("type", "Model used to set the fields");
 
     #include "addDictOption.H"
     #include "addRegionOption.H"
@@ -65,6 +68,63 @@ int main(int argc, char *argv[])
         mesh,
         IOobject::MUST_READ
     );
+    autoPtr<IOdictionary> atmospherePropertiesPtr;
+    if (!atmospherePropertiesIO.typeHeaderOk<IOdictionary>(true))
+    {
+        atmospherePropertiesIO.readOpt() = IOobject::NO_READ;
+        atmospherePropertiesPtr.set
+        (
+            new IOdictionary(atmospherePropertiesIO)
+        );
+
+        atmospherePropertiesPtr->set
+        (
+            "type",
+            atmosphereModels::hydrostatic::typeName
+        );
+        atmospherePropertiesPtr->set
+        (
+            "pRef",
+            args.optionLookupOrDefault<scalar>
+            (
+                "pRef",
+                Foam::constant::thermodynamic::Pstd
+            )
+        );
+        atmospherePropertiesPtr->set
+        (
+            "hRef",
+            args.optionLookupOrDefault<scalar>("hRef", 0.0)
+        );
+    }
+    else
+    {
+        atmospherePropertiesPtr.set
+        (
+            new IOdictionary(atmospherePropertiesIO)
+        );
+    }
+    const dictionary& atmosphereProperties = atmospherePropertiesPtr();
+
+    label zoneID = -1;
+    if (args.optionFound("zone"))
+    {
+        zoneID = mesh.cellZones()[args.optionRead<word>("zone")].index();
+    }
+    autoPtr<atmosphereModel> atmosphere
+    (
+        atmosphereModel::New
+        (
+            (
+                args.optionFound("type")
+              ? args.optionRead<word>("type")
+              : atmosphereProperties.lookup<word>("type")
+            ),
+            mesh,
+            atmosphereProperties,
+            zoneID
+        )
+    );
 
     IOdictionary phaseProperties
     (
@@ -78,54 +138,30 @@ int main(int argc, char *argv[])
     );
 
     word phaseName = word::null;
-    wordList phases(1, phaseName);
-    autoPtr<atmosphereModel> atmosphere;
-    if (!atmospherePropertiesIO.typeHeaderOk<IOdictionary>(true))
+    wordList phases(1, word::null);
+    if (args.optionFound("phase"))
     {
-        scalar pRef = args.optionLookupOrDefault<scalar>
-        (
-            "pRef",
-            Foam::constant::thermodynamic::Pstd
-        );
-        scalar elevation = args.optionLookupOrDefault<scalar>
-        (
-            "elevation",
-            0
-        );
-
-        if (args.optionFound("phase"))
+        phases = args.optionRead<word>("phase");
+        if (phaseProperties.found("phases"))
         {
-            phases = args.optionRead<word>("phase");
+            phaseName = phases[0];
         }
-        else if (phaseProperties.found("phases"))
-        {
-            phases = phaseProperties.lookup<wordList>("phases");
-        }
-        atmosphere.set
-        (
-            new atmosphereModels::hydrostatic
-            (
-                mesh,
-                pRef,
-                elevation
-            )
-        );
     }
-    else
+    else if (args.optionFound("phases"))
     {
-        IOdictionary atmosphereProperties(atmospherePropertiesIO);
-        atmosphere =
-            atmosphereModel::New(mesh, atmosphereProperties);
-
-        if (atmosphereProperties.found("phase"))
-        {
-            phases = atmosphereProperties.lookup<word>("phase");
-        }
-        else if (phaseProperties.found("phases"))
-        {
-            phases = phaseProperties.lookup<wordList>("phases");
-        }
-
+        phases = args.optionRead<wordList>("phases");
+    }
+    else if (atmosphereProperties.found("phase"))
+    {
+        phases = atmosphereProperties.lookup<word>("phase");
+    }
+    else if (atmosphereProperties.found("phases"))
+    {
+        phases = atmosphereProperties.lookup<wordList>("phases");
+    }
+    else if (phaseProperties.found("phases"))
+    {
+        phases = phaseProperties.lookup<wordList>("phases");
     }
 
     autoPtr<fluidBlastThermo> thermo
@@ -134,7 +170,8 @@ int main(int argc, char *argv[])
         (
             phases.size(),
             mesh,
-            phaseProperties
+            phaseProperties,
+            phaseName
         )
     );
 

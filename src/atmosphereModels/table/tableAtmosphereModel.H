@@ -72,7 +72,7 @@ public:
     TypeName("table");
 
     // Constructor
-    table(const fvMesh& mesh, const dictionary& dict);
+    table(const fvMesh&, const dictionary&, const label);
 
 
     //- Destructor
