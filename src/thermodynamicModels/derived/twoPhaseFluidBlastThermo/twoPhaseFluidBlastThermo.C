@@ -355,8 +355,8 @@ void Foam::twoPhaseFluidBlastThermo::update()
 
 void Foam::twoPhaseFluidBlastThermo::updateRho(const volScalarField& p)
 {
-    thermo1_->updateRho(p);
-    thermo2_->updateRho(p);
+    thermo1_->updateRho(alpha1_, p);
+    thermo2_->updateRho(alpha2_, p);
     this->rho_ = alpha1_*thermo1_->rho() + alpha2_*thermo2_->rho();
 }
 

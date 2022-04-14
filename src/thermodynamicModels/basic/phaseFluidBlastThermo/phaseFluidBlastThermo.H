@@ -160,7 +160,11 @@ public:
         // Access to derived thermodynamic variables
 
             //- Calculate density
-            virtual void updateRho(const volScalarField&) = 0;
+            virtual void updateRho
+            (
+                const volScalarField& alpha,
+                const volScalarField& p
+            ) = 0;
 
             //- Calculate internal energy given a pressure
             virtual tmp<volScalarField> calce(const volScalarField&) const = 0;

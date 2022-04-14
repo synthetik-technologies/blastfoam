@@ -313,6 +313,7 @@ public:
             //- Initialize internal energy
             scalar rhoPT
             (
+                const scalar rho,
                 const scalar p,
                 const scalar T
             ) const;

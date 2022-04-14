@@ -590,9 +590,81 @@ void Foam::detonatingFluidBlastThermo<Thermo>::updateRho(const volScalarField& p
         dimDensity,
         &Thermo::thermoType1::rhoPT,
         &Thermo::thermoType2::rhoPT,
+        this->rho_,
         p,
         this->T_
     );
+}
+
+
+template<class Thermo>
+void Foam::detonatingFluidBlastThermo<Thermo>::updateRho
+(
+    const volScalarField& alpha,
+    const volScalarField& p
+)
+{
+    const typename Thermo::thermoType1& t1(*this);
+    const typename Thermo::thermoType2& t2(*this);
+
+    scalarField& rhoI = this->rho_.primitiveFieldRef();
+    forAll(this->rho_, celli)
+    {
+        if (alpha[celli] > this->residualAlpha_.value())
+        {
+            const scalar x2 = this->cellx(celli);
+            const scalar x1 = 1.0 - x2;
+
+            if (x2 < this->residualActivation_)
+            {
+                rhoI[celli] = t1.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
+            }
+            else if (x1 < this->residualActivation_)
+            {
+                rhoI[celli] = t2.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
+            }
+            else
+            {
+                rhoI[celli] =
+                    t1.rhoPT(rhoI[celli], p[celli], this->T_[celli])*x1
+                  + t2.rhoPT(rhoI[celli], p[celli], this->T_[celli])*x2;
+            }
+        }
+    }
+
+    volScalarField::Boundary& brho = this->rho_.boundaryFieldRef();
+
+    forAll(brho, patchi)
+    {
+        scalarField& prho = brho[patchi];
+        const scalarField& palpha = alpha.boundaryField()[patchi];
+        const scalarField& pT = this->T_.boundaryField()[patchi];
+        const scalarField& pp = p.boundaryField()[patchi];
+        const scalarField px(this->x(patchi));
+
+        forAll(prho, facei)
+        {
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                const scalar x2 = px[facei];
+                const scalar x1 = 1.0 - x2;
+                if (x2 < this->residualActivation_)
+                {
+                    prho[facei] = t1.rhoPT(prho[facei], pp[facei], pT[facei]);
+                }
+                else if (x1 < this->residualActivation_)
+                {
+                    prho[facei] = t2.rhoPT(prho[facei], pp[facei], pT[facei]);
+                }
+                else
+                {
+                    prho[facei] =
+                        t1.rhoPT(prho[facei], pp[facei], pT[facei])*x1
+                      + t2.rhoPT(prho[facei], pp[facei], pT[facei])*x2;
+                }
+            }
+        }
+    }
 }
 
 

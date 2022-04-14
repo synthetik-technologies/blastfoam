@@ -243,7 +243,7 @@ void Foam::multicomponentBlastThermo::solve()
             Yt += Y_[i];
         }
 
-        if (max(Yt).value() < rootVSmall)
+        if (max(Yt).value() < small)
         {
             FatalErrorInFunction
                 << "Sum of mass fractions is zero for species " << species()

@@ -207,6 +207,7 @@ public:
         //- Initialize internal energy
         inline scalar rhoPT
         (
+            const scalar rho,
             const scalar p,
             const scalar T
         ) const;

@@ -114,7 +114,9 @@ Foam::autoPtr<Foam::fluidBlastThermo> Foam::fluidBlastThermo::New
         return blastThermo::New<fluidBlastThermo>
         (
             mesh,
-            dict.optionalSubDict("mixture"),
+            (dict.isDict(phaseName) && phaseName != word::null)
+          ? dict.subDict(phaseName)
+          : dict.optionalSubDict("mixture"),
             phaseName,
             phaseName
         );

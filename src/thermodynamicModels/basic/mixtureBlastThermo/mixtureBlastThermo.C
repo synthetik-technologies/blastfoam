@@ -875,6 +875,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::rho
 {
     return speciesData_[speciei].rhoPT
     (
+        1.0,
         p,
         T
     );
@@ -896,6 +897,7 @@ Foam::mixtureBlastThermo<BasicThermo, ThermoType>::rho
         "rho",
         dimDensity,
         &ThermoType::rhoPT,
+        this->rho_,
         p,
         T
     );

@@ -353,12 +353,54 @@ void Foam::multicomponentFluidBlastThermo<Thermo>::updateRho
 {
     this->rho_ == Thermo::volScalarFieldProperty
     (
-        "rhoNew",
+        "rho",
         dimDensity,
         &Thermo::thermoType::rhoPT,
+        this->rho_,
         p,
         this->T_
     );
+}
+
+
+template<class Thermo>
+void Foam::multicomponentFluidBlastThermo<Thermo>::updateRho
+(
+    const volScalarField& alpha,
+    const volScalarField& p
+)
+{
+    scalarField& rhoI = this->rho_.primitiveFieldRef();
+    forAll(rhoI, celli)
+    {
+        if (alpha[celli] > this->residualAlpha_.value())
+        {
+            const typename Thermo::thermoType& t(this->mixture_[celli]);
+            rhoI[celli] = t.rhoPT(rhoI[celli], p[celli], this->T_[celli]);
+        }
+    }
+
+    volScalarField::Boundary& brho = this->rho_.boundaryFieldRef();
+
+    forAll(this->rho_.boundaryField(), patchi)
+    {
+        scalarField& prho = brho[patchi];
+        const scalarField& palpha = alpha.boundaryField()[patchi];
+        const scalarField& pT = this->T_.boundaryField()[patchi];
+        const scalarField& pp = p.boundaryField()[patchi];
+
+        forAll(prho, facei)
+        {
+            if (palpha[facei] > this->residualAlpha_.value())
+            {
+                const typename Thermo::thermoType& t
+                (
+                    this->mixture_.boundary(patchi, facei)
+                );
+                prho[facei] = t.rhoPT(prho[facei], pp[facei], pT[facei]);
+            }
+        }
+    }
 }
 
 

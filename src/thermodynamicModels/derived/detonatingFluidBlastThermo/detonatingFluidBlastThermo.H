@@ -155,6 +155,13 @@ public:
         //- Calculate density
         virtual void updateRho(const volScalarField& p);
 
+        //- Calculate density
+        virtual void updateRho
+        (
+            const volScalarField& alpha,
+            const volScalarField& p
+        );
+
         //- Calculate pressure for cell [Pa]
         virtual scalar cellpRhoT
         (

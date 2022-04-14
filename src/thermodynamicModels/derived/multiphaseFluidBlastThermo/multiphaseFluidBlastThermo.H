@@ -25,7 +25,7 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 
 Class
-    Foam::multiphaseFluidTherm
+    Foam::multiphaseFluidThermo
 
 Description
     Class to calculate mixture properties of a collection of more than two

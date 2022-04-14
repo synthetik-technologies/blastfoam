@@ -333,6 +333,7 @@ Foam::scalar Foam::tabulatedThermoEOS<Specie>::initializeEnergy
 template<class Specie>
 Foam::scalar Foam::tabulatedThermoEOS<Specie>::rhoPT
 (
+    const scalar rho,
     const scalar p,
     const scalar T
 ) const
