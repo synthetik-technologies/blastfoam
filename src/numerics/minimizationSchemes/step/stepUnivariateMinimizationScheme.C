@@ -75,7 +75,7 @@ Foam::stepUnivariateMinimizationScheme::stepUnivariateMinimizationScheme
             (eqn_.upper() - eqn_.lower())/100.0
         )
     ),
-    f_(dict.lookupOrDefault<scalar>("f", 0.5))
+    f_(this->tau_)
 {
     checkY_ = true;
 }
