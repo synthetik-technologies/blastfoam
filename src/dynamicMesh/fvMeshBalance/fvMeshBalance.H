@@ -89,6 +89,9 @@ protected:
         //- Allowable imbalance
         scalar allowableImbalance_;
 
+        //- Distribution
+        mutable labelList distribution_;
+
 
     // Private member functions
 
@@ -159,11 +162,8 @@ public:
             //- Preserve baffles
             void preserveBaffles();
 
-        //- Return the decompositionMethod
-        const decompositionMethod& decomposer() const;
-
         //- Access the decompositionMethod
-        decompositionMethod& decomposer();
+        decompositionMethod& decomposer() const;
 
         //- Balance the mesh
         autoPtr<mapDistributePolyMesh> distribute();

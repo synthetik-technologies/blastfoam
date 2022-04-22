@@ -421,17 +421,7 @@ void Foam::fvMeshBalance::makeDecomposer() const
 }
 
 
-const Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
-{
-    if (!decomposer_.valid())
-    {
-        makeDecomposer();
-    }
-    return decomposer_();
-}
-
-
-Foam::decompositionMethod& Foam::fvMeshBalance::decomposer()
+Foam::decompositionMethod& Foam::fvMeshBalance::decomposer() const
 {
     if (!decomposer_.valid())
     {
@@ -471,11 +461,41 @@ bool Foam::fvMeshBalance::canBalance() const
     // weights equal to their number of subcells. This partitioning works
     // as long as the number of level 0 cells is several times greater than
     // the number of processors.
-    if (maxImbalanceRatio > allowableImbalance_)
+    if (maxImbalanceRatio < allowableImbalance_)
     {
-        return true;
+        return false;
     }
-    return false;
+
+    // Decompose the mesh with uniform weights
+    // The refinementHistory constraint is applied internally
+    distribution_ = decomposer().decompose
+    (
+        mesh_,
+        scalarField(mesh_.nCells(), 1.0)
+    );
+
+    // Check if distribution will improve anything
+    labelList procLoadNew(Pstream::nProcs(), 0);
+    forAll(distribution_, celli)
+    {
+        procLoadNew[distribution_[celli]]++;
+    }
+    reduce(procLoadNew, sumOp<labelList>());
+    scalar averageLoadNew
+    (
+        scalar(sum(procLoadNew))/scalar(Pstream::nProcs())
+    );
+    scalar maxDevNew(max(mag(procLoadNew - averageLoadNew)));
+
+    if (maxDevNew > maxImbalanceRatio*0.99)
+    {
+        DebugInfo
+            << "    Not balancing because the new distribution does" << nl
+            << "    not improve the load" << endl;
+        return false;
+    }
+
+    return true;
 }
 
 
@@ -495,20 +515,13 @@ Foam::fvMeshBalance::distribute()
     correctBoundaries<pointSymmTensorField>();
     correctBoundaries<pointTensorField>();
 
-    // Decompose the mesh with uniform weights
-    // The refinementHistory constraint is applied internally
-    labelList finalDecomp = decomposer().decompose
-    (
-        mesh_,
-        scalarField(mesh_.nCells(), 1.0)
-    );
+
 
     Info<< "Distributing the mesh ..." << endl;
     autoPtr<mapDistributePolyMesh> map =
-        distributor_.distribute(finalDecomp);
+        distributor_.distribute(distribution_);
 
     Info << "Successfully distributed mesh" << endl;
-
     label procLoadNew(mesh_.nCells());
     label overallLoadNew(returnReduce(procLoadNew, sumOp<label>()));
     scalar averageLoadNew(overallLoadNew/scalar(Pstream::nProcs()));
