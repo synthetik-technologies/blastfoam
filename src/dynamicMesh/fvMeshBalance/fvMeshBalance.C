@@ -481,6 +481,12 @@ bool Foam::fvMeshBalance::canBalance() const
         procLoadNew[distribution_[celli]]++;
     }
     reduce(procLoadNew, sumOp<labelList>());
+    if (min(procLoadNew) == 0)
+    {
+        DebugInfo
+            << "New distribtion results in a load of 0. Skipping" << endl;
+        return false;
+    }
     scalar averageLoadNew
     (
         scalar(sum(procLoadNew))/scalar(Pstream::nProcs())
@@ -491,7 +497,7 @@ bool Foam::fvMeshBalance::canBalance() const
     {
         DebugInfo
             << "    Not balancing because the new distribution does" << nl
-            << "    not improve the load" << endl;
+            << "    not improve the load. Skipping" << endl;
         return false;
     }
 
